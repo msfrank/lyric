@@ -1,0 +1,48 @@
+namespace lbm1;
+
+file_identifier "LBM1";                         // 4 byte magic for Lyric build metadata version 1
+
+enum MetadataVersion : uint8 {
+    Unknown,
+    Version1,
+}
+
+enum TrueFalseNil : uint8 { Nil = 0, False, True }
+
+table TrueFalseNilValue { tfn: TrueFalseNil; }
+table Int64Value        { i64: int64; }
+table Float64Value      { f64: float64; }
+table UInt64Value       { u64: uint64; }
+table UInt32Value       { u32: uint32; }
+table UInt16Value       { u16: uint16; }
+table UInt8Value        { u8: uint8; }
+table StringValue       { utf8: string; }
+
+union Value {
+    TrueFalseNilValue,
+    Int64Value,
+    Float64Value,
+    UInt64Value,
+    UInt32Value,
+    UInt16Value,
+    UInt8Value,
+    StringValue,
+}
+
+table NamespaceDescriptor {
+    ns_url: string;
+}
+
+table AttrDescriptor {
+    attr_ns: uint32;                            // namespace of the attribute
+    attr_id: uint32;                            // the id of the attribute
+    attr_value: Value;                          // value of the attribute
+}
+
+table Metadata {
+    abi: MetadataVersion;                       // target ABI the manifest was generated for
+    namespaces: [NamespaceDescriptor];          // array of namespace descriptors
+    attrs: [AttrDescriptor];                    // array of attribute descriptors
+}
+
+root_type Metadata;

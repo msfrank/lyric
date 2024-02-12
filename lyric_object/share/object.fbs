@@ -1,0 +1,559 @@
+namespace lyo1;
+
+file_identifier "LYO1";                         // 4 byte magic for Lyric Object version 1
+
+enum ObjectVersion : uint8 {
+    Unknown,
+    Version1,
+}
+
+enum DescriptorSection : uint8 {
+    Invalid,
+    Type,
+    Existential,
+    Literal,
+    Call,
+    Field,
+    Static,
+    Action,
+    Class,
+    Struct,
+    Instance,
+    Concept,
+    Enum,
+    Namespace,
+}
+
+enum TrueFalseNil : uint8 { Nil = 0, False, True }
+
+table TrueFalseNilValue { tfn: TrueFalseNil; }  // true, false, or nil constant literal
+table Int64Value        { i64: int64; }         // int64 literal
+table Float64Value      { dbl: float64; }       // float64 literal
+table CharValue         { chr: int32; }         // char literal serialized as a utf32 code unit
+table StringValue       { str: string; }        // string literal serialized as a utf8 string
+
+union Value {
+    TrueFalseNilValue,
+    Int64Value,
+    Float64Value,
+    CharValue,
+    StringValue,
+}
+
+// FIXME: rename to ConstantDescriptor
+// FIXME: add constants to symbol table
+table LiteralDescriptor {
+    literal_value: Value;                        // the value of the literal
+}
+
+enum IntrinsicType : uint8 {
+    Invalid,
+    Nil,
+    Present,
+    Bool,
+    Char,
+    Float64,
+    Int64,
+    Utf8,
+    Class,
+    Concept,
+    Instance,
+    Call,
+    Action,
+    Field,
+    Struct,
+    Enum,
+    Existential,
+    Namespace,
+}
+
+enum TypeSection : uint8 {
+    Invalid,
+    Class,
+    Concept,
+    Enum,
+    Existential,
+    Instance,
+    Struct,
+    Type,
+}
+
+enum SpecialType : uint8 {
+    Invalid,
+    NoReturn,
+}
+
+table ConcreteAssignable {
+    concrete_section: TypeSection = Invalid;    // object section containing the descriptor
+    concrete_descriptor: uint32 = 0xFFFFFFFF;   // index of the descriptor in the specified section
+    concrete_parameters: [uint32];              // array of descriptors of type parameters
+}
+
+table PlaceholderAssignable {
+    placeholder_template: uint32 = 0xFFFFFFFF;  // index of the template in the object
+    placeholder_index: uint16 = 0xFFFF;         // index of the placeholder in the specified template
+    placeholder_parameters: [uint32];           // array of descriptors of type parameters
+}
+
+table UnionAssignable {
+    union_members: [uint32];                    // array of descriptors of union members
+}
+
+table IntersectionAssignable {
+    intersection_members: [uint32];             // array of descriptors of intersection members
+}
+
+table SpecialAssignable {
+    special_type: SpecialType = Invalid;        // the special type
+}
+
+union Assignable {
+    ConcreteAssignable,
+    PlaceholderAssignable,
+    UnionAssignable,
+    IntersectionAssignable,
+    SpecialAssignable,
+}
+
+table TypeDescriptor {
+    type_assignable: Assignable;                // the assignable type union
+    super_type: uint32 = 0xFFFFFFFF;            // super type of the type
+}
+
+enum PlaceholderVariance : uint8 {
+    Invariant,
+    Covariant,
+    Contravariant,
+}
+
+struct Placeholder {
+    placeholder_variance: PlaceholderVariance;  // type of variance
+    name_offset: uint8;                         // offset of the placeholder name in the names array
+}
+
+enum ConstraintBound : uint8 {
+    Super,
+    Extends,
+}
+
+struct Constraint {
+    placeholder_offset: uint8;                  // offset of the placeholder in the placeholders array
+    constraint_bound: ConstraintBound;          // type of bound for the constraint type
+    constraint_type: uint32;                    // offset of the constraint type in the types section
+}
+
+table TemplateDescriptor {
+    fqsn: string;                               // fully qualified name of symbol which declares the template
+    placeholders: [Placeholder];                // array of template placeholders
+    constraints: [Constraint];                  // array of constraints on the placeholders
+    names: [string];                            // array of placeholder names
+}
+
+// flags which apply to an ExistentialDescriptor
+
+enum ExistentialFlags : uint16 (bit_flags) {
+    Sealed,                                     // existential can only be inherited from in the current object
+    Final,                                      // existential cannot be inherited from
+    DeclOnly,                                   // existential descriptor is only a declaration
+}
+
+//
+//
+
+table ExistentialDescriptor {
+    fqsn: string;                               // fully qualified existential name
+    super_existential: uint32 = 0xFFFFFFFF;     // offset of the super existential in the existentials section
+    existential_template: uint32 = 0xFFFFFFFF;  // offset of the template in the templates section, or 0xFFFFFFFF if not generic
+    existential_type: uint32 = 0xFFFFFFFF;      // offset of the existential type in the types section
+    intrinsic_mapping: IntrinsicType = Invalid; // mapping to intrinsic type, or Invalid if there is no mapping
+    flags: ExistentialFlags;                    // bitfield containing existential flags
+    impls: [uint32];                            // array of impls in the impls section
+    sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
+}
+
+// flags which apply to a CallDescriptor
+
+enum CallFlags : uint16 (bit_flags) {
+    NoReturn,                                   // call does not return a value
+    Bound,                                      // call is a bound method
+    Inline,                                     // call can be inlined
+    Ctor,                                       // call is a constructor
+    InheritVisibility,                          // visible to enclosing symbol and inheriting symbols
+    GlobalVisibility,                           // visible to all symbols
+    DeclOnly,                                   // call descriptor is only a declaration
+}
+
+// flags which apply to a Parameter
+
+enum ParameterFlags : uint16 (bit_flags) {
+    Var,                                        // parameter argument binding is variable
+    Named,                                      // parameter is named
+    Rest,                                       // parameter describes the rest argument
+    Ctx,                                        // parameter is a context parameter
+}
+
+struct Parameter {
+    flags: ParameterFlags;                      // bitfield containing parameter flags
+    parameter_type: uint32;                     // offset of the parameter type in the types section
+    initializer_call: uint32;                   // offset of the initializer call in the calls section, or 0xFFFFFFFF if no initializer
+    name_offset: uint8;                         // offset of the parameter name in the names array, or 0xFF
+    label_offset: uint8;                        // offset of the parameter label in the names array, or 0xFF
+}
+
+// a CallDescriptor describes a lambda, function or method.  a call is a
+// symbol, meaning it has a name and can be referred to from other assemblies.
+
+table CallDescriptor {
+    fqsn: string;                               // fully qualified call name
+    call_template: uint32 = 0xFFFFFFFF;         // offset of the template in the templates section, or 0xFFFFFFFF if not generic
+    receiver_section: TypeSection = Invalid;    // object section containing the descriptor for the receiver, or Invalid if the call is not bound
+    receiver_descriptor: uint32 = 0xFFFFFFFF;   // index of the descriptor for the receiver in the specified section, or 0xFFFFFFFF if the call is not bound
+    call_type: uint32 = 0xFFFFFFFF;             // offset of the call type in the types section
+    bytecode_offset: uint32 = 0xFFFFFFFF;       // offset of the start of the proc in the bytecode section
+    flags: CallFlags;                           // bitfield containing call flags
+    parameters: [Parameter];                    // array of call parameters
+    rest: Parameter;                            // if present, the parameter describing any additional arguments
+    names: [string];                            // array of parameter names and labels
+    result_type: uint32 = 0xFFFFFFFF;           // offset of the result type in the types section, or 0xFFFFFFFF if the call is marked NoReturn
+}
+
+// flags which apply to a StaticDescriptor
+
+enum StaticFlags : uint16 (bit_flags) {
+    Var,                                        // the static binding is variable
+    DeclOnly,                                   // static descriptor is only a declaration
+}
+
+// a StaticDescriptor describes a variable in static storage.  such variables
+// are either top-level variables in the object (also known as "globals") or
+// static members of a class.  if StaticFlags::Var is set, then the static
+// storage location is variable and the value of the static can be reassigned.
+
+table StaticDescriptor {
+    fqsn: string;                               // fully qualified static name
+    static_type: uint32 = 0xFFFFFFFF;           // offset of the static type in the types section
+    flags: StaticFlags;                         // bitfield containing static flags
+    initializer_call: uint32 = 0xFFFFFFFF;      // offset of the initializer call in the calls section
+}
+
+// flags which apply to a ActionDescriptor
+
+enum ActionFlags : uint16 (bit_flags) {
+    NoReturn,                                   // action does not return a value
+    DeclOnly,                                   // action descriptor is only a declaration
+}
+
+// an ActionDescriptor describes the inputs (parameters) and output (return type) of an
+// operation supported by a concept. an action is abstract in that it does not contain
+// the implementation itself.
+
+table ActionDescriptor {
+    fqsn: string;                               // fully qualified action name
+    action_template: uint32 = 0xFFFFFFFF;       // offset of the template in the templates section, or 0xFFFFFFFF if not generic
+    receiver_section: TypeSection = Invalid;    // object section containing the descriptor for the receiver, or Invalid if the call is not bound
+    receiver_descriptor: uint32 = 0xFFFFFFFF;   // index of the descriptor for the receiver in the specified section, or 0xFFFFFFFF if the call is not bound
+    flags: ActionFlags;                         // bitfield containing action flags
+    parameters: [Parameter];                    // array of action parameters
+    rest: Parameter;                            // if present, the parameter describing any additional arguments
+    names: [string];                            // array of parameter names and labels
+    result_type: uint32 = 0xFFFFFFFF;           // offset of the result type in the types section, or 0xFFFFFFFF if the action is marked NoReturn
+}
+
+// flags which apply to a ConceptDescriptor
+
+enum ConceptFlags : uint16 (bit_flags) {
+    Sealed,                                     // concept can only be inherited from in the current object
+    Final,                                      // concept cannot be inherited from
+    DeclOnly,                                   // concept descriptor is only a declaration
+}
+
+// a ConceptDescriptor describes a set of actions which may be implemented by a type. It is
+// analogous to a Java interface or Scala trait; i.e. it defines a contract to be implemented
+// by an Instance impl.
+
+table ConceptDescriptor {
+    fqsn: string;                               // fully qualified concept name
+    super_concept: uint32 = 0xFFFFFFFF;         // offset of the super concept in the concepts section
+    concept_template: uint32 = 0xFFFFFFFF;      // offset of the template in the templates section, or 0xFFFFFFFF if not generic
+    concept_type: uint32 = 0xFFFFFFFF;          // offset of the concept type in the types section
+    flags: ConceptFlags;                        // bitfield containing concept flags
+    actions: [uint32];                          // array of actions in the actions section
+    sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
+}
+
+// flags which apply to a FieldDescriptor
+
+enum FieldFlags : uint16 (bit_flags) {
+    Var,                                        // the field binding is variable
+    InheritVisibility,                          // visible to enclosing symbol and inheriting symbols
+    GlobalVisibility,                           // visible to all symbols
+    DeclOnly,
+}
+
+// a FieldDescriptor describes a variable in a class or instance. if FieldFlags::Var
+// is set, then the storage location is variable and the value of the field can be reassigned.
+
+table FieldDescriptor {
+    fqsn: string;                               // fully qualified field name
+    field_type: uint32 = 0xFFFFFFFF;            // offset of the field type in the types section
+    flags: FieldFlags;                          // bitfield containing field flags
+    default_call: uint32 = 0xFFFFFFFF;          // offset of the initializer call in the calls section, or 0xFFFFFFFF if no initializer
+}
+
+//
+
+struct ImplExtension {
+    extension_action: uint32;                   // offset of the action in the actions section
+    extension_call: uint32;                     // offset of the call in the calls section
+}
+
+//
+//
+//
+
+table ImplDescriptor {
+    impl_type: uint32 = 0xFFFFFFFF;             // offset of the impl type in the types section
+    impl_concept: uint32 = 0xFFFFFFFF;          // offset of the impl concept in the concepts section
+    receiver_section: TypeSection = Invalid;    // object section containing the descriptor for the receiver, or Invalid if the call is not bound
+    receiver_descriptor: uint32 = 0xFFFFFFFF;   // index of the descriptor for the receiver in the specified section, or 0xFFFFFFFF if the call is not bound
+    extensions: [ImplExtension];                // array of extensions bound to the impl
+}
+
+// flags which apply to a ClassDescriptor
+
+enum ClassFlags : uint16 (bit_flags) {
+    Abstract,                                   // class is abstract (cannot be instantiated)
+    Sealed,                                     // class can only be inherited from in the current object
+    Final,                                      // class cannot be inherited from
+    DeclOnly,                                   // class descriptor is only a declaration
+}
+
+// a ClassDescriptor describes properties of a class, including its member variables
+// and methods.
+//
+
+table ClassDescriptor {
+    fqsn: string;                               // fully qualified class name
+    super_class: uint32 = 0xFFFFFFFF;           // offset of the super class in the classes section
+    class_template: uint32 = 0xFFFFFFFF;        // offset of the template in the templates section, or 0xFFFFFFFF if not generic
+    class_type: uint32 = 0xFFFFFFFF;            // offset of the class type in the types section
+    flags: ClassFlags;                          // bitfield containing class flags
+    members: [uint32];                          // array of members in the fields section
+    methods: [uint32];                          // array of methods in the calls section
+    impls: [uint32];                            // array of impls in the impls section
+    allocator_trap: uint32 = 0xFFFFFFFF;        // index of the allocator trap in the current object, or 0xFFFFFFFF if delegating to parent
+    ctor_call: uint32 = 0xFFFFFFFF;             // offset of the class constructor in the calls section
+    sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
+}
+
+// flags which apply to the StructDescriptor
+
+enum StructFlags : uint16 (bit_flags) {
+    Abstract,                                   // struct is abstract (cannot be instantiated)
+    Sealed,                                     // struct can only be inherited from in the current object
+    Final,                                      // struct cannot be inherited from
+    DeclOnly,                                   // struct descriptor is only a declaration
+}
+
+// a StructDescriptor describes properties of a struct, including its member values
+// and methods.
+//
+
+table StructDescriptor {
+    fqsn: string;                               // fully qualified struct name
+    super_struct: uint32 = 0xFFFFFFFF;          // offset of the super struct in the structs section
+    struct_type: uint32 = 0xFFFFFFFF;           // offset of the struct type in the types section
+    flags: StructFlags;                         // bitfield containing struct flags
+    members: [uint32];                          // array of members in the fields section
+    methods: [uint32];                          // array of methods in the calls section
+    impls: [uint32];                            // array of impls in the impls section
+    allocator_trap: uint32 = 0xFFFFFFFF;        // index of the allocator trap in the current object, or 0xFFFFFFFF if delegating to parent
+    ctor_call: uint32 = 0xFFFFFFFF;             // offset of  the struct constructor in the calls section
+    sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
+}
+
+// flags which apply to the InstanceDecriptor
+
+enum InstanceFlags : uint16 (bit_flags) {
+    Abstract,                                   // instance is abstract (cannot be instantiated)
+    Sealed,                                     // instance can only be inherited from in the current object
+    Final,                                      // instance cannot be inherited from
+    DeclOnly,                                   // instance descriptor is only a declaration
+}
+
+//
+//
+//
+
+table InstanceDescriptor {
+    fqsn: string;                               // fully qualified symbol name for the instance
+    super_instance: uint32 = 0xFFFFFFFF;        // offset of the super instance in the instances section
+    instance_type: uint32 = 0xFFFFFFFF;         // offset of the instance type in the types section
+    flags: InstanceFlags;                       // bitfield containing instance flags
+    members: [uint32];                          // array of members in the fields section
+    methods: [uint32];                          // array of methods in the calls section
+    impls: [uint32];                            // array of impls in the impls section
+    allocator_trap: uint32 = 0xFFFFFFFF;        // index of the allocator trap in the current object, or 0xFFFFFFFF if delegating to parent
+    ctor_call: uint32 = 0xFFFFFFFF;             // offset of  the instance constructor in the calls section
+    sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
+}
+
+// flags which apply to the EnumDecriptor
+
+enum EnumFlags : uint16 (bit_flags) {
+    Abstract,                                   // enum is abstract (cannot be instantiated directly)
+    Sealed,                                     // enum can only be inherited from in the current object
+    Final,                                      // enum cannot be inherited from
+    DeclOnly,                                   // enum descriptor is only a declaration
+}
+
+//
+//
+//
+
+table EnumDescriptor {
+    fqsn: string;                               // fully qualified symbol name for the enum
+    super_enum: uint32 = 0xFFFFFFFF;            // offset of the super enum in the enums section
+    enum_type: uint32 = 0xFFFFFFFF;             // offset of the enum type in the types section
+    flags: EnumFlags;                           // bitfield containing enum flags
+    members: [uint32];                          // array of members in the fields section
+    methods: [uint32];                          // array of methods in the calls section
+    impls: [uint32];                            // array of impls in the impls section
+    allocator_trap: uint32 = 0xFFFFFFFF;        // index of the allocator trap in the current object, or 0xFFFFFFFF if delegating to parent
+    ctor_call: uint32 = 0xFFFFFFFF;             // offset of  the enum constructor in the calls section
+    sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
+}
+
+// flags which apply to the NamespaceDecriptor
+
+enum NamespaceFlags : uint16 (bit_flags) {
+    DeclOnly,                                   // enum descriptor is only a declaration
+}
+
+//
+
+struct NamespaceBinding {
+    binding_type: DescriptorSection;            // object section containing the symbol
+    binding_descriptor: uint32;                 // offset of the symbol in the section
+}
+
+//
+//
+//
+
+table NamespaceDescriptor {
+    fqsn: string;                               // fully qualified symbol name for the namespace
+    super_namespace: uint32 = 0xFFFFFFFF;       // offset of the super namespace in the namespaces section
+    flags: NamespaceFlags;                      // bitfield containing namespace flags
+    bindings: [NamespaceBinding];               // array of bindings contained in the namespace
+}
+
+//
+//
+//
+
+table SymbolDescriptor {
+    fqsn: string (key);                         // name of the symbol
+    symbol_type: DescriptorSection = Invalid;   // object section containing the symbol
+    symbol_descriptor: uint32 = 0xFFFFFFFF;     // offset of the symbol in the section
+}
+
+//
+
+enum HashType : uint8 {
+    Invalid,                                    // invalid hash type
+    None,                                       // contents are not hashed. not allowed for external dependencies!
+    Sha256,                                     // SHA-256 algorithm
+}
+
+//
+
+enum ImportFlags : uint16 (bit_flags) {
+    SystemBootstrap,                            // import is the system bootstrap object
+    ExactLinkage,                               // imported object must match the entire version exactly
+    ApiLinkage,                                 // imported object must match the major and minor version
+}
+
+// an ImportDescriptor describes a module containing symbols which are required by this
+// object.
+
+table ImportDescriptor {
+    import_location: string;                    // string containing the location of the module
+    hash_type: HashType = Invalid;              // hashing algorithm used for the import hash
+    import_hash: [uint8];                       // content hash of imported module, or empty if hash type is NONE
+    flags: ImportFlags;                         // bitfield containing import flags
+}
+
+// a LinkDescriptor describes a symbol defined externally which must be resolved at runtime.
+
+table LinkDescriptor {
+    fqsn: string;                               // fully qualified symbol name
+    link_type: DescriptorSection = Invalid;     // descriptor section containing the symbol
+    link_import: uint32 = 0xFFFFFFFF;           // offset of the link import in the imports section
+}
+
+// an ExportDescriptor
+
+table ExportDescriptor {
+    export_path: string;                        // '/'-separated relative path to submodule. no '.' or '..' allowed
+    export_hash: [uint8];                       // content hash of exported module, or empty if hash type is NONE
+    hash_type: HashType = Invalid;              // hashing algorithm used for the export hash
+}
+
+// a PluginDescriptor describes a plugin (a dynamically linked library) which contains traps
+// referenced by the bytecode. each descriptor is associated with a platform indentifying the
+// combination of operating system name, OS version, architecture, and compiler which the
+// plugin was compiled for.
+
+table PluginDescriptor {
+    plugin_path: string;                        // '/'-separated relative path to plugin. no '.' or '..' allowed
+    plugin_platform: string;                    // id of the platform the plugin was compiled for
+}
+
+//
+
+//enum TrapFlags : uint16 (bit_flags) {
+//}
+
+//
+//
+//
+
+table TrapDescriptor {
+    trap_index: uint32 = 0xFFFFFFFF;
+    //trap_flags: TrapFlags;
+}
+
+table Object {
+
+    abi: ObjectVersion;                         // bytecode ABI the object was compiled against
+
+    version_major: uint32 = 0;                  // version major number, defaults to 0
+    version_minor: uint32 = 0;                  // version minor number, defaults to 0
+    version_patch: uint32 = 0;                  // version patch number, defaults to 0
+
+    types: [TypeDescriptor];                    // array of type descriptors
+    templates: [TemplateDescriptor];            // array of template descriptors
+    existentials: [ExistentialDescriptor];      // array of existential descriptors
+    literals: [LiteralDescriptor];              // array of literal descriptors
+    statics: [StaticDescriptor];                // array of static descriptors
+    calls: [CallDescriptor];                    // array of call descriptors
+    fields: [FieldDescriptor];                  // array of field descriptors
+    actions: [ActionDescriptor];                // array of action descriptors
+    concepts: [ConceptDescriptor];              // array of concept descriptors
+    impls: [ImplDescriptor];                    // array of impl descriptors
+    classes: [ClassDescriptor];                 // array of class descriptors
+    structs: [StructDescriptor];                // array of struct descriptors
+    instances: [InstanceDescriptor];            // array of instance descriptors
+    enums: [EnumDescriptor];                    // array of enum descriptors
+    namespaces: [NamespaceDescriptor];          // array of namespace descriptors
+    symbols: [SymbolDescriptor];                // sorted array mapping symbol name to location in object
+    imports: [ImportDescriptor];                // array of import descriptors
+    links: [LinkDescriptor];                    // array of external references needed by object
+    traps: [TrapDescriptor];                    // array of trap descriptors
+    plugins: [PluginDescriptor];                // array of plugin descriptors
+
+    bytecode: [uint8];                          // the bytecode for this object
+}
+
+root_type Object;

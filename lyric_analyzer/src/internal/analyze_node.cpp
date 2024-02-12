@@ -1,0 +1,164 @@
+
+#include <lyric_analyzer/internal/analyze_def.h>
+#include <lyric_analyzer/internal/analyze_node.h>
+#include <lyric_parser/ast_attrs.h>
+#include <lyric_schema/ast_schema.h>
+
+tempo_utils::Status
+lyric_analyzer::internal::analyze_val(
+    lyric_assembler::BlockHandle *block,
+    const lyric_parser::NodeWalker &walker,
+    EntryPoint &entryPoint)
+{
+    TU_ASSERT(block != nullptr);
+    TU_ASSERT(walker.isValid());
+    auto *typeSystem = entryPoint.getTypeSystem();
+
+    if (!block->isRoot())
+        return AnalyzerStatus::ok();
+
+    std::string identifier;
+    entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
+
+    tu_uint32 typeOffset;
+    entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
+    auto assignedType = walker.getNodeAtOffset(typeOffset);
+    auto resolveValTypeResult = typeSystem->resolveAssignable(block, assignedType);
+    if (resolveValTypeResult.isStatus())
+        return resolveValTypeResult.getStatus();
+    auto valType = resolveValTypeResult.getResult();
+
+    auto declareVariableResult = block->declareStatic(identifier,
+        valType, lyric_parser::BindingType::VALUE, true);
+    if (declareVariableResult.isStatus())
+        return declareVariableResult.getStatus();
+    return AnalyzerStatus::ok();
+}
+
+tempo_utils::Status
+lyric_analyzer::internal::analyze_var(
+    lyric_assembler::BlockHandle *block,
+    const lyric_parser::NodeWalker &walker,
+    EntryPoint &entryPoint)
+{
+    TU_ASSERT(block != nullptr);
+    TU_ASSERT(walker.isValid());
+    auto *typeSystem = entryPoint.getTypeSystem();
+
+    if (!block->isRoot())
+        return AnalyzerStatus::ok();
+
+    std::string identifier;
+    entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
+
+    tu_uint32 typeOffset;
+    entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
+    auto assignedType = walker.getNodeAtOffset(typeOffset);
+    auto resolveVarTypeResult = typeSystem->resolveAssignable(block, assignedType);
+    if (resolveVarTypeResult.isStatus())
+        return resolveVarTypeResult.getStatus();
+    auto varType = resolveVarTypeResult.getResult();
+
+    auto declareVariableResult = block->declareStatic(identifier,
+        varType, lyric_parser::BindingType::VARIABLE, true);
+    if (declareVariableResult.isStatus())
+        return declareVariableResult.getStatus();
+    return AnalyzerStatus::ok();
+}
+
+tempo_utils::Status
+lyric_analyzer::internal::analyze_block(
+    lyric_assembler::BlockHandle *block,
+    const lyric_parser::NodeWalker &walker,
+    EntryPoint &entryPoint)
+{
+    TU_ASSERT(block != nullptr);
+    TU_ASSERT(walker.isValid());
+    entryPoint.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstBlockClass, 1);
+
+    for (int i = 0; i < walker.numChildren(); i++) {
+        auto status = analyze_node(block, walker.getChild(i), entryPoint);
+        if (!status.isOk())
+            return status;
+    }
+    return AnalyzerStatus::ok();
+}
+
+tempo_utils::Status
+lyric_analyzer::internal::analyze_node(
+    lyric_assembler::BlockHandle *block,
+    const lyric_parser::NodeWalker &walker,
+    EntryPoint &entryPoint)
+{
+    TU_ASSERT(block != nullptr);
+    TU_ASSERT (walker.isValid());
+
+    lyric_schema::LyricAstId nodeId{};
+    entryPoint.parseIdOrThrow(walker, lyric_schema::kLyricAstVocabulary, nodeId);
+
+    switch (nodeId) {
+
+        // ignored literal forms
+        case lyric_schema::LyricAstId::Nil:
+        case lyric_schema::LyricAstId::False:
+        case lyric_schema::LyricAstId::True:
+        case lyric_schema::LyricAstId::Integer:
+        case lyric_schema::LyricAstId::Float:
+        case lyric_schema::LyricAstId::Char:
+        case lyric_schema::LyricAstId::String:
+        case lyric_schema::LyricAstId::Url:
+            return AnalyzerStatus::ok();
+
+        // ignored element forms
+        case lyric_schema::LyricAstId::Seq:
+        case lyric_schema::LyricAstId::Map:
+        case lyric_schema::LyricAstId::Row:
+            return AnalyzerStatus::ok();
+
+        // ignored expression forms
+        case lyric_schema::LyricAstId::Name:
+        case lyric_schema::LyricAstId::This:
+        case lyric_schema::LyricAstId::Call:
+        case lyric_schema::LyricAstId::IsA:
+        case lyric_schema::LyricAstId::IsEq:
+        case lyric_schema::LyricAstId::IsLt:
+        case lyric_schema::LyricAstId::IsLe:
+        case lyric_schema::LyricAstId::IsGt:
+        case lyric_schema::LyricAstId::IsGe:
+        case lyric_schema::LyricAstId::Deref:
+        case lyric_schema::LyricAstId::New:
+        case lyric_schema::LyricAstId::Build:
+
+        case lyric_schema::LyricAstId::Cond:
+        case lyric_schema::LyricAstId::Match:
+        case lyric_schema::LyricAstId::Lambda:
+            return AnalyzerStatus::ok();
+
+        // ignored statement forms
+        case lyric_schema::LyricAstId::Set:
+        case lyric_schema::LyricAstId::While:
+        case lyric_schema::LyricAstId::For:
+        case lyric_schema::LyricAstId::Return:
+            return AnalyzerStatus::ok();
+
+        case lyric_schema::LyricAstId::Block:
+            return analyze_block(block, walker, entryPoint);
+        case lyric_schema::LyricAstId::Val:
+            return analyze_val(block, walker, entryPoint);
+        case lyric_schema::LyricAstId::Var:
+            return analyze_var(block, walker, entryPoint);
+        case lyric_schema::LyricAstId::Def:
+            return analyze_def(block, walker, entryPoint);
+
+        case lyric_schema::LyricAstId::DefClass:
+        case lyric_schema::LyricAstId::Init:
+        case lyric_schema::LyricAstId::ImportModule:
+        case lyric_schema::LyricAstId::ImportSymbols:
+        case lyric_schema::LyricAstId::ImportAll:
+
+        default:
+            break;
+    }
+
+    block->throwSyntaxError(walker, "invalid node");
+}

@@ -1,0 +1,60 @@
+namespace lyi1;
+
+file_identifier "LYI1";                         // 4 byte magic for Lyric IR version 1
+
+enum ArchetypeVersion : uint8 {
+    Unknown,
+    Version1,
+}
+
+enum TrueFalseNil : uint8 { Nil = 0, False, True }
+
+table TrueFalseNilValue { tfn: TrueFalseNil; }
+table Int64Value        { i64: int64; }
+table Float64Value      { f64: float64; }
+table UInt64Value       { u64: uint64; }
+table UInt32Value       { u32: uint32; }
+table UInt16Value       { u16: uint16; }
+table UInt8Value        { u8: uint8; }
+table StringValue       { utf8: string; }
+
+union Value {
+    TrueFalseNilValue,
+    Int64Value,
+    Float64Value,
+    UInt64Value,
+    UInt32Value,
+    UInt16Value,
+    UInt8Value,
+    StringValue,
+}
+
+table NamespaceDescriptor {
+    ns_url: string;
+}
+
+table AttributeDescriptor {
+    attr_ns: uint32;                            // namespace of the attribute
+    attr_type: uint32;                          // the type of the attribute. this only has meaning relative to the ns!
+    attr_value: Value;                          // value of the attribute
+}
+
+table NodeDescriptor {
+    node_ns: uint32;                            // offset of the node namespace
+    node_type: uint32;                          // the type of the node. this only has meaning relative to the ns!
+    node_attrs: [uint32];                       // array of attributes bound to the node
+    node_children: [uint32];                    // array of child nodes
+    file_offset: uint32;                        // byte offset of the node in the source code text
+    line_nr: uint32;                            // line number of the node in the source code text
+    column_nr: uint32;                          // column number of the node in the source code text
+    text_span: uint32;                          // the number of bytes the node spans in the source code text
+}
+
+table Archetype {
+    abi: ArchetypeVersion;                      // target ABI the archetype was generated for
+    namespaces: [NamespaceDescriptor];          // array of namespace descriptors
+    attributes: [AttributeDescriptor];          // array of attribute descriptors
+    nodes: [NodeDescriptor];                    // array of node descriptors
+}
+
+root_type Archetype;

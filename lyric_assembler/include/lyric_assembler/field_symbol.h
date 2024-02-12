@@ -1,0 +1,73 @@
+#ifndef LYRIC_ASSEMBLER_FIELD_SYMBOL_H
+#define LYRIC_ASSEMBLER_FIELD_SYMBOL_H
+
+#include "abstract_symbol.h"
+#include "assembly_state.h"
+#include "base_symbol.h"
+#include "type_handle.h"
+
+namespace lyric_assembler {
+
+    struct FieldSymbolPriv {
+        lyric_object::AccessType access;
+        bool isVariable;
+        lyric_common::SymbolUrl init;
+        TypeHandle *fieldType;
+    };
+
+    class FieldSymbol : public BaseSymbol<FieldAddress,FieldSymbolPriv> {
+    public:
+        FieldSymbol(
+            const lyric_common::SymbolUrl &fieldUrl,
+            lyric_object::AccessType access,
+            bool isVariable,
+            FieldAddress address,
+            TypeHandle *fieldType,
+            AssemblyState *state);
+        FieldSymbol(
+            const lyric_common::SymbolUrl &fieldUrl,
+            lyric_object::AccessType access,
+            bool isVariable,
+            const lyric_common::SymbolUrl &init,
+            FieldAddress address,
+            TypeHandle *fieldType,
+            AssemblyState *state);
+        FieldSymbol(
+            const lyric_common::SymbolUrl &fieldUrl,
+            lyric_importer::FieldImport *fieldImport,
+            AssemblyState *state);
+
+        lyric_object::LinkageSection getLinkage() const override;
+
+        SymbolType getSymbolType() const override;
+        lyric_common::SymbolUrl getSymbolUrl() const override;
+        lyric_common::TypeDef getAssignableType() const override;
+        TypeSignature getTypeSignature() const override;
+        void touch() override;
+
+        std::string getName() const;
+        lyric_object::AccessType getAccessType() const;
+        bool isVariable() const;
+
+        lyric_common::SymbolUrl getInitializer() const;
+
+    private:
+        lyric_common::SymbolUrl m_fieldUrl;
+        lyric_importer::FieldImport * m_fieldImport = nullptr;
+        AssemblyState *m_state;
+
+        FieldSymbolPriv *load() override;
+    };
+
+    static inline const FieldSymbol *cast_symbol_to_field(const AbstractSymbol *sym) {
+        TU_ASSERT (sym->getSymbolType() == SymbolType::FIELD);
+        return static_cast<const FieldSymbol *>(sym);       // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    }
+
+    static inline FieldSymbol *cast_symbol_to_field(AbstractSymbol *sym) {
+        TU_ASSERT (sym->getSymbolType() == SymbolType::FIELD);
+        return static_cast<FieldSymbol *>(sym);             // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    }
+}
+
+#endif // LYRIC_ASSEMBLER_FIELD_SYMBOL_H

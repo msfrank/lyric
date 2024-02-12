@@ -1,0 +1,43 @@
+#ifndef LYRIC_ASSEMBLER_LEXICAL_VARIABLE_H
+#define LYRIC_ASSEMBLER_LEXICAL_VARIABLE_H
+
+#include "abstract_symbol.h"
+#include "assembler_types.h"
+
+namespace lyric_assembler {
+
+    class LexicalVariable : public AbstractSymbol {
+
+    public:
+        LexicalVariable(
+            const lyric_common::SymbolUrl &lexicalUrl,
+            const lyric_common::TypeDef &assignableType,
+            LexicalOffset offset);
+
+        SymbolType getSymbolType() const override;
+        lyric_common::SymbolUrl getSymbolUrl() const override;
+        lyric_common::TypeDef getAssignableType() const override;
+        TypeSignature getTypeSignature() const override;
+        void touch() override;
+
+        std::string getName() const;
+        LexicalOffset getOffset() const;
+
+    private:
+        lyric_common::SymbolUrl m_lexicalUrl;
+        lyric_common::TypeDef m_assignableType;
+        LexicalOffset m_offset;
+    };
+
+    static inline const LexicalVariable *cast_symbol_to_lexical(const AbstractSymbol *sym) {
+        TU_ASSERT (sym->getSymbolType() == SymbolType::LEXICAL);
+        return static_cast<const LexicalVariable *>(sym);   // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    }
+
+    static inline LexicalVariable *cast_symbol_to_lexical(AbstractSymbol *sym) {
+        TU_ASSERT (sym->getSymbolType() == SymbolType::LEXICAL);
+        return static_cast<LexicalVariable *>(sym);         // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    }
+}
+
+#endif // LYRIC_ASSEMBLER_LEXICAL_VARIABLE_H

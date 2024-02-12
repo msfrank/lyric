@@ -1,0 +1,306 @@
+
+#include <lyric_importer/importer_result.h>
+#include <lyric_importer/module_cache.h>
+
+/**
+ * Private constructor.
+ */
+lyric_importer::ModuleCache::ModuleCache(std::shared_ptr<lyric_runtime::AbstractLoader> loader)
+    : m_loader(std::move(loader))
+{
+    m_lock = new absl::Mutex();
+}
+
+lyric_importer::ModuleCache::~ModuleCache()
+{
+    delete m_lock;
+}
+
+/**
+ * Construct a new shared module cache.
+ *
+ * @return The thread-safe, shared module cache
+ */
+std::shared_ptr<lyric_importer::ModuleCache>
+lyric_importer::ModuleCache::create(std::shared_ptr<lyric_runtime::AbstractLoader> loader)
+{
+    return std::shared_ptr<ModuleCache>(new ModuleCache(std::move(loader)));
+}
+
+std::shared_ptr<lyric_runtime::AbstractLoader>
+lyric_importer::ModuleCache::getLoader() const
+{
+    return m_loader;
+}
+
+/**
+ * Returns whether the module cache contains the specified module.
+ *
+ * @param location The location of the module.
+ * @return true if the module cache contains the module, otherwise false.
+ */
+bool
+lyric_importer::ModuleCache::hasModule(const lyric_common::AssemblyLocation &location) const
+{
+    absl::MutexLock locker(m_lock);
+    return m_moduleImports.contains(location);
+}
+
+/**
+ * Returns the thread-safe shared module import if it exists in the cache.
+ *
+ * @param location The location of the module.
+ * @return The shared module import is it exists in the cache, otherwise an empty shared ptr.
+ */
+std::shared_ptr<lyric_importer::ModuleImport>
+lyric_importer::ModuleCache::getModule(const lyric_common::AssemblyLocation &location) const
+{
+    absl::MutexLock locker(m_lock);
+
+    if (m_moduleImports.contains(location))
+        return m_moduleImports.at(location);
+    return {};
+}
+
+/**
+ *
+ * @param location
+ * @param object
+ * @param mode
+ * @return
+ */
+tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
+lyric_importer::ModuleCache::insertModule(
+    const lyric_common::AssemblyLocation &location,
+    const lyric_object::LyricObject &object)
+{
+    absl::MutexLock locker(m_lock);
+
+    if (m_moduleImports.contains(location))
+        return m_moduleImports.at(location);
+
+    auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(location, object));
+    TU_RETURN_IF_NOT_OK(moduleImport->initialize());
+
+    m_moduleImports[location] = moduleImport;
+    return moduleImport;
+}
+
+tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
+lyric_importer::ModuleCache::importModule(const lyric_common::AssemblyLocation &location)
+{
+    absl::MutexLock locker(m_lock);
+
+    Option<lyric_common::AssemblyLocation> resolvedOption;
+    TU_ASSIGN_OR_RETURN (resolvedOption, m_loader->resolveAssembly(location));
+
+    if (resolvedOption.isEmpty())
+        return ImporterStatus::forCondition(
+            ImporterCondition::kModuleNotFound, "{} could not be resolved to an absolute location",
+            location.toString());
+    auto resolvedLocation = resolvedOption.getValue();
+
+    if (m_moduleImports.contains(resolvedLocation))
+        return m_moduleImports.at(resolvedLocation);
+
+    auto loadModuleResult = m_loader->loadAssembly(resolvedLocation);
+    TU_RETURN_IF_STATUS(loadModuleResult);
+    auto objectOption = loadModuleResult.getResult();
+    if (objectOption.isEmpty())
+        return ImporterStatus::forCondition(
+            ImporterCondition::kModuleNotFound, "module {} not found",
+            resolvedLocation.toString());
+
+    auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(resolvedLocation, objectOption.getValue()));
+    TU_RETURN_IF_NOT_OK(moduleImport->initialize());
+
+    m_moduleImports[resolvedLocation] = moduleImport;
+    return moduleImport;
+}
+
+tempo_utils::Result<lyric_importer::ActionImport *>
+lyric_importer::ModuleCache::getAction(const lyric_common::SymbolUrl &actionUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(actionUrl.getAssemblyLocation()));
+
+    auto object = moduleImport->getObject().getObject();
+    auto symbolWalker = object.findSymbol(actionUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Action)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not an action",
+            actionUrl.toString());
+
+    return moduleImport->getAction(symbolWalker.getLinkageIndex());
+}
+
+tempo_utils::Result<lyric_importer::CallImport *>
+lyric_importer::ModuleCache::getCall(const lyric_common::SymbolUrl &callUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(callUrl.getAssemblyLocation()));
+
+    auto object = moduleImport->getObject().getObject();
+    auto symbolWalker = object.findSymbol(callUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Call)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not a call",
+            callUrl.toString());
+
+    return moduleImport->getCall(symbolWalker.getLinkageIndex());
+}
+
+tempo_utils::Result<lyric_importer::ClassImport *>
+lyric_importer::ModuleCache::getClass(const lyric_common::SymbolUrl &classUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(classUrl.getAssemblyLocation()));
+
+    auto object = moduleImport->getObject().getObject();
+    auto symbolWalker = object.findSymbol(classUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Class)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not a class",
+            classUrl.toString());
+
+    return moduleImport->getClass(symbolWalker.getLinkageIndex());
+}
+
+tempo_utils::Result<lyric_importer::ConceptImport *>
+lyric_importer::ModuleCache::getConcept(const lyric_common::SymbolUrl &conceptUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(conceptUrl.getAssemblyLocation()));
+
+    auto object = moduleImport->getObject().getObject();
+    auto symbolWalker = object.findSymbol(conceptUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Concept)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not a concept",
+            conceptUrl.toString());
+
+    return moduleImport->getConcept(symbolWalker.getLinkageIndex());
+}
+
+tempo_utils::Result<lyric_importer::EnumImport *>
+lyric_importer::ModuleCache::getEnum(const lyric_common::SymbolUrl &enumUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(enumUrl.getAssemblyLocation()));
+
+    auto object = moduleImport->getObject().getObject();
+    auto symbolWalker = object.findSymbol(enumUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Enum)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not an enum",
+            enumUrl.toString());
+
+    return moduleImport->getEnum(symbolWalker.getLinkageIndex());
+}
+
+tempo_utils::Result<lyric_importer::ExistentialImport *>
+lyric_importer::ModuleCache::getExistential(const lyric_common::SymbolUrl &existentialUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(existentialUrl.getAssemblyLocation()));
+
+    auto object = moduleImport->getObject().getObject();
+    auto symbolWalker = object.findSymbol(existentialUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Existential)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not an existential",
+            existentialUrl.toString());
+
+    return moduleImport->getExistential(symbolWalker.getLinkageIndex());
+}
+
+tempo_utils::Result<lyric_importer::FieldImport *>
+lyric_importer::ModuleCache::getField(const lyric_common::SymbolUrl &fieldUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(fieldUrl.getAssemblyLocation()));
+
+    auto object = moduleImport->getObject().getObject();
+    auto symbolWalker = object.findSymbol(fieldUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Field)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not a field",
+            fieldUrl.toString());
+
+    return moduleImport->getField(symbolWalker.getLinkageIndex());
+}
+
+tempo_utils::Result<lyric_importer::InstanceImport *>
+lyric_importer::ModuleCache::getInstance(const lyric_common::SymbolUrl &instanceUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(instanceUrl.getAssemblyLocation()));
+
+    auto object = moduleImport->getObject().getObject();
+    auto symbolWalker = object.findSymbol(instanceUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Instance)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not an instance",
+            instanceUrl.toString());
+
+    return moduleImport->getInstance(symbolWalker.getLinkageIndex());
+}
+
+tempo_utils::Result<lyric_importer::NamespaceImport *>
+lyric_importer::ModuleCache::getNamespace(const lyric_common::SymbolUrl &namespaceUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(namespaceUrl.getAssemblyLocation()));
+
+    auto object = moduleImport->getObject().getObject();
+    auto symbolWalker = object.findSymbol(namespaceUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Namespace)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not a field",
+            namespaceUrl.toString());
+
+    return moduleImport->getNamespace(symbolWalker.getLinkageIndex());
+}
+
+tempo_utils::Result<lyric_importer::StaticImport *>
+lyric_importer::ModuleCache::getStatic(const lyric_common::SymbolUrl &staticUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(staticUrl.getAssemblyLocation()));
+
+    auto object = moduleImport->getObject().getObject();
+    auto symbolWalker = object.findSymbol(staticUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Static)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not a static",
+            staticUrl.toString());
+
+    return moduleImport->getStatic(symbolWalker.getLinkageIndex());
+}
+
+tempo_utils::Result<lyric_importer::StructImport *>
+lyric_importer::ModuleCache::getStruct(const lyric_common::SymbolUrl &structUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(structUrl.getAssemblyLocation()));
+
+    auto object = moduleImport->getObject().getObject();
+    auto symbolWalker = object.findSymbol(structUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Struct)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not a struct",
+            structUrl.toString());
+
+    return moduleImport->getStruct(symbolWalker.getLinkageIndex());
+}
