@@ -1,13 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
 
 #include "test_helpers.h"
 
 TEST(CoreUrl, TestEvaluateNewUrl)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val uri: Url = `https://zuri.dev/example/uri.html`
         uri
     )");
@@ -19,7 +18,7 @@ TEST(CoreUrl, TestEvaluateNewUrl)
 
 TEST(CoreUrl, TestEvaluateNewEmptyUrl)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val uri: Url = ``
         uri
     )");
@@ -31,7 +30,7 @@ TEST(CoreUrl, TestEvaluateNewEmptyUrl)
 
 TEST(CoreUrl, TestEvaluateNewUrlInSandbox)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val uri: Url = `https://zuri.dev/example/uri.html`
         uri
     )");
@@ -43,7 +42,7 @@ TEST(CoreUrl, TestEvaluateNewUrlInSandbox)
 
 TEST(CoreUrl, TestEvaluateIsEq)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         `/Hello` == `/Hello`
     )");
 

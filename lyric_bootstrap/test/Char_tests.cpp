@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreChar, EvaluateCharLiteral)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         'H'
     )");
 
@@ -17,7 +18,7 @@ TEST(CoreChar, EvaluateCharLiteral)
 
 TEST(CoreChar, EvaluateUnicode2ByteEscape)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         '\u03a9'
     )");
 
@@ -29,7 +30,7 @@ TEST(CoreChar, EvaluateUnicode2ByteEscape)
 
 TEST(CoreChar, EvaluateUnicode4ByteEscape)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         '\U0001f71f'
     )");
 
@@ -41,7 +42,7 @@ TEST(CoreChar, EvaluateUnicode4ByteEscape)
 
 TEST(CoreChar, EvaluateIsEq)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         'H' == 'H'
     )");
 
@@ -50,7 +51,7 @@ TEST(CoreChar, EvaluateIsEq)
 
 TEST(CoreChar, EvaluateIsLt)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         'b' < 'a'
     )");
 
@@ -59,7 +60,7 @@ TEST(CoreChar, EvaluateIsLt)
 
 TEST(CoreChar, EvaluateIsGt)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         'c' > 'b'
     )");
 
@@ -68,7 +69,7 @@ TEST(CoreChar, EvaluateIsGt)
 
 TEST(CoreChar, EvaluateIsLe)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         'h' <= 'e'
     )");
 
@@ -77,7 +78,7 @@ TEST(CoreChar, EvaluateIsLe)
 
 TEST(CoreChar, EvaluateIsGe)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         'h' >= 'e'
     )");
 

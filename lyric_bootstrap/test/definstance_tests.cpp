@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreDefinstance, EvaluateInstanceValMember)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         definstance Foo {
             val i: Int = 100
         }
@@ -17,7 +18,7 @@ TEST(CoreDefinstance, EvaluateInstanceValMember)
 
 TEST(CoreDefinstance, EvaluateInstanceVarMember)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         definstance Foo {
             var i: Int = 100
         }
@@ -29,7 +30,7 @@ TEST(CoreDefinstance, EvaluateInstanceVarMember)
 
 TEST(CoreDefinstance, EvaluateInstanceMethod)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         definstance Foo {
             def identity(x: Int): Int {
                 x
@@ -43,7 +44,7 @@ TEST(CoreDefinstance, EvaluateInstanceMethod)
 
 TEST(CoreDefinstance, EvaluateInstanceApplication)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         definstance IntReverseOrdering {
             impl Ordered[Int] {
                 def compare(lhs: Int, rhs: Int): Int {
@@ -68,7 +69,7 @@ TEST(CoreDefinstance, EvaluateInstanceApplication)
 
 TEST(CoreDefinstance, EvaluateUsingInstanceApplication)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         definstance IntReverseOrdering {
             impl Ordered[Int] {
                 def compare(lhs: Int, rhs: Int): Int {

@@ -11,6 +11,7 @@
 #include "record_ref.h"
 #include "seq_ref.h"
 #include "singleton_ref.h"
+#include "status_ref.h"
 #include "string_ref.h"
 #include "uri_ref.h"
 
@@ -77,6 +78,8 @@ NativeCore::getTrap(uint32_t index) const
             return seq_iter;
         case lyric_bootstrap::internal::BootstrapTrap::SINGLETON_ALLOC:
             return singleton_alloc;
+        case lyric_bootstrap::internal::BootstrapTrap::STATUS_ALLOC:
+            return status_alloc;
         case lyric_bootstrap::internal::BootstrapTrap::STRING_ALLOC:
             return string_alloc;
         case lyric_bootstrap::internal::BootstrapTrap::STRING_AT:

@@ -1,13 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
 
 #include "test_helpers.h"
 
 TEST(CoreLambda, TestEvaluatePureLambda)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + 1
         }
@@ -21,7 +20,7 @@ TEST(CoreLambda, TestEvaluatePureLambda)
 
 TEST(CoreLambda, TestEvaluateInvokePureLambda)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + 1
         }
@@ -33,7 +32,7 @@ TEST(CoreLambda, TestEvaluateInvokePureLambda)
 
 TEST(CoreLambda, TestEvaluateLambdaClosure)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val x: Int = 1
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + x
@@ -48,7 +47,7 @@ TEST(CoreLambda, TestEvaluateLambdaClosure)
 
 TEST(CoreLambda, TestEvaluateInvokeLambdaClosure)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val x: Int = 1
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + x

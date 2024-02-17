@@ -1,12 +1,13 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreAssignment, EvaluateValAssignmentFails)
 {
-    auto result = lyric_test::LyricTester::compileSingleModule(R"(
+    auto result = compileModule(R"(
         val foo: Int = 100
         set foo = 1
     )");
@@ -18,7 +19,7 @@ TEST(CoreAssignment, EvaluateValAssignmentFails)
 
 TEST(CoreAssignment, EvaluateVarAssignment)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         var mutablefoo: Int = 100
         set mutablefoo = 1
         mutablefoo
@@ -31,7 +32,7 @@ TEST(CoreAssignment, EvaluateVarAssignment)
 
 TEST(CoreAssignment, EvaluateVarInplaceAdd)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         var mutablefoo: Int = 100
         set mutablefoo += 10
         mutablefoo
@@ -44,7 +45,7 @@ TEST(CoreAssignment, EvaluateVarInplaceAdd)
 
 TEST(CoreAssignment, EvaluateVarInplaceSubtract)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         var mutablefoo: Int = 100
         set mutablefoo -= 10
         mutablefoo
@@ -57,7 +58,7 @@ TEST(CoreAssignment, EvaluateVarInplaceSubtract)
 
 TEST(CoreAssignment, EvaluateVarInplaceMultiply)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         var mutablefoo: Int = 100
         set mutablefoo *= 5
         mutablefoo
@@ -70,7 +71,7 @@ TEST(CoreAssignment, EvaluateVarInplaceMultiply)
 
 TEST(CoreAssignment, EvaluateVarInplaceDivide)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         var mutablefoo: Int = 100
         set mutablefoo /= 50
         mutablefoo

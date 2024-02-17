@@ -1,12 +1,13 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreFloat, EvaluateDecimalFixedFloat)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         1.5
     )");
 
@@ -15,7 +16,7 @@ TEST(CoreFloat, EvaluateDecimalFixedFloat)
 
 TEST(CoreFloat, EvaluateDecimalScientificFloat)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         1.5e2
     )");
 
@@ -24,7 +25,7 @@ TEST(CoreFloat, EvaluateDecimalScientificFloat)
 
 TEST(CoreFloat, EvaluateHexFloat)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         0x10.8
     )");
 
@@ -33,7 +34,7 @@ TEST(CoreFloat, EvaluateHexFloat)
 
 TEST(CoreFloat, EvaluateAddition)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         1.5 + 2.5
     )");
 
@@ -42,7 +43,7 @@ TEST(CoreFloat, EvaluateAddition)
 
 TEST(CoreFloat, EvaluateSubtraction)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         2.5 - 1.0
     )");
 
@@ -51,7 +52,7 @@ TEST(CoreFloat, EvaluateSubtraction)
 
 TEST(CoreFloat, EvaluateMultiplication)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         2.0 * 3.0
     )");
 
@@ -60,7 +61,7 @@ TEST(CoreFloat, EvaluateMultiplication)
 
 TEST(CoreFloat, EvaluateDivision)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         20.0 / 8.0
     )");
 
@@ -69,7 +70,7 @@ TEST(CoreFloat, EvaluateDivision)
 
 TEST(CoreFloat, EvaluateNegation)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         -5.0
     )");
 
@@ -78,7 +79,7 @@ TEST(CoreFloat, EvaluateNegation)
 
 TEST(CoreFloat, EvaluateIsEq)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         5.2 == 2.2
     )");
 
@@ -87,7 +88,7 @@ TEST(CoreFloat, EvaluateIsEq)
 
 TEST(CoreFloat, EvaluateIsLt)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         5.7 < 2.1
     )");
 
@@ -96,7 +97,7 @@ TEST(CoreFloat, EvaluateIsLt)
 
 TEST(CoreFloat, EvaluateIsGt)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         5.4 > 0.3
     )");
 
@@ -105,7 +106,7 @@ TEST(CoreFloat, EvaluateIsGt)
 
 TEST(CoreFloat, EvaluateIsLe)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         5.1 <= 1.8
     )");
 
@@ -114,7 +115,7 @@ TEST(CoreFloat, EvaluateIsLe)
 
 TEST(CoreFloat, EvaluateIsGe)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         5.0 >= 3.5
     )");
 

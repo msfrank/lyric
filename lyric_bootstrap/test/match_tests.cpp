@@ -1,12 +1,13 @@
 
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreMatch, TestIsAEquals)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         Object{} ^? Object
     )");
 
@@ -15,7 +16,7 @@ TEST(CoreMatch, TestIsAEquals)
 
 TEST(CoreMatch, TestIsASubtype)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         Object{} ^? Any
     )");
 
@@ -24,7 +25,7 @@ TEST(CoreMatch, TestIsASubtype)
 
 TEST(CoreMatch, TestIsADisjointType)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Test {
             init() from Object() {}
         }
@@ -36,7 +37,7 @@ TEST(CoreMatch, TestIsADisjointType)
 
 TEST(CoreMatch, TestMatchIntrinsic)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val x: Any = 42
         match x {
             case t0: Bool       0
@@ -51,7 +52,7 @@ TEST(CoreMatch, TestMatchIntrinsic)
 
 TEST(CoreMatch, TestMatchClass)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Test1 {
             init() from Object() {}
         }
@@ -75,7 +76,7 @@ TEST(CoreMatch, TestMatchClass)
 
 TEST(CoreMatch, TestMatchEnum)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defenum Direction {
             case North
             case South
@@ -101,7 +102,7 @@ TEST(CoreMatch, TestMatchEnum)
 
 TEST(CoreMatch, TestMatchDerefAlias)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Test1 {
             val x: Int
             init(x: Int) from Object() {
@@ -124,7 +125,7 @@ TEST(CoreMatch, TestMatchDerefAlias)
 
 TEST(CoreMatch, TestMatchUnwrapGenericClass)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val x: Tuple3[Int,Int,Int] = Tuple3[Int,Int,Int]{1, 2, 3}
         match x {
             case Tuple3[Int, Int, Int](t1: Int, t2: Int, t3: Int)

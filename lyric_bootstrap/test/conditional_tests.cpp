@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreConditional, EvaluateIf)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         var x: Int = 0
         if true { set x = 1 }
         x
@@ -16,7 +17,7 @@ TEST(CoreConditional, EvaluateIf)
 
 TEST(CoreConditional, EvaluateCondIf)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         var x: String = "two"
         var y: Int = 0
         cond if {
@@ -35,7 +36,7 @@ TEST(CoreConditional, EvaluateCondIf)
 
 TEST(CoreConditional, EvaluateIfThenElse)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         if false then 1 else 0
     )");
 
@@ -44,7 +45,7 @@ TEST(CoreConditional, EvaluateIfThenElse)
 
 TEST(CoreConditional, EvaluateCond)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         var x: String = "three"
         cond {
           case x == "one"       1
@@ -59,7 +60,7 @@ TEST(CoreConditional, EvaluateCond)
 
 TEST(CoreConditional, EvaluateCondElse)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         var x: String = "four"
         cond {
           case x == "one"       1

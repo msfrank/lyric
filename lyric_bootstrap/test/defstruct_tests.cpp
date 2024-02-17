@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreDefstruct, EvaluateNewInstanceWithDefaultConstructor)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defstruct Foo {
             val value: Int = 42
         }
@@ -19,7 +20,7 @@ TEST(CoreDefstruct, EvaluateNewInstanceWithDefaultConstructor)
 
 TEST(CoreDefstruct, EvaluateNewInstanceWithConstructor)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defstruct Foo {
             val value: Int
             init(i: Int, j: Int) {
@@ -35,7 +36,7 @@ TEST(CoreDefstruct, EvaluateNewInstanceWithConstructor)
 
 TEST(CoreDefstruct, EvaluateDerefPublicVarMember)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defstruct Foo {
             val value: Int
         }
@@ -48,7 +49,7 @@ TEST(CoreDefstruct, EvaluateDerefPublicVarMember)
 
 TEST(CoreDefstruct, EvaluateInvokeMethod)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defstruct Foo {
             val value: Int
             def plus10(): Int {

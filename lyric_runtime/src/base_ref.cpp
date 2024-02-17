@@ -72,13 +72,19 @@ lyric_runtime::BaseRef::iteratorNext(DataCell &cell)
 }
 
 bool
-lyric_runtime::BaseRef::acquireWaiter(Waiter *waiter)
+lyric_runtime::BaseRef::attachWaiter(Waiter *waiter)
 {
     return false;
 }
 
 bool
-lyric_runtime::BaseRef::consumeWaiter(Waiter **waiter)
+lyric_runtime::BaseRef::releaseWaiter(Waiter **waiter)
+{
+    return false;
+}
+
+bool
+lyric_runtime::BaseRef::resolveFuture(DataCell &result, BytecodeInterpreter *interp, InterpreterState *state)
 {
     return false;
 }

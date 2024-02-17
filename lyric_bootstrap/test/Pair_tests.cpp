@@ -1,13 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
 
 #include "test_helpers.h"
 
 TEST(CorePair, TestEvaluateNewPair)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val pair: Pair = Pair{first = 1, second = 2}
         pair
     )");
@@ -19,7 +18,7 @@ TEST(CorePair, TestEvaluateNewPair)
 
 TEST(CorePair, TestEvaluatePairFirst)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val pair: Pair = Pair{first = 1, second = 2}
         pair.first()
     )");
@@ -29,7 +28,7 @@ TEST(CorePair, TestEvaluatePairFirst)
 
 TEST(CorePair, TestEvaluatePairSecond)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val pair: Pair = Pair{first = 1, second = 2}
         pair.second()
     )");

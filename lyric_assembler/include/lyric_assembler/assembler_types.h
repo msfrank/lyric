@@ -60,7 +60,6 @@ namespace lyric_assembler {
         Utf8,
 
         // statuses
-        Ok,
         Cancelled,
         InvalidArgument,
         DeadlineExceeded,

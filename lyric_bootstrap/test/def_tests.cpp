@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreDef, EvaluateDefUnaryFunction)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         def add10(x: Int): Int {
             x + 10
         }
@@ -19,7 +20,7 @@ TEST(CoreDef, EvaluateDefUnaryFunction)
 
 TEST(CoreDef, EvaluateDefBinaryFunction)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         def subtractInts(x: Int, y: Int): Int {
             x - y
         }
@@ -33,7 +34,7 @@ TEST(CoreDef, EvaluateDefBinaryFunction)
 
 TEST(CoreDef, EvaluateDefFunctionWithNamedParams)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         def subtractInts(x: Int, named y: Int): Int {
             x - y
         }
@@ -47,7 +48,7 @@ TEST(CoreDef, EvaluateDefFunctionWithNamedParams)
 
 TEST(CoreDef, EvaluateDefFunctionWithDefaultInitializer)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         def subtractInts(x: Int, named y: Int = 1): Int {
             x - y
         }
@@ -89,7 +90,7 @@ TEST(CoreDef, EvaluateDefFunctionWithDefaultInitializer)
 
 TEST(CoreDef, EvaluateDefGenericFunction)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         def identity[A](x: A): A {
             x
         }
@@ -104,7 +105,7 @@ TEST(CoreDef, EvaluateDefGenericFunction)
 
 TEST(CoreDef, EvaluateDefGenericFunctionWithUpperBound)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         def identity[A](x: A): A where A extends Int {
             x
         }
@@ -118,7 +119,7 @@ TEST(CoreDef, EvaluateDefGenericFunctionWithUpperBound)
 
 TEST(CoreDef, EvaluateDefGenericFunctionWithCtxParameter)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         def sum[A](x1: A, x2: A, using math: Arithmetic[A, A]): A {
             math.add(x1, x2)
         }

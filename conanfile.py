@@ -66,6 +66,7 @@ class Lyric(ConanFile):
         tc.variables['ANTLR_TOOL_JAR'] = antlr.get('ANTLR_TOOL_JAR')
         tc.variables['FLATBUFFERS_FLATC'] = flatbuffers.get('FLATBUFFERS_FLATC')
         tc.generate()
+
         deps = CMakeDeps(self)
         deps.generate()
 

@@ -133,8 +133,7 @@ main(int argc, char *argv[])
         IntExistential->existentialType, CharExistential->existentialType);
 
     // core status structs
-    auto *StatusStruct = build_core_Status(state, RecordStruct, StringStruct->structType);
-    build_core_Status_code("Ok", state, StatusStruct, StringStruct->structType);
+    auto *StatusStruct = build_core_Status(state, StringStruct->structType);
     build_core_Status_code("Cancelled", state, StatusStruct, StringStruct->structType);
     build_core_Status_code("InvalidArgument", state, StatusStruct, StringStruct->structType);
     build_core_Status_code("DeadlineExceeded", state, StatusStruct, StringStruct->structType);

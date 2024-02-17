@@ -3,7 +3,7 @@
 
 #include "builder_state.h"
 
-const CoreStruct *build_core_Status(BuilderState &state, const CoreStruct *RecordStruct, const CoreType *StringType);
+const CoreStruct *build_core_Status(BuilderState &state, const CoreType *StringType);
 
 const CoreType *build_core_Status_code(
     std::string_view code,

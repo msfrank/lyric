@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreBoolean, EvaluateLogicalAnd)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         true and false
     )");
 
@@ -14,7 +15,7 @@ TEST(CoreBoolean, EvaluateLogicalAnd)
 
 TEST(CoreBoolean, EvaluateLogicalOr)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         true or false
     )");
 
@@ -23,7 +24,7 @@ TEST(CoreBoolean, EvaluateLogicalOr)
 
 TEST(CoreBoolean, EvaluateLogicalNot)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         not false
     )");
 

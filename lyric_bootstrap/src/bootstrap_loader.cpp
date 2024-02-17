@@ -11,7 +11,7 @@
 #include <tempo_utils/log_stream.h>
 
 lyric_bootstrap::BootstrapLoader::BootstrapLoader()
-    : m_directoryPath(LYRIC_BOOTSTRAP_DIRECTORY)
+    : m_directoryPath(LYRIC_RUNTIME_BOOTSTRAP_DIR)
 {
 }
 

@@ -14,14 +14,22 @@ endif()
 #
 #######################################################################
 
-option(USE_SANITIZER "Enable sanitizer library" OFF)
+set(RUNTIME_DISTRIBUTION_ROOT "${CMAKE_INSTALL_PREFIX}"
+    CACHE STRING
+    "The runtime distribution root directory. Defaults to CMAKE_INSTALL_PREFIX.")
+message(STATUS "runtime distribution root is ${RUNTIME_DISTRIBUTION_ROOT}")
+
+option(USE_SANITIZER "Enable sanitizer library." OFF)
+
 set(SANITIZER ""
     CACHE STRING
-    "one of 'address', 'thread', 'memory', 'ub', or 'leak'")
+    "The sanitizer to use. Must be one of 'address', 'thread', 'memory', 'ub', or 'leak'.")
+
 set(SANITIZER_IGNORELIST ""
     CACHE PATH
-    "Instruct sanitizer to ignore symbols specified in ignorelist")
-option(USE_PROFILER "Enable gperftools profiler" OFF)
+    "Instruct sanitizer to ignore symbols specified in ignorelist.")
+
+option(USE_PROFILER "Enable gperftools profiler." OFF)
 
 #######################################################################
 #
@@ -98,13 +106,13 @@ endif()
 #
 #######################################################################
 
-# find required Tempo dependencies
+# find required Tempo dependency
 find_package(tempo REQUIRED)
 
-# find required Abseil dependencies
+# find required Abseil dependency
 find_package(absl REQUIRED)
 
-# find required Boost dependencies
+# find required Boost dependency
 find_package(boost REQUIRED)
 
 # find required Antlr dependency
@@ -136,7 +144,7 @@ find_package(icu REQUIRED)
 # find java build tool dependency for antlr
 find_package(Java REQUIRED)
 
-# find google test libraries
+# find required google test dependency
 find_package(gtest REQUIRED)
 
 # link to gperftools profiler library if specified
@@ -147,6 +155,12 @@ if (${USE_PROFILER})
 else()
     message(STATUS "gperftools profiler not enabled")
 endif(${USE_PROFILER})
+
+# include needed CMake features
+include(CMakePackageConfigHelpers)
+include(CTest)
+include(GNUInstallDirs)
+include(GoogleTest)
 
 #######################################################################
 #
@@ -189,15 +203,20 @@ string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1"
 set(FULL_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}")
 message(STATUS "version is ${FULL_VERSION}")
 
+# install paths
+set(BOOTSTRAP_DIR_PREFIX            "${CMAKE_INSTALL_LIBDIR}/bootstrap")
+
+# build paths
+set(LYRIC_BUILD_BOOTSTRAP_DIR       "${CMAKE_BINARY_DIR}/${BOOTSTRAP_DIR_PREFIX}")
+
+# runtime paths
+set(LYRIC_RUNTIME_BOOTSTRAP_DIR     "${RUNTIME_DISTRIBUTION_ROOT}/${BOOTSTRAP_DIR_PREFIX}")
+
 #######################################################################
 #
 # add library targets from subdirectories
 #
 #######################################################################
-
-include(CTest)
-include(GNUInstallDirs)
-include(GoogleTest)
 
 add_subdirectory(lyric_analyzer)
 add_subdirectory(lyric_assembler)
@@ -245,13 +264,12 @@ gtest_discover_tests(lyric_testsuite)
 #
 #######################################################################
 
-include(CMakePackageConfigHelpers)
-
 configure_package_config_file(
     cmake/lyric-config.cmake.in
     lyric-config.cmake
     INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/lyric"
-    PATH_VARS CMAKE_INSTALL_BINDIR CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_DATADIR
+    PATH_VARS
+        BOOTSTRAP_DIR_PREFIX
     )
 
 write_basic_package_version_file(lyric-config-version.cmake

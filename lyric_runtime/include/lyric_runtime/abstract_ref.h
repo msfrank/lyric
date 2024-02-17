@@ -118,20 +118,28 @@ namespace lyric_runtime {
         virtual bool iteratorNext(DataCell &next) = 0;
 
         /**
-         * Assigns the specified `waiter` to the ref. If the ref type does not support scheduling then
+         * Attaches the specified `waiter` to the ref. If the ref type does not support scheduling then
          * `waiter` is untouched and the method must return false.
          *
          * @return true if `waiter` was assigned, otherwise false.
          */
-        virtual bool acquireWaiter(Waiter *waiter) = 0;
+        virtual bool attachWaiter(Waiter *waiter) = 0;
 
         /**
-         * Removes the waiter from the ref and assigns it to the location pointed to by `waiter`. If the ref
+         * Releases the waiter from the ref and assigns it to the location pointed to by `waiter`. If the ref
          * type does not support scheduling the `waiter` is untouched and the method must return false.
          *
-         * @return true if the waiter was removed from the ref and assigned to `waiter`, otherwise false.
+         * @return true if the waiter was released from the ref and assigned to `waiter`, otherwise false.
          */
-        virtual bool consumeWaiter(Waiter **waiter) = 0;
+        virtual bool releaseWaiter(Waiter **waiter) = 0;
+
+        /**
+         * Resolves the future and assigns the result to `result`. If the ref does not support resolution, or
+         * the ref does not contain a result yet, then `result` is untouched and the method must return false.
+         *
+         * @return true if `result` was assigned, otherwise false.
+         */
+        virtual bool resolveFuture(DataCell &result, BytecodeInterpreter *interp, InterpreterState *state) = 0;
 
         /**
          * Generate a human-readable representation which describes the ref.

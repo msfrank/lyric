@@ -1,13 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
 
 #include "test_helpers.h"
 
 TEST(CoreSeq, TestEvaluateNewSeq)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val seq: Seq = Seq{1, 2, 3}
         seq
     )");
@@ -19,7 +18,7 @@ TEST(CoreSeq, TestEvaluateNewSeq)
 
 TEST(CoreSeq, TestEvaluateSeqSize)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val seq: Seq = Seq{1, 2, 3}
         seq.Size()
     )");
@@ -29,7 +28,7 @@ TEST(CoreSeq, TestEvaluateSeqSize)
 
 TEST(CoreSeq, TestEvaluateSeqGet)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val seq: Seq = Seq{1, 2, 3}
         seq.GetOrElse(0, 0)
     )");
@@ -39,7 +38,7 @@ TEST(CoreSeq, TestEvaluateSeqGet)
 
 TEST(CoreSeq, TestEvaluateSeqAppend)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val seq1: Seq = Seq{1, 2, 3}
         val seq2: Seq = seq1.Append(4, 5, 6)
         seq2.GetOrElse(5, 0)
@@ -50,7 +49,7 @@ TEST(CoreSeq, TestEvaluateSeqAppend)
 
 TEST(CoreSeq, TestEvaluateSeqExtend)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val seq1: Seq = Seq{1, 2, 3}
         val seq2: Seq = Seq{4, 5, 6}
         val seq3: Seq = seq1.Extend(seq2)
@@ -62,7 +61,7 @@ TEST(CoreSeq, TestEvaluateSeqExtend)
 
 TEST(CoreSeq, TestEvaluateSeqSlice)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val seq1: Seq = Seq{1, 2, 3, 4, 5, 6}
         val seq2: Seq = seq1.Slice(2, 2)
         seq2.GetOrElse(1, 0)
@@ -73,7 +72,7 @@ TEST(CoreSeq, TestEvaluateSeqSlice)
 
 TEST(CoreSeq, TestEvaluateSeqIter)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val seq: Seq = Seq{1, 2, 3, 4, 5, 6}
         var count: Int = 0
         for n in seq.Iter() {

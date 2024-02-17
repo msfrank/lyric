@@ -75,8 +75,6 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
         case FundamentalSymbol::Utf8:
             return "Utf8";
 
-        case FundamentalSymbol::Ok:
-            return "Ok";
         case FundamentalSymbol::Cancelled:
             return "Cancelled";
         case FundamentalSymbol::InvalidArgument:

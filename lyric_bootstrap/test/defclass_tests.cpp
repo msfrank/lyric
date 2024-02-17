@@ -1,12 +1,13 @@
 #include <gtest/gtest.h>
 
 #include <lyric_assembler/assembler_result.h>
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreDefclass, EvaluateNewInstanceWithDefaultConstructor)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Foo {
             val value: Int = 42
         }
@@ -20,7 +21,7 @@ TEST(CoreDefclass, EvaluateNewInstanceWithDefaultConstructor)
 
 TEST(CoreDefclass, EvaluateNewInstanceFromDefaultSuperclass)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Foo {
             init() {}
         }
@@ -34,7 +35,7 @@ TEST(CoreDefclass, EvaluateNewInstanceFromDefaultSuperclass)
 
 TEST(CoreDefclass, EvaluateNewInstanceFromSuperclass)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Foo {
             init() from Object() {}
         }
@@ -48,7 +49,7 @@ TEST(CoreDefclass, EvaluateNewInstanceFromSuperclass)
 
 TEST(CoreDefclass, EvaluateNewInstanceWithDefaultInitializedMember)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Foo {
             val i: Int = 100
             init() {}
@@ -63,7 +64,7 @@ TEST(CoreDefclass, EvaluateNewInstanceWithDefaultInitializedMember)
 
 TEST(CoreDefclass, EvaluateNewInstanceWithDefaultConstructorAndDefaultInitializedMember)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Foo {
             val i: Int = 100
         }
@@ -77,7 +78,7 @@ TEST(CoreDefclass, EvaluateNewInstanceWithDefaultConstructorAndDefaultInitialize
 
 TEST(CoreDefclass, EvaluateDerefPublicVarMember)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Foo {
             var i: Int
             init(i: Int) from Object() {
@@ -95,7 +96,7 @@ TEST(CoreDefclass, EvaluateDerefPublicVarMember)
 
 TEST(CoreDefclass, EvaluateDerefPublicVarDefaultInitializedMember)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Foo {
             var i: Int = 100
         }
@@ -110,7 +111,7 @@ TEST(CoreDefclass, EvaluateDerefPublicVarDefaultInitializedMember)
 
 TEST(CoreDefclass, EvaluateDerefThisProtectedVarMember)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Foo {
             var _i: Int
             init(i: Int) from Object() {
@@ -134,7 +135,7 @@ TEST(CoreDefclass, EvaluateDerefThisProtectedVarMember)
 
 TEST(CoreDefclass, EvaluateDerefProtectedVarMemberFails)
 {
-    auto result = lyric_test::LyricTester::compileSingleModule(R"(
+    auto result = compileModule(R"(
         defclass Foo {
             var _i: Int
             init(i: Int) from Object() {
@@ -152,7 +153,7 @@ TEST(CoreDefclass, EvaluateDerefProtectedVarMemberFails)
 
 TEST(CoreDefclass, EvaluateDerefThisPrivateVarMember)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Foo {
             var __i: Int
             init(i: Int) from Object() {
@@ -179,7 +180,7 @@ TEST(CoreDefclass, EvaluateDerefThisPrivateVarMember)
 
 TEST(CoreDefclass, EvaluateDerefPrivateVarMemberFails)
 {
-    auto result = lyric_test::LyricTester::compileSingleModule(R"(
+    auto result = compileModule(R"(
         defclass Foo {
             var __i: Int
             init(i: Int) from Object() {
@@ -197,7 +198,7 @@ TEST(CoreDefclass, EvaluateDerefPrivateVarMemberFails)
 
 TEST(CoreDefclass, EvaluateInvokeMethod)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Foo {
             var _i: Int
             init(i: Int) from Object() {
@@ -218,7 +219,7 @@ TEST(CoreDefclass, EvaluateInvokeMethod)
 
 TEST(CoreDefclass, EvaluateDefGenericClass)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defclass Foo[A] {
             var _i: A
             init(i: A) from Object() {

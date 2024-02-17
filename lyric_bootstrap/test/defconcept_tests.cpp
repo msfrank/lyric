@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreDefconcept, EvaluateDefconcept)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defconcept Sum[T] {
             def sum(x1: T, x2: T): T
         }
@@ -19,7 +20,7 @@ TEST(CoreDefconcept, EvaluateDefconcept)
 
 TEST(CoreDefconcept, EvaluateDefconceptImplementation)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defconcept Sum[T] {
             def sum(x1: T, x2: T): T
         }
@@ -45,7 +46,7 @@ TEST(CoreDefconcept, EvaluateDefconceptImplementation)
 
 TEST(CoreDefconcept, EvaluateDefconceptAction)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defconcept Sum[T] {
             def sum(x1: T, x2: T): T
         }

@@ -1,12 +1,11 @@
 
-set(LYRIC_BOOTSTRAP_DIRECTORY   "${CMAKE_CURRENT_BINARY_DIR}/bootstrap")
-
 set(PRELUDE_NAME                "prelude")
 set(PRELUDE_ASSEMBLY_NAME       "${PRELUDE_NAME}.lyo")
-set(PRELUDE_ASSEMBLY_PATH       "${LYRIC_BOOTSTRAP_DIRECTORY}/${PRELUDE_ASSEMBLY_NAME}")
 set(PRELUDE_PLUGIN_BASENAME     "${PRELUDE_NAME}.${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 set(PRELUDE_PLUGIN_NAME         "${PRELUDE_PLUGIN_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-set(PRELUDE_PLUGIN_PATH         "${LYRIC_BOOTSTRAP_DIRECTORY}/${PRELUDE_PLUGIN_NAME}")
+
+set(PRELUDE_ASSEMBLY_PATH       "${LYRIC_BUILD_BOOTSTRAP_DIR}/${PRELUDE_ASSEMBLY_NAME}")
+set(PRELUDE_PLUGIN_PATH         "${LYRIC_BUILD_BOOTSTRAP_DIR}/${PRELUDE_PLUGIN_NAME}")
 
 add_executable(prelude-builder
     assembly/builder_state.cpp
@@ -140,6 +139,8 @@ add_library(prelude-plugin SHARED
     plugin/seq_ref.h
     plugin/singleton_ref.cpp
     plugin/singleton_ref.h
+    plugin/status_ref.cpp
+    plugin/status_ref.h
     plugin/string_ref.cpp
     plugin/string_ref.h
     plugin/uri_ref.cpp
@@ -150,10 +151,10 @@ add_library(prelude-plugin SHARED
 
 target_include_directories(prelude-plugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# set properties to omit the 'lib' prefix and write the plugin into the package directory
+# set properties to omit the 'lib' prefix and write the plugin into the bootstrap directory
 set_target_properties(prelude-plugin PROPERTIES
     LIBRARY_OUTPUT_NAME ${PRELUDE_PLUGIN_BASENAME}
-    LIBRARY_OUTPUT_DIRECTORY ${LYRIC_BOOTSTRAP_DIRECTORY}
+    LIBRARY_OUTPUT_DIRECTORY ${LYRIC_BUILD_BOOTSTRAP_DIR}
     PREFIX ""
     )
 
@@ -203,7 +204,7 @@ target_include_directories(lyric_bootstrap PUBLIC
 )
 
 target_compile_definitions(lyric_bootstrap PRIVATE
-    "LYRIC_BOOTSTRAP_DIRECTORY=\"${LYRIC_BOOTSTRAP_DIRECTORY}\""
+    "LYRIC_RUNTIME_BOOTSTRAP_DIR=\"${LYRIC_RUNTIME_BOOTSTRAP_DIR}\""
     "ASSEMBLY_PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""
     "ASSEMBLY_PLUGIN_ARCHITECTURE=\"${CMAKE_SYSTEM_PROCESSOR}\""
     "ASSEMBLY_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
@@ -222,7 +223,7 @@ target_link_libraries(lyric_bootstrap
 install(FILES
     ${PRELUDE_ASSEMBLY_PATH}
     ${PRELUDE_PLUGIN_PATH}
-    DESTINATION ${LYRIC_BOOTSTRAP_DIRECTORY}
+    DESTINATION ${BOOTSTRAP_DIR_PREFIX}
     )
 install(TARGETS lyric_bootstrap EXPORT lyric-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

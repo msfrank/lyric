@@ -81,8 +81,6 @@ lyric_assembler::FundamentalCache::FundamentalCache(
         fundamentalTypeToSymbolPath(FundamentalSymbol::Utf8));
 
     // cache symbol urls for statuses
-    m_fundamentalOk = lyric_common::SymbolUrl(preludeLocation,
-        fundamentalTypeToSymbolPath(FundamentalSymbol::Ok));
     m_fundamentalCancelled = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Cancelled));
     m_fundamentalInvalidArgument = lyric_common::SymbolUrl(preludeLocation,
@@ -274,8 +272,6 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
         case FundamentalSymbol::Utf8:
             return m_fundamentalUtf8;
 
-        case FundamentalSymbol::Ok:
-            return m_fundamentalOk;
         case FundamentalSymbol::Cancelled:
             return m_fundamentalCancelled;
         case FundamentalSymbol::InvalidArgument:

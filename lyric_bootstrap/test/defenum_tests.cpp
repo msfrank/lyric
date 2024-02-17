@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreDefenum, EvaluateEnum)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defenum Direction {
             case North
             case South
@@ -22,7 +23,7 @@ TEST(CoreDefenum, EvaluateEnum)
 
 TEST(CoreDefenum, EvaluateEnumCase)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defenum Direction {
             case North
             case South
@@ -39,7 +40,7 @@ TEST(CoreDefenum, EvaluateEnumCase)
 
 TEST(CoreDefenum, EvaluateEnumCaseVal)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defenum Direction {
             val index: Int
             init(index: Int) {
@@ -58,7 +59,7 @@ TEST(CoreDefenum, EvaluateEnumCaseVal)
 
 TEST(CoreDefenum, EvaluateEnumCaseDef)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         defenum Direction {
             val abbreviation: String
             init(abbreviation: String) {

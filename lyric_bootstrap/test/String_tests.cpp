@@ -1,13 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
 
 #include "test_helpers.h"
 
 TEST(CoreString, TestEvaluateNewString)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val string: String = "Hello, world!"
         string
     )");
@@ -19,7 +18,7 @@ TEST(CoreString, TestEvaluateNewString)
 
 TEST(CoreString, TestEvaluateNewEmptyString)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val string: String = ""
         string
     )");
@@ -31,7 +30,7 @@ TEST(CoreString, TestEvaluateNewEmptyString)
 
 TEST(CoreString, TestEvaluateStringSize)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val string: String = "Hello, world!"
         string.length()
     )");
@@ -41,7 +40,7 @@ TEST(CoreString, TestEvaluateStringSize)
 
 TEST(CoreString, TestEvaluateStringAt)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val string: String = "Hello, world!"
         string.at(0)
     )");
@@ -51,7 +50,7 @@ TEST(CoreString, TestEvaluateStringAt)
 
 TEST(CoreString, TestEvaluateIsEq)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         "Hello" == "Hello"
     )");
 
@@ -60,7 +59,7 @@ TEST(CoreString, TestEvaluateIsEq)
 
 TEST(CoreString, TestEvaluateIsLt)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         "hello" < "goodbye"
     )");
 
@@ -69,7 +68,7 @@ TEST(CoreString, TestEvaluateIsLt)
 
 TEST(CoreString, TestEvaluateIsGt)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         "hello" > "goodbye"
     )");
 
@@ -78,7 +77,7 @@ TEST(CoreString, TestEvaluateIsGt)
 
 TEST(CoreString, TestEvaluateIsLe)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         "hello" <= "goodbye"
     )");
 
@@ -87,7 +86,7 @@ TEST(CoreString, TestEvaluateIsLe)
 
 TEST(CoreString, TestEvaluateIsGe)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         "hello" >= "goodbye"
     )");
 

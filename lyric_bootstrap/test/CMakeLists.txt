@@ -4,7 +4,6 @@ include(GoogleTest)
 
 # define unit tests
 
-set(TEST_CASE_PREFIX lyric_bootstrap)
 set(TEST_CASES
     assignment_tests.cpp
     Bool_tests.cpp
@@ -30,7 +29,7 @@ set(TEST_CASES
     Status_tests.cpp
     String_tests.cpp
     Tuple_tests.cpp
-    Uri_tests.cpp
+    Url_tests.cpp
     Utf16_tests.cpp
     val_tests.cpp
     var_tests.cpp
@@ -39,19 +38,23 @@ set(TEST_CASES
 
 # define test suite driver
 
-set(TESTSUITE_EXECUTABLE "${TEST_CASE_PREFIX}_testsuite")
-add_executable(${TESTSUITE_EXECUTABLE} ${TEST_CASES} test_helpers.cpp test_helpers.h)
-#add_dependencies(${TESTSUITE_EXECUTABLE} lyric_bootstrap)
-target_link_libraries(${TESTSUITE_EXECUTABLE} PUBLIC
+add_executable(lyric_bootstrap_testsuite ${TEST_CASES} test_helpers.cpp test_helpers.h)
+target_compile_definitions(lyric_bootstrap_testsuite PRIVATE
+    "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
+    )
+target_link_libraries(lyric_bootstrap_testsuite PUBLIC
     lyric::lyric_bootstrap
     lyric::lyric_test
     gtest::gtest
     )
-gtest_discover_tests(${TESTSUITE_EXECUTABLE})
+gtest_discover_tests(lyric_bootstrap_testsuite)
 
 # define test suite static library
 
 add_library(LyricBootstrapTestSuite OBJECT ${TEST_CASES} test_helpers.cpp test_helpers.h)
+target_compile_definitions(LyricBootstrapTestSuite PRIVATE
+    "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
+    )
 target_link_libraries(LyricBootstrapTestSuite PUBLIC
     lyric::lyric_bootstrap
     lyric::lyric_test

@@ -60,7 +60,6 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalUrl;
         lyric_common::SymbolUrl m_fundamentalUtf8;
 
-        lyric_common::SymbolUrl m_fundamentalOk;
         lyric_common::SymbolUrl m_fundamentalCancelled;
         lyric_common::SymbolUrl m_fundamentalInvalidArgument;
         lyric_common::SymbolUrl m_fundamentalDeadlineExceeded;

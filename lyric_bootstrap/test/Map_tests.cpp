@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreMap, TestEvaluateMapContainsNoEntries)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val names: Map = Map{}
         names.Contains("one")
     )");
@@ -15,7 +16,7 @@ TEST(CoreMap, TestEvaluateMapContainsNoEntries)
 
 TEST(CoreMap, TestEvaluateMapContainsSingleEntry)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val names: Map = Map{ Pair{first = "one", second = 1} }
         names.Contains("one")
     )");
@@ -25,7 +26,7 @@ TEST(CoreMap, TestEvaluateMapContainsSingleEntry)
 
 TEST(CoreMap, TestEvaluateMapContainsMultipleEntries)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val names: Map = Map{
             Pair{first = "one", second = 1},
             Pair{first = "two", second = 2},
@@ -39,7 +40,7 @@ TEST(CoreMap, TestEvaluateMapContainsMultipleEntries)
 
 TEST(CoreMap, TestEvaluateMapGetSingleEntry)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val names: Map = Map{ Pair{first = "one", second = 1} }
         names.GetOrElse("one", 0)
     )");
@@ -49,7 +50,7 @@ TEST(CoreMap, TestEvaluateMapGetSingleEntry)
 
 TEST(CoreMap, TestEvaluateMapGetMultipleEntries)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val names: Map = Map{
             Pair{first = "one", second = 1},
             Pair{first = "two", second = 2},
@@ -63,7 +64,7 @@ TEST(CoreMap, TestEvaluateMapGetMultipleEntries)
 
 TEST(CoreMap, TestEvaluateMapSizeMultipleEntries)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         val names: Map = Map{
             Pair{first = "one", second = 1},
             Pair{first = "two", second = 2},
@@ -77,7 +78,7 @@ TEST(CoreMap, TestEvaluateMapSizeMultipleEntries)
 
 TEST(CoreMap, TestEvaluateMapUpdate)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         var names: Map = Map{
             Pair{first = "one", second = 1},
             Pair{first = "two", second = 2}
@@ -91,7 +92,7 @@ TEST(CoreMap, TestEvaluateMapUpdate)
 
 TEST(CoreMap, TestEvaluateMapRemove)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         var names: Map = Map{
             Pair{first = "one", second = 1},
             Pair{first = "two", second = 2},

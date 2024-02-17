@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
+
+#include "test_helpers.h"
 
 TEST(CoreInt, EvaluateDecimalInt)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         10
     )");
 
@@ -14,7 +15,7 @@ TEST(CoreInt, EvaluateDecimalInt)
 
 TEST(CoreInt, EvaluateOctalInt)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         010
     )");
 
@@ -23,7 +24,7 @@ TEST(CoreInt, EvaluateOctalInt)
 
 TEST(CoreInt, EvaluateHexInt)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         0x10
     )");
 
@@ -32,7 +33,7 @@ TEST(CoreInt, EvaluateHexInt)
 
 TEST(CoreInt, EvaluateAddition)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         1 + 2
     )");
 
@@ -42,7 +43,7 @@ TEST(CoreInt, EvaluateAddition)
 
 TEST(CoreInt, EvaluateSubtraction)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         2 - 1
     )");
 
@@ -51,7 +52,7 @@ TEST(CoreInt, EvaluateSubtraction)
 
 TEST(CoreInt, EvaluateMultiplication)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         2 * 3
     )");
 
@@ -60,7 +61,7 @@ TEST(CoreInt, EvaluateMultiplication)
 
 TEST(CoreInt, EvaluateDivision)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         20 / 5
     )");
 
@@ -69,7 +70,7 @@ TEST(CoreInt, EvaluateDivision)
 
 TEST(CoreInt, EvaluateNegation)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         -(5)
     )");
 
@@ -123,7 +124,7 @@ TEST(CoreInt, EvaluateNegation)
 
 TEST(CoreInt, EvaluateIsEq)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         5 == 0
     )");
 
@@ -132,7 +133,7 @@ TEST(CoreInt, EvaluateIsEq)
 
 TEST(CoreInt, EvaluateIsLt)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         5 < 0
     )");
 
@@ -141,7 +142,7 @@ TEST(CoreInt, EvaluateIsLt)
 
 TEST(CoreInt, EvaluateIsGt)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         5 > 0
     )");
 
@@ -150,7 +151,7 @@ TEST(CoreInt, EvaluateIsGt)
 
 TEST(CoreInt, EvaluateIsLe)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         5 <= 0
     )");
 
@@ -159,7 +160,7 @@ TEST(CoreInt, EvaluateIsLe)
 
 TEST(CoreInt, EvaluateIsGe)
 {
-    auto result = lyric_test::LyricTester::runSingleModule(R"(
+    auto result = runModule(R"(
         5 >= 0
     )");
 
