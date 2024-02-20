@@ -3,7 +3,9 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_compiler/compiler_result.h>
+#include <lyric_compiler/internal/compile_node.h>
 #include <lyric_compiler/module_entry.h>
+#include <lyric_parser/lyric_parser.h>
 
 lyric_compiler::ModuleEntry::ModuleEntry(lyric_assembler::AssemblyState *state)
     : m_state(state),
@@ -84,6 +86,12 @@ lyric_compiler::ModuleEntry::initialize()
     return CompilerStatus::ok();
 }
 
+lyric_common::AssemblyLocation
+lyric_compiler::ModuleEntry::getLocation() const
+{
+    return m_state->getLocation();
+}
+
 lyric_assembler::NamespaceSymbol *
 lyric_compiler::ModuleEntry::getRoot() const
 {
@@ -100,6 +108,19 @@ lyric_typing::TypeSystem *
 lyric_compiler::ModuleEntry::getTypeSystem() const
 {
     return m_typeSystem;
+}
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_compiler::ModuleEntry::compileBlock(std::string_view utf8, lyric_assembler::BlockHandle *block)
+{
+    // parse the block code
+    lyric_parser::ParserOptions parserOptions;
+    lyric_parser::LyricParser lyricParser(parserOptions);
+    lyric_parser::LyricArchetype archetype;
+    TU_ASSIGN_OR_RETURN (archetype, lyricParser.parseBlock(utf8, getLocation().toUrl(), m_state->scopeManager()));
+
+    // compile the block code
+    return internal::compile_block(block, archetype.getNode(0), *this);
 }
 
 void

@@ -27,6 +27,9 @@ namespace lyric_compiler {
         lyric_assembler::CallSymbol *getEntry() const;
         lyric_typing::TypeSystem *getTypeSystem() const;
 
+        tempo_utils::Result<lyric_common::TypeDef> compileBlock(
+            std::string_view utf8,
+            lyric_assembler::BlockHandle *block);
 
         void putExitType(const lyric_common::TypeDef &exitType);
         absl::flat_hash_set<lyric_common::TypeDef> listExitTypes() const;

@@ -30,3 +30,9 @@ Quick Start
   ```
 conan create . --build=missing
   ```
+
+Licensing
+---------
+
+The software in this package is licensed under the terms of the BSD 3-clause license.
+The text of the license is contained in the file `LICENSE.txt`.

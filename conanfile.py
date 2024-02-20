@@ -8,8 +8,9 @@ from conan.tools.files import copy
 class Lyric(ConanFile):
     name = 'lyric'
     version = '0.0.1'
-    url = ''
-    description = ''
+    license = 'BSD-3-Clause'
+    url = 'https://github.com/msfrank/lyric'
+    description = 'Build system and runtime for the Zuri project'
 
     settings = 'os', 'compiler', 'build_type', 'arch'
     options = {'shared': [True, False], 'compiler.cppstd': ['17', '20'], 'build_type': ['Debug', 'Release']}

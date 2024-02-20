@@ -508,7 +508,7 @@ get_placeholder_bound(
         tracer->throwAssemblerInvariant("missing template for placeholder {}", placeholderType.toString());
 
     auto tp = templateHandle->getTemplateParameter(placeholderType.getPlaceholderIndex());
-    if (tp.bound != lyric_object::BoundType::Extends)
+    if (tp.bound != lyric_object::BoundType::None && tp.bound != lyric_object::BoundType::Extends)
         return tracer->logAndContinue(
             lyric_assembler::AssemblerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
