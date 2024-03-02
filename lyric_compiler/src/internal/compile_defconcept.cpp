@@ -87,7 +87,8 @@ tempo_utils::Status
 lyric_compiler::internal::compile_defconcept(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
-    ModuleEntry &moduleEntry)
+    ModuleEntry &moduleEntry,
+    lyric_assembler::ConceptSymbol **conceptSymbolPtr)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT(walker.isValid());
@@ -156,6 +157,10 @@ lyric_compiler::internal::compile_defconcept(
         auto status = compile_defconcept_def(conceptSymbol, def, moduleEntry);
         if (!status.isOk())
             return status;
+    }
+
+    if (conceptSymbolPtr != nullptr) {
+        *conceptSymbolPtr = conceptSymbol;
     }
 
     return CompilerStatus::ok();

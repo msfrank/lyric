@@ -498,7 +498,8 @@ tempo_utils::Status
 lyric_compiler::internal::compile_defenum(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
-    ModuleEntry &moduleEntry)
+    ModuleEntry &moduleEntry,
+    lyric_assembler::EnumSymbol **enumSymbolPtr)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT(walker.isValid());
@@ -597,6 +598,10 @@ lyric_compiler::internal::compile_defenum(
         status = compile_defenum_case(block, case_, baseEnum, moduleEntry);
         if (status.notOk())
             return status;
+    }
+
+    if (enumSymbolPtr != nullptr) {
+        *enumSymbolPtr = baseEnum;
     }
 
     return CompilerStatus::ok();

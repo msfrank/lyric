@@ -479,7 +479,8 @@ tempo_utils::Status
 lyric_compiler::internal::compile_definstance(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
-    ModuleEntry &moduleEntry)
+    ModuleEntry &moduleEntry,
+    lyric_assembler::InstanceSymbol **instanceSymbolPtr)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT(walker.isValid());
@@ -575,6 +576,10 @@ lyric_compiler::internal::compile_definstance(
         status = compile_definstance_impl(instance, impl, moduleEntry);
         if (!status.isOk())
             return status;
+    }
+
+    if (instanceSymbolPtr != nullptr) {
+        *instanceSymbolPtr = instance;
     }
 
     return CompilerStatus::ok();

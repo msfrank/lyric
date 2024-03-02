@@ -9,7 +9,8 @@ namespace lyric_compiler::internal {
     tempo_utils::Status compile_defconcept(
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,
-        lyric_compiler::ModuleEntry &moduleEntry);
+        lyric_compiler::ModuleEntry &moduleEntry,
+        lyric_assembler::ConceptSymbol **conceptSymbolPtr = nullptr);
 }
 
 #endif // LYRIC_COMPILER_COMPILE_DEFCONCEPT_H

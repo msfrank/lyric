@@ -9,7 +9,8 @@ namespace lyric_compiler::internal {
     tempo_utils::Status compile_defstruct(
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,
-        lyric_compiler::ModuleEntry &moduleEntry);
+        lyric_compiler::ModuleEntry &moduleEntry,
+        lyric_assembler::StructSymbol **structSymbolPtr = nullptr);
 }
 
 #endif // LYRIC_COMPILER_COMPILE_DEFSTRUCT_H

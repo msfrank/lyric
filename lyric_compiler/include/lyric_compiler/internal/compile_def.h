@@ -11,7 +11,8 @@ namespace lyric_compiler::internal {
     tempo_utils::Status compile_def(
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,
-        lyric_compiler::ModuleEntry &moduleEntry);
+        lyric_compiler::ModuleEntry &moduleEntry,
+        lyric_assembler::CallSymbol **callSymbolPtr = nullptr);
 }
 
 #endif // LYRIC_COMPILER_COMPILE_DEFINITION_H

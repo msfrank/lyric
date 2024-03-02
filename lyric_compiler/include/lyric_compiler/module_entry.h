@@ -31,6 +31,25 @@ namespace lyric_compiler {
             std::string_view utf8,
             lyric_assembler::BlockHandle *block);
 
+        tempo_utils::Result<lyric_assembler::ClassSymbol *> compileClass(
+            std::string_view utf8,
+            lyric_assembler::BlockHandle *block);
+        tempo_utils::Result<lyric_assembler::ConceptSymbol *> compileConcept(
+            std::string_view utf8,
+            lyric_assembler::BlockHandle *block);
+        tempo_utils::Result<lyric_assembler::EnumSymbol *> compileEnum(
+            std::string_view utf8,
+            lyric_assembler::BlockHandle *block);
+        tempo_utils::Result<lyric_assembler::CallSymbol *> compileFunction(
+            std::string_view utf8,
+            lyric_assembler::BlockHandle *block);
+        tempo_utils::Result<lyric_assembler::InstanceSymbol *> compileInstance(
+            std::string_view utf8,
+            lyric_assembler::BlockHandle *block);
+        tempo_utils::Result<lyric_assembler::StructSymbol *> compileStruct(
+            std::string_view utf8,
+            lyric_assembler::BlockHandle *block);
+
         void putExitType(const lyric_common::TypeDef &exitType);
         absl::flat_hash_set<lyric_common::TypeDef> listExitTypes() const;
 

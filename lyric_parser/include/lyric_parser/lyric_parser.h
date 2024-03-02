@@ -31,6 +31,36 @@ namespace lyric_parser {
             const tempo_utils::Url &sourceUrl,
             tempo_tracing::ScopeManager *scopeManager);
 
+        tempo_utils::Result<LyricArchetype> parseClass(
+            std::string_view utf8,
+            const tempo_utils::Url &sourceUrl,
+            tempo_tracing::ScopeManager *scopeManager);
+
+        tempo_utils::Result<LyricArchetype> parseConcept(
+            std::string_view utf8,
+            const tempo_utils::Url &sourceUrl,
+            tempo_tracing::ScopeManager *scopeManager);
+
+        tempo_utils::Result<LyricArchetype> parseEnum(
+            std::string_view utf8,
+            const tempo_utils::Url &sourceUrl,
+            tempo_tracing::ScopeManager *scopeManager);
+
+        tempo_utils::Result<LyricArchetype> parseFunction(
+            std::string_view utf8,
+            const tempo_utils::Url &sourceUrl,
+            tempo_tracing::ScopeManager *scopeManager);
+
+        tempo_utils::Result<LyricArchetype> parseInstance(
+            std::string_view utf8,
+            const tempo_utils::Url &sourceUrl,
+            tempo_tracing::ScopeManager *scopeManager);
+
+        tempo_utils::Result<LyricArchetype> parseStruct(
+            std::string_view utf8,
+            const tempo_utils::Url &sourceUrl,
+            tempo_tracing::ScopeManager *scopeManager);
+
     private:
         ParserOptions m_options;
     };

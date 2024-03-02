@@ -14,7 +14,8 @@ tempo_utils::Status
 lyric_compiler::internal::compile_def(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
-    ModuleEntry &moduleEntry)
+    ModuleEntry &moduleEntry,
+    lyric_assembler::CallSymbol **callSymbolPtr)
 {
     TU_ASSERT(block != nullptr);
     TU_ASSERT(walker.isValid());
@@ -108,6 +109,10 @@ lyric_compiler::internal::compile_def(
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "body does not match return type {}", call->getReturnType().toString());
+    }
+
+    if (callSymbolPtr != nullptr) {
+        *callSymbolPtr = call;
     }
 
     // return control to the caller

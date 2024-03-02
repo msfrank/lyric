@@ -398,7 +398,8 @@ tempo_utils::Status
 lyric_compiler::internal::compile_defstruct(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
-    ModuleEntry &moduleEntry)
+    ModuleEntry &moduleEntry,
+    lyric_assembler::StructSymbol **structSymbolPtr)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT(walker.isValid());
@@ -528,6 +529,10 @@ lyric_compiler::internal::compile_defstruct(
         status = compile_defstruct_def(structSymbol, def, moduleEntry);
         if (!status.isOk())
             return status;
+    }
+
+    if (structSymbolPtr != nullptr) {
+        *structSymbolPtr = structSymbol;
     }
 
     return CompilerStatus::ok();

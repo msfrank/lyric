@@ -378,7 +378,8 @@ tempo_utils::Status
 lyric_compiler::internal::compile_defclass(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
-    ModuleEntry &moduleEntry)
+    ModuleEntry &moduleEntry,
+    lyric_assembler::ClassSymbol **classSymbolPtr)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT(walker.isValid());
@@ -532,6 +533,10 @@ lyric_compiler::internal::compile_defclass(
         status = compile_defclass_def(thisClass, def, moduleEntry);
         if (!status.isOk())
             return status;
+    }
+
+    if (classSymbolPtr) {
+        *classSymbolPtr = thisClass;
     }
 
     return CompilerStatus::ok();

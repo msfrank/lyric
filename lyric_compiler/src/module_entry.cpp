@@ -6,6 +6,12 @@
 #include <lyric_compiler/internal/compile_node.h>
 #include <lyric_compiler/module_entry.h>
 #include <lyric_parser/lyric_parser.h>
+#include "lyric_compiler/internal/compile_defclass.h"
+#include "lyric_compiler/internal/compile_defenum.h"
+#include "lyric_compiler/internal/compile_definstance.h"
+#include "lyric_compiler/internal/compile_defstruct.h"
+#include "lyric_compiler/internal/compile_defconcept.h"
+#include "lyric_compiler/internal/compile_def.h"
 
 lyric_compiler::ModuleEntry::ModuleEntry(lyric_assembler::AssemblyState *state)
     : m_state(state),
@@ -121,6 +127,108 @@ lyric_compiler::ModuleEntry::compileBlock(std::string_view utf8, lyric_assembler
 
     // compile the block code
     return internal::compile_block(block, archetype.getNode(0), *this);
+}
+
+tempo_utils::Result<lyric_assembler::ClassSymbol *>
+lyric_compiler::ModuleEntry::compileClass(
+    std::string_view utf8,
+    lyric_assembler::BlockHandle *block)
+{
+    // parse the defclass code
+    lyric_parser::ParserOptions parserOptions;
+    lyric_parser::LyricParser lyricParser(parserOptions);
+    lyric_parser::LyricArchetype archetype;
+    TU_ASSIGN_OR_RETURN (archetype, lyricParser.parseClass(utf8, getLocation().toUrl(), m_state->scopeManager()));
+
+    // compile the defclass code
+    lyric_assembler::ClassSymbol *classSymbol;
+    TU_RETURN_IF_NOT_OK (internal::compile_defclass(block, archetype.getNode(0), *this, &classSymbol));
+    return classSymbol;
+}
+
+tempo_utils::Result<lyric_assembler::ConceptSymbol *>
+lyric_compiler::ModuleEntry::compileConcept(
+    std::string_view utf8,
+    lyric_assembler::BlockHandle *block)
+{
+    // parse the defconcept code
+    lyric_parser::ParserOptions parserOptions;
+    lyric_parser::LyricParser lyricParser(parserOptions);
+    lyric_parser::LyricArchetype archetype;
+    TU_ASSIGN_OR_RETURN (archetype, lyricParser.parseConcept(utf8, getLocation().toUrl(), m_state->scopeManager()));
+
+    // compile the defconcept code
+    lyric_assembler::ConceptSymbol *conceptSymbol;
+    TU_RETURN_IF_NOT_OK (internal::compile_defconcept(block, archetype.getNode(0), *this, &conceptSymbol));
+    return conceptSymbol;
+}
+
+tempo_utils::Result<lyric_assembler::EnumSymbol *>
+lyric_compiler::ModuleEntry::compileEnum(
+    std::string_view utf8,
+    lyric_assembler::BlockHandle *block)
+{
+    // parse the defenum code
+    lyric_parser::ParserOptions parserOptions;
+    lyric_parser::LyricParser lyricParser(parserOptions);
+    lyric_parser::LyricArchetype archetype;
+    TU_ASSIGN_OR_RETURN (archetype, lyricParser.parseEnum(utf8, getLocation().toUrl(), m_state->scopeManager()));
+
+    // compile the defenum code
+    lyric_assembler::EnumSymbol *enumSymbol;
+    TU_RETURN_IF_NOT_OK (internal::compile_defenum(block, archetype.getNode(0), *this, &enumSymbol));
+    return enumSymbol;
+}
+
+tempo_utils::Result<lyric_assembler::CallSymbol *>
+lyric_compiler::ModuleEntry::compileFunction(
+    std::string_view utf8,
+    lyric_assembler::BlockHandle *block)
+{
+    // parse the def code
+    lyric_parser::ParserOptions parserOptions;
+    lyric_parser::LyricParser lyricParser(parserOptions);
+    lyric_parser::LyricArchetype archetype;
+    TU_ASSIGN_OR_RETURN (archetype, lyricParser.parseFunction(utf8, getLocation().toUrl(), m_state->scopeManager()));
+
+    // compile the def code
+    lyric_assembler::CallSymbol *callSymbol;
+    TU_RETURN_IF_NOT_OK (internal::compile_def(block, archetype.getNode(0), *this, &callSymbol));
+    return callSymbol;
+}
+
+tempo_utils::Result<lyric_assembler::InstanceSymbol *>
+lyric_compiler::ModuleEntry::compileInstance(
+    std::string_view utf8,
+    lyric_assembler::BlockHandle *block)
+{
+    // parse the definstance code
+    lyric_parser::ParserOptions parserOptions;
+    lyric_parser::LyricParser lyricParser(parserOptions);
+    lyric_parser::LyricArchetype archetype;
+    TU_ASSIGN_OR_RETURN (archetype, lyricParser.parseInstance(utf8, getLocation().toUrl(), m_state->scopeManager()));
+
+    // compile the definstance code
+    lyric_assembler::InstanceSymbol *instanceSymbol;
+    TU_RETURN_IF_NOT_OK (internal::compile_definstance(block, archetype.getNode(0), *this, &instanceSymbol));
+    return instanceSymbol;
+}
+
+tempo_utils::Result<lyric_assembler::StructSymbol *>
+lyric_compiler::ModuleEntry::compileStruct(
+    std::string_view utf8,
+    lyric_assembler::BlockHandle *block)
+{
+    // parse the defstruct code
+    lyric_parser::ParserOptions parserOptions;
+    lyric_parser::LyricParser lyricParser(parserOptions);
+    lyric_parser::LyricArchetype archetype;
+    TU_ASSIGN_OR_RETURN (archetype, lyricParser.parseStruct(utf8, getLocation().toUrl(), m_state->scopeManager()));
+
+    // compile the defstruct code
+    lyric_assembler::StructSymbol *structSymbol;
+    TU_RETURN_IF_NOT_OK (internal::compile_defstruct(block, archetype.getNode(0), *this, &structSymbol));
+    return structSymbol;
 }
 
 void
