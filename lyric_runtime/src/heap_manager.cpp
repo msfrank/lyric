@@ -227,10 +227,10 @@ set_reachable_for_task(lyric_runtime::Task *task)
     if (task == nullptr)
         return;
 
-    auto &coro = task->coro;
+    auto *coro = task->stackfulCoroutine();
 
     // walk the data stack and mark all reachable instances
-    for (auto iterator = coro.dataBegin(); iterator != coro.dataEnd(); iterator++) {
+    for (auto iterator = coro->dataBegin(); iterator != coro->dataEnd(); iterator++) {
         if (iterator->type == lyric_runtime::DataCellType::REF) {
             auto *instance = iterator->data.ref;
             if (instance) {
@@ -248,11 +248,11 @@ lyric_runtime::HeapManager::collectGarbage() {
 
     set_reachable_for_task(m_systemScheduler->currentTask());
 
-    for (Task *task = m_systemScheduler->firstWaitingTask(); task != nullptr; task = task->next) {
+    for (Task *task = m_systemScheduler->firstWaitingTask(); task != nullptr; task = task->nextTask()) {
         set_reachable_for_task(task);
     }
 
-    for (Task *task = m_systemScheduler->firstReadyTask(); task != nullptr; task = task->next) {
+    for (Task *task = m_systemScheduler->firstReadyTask(); task != nullptr; task = task->nextTask()) {
         set_reachable_for_task(task);
     }
 

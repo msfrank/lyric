@@ -63,6 +63,9 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
     for (;;) {
 
+        // this will be set only if the current task has changed
+        Task *nextReady = nullptr;
+
         // if time slice has been exceeded, then poll for events and schedule a new task
         if (++opcount > TIME_SLICE) {
             opcount = 0;
@@ -70,7 +73,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 if (systemScheduler->poll())
                     break;
             }
-            systemScheduler->selectNextReady();
+            nextReady = systemScheduler->selectNextReady();
             currentCoro = m_state->currentCoro();
         }
 
@@ -79,9 +82,14 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             // if blocking poll returns false, there are no tasks remaining
             if (!systemScheduler->blockingPoll())
                 break;
-            systemScheduler->selectNextReady();
+            nextReady = systemScheduler->selectNextReady();
             currentCoro = m_state->currentCoro();
             TU_ASSERT (currentCoro != nullptr);
+        }
+
+        // if we switched tasks then process all attached promises
+        if (nextReady) {
+            nextReady->adaptPromises(this, m_state.get());
         }
 
         // ensure the guard invariant for the current call stack is not violated
@@ -114,7 +122,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             Task *currentTask = systemScheduler->currentTask();
 
             // if current task is the main task then halt
-            if (currentTask->type == TaskType::Main) {
+            if (currentTask->getTaskType() == TaskType::Main) {
                 if (currentCoro->dataStackSize() > 0)
                     return onHalt(op, currentCoro->popData());
                 return onHalt(op, DataCell::nil());

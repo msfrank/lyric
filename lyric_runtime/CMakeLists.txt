@@ -31,6 +31,7 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/native_interface.h
     include/lyric_runtime/plugin_specifier.h
     include/lyric_runtime/port_multiplexer.h
+    include/lyric_runtime/promise.h
     include/lyric_runtime/ref_handle.h
     include/lyric_runtime/runtime_options.h
     include/lyric_runtime/runtime_types.h
@@ -39,6 +40,7 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/stackful_coroutine.h
     include/lyric_runtime/subroutine_manager.h
     include/lyric_runtime/system_scheduler.h
+    include/lyric_runtime/task.h
     include/lyric_runtime/type_manager.h
     include/lyric_runtime/virtual_table.h
     )
@@ -61,6 +63,7 @@ target_sources(lyric_runtime PRIVATE
     src/native_interface.cpp
     src/plugin_specifier.cpp
     src/port_multiplexer.cpp
+    src/promise.cpp
     src/ref_handle.cpp
     src/runtime_options.cpp
     src/runtime_types.cpp
@@ -69,6 +72,7 @@ target_sources(lyric_runtime PRIVATE
     src/stackful_coroutine.cpp
     src/subroutine_manager.cpp
     src/system_scheduler.cpp
+    src/task.cpp
     src/type_manager.cpp
     src/virtual_table.cpp
 

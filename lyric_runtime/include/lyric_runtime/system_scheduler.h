@@ -4,53 +4,35 @@
 #include <uv.h>
 
 #include "interpreter_result.h"
+#include "promise.h"
 #include "stackful_coroutine.h"
+#include "task.h"
 
 namespace lyric_runtime {
 
     class SystemScheduler;
     struct Waiter;
-    typedef void (*WaiterCallback)(Waiter *, void *);
 
     /**
-     * The task type.
+     *
      */
-    enum class TaskType {
-        Main,       /**< Main task. There can only be a single main task for a running interpreter. */
-        Worker,     /**< Worker task. There can be many concurrent worker tasks in a running interpreter. */
-    };
-
-    /**
-     * The task state.
-     */
-    enum class TaskState {
-        Initial,    /**< The initial state of a task before it is added to the scheduler. */
-        Waiting,    /**< The task is in the waiting queue. */
-        Ready,      /**< The task is in the ready queue. */
-        Running,    /**< The task is currently running. */
-    };
-
-    struct Task {
-        TaskType type;
-        TaskState state = TaskState::Initial;
-        StackfulCoroutine coro;
-        SystemScheduler *scheduler = nullptr;
-        uv_async_t *worker = nullptr;
-        Task *prev = nullptr;
-        Task *next = nullptr;
-        explicit Task(TaskType type): type(type) {};
-    };
-
-    struct Waiter {
+    struct Waiter final {
+    public:
+        uv_handle_t * const handle;
         Task *task = nullptr;
-        uv_handle_t *handle = nullptr;
-        WaiterCallback cb = nullptr;
-        void *data = nullptr;
+        std::shared_ptr<Promise> promise;
+    private:
         Waiter *prev = nullptr;
         Waiter *next = nullptr;
-        explicit Waiter(Task *task): task(task) {};
+        friend class SystemScheduler;
+    public:
+        explicit Waiter(uv_handle_t *handle): handle(handle) {};
     };
 
+    /**
+     * The SystemScheduler manages and schedules tasks run by the interpreter, and is responsible for
+     * polling the uv main loop.
+     */
     class SystemScheduler {
     public:
         explicit SystemScheduler(uv_loop_t *loop);
@@ -72,8 +54,8 @@ namespace lyric_runtime {
         void resumeTask(Task *task);
         void destroyTask(Task *task);
 
-        Waiter *registerTimer(uint64_t timeout, WaiterCallback cb, void *data);
-        Waiter *registerAsync(uv_async_t **asyncptr, WaiterCallback cb, void *data);
+        void registerTimer(tu_uint64 deadline, std::shared_ptr<Promise> promise);
+        void registerAsync(uv_async_t **asyncptr, std::shared_ptr<Promise> promise, tu_uint64 deadline = 0);
         void destroyWaiter(Waiter *waiter);
 
         bool poll();

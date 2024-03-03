@@ -28,9 +28,9 @@ namespace lyric_runtime {
         bool serializeValue(lyric_serde::PatchsetState &state, tu_uint32 &index) override;
         bool iteratorValid() override;
         bool iteratorNext(DataCell &cell) override;
-        bool attachWaiter(Waiter *waiter) override;
-        bool releaseWaiter(Waiter **waiter) override;
-        bool resolveFuture(DataCell &result, BytecodeInterpreter *interp, InterpreterState *state) override;
+        bool prepareFuture(std::shared_ptr<Promise> promise) override;
+        bool awaitFuture(SystemScheduler *systemScheduler) override;
+        bool resolveFuture(DataCell &result) override;
         bool isReachable() const override;
         void setReachable() override;
         void clearReachable() override;

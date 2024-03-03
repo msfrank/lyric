@@ -118,28 +118,31 @@ namespace lyric_runtime {
         virtual bool iteratorNext(DataCell &next) = 0;
 
         /**
-         * Attaches the specified `waiter` to the ref. If the ref type does not support scheduling then
-         * `waiter` is untouched and the method must return false.
+         * Assigns the specified `promise` to the ref. If the ref type does not support the futures protocol
+         * then `promise` is untouched and the method must return false.
          *
-         * @return true if `waiter` was assigned, otherwise false.
+         * @param promise
+         * @return true if `promise` was assigned, otherwise false.
          */
-        virtual bool attachWaiter(Waiter *waiter) = 0;
+        virtual bool prepareFuture(std::shared_ptr<Promise> promise) = 0;
 
         /**
-         * Releases the waiter from the ref and assigns it to the location pointed to by `waiter`. If the ref
-         * type does not support scheduling the `waiter` is untouched and the method must return false.
+         * Instructs the ref to await the promise(es) assigned to the ref, suspending the current task if
+         * necessary. If the ref type does not support the futures protocol then side effects must not occur
+         * and the method must return false.
          *
-         * @return true if the waiter was released from the ref and assigned to `waiter`, otherwise false.
+         * @return true if the ref is awaiting, otherwise false.
          */
-        virtual bool releaseWaiter(Waiter **waiter) = 0;
+        virtual bool awaitFuture(SystemScheduler *systemScheduler) = 0;
 
         /**
-         * Resolves the future and assigns the result to `result`. If the ref does not support resolution, or
-         * the ref does not contain a result yet, then `result` is untouched and the method must return false.
+         * Assigns the result of the future to `result`. If the ref type does not support the futures protocol
+         * or if there is no result yet then the method must return false.
          *
-         * @return true if `result` was assigned, otherwise false.
+         * @param result
+         * @return true if a result is available, otherwise false.
          */
-        virtual bool resolveFuture(DataCell &result, BytecodeInterpreter *interp, InterpreterState *state) = 0;
+        virtual bool resolveFuture(lyric_runtime::DataCell &result) = 0;
 
         /**
          * Generate a human-readable representation which describes the ref.

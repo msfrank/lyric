@@ -11,14 +11,11 @@ lyric_runtime::SystemScheduler::SystemScheduler(uv_loop_t *loop)
 {
     TU_ASSERT (m_loop != nullptr);
 
-    m_mainTask = new Task(TaskType::Main);
-    m_mainTask->scheduler = this;
-    m_mainTask->state = TaskState::Waiting;
+    m_mainTask = new Task(TaskType::Main, this);
+    m_mainTask->setTaskState(TaskState::Waiting);
 
     // attach main task to the end of the wait queue
-    m_mainTask->prev = nullptr;
-    m_mainTask->next = nullptr;
-    m_waitQueue = m_mainTask;
+    m_mainTask->attach(&m_waitQueue);
 }
 
 lyric_runtime::SystemScheduler::~SystemScheduler()
@@ -57,7 +54,7 @@ lyric_runtime::StackfulCoroutine *
 lyric_runtime::SystemScheduler::mainCoro() const
 {
     if (m_mainTask)
-        return &m_mainTask->coro;
+        return m_mainTask->stackfulCoroutine();
     return nullptr;
 }
 
@@ -71,7 +68,7 @@ lyric_runtime::StackfulCoroutine *
 lyric_runtime::SystemScheduler::currentCoro() const
 {
     if (m_currentTask)
-        return &m_currentTask->coro;
+        return m_currentTask->stackfulCoroutine();
     return nullptr;
 }
 
@@ -93,19 +90,22 @@ lyric_runtime::SystemScheduler::selectNextReady()
     // if there is no current task, then select the top of the ready queue
     if (m_currentTask == nullptr) {
         m_currentTask = m_readyQueue;
-        if (m_currentTask)
-            m_currentTask->state = TaskState::Running;
+        if (m_currentTask) {
+            m_currentTask->setTaskState(TaskState::Running);
+        }
         return m_currentTask;
     }
 
     // if there is a current task but no other ready tasks, then keep the current task running
-    if (m_currentTask->next == nullptr)
+    if (m_currentTask->nextTask() == nullptr)
         return m_currentTask;
 
-    // if there is a next ready task, then select the next task
-    m_currentTask->state = TaskState::Ready;
-    auto *selected = m_currentTask->next;
-    selected->state = TaskState::Running;
+    // otherwise switch current task state to ready
+    m_currentTask->setTaskState(TaskState::Ready);
+
+    // then select the next task
+    auto *selected = m_currentTask->nextTask();
+    selected->setTaskState(TaskState::Running);
     m_currentTask = selected;
     return m_currentTask;
 }
@@ -113,38 +113,14 @@ lyric_runtime::SystemScheduler::selectNextReady()
 lyric_runtime::Task *
 lyric_runtime::SystemScheduler::createTask()
 {
-    auto *task = new Task(TaskType::Worker);    // task is created in INITIAL state
-
-    task->scheduler = this;
-
     //
-    task->worker = new uv_async_t;
+    auto *worker = new uv_async_t;
     //uv_async_init(m_loop, task->worker, )
 
-    // update the task state
-    task->state = TaskState::Waiting;
-
-    // attach task to the end of the wait queue
-    if (m_waitQueue == nullptr) {
-        task->prev = nullptr;
-        task->next = nullptr;
-        m_waitQueue = task;
-    } else {
-        auto *prev = m_waitQueue->prev;
-        auto *next = m_waitQueue->next;
-        TU_ASSERT ((prev && next) || (!prev && !next));
-        if (prev && next) {
-            task->prev = prev;
-            task->next = next;
-            prev->next = task;
-            next->prev = task;
-        } else {
-            m_waitQueue->prev = task;
-            m_waitQueue->next = task;
-            task->prev = m_waitQueue;
-            task->next = m_waitQueue;
-        }
-    }
+    // create new worker task and attach it to the end of the wait queue
+    auto *task = new Task(TaskType::Worker, this, worker);
+    task->setTaskState(TaskState::Waiting);
+    task->attach(&m_waitQueue);
 
     return task;
 }
@@ -153,134 +129,67 @@ void
 lyric_runtime::SystemScheduler::suspendTask(Task *task)
 {
     TU_ASSERT (task != nullptr);
-    TU_ASSERT (task->state != TaskState::Initial);
 
-    // if task is already suspended, then do nothing
-    if (task->state == TaskState::Waiting)
-        return;
+    switch (task->getTaskState()) {
+        case TaskState::Waiting:
+            return;     // if task is already suspended, then do nothing
+        case TaskState::Ready:
+        case TaskState::Running:
+            break;
+        default:
+            TU_LOG_FATAL << "task " << task << " cannot be suspended; unexpected state";
+            return;
+    }
 
     // detach task from the ready queue
-    TU_ASSERT ((task->prev && task->next) || (!task->prev && !task->next));
-    if (task->prev && task->next) {
-        auto *prev = task->prev;
-        auto *next = task->next;
-        prev->next = task->next;
-        next->prev = task->prev;
-        if (task == m_readyQueue) {
-            m_readyQueue = next;
-        }
-        if (task == m_currentTask) {
-            m_currentTask = nullptr;
-        }
-    } else {
-        if (task == m_readyQueue) {
-            m_readyQueue = nullptr;
-        }
-        if (task == m_currentTask) {
-            m_currentTask = nullptr;
-        }
+    task->detach(&m_readyQueue);
+
+    // if task is running then clear the current task
+    if (task == m_currentTask) {
+        m_currentTask = nullptr;
     }
 
-    // update the task state
-    task->state = TaskState::Waiting;
+    // set the task state to Waiting
+    task->setTaskState(TaskState::Waiting);
 
     // attach task to the end of the wait queue
-    if (m_waitQueue == nullptr) {
-        task->prev = nullptr;
-        task->next = nullptr;
-        m_waitQueue = task;
-    } else {
-        auto *prev = m_waitQueue->prev;
-        auto *next = m_waitQueue->next;
-        TU_ASSERT ((prev && next) || (!prev && !next));
-        if (prev && next) {
-            task->prev = prev;
-            task->next = next;
-            prev->next = task;
-            next->prev = task;
-        } else {
-            m_waitQueue->prev = task;
-            m_waitQueue->next = task;
-            task->prev = m_waitQueue;
-            task->next = m_waitQueue;
-        }
-    }
+    task->attach(&m_waitQueue);
 }
 
 void
 lyric_runtime::SystemScheduler::resumeTask(Task *task)
 {
     TU_ASSERT (task != nullptr);
-    TU_ASSERT (task->state != TaskState::Initial);
 
-    // if task is ready or running, then do nothing
-    if (task->state == TaskState::Running || task->state == TaskState::Ready)
-        return;
+    switch (task->getTaskState()) {
+        case TaskState::Ready:
+        case TaskState::Running:
+            return;     // if task is ready or running, then do nothing
+        case TaskState::Waiting:
+            break;
+        default:
+            TU_LOG_FATAL << "task " << task << " cannot be resumed; unexpected state";
+            return;
+    }
 
     // detach task from the wait queue
-    TU_ASSERT ((task->prev && task->next) || (!task->prev && !task->next));
-    if (task->prev && task->next) {
-        auto *prev = task->prev;
-        auto *next = task->next;
-        prev->next = task->next;
-        next->prev = task->prev;
-        if (task == m_waitQueue) {
-            m_waitQueue = next;
-        }
-    } else {
-        if (task == m_waitQueue) {
-            m_waitQueue = nullptr;
-        }
-    }
+    task->detach(&m_waitQueue);
 
-    // update the task state
-    task->state = TaskState::Ready;
+    // set the task state to Ready
+    task->setTaskState(TaskState::Ready);
 
     // attach task to the end of the ready queue
-    if (m_readyQueue == nullptr) {
-        task->prev = nullptr;
-        task->next = nullptr;
-        m_readyQueue = task;
-    } else {
-        auto *prev = m_readyQueue->prev;
-        auto *next = m_readyQueue->next;
-        TU_ASSERT ((prev && next) || (!prev && !next));
-        if (prev && next) {
-            task->prev = prev;
-            task->next = next;
-            prev->next = task;
-            next->prev = task;
-        } else {
-            m_readyQueue->prev = task;
-            m_readyQueue->next = task;
-            task->prev = m_readyQueue;
-            task->next = m_readyQueue;
-        }
-    }
+    task->attach(&m_readyQueue);
 }
 
 void
 lyric_runtime::SystemScheduler::destroyTask(Task *task)
 {
     TU_ASSERT (task != nullptr);
-    TU_ASSERT (task->state == TaskState::Waiting);
+    TU_ASSERT (task->getTaskState() == TaskState::Waiting);
 
-    // detach task from the wait queue
-    TU_ASSERT ((task->prev && task->next) || (!task->prev && !task->next));
-    if (task->prev && task->next) {
-        auto *prev = task->prev;
-        auto *next = task->next;
-        prev->next = task->next;
-        next->prev = task->prev;
-        if (task == m_waitQueue) {
-            m_waitQueue = next;
-        }
-    } else {
-        if (task == m_waitQueue) {
-            m_waitQueue = nullptr;
-        }
-    }
-
+    // detach task from the wait queue and deallocate it
+    task->detach(&m_waitQueue);
     delete task;
 }
 
@@ -293,46 +202,71 @@ on_timer_complete(uv_timer_t *timer)
     // we do this before running the waiter callback so that there will be a coroutine
     // available to the callback.
     if (waiter->task) {
-        waiter->task->scheduler->resumeTask(waiter->task);
+        waiter->task->resume();
     }
 
-    // if the waiter has a callback, then run the waiter callback
-    if (waiter->cb) {
-        waiter->cb(waiter, waiter->data);
+    // if the waiter has an attached promise, then run the accept callback
+    if (waiter->promise) {
+        auto promise = waiter->promise;
+        promise->accept();
+
+        // if the promise has an adapt callback, then schedule it to be called before the task resumes
+        if (promise->needsAdapt()) {
+            auto *task = waiter->task;
+            task->appendPromise(promise);
+        }
     }
 
     // free the completed waiter
-    waiter->task->scheduler->destroyWaiter(waiter);
+    auto *scheduler = waiter->task->getSystemScheduler();
+    scheduler->destroyWaiter(waiter);
 }
 
-lyric_runtime::Waiter *
-lyric_runtime::SystemScheduler::registerTimer(uint64_t timeout, WaiterCallback cb, void *data)
+void
+lyric_runtime::SystemScheduler::registerTimer(tu_uint64 deadline, std::shared_ptr<Promise> promise)
 {
-    uv_timer_t *timer = (uv_timer_t *) malloc(sizeof(uv_timer_t));
+    TU_ASSERT (promise != nullptr);
+    TU_ASSERT (promise->getPromiseState() == PromiseState::Initial);
+
+    // initialize the timer handle
+    auto *timer = (uv_timer_t *) malloc(sizeof(uv_timer_t));
     uv_timer_init(m_loop, timer);
 
-    auto *waiter = new Waiter(m_currentTask);
-    waiter->handle = (uv_handle_t *) timer;
-    waiter->cb = cb;
-    waiter->data = data;
+    // allocate a new waiter
+    auto *waiter = new Waiter((uv_handle_t *) timer);
+    waiter->promise = promise;
 
+    // link the waiter to the promise and set the promise state to Pending
+    promise->attach(waiter);
+
+    // link the waiter to the timer handle
     timer->data = waiter;
-    uv_timer_start(timer, on_timer_complete, timeout, 0);
 
-    // attach handle to the end of the handles list
+    // start the timer
+    uv_timer_start(timer, on_timer_complete, deadline, 0);
+
+    // attach waiter to the end of the global waiters list
     if (m_waiters == nullptr) {
         waiter->prev = nullptr;
         waiter->next = nullptr;
         m_waiters = waiter;
     } else {
         auto *prev = m_waiters->prev;
-        prev->next = waiter;
-        waiter->prev = prev;
-        waiter->next = m_waiters;
-        m_waiters->prev = waiter;
+        auto *next = m_waiters->next;
+        if (prev == nullptr && next == nullptr) {
+            m_waiters->prev = waiter;
+            m_waiters->next = waiter;
+            waiter->prev = m_waiters;
+            waiter->next = m_waiters;
+        } else {
+            TU_ASSERT (prev != nullptr);
+            TU_ASSERT (next != nullptr);
+            waiter->prev = prev;
+            waiter->next = m_waiters;
+            prev->next = waiter;
+            m_waiters->prev = waiter;
+        }
     }
-
-    return waiter;
 }
 
 static void
@@ -344,49 +278,74 @@ on_async_complete(uv_async_t *async)
     // we do this before running the waiter callback so that there will be a coroutine
     // available to the callback.
     if (waiter->task) {
-        waiter->task->scheduler->resumeTask(waiter->task);
+        waiter->task->resume();
     }
 
-    // if the waiter has a callback, then run the waiter callback
-    if (waiter->cb) {
-        waiter->cb(waiter, waiter->data);
+    // if the waiter has an attached promise, then run the accept callback
+    if (waiter->promise) {
+        auto promise = waiter->promise;
+        promise->accept();
+
+        // if the promise has an adapt callback, then schedule it to be called before the task resumes
+        if (promise->needsAdapt()) {
+            auto *task = waiter->task;
+            task->appendPromise(promise);
+        }
     }
 
     // free the completed waiter
-    waiter->task->scheduler->destroyWaiter(waiter);
+    auto *scheduler = waiter->task->getSystemScheduler();
+    scheduler->destroyWaiter(waiter);
 }
 
-lyric_runtime::Waiter *
-lyric_runtime::SystemScheduler::registerAsync(uv_async_t **asyncptr, WaiterCallback cb, void *data)
+void
+lyric_runtime::SystemScheduler::registerAsync(
+    uv_async_t **asyncptr,
+    std::shared_ptr<Promise> promise,
+    tu_uint64 deadline)
 {
     TU_ASSERT (asyncptr != nullptr);
+    TU_ASSERT (promise != nullptr);
+    TU_ASSERT (promise->getPromiseState() == PromiseState::Initial);
 
-    uv_async_t *async = (uv_async_t *) malloc(sizeof(uv_async_t));
+    // initialize the async handle
+    auto *async = (uv_async_t *) malloc(sizeof(uv_async_t));
     uv_async_init(m_loop, async, on_async_complete);
 
-    auto *waiter = new Waiter(m_currentTask);
-    waiter->handle = (uv_handle_t *) async;
-    waiter->cb = cb;
-    waiter->data = data;
+    // allocate a new waiter
+    auto *waiter = new Waiter((uv_handle_t *) async);
+    waiter->promise = promise;
 
+    // link the waiter to the promise and set the promise state to Pending
+    promise->attach(waiter);
+
+    // link the waiter to the async handle
     async->data = waiter;
 
-    // attach handle to the end of the handles list
+    // attach waiter to the end of the global waiters list
     if (m_waiters == nullptr) {
         waiter->prev = nullptr;
         waiter->next = nullptr;
         m_waiters = waiter;
     } else {
         auto *prev = m_waiters->prev;
-        prev->next = waiter;
-        waiter->prev = prev;
-        waiter->next = m_waiters;
-        m_waiters->prev = waiter;
+        auto *next = m_waiters->next;
+        if (prev == nullptr && next == nullptr) {
+            m_waiters->prev = waiter;
+            m_waiters->next = waiter;
+            waiter->prev = m_waiters;
+            waiter->next = m_waiters;
+        } else {
+            TU_ASSERT (prev != nullptr);
+            TU_ASSERT (next != nullptr);
+            waiter->prev = prev;
+            waiter->next = m_waiters;
+            prev->next = waiter;
+            m_waiters->prev = waiter;
+        }
     }
 
     *asyncptr = async;
-
-    return waiter;
 }
 
 static void
@@ -401,17 +360,24 @@ lyric_runtime::SystemScheduler::destroyWaiter(Waiter *waiter)
     // close the handle, deferring resource deallocation to the specified callback
     uv_close(waiter->handle, on_handle_close);
 
+    auto *prev = waiter->prev;
+    auto *next = waiter->next;
+
     // detach task from the wait queue
-    TU_ASSERT ((waiter->prev && waiter->next) || (!waiter->prev && !waiter->next));
-    if (waiter->prev && waiter->next) {
-        auto *prev = waiter->prev;
-        auto *next = waiter->next;
-        prev->next = waiter->next;
-        next->prev = waiter->prev;
+    if (prev != nullptr && next != nullptr) {
+        if (prev == next) {
+            next->next = nullptr;
+            next->prev = nullptr;
+        } else {
+            prev->next = waiter->next;
+            next->prev = waiter->prev;
+        }
         if (waiter == m_waiters) {
             m_waiters = next;
         }
     } else {
+        TU_ASSERT (prev == nullptr);
+        TU_ASSERT (next == nullptr);
         if (waiter == m_waiters) {
             m_waiters = nullptr;
         }

@@ -72,19 +72,19 @@ lyric_runtime::BaseRef::iteratorNext(DataCell &cell)
 }
 
 bool
-lyric_runtime::BaseRef::attachWaiter(Waiter *waiter)
+lyric_runtime::BaseRef::prepareFuture(std::shared_ptr<Promise> promise)
 {
     return false;
 }
 
 bool
-lyric_runtime::BaseRef::releaseWaiter(Waiter **waiter)
+lyric_runtime::BaseRef::awaitFuture(SystemScheduler *systemScheduler)
 {
     return false;
 }
 
 bool
-lyric_runtime::BaseRef::resolveFuture(DataCell &result, BytecodeInterpreter *interp, InterpreterState *state)
+lyric_runtime::BaseRef::resolveFuture(DataCell &result)
 {
     return false;
 }

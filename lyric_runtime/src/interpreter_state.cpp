@@ -349,8 +349,9 @@ lyric_runtime::InterpreterState::reload(const lyric_common::AssemblyLocation &ma
 
     // reset the main task and initialize it with the new entry call
     auto *mainTask = m_systemScheduler->mainTask();
-    mainTask->coro.reset();
-    mainTask->coro.pushCall(frame, ip, segment);
+    auto *coro = mainTask->stackfulCoroutine();
+    coro->reset();
+    coro->pushCall(frame, ip, segment);
     TU_LOG_V << "initialized ip to " << ip;
 
     // move main task to the ready queue
