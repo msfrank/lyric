@@ -39,6 +39,9 @@ namespace lyric_runtime {
         tempo_utils::Result<DataCell> runSubinterpreter();
         tempo_utils::Status interrupt();
 
+        tu_uint16 getSliceCounter() const;
+        tu_uint64 getInstructionCounter() const;
+
         int getRecursionDepth() const;
         void incrementRecursionDepth();
         void decrementRecursionDepth();
@@ -46,6 +49,8 @@ namespace lyric_runtime {
     private:
         std::shared_ptr<InterpreterState> m_state;
         AbstractInspector *m_inspector;
+        tu_uint16 m_sliceCounter;
+        tu_uint64 m_instructionCounter;
         int m_recursionDepth;
 
         tempo_utils::Status onInterrupt(const DataCell &cell);

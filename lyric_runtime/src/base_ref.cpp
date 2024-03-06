@@ -90,6 +90,12 @@ lyric_runtime::BaseRef::resolveFuture(DataCell &result)
 }
 
 bool
+lyric_runtime::BaseRef::applyClosure(Task *task, lyric_runtime::InterpreterState *state)
+{
+    return false;
+}
+
+bool
 lyric_runtime::BaseRef::isReachable() const
 {
     return m_reachable;

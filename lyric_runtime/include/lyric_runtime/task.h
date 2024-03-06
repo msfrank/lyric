@@ -29,6 +29,7 @@ namespace lyric_runtime {
         Waiting,    /**< The task is in the waiting queue. */
         Ready,      /**< The task is in the ready queue. */
         Running,    /**< The task is currently running. */
+        Done,       /**< The task has finished and is in the done queue. */
     };
 
     /**
@@ -37,7 +38,6 @@ namespace lyric_runtime {
     class Task final {
     public:
         Task(TaskType type, SystemScheduler *scheduler);
-        Task(TaskType type, SystemScheduler *scheduler, uv_async_t *worker);
 
         TaskType getTaskType() const;
         SystemScheduler *getSystemScheduler() const;
@@ -45,6 +45,10 @@ namespace lyric_runtime {
 
         TaskState getTaskState() const;
         void setTaskState(TaskState state);
+
+        uv_async_t *getMonitor() const;
+        void setMonitor(uv_async_t *monitor);
+        void signalMonitor();
 
         Task *prevTask() const;
         Task *nextTask() const;
@@ -62,7 +66,7 @@ namespace lyric_runtime {
         StackfulCoroutine m_coro;
         std::queue<std::shared_ptr<Promise>> m_promises;
         SystemScheduler *m_scheduler;
-        uv_async_t *m_worker;
+        uv_async_t *m_monitor;
         Task *m_prev;
         Task *m_next;
     };

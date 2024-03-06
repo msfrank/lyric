@@ -70,7 +70,7 @@ namespace lyric_runtime {
 
         PromiseState m_state;
         Waiter *m_waiter;
-        DataCell m_result;
+        DataCell m_result;  // FIXME: ensure result is reachable during GC
 
         Promise(PromiseState state, const DataCell &result);
         Promise(AcceptCallback accept, const PromiseOptions &options);

@@ -25,13 +25,70 @@ ClosureRef::~ClosureRef()
 lyric_runtime::DataCell
 ClosureRef::getField(const lyric_runtime::DataCell &field) const
 {
-    return lyric_runtime::DataCell();
+    return {};
 }
 
 lyric_runtime::DataCell
 ClosureRef::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
 {
-    return lyric_runtime::DataCell();
+    return {};
+}
+
+bool
+ClosureRef::applyClosure(lyric_runtime::Task *task, lyric_runtime::InterpreterState *state)
+{
+    auto *currentCoro = task->stackfulCoroutine();
+
+    //
+    TU_ASSERT (currentCoro->callStackSize() == 0);
+    TU_ASSERT (currentCoro->dataStackSize() == 0);
+
+    auto *segment = state->segmentManager()->getSegment(getSegmentIndex());
+    TU_ASSERT (segment != nullptr);
+    auto address = getCallIndex();
+    auto procOffset = getProcOffset();
+
+    // proc offset must be within the segment bytecode
+    auto *bytecodeData = segment->getBytecodeData();
+    auto bytecodeSize = segment->getBytecodeSize();
+    if (bytecodeSize <= procOffset)
+        throw tempo_utils::StatusException(
+            lyric_runtime::InterpreterStatus::forCondition(
+                lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid proc offset"));
+
+    const tu_uint8 *header = bytecodeData + procOffset;
+
+    header += 4;                                                        // skip over procSize
+    auto numArguments = tempo_utils::read_u16_and_advance(header);      // read numArguments
+    auto numLocals = tempo_utils::read_u16_and_advance(header);         // read numLocals
+    auto numLexicals = tempo_utils::read_u16_and_advance(header);       // read numLexicals
+
+    // maximum number of args is 2^16
+    if (numArguments != 0)
+        throw tempo_utils::StatusException(
+            lyric_runtime::InterpreterStatus::forCondition(
+                lyric_runtime::InterpreterCondition::kRuntimeInvariant, "too many arguments"));
+
+    // construct the task activation call frame
+    lyric_runtime::CallCell frame(address, segment->getSegmentIndex(), procOffset, segment->getSegmentIndex(),
+        {}, 0, 0, 0, numLocals, numLexicals, {});
+
+    if (this->numLexicals() != numLexicals)
+        throw tempo_utils::StatusException(
+            lyric_runtime::InterpreterStatus::forCondition(
+                lyric_runtime::InterpreterCondition::kRuntimeInvariant, "not enough arguments"));
+
+    // import each lexical from the instance into the stack
+    for (tu_uint16 i = 0; i < numLexicals; i++) {
+        frame.setLexical(i, lexicalAt(i));
+    }
+
+    // push the lambda onto the call stack
+    auto ip = getIP();
+    currentCoro->pushCall(frame, ip, segment);
+    TU_LOG_INFO << "initialized task " << task << " ip to " << ip;
+
+    return true;
 }
 
 std::string
@@ -41,38 +98,38 @@ ClosureRef::toString() const
         this, m_callIndex, m_segmentIndex);
 }
 
-uint32_t
+tu_uint32
 ClosureRef::getSegmentIndex() const
 {
     return m_segmentIndex;
 }
 
 void
-ClosureRef::setSegmentIndex(uint32_t segmentIndex)
+ClosureRef::setSegmentIndex(tu_uint32 segmentIndex)
 {
     m_segmentIndex = segmentIndex;
 }
 
-uint32_t
+tu_uint32
 ClosureRef::getCallIndex() const
 {
     return m_callIndex;
 }
 
 void
-ClosureRef::setCallIndex(uint32_t callIndex)
+ClosureRef::setCallIndex(tu_uint32 callIndex)
 {
     m_callIndex = callIndex;
 }
 
-uint32_t
+tu_uint32
 ClosureRef::getProcOffset() const
 {
     return m_procOffset;
 }
 
 void
-ClosureRef::setProcOffset(uint32_t procOffset)
+ClosureRef::setProcOffset(tu_uint32 procOffset)
 {
     m_procOffset = procOffset;
 }
@@ -178,14 +235,14 @@ closure_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
     instance->setProcOffset(procOffset);
 
     // read the call proc header
-    const uint8_t *header = bytecodeData + procOffset;
+    const tu_uint8 *header = bytecodeData + procOffset;
     auto procSize = tempo_utils::read_u32_and_advance(header);          // read procSize
     header += 4;                                                        // skip over numArguments and numLocals
     auto numLexicals = tempo_utils::read_u16_and_advance(header);       // read numLexicals
     auto codeSize = procSize - 6;
 
     // import each lexical from the latest activation and add it to the closure instance
-    for (uint16_t i = 0; i < numLexicals; i++) {
+    for (tu_uint16 i = 0; i < numLexicals; i++) {
 
         // read the call proc lexical
         auto activationCall = tempo_utils::read_u32_and_advance(header);
@@ -255,7 +312,7 @@ closure_apply(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
 
-    const uint8_t *header = bytecodeData + procOffset;
+    const tu_uint8 *header = bytecodeData + procOffset;
     auto returnSP = frame.getReturnSegment();
     auto returnIP = frame.getReturnIP();
     auto stackGuard = currentCoro->dataStackSize();
@@ -266,7 +323,7 @@ closure_apply(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
     auto numLexicals = tempo_utils::read_u16_and_advance(header);       // read numLexicals
 
     // maximum number of args is 2^16
-    if (std::numeric_limits<uint16_t>::max() <= frame.numArguments())
+    if (std::numeric_limits<tu_uint16>::max() <= frame.numArguments())
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "too many arguments");
     // all required args must be present
@@ -294,7 +351,7 @@ closure_apply(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "not enough arguments");
 
     // import each lexical from the instance into the stack
-    for (uint16_t i = 0; i < numLexicals; i++) {
+    for (tu_uint16 i = 0; i < numLexicals; i++) {
         trampoline.setLexical(i, instance->lexicalAt(i));
     }
 

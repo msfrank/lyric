@@ -7,18 +7,11 @@ lyric_runtime::Task::Task(TaskType type, SystemScheduler *scheduler)
     : m_type(type),
       m_state(TaskState::Initial),
       m_scheduler(scheduler),
-      m_worker(nullptr),
+      m_monitor(nullptr),
       m_prev(nullptr),
       m_next(nullptr)
 {
     TU_ASSERT (m_scheduler != nullptr);
-}
-
-lyric_runtime::Task::Task(TaskType type, SystemScheduler *scheduler, uv_async_t *worker)
-    : Task(type, scheduler)
-{
-    m_worker = worker;
-    TU_ASSERT (m_worker != nullptr);
 }
 
 lyric_runtime::TaskType
@@ -49,6 +42,28 @@ void
 lyric_runtime::Task::setTaskState(TaskState state)
 {
     m_state = state;
+}
+
+uv_async_t *
+lyric_runtime::Task::getMonitor() const
+{
+    return m_monitor;
+}
+
+void
+lyric_runtime::Task::setMonitor(uv_async_t *monitor)
+{
+    TU_ASSERT (m_monitor == nullptr);
+    m_monitor = monitor;
+}
+
+void
+lyric_runtime::Task::signalMonitor()
+{
+    if (m_monitor) {
+        uv_async_send(m_monitor);
+        m_monitor = nullptr;
+    }
 }
 
 lyric_runtime::Task *

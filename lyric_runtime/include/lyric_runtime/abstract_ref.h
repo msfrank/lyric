@@ -142,7 +142,14 @@ namespace lyric_runtime {
          * @param result
          * @return true if a result is available, otherwise false.
          */
-        virtual bool resolveFuture(lyric_runtime::DataCell &result) = 0;
+        virtual bool resolveFuture(DataCell &result) = 0;
+
+        /**
+         *
+         * @param task
+         * @return
+         */
+        virtual bool applyClosure(Task *task, lyric_runtime::InterpreterState *state) = 0;
 
         /**
          * Generate a human-readable representation which describes the ref.

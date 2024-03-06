@@ -181,6 +181,9 @@ lyric_runtime::InterpreterState::create(
 
     // allocate a new UV main loop
     loop = new uv_loop_t;
+
+    // initialize the main loop here, but note that SystemScheduler takes ownership of the loop
+    // once it is constructed. in particular, the SystemScheduler owns the loop.data pointer.
     auto ret = uv_loop_init(loop);
     if (ret != 0) {
         status = InterpreterStatus::forCondition(
@@ -193,12 +196,12 @@ lyric_runtime::InterpreterState::create(
 
     // the prelude must either be explicitly specified or inferred from the main location
     if (!options.preludeLocation.isValid()) {
-        if (!mainLocation.isValid()) {
+        if (mainLocation.isValid()) {
+            status = detect_bootstrap(segmentManager, mainLocation, &preludeLocation);
+        } else {
             status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             "either main location or prelude location must be specified");
         }
-
-        status = detect_bootstrap(segmentManager, mainLocation, &preludeLocation);
         if (status.notOk()) {
             goto err;
         }

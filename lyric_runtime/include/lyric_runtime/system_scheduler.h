@@ -52,8 +52,10 @@ namespace lyric_runtime {
         Task *createTask();
         void suspendTask(Task *task);
         void resumeTask(Task *task);
+        void terminateTask(Task *task);
         void destroyTask(Task *task);
 
+        void registerWorker(Task *workerTask, std::shared_ptr<Promise> promise);
         void registerTimer(tu_uint64 deadline, std::shared_ptr<Promise> promise);
         void registerAsync(uv_async_t **asyncptr, std::shared_ptr<Promise> promise, tu_uint64 deadline = 0);
         void destroyWaiter(Waiter *waiter);
@@ -65,9 +67,12 @@ namespace lyric_runtime {
         uv_loop_t *m_loop;
         Task *m_readyQueue;
         Task *m_waitQueue;
+        Task *m_doneQueue;
         Task *m_currentTask;
         Task *m_mainTask;
         Waiter *m_waiters;
+
+        void attachWaiter(Waiter *waiter);
     };
 }
 

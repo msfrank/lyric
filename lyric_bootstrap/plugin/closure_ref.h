@@ -14,14 +14,15 @@ public:
 
     lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
     lyric_runtime::DataCell setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value) override;
+    bool applyClosure(lyric_runtime::Task *task, lyric_runtime::InterpreterState *state) override;
     std::string toString() const override;
 
-    uint32_t getSegmentIndex() const;
-    void setSegmentIndex(uint32_t segmentIndex);
-    uint32_t getCallIndex() const;
-    void setCallIndex(uint32_t callIndex);
-    uint32_t getProcOffset() const;
-    void setProcOffset(uint32_t procOffset);
+    tu_uint32 getSegmentIndex() const;
+    void setSegmentIndex(tu_uint32 segmentIndex);
+    tu_uint32 getCallIndex() const;
+    void setCallIndex(tu_uint32 callIndex);
+    tu_uint32 getProcOffset() const;
+    void setProcOffset(tu_uint32 procOffset);
     lyric_object::BytecodeIterator getIP() const;
     void setIP(lyric_object::BytecodeIterator ip);
 
@@ -34,9 +35,9 @@ protected:
     void clearMembersReachable() override;
 
 private:
-    uint32_t m_segmentIndex;
-    uint32_t m_callIndex;
-    uint32_t m_procOffset;
+    tu_uint32 m_segmentIndex;
+    tu_uint32 m_callIndex;
+    tu_uint32 m_procOffset;
     lyric_object::BytecodeIterator m_IP;
     std::vector<lyric_runtime::DataCell> m_lexicals;
 };

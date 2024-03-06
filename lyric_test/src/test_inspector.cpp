@@ -7,30 +7,50 @@
 #include <tempo_utils/log_stream.h>
 
 lyric_test::TestInspector::TestInspector()
+    : m_currentTask(nullptr)
 {
 }
 
 tempo_utils::Status
 lyric_test::TestInspector::beforeOp(
     const lyric_object::OpCell &op,
+    lyric_runtime::BytecodeInterpreter *interp,
     lyric_runtime::InterpreterState *state)
 {
-    TU_CONSOLE_OUT << "exec opcode " << op.opcode << " (" << (uint8_t) op.opcode << ")";
+    auto *currentTask = state->systemScheduler()->currentTask();
+
+    if (currentTask != m_currentTask) {
+        if (m_currentTask != nullptr) {
+            TU_CONSOLE_OUT << "*** task switch from " << m_currentTask << " to " << currentTask << " ***";
+            printCallStack(state);
+            TU_CONSOLE_OUT << "";
+        }
+        m_currentTask = currentTask;
+    }
+
+    TU_CONSOLE_OUT << "task " << m_currentTask << ": exec opcode " << op.opcode
+        << " (" << (uint8_t) op.opcode << ")"
+        << " rd:" << interp->getRecursionDepth()
+        << " sc:" << interp->getSliceCounter()
+        << " ic:" << interp->getInstructionCounter();
     return lyric_runtime::InterpreterStatus::ok();
 }
 
 tempo_utils::Status
 lyric_test::TestInspector::afterOp(
     const lyric_object::OpCell &op,
+    lyric_runtime::BytecodeInterpreter *interp,
     lyric_runtime::InterpreterState *state)
 {
     printDataStack(state);
+    TU_CONSOLE_OUT << "";
     return lyric_runtime::InterpreterStatus::ok();
 }
 
 tempo_utils::Status
 lyric_test::TestInspector::onInterrupt(
     const lyric_runtime::DataCell &cell,
+    lyric_runtime::BytecodeInterpreter *interp,
     lyric_runtime::InterpreterState *state)
 {
     return lyric_runtime::InterpreterStatus::forCondition(
@@ -41,6 +61,7 @@ tempo_utils::Result<lyric_runtime::DataCell>
 lyric_test::TestInspector::onError(
     const lyric_object::OpCell &op,
     const tempo_utils::Status &status,
+    lyric_runtime::BytecodeInterpreter *interp,
     lyric_runtime::InterpreterState *state)
 {
     return status;
@@ -50,6 +71,7 @@ tempo_utils::Result<lyric_runtime::DataCell>
 lyric_test::TestInspector::onHalt(
     const lyric_object::OpCell &op,
     const lyric_runtime::DataCell &cell,
+    lyric_runtime::BytecodeInterpreter *interp,
     lyric_runtime::InterpreterState *state)
 {
     return cell;
@@ -84,7 +106,7 @@ lyric_test::TestInspector::printCallStack(lyric_runtime::InterpreterState *state
     int frameNr = currentCoro->callStackSize() - 1;
     for (auto iterator = currentCoro->callsBegin(); iterator != currentCoro->callsEnd(); iterator++) {
         auto frameDescription = frame_to_description(*iterator, state);
-        TU_LOG_INFO << "Frame #" << frameNr << ": " << frameDescription;
+        TU_CONSOLE_OUT << "Frame #" << frameNr << ": " << frameDescription;
         frameNr--;
     }
     TU_CONSOLE_OUT << "---------------------------------";

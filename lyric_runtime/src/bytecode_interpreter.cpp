@@ -15,6 +15,8 @@ lyric_runtime::BytecodeInterpreter::BytecodeInterpreter(
     AbstractInspector *inspector)
     : m_state(state),
       m_inspector(inspector),
+      m_sliceCounter(0),
+      m_instructionCounter(0),
       m_recursionDepth(0)
 {
     TU_ASSERT (m_state != nullptr);
@@ -55,20 +57,22 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
     auto *subroutineManager = m_state->subroutineManager();
     auto *systemScheduler = m_state->systemScheduler();
     auto *typeManager = m_state->typeManager();
+
     auto *currentCoro = m_state->currentCoro();
     TU_ASSERT (currentCoro != nullptr);
     currentCoro->pushGuard();
-
-    int opcount = 0;
 
     for (;;) {
 
         // this will be set only if the current task has changed
         Task *nextReady = nullptr;
 
+        m_instructionCounter++;
+        m_sliceCounter++;
+
         // if time slice has been exceeded, then poll for events and schedule a new task
-        if (++opcount > TIME_SLICE) {
-            opcount = 0;
+        if (m_sliceCounter > TIME_SLICE) {
+            m_sliceCounter = 0;
             for (int i = 0; i < FAST_POLL_ITERATIONS; i++) {
                 if (systemScheduler->poll())
                     break;
@@ -79,9 +83,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
         // poll for events again if there are no ready tasks
         if (currentCoro == nullptr) {
-            // if blocking poll returns false, there are no tasks remaining
-            if (!systemScheduler->blockingPoll())
-                break;
+            // perform blocking poll. this may not block if there is a ready task available.
+            systemScheduler->blockingPoll();
             nextReady = systemScheduler->selectNextReady();
             currentCoro = m_state->currentCoro();
             TU_ASSERT (currentCoro != nullptr);
@@ -100,22 +103,29 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
         // read the next bytecode op
         lyric_object::OpCell op;
         if (!currentCoro->nextOp(op)) {
-            InterpreterStatus status;
 
-            // if we reached the call stack guard then pop the guard
-            bool reachedGuard = currentCoro->peekGuard() == currentCoro->callStackSize();
-            if (reachedGuard)
-                currentCoro->popGuard();
-            // the end of the iterator means we return to the caller
-            if (subroutineManager->returnToCaller(currentCoro, status)) {
-                // if we did not reach a guard then continue the interpreter loop
-                if (!reachedGuard)
-                    continue;
-                // otherwise fall through
+            // if there is no next op but there is a guard then we have reached the end of the current
+            // call but possibly not the end of the current task, so try returning to the caller
+            if (currentCoro->guardStackSize() > 0) {
+                InterpreterStatus status;
+
+                // if we reached the call stack guard then pop the guard
+                bool reachedGuard = currentCoro->peekGuard() == currentCoro->callStackSize();
+                if (reachedGuard)
+                    currentCoro->popGuard();
+
+                // the end of the iterator means we return to the caller
+                if (subroutineManager->returnToCaller(currentCoro, status)) {
+                    // if we did not reach a guard then jump back to the top of the interpreter loop
+                    if (!reachedGuard)
+                        continue;
+                    // otherwise fall through
+                }
+
+                // if result is false and status is not ok, then return error
+                if (status.notOk())
+                    return status;
             }
-            // if result is false and status is not ok, then return error
-            if (status.notOk())
-                return status;
 
             // at this point we know the current task is finished. we behave differently depending
             // on whether the current task is the main task or a worker task.
@@ -128,12 +138,17 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 return onHalt(op, DataCell::nil());
             }
 
-            // otherwise this is a worker task
+            // otherwise this is a worker task, get the result and terminate the task
+            systemScheduler->terminateTask(currentTask);
+
+            // clear the current coro and jump back to the top of the loop
+            currentCoro = nullptr;
+            continue;
         }
 
         // run inspector hook after processing op
         if (m_inspector) {
-            auto status = m_inspector->beforeOp(op, m_state.get());
+            auto status = m_inspector->beforeOp(op, this, m_state.get());
             if (!status.isOk())
                 return status;
         }
@@ -1064,16 +1079,25 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 bool reachedGuard = currentCoro->peekGuard() == currentCoro->callStackSize();
                 if (reachedGuard)
                     currentCoro->popGuard();
-                // if we reached the guard or reached the bottom of the call stack then return
                 InterpreterStatus status;
-                auto noCaller = !subroutineManager->returnToCaller(currentCoro, status);
-                if (noCaller || reachedGuard) {
+                // check if we reached the bottom of the call stack
+                if (!subroutineManager->returnToCaller(currentCoro, status)) {
                     if (status.notOk())
                         return onError(op, status);
-                    // if result is false, then treat as a HALT
+                    // if we're executing the main task and we have no return address then halt
+                    if (systemScheduler->currentTask()->getTaskType() == TaskType::Main) {
+                        if (currentCoro->dataStackSize() > 0)
+                            return onHalt(op, currentCoro->popData());
+                        return onHalt(op, DataCell::nil());
+                    }
+                    // otherwise we're executing a worker task, so we do nothing
+                    break;
+                }
+                // if the call stack is still valid and we reached a guard then return from the subinterpreter
+                if (reachedGuard) {
                     if (currentCoro->dataStackSize() > 0)
-                        return onHalt(op, currentCoro->popData());
-                    return onHalt(op, DataCell::nil());
+                        return currentCoro->popData();
+                    return DataCell();
                 }
                 break;
             }
@@ -1180,7 +1204,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
         // run inspector hook after processing op
         if (m_inspector) {
-            auto status = m_inspector->afterOp(op, m_state.get());
+            auto status = m_inspector->afterOp(op, this, m_state.get());
             if (!status.isOk())
                 return status;
         }
@@ -1206,6 +1230,18 @@ lyric_runtime::BytecodeInterpreter::interpreterInspector() const
     return m_inspector;
 }
 
+tu_uint16
+lyric_runtime::BytecodeInterpreter::getSliceCounter() const
+{
+    return m_sliceCounter;
+}
+
+tu_uint64
+lyric_runtime::BytecodeInterpreter::getInstructionCounter() const
+{
+    return m_instructionCounter;
+}
+
 int
 lyric_runtime::BytecodeInterpreter::getRecursionDepth() const
 {
@@ -1229,7 +1265,7 @@ lyric_runtime::BytecodeInterpreter::onInterrupt(const DataCell &cell)
 {
     TU_LOG_VV << "interrupting interpreter";
     if (m_inspector)
-        return m_inspector->onInterrupt(cell, m_state.get());
+        return m_inspector->onInterrupt(cell, this, m_state.get());
     return InterpreterStatus::ok();
 }
 
@@ -1238,7 +1274,7 @@ lyric_runtime::BytecodeInterpreter::onError(const lyric_object::OpCell &op, cons
 {
     TU_LOG_VV << status;
     if (m_inspector)
-        return m_inspector->onError(op, status, m_state.get());
+        return m_inspector->onError(op, status, this, m_state.get());
     return status;
 }
 
@@ -1247,7 +1283,7 @@ lyric_runtime::BytecodeInterpreter::onHalt(const lyric_object::OpCell &op, const
 {
     TU_LOG_VV << "halting interpreter";
     if (m_inspector)
-        return m_inspector->onHalt(op, cell, m_state.get());
+        return m_inspector->onHalt(op, cell, this, m_state.get());
     return cell;
 }
 
