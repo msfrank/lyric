@@ -27,7 +27,7 @@ namespace lyric_runtime {
 
         struct HandlePriv {
             AbstractRef *instance;
-            int refcount;
+            std::atomic<int> refcount;
             struct HandlePriv *prev;
             struct HandlePriv *next;
         };

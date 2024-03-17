@@ -8,6 +8,21 @@
 #include <tempo_utils/big_endian.h>
 #include <tempo_utils/log_stream.h>
 
+/**
+ * Default no-args constructor which creates an invalid InterpreterState instance. This is only useful
+ * for mocking the class when testing.
+ */
+lyric_runtime::InterpreterState::InterpreterState()
+    : m_loop(nullptr),
+      m_segmentManager(nullptr),
+      m_typeManager(nullptr),
+      m_subroutineManager(nullptr),
+      m_systemScheduler(nullptr),
+      m_portMultiplexer(nullptr),
+      m_heapManager(nullptr)
+{
+}
+
 lyric_runtime::InterpreterState::InterpreterState(
     uv_loop_t *loop,
     std::shared_ptr<AbstractHeap> heap,
@@ -45,9 +60,10 @@ lyric_runtime::InterpreterState::~InterpreterState()
     delete m_typeManager;
     delete m_segmentManager;
 
-    // release uv loop resources
-    uv_loop_close(m_loop);
-    free(m_loop);
+    if (m_loop != nullptr) {
+        uv_loop_close(m_loop);
+        free(m_loop);
+    }
 }
 
 static tempo_utils::Status

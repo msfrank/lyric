@@ -116,8 +116,13 @@ lyric_packaging::DirectoryLoader::loadPlugin(
 
     // attempt to load the plugin
     auto loader = std::make_shared<tempo_utils::LibraryLoader>(absolutePath, "native_init");
-    if (!loader->isValid())
-        return loader->getStatus();
+    if (!loader->isValid()) {
+        auto status = loader->getStatus();
+        // if plugin is not found then return empty option instead of status
+        if (status.getStatusCode() == tempo_utils::StatusCode::kNotFound)
+            return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>();
+        return status;
+    }
 
     // cast raw pointer to native_init function pointer
     auto native_init = (lyric_runtime::NativeInitFunc) loader->symbolPointer();

@@ -17,7 +17,7 @@ lyric_runtime::DataCell::DataCell(bool b)
     data.b = b;
 }
 
-lyric_runtime::DataCell::DataCell(int64_t i64)
+lyric_runtime::DataCell::DataCell(tu_int64 i64)
 {
     type = DataCellType::I64;
     data.i64 = i64;
@@ -188,7 +188,7 @@ lyric_runtime::DataCell::forLiteral(const lyric_runtime::LiteralCell &literal)
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forUtf8(const char *data, int32_t size)
+lyric_runtime::DataCell::forUtf8(const char *data, tu_int32 size)
 {
     TU_ASSERT (data != nullptr);
     TU_ASSERT (size >= 0);
@@ -210,7 +210,7 @@ lyric_runtime::DataCell::forRef(BaseRef *instance)
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forClass(uint32_t assemblyIndex, uint32_t classIndex)
+lyric_runtime::DataCell::forClass(tu_uint32 assemblyIndex, tu_uint32 classIndex)
 {
     TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
     DataCell cell;
@@ -221,7 +221,7 @@ lyric_runtime::DataCell::forClass(uint32_t assemblyIndex, uint32_t classIndex)
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forStruct(uint32_t assemblyIndex, uint32_t structIndex)
+lyric_runtime::DataCell::forStruct(tu_uint32 assemblyIndex, tu_uint32 structIndex)
 {
     TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
     DataCell cell;
@@ -232,7 +232,7 @@ lyric_runtime::DataCell::forStruct(uint32_t assemblyIndex, uint32_t structIndex)
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forEnum(uint32_t assemblyIndex, uint32_t enumIndex)
+lyric_runtime::DataCell::forEnum(tu_uint32 assemblyIndex, tu_uint32 enumIndex)
 {
     TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
     DataCell cell;
@@ -243,7 +243,7 @@ lyric_runtime::DataCell::forEnum(uint32_t assemblyIndex, uint32_t enumIndex)
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forInstance(uint32_t assemblyIndex, uint32_t instanceIndex)
+lyric_runtime::DataCell::forInstance(tu_uint32 assemblyIndex, tu_uint32 instanceIndex)
 {
     TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
     DataCell cell;
@@ -254,7 +254,7 @@ lyric_runtime::DataCell::forInstance(uint32_t assemblyIndex, uint32_t instanceIn
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forConcept(uint32_t assemblyIndex, uint32_t conceptIndex)
+lyric_runtime::DataCell::forConcept(tu_uint32 assemblyIndex, tu_uint32 conceptIndex)
 {
     TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
     DataCell cell;
@@ -265,7 +265,7 @@ lyric_runtime::DataCell::forConcept(uint32_t assemblyIndex, uint32_t conceptInde
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forField(uint32_t assemblyIndex, uint32_t fieldIndex)
+lyric_runtime::DataCell::forField(tu_uint32 assemblyIndex, tu_uint32 fieldIndex)
 {
     TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
     DataCell cell;
@@ -276,7 +276,7 @@ lyric_runtime::DataCell::forField(uint32_t assemblyIndex, uint32_t fieldIndex)
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forCall(uint32_t assemblyIndex, uint32_t callIndex)
+lyric_runtime::DataCell::forCall(tu_uint32 assemblyIndex, tu_uint32 callIndex)
 {
     TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
     DataCell cell;
@@ -287,7 +287,7 @@ lyric_runtime::DataCell::forCall(uint32_t assemblyIndex, uint32_t callIndex)
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forAction(uint32_t assemblyIndex, uint32_t actionIndex)
+lyric_runtime::DataCell::forAction(tu_uint32 assemblyIndex, tu_uint32 actionIndex)
 {
     TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
     DataCell cell;
@@ -298,7 +298,7 @@ lyric_runtime::DataCell::forAction(uint32_t assemblyIndex, uint32_t actionIndex)
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forType(uint32_t assemblyIndex, uint32_t typeIndex)
+lyric_runtime::DataCell::forType(tu_uint32 assemblyIndex, tu_uint32 typeIndex)
 {
     TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
     DataCell cell;
@@ -309,7 +309,7 @@ lyric_runtime::DataCell::forType(uint32_t assemblyIndex, uint32_t typeIndex)
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forExistential(uint32_t assemblyIndex, uint32_t existentialIndex)
+lyric_runtime::DataCell::forExistential(tu_uint32 assemblyIndex, tu_uint32 existentialIndex)
 {
     TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
     DataCell cell;
@@ -320,7 +320,7 @@ lyric_runtime::DataCell::forExistential(uint32_t assemblyIndex, uint32_t existen
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forNamespace(uint32_t assemblyIndex, uint32_t namespaceIndex)
+lyric_runtime::DataCell::forNamespace(tu_uint32 assemblyIndex, tu_uint32 namespaceIndex)
 {
     TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
     DataCell cell;

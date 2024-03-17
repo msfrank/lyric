@@ -28,6 +28,7 @@ namespace lyric_runtime {
 
     class InterpreterState : public std::enable_shared_from_this<InterpreterState> {
     public:
+        InterpreterState();
         static tempo_utils::Result<std::shared_ptr<InterpreterState>> create(
             const InterpreterStateOptions &options,
             const lyric_common::AssemblyLocation &mainLocation = {});

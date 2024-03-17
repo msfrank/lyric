@@ -72,3 +72,17 @@ lyric_runtime::ChainLoader::loadPlugin(
     }
     return Option<std::shared_ptr<const AbstractPlugin>>();
 }
+
+std::shared_ptr<lyric_runtime::AbstractLoader>
+lyric_runtime::ChainLoader::getLoader(int index) const
+{
+    if (0 <= index && index < m_chain.size())
+        return m_chain.at(index);
+    return {};
+}
+
+int
+lyric_runtime::ChainLoader::numLoaders() const
+{
+    return m_chain.size();
+}

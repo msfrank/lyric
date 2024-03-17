@@ -24,6 +24,9 @@ namespace lyric_runtime {
             const lyric_common::AssemblyLocation &location,
             const lyric_object::PluginSpecifier &specifier) override;
 
+        std::shared_ptr<AbstractLoader> getLoader(int index) const;
+        int numLoaders() const;
+
     private:
         std::vector<std::shared_ptr<AbstractLoader>> m_chain;
     };

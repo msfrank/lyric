@@ -40,7 +40,7 @@ namespace lyric_runtime {
 
         DataCell();
         explicit DataCell(bool b);
-        explicit DataCell(int64_t i64);
+        explicit DataCell(tu_int64 i64);
         explicit DataCell(double dbl);
         explicit DataCell(UChar32 char32);
         DataCell(const DataCell &other);
@@ -56,33 +56,33 @@ namespace lyric_runtime {
         static DataCell nil();
         static DataCell present();
         static DataCell forLiteral(const lyric_runtime::LiteralCell &literal);
-        static DataCell forUtf8(const char *data, int32_t size);
+        static DataCell forUtf8(const char *data, tu_int32 size);
         static DataCell forRef(BaseRef *ref);
-        static DataCell forClass(uint32_t assemblyIndex, uint32_t classIndex);
-        static DataCell forStruct(uint32_t assemblyIndex, uint32_t structIndex);
-        static DataCell forInstance(uint32_t assemblyIndex, uint32_t instanceIndex);
-        static DataCell forConcept(uint32_t assemblyIndex, uint32_t conceptIndex);
-        static DataCell forEnum(uint32_t assemblyIndex, uint32_t enumIndex);
-        static DataCell forCall(uint32_t assemblyIndex, uint32_t callIndex);
-        static DataCell forField(uint32_t assemblyIndex, uint32_t fieldIndex);
-        static DataCell forAction(uint32_t assemblyIndex, uint32_t actionIndex);
-        static DataCell forType(uint32_t assemblyIndex, uint32_t typeIndex);
-        static DataCell forExistential(uint32_t assemblyIndex, uint32_t existentialIndex);
-        static DataCell forNamespace(uint32_t assemblyIndex, uint32_t namespaceIndex);
+        static DataCell forClass(tu_uint32 assemblyIndex, tu_uint32 classIndex);
+        static DataCell forStruct(tu_uint32 assemblyIndex, tu_uint32 structIndex);
+        static DataCell forInstance(tu_uint32 assemblyIndex, tu_uint32 instanceIndex);
+        static DataCell forConcept(tu_uint32 assemblyIndex, tu_uint32 conceptIndex);
+        static DataCell forEnum(tu_uint32 assemblyIndex, tu_uint32 enumIndex);
+        static DataCell forCall(tu_uint32 assemblyIndex, tu_uint32 callIndex);
+        static DataCell forField(tu_uint32 assemblyIndex, tu_uint32 fieldIndex);
+        static DataCell forAction(tu_uint32 assemblyIndex, tu_uint32 actionIndex);
+        static DataCell forType(tu_uint32 assemblyIndex, tu_uint32 typeIndex);
+        static DataCell forExistential(tu_uint32 assemblyIndex, tu_uint32 existentialIndex);
+        static DataCell forNamespace(tu_uint32 assemblyIndex, tu_uint32 namespaceIndex);
 
         DataCellType type;
         union {
             bool b;
-            int64_t i64;
+            tu_int64 i64;
             double dbl;
             UChar32 chr;
             struct {
                 const char *data;
-                int32_t size;
+                tu_int32 size;
             } utf8;
             struct {
-                uint32_t assembly;
-                uint32_t value;
+                tu_uint32 assembly;
+                tu_uint32 value;
             } descriptor;
             BaseRef *ref;
         } data;

@@ -145,9 +145,12 @@ namespace lyric_runtime {
         virtual bool resolveFuture(DataCell &result) = 0;
 
         /**
+         * Modify the specified `task` such that the closure contained in the ref is immediately invoked when
+         * the task resumes. If the ref type does not support the closure protocol or if the task is in Done
+         * state then side effects must not occur and the method must return false.
          *
          * @param task
-         * @return
+         * @return true if the closure call frame has been pushed onto the task call stack, otherwise false.
          */
         virtual bool applyClosure(Task *task, lyric_runtime::InterpreterState *state) = 0;
 
