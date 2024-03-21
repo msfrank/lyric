@@ -4,13 +4,12 @@
 #include <chrono>
 #include <filesystem>
 
-#include <boost/uuid/uuid.hpp>
-
 #include <lyric_common/assembly_location.h>
 #include <lyric_packaging/package_types.h>
 #include <lyric_packaging/lyric_manifest.h>
-#include <tempo_tracing/tempo_spanset.h>
 #include <tempo_config/config_types.h>
+#include <tempo_tracing/tempo_spanset.h>
+#include <tempo_utils/uuid.h>
 
 namespace lyric_build {
 
@@ -39,16 +38,16 @@ namespace lyric_build {
     public:
         BuildGeneration();
         BuildGeneration(
-            const boost::uuids::uuid &uuid,
+            const tempo_utils::UUID &uuid,
             const std::chrono::time_point<std::chrono::system_clock> &createTime);
         BuildGeneration(const BuildGeneration &other);
 
         bool isValid() const;
-        boost::uuids::uuid getUuid() const;
+        tempo_utils::UUID getUuid() const;
         std::chrono::time_point<std::chrono::system_clock> getCreateTime();
 
     private:
-        boost::uuids::uuid m_uuid;
+        tempo_utils::UUID m_uuid;
         std::chrono::time_point<std::chrono::system_clock> m_createTime;
     };
 
@@ -134,18 +133,18 @@ namespace lyric_build {
         };
 
         TaskState();
-        TaskState(Status status, const boost::uuids::uuid &generation, const std::string &hash);
+        TaskState(Status status, const tempo_utils::UUID &generation, const std::string &hash);
         TaskState(const TaskState &other);
 
         Status getStatus() const;
-        boost::uuids::uuid getGeneration() const;
+        tempo_utils::UUID getGeneration() const;
         std::string getHash() const;
 
         std::string toString() const;
 
     private:
         Status m_status;
-        boost::uuids::uuid m_generation;
+        tempo_utils::UUID m_generation;
         std::string m_hash;
     };
 
@@ -156,14 +155,14 @@ namespace lyric_build {
 
     public:
         ArtifactId();
-        ArtifactId(const boost::uuids::uuid &generation, const std::string &hash, const tempo_utils::Url &location);
+        ArtifactId(const tempo_utils::UUID &generation, const std::string &hash, const tempo_utils::Url &location);
         // ArtifactId(const boost::uuids::uuid &generation, const std::string &hash, const std::string &path);
         // ArtifactId(const boost::uuids::uuid &generation, const std::string &hash, const std::vector<std::string> &path);
         // ArtifactId(const boost::uuids::uuid &generation, const std::string &hash, const std::filesystem::path &path);
         ArtifactId(const ArtifactId &other);
 
         bool isValid() const;
-        boost::uuids::uuid getGeneration() const;
+        tempo_utils::UUID getGeneration() const;
         std::string getHash() const;
         tempo_utils::Url getLocation() const;
 
@@ -174,11 +173,11 @@ namespace lyric_build {
 
         template <typename H>
         friend H AbslHashValue(H h, const ArtifactId &artifactId) {
-            return H::combine(std::move(h), artifactId.m_generation.data, artifactId.m_hash, artifactId.m_location);
+            return H::combine(std::move(h), artifactId.m_generation, artifactId.m_hash, artifactId.m_location);
         }
 
     private:
-        boost::uuids::uuid m_generation;
+        tempo_utils::UUID m_generation;
         std::string m_hash;
         tempo_utils::Url m_location;
     };

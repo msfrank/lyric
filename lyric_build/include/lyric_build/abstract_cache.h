@@ -3,8 +3,6 @@
 
 #include <span>
 
-#include <boost/uuid/uuid.hpp>
-
 #include <lyric_build/build_types.h>
 #include <lyric_build/lyric_metadata.h>
 #include <tempo_utils/immutable_bytes.h>
@@ -62,16 +60,16 @@ namespace lyric_build {
         virtual tempo_utils::Status linkArtifact(const ArtifactId &dstId, const ArtifactId &srcId) = 0;
 
         virtual tempo_utils::Result<std::vector<ArtifactId>> findArtifacts(
-            const boost::uuids::uuid &generation,
+            const tempo_utils::UUID &generation,
             const std::string &hash,
             const tempo_utils::Url &baseUrl,
             const LyricMetadata &filters) = 0;
 
         virtual bool containsTrace(const TraceId &traceId) = 0;
 
-        virtual boost::uuids::uuid loadTrace(const TraceId &traceId) = 0;
+        virtual tempo_utils::UUID loadTrace(const TraceId &traceId) = 0;
 
-        virtual void storeTrace(const TraceId &traceId, const boost::uuids::uuid &generation) = 0;
+        virtual void storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation) = 0;
 
         virtual bool containsDiagnostics(const TraceId &traceId) = 0;
 

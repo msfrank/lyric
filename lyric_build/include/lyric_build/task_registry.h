@@ -1,8 +1,6 @@
 #ifndef LYRIC_BUILD_TASK_REGISTRY_H
 #define LYRIC_BUILD_TASK_REGISTRY_H
 
-#include <boost/uuid/uuid.hpp>
-
 #include "base_task.h"
 #include "build_types.h"
 #include "config_store.h"
@@ -14,7 +12,7 @@ namespace lyric_build {
         explicit TaskRegistry(const ConfigStore &config);
 
         tempo_utils::Result<BaseTask *> makeTask(
-            const boost::uuids::uuid &generation,
+            const tempo_utils::UUID &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
 

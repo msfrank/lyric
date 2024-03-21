@@ -285,7 +285,7 @@ lyric_build::LyricBuilder::computeTargets(
     TaskRegistry registry(config);
 
     // wrap the build cache and loader chain in a unique generation
-    BuildGeneration buildGen(m_uuidgen(), std::chrono::system_clock::now());
+    BuildGeneration buildGen(tempo_utils::UUID::randomUUID(), std::chrono::system_clock::now());
     auto state = std::make_shared<BuildState>(buildGen, m_cache, m_bootstrapLoader, m_packageLoader,
         m_fallbackLoader, m_sharedModuleCache, m_virtualFilesystem);
 

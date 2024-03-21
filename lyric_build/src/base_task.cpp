@@ -1,6 +1,4 @@
 
-#include <boost/uuid/uuid_io.hpp>
-
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/build_attrs.h>
@@ -9,7 +7,7 @@
 #include <tempo_tracing/tracing_schema.h>
 
 lyric_build::BaseTask::BaseTask(
-    const boost::uuids::uuid &generation,
+    const tempo_utils::UUID &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
     : m_generation(generation),
@@ -29,7 +27,7 @@ lyric_build::BaseTask::~BaseTask()
     }
 }
 
-boost::uuids::uuid
+tempo_utils::UUID
 lyric_build::BaseTask::getGeneration() const
 {
     return m_generation;
@@ -127,7 +125,7 @@ lyric_build::BaseTask::run(
     if (m_state == State::READY) {
         m_span->setStartTime(absl::Now());
         m_span->putTag(tempo_tracing::kOpentracingComponent, std::string("lyric_build"));
-        m_span->putTag(lyric_build::kLyricBuildGeneration, boost::uuids::to_string(m_generation));
+        m_span->putTag(lyric_build::kLyricBuildGeneration, m_generation.toString());
         m_span->putTag(lyric_build::kLyricBuildTaskParams, m_key.getParams().toString());
         m_span->putTag(lyric_build::kLyricBuildTaskHash, taskHash);
         m_state = State::ACTIVE;

@@ -71,7 +71,7 @@ namespace lyric_build {
 
         void parkDeps(const TaskKey &key, const absl::flat_hash_set<TaskKey> &dependencies);
         void restartDeps(const TaskKey &key);
-        void markTaskFailed(const TaskKey &key, BuildStatus status, boost::uuids::uuid generation);
+        void markTaskFailed(const TaskKey &key, BuildStatus status, const tempo_utils::UUID &generation);
         void joinThread(int index);
         void invokeNotificationCallback(const TaskNotification *notification);
 

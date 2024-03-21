@@ -267,7 +267,8 @@ lyric_test::TestRunner::buildModuleInternal(
         return BuildModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
     // construct module location based on the source path
-    std::filesystem::path modulePath = sourcePath;
+    std::filesystem::path modulePath = "/";
+    modulePath /= sourcePath;
     modulePath.replace_extension();
     lyric_common::AssemblyLocation moduleLocation(modulePath);
 
@@ -305,10 +306,12 @@ lyric_test::TestRunner::compileModuleInternal(
     auto generation = cache->loadTrace(targetTrace);
 
     // change the file extension
-    sourcePath.replace_extension(lyric_common::kAssemblyFileSuffix);
-    auto assemblyUrl = tempo_utils::Url::fromRelative(sourcePath.string());
+    std::filesystem::path modulePath = "/";
+    modulePath /= sourcePath;
+    modulePath.replace_extension(lyric_common::kAssemblyFileSuffix);
+    auto moduleUrl = tempo_utils::Url::fromRelative(modulePath.string());
 
-    lyric_build::ArtifactId targetArtifact(generation, targetState.getHash(), assemblyUrl);
+    lyric_build::ArtifactId targetArtifact(generation, targetState.getHash(), moduleUrl);
     auto loadContentResult = cache->loadContentFollowingLinks(targetArtifact);
     if (loadContentResult.isStatus())
         return loadContentResult.getStatus();
@@ -348,10 +351,12 @@ lyric_test::TestRunner::analyzeModuleInternal(
     auto generation = cache->loadTrace(targetTrace);
 
     // change the file extension
-    sourcePath.replace_extension(lyric_common::kAssemblyFileSuffix);
-    auto assemblyUrl = tempo_utils::Url::fromRelative(sourcePath.string());
+    std::filesystem::path modulePath = "/";
+    modulePath /= sourcePath;
+    modulePath.replace_extension(lyric_common::kAssemblyFileSuffix);
+    auto moduleUrl = tempo_utils::Url::fromRelative(modulePath.string());
 
-    lyric_build::ArtifactId targetArtifact(generation, targetState.getHash(), assemblyUrl);
+    lyric_build::ArtifactId targetArtifact(generation, targetState.getHash(), moduleUrl);
     auto loadContentResult = cache->loadContentFollowingLinks(targetArtifact);
     if (loadContentResult.isStatus())
         return loadContentResult.getStatus();
@@ -391,10 +396,12 @@ lyric_test::TestRunner::symbolizeModuleInternal(
     auto generation = cache->loadTrace(targetTrace);
 
     // change the file extension
-    sourcePath.replace_extension(lyric_common::kAssemblyFileSuffix);
-    auto assemblyUrl = tempo_utils::Url::fromRelative(sourcePath.string());
+    std::filesystem::path modulePath = "/";
+    modulePath /= sourcePath;
+    modulePath.replace_extension(lyric_common::kAssemblyFileSuffix);
+    auto moduleUrl = tempo_utils::Url::fromRelative(modulePath.string());
 
-    lyric_build::ArtifactId targetArtifact(generation, targetState.getHash(), assemblyUrl);
+    lyric_build::ArtifactId targetArtifact(generation, targetState.getHash(), moduleUrl);
     auto loadContentResult = cache->loadContentFollowingLinks(targetArtifact);
     if (loadContentResult.isStatus())
         return loadContentResult.getStatus();
@@ -420,7 +427,8 @@ lyric_test::TestRunner::packageModuleInternal(
     auto sourcePath = writeSourceResult.getResult();
     lyric_build::TaskId target("package");
 
-    std::filesystem::path modulePath = sourcePath;
+    std::filesystem::path modulePath = "/";
+    modulePath /= sourcePath;
     modulePath.replace_extension();
 
     absl::flat_hash_map<lyric_build::TaskId,tempo_config::ConfigMap> taskOverrides;

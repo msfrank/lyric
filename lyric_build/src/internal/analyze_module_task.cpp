@@ -23,7 +23,7 @@
 #include <tempo_utils/log_stream.h>
 
 lyric_build::internal::AnalyzeModuleTask::AnalyzeModuleTask(
-    const boost::uuids::uuid &generation,
+    const tempo_utils::UUID &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
     : BaseTask(generation, key, span),
@@ -280,7 +280,7 @@ lyric_build::internal::AnalyzeModuleTask::runTask(
 
 lyric_build::BaseTask *
 lyric_build::internal::new_analyze_module_task(
-    const boost::uuids::uuid &generation,
+    const tempo_utils::UUID &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {

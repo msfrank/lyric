@@ -141,7 +141,7 @@ lyric_build::MemoryCache::linkArtifact(const ArtifactId &dstId, const ArtifactId
 
 tempo_utils::Result<std::vector<lyric_build::ArtifactId>>
 lyric_build::MemoryCache::findArtifacts(
-    const boost::uuids::uuid &generation,
+    const tempo_utils::UUID &generation,
     const std::string &hash,
     const tempo_utils::Url &baseUrl,
     const LyricMetadata &filters)
@@ -184,7 +184,7 @@ lyric_build::MemoryCache::containsTrace(const TraceId &traceId)
     return m_traces.contains(traceId);
 }
 
-boost::uuids::uuid
+tempo_utils::UUID
 lyric_build::MemoryCache::loadTrace(const TraceId &traceId)
 {
     absl::MutexLock locker(&m_lock);
@@ -194,7 +194,7 @@ lyric_build::MemoryCache::loadTrace(const TraceId &traceId)
 }
 
 void
-lyric_build::MemoryCache::storeTrace(const TraceId &traceId, const boost::uuids::uuid &generation)
+lyric_build::MemoryCache::storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation)
 {
     absl::MutexLock locker(&m_lock);
     m_traces.insert_or_assign(traceId, generation);

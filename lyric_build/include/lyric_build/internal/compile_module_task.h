@@ -1,8 +1,6 @@
 #ifndef LYRIC_BUILD_INTERNAL_COMPILE_MODULE_TASK_H
 #define LYRIC_BUILD_INTERNAL_COMPILE_MODULE_TASK_H
 
-#include <boost/uuid/uuid.hpp>
-
 #include <lyric_assembler/assembly_state.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_state.h>
@@ -23,7 +21,7 @@ namespace lyric_build::internal {
 
     public:
         CompileModuleTask(
-            const boost::uuids::uuid &generation,
+            const tempo_utils::UUID &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
 
@@ -58,7 +56,7 @@ namespace lyric_build::internal {
     };
 
     BaseTask *new_compile_module_task(
-        const boost::uuids::uuid &generation,
+        const tempo_utils::UUID &generation,
         const TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }

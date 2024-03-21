@@ -3,7 +3,6 @@
 #include <absl/strings/escaping.h>
 
 #include <tempo_utils/log_message.h>
-#include <boost/uuid/uuid_io.hpp>
 
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_runner.h>
@@ -359,7 +358,7 @@ lyric_build::BuildRunner::restartDeps(const TaskKey &key)
 }
 
 void
-lyric_build::BuildRunner::markTaskFailed(const TaskKey &key, BuildStatus status, boost::uuids::uuid generation)
+lyric_build::BuildRunner::markTaskFailed(const TaskKey &key, BuildStatus status, const tempo_utils::UUID &generation)
 {
     std::shared_lock<std::shared_mutex> locker(m_tasksRWlock);
     TU_ASSERT (m_tasks.contains(key));
@@ -494,7 +493,7 @@ static void on_async_notify(uv_async_t *async)
 static tempo_utils::Status
 link_dependencies(
     lyric_build::AbstractCache *cache,
-    const boost::uuids::uuid &generation,
+    const tempo_utils::UUID &generation,
     const lyric_build::TaskKey &key,
     const absl::flat_hash_map<lyric_build::TaskKey, lyric_build::TaskState> &depStates)
 {

@@ -17,7 +17,7 @@
 struct Task {
     const char *name;
     lyric_build::BaseTask* (*func)(
-        const boost::uuids::uuid &generation,
+        const tempo_utils::UUID &generation,
         const lyric_build::TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 };
@@ -43,7 +43,7 @@ lyric_build::TaskRegistry::TaskRegistry(const ConfigStore &config)
 
 tempo_utils::Result<lyric_build::BaseTask *>
 lyric_build::TaskRegistry::makeTask(
-    const boost::uuids::uuid &generation,
+    const tempo_utils::UUID &generation,
     const TaskKey &key,
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {

@@ -3,7 +3,6 @@
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
-#include <boost/uuid/uuid.hpp>
 
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_result.h>
@@ -20,12 +19,12 @@ namespace lyric_build {
 
     public:
         BaseTask(
-            const boost::uuids::uuid &generation,
+            const tempo_utils::UUID &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
         virtual ~BaseTask();
 
-        boost::uuids::uuid getGeneration() const;
+        tempo_utils::UUID getGeneration() const;
         TaskKey getKey() const;
         TaskId getId() const;
         tempo_config::ConfigMap getParams() const;
@@ -54,7 +53,7 @@ namespace lyric_build {
             BuildState *buildState);
 
     private:
-        boost::uuids::uuid m_generation;
+        tempo_utils::UUID m_generation;
         TaskKey m_key;
         std::shared_ptr<tempo_tracing::TraceSpan> m_span;
         std::shared_ptr<tempo_tracing::TraceRecorder> m_diagnostics;

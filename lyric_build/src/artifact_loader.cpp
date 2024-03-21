@@ -18,7 +18,7 @@ lyric_build::ArtifactLoader::ArtifactLoader(
       m_hash(hash),
       m_cache(cache)
 {
-    TU_ASSERT (!m_generation.is_nil());
+    TU_ASSERT (!m_generation.isNil());
     TU_ASSERT (!m_hash.empty());
     TU_ASSERT (m_cache != nullptr);
 }
@@ -31,7 +31,7 @@ lyric_build::ArtifactLoader::ArtifactLoader(
       m_hash(hash),
       m_cache(cache)
 {
-    TU_ASSERT (!m_generation.is_nil());
+    TU_ASSERT (!m_generation.isNil());
     TU_ASSERT (!m_hash.empty());
     TU_ASSERT (m_cache != nullptr);
 }

@@ -3,8 +3,6 @@
 
 #include <filesystem>
 
-#include <boost/uuid/uuid.hpp>
-
 #include <lyric_assembler/assembly_state.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_state.h>
@@ -19,7 +17,7 @@ namespace lyric_build::internal {
 
     public:
         SymbolizeModuleTask(
-            const boost::uuids::uuid &generation,
+            const tempo_utils::UUID &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
 
@@ -44,7 +42,7 @@ namespace lyric_build::internal {
     };
 
     BaseTask *new_symbolize_module_task(
-        const boost::uuids::uuid &generation,
+        const tempo_utils::UUID &generation,
         const TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }

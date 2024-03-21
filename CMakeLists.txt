@@ -113,7 +113,7 @@ find_package(tempo REQUIRED)
 find_package(absl REQUIRED)
 
 # find required Boost dependency
-find_package(boost REQUIRED)
+find_package(Boost REQUIRED)
 
 # find required Antlr dependency
 find_package(antlr REQUIRED)
@@ -135,11 +135,6 @@ find_package(fmt REQUIRED)
 
 # find required ICU dependency
 find_package(icu REQUIRED)
-
-# find required dependencies which may come from the platform
-#find_package(ZLIB REQUIRED)
-#find_package(BZip2 REQUIRED)
-#find_package(LibXml2 REQUIRED)
 
 # find java build tool dependency for antlr
 find_package(Java REQUIRED)

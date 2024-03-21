@@ -4,7 +4,6 @@
 #include <filesystem>
 
 #include <absl/container/flat_hash_set.h>
-#include <boost/uuid/uuid.hpp>
 
 #include <lyric_analyzer/lyric_analyzer.h>
 #include <lyric_assembler/assembly_state.h>
@@ -26,7 +25,7 @@ namespace lyric_build::internal {
 
     public:
         AnalyzeModuleTask(
-            const boost::uuids::uuid &generation,
+            const tempo_utils::UUID &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
 
@@ -61,7 +60,7 @@ namespace lyric_build::internal {
     };
 
     BaseTask *new_analyze_module_task(
-        const boost::uuids::uuid &generation,
+        const tempo_utils::UUID &generation,
         const TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }

@@ -1,8 +1,6 @@
 
 #include <absl/strings/escaping.h>
 #include <absl/strings/str_split.h>
-#include <boost/uuid/string_generator.hpp>
-#include <boost/uuid/uuid_io.hpp>
 
 #include <lyric_build/build_attrs.h>
 #include <lyric_build/build_types.h>
@@ -156,22 +154,16 @@ write_trace_id(const lyric_build::TraceId &traceId)
     return bytes;
 }
 
-inline boost::uuids::uuid
+inline tempo_utils::UUID
 read_generation(const std::string &v)
 {
-    std::string bytes(v.data(), v.size());
-    boost::uuids::string_generator gen;
-    try {
-        return gen(bytes);
-    } catch (std::runtime_error &error) {
-        return boost::uuids::uuid();
-    }
+    return tempo_utils::UUID::parse(v);
 }
 
 inline std::string
-write_generation(const boost::uuids::uuid &generation)
+write_generation(const tempo_utils::UUID &generation)
 {
-    return boost::uuids::to_string(generation);
+    return generation.toString();
 }
 
 // artifact id has the following format:
@@ -189,7 +181,7 @@ read_artifact_id(const std::string &v)
     if (parts.size() != 4)
         return {};
     auto generation = read_generation(parts[0]);
-    if (generation.is_nil())
+    if (generation.isNil())
         return {};
     std::string hash;
     if (!absl::WebSafeBase64Unescape(parts[1], &hash))
@@ -469,7 +461,7 @@ lyric_build::RocksdbCache::linkArtifact(const ArtifactId &dstId, const ArtifactI
 
 tempo_utils::Result<std::vector<lyric_build::ArtifactId>>
 lyric_build::RocksdbCache::findArtifacts(
-    const boost::uuids::uuid &generation,
+    const tempo_utils::UUID &generation,
     const std::string &hash,
     const tempo_utils::Url &baseUrl,
     const LyricMetadata &filters)
@@ -527,7 +519,7 @@ lyric_build::RocksdbCache::containsTrace(const TraceId &traceId)
     return true;
 }
 
-boost::uuids::uuid
+tempo_utils::UUID
 lyric_build::RocksdbCache::loadTrace(const TraceId &traceId)
 {
     TU_ASSERT (m_db != nullptr);
@@ -548,7 +540,7 @@ lyric_build::RocksdbCache::loadTrace(const TraceId &traceId)
 }
 
 void
-lyric_build::RocksdbCache::storeTrace(const TraceId &traceId, const boost::uuids::uuid &generation)
+lyric_build::RocksdbCache::storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation)
 {
     TU_ASSERT (m_db != nullptr);
 

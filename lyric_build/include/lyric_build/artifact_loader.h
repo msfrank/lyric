@@ -1,8 +1,6 @@
 #ifndef LYRIC_BUILD_ARTIFACT_LOADER_H
 #define LYRIC_BUILD_ARTIFACT_LOADER_H
 
-#include <boost/uuid/uuid.hpp>
-
 #include <lyric_build/abstract_cache.h>
 #include <lyric_build/build_types.h>
 #include <lyric_runtime/abstract_loader.h>
@@ -34,7 +32,7 @@ namespace lyric_build {
             const lyric_object::PluginSpecifier &specifier) override;
 
     private:
-        boost::uuids::uuid m_generation;
+        tempo_utils::UUID m_generation;
         std::string m_hash;
         std::shared_ptr<AbstractCache> m_cache;
     };

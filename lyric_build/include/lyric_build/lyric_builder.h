@@ -3,7 +3,6 @@
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
-#include <boost/uuid/random_generator.hpp>
 
 #include <lyric_bootstrap/bootstrap_loader.h>
 #include <lyric_build/abstract_cache.h>
@@ -123,7 +122,6 @@ namespace lyric_build {
         std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;
         std::shared_ptr<AbstractFilesystem> m_virtualFilesystem;
         std::shared_ptr<AbstractCache> m_cache;
-        boost::uuids::random_generator m_uuidgen;
 
         // updated during each invocation of computeTargets
         absl::flat_hash_set<TaskKey> m_targets;

@@ -3,7 +3,6 @@
 
 #include <filesystem>
 
-#include <boost/uuid/uuid.hpp>
 #include <rocksdb/db.h>
 
 #include "abstract_cache.h"
@@ -50,14 +49,14 @@ namespace lyric_build {
         tempo_utils::Status linkArtifact(const ArtifactId &dstId, const ArtifactId &srcId) override;
 
         tempo_utils::Result<std::vector<ArtifactId>> findArtifacts(
-            const boost::uuids::uuid &generation,
+            const tempo_utils::UUID &generation,
             const std::string &hash,
             const tempo_utils::Url &baseUrl,
             const LyricMetadata &filters) override;
 
         bool containsTrace(const TraceId &traceId) override;
-        boost::uuids::uuid loadTrace(const TraceId &traceId) override;
-        void storeTrace(const TraceId &traceId, const boost::uuids::uuid &generation) override;
+        tempo_utils::UUID loadTrace(const TraceId &traceId) override;
+        void storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation) override;
 
         bool containsDiagnostics(const TraceId &traceId) override;
         tempo_tracing::TempoSpanset loadDiagnostics(const TraceId &traceId) override;

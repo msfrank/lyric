@@ -2,7 +2,6 @@
 #define LYRIC_BUILD_INTERNAL_ORCHESTRATE_TASK_H
 
 #include <absl/container/flat_hash_set.h>
-#include <boost/uuid/uuid.hpp>
 
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_state.h>
@@ -15,7 +14,7 @@ namespace lyric_build::internal {
 
     public:
         OrchestrateTask(
-            const boost::uuids::uuid &generation,
+            const tempo_utils::UUID &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
 
@@ -35,7 +34,7 @@ namespace lyric_build::internal {
     };
 
     BaseTask *new_orchestrate_task(
-        const boost::uuids::uuid &generation,
+        const tempo_utils::UUID &generation,
         const TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }

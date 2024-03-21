@@ -2,7 +2,6 @@
 #include <absl/strings/escaping.h>
 #include <absl/strings/str_join.h>
 #include <absl/strings/substitute.h>
-#include <boost/uuid/uuid_io.hpp>
 
 #include <lyric_build/build_types.h>
 #include <tempo_utils/log_stream.h>
@@ -12,12 +11,12 @@ lyric_build::BuildGeneration::BuildGeneration()
 }
 
 lyric_build::BuildGeneration::BuildGeneration(
-    const boost::uuids::uuid &uuid,
+    const tempo_utils::UUID &uuid,
     const std::chrono::time_point<std::chrono::system_clock> &createTime)
     : m_uuid(uuid),
       m_createTime(createTime)
 {
-    TU_ASSERT (!m_uuid.is_nil());
+    TU_ASSERT (m_uuid.isValid());
 }
 
 lyric_build::BuildGeneration::BuildGeneration(const lyric_build::BuildGeneration &other)
@@ -29,10 +28,10 @@ lyric_build::BuildGeneration::BuildGeneration(const lyric_build::BuildGeneration
 bool
 lyric_build::BuildGeneration::isValid() const
 {
-    return !m_uuid.is_nil();
+    return m_uuid.isValid();
 }
 
-boost::uuids::uuid
+tempo_utils::UUID
 lyric_build::BuildGeneration::getUuid() const
 {
     return m_uuid;
@@ -237,7 +236,7 @@ lyric_build::TaskState::TaskState()
 {
 }
 
-lyric_build::TaskState::TaskState(Status status, const boost::uuids::uuid &generation, const std::string &hash)
+lyric_build::TaskState::TaskState(Status status, const tempo_utils::UUID &generation, const std::string &hash)
     : m_status(status), m_generation(generation), m_hash(hash)
 {
 }
@@ -253,7 +252,7 @@ lyric_build::TaskState::getStatus() const
     return m_status;
 }
 
-boost::uuids::uuid
+tempo_utils::UUID
 lyric_build::TaskState::getGeneration() const
 {
     return m_generation;
@@ -289,9 +288,8 @@ lyric_build::TaskState::toString() const
             valueStatus = "FAILED";
             break;
     }
-    auto generation = boost::uuids::to_string(m_generation);
     return absl::Substitute("TaskState(status=$0, generation=$1, hash=$2)",
-        valueStatus, generation, absl::BytesToHexString(m_hash));
+        valueStatus, m_generation.toString(), absl::BytesToHexString(m_hash));
 }
 
 tempo_utils::LogMessage&&
@@ -309,7 +307,7 @@ lyric_build::ArtifactId::ArtifactId()
 }
 
 lyric_build::ArtifactId::ArtifactId(
-    const boost::uuids::uuid &generation,
+    const tempo_utils::UUID &generation,
     const std::string &hash,
     const tempo_utils::Url &location)
     : m_generation(generation),
@@ -356,10 +354,10 @@ lyric_build::ArtifactId::ArtifactId(const lyric_build::ArtifactId &other)
 bool
 lyric_build::ArtifactId::isValid() const
 {
-    return !m_generation.is_nil() && !m_hash.empty();
+    return m_generation.isValid() && !m_hash.empty();
 }
 
-boost::uuids::uuid
+tempo_utils::UUID
 lyric_build::ArtifactId::getGeneration() const
 {
     return m_generation;
@@ -381,7 +379,7 @@ std::string
 lyric_build::ArtifactId::toString() const
 {
     return absl::StrCat(
-        boost::uuids::to_string(m_generation),
+        m_generation.toString(),
         ":",
         absl::BytesToHexString(m_hash),
         ":",
