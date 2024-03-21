@@ -371,8 +371,8 @@ seq_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 
     auto &frame = currentCoro->peekCall();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *seq = static_cast<SeqRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     if (frame.numRest() > 0) {
         auto *node = new LeafSeqNode();
@@ -397,8 +397,8 @@ seq_size(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
     auto &frame = currentCoro->peekCall();
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *seq = static_cast<SeqRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     currentCoro->pushData(seq->seqSize());
     return lyric_runtime::InterpreterStatus::ok();
@@ -416,8 +416,8 @@ seq_get(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterSt
     TU_ASSERT(arg0.type == lyric_runtime::DataCellType::I64);
     const auto &arg1 = frame.getArgument(1);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *seq = static_cast<SeqRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     auto value = seq->seqGet(arg0);
     if (!value.isValid()) {
@@ -438,8 +438,8 @@ seq_append(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
     const auto &arg0 = frame.getArgument(0);
     TU_ASSERT(arg0.isValid());
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *seq = static_cast<SeqRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     auto *left = seq->getNode();
     TU_ASSERT (left != nullptr);
@@ -487,8 +487,8 @@ seq_extend(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
     TU_ASSERT(arg0.type == lyric_runtime::DataCellType::REF);
     auto *other = static_cast<SeqRef *>(arg0.data.ref);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *seq = static_cast<SeqRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     auto *left = seq->getNode();
     TU_ASSERT (left != nullptr);
@@ -532,8 +532,8 @@ seq_slice(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
     const auto &arg1 = frame.getArgument(1);
     TU_ASSERT(arg1.type == lyric_runtime::DataCellType::I64);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *seq = static_cast<SeqRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     auto *node = seq->seqSlice(arg0, arg1);
     if (node != nullptr) {
@@ -561,8 +561,8 @@ seq_iter(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
     TU_ASSERT(cell.type == lyric_runtime::DataCellType::CLASS);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *instance = static_cast<SeqRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *instance = static_cast<SeqRef *>(receiver.data.ref);
 
     lyric_runtime::InterpreterStatus status;
     const auto *vtable = state->segmentManager()->resolveClassVirtualTable(cell, status);

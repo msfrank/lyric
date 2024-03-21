@@ -71,8 +71,8 @@ iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interp
     TU_ASSERT(frame.numArguments() == 0);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
     currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
 
     return lyric_runtime::InterpreterStatus::ok();
@@ -88,8 +88,8 @@ iterator_next(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
     TU_ASSERT(frame.numArguments() == 0);
 
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
 
     lyric_runtime::DataCell next;
     if (!instance->iteratorNext(next)) {

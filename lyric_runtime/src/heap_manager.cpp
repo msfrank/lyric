@@ -112,16 +112,15 @@ lyric_runtime::HeapManager::constructNew(std::vector<DataCell> &args, tempo_util
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
 
-    auto &cell = currentCoro->peekData();
-    if (cell.type != DataCellType::REF) {
+    auto &receiver = currentCoro->peekData();
+    if (receiver.type != DataCellType::REF) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kInvalidReceiver, "invalid data cell");
         return false;
     }
-    auto *receiver = cell.data.ref;
 
     // get the ctor call from the vtable
-    const auto *vtable = receiver->getVirtualTable();
+    const auto *vtable = receiver.data.ref->getVirtualTable();
     TU_ASSERT (vtable != nullptr);
     const auto *ctor = vtable->getCtor();
     if (ctor == nullptr) {

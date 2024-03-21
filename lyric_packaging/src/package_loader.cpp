@@ -203,7 +203,7 @@ static lyric_packaging::EntryPath
 assembly_location_path_to_entry_path(const tempo_utils::UrlPath &locationPath)
 {
     auto locationInit = locationPath.getInit();
-    auto assemblyPath = lyric_packaging::EntryPath::fromString("lib");
+    auto assemblyPath = lyric_packaging::EntryPath::fromString("").traverse("lib");
     for (int i = 0; i < locationInit.numParts(); i++) {
         assemblyPath = assemblyPath.traverse(locationInit.partView(i));
     }

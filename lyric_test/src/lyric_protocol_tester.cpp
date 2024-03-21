@@ -61,7 +61,8 @@ lyric_test::LyricProtocolTester::runModuleInMockSandbox(
     TU_ASSERT (targetComputation.isValid());
 
     // construct module location based on the source path
-    std::filesystem::path modulePath = sourcePath;
+    std::filesystem::path modulePath = "/";
+    modulePath /= sourcePath;
     modulePath.replace_extension();
     lyric_common::AssemblyLocation moduleLocation(modulePath);
 

@@ -213,9 +213,9 @@ closure_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
     const auto &arg0 = frame.getArgument(0);
     TU_ASSERT(arg0.type == lyric_runtime::DataCellType::CALL);
 
-    auto *receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *instance = static_cast<ClosureRef *>(receiver);
+    auto receiver = frame.getReceiver();
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *instance = static_cast<ClosureRef *>(receiver.data.ref);
     instance->setSegmentIndex(arg0.data.descriptor.assembly);
     instance->setCallIndex(arg0.data.descriptor.value);
 
@@ -296,9 +296,9 @@ closure_apply(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
     // pop any temporaries related to the previous frame off the data stack
     currentCoro->resizeDataStack(frame.getStackGuard());
 
-    auto *receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *instance = static_cast<ClosureRef *>(receiver);
+    auto receiver = frame.getReceiver();
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *instance = static_cast<ClosureRef *>(receiver.data.ref);
 
     auto *segment = state->segmentManager()->getSegment(instance->getSegmentIndex());
     TU_ASSERT (segment != nullptr);

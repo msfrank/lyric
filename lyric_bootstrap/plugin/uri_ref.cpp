@@ -127,8 +127,8 @@ uri_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 
     auto &frame = currentCoro->peekCall();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *instance = static_cast<UrlRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *instance = static_cast<UrlRef *>(receiver.data.ref);
 
     TU_ASSERT (frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);

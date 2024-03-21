@@ -28,7 +28,6 @@ lyric_runtime::CallCell::CallCell(
       m_numLocals(numLocals),
       m_numLexicals(numLexicals),
       m_data(data),
-      m_receiver(nullptr),
       m_vtable(vtable)
 {
     TU_ASSERT (m_vtable != nullptr);
@@ -47,7 +46,7 @@ lyric_runtime::CallCell::CallCell(
     uint16_t numLocals,
     uint16_t numLexicals,
     const std::vector<DataCell> &data,
-    BaseRef *receiver)
+    DataCell receiver)
     : m_callIndex(callIndex),
       m_callSegment(callSegment),
       m_procOffset(procOffset),
@@ -62,7 +61,7 @@ lyric_runtime::CallCell::CallCell(
       m_receiver(receiver),
       m_vtable(nullptr)
 {
-    TU_ASSERT (m_receiver != nullptr);
+    TU_ASSERT (m_receiver.type != DataCellType::INVALID);
     m_data.resize(numArguments + numRest + numLocals + numLexicals);
 }
 
@@ -89,7 +88,6 @@ lyric_runtime::CallCell::CallCell(
       m_numLocals(numLocals),
       m_numLexicals(numLexicals),
       m_data(data),
-      m_receiver(nullptr),
       m_vtable(nullptr)
 {
     m_data.resize(numArguments + numRest + numLocals + numLexicals);
@@ -141,7 +139,7 @@ lyric_runtime::CallCell::CallCell(CallCell &&other) noexcept
     other.m_numLocals = 0;
     other.m_numLexicals = 0;
     other.m_data.clear();
-    other.m_receiver = nullptr;
+    other.m_receiver = {};
     other.m_vtable = nullptr;
 }
 
@@ -197,7 +195,7 @@ lyric_runtime::CallCell::operator=(CallCell &&other) noexcept
         other.m_numLocals = 0;
         other.m_numLexicals = 0;
         other.m_data.clear();
-        other.m_receiver = nullptr;
+        other.m_receiver = {};
         other.m_vtable = nullptr;
     }
 
@@ -240,7 +238,7 @@ lyric_runtime::CallCell::getStackGuard() const
     return m_stackGuard;
 }
 
-lyric_runtime::BaseRef *
+lyric_runtime::DataCell
 lyric_runtime::CallCell::getReceiver() const
 {
     return m_receiver;
@@ -339,13 +337,13 @@ lyric_runtime::CallCell::numLexicals() const
 std::string
 lyric_runtime::CallCell::toString() const
 {
-    auto *receiver = getReceiver();
-    if (receiver != nullptr) {
+    auto receiver = getReceiver();
+    if (receiver.isValid()) {
         return absl::Substitute("CallCell(segment=$0, call=$1 offset=$2, receiver=$3)",
             getCallSegment(),
             getCallIndex(),
             getProcOffset(),
-            receiver->toString());
+            receiver.toString());
     } else {
         return absl::Substitute("CallCell(segment=$0, call=$1 offset=$2)",
             getCallSegment(),

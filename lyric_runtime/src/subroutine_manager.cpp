@@ -328,7 +328,7 @@ lyric_runtime::SubroutineManager::callVirtual(
 
     // construct the activation call frame
     CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
-        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, receiver);
+        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, DataCell::forRef(receiver));
 
     // import each lexical from the latest activation and push it onto the stack
     for (uint16_t i = 0; i < numLexicals; i++) {
@@ -451,7 +451,7 @@ lyric_runtime::SubroutineManager::callConcept(
 
     // construct the activation call frame
     CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
-        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, receiver);
+        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, DataCell::forRef(receiver));
 
     // import each lexical from the latest activation and push it onto the stack
     for (uint16_t i = 0; i < numLexicals; i++) {

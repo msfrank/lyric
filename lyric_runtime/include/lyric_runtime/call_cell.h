@@ -39,7 +39,7 @@ namespace lyric_runtime {
             uint16_t numLocals,
             uint16_t numLexicals,
             const std::vector<DataCell> &data,
-            BaseRef *receiver);
+            DataCell receiver);
         CallCell(
             uint32_t callIndex,
             uint32_t callSegment,
@@ -64,7 +64,7 @@ namespace lyric_runtime {
         uint32_t getReturnSegment() const;
         lyric_object::BytecodeIterator getReturnIP() const;
         int getStackGuard() const;
-        BaseRef *getReceiver() const;
+        DataCell getReceiver() const;
         const VirtualTable *getVirtualTable() const;
 
         DataCell getArgument(int index) const;
@@ -97,7 +97,7 @@ namespace lyric_runtime {
         uint16_t m_numLocals;
         uint16_t m_numLexicals;
         std::vector<DataCell> m_data;
-        BaseRef *m_receiver;
+        DataCell m_receiver;
         const VirtualTable *m_vtable;
     };
 

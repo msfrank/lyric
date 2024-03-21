@@ -103,8 +103,8 @@ pair_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
 
     auto &frame = currentCoro->peekCall();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *pair = static_cast<PairRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *pair = static_cast<PairRef *>(receiver.data.ref);
 
     TU_ASSERT (frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
@@ -122,8 +122,8 @@ pair_first(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
     auto &frame = currentCoro->peekCall();
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *pair = static_cast<PairRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *pair = static_cast<PairRef *>(receiver.data.ref);
 
     currentCoro->pushData(pair->pairFirst());
     return lyric_runtime::InterpreterStatus::ok();
@@ -137,8 +137,8 @@ pair_second(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
     auto &frame = currentCoro->peekCall();
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *pair = static_cast<PairRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *pair = static_cast<PairRef *>(receiver.data.ref);
 
     currentCoro->pushData(pair->pairSecond());
     return lyric_runtime::InterpreterStatus::ok();

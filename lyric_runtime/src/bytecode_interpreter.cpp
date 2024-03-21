@@ -203,9 +203,9 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 auto synthetic = op.operands.type_u8.type;
                 switch (synthetic) {
                     case lyric_object::SYNTHETIC_THIS: {
-                        auto *thiz = activation.getReceiver();
-                        TU_LOG_V << "loaded receiver " << thiz->toString();
-                        currentCoro->pushData(DataCell::forRef(thiz));
+                        auto receiver = activation.getReceiver();
+                        TU_LOG_V << "loaded receiver " << receiver.toString();
+                        currentCoro->pushData(receiver);
                         break;
                     }
                     default:

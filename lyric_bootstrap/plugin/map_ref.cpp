@@ -601,8 +601,8 @@ map_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 
     auto &frame = currentCoro->peekCall();
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *map = static_cast<MapRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     if (frame.numRest() == 1) {
         auto *node = new ValueMapNode();
@@ -641,8 +641,8 @@ map_size(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
     auto &frame = currentCoro->peekCall();
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *map = static_cast<MapRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     int64_t size = map->mapSize();
     currentCoro->pushData(lyric_runtime::DataCell(size));
@@ -658,8 +658,8 @@ map_contains(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
     TU_ASSERT (frame.numArguments() == 1);
     auto arg0 = frame.getArgument(0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *map = static_cast<MapRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     currentCoro->pushData(lyric_runtime::DataCell(map->mapContains(arg0)));
     return lyric_runtime::InterpreterStatus::ok();
@@ -675,8 +675,8 @@ map_get(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterSt
     auto arg0 = frame.getArgument(0);
     auto arg1 = frame.getArgument(1);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *map = static_cast<MapRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     auto value = map->mapGet(arg0);
     if (!value.isValid()) {
@@ -696,8 +696,8 @@ map_update(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
     auto arg0 = frame.getArgument(0);
     auto arg1 = frame.getArgument(1);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *map = static_cast<MapRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     auto *node = map->mapUpdate(arg0, arg1);
     TU_ASSERT (node != nullptr);
@@ -719,8 +719,8 @@ map_remove(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
     TU_ASSERT (frame.numArguments() == 1);
     auto arg0 = frame.getArgument(0);
     auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver != nullptr);
-    auto *map = static_cast<MapRef *>(receiver);
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     auto *node = map->mapRemove(arg0);
 
