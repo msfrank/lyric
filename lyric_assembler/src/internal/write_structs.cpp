@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/internal/write_structs.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -69,6 +70,10 @@ write_struct(
 
     // serialize array of impls
     std::vector<tu_uint32> impls;
+    for (auto iterator = structSymbol->implsBegin(); iterator != structSymbol->implsEnd(); iterator++) {
+        auto *implHandle = iterator->second;
+        impls.push_back(implHandle->getOffset().getOffset());
+    }
 
     // get struct ctor
     auto ctorUrl = structSymbol->getCtor();

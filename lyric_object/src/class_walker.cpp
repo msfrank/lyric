@@ -2,6 +2,7 @@
 #include <lyric_object/call_walker.h>
 #include <lyric_object/class_walker.h>
 #include <lyric_object/field_walker.h>
+#include <lyric_object/impl_walker.h>
 #include <lyric_object/internal/object_reader.h>
 #include <lyric_object/link_walker.h>
 #include <lyric_object/template_walker.h>
@@ -36,24 +37,6 @@ lyric_object::ClassMember::isValid() const
 {
     return m_reader && m_reader->isValid() && m_classDescriptor;
 }
-
-//std::string
-//lyric_object::ClassMember::getName() const
-//{
-//    if (!isValid())
-//        return {};
-//    auto *classDescriptor = static_cast<const lyo1::ClassDescriptor *>(m_classDescriptor);
-//    if (classDescriptor->members() == nullptr)
-//        return {};
-//    if (classDescriptor->members()->size() <= m_fieldOffset)
-//        return {};
-//    auto *classMember = classDescriptor->members()->Get(m_fieldOffset);
-//    if (classDescriptor->names() == nullptr)
-//        return {};
-//    if (classDescriptor->names()->size() <= classMember->name_offset())
-//        return {};
-//    return classDescriptor->names()->Get(classMember->name_offset())->str();
-//}
 
 lyric_object::AddressType
 lyric_object::ClassMember::memberAddressType() const
@@ -123,24 +106,6 @@ lyric_object::ClassMethod::isValid() const
 {
     return m_reader && m_reader->isValid() && m_classDescriptor;
 }
-
-//std::string
-//lyric_object::ClassMethod::getName() const
-//{
-//    if (!isValid())
-//        return {};
-//    auto *classDescriptor = static_cast<const lyo1::ClassDescriptor *>(m_classDescriptor);
-//    if (classDescriptor->methods() == nullptr)
-//        return {};
-//    if (classDescriptor->methods()->size() <= m_callOffset)
-//        return {};
-//    auto *classMethod = classDescriptor->methods()->Get(m_callOffset);
-//    if (classDescriptor->names() == nullptr)
-//        return {};
-//    if (classDescriptor->names()->size() <= classMethod->name_offset())
-//        return {};
-//    return classDescriptor->names()->Get(classMethod->name_offset())->str();
-//}
 
 lyric_object::AddressType
 lyric_object::ClassMethod::methodAddressType() const
@@ -408,6 +373,34 @@ lyric_object::ClassWalker::getMethod(tu_uint8 index) const
     if (classDescriptor->methods()->size() <= index)
         return {};
     return ClassMethod(m_reader, (void *) classDescriptor, index);
+}
+
+tu_uint8
+lyric_object::ClassWalker::numImpls() const
+{
+    if (!isValid())
+        return 0;
+    auto *classDescriptor = m_reader->getClass(m_classOffset);
+    if (classDescriptor == nullptr)
+        return 0;
+    if (classDescriptor->impls() == nullptr)
+        return 0;
+    return classDescriptor->impls()->size();
+}
+
+lyric_object::ImplWalker
+lyric_object::ClassWalker::getImpl(tu_uint8 index) const
+{
+    if (!isValid())
+        return {};
+    auto *classDescriptor = m_reader->getClass(m_classOffset);
+    if (classDescriptor == nullptr)
+        return {};
+    if (classDescriptor->impls() == nullptr)
+        return {};
+    if (classDescriptor->impls()->size() <= index)
+        return {};
+    return ImplWalker(m_reader, classDescriptor->impls()->Get(index));
 }
 
 tu_uint8

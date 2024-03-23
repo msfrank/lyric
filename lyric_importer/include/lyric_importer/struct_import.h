@@ -27,6 +27,10 @@ namespace lyric_importer {
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator methodsEnd();
         tu_uint8 numMethods();
 
+        absl::flat_hash_map<lyric_common::TypeDef,ImplImport *>::const_iterator implsBegin();
+        absl::flat_hash_map<lyric_common::TypeDef,ImplImport *>::const_iterator implsEnd();
+        tu_uint8 numImpls();
+
         absl::flat_hash_set<lyric_common::TypeDef>::const_iterator sealedTypesBegin();
         absl::flat_hash_set<lyric_common::TypeDef>::const_iterator sealedTypesEnd();
         int numSealedTypes();

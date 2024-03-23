@@ -43,6 +43,7 @@ namespace lyric_object {
         friend class EnumMember;
         friend class EnumMethod;
         friend class EnumWalker;
+        friend class ExistentialMethod;
         friend class ExistentialWalker;
         friend class ExtensionWalker;
         friend class FieldWalker;

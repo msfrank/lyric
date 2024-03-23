@@ -1,7 +1,11 @@
 
+#include <absl/strings/match.h>
+
 #include <lyric_assembler/class_symbol.h>
+#include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
+#include <lyric_assembler/impl_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
@@ -171,6 +175,333 @@ lyric_assembler::ExistentialSymbol::existentialTemplate() const
 {
     auto *priv = getPriv();
     return priv->existentialTemplate;
+}
+
+bool
+lyric_assembler::ExistentialSymbol::hasMethod(const std::string &name) const
+{
+    auto *priv = getPriv();
+    return priv->methods.contains(name);
+}
+
+Option<lyric_assembler::BoundMethod>
+lyric_assembler::ExistentialSymbol::getMethod(const std::string &name) const
+{
+    auto *priv = getPriv();
+    if (priv->methods.contains(name))
+        return Option<BoundMethod>(priv->methods.at(name));
+    return Option<BoundMethod>();
+}
+
+absl::flat_hash_map<std::string,lyric_assembler::BoundMethod>::const_iterator
+lyric_assembler::ExistentialSymbol::methodsBegin() const
+{
+    auto *priv = getPriv();
+    return priv->methods.cbegin();
+}
+
+absl::flat_hash_map<std::string,lyric_assembler::BoundMethod>::const_iterator
+lyric_assembler::ExistentialSymbol::methodsEnd() const
+{
+    auto *priv = getPriv();
+    return priv->methods.cend();
+}
+
+tu_uint32
+lyric_assembler::ExistentialSymbol::numMethods() const
+{
+    auto *priv = getPriv();
+    return static_cast<tu_uint32>(priv->methods.size());
+}
+
+tempo_utils::Result<lyric_common::SymbolUrl>
+lyric_assembler::ExistentialSymbol::declareMethod(
+    const std::string &name,
+    const std::vector<lyric_assembler::ParameterSpec> &parameterSpec,
+    const Option<lyric_assembler::ParameterSpec> &restSpec,
+    const std::vector<lyric_assembler::ParameterSpec> &ctxSpec,
+    const lyric_parser::Assignable &returnSpec)
+{
+    if (isImported())
+        m_state->throwAssemblerInvariant(
+            "can't declare method on imported existential {}", m_existentialUrl.toString());
+
+    auto *priv = getPriv();
+
+    if (absl::StartsWith(name, "__"))
+        return m_state->logAndContinue(AssemblerCondition::kInvalidAccess,
+            tempo_tracing::LogSeverity::kError,
+            "declaration of private member {} is not allowed", name);
+    if (absl::StartsWith(name, "_"))
+        return m_state->logAndContinue(AssemblerCondition::kInvalidAccess,
+            tempo_tracing::LogSeverity::kError,
+            "declaration of protected member {} is not allowed", name);
+
+    if (priv->methods.contains(name))
+        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+            tempo_tracing::LogSeverity::kError,
+            "method {} already defined for existential {}", name, m_existentialUrl.toString());
+
+    std::vector<lyric_object::Parameter> parameters;
+    Option<lyric_object::Parameter> rest;
+    absl::flat_hash_set<std::string> names;
+    absl::flat_hash_set<std::string> labels;
+
+    for (const auto &p : parameterSpec) {
+        auto resolveParamTypeResult = priv->existentialBlock->resolveAssignable(p.type);
+        if (resolveParamTypeResult.isStatus())
+            return resolveParamTypeResult.getStatus();
+
+        lyric_object::Parameter param;
+        param.index = parameters.size();
+        param.name = p.name;
+        param.label = !p.label.empty()? p.label : p.name;
+        param.placement = !p.label.empty()? lyric_object::PlacementType::Named : lyric_object::PlacementType::List;
+        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE? true : false;
+        param.typeDef = resolveParamTypeResult.getResult();
+
+        if (!p.init.isEmpty()) {
+            if (param.placement != lyric_object::PlacementType::Named) {
+                return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
+                    "invalid initializer for positional parameter {}; only named parameters can be default-initialized",
+                    p.name);
+            } else {
+                param.placement = lyric_object::PlacementType::Opt;
+            }
+        }
+
+        if (names.contains(p.name))
+            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+                tempo_tracing::LogSeverity::kError,
+                "parameter {} already defined for method {} on existential {}",
+                p.name, name, m_existentialUrl.toString());
+        names.insert(p.name);
+
+        if (labels.contains(param.label))
+            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+                tempo_tracing::LogSeverity::kError,
+                "label {} already defined for method {} on existential {}",
+                p.label, name, m_existentialUrl.toString());
+        labels.insert(param.label);
+
+        m_state->typeCache()->touchType(param.typeDef);
+        parameters.push_back(param);
+    }
+
+    for (const auto &p : ctxSpec) {
+        auto resolveParamTypeResult = priv->existentialBlock->resolveAssignable(p.type);
+        if (resolveParamTypeResult.isStatus())
+            return resolveParamTypeResult.getStatus();
+
+        lyric_object::Parameter param;
+        param.index = parameters.size();
+        param.placement = lyric_object::PlacementType::Ctx;
+        param.isVariable = false;
+        param.typeDef = resolveParamTypeResult.getResult();
+
+        // if ctx parameter name is not specified, then generate a unique name
+        param.name = p.name.empty()? absl::StrCat("$ctx", parameters.size()) : p.name;
+        param.label = param.name;
+
+        if (names.contains(param.name))
+            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+                tempo_tracing::LogSeverity::kError,
+                "parameter {} already defined for method {} on existential {}",
+                p.name, name, m_existentialUrl.toString());
+        names.insert(param.name);
+
+        if (labels.contains(param.label))
+            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+                tempo_tracing::LogSeverity::kError,
+                "label {} already defined for method {} on existential {}",
+                p.label, name, m_existentialUrl.toString());
+        labels.insert(param.label);
+
+        m_state->typeCache()->touchType(param.typeDef);
+        parameters.push_back(param);
+    }
+
+    if (!restSpec.isEmpty()) {
+        const auto &p = restSpec.getValue();
+        auto resolveRestTypeResult = priv->existentialBlock->resolveAssignable(p.type);
+        if (resolveRestTypeResult.isStatus())
+            return resolveRestTypeResult.getStatus();
+
+        lyric_object::Parameter param;
+        param.index = parameters.size();
+        param.name = p.name;
+        param.label = param.name;
+        param.placement = lyric_object::PlacementType::Rest;
+        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE? true : false;
+        param.typeDef = resolveRestTypeResult.getResult();
+
+        if (names.contains(p.name))
+            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+                tempo_tracing::LogSeverity::kError,
+                "parameter {} already defined for method {} on existential {}",
+                p.name, name, m_existentialUrl.toString());
+        names.insert(p.name);
+
+        if (labels.contains(param.label))
+            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+                tempo_tracing::LogSeverity::kError,
+                "label {} already defined for method {} on existential {}",
+                p.label, name, m_existentialUrl.toString());
+        labels.insert(param.label);
+
+        m_state->typeCache()->touchType(param.typeDef);
+        rest = Option<lyric_object::Parameter>(param);
+    }
+
+    auto resolveReturnTypeResult = priv->existentialBlock->resolveAssignable(returnSpec);
+    if (resolveReturnTypeResult.isStatus())
+        return resolveReturnTypeResult.getStatus();
+    auto returnType = resolveReturnTypeResult.getResult();
+    m_state->typeCache()->touchType(returnType);
+
+    // build reference path to function
+    auto methodPath = m_existentialUrl.getSymbolPath().getPath();
+    methodPath.push_back(name);
+    auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
+    auto callIndex = m_state->numCalls();
+    auto address = CallAddress::near(callIndex);
+
+    // construct call symbol
+    auto *callSymbol = new CallSymbol(methodUrl, parameters, rest, returnType, m_existentialUrl,
+        lyric_object::AccessType::Public, address, lyric_object::CallMode::Normal, priv->existentialType,
+        priv->existentialBlock.get(), m_state);
+
+    auto status = m_state->appendCall(callSymbol);
+    if (status.notOk()) {
+        delete callSymbol;
+        return status;
+    }
+
+    // add bound method
+    priv->methods[name] = { methodUrl, lyric_object::AccessType::Public, false /* final */ };
+
+    return methodUrl;
+}
+
+tempo_utils::Result<lyric_assembler::MethodInvoker>
+lyric_assembler::ExistentialSymbol::resolveMethod(
+    const std::string &name,
+    const lyric_common::TypeDef &receiverType,
+    bool thisReceiver) const
+{
+    auto *priv = getPriv();
+
+    if (!priv->methods.contains(name)) {
+        if (priv->superExistential == nullptr)
+            return m_state->logAndContinue(AssemblerCondition::kMissingMethod,
+                tempo_tracing::LogSeverity::kError,
+                "missing method {}", name);
+        return priv->superExistential->resolveMethod(name, receiverType, thisReceiver);
+    }
+
+    const auto &method = priv->methods.at(name);
+    auto *methodSym = m_state->symbolCache()->getSymbol(method.methodCall);
+    if (methodSym == nullptr)
+        m_state->throwAssemblerInvariant("missing call symbol {}", method.methodCall.toString());
+    if (methodSym->getSymbolType() != SymbolType::CALL)
+        m_state->throwAssemblerInvariant("invalid call symbol {}", method.methodCall.toString());
+    auto *callSymbol = cast_symbol_to_call(methodSym);
+
+    if (callSymbol->isInline())
+        return MethodInvoker(callSymbol, callSymbol->callProc());
+    if (!callSymbol->isBound())
+        m_state->throwAssemblerInvariant("invalid call symbol {}", callSymbol->getSymbolUrl().toString());
+
+    return MethodInvoker(callSymbol, receiverType);
+}
+
+bool
+lyric_assembler::ExistentialSymbol::hasImpl(const lyric_common::TypeDef &implType) const
+{
+    auto *priv = getPriv();
+    return priv->impls.contains(implType);
+}
+
+lyric_assembler::ImplHandle *
+lyric_assembler::ExistentialSymbol::getImpl(const lyric_common::TypeDef &implType) const
+{
+    auto *priv = getPriv();
+    if (priv->impls.contains(implType))
+        return priv->impls.at(implType);
+    return nullptr;
+}
+
+absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::ImplHandle *>::const_iterator
+lyric_assembler::ExistentialSymbol::implsBegin() const
+{
+    auto *priv = getPriv();
+    return priv->impls.cbegin();
+}
+
+absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::ImplHandle *>::const_iterator
+lyric_assembler::ExistentialSymbol::implsEnd() const
+{
+    auto *priv = getPriv();
+    return priv->impls.cend();
+}
+
+tu_uint32
+lyric_assembler::ExistentialSymbol::numImpls() const
+{
+    auto *priv = getPriv();
+    return priv->impls.size();
+}
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_assembler::ExistentialSymbol::declareImpl(const lyric_parser::Assignable &implSpec)
+{
+    if (isImported())
+        m_state->throwAssemblerInvariant(
+            "can't declare impl on imported existential {}", m_existentialUrl.toString());
+
+    auto *priv = getPriv();
+
+    auto resolveImplTypeResult = priv->existentialBlock->resolveAssignable(implSpec);
+    if (resolveImplTypeResult.isStatus())
+        return resolveImplTypeResult.getStatus();
+    auto implType = resolveImplTypeResult.getResult();
+
+    if (priv->impls.contains(implType))
+        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+            tempo_tracing::LogSeverity::kError,
+            "impl {} already defined for existential {}", implType.toString(), m_existentialUrl.toString());
+
+    // touch the impl type
+    auto *implTypeHandle = m_state->typeCache()->getType(implType);
+    if (implTypeHandle == nullptr)
+        m_state->throwAssemblerInvariant("missing type {}", implType.toString());
+    TU_RETURN_IF_NOT_OK (m_state->typeCache()->touchType(implType));
+
+    // confirm that the impl concept exists
+    auto implConcept = implType.getConcreteUrl();
+    if (!m_state->symbolCache()->hasSymbol(implConcept))
+        m_state->throwAssemblerInvariant("missing concept symbol {}", implConcept.toString());
+
+    // resolve the concept symbol
+    auto *conceptSym = m_state->symbolCache()->getSymbol(implConcept);
+    if (conceptSym->getSymbolType() != SymbolType::CONCEPT)
+        m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
+    auto *conceptSymbol = cast_symbol_to_concept(conceptSym);
+
+    conceptSymbol->touch();
+
+    auto *implCache = m_state->implCache();
+
+    auto name = absl::StrCat("$impl", priv->impls.size());
+
+    ImplHandle *implHandle;
+    TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
+        name, implTypeHandle, conceptSymbol, m_existentialUrl, priv->existentialBlock.get()));
+
+    priv->impls[implType] = implHandle;
+
+    return implType;
 }
 
 bool

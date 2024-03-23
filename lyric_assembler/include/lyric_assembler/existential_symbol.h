@@ -15,6 +15,8 @@ namespace lyric_assembler {
         TypeHandle *existentialType;
         TemplateHandle *existentialTemplate;
         ExistentialSymbol *superExistential;
+        absl::flat_hash_map<std::string, BoundMethod> methods;
+        absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
         std::unique_ptr<BlockHandle> existentialBlock;
     };
@@ -61,7 +63,38 @@ namespace lyric_assembler {
         TemplateHandle *existentialTemplate() const;
 
         /*
-         * subtype tracking for sealed class
+         * existential method management
+         */
+        bool hasMethod(const std::string &name) const;
+        Option<BoundMethod> getMethod(const std::string &name) const;
+        absl::flat_hash_map<std::string, BoundMethod>::const_iterator methodsBegin() const;
+        absl::flat_hash_map<std::string, BoundMethod>::const_iterator methodsEnd() const;
+        tu_uint32 numMethods() const;
+
+        tempo_utils::Result<lyric_common::SymbolUrl> declareMethod(
+            const std::string &name,
+            const std::vector<ParameterSpec> &parameterSpec,
+            const Option<ParameterSpec> &restSpec,
+            const std::vector<ParameterSpec> &ctxSpec,
+            const lyric_parser::Assignable &returnSpec);
+        tempo_utils::Result<MethodInvoker> resolveMethod(
+            const std::string &name,
+            const lyric_common::TypeDef &receiverType,
+            bool isReceiver = false) const;
+
+        /*
+         * existential impl management
+         */
+        bool hasImpl(const lyric_common::TypeDef &implType) const;
+        ImplHandle *getImpl(const lyric_common::TypeDef &implType) const;
+        absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *>::const_iterator implsBegin() const;
+        absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *>::const_iterator implsEnd() const;
+        tu_uint32 numImpls() const;
+
+        tempo_utils::Result<lyric_common::TypeDef> declareImpl(const lyric_parser::Assignable &implSpec);
+
+        /*
+         * subtype tracking for sealed existential
          */
         bool hasSealedType(const lyric_common::TypeDef &sealedType) const;
         absl::flat_hash_set<lyric_common::TypeDef>::const_iterator sealedTypesBegin() const;

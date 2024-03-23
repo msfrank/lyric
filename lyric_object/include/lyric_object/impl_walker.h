@@ -42,11 +42,16 @@ namespace lyric_object {
         ImplWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 implOffset);
 
         friend class CallWalker;
+        friend class ClassWalker;
+        friend class ConceptWalker;
+        friend class EnumWalker;
+        friend class ExistentialWalker;
         friend class FieldWalker;
         friend class InstanceWalker;
         friend class ObjectWalker;
         friend class ParameterWalker;
         friend class StaticWalker;
+        friend class StructWalker;
     };
 }
 

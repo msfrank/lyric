@@ -14,6 +14,16 @@ namespace lyric_importer {
         TypeImport *getExistentialType();
         TemplateImport *getExistentialTemplate();
         lyric_common::SymbolUrl getSuperExistential();
+
+        lyric_common::SymbolUrl getMethod(std::string_view name);
+        absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator methodsBegin();
+        absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator methodsEnd();
+        tu_uint8 numMethods();
+
+        absl::flat_hash_map<lyric_common::TypeDef,ImplImport *>::const_iterator implsBegin();
+        absl::flat_hash_map<lyric_common::TypeDef,ImplImport *>::const_iterator implsEnd();
+        tu_uint8 numImpls();
+
         absl::flat_hash_set<lyric_common::TypeDef>::const_iterator sealedTypesBegin();
         absl::flat_hash_set<lyric_common::TypeDef>::const_iterator sealedTypesEnd();
         int numSealedTypes();

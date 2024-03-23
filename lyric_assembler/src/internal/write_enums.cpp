@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/enum_symbol.h>
+#include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/internal/write_enums.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
@@ -67,6 +68,10 @@ write_enum(
 
     // serialize array of impls
     std::vector<tu_uint32> impls;
+    for (auto iterator = enumSymbol->implsBegin(); iterator != enumSymbol->implsEnd(); iterator++) {
+        auto *implHandle = iterator->second;
+        impls.push_back(implHandle->getOffset().getOffset());
+    }
 
     // get enum ctor
     auto ctorUrl = enumSymbol->getCtor();

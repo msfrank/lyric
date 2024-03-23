@@ -132,14 +132,6 @@ namespace lyric_assembler {
 
         tempo_utils::Result<lyric_common::TypeDef> declareImpl(const lyric_parser::Assignable &implSpec);
 
-//        tempo_utils::Result<lyric_common::SymbolUrl> declareExtension(
-//            const lyric_parser::Assignable &implSpec,
-//            const std::string &name,
-//            const std::vector<ParameterSpec> &parameterSpec,
-//            const Option<ParameterSpec> &restSpec,
-//            const std::vector<ParameterSpec> &ctxSpec,
-//            const lyric_parser::Assignable &returnSpec);
-
         /*
          * subtype tracking for sealed instance
          */

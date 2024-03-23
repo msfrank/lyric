@@ -66,7 +66,7 @@ write_instance(
         methods.push_back(callSymbol->getAddress().getAddress());
     }
 
-    // serialize array of instance impls
+    // serialize array of impls
     std::vector<tu_uint32> impls;
     for (auto iterator = instanceSymbol->implsBegin(); iterator != instanceSymbol->implsEnd(); iterator++) {
         auto *implHandle = iterator->second;

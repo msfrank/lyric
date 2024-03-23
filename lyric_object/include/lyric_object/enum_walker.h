@@ -8,6 +8,7 @@ namespace lyric_object {
     // forward declarations
     class CallWalker;
     class FieldWalker;
+    class ImplWalker;
     class LinkWalker;
     class ParameterWalker;
     class TemplateWalker;
@@ -22,7 +23,6 @@ namespace lyric_object {
         EnumMember(const EnumMember &other);
 
         bool isValid() const;
-        //std::string getName() const;
         AddressType memberAddressType() const;
         FieldWalker getNearField() const;
         LinkWalker getFarField() const;
@@ -49,7 +49,6 @@ namespace lyric_object {
         EnumMethod(const EnumMethod &other);
 
         bool isValid() const;
-        //std::string getName() const;
         AddressType methodAddressType() const;
         CallWalker getNearCall() const;
         LinkWalker getFarCall() const;
@@ -98,6 +97,9 @@ namespace lyric_object {
 
         tu_uint8 numMethods() const;
         EnumMethod getMethod(tu_uint8 index) const;
+
+        tu_uint8 numImpls() const;
+        ImplWalker getImpl(tu_uint8 index) const;
 
         tu_uint8 numSealedSubEnums() const;
         TypeWalker getSealedSubEnum(tu_uint8 index) const;

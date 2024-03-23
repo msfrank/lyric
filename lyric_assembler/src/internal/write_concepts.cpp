@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/concept_symbol.h>
+#include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/internal/write_concepts.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
@@ -33,8 +34,8 @@ write_concept(
     if (!conceptSymbol->getAddress().isValid())
         conceptFlags |= lyo1::ConceptFlags::DeclOnly;
 
-    // serialize array of concept actions
-    std::vector<tu_uint32> conceptActions;
+    // serialize array of actions
+    std::vector<tu_uint32> actions;
     for (auto iterator = conceptSymbol->actionsBegin(); iterator != conceptSymbol->actionsEnd(); iterator++) {
         const auto &actionMethod = iterator->second;
         const auto *sym = symbolCache->getSymbol(actionMethod.methodAction);
@@ -43,13 +44,30 @@ write_concept(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid action symbol");
         const auto *actionSymbol = cast_symbol_to_action(sym);
 
-        conceptActions.push_back(actionSymbol->getAddress().getAddress());
+        actions.push_back(actionSymbol->getAddress().getAddress());
+    }
+
+    // serialize array of impls
+    std::vector<tu_uint32> impls;
+    for (auto iterator = conceptSymbol->implsBegin(); iterator != conceptSymbol->implsEnd(); iterator++) {
+        auto *implHandle = iterator->second;
+        impls.push_back(implHandle->getOffset().getOffset());
+    }
+
+    // serialize the sealed subtypes
+    std::vector<uint32_t> sealedSubtypes;
+    for (auto iterator = conceptSymbol->sealedTypesBegin(); iterator != conceptSymbol->sealedTypesEnd(); iterator++) {
+        if (!typeCache->hasType(*iterator))
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing sealed subtype");
+        auto *typeHandle = typeCache->getType(*iterator);
+        sealedSubtypes.push_back(typeHandle->getAddress().getAddress());
     }
 
     // add concept descriptor
     concepts_vector.push_back(lyo1::CreateConceptDescriptor(buffer, fullyQualifiedName,
         superconceptIndex, conceptTemplate, typeIndex, conceptFlags,
-        buffer.CreateVector(conceptActions), 0 /* sealed subtypes */));
+        buffer.CreateVector(actions), buffer.CreateVector(impls), buffer.CreateVector(sealedSubtypes)));
 
     // add symbol descriptor
     symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,

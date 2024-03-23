@@ -38,24 +38,6 @@ lyric_object::InstanceMember::isValid() const
     return m_reader && m_reader->isValid() && m_instanceDescriptor;
 }
 
-//std::string
-//lyric_object::InstanceMember::getName() const
-//{
-//    if (!isValid())
-//        return {};
-//    auto *instanceDescriptor = static_cast<const lyo1::InstanceDescriptor *>(m_instanceDescriptor);
-//    if (instanceDescriptor->members() == nullptr)
-//        return {};
-//    if (instanceDescriptor->members()->size() <= m_fieldOffset)
-//        return {};
-//    auto *instanceMember = instanceDescriptor->members()->Get(m_fieldOffset);
-//    if (instanceDescriptor->names() == nullptr)
-//        return {};
-//    if (instanceDescriptor->names()->size() <= instanceMember->name_offset())
-//        return {};
-//    return instanceDescriptor->names()->Get(instanceMember->name_offset())->str();
-//}
-
 lyric_object::AddressType
 lyric_object::InstanceMember::memberAddressType() const
 {
@@ -125,24 +107,6 @@ lyric_object::InstanceMethod::isValid() const
     return m_reader && m_reader->isValid() && m_instanceDescriptor;
 }
 
-//std::string
-//lyric_object::InstanceMethod::getName() const
-//{
-//    if (!isValid())
-//        return {};
-//    auto *instanceDescriptor = static_cast<const lyo1::InstanceDescriptor *>(m_instanceDescriptor);
-//    if (instanceDescriptor->methods() == nullptr)
-//        return {};
-//    if (instanceDescriptor->methods()->size() <= m_callOffset)
-//        return {};
-//    auto *instanceMethod = instanceDescriptor->methods()->Get(m_callOffset);
-//    if (instanceDescriptor->names() == nullptr)
-//        return {};
-//    if (instanceDescriptor->names()->size() <= instanceMethod->name_offset())
-//        return {};
-//    return instanceDescriptor->names()->Get(instanceMethod->name_offset())->str();
-//}
-
 lyric_object::AddressType
 lyric_object::InstanceMethod::methodAddressType() const
 {
@@ -181,84 +145,6 @@ lyric_object::InstanceMethod::getFarCall() const
         return {};
     return LinkWalker(m_reader, GET_LINK_OFFSET(instanceDescriptor->methods()->Get(m_callOffset)));
 }
-
-//lyric_object::InstanceImpl::InstanceImpl()
-//    : m_instanceDescriptor(nullptr)
-//{
-//}
-//
-//lyric_object::InstanceImpl::InstanceImpl(
-//    std::shared_ptr<const internal::ObjectReader> reader,
-//    void *instanceDescriptor,
-//    tu_uint8 implOffset)
-//    : m_reader(reader),
-//      m_instanceDescriptor(instanceDescriptor),
-//      m_implOffset(implOffset)
-//{
-//    TU_ASSERT (m_reader != nullptr);
-//    TU_ASSERT (m_instanceDescriptor != nullptr);
-//}
-//
-//lyric_object::InstanceImpl::InstanceImpl(const InstanceImpl &other)
-//    : m_reader(other.m_reader),
-//      m_instanceDescriptor(other.m_instanceDescriptor),
-//      m_implOffset(other.m_implOffset)
-//{
-//}
-//
-//bool
-//lyric_object::InstanceImpl::isValid() const
-//{
-//    return m_reader && m_reader->isValid() && m_instanceDescriptor;
-//}
-//
-//lyric_object::TypeWalker
-//lyric_object::InstanceImpl::getImplType() const
-//{
-//    if (!isValid())
-//        return {};
-//    auto *instanceDescriptor = static_cast<const lyo1::InstanceDescriptor *>(m_instanceDescriptor);
-//    if (instanceDescriptor->impls() == nullptr)
-//        return {};
-//    if (instanceDescriptor->impls()->size() <= m_implOffset)
-//        return {};
-//    auto *instanceImpl = instanceDescriptor->impls()->Get(m_implOffset);
-//    return TypeWalker(m_reader, instanceImpl->impl_type());
-//}
-//
-//lyric_object::ExtensionWalker
-//lyric_object::InstanceImpl::getExtension(tu_uint8 index) const
-//{
-//    if (!isValid())
-//        return {};
-//    auto *instanceDescriptor = static_cast<const lyo1::InstanceDescriptor *>(m_instanceDescriptor);
-//    if (instanceDescriptor->impls() == nullptr)
-//        return {};
-//    if (instanceDescriptor->impls()->size() <= m_implOffset)
-//        return {};
-//    auto *instanceImpl = instanceDescriptor->impls()->Get(m_implOffset);
-//    if (instanceImpl->extensions() == nullptr)
-//        return {};
-//    if (instanceImpl->extensions()->size() <= index)
-//        return {};
-//    return ExtensionWalker(m_reader, (void *) instanceDescriptor, m_implOffset, index);
-//}
-//
-//tu_uint8
-//lyric_object::InstanceImpl::numExtensions() const
-//{
-//    if (!isValid())
-//        return {};
-//    auto *instanceDescriptor = static_cast<const lyo1::InstanceDescriptor *>(m_instanceDescriptor);
-//    if (instanceDescriptor->impls() == nullptr)
-//        return {};
-//    if (instanceDescriptor->impls()->size() <= m_implOffset)
-//        return {};
-//    auto *instanceImpl = instanceDescriptor->impls()->Get(m_implOffset);
-//    if (instanceImpl->extensions() == nullptr)
-//        return {};
-//    return instanceImpl->extensions()->size();
-//}
 
 lyric_object::InstanceWalker::InstanceWalker()
     : m_instanceOffset(INVALID_ADDRESS_U32)

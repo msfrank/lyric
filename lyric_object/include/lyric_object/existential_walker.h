@@ -6,10 +6,39 @@
 namespace lyric_object {
 
     // forward declarations
+    class CallWalker;
+    class ImplWalker;
     class LinkWalker;
     class ParameterWalker;
     class TemplateWalker;
     class TypeWalker;
+
+    /**
+     *
+     */
+    class ExistentialMethod {
+    public:
+        ExistentialMethod();
+        ExistentialMethod(const ExistentialMethod &other);
+
+        bool isValid() const;
+        //std::string getName() const;
+        AddressType methodAddressType() const;
+        CallWalker getNearCall() const;
+        LinkWalker getFarCall() const;
+
+    private:
+        std::shared_ptr<const internal::ObjectReader> m_reader;
+        void *m_existentialDescriptor;
+        tu_uint8 m_callOffset;
+
+        ExistentialMethod(
+            std::shared_ptr<const internal::ObjectReader> reader,
+            void *existentialDescriptor,
+            tu_uint8 callOffset);
+
+        friend class ExistentialWalker;
+    };
 
     /**
      *
@@ -35,6 +64,12 @@ namespace lyric_object {
         TemplateWalker getTemplate() const;
 
         IntrinsicType getIntrinsicType() const;
+
+        tu_uint8 numMethods() const;
+        ExistentialMethod getMethod(tu_uint8 index) const;
+
+        tu_uint8 numImpls() const;
+        ImplWalker getImpl(tu_uint8 index) const;
 
         tu_uint8 numSealedSubExistentials() const;
         TypeWalker getSealedSubExistential(tu_uint8 index) const;

@@ -5,12 +5,13 @@
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
+#include <lyric_assembler/impl_cache.h>
 #include <lyric_assembler/import_cache.h>
-#include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/template_handle.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_importer/type_import.h>
+#include "lyric_assembler/concept_symbol.h"
 
 lyric_assembler::ClassSymbol::ClassSymbol(
     const lyric_common::SymbolUrl &classUrl,
@@ -894,6 +895,94 @@ lyric_assembler::ClassSymbol::resolveMethod(
         m_state->throwAssemblerInvariant("invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
     return MethodInvoker(callSymbol, receiverType);
+}
+
+bool
+lyric_assembler::ClassSymbol::hasImpl(const lyric_common::TypeDef &implType) const
+{
+    auto *priv = getPriv();
+    return priv->impls.contains(implType);
+}
+
+lyric_assembler::ImplHandle *
+lyric_assembler::ClassSymbol::getImpl(const lyric_common::TypeDef &implType) const
+{
+    auto *priv = getPriv();
+    if (priv->impls.contains(implType))
+        return priv->impls.at(implType);
+    return nullptr;
+}
+
+absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::ImplHandle *>::const_iterator
+lyric_assembler::ClassSymbol::implsBegin() const
+{
+    auto *priv = getPriv();
+    return priv->impls.cbegin();
+}
+
+absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::ImplHandle *>::const_iterator
+lyric_assembler::ClassSymbol::implsEnd() const
+{
+    auto *priv = getPriv();
+    return priv->impls.cend();
+}
+
+tu_uint32
+lyric_assembler::ClassSymbol::numImpls() const
+{
+    auto *priv = getPriv();
+    return priv->impls.size();
+}
+
+tempo_utils::Result<lyric_common::TypeDef>
+lyric_assembler::ClassSymbol::declareImpl(const lyric_parser::Assignable &implSpec)
+{
+    if (isImported())
+        m_state->throwAssemblerInvariant(
+            "can't declare impl on imported class {}", m_classUrl.toString());
+
+    auto *priv = getPriv();
+
+    auto resolveImplTypeResult = priv->classBlock->resolveAssignable(implSpec);
+    if (resolveImplTypeResult.isStatus())
+        return resolveImplTypeResult.getStatus();
+    auto implType = resolveImplTypeResult.getResult();
+
+    if (priv->impls.contains(implType))
+        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+            tempo_tracing::LogSeverity::kError,
+            "impl {} already defined for class {}", implType.toString(), m_classUrl.toString());
+
+    // touch the impl type
+    auto *implTypeHandle = m_state->typeCache()->getType(implType);
+    if (implTypeHandle == nullptr)
+        m_state->throwAssemblerInvariant("missing type {}", implType.toString());
+    TU_RETURN_IF_NOT_OK (m_state->typeCache()->touchType(implType));
+
+    // confirm that the impl concept exists
+    auto implConcept = implType.getConcreteUrl();
+    if (!m_state->symbolCache()->hasSymbol(implConcept))
+        m_state->throwAssemblerInvariant("missing concept symbol {}", implConcept.toString());
+
+    // resolve the concept symbol
+    auto *conceptSym = m_state->symbolCache()->getSymbol(implConcept);
+    if (conceptSym->getSymbolType() != SymbolType::CONCEPT)
+        m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
+    auto *conceptSymbol = cast_symbol_to_concept(conceptSym);
+
+    conceptSymbol->touch();
+
+    auto *implCache = m_state->implCache();
+
+    auto name = absl::StrCat("$impl", priv->impls.size());
+
+    ImplHandle *implHandle;
+    TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
+        name, implTypeHandle, conceptSymbol, m_classUrl, priv->classBlock.get()));
+
+    priv->impls[implType] = implHandle;
+
+    return implType;
 }
 
 bool

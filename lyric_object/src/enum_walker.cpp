@@ -2,6 +2,7 @@
 #include <lyric_object/call_walker.h>
 #include <lyric_object/enum_walker.h>
 #include <lyric_object/field_walker.h>
+#include <lyric_object/impl_walker.h>
 #include <lyric_object/internal/object_reader.h>
 #include <lyric_object/link_walker.h>
 #include <lyric_object/type_walker.h>
@@ -35,24 +36,6 @@ lyric_object::EnumMember::isValid() const
 {
     return m_reader && m_reader->isValid() && m_enumDescriptor;
 }
-
-//std::string
-//lyric_object::EnumMember::getName() const
-//{
-//    if (!isValid())
-//        return {};
-//    auto *enumDescriptor = static_cast<const lyo1::EnumDescriptor *>(m_enumDescriptor);
-//    if (enumDescriptor->members() == nullptr)
-//        return {};
-//    if (enumDescriptor->members()->size() <= m_fieldOffset)
-//        return {};
-//    auto *enumMember = enumDescriptor->members()->Get(m_fieldOffset);
-//    if (enumDescriptor->names() == nullptr)
-//        return {};
-//    if (enumDescriptor->names()->size() <= enumMember->name_offset())
-//        return {};
-//    return enumDescriptor->names()->Get(enumMember->name_offset())->str();
-//}
 
 lyric_object::AddressType
 lyric_object::EnumMember::memberAddressType() const
@@ -122,24 +105,6 @@ lyric_object::EnumMethod::isValid() const
 {
     return m_reader && m_reader->isValid() && m_enumDescriptor;
 }
-
-//std::string
-//lyric_object::EnumMethod::getName() const
-//{
-//    if (!isValid())
-//        return {};
-//    auto *enumDescriptor = static_cast<const lyo1::EnumDescriptor *>(m_enumDescriptor);
-//    if (enumDescriptor->methods() == nullptr)
-//        return {};
-//    if (enumDescriptor->methods()->size() <= m_callOffset)
-//        return {};
-//    auto *enumMethod = enumDescriptor->methods()->Get(m_callOffset);
-//    if (enumDescriptor->names() == nullptr)
-//        return {};
-//    if (enumDescriptor->names()->size() <= enumMethod->name_offset())
-//        return {};
-//    return enumDescriptor->names()->Get(enumMethod->name_offset())->str();
-//}
 
 lyric_object::AddressType
 lyric_object::EnumMethod::methodAddressType() const
@@ -385,6 +350,34 @@ lyric_object::EnumWalker::getMethod(tu_uint8 index) const
     if (enumDescriptor->methods()->size() <= index)
         return {};
     return EnumMethod(m_reader, (void *) enumDescriptor, index);
+}
+
+tu_uint8
+lyric_object::EnumWalker::numImpls() const
+{
+    if (!isValid())
+        return 0;
+    auto *enumDescriptor = m_reader->getEnum(m_enumOffset);
+    if (enumDescriptor == nullptr)
+        return 0;
+    if (enumDescriptor->impls() == nullptr)
+        return 0;
+    return enumDescriptor->impls()->size();
+}
+
+lyric_object::ImplWalker
+lyric_object::EnumWalker::getImpl(tu_uint8 index) const
+{
+    if (!isValid())
+        return {};
+    auto *enumDescriptor = m_reader->getEnum(m_enumOffset);
+    if (enumDescriptor == nullptr)
+        return {};
+    if (enumDescriptor->impls() == nullptr)
+        return {};
+    if (enumDescriptor->impls()->size() <= index)
+        return {};
+    return ImplWalker(m_reader, enumDescriptor->impls()->Get(index));
 }
 
 tu_uint8

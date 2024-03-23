@@ -7,6 +7,7 @@ namespace lyric_object {
 
     // forward declarations
     class ActionWalker;
+    class ImplWalker;
     class LinkWalker;
     class ParameterWalker;
     class TemplateWalker;
@@ -21,7 +22,6 @@ namespace lyric_object {
         ConceptAction(const ConceptAction &other);
 
         bool isValid() const;
-        //std::string getName() const;
         AddressType actionAddressType() const;
         ActionWalker getNearAction() const;
         LinkWalker getFarAction() const;
@@ -64,6 +64,9 @@ namespace lyric_object {
 
         tu_uint8 numActions() const;
         ConceptAction getAction(tu_uint8 index) const;
+
+        tu_uint8 numImpls() const;
+        ImplWalker getImpl(tu_uint8 index) const;
 
         tu_uint8 numSealedSubConcepts() const;
         TypeWalker getSealedSubConcept(tu_uint8 index) const;

@@ -13,6 +13,7 @@ namespace lyric_importer {
         lyric_common::SymbolUrl superEnum;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
+        absl::flat_hash_map<lyric_common::TypeDef,ImplImport *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
         tu_uint32 allocator;
     };
@@ -121,6 +122,27 @@ lyric_importer::EnumImport::numMethods()
 {
     load();
     return m_priv->methods.size();
+}
+
+absl::flat_hash_map<lyric_common::TypeDef,lyric_importer::ImplImport *>::const_iterator
+lyric_importer::EnumImport::implsBegin()
+{
+    load();
+    return m_priv->impls.cbegin();
+}
+
+absl::flat_hash_map<lyric_common::TypeDef,lyric_importer::ImplImport *>::const_iterator
+lyric_importer::EnumImport::implsEnd()
+{
+    load();
+    return m_priv->impls.cend();
+}
+
+tu_uint8
+lyric_importer::EnumImport::numImpls()
+{
+    load();
+    return m_priv->impls.size();
 }
 
 absl::flat_hash_set<lyric_common::TypeDef>::const_iterator
@@ -241,6 +263,14 @@ lyric_importer::EnumImport::load()
         }
         auto name = callUrl.getSymbolName();
         priv->methods[name] = callUrl;
+    }
+
+    for (tu_uint8 i = 0; i < enumWalker.numImpls(); i++) {
+        auto implWalker = enumWalker.getImpl(i);
+
+        auto *implType = m_moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
+        auto *implImport = m_moduleImport->getImpl(implWalker.getDescriptorOffset());
+        priv->impls[implType->getTypeDef()] = implImport;
     }
 
     for (tu_uint8 i = 0; i < enumWalker.numSealedSubEnums(); i++) {

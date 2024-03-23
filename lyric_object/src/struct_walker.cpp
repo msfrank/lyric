@@ -1,6 +1,7 @@
 
 #include <lyric_object/call_walker.h>
 #include <lyric_object/field_walker.h>
+#include <lyric_object/impl_walker.h>
 #include <lyric_object/internal/object_reader.h>
 #include <lyric_object/link_walker.h>
 #include <lyric_object/struct_walker.h>
@@ -35,24 +36,6 @@ lyric_object::StructMember::isValid() const
 {
     return m_reader && m_reader->isValid() && m_structDescriptor;
 }
-
-//std::string
-//lyric_object::StructMember::getName() const
-//{
-//    if (!isValid())
-//        return {};
-//    auto *structDescriptor = static_cast<const lyo1::StructDescriptor *>(m_structDescriptor);
-//    if (structDescriptor->members() == nullptr)
-//        return {};
-//    if (structDescriptor->members()->size() <= m_fieldOffset)
-//        return {};
-//    auto *classMember = structDescriptor->members()->Get(m_fieldOffset);
-//    if (structDescriptor->names() == nullptr)
-//        return {};
-//    if (structDescriptor->names()->size() <= classMember->name_offset())
-//        return {};
-//    return structDescriptor->names()->Get(classMember->name_offset())->str();
-//}
 
 lyric_object::AddressType
 lyric_object::StructMember::memberAddressType() const
@@ -122,24 +105,6 @@ lyric_object::StructMethod::isValid() const
 {
     return m_reader && m_reader->isValid() && m_structDescriptor;
 }
-
-//std::string
-//lyric_object::StructMethod::getName() const
-//{
-//    if (!isValid())
-//        return {};
-//    auto *structDescriptor = static_cast<const lyo1::StructDescriptor *>(m_structDescriptor);
-//    if (structDescriptor->methods() == nullptr)
-//        return {};
-//    if (structDescriptor->methods()->size() <= m_callOffset)
-//        return {};
-//    auto *classMethod = structDescriptor->methods()->Get(m_callOffset);
-//    if (structDescriptor->names() == nullptr)
-//        return {};
-//    if (structDescriptor->names()->size() <= classMethod->name_offset())
-//        return {};
-//    return structDescriptor->names()->Get(classMethod->name_offset())->str();
-//}
 
 lyric_object::AddressType
 lyric_object::StructMethod::methodAddressType() const
@@ -385,6 +350,34 @@ lyric_object::StructWalker::getMethod(tu_uint8 index) const
     if (structDescriptor->methods()->size() <= index)
         return {};
     return StructMethod(m_reader, (void *) structDescriptor, index);
+}
+
+tu_uint8
+lyric_object::StructWalker::numImpls() const
+{
+    if (!isValid())
+        return 0;
+    auto *structDescriptor = m_reader->getStruct(m_structOffset);
+    if (structDescriptor == nullptr)
+        return 0;
+    if (structDescriptor->impls() == nullptr)
+        return 0;
+    return structDescriptor->impls()->size();
+}
+
+lyric_object::ImplWalker
+lyric_object::StructWalker::getImpl(tu_uint8 index) const
+{
+    if (!isValid())
+        return {};
+    auto *structDescriptor = m_reader->getStruct(m_structOffset);
+    if (structDescriptor == nullptr)
+        return {};
+    if (structDescriptor->impls() == nullptr)
+        return {};
+    if (structDescriptor->impls()->size() <= index)
+        return {};
+    return ImplWalker(m_reader, structDescriptor->impls()->Get(index));
 }
 
 tu_uint8

@@ -1,6 +1,7 @@
 
 #include <lyric_object/action_walker.h>
 #include <lyric_object/concept_walker.h>
+#include <lyric_object/impl_walker.h>
 #include <lyric_object/internal/object_reader.h>
 #include <lyric_object/link_walker.h>
 #include <lyric_object/template_walker.h>
@@ -35,24 +36,6 @@ lyric_object::ConceptAction::isValid() const
 {
     return m_reader && m_reader->isValid() && m_conceptDescriptor;
 }
-
-//std::string
-//lyric_object::ConceptAction::getName() const
-//{
-//    if (!isValid())
-//        return {};
-//    auto *conceptDescriptor = static_cast<const lyo1::ConceptDescriptor *>(m_conceptDescriptor);
-//    if (conceptDescriptor->actions() == nullptr)
-//        return {};
-//    if (conceptDescriptor->actions()->size() <= m_actionOffset)
-//        return {};
-//    auto *conceptAction = conceptDescriptor->actions()->Get(m_actionOffset);
-//    if (conceptDescriptor->names() == nullptr)
-//        return {};
-//    if (conceptDescriptor->names()->size() <= conceptAction->name_offset())
-//        return {};
-//    return conceptDescriptor->names()->Get(conceptAction->name_offset())->str();
-//}
 
 lyric_object::AddressType
 lyric_object::ConceptAction::actionAddressType() const
@@ -248,6 +231,34 @@ lyric_object::ConceptWalker::getAction(tu_uint8 index) const
     if (conceptDescriptor->actions()->size() <= index)
         return {};
     return ConceptAction(m_reader, (void *) conceptDescriptor, index);
+}
+
+tu_uint8
+lyric_object::ConceptWalker::numImpls() const
+{
+    if (!isValid())
+        return 0;
+    auto *conceptDescriptor = m_reader->getConcept(m_conceptOffset);
+    if (conceptDescriptor == nullptr)
+        return 0;
+    if (conceptDescriptor->impls() == nullptr)
+        return 0;
+    return conceptDescriptor->impls()->size();
+}
+
+lyric_object::ImplWalker
+lyric_object::ConceptWalker::getImpl(tu_uint8 index) const
+{
+    if (!isValid())
+        return {};
+    auto *conceptDescriptor = m_reader->getConcept(m_conceptOffset);
+    if (conceptDescriptor == nullptr)
+        return {};
+    if (conceptDescriptor->impls() == nullptr)
+        return {};
+    if (conceptDescriptor->impls()->size() <= index)
+        return {};
+    return ImplWalker(m_reader, conceptDescriptor->impls()->Get(index));
 }
 
 tu_uint8

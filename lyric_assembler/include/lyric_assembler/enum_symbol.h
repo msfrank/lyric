@@ -24,6 +24,7 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string, SymbolBinding> members;
         absl::flat_hash_set<std::string> initializedMembers;
         absl::flat_hash_map<std::string, BoundMethod> methods;
+        absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
         std::unique_ptr<BlockHandle> enumBlock;
     };
@@ -120,6 +121,17 @@ namespace lyric_assembler {
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
             bool isReceiver = false) const;
+
+        /*
+         * enum impl management
+         */
+        bool hasImpl(const lyric_common::TypeDef &implType) const;
+        ImplHandle *getImpl(const lyric_common::TypeDef &implType) const;
+        absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *>::const_iterator implsBegin() const;
+        absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *>::const_iterator implsEnd() const;
+        tu_uint32 numImpls() const;
+
+        tempo_utils::Result<lyric_common::TypeDef> declareImpl(const lyric_parser::Assignable &implSpec);
 
         /*
          * subtype tracking for sealed enum

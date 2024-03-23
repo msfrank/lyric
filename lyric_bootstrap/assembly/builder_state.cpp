@@ -1638,6 +1638,7 @@ BuilderState::toBytes() const
     // write the existential descriptors
     for (const auto *Existential : existentials) {
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Existential->existentialPath.toString());
+        auto fb_methods = build_calls_vector(buffer, {});
         auto fb_impls = build_impls_vector(buffer, {});
 
         tu_uint32 superExistential = Existential->superExistential?
@@ -1647,7 +1648,7 @@ BuilderState::toBytes() const
         existentials_vector.push_back(lyo1::CreateExistentialDescriptor(buffer,
             fb_fullyQualifiedName, superExistential, existentialTemplate,
             Existential->existentialType->type_index, Existential->intrinsicMapping,
-            Existential->flags, fb_impls, 0 /* sealedSubtypes */));
+            Existential->flags, fb_methods, fb_impls, /* sealed_subtypes= */ 0));
     }
 
     // write the action descriptors
@@ -1739,7 +1740,7 @@ BuilderState::toBytes() const
 
         classes_vector.push_back(lyo1::CreateClassDescriptor(buffer,
             fb_fullyQualifiedName, superClass, classTemplate, Class->classType->type_index, Class->flags,
-            fb_members, fb_methods, fb_impls, Class->allocatorTrap, classCtor));
+            fb_members, fb_methods, fb_impls, Class->allocatorTrap, classCtor, /* sealed_subtypes= */ 0));
     }
 
     // write the struct descriptors
@@ -1755,13 +1756,14 @@ BuilderState::toBytes() const
 
         structs_vector.push_back(lyo1::CreateStructDescriptor(buffer,
             fb_fullyQualifiedName, superStruct, Struct->structType->type_index, Struct->flags,
-            fb_members, fb_methods, fb_impls, Struct->allocatorTrap, structCtor));
+            fb_members, fb_methods, fb_impls, Struct->allocatorTrap, structCtor, /* sealed_subtypes= */ 0));
     }
 
     // write the concept descriptors
     for (const auto *Concept : concepts) {
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Concept->conceptPath.toString());
         auto fb_actions = build_actions_vector(buffer, Concept->actions);
+        auto fb_impls = build_impls_vector(buffer, {});
 
         tu_uint32 superConcept = Concept->superConcept? Concept->superConcept->concept_index
             : lyric_object::INVALID_ADDRESS_U32;
@@ -1770,7 +1772,7 @@ BuilderState::toBytes() const
 
         concepts_vector.push_back(lyo1::CreateConceptDescriptor(buffer,
             fb_fullyQualifiedName, superConcept, conceptTemplate, Concept->conceptType->type_index,
-            Concept->flags, fb_actions));
+            Concept->flags, fb_actions, fb_impls, /* sealed_subtypes= */ 0));
     }
 
     // write the static descriptors
@@ -1794,7 +1796,7 @@ BuilderState::toBytes() const
 
         instances_vector.push_back(lyo1::CreateInstanceDescriptor(buffer,
             fb_fullyQualifiedName, superInstance, Instance->instanceType->type_index, lyo1::InstanceFlags::NONE,
-            fb_members, fb_methods, fb_impls, Instance->allocatorTrap, instanceCtor));
+            fb_members, fb_methods, fb_impls, Instance->allocatorTrap, instanceCtor, /* sealed_subtypes= */ 0));
     }
 
     // write the enum descriptors
@@ -1810,7 +1812,7 @@ BuilderState::toBytes() const
 
         enums_vector.push_back(lyo1::CreateEnumDescriptor(buffer,
             fb_fullyQualifiedName, superEnum, Enum->enumType->type_index, lyo1::EnumFlags::NONE,
-            fb_members, fb_methods, fb_impls, Enum->allocatorTrap, enumCtor));
+            fb_members, fb_methods, fb_impls, Enum->allocatorTrap, enumCtor, /* sealed_subtypes= */ 0));
     }
 
     // write the plugin descriptors

@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/class_symbol.h>
+#include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/internal/write_classes.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
@@ -73,6 +74,10 @@ write_class(
 
     // serialize array of impls
     std::vector<tu_uint32> impls;
+    for (auto iterator = classSymbol->implsBegin(); iterator != classSymbol->implsEnd(); iterator++) {
+        auto *implHandle = iterator->second;
+        impls.push_back(implHandle->getOffset().getOffset());
+    }
 
     // get class ctor
     auto ctorUrl = classSymbol->getCtor();

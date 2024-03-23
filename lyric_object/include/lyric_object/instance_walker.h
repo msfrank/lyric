@@ -24,7 +24,6 @@ namespace lyric_object {
         InstanceMember(const InstanceMember &other);
 
         bool isValid() const;
-        //std::string getName() const;
         AddressType memberAddressType() const;
         FieldWalker getNearField() const;
         LinkWalker getFarField() const;
@@ -51,7 +50,6 @@ namespace lyric_object {
         InstanceMethod(const InstanceMethod &other);
 
         bool isValid() const;
-        //std::string getName() const;
         AddressType methodAddressType() const;
         CallWalker getNearCall() const;
         LinkWalker getFarCall() const;
@@ -68,32 +66,6 @@ namespace lyric_object {
 
         friend class InstanceWalker;
     };
-
-//    /**
-//     *
-//     */
-//    class InstanceImpl {
-//    public:
-//        InstanceImpl();
-//        InstanceImpl(const InstanceImpl &other);
-//
-//        bool isValid() const;
-//        TypeWalker getImplType() const;
-//        ExtensionWalker getExtension(tu_uint8 index) const;
-//        tu_uint8 numExtensions() const;
-//
-//    private:
-//        std::shared_ptr<const internal::ObjectReader> m_reader;
-//        void *m_instanceDescriptor;
-//        tu_uint8 m_implOffset;
-//
-//        InstanceImpl(
-//            std::shared_ptr<const internal::ObjectReader> reader,
-//            void *instanceDescriptor,
-//            tu_uint8 implOffset);
-//
-//        friend class InstanceWalker;
-//    };
 
     /**
      *

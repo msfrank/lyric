@@ -167,6 +167,7 @@ table ExistentialDescriptor {
     existential_type: uint32 = 0xFFFFFFFF;      // offset of the existential type in the types section
     intrinsic_mapping: IntrinsicType = Invalid; // mapping to intrinsic type, or Invalid if there is no mapping
     flags: ExistentialFlags;                    // bitfield containing existential flags
+    methods: [uint32];                          // array of methods in the calls section
     impls: [uint32];                            // array of impls in the impls section
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
@@ -278,6 +279,7 @@ table ConceptDescriptor {
     concept_type: uint32 = 0xFFFFFFFF;          // offset of the concept type in the types section
     flags: ConceptFlags;                        // bitfield containing concept flags
     actions: [uint32];                          // array of actions in the actions section
+    impls: [uint32];                            // array of impls in the impls section
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
 

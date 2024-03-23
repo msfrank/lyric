@@ -12,6 +12,7 @@ namespace lyric_importer {
         TemplateImport *conceptTemplate;
         lyric_common::SymbolUrl superConcept;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> actions;
+        absl::flat_hash_map<lyric_common::TypeDef,ImplImport *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
     };
 }
@@ -89,6 +90,27 @@ lyric_importer::ConceptImport::numActions()
 {
     load();
     return m_priv->actions.size();
+}
+
+absl::flat_hash_map<lyric_common::TypeDef,lyric_importer::ImplImport *>::const_iterator
+lyric_importer::ConceptImport::implsBegin()
+{
+    load();
+    return m_priv->impls.cbegin();
+}
+
+absl::flat_hash_map<lyric_common::TypeDef,lyric_importer::ImplImport *>::const_iterator
+lyric_importer::ConceptImport::implsEnd()
+{
+    load();
+    return m_priv->impls.cend();
+}
+
+tu_uint8
+lyric_importer::ConceptImport::numImpls()
+{
+    load();
+    return m_priv->impls.size();
 }
 
 absl::flat_hash_set<lyric_common::TypeDef>::const_iterator
@@ -181,6 +203,14 @@ lyric_importer::ConceptImport::load()
         }
         auto name = actionUrl.getSymbolName();
         priv->actions[name] = actionUrl;
+    }
+
+    for (tu_uint8 i = 0; i < conceptWalker.numImpls(); i++) {
+        auto implWalker = conceptWalker.getImpl(i);
+
+        auto *implType = m_moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
+        auto *implImport = m_moduleImport->getImpl(implWalker.getDescriptorOffset());
+        priv->impls[implType->getTypeDef()] = implImport;
     }
 
     for (tu_uint8 i = 0; i < conceptWalker.numSealedSubConcepts(); i++) {

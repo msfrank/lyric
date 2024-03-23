@@ -12,6 +12,8 @@ namespace lyric_importer {
         TypeImport *existentialType;
         TemplateImport *existentialTemplate;
         lyric_common::SymbolUrl superExistential;
+        absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
+        absl::flat_hash_map<lyric_common::TypeDef,ImplImport *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
     };
 }
@@ -59,6 +61,57 @@ lyric_importer::ExistentialImport::getSuperExistential()
 {
     load();
     return m_priv->superExistential;
+}
+
+lyric_common::SymbolUrl
+lyric_importer::ExistentialImport::getMethod(std::string_view name)
+{
+    load();
+    if (m_priv->methods.contains(name))
+        return m_priv->methods.at(name);
+    return {};
+}
+
+absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator
+lyric_importer::ExistentialImport::methodsBegin()
+{
+    load();
+    return m_priv->methods.cbegin();
+}
+
+absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator
+lyric_importer::ExistentialImport::methodsEnd()
+{
+    load();
+    return m_priv->methods.cend();
+}
+
+tu_uint8
+lyric_importer::ExistentialImport::numMethods()
+{
+    load();
+    return m_priv->methods.size();
+}
+
+absl::flat_hash_map<lyric_common::TypeDef,lyric_importer::ImplImport *>::const_iterator
+lyric_importer::ExistentialImport::implsBegin()
+{
+    load();
+    return m_priv->impls.cbegin();
+}
+
+absl::flat_hash_map<lyric_common::TypeDef,lyric_importer::ImplImport *>::const_iterator
+lyric_importer::ExistentialImport::implsEnd()
+{
+    load();
+    return m_priv->impls.cend();
+}
+
+tu_uint8
+lyric_importer::ExistentialImport::numImpls()
+{
+    load();
+    return m_priv->impls.size();
 }
 
 absl::flat_hash_set<lyric_common::TypeDef>::const_iterator
@@ -130,6 +183,35 @@ lyric_importer::ExistentialImport::load()
                         "cannot import existential at index {} in assembly {}; invalid super existential",
                         m_existentialOffset, location.toString()));
         }
+    }
+
+    for (tu_uint8 i = 0; i < existentialWalker.numMethods(); i++) {
+        auto method = existentialWalker.getMethod(i);
+        lyric_common::SymbolUrl callUrl;
+        switch (method.methodAddressType()) {
+            case lyric_object::AddressType::Near:
+                callUrl = lyric_common::SymbolUrl(location, method.getNearCall().getSymbolPath());
+                break;
+            case lyric_object::AddressType::Far:
+                callUrl = method.getFarCall().getLinkUrl();
+                break;
+            default:
+                throw ImporterException(
+                    ImporterStatus::forCondition(
+                        ImporterCondition::kImportError,
+                        "cannot import existential at index {} in assembly {}; invalid method at index {}",
+                        m_existentialOffset, location.toString(), i));
+        }
+        auto name = callUrl.getSymbolName();
+        priv->methods[name] = callUrl;
+    }
+
+    for (tu_uint8 i = 0; i < existentialWalker.numImpls(); i++) {
+        auto implWalker = existentialWalker.getImpl(i);
+
+        auto *implType = m_moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
+        auto *implImport = m_moduleImport->getImpl(implWalker.getDescriptorOffset());
+        priv->impls[implType->getTypeDef()] = implImport;
     }
 
     for (tu_uint8 i = 0; i < existentialWalker.numSealedSubExistentials(); i++) {
