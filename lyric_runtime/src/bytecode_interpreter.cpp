@@ -994,7 +994,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 std::vector<DataCell> placement;
 
                 if (flags & lyric_object::CALL_RECEIVER_FOLLOWS) {
-                    // receiver is last item on the stack so we pop it before placement
+                    // receiver comes after arguments so we pop receiver first
                     receiver = currentCoro->popData();
                     if (receiver.type != DataCellType::REF)
                         return onError(op,
@@ -1002,7 +1002,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                                 InterpreterCondition::kInvalidReceiver, "invalid receiver for virtual call"));
                     placement = currentCoro->popData(placementSize);
                 } else {
-                    // receiver is first item on the stack so we pop it after placement
+                    // receiver comes before arguments so we pop placement first
                     placement = currentCoro->popData(placementSize);
                     receiver = currentCoro->popData();
                     if (receiver.type != DataCellType::REF)
@@ -1020,55 +1020,63 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
                 // construct the activation call frame
                 InterpreterStatus status;
-                if (!subroutineManager->callVirtual(receiver.data.ref, callAddress, placement, currentCoro, status))
+                if (!subroutineManager->callVirtual(receiver, callAddress, placement, currentCoro, status))
                     return onError(op, status);
                 break;
             }
 
-            case lyric_object::Opcode::OP_CALL_ACTION: {
+            case lyric_object::Opcode::OP_CALL_CONCEPT: {
                 auto actionAddress = op.operands.flags_u8_address_u32_placement_u16.address;
                 auto placementSize = op.operands.flags_u8_address_u32_placement_u16.placement;
+                auto flags = op.operands.flags_u8_address_u32_placement_u16.flags;
+                DataCell receiver;
+                std::vector<DataCell> placement;
 
-                auto descriptor = currentCoro->popData();
-                if (descriptor.type != DataCellType::CONCEPT)
+                auto conceptDescriptor = currentCoro->popData();
+                if (conceptDescriptor.type != DataCellType::CONCEPT)
                     return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "invalid descriptor for action call"));
+                        InterpreterCondition::kInvalidDataStackV1, "invalid descriptor for concept call"));
 
-                auto placement = currentCoro->popData(placementSize);
-
-                auto receiver = currentCoro->popData();
-                if (receiver.type != DataCellType::REF)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidReceiver, "invalid receiver for action call"));
+                if (flags & lyric_object::CALL_RECEIVER_FOLLOWS) {
+                    // receiver comes after arguments so we pop receiver first
+                    receiver = currentCoro->popData();
+                    if (receiver.type != DataCellType::REF)
+                        return onError(op, InterpreterStatus::forCondition(
+                            InterpreterCondition::kInvalidReceiver, "invalid receiver for concept call"));
+                    placement = currentCoro->popData(placementSize);
+                } else {
+                    // receiver comes before arguments so we pop placement first
+                    placement = currentCoro->popData(placementSize);
+                    receiver = currentCoro->popData();
+                    if (receiver.type != DataCellType::REF)
+                        return onError(op, InterpreterStatus::forCondition(
+                            InterpreterCondition::kInvalidReceiver, "invalid receiver for concept call"));
+                }
 
                 // construct the activation call frame
                 InterpreterStatus status;
                 if (!subroutineManager->callConcept(
-                    receiver.data.ref, descriptor, actionAddress, placement, currentCoro, status))
+                    receiver, conceptDescriptor, actionAddress, placement, currentCoro, status))
                     return onError(op, status);
                 break;
             }
 
-            case lyric_object::Opcode::OP_CALL_EXTENSION: {
-                auto actionAddress = op.operands.flags_u8_address_u32_placement_u16.address;
+            case lyric_object::Opcode::OP_CALL_EXISTENTIAL: {
+                auto callAddress = op.operands.flags_u8_address_u32_placement_u16.address;
                 auto placementSize = op.operands.flags_u8_address_u32_placement_u16.placement;
 
-                auto receiver = currentCoro->popData();
-                if (receiver.type != DataCellType::REF)
+                auto existentialDescriptor = currentCoro->popData();
+                if (existentialDescriptor.type != DataCellType::EXISTENTIAL)
                     return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidReceiver, "invalid receiver for extension call"));
-
-                auto descriptor = currentCoro->popData();
-                if (descriptor.type != DataCellType::CONCEPT)
-                    return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "invalid descriptor for extension call"));
+                        InterpreterCondition::kInvalidDataStackV1, "invalid descriptor for existential call"));
 
                 auto placement = currentCoro->popData(placementSize);
+                auto receiver = currentCoro->popData();
 
                 // construct the activation call frame
                 InterpreterStatus status;
-                if (!subroutineManager->callConcept(
-                    receiver.data.ref, descriptor, actionAddress, placement, currentCoro, status))
+                if (!subroutineManager->callExistential(
+                    receiver, existentialDescriptor, callAddress, placement, currentCoro, status))
                     return onError(op, status);
                 break;
             }

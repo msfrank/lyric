@@ -1,7 +1,9 @@
 
 #include <lyric_runtime/internal/assembly_reader.h>
 #include <lyric_runtime/internal/get_class_virtual_table.h>
+#include <lyric_runtime/internal/get_concept_table.h>
 #include <lyric_runtime/internal/get_enum_virtual_table.h>
+#include <lyric_runtime/internal/get_existential_table.h>
 #include <lyric_runtime/internal/get_instance_virtual_table.h>
 #include <lyric_runtime/internal/get_struct_virtual_table.h>
 #include <lyric_runtime/internal/load_utils.h>
@@ -75,12 +77,28 @@ lyric_runtime::SegmentManager::resolveClassVirtualTable(
     return internal::get_class_virtual_table(descriptor, &m_data, status);
 }
 
+const lyric_runtime::ConceptTable *
+lyric_runtime::SegmentManager::resolveConceptTable(
+    const DataCell &descriptor,
+    tempo_utils::Status &status)
+{
+    return internal::get_concept_table(descriptor, &m_data, status);
+}
+
 const lyric_runtime::VirtualTable *
 lyric_runtime::SegmentManager::resolveEnumVirtualTable(
     const DataCell &descriptor,
     tempo_utils::Status &status)
 {
     return internal::get_enum_virtual_table(descriptor, &m_data, status);
+}
+
+const lyric_runtime::ExistentialTable *
+lyric_runtime::SegmentManager::resolveExistentialTable(
+    const DataCell &descriptor,
+    tempo_utils::Status &status)
+{
+    return internal::get_existential_table(descriptor, &m_data, status);
 }
 
 const lyric_runtime::VirtualTable *

@@ -26,16 +26,24 @@ namespace lyric_runtime {
             tempo_utils::Status &status);
 
         bool callVirtual(
-            BaseRef *receiver,
+            const DataCell &receiver,
             tu_uint32 address,
             std::vector<DataCell> &args,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
         bool callConcept(
-            BaseRef *receiver,
+            const DataCell &receiver,
             const DataCell &descriptor,
             tu_uint32 address,
+            std::vector<DataCell> &args,
+            StackfulCoroutine *currentCoro,
+            tempo_utils::Status &status);
+
+        bool callExistential(
+            const DataCell &receiver,
+            const DataCell &existentialDescriptor,
+            tu_uint32 methodAddress,
             std::vector<DataCell> &args,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);

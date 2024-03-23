@@ -133,7 +133,7 @@ lyric_runtime::SubroutineManager::callStatic(
         call = object.getCall(address);
         if (!call.isValid()) {
             status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "missing call descriptor");
+                InterpreterCondition::kRuntimeInvariant, "missing call");
             return false;
         }
         callIndex = address;
@@ -150,7 +150,7 @@ lyric_runtime::SubroutineManager::callStatic(
         call = object.getCall(linkage->value);
         if (!call.isValid()) {
             status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "missing call descriptor");
+                InterpreterCondition::kRuntimeInvariant, "missing call");
             return false;
         }
         callIndex = linkage->value;
@@ -258,13 +258,13 @@ lyric_runtime::SubroutineManager::callStatic(
 
 bool
 lyric_runtime::SubroutineManager::callVirtual(
-    BaseRef *receiver,
+    const DataCell &receiver,
     tu_uint32 address,
     std::vector<DataCell> &args,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
-    TU_ASSERT (receiver != nullptr);
+    TU_ASSERT (receiver.type == DataCellType::REF);
     TU_ASSERT (currentCoro != nullptr);
 
     auto *sp = currentCoro->peekSP();
@@ -276,12 +276,12 @@ lyric_runtime::SubroutineManager::callVirtual(
         return false;
 
     // resolve the descriptor  to a vtable entry
-    const auto *vtable = receiver->getVirtualTable();
+    const auto *vtable = receiver.data.ref->getVirtualTable();
     TU_ASSERT (vtable != nullptr);
     const auto *method = vtable->getMethod(descriptor);
     if (method == nullptr) {
         status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "missing virtual method");
+            InterpreterCondition::kRuntimeInvariant, "missing method");
         return false;
     }
 
@@ -328,7 +328,7 @@ lyric_runtime::SubroutineManager::callVirtual(
 
     // construct the activation call frame
     CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
-        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, DataCell::forRef(receiver));
+        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, receiver);
 
     // import each lexical from the latest activation and push it onto the stack
     for (uint16_t i = 0; i < numLexicals; i++) {
@@ -378,19 +378,19 @@ lyric_runtime::SubroutineManager::callVirtual(
 
 bool
 lyric_runtime::SubroutineManager::callConcept(
-    BaseRef *receiver,
+    const DataCell &receiver,
     const DataCell &conceptDescriptor,
     tu_uint32 actionAddress,
     std::vector<DataCell> &args,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
-    TU_ASSERT (receiver != nullptr);
+    TU_ASSERT (receiver.type == DataCellType::REF);
     TU_ASSERT (currentCoro != nullptr);
 
     auto *sp = currentCoro->peekSP();
 
-    const auto *vtable = receiver->getVirtualTable();
+    const auto *vtable = receiver.data.ref->getVirtualTable();
     if (vtable == nullptr)
         return false;
 
@@ -404,7 +404,7 @@ lyric_runtime::SubroutineManager::callConcept(
     const auto *method = vtable->getExtension(conceptDescriptor, actionDescriptor);
     if (method == nullptr) {
         status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "missing extension method");
+            InterpreterCondition::kRuntimeInvariant, "missing extension");
         return false;
     }
 
@@ -451,7 +451,131 @@ lyric_runtime::SubroutineManager::callConcept(
 
     // construct the activation call frame
     CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
-        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, DataCell::forRef(receiver));
+        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, receiver);
+
+    // import each lexical from the latest activation and push it onto the stack
+    for (uint16_t i = 0; i < numLexicals; i++) {
+
+        // read the call proc lexical
+        auto activationCall = tempo_utils::read_u32_and_advance(header);
+        auto targetOffset = tempo_utils::read_u32_and_advance(header);
+        auto lexicalTarget = tempo_utils::read_u8_and_advance(header);
+        codeSize -= 9;
+
+        bool found = false;
+        for (auto iterator = currentCoro->callsBegin(); iterator != currentCoro->callsEnd(); iterator++) {
+            const auto &ancestor = *iterator;
+
+            if (ancestor.getCallSegment() != segment->getSegmentIndex())    // lexical must exist in callee segment
+                continue;
+            if (ancestor.getCallIndex() != activationCall)                  // frame does not match activation call
+                continue;
+            switch (lexicalTarget) {
+                case lyric_object::LEXICAL_ARGUMENT:
+                    frame.setLexical(i, ancestor.getArgument(targetOffset));
+                    break;
+                case lyric_object::LEXICAL_LOCAL:
+                    frame.setLexical(i, ancestor.getLocal(targetOffset));
+                    break;
+                default:
+                    status = InterpreterStatus::forCondition(
+                        InterpreterCondition::kRuntimeInvariant, "invalid lexical target");
+                    return false;
+            }
+            found = true;                       // we found the lexical, break loop early
+            break;
+        }
+        if (!found) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "missing lexical");
+            return false;
+        }
+    }
+
+    lyric_object::BytecodeIterator ip(header, codeSize);
+    currentCoro->pushCall(frame, ip, segment);               // push the activation onto the call stack
+    TU_LOG_V << "moved ip to " << ip;
+
+    return true;
+}
+
+bool
+lyric_runtime::SubroutineManager::callExistential(
+    const DataCell &receiver,
+    const DataCell &existentialDescriptor,
+    tu_uint32 methodAddress,
+    std::vector<DataCell> &args,
+    StackfulCoroutine *currentCoro,
+    tempo_utils::Status &status)
+{
+    TU_ASSERT (receiver.isValid());
+    TU_ASSERT (existentialDescriptor.isValid());
+    TU_ASSERT (currentCoro != nullptr);
+
+    auto *sp = currentCoro->peekSP();
+
+    auto *etable = m_segmentManager->resolveExistentialTable(existentialDescriptor, status);
+    if (etable == nullptr)
+        return false;
+
+    // resolve address to a descriptor
+    auto callDescriptor = m_segmentManager->resolveDescriptor(
+        sp, lyric_object::LinkageSection::Call, methodAddress, status);
+    if (!callDescriptor.isValid())
+        return false;
+
+    // resolve the descriptor to an etable entry
+    const auto *method = etable->getMethod(callDescriptor);
+    if (method == nullptr) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "missing method");
+        return false;
+    }
+
+    auto *segment = method->getSegment();
+    const auto callIndex = method->getCallIndex();
+    const auto procOffset = method->getProcOffset();
+
+    // proc offset must be within the segment bytecode
+    auto *bytecodeData = segment->getBytecodeData();
+    auto bytecodeSize = segment->getBytecodeSize();
+    if (bytecodeSize <= procOffset) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
+        return false;
+    }
+
+    const uint8_t *header = bytecodeData + procOffset;
+    const BytecodeSegment *returnSP = sp;
+    const lyric_object::BytecodeIterator returnIP = currentCoro->peekIP();
+    auto stackGuard = currentCoro->dataStackSize();
+
+    // read the call proc header
+    auto procSize = tempo_utils::read_u32_and_advance(header);
+    auto numArguments = tempo_utils::read_u16_and_advance(header);
+    auto numLocals = tempo_utils::read_u16_and_advance(header);
+    auto numLexicals = tempo_utils::read_u16_and_advance(header);
+    auto codeSize = procSize - 6;
+
+    // maximum number of args is 2^16
+    if (std::numeric_limits<uint16_t>::max() <= args.size()) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "too many arguments");
+        return false;
+    }
+
+    // all required args must be present
+    if (args.size() < numArguments) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "not enough arguments");
+        return false;
+    }
+
+    auto numRest = static_cast<uint16_t>(args.size()) - numArguments;
+
+    // construct the activation call frame
+    CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
+        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, receiver);
 
     // import each lexical from the latest activation and push it onto the stack
     for (uint16_t i = 0; i < numLexicals; i++) {

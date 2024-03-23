@@ -23,7 +23,7 @@ namespace lyric_assembler {
         enum class InvokeType {
             INVALID,
             INLINE,
-            EXTENSION,
+            VIRTUAL,
         };
 
     public:

@@ -16,6 +16,8 @@ namespace lyric_runtime {
         std::vector<BytecodeSegment *> segments;
         absl::flat_hash_map<lyric_common::AssemblyLocation,tu_uint32> segmentcache;
         absl::flat_hash_map<DataCell,const VirtualTable *> vtablecache;
+        absl::flat_hash_map<DataCell,const ExistentialTable *> etablecache;
+        absl::flat_hash_map<DataCell,const ConceptTable *> ctablecache;
     };
 
     class SegmentManager {
@@ -35,6 +37,14 @@ namespace lyric_runtime {
             const BytecodeSegment *sp,
             lyric_object::LinkageSection section,
             tu_uint32 address,
+            tempo_utils::Status &status);
+
+        virtual const ExistentialTable *resolveExistentialTable(
+            const DataCell &descriptor,
+            tempo_utils::Status &status);
+
+        virtual const ConceptTable *resolveConceptTable(
+            const DataCell &descriptor,
             tempo_utils::Status &status);
 
         virtual const VirtualTable *resolveClassVirtualTable(

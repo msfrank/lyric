@@ -116,7 +116,7 @@ lyric_assembler::ActionInvoker::invoke(BlockHandle *block, const AbstractCallsit
     if (!status.isOk())
         return status;
 
-    status = code->callAction(m_action->getAddress(), placementSize);
+    status = code->callConcept(m_action->getAddress(), placementSize);
     if (!status.isOk())
         return status;
 

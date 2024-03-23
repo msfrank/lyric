@@ -45,6 +45,7 @@ namespace lyric_assembler {
         tempo_utils::Status loadStruct(const StructAddress &structAddress);
         tempo_utils::Status loadConcept(const ConceptAddress &conceptAddress);
         tempo_utils::Status loadCall(const CallAddress &callAddress);
+        tempo_utils::Status loadExistential(const ExistentialAddress &existentialAddress);
         tempo_utils::Status loadType(const TypeAddress &typeAddress);
 
         tempo_utils::Status storeArgument(const ArgumentOffset &argumentOffset);
@@ -86,13 +87,18 @@ namespace lyric_assembler {
             tu_uint16 placementSize,
             tu_uint8 flags = 0);
 
-        tempo_utils::Status callExtension(
+//        tempo_utils::Status callExtension(
+//            const ActionAddress &address,
+//            tu_uint16 placementSize,
+//            tu_uint8 flags = 0);
+
+        tempo_utils::Status callConcept(
             const ActionAddress &address,
             tu_uint16 placementSize,
             tu_uint8 flags = 0);
 
-        tempo_utils::Status callAction(
-            const ActionAddress &address,
+        tempo_utils::Status callExistential(
+            const CallAddress &address,
             tu_uint16 placementSize,
             tu_uint8 flags = 0);
 

@@ -16,31 +16,118 @@ namespace lyric_runtime {
     class VirtualMember {
     public:
         VirtualMember();
-        VirtualMember(BytecodeSegment *segment, uint32_t memberIndex, uint32_t layoutOffset);
+        VirtualMember(BytecodeSegment *segment, tu_uint32 memberIndex, tu_uint32 layoutOffset);
 
         BytecodeSegment *getSegment() const;
-        uint32_t getMemberIndex() const;
-        uint32_t getLayoutOffset() const;
+        tu_uint32 getMemberIndex() const;
+        tu_uint32 getLayoutOffset() const;
 
     private:
         BytecodeSegment *m_segment;
-        const uint32_t m_memberIndex;
-        const uint32_t m_layoutOffset;
+        const tu_uint32 m_memberIndex;
+        const tu_uint32 m_layoutOffset;
     };
 
     class VirtualMethod {
     public:
         VirtualMethod();
-        VirtualMethod(BytecodeSegment *segment, uint32_t callIndex, uint32_t procOffset);
+        VirtualMethod(BytecodeSegment *segment, tu_uint32 callIndex, tu_uint32 procOffset);
 
         BytecodeSegment *getSegment() const;
-        uint32_t getCallIndex() const;
-        uint32_t getProcOffset() const;
+        tu_uint32 getCallIndex() const;
+        tu_uint32 getProcOffset() const;
 
     private:
         BytecodeSegment *m_segment;
-        const uint32_t m_callIndex;
-        const uint32_t m_procOffset;
+        const tu_uint32 m_callIndex;
+        const tu_uint32 m_procOffset;
+    };
+
+    class ImplTable {
+
+    public:
+        ImplTable(
+            BytecodeSegment *segment,
+            const DataCell &descriptor,
+            const DataCell &type,
+            absl::flat_hash_map<DataCell,VirtualMethod> &methods);
+
+        BytecodeSegment *getSegment() const;
+        DataCell getDescriptor() const;
+        DataCell getType() const;
+
+        lyric_common::SymbolUrl getSymbolUrl() const;
+        lyric_object::LinkageSection getLinkageSection() const;
+        tu_uint32 getDescriptorIndex() const;
+
+        const VirtualMethod *getMethod(const DataCell &descriptor) const;
+
+    private:
+        BytecodeSegment *m_segment;
+        const DataCell m_descriptor;
+        const DataCell m_type;
+        const absl::flat_hash_map<DataCell,VirtualMethod> m_methods;
+    };
+
+    class ExistentialTable {
+
+    public:
+        ExistentialTable(
+            BytecodeSegment *segment,
+            const DataCell &descriptor,
+            const DataCell &type,
+            const ExistentialTable *parentTable,
+            absl::flat_hash_map<DataCell,VirtualMethod> &methods,
+            absl::flat_hash_map<DataCell,ImplTable> &impls);
+
+        BytecodeSegment *getSegment() const;
+        DataCell getDescriptor() const;
+        DataCell getType() const;
+        const ExistentialTable *getParent() const;
+
+        lyric_common::SymbolUrl getSymbolUrl() const;
+        lyric_object::LinkageSection getLinkageSection() const;
+        tu_uint32 getDescriptorIndex() const;
+
+        const VirtualMethod *getMethod(const DataCell &descriptor) const;
+        const VirtualMethod *getExtension(const DataCell &conceptDescriptor, const DataCell &callDescriptor) const;
+
+    private:
+        BytecodeSegment *m_segment;
+        const DataCell m_descriptor;
+        const DataCell m_type;
+        const ExistentialTable *m_parent;
+        const absl::flat_hash_map<DataCell,VirtualMethod> m_methods;
+        const absl::flat_hash_map<DataCell,ImplTable> m_impls;
+    };
+
+    class ConceptTable {
+
+    public:
+        ConceptTable(
+            BytecodeSegment *segment,
+            const DataCell &descriptor,
+            const DataCell &type,
+            const ConceptTable *parentTable,
+            absl::flat_hash_map<DataCell,ImplTable> &impls);
+
+        BytecodeSegment *getSegment() const;
+        DataCell getDescriptor() const;
+        DataCell getType() const;
+        const ConceptTable *getParent() const;
+
+        lyric_common::SymbolUrl getSymbolUrl() const;
+        lyric_object::LinkageSection getLinkageSection() const;
+        tu_uint32 getDescriptorIndex() const;
+
+        const VirtualMethod *getExtension(const DataCell &conceptDescriptor, const DataCell &callDescriptor) const;
+
+    private:
+        BytecodeSegment *m_segment;
+        const DataCell m_descriptor;
+        const DataCell m_type;
+        const ConceptTable *m_parent;
+        const absl::flat_hash_map<DataCell,ImplTable> m_impls;
     };
 
     class VirtualTable {
@@ -54,22 +141,8 @@ namespace lyric_runtime {
             NativeFunc allocator,
             const VirtualMethod &ctor,
             absl::flat_hash_map<DataCell,VirtualMember> &members,
-            absl::flat_hash_map<DataCell,VirtualMethod> &methods);
-        VirtualTable(
-            BytecodeSegment *segment,
-            const DataCell &descriptor,
-            const DataCell &type,
-            const VirtualTable *parentTable,
-            NativeFunc allocator,
-            const VirtualMethod &ctor,
-            absl::flat_hash_map<DataCell,VirtualMember> &members,
             absl::flat_hash_map<DataCell,VirtualMethod> &methods,
-            absl::flat_hash_map<DataCell,VirtualTable> &impls);
-        VirtualTable(
-            BytecodeSegment *segment,
-            const DataCell &descriptor,
-            const DataCell &type,
-            absl::flat_hash_map<DataCell,VirtualMethod> &methods);
+            absl::flat_hash_map<DataCell,ImplTable> &impls);
 
         BytecodeSegment *getSegment() const;
         DataCell getDescriptor() const;
@@ -78,9 +151,9 @@ namespace lyric_runtime {
 
         lyric_common::SymbolUrl getSymbolUrl() const;
         lyric_object::LinkageSection getLinkageSection() const;
-        uint32_t getDescriptorIndex() const;
-        uint32_t getLayoutStart() const;
-        uint32_t getLayoutTotal() const;
+        tu_uint32 getDescriptorIndex() const;
+        tu_uint32 getLayoutStart() const;
+        tu_uint32 getLayoutTotal() const;
 
         NativeFunc getAllocator() const;
         const VirtualMethod *getCtor() const;
@@ -98,7 +171,7 @@ namespace lyric_runtime {
         const VirtualMethod m_ctor;
         const absl::flat_hash_map<DataCell,VirtualMember> m_members;
         const absl::flat_hash_map<DataCell,VirtualMethod> m_methods;
-        const absl::flat_hash_map<DataCell,VirtualTable> m_impls;
+        const absl::flat_hash_map<DataCell,ImplTable> m_impls;
     };
 }
 

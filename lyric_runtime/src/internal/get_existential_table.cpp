@@ -2,118 +2,78 @@
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_segment.h>
 #include <lyric_runtime/data_cell.h>
-#include <lyric_runtime/internal/get_enum_virtual_table.h>
+#include <lyric_runtime/internal/get_existential_table.h>
 #include <lyric_runtime/internal/resolve_link.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <tempo_utils/big_endian.h>
 #include <tempo_utils/log_stream.h>
 
-const lyric_runtime::VirtualTable *
-lyric_runtime::internal::get_enum_virtual_table(
+const lyric_runtime::ExistentialTable *
+lyric_runtime::internal::get_existential_table(
     const DataCell &descriptor,
     SegmentManagerData *segmentManagerData,
     tempo_utils::Status &status)
 {
     TU_ASSERT (segmentManagerData != nullptr);
 
-    if (descriptor.type != DataCellType::ENUM) {
+    if (descriptor.type != DataCellType::EXISTENTIAL) {
         status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid enum descriptor");
+            InterpreterCondition::kRuntimeInvariant, "invalid existential descriptor");
         return nullptr;
     }
 
-    if (segmentManagerData->vtablecache.contains(descriptor))
-        return segmentManagerData->vtablecache[descriptor];
+    if (segmentManagerData->etablecache.contains(descriptor))
+        return segmentManagerData->etablecache[descriptor];
 
     auto assemblyIndex = descriptor.data.descriptor.assembly;
-    auto *enumSegment = segmentManagerData->segments[assemblyIndex];
-    auto enumObject = enumSegment->getObject().getObject();
-    auto enumIndex = descriptor.data.descriptor.value;
-    auto enumDescriptor = enumObject.getEnum(enumIndex);
-    auto enumType = DataCell::forType(
-        assemblyIndex, enumDescriptor.getEnumType().getDescriptorOffset());
+    auto *existentialSegment = segmentManagerData->segments[assemblyIndex];
+    auto existentialObject = existentialSegment->getObject().getObject();
+    auto existentialIndex = descriptor.data.descriptor.value;
+    auto existentialDescriptor = existentialObject.getExistential(existentialIndex);
+    auto existentialType = DataCell::forType(
+        assemblyIndex, existentialDescriptor.getExistentialType().getDescriptorOffset());
 
-    const VirtualTable *parentTable = nullptr;
-    tu_uint32 layoutBase = 0;
-    absl::flat_hash_map<DataCell,VirtualMember> members;
+    const ExistentialTable *parentTable = nullptr;
     absl::flat_hash_map<DataCell,VirtualMethod> methods;
     absl::flat_hash_map<DataCell,ImplTable> impls;
 
-    // if enum has a superenum, then resolve its virtual table
-    if (enumDescriptor.hasSuperEnum()) {
+    // if existential has a superexistential, then resolve its virtual table
+    if (existentialDescriptor.hasSuperExistential()) {
         tu_uint32 superAssemblyIndex = INVALID_ADDRESS_U32;;
-        tu_uint32 superEnumIndex = INVALID_ADDRESS_U32;;
+        tu_uint32 superExistentialIndex = INVALID_ADDRESS_U32;;
 
-        switch (enumDescriptor.superEnumAddressType()) {
+        switch (existentialDescriptor.superExistentialAddressType()) {
             case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(enumSegment, enumDescriptor.getFarSuperEnum(),
+                auto *link = resolve_link(existentialSegment, existentialDescriptor.getFarSuperExistential(),
                     segmentManagerData, status);
-                if (!link || link->linkage != lyric_object::LinkageSection::Enum) {
+                if (!link || link->linkage != lyric_object::LinkageSection::Existential) {
                     status = InterpreterStatus::forCondition(
-                        InterpreterCondition::kRuntimeInvariant, "invalid super enum");
+                        InterpreterCondition::kRuntimeInvariant, "invalid super existential");
                     return nullptr;
                 }
                 superAssemblyIndex = link->assembly;
-                superEnumIndex = link->value;
+                superExistentialIndex = link->value;
                 break;
             }
             case lyric_object::AddressType::Near:
                 superAssemblyIndex = assemblyIndex;
-                superEnumIndex = enumDescriptor.getNearSuperEnum().getDescriptorOffset();
+                superExistentialIndex = existentialDescriptor.getNearSuperExistential().getDescriptorOffset();
                 break;
             default:
                 status = InterpreterStatus::forCondition(
-                    InterpreterCondition::kRuntimeInvariant, "invalid super enum");
+                    InterpreterCondition::kRuntimeInvariant, "invalid super existential");
                 break;
         }
 
-        parentTable = get_enum_virtual_table(DataCell::forEnum(superAssemblyIndex, superEnumIndex),
-            segmentManagerData, status);
+        parentTable = get_existential_table(
+            DataCell::forExistential(superAssemblyIndex, superExistentialIndex), segmentManagerData, status);
         if (parentTable == nullptr)
             return nullptr;
-        layoutBase = parentTable->getLayoutTotal();
     }
 
-    // resolve each member for the enum
-    for (tu_uint8 i = 0; i < enumDescriptor.numMembers(); i++) {
-        auto member = enumDescriptor.getMember(i);
-
-        BytecodeSegment *fieldSegment;
-        tu_uint32 fieldAssembly;
-        tu_uint32 fieldIndex;
-
-        switch (member.memberAddressType()) {
-            case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(enumSegment, member.getFarField(), segmentManagerData, status);
-                if (!link || link->linkage != lyric_object::LinkageSection::Field) {
-                    status = InterpreterStatus::forCondition(
-                        InterpreterCondition::kRuntimeInvariant, "invalid enum member linkage");
-                    return nullptr;
-                }
-                fieldSegment = segmentManagerData->segments[link->assembly];
-                fieldAssembly = link->assembly;
-                fieldIndex = link->value;
-                break;
-            }
-            case lyric_object::AddressType::Near: {
-                fieldSegment = enumSegment;
-                fieldAssembly = assemblyIndex;
-                fieldIndex = member.getNearField().getDescriptorOffset();
-                break;
-            }
-            default:
-                status = InterpreterStatus::forCondition(
-                    InterpreterCondition::kRuntimeInvariant, "invalid enum member linkage");
-                return nullptr;
-        }
-
-        auto key = DataCell::forField(fieldAssembly, fieldIndex);
-        members.try_emplace(key, fieldSegment, fieldIndex, layoutBase + i);
-    }
-
-    // resolve each method for the enum
-    for (tu_uint8 i = 0; i < enumDescriptor.numMethods(); i++) {
-        auto method = enumDescriptor.getMethod(i);
+    // resolve each method for the existential
+    for (tu_uint8 i = 0; i < existentialDescriptor.numMethods(); i++) {
+        auto method = existentialDescriptor.getMethod(i);
 
         BytecodeSegment *callSegment;
         tu_uint32 callAssembly;
@@ -122,10 +82,10 @@ lyric_runtime::internal::get_enum_virtual_table(
 
         switch (method.methodAddressType()) {
             case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(enumSegment, method.getFarCall(), segmentManagerData, status);
+                auto *link = resolve_link(existentialSegment, method.getFarCall(), segmentManagerData, status);
                 if (!link || link->linkage != lyric_object::LinkageSection::Call) {
                     status = InterpreterStatus::forCondition(
-                        InterpreterCondition::kRuntimeInvariant, "invalid enum method linkage");
+                        InterpreterCondition::kRuntimeInvariant, "invalid existential method linkage");
                     return nullptr;
                 }
                 callSegment = segmentManagerData->segments[link->assembly];
@@ -135,7 +95,7 @@ lyric_runtime::internal::get_enum_virtual_table(
                 break;
             }
             case lyric_object::AddressType::Near: {
-                callSegment = enumSegment;
+                callSegment = existentialSegment;
                 callAssembly = assemblyIndex;
                 callIndex = method.getNearCall().getDescriptorOffset();
                 procOffset = method.getNearCall().getProcOffset();
@@ -143,7 +103,7 @@ lyric_runtime::internal::get_enum_virtual_table(
             }
             default:
                 status = InterpreterStatus::forCondition(
-                    InterpreterCondition::kRuntimeInvariant, "invalid enum method linkage");
+                    InterpreterCondition::kRuntimeInvariant, "invalid existential method linkage");
                 return nullptr;
         }
 
@@ -153,8 +113,8 @@ lyric_runtime::internal::get_enum_virtual_table(
 
     // resolve extensions for each impl
 
-    for (tu_uint8 i = 0; i < enumDescriptor.numImpls(); i++) {
-        auto impl = enumDescriptor.getImpl(i);
+    for (tu_uint8 i = 0; i < existentialDescriptor.numImpls(); i++) {
+        auto impl = existentialDescriptor.getImpl(i);
 
         // create a mapping of action descriptor to virtual method
         absl::flat_hash_map<DataCell,VirtualMethod> extensions;
@@ -166,7 +126,7 @@ lyric_runtime::internal::get_enum_virtual_table(
 
             switch (extension.actionAddressType()) {
                 case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(enumSegment, extension.getFarAction(), segmentManagerData, status);
+                    auto *link = resolve_link(existentialSegment, extension.getFarAction(), segmentManagerData, status);
                     if (!link || link->linkage != lyric_object::LinkageSection::Action) {
                         status = InterpreterStatus::forCondition(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
@@ -193,7 +153,7 @@ lyric_runtime::internal::get_enum_virtual_table(
 
             switch (extension.callAddressType()) {
                 case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(enumSegment, extension.getFarCall(), segmentManagerData, status);
+                    auto *link = resolve_link(existentialSegment, extension.getFarCall(), segmentManagerData, status);
                     if (!link || link->linkage != lyric_object::LinkageSection::Call) {
                         status = InterpreterStatus::forCondition(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
@@ -205,7 +165,7 @@ lyric_runtime::internal::get_enum_virtual_table(
                     break;
                 }
                 case lyric_object::AddressType::Near: {
-                    callSegment = enumSegment;
+                    callSegment = existentialSegment;
                     callIndex = extension.getNearCall().getDescriptorOffset();
                     procOffset = extension.getNearCall().getProcOffset();
                     break;
@@ -232,8 +192,8 @@ lyric_runtime::internal::get_enum_virtual_table(
         DataCell conceptKey;
         auto address = implConceptType.getLinkageIndex();
         if (lyric_object::IS_FAR(address)) {
-            auto link = enumObject.getLink(lyric_object::GET_LINK_OFFSET(address));
-            auto *linkage = resolve_link(enumSegment, link, segmentManagerData, status);
+            auto link = existentialObject.getLink(lyric_object::GET_LINK_OFFSET(address));
+            auto *linkage = resolve_link(existentialSegment, link, segmentManagerData, status);
             if (linkage == nullptr)
                 return {};
             if (linkage->linkage != lyric_object::LinkageSection::Concept) {
@@ -243,40 +203,14 @@ lyric_runtime::internal::get_enum_virtual_table(
             }
             conceptKey = DataCell::forConcept(linkage->assembly, linkage->value);
         } else {
-            conceptKey = DataCell::forConcept(enumSegment->getSegmentIndex(), address);
+            conceptKey = DataCell::forConcept(existentialSegment->getSegmentIndex(), address);
         }
 
-        impls.try_emplace(conceptKey, enumSegment, conceptKey, enumType, extensions);
+        impls.try_emplace(conceptKey, existentialSegment, conceptKey, existentialType, extensions);
     }
 
-    auto constructor = enumDescriptor.getConstructor();
+    auto *etable = new ExistentialTable(existentialSegment, descriptor, existentialType, parentTable, methods, impls);
+    segmentManagerData->etablecache[descriptor] = etable;
 
-    // validate ctor descriptor
-    if (constructor.getMode() != lyric_object::CallMode::Constructor || !constructor.isBound()) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid enum ctor flags");
-        return nullptr;
-    }
-
-    // define the ctor virtual method
-    tu_uint32 ctorIndex = constructor.getDescriptorOffset();
-    tu_uint32 procOffset = constructor.getProcOffset();
-    VirtualMethod ctor(enumSegment, ctorIndex, procOffset);
-
-    // get the function pointer for the allocator trap if specified
-    NativeFunc allocator = nullptr;
-    if (enumDescriptor.hasAllocator()) {
-        allocator = enumSegment->getTrap(enumDescriptor.getAllocator());
-        if (allocator == nullptr) {
-            status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "invalid enum allocator");
-            return nullptr;
-        }
-    }
-
-    auto *vtable = new VirtualTable(enumSegment, descriptor, enumType, parentTable,
-        allocator, ctor, members, methods, impls);
-    segmentManagerData->vtablecache[descriptor] = vtable;
-
-    return vtable;
+    return etable;
 }

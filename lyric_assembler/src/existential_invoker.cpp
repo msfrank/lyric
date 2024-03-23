@@ -1,22 +1,22 @@
 
 #include <lyric_assembler/call_symbol.h>
-#include <lyric_assembler/extension_invoker.h>
+#include <lyric_assembler/existential_invoker.h>
+#include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/template_handle.h>
 
-lyric_assembler::ExtensionInvoker::ExtensionInvoker()
+lyric_assembler::ExistentialInvoker::ExistentialInvoker()
     : m_type(InvokeType::INVALID),
       m_call(nullptr),
       m_proc(nullptr)
 {
 }
 
-lyric_assembler::ExtensionInvoker::ExtensionInvoker(CallSymbol *callSymbol, ProcHandle *procHandle)
+lyric_assembler::ExistentialInvoker::ExistentialInvoker(CallSymbol *callSymbol, ProcHandle *procHandle)
     : m_type(InvokeType::INLINE),
       m_call(callSymbol),
       m_proc(procHandle),
-      m_concept(nullptr),
-      m_action(nullptr)
+      m_existential(nullptr)
 {
     TU_ASSERT (m_call != nullptr);
     TU_ASSERT (m_proc != nullptr);
@@ -31,27 +31,24 @@ lyric_assembler::ExtensionInvoker::ExtensionInvoker(CallSymbol *callSymbol, Proc
     }
 }
 
-lyric_assembler::ExtensionInvoker::ExtensionInvoker(
-    ConceptSymbol *conceptSymbol,
-    ActionSymbol *actionSymbol,
-    const lyric_common::TypeDef &receiverType,
-    const SymbolBinding &var)
+lyric_assembler::ExistentialInvoker::ExistentialInvoker(
+    ExistentialSymbol *existentialSymbol,
+    CallSymbol *callSymbol,
+    const lyric_common::TypeDef &receiverType)
     : m_type(InvokeType::VIRTUAL),
-      m_call(nullptr),
+      m_call(callSymbol),
       m_proc(nullptr),
-      m_concept(conceptSymbol),
-      m_action(actionSymbol),
-      m_var(var)
+      m_existential(existentialSymbol)
 {
-    TU_ASSERT (m_concept != nullptr);
-    TU_ASSERT (m_action != nullptr);
+    TU_ASSERT (m_call != nullptr);
+    TU_ASSERT (m_existential != nullptr);
     TU_ASSERT (receiverType.isValid());
 
-    m_parameters = m_action->getParameters();
-    m_rest = m_action->getRest();
-    auto *actionTemplate = m_action->actionTemplate();
-    if (actionTemplate != nullptr) {
-        m_templateParameters = actionTemplate->getTemplateParameters();
+    m_parameters = m_call->getParameters();
+    m_rest = m_call->getRest();
+    auto *callTemplate = m_call->callTemplate();
+    if (callTemplate != nullptr) {
+        m_templateParameters = callTemplate->getTemplateParameters();
         switch (receiverType.getType()) {
             case lyric_common::TypeDefType::Concrete:
                 m_templateArguments = std::vector<lyric_common::TypeDef>(
@@ -64,100 +61,96 @@ lyric_assembler::ExtensionInvoker::ExtensionInvoker(
             default:
                 TU_UNREACHABLE();
         }
-        m_templateUrl = actionTemplate->getTemplateUrl();
+        m_templateUrl = callTemplate->getTemplateUrl();
     }
 }
 
 bool
-lyric_assembler::ExtensionInvoker::isValid() const
+lyric_assembler::ExistentialInvoker::isValid() const
 {
     return m_type != InvokeType::INVALID;
 }
 
 std::vector<lyric_object::Parameter>
-lyric_assembler::ExtensionInvoker::getParameters() const
+lyric_assembler::ExistentialInvoker::getParameters() const
 {
     return m_parameters;
 }
 
 Option<lyric_object::Parameter>
-lyric_assembler::ExtensionInvoker::getRest() const
+lyric_assembler::ExistentialInvoker::getRest() const
 {
     return m_rest;
 }
 
 lyric_common::SymbolUrl
-lyric_assembler::ExtensionInvoker::getTemplateUrl() const
+lyric_assembler::ExistentialInvoker::getTemplateUrl() const
 {
     return m_templateUrl;
 }
 
 std::vector<lyric_object::TemplateParameter>
-lyric_assembler::ExtensionInvoker::getTemplateParameters() const
+lyric_assembler::ExistentialInvoker::getTemplateParameters() const
 {
     return m_templateParameters;
 }
 
 std::vector<lyric_common::TypeDef>
-lyric_assembler::ExtensionInvoker::getTemplateArguments() const
+lyric_assembler::ExistentialInvoker::getTemplateArguments() const
 {
     return m_templateArguments;
 }
 
 std::vector<lyric_object::Parameter>::const_iterator
-lyric_assembler::ExtensionInvoker::placementBegin() const
+lyric_assembler::ExistentialInvoker::placementBegin() const
 {
     switch (m_type) {
         case InvokeType::INLINE:
-            return m_call->placementBegin();
         case InvokeType::VIRTUAL:
-            return m_action->placementBegin();
+            return m_call->placementBegin();
         default:
             TU_UNREACHABLE();
     }
 }
 
 std::vector<lyric_object::Parameter>::const_iterator
-lyric_assembler::ExtensionInvoker::placementEnd() const
+lyric_assembler::ExistentialInvoker::placementEnd() const
 {
     switch (m_type) {
         case InvokeType::INLINE:
-            return m_call->placementEnd();
         case InvokeType::VIRTUAL:
-            return m_action->placementEnd();
+            return m_call->placementEnd();
         default:
             TU_UNREACHABLE();
     }
 }
 
 bool
-lyric_assembler::ExtensionInvoker::hasInitializer(const std::string &name) const
+lyric_assembler::ExistentialInvoker::hasInitializer(const std::string &name) const
 {
     switch (m_type) {
         case InvokeType::INLINE:
-            return m_call->hasInitializer(name);
         case InvokeType::VIRTUAL:
-            return m_action->hasInitializer(name);
+            return m_call->hasInitializer(name);
         default:
             TU_UNREACHABLE();
     }
 }
 
 lyric_common::SymbolUrl
-lyric_assembler::ExtensionInvoker::getInitializer(const std::string &name) const
+lyric_assembler::ExistentialInvoker::getInitializer(const std::string &name) const
 {
     switch (m_type) {
         case InvokeType::INLINE:
-            return m_call->getInitializer(name);
         case InvokeType::VIRTUAL:
-            return m_action->getInitializer(name);
+            return m_call->getInitializer(name);
         default:
             TU_UNREACHABLE();
     }
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
-lyric_assembler::ExtensionInvoker::invoke(
+lyric_assembler::ExistentialInvoker::invoke(
     BlockHandle *block,
     const AbstractCallsiteReifier &reifier)
 {
@@ -166,30 +159,24 @@ lyric_assembler::ExtensionInvoker::invoke(
 
     auto placementSize = reifier.numArguments();
     if (placementSize > std::numeric_limits<uint16_t>::max())
-        return block->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
-            "too many call arguments");
+        return block->logAndContinue(
+            AssemblerCondition::kSyntaxError, tempo_tracing::LogSeverity::kError, "too many call arguments");
 
     auto *code = block->blockCode();
 
     switch (m_type) {
 
         case InvokeType::INLINE: {
-            auto status = code->callInline(m_proc->procCode());
-            if (!status.isOk())
-                return status;
+            TU_RETURN_IF_NOT_OK (code->callInline(m_proc->procCode()));
             return reifier.reifyResult(m_call->getReturnType());
         }
 
         case InvokeType::VIRTUAL: {
-            m_concept->touch();
-            m_action->touch();
-            TU_RETURN_IF_NOT_OK (block->load(m_var));
-            TU_RETURN_IF_NOT_OK (code->loadConcept(m_concept->getAddress()));
-            TU_RETURN_IF_NOT_OK (
-                code->callConcept(
-                    m_action->getAddress(), static_cast<uint16_t>(placementSize), lyric_object::CALL_RECEIVER_FOLLOWS));
-            return reifier.reifyResult(m_action->getReturnType());
+            m_existential->touch();
+            m_call->touch();
+            TU_RETURN_IF_NOT_OK (code->loadExistential(m_existential->getAddress()));
+            TU_RETURN_IF_NOT_OK (code->callExistential(m_call->getAddress(), static_cast<uint16_t>(placementSize)));
+            return reifier.reifyResult(m_call->getReturnType());
         }
 
         default:

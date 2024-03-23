@@ -97,12 +97,12 @@ namespace lyric_object {
             tu_uint16 placementSize,
             tu_uint8 flags = 0);
 
-        tempo_utils::Status callExtension(
+        tempo_utils::Status callConcept(
             tu_uint32 address,
             tu_uint16 placementSize,
             tu_uint8 flags = 0);
 
-        tempo_utils::Status callAction(
+        tempo_utils::Status callExistential(
             tu_uint32 address,
             tu_uint16 placementSize,
             tu_uint8 flags = 0);

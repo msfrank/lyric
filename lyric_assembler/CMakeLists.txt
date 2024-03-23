@@ -32,6 +32,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/ctor_invoker.h
     include/lyric_assembler/disjoint_type_set.h
     include/lyric_assembler/enum_symbol.h
+    include/lyric_assembler/existential_invoker.h
     include/lyric_assembler/existential_symbol.h
     include/lyric_assembler/extension_invoker.h
     include/lyric_assembler/field_symbol.h
@@ -76,6 +77,7 @@ target_sources(lyric_assembler PRIVATE
     src/ctor_invoker.cpp
     src/disjoint_type_set.cpp
     src/enum_symbol.cpp
+    src/existential_invoker.cpp
     src/existential_symbol.cpp
     src/extension_invoker.cpp
     src/field_symbol.cpp

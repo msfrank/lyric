@@ -4,6 +4,7 @@
 #include "abstract_symbol.h"
 #include "assembly_state.h"
 #include "base_symbol.h"
+#include "existential_invoker.h"
 #include "template_handle.h"
 #include "type_handle.h"
 
@@ -77,10 +78,10 @@ namespace lyric_assembler {
             const Option<ParameterSpec> &restSpec,
             const std::vector<ParameterSpec> &ctxSpec,
             const lyric_parser::Assignable &returnSpec);
-        tempo_utils::Result<MethodInvoker> resolveMethod(
+        tempo_utils::Result<ExistentialInvoker> resolveMethod(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
-            bool isReceiver = false) const;
+            bool isReceiver = false);
 
         /*
          * existential impl management

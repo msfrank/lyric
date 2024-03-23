@@ -1,21 +1,23 @@
-#ifndef LYRIC_ASSEMBLER_METHOD_INVOKER_H
-#define LYRIC_ASSEMBLER_METHOD_INVOKER_H
+#ifndef LYRIC_ASSEMBLER_EXTENSION_INVOKER_H
+#define LYRIC_ASSEMBLER_EXTENSION_INVOKER_H
 
 #include <lyric_common/symbol_url.h>
 
 #include "abstract_callsite_reifier.h"
 #include "abstract_invoker.h"
+#include "action_symbol.h"
 #include "assembler_result.h"
-#include "code_builder.h"
 #include "assembler_types.h"
+#include "code_builder.h"
 
 namespace lyric_assembler {
 
     // forward declarations
     class BlockHandle;
     class CallSymbol;
+    class ExistentialSymbol;
 
-    class MethodInvoker : public AbstractInvoker {
+    class ExistentialInvoker : public AbstractInvoker {
 
         enum class InvokeType {
             INVALID,
@@ -24,9 +26,12 @@ namespace lyric_assembler {
         };
 
     public:
-        MethodInvoker();
-        MethodInvoker(CallSymbol *call, ProcHandle *proc);
-        MethodInvoker(CallSymbol *call, const lyric_common::TypeDef &receiverType);
+        ExistentialInvoker();
+        ExistentialInvoker(CallSymbol *callSymbol, ProcHandle *procHandle);
+        ExistentialInvoker(
+            ExistentialSymbol *existentialSymbol,
+            CallSymbol *callSymbol,
+            const lyric_common::TypeDef &receiverType);
 
         bool isValid() const;
 
@@ -47,7 +52,7 @@ namespace lyric_assembler {
         InvokeType m_type;
         CallSymbol *m_call;
         ProcHandle *m_proc;
-        SymbolBinding m_var;
+        ExistentialSymbol *m_existential;
 
         std::vector<lyric_object::Parameter> m_parameters;
         Option<lyric_object::Parameter> m_rest;
@@ -57,4 +62,4 @@ namespace lyric_assembler {
     };
 }
 
-#endif // LYRIC_ASSEMBLER_METHOD_INVOKER_H
+#endif // LYRIC_ASSEMBLER_EXTENSION_INVOKER_H

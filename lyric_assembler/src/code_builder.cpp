@@ -299,6 +299,18 @@ lyric_assembler::CodeBuilder::loadCall(const CallAddress &callAddress)
 }
 
 tempo_utils::Status
+lyric_assembler::CodeBuilder::loadExistential(const ExistentialAddress &existentialAddress)
+{
+    auto status = writeOpcode(lyric_object::Opcode::OP_DESCRIPTOR);
+    if (!status.isOk())
+        return status;
+    status = writeU8(lyric_object::linkage_to_descriptor_section(lyric_object::LinkageSection::Existential));
+    if (!status.isOk())
+        return status;
+    return writeU32(existentialAddress.getAddress());
+}
+
+tempo_utils::Status
 lyric_assembler::CodeBuilder::loadType(const TypeAddress &typeAddress)
 {
     auto status = writeOpcode(lyric_object::Opcode::OP_DESCRIPTOR);
@@ -622,13 +634,37 @@ lyric_assembler::CodeBuilder::callVirtual(const CallAddress &address, uint16_t p
     return writeU16(placementSize);
 }
 
+//tempo_utils::Status
+//lyric_assembler::CodeBuilder::callExtension(const ActionAddress &address, uint16_t placementSize, uint8_t flags)
+//{
+//    TU_ASSERT (address.isValid());
+//
+//    tempo_utils::Status status;
+//    status = writeOpcode(lyric_object::Opcode::OP_CALL_EXTENSION);
+//    if (!status.isOk())
+//        return status;
+//
+//    // write flags
+//    status = writeU8(flags);
+//    if (!status.isOk())
+//        return status;
+//
+//    // write action address
+//    status = writeU32(address.getAddress());
+//    if (!status.isOk())
+//        return status;
+//
+//    // write placement size
+//    return writeU16(placementSize);
+//}
+
 tempo_utils::Status
-lyric_assembler::CodeBuilder::callExtension(const ActionAddress &address, uint16_t placementSize, uint8_t flags)
+lyric_assembler::CodeBuilder::callConcept(const ActionAddress &address, uint16_t placementSize, uint8_t flags)
 {
     TU_ASSERT (address.isValid());
 
     tempo_utils::Status status;
-    status = writeOpcode(lyric_object::Opcode::OP_CALL_EXTENSION);
+    status = writeOpcode(lyric_object::Opcode::OP_CALL_CONCEPT);
     if (!status.isOk())
         return status;
 
@@ -647,12 +683,12 @@ lyric_assembler::CodeBuilder::callExtension(const ActionAddress &address, uint16
 }
 
 tempo_utils::Status
-lyric_assembler::CodeBuilder::callAction(const ActionAddress &address, uint16_t placementSize, uint8_t flags)
+lyric_assembler::CodeBuilder::callExistential(const CallAddress &address, tu_uint16 placementSize, tu_uint8 flags)
 {
     TU_ASSERT (address.isValid());
 
     tempo_utils::Status status;
-    status = writeOpcode(lyric_object::Opcode::OP_CALL_ACTION);
+    status = writeOpcode(lyric_object::Opcode::OP_CALL_EXISTENTIAL);
     if (!status.isOk())
         return status;
 

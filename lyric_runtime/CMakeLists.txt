@@ -78,8 +78,12 @@ target_sources(lyric_runtime PRIVATE
 
     include/lyric_runtime/internal/get_class_virtual_table.h
     src/internal/get_class_virtual_table.cpp
+    include/lyric_runtime/internal/get_concept_table.h
+    src/internal/get_concept_table.cpp
     include/lyric_runtime/internal/get_enum_virtual_table.h
     src/internal/get_enum_virtual_table.cpp
+    include/lyric_runtime/internal/get_existential_table.h
+    src/internal/get_existential_table.cpp
     include/lyric_runtime/internal/get_instance_virtual_table.h
     src/internal/get_instance_virtual_table.cpp
     include/lyric_runtime/internal/get_struct_virtual_table.h

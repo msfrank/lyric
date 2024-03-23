@@ -39,7 +39,7 @@ lyric_runtime::internal::get_instance_virtual_table(
     tu_uint32 layoutBase = 0;
     absl::flat_hash_map<DataCell,VirtualMember> members;
     absl::flat_hash_map<DataCell,VirtualMethod> methods;
-    absl::flat_hash_map<DataCell,VirtualTable> impls;
+    absl::flat_hash_map<DataCell,ImplTable> impls;
 
     // if instance has a superinstance, then resolve its virtual table
     if (instanceDescriptor.hasSuperInstance()) {
@@ -168,8 +168,7 @@ lyric_runtime::internal::get_instance_virtual_table(
 
             switch (extension.actionAddressType()) {
                 case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(instanceSegment, extension.getFarAction(),
-                        segmentManagerData, status);
+                    auto *link = resolve_link(instanceSegment, extension.getFarAction(), segmentManagerData, status);
                     if (!link || link->linkage != lyric_object::LinkageSection::Action) {
                         status = InterpreterStatus::forCondition(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
@@ -196,8 +195,7 @@ lyric_runtime::internal::get_instance_virtual_table(
 
             switch (extension.callAddressType()) {
                 case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(instanceSegment, extension.getFarCall(),
-                    segmentManagerData, status);
+                    auto *link = resolve_link(instanceSegment, extension.getFarCall(), segmentManagerData, status);
                     if (!link || link->linkage != lyric_object::LinkageSection::Call) {
                         status = InterpreterStatus::forCondition(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
@@ -278,8 +276,8 @@ lyric_runtime::internal::get_instance_virtual_table(
         }
     }
 
-    auto *vtable = new VirtualTable(instanceSegment, descriptor, instanceType,
-        parentTable, allocator, ctor, members, methods, impls);
+    auto *vtable = new VirtualTable(instanceSegment, descriptor, instanceType, parentTable,
+        allocator, ctor, members, methods, impls);
     segmentManagerData->vtablecache[descriptor] = vtable;
 
     return vtable;

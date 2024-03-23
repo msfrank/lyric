@@ -60,39 +60,6 @@ lyric_assembler::MethodInvoker::MethodInvoker(CallSymbol *call, const lyric_comm
     }
 }
 
-lyric_assembler::MethodInvoker::MethodInvoker(
-    CallSymbol *call,
-    const lyric_common::TypeDef &receiverType,
-    const SymbolBinding &var)
-    : m_type(InvokeType::EXTENSION),
-      m_call(call),
-      m_proc(nullptr),
-      m_var(var)
-{
-    TU_ASSERT (m_call != nullptr);
-    TU_ASSERT (receiverType.isValid());
-
-    m_parameters = m_call->getParameters();
-    m_rest = m_call->getRest();
-    auto *callTemplate = m_call->callTemplate();
-    if (callTemplate != nullptr) {
-        m_templateParameters = callTemplate->getTemplateParameters();
-        switch (receiverType.getType()) {
-            case lyric_common::TypeDefType::Concrete:
-                m_templateArguments = std::vector<lyric_common::TypeDef>(
-                    receiverType.concreteArgumentsBegin(), receiverType.concreteArgumentsEnd());
-                break;
-            case lyric_common::TypeDefType::Placeholder:
-                m_templateArguments = std::vector<lyric_common::TypeDef>(
-                    receiverType.placeholderArgumentsBegin(), receiverType.placeholderArgumentsEnd());
-                break;
-            default:
-                TU_UNREACHABLE();
-        }
-        m_templateUrl = callTemplate->getTemplateUrl();
-    }
-}
-
 bool
 lyric_assembler::MethodInvoker::isValid() const
 {
@@ -182,17 +149,6 @@ lyric_assembler::MethodInvoker::invoke(
         case InvokeType::VIRTUAL: {
             m_call->touch();
             auto status = code->callVirtual(m_call->getAddress(), placementSize);
-            if (!status.isOk())
-                return status;
-            break;
-        }
-
-        case InvokeType::EXTENSION: {
-            m_call->touch();
-            auto status = block->load(m_var);
-            if (!status.isOk())
-                return status;
-            status = code->callVirtual(m_call->getAddress(), placementSize, lyric_object::CALL_RECEIVER_FOLLOWS);
             if (!status.isOk())
                 return status;
             break;

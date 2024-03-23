@@ -76,27 +76,291 @@ lyric_runtime::VirtualMethod::getProcOffset() const
     return m_procOffset;
 }
 
-lyric_runtime::VirtualTable::VirtualTable(
+lyric_runtime::ImplTable::ImplTable(
     BytecodeSegment *segment,
     const DataCell &descriptor,
     const DataCell &type,
-    const VirtualTable *parentTable,
-    NativeFunc allocator,
-    const VirtualMethod &ctor,
-    absl::flat_hash_map<DataCell,VirtualMember> &members,
     absl::flat_hash_map<DataCell,VirtualMethod> &methods)
     : m_segment(segment),
       m_descriptor(descriptor),
       m_type(type),
-      m_parent(parentTable),
-      m_allocator(allocator),
-      m_ctor(ctor),
-      m_members(std::move(members)),
       m_methods(std::move(methods))
 {
     TU_ASSERT (m_segment != nullptr);
     TU_ASSERT (m_descriptor.isValid());
     TU_ASSERT (m_type.isValid());
+}
+
+lyric_runtime::BytecodeSegment *
+lyric_runtime::ImplTable::getSegment() const
+{
+    return m_segment;
+}
+
+lyric_runtime::DataCell
+lyric_runtime::ImplTable::getDescriptor() const
+{
+    return m_descriptor;
+}
+
+lyric_runtime::DataCell
+lyric_runtime::ImplTable::getType() const
+{
+    return m_type;
+}
+
+lyric_common::SymbolUrl
+lyric_runtime::ImplTable::getSymbolUrl() const
+{
+    auto location = m_segment->getLocation();
+    auto object = m_segment->getObject().getObject();
+
+    lyric_object::LinkageSection section;
+    switch (m_descriptor.type) {
+        case DataCellType::CLASS:
+            section = lyric_object::LinkageSection::Class;
+            break;
+        case DataCellType::CONCEPT:
+            section = lyric_object::LinkageSection::Concept;
+            break;
+        case DataCellType::ENUM:
+            section = lyric_object::LinkageSection::Enum;
+            break;
+        case DataCellType::INSTANCE:
+            section = lyric_object::LinkageSection::Instance;
+            break;
+        case DataCellType::STRUCT:
+            section = lyric_object::LinkageSection::Struct;
+            break;
+        default:
+            return {};
+    }
+
+    auto symbolPath = object.getSymbolPath(section, getDescriptorIndex());
+    return lyric_common::SymbolUrl(location, symbolPath);
+}
+
+lyric_object::LinkageSection
+lyric_runtime::ImplTable::getLinkageSection() const
+{
+    switch (m_descriptor.type) {
+        case DataCellType::CLASS:
+            return lyric_object::LinkageSection::Class;
+        case DataCellType::CONCEPT:
+            return lyric_object::LinkageSection::Concept;
+        case DataCellType::ENUM:
+            return lyric_object::LinkageSection::Enum;
+        case DataCellType::INSTANCE:
+            return lyric_object::LinkageSection::Instance;
+        case DataCellType::STRUCT:
+            return lyric_object::LinkageSection::Struct;
+        default:
+            return lyric_object::LinkageSection::Invalid;
+    }
+}
+
+uint32_t
+lyric_runtime::ImplTable::getDescriptorIndex() const
+{
+    return m_descriptor.data.descriptor.value;
+}
+
+const lyric_runtime::VirtualMethod *
+lyric_runtime::ImplTable::getMethod(const DataCell &descriptor) const
+{
+    if (m_methods.contains(descriptor)) {
+        const auto &method = m_methods.at(descriptor);
+        return &method;     // return pointer to the virtual method entry
+    }
+    return nullptr;
+}
+
+lyric_runtime::ExistentialTable::ExistentialTable(
+    BytecodeSegment *segment,
+    const DataCell &descriptor,
+    const DataCell &type,
+    const ExistentialTable *parentTable,
+    absl::flat_hash_map<DataCell,VirtualMethod> &methods,
+    absl::flat_hash_map<DataCell,ImplTable> &impls)
+    : m_segment(segment),
+      m_descriptor(descriptor),
+      m_type(type),
+      m_parent(parentTable),
+      m_methods(std::move(methods)),
+      m_impls(std::move(impls))
+{
+    TU_ASSERT (m_segment != nullptr);
+    TU_ASSERT (m_descriptor.isValid());
+    TU_ASSERT (m_type.isValid());
+}
+
+lyric_runtime::BytecodeSegment *
+lyric_runtime::ExistentialTable::getSegment() const
+{
+    return m_segment;
+}
+
+lyric_runtime::DataCell
+lyric_runtime::ExistentialTable::getDescriptor() const
+{
+    return m_descriptor;
+}
+
+lyric_runtime::DataCell
+lyric_runtime::ExistentialTable::getType() const
+{
+    return m_type;
+}
+
+const lyric_runtime::ExistentialTable *
+lyric_runtime::ExistentialTable::getParent() const
+{
+    return m_parent;
+}
+
+lyric_common::SymbolUrl
+lyric_runtime::ExistentialTable::getSymbolUrl() const
+{
+    auto location = m_segment->getLocation();
+    auto object = m_segment->getObject().getObject();
+
+    lyric_object::LinkageSection section;
+    switch (m_descriptor.type) {
+        case DataCellType::EXISTENTIAL:
+            section = lyric_object::LinkageSection::Existential;
+            break;
+        default:
+            return {};
+    }
+
+    auto symbolPath = object.getSymbolPath(section, getDescriptorIndex());
+    return lyric_common::SymbolUrl(location, symbolPath);
+}
+
+lyric_object::LinkageSection
+lyric_runtime::ExistentialTable::getLinkageSection() const
+{
+    switch (m_descriptor.type) {
+        case DataCellType::EXISTENTIAL:
+            return lyric_object::LinkageSection::Existential;
+        default:
+            return lyric_object::LinkageSection::Invalid;
+    }
+}
+
+uint32_t
+lyric_runtime::ExistentialTable::getDescriptorIndex() const
+{
+    return m_descriptor.data.descriptor.value;
+}
+
+const lyric_runtime::VirtualMethod *
+lyric_runtime::ExistentialTable::getMethod(const DataCell &descriptor) const
+{
+    for (auto *curr = this; curr != nullptr; curr = curr->m_parent) {
+        if (curr->m_methods.contains(descriptor)) {
+            const auto &method = curr->m_methods.at(descriptor);
+            return &method;     // return pointer to the virtual method entry
+        }
+    }
+    return nullptr;
+}
+
+const lyric_runtime::VirtualMethod *
+lyric_runtime::ExistentialTable::getExtension(const DataCell &conceptDescriptor, const DataCell &callDescriptor) const
+{
+    if (!m_impls.contains(conceptDescriptor))
+        return nullptr;
+
+    const auto &impl = m_impls.at(conceptDescriptor);
+    return impl.getMethod(callDescriptor);
+}
+
+lyric_runtime::ConceptTable::ConceptTable(
+    BytecodeSegment *segment,
+    const DataCell &descriptor,
+    const DataCell &type,
+    const ConceptTable *parentTable,
+    absl::flat_hash_map<DataCell,ImplTable> &impls)
+    : m_segment(segment),
+      m_descriptor(descriptor),
+      m_type(type),
+      m_parent(parentTable),
+      m_impls(std::move(impls))
+{
+    TU_ASSERT (m_segment != nullptr);
+    TU_ASSERT (m_descriptor.isValid());
+    TU_ASSERT (m_type.isValid());
+}
+
+lyric_runtime::BytecodeSegment *
+lyric_runtime::ConceptTable::getSegment() const
+{
+    return m_segment;
+}
+
+lyric_runtime::DataCell
+lyric_runtime::ConceptTable::getDescriptor() const
+{
+    return m_descriptor;
+}
+
+lyric_runtime::DataCell
+lyric_runtime::ConceptTable::getType() const
+{
+    return m_type;
+}
+
+const lyric_runtime::ConceptTable *
+lyric_runtime::ConceptTable::getParent() const
+{
+    return m_parent;
+}
+
+lyric_common::SymbolUrl
+lyric_runtime::ConceptTable::getSymbolUrl() const
+{
+    auto location = m_segment->getLocation();
+    auto object = m_segment->getObject().getObject();
+
+    lyric_object::LinkageSection section;
+    switch (m_descriptor.type) {
+        case DataCellType::CONCEPT:
+            section = lyric_object::LinkageSection::Concept;
+            break;
+        default:
+            return {};
+    }
+
+    auto symbolPath = object.getSymbolPath(section, getDescriptorIndex());
+    return lyric_common::SymbolUrl(location, symbolPath);
+}
+
+lyric_object::LinkageSection
+lyric_runtime::ConceptTable::getLinkageSection() const
+{
+    switch (m_descriptor.type) {
+        case DataCellType::CONCEPT:
+            return lyric_object::LinkageSection::Concept;
+        default:
+            return lyric_object::LinkageSection::Invalid;
+    }
+}
+
+uint32_t
+lyric_runtime::ConceptTable::getDescriptorIndex() const
+{
+    return m_descriptor.data.descriptor.value;
+}
+
+const lyric_runtime::VirtualMethod *
+lyric_runtime::ConceptTable::getExtension(const DataCell &conceptDescriptor, const DataCell &callDescriptor) const
+{
+    if (!m_impls.contains(conceptDescriptor))
+        return nullptr;
+
+    const auto &impl = m_impls.at(conceptDescriptor);
+    return impl.getMethod(callDescriptor);
 }
 
 lyric_runtime::VirtualTable::VirtualTable(
@@ -108,7 +372,7 @@ lyric_runtime::VirtualTable::VirtualTable(
     const VirtualMethod &ctor,
     absl::flat_hash_map<DataCell,VirtualMember> &members,
     absl::flat_hash_map<DataCell,VirtualMethod> &methods,
-    absl::flat_hash_map<DataCell,VirtualTable> &impls)
+    absl::flat_hash_map<DataCell,ImplTable> &impls)
     : m_segment(segment),
       m_descriptor(descriptor),
       m_type(type),
@@ -118,24 +382,6 @@ lyric_runtime::VirtualTable::VirtualTable(
       m_members(std::move(members)),
       m_methods(std::move(methods)),
       m_impls(std::move(impls))
-{
-    TU_ASSERT (m_segment != nullptr);
-    TU_ASSERT (m_descriptor.isValid());
-    TU_ASSERT (m_type.isValid());
-}
-
-lyric_runtime::VirtualTable::VirtualTable(
-    BytecodeSegment *segment,
-    const DataCell &descriptor,
-    const DataCell &type,
-    absl::flat_hash_map<DataCell,VirtualMethod> &methods)
-    : m_segment(segment),
-      m_descriptor(descriptor),
-      m_type(type),
-      m_parent(nullptr),
-      m_allocator(nullptr),
-      m_ctor(),
-      m_methods(std::move(methods))
 {
     TU_ASSERT (m_segment != nullptr);
     TU_ASSERT (m_descriptor.isValid());
@@ -280,9 +526,5 @@ lyric_runtime::VirtualTable::getExtension(const DataCell &conceptDescriptor, con
         return nullptr;
 
     const auto &impl = m_impls.at(conceptDescriptor);
-    if (impl.m_methods.contains(callDescriptor)) {
-        const auto &extension = impl.m_methods.at(callDescriptor);
-        return &extension;     // return pointer to the virtual method entry
-    }
-    return nullptr;
+    return impl.getMethod(callDescriptor);
 }

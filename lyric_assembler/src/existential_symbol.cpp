@@ -384,11 +384,11 @@ lyric_assembler::ExistentialSymbol::declareMethod(
     return methodUrl;
 }
 
-tempo_utils::Result<lyric_assembler::MethodInvoker>
+tempo_utils::Result<lyric_assembler::ExistentialInvoker>
 lyric_assembler::ExistentialSymbol::resolveMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
-    bool thisReceiver) const
+    bool thisReceiver)
 {
     auto *priv = getPriv();
 
@@ -409,11 +409,11 @@ lyric_assembler::ExistentialSymbol::resolveMethod(
     auto *callSymbol = cast_symbol_to_call(methodSym);
 
     if (callSymbol->isInline())
-        return MethodInvoker(callSymbol, callSymbol->callProc());
+        return ExistentialInvoker(callSymbol, callSymbol->callProc());
     if (!callSymbol->isBound())
         m_state->throwAssemblerInvariant("invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-    return MethodInvoker(callSymbol, receiverType);
+    return ExistentialInvoker(this, callSymbol, receiverType);
 }
 
 bool

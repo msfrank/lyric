@@ -5,6 +5,7 @@
 #include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/enum_symbol.h>
+#include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
@@ -172,43 +173,6 @@ lyric_compiler::internal::compile_deref_call(
     return compile_function_call(bindingBlock, loadBlock, identifier, walker, moduleEntry);
 }
 
-//tempo_utils::Result<lyric_common::TypeDef>
-//lyric_compiler::compile_deref_extension(
-//    lyric_assembler::BlockHandle *block,
-//    const std::string &identifier,
-//    const lyric_common::TypeDef &receiverType,
-//    const lyric_parser::NodeWalker &walker,
-//    ModuleEntry &moduleEntry)
-//{
-//    TU_ASSERT (walker.isValid());
-//
-//    auto resolveExtensionResult = block->resolveExtension(receiverType, identifier);
-//    if (resolveExtensionResult.isStatus())
-//        return resolveExtensionResult.getStatus();
-//    auto extension = resolveExtensionResult.getResult();
-//
-//    lyric_assembler::CallsiteReifier reifier(extension.getParameters(), extension.getRest(),
-//        extension.getTemplateUrl(), extension.getTemplateParameters(),
-//        extension.getTemplateArguments(), block->blockState());
-//
-//    tempo_utils::Status status;
-//
-//    // the extension receiver must be the first argument
-//    status = reifier.reifyNextArgument(receiverType);
-//    if (!status.isOk())
-//        return status;
-//    placementBegin++;
-//
-//    status = compile_placement(block, extension, reifier, walker, moduleEntry);
-//    if (!status.isOk())
-//        return status;
-//
-//    auto invokeExtensionResult = extension.invoke(block, reifier);
-//    if (invokeExtensionResult.isStatus())
-//        return invokeExtensionResult.getStatus();
-//    return invokeExtensionResult.getResult();
-//}
-
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_compiler::internal::compile_deref_method(
     lyric_assembler::BlockHandle *block,
@@ -238,15 +202,30 @@ lyric_compiler::internal::compile_deref_method(
     // invoke method on receiver
     switch (receiver->getSymbolType()) {
 
+        case lyric_assembler::SymbolType::CLASS: {
+            auto *classSymbol = cast_symbol_to_class(receiver);
+            auto resolveMethodResult = classSymbol->resolveMethod(identifier, receiverType, thisReceiver);
+            if (resolveMethodResult.isStatus())
+                return resolveMethodResult.getStatus();
+            auto method = resolveMethodResult.getResult();
+
+            lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
+                method.getTemplateUrl(), method.getTemplateParameters(),
+                method.getTemplateArguments(), typeSystem);
+
+            auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
+            if (!status.isOk())
+                return status;
+
+            auto invokeMethodResult = method.invoke(block, reifier);
+            if (invokeMethodResult.isStatus())
+                return invokeMethodResult.getStatus();
+            return invokeMethodResult.getResult();
+        }
+
         case lyric_assembler::SymbolType::CONCEPT: {
             auto *conceptSymbol = cast_symbol_to_concept(receiver);
-            auto resolveActionResult = conceptSymbol->resolveAction(
-                identifier, receiverType, thisReceiver);
-//            if (resolveActionResult.isStatus()) {
-//                if (resolveActionResult.getStatus().getType() == CompilerStatusType::MISSING_METHOD)
-//                    return compile_deref_extension(block, identifier, receiverType, walker);
-//                return CompilerResult<Assignable>(resolveActionResult.getStatus());
-//            }
+            auto resolveActionResult = conceptSymbol->resolveAction(identifier, receiverType, thisReceiver);
             if (resolveActionResult.isStatus())
                 return resolveActionResult.getStatus();
             auto action = resolveActionResult.getResult();
@@ -265,41 +244,9 @@ lyric_compiler::internal::compile_deref_method(
             return invokeActionResult.getResult();
         }
 
-        case lyric_assembler::SymbolType::INSTANCE: {
-            auto *instanceSymbol = cast_symbol_to_instance(receiver);
-            auto resolveMethodResult = instanceSymbol->resolveMethod(
-                identifier, receiverType, thisReceiver);
-//            if (resolveMethodResult.isStatus()) {
-//                if (resolveMethodResult.getStatus().getType() == CompilerStatusType::MISSING_METHOD)
-//                    return compile_deref_extension(block, identifier, receiverType, walker);
-//                return CompilerResult<Assignable>(resolveMethodResult.getStatus());
-//            }
-            if (resolveMethodResult.isStatus())
-                return resolveMethodResult.getStatus();
-            auto method = resolveMethodResult.getResult();
-
-            lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
-                method.getTemplateUrl(), method.getTemplateParameters(),
-                method.getTemplateArguments(), typeSystem);
-
-            auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
-            if (!status.isOk())
-                return status;
-
-            auto invokeMethodResult = method.invoke(block, reifier);
-            if (invokeMethodResult.isStatus())
-                return invokeMethodResult.getStatus();
-            return invokeMethodResult.getResult();
-        }
-
         case lyric_assembler::SymbolType::ENUM: {
             auto *enumSymbol = cast_symbol_to_enum(receiver);
             auto resolveMethodResult = enumSymbol->resolveMethod(identifier, receiverType, thisReceiver);
-//            if (resolveMethodResult.isStatus()) {
-//                if (resolveMethodResult.getStatus().getType() == CompilerStatusType::MISSING_METHOD)
-//                    return compile_deref_extension(block, identifier, receiverType, walker);
-//                return CompilerResult<Assignable>(resolveMethodResult.getStatus());
-//            }
             if (resolveMethodResult.isStatus())
                 return resolveMethodResult.getStatus();
             auto method = resolveMethodResult.getResult();
@@ -318,14 +265,30 @@ lyric_compiler::internal::compile_deref_method(
             return invokeMethodResult.getResult();
         }
 
-        case lyric_assembler::SymbolType::CLASS: {
-            auto *classSymbol = cast_symbol_to_class(receiver);
-            auto resolveMethodResult = classSymbol->resolveMethod(identifier, receiverType, thisReceiver);
-//            if (resolveMethodResult.isStatus()) {
-//                if (resolveMethodResult.getStatus().getType() == CompilerStatusType::MISSING_METHOD)
-//                    return compile_deref_extension(block, identifier, receiverType, walker);
-//                return CompilerResult<Assignable>(resolveMethodResult.getStatus());
-//            }
+        case lyric_assembler::SymbolType::EXISTENTIAL: {
+            auto *existentialSymbol = cast_symbol_to_existential(receiver);
+            auto resolveMethodResult = existentialSymbol->resolveMethod(identifier, receiverType, thisReceiver);
+            if (resolveMethodResult.isStatus())
+                return resolveMethodResult.getStatus();
+            auto method = resolveMethodResult.getResult();
+
+            lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
+                method.getTemplateUrl(), method.getTemplateParameters(),
+                method.getTemplateArguments(), typeSystem);
+
+            auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
+            if (!status.isOk())
+                return status;
+
+            auto invokeMethodResult = method.invoke(block, reifier);
+            if (invokeMethodResult.isStatus())
+                return invokeMethodResult.getStatus();
+            return invokeMethodResult.getResult();
+        }
+
+        case lyric_assembler::SymbolType::INSTANCE: {
+            auto *instanceSymbol = cast_symbol_to_instance(receiver);
+            auto resolveMethodResult = instanceSymbol->resolveMethod(identifier, receiverType, thisReceiver);
             if (resolveMethodResult.isStatus())
                 return resolveMethodResult.getStatus();
             auto method = resolveMethodResult.getResult();
@@ -346,13 +309,7 @@ lyric_compiler::internal::compile_deref_method(
 
         case lyric_assembler::SymbolType::STRUCT: {
             auto *structSymbol = cast_symbol_to_struct(receiver);
-            auto resolveMethodResult = structSymbol->resolveMethod(
-                identifier, receiverType, thisReceiver);
-//            if (resolveMethodResult.isStatus()) {
-//                if (resolveMethodResult.getStatus().getType() == CompilerStatusType::MISSING_METHOD)
-//                    return compile_deref_extension(block, identifier, receiverType, walker);
-//                return CompilerResult<Assignable>(resolveMethodResult.getStatus());
-//            }
+            auto resolveMethodResult = structSymbol->resolveMethod(identifier, receiverType, thisReceiver);
             if (resolveMethodResult.isStatus())
                 return resolveMethodResult.getStatus();
             auto method = resolveMethodResult.getResult();

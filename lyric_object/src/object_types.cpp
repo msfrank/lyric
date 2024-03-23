@@ -180,11 +180,11 @@ tempo_utils::LogMessage&& lyric_object::operator<<(tempo_utils::LogMessage&& mes
         case Opcode::OP_CALL_VIRTUAL:
             std::forward<tempo_utils::LogMessage>(message) << "OP_CALL_VIRTUAL";
             break;
-        case Opcode::OP_CALL_ACTION:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_CALL_ACTION";
+        case Opcode::OP_CALL_CONCEPT:
+            std::forward<tempo_utils::LogMessage>(message) << "OP_CALL_CONCEPT";
             break;
-        case Opcode::OP_CALL_EXTENSION:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_CALL_EXTENSION";
+        case Opcode::OP_CALL_EXISTENTIAL:
+            std::forward<tempo_utils::LogMessage>(message) << "OP_CALL_EXISTENTIAL";
             break;
         case Opcode::OP_TRAP:
             std::forward<tempo_utils::LogMessage>(message) << "OP_TRAP";

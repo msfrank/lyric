@@ -36,6 +36,7 @@ lyric_runtime::internal::get_class_virtual_table(
     tu_uint32 layoutBase = 0;
     absl::flat_hash_map<DataCell,VirtualMember> members;
     absl::flat_hash_map<DataCell,VirtualMethod> methods;
+    absl::flat_hash_map<DataCell,ImplTable> impls;
 
     // if class has a superclass, then resolve its virtual table
     if (classDescriptor.hasSuperClass()) {
@@ -149,6 +150,104 @@ lyric_runtime::internal::get_class_virtual_table(
         methods.try_emplace(key, callSegment, callIndex, procOffset);
     }
 
+    // resolve extensions for each impl
+
+    for (tu_uint8 i = 0; i < classDescriptor.numImpls(); i++) {
+        auto impl = classDescriptor.getImpl(i);
+
+        // create a mapping of action descriptor to virtual method
+        absl::flat_hash_map<DataCell,VirtualMethod> extensions;
+        for (tu_uint8 j = 0; j < impl.numExtensions(); j++) {
+            auto extension = impl.getExtension(j);
+
+            tu_uint32 actionAssembly;
+            tu_uint32 actionIndex;
+
+            switch (extension.actionAddressType()) {
+                case lyric_object::AddressType::Far: {
+                    auto *link = resolve_link(classSegment, extension.getFarAction(), segmentManagerData, status);
+                    if (!link || link->linkage != lyric_object::LinkageSection::Action) {
+                        status = InterpreterStatus::forCondition(
+                            InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
+                        return nullptr;
+                    }
+                    actionAssembly = link->assembly;
+                    actionIndex = link->value;
+                    break;
+                }
+                case lyric_object::AddressType::Near: {
+                    actionAssembly = assemblyIndex;
+                    actionIndex = extension.getNearAction().getDescriptorOffset();
+                    break;
+                }
+                default:
+                    status = InterpreterStatus::forCondition(
+                        InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
+                    return nullptr;
+            }
+
+            BytecodeSegment *callSegment;
+            tu_uint32 callIndex;
+            tu_uint32 procOffset;
+
+            switch (extension.callAddressType()) {
+                case lyric_object::AddressType::Far: {
+                    auto *link = resolve_link(classSegment, extension.getFarCall(), segmentManagerData, status);
+                    if (!link || link->linkage != lyric_object::LinkageSection::Call) {
+                        status = InterpreterStatus::forCondition(
+                            InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
+                        return nullptr;
+                    }
+                    callSegment = segmentManagerData->segments[link->assembly];
+                    callIndex = link->value;
+                    procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
+                    break;
+                }
+                case lyric_object::AddressType::Near: {
+                    callSegment = classSegment;
+                    callIndex = extension.getNearCall().getDescriptorOffset();
+                    procOffset = extension.getNearCall().getProcOffset();
+                    break;
+                }
+                default:
+                    status = InterpreterStatus::forCondition(
+                        InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
+                    return nullptr;
+            }
+
+            auto actionKey = DataCell::forAction(actionAssembly, actionIndex);
+            extensions.try_emplace(actionKey, callSegment, callIndex, procOffset);
+        }
+
+        // resolve the concept for the impl
+        auto implConceptType = impl.getImplType().concreteType();
+        if (!implConceptType.isValid() || implConceptType.getLinkageSection() != lyric_object::LinkageSection::Concept) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid impl type");
+            return nullptr;
+        }
+
+        // create the concept descriptor
+        DataCell conceptKey;
+        auto address = implConceptType.getLinkageIndex();
+        if (lyric_object::IS_FAR(address)) {
+            auto link = classObject.getLink(lyric_object::GET_LINK_OFFSET(address));
+            auto *linkage = resolve_link(classSegment, link, segmentManagerData, status);
+            if (linkage == nullptr)
+                return {};
+            if (linkage->linkage != lyric_object::LinkageSection::Concept) {
+                status = InterpreterStatus::forCondition(
+                    InterpreterCondition::kRuntimeInvariant, "invalid impl concept linkage");
+                return {};
+            }
+            conceptKey = DataCell::forConcept(linkage->assembly, linkage->value);
+        } else {
+            conceptKey = DataCell::forConcept(classSegment->getSegmentIndex(), address);
+        }
+
+        impls.try_emplace(conceptKey, classSegment, conceptKey, classType, extensions);
+    }
+
     auto constructor = classDescriptor.getConstructor();
 
     // validate ctor descriptor
@@ -175,7 +274,7 @@ lyric_runtime::internal::get_class_virtual_table(
     }
 
     auto *vtable = new VirtualTable(classSegment, descriptor, classType, parentTable,
-        allocator, ctor, members, methods);
+        allocator, ctor, members, methods, impls);
     segmentManagerData->vtablecache[descriptor] = vtable;
 
     return vtable;

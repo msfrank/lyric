@@ -629,17 +629,17 @@ lyric_object::BytecodeBuilder::callVirtual(
 }
 
 tempo_utils::Status
-lyric_object::BytecodeBuilder::callExtension(
+lyric_object::BytecodeBuilder::callConcept(
     tu_uint32 address,
     uint16_t placementSize,
     tu_uint8 flags)
 {
     if (address == INVALID_ADDRESS_U32)
         return ObjectStatus::forCondition(ObjectCondition::kObjectInvariant,
-            "invalid address for extension call");
+            "invalid address for concept call");
 
     tempo_utils::Status status;
-    status = writeOpcode(Opcode::OP_CALL_EXTENSION);
+    status = writeOpcode(Opcode::OP_CALL_CONCEPT);
     if (!status.isOk())
         return status;
 
@@ -658,17 +658,17 @@ lyric_object::BytecodeBuilder::callExtension(
 }
 
 tempo_utils::Status
-lyric_object::BytecodeBuilder::callAction(
+lyric_object::BytecodeBuilder::callExistential(
     tu_uint32 address,
     uint16_t placementSize,
     tu_uint8 flags)
 {
     if (address == INVALID_ADDRESS_U32)
         return ObjectStatus::forCondition(ObjectCondition::kObjectInvariant,
-            "invalid address for action call");
+            "invalid address for existential call");
 
     tempo_utils::Status status;
-    status = writeOpcode(Opcode::OP_CALL_ACTION);
+    status = writeOpcode(Opcode::OP_CALL_EXISTENTIAL);
     if (!status.isOk())
         return status;
 
