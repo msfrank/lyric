@@ -3,7 +3,8 @@
 
 #include "builder_state.h"
 
-CoreExistential *build_core_Float(BuilderState &state, const CoreExistential *IntrinsicExistential);
+CoreExistential *declare_core_Float(BuilderState &state, const CoreExistential *IntrinsicExistential);
+void build_core_Float(BuilderState &state, const CoreExistential *FloatExistential);
 
 CoreInstance *
 build_core_FloatInstance(

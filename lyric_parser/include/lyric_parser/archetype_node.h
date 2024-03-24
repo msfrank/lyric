@@ -47,7 +47,8 @@ namespace lyric_parser {
 
         void prependChild(ArchetypeNode *child);
         void appendChild(ArchetypeNode *child);
-        NodeAddress getChild(int index);
+        NodeAddress getChild(int index) const;
+        ArchetypeNode *detachChild(int index);
         std::vector<NodeAddress>::const_iterator childrenBegin() const;
         std::vector<NodeAddress>::const_iterator childrenEnd() const;
         int numChildren() const;

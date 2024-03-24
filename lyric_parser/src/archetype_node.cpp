@@ -147,11 +147,25 @@ lyric_parser::ArchetypeNode::appendChild(ArchetypeNode *child)
 }
 
 lyric_parser::NodeAddress
-lyric_parser::ArchetypeNode::getChild(int index)
+lyric_parser::ArchetypeNode::getChild(int index) const
 {
     if (0 <= index && std::cmp_less(index, m_children.size()))
         return m_children.at(index);
     return {};
+}
+
+lyric_parser::ArchetypeNode *
+lyric_parser::ArchetypeNode::detachChild(int index)
+{
+    if (0 <= index && std::cmp_less(index, m_children.size())) {
+        auto iterator = m_children.begin();
+        std::advance(iterator, index);
+        auto address = *iterator;
+        auto *child = m_state->getNode(address.getAddress());
+        m_children.erase(iterator);
+        return child;
+    }
+    return nullptr;
 }
 
 std::vector<lyric_parser::NodeAddress>::const_iterator

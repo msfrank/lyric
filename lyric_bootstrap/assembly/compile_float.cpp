@@ -4,12 +4,37 @@
 #include "compile_float.h"
 
 CoreExistential *
-build_core_Float(BuilderState &state, const CoreExistential *IntrinsicExistential)
+declare_core_Float(BuilderState &state, const CoreExistential *IntrinsicExistential)
 {
     lyric_common::SymbolPath existentialPath({"Float"});
     auto *FloatExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::Float64,
         lyo1::ExistentialFlags::Final, IntrinsicExistential);
     return FloatExistential;
+}
+
+void
+build_core_Float(BuilderState &state, const CoreExistential *FloatExistential)
+{
+    auto *FloatType = FloatExistential->existentialType;
+
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::FLOAT_CEIL)));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Ceil", FloatExistential, {}, {}, code, FloatType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::FLOAT_FLOOR)));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Floor", FloatExistential, {}, {}, code, FloatType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::FLOAT_TRUNC)));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("Trunc", FloatExistential, {}, {}, code, FloatType);
+    }
 }
 
 CoreInstance *

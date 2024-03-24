@@ -14,6 +14,22 @@ lyric_parser::internal::ModuleDerefOps::ModuleDerefOps(ArchetypeState *state)
 }
 
 void
+lyric_parser::internal::ModuleDerefOps::enterLiteralExpression(ModuleParser::LiteralExpressionContext *ctx)
+{
+    auto *token = ctx->getStart();
+    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDerefClass, token);
+    m_state->pushNode(derefNode);
+}
+
+void
+lyric_parser::internal::ModuleDerefOps::enterGroupingExpression(ModuleParser::GroupingExpressionContext *ctx)
+{
+    auto *token = ctx->getStart();
+    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDerefClass, token);
+    m_state->pushNode(derefNode);
+}
+
+void
 lyric_parser::internal::ModuleDerefOps::enterThisExpression(ModuleParser::ThisExpressionContext *ctx)
 {
     auto *token = ctx->getStart();
@@ -35,6 +51,43 @@ lyric_parser::internal::ModuleDerefOps::enterCallExpression(ModuleParser::CallEx
     auto *token = ctx->getStart();
     auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDerefClass, token);
     m_state->pushNode(derefNode);
+}
+
+void
+lyric_parser::internal::ModuleDerefOps::exitDerefLiteral(ModuleParser::DerefLiteralContext *ctx)
+{
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(ctx->getStop());
+    auto *literalNode = m_state->popNode();
+
+    // if ancestor node is not a kDeref, then report internal violation
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(ctx->getStop());
+    auto *derefNode = m_state->peekNode();
+    derefNode->checkClassOrThrow(lyric_schema::kLyricAstDerefClass);
+
+    // otherwise append literal to the deref
+    derefNode->appendChild(literalNode);
+}
+
+void
+lyric_parser::internal::ModuleDerefOps::exitDerefGrouping(ModuleParser::DerefGroupingContext *ctx)
+{
+    // if stack is empty, then mark source as incomplete
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(ctx->getStop());
+    auto *expressionNode = m_state->popNode();
+
+    // if ancestor node is not a kDeref, then report internal violation
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(ctx->getStop());
+    auto *derefNode = m_state->peekNode();
+    derefNode->checkClassOrThrow(lyric_schema::kLyricAstDerefClass);
+
+    // otherwise wrap expression in a block and append to the deref
+    auto *blockNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstBlockClass, ctx->getStart());
+    blockNode->appendChild(expressionNode);
+    derefNode->appendChild(blockNode);
 }
 
 void
@@ -193,46 +246,50 @@ lyric_parser::internal::ModuleDerefOps::exitDerefMethod(ModuleParser::DerefMetho
 }
 
 void
+lyric_parser::internal::ModuleDerefOps::exitLiteralExpression(ModuleParser::LiteralExpressionContext *ctx)
+{
+    // if ancestor node is not a kDeref, then report internal violation
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(ctx->getStop());
+    auto *derefNode = m_state->peekNode();
+    derefNode->checkClassOrThrow(lyric_schema::kLyricAstDerefClass);
+
+    // if deref only contains one element, then simplify the expression
+    if (derefNode->numChildren() == 1) {
+        auto *child = derefNode->detachChild(0);
+        m_state->popNode();
+        m_state->pushNode(child);
+    }
+}
+
+void
+lyric_parser::internal::ModuleDerefOps::exitGroupingExpression(ModuleParser::GroupingExpressionContext *ctx)
+{
+    // if ancestor node is not a kDeref, then report internal violation
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(ctx->getStop());
+    auto *derefNode = m_state->peekNode();
+    derefNode->checkClassOrThrow(lyric_schema::kLyricAstDerefClass);
+
+    // if deref only contains one element, then simplify the expression
+    if (derefNode->numChildren() == 1) {
+        auto *child = derefNode->detachChild(0);
+        m_state->popNode();
+        m_state->pushNode(child);
+    }
+}
+
+void
 lyric_parser::internal::ModuleDerefOps::exitThisExpression(ModuleParser::ThisExpressionContext *ctx)
 {
-//    if (isEmpty() || peek()->getNodeType() != FirNodeType::FIR_DEREF)
-//        throw ParseInvariantException(ctx->getStop(), "expected ancestor FIR_DEREF");
-//    auto *deref = static_cast<FirDeref *>(peek());
-//
-//    // if deref only contains one element, then simplify the expression
-//    if (deref->numP() == 1) {
-//        auto *thiz = deref->getP(0)->clone();
-//        delete pop();
-//        push(thiz);
-//    }
 }
 
 void
 lyric_parser::internal::ModuleDerefOps::exitNameExpression(ModuleParser::NameExpressionContext *ctx)
 {
-//    if (isEmpty() || peek()->getNodeType() != FirNodeType::FIR_DEREF)
-//        throw ParseInvariantException(ctx->getStop(), "expected ancestor FIR_DEREF");
-//    auto *deref = static_cast<FirDeref *>(peek());
-//
-//    // if deref only contains one element, then simplify the expression
-//    if (deref->numP() == 1) {
-//        auto *name = deref->getP(0)->clone();
-//        delete pop();
-//        push(name);
-//    }
 }
 
 void
 lyric_parser::internal::ModuleDerefOps::exitCallExpression(ModuleParser::CallExpressionContext *ctx)
 {
-//    if (isEmpty() || peek()->getNodeType() != FirNodeType::FIR_DEREF)
-//        throw ParseInvariantException(ctx->getStop(), "expected ancestor FIR_DEREF");
-//    auto *deref = static_cast<FirDeref *>(peek());
-//
-//    // if deref only contains one element, then simplify the expression
-//    if (deref->numP() == 1) {
-//        auto *call = deref->getP(0)->clone();
-//        delete pop();
-//        push(call);
-//    }
 }

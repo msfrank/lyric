@@ -35,7 +35,7 @@ lyric_parser::internal::ModuleConstructOps::exitPairExpression(ModuleParser::Pai
 }
 
 void
-lyric_parser::internal::ModuleConstructOps::exitNewExpression(ModuleParser::NewExpressionContext *ctx)
+lyric_parser::internal::ModuleConstructOps::exitDerefNew(ModuleParser::DerefNewContext *ctx)
 {
     auto *typeNode = m_state->makeType(ctx->assignableType());
     auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,

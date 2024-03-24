@@ -11,6 +11,7 @@
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/internal/compile_call.h>
+#include <lyric_compiler/internal/compile_constant.h>
 #include <lyric_compiler/internal/compile_deref.h>
 #include <lyric_compiler/internal/compile_new.h>
 #include <lyric_compiler/internal/compile_node.h>
@@ -444,6 +445,8 @@ lyric_compiler::internal::compile_deref(
 
     // load the initial deref element onto the top of the stack
     switch (initialId) {
+
+        // this expression
         case lyric_schema::LyricAstId::This: {
             auto derefThisResult = compile_deref_this(block, initial, moduleEntry);
             if (derefThisResult.isStatus())
@@ -453,6 +456,8 @@ lyric_compiler::internal::compile_deref(
             index++;
             break;
         }
+
+        // name expression
         case lyric_schema::LyricAstId::Name: {
             auto derefNameResult = compile_deref_name(nsBlock, block, initial, moduleEntry);
             if (derefNameResult.isStatus())
@@ -461,6 +466,8 @@ lyric_compiler::internal::compile_deref(
             index++;
             break;
         }
+
+        // call expression
         case lyric_schema::LyricAstId::Call: {
             auto derefCallResult = compile_deref_call(nsBlock, block, initial, moduleEntry);
             if (derefCallResult.isStatus())
@@ -469,6 +476,45 @@ lyric_compiler::internal::compile_deref(
             index++;
             break;
         }
+
+        // grouping expression
+        case lyric_schema::LyricAstId::Block: {
+            auto derefGroupingResult = compile_block(block, initial, moduleEntry);
+            if (derefGroupingResult.isStatus())
+                return derefGroupingResult;
+            derefType = derefGroupingResult.getResult();
+            index++;
+            break;
+        }
+
+        // new expression
+        case lyric_schema::LyricAstId::New: {
+            auto derefNewResult = compile_new(block, initial, moduleEntry);
+            if (derefNewResult.isStatus())
+                return derefNewResult;
+            derefType = derefNewResult.getResult();
+            index++;
+            break;
+        }
+
+        // literal expression
+        case lyric_schema::LyricAstId::Nil:
+        case lyric_schema::LyricAstId::True:
+        case lyric_schema::LyricAstId::False:
+        case lyric_schema::LyricAstId::Char:
+        case lyric_schema::LyricAstId::Integer:
+        case lyric_schema::LyricAstId::Float:
+        case lyric_schema::LyricAstId::String:
+        case lyric_schema::LyricAstId::Url:
+        case lyric_schema::LyricAstId::SymbolRef: {
+            auto derefLiteralResult = compile_constant(block, initial, moduleEntry);
+            if (derefLiteralResult.isStatus())
+                return derefLiteralResult;
+            derefType = derefLiteralResult.getResult();
+            index++;
+            break;
+        }
+
         default:
             block->throwSyntaxError(initial, "invalid deref");
     }

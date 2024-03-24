@@ -102,6 +102,24 @@ lyric_assembler::ExistentialSymbol::load()
         TU_ASSIGN_OR_RAISE (priv->superExistential, importCache->importExistential(superExistentialUrl));
     }
 
+    for (auto iterator = m_existentialImport->methodsBegin(); iterator != m_existentialImport->methodsEnd(); iterator++) {
+        CallSymbol *callSymbol;
+        TU_ASSIGN_OR_RAISE (callSymbol, importCache->importCall(iterator->second));
+
+        BoundMethod methodBinding;
+        methodBinding.methodCall = iterator->second;
+        methodBinding.access = callSymbol->getAccessType();
+        methodBinding.final = false;    // FIXME: this should come from the call symbol
+        priv->methods[iterator->first] = methodBinding;
+    }
+
+    auto *implCache = m_state->implCache();
+    for (auto iterator = m_existentialImport->implsBegin(); iterator != m_existentialImport->implsEnd(); iterator++) {
+        ImplHandle *implHandle;
+        TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(iterator->second));
+        priv->impls[iterator->first] = implHandle;
+    }
+
     for (auto iterator = m_existentialImport->sealedTypesBegin(); iterator != m_existentialImport->sealedTypesEnd(); iterator++) {
         priv->sealedTypes.insert(*iterator);
     }

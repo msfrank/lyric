@@ -121,3 +121,30 @@ TEST(CoreFloat, EvaluateIsGe)
 
     ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
 }
+
+TEST(CoreFloat, EvaluateCeil)
+{
+    auto result = runModule(R"(
+        (5.5).Ceil()
+    )");
+
+    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellFloat(6.0)))));
+}
+
+TEST(CoreFloat, EvaluateFloor)
+{
+    auto result = runModule(R"(
+        (5.5).Floor()
+    )");
+
+    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellFloat(5.0)))));
+}
+
+TEST(CoreFloat, EvaluateTrunc)
+{
+    auto result = runModule(R"(
+        (-5.5).Trunc()
+    )");
+
+    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellFloat(-5.0)))));
+}

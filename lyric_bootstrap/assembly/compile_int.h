@@ -1,9 +1,10 @@
-#ifndef ZURI_CORE_COMPILE_INT_H
-#define ZURI_CORE_COMPILE_INT_H
+#ifndef LYRIC_BOOTSTRAP_COMPILE_INT_H
+#define LYRIC_BOOTSTRAP_COMPILE_INT_H
 
 #include "builder_state.h"
 
-CoreExistential *build_core_Int(BuilderState &state, const CoreExistential *IntrinsicExistential);
+CoreExistential *declare_core_Int(BuilderState &state, const CoreExistential *IntrinsicExistential);
+void build_core_Int(BuilderState &state, const CoreExistential *IntExistential);
 
 CoreInstance *build_core_IntInstance(
     BuilderState &state,
@@ -15,4 +16,4 @@ CoreInstance *build_core_IntInstance(
     const CoreConcept *OrderedConcept,
     const CoreType *BoolType);
 
-#endif // ZURI_CORE_COMPILE_INT_H
+#endif // LYRIC_BOOTSTRAP_COMPILE_INT_H

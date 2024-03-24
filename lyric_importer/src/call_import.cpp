@@ -177,6 +177,7 @@ lyric_importer::CallImport::load()
         switch (receiver.getLinkageSection()) {
             case lyric_object::LinkageSection::Class:
             case lyric_object::LinkageSection::Enum:
+            case lyric_object::LinkageSection::Existential:
             case lyric_object::LinkageSection::Instance:
             case lyric_object::LinkageSection::Struct:
             {

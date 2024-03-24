@@ -539,6 +539,16 @@ void lyric_parser::internal::ModuleArchetype::exitCatchFinally(ModuleParser::Cat
 /*
  * deref ops
  */
+void lyric_parser::internal::ModuleArchetype::enterLiteralExpression(ModuleParser::LiteralExpressionContext *ctx)
+{
+    return ModuleDerefOps::enterLiteralExpression(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::enterGroupingExpression(ModuleParser::GroupingExpressionContext *ctx)
+{
+    return ModuleDerefOps::enterGroupingExpression(ctx);
+}
+
 void lyric_parser::internal::ModuleArchetype::enterThisExpression(ModuleParser::ThisExpressionContext *ctx)
 {
     return ModuleDerefOps::enterThisExpression(ctx);
@@ -552,6 +562,16 @@ void lyric_parser::internal::ModuleArchetype::enterNameExpression(ModuleParser::
 void lyric_parser::internal::ModuleArchetype::enterCallExpression(ModuleParser::CallExpressionContext *ctx)
 {
     return ModuleDerefOps::enterCallExpression(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitDerefLiteral(ModuleParser::DerefLiteralContext *ctx)
+{
+    return ModuleDerefOps::exitDerefLiteral(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitDerefGrouping(ModuleParser::DerefGroupingContext *ctx)
+{
+    return ModuleDerefOps::exitDerefGrouping(ctx);
 }
 
 void lyric_parser::internal::ModuleArchetype::exitThisSpec(ModuleParser::ThisSpecContext *ctx)
@@ -579,6 +599,16 @@ void lyric_parser::internal::ModuleArchetype::exitDerefMember(ModuleParser::Dere
     return ModuleDerefOps::exitDerefMember(ctx);
 }
 
+void lyric_parser::internal::ModuleArchetype::exitLiteralExpression(ModuleParser::LiteralExpressionContext *ctx)
+{
+    return ModuleDerefOps::exitLiteralExpression(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitGroupingExpression(ModuleParser::GroupingExpressionContext *ctx)
+{
+    return ModuleDerefOps::exitGroupingExpression(ctx);
+}
+
 void lyric_parser::internal::ModuleArchetype::exitThisExpression(ModuleParser::ThisExpressionContext *ctx)
 {
     return ModuleDerefOps::exitThisExpression(ctx);
@@ -602,9 +632,9 @@ void lyric_parser::internal::ModuleArchetype::exitPairExpression(ModuleParser::P
     return ModuleConstructOps::exitPairExpression(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitNewExpression(ModuleParser::NewExpressionContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitDerefNew(ModuleParser::DerefNewContext *ctx)
 {
-    return ModuleConstructOps::exitNewExpression(ctx);
+    return ModuleConstructOps::exitDerefNew(ctx);
 }
 
 void lyric_parser::internal::ModuleArchetype::exitLambdaExpression(ModuleParser::LambdaExpressionContext *ctx)

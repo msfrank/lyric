@@ -2,12 +2,17 @@
 #include "compile_int.h"
 
 CoreExistential *
-build_core_Int(BuilderState &state, const CoreExistential *IntrinsicExistential)
+declare_core_Int(BuilderState &state, const CoreExistential *IntrinsicExistential)
 {
     lyric_common::SymbolPath existentialPath({"Int"});
     auto *IntExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::Int64,
         lyo1::ExistentialFlags::Final, IntrinsicExistential);
     return IntExistential;
+}
+
+void
+build_core_Int(BuilderState &state, const CoreExistential *IntExistential)
+{
 }
 
 CoreInstance *

@@ -12,8 +12,9 @@
 #include <lyric_object/bytecode_builder.h>
 #include <tempo_utils/option_template.h>
 
-struct CoreTemplate;
 struct CoreCall;
+struct CoreConcept;
+struct CoreTemplate;
 
 struct CoreType {
     tu_uint32 type_index;
@@ -58,16 +59,6 @@ struct CoreAction {
     std::vector<lyo1::Parameter> parameters;
     Option<lyo1::Parameter> rest;
     std::vector<std::string> names;
-};
-
-struct CoreConcept {
-    tu_uint32 concept_index;
-    lyric_common::SymbolPath conceptPath;
-    const CoreType *conceptType;
-    const CoreTemplate *conceptTemplate;
-    const CoreConcept *superConcept;
-    lyo1::ConceptFlags flags;
-    std::vector<CoreAction *> actions;
 };
 
 struct CoreParam {
@@ -124,6 +115,21 @@ struct CoreExistential {
     const CoreExistential *superExistential;
     lyo1::IntrinsicType intrinsicMapping;
     lyo1::ExistentialFlags flags;
+    std::vector<CoreCall *> methods;
+    std::vector<CoreImpl *> impls;
+    std::vector<tu_uint32> sealedSubtypes;
+};
+
+struct CoreConcept {
+    tu_uint32 concept_index;
+    lyric_common::SymbolPath conceptPath;
+    const CoreType *conceptType;
+    const CoreTemplate *conceptTemplate;
+    const CoreConcept *superConcept;
+    lyo1::ConceptFlags flags;
+    std::vector<CoreAction *> actions;
+    std::vector<CoreImpl *> impls;
+    std::vector<tu_uint32> sealedSubtypes;
 };
 
 struct CoreClass {
@@ -137,6 +143,8 @@ struct CoreClass {
     const CoreCall *classCtor;
     std::vector<CoreField *> members;
     std::vector<CoreCall *> methods;
+    std::vector<CoreImpl *> impls;
+    std::vector<tu_uint32> sealedSubtypes;
 };
 
 struct CoreEnum {
@@ -149,6 +157,8 @@ struct CoreEnum {
     const CoreCall *enumCtor;
     std::vector<CoreField *> members;
     std::vector<CoreCall *> methods;
+    std::vector<CoreImpl *> impls;
+    std::vector<tu_uint32> sealedSubtypes;
 };
 
 struct CoreInstance {
@@ -162,6 +172,7 @@ struct CoreInstance {
     std::vector<CoreField *> members;
     std::vector<CoreCall *> methods;
     std::vector<CoreImpl *> impls;
+    std::vector<tu_uint32> sealedSubtypes;
 };
 
 struct CoreStruct {
@@ -174,6 +185,7 @@ struct CoreStruct {
     const CoreCall *structCtor;
     std::vector<CoreField *> members;
     std::vector<CoreCall *> methods;
+    std::vector<CoreImpl *> impls;
     std::vector<tu_uint32> sealedSubtypes;
 };
 
@@ -243,6 +255,15 @@ struct BuilderState {
         lyo1::IntrinsicType intrinsicMapping,
         lyo1::ExistentialFlags existentialFlags,
         const CoreExistential *superExistential = nullptr);
+    CoreCall *addExistentialMethod(
+        const std::string &methodName,
+        const CoreExistential *receiver,
+        lyo1::CallFlags callFlags,
+        const std::vector<CoreParam> &parameters,
+        const lyric_object::BytecodeBuilder &code,
+        const CoreType *returnType,
+        bool isInline = false);
+    void addExistentialSealedSubtype(const CoreExistential *receiver, const CoreExistential *subtypeExistential);
 
     /*
      * function definitions
@@ -280,6 +301,7 @@ struct BuilderState {
         const std::vector<std::pair<std::string, const CoreType *>> &parameters,
         const Option<std::pair<std::string, const CoreType *>> &rest,
         const CoreType *returnType);
+    void addConceptSealedSubtype(const CoreConcept *receiver, const CoreConcept *subtypeConcept);
 
     /*
      * class definitions
@@ -313,6 +335,7 @@ struct BuilderState {
         const lyric_object::BytecodeBuilder &code,
         const CoreType *returnType,
         bool isInline = false);
+    void addClassSealedSubtype(const CoreClass *receiver, const CoreClass *subtypeClass);
 
     /*
      * struct definitions
@@ -369,6 +392,7 @@ struct BuilderState {
         const lyric_object::BytecodeBuilder &code,
         const CoreType *returnType,
         bool isInline = false);
+    void addInstanceSealedSubtype(const CoreInstance *receiver, const CoreInstance *subtypeInstance);
 
     /*
      * impl definitions
@@ -413,6 +437,7 @@ struct BuilderState {
         const lyric_object::BytecodeBuilder &code,
         const CoreType *returnType,
         bool isInline = false);
+    void addEnumSealedSubtype(const CoreEnum *receiver, const CoreEnum *subtypeEnum);
 
     // serialize the state
     std::shared_ptr<const std::string> toBytes() const;

@@ -3,6 +3,7 @@
 
 #include "category_ref.h"
 #include "closure_ref.h"
+#include "float_traps.h"
 #include "iterator_ref.h"
 #include "map_ref.h"
 #include "native_prelude.h"
@@ -28,6 +29,12 @@ NativeCore::getTrap(uint32_t index) const
             return closure_apply;
         case lyric_bootstrap::internal::BootstrapTrap::CLOSURE_CTOR:
             return closure_ctor;
+        case lyric_bootstrap::internal::BootstrapTrap::FLOAT_CEIL:
+            return float_ceil;
+        case lyric_bootstrap::internal::BootstrapTrap::FLOAT_FLOOR:
+            return float_floor;
+        case lyric_bootstrap::internal::BootstrapTrap::FLOAT_TRUNC:
+            return float_trunc;
         case lyric_bootstrap::internal::BootstrapTrap::ITERATOR_ALLOC:
             return iterator_alloc;
         case lyric_bootstrap::internal::BootstrapTrap::ITERATOR_VALID:

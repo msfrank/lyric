@@ -4,12 +4,17 @@
 #include "builder_state.h"
 
 const CoreExistential *
-build_core_Bool(BuilderState &state, const CoreExistential *IntrinsicExistential)
+declare_core_Bool(BuilderState &state, const CoreExistential *IntrinsicExistential)
 {
     lyric_common::SymbolPath existentialPath({"Bool"});
     auto *BoolExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::Bool,
         lyo1::ExistentialFlags::Final, IntrinsicExistential);
     return BoolExistential;
+}
+
+void
+build_core_Bool(BuilderState &state, const CoreExistential *BoolExistential)
+{
 }
 
 const CoreInstance *

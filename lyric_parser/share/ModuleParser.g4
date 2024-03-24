@@ -309,7 +309,7 @@ basicExpression     : basicExpression ArrowOperator basicExpression             
                     | basicExpression AndKeyword basicExpression                            # booleanAndExpression
                     | basicExpression OrKeyword basicExpression                             # booleanOrExpression
                     | NotKeyword basicExpression                                            # booleanNotExpression
-                    | equality                                                              # equalityExpression
+                    | equality                                                              # equalityRule
                     ;
 
 equality            : equality IsAOperator assignableType                                   # isAExpression
@@ -318,34 +318,34 @@ equality            : equality IsAOperator assignableType                       
                     | equality IsLeOperator equality                                        # isLessOrEqualExpression
                     | equality IsGtOperator equality                                        # isGreaterThanExpression
                     | equality IsGeOperator equality                                        # isGreaterOrEqualExpression
-                    | plusOrMinus                                                           # plusOrMinusExpression
+                    | plusOrMinus                                                           # plusOrMinusRule
                     ;
 
 plusOrMinus         : plusOrMinus PlusOperator multOrDiv                                    # addExpression
                     | plusOrMinus MinusOperator multOrDiv                                   # subExpression
-                    | multOrDiv                                                             # mulOrDivExpression
+                    | multOrDiv                                                             # mulOrDivRule
                     ;
 
 multOrDiv           : multOrDiv StarOperator negation                                       # mulExpression
                     | multOrDiv SlashOperator negation                                      # divExpression
-                    | negation                                                              # negationExpression
+                    | negation                                                              # negationRule
                     ;
 
 negation            : MinusOperator negation                                                # negExpression
-                    | literalOrGroup                                                        # literalOrGroupExpression
+                    | newOrDeref                                                            # newOrDerefRule
                     ;
 
-literalOrGroup      : literal                                                               # literalExpression
-                    | ParenOpen expression ParenClose                                       # groupingExpression
-                    | newOrDeref                                                            # newOrDerefExpression
-                    ;
-
-newOrDeref          : assignableType CurlyOpen argList? CurlyClose                          # newExpression
+newOrDeref          : derefLiteral derefSpec*                                               # literalExpression
+                    | derefGrouping derefSpec*                                              # groupingExpression
+                    | derefNew derefSpec*                                                   # newExpression
                     | thisSpec derefSpec*                                                   # thisExpression
                     | callSpec derefSpec*                                                   # callExpression
                     | nameSpec derefSpec*                                                   # nameExpression
                     ;
 
+derefLiteral        : literal ;
+derefGrouping       : ParenOpen expression ParenClose ;
+derefNew            : assignableType CurlyOpen argList? CurlyClose ;
 thisSpec            : ThisKeyword ;
 callSpec            : Identifier ParenOpen argList? ParenClose ;
 nameSpec            : Identifier ;

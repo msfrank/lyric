@@ -68,13 +68,13 @@ main(int argc, char *argv[])
     // define the Intrinsic type
     auto *IntrinsicExistential = build_core_Intrinsic(state, AnyExistential);
 
-    // define intrinsic subtypes
+    // declare intrinsic subtypes
     build_core_Present(state, IntrinsicExistential);
-    auto *BoolExistential = build_core_Bool(state, IntrinsicExistential);
-    auto *CharExistential = build_core_Char(state, IntrinsicExistential);
-    auto *IntExistential = build_core_Int(state, IntrinsicExistential);
-    auto *FloatExistential = build_core_Float(state, IntrinsicExistential);
-    auto *Utf8Existential = build_core_Utf8(state, IntrinsicExistential);
+    auto *BoolExistential = declare_core_Bool(state, IntrinsicExistential);
+    auto *CharExistential = declare_core_Char(state, IntrinsicExistential);
+    auto *IntExistential = declare_core_Int(state, IntrinsicExistential);
+    auto *FloatExistential = declare_core_Float(state, IntrinsicExistential);
+    auto *Utf8Existential = declare_core_Utf8(state, IntrinsicExistential);
 
     // define Descriptor type
     auto *DescriptorExistential = build_core_Descriptor(state, AnyExistential);
@@ -101,6 +101,13 @@ main(int argc, char *argv[])
         const auto *FunctionNClass = declare_core_FunctionN(state, i, ObjectClass);
         functionClasses.push_back(FunctionNClass);
     }
+
+    // define existentials
+    build_core_Bool(state, BoolExistential);
+    build_core_Char(state, CharExistential);
+    build_core_Int(state, IntExistential);
+    build_core_Float(state, FloatExistential);
+    build_core_Utf8(state, Utf8Existential);
 
     // define Function classes
     for (int i = 0; i <= NUM_FUNCTION_CLASSES; i++) {

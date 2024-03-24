@@ -4,12 +4,17 @@
 #include "compile_char.h"
 
 CoreExistential *
-build_core_Char(BuilderState &state, const CoreExistential *IntrinsicExistential)
+declare_core_Char(BuilderState &state, const CoreExistential *IntrinsicExistential)
 {
     lyric_common::SymbolPath existentialPath({"Char"});
     auto *CharExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::Char,
         lyo1::ExistentialFlags::Final, IntrinsicExistential);
     return CharExistential;
+}
+
+void
+build_core_Char(BuilderState &state, const CoreExistential *CharExistential)
+{
 }
 
 CoreInstance *

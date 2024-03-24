@@ -122,6 +122,8 @@ add_library(prelude-plugin SHARED
     plugin/category_ref.h
     plugin/closure_ref.cpp
     plugin/closure_ref.h
+    plugin/float_traps.cpp
+    plugin/float_traps.h
     plugin/iterator_ref.cpp
     plugin/iterator_ref.h
     plugin/map_key.h

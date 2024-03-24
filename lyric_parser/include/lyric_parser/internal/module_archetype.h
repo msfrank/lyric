@@ -162,21 +162,27 @@ namespace lyric_parser::internal {
         void exitCatchFinally(ModuleParser::CatchFinallyContext *ctx) override;
 
         // implemented by ModuleDerefOps
+        void enterLiteralExpression(ModuleParser::LiteralExpressionContext *ctx) override;
+        void enterGroupingExpression(ModuleParser::GroupingExpressionContext *ctx) override;
         void enterThisExpression(ModuleParser::ThisExpressionContext *ctx) override;
         void enterNameExpression(ModuleParser::NameExpressionContext *ctx) override;
         void enterCallExpression(ModuleParser::CallExpressionContext *ctx) override;
+        void exitDerefLiteral(ModuleParser::DerefLiteralContext *ctx) override;
+        void exitDerefGrouping(ModuleParser::DerefGroupingContext *ctx) override;
         void exitThisSpec(ModuleParser::ThisSpecContext *ctx) override;
         void exitNameSpec(ModuleParser::NameSpecContext *ctx) override;
         void exitCallSpec(ModuleParser::CallSpecContext *ctx) override;
         void exitDerefMethod(ModuleParser::DerefMethodContext *ctx) override;
         void exitDerefMember(ModuleParser::DerefMemberContext *ctx) override;
+        void exitLiteralExpression(ModuleParser::LiteralExpressionContext *ctx) override;
+        void exitGroupingExpression(ModuleParser::GroupingExpressionContext *ctx) override;
         void exitThisExpression(ModuleParser::ThisExpressionContext *ctx) override;
         void exitNameExpression(ModuleParser::NameExpressionContext *ctx) override;
         void exitCallExpression(ModuleParser::CallExpressionContext *ctx) override;
 
         // implemented by ModuleConstructOps
+        void exitDerefNew(ModuleParser::DerefNewContext *ctx) override;
         void exitPairExpression(ModuleParser::PairExpressionContext *ctx) override;
-        void exitNewExpression(ModuleParser::NewExpressionContext *ctx) override;
         void exitLambdaExpression(ModuleParser::LambdaExpressionContext *ctx) override;
         void exitDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx) override;
         void exitDefaultInitializerNew(ModuleParser::DefaultInitializerNewContext *ctx) override;

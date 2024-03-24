@@ -165,6 +165,102 @@ BuilderState::addGenericExistential(
 }
 
 CoreCall *
+BuilderState::addExistentialMethod(
+    const std::string &methodName,
+    const CoreExistential *receiver,
+    lyo1::CallFlags callFlags,
+    const std::vector<CoreParam> &parameters,
+    const lyric_object::BytecodeBuilder &code,
+    const CoreType *returnType,
+    bool isInline)
+{
+    TU_ASSERT (!methodName.empty());
+    TU_ASSERT (receiver != nullptr);
+    TU_ASSERT (existentialcache.contains(receiver->existentialPath));
+    TU_ASSERT (returnType != nullptr);
+    TU_ASSERT (parameters.size() <= functionclasspaths.size());
+
+    auto *ReceiverExistential = existentialcache[receiver->existentialPath];
+    lyric_common::SymbolPath callPath(ReceiverExistential->existentialPath.getPath(), methodName);
+    TU_ASSERT (!symbols.contains(callPath));
+
+    auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
+
+    // ensure Bound is set
+    callFlags |= lyo1::CallFlags::Bound;
+
+    auto *Call = new CoreCall();
+    Call->call_index = calls.size();
+    Call->callPath = callPath;
+    Call->callTemplate = nullptr;
+    Call->callType = FunctionClass->classType;
+    Call->receiverSection = lyo1::TypeSection::Existential;
+    Call->receiverDescriptor = receiver->existential_index;
+    Call->flags = callFlags;
+    Call->code = code;
+    Call->returnType = returnType;
+    calls.push_back(Call);
+
+    absl::flat_hash_set<std::string> usedNames;
+    bool restIsLastParameter = true;
+
+    for (const auto &param : parameters) {
+        TU_ASSERT (restIsLastParameter);
+        TU_ASSERT (param.paramType != nullptr);
+
+        uint8_t name_offset = lyric_object::INVALID_OFFSET_U8;
+        if (!param.paramName.empty()) {
+            const auto &name = param.paramName;
+            TU_ASSERT (!usedNames.contains(name));
+            usedNames.insert(name);
+            name_offset = Call->names.size();
+            Call->names.emplace_back(name);
+        }
+
+        tu_uint32 param_dfl = lyric_object::INVALID_ADDRESS_U32;
+        if (param.paramDefault)
+            param_dfl = param.paramDefault->call_index;
+
+        if (bool(param.flags & lyo1::ParameterFlags::Rest)) {
+            TU_ASSERT (param_dfl == lyric_object::INVALID_ADDRESS_U32);
+            Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(param.flags, param.paramType->type_index,
+                lyric_object::INVALID_ADDRESS_U32, name_offset, lyric_object::INVALID_OFFSET_U8));
+            restIsLastParameter = false;
+        } else {
+            TU_ASSERT (name_offset != lyric_object::INVALID_OFFSET_U8);
+            Call->parameters.emplace_back(lyo1::Parameter(param.flags, param.paramType->type_index,
+                param_dfl, name_offset, lyric_object::INVALID_OFFSET_U8));
+        }
+    }
+
+    ReceiverExistential->methods.push_back(Call);
+
+    auto *Symbol = new CoreSymbol();
+    Symbol->symbolPath = Call->callPath;
+    Symbol->section = lyo1::DescriptorSection::Call;
+    Symbol->index = Call->call_index;
+    symbols[Symbol->symbolPath] = Symbol;
+
+    return Call;
+}
+
+void
+BuilderState::addExistentialSealedSubtype(const CoreExistential *receiver, const CoreExistential *subtypeExistential)
+{
+    TU_ASSERT (receiver != nullptr);
+    TU_ASSERT (existentialcache.contains(receiver->existentialPath));
+    TU_ASSERT (subtypeExistential != nullptr);
+    TU_ASSERT (existentialcache.contains(subtypeExistential->existentialPath));
+
+    auto *ReceiverExistential = existentialcache[receiver->existentialPath];
+    TU_ASSERT (bool(ReceiverExistential->flags & lyo1::ExistentialFlags::Sealed));
+    auto *SubTypeExistential = existentialcache[subtypeExistential->existentialPath];
+    TU_ASSERT (bool(SubTypeExistential->flags & lyo1::ExistentialFlags::Final));
+    TU_ASSERT (SubTypeExistential->superExistential == ReceiverExistential);
+    ReceiverExistential->sealedSubtypes.push_back(SubTypeExistential->existentialType->type_index);
+}
+
+CoreCall *
 BuilderState::addFunction(
     const lyric_common::SymbolPath &functionPath,
     const std::vector<CoreParam> &parameters,
@@ -442,6 +538,22 @@ BuilderState::addConceptAction(
     return Action;
 }
 
+void
+BuilderState::addConceptSealedSubtype(const CoreConcept *receiver, const CoreConcept *subtypeConcept)
+{
+    TU_ASSERT (receiver != nullptr);
+    TU_ASSERT (conceptcache.contains(receiver->conceptPath));
+    TU_ASSERT (subtypeConcept != nullptr);
+    TU_ASSERT (conceptcache.contains(subtypeConcept->conceptPath));
+
+    auto *ReceiverConcept = conceptcache[receiver->conceptPath];
+    TU_ASSERT (bool(ReceiverConcept->flags & lyo1::ConceptFlags::Sealed));
+    auto *SubTypeConcept = conceptcache[subtypeConcept->conceptPath];
+    TU_ASSERT (bool(SubTypeConcept->flags & lyo1::ConceptFlags::Final));
+    TU_ASSERT (SubTypeConcept->superConcept == ReceiverConcept);
+    ReceiverConcept->sealedSubtypes.push_back(SubTypeConcept->conceptType->type_index);
+}
+
 CoreClass *
 BuilderState::addClass(
     const lyric_common::SymbolPath &classPath,
@@ -710,6 +822,22 @@ BuilderState::addClassMethod(
     symbols[Symbol->symbolPath] = Symbol;
 
     return Call;
+}
+
+void
+BuilderState::addClassSealedSubtype(const CoreClass *receiver, const CoreClass *subtypeClass)
+{
+    TU_ASSERT (receiver != nullptr);
+    TU_ASSERT (classcache.contains(receiver->classPath));
+    TU_ASSERT (subtypeClass != nullptr);
+    TU_ASSERT (classcache.contains(subtypeClass->classPath));
+
+    auto *ReceiverClass = classcache[receiver->classPath];
+    TU_ASSERT (bool(ReceiverClass->flags & lyo1::ClassFlags::Sealed));
+    auto *SubTypeClass = classcache[subtypeClass->classPath];
+    TU_ASSERT (bool(SubTypeClass->flags & lyo1::ClassFlags::Final));
+    TU_ASSERT (SubTypeClass->superClass == ReceiverClass);
+    ReceiverClass->sealedSubtypes.push_back(SubTypeClass->classType->type_index);
 }
 
 CoreStruct *
@@ -1191,6 +1319,22 @@ BuilderState::addInstanceMethod(
     return Call;
 }
 
+void
+BuilderState::addInstanceSealedSubtype(const CoreInstance *receiver, const CoreInstance *subtypeInstance)
+{
+    TU_ASSERT (receiver != nullptr);
+    TU_ASSERT (instancecache.contains(receiver->instancePath));
+    TU_ASSERT (subtypeInstance != nullptr);
+    TU_ASSERT (instancecache.contains(subtypeInstance->instancePath));
+
+    auto *ReceiverInstance = instancecache[receiver->instancePath];
+    TU_ASSERT (bool(ReceiverInstance->flags & lyo1::InstanceFlags::Sealed));
+    auto *SubTypeInstance = instancecache[subtypeInstance->instancePath];
+    TU_ASSERT (bool(SubTypeInstance->flags & lyo1::InstanceFlags::Final));
+    TU_ASSERT (SubTypeInstance->superInstance == ReceiverInstance);
+    ReceiverInstance->sealedSubtypes.push_back(SubTypeInstance->instanceType->type_index);
+}
+
 CoreImpl *
 BuilderState::addImpl(
     const lyric_common::SymbolPath &receiverPath,
@@ -1533,6 +1677,22 @@ BuilderState::addEnumMethod(
     return Call;
 }
 
+void
+BuilderState::addEnumSealedSubtype(const CoreEnum *receiver, const CoreEnum *subtypeEnum)
+{
+    TU_ASSERT (receiver != nullptr);
+    TU_ASSERT (enumcache.contains(receiver->enumPath));
+    TU_ASSERT (subtypeEnum != nullptr);
+    TU_ASSERT (enumcache.contains(subtypeEnum->enumPath));
+
+    auto *ReceiverEnum = enumcache[receiver->enumPath];
+    TU_ASSERT (bool(ReceiverEnum->flags & lyo1::EnumFlags::Sealed));
+    auto *SubTypeEnum = enumcache[subtypeEnum->enumPath];
+    TU_ASSERT (bool(SubTypeEnum->flags & lyo1::EnumFlags::Final));
+    TU_ASSERT (SubTypeEnum->superEnum == ReceiverEnum);
+    ReceiverEnum->sealedSubtypes.push_back(SubTypeEnum->enumType->type_index);
+}
+
 inline flatbuffers::Offset<flatbuffers::Vector<tu_uint32>>
 build_actions_vector(flatbuffers::FlatBufferBuilder &buffer, const std::vector<CoreAction *> &actions)
 {
@@ -1638,8 +1798,9 @@ BuilderState::toBytes() const
     // write the existential descriptors
     for (const auto *Existential : existentials) {
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Existential->existentialPath.toString());
-        auto fb_methods = build_calls_vector(buffer, {});
-        auto fb_impls = build_impls_vector(buffer, {});
+        auto fb_methods = build_calls_vector(buffer, Existential->methods);
+        auto fb_impls = build_impls_vector(buffer, Existential->impls);
+        auto fb_sealedSubtypes = buffer.CreateVector(Existential->sealedSubtypes);
 
         tu_uint32 superExistential = Existential->superExistential?
             Existential->superExistential->existential_index : lyric_object::INVALID_ADDRESS_U32;
@@ -1648,7 +1809,7 @@ BuilderState::toBytes() const
         existentials_vector.push_back(lyo1::CreateExistentialDescriptor(buffer,
             fb_fullyQualifiedName, superExistential, existentialTemplate,
             Existential->existentialType->type_index, Existential->intrinsicMapping,
-            Existential->flags, fb_methods, fb_impls, /* sealed_subtypes= */ 0));
+            Existential->flags, fb_methods, fb_impls, fb_sealedSubtypes));
     }
 
     // write the action descriptors
@@ -1730,7 +1891,8 @@ BuilderState::toBytes() const
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Class->classPath.toString());
         auto fb_members = build_fields_vector(buffer, Class->members);
         auto fb_methods = build_calls_vector(buffer, Class->methods);
-        auto fb_impls = build_impls_vector(buffer, {});
+        auto fb_impls = build_impls_vector(buffer, Class->impls);
+        auto fb_sealedSubtypes = buffer.CreateVector(Class->sealedSubtypes);
 
         tu_uint32 superClass = Class->superClass? Class->superClass->class_index
             : lyric_object::INVALID_ADDRESS_U32;
@@ -1740,7 +1902,7 @@ BuilderState::toBytes() const
 
         classes_vector.push_back(lyo1::CreateClassDescriptor(buffer,
             fb_fullyQualifiedName, superClass, classTemplate, Class->classType->type_index, Class->flags,
-            fb_members, fb_methods, fb_impls, Class->allocatorTrap, classCtor, /* sealed_subtypes= */ 0));
+            fb_members, fb_methods, fb_impls, Class->allocatorTrap, classCtor, fb_sealedSubtypes));
     }
 
     // write the struct descriptors
@@ -1748,7 +1910,8 @@ BuilderState::toBytes() const
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Struct->structPath.toString());
         auto fb_members = build_fields_vector(buffer, Struct->members);
         auto fb_methods = build_calls_vector(buffer, Struct->methods);
-        auto fb_impls = build_impls_vector(buffer, {});
+        auto fb_impls = build_impls_vector(buffer, Struct->impls);
+        auto fb_sealedSubtypes = buffer.CreateVector(Struct->sealedSubtypes);
 
         tu_uint32 superStruct = Struct->superStruct? Struct->superStruct->struct_index
             : lyric_object::INVALID_ADDRESS_U32;
@@ -1756,14 +1919,15 @@ BuilderState::toBytes() const
 
         structs_vector.push_back(lyo1::CreateStructDescriptor(buffer,
             fb_fullyQualifiedName, superStruct, Struct->structType->type_index, Struct->flags,
-            fb_members, fb_methods, fb_impls, Struct->allocatorTrap, structCtor, /* sealed_subtypes= */ 0));
+            fb_members, fb_methods, fb_impls, Struct->allocatorTrap, structCtor, fb_sealedSubtypes));
     }
 
     // write the concept descriptors
     for (const auto *Concept : concepts) {
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Concept->conceptPath.toString());
         auto fb_actions = build_actions_vector(buffer, Concept->actions);
-        auto fb_impls = build_impls_vector(buffer, {});
+        auto fb_impls = build_impls_vector(buffer, Concept->impls);
+        auto fb_sealedSubtypes = buffer.CreateVector(Concept->sealedSubtypes);
 
         tu_uint32 superConcept = Concept->superConcept? Concept->superConcept->concept_index
             : lyric_object::INVALID_ADDRESS_U32;
@@ -1772,7 +1936,7 @@ BuilderState::toBytes() const
 
         concepts_vector.push_back(lyo1::CreateConceptDescriptor(buffer,
             fb_fullyQualifiedName, superConcept, conceptTemplate, Concept->conceptType->type_index,
-            Concept->flags, fb_actions, fb_impls, /* sealed_subtypes= */ 0));
+            Concept->flags, fb_actions, fb_impls, fb_sealedSubtypes));
     }
 
     // write the static descriptors
@@ -1789,6 +1953,7 @@ BuilderState::toBytes() const
         auto fb_members = build_fields_vector(buffer, Instance->members);
         auto fb_methods = build_calls_vector(buffer, Instance->methods);
         auto fb_impls = build_impls_vector(buffer, Instance->impls);
+        auto fb_sealedSubtypes = buffer.CreateVector(Instance->sealedSubtypes);
 
         tu_uint32 superInstance = Instance->superInstance? Instance->superInstance->instance_index
             : lyric_object::INVALID_ADDRESS_U32;
@@ -1796,7 +1961,7 @@ BuilderState::toBytes() const
 
         instances_vector.push_back(lyo1::CreateInstanceDescriptor(buffer,
             fb_fullyQualifiedName, superInstance, Instance->instanceType->type_index, lyo1::InstanceFlags::NONE,
-            fb_members, fb_methods, fb_impls, Instance->allocatorTrap, instanceCtor, /* sealed_subtypes= */ 0));
+            fb_members, fb_methods, fb_impls, Instance->allocatorTrap, instanceCtor, fb_sealedSubtypes));
     }
 
     // write the enum descriptors
@@ -1804,7 +1969,8 @@ BuilderState::toBytes() const
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Enum->enumPath.toString());
         auto fb_members = build_fields_vector(buffer, Enum->members);
         auto fb_methods = build_calls_vector(buffer, Enum->methods);
-        auto fb_impls = build_impls_vector(buffer, {});
+        auto fb_impls = build_impls_vector(buffer, Enum->impls);
+        auto fb_sealedSubtypes = buffer.CreateVector(Enum->sealedSubtypes);
 
         tu_uint32 superEnum = Enum->superEnum? Enum->superEnum->enum_index
             : lyric_object::INVALID_ADDRESS_U32;
@@ -1812,7 +1978,7 @@ BuilderState::toBytes() const
 
         enums_vector.push_back(lyo1::CreateEnumDescriptor(buffer,
             fb_fullyQualifiedName, superEnum, Enum->enumType->type_index, lyo1::EnumFlags::NONE,
-            fb_members, fb_methods, fb_impls, Enum->allocatorTrap, enumCtor, /* sealed_subtypes= */ 0));
+            fb_members, fb_methods, fb_impls, Enum->allocatorTrap, enumCtor, fb_sealedSubtypes));
     }
 
     // write the plugin descriptors

@@ -13,8 +13,9 @@ namespace lyric_parser::internal {
         explicit ModuleConstructOps(ArchetypeState *state);
         virtual ~ModuleConstructOps() = default;
 
+        void exitDerefNew(ModuleParser::DerefNewContext *ctx);
+
         void exitPairExpression(ModuleParser::PairExpressionContext *ctx);
-        void exitNewExpression(ModuleParser::NewExpressionContext *ctx);
         void exitLambdaExpression(ModuleParser::LambdaExpressionContext *ctx);
 
         void exitDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx);
