@@ -67,8 +67,8 @@ SeqRef::serializeValue(lyric_serde::PatchsetState &state, tu_uint32 &index)
 {
     std::vector<lyric_serde::ValueAddress> children;
     for (tu_int64 i = 0; i < m_node->count; i++) {
-        lyric_runtime::DataCell index(i);
-        auto child = seqGet(index);
+        lyric_runtime::DataCell seqIndex(i);
+        auto child = seqGet(seqIndex);
         auto childOffset = lyric_runtime::serialize_value(child, state);
         if (childOffset == lyric_runtime::INVALID_ADDRESS_U32)
             return lyric_runtime::INVALID_ADDRESS_U32;
@@ -287,6 +287,14 @@ SeqRef::clearMembersReachable()
     if (m_node == nullptr)
         return;
     clear_reachable(m_node);
+}
+
+SeqIterator::SeqIterator(const lyric_runtime::VirtualTable *vtable)
+    : BaseRef(vtable),
+      m_curr(0),
+      m_size(0),
+      m_seq(nullptr)
+{
 }
 
 SeqIterator::SeqIterator(const lyric_runtime::VirtualTable *vtable, SeqRef *seq)
@@ -571,6 +579,60 @@ seq_iter(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 
     auto ref = state->heapManager()->allocateRef<SeqIterator>(vtable, instance);
     currentCoro->pushData(ref);
+
+    return lyric_runtime::InterpreterStatus::ok();
+}
+
+tempo_utils::Status
+seq_iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+{
+    auto *currentCoro = state->currentCoro();
+
+    auto &frame = currentCoro->peekCall();
+    const auto *vtable = frame.getVirtualTable();
+    TU_ASSERT(vtable != nullptr);
+
+    auto ref = state->heapManager()->allocateRef<SeqRef>(vtable);
+    currentCoro->pushData(ref);
+
+    return lyric_runtime::InterpreterStatus::ok();
+}
+
+tempo_utils::Status
+seq_iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+{
+    auto *currentCoro = state->currentCoro();
+
+    auto &frame = currentCoro->peekCall();
+
+    TU_ASSERT(frame.numArguments() == 0);
+
+    auto receiver = frame.getReceiver();
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
+    currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
+
+    return lyric_runtime::InterpreterStatus::ok();
+}
+
+tempo_utils::Status
+seq_iterator_next(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+{
+    auto *currentCoro = state->currentCoro();
+
+    auto &frame = currentCoro->peekCall();
+
+    TU_ASSERT(frame.numArguments() == 0);
+
+    auto receiver = frame.getReceiver();
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
+
+    lyric_runtime::DataCell next;
+    if (!instance->iteratorNext(next)) {
+        next = lyric_runtime::DataCell();
+    }
+    currentCoro->pushData(next);
 
     return lyric_runtime::InterpreterStatus::ok();
 }

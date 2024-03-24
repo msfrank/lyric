@@ -1,6 +1,6 @@
 
-#include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/code_builder.h>
+#include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/internal/compile_loop.h>
@@ -104,16 +104,16 @@ lyric_compiler::internal::compile_for(
         return compileGeneratorResult.getStatus();
     auto generatorType = compileGeneratorResult.getResult();
 
-    // look up the Iterator class symbol
+    // look up the Iterator concept symbol
     auto fundamentalIterator = state->fundamentalCache()->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Iterator);
     auto *iteratorSym = state->symbolCache()->getSymbol(fundamentalIterator);
     if (iteratorSym == nullptr)
-        block->throwAssemblerInvariant("missing class symbol {}", fundamentalIterator.toString());
-    if (iteratorSym->getSymbolType() != lyric_assembler::SymbolType::CLASS)
-        block->throwAssemblerInvariant("invalid class symbol {}", fundamentalIterator.toString());
-    auto *iteratorClass = cast_symbol_to_class(iteratorSym);
+        block->throwAssemblerInvariant("missing concept symbol {}", fundamentalIterator.toString());
+    if (iteratorSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
+        block->throwAssemblerInvariant("invalid concept symbol {}", fundamentalIterator.toString());
+    auto *iteratorConcept = cast_symbol_to_concept(iteratorSym);
 
-    // synthesize the iterator type if needed
+    // synthesize the iterator type
     lyric_common::TypeDef iteratorType;
     if (targetType.isValid()) {
         iteratorType = lyric_common::TypeDef::forConcrete(fundamentalIterator, {targetType});
@@ -134,8 +134,6 @@ lyric_compiler::internal::compile_for(
                 resultTypeParameters.begin(), resultTypeParameters.end()));
         targetType = resultTypeParameters.front();
     }
-
-//    auto iteratorType = iteratorResult.getResult();
 
     // validate that the generator expression conforms to the iterator type
     if (!typeSystem->isAssignable(iteratorType, generatorType))
@@ -178,7 +176,7 @@ lyric_compiler::internal::compile_for(
         return status;
 
     // resolve Iterator.valid() method
-    auto resolveValidMethodResult = iteratorClass->resolveMethod("valid", iteratorType);
+    auto resolveValidMethodResult = iteratorConcept->resolveAction("Valid", iteratorType);
     if (resolveValidMethodResult.isStatus())
         return resolveValidMethodResult.getStatus();
     auto valid = resolveValidMethodResult.getResult();
@@ -193,7 +191,7 @@ lyric_compiler::internal::compile_for(
 
     auto boolType = state->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
     if (!typeSystem->isAssignable(boolType, invokeValidResult.getResult()))
-        forBlock.throwAssemblerInvariant("expected valid() method to return {}; found {}",
+        forBlock.throwAssemblerInvariant("expected Valid method to return {}; found {}",
             boolType.toString(), invokeValidResult.getResult().toString());
 
     auto predicateJumpResult = code->jumpIfFalse();
@@ -207,7 +205,7 @@ lyric_compiler::internal::compile_for(
         return status;
 
     // resolve Iterator.next() method
-    auto resolveNextMethodResult = iteratorClass->resolveMethod("next", iteratorType);
+    auto resolveNextMethodResult = iteratorConcept->resolveAction("Next", iteratorType);
     if (resolveNextMethodResult.isStatus())
         return resolveNextMethodResult.getStatus();
     auto next = resolveNextMethodResult.getResult();
@@ -221,7 +219,7 @@ lyric_compiler::internal::compile_for(
         return invokeNextResult.getStatus();
 
     if (!typeSystem->isAssignable(targetType, invokeNextResult.getResult()))
-        forBlock.throwAssemblerInvariant("expected next() method to return {}; found {}",
+        forBlock.throwAssemblerInvariant("expected Next method to return {}; found {}",
             targetType.toString(), invokeNextResult.getResult().toString());
 
     // store the next value in the target variable

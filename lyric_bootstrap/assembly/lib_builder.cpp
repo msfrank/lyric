@@ -130,7 +130,7 @@ main(int argc, char *argv[])
     build_core_Varargs(state, IdeaConcept);
 
     // core classes
-    auto *IteratorClass = build_core_Iterator(state, ObjectClass, BoolExistential->existentialType);
+    auto *IteratorConcept = build_core_Iterator(state, IdeaConcept, BoolExistential->existentialType);
     //build_core_Rest(state, AnyType, VarargsConcept, IntType);
 
     // core structs
@@ -185,11 +185,16 @@ main(int argc, char *argv[])
 
     //
     auto *DataUnionType = state.addUnionType({IntrinsicExistential->existentialType, RecordStruct->structType});
+    auto *DataIteratorType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
+        IteratorConcept->concept_index, {DataUnionType});
 
     build_core_Pair(state, RecordStruct, DataUnionType);
     build_core_Map(state, RecordStruct, DataUnionType,
         BoolExistential->existentialType, IntExistential->existentialType);
-    build_core_Seq(state, RecordStruct, IteratorClass, DataUnionType,
+
+    auto *SeqIteratorClass = build_core_SeqIterator(state, ObjectClass, IteratorConcept, DataUnionType,
+        DataIteratorType, BoolExistential->existentialType);
+    build_core_Seq(state, RecordStruct, IteratorConcept, SeqIteratorClass, DataUnionType, DataIteratorType,
         BoolExistential->existentialType, IntExistential->existentialType);
 
     auto bytes = state.toBytes();

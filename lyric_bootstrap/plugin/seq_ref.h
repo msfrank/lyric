@@ -56,6 +56,7 @@ private:
 class SeqIterator : public lyric_runtime::BaseRef {
 
 public:
+    explicit SeqIterator(const lyric_runtime::VirtualTable *vtable);
     SeqIterator(const lyric_runtime::VirtualTable *vtable, SeqRef *seq);
 
     lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
@@ -85,5 +86,9 @@ tempo_utils::Status seq_append(lyric_runtime::BytecodeInterpreter *interp, lyric
 tempo_utils::Status seq_extend(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
 tempo_utils::Status seq_slice(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
 tempo_utils::Status seq_iter(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
+
+tempo_utils::Status seq_iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
+tempo_utils::Status seq_iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
+tempo_utils::Status seq_iterator_next(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
 
 #endif // ZURI_CORE_SEQ_REF_H

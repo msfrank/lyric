@@ -1356,10 +1356,50 @@ BuilderState::addImpl(
     auto *symbol = symbols.at(receiverPath);
     switch (symbol->section) {
 
+        case lyo1::DescriptorSection::Class: {
+            Impl->receiverSection = lyo1::TypeSection::Class;
+            Impl->receiverDescriptor = symbol->index;
+            auto *receiver = classes.at(symbol->index);
+            receiver->impls.push_back(Impl);
+            break;
+        }
+
+        case lyo1::DescriptorSection::Concept: {
+            Impl->receiverSection = lyo1::TypeSection::Concept;
+            Impl->receiverDescriptor = symbol->index;
+            auto *receiver = concepts.at(symbol->index);
+            receiver->impls.push_back(Impl);
+            break;
+        }
+
+        case lyo1::DescriptorSection::Enum: {
+            Impl->receiverSection = lyo1::TypeSection::Enum;
+            Impl->receiverDescriptor = symbol->index;
+            auto *receiver = enums.at(symbol->index);
+            receiver->impls.push_back(Impl);
+            break;
+        }
+
+        case lyo1::DescriptorSection::Existential: {
+            Impl->receiverSection = lyo1::TypeSection::Existential;
+            Impl->receiverDescriptor = symbol->index;
+            auto *receiver = existentials.at(symbol->index);
+            receiver->impls.push_back(Impl);
+            break;
+        }
+
         case lyo1::DescriptorSection::Instance: {
             Impl->receiverSection = lyo1::TypeSection::Instance;
             Impl->receiverDescriptor = symbol->index;
             auto *receiver = instances.at(symbol->index);
+            receiver->impls.push_back(Impl);
+            break;
+        }
+
+        case lyo1::DescriptorSection::Struct: {
+            Impl->receiverSection = lyo1::TypeSection::Struct;
+            Impl->receiverDescriptor = symbol->index;
+            auto *receiver = structs.at(symbol->index);
             receiver->impls.push_back(Impl);
             break;
         }

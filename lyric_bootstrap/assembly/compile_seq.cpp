@@ -5,8 +5,10 @@ CoreStruct *
 build_core_Seq(
     BuilderState &state,
     const CoreStruct *RecordStruct,
-    const CoreClass *IteratorClass,
+    const CoreConcept *IteratorConcept,
+    const CoreClass *SeqIteratorClass,
     const CoreType *DataType,
+    const CoreType *DataIteratorType,
     const CoreType *BoolType,
     const CoreType *IntegerType)
 {
@@ -93,14 +95,8 @@ build_core_Seq(
             SeqStruct->structType);
     }
     {
-        auto *IteratorType = IteratorClass->classType;
-        auto *IteratorOfDataType = state.addConcreteType(
-            IteratorType,
-            IteratorType->concreteSection,
-            IteratorType->concreteDescriptor,
-            {DataType});
         lyric_object::BytecodeBuilder code;
-        code.loadClass(IteratorClass->class_index);
+        code.loadClass(SeqIteratorClass->class_index);
         code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_ITER));
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Iter",
@@ -108,8 +104,48 @@ build_core_Seq(
             lyo1::CallFlags::GlobalVisibility,
             {},
             code,
-            IteratorOfDataType);
+            DataIteratorType);
     }
 
     return SeqStruct;
+}
+
+CoreClass *
+build_core_SeqIterator(
+    BuilderState &state,
+    const CoreClass *ObjectClass,
+    const CoreConcept *IteratorConcept,
+    const CoreType *DataType,
+    const CoreType *DataIteratorType,
+    const CoreType *BoolType)
+{
+    lyric_common::SymbolPath classPath({"SeqIterator"});
+
+    auto *SeqIteratorClass = state.addClass(classPath, lyo1::ClassFlags::Final, ObjectClass);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
+        state.addClassCtor(SeqIteratorClass,
+            {},
+            code);
+        state.setClassAllocator(SeqIteratorClass, lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_ALLOC);
+    }
+
+    auto *IteratorImpl = state.addImpl(classPath, DataIteratorType, IteratorConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_VALID));
+        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
+        state.addImplExtension("Valid", IteratorImpl, {}, {}, code, BoolType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_NEXT));
+        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
+        state.addImplExtension("Next", IteratorImpl, {}, {}, code, DataType);
+    }
+
+    return SeqIteratorClass;
 }

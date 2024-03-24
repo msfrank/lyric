@@ -35,12 +35,6 @@ NativeCore::getTrap(uint32_t index) const
             return float_floor;
         case lyric_bootstrap::internal::BootstrapTrap::FLOAT_TRUNC:
             return float_trunc;
-        case lyric_bootstrap::internal::BootstrapTrap::ITERATOR_ALLOC:
-            return iterator_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::ITERATOR_VALID:
-            return iterator_valid;
-        case lyric_bootstrap::internal::BootstrapTrap::ITERATOR_NEXT:
-            return iterator_next;
         case lyric_bootstrap::internal::BootstrapTrap::MAP_ALLOC:
             return map_alloc;
         case lyric_bootstrap::internal::BootstrapTrap::MAP_CTOR:
@@ -83,6 +77,12 @@ NativeCore::getTrap(uint32_t index) const
             return seq_slice;
         case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITER:
             return seq_iter;
+        case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_ALLOC:
+            return seq_iterator_alloc;
+        case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_NEXT:
+            return seq_iterator_next;
+        case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_VALID:
+            return seq_iterator_valid;
         case lyric_bootstrap::internal::BootstrapTrap::SINGLETON_ALLOC:
             return singleton_alloc;
         case lyric_bootstrap::internal::BootstrapTrap::STATUS_ALLOC:
