@@ -19,7 +19,7 @@ namespace lyric_assembler {
         TemplateHandle *conceptTemplate;
         ConceptSymbol *superConcept;
         absl::flat_hash_map<std::string, ActionMethod> actions;
-        absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *> impls;
+        absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
         std::unique_ptr<BlockHandle> conceptBlock;
     };
@@ -91,10 +91,12 @@ namespace lyric_assembler {
         /*
          * concept impl management
          */
+        bool hasImpl(const lyric_common::SymbolUrl &implUrl) const;
         bool hasImpl(const lyric_common::TypeDef &implType) const;
+        ImplHandle *getImpl(const lyric_common::SymbolUrl &implUrl) const;
         ImplHandle *getImpl(const lyric_common::TypeDef &implType) const;
-        absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *>::const_iterator implsBegin() const;
-        absl::flat_hash_map<lyric_common::TypeDef, ImplHandle *>::const_iterator implsEnd() const;
+        absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsBegin() const;
+        absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsEnd() const;
         tu_uint32 numImpls() const;
 
         tempo_utils::Result<lyric_common::TypeDef> declareImpl(const lyric_parser::Assignable &implSpec);

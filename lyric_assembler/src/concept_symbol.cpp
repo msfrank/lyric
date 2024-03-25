@@ -111,6 +111,14 @@ lyric_assembler::ConceptSymbol::load()
         priv->actions[iterator->first] = methodBinding;
     }
 
+    auto *implCache = m_state->implCache();
+    for (auto iterator = m_conceptImport->implsBegin(); iterator != m_conceptImport->implsEnd(); iterator++) {
+        ImplHandle *implHandle;
+        TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(iterator->second));
+        auto implUrl = iterator->first.getConcreteUrl();
+        priv->impls[implUrl] = implHandle;
+    }
+
     for (auto iterator = m_conceptImport->sealedTypesBegin(); iterator != m_conceptImport->sealedTypesEnd(); iterator++) {
         priv->sealedTypes.insert(*iterator);
     }
@@ -433,29 +441,46 @@ lyric_assembler::ConceptSymbol::resolveAction(
 }
 
 bool
-lyric_assembler::ConceptSymbol::hasImpl(const lyric_common::TypeDef &implType) const
+lyric_assembler::ConceptSymbol::hasImpl(const lyric_common::SymbolUrl &implUrl) const
 {
     auto *priv = getPriv();
-    return priv->impls.contains(implType);
+    return priv->impls.contains(implUrl);
+}
+
+bool
+lyric_assembler::ConceptSymbol::hasImpl(const lyric_common::TypeDef &implType) const
+{
+    if (implType.getType() != lyric_common::TypeDefType::Concrete)
+        return false;
+    return hasImpl(implType.getConcreteUrl());
+}
+
+lyric_assembler::ImplHandle *
+lyric_assembler::ConceptSymbol::getImpl(const lyric_common::SymbolUrl &implUrl) const
+{
+    auto *priv = getPriv();
+    auto iterator = priv->impls.find(implUrl);
+    if (iterator != priv->impls.cend())
+        return iterator->second;
+    return nullptr;
 }
 
 lyric_assembler::ImplHandle *
 lyric_assembler::ConceptSymbol::getImpl(const lyric_common::TypeDef &implType) const
 {
-    auto *priv = getPriv();
-    if (priv->impls.contains(implType))
-        return priv->impls.at(implType);
-    return nullptr;
+    if (implType.getType() != lyric_common::TypeDefType::Concrete)
+        return nullptr;
+    return getImpl(implType.getConcreteUrl());
 }
 
-absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::ImplHandle *>::const_iterator
+absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::ImplHandle *>::const_iterator
 lyric_assembler::ConceptSymbol::implsBegin() const
 {
     auto *priv = getPriv();
     return priv->impls.cbegin();
 }
 
-absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::ImplHandle *>::const_iterator
+absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::ImplHandle *>::const_iterator
 lyric_assembler::ConceptSymbol::implsEnd() const
 {
     auto *priv = getPriv();
@@ -483,7 +508,11 @@ lyric_assembler::ConceptSymbol::declareImpl(const lyric_parser::Assignable &impl
         return resolveImplTypeResult.getStatus();
     auto implType = resolveImplTypeResult.getResult();
 
-    if (priv->impls.contains(implType))
+    if (implType.getType() != lyric_common::TypeDefType::Concrete)
+        m_state->throwAssemblerInvariant("invalid impl type {}", implType.toString());
+    auto implUrl = implType.getConcreteUrl();
+
+    if (priv->impls.contains(implUrl))
         return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
             "impl {} already defined for concept {}", implType.toString(), m_conceptUrl.toString());
@@ -515,7 +544,7 @@ lyric_assembler::ConceptSymbol::declareImpl(const lyric_parser::Assignable &impl
     TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
         name, implTypeHandle, conceptSymbol, m_conceptUrl, priv->conceptBlock.get()));
 
-    priv->impls[implType] = implHandle;
+    priv->impls[implUrl] = implHandle;
 
     return implType;
 }

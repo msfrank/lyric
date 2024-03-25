@@ -11,6 +11,7 @@
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/impl_cache.h>
+#include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/internal/write_object.h>
@@ -164,7 +165,8 @@ lyric_assembler::AssemblyState::initialize()
                 m_symbolcache->insertEnvBinding(symbolName, binding);
                 auto *instanceSymbol = cast_symbol_to_instance(sym);
                 for (auto iterator = instanceSymbol->implsBegin(); iterator != instanceSymbol->implsEnd(); iterator++) {
-                    auto &implType = iterator->first;
+                    auto *implHandle = iterator->second;
+                    auto implType = implHandle->implType()->getTypeDef();
                     if (m_symbolcache->hasEnvInstance(implType))
                         return logAndContinue(AssemblerCondition::kImportError,
                             tempo_tracing::LogSeverity::kError,

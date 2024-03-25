@@ -26,9 +26,9 @@ lyric_compiler::internal::compile_using(
 
         lyric_common::SymbolPath symbolPath;
         moduleEntry.parseAttrOrThrow(symbolRef, lyric_parser::kLyricAstSymbolPath, symbolPath);
-        lyric_common::SymbolUrl instanceUrl(usingLocation, symbolPath);
+        lyric_common::SymbolUrl usingUrl(usingLocation, symbolPath);
 
-        auto status = block->useInstance(instanceUrl);
+        auto status = block->useSymbol(usingUrl);
         if (status.notOk())
             return status;
     }

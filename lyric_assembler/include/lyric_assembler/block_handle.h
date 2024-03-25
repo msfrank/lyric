@@ -181,12 +181,15 @@ namespace lyric_assembler {
         tempo_utils::Result<SymbolBinding> resolveInstance(
             const lyric_parser::Assignable &instanceSpec);
 
-        tempo_utils::Status useInstance(const lyric_common::SymbolUrl &instanceUrl);
+        tempo_utils::Status useSymbol(
+            const lyric_common::SymbolUrl &symbolUrl,
+            const absl::flat_hash_set<lyric_common::TypeDef> &implTypes = {});
 
         bool hasImpl(const lyric_common::TypeDef &implType) const;
         Option<lyric_common::SymbolUrl> getImpl(const lyric_common::TypeDef &implType) const;
         tempo_utils::Result<lyric_common::SymbolUrl> resolveImpl(
-            const lyric_common::TypeDef &implType, ResolveMode mode = ResolveMode::kDefault);
+            const lyric_common::TypeDef &implType,
+            ResolveMode mode = ResolveMode::kDefault);
 
         tempo_utils::Result<lyric_common::SymbolUrl> declareNamespace(
             const std::string &name,

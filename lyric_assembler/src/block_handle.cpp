@@ -13,6 +13,7 @@
 #include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
+#include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/lexical_variable.h>
 #include <lyric_assembler/local_variable.h>
@@ -1399,30 +1400,74 @@ lyric_assembler::BlockHandle::resolveInstance(const lyric_parser::Assignable &in
 }
 
 tempo_utils::Status
-lyric_assembler::BlockHandle::useInstance(const lyric_common::SymbolUrl &instanceUrl)
+lyric_assembler::BlockHandle::useSymbol(
+    const lyric_common::SymbolUrl &symbolUrl,
+    const absl::flat_hash_set<lyric_common::TypeDef> &implTypes)
 {
-    if (!m_state->symbolCache()->hasSymbol(instanceUrl))
+    auto *sym = m_state->symbolCache()->getSymbol(symbolUrl);
+    if (sym == nullptr)
         return logAndContinue(AssemblerCondition::kMissingSymbol,
             tempo_tracing::LogSeverity::kError,
-            "missing instance symbol {}", instanceUrl.toString());
-    auto *sym = m_state->symbolCache()->getSymbol(instanceUrl);
-    if (sym == nullptr)
-        throwAssemblerInvariant("missing instance symbol {}", instanceUrl.toString());
-    if (sym->getSymbolType() != SymbolType::INSTANCE)
-        return logAndContinue(AssemblerCondition::kInvalidSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "invalid instance symbol {}", instanceUrl.toString());
-    auto *instanceSymbol = cast_symbol_to_instance(sym);
+            "missing symbol {}", symbolUrl.toString());
 
-    for (auto iterator = instanceSymbol->implsBegin(); iterator != instanceSymbol->implsEnd(); iterator++) {
-        auto &implType = iterator->first;
+    absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsBegin;
+    absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsEnd;
+
+    switch (sym->getSymbolType()) {
+        case SymbolType::CLASS: {
+            auto *classSymbol = cast_symbol_to_class(sym);
+            implsBegin = classSymbol->implsBegin();
+            implsEnd = classSymbol->implsEnd();
+            break;
+        }
+        case SymbolType::CONCEPT: {
+            auto *conceptSymbol = cast_symbol_to_concept(sym);
+            implsBegin = conceptSymbol->implsBegin();
+            implsEnd = conceptSymbol->implsEnd();
+            break;
+        }
+        case SymbolType::ENUM: {
+            auto *enumSymbol = cast_symbol_to_enum(sym);
+            implsBegin = enumSymbol->implsBegin();
+            implsEnd = enumSymbol->implsEnd();
+            break;
+        }
+        case SymbolType::EXISTENTIAL: {
+            auto *existentialSymbol = cast_symbol_to_existential(sym);
+            implsBegin = existentialSymbol->implsBegin();
+            implsEnd = existentialSymbol->implsEnd();
+            break;
+        }
+        case SymbolType::INSTANCE: {
+            auto *instanceSymbol = cast_symbol_to_instance(sym);
+            implsBegin = instanceSymbol->implsBegin();
+            implsEnd = instanceSymbol->implsEnd();
+            break;
+        }
+        case SymbolType::STRUCT: {
+            auto *structSymbol = cast_symbol_to_struct(sym);
+            implsBegin = structSymbol->implsBegin();
+            implsEnd = structSymbol->implsEnd();
+            break;
+        }
+        default:
+            return logAndContinue(AssemblerCondition::kInvalidSymbol,
+                tempo_tracing::LogSeverity::kError,
+                "symbol {} does not support impls", symbolUrl.toString());
+    }
+
+    for (auto iterator = implsBegin; iterator != implsEnd; iterator++) {
+        auto *implHandle = iterator->second;
+        auto implType = implHandle->implType()->getTypeDef();
+        if (!implTypes.empty() && !implTypes.contains(implType))
+            continue;
         if (m_impls.contains(implType)) {
             const auto &impl = m_impls.at(implType);
             return logAndContinue(AssemblerCondition::kImplConflict,
                 tempo_tracing::LogSeverity::kError,
-                "instance {} conflicts with impl {}", instanceUrl.toString(), impl.toString());
+                "symbol {} conflicts with impl {}", symbolUrl.toString(), impl.toString());
         }
-        m_impls[implType] = instanceUrl;
+        m_impls[implType] = symbolUrl;
     }
 
     return AssemblerStatus::ok();
