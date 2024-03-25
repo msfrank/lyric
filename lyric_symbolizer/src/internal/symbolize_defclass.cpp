@@ -71,6 +71,7 @@ lyric_symbolizer::internal::symbolize_defclass(
     std::vector<lyric_parser::NodeWalker> vals;
     std::vector<lyric_parser::NodeWalker> vars;
     std::vector<lyric_parser::NodeWalker> defs;
+    std::vector<lyric_parser::NodeWalker> impls;
 
     // make initial pass over class body
     for (int i = 0; i < walker.numChildren(); i++) {
@@ -92,6 +93,9 @@ lyric_symbolizer::internal::symbolize_defclass(
                 break;
             case lyric_schema::LyricAstId::Def:
                 defs.emplace_back(child);
+                break;
+            case lyric_schema::LyricAstId::Impl:
+                impls.emplace_back(child);
                 break;
             default:
                 block->throwSyntaxError(child, "expected class body");

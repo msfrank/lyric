@@ -75,7 +75,7 @@ TEST(CoreSeq, TestEvaluateSeqIter)
     auto result = runModule(R"(
         val seq: Seq = Seq{1, 2, 3, 4, 5, 6}
         var count: Int = 0
-        for n in seq.Iter() {
+        for n: Any in seq.Iter() {
             set count += 1
         }
         count

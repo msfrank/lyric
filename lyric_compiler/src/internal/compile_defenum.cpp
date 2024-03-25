@@ -4,6 +4,7 @@
 #include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
+#include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/internal/compile_call.h>
@@ -494,6 +495,144 @@ compile_defenum_case(
     return compile_defenum_case_init(caseEnum, caseCall, moduleEntry);
 }
 
+static tempo_utils::Status
+compile_defenum_impl_def(
+    lyric_assembler::ImplHandle *implHandle,
+    const lyric_parser::NodeWalker &walker,
+    lyric_compiler::ModuleEntry &moduleEntry)
+{
+    TU_ASSERT (implHandle != nullptr);
+    TU_ASSERT(walker.isValid());
+    auto *state = moduleEntry.getState();
+    auto *typeSystem = moduleEntry.getTypeSystem();
+
+    moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDefClass, 2);
+
+    auto *implBlock = implHandle->implBlock();
+
+    // get method name
+    std::string identifier;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
+
+    // get method return type
+    tu_uint32 typeOffset;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
+    auto type = walker.getNodeAtOffset(typeOffset);
+    auto parseAssignableResult = typeSystem->parseAssignable(implBlock, type);
+    if (parseAssignableResult.isStatus())
+        return parseAssignableResult.getStatus();
+    auto returnSpec = parseAssignableResult.getResult();
+
+    // compile the parameter list
+    auto pack = walker.getChild(0);
+    auto parsePackResult = typeSystem->parsePack(implBlock, pack);
+    if (parsePackResult.isStatus())
+        return parsePackResult.getStatus();
+    auto packSpec = parsePackResult.getResult();
+
+    // compile initializers
+    absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
+    for (const auto &p : packSpec.parameterSpec) {
+        if (!p.init.isEmpty()) {
+            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(implBlock,
+                p.name, p.type, p.init.getValue(), moduleEntry);
+            if (compileInitializerResult.isStatus())
+                return compileInitializerResult.getStatus();
+            initializers[p.name] = compileInitializerResult.getResult();
+        }
+    }
+
+    // declare the impl extension
+    lyric_assembler::ExtensionMethod extension;
+    TU_ASSIGN_OR_RETURN (extension, implHandle->declareExtension(
+        identifier, packSpec.parameterSpec, packSpec.restSpec, packSpec.ctxSpec, returnSpec));
+    auto *sym = state->symbolCache()->getSymbol(extension.methodCall);
+    if (sym == nullptr)
+        implBlock->throwAssemblerInvariant("missing call symbol {}", extension.methodCall.toString());
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+        implBlock->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
+    auto *call = cast_symbol_to_call(sym);
+    for (const auto &entry : initializers) {
+        call->putInitializer(entry.first, entry.second);
+    }
+
+    // compile the method body
+    auto body = walker.getChild(1);
+    auto *proc = call->callProc();
+    auto compileBodyResult = lyric_compiler::internal::compile_block(proc->procBlock(), body, moduleEntry);
+    if (compileBodyResult.isStatus())
+        return compileBodyResult.getStatus();
+    auto bodyType = compileBodyResult.getResult();
+
+    // add return instruction
+    auto status = proc->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN);
+    if (!status.isOk())
+        return status;
+
+    // validate that body returns the expected type
+    if (!typeSystem->isAssignable(call->getReturnType(), bodyType))
+        return implBlock->logAndContinue(body,
+            lyric_compiler::CompilerCondition::kIncompatibleType,
+            tempo_tracing::LogSeverity::kError,
+            "body does not match return type {}", call->getReturnType().toString());
+    for (const auto &exitType : call->listExitTypes()) {
+        if (!typeSystem->isAssignable(call->getReturnType(), exitType))
+            return implBlock->logAndContinue(body,
+                lyric_compiler::CompilerCondition::kIncompatibleType,
+                tempo_tracing::LogSeverity::kError,
+                "body does not match return type {}", call->getReturnType().toString());
+    }
+
+    // return control to the caller
+    return lyric_compiler::CompilerStatus::ok();
+}
+
+static tempo_utils::Status
+compile_defenum_impl(
+    lyric_assembler::EnumSymbol *enumSymbol,
+    const lyric_parser::NodeWalker &walker,
+    lyric_compiler::ModuleEntry &moduleEntry)
+{
+    TU_ASSERT (enumSymbol != nullptr);
+    TU_ASSERT(walker.isValid());
+    auto *enumBlock = enumSymbol->enumBlock();
+    auto *typeSystem = moduleEntry.getTypeSystem();
+
+    // get impl type
+    tu_uint32 typeOffset;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
+    auto type = walker.getNodeAtOffset(typeOffset);
+    auto parseAssignableResult = typeSystem->parseAssignable(enumBlock, type);
+    if (parseAssignableResult.isStatus())
+        return parseAssignableResult.getStatus();
+    auto implSpec = parseAssignableResult.getResult();
+
+    tempo_utils::Status status;
+
+    // declare the enum impl
+    lyric_common::TypeDef implType;
+    TU_ASSIGN_OR_RETURN (implType, enumSymbol->declareImpl(implSpec));
+    auto *implHandle = enumSymbol->getImpl(implType);
+
+    // compile each impl def
+    for (int i = 0; i < walker.numChildren(); i++) {
+        auto child = walker.getChild(i);
+        lyric_schema::LyricAstId childId{};
+        moduleEntry.parseIdOrThrow(child, lyric_schema::kLyricAstVocabulary, childId);
+        switch (childId) {
+            case lyric_schema::LyricAstId::Def:
+                status = compile_defenum_impl_def(implHandle, child, moduleEntry);
+                break;
+            default:
+                enumBlock->throwSyntaxError(child, "expected impl def");
+        }
+        if (!status.isOk())
+            return status;
+    }
+
+    return lyric_compiler::CompilerStatus::ok();
+}
+
 tempo_utils::Status
 lyric_compiler::internal::compile_defenum(
     lyric_assembler::BlockHandle *block,
@@ -513,6 +652,7 @@ lyric_compiler::internal::compile_defenum(
     std::vector<lyric_parser::NodeWalker> cases;
     std::vector<lyric_parser::NodeWalker> vals;
     std::vector<lyric_parser::NodeWalker> defs;
+    std::vector<lyric_parser::NodeWalker> impls;
 
     // make initial pass over class body
     for (int i = 0; i < walker.numChildren(); i++) {
@@ -534,13 +674,17 @@ lyric_compiler::internal::compile_defenum(
             case lyric_schema::LyricAstId::Def:
                 defs.emplace_back(child);
                 break;
+            case lyric_schema::LyricAstId::Impl:
+                impls.emplace_back(child);
+                break;
             default:
                 block->throwSyntaxError(child, "expected enum body");
         }
     }
 
     // the super enum of the base is Category
-    auto fundamentalCategory = state->fundamentalCache()->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Category);
+    auto fundamentalCategory = state->fundamentalCache()->getFundamentalUrl(
+        lyric_assembler::FundamentalSymbol::Category);
     auto *categorySym = state->symbolCache()->getSymbol(fundamentalCategory);
     if (categorySym == nullptr)
         block->throwAssemblerInvariant("missing enum symbol {}", fundamentalCategory.toString());
@@ -597,6 +741,13 @@ lyric_compiler::internal::compile_defenum(
     for (const auto &case_ : cases) {
         status = compile_defenum_case(block, case_, baseEnum, moduleEntry);
         if (status.notOk())
+            return status;
+    }
+
+    // compile impls last
+    for (const auto &impl : impls) {
+        status = compile_defenum_impl(baseEnum, impl, moduleEntry);
+        if (!status.isOk())
             return status;
     }
 

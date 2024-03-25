@@ -66,6 +66,7 @@ lyric_symbolizer::internal::symbolize_defenum(
     std::vector<lyric_parser::NodeWalker> vals;
     std::vector<lyric_parser::NodeWalker> defs;
     std::vector<lyric_parser::NodeWalker> cases;
+    std::vector<lyric_parser::NodeWalker> impls;
 
     // make initial pass over instance body
     for (int i = 0; i < walker.numChildren(); i++) {
@@ -87,6 +88,9 @@ lyric_symbolizer::internal::symbolize_defenum(
                 break;
             case lyric_schema::LyricAstId::Case:
                 cases.emplace_back(child);
+                break;
+            case lyric_schema::LyricAstId::Impl:
+                impls.emplace_back(child);
                 break;
             default:
                 block->throwSyntaxError(child, "expected enum body");

@@ -190,6 +190,8 @@ namespace lyric_parser::internal {
         // implemented by ModuleDefineOps
         void enterDefStatement(ModuleParser::DefStatementContext *ctx) override;
         void exitDefStatement(ModuleParser::DefStatementContext *ctx) override;
+        void enterImplDef(ModuleParser::ImplDefContext *ctx) override;
+        void exitImplDef(ModuleParser::ImplDefContext *ctx) override;
         void exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx) override;
 
         // implemented by ModuleDefclassOps
@@ -203,12 +205,16 @@ namespace lyric_parser::internal {
         void exitClassVar(ModuleParser::ClassVarContext *ctx) override;
         void enterClassDef(ModuleParser::ClassDefContext *ctx) override;
         void exitClassDef(ModuleParser::ClassDefContext *ctx) override;
+        void enterClassImpl(ModuleParser::ClassImplContext *ctx) override;
+        void exitClassImpl(ModuleParser::ClassImplContext *ctx) override;
         void exitDefclassStatement(ModuleParser::DefclassStatementContext *ctx) override;
 
         // implemented by ModuleDefconceptOps
         void enterDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx) override;
         void enterConceptDef(ModuleParser::ConceptDefContext *ctx) override;
         void exitConceptDef(ModuleParser::ConceptDefContext *ctx) override;
+        void enterConceptImpl(ModuleParser::ConceptImplContext *ctx) override;
+        void exitConceptImpl(ModuleParser::ConceptImplContext *ctx) override;
         void exitDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx) override;
 
         // implemented by ModuleDefenumOps
@@ -221,6 +227,8 @@ namespace lyric_parser::internal {
         void exitEnumDef(ModuleParser::EnumDefContext *ctx) override;
         void enterEnumCase(ModuleParser::EnumCaseContext *ctx) override;
         void exitEnumCase(ModuleParser::EnumCaseContext *ctx) override;
+        void enterEnumImpl(ModuleParser::EnumImplContext *ctx) override;
+        void exitEnumImpl(ModuleParser::EnumImplContext *ctx) override;
         void exitDefenumStatement(ModuleParser::DefenumStatementContext *ctx) override;
 
         // implemented by ModuleDefinstanceOps
@@ -232,8 +240,6 @@ namespace lyric_parser::internal {
         void enterInstanceDef(ModuleParser::InstanceDefContext *ctx) override;
         void exitInstanceDef(ModuleParser::InstanceDefContext *ctx) override;
         void enterInstanceImpl(ModuleParser::InstanceImplContext *ctx) override;
-        void enterImplDef(ModuleParser::ImplDefContext *ctx) override;
-        void exitImplDef(ModuleParser::ImplDefContext *ctx) override;
         void exitInstanceImpl(ModuleParser::InstanceImplContext *ctx) override;
         void exitDefinstanceStatement(ModuleParser::DefinstanceStatementContext *ctx) override;
 
@@ -246,6 +252,8 @@ namespace lyric_parser::internal {
         void exitStructVal(ModuleParser::StructValContext *ctx) override;
         void enterStructDef(ModuleParser::StructDefContext *ctx) override;
         void exitStructDef(ModuleParser::StructDefContext *ctx) override;
+        void enterStructImpl(ModuleParser::StructImplContext *ctx) override;
+        void exitStructImpl(ModuleParser::StructImplContext *ctx) override;
         void exitDefstructStatement(ModuleParser::DefstructStatementContext *ctx) override;
 
         // implemented by ModuleParameterOps

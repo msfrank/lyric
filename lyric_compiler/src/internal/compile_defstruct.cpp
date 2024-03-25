@@ -3,6 +3,7 @@
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
+#include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/synthetic_symbol.h>
@@ -192,7 +193,7 @@ compile_defstruct_init(
 
     tempo_utils::Status status;
 
-    // load the uninitialized instance onto the top of the stack
+    // load the uninitialized struct onto the top of the stack
     status = code->loadSynthetic(lyric_assembler::SyntheticType::THIS);
     if (!status.isOk())
         return status;
@@ -205,7 +206,7 @@ compile_defstruct_init(
             return status;
     }
 
-    // call super ctor, instance is now on the top of the stack
+    // call super ctor, struct is now on the top of the stack
     auto invokeSuperCtorResult = superCtor.invoke(ctorBlock, reifier);
     if (invokeSuperCtorResult.isStatus())
         return invokeSuperCtorResult.getStatus();
@@ -394,6 +395,144 @@ compile_defstruct_def(
     return lyric_compiler::CompilerStatus::ok();
 }
 
+static tempo_utils::Status
+compile_defstruct_impl_def(
+    lyric_assembler::ImplHandle *implHandle,
+    const lyric_parser::NodeWalker &walker,
+    lyric_compiler::ModuleEntry &moduleEntry)
+{
+    TU_ASSERT (implHandle != nullptr);
+    TU_ASSERT(walker.isValid());
+    auto *state = moduleEntry.getState();
+    auto *typeSystem = moduleEntry.getTypeSystem();
+
+    moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDefClass, 2);
+
+    auto *implBlock = implHandle->implBlock();
+
+    // get method name
+    std::string identifier;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
+
+    // get method return type
+    tu_uint32 typeOffset;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
+    auto type = walker.getNodeAtOffset(typeOffset);
+    auto parseAssignableResult = typeSystem->parseAssignable(implBlock, type);
+    if (parseAssignableResult.isStatus())
+        return parseAssignableResult.getStatus();
+    auto returnSpec = parseAssignableResult.getResult();
+
+    // compile the parameter list
+    auto pack = walker.getChild(0);
+    auto parsePackResult = typeSystem->parsePack(implBlock, pack);
+    if (parsePackResult.isStatus())
+        return parsePackResult.getStatus();
+    auto packSpec = parsePackResult.getResult();
+
+    // compile initializers
+    absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
+    for (const auto &p : packSpec.parameterSpec) {
+        if (!p.init.isEmpty()) {
+            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(implBlock,
+                p.name, p.type, p.init.getValue(), moduleEntry);
+            if (compileInitializerResult.isStatus())
+                return compileInitializerResult.getStatus();
+            initializers[p.name] = compileInitializerResult.getResult();
+        }
+    }
+
+    // declare the impl extension
+    lyric_assembler::ExtensionMethod extension;
+    TU_ASSIGN_OR_RETURN (extension, implHandle->declareExtension(
+        identifier, packSpec.parameterSpec, packSpec.restSpec, packSpec.ctxSpec, returnSpec));
+    auto *sym = state->symbolCache()->getSymbol(extension.methodCall);
+    if (sym == nullptr)
+        implBlock->throwAssemblerInvariant("missing call symbol {}", extension.methodCall.toString());
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+        implBlock->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
+    auto *call = cast_symbol_to_call(sym);
+    for (const auto &entry : initializers) {
+        call->putInitializer(entry.first, entry.second);
+    }
+
+    // compile the method body
+    auto body = walker.getChild(1);
+    auto *proc = call->callProc();
+    auto compileBodyResult = lyric_compiler::internal::compile_block(proc->procBlock(), body, moduleEntry);
+    if (compileBodyResult.isStatus())
+        return compileBodyResult.getStatus();
+    auto bodyType = compileBodyResult.getResult();
+
+    // add return instruction
+    auto status = proc->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN);
+    if (!status.isOk())
+        return status;
+
+    // validate that body returns the expected type
+    if (!typeSystem->isAssignable(call->getReturnType(), bodyType))
+        return implBlock->logAndContinue(body,
+            lyric_compiler::CompilerCondition::kIncompatibleType,
+            tempo_tracing::LogSeverity::kError,
+            "body does not match return type {}", call->getReturnType().toString());
+    for (const auto &exitType : call->listExitTypes()) {
+        if (!typeSystem->isAssignable(call->getReturnType(), exitType))
+            return implBlock->logAndContinue(body,
+                lyric_compiler::CompilerCondition::kIncompatibleType,
+                tempo_tracing::LogSeverity::kError,
+                "body does not match return type {}", call->getReturnType().toString());
+    }
+
+    // return control to the caller
+    return lyric_compiler::CompilerStatus::ok();
+}
+
+static tempo_utils::Status
+compile_defstruct_impl(
+    lyric_assembler::StructSymbol *structSymbol,
+    const lyric_parser::NodeWalker &walker,
+    lyric_compiler::ModuleEntry &moduleEntry)
+{
+    TU_ASSERT (structSymbol != nullptr);
+    TU_ASSERT(walker.isValid());
+    auto *structBlock = structSymbol->structBlock();
+    auto *typeSystem = moduleEntry.getTypeSystem();
+
+    // get impl type
+    tu_uint32 typeOffset;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
+    auto type = walker.getNodeAtOffset(typeOffset);
+    auto parseAssignableResult = typeSystem->parseAssignable(structBlock, type);
+    if (parseAssignableResult.isStatus())
+        return parseAssignableResult.getStatus();
+    auto implSpec = parseAssignableResult.getResult();
+
+    tempo_utils::Status status;
+
+    // declare the struct impl
+    lyric_common::TypeDef implType;
+    TU_ASSIGN_OR_RETURN (implType, structSymbol->declareImpl(implSpec));
+    auto *implHandle = structSymbol->getImpl(implType);
+
+    // compile each impl def
+    for (int i = 0; i < walker.numChildren(); i++) {
+        auto child = walker.getChild(i);
+        lyric_schema::LyricAstId childId{};
+        moduleEntry.parseIdOrThrow(child, lyric_schema::kLyricAstVocabulary, childId);
+        switch (childId) {
+            case lyric_schema::LyricAstId::Def:
+                status = compile_defstruct_impl_def(implHandle, child, moduleEntry);
+                break;
+            default:
+                structBlock->throwSyntaxError(child, "expected impl def");
+        }
+        if (!status.isOk())
+            return status;
+    }
+
+    return lyric_compiler::CompilerStatus::ok();
+}
+
 tempo_utils::Status
 lyric_compiler::internal::compile_defstruct(
     lyric_assembler::BlockHandle *block,
@@ -413,6 +552,7 @@ lyric_compiler::internal::compile_defstruct(
     lyric_parser::NodeWalker init;
     std::vector<lyric_parser::NodeWalker> vals;
     std::vector<lyric_parser::NodeWalker> defs;
+    std::vector<lyric_parser::NodeWalker> impls;
 
     // make initial pass over struct body
     for (int i = 0; i < walker.numChildren(); i++) {
@@ -432,6 +572,9 @@ lyric_compiler::internal::compile_defstruct(
             case lyric_schema::LyricAstId::Def:
                 defs.emplace_back(child);
                 break;
+            case lyric_schema::LyricAstId::Impl:
+                impls.emplace_back(child);
+                break;
             default:
                 block->throwSyntaxError(child, "expected struct body");
         }
@@ -440,7 +583,8 @@ lyric_compiler::internal::compile_defstruct(
     lyric_parser::NodeWalker initPack;
     lyric_parser::NodeWalker initSuper;
     lyric_parser::NodeWalker initBody;
-    lyric_common::SymbolUrl superStructUrl = state->fundamentalCache()->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Record);
+    lyric_common::SymbolUrl superStructUrl = state->fundamentalCache()->getFundamentalUrl(
+        lyric_assembler::FundamentalSymbol::Record);
 
     // if init was specified then process it
     if (init.isValid()) {
@@ -527,6 +671,13 @@ lyric_compiler::internal::compile_defstruct(
     // then compile methods
     for (const auto &def : defs) {
         status = compile_defstruct_def(structSymbol, def, moduleEntry);
+        if (!status.isOk())
+            return status;
+    }
+
+    // compile impls last
+    for (const auto &impl : impls) {
+        status = compile_defstruct_impl(structSymbol, impl, moduleEntry);
         if (!status.isOk())
             return status;
     }

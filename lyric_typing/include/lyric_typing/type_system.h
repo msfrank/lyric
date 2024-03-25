@@ -46,6 +46,10 @@ namespace lyric_typing {
             const lyric_common::TypeDef &toRef,
             const lyric_common::TypeDef &fromRef);
 
+        tempo_utils::Result<bool> isImplementable(
+            const lyric_common::TypeDef &toConcept,
+            const lyric_common::TypeDef &fromRef);
+
     private:
         lyric_assembler::AssemblyState *m_state;
     };

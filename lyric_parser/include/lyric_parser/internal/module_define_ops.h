@@ -16,6 +16,9 @@ namespace lyric_parser::internal {
         void enterDefStatement(ModuleParser::DefStatementContext *ctx);
         void exitDefStatement(ModuleParser::DefStatementContext *ctx);
 
+        void enterImplDef(ModuleParser::ImplDefContext *ctx);
+        void exitImplDef(ModuleParser::ImplDefContext *ctx);
+
         void exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx);
 
     private:

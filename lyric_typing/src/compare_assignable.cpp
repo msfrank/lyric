@@ -30,9 +30,44 @@ compare_concrete_to_concept(
 
     switch (symbol->getSymbolType()) {
 
+        case lyric_assembler::SymbolType::CLASS: {
+            auto *classSymbol = cast_symbol_to_class(symbol);
+            if (classSymbol->hasImpl(toConcept))
+                return lyric_runtime::TypeComparison::EQUAL;
+            return lyric_runtime::TypeComparison::DISJOINT;
+        }
+
+        case lyric_assembler::SymbolType::CONCEPT: {
+            auto *conceptSymbol = cast_symbol_to_concept(symbol);
+            if (conceptSymbol->hasImpl(toConcept))
+                return lyric_runtime::TypeComparison::EQUAL;
+            return lyric_runtime::TypeComparison::DISJOINT;
+        }
+
+        case lyric_assembler::SymbolType::ENUM: {
+            auto *enumSymbol = cast_symbol_to_enum(symbol);
+            if (enumSymbol->hasImpl(toConcept))
+                return lyric_runtime::TypeComparison::EQUAL;
+            return lyric_runtime::TypeComparison::DISJOINT;
+        }
+
+        case lyric_assembler::SymbolType::EXISTENTIAL: {
+            auto *existentialSymbol = cast_symbol_to_existential(symbol);
+            if (existentialSymbol->hasImpl(toConcept))
+                return lyric_runtime::TypeComparison::EQUAL;
+            return lyric_runtime::TypeComparison::DISJOINT;
+        }
+
         case lyric_assembler::SymbolType::INSTANCE: {
             auto *instanceSymbol = cast_symbol_to_instance(symbol);
             if (instanceSymbol->hasImpl(toConcept))
+                return lyric_runtime::TypeComparison::EQUAL;
+            return lyric_runtime::TypeComparison::DISJOINT;
+        }
+
+        case lyric_assembler::SymbolType::STRUCT: {
+            auto *structSymbol = cast_symbol_to_struct(symbol);
+            if (structSymbol->hasImpl(toConcept))
                 return lyric_runtime::TypeComparison::EQUAL;
             return lyric_runtime::TypeComparison::DISJOINT;
         }
@@ -370,4 +405,66 @@ lyric_typing::compare_assignable(
                 tempo_tracing::LogSeverity::kError,
                 "invalid assignable type {}", toRef.toString());
     }
+}
+
+tempo_utils::Result<bool>
+lyric_typing::is_implementable(
+    const lyric_common::TypeDef &toConcept,
+    const lyric_common::TypeDef &fromRef,
+    lyric_assembler::AssemblyState *state)
+{
+    TU_ASSERT (toConcept.isValid());
+    TU_ASSERT (fromRef.isValid());
+    TU_ASSERT (state != nullptr);
+
+    auto *symbolCache = state->symbolCache();
+
+    auto *toSym = symbolCache->getSymbol(toConcept.getConcreteUrl());
+    if (toSym == nullptr)
+        return state->logAndContinue(TypingCondition::kMissingType,
+            tempo_tracing::LogSeverity::kError,
+            "missing symbol for concept type {}", toConcept.toString());
+    if (toSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
+        return state->logAndContinue(TypingCondition::kIncompatibleType,
+            tempo_tracing::LogSeverity::kError,
+            "incompatible type {}; expected concept", toConcept.toString());
+
+    auto *fromSym = symbolCache->getSymbol(fromRef.getConcreteUrl());
+    if (fromSym == nullptr)
+        return state->logAndContinue(TypingCondition::kMissingType,
+            tempo_tracing::LogSeverity::kError,
+            "missing symbol for type {}", fromRef.toString());
+
+    switch (fromSym->getSymbolType()) {
+        case lyric_assembler::SymbolType::CLASS: {
+            auto *classSymbol = cast_symbol_to_class(fromSym);
+            return classSymbol->hasImpl(toConcept);
+        }
+        case lyric_assembler::SymbolType::CONCEPT: {
+            auto *conceptSymbol = cast_symbol_to_concept(fromSym);
+            return conceptSymbol->hasImpl(toConcept);
+        }
+        case lyric_assembler::SymbolType::ENUM: {
+            auto *enumSymbol = cast_symbol_to_enum(fromSym);
+            return enumSymbol->hasImpl(toConcept);
+        }
+        case lyric_assembler::SymbolType::EXISTENTIAL: {
+            auto *existentialSymbol = cast_symbol_to_existential(fromSym);
+            return existentialSymbol->hasImpl(toConcept);
+        }
+        case lyric_assembler::SymbolType::INSTANCE: {
+            auto *instanceSymbol = cast_symbol_to_instance(fromSym);
+            return instanceSymbol->hasImpl(toConcept);
+        }
+        case lyric_assembler::SymbolType::STRUCT: {
+            auto *structSymbol = cast_symbol_to_struct(fromSym);
+            return structSymbol->hasImpl(toConcept);
+        }
+        default:
+            break;
+    }
+
+    return state->logAndContinue(TypingCondition::kIncompatibleType,
+        tempo_tracing::LogSeverity::kError,
+        "type {} cannot implement {}", fromRef.toString(), toConcept.toString());
 }

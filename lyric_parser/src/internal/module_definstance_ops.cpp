@@ -202,61 +202,6 @@ lyric_parser::internal::ModuleDefinstanceOps::enterInstanceImpl(ModuleParser::In
 }
 
 void
-lyric_parser::internal::ModuleDefinstanceOps::enterImplDef(ModuleParser::ImplDefContext *ctx)
-{
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
-}
-
-void
-lyric_parser::internal::ModuleDefinstanceOps::exitImplDef(ModuleParser::ImplDefContext *ctx)
-{
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
-    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
-
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
-    auto *blockNode = m_state->popNode();
-
-    // the parameter list
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
-    auto *packNode = m_state->popNode();
-
-    // the function name
-    auto id = ctx->symbolIdentifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-
-    // the function return type
-    auto *returnTypeNode = m_state->makeType(ctx->returnSpec()->assignableType());
-    auto *returnTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(returnTypeNode->getAddress().getAddress()));
-
-    auto *token = ctx->getStart();
-
-    auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, token);
-    defNode->putAttr(identifierAttr);
-    defNode->putAttr(returnTypeOffsetAttr);
-    defNode->appendChild(packNode);
-    defNode->appendChild(blockNode);
-
-    // if ancestor node is not a kImpl, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
-    auto *implNode = m_state->peekNode();
-    implNode->checkClassOrThrow(lyric_schema::kLyricAstImplClass);
-
-    implNode->appendChild(defNode);
-
-    scopeManager->popSpan();
-
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
-}
-
-void
 lyric_parser::internal::ModuleDefinstanceOps::exitInstanceImpl(ModuleParser::InstanceImplContext *ctx)
 {
     auto *scopeManager = m_state->scopeManager();

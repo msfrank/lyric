@@ -142,35 +142,40 @@ defStatement        : DefKeyword symbolIdentifier
                         placeholderSpec? paramSpec returnSpec constraintSpec?
                         CurlyOpen block CurlyClose ;
 
+// impl statement
+
+implDef             : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen block CurlyClose ;
+implSpec            : implDef ;
+
 
 // defclass statement
 
 classSuper          : FromKeyword assignableType ParenOpen argList? ParenClose ;
-classInit           : InitKeyword paramSpec classSuper? CurlyOpen block? CurlyClose ;
+classImpl           : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 classVal            : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 classVar            : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 classDef            : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen block CurlyClose ;
+classInit           : InitKeyword paramSpec classSuper? CurlyOpen block? CurlyClose ;
 genericClass        : placeholderSpec constraintSpec? ;
-classSpec           : classInit | classVal | classVar | classDef ;
+classSpec           : classInit | classVal | classVar | classDef | classImpl ;
 defclassStatement   : DefClassKeyword symbolIdentifier genericClass? CurlyOpen classSpec*  CurlyClose ;
 
 
 // defconcept statement
 
 conceptDef          : DefKeyword symbolIdentifier paramSpec returnSpec ;
+conceptImpl         : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 genericConcept      : placeholderSpec constraintSpec? ;
-conceptSpec         : conceptDef ;
+conceptSpec         : conceptDef | conceptImpl ;
 defconceptStatement : DefConceptKeyword symbolIdentifier genericConcept? CurlyOpen conceptSpec* CurlyClose ;
 
 
 // definstance statement
 
-implDef             : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen block CurlyClose ;
-implSpec            : implDef ;
-instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen block CurlyClose ;
+instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 instanceSpec        : instanceVal | instanceVar | instanceDef | instanceImpl ;
 definstanceStatement: DefInstanceKeyword symbolIdentifier CurlyOpen instanceSpec* CurlyClose ;
 
@@ -181,7 +186,8 @@ enumInit            : InitKeyword paramSpec CurlyOpen block? CurlyClose ;
 enumVal             : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen block CurlyClose ;
 enumCase            : CaseKeyword symbolIdentifier ( ParenOpen argList? ParenClose )? ;
-enumSpec            : enumInit | enumVal | enumDef | enumCase ;
+enumImpl            : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
+enumSpec            : enumInit | enumVal | enumDef | enumCase | enumImpl ;
 defenumStatement    : DefEnumKeyword symbolIdentifier CurlyOpen enumSpec* CurlyClose ;
 
 
@@ -191,7 +197,8 @@ structSuper         : FromKeyword assignableType ParenOpen argList? ParenClose ;
 structInit          : InitKeyword paramSpec structSuper? CurlyOpen block? CurlyClose ;
 structVal           : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 structDef           : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen block CurlyClose ;
-structSpec          : structInit | structVal | structDef ;
+structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
+structSpec          : structInit | structVal | structDef | structImpl ;
 defstructStatement  : DefStructKeyword symbolIdentifier CurlyOpen structSpec* CurlyClose ;
 
 

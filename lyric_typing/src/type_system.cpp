@@ -79,3 +79,11 @@ lyric_typing::TypeSystem::unifyAssignable(
 {
     return unify_assignable(toRef, fromRef, m_state);
 }
+
+tempo_utils::Result<bool>
+lyric_typing::TypeSystem::isImplementable(
+    const lyric_common::TypeDef &toConcept,
+    const lyric_common::TypeDef &fromRef)
+{
+    return is_implementable(toConcept, fromRef, m_state);
+}

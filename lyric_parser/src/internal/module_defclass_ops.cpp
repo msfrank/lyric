@@ -298,6 +298,52 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDef(ModuleParser::ClassDefCo
 }
 
 void
+lyric_parser::internal::ModuleDefclassOps::enterClassImpl(ModuleParser::ClassImplContext *ctx)
+{
+    auto *token = ctx->getStart();
+    auto *implNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImplClass, token);
+    m_state->pushNode(implNode);
+
+    auto *scopeManager = m_state->scopeManager();
+    auto span = scopeManager->makeSpan();
+    span->putTag(kLyricParserNodeOffset, static_cast<tu_int64>(implNode->getAddress().getAddress()));
+    span->putTag(kLyricParserLineNumber, static_cast<tu_int64>(implNode->getLineNumber()));
+    span->putTag(kLyricParserColumnNumber, static_cast<tu_int64>(implNode->getColumnNumber()));
+    span->putTag(kLyricParserFileOffset, static_cast<tu_int64>(implNode->getFileOffset()));
+}
+
+void
+lyric_parser::internal::ModuleDefclassOps::exitClassImpl(ModuleParser::ClassImplContext *ctx)
+{
+    auto *scopeManager = m_state->scopeManager();
+    auto span = scopeManager->peekSpan();
+
+    // the impl type
+    auto *implTypeNode = m_state->makeType(ctx->assignableType());
+    auto *implTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
+        static_cast<tu_uint32>(implTypeNode->getAddress().getAddress()));
+
+    // pop impl off the stack
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(ctx->getStop());
+    auto *implNode = m_state->popNode();
+    implNode->checkClassOrThrow(lyric_schema::kLyricAstImplClass);
+
+    // set the impl type
+    implNode->putAttr(implTypeOffsetAttr);
+
+    // if ancestor node is not a kDefClass, then report internal violation
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(ctx->getStop());
+    auto *definstanceNode = m_state->peekNode();
+    definstanceNode->checkClassOrThrow(lyric_schema::kLyricAstDefClassClass);
+
+    definstanceNode->appendChild(implNode);
+
+    scopeManager->popSpan();
+}
+
+void
 lyric_parser::internal::ModuleDefclassOps::exitDefclassStatement(ModuleParser::DefclassStatementContext *ctx)
 {
     auto *scopeManager = m_state->scopeManager();

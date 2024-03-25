@@ -4,6 +4,7 @@
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
+#include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/synthetic_symbol.h>
@@ -180,7 +181,7 @@ compile_defclass_init(
         superCtor.getTemplateUrl(), superCtor.getTemplateParameters(),
         superCtor.getTemplateArguments(), typeSystem);
 
-    // load the uninitialized instance onto the top of the stack
+    // load the uninitialized class onto the top of the stack
     tempo_utils::Status status = code->loadSynthetic(lyric_assembler::SyntheticType::THIS);
     if (!status.isOk())
         return status;
@@ -193,7 +194,7 @@ compile_defclass_init(
             return status;
     }
 
-    // call super ctor, instance is now on the top of the stack
+    // call super ctor, class is now on the top of the stack
     auto invokeSuperCtorResult = superCtor.invoke(ctorBlock, reifier);
     if (invokeSuperCtorResult.isStatus())
         return invokeSuperCtorResult.getStatus();
@@ -374,6 +375,144 @@ compile_defclass_def(
     return lyric_compiler::CompilerStatus::ok();
 }
 
+static tempo_utils::Status
+compile_defclass_impl_def(
+    lyric_assembler::ImplHandle *implHandle,
+    const lyric_parser::NodeWalker &walker,
+    lyric_compiler::ModuleEntry &moduleEntry)
+{
+    TU_ASSERT (implHandle != nullptr);
+    TU_ASSERT(walker.isValid());
+    auto *state = moduleEntry.getState();
+    auto *typeSystem = moduleEntry.getTypeSystem();
+
+    moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDefClass, 2);
+
+    auto *implBlock = implHandle->implBlock();
+
+    // get method name
+    std::string identifier;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
+
+    // get method return type
+    tu_uint32 typeOffset;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
+    auto type = walker.getNodeAtOffset(typeOffset);
+    auto parseAssignableResult = typeSystem->parseAssignable(implBlock, type);
+    if (parseAssignableResult.isStatus())
+        return parseAssignableResult.getStatus();
+    auto returnSpec = parseAssignableResult.getResult();
+
+    // compile the parameter list
+    auto pack = walker.getChild(0);
+    auto parsePackResult = typeSystem->parsePack(implBlock, pack);
+    if (parsePackResult.isStatus())
+        return parsePackResult.getStatus();
+    auto packSpec = parsePackResult.getResult();
+
+    // compile initializers
+    absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
+    for (const auto &p : packSpec.parameterSpec) {
+        if (!p.init.isEmpty()) {
+            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(implBlock,
+                p.name, p.type, p.init.getValue(), moduleEntry);
+            if (compileInitializerResult.isStatus())
+                return compileInitializerResult.getStatus();
+            initializers[p.name] = compileInitializerResult.getResult();
+        }
+    }
+
+    // declare the impl extension
+    lyric_assembler::ExtensionMethod extension;
+    TU_ASSIGN_OR_RETURN (extension, implHandle->declareExtension(
+        identifier, packSpec.parameterSpec, packSpec.restSpec, packSpec.ctxSpec, returnSpec));
+    auto *sym = state->symbolCache()->getSymbol(extension.methodCall);
+    if (sym == nullptr)
+        implBlock->throwAssemblerInvariant("missing call symbol {}", extension.methodCall.toString());
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+        implBlock->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
+    auto *call = cast_symbol_to_call(sym);
+    for (const auto &entry : initializers) {
+        call->putInitializer(entry.first, entry.second);
+    }
+
+    // compile the method body
+    auto body = walker.getChild(1);
+    auto *proc = call->callProc();
+    auto compileBodyResult = lyric_compiler::internal::compile_block(proc->procBlock(), body, moduleEntry);
+    if (compileBodyResult.isStatus())
+        return compileBodyResult.getStatus();
+    auto bodyType = compileBodyResult.getResult();
+
+    // add return instruction
+    auto status = proc->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN);
+    if (!status.isOk())
+        return status;
+
+    // validate that body returns the expected type
+    if (!typeSystem->isAssignable(call->getReturnType(), bodyType))
+        return implBlock->logAndContinue(body,
+            lyric_compiler::CompilerCondition::kIncompatibleType,
+            tempo_tracing::LogSeverity::kError,
+            "body does not match return type {}", call->getReturnType().toString());
+    for (const auto &exitType : call->listExitTypes()) {
+        if (!typeSystem->isAssignable(call->getReturnType(), exitType))
+            return implBlock->logAndContinue(body,
+                lyric_compiler::CompilerCondition::kIncompatibleType,
+                tempo_tracing::LogSeverity::kError,
+                "body does not match return type {}", call->getReturnType().toString());
+    }
+
+    // return control to the caller
+    return lyric_compiler::CompilerStatus::ok();
+}
+
+static tempo_utils::Status
+compile_defclass_impl(
+    lyric_assembler::ClassSymbol *classSymbol,
+    const lyric_parser::NodeWalker &walker,
+    lyric_compiler::ModuleEntry &moduleEntry)
+{
+    TU_ASSERT (classSymbol != nullptr);
+    TU_ASSERT(walker.isValid());
+    auto *classBlock = classSymbol->classBlock();
+    auto *typeSystem = moduleEntry.getTypeSystem();
+
+    // get impl type
+    tu_uint32 typeOffset;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
+    auto type = walker.getNodeAtOffset(typeOffset);
+    auto parseAssignableResult = typeSystem->parseAssignable(classBlock, type);
+    if (parseAssignableResult.isStatus())
+        return parseAssignableResult.getStatus();
+    auto implSpec = parseAssignableResult.getResult();
+
+    tempo_utils::Status status;
+
+    // declare the class impl
+    lyric_common::TypeDef implType;
+    TU_ASSIGN_OR_RETURN (implType, classSymbol->declareImpl(implSpec));
+    auto *implHandle = classSymbol->getImpl(implType);
+
+    // compile each impl def
+    for (int i = 0; i < walker.numChildren(); i++) {
+        auto child = walker.getChild(i);
+        lyric_schema::LyricAstId childId{};
+        moduleEntry.parseIdOrThrow(child, lyric_schema::kLyricAstVocabulary, childId);
+        switch (childId) {
+            case lyric_schema::LyricAstId::Def:
+                status = compile_defclass_impl_def(implHandle, child, moduleEntry);
+                break;
+            default:
+                classBlock->throwSyntaxError(child, "expected impl def");
+        }
+        if (!status.isOk())
+            return status;
+    }
+
+    return lyric_compiler::CompilerStatus::ok();
+}
+
 tempo_utils::Status
 lyric_compiler::internal::compile_defclass(
     lyric_assembler::BlockHandle *block,
@@ -408,6 +547,7 @@ lyric_compiler::internal::compile_defclass(
     std::vector<lyric_parser::NodeWalker> vals;
     std::vector<lyric_parser::NodeWalker> vars;
     std::vector<lyric_parser::NodeWalker> defs;
+    std::vector<lyric_parser::NodeWalker> impls;
 
     // make initial pass over class body
     for (int i = 0; i < walker.numChildren(); i++) {
@@ -429,6 +569,9 @@ lyric_compiler::internal::compile_defclass(
             case lyric_schema::LyricAstId::Def:
                 defs.emplace_back(child);
                 break;
+            case lyric_schema::LyricAstId::Impl:
+                impls.emplace_back(child);
+                break;
             default:
                 block->throwSyntaxError(child, "expected class body");
         }
@@ -437,7 +580,8 @@ lyric_compiler::internal::compile_defclass(
     lyric_parser::NodeWalker initPack;
     lyric_parser::NodeWalker initSuper;
     lyric_parser::NodeWalker initBody;
-    lyric_common::SymbolUrl superClassUrl = state->fundamentalCache()->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Object);
+    lyric_common::SymbolUrl superClassUrl = state->fundamentalCache()->getFundamentalUrl(
+        lyric_assembler::FundamentalSymbol::Object);
 
     // if init was specified then process it
     if (init.isValid()) {
@@ -497,12 +641,12 @@ lyric_compiler::internal::compile_defclass(
         return declClassResult.getStatus();
     auto classUrl = declClassResult.getResult();
 
-    auto *thisSym = block->blockState()->symbolCache()->getSymbol(classUrl);
-    if (thisSym == nullptr)
+    auto *sym = block->blockState()->symbolCache()->getSymbol(classUrl);
+    if (sym == nullptr)
         block->throwAssemblerInvariant("missing class symbol {}", classUrl.toString());
-    if (thisSym->getSymbolType() != lyric_assembler::SymbolType::CLASS)
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::CLASS)
         block->throwAssemblerInvariant("invalid class symbol {}", classUrl.toString());
-    auto *thisClass = cast_symbol_to_class(thisSym);
+    auto *classSymbol = cast_symbol_to_class(sym);
 
     TU_LOG_INFO << "declared class " << identifier << " from " << superClassUrl << " with url " << classUrl;
 
@@ -511,32 +655,39 @@ lyric_compiler::internal::compile_defclass(
 
     // compile members first
     for (const auto &val : vals) {
-        auto compileValResult = compile_defclass_val(thisClass, val, moduleEntry);
+        auto compileValResult = compile_defclass_val(classSymbol, val, moduleEntry);
         if (compileValResult.isStatus())
             return compileValResult.getStatus();
         classMemberNames.insert(compileValResult.getResult());
     }
     for (const auto &var : vars) {
-        auto compileVarResult = compile_defclass_var(thisClass, var, moduleEntry);
+        auto compileVarResult = compile_defclass_var(classSymbol, var, moduleEntry);
         if (compileVarResult.isStatus())
             return compileVarResult.getStatus();
         classMemberNames.insert(compileVarResult.getResult());
     }
 
     // then compile constructor, which might be the default constructor if an init was not specified
-    status = compile_defclass_init(thisClass, initPack, initSuper, initBody, classMemberNames, moduleEntry);
+    status = compile_defclass_init(classSymbol, initPack, initSuper, initBody, classMemberNames, moduleEntry);
     if (!status.isOk())
         return status;
 
-    // compile methods last
+    // then compile methods
     for (const auto &def : defs) {
-        status = compile_defclass_def(thisClass, def, moduleEntry);
+        status = compile_defclass_def(classSymbol, def, moduleEntry);
+        if (!status.isOk())
+            return status;
+    }
+
+    // compile impls last
+    for (const auto &impl : impls) {
+        status = compile_defclass_impl(classSymbol, impl, moduleEntry);
         if (!status.isOk())
             return status;
     }
 
     if (classSymbolPtr) {
-        *classSymbolPtr = thisClass;
+        *classSymbolPtr = classSymbol;
     }
 
     return CompilerStatus::ok();

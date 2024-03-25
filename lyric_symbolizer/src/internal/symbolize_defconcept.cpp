@@ -40,6 +40,7 @@ lyric_symbolizer::internal::symbolize_defconcept(
     SymbolizeHandle conceptBlock(result.getResult(), block);
 
     std::vector<lyric_parser::NodeWalker> actions;
+    std::vector<lyric_parser::NodeWalker> impls;
 
     // make initial pass over concept body
     for (int i = 0; i < walker.numChildren(); i++) {
@@ -50,6 +51,9 @@ lyric_symbolizer::internal::symbolize_defconcept(
         switch (childId) {
             case lyric_schema::LyricAstId::Def:
                 actions.emplace_back(child);
+                break;
+            case lyric_schema::LyricAstId::Impl:
+                impls.emplace_back(child);
                 break;
             default:
                 block->throwSyntaxError(child, "expected concept body");

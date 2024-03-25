@@ -519,7 +519,8 @@ lyric_compiler::internal::compile_definstance(
     }
 
     //
-    auto fundamentalSingleton = state->fundamentalCache()->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Singleton);
+    auto fundamentalSingleton = state->fundamentalCache()->getFundamentalUrl(
+        lyric_assembler::FundamentalSymbol::Singleton);
     auto *superInstanceSym = state->symbolCache()->getSymbol(fundamentalSingleton);
     if (superInstanceSym == nullptr)
         block->throwAssemblerInvariant("missing instance symbol {}", fundamentalSingleton.toString());
@@ -533,12 +534,12 @@ lyric_compiler::internal::compile_definstance(
         return declInstanceResult.getStatus();
     auto instanceUrl = declInstanceResult.getResult();
 
-    auto *instanceSym = state->symbolCache()->getSymbol(instanceUrl);
-    if (instanceSym == nullptr)
+    auto *sym = state->symbolCache()->getSymbol(instanceUrl);
+    if (sym == nullptr)
         block->throwAssemblerInvariant("missing instance symbol {}", instanceUrl.toString());
-    if (instanceSym->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
         block->throwAssemblerInvariant("invalid instance symbol {}", instanceUrl.toString());
-    auto *instance = cast_symbol_to_instance(instanceSym);
+    auto *instanceSymbol = cast_symbol_to_instance(sym);
 
     TU_LOG_INFO << "declared instance " << identifier << " with url " << instanceUrl;
 
@@ -547,39 +548,39 @@ lyric_compiler::internal::compile_definstance(
 
     // compile members first
     for (const auto &val : vals) {
-        auto valResult = compile_definstance_val(instance, val, moduleEntry);
+        auto valResult = compile_definstance_val(instanceSymbol, val, moduleEntry);
         if (valResult.isStatus())
             return valResult.getStatus();
         instanceMemberNames.insert(valResult.getResult());
     }
     for (const auto &var : vars) {
-        auto varResult = compile_definstance_var(instance, var, moduleEntry);
+        auto varResult = compile_definstance_var(instanceSymbol, var, moduleEntry);
         if (varResult.isStatus())
             return varResult.getStatus();
         instanceMemberNames.insert(varResult.getResult());
     }
 
     // then compile constructor
-    status = compile_definstance_init(instance, instanceMemberNames, moduleEntry);
+    status = compile_definstance_init(instanceSymbol, instanceMemberNames, moduleEntry);
     if (!status.isOk())
         return status;
 
     // then compile methods
     for (const auto &def : defs) {
-        status = compile_definstance_def(instance, def, moduleEntry);
+        status = compile_definstance_def(instanceSymbol, def, moduleEntry);
         if (!status.isOk())
             return status;
     }
 
     // compile impls last
     for (const auto &impl : impls) {
-        status = compile_definstance_impl(instance, impl, moduleEntry);
+        status = compile_definstance_impl(instanceSymbol, impl, moduleEntry);
         if (!status.isOk())
             return status;
     }
 
     if (instanceSymbolPtr != nullptr) {
-        *instanceSymbolPtr = instance;
+        *instanceSymbolPtr = instanceSymbol;
     }
 
     return CompilerStatus::ok();

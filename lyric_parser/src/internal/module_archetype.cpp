@@ -665,6 +665,16 @@ void lyric_parser::internal::ModuleArchetype::exitDefStatement(ModuleParser::Def
     return ModuleDefineOps::exitDefStatement(ctx);
 }
 
+void lyric_parser::internal::ModuleArchetype::enterImplDef(ModuleParser::ImplDefContext *ctx)
+{
+    return ModuleDefineOps::enterImplDef(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitImplDef(ModuleParser::ImplDefContext *ctx)
+{
+    return ModuleDefineOps::exitImplDef(ctx);
+}
+
 /*
  * defclass ops
  */
@@ -718,6 +728,16 @@ void lyric_parser::internal::ModuleArchetype::exitClassDef(ModuleParser::ClassDe
     return ModuleDefclassOps::exitClassDef(ctx);
 }
 
+void lyric_parser::internal::ModuleArchetype::enterClassImpl(ModuleParser::ClassImplContext *ctx)
+{
+    return ModuleDefclassOps::enterClassImpl(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitClassImpl(ModuleParser::ClassImplContext *ctx)
+{
+    return ModuleDefclassOps::exitClassImpl(ctx);
+}
+
 void lyric_parser::internal::ModuleArchetype::exitDefclassStatement(ModuleParser::DefclassStatementContext *ctx)
 {
     return ModuleDefclassOps::exitDefclassStatement(ctx);
@@ -739,6 +759,16 @@ void lyric_parser::internal::ModuleArchetype::enterConceptDef(ModuleParser::Conc
 void lyric_parser::internal::ModuleArchetype::exitConceptDef(ModuleParser::ConceptDefContext *ctx)
 {
     return ModuleDefconceptOps::exitConceptDef(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::enterConceptImpl(ModuleParser::ConceptImplContext *ctx)
+{
+    return ModuleDefconceptOps::enterConceptImpl(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitConceptImpl(ModuleParser::ConceptImplContext *ctx)
+{
+    return ModuleDefconceptOps::exitConceptImpl(ctx);
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx)
@@ -794,6 +824,16 @@ void lyric_parser::internal::ModuleArchetype::exitEnumCase(ModuleParser::EnumCas
     return ModuleDefenumOps::exitEnumCase(ctx);
 }
 
+void lyric_parser::internal::ModuleArchetype::enterEnumImpl(ModuleParser::EnumImplContext *ctx)
+{
+    return ModuleDefenumOps::enterEnumImpl(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitEnumImpl(ModuleParser::EnumImplContext *ctx)
+{
+    return ModuleDefenumOps::exitEnumImpl(ctx);
+}
+
 void lyric_parser::internal::ModuleArchetype::exitDefenumStatement(ModuleParser::DefenumStatementContext *ctx)
 {
     return ModuleDefenumOps::exitDefenumStatement(ctx);
@@ -840,16 +880,6 @@ void lyric_parser::internal::ModuleArchetype::exitInstanceDef(ModuleParser::Inst
 void lyric_parser::internal::ModuleArchetype::enterInstanceImpl(ModuleParser::InstanceImplContext *ctx)
 {
     return ModuleDefinstanceOps::enterInstanceImpl(ctx);
-}
-
-void lyric_parser::internal::ModuleArchetype::enterImplDef(ModuleParser::ImplDefContext *ctx)
-{
-    return ModuleDefinstanceOps::enterImplDef(ctx);
-}
-
-void lyric_parser::internal::ModuleArchetype::exitImplDef(ModuleParser::ImplDefContext *ctx)
-{
-    return ModuleDefinstanceOps::exitImplDef(ctx);
 }
 
 void lyric_parser::internal::ModuleArchetype::exitInstanceImpl(ModuleParser::InstanceImplContext *ctx)
@@ -903,6 +933,16 @@ void lyric_parser::internal::ModuleArchetype::enterStructDef(ModuleParser::Struc
 void lyric_parser::internal::ModuleArchetype::exitStructDef(ModuleParser::StructDefContext *ctx)
 {
     return ModuleDefstructOps::exitStructDef(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::enterStructImpl(ModuleParser::StructImplContext *ctx)
+{
+    return ModuleDefstructOps::enterStructImpl(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitStructImpl(ModuleParser::StructImplContext *ctx)
+{
+    return ModuleDefstructOps::exitStructImpl(ctx);
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefstructStatement(ModuleParser::DefstructStatementContext *ctx)
