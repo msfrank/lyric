@@ -71,52 +71,47 @@ lyric_compiler::internal::compile_while(
 }
 
 static tempo_utils::Result<lyric_common::TypeDef>
-get_iterator_type(
+get_or_construct_iterator(
     lyric_assembler::BlockHandle *block,
     lyric_typing::TypeSystem *typeSystem,
     lyric_assembler::ConceptSymbol *iteratorConcept,
+    lyric_assembler::ConceptSymbol *iterableConcept,
     const lyric_common::TypeDef &generatorType,
     const lyric_common::TypeDef &targetType)
 {
-    // if target type is specified then verify that the generator type implements Iterator for the target type
+    // if target type is specified then the iterator type must conform to Iterator[targetType]
     if (targetType.isValid()) {
-        if (targetType.getType() != lyric_common::TypeDefType::Concrete)
-            return block->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
-                "incompatible generator type {}", generatorType.toString());
-
-        // if the generator type is Iterator then verify that the generator type has a
-        // single param and it matches the target type
-        if (generatorType.getConcreteUrl() == iteratorConcept->getSymbolUrl()) {
-            auto typeArguments = generatorType.getConcreteArguments();
-            if (typeArguments.size() != 1)
-                return block->logAndContinue(lyric_compiler::CompilerCondition::kTypeError,
-                    tempo_tracing::LogSeverity::kError,
-                    "invalid generator type {}; expected a single type argument for Iterator",
-                    generatorType.toString());
-            auto &typeArg0 = typeArguments.front();
-            if (!typeSystem->isAssignable(targetType, typeArg0))
-                return block->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
-                    tempo_tracing::LogSeverity::kError,
-                    "invalid generator type {}; type argument {} is not assignable to target type {}",
-                    generatorType.toString(), typeArg0.toString(), targetType.toString());
-            return generatorType;
-        }
-
         auto iteratorType = lyric_common::TypeDef::forConcrete(iteratorConcept->getSymbolUrl(), {targetType});
-        bool isImplementable;
-        TU_ASSIGN_OR_RETURN (isImplementable, typeSystem->isImplementable(iteratorType, generatorType));
-        if (!isImplementable)
-            return block->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
-                "generator type {} does not implement type {}",
-                generatorType.toString(), iteratorType.toString());
-        return iteratorType;
+
+        // if generatorType implements iteratorType then we are done
+        bool implementsIterator;
+        TU_ASSIGN_OR_RETURN (implementsIterator, typeSystem->isImplementable(iteratorType, generatorType));
+        if (implementsIterator)
+            return iteratorType;
+
+        // if generatorType doesn't implement Iterator then fall through
     }
 
-    return block->logAndContinue(lyric_compiler::CompilerCondition::kCompilerInvariant,
-        tempo_tracing::LogSeverity::kError,
-        "iterator type couldn't be determined from generator type {}", generatorType.toString());
+    // otherwise check if generatorType implements Iterable[targetType]
+    auto iterableType = lyric_common::TypeDef::forConcrete(iterableConcept->getSymbolUrl(), {targetType});
+    bool implementsIterable;
+    TU_ASSIGN_OR_RETURN (implementsIterable, typeSystem->isImplementable(iterableType, generatorType));
+    if (!implementsIterable)
+        return block->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
+            tempo_tracing::LogSeverity::kError,
+            "generator type {} is not iterable", generatorType.toString());
+
+    // resolve the Iterate impl method
+    auto resolveIterateMethodResult = iterableConcept->resolveAction("Iterate", iterableType);
+    if (resolveIterateMethodResult.isStatus())
+        return resolveIterateMethodResult.getStatus();
+    auto invoker = resolveIterateMethodResult.getResult();
+
+    // invoke Iterate()
+    lyric_typing::CallsiteReifier reifier(invoker.getParameters(), invoker.getRest(),
+        invoker.getTemplateUrl(), invoker.getTemplateParameters(), invoker.getTemplateArguments(),
+        typeSystem);
+    return invoker.invoke(block, reifier);
 }
 
 tempo_utils::Status
@@ -147,7 +142,7 @@ lyric_compiler::internal::compile_for(
         targetType = resolveTargetTypeResult.getResult();
     }
 
-    // invoke the iterator expression
+    // invoke the generator expression
     auto forGenerator = walker.getChild(0);
     auto compileGeneratorResult = compile_expression(block, forGenerator, moduleEntry);
     if (compileGeneratorResult.isStatus())
@@ -164,16 +159,22 @@ lyric_compiler::internal::compile_for(
         block->throwAssemblerInvariant("invalid concept symbol {}", fundamentalIterator.toString());
     auto *iteratorConcept = cast_symbol_to_concept(iteratorSym);
 
-    // determine the iterator type
-    lyric_common::TypeDef iteratorType;
-    TU_ASSIGN_OR_RETURN (iteratorType, get_iterator_type(
-        block, typeSystem, iteratorConcept, generatorType, targetType));
+    // look up the Iterable concept symbol
+    auto fundamentalIterable = state->fundamentalCache()->getFundamentalUrl(
+        lyric_assembler::FundamentalSymbol::Iterable);
+    auto *iterableSym = state->symbolCache()->getSymbol(fundamentalIterable);
+    if (iterableSym == nullptr)
+        block->throwAssemblerInvariant("missing concept symbol {}", fundamentalIterator.toString());
+    if (iterableSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
+        block->throwAssemblerInvariant("invalid concept symbol {}", fundamentalIterator.toString());
+    auto *iterableConcept = cast_symbol_to_concept(iterableSym);
 
-//    // validate that the generator expression conforms to the iterator type
-//    if (!typeSystem->isAssignable(iteratorType, generatorType))
-//        return block->logAndContinue(forGenerator, lyric_compiler::CompilerCondition::kIncompatibleType,
-//            tempo_tracing::LogSeverity::kError,
-//            "expected generator expression to return {}; found {}", iteratorType.toString(), generatorType.toString());
+    // put the iterator on the top of the stack. if the result of the generator is the iterator then this
+    // call does not modify the stack. otherwise if the generator type implements Iterable then generator
+    // will be swapped on the stack with the result of Iterate().
+    lyric_common::TypeDef iteratorType;
+    TU_ASSIGN_OR_RETURN (iteratorType, get_or_construct_iterator(
+        block, typeSystem, iteratorConcept, iterableConcept, generatorType, targetType));
 
     // declare temp variable to store the iterator
     auto declareTempResult = block->declareTemporary(iteratorType, lyric_parser::BindingType::VALUE);

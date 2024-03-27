@@ -77,6 +77,8 @@ NativeCore::getTrap(uint32_t index) const
             return seq_slice;
         case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITER:
             return seq_iter;
+        case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATE:
+            return seq_iterate;
         case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_ALLOC:
             return seq_iterator_alloc;
         case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_NEXT:

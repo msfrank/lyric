@@ -13,9 +13,7 @@
 #include "compile_code.h"
 #include "compile_comparison.h"
 #include "compile_concept.h"
-#include "compile_intrinsic.h"
 #include "compile_descriptor.h"
-#include "compile_nil.h"
 #include "compile_enum.h"
 #include "compile_equality.h"
 #include "compile_float.h"
@@ -23,9 +21,12 @@
 #include "compile_idea.h"
 #include "compile_int.h"
 #include "compile_instance.h"
+#include "compile_intrinsic.h"
+#include "compile_iterable.h"
 #include "compile_iterator.h"
 #include "compile_map.h"
 #include "compile_namespace.h"
+#include "compile_nil.h"
 #include "compile_present.h"
 #include "compile_object.h"
 #include "compile_ordered.h"
@@ -129,8 +130,8 @@ main(int argc, char *argv[])
     auto *UnwrapConcept = build_core_Unwrap(state, IdeaConcept);
     build_core_Varargs(state, IdeaConcept);
 
-    // core classes
     auto *IteratorConcept = build_core_Iterator(state, IdeaConcept, BoolExistential->existentialType);
+    auto *IterableConcept = build_core_Iterable(state, IdeaConcept, IteratorConcept);
     //build_core_Rest(state, AnyType, VarargsConcept, IntType);
 
     // core structs
@@ -185,6 +186,8 @@ main(int argc, char *argv[])
 
     //
     auto *DataUnionType = state.addUnionType({IntrinsicExistential->existentialType, RecordStruct->structType});
+    auto *DataIterableType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
+        IterableConcept->concept_index, {DataUnionType});
     auto *DataIteratorType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
         IteratorConcept->concept_index, {DataUnionType});
 
@@ -194,8 +197,8 @@ main(int argc, char *argv[])
 
     auto *SeqIteratorClass = build_core_SeqIterator(state, ObjectClass, IteratorConcept, DataUnionType,
         DataIteratorType, BoolExistential->existentialType);
-    build_core_Seq(state, RecordStruct, IteratorConcept, SeqIteratorClass, DataUnionType, DataIteratorType,
-        BoolExistential->existentialType, IntExistential->existentialType);
+    build_core_Seq(state, RecordStruct, IteratorConcept, IterableConcept, SeqIteratorClass, DataUnionType,
+        DataIteratorType, DataIterableType, BoolExistential->existentialType, IntExistential->existentialType);
 
     auto bytes = state.toBytes();
 

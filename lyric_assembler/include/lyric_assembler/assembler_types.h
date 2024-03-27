@@ -40,6 +40,7 @@ namespace lyric_assembler {
         Instance,
         Int,
         Intrinsic,
+        Iterable,
         Iterator,
         Map,
         Namespace,

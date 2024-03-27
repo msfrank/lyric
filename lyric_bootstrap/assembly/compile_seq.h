@@ -7,9 +7,11 @@ CoreStruct *build_core_Seq(
     BuilderState &state,
     const CoreStruct *RecordStruct,
     const CoreConcept *IteratorConcept,
+    const CoreConcept *IterableConcept,
     const CoreClass *SeqIteratorClass,
     const CoreType *DataType,
     const CoreType *DataIteratorType,
+    const CoreType *DataIterableType,
     const CoreType *BoolType,
     const CoreType *IntegerType);
 

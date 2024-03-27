@@ -34,6 +34,7 @@ namespace lyric_bootstrap::internal {
         SEQ_EXTEND,
         SEQ_SLICE,
         SEQ_ITER,
+        SEQ_ITERATE,
         SEQ_ITERATOR_ALLOC,
         SEQ_ITERATOR_VALID,
         SEQ_ITERATOR_NEXT,

@@ -41,6 +41,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalInt;
         lyric_common::SymbolUrl m_fundamentalInstance;
         lyric_common::SymbolUrl m_fundamentalIntrinsic;
+        lyric_common::SymbolUrl m_fundamentalIterable;
         lyric_common::SymbolUrl m_fundamentalIterator;
         lyric_common::SymbolUrl m_fundamentalMap;
         lyric_common::SymbolUrl m_fundamentalNamespace;

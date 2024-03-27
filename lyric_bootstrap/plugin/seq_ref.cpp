@@ -584,6 +584,31 @@ seq_iter(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 }
 
 tempo_utils::Status
+seq_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+{
+    auto *currentCoro = state->currentCoro();
+
+    auto &frame = currentCoro->peekCall();
+
+    const auto cell = currentCoro->popData();
+    TU_ASSERT(cell.type == lyric_runtime::DataCellType::CLASS);
+
+    auto receiver = frame.getReceiver();
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *instance = static_cast<SeqRef *>(receiver.data.ref);
+
+    lyric_runtime::InterpreterStatus status;
+    const auto *vtable = state->segmentManager()->resolveClassVirtualTable(cell, status);
+    if (vtable == nullptr)
+        return status;
+
+    auto ref = state->heapManager()->allocateRef<SeqIterator>(vtable, instance);
+    currentCoro->pushData(ref);
+
+    return lyric_runtime::InterpreterStatus::ok();
+}
+
+tempo_utils::Status
 seq_iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
 {
     auto *currentCoro = state->currentCoro();

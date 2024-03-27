@@ -52,6 +52,8 @@ add_executable(prelude-builder
     assembly/compile_instance.h
     assembly/compile_int.cpp
     assembly/compile_int.h
+    assembly/compile_iterable.cpp
+    assembly/compile_iterable.h
     assembly/compile_iterator.cpp
     assembly/compile_iterator.h
     assembly/compile_map.cpp

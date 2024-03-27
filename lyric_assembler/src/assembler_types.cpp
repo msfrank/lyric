@@ -38,6 +38,8 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Int";
         case FundamentalSymbol::Intrinsic:
             return "Intrinsic";
+        case FundamentalSymbol::Iterable:
+            return "Iterable";
         case FundamentalSymbol::Iterator:
             return "Iterator";
         case FundamentalSymbol::Map:

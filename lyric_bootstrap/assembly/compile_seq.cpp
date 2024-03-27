@@ -6,9 +6,11 @@ build_core_Seq(
     BuilderState &state,
     const CoreStruct *RecordStruct,
     const CoreConcept *IteratorConcept,
+    const CoreConcept *IterableConcept,
     const CoreClass *SeqIteratorClass,
     const CoreType *DataType,
     const CoreType *DataIteratorType,
+    const CoreType *DataIterableType,
     const CoreType *BoolType,
     const CoreType *IntegerType)
 {
@@ -105,6 +107,16 @@ build_core_Seq(
             {},
             code,
             DataIteratorType);
+    }
+
+    auto *IterableImpl = state.addImpl(structPath, DataIterableType, IterableConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        code.loadClass(SeqIteratorClass->class_index);
+        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATE));
+        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
+        state.addImplExtension("Iterate", IterableImpl, {}, {}, code, DataIteratorType);
     }
 
     return SeqStruct;

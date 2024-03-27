@@ -9,7 +9,7 @@ build_core_Iterator(BuilderState &state, const CoreConcept *IdeaConcept, const C
     auto *IteratorTemplate = state.addTemplate(
         classPath,
         {
-            {"T", lyo1::PlaceholderVariance::Invariant},
+            {"T", lyo1::PlaceholderVariance::Contravariant},
         });
 
     auto *TType = IteratorTemplate->types["T"];

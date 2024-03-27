@@ -86,6 +86,7 @@ tempo_utils::Status seq_append(lyric_runtime::BytecodeInterpreter *interp, lyric
 tempo_utils::Status seq_extend(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
 tempo_utils::Status seq_slice(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
 tempo_utils::Status seq_iter(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
+tempo_utils::Status seq_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
 
 tempo_utils::Status seq_iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
 tempo_utils::Status seq_iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);

@@ -43,6 +43,8 @@ lyric_assembler::FundamentalCache::FundamentalCache(
         fundamentalTypeToSymbolPath(FundamentalSymbol::Int));
     m_fundamentalIntrinsic = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Intrinsic));
+    m_fundamentalIterable = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::Iterable));
     m_fundamentalIterator = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Iterator));
     m_fundamentalMap = lyric_common::SymbolUrl(preludeLocation,
@@ -235,6 +237,8 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalInt;
         case FundamentalSymbol::Intrinsic:
             return m_fundamentalIntrinsic;
+        case FundamentalSymbol::Iterable:
+            return m_fundamentalIterable;
         case FundamentalSymbol::Iterator:
             return m_fundamentalIterator;
         case FundamentalSymbol::Map:

@@ -3,6 +3,7 @@
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
+#include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -435,36 +436,55 @@ lyric_typing::is_implementable(
             tempo_tracing::LogSeverity::kError,
             "missing symbol for type {}", fromRef.toString());
 
+    auto toUrl = toConcept.getConcreteUrl();
+    lyric_assembler::ImplHandle *implHandle = nullptr;
+
     switch (fromSym->getSymbolType()) {
+
+        // special case: if fromRef is a concept, then directly compare the types and return
+        case lyric_assembler::SymbolType::CONCEPT: {
+            lyric_runtime::TypeComparison cmp;
+            TU_ASSIGN_OR_RETURN (cmp, compare_assignable(toConcept, fromRef, state));
+            return (cmp == lyric_runtime::TypeComparison::EQUAL || cmp == lyric_runtime::TypeComparison::EXTENDS);
+        }
+
+        // otherwise if fromRef is not a concept, then check the symbol for a matching impl
         case lyric_assembler::SymbolType::CLASS: {
             auto *classSymbol = cast_symbol_to_class(fromSym);
-            return classSymbol->hasImpl(toConcept);
-        }
-        case lyric_assembler::SymbolType::CONCEPT: {
-            auto *conceptSymbol = cast_symbol_to_concept(fromSym);
-            return conceptSymbol->hasImpl(toConcept);
+            implHandle = classSymbol->getImpl(toUrl);
+            break;
         }
         case lyric_assembler::SymbolType::ENUM: {
             auto *enumSymbol = cast_symbol_to_enum(fromSym);
-            return enumSymbol->hasImpl(toConcept);
+            implHandle = enumSymbol->getImpl(toUrl);
+            break;
         }
         case lyric_assembler::SymbolType::EXISTENTIAL: {
             auto *existentialSymbol = cast_symbol_to_existential(fromSym);
-            return existentialSymbol->hasImpl(toConcept);
+            implHandle = existentialSymbol->getImpl(toUrl);
+            break;
         }
         case lyric_assembler::SymbolType::INSTANCE: {
             auto *instanceSymbol = cast_symbol_to_instance(fromSym);
-            return instanceSymbol->hasImpl(toConcept);
+            implHandle = instanceSymbol->getImpl(toUrl);
+            break;
         }
         case lyric_assembler::SymbolType::STRUCT: {
             auto *structSymbol = cast_symbol_to_struct(fromSym);
-            return structSymbol->hasImpl(toConcept);
+            implHandle = structSymbol->getImpl(toUrl);
+            break;
         }
         default:
-            break;
+            return state->logAndContinue(TypingCondition::kIncompatibleType,
+                tempo_tracing::LogSeverity::kError,
+                "type {} cannot implement {}", fromRef.toString(), toConcept.toString());
     }
 
-    return state->logAndContinue(TypingCondition::kIncompatibleType,
-        tempo_tracing::LogSeverity::kError,
-        "type {} cannot implement {}", fromRef.toString(), toConcept.toString());
+    if (implHandle == nullptr)
+        return false;
+
+    auto implType = implHandle->implType()->getTypeDef();
+    lyric_runtime::TypeComparison cmp;
+    TU_ASSIGN_OR_RETURN (cmp, compare_assignable(implType, fromRef, state));
+    return (cmp == lyric_runtime::TypeComparison::EQUAL || cmp == lyric_runtime::TypeComparison::EXTENDS);
 }
