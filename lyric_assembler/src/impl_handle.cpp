@@ -3,6 +3,7 @@
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/type_cache.h>
+#include "lyric_assembler/class_symbol.h"
 
 lyric_assembler::ImplHandle::ImplHandle(
     ImplOffset offset,
@@ -30,6 +31,29 @@ lyric_assembler::ImplHandle::ImplHandle(
     TU_ASSERT (priv->implType != nullptr);
     TU_ASSERT (priv->implConcept != nullptr);
     TU_ASSERT (priv->receiverUrl.isValid());
+}
+
+lyric_assembler::ImplHandle::ImplHandle(
+    ImplOffset offset,
+    const std::string &name,
+    TypeHandle *implType,
+    ConceptSymbol *implConcept,
+    const lyric_common::SymbolUrl &receiverUrl,
+    TemplateHandle *receiverTemplate,
+    BlockHandle *parentBlock,
+    AssemblyState *state)
+    : ImplHandle(
+        offset,
+        name,
+        implType,
+        implConcept,
+        receiverUrl,
+        parentBlock,
+        state)
+{
+    auto *priv = getPriv();
+    priv->receiverTemplate = receiverTemplate;
+    TU_ASSERT(priv->receiverTemplate != nullptr);
 }
 
 lyric_assembler::ImplHandle::ImplHandle(lyric_importer::ImplImport *implImport, AssemblyState *state)
@@ -151,13 +175,19 @@ lyric_assembler::ImplHandle::declareExtension(
     auto &extension = priv->extensions[name];
     extension.methodAction = actionOption.getValue().methodAction;
 
+    // touch the action symbol
+    m_state->symbolCache()->touchSymbol(extension.methodAction);
+
     std::vector<lyric_object::Parameter> parameters;
     Option<lyric_object::Parameter> rest;
     absl::flat_hash_set<std::string> names;
     absl::flat_hash_set<std::string> labels;
 
+    AbstractResolver *resolver = priv->receiverTemplate?
+        (AbstractResolver *) priv->receiverTemplate : priv->implBlock.get();
+
     for (const auto &p : parameterSpec) {
-        auto resolveParamTypeResult = priv->implBlock->resolveAssignable(p.type);
+        auto resolveParamTypeResult = resolver->resolveAssignable(p.type);
         if (resolveParamTypeResult.isStatus())
             return resolveParamTypeResult.getStatus();
 
@@ -197,7 +227,7 @@ lyric_assembler::ImplHandle::declareExtension(
     }
 
     for (const auto &p : ctxSpec) {
-        auto resolveParamTypeResult = priv->implBlock->resolveAssignable(p.type);
+        auto resolveParamTypeResult = resolver->resolveAssignable(p.type);
         if (resolveParamTypeResult.isStatus())
             return resolveParamTypeResult.getStatus();
 
@@ -229,7 +259,7 @@ lyric_assembler::ImplHandle::declareExtension(
 
     if (!restSpec.isEmpty()) {
         const auto &p = restSpec.getValue();
-        auto resolveRestTypeResult = priv->implBlock->resolveAssignable(p.type);
+        auto resolveRestTypeResult = resolver->resolveAssignable(p.type);
         if (resolveRestTypeResult.isStatus())
             return resolveRestTypeResult.getStatus();
 
@@ -257,7 +287,7 @@ lyric_assembler::ImplHandle::declareExtension(
         rest = Option<lyric_object::Parameter>(param);
     }
 
-    auto resolveReturnTypeResult = priv->implBlock->resolveAssignable(returnSpec);
+    auto resolveReturnTypeResult = resolver->resolveAssignable(returnSpec);
     if (resolveReturnTypeResult.isStatus())
         return resolveReturnTypeResult.getStatus();
     auto returnType = resolveReturnTypeResult.getResult();
@@ -275,9 +305,16 @@ lyric_assembler::ImplHandle::declareExtension(
     TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareFunctionType(returnType, parameters, rest));
 
     // construct call symbol
-    auto *callSymbol = new CallSymbol(methodUrl, parameters, rest, returnType, priv->receiverUrl,
-        lyric_object::AccessType::Public, address, lyric_object::CallMode::Normal, typeHandle,
-        priv->implBlock.get(), m_state);
+    CallSymbol *callSymbol;
+    if (priv->receiverTemplate != nullptr) {
+        callSymbol = new CallSymbol(methodUrl, parameters, rest, returnType, priv->receiverUrl,
+            lyric_object::AccessType::Public, address, lyric_object::CallMode::Normal, typeHandle,
+            priv->receiverTemplate, priv->implBlock.get(), m_state);
+    } else {
+        callSymbol = new CallSymbol(methodUrl, parameters, rest, returnType, priv->receiverUrl,
+            lyric_object::AccessType::Public, address, lyric_object::CallMode::Normal, typeHandle,
+            priv->implBlock.get(), m_state);
+    }
 
     auto status = m_state->appendCall(callSymbol);
     if (status.notOk()) {

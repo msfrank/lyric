@@ -70,20 +70,6 @@ TEST(CoreSeq, TestEvaluateSeqSlice)
     ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(4)))));
 }
 
-TEST(CoreSeq, TestEvaluateSeqIter)
-{
-    auto result = runModule(R"(
-        val seq: Seq = Seq{1, 2, 3, 4, 5, 6}
-        var count: Int = 0
-        for n: Any in seq.Iter() {
-            set count += 1
-        }
-        count
-    )");
-
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(6)))));
-}
-
 TEST(CoreSeq, TestEvaluateSeqIterateImpl)
 {
     auto result = runModule(R"(

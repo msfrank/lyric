@@ -96,18 +96,6 @@ build_core_Seq(
             code,
             SeqStruct->structType);
     }
-    {
-        lyric_object::BytecodeBuilder code;
-        code.loadClass(SeqIteratorClass->class_index);
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_ITER));
-        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addStructMethod("Iter",
-            SeqStruct,
-            lyo1::CallFlags::GlobalVisibility,
-            {},
-            code,
-            DataIteratorType);
-    }
 
     auto *IterableImpl = state.addImpl(structPath, DataIterableType, IterableConcept);
 

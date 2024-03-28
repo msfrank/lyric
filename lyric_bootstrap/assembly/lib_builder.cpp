@@ -192,8 +192,11 @@ main(int argc, char *argv[])
         IteratorConcept->concept_index, {DataUnionType});
 
     build_core_Pair(state, RecordStruct, DataUnionType);
-    build_core_Map(state, RecordStruct, DataUnionType,
-        BoolExistential->existentialType, IntExistential->existentialType);
+
+    auto *MapIteratorClass = build_core_MapIterator(state, ObjectClass, IteratorConcept, DataUnionType,
+        DataIteratorType, BoolExistential->existentialType);
+    build_core_Map(state, RecordStruct, IteratorConcept, IterableConcept, MapIteratorClass, DataUnionType,
+        DataIteratorType, DataIterableType, BoolExistential->existentialType, IntExistential->existentialType);
 
     auto *SeqIteratorClass = build_core_SeqIterator(state, ObjectClass, IteratorConcept, DataUnionType,
         DataIteratorType, BoolExistential->existentialType);

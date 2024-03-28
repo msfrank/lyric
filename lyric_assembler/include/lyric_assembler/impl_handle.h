@@ -18,6 +18,7 @@ namespace lyric_assembler {
         TypeHandle *implType = nullptr;
         ConceptSymbol *implConcept = nullptr;
         lyric_common::SymbolUrl receiverUrl;
+        TemplateHandle *receiverTemplate = nullptr;
         absl::flat_hash_map<std::string, ExtensionMethod> extensions;
         std::unique_ptr<BlockHandle> implBlock;
     };
@@ -30,6 +31,15 @@ namespace lyric_assembler {
             TypeHandle *implType,
             ConceptSymbol *implConcept,
             const lyric_common::SymbolUrl &receiverUrl,
+            BlockHandle *parentBlock,
+            AssemblyState *state);
+        ImplHandle(
+            ImplOffset offset,
+            const std::string &name,
+            TypeHandle *implType,
+            ConceptSymbol *implConcept,
+            const lyric_common::SymbolUrl &receiverUrl,
+            TemplateHandle *receiverTemplate,
             BlockHandle *parentBlock,
             AssemblyState *state);
 

@@ -20,6 +20,7 @@ lyric_assembler::ImplCache::~ImplCache()
         delete implHandle;
     }
 }
+
 tempo_utils::Result<lyric_assembler::ImplHandle *>
 lyric_assembler::ImplCache::makeImpl(
     const std::string &name,
@@ -29,8 +30,24 @@ lyric_assembler::ImplCache::makeImpl(
     BlockHandle *parentBlock)
 {
     ImplOffset offset(m_declaredImpls.size());
-    auto *implHandle = new ImplHandle(offset, name, implType, implConcept,
-        receiverUrl, parentBlock, m_assemblyState);
+    auto *implHandle = new ImplHandle(offset, name, implType, implConcept, receiverUrl,
+        parentBlock, m_assemblyState);
+    m_declaredImpls.push_back(implHandle);
+    return implHandle;
+}
+
+tempo_utils::Result<lyric_assembler::ImplHandle *>
+lyric_assembler::ImplCache::makeImpl(
+    const std::string &name,
+    TypeHandle *implType,
+    ConceptSymbol *implConcept,
+    const lyric_common::SymbolUrl &receiverUrl,
+    TemplateHandle *receiverTemplate,
+    BlockHandle *parentBlock)
+{
+    ImplOffset offset(m_declaredImpls.size());
+    auto *implHandle = new ImplHandle(offset, name, implType, implConcept, receiverUrl,
+        receiverTemplate, parentBlock, m_assemblyState);
     m_declaredImpls.push_back(implHandle);
     return implHandle;
 }

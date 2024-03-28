@@ -5,7 +5,12 @@ CoreStruct *
 build_core_Map(
     BuilderState &state,
     const CoreStruct *RecordStruct,
+    const CoreConcept *IteratorConcept,
+    const CoreConcept *IterableConcept,
+    const CoreClass *MapIteratorClass,
     const CoreType *DataType,
+    const CoreType *DataIteratorType,
+    const CoreType *DataIterableType,
     const CoreType *BoolType,
     const CoreType *IntegerType)
 {
@@ -91,5 +96,55 @@ build_core_Map(
             MapStruct->structType);
     }
 
+    auto *IterableImpl = state.addImpl(structPath, DataIterableType, IterableConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        code.loadClass(MapIteratorClass->class_index);
+        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATE));
+        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
+        state.addImplExtension("Iterate", IterableImpl, {}, {}, code, DataIteratorType);
+    }
+
     return MapStruct;
+}
+
+CoreClass *
+build_core_MapIterator(
+    BuilderState &state,
+    const CoreClass *ObjectClass,
+    const CoreConcept *IteratorConcept,
+    const CoreType *DataType,
+    const CoreType *DataIteratorType,
+    const CoreType *BoolType)
+{
+    lyric_common::SymbolPath classPath({"MapIterator"});
+
+    auto *MapIteratorClass = state.addClass(classPath, lyo1::ClassFlags::Final, ObjectClass);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
+        state.addClassCtor(MapIteratorClass,
+            {},
+            code);
+        state.setClassAllocator(MapIteratorClass, lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_ALLOC);
+    }
+
+    auto *IteratorImpl = state.addImpl(classPath, DataIteratorType, IteratorConcept);
+
+    {
+        lyric_object::BytecodeBuilder code;
+        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_VALID));
+        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
+        state.addImplExtension("Valid", IteratorImpl, {}, {}, code, BoolType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_NEXT));
+        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
+        state.addImplExtension("Next", IteratorImpl, {}, {}, code, DataType);
+    }
+
+    return MapIteratorClass;
 }

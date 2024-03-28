@@ -579,6 +579,150 @@ MapRef::clearMembersReachable()
     }
 }
 
+MapIterator::MapIterator(const lyric_runtime::VirtualTable *vtable)
+    : BaseRef(vtable),
+      m_map(nullptr)
+{
+}
+
+inline int
+find_valid_index_node_child(int start, IndexMapNode *node)
+{
+    TU_ASSERT (node != nullptr);
+    for (int i = start; i < node->table.size(); i++) {
+        if (node->table.at(i) != nullptr)
+            return i;
+    }
+    return -1;
+}
+
+inline void
+build_stack(std::stack<NodePointer> &stack, MapNode *curr)
+{
+    TU_ASSERT (curr != nullptr);
+
+    while (curr != nullptr) {
+        switch (curr->type) {
+
+            case MapNodeType::VALUE: {
+                stack.push({curr, -1});     // invariant: NodePointer on top of stack will always have index = -1
+                curr = nullptr;
+                break;
+            }
+
+            case MapNodeType::INDEX: {
+                auto *inode = static_cast<IndexMapNode *>(curr);
+                auto index = find_valid_index_node_child(0, inode);
+                TU_ASSERT (index >= 0);
+                stack.push({curr, index});
+                curr = inode->table.at(index);
+                TU_ASSERT (curr != nullptr);
+                break;
+            }
+
+            default:
+                TU_UNREACHABLE();
+        }
+    }
+}
+
+void
+init_node_pointer_stack(std::stack<NodePointer> &stack, MapRef *map)
+{
+    auto *node = map->m_node;
+    if (node == nullptr)
+        return;
+
+    build_stack(stack, node);
+}
+
+void
+update_node_pointer_stack(std::stack<NodePointer> &stack)
+{
+    MapNode *node = nullptr;
+
+    while (!stack.empty()) {
+        auto &nodepointer = stack.top();
+        TU_ASSERT (nodepointer.node->type == MapNodeType::INDEX);
+        auto *inode = static_cast<IndexMapNode *>(nodepointer.node);
+
+        auto index = find_valid_index_node_child(nodepointer.index + 1, inode);
+        if (index > nodepointer.index) {
+            nodepointer.index = index;
+            node = inode->table.at(index);
+            break;
+        }
+
+        stack.pop();
+    }
+
+    if (stack.empty())
+        return;
+    build_stack(stack, node);
+}
+
+MapIterator::MapIterator(const lyric_runtime::VirtualTable *vtable, MapRef *map)
+    : BaseRef(vtable),
+      m_map(map)
+{
+    TU_ASSERT (m_map != nullptr);
+    init_node_pointer_stack(m_stack, m_map);
+}
+
+lyric_runtime::DataCell
+MapIterator::getField(const lyric_runtime::DataCell &field) const
+{
+    return {};
+}
+
+lyric_runtime::DataCell
+MapIterator::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
+{
+    return {};
+}
+
+std::string
+MapIterator::toString() const
+{
+    return absl::Substitute("<$0: MapIterator>", this);
+}
+
+bool
+MapIterator::iteratorValid()
+{
+    return !m_stack.empty();
+}
+
+bool
+MapIterator::iteratorNext(lyric_runtime::DataCell &cell)
+{
+    if (m_stack.empty())
+        return false;
+
+    // get the entry on the top of the stack
+    auto &nodepointer = m_stack.top();
+    TU_ASSERT (nodepointer.node->type == MapNodeType::VALUE);
+    auto *vnode = static_cast<ValueMapNode *>(nodepointer.node);
+    cell = vnode->value;    // FIXME: vnode should store Pair[KeyType,ValueType]
+    m_stack.pop();
+
+    // find the next entry
+    update_node_pointer_stack(m_stack);
+    return true;
+}
+
+void
+MapIterator::setMembersReachable()
+{
+    m_map->setReachable();
+}
+
+void
+MapIterator::clearMembersReachable()
+{
+    m_map->clearReachable();
+}
+
 tempo_utils::Status
 map_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
 {
@@ -734,6 +878,85 @@ map_remove(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
         // key was not present in the map, so return the existing reference
         currentCoro->pushData(lyric_runtime::DataCell::forRef(map));
     }
+
+    return lyric_runtime::InterpreterStatus::ok();
+}
+
+tempo_utils::Status
+map_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+{
+    auto *currentCoro = state->currentCoro();
+
+    auto &frame = currentCoro->peekCall();
+
+    const auto cell = currentCoro->popData();
+    TU_ASSERT(cell.type == lyric_runtime::DataCellType::CLASS);
+
+    auto receiver = frame.getReceiver();
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *instance = static_cast<MapRef *>(receiver.data.ref);
+
+    lyric_runtime::InterpreterStatus status;
+    const auto *vtable = state->segmentManager()->resolveClassVirtualTable(cell, status);
+    if (vtable == nullptr)
+        return status;
+
+    auto ref = state->heapManager()->allocateRef<MapIterator>(vtable, instance);
+    currentCoro->pushData(ref);
+
+    return lyric_runtime::InterpreterStatus::ok();
+}
+
+tempo_utils::Status
+map_iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+{
+    auto *currentCoro = state->currentCoro();
+
+    auto &frame = currentCoro->peekCall();
+    const auto *vtable = frame.getVirtualTable();
+    TU_ASSERT(vtable != nullptr);
+
+    auto ref = state->heapManager()->allocateRef<MapIterator>(vtable);
+    currentCoro->pushData(ref);
+
+    return lyric_runtime::InterpreterStatus::ok();
+}
+
+tempo_utils::Status
+map_iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+{
+    auto *currentCoro = state->currentCoro();
+
+    auto &frame = currentCoro->peekCall();
+
+    TU_ASSERT(frame.numArguments() == 0);
+
+    auto receiver = frame.getReceiver();
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
+    currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
+
+    return lyric_runtime::InterpreterStatus::ok();
+}
+
+tempo_utils::Status
+map_iterator_next(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+{
+    auto *currentCoro = state->currentCoro();
+
+    auto &frame = currentCoro->peekCall();
+
+    TU_ASSERT(frame.numArguments() == 0);
+
+    auto receiver = frame.getReceiver();
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
+    auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
+
+    lyric_runtime::DataCell next;
+    if (!instance->iteratorNext(next)) {
+        next = lyric_runtime::DataCell();
+    }
+    currentCoro->pushData(next);
 
     return lyric_runtime::InterpreterStatus::ok();
 }

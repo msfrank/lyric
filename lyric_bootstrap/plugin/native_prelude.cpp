@@ -49,6 +49,14 @@ NativeCore::getTrap(uint32_t index) const
             return map_update;
         case lyric_bootstrap::internal::BootstrapTrap::MAP_REMOVE:
             return map_remove;
+        case lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATE:
+            return map_iterate;
+        case lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_ALLOC:
+            return map_iterator_alloc;
+        case lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_NEXT:
+            return map_iterator_next;
+        case lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_VALID:
+            return map_iterator_valid;
         case lyric_bootstrap::internal::BootstrapTrap::OBJECT_ALLOC:
             return object_alloc;
         case lyric_bootstrap::internal::BootstrapTrap::PAIR_ALLOC:
@@ -75,8 +83,6 @@ NativeCore::getTrap(uint32_t index) const
             return seq_extend;
         case lyric_bootstrap::internal::BootstrapTrap::SEQ_SLICE:
             return seq_slice;
-        case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITER:
-            return seq_iter;
         case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATE:
             return seq_iterate;
         case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_ALLOC:

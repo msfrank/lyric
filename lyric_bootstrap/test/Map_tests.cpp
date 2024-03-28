@@ -104,3 +104,21 @@ TEST(CoreMap, TestEvaluateMapRemove)
 
     ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
 }
+
+TEST(CoreMap, TestEvaluateMapIterateImpl)
+{
+    auto result = runModule(R"(
+        val names: Map = Map{
+            Pair{first = "one", second = 1},
+            Pair{first = "two", second = 2},
+            Pair{first = "three", second = 3}
+            }
+        var count: Int = 0
+        for n: Any in names {
+            set count += 1
+        }
+        count
+    )");
+
+    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(3)))));
+}

@@ -20,6 +20,14 @@ namespace lyric_assembler {
             ConceptSymbol *implConcept,
             const lyric_common::SymbolUrl &receiverUrl,
             BlockHandle *parentBlock);
+        tempo_utils::Result<ImplHandle *> makeImpl(
+            const std::string &name,
+            TypeHandle *implType,
+            ConceptSymbol *implConcept,
+            const lyric_common::SymbolUrl &receiverUrl,
+            TemplateHandle *receiverTemplate,
+            BlockHandle *parentBlock);
+
         tempo_utils::Result<ImplHandle *> importImpl(lyric_importer::ImplImport *implImport);
 
         std::vector<ImplHandle *>::const_iterator implsBegin() const;

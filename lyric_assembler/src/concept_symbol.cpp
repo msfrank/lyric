@@ -541,8 +541,13 @@ lyric_assembler::ConceptSymbol::declareImpl(const lyric_parser::Assignable &impl
     auto name = absl::StrCat("$impl", priv->impls.size());
 
     ImplHandle *implHandle;
-    TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-        name, implTypeHandle, conceptSymbol, m_conceptUrl, priv->conceptBlock.get()));
+    if (priv->conceptTemplate != nullptr) {
+        TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
+            name, implTypeHandle, conceptSymbol, m_conceptUrl, priv->conceptTemplate, priv->conceptBlock.get()));
+    } else {
+        TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
+            name, implTypeHandle, conceptSymbol, m_conceptUrl, priv->conceptBlock.get()));
+    }
 
     priv->impls[implUrl] = implHandle;
 

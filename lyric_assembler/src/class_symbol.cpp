@@ -968,7 +968,10 @@ lyric_assembler::ClassSymbol::declareImpl(const lyric_parser::Assignable &implSp
 
     auto *priv = getPriv();
 
-    auto resolveImplTypeResult = priv->classBlock->resolveAssignable(implSpec);
+    AbstractResolver *resolver = priv->classTemplate?
+        (AbstractResolver *) priv->classTemplate : priv->classBlock.get();
+
+    auto resolveImplTypeResult = resolver->resolveAssignable(implSpec);
     if (resolveImplTypeResult.isStatus())
         return resolveImplTypeResult.getStatus();
     auto implType = resolveImplTypeResult.getResult();
@@ -1006,8 +1009,13 @@ lyric_assembler::ClassSymbol::declareImpl(const lyric_parser::Assignable &implSp
     auto name = absl::StrCat("$impl", priv->impls.size());
 
     ImplHandle *implHandle;
-    TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-        name, implTypeHandle, conceptSymbol, m_classUrl, priv->classBlock.get()));
+    if (priv->classTemplate != nullptr) {
+        TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
+            name, implTypeHandle, conceptSymbol, m_classUrl, priv->classTemplate, priv->classBlock.get()));
+    } else {
+        TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
+            name, implTypeHandle, conceptSymbol, m_classUrl, priv->classBlock.get()));
+    }
 
     priv->impls[implUrl] = implHandle;
 
