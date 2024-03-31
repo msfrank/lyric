@@ -66,16 +66,6 @@ namespace lyric_parser {
             return ParseStatus(condition, message, traceId, spanId);
         }
     };
-
-    class ParseException : public std::exception {
-    public:
-        ParseException(const ParseStatus &status) noexcept;
-        ParseStatus getStatus() const;
-        const char* what() const noexcept override;
-
-    private:
-        ParseStatus m_status;
-    };
 }
 
 namespace tempo_utils {

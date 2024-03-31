@@ -1187,7 +1187,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 break;
             }
 
-            // exit the interpreter.  if there is a value on the stack, return it, otherwise return nil.
+            // interrupt the interpreter.  if there is a value on the stack, return it, otherwise return nil.
             case lyric_object::Opcode::OP_INTERRUPT: {
                 auto status = onInterrupt(currentCoro->popData());
                 // if status from interrupt handler is ok, then replace with generic status
@@ -1202,6 +1202,11 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 if (currentCoro->dataStackSize() > 0)
                     return onHalt(op, currentCoro->popData());
                 return onHalt(op, DataCell::nil());
+            }
+
+            // abort the interpreter.  if there is a value on the stack, return it, otherwise return nil.
+            case lyric_object::Opcode::OP_ABORT: {
+                return onError(op, InterpreterStatus::forCondition( InterpreterCondition::kAborted));
             }
 
             // unknown opcode

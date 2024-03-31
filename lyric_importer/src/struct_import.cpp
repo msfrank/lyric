@@ -195,7 +195,7 @@ lyric_importer::StructImport::load()
     priv->isAbstract = structWalker.isAbstract();
 
     if (structWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
-        throw ImporterException(
+        throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import struct at index {} in assembly {}; invalid derive type",
@@ -215,7 +215,7 @@ lyric_importer::StructImport::load()
                 priv->superStruct = structWalker.getFarSuperStruct().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import struct at index {} in assembly {}; invalid super struct",
@@ -234,7 +234,7 @@ lyric_importer::StructImport::load()
                 fieldUrl = member.getFarField().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import struct at index {} in assembly {}; invalid member at index {}",
@@ -255,7 +255,7 @@ lyric_importer::StructImport::load()
                 callUrl = method.getFarCall().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import struct at index {} in assembly {}; invalid method at index {}",

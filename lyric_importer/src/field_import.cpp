@@ -73,7 +73,7 @@ lyric_importer::FieldImport::load()
     priv->symbolUrl = lyric_common::SymbolUrl(location, fieldWalker.getSymbolPath());
 
     if (fieldWalker.getAccess() == lyric_object::AccessType::Invalid)
-        throw ImporterException(
+        throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import field at index {} in assembly {}; invalid access type",
@@ -97,7 +97,7 @@ lyric_importer::FieldImport::load()
                 break;
             }
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
                         "cannot import field at index {} in assembly {}; invalid initializer",
                         fieldWalker.getDescriptorOffset(), location.toString()));

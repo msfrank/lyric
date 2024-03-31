@@ -1,6 +1,7 @@
 
 #include <gtest/gtest.h>
 
+#include <lyric_assembler/assembler_result.h>
 #include <lyric_test/matchers.h>
 
 #include "test_helpers.h"
@@ -35,6 +36,68 @@ TEST(CoreMatch, TestIsADisjointType)
     ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
 }
 
+TEST(CoreMatch, TestIsAPlaceholderType)
+{
+    auto result = runModule(R"(
+        def generic[T](t: T): Bool {
+            t ^? Int
+        }
+        generic(42)
+    )");
+
+    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+}
+
+TEST(CoreMatch, TestIsAPlaceholderTypeNoMatch)
+{
+    auto result = runModule(R"(
+        def generic[T](t: T): Bool {
+            t ^? Float
+        }
+        generic(42)
+    )");
+
+    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+}
+
+TEST(CoreMatch, TestIsABoundedPlaceholderType)
+{
+    auto result = runModule(R"(
+        def generic[T](t: T): Bool where T extends Intrinsic {
+            t ^? Int
+        }
+        generic(42)
+    )");
+
+    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+}
+
+TEST(CoreMatch, TestIsABoundedPlaceholderTypeNoMatch)
+{
+    auto result = runModule(R"(
+        def generic[T](t: T): Bool where T extends Intrinsic {
+            t ^? Float
+        }
+        generic(42)
+    )");
+
+    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+}
+
+TEST(CoreMatch, TestIsABoundedPlaceholderTypeDisjoint)
+{
+    auto result = compileModule(R"(
+        def generic[T](t: T): Bool where T extends Int {
+            t ^? Float
+        }
+        generic(42)
+    )");
+
+    ASSERT_THAT (result, ContainsResult(
+        CompileModule(
+            SpansetContainsError(lyric_assembler::AssemblerCondition::kSyntaxError))));
+}
+
 TEST(CoreMatch, TestMatchIntrinsic)
 {
     auto result = runModule(R"(
@@ -48,6 +111,83 @@ TEST(CoreMatch, TestMatchIntrinsic)
     )");
 
     ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(2)))));
+}
+
+TEST(CoreMatch, TestMatchPlaceholderType)
+{
+    auto result = runModule(R"(
+        def generic[T](t: T): Any {
+            match t {
+                case i: Int     true
+                else            false
+            }
+        }
+        generic(42)
+    )");
+
+    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+}
+
+TEST(CoreMatch, TestMatchPlaceholderTypeNoMatch)
+{
+    auto result = runModule(R"(
+        def generic[T](t: T): Any {
+            match t {
+                case f: Float   true
+                else            false
+            }
+        }
+        generic(42)
+    )");
+
+    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+}
+
+TEST(CoreMatch, TestMatchBoundedPlaceholderType)
+{
+    auto result = runModule(R"(
+        def generic[T](t: T): Any where T extends Intrinsic {
+            match t {
+                case i: Int     true
+                else            false
+            }
+        }
+        generic(42)
+    )");
+
+    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+}
+
+TEST(CoreMatch, TestMatchBoundedPlaceholderTypeNoMatch)
+{
+    auto result = runModule(R"(
+        def generic[T](t: T): Any where T extends Intrinsic {
+            match t {
+                case f: Float   true
+                else            false
+            }
+        }
+        generic(42)
+    )");
+
+    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+}
+
+TEST(CoreMatch, TestMatchBoundedPlaceholderTypeDisjoint)
+{
+    auto result = compileModule(R"(
+        def generic[T](t: T): Any where T extends Int {
+            match t {
+                case f: Float   true
+                else            false
+            }
+        }
+        generic(42)
+    )");
+
+    ASSERT_THAT (result, ContainsResult(
+        CompileModule(
+            SpansetContainsError(lyric_assembler::AssemblerCondition::kSyntaxError))));
 }
 
 TEST(CoreMatch, TestMatchClass)

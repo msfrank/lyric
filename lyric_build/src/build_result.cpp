@@ -24,20 +24,3 @@ lyric_build::BuildStatus::convert(BuildStatus &dstStatus, const tempo_utils::Sta
     dstStatus = BuildStatus(srcStatus.getStatusCode(), srcStatus.getDetail());
     return true;
 }
-
-lyric_build::BuildException::BuildException(const BuildStatus &status) noexcept
-    : m_status(status)
-{
-}
-
-lyric_build::BuildStatus
-lyric_build::BuildException::getStatus() const
-{
-    return m_status;
-}
-
-const char *
-lyric_build::BuildException::what() const noexcept
-{
-    return m_status.getMessage().data();
-}

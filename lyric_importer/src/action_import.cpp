@@ -149,7 +149,7 @@ lyric_importer::ActionImport::load()
             break;
         }
         default:
-            throw ImporterException(
+            throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(ImporterCondition::kImportError,
                     "cannot import action at index {} in assembly {}; invalid receiver",
                     actionWalker.getDescriptorOffset(), location.toString()));
@@ -190,7 +190,7 @@ lyric_importer::ActionImport::load()
                     break;
                 }
                 default:
-                    throw ImporterException(
+                    throw tempo_utils::StatusException(
                         ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
                             "cannot import action at index {} in assembly {}; invalid parameter at index {}",
                             actionWalker.getDescriptorOffset(), location.toString(), i));
@@ -214,7 +214,7 @@ lyric_importer::ActionImport::load()
         p.isVariable = parameter.isVariable();
 
         if (p.placement != lyric_object::PlacementType::Rest)
-            throw ImporterException(
+            throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(ImporterCondition::kImportError,
                     "cannot import action at index {} in assembly {}; invalid rest parameter",
                     actionWalker.getDescriptorOffset(), location.toString()));

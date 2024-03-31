@@ -79,7 +79,7 @@ lyric_importer::NamespaceImport::load()
                 priv->superNamespace = namespaceWalker.getFarSuperNamespace().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import namespace at index {} in assembly {}; invalid super namespace",

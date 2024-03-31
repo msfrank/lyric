@@ -204,6 +204,9 @@ tempo_utils::LogMessage&& lyric_object::operator<<(tempo_utils::LogMessage&& mes
         case Opcode::OP_HALT:
             std::forward<tempo_utils::LogMessage>(message) << "OP_HALT";
             break;
+        case Opcode::OP_ABORT:
+            std::forward<tempo_utils::LogMessage>(message) << "OP_ABORT";
+            break;
         case Opcode::LAST_:
         default:
             std::forward<tempo_utils::LogMessage>(message) << "???";

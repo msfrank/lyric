@@ -75,16 +75,6 @@ namespace lyric_importer {
             return ImporterStatus(condition, message, traceId, spanId);
         }
     };
-
-    class ImporterException : public std::exception {
-    public:
-        ImporterException(const ImporterStatus &status) noexcept;
-        ImporterStatus getStatus() const;
-        const char* what() const noexcept override;
-
-    private:
-        ImporterStatus m_status;
-    };
 }
 
 namespace tempo_utils {

@@ -68,8 +68,6 @@ lyric_compiler::LyricCompiler::compileModule(
         TU_ASSERT (object.isValid());
         return object;
 
-    } catch (CompilerException &ex) {
-        return ex.getStatus();
     } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();
     }

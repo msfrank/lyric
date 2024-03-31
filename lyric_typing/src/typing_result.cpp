@@ -24,20 +24,3 @@ lyric_typing::TypingStatus::convert(TypingStatus &dstStatus, const tempo_utils::
     dstStatus = TypingStatus(srcStatus.getStatusCode(), srcStatus.getDetail());
     return true;
 }
-
-lyric_typing::TypingException::TypingException(const TypingStatus &status) noexcept
-    : m_status(status)
-{
-}
-
-lyric_typing::TypingStatus
-lyric_typing::TypingException::getStatus() const
-{
-    return m_status;
-}
-
-const char *
-lyric_typing::TypingException::what() const noexcept
-{
-    return m_status.getMessage().data();
-}

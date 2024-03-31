@@ -24,20 +24,3 @@ lyric_test::TestStatus::convert(TestStatus &dstStatus, const tempo_utils::Status
     dstStatus = TestStatus(srcStatus.getStatusCode(), srcStatus.getDetail());
     return true;
 }
-
-lyric_test::TestException::TestException(const TestStatus &status) noexcept
-    : m_status(status)
-{
-}
-
-lyric_test::TestStatus
-lyric_test::TestException::getStatus() const
-{
-    return m_status;
-}
-
-const char *
-lyric_test::TestException::what() const noexcept
-{
-    return m_status.getMessage().data();
-}

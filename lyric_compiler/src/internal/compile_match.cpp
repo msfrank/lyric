@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/class_symbol.h>
+#include <lyric_assembler/disjoint_type_set.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
@@ -8,9 +9,9 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_compiler/compiler_result.h>
-#include <lyric_compiler/internal/compile_deref.h>
 #include <lyric_compiler/internal/compile_match.h>
 #include <lyric_compiler/internal/compile_node.h>
+#include <lyric_compiler/internal/compile_operator.h>
 #include <lyric_compiler/internal/compile_unwrap.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
@@ -22,6 +23,7 @@ compile_predicate(
     lyric_assembler::BlockHandle *block,
     const lyric_assembler::SymbolBinding &target,
     const lyric_common::TypeDef &predicateType,
+    const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
     TU_ASSERT (block != nullptr);
@@ -57,6 +59,10 @@ compile_predicate(
         default:
             block->throwAssemblerInvariant("invalid predicate type {}", predicateType.toString());
     }
+
+    // verify that the targetType can be a subtype of isAType
+    TU_RETURN_IF_NOT_OK (
+        lyric_compiler::internal::match_types(target.type, predicateType, walker, block, moduleEntry));
 
     // perform type comparison
     return code->writeOpcode(lyric_object::Opcode::OP_TYPE_CMP);
@@ -118,7 +124,7 @@ compile_match_case_symbol_ref(
     auto predicateLabel = makeLabelResult.getResult();
 
     // check whether the predicate case matches the target
-    auto status = compile_predicate(block, target, predicateType, moduleEntry);
+    auto status = compile_predicate(block, target, predicateType, symbolRef, moduleEntry);
     if (!status.isOk())
         return status;
 
@@ -177,7 +183,7 @@ compile_match_case_unpack(
     auto predicateLabel = makeLabelResult.getResult();
 
     // check whether the predicate case matches the target
-    auto status = compile_predicate(block, target, predicateType, moduleEntry);
+    auto status = compile_predicate(block, target, predicateType, unpack, moduleEntry);
     if (!status.isOk())
         return status;
 
@@ -401,6 +407,7 @@ lyric_compiler::internal::compile_match(
         return status;
 
     std::vector<lyric_assembler::MatchCasePatch> patchList;
+    lyric_assembler::DisjointTypeSet predicateSet(block->blockState());
 
     // evaluate each case
     for (int i = 1; i < walker.numChildren(); i++) {
@@ -410,9 +417,11 @@ lyric_compiler::internal::compile_match(
         if (matchCaseResult.isStatus())
             return matchCaseResult.getStatus();
         auto casePatch = matchCaseResult.getResult();
-        patchList.push_back(casePatch);
 
-        // FIXME: use DisjointTypeSet to verify all case predicate types are disjoint
+        // verify all case predicate types are disjoint
+        TU_RETURN_IF_NOT_OK (predicateSet.putType(casePatch.getPredicateType()));
+
+        patchList.push_back(casePatch);
     }
 
     // construct the alternative block
@@ -432,10 +441,13 @@ lyric_compiler::internal::compile_match(
         if (alternativeResult.isStatus())
             return alternativeResult;
         alternativeType = alternativeResult.getResult();
+        TU_RETURN_IF_NOT_OK (predicateSet.putType(alternativeType));
     } else {
         status = code->loadNil();
         if (!status.isOk())
             return status;
+        TU_RETURN_IF_NOT_OK (predicateSet.putType(
+            fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Nil)));
         // it is intentional that we don't set alternativeType here
     }
 

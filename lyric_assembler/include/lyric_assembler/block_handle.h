@@ -300,7 +300,7 @@ namespace lyric_assembler {
             log->putField(lyric_parser::kLyricParserColumnNumber, static_cast<tu_int64>(walker.getColumnNumber()));
             log->putField(lyric_parser::kLyricParserFileOffset, static_cast<tu_int64>(walker.getFileOffset()));
             log->putField(lyric_parser::kLyricParserTextSpan, static_cast<tu_int64>(walker.getTextSpan()));
-            throw AssemblerException(status);
+            throw tempo_utils::StatusException(status);
         }
         /**
          *
@@ -325,7 +325,7 @@ namespace lyric_assembler {
             log->putField(lyric_parser::kLyricParserColumnNumber, static_cast<tu_int64>(walker.getColumnNumber()));
             log->putField(lyric_parser::kLyricParserFileOffset, static_cast<tu_int64>(walker.getFileOffset()));
             log->putField(lyric_parser::kLyricParserTextSpan, static_cast<tu_int64>(walker.getTextSpan()));
-            throw AssemblerException(status);
+            throw tempo_utils::StatusException(status);
         }
         /**
          *
@@ -343,7 +343,7 @@ namespace lyric_assembler {
                 span->traceId(), span->spanId(), messageFmt, messageArgs...);
             auto log = span->logStatus(status, absl::Now(), tempo_tracing::LogSeverity::kError);
             log->putField(lyric_parser::kLyricParserIdentifier, m_definition.getSymbolPath().toString());
-            throw AssemblerException(status);
+            throw tempo_utils::StatusException(status);
         }
     };
 }

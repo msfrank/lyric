@@ -65,7 +65,7 @@ lyric_parser::LyricParser::parseModule(
     try {
         antlr4::tree::ParseTree *tree = parser.root();
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-    } catch (ParseException &ex) {
+    } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();
     } catch (antlr4::ParseCancellationException &ex) {
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
@@ -118,7 +118,7 @@ lyric_parser::LyricParser::parseBlock(
     try {
         antlr4::tree::ParseTree *tree = parser.block();
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-    } catch (ParseException &ex) {
+    } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();
     } catch (antlr4::ParseCancellationException &ex) {
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
@@ -171,7 +171,7 @@ lyric_parser::LyricParser::parseClass(
     try {
         antlr4::tree::ParseTree *tree = parser.defclassStatement();
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-    } catch (ParseException &ex) {
+    } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();
     } catch (antlr4::ParseCancellationException &ex) {
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
@@ -224,7 +224,7 @@ lyric_parser::LyricParser::parseConcept(
     try {
         antlr4::tree::ParseTree *tree = parser.defconceptStatement();
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-    } catch (ParseException &ex) {
+    } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();
     } catch (antlr4::ParseCancellationException &ex) {
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
@@ -277,7 +277,7 @@ lyric_parser::LyricParser::parseEnum(
     try {
         antlr4::tree::ParseTree *tree = parser.defenumStatement();
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-    } catch (ParseException &ex) {
+    } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();
     } catch (antlr4::ParseCancellationException &ex) {
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
@@ -330,7 +330,7 @@ lyric_parser::LyricParser::parseFunction(
     try {
         antlr4::tree::ParseTree *tree = parser.defStatement();
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-    } catch (ParseException &ex) {
+    } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();
     } catch (antlr4::ParseCancellationException &ex) {
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
@@ -383,7 +383,7 @@ lyric_parser::LyricParser::parseInstance(
     try {
         antlr4::tree::ParseTree *tree = parser.definstanceStatement();
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-    } catch (ParseException &ex) {
+    } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();
     } catch (antlr4::ParseCancellationException &ex) {
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
@@ -436,7 +436,7 @@ lyric_parser::LyricParser::parseStruct(
     try {
         antlr4::tree::ParseTree *tree = parser.defstructStatement();
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&listener, tree);
-    } catch (ParseException &ex) {
+    } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();
     } catch (antlr4::ParseCancellationException &ex) {
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());

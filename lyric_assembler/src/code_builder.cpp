@@ -49,7 +49,7 @@ lyric_assembler::CodeBuilder::writeOpcode(lyric_object::Opcode op)
 {
     if (lyric_object::Opcode::OP_UNKNOWN < op && op < lyric_object::Opcode::LAST_)
         return writeU8(static_cast<uint8_t>(op));
-    throw AssemblerException(
+    throw tempo_utils::StatusException(
         AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "unknown opcode {}", static_cast<tu_uint8>(op)));
 }
@@ -720,7 +720,7 @@ lyric_assembler::CodeBuilder::callInline(const CodeBuilder *inlineCode, [[maybe_
     for(;;) {
         lyric_object::OpCell op;
         if (!it.getNext(op))
-            throw AssemblerException(
+            throw tempo_utils::StatusException(
                 AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant, "invalid inline code"));
         if (op.opcode != lyric_object::Opcode::OP_LOAD || op.operands.flags_u8_address_u32.flags != lyric_object::LOAD_ARGUMENT)
             break;

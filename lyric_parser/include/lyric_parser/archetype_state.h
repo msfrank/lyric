@@ -232,7 +232,7 @@ namespace lyric_parser {
                 span->traceId(), span->spanId(), messageFmt, messageArgs...);
             auto log = span->logStatus(status, absl::Now(), tempo_tracing::LogSeverity::kError);
             log->putField(lyric_parser::kLyricParserIdentifier, currentSymbolString());
-            throw ParseException(status);
+            throw tempo_utils::StatusException(status);
         }
 
         /**
@@ -259,7 +259,7 @@ namespace lyric_parser {
             log->putField(kLyricParserFileOffset, static_cast<tu_int64>(token->getStartIndex()));
             log->putField(kLyricParserTextSpan, static_cast<tu_int64>(token->getStopIndex() - token->getStartIndex()));
             log->putField(kLyricParserNodeOffset, static_cast<tu_int64>(address.getAddress()));
-            throw ParseException(status);
+            throw tempo_utils::StatusException(status);
         }
 
         /**
@@ -278,7 +278,7 @@ namespace lyric_parser {
             auto log = span->logStatus(status, absl::Now(), tempo_tracing::LogSeverity::kError);
             log->putField(kLyricParserIdentifier, currentSymbolString());
             log->putField(kLyricParserNodeOffset, static_cast<tu_int64>(address.getAddress()));
-            throw ParseException(status);
+            throw tempo_utils::StatusException(status);
         }
 
         /**
@@ -300,7 +300,7 @@ namespace lyric_parser {
             log->putField(kLyricParserColumnNumber, static_cast<tu_int64>(token->getCharPositionInLine()));
             log->putField(kLyricParserFileOffset, static_cast<tu_int64>(token->getStartIndex()));
             log->putField(kLyricParserTextSpan, static_cast<tu_int64>(token->getStopIndex() - token->getStartIndex()));
-            throw ParseException(status);
+            throw tempo_utils::StatusException(status);
         }
     };
 }

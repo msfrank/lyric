@@ -149,7 +149,7 @@ lyric_importer::ConceptImport::load()
     priv->symbolUrl = lyric_common::SymbolUrl(location, conceptWalker.getSymbolPath());
 
     if (conceptWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
-        throw ImporterException(
+        throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import concept at index {} in assembly {}; invalid derive type",
@@ -176,7 +176,7 @@ lyric_importer::ConceptImport::load()
                 priv->superConcept = conceptWalker.getFarSuperConcept().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import concept at index {} in assembly {}; invalid super concept",
@@ -195,7 +195,7 @@ lyric_importer::ConceptImport::load()
                 actionUrl = action.getFarAction().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import concept at index {} in assembly {}; invalid action at index {}",

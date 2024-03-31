@@ -65,16 +65,6 @@ namespace lyric_symbolizer {
             return SymbolizerStatus(condition, message, traceId, spanId);
         }
     };
-
-    class SymbolizerException : public std::exception {
-    public:
-        SymbolizerException(const SymbolizerStatus &status) noexcept;
-        SymbolizerStatus getStatus() const;
-        const char* what() const noexcept override;
-
-    private:
-        SymbolizerStatus m_status;
-    };
 }
 
 namespace tempo_utils {

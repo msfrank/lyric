@@ -10,6 +10,7 @@
 #include <lyric_compiler/internal/compile_operator.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_typing/callsite_reifier.h>
+#include "lyric_assembler/disjoint_type_set.h"
 
 static lyric_common::TypeDef
 operation_type_to_concept_type(
@@ -109,6 +110,83 @@ operation_type_to_action_name(lyric_schema::LyricAstId operationId)
     }
 }
 
+static tempo_utils::Result<lyric_runtime::TypeComparison>
+compare_types(
+    const lyric_common::TypeDef &lhs,
+    const lyric_common::TypeDef &rhs,
+    lyric_assembler::TypeCache *typeCache,
+    lyric_assembler::FundamentalCache *fundamentalCache,
+    lyric_typing::TypeSystem *typeSystem)
+{
+    TU_ASSERT (rhs.getType() == lyric_common::TypeDefType::Concrete);
+    TU_ASSERT (typeCache != nullptr);
+    TU_ASSERT (fundamentalCache != nullptr);
+
+    lyric_common::TypeDef targetType;
+    switch (lhs.getType()) {
+        case lyric_common::TypeDefType::Concrete: {
+            targetType = lhs;
+            break;
+        }
+        case lyric_common::TypeDefType::Placeholder: {
+            auto *templateHandle = typeCache->getTemplate(lhs.getPlaceholderTemplateUrl());
+            auto tp = templateHandle->getTemplateParameter(lhs.getPlaceholderIndex());
+            targetType = tp.typeDef.isValid()? tp.typeDef
+                : fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
+            break;
+        }
+        default:
+            return lyric_compiler::CompilerStatus::forCondition(
+                lyric_compiler::CompilerCondition::kIncompatibleType);
+    }
+
+    return typeSystem->compareAssignable(targetType, rhs);
+}
+
+tempo_utils::Status
+lyric_compiler::internal::match_types(
+    const lyric_common::TypeDef &targetType,
+    const lyric_common::TypeDef &matchType,
+    const lyric_parser::NodeWalker &walker,
+    lyric_assembler::BlockHandle *block,
+    lyric_compiler::ModuleEntry &moduleEntry)
+{
+    auto *state = block->blockState();
+    auto *typeCache = state->typeCache();
+    auto *fundamentalCache = state->fundamentalCache();
+    auto *typeSystem = moduleEntry.getTypeSystem();
+
+    switch (targetType.getType()) {
+        case lyric_common::TypeDefType::Concrete:
+        case lyric_common::TypeDefType::Placeholder: {
+            lyric_runtime::TypeComparison cmp;
+            TU_ASSIGN_OR_RETURN (cmp, compare_types(targetType, matchType, typeCache, fundamentalCache, typeSystem));
+            if(cmp == lyric_runtime::TypeComparison::DISJOINT)
+                block->throwSyntaxError(walker,
+                    "cannot compare {} to {}; types are disjoint",
+                    targetType.toString(), matchType.toString());
+            return {};
+        }
+        case lyric_common::TypeDefType::Union: {
+            lyric_assembler::DisjointTypeSet targetMemberSet(state);
+            for (const auto &targetMember : targetType.getUnionMembers()) {
+                lyric_runtime::TypeComparison cmp;
+                TU_ASSIGN_OR_RETURN (cmp, compare_types(targetMember, matchType, typeCache, fundamentalCache, typeSystem));
+                if(cmp == lyric_runtime::TypeComparison::DISJOINT)
+                    block->throwSyntaxError(walker,
+                        "cannot compare {} to {}; types are disjoint",
+                        targetMember.toString(), matchType.toString());
+                TU_RETURN_IF_NOT_OK (targetMemberSet.putType(targetMember));
+            }
+            return {};
+        }
+        default:
+            block->throwSyntaxError(walker,
+                "cannot compare {} to {}; invalid type for right-hand side",
+                targetType.toString(), matchType.toString());
+    }
+}
+
 static tempo_utils::Result<lyric_common::TypeDef>
 compile_is_a(
     lyric_assembler::BlockHandle *block,
@@ -128,6 +206,7 @@ compile_is_a(
     auto compileExprResult = lyric_compiler::internal::compile_expression(block, walker.getChild(0), moduleEntry);
     if (compileExprResult.isStatus())
         return compileExprResult.getStatus();
+    auto targetType = compileExprResult.getResult();
 
     // pop expression result and push expression type descriptor onto the stack
     status = code->writeOpcode(lyric_object::Opcode::OP_TYPE_OF);
@@ -154,9 +233,13 @@ compile_is_a(
             break;
         }
         default:
-            block->throwAssemblerInvariant("type comparison for unimplemented {}", isAType.toString());
+            block->throwSyntaxError(walker.getChild(1),
+                "cannot compare {} to {}; right-hand side must be a concrete type",
+                targetType.toString(), isAType.toString());
     }
 
+    // verify that the targetType can be a subtype of isAType
+    TU_RETURN_IF_NOT_OK (lyric_compiler::internal::match_types(targetType, isAType, walker, block, moduleEntry));
 
     // perform type comparison
     status = code->writeOpcode(lyric_object::Opcode::OP_TYPE_CMP);

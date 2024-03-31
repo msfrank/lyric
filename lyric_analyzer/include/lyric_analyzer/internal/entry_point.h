@@ -56,7 +56,7 @@ namespace lyric_analyzer::internal {
                 auto status = m_state->logAndContinue(AnalyzerCondition::kSyntaxError,
                     tempo_tracing::LogSeverity::kError,
                     "expected {} node", schemaClass.getName());
-                throw AnalyzerException(status);
+                throw tempo_utils::StatusException(status);
             }
         }
 
@@ -80,14 +80,14 @@ namespace lyric_analyzer::internal {
                 auto status = m_state->logAndContinue(AnalyzerCondition::kSyntaxError,
                     tempo_tracing::LogSeverity::kError,
                     "expected {} node", schemaClass.getName());
-                throw AnalyzerException(status);
+                throw tempo_utils::StatusException(status);
             }
             if (walker.numChildren() != numChildren) {
                 auto status = m_state->logAndContinue(AnalyzerCondition::kSyntaxError,
                     tempo_tracing::LogSeverity::kError,
                     "invalid {} node; expected {} children but found {}",
                     schemaClass.getName(), numChildren, walker.numChildren());
-                throw AnalyzerException(status);
+                throw tempo_utils::StatusException(status);
             }
         }
 
@@ -113,14 +113,14 @@ namespace lyric_analyzer::internal {
                 auto status = m_state->logAndContinue(AnalyzerCondition::kSyntaxError,
                     tempo_tracing::LogSeverity::kError,
                     "expected {} node", schemaClass.getName());
-                throw AnalyzerException(status);
+                throw tempo_utils::StatusException(status);
             }
             if (walker.numChildren() < minChildren) {
                 auto status = m_state->logAndContinue(AnalyzerCondition::kSyntaxError,
                     tempo_tracing::LogSeverity::kError,
                     "invalid {} node; expected at least {} children but found {}",
                     schemaClass.getName(), minChildren, walker.numChildren());
-                throw AnalyzerException(status);
+                throw tempo_utils::StatusException(status);
             }
             if (maxChildren >= 0) {
                 TU_ASSERT (maxChildren >= minChildren);
@@ -129,7 +129,7 @@ namespace lyric_analyzer::internal {
                         tempo_tracing::LogSeverity::kError,
                         "invalid {} node; expected at most {} children but found {}",
                         schemaClass.getName(), maxChildren, walker.numChildren());
-                    throw AnalyzerException(status);
+                    throw tempo_utils::StatusException(status);
                 }
             }
         }
@@ -180,7 +180,7 @@ namespace lyric_analyzer::internal {
                     break;
             }
 
-            throw AnalyzerException(compilerStatus);
+            throw tempo_utils::StatusException(compilerStatus);
         }
 
         template<class NsType, class IdType>
@@ -192,7 +192,7 @@ namespace lyric_analyzer::internal {
         {
             auto status = walker.parseId(vocabulary, id);
             if (status.notOk())
-                throw AnalyzerException(m_state->logAndContinue(AnalyzerCondition::kSyntaxError,
+                throw tempo_utils::StatusException(m_state->logAndContinue(AnalyzerCondition::kSyntaxError,
                     tempo_tracing::LogSeverity::kError,
                     "expected node in schema ns {}", vocabulary.getNs()->getNs()));
         }

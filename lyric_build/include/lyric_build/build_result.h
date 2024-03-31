@@ -72,16 +72,6 @@ namespace lyric_build {
             return BuildStatus(condition, message, traceId, spanId);
         }
     };
-
-    class BuildException : public std::exception {
-    public:
-        BuildException(const BuildStatus &status) noexcept;
-        BuildStatus getStatus() const;
-        const char* what() const noexcept override;
-
-    private:
-        BuildStatus m_status;
-    };
 }
 
 namespace tempo_utils {

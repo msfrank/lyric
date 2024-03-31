@@ -38,7 +38,7 @@ lyric_parser::ArchetypeNode *
 lyric_parser::ArchetypeState::popNode()
 {
     if (m_nodeStack.empty()) {
-        throw ParseException(
+        throw tempo_utils::StatusException(
             ParseStatus::forCondition(ParseCondition::kParseInvariant,
                 "node stack is empty"));
     }
@@ -425,7 +425,7 @@ std::string
 lyric_parser::ArchetypeState::popSymbol()
 {
     if (m_symbolStack.empty())
-        throw ParseException(
+        throw tempo_utils::StatusException(
             ParseStatus::forCondition(ParseCondition::kParseInvariant,
                 "symbol stack is empty"));
     auto identifier = m_symbolStack.back();
@@ -437,12 +437,12 @@ std::string
 lyric_parser::ArchetypeState::popSymbolAndCheck(std::string_view checkIdentifier)
 {
     if (m_symbolStack.empty())
-        throw ParseException(
+        throw tempo_utils::StatusException(
             ParseStatus::forCondition(ParseCondition::kParseInvariant,
                 "symbol stack is empty"));
     auto identifier = m_symbolStack.back();
     if (identifier != checkIdentifier)
-        throw ParseException(
+        throw tempo_utils::StatusException(
             ParseStatus::forCondition(ParseCondition::kParseInvariant,
                 "unexpected symbol on top of symbol stack"));
     m_symbolStack.pop_back();

@@ -68,6 +68,7 @@ lyric_object::OpInfo ops[] = {
     { lyric_object::Opcode::OP_TYPE_OF,             lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_INTERRUPT,           lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_HALT,                lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_ABORT,               lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::LAST_,                  lyric_object::OpInfoType::NO_OPERANDS },
 };
 

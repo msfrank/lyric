@@ -85,16 +85,6 @@ namespace lyric_compiler {
             return CompilerStatus(condition, message, traceId, spanId);
         }
     };
-
-    class CompilerException : public std::exception {
-    public:
-        CompilerException(const CompilerStatus &status) noexcept;
-        CompilerStatus getStatus() const;
-        const char* what() const noexcept override;
-
-    private:
-        CompilerStatus m_status;
-    };
 }
 
 namespace tempo_utils {

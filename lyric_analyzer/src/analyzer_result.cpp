@@ -24,20 +24,3 @@ lyric_analyzer::AnalyzerStatus::convert(AnalyzerStatus &dstStatus, const tempo_u
     dstStatus = AnalyzerStatus(srcStatus.getStatusCode(), srcStatus.getDetail());
     return true;
 }
-
-lyric_analyzer::AnalyzerException::AnalyzerException(const AnalyzerStatus &status) noexcept
-    : m_status(status)
-{
-}
-
-lyric_analyzer::AnalyzerStatus
-lyric_analyzer::AnalyzerException::getStatus() const
-{
-    return m_status;
-}
-
-const char *
-lyric_analyzer::AnalyzerException::what() const noexcept
-{
-    return m_status.getMessage().data();
-}

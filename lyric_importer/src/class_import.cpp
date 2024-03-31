@@ -204,7 +204,7 @@ lyric_importer::ClassImport::load()
     priv->isAbstract = classWalker.isAbstract();
 
     if (classWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
-        throw ImporterException(
+        throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import class at index {} in assembly {}; invalid derive type",
@@ -231,7 +231,7 @@ lyric_importer::ClassImport::load()
                 priv->superClass = classWalker.getFarSuperClass().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import class at index {} in assembly {}; invalid super class",
@@ -250,7 +250,7 @@ lyric_importer::ClassImport::load()
                 fieldUrl = member.getFarField().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import class at index {} in assembly {}; invalid member at index {}",
@@ -271,7 +271,7 @@ lyric_importer::ClassImport::load()
                 callUrl = method.getFarCall().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import class at index {} in assembly {}; invalid method at index {}",

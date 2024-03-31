@@ -68,16 +68,6 @@ namespace lyric_typing {
             return TypingStatus(condition, message, traceId, spanId);
         }
     };
-
-    class TypingException : public std::exception {
-    public:
-        TypingException(const TypingStatus &status) noexcept;
-        TypingStatus getStatus() const;
-        const char* what() const noexcept override;
-
-    private:
-        TypingStatus m_status;
-    };
 }
 
 namespace tempo_utils {

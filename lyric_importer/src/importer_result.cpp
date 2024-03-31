@@ -25,20 +25,3 @@ lyric_importer::ImporterStatus::convert(ImporterStatus &dstStatus, const tempo_u
     dstStatus = ImporterStatus(srcStatus.getStatusCode(), srcStatus.getDetail());
     return true;
 }
-
-lyric_importer::ImporterException::ImporterException(const ImporterStatus &status) noexcept
-    : m_status(status)
-{
-}
-
-lyric_importer::ImporterStatus
-lyric_importer::ImporterException::getStatus() const
-{
-    return m_status;
-}
-
-const char *
-lyric_importer::ImporterException::what() const noexcept
-{
-    return m_status.getMessage().data();
-}

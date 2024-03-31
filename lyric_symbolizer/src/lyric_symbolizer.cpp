@@ -66,8 +66,6 @@ lyric_symbolizer::LyricSymbolizer::symbolizeModule(
         TU_ASSERT (assembly.isValid());
         return assembly;
 
-    } catch (lyric_symbolizer::SymbolizerException &ex) {
-        return ex.getStatus();
     } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();
     }

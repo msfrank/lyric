@@ -291,6 +291,7 @@ namespace lyric_object {
         OP_TYPE_OF,
         OP_INTERRUPT,
         OP_HALT,
+        OP_ABORT,
 
         // sentinel, must not be used
         LAST_

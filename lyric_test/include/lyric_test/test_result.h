@@ -65,16 +65,6 @@ namespace lyric_test {
             return TestStatus(condition, message, traceId, spanId);
         }
     };
-
-    class TestException : public std::exception {
-    public:
-        TestException(const TestStatus &status) noexcept;
-        TestStatus getStatus() const;
-        const char* what() const noexcept override;
-
-    private:
-        TestStatus m_status;
-    };
 }
 
 namespace tempo_utils {

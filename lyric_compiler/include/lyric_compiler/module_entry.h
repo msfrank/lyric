@@ -77,7 +77,7 @@ namespace lyric_compiler {
                 auto status = m_state->logAndContinue(CompilerCondition::kSyntaxError,
                     tempo_tracing::LogSeverity::kError,
                     "expected {} node", schemaClass.getName());
-                throw CompilerException(status);
+                throw tempo_utils::StatusException(status);
             }
         }
 
@@ -101,14 +101,14 @@ namespace lyric_compiler {
                 auto status = m_state->logAndContinue(CompilerCondition::kSyntaxError,
                     tempo_tracing::LogSeverity::kError,
                     "expected {} node", schemaClass.getName());
-                throw CompilerException(status);
+                throw tempo_utils::StatusException(status);
             }
             if (walker.numChildren() != numChildren) {
                 auto status = m_state->logAndContinue(CompilerCondition::kSyntaxError,
                     tempo_tracing::LogSeverity::kError,
                     "invalid {} node; expected {} children but found {}",
                     schemaClass.getName(), numChildren, walker.numChildren());
-                throw CompilerException(status);
+                throw tempo_utils::StatusException(status);
             }
         }
 
@@ -134,14 +134,14 @@ namespace lyric_compiler {
                 auto status = m_state->logAndContinue(CompilerCondition::kSyntaxError,
                     tempo_tracing::LogSeverity::kError,
                     "expected {} node", schemaClass.getName());
-                throw CompilerException(status);
+                throw tempo_utils::StatusException(status);
             }
             if (walker.numChildren() < minChildren) {
                 auto status = m_state->logAndContinue(CompilerCondition::kSyntaxError,
                     tempo_tracing::LogSeverity::kError,
                     "invalid {} node; expected at least {} children but found {}",
                     schemaClass.getName(), minChildren, walker.numChildren());
-                throw CompilerException(status);
+                throw tempo_utils::StatusException(status);
             }
             if (maxChildren >= 0) {
                 TU_ASSERT (maxChildren >= minChildren);
@@ -150,7 +150,7 @@ namespace lyric_compiler {
                         tempo_tracing::LogSeverity::kError,
                         "invalid {} node; expected at most {} children but found {}",
                         schemaClass.getName(), maxChildren, walker.numChildren());
-                    throw CompilerException(status);
+                    throw tempo_utils::StatusException(status);
                 }
             }
         }
@@ -201,7 +201,7 @@ namespace lyric_compiler {
                     break;
             }
 
-            throw CompilerException(compilerStatus);
+            throw tempo_utils::StatusException(compilerStatus);
         }
 
         template<class NsType, class IdType>
@@ -213,7 +213,7 @@ namespace lyric_compiler {
         {
             auto status = walker.parseId(vocabulary, id);
             if (status.notOk())
-                throw CompilerException(m_state->logAndContinue(CompilerCondition::kSyntaxError,
+                throw tempo_utils::StatusException(m_state->logAndContinue(CompilerCondition::kSyntaxError,
                     tempo_tracing::LogSeverity::kError,
                     "expected node in schema ns {}", vocabulary.getNs()->getNs()));
         }

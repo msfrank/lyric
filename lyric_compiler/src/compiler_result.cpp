@@ -25,20 +25,3 @@ lyric_compiler::CompilerStatus::convert(CompilerStatus &dstStatus, const tempo_u
     dstStatus = CompilerStatus(srcStatus.getStatusCode(), srcStatus.getDetail());
     return true;
 }
-
-lyric_compiler::CompilerException::CompilerException(const CompilerStatus &status) noexcept
-    : m_status(status)
-{
-}
-
-lyric_compiler::CompilerStatus
-lyric_compiler::CompilerException::getStatus() const
-{
-    return m_status;
-}
-
-const char *
-lyric_compiler::CompilerException::what() const noexcept
-{
-    return m_status.getMessage().data();
-}

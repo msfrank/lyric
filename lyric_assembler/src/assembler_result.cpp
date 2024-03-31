@@ -25,20 +25,3 @@ lyric_assembler::AssemblerStatus::convert(AssemblerStatus &dstStatus, const temp
     dstStatus = AssemblerStatus(srcStatus.getStatusCode(), srcStatus.getDetail());
     return true;
 }
-
-lyric_assembler::AssemblerException::AssemblerException(const AssemblerStatus &status) noexcept
-    : m_status(status)
-{
-}
-
-lyric_assembler::AssemblerStatus
-lyric_assembler::AssemblerException::getStatus() const
-{
-    return m_status;
-}
-
-const char *
-lyric_assembler::AssemblerException::what() const noexcept
-{
-    return m_status.getMessage().data();
-}

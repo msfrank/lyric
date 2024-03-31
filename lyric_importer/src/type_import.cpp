@@ -69,7 +69,7 @@ import_type_symbol(
         case lyric_object::LinkageSection::Enum:
             break;
         default:
-            throw lyric_importer::ImporterException(
+            throw tempo_utils::StatusException(
                 lyric_importer::ImporterStatus::forCondition(
                 lyric_importer::ImporterCondition::kImportError,
                 "cannot import type in assembly {}; invalid descriptor section", location.toString()));
@@ -81,7 +81,7 @@ import_type_symbol(
                 concreteTypeWalker.getLinkageSection(),
                 lyric_object::GET_DESCRIPTOR_OFFSET(concreteTypeWalker.getLinkageIndex()));
             if (!symbolPath.isValid())
-                throw lyric_importer::ImporterException(
+                throw tempo_utils::StatusException(
                     lyric_importer::ImporterStatus::forCondition(
                         lyric_importer::ImporterCondition::kImportError,
                         "cannot import type in assembly {}; symbol not found", location.toString()));
@@ -91,14 +91,14 @@ import_type_symbol(
             auto linkUrl = object.getLink(
                 lyric_object::GET_LINK_OFFSET(concreteTypeWalker.getLinkageIndex())).getLinkUrl();
             if (!linkUrl.isValid())
-                throw lyric_importer::ImporterException(
+                throw tempo_utils::StatusException(
                     lyric_importer::ImporterStatus::forCondition(
                         lyric_importer::ImporterCondition::kImportError,
                         "cannot import type in assembly {}; link not found", location.toString()));
             return linkUrl;
         }
         default:
-            throw lyric_importer::ImporterException(
+            throw tempo_utils::StatusException(
                 lyric_importer::ImporterStatus::forCondition(
                     lyric_importer::ImporterCondition::kImportError,
                     "cannot import type in assembly {}; invalid descriptor", location.toString()));
@@ -125,13 +125,13 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
             for (const auto &p : concreteTypeWalker.getParameters()) {
                 auto parameterOffset = p.getDescriptorOffset();
                 if (typeOffset <= parameterOffset)
-                    throw lyric_importer::ImporterException(
+                    throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
                             "cannot import type in assembly {}; invalid descriptor", location.toString()));
                 auto *parameterType = moduleImport->getType(p.getDescriptorOffset());
                 if (parameterType == nullptr)
-                    throw lyric_importer::ImporterException(
+                    throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
                             "type at index {} not found in assembly {}", p.getDescriptorOffset(), location.toString()));
@@ -164,13 +164,13 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
             for (const auto &p : placeholderTypeWalker.getParameters()) {
                 auto parameterOffset = p.getDescriptorOffset();
                 if (typeOffset <= parameterOffset)
-                    throw lyric_importer::ImporterException(
+                    throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
                             "cannot import type in assembly {}; invalid descriptor", location.toString()));
                 auto *parameterType = moduleImport->getType(parameterOffset);
                 if (parameterType == nullptr)
-                    throw lyric_importer::ImporterException(
+                    throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
                             "type at index {} not found in assembly {}", p.getDescriptorOffset(), location.toString()));
@@ -188,18 +188,18 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
             for (const auto &m : disjunction.getMembers()) {
                 auto memberOffset = m.getDescriptorOffset();
                 if (typeOffset <= memberOffset)
-                    throw lyric_importer::ImporterException(lyric_importer::ImporterStatus::forCondition(
+                    throw tempo_utils::StatusException(lyric_importer::ImporterStatus::forCondition(
                         lyric_importer::ImporterCondition::kImportError,
                         "cannot import type in assembly {}; invalid descriptor", location.toString()));
                 auto memberType = moduleImport->getType(memberOffset);
                 if (memberType == nullptr)
-                    throw lyric_importer::ImporterException(lyric_importer::ImporterStatus::forCondition(
+                    throw tempo_utils::StatusException(lyric_importer::ImporterStatus::forCondition(
                         lyric_importer::ImporterCondition::kImportError,
                         "type at index {} not found in assembly {}", m.getDescriptorOffset(), location.toString()));
                 unionMembers.push_back(memberType->getTypeDef());
             }
             if (unionMembers.empty())
-                throw lyric_importer::ImporterException(
+                throw tempo_utils::StatusException(
                     lyric_importer::ImporterStatus::forCondition(
                         lyric_importer::ImporterCondition::kImportError,
                         "type at index {} in assembly {} has no union members", typeOffset, location.toString()));
@@ -214,20 +214,20 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
             for (const auto &m : conjunction.getMembers()) {
                 auto memberOffset = m.getDescriptorOffset();
                 if (typeOffset <= memberOffset)
-                    throw lyric_importer::ImporterException(
+                    throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
                             "cannot import type in assembly {}; invalid descriptor", location.toString()));
                 auto *memberType = moduleImport->getType(memberOffset);
                 if (memberType == nullptr)
-                    throw lyric_importer::ImporterException(
+                    throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
                             "type at index {} not found in assembly {}", m.getDescriptorOffset(), location.toString()));
                 intersectionMembers.push_back(memberType->getTypeDef());
             }
             if (intersectionMembers.empty())
-                throw lyric_importer::ImporterException(
+                throw tempo_utils::StatusException(
                     lyric_importer::ImporterStatus::forCondition(
                         lyric_importer::ImporterCondition::kImportError,
                         "type at index {} in assembly {} has no intersection members",
@@ -242,7 +242,7 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
         }
 
         default:
-            throw lyric_importer::ImporterException(
+            throw tempo_utils::StatusException(
                 lyric_importer::ImporterStatus::forCondition(
                     lyric_importer::ImporterCondition::kImportError,
                     "cannot import type at index {} in assembly {}; invalid assignable type",
@@ -267,13 +267,13 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
             for (const auto &p : concreteTypeWalker.getParameters()) {
                 auto parameterOffset = p.getDescriptorOffset();
                 if (typeOffset <= parameterOffset)
-                    throw lyric_importer::ImporterException(
+                    throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
                             "cannot import type in assembly {}; invalid descriptor", location.toString()));
                 auto *parameterType = moduleImport->getType(p.getDescriptorOffset());
                 if (parameterType == nullptr)
-                    throw lyric_importer::ImporterException(
+                    throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
                             "type at index {} not found in assembly {}", p.getDescriptorOffset(), location.toString()));
@@ -289,13 +289,13 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
             for (const auto &p : placeholderTypeWalker.getParameters()) {
                 auto parameterOffset = p.getDescriptorOffset();
                 if (typeOffset <= parameterOffset)
-                    throw lyric_importer::ImporterException(
+                    throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
                             "cannot import type in assembly {}; invalid descriptor", location.toString()));
                 auto *parameterType = moduleImport->getType(parameterOffset);
                 if (parameterType == nullptr)
-                    throw lyric_importer::ImporterException(
+                    throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
                             "type at index {} not found in assembly {}", p.getDescriptorOffset(), location.toString()));
@@ -311,12 +311,12 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
             for (const auto &m : disjunction.getMembers()) {
                 auto memberOffset = m.getDescriptorOffset();
                 if (typeOffset <= memberOffset)
-                    throw lyric_importer::ImporterException(lyric_importer::ImporterStatus::forCondition(
+                    throw tempo_utils::StatusException(lyric_importer::ImporterStatus::forCondition(
                         lyric_importer::ImporterCondition::kImportError,
                         "cannot import type in assembly {}; invalid descriptor", location.toString()));
                 auto memberType = moduleImport->getType(memberOffset);
                 if (memberType == nullptr)
-                    throw lyric_importer::ImporterException(lyric_importer::ImporterStatus::forCondition(
+                    throw tempo_utils::StatusException(lyric_importer::ImporterStatus::forCondition(
                         lyric_importer::ImporterCondition::kImportError,
                         "type at index {} not found in assembly {}", m.getDescriptorOffset(), location.toString()));
                 typeArguments.push_back(memberType);
@@ -331,13 +331,13 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
             for (const auto &m : conjunction.getMembers()) {
                 auto memberOffset = m.getDescriptorOffset();
                 if (typeOffset <= memberOffset)
-                    throw lyric_importer::ImporterException(
+                    throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
                             "cannot import type in assembly {}; invalid descriptor", location.toString()));
                 auto *memberType = moduleImport->getType(memberOffset);
                 if (memberType == nullptr)
-                    throw lyric_importer::ImporterException(
+                    throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
                             "type at index {} not found in assembly {}", m.getDescriptorOffset(), location.toString()));
@@ -353,7 +353,7 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
         }
 
         default:
-            throw lyric_importer::ImporterException(
+            throw tempo_utils::StatusException(
                 lyric_importer::ImporterStatus::forCondition(
                     lyric_importer::ImporterCondition::kImportError,
                     "cannot import type at index {} in assembly {}; invalid assignable type",

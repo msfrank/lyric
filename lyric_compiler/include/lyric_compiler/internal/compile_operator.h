@@ -7,6 +7,13 @@
 
 namespace lyric_compiler::internal {
 
+    tempo_utils::Status match_types(
+        const lyric_common::TypeDef &targetType,
+        const lyric_common::TypeDef &matchType,
+        const lyric_parser::NodeWalker &walker,
+        lyric_assembler::BlockHandle *block,
+        lyric_compiler::ModuleEntry &moduleEntry);
+
     tempo_utils::Result<lyric_common::TypeDef> compile_operator_call(
         lyric_assembler::BlockHandle *block,
         lyric_schema::LyricAstId operationId,

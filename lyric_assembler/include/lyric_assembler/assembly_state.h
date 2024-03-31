@@ -222,7 +222,7 @@ namespace lyric_assembler {
             auto status = AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                 span->traceId(), span->spanId(), messageFmt, messageArgs...);
             span->logStatus(status, absl::Now(), tempo_tracing::LogSeverity::kError);
-            throw AssemblerException(status);
+            throw tempo_utils::StatusException(status);
         }
     };
 }

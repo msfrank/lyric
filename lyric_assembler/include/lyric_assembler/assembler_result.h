@@ -86,16 +86,6 @@ namespace lyric_assembler {
             return AssemblerStatus(condition, message, traceId, spanId);
         }
     };
-
-    class AssemblerException : public std::exception {
-    public:
-        AssemblerException(const AssemblerStatus &status) noexcept;
-        AssemblerStatus getStatus() const;
-        const char* what() const noexcept override;
-
-    private:
-        AssemblerStatus m_status;
-    };
 }
 
 namespace tempo_utils {

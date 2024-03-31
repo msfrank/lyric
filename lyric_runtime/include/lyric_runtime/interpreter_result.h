@@ -37,6 +37,7 @@ namespace lyric_runtime {
         kMissingSymbol,
         kExceededMaximumRecursion,
         kInterrupted,
+        kAborted,
     };
 
     class InterpreterStatus : public tempo_utils::TypedStatus<InterpreterCondition> {
@@ -124,11 +125,11 @@ namespace tempo_utils {
                 case lyric_runtime::InterpreterCondition::kInvalidDataStackV2:
                 case lyric_runtime::InterpreterCondition::kInvalidDataStackValue:
                 case lyric_runtime::InterpreterCondition::kInvalidReceiver:
+                case lyric_runtime::InterpreterCondition::kAborted:
                     return tempo_utils::StatusCode::kAborted;
                 case lyric_runtime::InterpreterCondition::kRuntimeInvariant:
                     return tempo_utils::StatusCode::kInternal;
                 case lyric_runtime::InterpreterCondition::kMissingAssembly:
-                    return tempo_utils::StatusCode::kFailedPrecondition;
                 case lyric_runtime::InterpreterCondition::kMissingSymbol:
                     return tempo_utils::StatusCode::kFailedPrecondition;
                 case lyric_runtime::InterpreterCondition::kInterrupted:
@@ -186,6 +187,8 @@ namespace tempo_utils {
                     return "Missing symbol";
                 case lyric_runtime::InterpreterCondition::kInterrupted:
                     return "Interrupted";
+                case lyric_runtime::InterpreterCondition::kAborted:
+                    return "Aborted";
                 default:
                     return "INVALID";
             }

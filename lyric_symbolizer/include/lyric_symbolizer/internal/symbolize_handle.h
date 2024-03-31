@@ -56,7 +56,7 @@ namespace lyric_symbolizer::internal {
             log->putField(lyric_parser::kLyricParserColumnNumber, static_cast<tu_int64>(walker.getColumnNumber()));
             log->putField(lyric_parser::kLyricParserFileOffset, static_cast<tu_int64>(walker.getFileOffset()));
             log->putField(lyric_parser::kLyricParserTextSpan, static_cast<tu_int64>(walker.getTextSpan()));
-            throw SymbolizerException(status);
+            throw tempo_utils::StatusException(status);
         };
 
         /**
@@ -83,7 +83,7 @@ namespace lyric_symbolizer::internal {
             log->putField(lyric_parser::kLyricParserColumnNumber, static_cast<tu_int64>(walker.getColumnNumber()));
             log->putField(lyric_parser::kLyricParserFileOffset, static_cast<tu_int64>(walker.getFileOffset()));
             log->putField(lyric_parser::kLyricParserTextSpan, static_cast<tu_int64>(walker.getTextSpan()));
-            throw SymbolizerException(status);
+            throw tempo_utils::StatusException(status);
         };
     };
 }

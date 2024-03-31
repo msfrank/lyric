@@ -90,7 +90,7 @@ namespace lyric_parser {
                 auto status = m_state->logAndContinue(ParseCondition::kParseInvariant,
                     tempo_tracing::LogSeverity::kError,
                     "expected {} node", schemaClass.getName());
-                throw ParseException(status);
+                throw tempo_utils::StatusException(status);
             }
         }
     };

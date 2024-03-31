@@ -88,7 +88,7 @@ lyric_importer::ImplImport::load()
             priv->implConcept = implWalker.getFarImplConcept().getLinkUrl();
             break;
         default:
-            throw ImporterException(
+            throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(
                     ImporterCondition::kImportError,
                     "cannot import impl at index {} in assembly {}; invalid impl concept",
@@ -109,7 +109,7 @@ lyric_importer::ImplImport::load()
                 extension.actionUrl = extensionWalker.getFarAction().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import impl at index {} in assembly {}; invalid extension at index {}",
@@ -125,7 +125,7 @@ lyric_importer::ImplImport::load()
                 extension.callUrl = extensionWalker.getFarCall().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import impl at index {} in assembly {}; invalid extension at index {}",

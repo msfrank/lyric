@@ -150,7 +150,7 @@ lyric_importer::ExistentialImport::load()
     priv->symbolUrl = lyric_common::SymbolUrl(location, existentialWalker.getSymbolPath());
 
     if (existentialWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
-        throw ImporterException(
+        throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import existential at index {} in assembly {}; invalid derive type",
@@ -177,7 +177,7 @@ lyric_importer::ExistentialImport::load()
                 priv->superExistential = existentialWalker.getFarSuperExistential().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import existential at index {} in assembly {}; invalid super existential",
@@ -196,7 +196,7 @@ lyric_importer::ExistentialImport::load()
                 callUrl = method.getFarCall().getLinkUrl();
                 break;
             default:
-                throw ImporterException(
+                throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import existential at index {} in assembly {}; invalid method at index {}",

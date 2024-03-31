@@ -24,20 +24,3 @@ lyric_parser::ParseStatus::convert(ParseStatus &dstStatus, const tempo_utils::St
     dstStatus = ParseStatus(srcStatus.getStatusCode(), srcStatus.getDetail());
     return true;
 }
-
-lyric_parser::ParseException::ParseException(const ParseStatus &status) noexcept
-    : m_status(status)
-{
-}
-
-lyric_parser::ParseStatus
-lyric_parser::ParseException::getStatus() const
-{
-    return m_status;
-}
-
-const char *
-lyric_parser::ParseException::what() const noexcept
-{
-    return m_status.getMessage().data();
-}

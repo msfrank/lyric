@@ -77,7 +77,7 @@ lyric_importer::StaticImport::load()
             break;
         }
         default:
-            throw ImporterException(
+            throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
                     "cannot import static at index {} in assembly {}; invalid initializer",
                     staticWalker.getDescriptorOffset(), location.toString()));

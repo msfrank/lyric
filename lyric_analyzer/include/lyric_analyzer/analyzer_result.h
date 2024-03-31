@@ -65,16 +65,6 @@ namespace lyric_analyzer {
             return AnalyzerStatus(condition, message, traceId, spanId);
         }
     };
-
-    class AnalyzerException : public std::exception {
-    public:
-        AnalyzerException(const AnalyzerStatus &status) noexcept;
-        AnalyzerStatus getStatus() const;
-        const char* what() const noexcept override;
-
-    private:
-        AnalyzerStatus m_status;
-    };
 }
 
 namespace tempo_utils {

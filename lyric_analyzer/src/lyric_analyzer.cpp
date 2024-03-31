@@ -66,8 +66,6 @@ lyric_analyzer::LyricAnalyzer::analyzeModule(
         TU_ASSERT (assembly.isValid());
         return assembly;
 
-    } catch (lyric_analyzer::AnalyzerException &ex) {
-        return ex.getStatus();
     } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();
     }
