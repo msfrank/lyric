@@ -68,18 +68,60 @@ lyric_common::TypeDef::forPlaceholder(
     return TypeDef(TypeDefType::Placeholder, templateUrl, typeParameters, placeholderIndex);
 }
 
+bool
+lyric_common::member_cmp(const lyric_common::TypeDef &lhs, const lyric_common::TypeDef &rhs)
+{
+    return lhs.toString() < rhs.toString();
+}
+
 lyric_common::TypeDef
 lyric_common::TypeDef::forIntersection(const std::vector<TypeDef> &members)
 {
     TU_ASSERT (!members.empty());
-    return TypeDef(TypeDefType::Intersection, {}, members, -1);
+
+    // copy members to new array and verify each member is concrete or placeholder
+    std::vector<TypeDef> sortedMembers;
+    sortedMembers.reserve(members.size());
+    for (const auto &member : members) {
+        switch (member.getType()) {
+            case TypeDefType::Concrete:
+            case TypeDefType::Placeholder:
+                sortedMembers.push_back(member);
+                break;
+            default:
+                TU_UNREACHABLE();
+        }
+    }
+
+    // sort the members
+    std::sort(sortedMembers.begin(), sortedMembers.end(), member_cmp);
+
+    return TypeDef(TypeDefType::Intersection, {}, sortedMembers, -1);
 }
 
 lyric_common::TypeDef
 lyric_common::TypeDef::forUnion(const std::vector<TypeDef> &members)
 {
     TU_ASSERT (!members.empty());
-    return TypeDef(TypeDefType::Union, {}, members, -1);
+
+    // copy members to new array and verify each member is concrete or placeholder
+    std::vector<TypeDef> sortedMembers;
+    sortedMembers.reserve(members.size());
+    for (const auto &member : members) {
+        switch (member.getType()) {
+            case TypeDefType::Concrete:
+            case TypeDefType::Placeholder:
+                sortedMembers.push_back(member);
+                break;
+            default:
+                TU_UNREACHABLE();
+        }
+    }
+
+    // sort the members
+    std::sort(sortedMembers.begin(), sortedMembers.end(), member_cmp);
+
+    return TypeDef(TypeDefType::Union, {}, sortedMembers, -1);
 }
 
 lyric_common::TypeDef

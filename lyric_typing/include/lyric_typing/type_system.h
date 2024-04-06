@@ -28,7 +28,7 @@ namespace lyric_typing {
             const lyric_common::TypeDef &toRef,
             const lyric_common::TypeDef &fromRef);
 
-        bool isAssignable(
+        tempo_utils::Result<bool> isAssignable(
             const lyric_common::TypeDef &toRef,
             const lyric_common::TypeDef &fromRef);
 
@@ -36,6 +36,9 @@ namespace lyric_typing {
         resolveAssignable(
             lyric_assembler::BlockHandle *block,
             const lyric_parser::NodeWalker &walker);
+
+        tempo_utils::Result<std::pair<lyric_object::BoundType,lyric_common::TypeDef>>
+        resolveBound(const lyric_common::TypeDef &placeholderType);
 
         tempo_utils::Result<lyric_assembler::TemplateSpec>
         resolveTemplate(

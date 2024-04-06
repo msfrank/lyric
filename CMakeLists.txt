@@ -248,10 +248,13 @@ target_link_libraries(lyric_testsuite
     PRIVATE
     LyricBootstrapTestSuite
     LyricBuildTestSuite
+    LyricCommonTestSuite
+    LyricObjectTestSuite
     LyricPackagingTestSuite
     LyricParserTestSuite
+    LyricTypingTestSuite
 )
-gtest_discover_tests(lyric_testsuite)
+gtest_discover_tests(lyric_testsuite DISCOVERY_TIMEOUT 30)
 
 #######################################################################
 #

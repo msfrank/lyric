@@ -5,7 +5,6 @@ include(GoogleTest)
 
 # define unit tests
 
-set(TEST_CASE_PREFIX lyric_packaging)
 set(TEST_CASES
     #package_loader_tests.cpp
     package_reader_tests.cpp
@@ -15,17 +14,16 @@ set(TEST_CASES
 
 # define test suite driver
 
-set(TESTSUITE_EXECUTABLE "${TEST_CASE_PREFIX}_testsuite")
-add_executable(${TESTSUITE_EXECUTABLE} ${TEST_CASES})
-target_include_directories(${TESTSUITE_EXECUTABLE} PRIVATE
+add_executable(lyric_packaging_testsuite ${TEST_CASES})
+target_include_directories(lyric_packaging_testsuite PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
     ${CMAKE_CURRENT_BINARY_DIR}/../src
     )
-target_link_libraries(${TESTSUITE_EXECUTABLE} PUBLIC
+target_link_libraries(lyric_packaging_testsuite PUBLIC
     lyric::lyric_packaging
     gtest::gtest
     )
-gtest_discover_tests(${TESTSUITE_EXECUTABLE})
+gtest_discover_tests(lyric_packaging_testsuite DISCOVERY_TIMEOUT 30)
 
 # define test suite static library
 

@@ -13,8 +13,8 @@ namespace lyric_common {
     class AssemblyLocation {
     public:
         AssemblyLocation();
-        AssemblyLocation(const std::string &path);
-        AssemblyLocation(const std::string &origin, const std::string &path);
+        AssemblyLocation(std::string_view path);
+        AssemblyLocation(std::string_view origin, std::string_view path);
         AssemblyLocation(const AssemblyLocation &other);
         AssemblyLocation(AssemblyLocation &&other) noexcept;
 
@@ -41,7 +41,7 @@ namespace lyric_common {
         bool operator==(const AssemblyLocation &other) const;
         bool operator!=(const AssemblyLocation &other) const;
 
-        static AssemblyLocation fromString(const std::string &string);
+        static AssemblyLocation fromString(std::string_view s);
         static AssemblyLocation fromUrl(const tempo_utils::Url &uri);
 
         template<typename H>

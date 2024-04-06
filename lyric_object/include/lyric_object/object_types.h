@@ -334,23 +334,23 @@ namespace lyric_object {
      * Describes a parameter.
      */
     struct Parameter {
-        std::string name;                       /**< name of the parameter */
-        int index;                              /**< placement index */
-        std::string label;                      /**< optional parameter label */
-        PlacementType placement;                /**< parameter placement */
-        lyric_common::TypeDef typeDef;          /**< type of the parameter */
-        bool isVariable;                        /**< true if the parameter has variable binding, otherwise false */
+        std::string name = {};                               /**< name of the parameter */
+        int index = -1;                                      /**< placement index */
+        std::string label = {};                              /**< optional parameter label */
+        PlacementType placement = PlacementType::Invalid;    /**< parameter placement */
+        lyric_common::TypeDef typeDef = {};                  /**< type of the parameter */
+        bool isVariable = false;                             /**< true if the parameter has variable binding, otherwise false */
     };
 
     /**
      * Describes a template parameter.
      */
     struct TemplateParameter {
-        std::string name;                       /**< */
-        int index;                              /**< */
-        lyric_common::TypeDef typeDef;          /**< */
-        VarianceType variance;                  /**< */
-        BoundType bound;                        /**< */
+        std::string name = {};                           /**< */
+        int index = -1;                                  /**< */
+        lyric_common::TypeDef typeDef = {};              /**< */
+        VarianceType variance = VarianceType::Invalid;   /**< */
+        BoundType bound = BoundType::Invalid;            /**< */
     };
 
     class LiteralIndex {

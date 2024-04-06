@@ -10,6 +10,7 @@ namespace lyric_compiler::internal {
     compile_default_initializer(
         lyric_assembler::BlockHandle *block,
         const std::string &name,
+        const std::vector<lyric_object::TemplateParameter> &templateParameters,
         const lyric_parser::Assignable &type,
         const lyric_parser::NodeWalker &walker,
         lyric_compiler::ModuleEntry &moduleEntry);

@@ -14,14 +14,12 @@ lyric_common::AssemblyLocation::AssemblyLocation(const tempo_utils::Url &locatio
     TU_ASSERT (m_location->isValid());
 }
 
-lyric_common::AssemblyLocation::AssemblyLocation(const std::string &path)
+lyric_common::AssemblyLocation::AssemblyLocation(std::string_view path)
     : AssemblyLocation(tempo_utils::Url::fromRelative(path))
 {
 }
 
-lyric_common::AssemblyLocation::AssemblyLocation(
-    const std::string &origin,
-    const std::string &path)
+lyric_common::AssemblyLocation::AssemblyLocation(std::string_view origin, std::string_view path)
     : AssemblyLocation(tempo_utils::Url::fromOrigin(origin, path))
 {
 }
@@ -139,9 +137,9 @@ lyric_common::AssemblyLocation::operator!=(const AssemblyLocation &other) const
 }
 
 lyric_common::AssemblyLocation
-lyric_common::AssemblyLocation::fromString(const std::string &string)
+lyric_common::AssemblyLocation::fromString(std::string_view s)
 {
-    auto url = tempo_utils::Url::fromString(string);
+    auto url = tempo_utils::Url::fromString(s);
     return fromUrl(url);
 }
 

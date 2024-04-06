@@ -411,11 +411,11 @@ lyric_assembler::BlockHandle::resolveDefinition(const lyric_common::SymbolPath &
     return resolveDefinition(typePath);
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
-lyric_assembler::BlockHandle::resolveDefinition(const lyric_runtime::LiteralCell &literalCell)
-{
-    return m_state->fundamentalCache()->getFundamentalUrl(literalCell);
-}
+//tempo_utils::Result<lyric_common::SymbolUrl>
+//lyric_assembler::BlockHandle::resolveDefinition(const lyric_runtime::LiteralCell &literalCell)
+//{
+//    return m_state->fundamentalCache()->getFundamentalUrl(literalCell);
+//}
 
 tempo_utils::Result<lyric_assembler::SymbolBinding>
 lyric_assembler::BlockHandle::declareVariable(

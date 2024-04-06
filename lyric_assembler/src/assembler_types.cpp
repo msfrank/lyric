@@ -226,6 +226,9 @@ lyric_assembler::TypeSignature::signatureEnd() const
 lyric_runtime::TypeComparison
 lyric_assembler::TypeSignature::compare(const TypeSignature &other) const
 {
+    if (m_signature.empty() || other.m_signature.empty())
+        return lyric_runtime::TypeComparison::DISJOINT;
+
     auto othersize = other.m_signature.size();
     for (tu_uint32 i = 0; i < m_signature.size(); i++) {
         if (i == othersize)

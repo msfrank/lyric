@@ -35,11 +35,10 @@ lyric_object::TemplateParameterWalker::isValid() const
 lyric_object::TemplateParameter
 lyric_object::TemplateParameterWalker::getTemplateParameter() const
 {
-    TemplateParameter tp = { {}, -1, {}, VarianceType::Invalid, BoundType::Invalid};
-
     if (!isValid())
-        return tp;
+        return {};
 
+    TemplateParameter tp;
     tp.index = m_placeholderOffset;
     tp.name = getPlaceholderName();
     tp.variance = getPlaceholderVariance();
@@ -68,10 +67,10 @@ lyric_object::VarianceType
 lyric_object::TemplateParameterWalker::getPlaceholderVariance() const
 {
     if (!isValid())
-        return {};
+        return VarianceType::Invalid;
     auto *templateDescriptor = static_cast<const lyo1::TemplateDescriptor *>(m_templateDescriptor);
     if (!templateDescriptor->placeholders())
-        return {};
+        return VarianceType::Invalid;
     auto *placeholder = templateDescriptor->placeholders()->Get(m_placeholderOffset);
     switch (placeholder->placeholder_variance()) {
         case lyo1::PlaceholderVariance::Invariant:

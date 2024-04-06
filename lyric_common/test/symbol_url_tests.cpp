@@ -5,7 +5,7 @@
 
 TEST(SymbolUrl, ConstructRelativeSymbolUrlFromString)
 {
-    auto symbolUrl = lyric_common::SymbolUrl::fromString("/prelude#Bool");
+    auto symbolUrl = lyric_common::SymbolUrl::fromString("#Bool");
     ASSERT_TRUE (symbolUrl.isValid());
     ASSERT_TRUE (symbolUrl.isRelative());
 }

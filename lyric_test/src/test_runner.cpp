@@ -270,7 +270,7 @@ lyric_test::TestRunner::buildModuleInternal(
     std::filesystem::path modulePath = "/";
     modulePath /= sourcePath;
     modulePath.replace_extension();
-    lyric_common::AssemblyLocation moduleLocation(modulePath);
+    lyric_common::AssemblyLocation moduleLocation(modulePath.string());
 
     return BuildModule(shared_from_this(), targetComputation,
         targetComputationSet.getDiagnostics(), moduleLocation);

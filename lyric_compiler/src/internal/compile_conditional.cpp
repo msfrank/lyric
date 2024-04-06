@@ -45,7 +45,10 @@ lyric_compiler::internal::compile_cond(
         auto predicateType = predicateResult.getResult();
 
         auto boolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
-        if (!typeSystem->isAssignable(boolType, predicateType))
+
+        bool isAssignable;
+        TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(boolType, predicateType));
+        if (!isAssignable)
             return state->logAndContinue(CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "case predicate must return Boolean");
@@ -188,7 +191,10 @@ lyric_compiler::internal::compile_if(
 
         auto boolType = block->blockState()->fundamentalCache()->getFundamentalType(
             lyric_assembler::FundamentalSymbol::Bool);
-        if (!typeSystem->isAssignable(boolType, predicateType))
+
+        bool isAssignable;
+        TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(boolType, predicateType));
+        if (!isAssignable)
             return state->logAndContinue(CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "case predicate must return Boolean");

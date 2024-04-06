@@ -52,7 +52,8 @@ lyric_compiler::internal::compile_block(
             return compileNodeResult;
         resultType = compileNodeResult.getResult();
         if (!resultType.isValid())
-            block->throwAssemblerInvariant("invalid block result type");
+            block->throwSyntaxError(walker.getChild(0),
+                "block form returns an invalid result");
         // discard intermediate expression result
         if (i < last && resultType.getType() != lyric_common::TypeDefType::NoReturn) {
             code->popValue();

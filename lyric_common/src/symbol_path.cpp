@@ -111,10 +111,10 @@ lyric_common::SymbolPath::operator!=(const lyric_common::SymbolPath &other) cons
 }
 
 lyric_common::SymbolPath
-lyric_common::SymbolPath::fromString(const std::string &string)
+lyric_common::SymbolPath::fromString(std::string_view s)
 {
     std::vector<std::string> parts;
-    for (const auto &part : absl::StrSplit(string, ".", absl::SkipEmpty())) {
+    for (const auto &part : absl::StrSplit(s, ".", absl::SkipEmpty())) {
         parts.emplace_back(part.data(), part.size());
     }
     return lyric_common::SymbolPath(parts);

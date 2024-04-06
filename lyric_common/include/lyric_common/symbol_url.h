@@ -39,7 +39,7 @@ namespace lyric_common {
         bool operator==(const SymbolUrl &other) const;
         bool operator!=(const SymbolUrl &other) const;
 
-        static SymbolUrl fromString(const std::string &string);
+        static SymbolUrl fromString(std::string_view s);
         static SymbolUrl fromUrl(const tempo_utils::Url &uri);
 
         template <typename H>

@@ -37,8 +37,12 @@ lyric_compiler::internal::compile_while(
         return testResult.getStatus();
     auto testReturnType = testResult.getResult();
 
-    auto boolType = block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
-    if (!typeSystem->isAssignable(boolType, testReturnType))
+    auto boolType = block->blockState()->fundamentalCache()->getFundamentalType(
+        lyric_assembler::FundamentalSymbol::Bool);
+
+    bool isAssignable;
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(boolType, testReturnType));
+    if (!isAssignable)
         return block->logAndContinue(whileTest,
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
@@ -222,11 +226,15 @@ lyric_compiler::internal::compile_for(
     auto invokeValidResult = valid.invoke(&forBlock, validReifier);
     if (invokeValidResult.isStatus())
         return invokeValidResult.getStatus();
+    auto validReturnType = invokeValidResult.getResult();
 
     auto boolType = state->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
-    if (!typeSystem->isAssignable(boolType, invokeValidResult.getResult()))
+    bool isAssignable;
+
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(boolType, validReturnType));
+    if (!isAssignable)
         forBlock.throwAssemblerInvariant("expected Valid method to return {}; found {}",
-            boolType.toString(), invokeValidResult.getResult().toString());
+            boolType.toString(), validReturnType.toString());
 
     auto predicateJumpResult = code->jumpIfFalse();
     if (predicateJumpResult.isStatus())
@@ -251,10 +259,12 @@ lyric_compiler::internal::compile_for(
     auto invokeNextResult = next.invoke(&forBlock, nextReifier);
     if (invokeNextResult.isStatus())
         return invokeNextResult.getStatus();
+    auto nextReturnType = invokeNextResult.getResult();
 
-    if (!typeSystem->isAssignable(targetType, invokeNextResult.getResult()))
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(targetType, nextReturnType));
+    if (!isAssignable)
         forBlock.throwAssemblerInvariant("expected Next method to return {}; found {}",
-            targetType.toString(), invokeNextResult.getResult().toString());
+            targetType.toString(), nextReturnType.toString());
 
     // store the next value in the target variable
     status = forBlock.store(target);

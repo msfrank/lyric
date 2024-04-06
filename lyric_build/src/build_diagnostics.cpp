@@ -52,8 +52,13 @@ print_span(const tempo_tracing::SpanWalker &spanWalker, int indent)
         auto logWalker = spanWalker.getLog(i);
         std::string message;
         status = logWalker.parseField(tempo_tracing::kOpentracingMessage, message);
-        TU_ASSERT (status.isOk());
-        TU_CONSOLE_OUT << tempo_utils::Indent(indent + 2) << message;
+        if (status.isOk()) {
+            TU_CONSOLE_OUT << tempo_utils::Indent(indent + 2) << message;
+        } else {
+            if (!status.matchesCondition(tempo_tracing::TracingCondition::kMissingLog)) {
+                TU_CONSOLE_ERR << "failed to pring log: " << status;
+            }
+        }
     }
 
     for (int i = 0; i < spanWalker.numChildren(); i++) {

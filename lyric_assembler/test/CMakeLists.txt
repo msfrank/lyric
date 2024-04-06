@@ -4,20 +4,18 @@ include(GoogleTest)
 
 # define unit tests
 
-set(TEST_CASE_PREFIX lyric_assembler)
 set(TEST_CASES
     block_handle_tests.cpp
     )
 
 # define test suite driver
 
-set(TESTSUITE_EXECUTABLE "${TEST_CASE_PREFIX}_testsuite")
-add_executable(${TESTSUITE_EXECUTABLE} ${TEST_CASES})
-target_link_libraries(${TESTSUITE_EXECUTABLE} PUBLIC
+add_executable(lyric_assembler_testsuite ${TEST_CASES})
+target_link_libraries(lyric_assembler_testsuite PUBLIC
     lyric::lyric_assembler
     gtest::gtest
     )
-gtest_discover_tests(${TESTSUITE_EXECUTABLE})
+gtest_discover_tests(lyric_assembler_testsuite DISCOVERY_TIMEOUT 30)
 
 # define test suite static library
 

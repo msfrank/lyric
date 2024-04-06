@@ -1,6 +1,6 @@
 
 #include <lyric_assembler/class_symbol.h>
-#include <lyric_assembler/disjoint_type_set.h>
+#include <lyric_assembler/type_set.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
@@ -408,6 +408,8 @@ lyric_compiler::internal::compile_match(
 
     std::vector<lyric_assembler::MatchCasePatch> patchList;
     lyric_assembler::DisjointTypeSet predicateSet(block->blockState());
+    lyric_assembler::UnifiedTypeSet resultSet(block->blockState());
+    bool isExhaustive = false;
 
     // evaluate each case
     for (int i = 1; i < walker.numChildren(); i++) {
@@ -420,6 +422,9 @@ lyric_compiler::internal::compile_match(
 
         // verify all case predicate types are disjoint
         TU_RETURN_IF_NOT_OK (predicateSet.putType(casePatch.getPredicateType()));
+
+        // build the conjunction of all case consequents
+        TU_RETURN_IF_NOT_OK (resultSet.putType(casePatch.getConsequentType()));
 
         patchList.push_back(casePatch);
     }
@@ -441,12 +446,13 @@ lyric_compiler::internal::compile_match(
         if (alternativeResult.isStatus())
             return alternativeResult;
         alternativeType = alternativeResult.getResult();
-        TU_RETURN_IF_NOT_OK (predicateSet.putType(alternativeType));
+        TU_RETURN_IF_NOT_OK (resultSet.putType(alternativeType));
+        isExhaustive = true;
     } else {
         status = code->loadNil();
         if (!status.isOk())
             return status;
-        TU_RETURN_IF_NOT_OK (predicateSet.putType(
+        TU_RETURN_IF_NOT_OK (resultSet.putType(
             fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Nil)));
         // it is intentional that we don't set alternativeType here
     }
@@ -479,23 +485,14 @@ lyric_compiler::internal::compile_match(
     if (!status.isOk())
         return status;
 
-    // unify the types of all case clauses
-    auto unifiedType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
-    for (const auto &casePatch : patchList) {
-        auto unifyResult = lyric_typing::unify_assignable(
-            casePatch.getConsequentType(), unifiedType, block->blockState());
-        if (unifyResult.isStatus())
-            return unifyResult.getStatus();
-        unifiedType = unifyResult.getResult();
-    }
+    auto unifiedType = resultSet.getUnifiedType();
 
-    // if alternative clause is defined then unify its type with the other case clauses and return
-    if (alternativeType.isValid())
-        return lyric_typing::unify_assignable(alternativeType, unifiedType, block->blockState());
+    // if alternative clause is defined then return the unified type
+    if (isExhaustive)
+        return unifiedType;
 
     // if there is no alternative clause, then determine whether the match is exhaustive by verifying
     // that all subtypes of the target are enumerable and there is a case for all subtypes.
-    bool isExhaustive = false;
     switch (targetType.getType()) {
         case lyric_common::TypeDefType::Concrete: {
             TU_ASSIGN_OR_RETURN (isExhaustive, check_concrete_target_is_exhaustive(
@@ -508,17 +505,13 @@ lyric_compiler::internal::compile_match(
             break;
         }
         default:
-            //block->logAndContinue(CompilerCondition::kSyntaxError,
-            //    tempo_tracing::LogSeverity::kError,
-            //    "match expression has no default case and target type {} cannot be checked exhaustively",
-            //    targetType.toString());
             break;
     }
 
-    if (isExhaustive)
-        return unifiedType;
+    if (!isExhaustive)
+        block->throwSyntaxError(walker,
+            "match expression has no else clause and target type {} cannot be checked exhaustively",
+            targetType.toString());
 
-    // otherwise the return type is the union of return type and Nil
-    auto nilType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Nil);
-    return lyric_common::TypeDef::forUnion({unifiedType, nilType});
+    return unifiedType;
 }

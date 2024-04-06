@@ -84,8 +84,8 @@ namespace lyric_assembler {
             const std::vector<std::string> &typePath);
         tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
             const lyric_common::SymbolPath &symbolPath);
-        tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
-            const lyric_runtime::LiteralCell &literalCell);
+//        tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
+//            const lyric_runtime::LiteralCell &literalCell);
 
         tempo_utils::Result<SymbolBinding> declareVariable(
             const std::string &name,

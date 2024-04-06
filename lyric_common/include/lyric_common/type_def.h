@@ -98,6 +98,8 @@ namespace lyric_common {
             const std::vector<TypeDef> &parameters,
             int placeholder);
 
+        friend bool member_cmp(const lyric_common::TypeDef &lhs, const lyric_common::TypeDef &rhs);
+
     public:
         template <typename H>
         friend H AbslHashValue(H h, const TypeDef &typeDef) {

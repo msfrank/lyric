@@ -15,7 +15,7 @@ target_link_libraries(lyric_common_testsuite PUBLIC
     lyric::lyric_common
     gtest::gtest
     )
-gtest_discover_tests(lyric_common_testsuite)
+gtest_discover_tests(lyric_common_testsuite DISCOVERY_TIMEOUT 30)
 
 # define test suite static library
 

@@ -51,15 +51,13 @@ lyric_typing::TypeSystem::compareAssignable(
     return compare_assignable(toRef, fromRef, m_state);
 }
 
-bool
+tempo_utils::Result<bool>
 lyric_typing::TypeSystem::isAssignable(
     const lyric_common::TypeDef &toRef,
     const lyric_common::TypeDef &fromRef)
 {
-    auto compareAssignableResult = compareAssignable(toRef, fromRef);
-    if (compareAssignableResult.isStatus())
-        return false;
-    auto cmp = compareAssignableResult.getResult();
+    lyric_runtime::TypeComparison cmp;
+    TU_ASSIGN_OR_RETURN (cmp, compareAssignable(toRef, fromRef));
     return (cmp == lyric_runtime::TypeComparison::EQUAL || cmp == lyric_runtime::TypeComparison::EXTENDS);
 }
 
@@ -71,6 +69,11 @@ lyric_typing::TypeSystem::resolveTemplate(
     return resolve_template(block, walker, m_state);
 }
 
+tempo_utils::Result<std::pair<lyric_object::BoundType,lyric_common::TypeDef>>
+lyric_typing::TypeSystem::resolveBound(const lyric_common::TypeDef &placeholderType)
+{
+    return resolve_bound(placeholderType, m_state);
+}
 
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::TypeSystem::unifyAssignable(

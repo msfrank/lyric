@@ -37,7 +37,7 @@ namespace lyric_common {
         bool operator==(const SymbolPath &other) const;
         bool operator!=(const SymbolPath &other) const;
 
-        static SymbolPath fromString(const std::string &string);
+        static SymbolPath fromString(std::string_view s);
 
         static SymbolPath entrySymbol();
 

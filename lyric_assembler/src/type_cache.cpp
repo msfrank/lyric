@@ -1,6 +1,6 @@
 
 #include <lyric_assembler/assembly_state.h>
-#include <lyric_assembler/disjoint_type_set.h>
+#include <lyric_assembler/type_set.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
@@ -446,11 +446,20 @@ lyric_assembler::TypeCache::importTemplate(lyric_importer::TemplateImport *templ
         tp.bound = it->bound;
 
         if (it->type != nullptr) {
-            TypeHandle *paramType = nullptr;
-            TU_ASSIGN_OR_RAISE (paramType, importType(it->type));
+            TypeHandle *paramType;
+            TU_ASSIGN_OR_RETURN (paramType, importType(it->type));
             tp.typeDef = paramType->getTypeDef();
+            if (!tp.typeDef.isValid())
+                m_tracer->throwAssemblerInvariant(
+                    "cannot import template {}; invalid constraint type for template parameter {}",
+                    templateUrl.toString(), it->index);
+        } else if (tp.bound == lyric_object::BoundType::None) {
+            auto *fundamentalCache = m_assemblyState->fundamentalCache();
+            tp.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Any);
         } else {
-            tp.typeDef = {};
+            m_tracer->throwAssemblerInvariant(
+                "cannot import template {}; missing constraint type for template parameter {}",
+                templateUrl.toString(), it->index);
         }
 
         templateParameters.push_back(tp);

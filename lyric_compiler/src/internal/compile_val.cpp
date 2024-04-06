@@ -72,7 +72,9 @@ lyric_compiler::internal::compile_val(
         valType = resultType;
 
     // val type was explicitly declared and is disjoint from rvalue type
-    if (!typeSystem->isAssignable(valType, resultType))
+    bool isAssignable;
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(valType, resultType));
+    if (!isAssignable)
         return block->logAndContinue(CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "rvalue type {} is incompatible with val type {}", resultType.toString(), valType.toString());

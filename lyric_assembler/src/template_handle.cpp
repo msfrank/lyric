@@ -35,6 +35,7 @@ lyric_assembler::TemplateHandle::TemplateHandle(
     TU_ASSERT (m_state != nullptr);
 
     for (const auto &tp : m_templateParameters) {
+        TU_ASSERT (tp.typeDef.isValid());
         m_placeholders.push_back(lyric_common::TypeDef::forPlaceholder(tp.index, templateUrl));
         m_parameterIndex[tp.name] = tp.index;
     }

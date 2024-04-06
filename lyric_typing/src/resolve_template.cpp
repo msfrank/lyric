@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/fundamental_cache.h>
+#include <lyric_assembler/type_cache.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 #include <lyric_typing/resolve_template.h>
@@ -23,6 +24,8 @@ lyric_typing::resolve_template(
     lyric_assembler::TemplateSpec templateSpec;
     absl::flat_hash_set<std::string> usedPlaceholderNames;
 
+    auto *fundamentalCache = state->fundamentalCache();
+
     for (int i = 0; i < walker.numChildren(); i++) {
         auto placeholder = walker.getChild(i);
         if (!placeholder.isClass(lyric_schema::kLyricAstPlaceholderClass))
@@ -31,7 +34,7 @@ lyric_typing::resolve_template(
         // template parameter defaults
         lyric_object::TemplateParameter tp;
         tp.bound = lyric_object::BoundType::None;
-        tp.typeDef = state->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
+        tp.typeDef = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
         tp.index = i;
 
         // get placeholder name
@@ -99,4 +102,29 @@ lyric_typing::resolve_template(
     }
 
     return templateSpec;
+}
+
+tempo_utils::Result<std::pair<lyric_object::BoundType,lyric_common::TypeDef>>
+lyric_typing::resolve_bound(
+    const lyric_common::TypeDef &placeholderType,
+    lyric_assembler::AssemblyState *state)
+{
+    TU_ASSERT (placeholderType.getType() == lyric_common::TypeDefType::Placeholder);
+    TU_ASSERT (state != nullptr);
+
+    auto *typeCache = state->typeCache();
+    auto *templateHandle = typeCache->getTemplate(placeholderType.getPlaceholderTemplateUrl());
+    if (templateHandle == nullptr)
+        state->throwAssemblerInvariant("no template for placeholder type {}", placeholderType.toString());
+
+    auto tp = templateHandle->getTemplateParameter(placeholderType.getPlaceholderIndex());
+
+    // we treat None bound as extending Any
+    if (tp.bound == lyric_object::BoundType::None) {
+        auto *fundamentalCache = state->fundamentalCache();
+        auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
+        return std::pair{lyric_object::BoundType::Extends, AnyType};
+    }
+
+    return std::pair{tp.bound, tp.typeDef};
 }

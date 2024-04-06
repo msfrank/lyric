@@ -23,6 +23,7 @@ TEST(CoreStatus, TestEvaluateStatusMessage)
         match status {
             case c: Cancelled
                 c.message
+            else nil
         }
     )");
 

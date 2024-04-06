@@ -43,18 +43,6 @@ lyric_compiler::internal::compile_def(
         return parsePackResult.getStatus();
     auto packSpec = parsePackResult.getResult();
 
-    // compile initializers
-    absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
-    for (const auto &p : packSpec.parameterSpec) {
-        if (!p.init.isEmpty()) {
-            auto compileInitializerResult = compile_default_initializer(block,
-                p.name, p.type, p.init.getValue(), moduleEntry);
-            if (compileInitializerResult.isStatus())
-                return compileInitializerResult.getStatus();
-            initializers[p.name] = compileInitializerResult.getResult();
-        }
-    }
-
     // if function is generic, then compile the template parameter list
     lyric_assembler::TemplateSpec templateSpec;
     if (walker.hasAttr(lyric_parser::kLyricAstGenericOffset)) {
@@ -65,6 +53,18 @@ lyric_compiler::internal::compile_def(
         if (resolveTemplateResult.isStatus())
             return resolveTemplateResult.getStatus();
         templateSpec = resolveTemplateResult.getResult();
+    }
+
+    // compile initializers
+    absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
+    for (const auto &p : packSpec.parameterSpec) {
+        if (!p.init.isEmpty()) {
+            auto compileInitializerResult = compile_default_initializer(
+                block, p.name, templateSpec.templateParameters, p.type, p.init.getValue(), moduleEntry);
+            if (compileInitializerResult.isStatus())
+                return compileInitializerResult.getStatus();
+            initializers[p.name] = compileInitializerResult.getResult();
+        }
     }
 
     // declare the function
@@ -97,14 +97,20 @@ lyric_compiler::internal::compile_def(
     if (!status.isOk())
         return status;
 
+    bool isReturnable;
+
     // validate that body returns the expected type
-    if (!typeSystem->isAssignable(call->getReturnType(), bodyType))
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    if (!isReturnable)
         return block->logAndContinue(body,
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", call->getReturnType().toString());
+
+    // validate that each exit returns the expected type
     for (const auto &exitType : call->listExitTypes()) {
-        if (!typeSystem->isAssignable(call->getReturnType(), exitType))
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+        if (!isReturnable)
             return block->logAndContinue(body,
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,

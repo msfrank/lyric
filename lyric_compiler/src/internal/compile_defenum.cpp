@@ -52,8 +52,8 @@ compile_defenum_val(
         tu_uint32 defaultOffset;
         moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultOffset);
         auto defaultInit = walker.getNodeAtOffset(defaultOffset);
-        auto compileDefaultResult = lyric_compiler::internal::compile_default_initializer(baseEnum->enumBlock(),
-            identifier, valType, defaultInit, moduleEntry);
+        auto compileDefaultResult = lyric_compiler::internal::compile_default_initializer(
+            baseEnum->enumBlock(), identifier, {}, valType, defaultInit, moduleEntry);
         if (compileDefaultResult.isStatus())
             return compileDefaultResult.getStatus();
         init = compileDefaultResult.getResult();
@@ -108,8 +108,8 @@ compile_defenum_def(
     absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
     for (const auto &p : packSpec.parameterSpec) {
         if (!p.init.isEmpty()) {
-            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(enumBlock,
-                p.name, p.type, p.init.getValue(), moduleEntry);
+            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(
+                enumBlock, p.name, {}, p.type, p.init.getValue(), moduleEntry);
             if (compileInitializerResult.isStatus())
                 return compileInitializerResult.getStatus();
             initializers[p.name] = compileInitializerResult.getResult();
@@ -152,14 +152,20 @@ compile_defenum_def(
     if (!status.isOk())
         return status;
 
+    bool isReturnable;
+
     // validate that body returns the expected type
-    if (!typeSystem->isAssignable(call->getReturnType(), bodyType))
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    if (!isReturnable)
         return enumBlock->logAndContinue(body,
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "def body does not match return type {}", call->getReturnType().toString());
+
+    // validate that each exit returns the expected type
     for (const auto &exitType : call->listExitTypes()) {
-        if (!typeSystem->isAssignable(call->getReturnType(), exitType))
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+        if (!isReturnable)
             return enumBlock->logAndContinue(body,
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
@@ -534,8 +540,8 @@ compile_defenum_impl_def(
     absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
     for (const auto &p : packSpec.parameterSpec) {
         if (!p.init.isEmpty()) {
-            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(implBlock,
-                p.name, p.type, p.init.getValue(), moduleEntry);
+            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(
+                implBlock, p.name, {}, p.type, p.init.getValue(), moduleEntry);
             if (compileInitializerResult.isStatus())
                 return compileInitializerResult.getStatus();
             initializers[p.name] = compileInitializerResult.getResult();
@@ -569,14 +575,20 @@ compile_defenum_impl_def(
     if (!status.isOk())
         return status;
 
+    bool isReturnable;
+
     // validate that body returns the expected type
-    if (!typeSystem->isAssignable(call->getReturnType(), bodyType))
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    if (!isReturnable)
         return implBlock->logAndContinue(body,
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", call->getReturnType().toString());
+
+    // validate that each exit returns the expected type
     for (const auto &exitType : call->listExitTypes()) {
-        if (!typeSystem->isAssignable(call->getReturnType(), exitType))
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+        if (!isReturnable)
             return implBlock->logAndContinue(body,
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,

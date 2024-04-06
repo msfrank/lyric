@@ -13,6 +13,12 @@ namespace lyric_typing {
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,
         lyric_assembler::AssemblyState *state);
+
+
+    tempo_utils::Result<std::pair<lyric_object::BoundType,lyric_common::TypeDef>>
+    resolve_bound(
+        const lyric_common::TypeDef &placeholderType,
+        lyric_assembler::AssemblyState *state);
 }
 
 #endif // LYRIC_TYPING_RESOLVE_TEMPLATE_H

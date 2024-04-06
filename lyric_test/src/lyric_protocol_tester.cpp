@@ -64,7 +64,7 @@ lyric_test::LyricProtocolTester::runModuleInMockSandbox(
     std::filesystem::path modulePath = "/";
     modulePath /= sourcePath;
     modulePath.replace_extension();
-    lyric_common::AssemblyLocation moduleLocation(modulePath);
+    lyric_common::AssemblyLocation moduleLocation(modulePath.string());
 
     TU_CONSOLE_OUT << "";
     TU_CONSOLE_OUT << "======== RUN: " << moduleLocation << " ========";

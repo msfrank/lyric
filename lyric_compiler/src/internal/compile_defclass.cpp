@@ -20,6 +20,7 @@
 static tempo_utils::Result<std::string>
 compile_defclass_val(
     lyric_assembler::ClassSymbol *classSymbol,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
     const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
@@ -52,8 +53,8 @@ compile_defclass_val(
     lyric_common::SymbolUrl init;
     if (walker.numChildren() > 0) {
         auto defaultInit = walker.getChild(0);
-        auto compileDefaultResult = lyric_compiler::internal::compile_default_initializer(classSymbol->classBlock(),
-            identifier, valType, defaultInit, moduleEntry);
+        auto compileDefaultResult = lyric_compiler::internal::compile_default_initializer(
+            classSymbol->classBlock(), identifier, templateParameters, valType, defaultInit, moduleEntry);
         if (compileDefaultResult.isStatus())
             return compileDefaultResult.getStatus();
         init = compileDefaultResult.getResult();
@@ -71,6 +72,7 @@ compile_defclass_val(
 static tempo_utils::Result<std::string>
 compile_defclass_var(
     lyric_assembler::ClassSymbol *classSymbol,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
     const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
@@ -103,8 +105,8 @@ compile_defclass_var(
     lyric_common::SymbolUrl init;
     if (walker.numChildren() > 0) {
         auto defaultInit = walker.getChild(0);
-        auto compileDefaultResult = lyric_compiler::internal::compile_default_initializer(classSymbol->classBlock(),
-            identifier, varType, defaultInit, moduleEntry);
+        auto compileDefaultResult = lyric_compiler::internal::compile_default_initializer(
+            classSymbol->classBlock(), identifier, templateParameters, varType, defaultInit, moduleEntry);
         if (compileDefaultResult.isStatus())
             return compileDefaultResult.getStatus();
         init = compileDefaultResult.getResult();
@@ -122,6 +124,7 @@ compile_defclass_var(
 static tempo_utils::Status
 compile_defclass_init(
     lyric_assembler::ClassSymbol *classSymbol,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
     const lyric_parser::NodeWalker &initPack,
     const lyric_parser::NodeWalker &initSuper,
     const lyric_parser::NodeWalker &initBody,
@@ -144,8 +147,8 @@ compile_defclass_init(
         packSpec = parsePackResult.getResult();
         for (const auto &p : packSpec.parameterSpec) {
             if (!p.init.isEmpty()) {
-                auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(classBlock,
-                    p.name, p.type, p.init.getValue(), moduleEntry);
+                auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(
+                    classBlock, p.name, templateParameters, p.type, p.init.getValue(), moduleEntry);
                 if (compileInitializerResult.isStatus())
                     return compileInitializerResult.getStatus();
                 initializers[p.name] = compileInitializerResult.getResult();
@@ -277,6 +280,7 @@ compile_defclass_init(
 static tempo_utils::Status
 compile_defclass_def(
     lyric_assembler::ClassSymbol *classSymbol,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
     const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
@@ -312,8 +316,8 @@ compile_defclass_def(
     absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
     for (const auto &p : packSpec.parameterSpec) {
         if (!p.init.isEmpty()) {
-            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(classBlock,
-                p.name, p.type, p.init.getValue(), moduleEntry);
+            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(
+                classBlock, p.name, templateParameters, p.type, p.init.getValue(), moduleEntry);
             if (compileInitializerResult.isStatus())
                 return compileInitializerResult.getStatus();
             initializers[p.name] = compileInitializerResult.getResult();
@@ -357,14 +361,20 @@ compile_defclass_def(
     if (!status.isOk())
         return status;
 
+    bool isReturnable;
+
     // validate that body returns the expected type
-    if (!typeSystem->isAssignable(call->getReturnType(), bodyType))
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    if (!isReturnable)
         return classBlock->logAndContinue(body,
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", call->getReturnType().toString());
+
+    // validate that each exit returns the expected type
     for (const auto &exitType : call->listExitTypes()) {
-        if (!typeSystem->isAssignable(call->getReturnType(), exitType))
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+        if (!isReturnable)
             return classBlock->logAndContinue(body,
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
@@ -378,6 +388,7 @@ compile_defclass_def(
 static tempo_utils::Status
 compile_defclass_impl_def(
     lyric_assembler::ImplHandle *implHandle,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
     const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
@@ -414,8 +425,8 @@ compile_defclass_impl_def(
     absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
     for (const auto &p : packSpec.parameterSpec) {
         if (!p.init.isEmpty()) {
-            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(implBlock,
-                p.name, p.type, p.init.getValue(), moduleEntry);
+            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(
+                implBlock, p.name, templateParameters, p.type, p.init.getValue(), moduleEntry);
             if (compileInitializerResult.isStatus())
                 return compileInitializerResult.getStatus();
             initializers[p.name] = compileInitializerResult.getResult();
@@ -449,14 +460,20 @@ compile_defclass_impl_def(
     if (!status.isOk())
         return status;
 
+    bool isReturnable;
+
     // validate that body returns the expected type
-    if (!typeSystem->isAssignable(call->getReturnType(), bodyType))
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    if (!isReturnable)
         return implBlock->logAndContinue(body,
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", call->getReturnType().toString());
+
+    // validate that each exit returns the expected type
     for (const auto &exitType : call->listExitTypes()) {
-        if (!typeSystem->isAssignable(call->getReturnType(), exitType))
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+        if (!isReturnable)
             return implBlock->logAndContinue(body,
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
@@ -470,6 +487,7 @@ compile_defclass_impl_def(
 static tempo_utils::Status
 compile_defclass_impl(
     lyric_assembler::ClassSymbol *classSymbol,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
     const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
@@ -501,7 +519,7 @@ compile_defclass_impl(
         moduleEntry.parseIdOrThrow(child, lyric_schema::kLyricAstVocabulary, childId);
         switch (childId) {
             case lyric_schema::LyricAstId::Def:
-                status = compile_defclass_impl_def(implHandle, child, moduleEntry);
+                status = compile_defclass_impl_def(implHandle, templateParameters, child, moduleEntry);
                 break;
             default:
                 classBlock->throwSyntaxError(child, "expected impl def");
@@ -650,40 +668,34 @@ lyric_compiler::internal::compile_defclass(
 
     TU_LOG_INFO << "declared class " << identifier << " from " << superClassUrl << " with url " << classUrl;
 
-    tempo_utils::Status status;
     absl::flat_hash_set<std::string> classMemberNames;
 
     // compile members first
     for (const auto &val : vals) {
-        auto compileValResult = compile_defclass_val(classSymbol, val, moduleEntry);
-        if (compileValResult.isStatus())
-            return compileValResult.getStatus();
-        classMemberNames.insert(compileValResult.getResult());
+        std::string memberName;
+        TU_ASSIGN_OR_RETURN (memberName, compile_defclass_val(
+            classSymbol, templateSpec.templateParameters, val, moduleEntry));
+        classMemberNames.insert(memberName);
     }
     for (const auto &var : vars) {
-        auto compileVarResult = compile_defclass_var(classSymbol, var, moduleEntry);
-        if (compileVarResult.isStatus())
-            return compileVarResult.getStatus();
-        classMemberNames.insert(compileVarResult.getResult());
+        std::string memberName;
+        TU_ASSIGN_OR_RETURN (memberName, compile_defclass_var(
+            classSymbol, templateSpec.templateParameters, var, moduleEntry));
+        classMemberNames.insert(memberName);
     }
 
     // then compile constructor, which might be the default constructor if an init was not specified
-    status = compile_defclass_init(classSymbol, initPack, initSuper, initBody, classMemberNames, moduleEntry);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (compile_defclass_init(
+        classSymbol, templateSpec.templateParameters, initPack, initSuper, initBody, classMemberNames, moduleEntry));
 
     // then compile methods
     for (const auto &def : defs) {
-        status = compile_defclass_def(classSymbol, def, moduleEntry);
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (compile_defclass_def(classSymbol, templateSpec.templateParameters, def, moduleEntry));
     }
 
     // compile impls last
     for (const auto &impl : impls) {
-        status = compile_defclass_impl(classSymbol, impl, moduleEntry);
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (compile_defclass_impl(classSymbol, templateSpec.templateParameters, impl, moduleEntry));
     }
 
     if (classSymbolPtr) {

@@ -72,7 +72,9 @@ lyric_compiler::internal::compile_var(
         varType = exprResult.getResult();
 
     // var type was explicitly declared and is disjoint from rvalue type
-    if (!typeSystem->isAssignable(varType, resultType))
+    bool isAssignable;
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(varType, resultType));
+    if (!isAssignable)
         return block->logAndContinue(CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "rvalue type {} is incompatible with var type {}", resultType.toString(), varType.toString());

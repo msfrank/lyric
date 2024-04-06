@@ -16,6 +16,7 @@ tempo_utils::Result<lyric_common::SymbolUrl>
 lyric_compiler::internal::compile_default_initializer(
     lyric_assembler::BlockHandle *block,
     const std::string &name,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
     const lyric_parser::Assignable &type,
     const lyric_parser::NodeWalker &walker,
     ModuleEntry &moduleEntry)
@@ -28,7 +29,7 @@ lyric_compiler::internal::compile_default_initializer(
 
     // declare the initializer
     auto declareInitializerResult = block->declareFunction(identifier,
-        {}, {}, {}, type, lyric_object::AccessType::Public, {});
+        {}, {}, {}, type, lyric_object::AccessType::Public, templateParameters);
     if (declareInitializerResult.isStatus())
         return declareInitializerResult.getStatus();
     auto initializerUrl = declareInitializerResult.getResult();
@@ -77,13 +78,19 @@ lyric_compiler::internal::compile_default_initializer(
     if (!status.isOk())
         return status;
 
+    bool isReturnable;
+
     // validate that body returns the expected type
-    if (!typeSystem->isAssignable(call->getReturnType(), bodyType))
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    if (!isReturnable)
         return block->logAndContinue(CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "initializer is incompatible with type {}", call->getReturnType().toString());
+
+    // validate that each exit returns the expected type
     for (const auto &exitType : call->listExitTypes()) {
-        if (!typeSystem->isAssignable(call->getReturnType(), exitType))
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+        if (!isReturnable)
             return block->logAndContinue(CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "initializer is incompatible with type {}", call->getReturnType().toString());
@@ -122,20 +129,26 @@ lyric_compiler::internal::compile_static_initializer(
     auto exprResult = compile_expression(block, walker, moduleEntry);
     if (exprResult.isStatus())
         return exprResult.getStatus();
-    auto resultType = exprResult.getResult();
+    auto bodyType = exprResult.getResult();
 
     // add return instruction
     auto status = code->writeOpcode(lyric_object::Opcode::OP_RETURN);
     if (!status.isOk())
         return status;
 
+    bool isReturnable;
+
     // validate that body returns the expected type
-    if (!typeSystem->isAssignable(call->getReturnType(), resultType))
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    if (!isReturnable)
         return block->logAndContinue(CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "initializer is incompatible with type {}", call->getReturnType().toString());
+
+    // validate that each exit returns the expected type
     for (const auto &exitType : call->listExitTypes()) {
-        if (!typeSystem->isAssignable(call->getReturnType(), exitType))
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+        if (!isReturnable)
             return block->logAndContinue(CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "initializer is incompatible with type {}", call->getReturnType().toString());

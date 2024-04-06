@@ -17,6 +17,7 @@
 static tempo_utils::Status
 compile_defconcept_def(
     lyric_assembler::ConceptSymbol *conceptSymbol,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
     const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
@@ -53,8 +54,8 @@ compile_defconcept_def(
     absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
     for (const auto &p : packSpec.parameterSpec) {
         if (!p.init.isEmpty()) {
-            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(conceptBlock,
-                p.name, p.type, p.init.getValue(), moduleEntry);
+            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(
+                conceptBlock, p.name, templateParameters, p.type, p.init.getValue(), moduleEntry);
             if (compileInitializerResult.isStatus())
                 return compileInitializerResult.getStatus();
             initializers[p.name] = compileInitializerResult.getResult();
@@ -154,9 +155,8 @@ lyric_compiler::internal::compile_defconcept(
 
     // compile actions
     for (const auto &def : defs) {
-        auto status = compile_defconcept_def(conceptSymbol, def, moduleEntry);
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (compile_defconcept_def(
+            conceptSymbol, templateSpec.templateParameters, def, moduleEntry));
     }
 
     if (conceptSymbolPtr != nullptr) {

@@ -38,7 +38,7 @@ write_template(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant,
                     "invalid placeholder variance");
         }
-        placeholders.emplace_back(lyo1::Placeholder(variance, name_offset));
+        placeholders.emplace_back(variance, name_offset);
 
         if (tp.bound != lyric_object::BoundType::None) {
             lyo1::ConstraintBound bound;
@@ -64,7 +64,7 @@ write_template(
                     "missing constraint type");
 
             auto address = typeCache->getType(tp.typeDef)->getAddress();
-            constraints.emplace_back(lyo1::Constraint(placeholder_offset, bound, address.getAddress()));
+            constraints.emplace_back(placeholder_offset, bound, address.getAddress());
         }
     }
 

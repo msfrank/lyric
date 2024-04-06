@@ -117,9 +117,9 @@ lyric_common::SymbolUrl::operator!=(const lyric_common::SymbolUrl &other) const
 }
 
 lyric_common::SymbolUrl
-lyric_common::SymbolUrl::fromString(const std::string &string)
+lyric_common::SymbolUrl::fromString(std::string_view s)
 {
-    auto url = tempo_utils::Url::fromString(string);
+    auto url = tempo_utils::Url::fromString(s);
     return fromUrl(url);
 }
 
@@ -128,25 +128,15 @@ lyric_common::SymbolUrl::fromUrl(const tempo_utils::Url &url)
 {
     if (!url.isValid())
         return {};
-    auto fragment = url.getFragment();
+    auto fragment = url.fragmentView();
     if (fragment.empty())
         return {};
 
-    AssemblyLocation location;
-    if (url.hasScheme()) {
-        location = AssemblyLocation::fromUrl(tempo_utils::Url::fromAbsolute(url.getScheme(),
-            url.toAuthority().toString(), url.pathView(), url.queryView()));
-    } else {
-        auto origin = url.toOrigin();
-        if (origin.isValid()) {
-            location = AssemblyLocation::fromUrl(tempo_utils::Url::fromOrigin(origin.toString(),
-                url.pathView(), url.queryView()));
-        } else {
-            location = AssemblyLocation::fromUrl(tempo_utils::Url::fromRelative(url.pathView(), url.queryView()));
-        }
-    }
+    auto urlWithoutFragment = url.withFragment("");
+    AssemblyLocation location = urlWithoutFragment.isValid()?
+        AssemblyLocation::fromUrl(urlWithoutFragment) : AssemblyLocation() ;
 
-    auto path = lyric_common::SymbolPath::fromString(fragment.substr(1));
+    auto path = lyric_common::SymbolPath::fromString(fragment);
     return lyric_common::SymbolUrl(location, path);
 }
 

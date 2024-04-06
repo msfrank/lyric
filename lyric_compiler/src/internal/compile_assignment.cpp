@@ -104,8 +104,11 @@ compile_set_name(
         rvalueType = inplaceResult.getResult();
     }
 
+    bool isAssignable;
+
     // check that the rhs is assignable to the target type
-    if (!typeSystem->isAssignable(targetType, rvalueType))
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(targetType, rvalueType));
+    if (!isAssignable)
         return state->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "target does not match rvalue type {}", rvalueType.toString());
@@ -316,8 +319,11 @@ compile_set_member(
         rvalueType = inplaceResult.getResult();
     }
 
+    bool isAssignable;
+
     // check that the rhs is assignable to the member type
-    if (!typeSystem->isAssignable(var.type, rvalueType))
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(var.type, rvalueType));
+    if (!isAssignable)
         return state->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "member does not match rvalue type {}", rvalueType.toString());

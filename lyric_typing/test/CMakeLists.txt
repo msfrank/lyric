@@ -4,25 +4,33 @@ include(GoogleTest)
 
 # define unit tests
 
-set(TEST_CASE_PREFIX lyric_typing)
 set(TEST_CASES
     callsite_reifier_tests.cpp
+    compare_assignable_tests.cpp
+    is_assignable_tests.cpp
     )
 
 # define test suite driver
 
-set(TESTSUITE_EXECUTABLE "${TEST_CASE_PREFIX}_testsuite")
-add_executable(${TESTSUITE_EXECUTABLE} ${TEST_CASES})
-target_link_libraries(${TESTSUITE_EXECUTABLE} PUBLIC
+add_executable(lyric_typing_testsuite ${TEST_CASES} base_fixture.cpp base_fixture.h)
+target_compile_definitions(lyric_typing_testsuite PRIVATE
+    "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
+    )
+target_link_libraries(lyric_typing_testsuite PUBLIC
+    lyric::lyric_bootstrap
     lyric::lyric_typing
     gtest::gtest
     )
-gtest_discover_tests(${TESTSUITE_EXECUTABLE})
+gtest_discover_tests(lyric_typing_testsuite DISCOVERY_TIMEOUT 30)
 
 # define test suite static library
 
-add_library(LyricTypingTestSuite OBJECT ${TEST_CASES})
+add_library(LyricTypingTestSuite OBJECT ${TEST_CASES} base_fixture.cpp base_fixture.h)
+target_compile_definitions(LyricTypingTestSuite PRIVATE
+    "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
+    )
 target_link_libraries(LyricTypingTestSuite PUBLIC
+    lyric::lyric_bootstrap
     lyric::lyric_typing
     gtest::gtest
     )

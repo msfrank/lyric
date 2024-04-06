@@ -354,6 +354,8 @@ lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &ar
 {
     auto *state = m_typeSystem->getState();
 
+    bool isAssignable;
+
     // next argument is part of the fixed parameter list
     if (m_argumentTypes.size() < m_parameters.size()) {
         int index = m_argumentTypes.size();
@@ -392,10 +394,12 @@ lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &ar
         }
 
         //
-        if (!m_typeSystem->isAssignable(paramType, argumentType))
+        TU_ASSIGN_OR_RETURN (isAssignable, m_typeSystem->isAssignable(paramType, argumentType));
+        if (!isAssignable)
             return state->logAndContinue(lyric_assembler::AssemblerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "argument type {} is not compatible with parameter {}", argumentType.toString(), param.name);
+
         m_argumentTypes.push_back(argumentType);
 
         // if there is no type handle for type, then create it
@@ -435,7 +439,8 @@ lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &ar
     }
 
     //
-    if (!m_typeSystem->isAssignable(paramType, argumentType))
+    TU_ASSIGN_OR_RETURN (isAssignable, m_typeSystem->isAssignable(paramType, argumentType));
+    if (!isAssignable)
         return state->logAndContinue(lyric_assembler::AssemblerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "argument type {} is not compatible with parameter {}", argumentType.toString(), rest.name);

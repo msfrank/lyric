@@ -4,21 +4,19 @@ include(GoogleTest)
 
 # define unit tests
 
-set(TEST_CASE_PREFIX lyric_object)
 set(TEST_CASES
     type_walker_tests.cpp
     )
 
 # define test suite driver
 
-set(TESTSUITE_EXECUTABLE "${TEST_CASE_PREFIX}_testsuite")
-add_executable(${TESTSUITE_EXECUTABLE} ${TEST_CASES})
-target_link_libraries(${TESTSUITE_EXECUTABLE} PUBLIC
+add_executable(lyric_object_testsuite ${TEST_CASES})
+target_link_libraries(lyric_object_testsuite PUBLIC
     lyric::lyric_object
     flatbuffers::flatbuffers
     gtest::gtest
     )
-gtest_discover_tests(${TESTSUITE_EXECUTABLE})
+gtest_discover_tests(lyric_object_testsuite DISCOVERY_TIMEOUT 30)
 
 # define test suite static library
 

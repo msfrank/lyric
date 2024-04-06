@@ -85,14 +85,20 @@ lyric_compiler::internal::compile_lambda(
     if (!status.isOk())
         return status;
 
+    bool isReturnable;
+
     // validate that body returns the expected type
-    if (!typeSystem->isAssignable(lambdaCall->getReturnType(), lambdaBodyType))
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(lambdaCall->getReturnType(), lambdaBodyType));
+    if (!isReturnable)
         return block->logAndContinue(lambdaBody,
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", lambdaCall->getReturnType().toString());
+
+    // validate that each exit returns the expected type
     for (const auto &exitType : lambdaCall->listExitTypes()) {
-        if (!typeSystem->isAssignable(lambdaCall->getReturnType(), exitType))
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(lambdaCall->getReturnType(), exitType));
+        if (!isReturnable)
             return block->logAndContinue(lambdaBody,
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,

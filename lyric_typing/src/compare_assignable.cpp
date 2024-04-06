@@ -110,36 +110,44 @@ compare_union_to_concrete(
 {
     TU_ASSERT (toConcrete.getType() == lyric_common::TypeDefType::Concrete);
     TU_ASSERT (fromUnion.getType() == lyric_common::TypeDefType::Union);
+    auto *typeCache = state->typeCache();
 
-    auto resolveToSignatureResult = state->typeCache()->resolveSignature(toConcrete.getConcreteUrl());
+    auto resolveToSignatureResult = typeCache->resolveSignature(toConcrete.getConcreteUrl());
     if (resolveToSignatureResult.isStatus())
         return resolveToSignatureResult.getStatus();
     auto toSig = resolveToSignatureResult.getResult();
 
-    lyric_runtime::TypeComparison comparison = lyric_runtime::TypeComparison::DISJOINT;
-
     for (auto iterator = fromUnion.unionMembersBegin(); iterator != fromUnion.unionMembersEnd(); iterator++) {
+        const auto &memberType = *iterator;
+
+        lyric_common::SymbolUrl memberUrl;
+        switch (memberType.getType()) {
+            case lyric_common::TypeDefType::Concrete: {
+                memberUrl = memberType.getConcreteUrl();
+                break;
+            }
+            case lyric_common::TypeDefType::Placeholder: {
+            }
+            default:
+                state->throwAssemblerInvariant(
+                    "union type {} has invalid member {}", fromUnion.toString(), memberType.toString());
+        }
+
         auto resolveMemberSignatureResult = state->typeCache()->resolveSignature(iterator->getConcreteUrl());
         if (resolveMemberSignatureResult.isStatus())
             return resolveMemberSignatureResult.getStatus();
         auto memberSig = resolveMemberSignatureResult.getResult();
 
         switch (memberSig.compare(toSig)) {
-            case lyric_runtime::TypeComparison::EXTENDS: {
-                if (comparison == lyric_runtime::TypeComparison::DISJOINT) {
-                    comparison = lyric_runtime::TypeComparison::EXTENDS;
-                }
-                break;
-            }
+            case lyric_runtime::TypeComparison::EXTENDS:
             case lyric_runtime::TypeComparison::EQUAL:
-                comparison = lyric_runtime::TypeComparison::EQUAL;
                 break;
             default:
                 return lyric_runtime::TypeComparison::DISJOINT;
         }
     }
 
-    return comparison;
+    return lyric_runtime::TypeComparison::EQUAL;
 }
 
 static tempo_utils::Result<lyric_runtime::TypeComparison>
@@ -170,9 +178,11 @@ compare_placeholder_to_placeholder(
     TU_ASSERT (toPlaceholder.getType() == lyric_common::TypeDefType::Placeholder);
     TU_ASSERT (fromPlaceholder.getType() == lyric_common::TypeDefType::Placeholder);
 
-    if (fromPlaceholder.getPlaceholderIndex() == toPlaceholder.getPlaceholderIndex())
-            return lyric_runtime::TypeComparison::EQUAL;
-    return lyric_runtime::TypeComparison::DISJOINT;
+    if (fromPlaceholder.getPlaceholderIndex() != toPlaceholder.getPlaceholderIndex())
+        return lyric_runtime::TypeComparison::DISJOINT;
+
+    return fromPlaceholder.getPlaceholderTemplateUrl() == toPlaceholder.getPlaceholderTemplateUrl()?
+        lyric_runtime::TypeComparison::EQUAL : lyric_runtime::TypeComparison::DISJOINT;
 }
 
 static tempo_utils::Result<lyric_runtime::TypeComparison>
@@ -207,10 +217,21 @@ compare_concrete_to_union(
 
     auto fromSig = resolveFromSignatureResult.getResult();
     for (auto iterator = toUnion.unionMembersBegin(); iterator != toUnion.unionMembersEnd(); iterator++) {
-        auto resolveToSignatureResult = state->typeCache()->resolveSignature(iterator->getConcreteUrl());
-        if (resolveToSignatureResult.isStatus())
-            return resolveToSignatureResult.getStatus();
-        auto toSig = resolveToSignatureResult.getResult();
+        const auto &memberType = *iterator;
+
+        lyric_assembler::TypeSignature toSig;
+        switch (memberType.getType()) {
+            case lyric_common::TypeDefType::Concrete: {
+                TU_ASSIGN_OR_RETURN (toSig, state->typeCache()->resolveSignature(memberType.getConcreteUrl()));
+                break;
+            }
+            case lyric_common::TypeDefType::Placeholder: {
+                break;
+            }
+            default:
+                state->throwAssemblerInvariant(
+                    "union type {} has invalid member {}", toUnion.toString(), memberType.toString());
+        }
 
         auto comparison = fromSig.compare(toSig);
         switch (comparison) {
@@ -236,11 +257,19 @@ compare_union_to_union(
 
     absl::flat_hash_map<lyric_common::SymbolUrl,lyric_common::TypeDef> toBaseMap;
     for (auto iterator = toUnion.unionMembersBegin(); iterator != toUnion.unionMembersEnd(); iterator++) {
-        if (iterator->getType() != lyric_common::TypeDefType::Concrete)
-            return state->logAndContinue(lyric_typing::TypingCondition::kInvalidType,
-                tempo_tracing::LogSeverity::kError,
-                "{} contains invalid union member {}", toUnion.toString(), iterator->toString());
-        auto toBaseUrl = iterator->getConcreteUrl();
+        lyric_common::SymbolUrl toBaseUrl;
+        switch (iterator->getType()) {
+            case lyric_common::TypeDefType::Concrete:
+                toBaseUrl = iterator->getConcreteUrl();
+                break;
+            case lyric_common::TypeDefType::Placeholder:
+                toBaseUrl = iterator->getPlaceholderTemplateUrl();
+                break;
+            default:
+                return state->logAndContinue(lyric_typing::TypingCondition::kInvalidType,
+                    tempo_tracing::LogSeverity::kError,
+                    "{} contains invalid union member {}", toUnion.toString(), iterator->toString());
+        }
         if (toBaseMap.contains(toBaseUrl))
             return state->logAndContinue(lyric_typing::TypingCondition::kInvalidType,
                 tempo_tracing::LogSeverity::kError,
@@ -250,11 +279,19 @@ compare_union_to_union(
 
     absl::flat_hash_map<lyric_common::SymbolUrl,lyric_common::TypeDef> fromBaseMap;
     for (auto iterator = fromUnion.unionMembersBegin(); iterator != fromUnion.unionMembersEnd(); iterator++) {
-        if (iterator->getType() != lyric_common::TypeDefType::Concrete)
-            return state->logAndContinue(lyric_typing::TypingCondition::kInvalidType,
-                tempo_tracing::LogSeverity::kError,
-                "{} contains invalid union member {}", fromUnion.toString(), iterator->toString());
-        auto fromBaseUrl = iterator->getConcreteUrl();
+        lyric_common::SymbolUrl fromBaseUrl;
+        switch (iterator->getType()) {
+            case lyric_common::TypeDefType::Concrete:
+                fromBaseUrl = iterator->getConcreteUrl();
+                break;
+            case lyric_common::TypeDefType::Placeholder:
+                fromBaseUrl = iterator->getPlaceholderTemplateUrl();
+                break;
+            default:
+                return state->logAndContinue(lyric_typing::TypingCondition::kInvalidType,
+                    tempo_tracing::LogSeverity::kError,
+                    "{} contains invalid union member {}", fromUnion.toString(), iterator->toString());
+        }
         if (fromBaseMap.contains(fromBaseUrl))
             return state->logAndContinue(lyric_typing::TypingCondition::kInvalidType,
                 tempo_tracing::LogSeverity::kError,
@@ -269,7 +306,7 @@ compare_union_to_union(
         // toUnion contains the exact type of the fromMember, no further checks needed
         if (toBaseMap.contains(fromBase.first)) {
             auto toBase = toBaseMap.extract(fromBase.first);
-            auto comparisonResult = compare_concrete_to_concrete(toBase.mapped(), fromBase.second, state);
+            auto comparisonResult = lyric_typing::compare_assignable(toBase.mapped(), fromBase.second, state);
             if (comparisonResult.isStatus())
                 return comparisonResult;
             auto comparison = comparisonResult.getResult();
