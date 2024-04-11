@@ -15,63 +15,73 @@
 #include <lyric_compiler/internal/compile_unwrap.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
-#include <lyric_typing/unify_assignable.h>
 #include <tempo_utils/log_stream.h>
 
-static tempo_utils::Status
+static tempo_utils::Result<lyric_common::TypeDef>
 compile_predicate(
     lyric_assembler::BlockHandle *block,
-    const lyric_assembler::SymbolBinding &target,
+    const lyric_assembler::DataReference &targetRef,
     const lyric_common::TypeDef &predicateType,
     const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (predicateType.isValid());
-
     auto *state = block->blockState();
+    auto *typeCache = state->typeCache();
+    auto *typeSystem = moduleEntry.getTypeSystem();
+
     auto *code = block->blockCode();
-    tempo_utils::Status status;
 
     // push target variable onto the top of the stack
-    status = block->load(target);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (block->load(targetRef));
 
     // pop target and push target type descriptor onto the stack
-    status = code->writeOpcode(lyric_object::Opcode::OP_TYPE_OF);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_TYPE_OF));
 
-    if (!state->typeCache()->hasType(predicateType))
+    if (!typeCache->hasType(predicateType))
         block->throwAssemblerInvariant("missing predicate type {}", predicateType.toString());
-    state->typeCache()->touchType(predicateType);
+    typeCache->touchType(predicateType);
 
-    // push isA type descriptor onto the stack
+    // determine the match type
+    lyric_common::TypeDef matchType;
     switch (predicateType.getType()) {
         case lyric_common::TypeDefType::Concrete: {
-            auto *typeHandle = state->typeCache()->getType(predicateType);
-            status = code->loadType(typeHandle->getAddress());
-            if (!status.isOk())
-                return status;
+            matchType = predicateType;
+            break;
+        }
+        case lyric_common::TypeDefType::Placeholder: {
+            std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
+            TU_ASSIGN_OR_RETURN (bound, typeSystem->resolveBound(predicateType));
+            if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
+                block->throwSyntaxError(walker,
+                    "predicate type {} cannot match; constraint must have Extends bounds",
+                    predicateType.toString());
+            matchType = bound.second;
             break;
         }
         default:
             block->throwAssemblerInvariant("invalid predicate type {}", predicateType.toString());
     }
 
-    // verify that the targetType can be a subtype of isAType
+    // push match type descriptor onto the stack
+    auto *typeHandle = typeCache->getType(matchType);
+    TU_RETURN_IF_NOT_OK (code->loadType(typeHandle->getAddress()));
+
+    // verify that the target type can be a subtype of match type
     TU_RETURN_IF_NOT_OK (
-        lyric_compiler::internal::match_types(target.type, predicateType, walker, block, moduleEntry));
+        lyric_compiler::internal::match_types(targetRef.typeDef, matchType, walker, block, moduleEntry));
 
     // perform type comparison
-    return code->writeOpcode(lyric_object::Opcode::OP_TYPE_CMP);
+    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_TYPE_CMP));
+
+    return matchType;
 }
 
 static tempo_utils::Result<lyric_assembler::MatchCasePatch>
 compile_match_case_symbol_ref(
     lyric_assembler::BlockHandle *block,
-    const lyric_assembler::SymbolBinding &target,
+    const lyric_assembler::DataReference &targetRef,
     const lyric_parser::NodeWalker &symbolRef,
     const lyric_parser::NodeWalker &body,
     lyric_compiler::ModuleEntry &moduleEntry)
@@ -118,42 +128,33 @@ compile_match_case_symbol_ref(
     // body is the consequent block
     moduleEntry.checkClassOrThrow(body, lyric_schema::kLyricAstBlockClass);
 
-    auto makeLabelResult = code->makeLabel();
-    if (makeLabelResult.isStatus())
-        return makeLabelResult.getStatus();
-    auto predicateLabel = makeLabelResult.getResult();
+    lyric_assembler::JumpLabel predicateLabel;
+    TU_ASSIGN_OR_RETURN (predicateLabel, code->makeLabel());
 
     // check whether the predicate case matches the target
-    auto status = compile_predicate(block, target, predicateType, symbolRef, moduleEntry);
-    if (!status.isOk())
-        return status;
+    lyric_common::TypeDef matchType;
+    TU_ASSIGN_OR_RETURN (matchType, compile_predicate(block, targetRef, predicateType, symbolRef, moduleEntry));
 
     // if the type comparison is <= 0, then invoke the consequent
-    auto predicateJumpResult = code->jumpIfGreaterThan();
-    if (predicateJumpResult.isStatus())
-        return predicateJumpResult.getStatus();
-    auto predicateJump = predicateJumpResult.getResult();
+    lyric_assembler::PatchOffset predicateJump;
+    TU_ASSIGN_OR_RETURN (predicateJump, code->jumpIfGreaterThan());
 
     // evaluate the consequent block
     lyric_assembler::BlockHandle consequent(block->blockProc(), block->blockCode(), block, block->blockState());
-    auto consequentResult = lyric_compiler::internal::compile_block(&consequent, body, moduleEntry);
-    if (consequentResult.isStatus())
-        return consequentResult.getStatus();
-    auto consequentType = consequentResult.getResult();
+    lyric_common::TypeDef consequentType;
+    TU_ASSIGN_OR_RETURN (consequentType, lyric_compiler::internal::compile_block(&consequent, body, moduleEntry));
 
-    auto consequentJumpResult = code->jump();
-    if (consequentJumpResult.isStatus())
-        return consequentJumpResult.getStatus();
-    auto consequentJump = consequentJumpResult.getResult();
+    lyric_assembler::PatchOffset consequentJump;
+    TU_ASSIGN_OR_RETURN (consequentJump, code->jump());
 
-    return lyric_assembler::MatchCasePatch(predicateType, predicateLabel,
+    return lyric_assembler::MatchCasePatch(matchType, predicateLabel,
         predicateJump, consequentJump, consequentType);
 }
 
 static tempo_utils::Result<lyric_assembler::MatchCasePatch>
 compile_match_case_unpack(
     lyric_assembler::BlockHandle *block,
-    const lyric_assembler::SymbolBinding &target,
+    const lyric_assembler::DataReference &targetRef,
     const lyric_parser::NodeWalker &unpack,
     const lyric_parser::NodeWalker &body,
     lyric_compiler::ModuleEntry &moduleEntry)
@@ -169,55 +170,43 @@ compile_match_case_unpack(
     moduleEntry.parseAttrOrThrow(unpack, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto assignedType = unpack.getNodeAtOffset(typeOffset);
     auto *typeSystem = moduleEntry.getTypeSystem();
-    auto resolveUnwrapType = typeSystem->resolveAssignable(block, assignedType);
-    if (resolveUnwrapType.isStatus())
-        return resolveUnwrapType.getStatus();
-    auto predicateType = resolveUnwrapType.getResult();
+
+    lyric_common::TypeDef predicateType;
+    TU_ASSIGN_OR_RETURN (predicateType, typeSystem->resolveAssignable(block, assignedType));
 
     // body is the consequent block
     moduleEntry.checkClassOrThrow(body, lyric_schema::kLyricAstBlockClass);
 
-    auto makeLabelResult = code->makeLabel();
-    if (makeLabelResult.isStatus())
-        return makeLabelResult.getStatus();
-    auto predicateLabel = makeLabelResult.getResult();
+    lyric_assembler::JumpLabel predicateLabel;
+    TU_ASSIGN_OR_RETURN (predicateLabel, code->makeLabel());
 
     // check whether the predicate case matches the target
-    auto status = compile_predicate(block, target, predicateType, unpack, moduleEntry);
-    if (!status.isOk())
-        return status;
+    lyric_common::TypeDef matchType;
+    TU_ASSIGN_OR_RETURN (matchType, compile_predicate(block, targetRef, predicateType, unpack, moduleEntry));
 
     // if the type comparison is <= 0, then invoke the consequent
-    auto predicateJumpResult = code->jumpIfGreaterThan();
-    if (predicateJumpResult.isStatus())
-        return predicateJumpResult.getStatus();
-    auto predicateJump = predicateJumpResult.getResult();
+    lyric_assembler::PatchOffset predicateJump;
+    TU_ASSIGN_OR_RETURN (predicateJump, code->jumpIfGreaterThan());
 
     // create a block scope for the consequent and declare any unwrap variables
     lyric_assembler::BlockHandle consequent(block->blockProc(), block->blockCode(), block, block->blockState());
-    status = lyric_compiler::internal::compile_unwrap(&consequent, unpack, predicateType, target, moduleEntry);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (
+        lyric_compiler::internal::compile_unwrap(&consequent, unpack, predicateType, targetRef, moduleEntry));
 
     // evaluate the consequent block
-    auto consequentResult = lyric_compiler::internal::compile_block(&consequent, body, moduleEntry);
-    if (consequentResult.isStatus())
-        return consequentResult.getStatus();
-    auto consequentType = consequentResult.getResult();
+    lyric_common::TypeDef consequentType;
+    TU_ASSIGN_OR_RETURN (consequentType, lyric_compiler::internal::compile_block(&consequent, body, moduleEntry));
 
-    auto consequentJumpResult = code->jump();
-    if (consequentJumpResult.isStatus())
-        return consequentJumpResult.getStatus();
-    auto consequentJump = consequentJumpResult.getResult();
+    lyric_assembler::PatchOffset consequentJump;
+    TU_ASSIGN_OR_RETURN (consequentJump, code->jump());
 
-    return lyric_assembler::MatchCasePatch(predicateType, predicateLabel,
-        predicateJump, consequentJump, consequentType);
+    return lyric_assembler::MatchCasePatch(matchType, predicateLabel, predicateJump, consequentJump, consequentType);
 }
 
 static tempo_utils::Result<lyric_assembler::MatchCasePatch>
 compile_match_case(
     lyric_assembler::BlockHandle *block,
-    const lyric_assembler::SymbolBinding &target,
+    const lyric_assembler::DataReference &targetRef,
     const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
@@ -234,9 +223,9 @@ compile_match_case(
     // first child of case is the unwrap matcher
     switch (predicateId) {
         case lyric_schema::LyricAstId::Unpack:
-            return compile_match_case_unpack(block, target, casePredicate, caseBody, moduleEntry);
+            return compile_match_case_unpack(block, targetRef, casePredicate, caseBody, moduleEntry);
         case lyric_schema::LyricAstId::SymbolRef:
-            return compile_match_case_symbol_ref(block, target, casePredicate, caseBody, moduleEntry);
+            return compile_match_case_symbol_ref(block, targetRef, casePredicate, caseBody, moduleEntry);
         default:
             block->throwSyntaxError(casePredicate, "invalid match case predicate");
     }
@@ -255,6 +244,7 @@ check_concrete_target_is_exhaustive(
     lyric_assembler::BlockHandle *block,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
+    TU_ASSERT (targetType.getType() == lyric_common::TypeDefType::Concrete);
     auto *state = moduleEntry.getState();
 
     auto *sym = state->symbolCache()->getSymbol(targetType.getConcreteUrl());
@@ -349,6 +339,32 @@ check_concrete_target_is_exhaustive(
  * @return
  */
 static tempo_utils::Result<bool>
+check_placeholder_target_is_exhaustive(
+    const lyric_common::TypeDef &targetType,
+    const std::vector<lyric_assembler::MatchCasePatch> &patchList,
+    lyric_assembler::BlockHandle *block,
+    lyric_compiler::ModuleEntry &moduleEntry)
+{
+    TU_ASSERT (targetType.getType() == lyric_common::TypeDefType::Placeholder);
+    auto *typeSystem = moduleEntry.getTypeSystem();
+
+    std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
+    TU_ASSIGN_OR_RETURN (bound, typeSystem->resolveBound(targetType));
+    if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
+        block->throwAssemblerInvariant(
+            "invalid target type {}; constraint must have Extends bounds",
+            targetType.toString());
+
+    return check_concrete_target_is_exhaustive(bound.second, patchList, block, moduleEntry);
+}
+
+/**
+ *
+ * @param targetType
+ * @param patchList
+ * @return
+ */
+static tempo_utils::Result<bool>
 check_union_target_is_exhaustive(
     const lyric_common::TypeDef &targetType,
     const std::vector<lyric_assembler::MatchCasePatch> &patchList,
@@ -357,8 +373,20 @@ check_union_target_is_exhaustive(
 {
     for (const auto &memberType : targetType.getUnionMembers()) {
         bool isExhaustive;
-        TU_ASSIGN_OR_RETURN (isExhaustive, check_concrete_target_is_exhaustive(
-            memberType, patchList, block, moduleEntry));
+        switch (memberType.getType()) {
+            case lyric_common::TypeDefType::Concrete: {
+                TU_ASSIGN_OR_RETURN (isExhaustive, check_concrete_target_is_exhaustive(
+                    memberType, patchList, block, moduleEntry));
+                break;
+            }
+            case lyric_common::TypeDefType::Placeholder: {
+                TU_ASSIGN_OR_RETURN (isExhaustive, check_placeholder_target_is_exhaustive(
+                    memberType, patchList, block, moduleEntry));
+                break;
+            }
+            default:
+                block->throwAssemblerInvariant("invalid target type member {}", memberType.toString());
+        }
         if (!isExhaustive)
             return false;
     }
@@ -399,10 +427,10 @@ lyric_compiler::internal::compile_match(
     auto declareTempResult = block->declareTemporary(targetType, lyric_parser::BindingType::VALUE);
     if (declareTempResult.isStatus())
         return declareTempResult.getStatus();
-    auto target = declareTempResult.getResult();
+    auto targetRef = declareTempResult.getResult();
 
     // store the result of the target in the temporary
-    status = block->store(target);
+    status = block->store(targetRef);
     if (!status.isOk())
         return status;
 
@@ -415,7 +443,7 @@ lyric_compiler::internal::compile_match(
     for (int i = 1; i < walker.numChildren(); i++) {
         auto matchCase = walker.getChild(i);
 
-        auto matchCaseResult = compile_match_case(block, target, matchCase, moduleEntry);
+        auto matchCaseResult = compile_match_case(block, targetRef, matchCase, moduleEntry);
         if (matchCaseResult.isStatus())
             return matchCaseResult.getStatus();
         auto casePatch = matchCaseResult.getResult();
@@ -496,6 +524,11 @@ lyric_compiler::internal::compile_match(
     switch (targetType.getType()) {
         case lyric_common::TypeDefType::Concrete: {
             TU_ASSIGN_OR_RETURN (isExhaustive, check_concrete_target_is_exhaustive(
+                targetType, patchList, block, moduleEntry));
+            break;
+        }
+        case lyric_common::TypeDefType::Placeholder: {
+            TU_ASSIGN_OR_RETURN (isExhaustive, check_placeholder_target_is_exhaustive(
                 targetType, patchList, block, moduleEntry));
             break;
         }

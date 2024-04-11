@@ -69,6 +69,10 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     auto *priv = getPriv();
     priv->classTemplate = classTemplate;
     TU_ASSERT(priv->classTemplate != nullptr);
+    for (auto it = classTemplate->templateParametersBegin(); it != classTemplate->templateParametersEnd(); it++) {
+        const auto &tp = *it;
+        TU_RAISE_IF_STATUS (priv->classBlock->declareAlias(tp.name, classTemplate->getTemplateUrl(), tp.index));
+    }
 }
 
 lyric_assembler::ClassSymbol::ClassSymbol(
@@ -112,11 +116,11 @@ lyric_assembler::ClassSymbol::load()
         FieldSymbol *fieldSymbol;
         TU_ASSIGN_OR_RAISE (fieldSymbol, importCache->importField(iterator->second));
 
-        SymbolBinding memberBinding;
-        memberBinding.symbol = iterator->second;
-        memberBinding.type = fieldSymbol->getAssignableType();
-        memberBinding.binding = fieldSymbol->isVariable()? lyric_parser::BindingType::VARIABLE : lyric_parser::BindingType::VALUE;
-        priv->members[iterator->first] = memberBinding;
+        DataReference memberRef;
+        memberRef.symbolUrl = iterator->second;
+        memberRef.typeDef = fieldSymbol->getAssignableType();
+        memberRef.referenceType = fieldSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
+        priv->members[iterator->first] = memberRef;
     }
 
     for (auto iterator = m_classImport->methodsBegin(); iterator != m_classImport->methodsEnd(); iterator++) {
@@ -243,23 +247,23 @@ lyric_assembler::ClassSymbol::hasMember(const std::string &name) const
     return priv->members.contains(name);
 }
 
-Option<lyric_assembler::SymbolBinding>
+Option<lyric_assembler::DataReference>
 lyric_assembler::ClassSymbol::getMember(const std::string &name) const
 {
     auto *priv = getPriv();
     if (priv->members.contains(name))
-        return Option<SymbolBinding>(priv->members.at(name));
-    return Option<SymbolBinding>();
+        return Option<DataReference>(priv->members.at(name));
+    return Option<DataReference>();
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::SymbolBinding>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::DataReference>::const_iterator
 lyric_assembler::ClassSymbol::membersBegin() const
 {
     auto *priv = getPriv();
     return priv->members.cbegin();
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::SymbolBinding>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::DataReference>::const_iterator
 lyric_assembler::ClassSymbol::membersEnd() const
 {
     auto *priv = getPriv();
@@ -273,7 +277,7 @@ lyric_assembler::ClassSymbol::numMembers() const
     return static_cast<tu_uint32>(priv->members.size());
 }
 
-tempo_utils::Result<lyric_assembler::SymbolBinding>
+tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::ClassSymbol::declareMember(
     const std::string &name,
     const lyric_parser::Assignable &memberSpec,
@@ -325,16 +329,16 @@ lyric_assembler::ClassSymbol::declareMember(
 
     m_state->typeCache()->touchType(memberType);
 
-    SymbolBinding var;
-    var.symbol = memberUrl;
-    var.type = memberType;
-    var.binding = isVariable? lyric_parser::BindingType::VARIABLE : lyric_parser::BindingType::VALUE;
-    priv->members[name] = var;
+    DataReference ref;
+    ref.symbolUrl = memberUrl;
+    ref.typeDef = memberType;
+    ref.referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
+    priv->members[name] = ref;
 
-    return var;
+    return ref;
 }
 
-tempo_utils::Result<lyric_assembler::SymbolBinding>
+tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::ClassSymbol::resolveMember(
     const std::string &name,
     AbstractMemberReifier &reifier,
@@ -352,11 +356,11 @@ lyric_assembler::ClassSymbol::resolveMember(
     }
 
     const auto &member = priv->members.at(name);
-    if (!m_state->symbolCache()->hasSymbol(member.symbol))
-        m_state->throwAssemblerInvariant("missing field symbol {}", member.symbol.toString());
-    auto *sym = m_state->symbolCache()->getSymbol(member.symbol);
+    if (!m_state->symbolCache()->hasSymbol(member.symbolUrl))
+        m_state->throwAssemblerInvariant("missing field symbol {}", member.symbolUrl.toString());
+    auto *sym = m_state->symbolCache()->getSymbol(member.symbolUrl);
     if (sym->getSymbolType() != SymbolType::FIELD)
-        m_state->throwAssemblerInvariant("invalid field symbol {}", member.symbol.toString());
+        m_state->throwAssemblerInvariant("invalid field symbol {}", member.symbolUrl.toString());
     auto *fieldSymbol = cast_symbol_to_field(sym);
     auto access = fieldSymbol->getAccessType();
 

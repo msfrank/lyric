@@ -121,6 +121,21 @@ namespace lyric_assembler {
     std::string fundamentalTypeToString(FundamentalSymbol fundamentalType);
     lyric_common::SymbolPath fundamentalTypeToSymbolPath(FundamentalSymbol fundamentalType);
 
+    enum class BindingType {
+        Invalid,
+        Descriptor,                     /**< binding refers to a symbol descriptor */
+        Placeholder,                    /**< binding refers to a template placeholder */
+        Value,                          /**< binding refers to a data value */
+        Variable,                       /**< binding refers to a data variable */
+    };
+
+    enum class ReferenceType {
+        Invalid,
+        Descriptor,                     /**< binding refers to a symbol descriptor */
+        Value,                          /**< binding refers to a data value */
+        Variable,                       /**< binding refers to a data variable */
+    };
+
     enum class PlacementType {
         INVALID,
         CTX,
@@ -465,15 +480,34 @@ namespace lyric_assembler {
         std::vector<TypeAddress> m_signature;
     };
 
+    /**
+     * A binding of a symbol to a block. A symbol can be bound to multiple blocks, and a symbol can be
+     * bound to the same block multiple times as long as each binding has a different name.
+     */
     struct SymbolBinding {
-        lyric_common::SymbolUrl symbol;
-        lyric_common::TypeDef type;
-        lyric_parser::BindingType binding;
+        lyric_common::SymbolUrl symbolUrl;
+        lyric_common::TypeDef typeDef;
+        BindingType bindingType;
         SymbolBinding();
         SymbolBinding(
             const lyric_common::SymbolUrl &symbol,
             const lyric_common::TypeDef &type,
-            lyric_parser::BindingType binding);
+            BindingType bindingType);
+    };
+
+    /**
+     * A reference to a datum. The datum may exist on the current stack frame (an argument, local, or
+     * rest cell), a parent frame (a lexical cell), or in a segment (a static cell).
+     */
+    struct DataReference {
+        lyric_common::SymbolUrl symbolUrl;          /**< The symbol which defines the datum */
+        lyric_common::TypeDef typeDef;              /**< The type of the datum */
+        ReferenceType referenceType;                /**< the reference type */
+        DataReference();
+        DataReference(
+            const lyric_common::SymbolUrl &symbolUrl,
+            const lyric_common::TypeDef &typeDef,
+            ReferenceType referenceType);
     };
 
     struct ActionMethod {

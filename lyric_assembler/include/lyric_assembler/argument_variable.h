@@ -11,7 +11,7 @@ namespace lyric_assembler {
         ArgumentVariable(
             const lyric_common::SymbolUrl &argumentUrl,
             const lyric_common::TypeDef &assignableType,
-            lyric_parser::BindingType binding,
+            BindingType bindingType,
             ArgumentOffset offset);
 
         SymbolType getSymbolType() const override;
@@ -21,13 +21,13 @@ namespace lyric_assembler {
         void touch() override;
 
         std::string getName() const;
-        lyric_parser::BindingType getBindingType() const;
+        BindingType getBindingType() const;
         ArgumentOffset getOffset() const;
 
     private:
         lyric_common::SymbolUrl m_argumentUrl;
         lyric_common::TypeDef m_assignableType;
-        lyric_parser::BindingType m_binding;
+        BindingType m_bindingType;
         ArgumentOffset m_offset;
     };
 

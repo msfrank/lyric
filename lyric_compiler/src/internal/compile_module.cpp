@@ -42,7 +42,7 @@ lyric_compiler::internal::compile_module(
         auto preludeLocation = state->fundamentalCache()->getPreludeLocation();
         auto *procBlock = entry->callProc()->procBlock();
         for (auto iterator = procBlock->symbolsBegin(); iterator != procBlock->symbolsEnd(); iterator++) {
-            auto symbolUrl = iterator->second.symbol;
+            auto symbolUrl = iterator->second.symbolUrl;
             // ignore core symbols since they are guaranteed to be present at runtime
             if (symbolUrl.getAssemblyLocation() == preludeLocation)
                 continue;

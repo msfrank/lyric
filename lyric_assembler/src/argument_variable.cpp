@@ -4,11 +4,11 @@
 lyric_assembler::ArgumentVariable::ArgumentVariable(
     const lyric_common::SymbolUrl &argumentUrl,
     const lyric_common::TypeDef &assignableType,
-    lyric_parser::BindingType binding,
+    BindingType bindingType,
     ArgumentOffset offset)
     : m_argumentUrl(argumentUrl),
       m_assignableType(assignableType),
-      m_binding(binding),
+      m_bindingType(bindingType),
       m_offset(offset)
 {
 }
@@ -34,7 +34,7 @@ lyric_assembler::ArgumentVariable::getAssignableType() const
 lyric_assembler::TypeSignature
 lyric_assembler::ArgumentVariable::getTypeSignature() const
 {
-    return TypeSignature();
+    return {};
 }
 
 void
@@ -48,10 +48,10 @@ lyric_assembler::ArgumentVariable::getName() const
     return m_argumentUrl.getSymbolPath().getName();
 }
 
-lyric_parser::BindingType
+lyric_assembler::BindingType
 lyric_assembler::ArgumentVariable::getBindingType() const
 {
-    return m_binding;
+    return m_bindingType;
 }
 
 lyric_assembler::ArgumentOffset

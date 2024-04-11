@@ -35,13 +35,13 @@ lyric_assembler::ExtensionInvoker::ExtensionInvoker(
     ConceptSymbol *conceptSymbol,
     ActionSymbol *actionSymbol,
     const lyric_common::TypeDef &receiverType,
-    const SymbolBinding &var)
+    const DataReference &ref)
     : m_type(InvokeType::VIRTUAL),
       m_call(nullptr),
       m_proc(nullptr),
       m_concept(conceptSymbol),
       m_action(actionSymbol),
-      m_var(var)
+      m_ref(ref)
 {
     TU_ASSERT (m_concept != nullptr);
     TU_ASSERT (m_action != nullptr);
@@ -184,7 +184,7 @@ lyric_assembler::ExtensionInvoker::invoke(
         case InvokeType::VIRTUAL: {
             m_concept->touch();
             m_action->touch();
-            TU_RETURN_IF_NOT_OK (block->load(m_var));
+            TU_RETURN_IF_NOT_OK (block->load(m_ref));
             TU_RETURN_IF_NOT_OK (code->loadConcept(m_concept->getAddress()));
             TU_RETURN_IF_NOT_OK (
                 code->callConcept(

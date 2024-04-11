@@ -43,29 +43,29 @@ lyric_typing::resolve_S_or_P_type(
         return status;
 
     // resolve the base to a type
-    auto resolveTypePathResult = block->resolveDefinition(symbolPath);
+    auto resolveTypePathResult = block->resolveBinding(symbolPath.getPath());
     if (resolveTypePathResult.isStatus())
         return resolveTypePathResult.getStatus();
+    auto binding = resolveTypePathResult.getResult();
 
-    auto assignableType = lyric_common::TypeDef::forConcrete(
-        resolveTypePathResult.getResult(), typeParameters);
+    lyric_common::TypeDef assignableType;
+    switch (binding.bindingType) {
+        case lyric_assembler::BindingType::Descriptor: {
+            assignableType = lyric_common::TypeDef::forConcrete(binding.symbolUrl, typeParameters);
+            break;
+        }
+        case lyric_assembler::BindingType::Placeholder: {
+            assignableType = lyric_common::TypeDef::forPlaceholder(binding.typeDef.getPlaceholderIndex(),
+                binding.typeDef.getPlaceholderTemplateUrl(), typeParameters);
+            break;
+        }
+        default:
+            block->throwSyntaxError(walker, "cannot resolve type for binding {}", symbolPath.toString());
+    }
 
     // if type is in the typecache then we're done
     if (state->typeCache()->hasType(assignableType))
         return assignableType;
-
-    switch (assignableType.getType()) {
-        case lyric_common::TypeDefType::Concrete:
-            break;
-        case lyric_common::TypeDefType::Placeholder: {
-            // if placeholder has no type parameters, then we're done
-            if (assignableType.numPlaceholderArguments() == 0)
-                return assignableType;
-            block->throwSyntaxError(walker, "cannot resolve parameterized placeholder");
-        }
-        default:
-            block->throwSyntaxError(walker, "cannot resolve non-singular base type");
-    }
 
     status = state->typeCache()->makeType(assignableType);
     if (status.notOk())

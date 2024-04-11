@@ -176,15 +176,15 @@ compile_definstance_init(
             continue;
 
         // resolve the member binding
-        auto maybeBinding = instanceSymbol->getMember(memberName);
-        if (maybeBinding.isEmpty())
+        auto maybeMember = instanceSymbol->getMember(memberName);
+        if (maybeMember.isEmpty())
             instanceBlock->throwAssemblerInvariant("missing instance member {}", memberName);
-        auto fieldVar = maybeBinding.getValue();
-        if (!state->symbolCache()->hasSymbol(fieldVar.symbol))
-            instanceBlock->throwAssemblerInvariant("missing instance field {}", fieldVar.symbol.toString());
-        auto *sym = state->symbolCache()->getSymbol(fieldVar.symbol);
+        auto fieldRef = maybeMember.getValue();
+        if (!state->symbolCache()->hasSymbol(fieldRef.symbolUrl))
+            instanceBlock->throwAssemblerInvariant("missing instance field {}", fieldRef.symbolUrl.toString());
+        auto *sym = state->symbolCache()->getSymbol(fieldRef.symbolUrl);
         if (sym->getSymbolType() != lyric_assembler::SymbolType::FIELD)
-            instanceBlock->throwAssemblerInvariant("invalid instance field {}", fieldVar.symbol.toString());
+            instanceBlock->throwAssemblerInvariant("invalid instance field {}", fieldRef.symbolUrl.toString());
         auto *fieldSymbol = cast_symbol_to_field(sym);
         auto fieldInitializerUrl = fieldSymbol->getInitializer();
         if (!fieldInitializerUrl.isValid())
@@ -212,7 +212,7 @@ compile_definstance_init(
             return invokeInitializerResult.getStatus();
 
         // store default value in instance field
-        status = ctorBlock->store(fieldVar);
+        status = ctorBlock->store(fieldRef);
         if (!status.isOk())
             return status;
 
@@ -302,6 +302,8 @@ compile_definstance_def(
     if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         instanceBlock->throwAssemblerInvariant("invalid call symbol {}", methodUrl.toString());
     auto *call = cast_symbol_to_call(sym);
+
+    // add initializers to the call
     for (const auto &entry : initializers) {
         call->putInitializer(entry.first, entry.second);
     }
@@ -400,6 +402,8 @@ compile_definstance_impl_def(
     if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         implBlock->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
     auto *call = cast_symbol_to_call(sym);
+
+    // add initializers to the call
     for (const auto &entry : initializers) {
         call->putInitializer(entry.first, entry.second);
     }

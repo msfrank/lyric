@@ -1,6 +1,7 @@
 
 #include <lyric_assembler/argument_variable.h>
 #include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/synthetic_symbol.h>
@@ -96,11 +97,11 @@ lyric_assembler::CallSymbol::CallSymbol(
     auto thisType = receiverSymbol->getAssignableType();
     auto *thisSymbol = new SyntheticSymbol(thisUrl, SyntheticType::THIS, thisType);
     m_state->symbolCache()->insertSymbol(thisUrl, thisSymbol);
-    SymbolBinding thisVar;
-    thisVar.symbol = thisUrl;
-    thisVar.type = thisType;
-    thisVar.binding = lyric_parser::BindingType::VALUE;
-    bindings["$this"] = thisVar;
+    SymbolBinding thisBinding;
+    thisBinding.symbolUrl = thisUrl;
+    thisBinding.typeDef = thisType;
+    thisBinding.bindingType = BindingType::Value;
+    bindings["$this"] = thisBinding;
 
     // instantiate argument variables for ctx params
     for (const auto &param : parameters) {
@@ -108,20 +109,20 @@ lyric_assembler::CallSymbol::CallSymbol(
         auto paramPath = callUrl.getSymbolPath().getPath();
         paramPath.push_back(param.name);
         auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
-        auto binding = param.isVariable? lyric_parser::BindingType::VARIABLE : lyric_parser::BindingType::VALUE;
+        auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
         ArgumentOffset offset(static_cast<uint32_t>(param.index));
-        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, binding, offset);
+        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
         m_state->symbolCache()->insertSymbol(paramUrl, paramSymbol);
 
-        SymbolBinding var;
-        var.symbol = paramUrl;
-        var.type = param.typeDef;
-        var.binding = binding;
+        SymbolBinding argBinding;
+        argBinding.symbolUrl = paramUrl;
+        argBinding.typeDef = param.typeDef;
+        argBinding.bindingType = bindingType;
 
         if (!param.label.empty()) {
-            bindings[param.label] = var;
+            bindings[param.label] = argBinding;
         } else {
-            bindings[param.name] = var;
+            bindings[param.name] = argBinding;
         }
     }
 
@@ -163,6 +164,11 @@ lyric_assembler::CallSymbol::CallSymbol(
     auto *priv = getPriv();
     priv->callTemplate = callTemplate;
     TU_ASSERT (priv->callTemplate != nullptr);
+    auto *callBlock = priv->proc->procBlock();
+    for (auto it = callTemplate->templateParametersBegin(); it != callTemplate->templateParametersEnd(); it++) {
+        const auto &tp = *it;
+        TU_RAISE_IF_STATUS (callBlock->declareAlias(tp.name, callTemplate->getTemplateUrl(), tp.index));
+    }
 }
 
 
@@ -218,20 +224,20 @@ lyric_assembler::CallSymbol::CallSymbol(
         auto paramPath = callUrl.getSymbolPath().getPath();
         paramPath.push_back(param.name);
         auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
-        auto binding = param.isVariable? lyric_parser::BindingType::VARIABLE : lyric_parser::BindingType::VALUE;
+        auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
         ArgumentOffset offset(static_cast<uint32_t>(param.index));
-        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, binding, offset);
+        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
         m_state->symbolCache()->insertSymbol(paramUrl, paramSymbol);
 
-        SymbolBinding var;
-        var.symbol = paramUrl;
-        var.type = param.typeDef;
-        var.binding = binding;
+        SymbolBinding argBinding;
+        argBinding.symbolUrl = paramUrl;
+        argBinding.typeDef = param.typeDef;
+        argBinding.bindingType = bindingType;
 
         if (!param.label.empty()) {
-            bindings[param.label] = var;
+            bindings[param.label] = argBinding;
         } else {
-            bindings[param.name] = var;
+            bindings[param.name] = argBinding;
         }
     }
 
@@ -271,6 +277,11 @@ lyric_assembler::CallSymbol::CallSymbol(
     auto *priv = getPriv();
     priv->callTemplate = callTemplate;
     TU_ASSERT (priv->callTemplate != nullptr);
+    auto *callBlock = priv->proc->procBlock();
+    for (auto it = callTemplate->templateParametersBegin(); it != callTemplate->templateParametersEnd(); it++) {
+        const auto &tp = *it;
+        TU_RAISE_IF_STATUS (callBlock->declareAlias(tp.name, callTemplate->getTemplateUrl(), tp.index));
+    }
 }
 
 /**
@@ -288,7 +299,6 @@ lyric_assembler::CallSymbol::CallSymbol(
     TU_ASSERT (m_callUrl.isValid());
     TU_ASSERT (m_callImport != nullptr);
     TU_ASSERT (m_state != nullptr);
-
 }
 
 lyric_assembler::CallSymbolPriv *
@@ -348,6 +358,10 @@ lyric_assembler::CallSymbol::load()
 
     priv->initializers = absl::flat_hash_map<std::string,lyric_common::SymbolUrl>(
         m_callImport->initializersBegin(), m_callImport->initializersEnd());
+    auto *importCache = m_state->importCache();
+    for (const auto &entry : priv->initializers) {
+        TU_RAISE_IF_STATUS (importCache->importCall(entry.second));
+    }
 
     if (priv->mode == lyric_object::CallMode::Inline) {
         auto bytecode = m_callImport->getInlineBytecode();

@@ -131,15 +131,15 @@ compile_defstruct_init(
         }
     } else {
         for (const auto &memberName : structMemberNames) {
-            auto maybeBinding = structSymbol->getMember(memberName);
-            if (maybeBinding.isEmpty())
+            auto mayberMember = structSymbol->getMember(memberName);
+            if (mayberMember.isEmpty())
                 structBlock->throwAssemblerInvariant("missing struct member {}", memberName);
-            auto fieldVar = maybeBinding.getValue();
-            if (!state->symbolCache()->hasSymbol(fieldVar.symbol))
-                structBlock->throwAssemblerInvariant("missing struct field {}", fieldVar.symbol.toString());
-            auto *sym = state->symbolCache()->getSymbol(fieldVar.symbol);
+            auto fieldRef = mayberMember.getValue();
+            if (!state->symbolCache()->hasSymbol(fieldRef.symbolUrl))
+                structBlock->throwAssemblerInvariant("missing struct field {}", fieldRef.symbolUrl.toString());
+            auto *sym = state->symbolCache()->getSymbol(fieldRef.symbolUrl);
             if (sym->getSymbolType() != lyric_assembler::SymbolType::FIELD)
-                structBlock->throwAssemblerInvariant("invalid struct field {}", fieldVar.symbol.toString());
+                structBlock->throwAssemblerInvariant("invalid struct field {}", fieldRef.symbolUrl.toString());
             auto *fieldSymbol = cast_symbol_to_field(sym);
             auto fieldInitializerUrl = fieldSymbol->getInitializer();
 
@@ -173,6 +173,8 @@ compile_defstruct_init(
     if (ctorSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         structBlock->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
     auto *ctor = cast_symbol_to_call(ctorSym);
+
+    // add initializers to the ctor
     for (const auto &entry : initializers) {
         ctor->putInitializer(entry.first, entry.second);
     }
@@ -220,7 +222,7 @@ compile_defstruct_init(
         for (const auto &memberName : structMemberNames) {
 
             // resolve argument binding
-            auto resolveBindingResult = ctorBlock->resolveBinding(memberName);
+            auto resolveBindingResult = ctorBlock->resolveReference(memberName);
             if (resolveBindingResult.isStatus())
                 return resolveBindingResult.getStatus();
             auto argVar = resolveBindingResult.getResult();
@@ -256,15 +258,15 @@ compile_defstruct_init(
             continue;
 
         // resolve the member binding
-        auto maybeBinding = structSymbol->getMember(memberName);
-        if (maybeBinding.isEmpty())
+        auto maybeMember = structSymbol->getMember(memberName);
+        if (maybeMember.isEmpty())
             structBlock->throwAssemblerInvariant("missing struct member {}", memberName);
-        auto fieldVar = maybeBinding.getValue();
-        if (!state->symbolCache()->hasSymbol(fieldVar.symbol))
-            structBlock->throwAssemblerInvariant("missing struct field {}", fieldVar.symbol.toString());
-        auto *sym = state->symbolCache()->getSymbol(fieldVar.symbol);
+        auto fieldRef = maybeMember.getValue();
+        if (!state->symbolCache()->hasSymbol(fieldRef.symbolUrl))
+            structBlock->throwAssemblerInvariant("missing struct field {}", fieldRef.symbolUrl.toString());
+        auto *sym = state->symbolCache()->getSymbol(fieldRef.symbolUrl);
         if (sym->getSymbolType() != lyric_assembler::SymbolType::FIELD)
-            structBlock->throwAssemblerInvariant("invalid struct field {}", fieldVar.symbol.toString());
+            structBlock->throwAssemblerInvariant("invalid struct field {}", fieldRef.symbolUrl.toString());
         auto *fieldSymbol = cast_symbol_to_field(sym);
         auto fieldInitializerUrl = fieldSymbol->getInitializer();
         if (!fieldInitializerUrl.isValid())
@@ -292,7 +294,7 @@ compile_defstruct_init(
             return invokeInitializerResult.getStatus();
 
         // store default value in struct field
-        status = ctorBlock->store(fieldVar);
+        status = ctorBlock->store(fieldRef);
         if (!status.isOk())
             return status;
 
@@ -350,6 +352,18 @@ compile_defstruct_def(
         return parsePackResult.getStatus();
     auto packSpec = parsePackResult.getResult();
 
+    // compile initializers
+    absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
+    for (const auto &p : packSpec.parameterSpec) {
+        if (!p.init.isEmpty()) {
+            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(
+                structBlock, p.name, {}, p.type, p.init.getValue(), moduleEntry);
+            if (compileInitializerResult.isStatus())
+                return compileInitializerResult.getStatus();
+            initializers[p.name] = compileInitializerResult.getResult();
+        }
+    }
+
     // declare the method
     auto declareMethodResult = structSymbol->declareMethod(
         identifier, packSpec.parameterSpec,
@@ -363,6 +377,11 @@ compile_defstruct_def(
     if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         structBlock->throwAssemblerInvariant("invalid call symbol {}", methodUrl.toString());
     auto *call = cast_symbol_to_call(sym);
+
+    // add initializers to the call
+    for (const auto &entry : initializers) {
+        call->putInitializer(entry.first, entry.second);
+    }
 
     // compile the method body
     auto body = walker.getChild(1);
@@ -458,6 +477,8 @@ compile_defstruct_impl_def(
     if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         implBlock->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
     auto *call = cast_symbol_to_call(sym);
+
+    // add initializers to the call
     for (const auto &entry : initializers) {
         call->putInitializer(entry.first, entry.second);
     }

@@ -124,7 +124,7 @@ lyric_assembler::AssemblyState::initialize()
             return logAndContinue(AssemblerCondition::kImportError,
                 tempo_tracing::LogSeverity::kError,
                 "environment already contains binding {} referencing symbol {}",
-                symbolName, m_symbolcache->getEnvBinding(symbolName).symbol.toString());
+                symbolName, m_symbolcache->getEnvBinding(symbolName).symbolUrl.toString());
 
         switch (sym->getSymbolType()) {
 
@@ -138,9 +138,9 @@ lyric_assembler::AssemblyState::initialize()
             case lyric_assembler::SymbolType::ENUM:
             {
                 lyric_assembler::SymbolBinding binding;
-                binding.symbol = symbolUrl;
-                binding.type = sym->getAssignableType();
-                binding.binding = lyric_parser::BindingType::VALUE;
+                binding.symbolUrl = symbolUrl;
+                binding.typeDef = sym->getAssignableType();
+                binding.bindingType = BindingType::Descriptor;
                 m_symbolcache->insertEnvBinding(symbolName, binding);
                 break;
             }
@@ -148,10 +148,10 @@ lyric_assembler::AssemblyState::initialize()
             case lyric_assembler::SymbolType::STATIC:
             {
                 lyric_assembler::SymbolBinding binding;
-                binding.symbol = symbolUrl;
-                binding.type = sym->getAssignableType();
-                binding.binding = cast_symbol_to_static(sym)->isVariable()?
-                    lyric_parser::BindingType::VARIABLE : lyric_parser::BindingType::VALUE;
+                binding.symbolUrl = symbolUrl;
+                binding.typeDef = sym->getAssignableType();
+                binding.bindingType = cast_symbol_to_static(sym)->isVariable()?
+                    BindingType::Variable : BindingType::Value;
                 m_symbolcache->insertEnvBinding(symbolName, binding);
                 break;
             }
@@ -159,9 +159,9 @@ lyric_assembler::AssemblyState::initialize()
             case lyric_assembler::SymbolType::INSTANCE:
             {
                 lyric_assembler::SymbolBinding binding;
-                binding.symbol = symbolUrl;
-                binding.type = sym->getAssignableType();
-                binding.binding = lyric_parser::BindingType::VALUE;
+                binding.symbolUrl = symbolUrl;
+                binding.typeDef = sym->getAssignableType();
+                binding.bindingType = BindingType::Descriptor;
                 m_symbolcache->insertEnvBinding(symbolName, binding);
                 auto *instanceSymbol = cast_symbol_to_instance(sym);
                 for (auto iterator = instanceSymbol->implsBegin(); iterator != instanceSymbol->implsEnd(); iterator++) {

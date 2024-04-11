@@ -253,20 +253,43 @@ lyric_assembler::TypeSignature::operator!=(const TypeSignature &other) const
 }
 
 lyric_assembler::SymbolBinding::SymbolBinding()
-    : symbol(),
-      type(),
-      binding(lyric_parser::BindingType::VALUE)
+    : symbolUrl(),
+      typeDef(),
+      bindingType(BindingType::Invalid)
 {
 }
 
 lyric_assembler::SymbolBinding::SymbolBinding(
-    const lyric_common::SymbolUrl &symbol,
-    const lyric_common::TypeDef &type,
-    lyric_parser::BindingType binding)
-    : symbol(symbol),
-      type(type),
-      binding(binding)
+    const lyric_common::SymbolUrl &symbolUrl,
+    const lyric_common::TypeDef &typeDef,
+    BindingType bindingType)
+    : symbolUrl(symbolUrl),
+      typeDef(typeDef),
+      bindingType(bindingType)
 {
+    TU_ASSERT (symbolUrl.isValid());
+    TU_ASSERT (typeDef.isValid());
+    TU_ASSERT (bindingType != BindingType::Invalid);
+}
+
+lyric_assembler::DataReference::DataReference()
+    : symbolUrl(),
+      typeDef(),
+      referenceType(ReferenceType::Invalid)
+{
+}
+
+lyric_assembler::DataReference::DataReference(
+    const lyric_common::SymbolUrl &symbolUrl,
+    const lyric_common::TypeDef &typeDef,
+    ReferenceType referenceType)
+    : symbolUrl(symbolUrl),
+      typeDef(typeDef),
+      referenceType(referenceType)
+{
+    TU_ASSERT (symbolUrl.isValid());
+    TU_ASSERT (typeDef.isValid());
+    TU_ASSERT (referenceType != ReferenceType::Invalid);
 }
 
 lyric_assembler::ActionMethod::ActionMethod()
@@ -277,6 +300,7 @@ lyric_assembler::ActionMethod::ActionMethod()
 lyric_assembler::ActionMethod::ActionMethod(const lyric_common::SymbolUrl &methodAction)
     : methodAction(methodAction)
 {
+    TU_ASSERT (methodAction.isValid());
 }
 
 lyric_assembler::BoundMethod::BoundMethod()

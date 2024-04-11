@@ -81,11 +81,11 @@ lyric_assembler::EnumSymbol::load()
         FieldSymbol *fieldSymbol;
         TU_ASSIGN_OR_RAISE (fieldSymbol, importCache->importField(iterator->second));
 
-        SymbolBinding memberBinding;
-        memberBinding.symbol = iterator->second;
-        memberBinding.type = fieldSymbol->getAssignableType();
-        memberBinding.binding = fieldSymbol->isVariable()? lyric_parser::BindingType::VARIABLE : lyric_parser::BindingType::VALUE;
-        priv->members[iterator->first] = memberBinding;
+        DataReference memberRef;
+        memberRef.symbolUrl = iterator->second;
+        memberRef.typeDef = fieldSymbol->getAssignableType();
+        memberRef.referenceType = fieldSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
+        priv->members[iterator->first] = memberRef;
     }
 
     for (auto iterator = m_enumImport->methodsBegin(); iterator != m_enumImport->methodsEnd(); iterator++) {
@@ -205,23 +205,23 @@ lyric_assembler::EnumSymbol::hasMember(const std::string &name) const
     return priv->members.contains(name);
 }
 
-Option<lyric_assembler::SymbolBinding>
+Option<lyric_assembler::DataReference>
 lyric_assembler::EnumSymbol::getMember(const std::string &name) const
 {
     auto *priv = getPriv();
     if (priv->members.contains(name))
-        return Option<SymbolBinding>(priv->members.at(name));
+        return Option<DataReference>(priv->members.at(name));
     return {};
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::SymbolBinding>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::DataReference>::const_iterator
 lyric_assembler::EnumSymbol::membersBegin() const
 {
     auto *priv = getPriv();
     return priv->members.cbegin();
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::SymbolBinding>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::DataReference>::const_iterator
 lyric_assembler::EnumSymbol::membersEnd() const
 {
     auto *priv = getPriv();
@@ -235,7 +235,7 @@ lyric_assembler::EnumSymbol::numMembers() const
     return priv->members.size();
 }
 
-tempo_utils::Result<lyric_assembler::SymbolBinding>
+tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::EnumSymbol::declareMember(
     const std::string &name,
     const lyric_parser::Assignable &memberSpec,
@@ -284,16 +284,16 @@ lyric_assembler::EnumSymbol::declareMember(
 
     m_state->typeCache()->touchType(memberType);
 
-    SymbolBinding var;
-    var.symbol = memberUrl;
-    var.type = memberType;
-    var.binding = isVariable? lyric_parser::BindingType::VARIABLE : lyric_parser::BindingType::VALUE;
-    priv->members[name] = var;
+    DataReference ref;
+    ref.symbolUrl = memberUrl;
+    ref.typeDef = memberType;
+    ref.referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
+    priv->members[name] = ref;
 
-    return var;
+    return ref;
 }
 
-tempo_utils::Result<lyric_assembler::SymbolBinding>
+tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::EnumSymbol::resolveMember(
     const std::string &name,
     AbstractMemberReifier &reifier,
@@ -310,9 +310,9 @@ lyric_assembler::EnumSymbol::resolveMember(
         return priv->superEnum->resolveMember(name, reifier, receiverType, thisReceiver);
     }
     const auto &member = priv->members.at(name);
-    auto *sym = m_state->symbolCache()->getSymbol(member.symbol);
+    auto *sym = m_state->symbolCache()->getSymbol(member.symbolUrl);
     if (sym->getSymbolType() != SymbolType::FIELD)
-        m_state->throwAssemblerInvariant("invalid field symbol {}", member.symbol.toString());
+        m_state->throwAssemblerInvariant("invalid field symbol {}", member.symbolUrl.toString());
     auto *fieldSymbol = cast_symbol_to_field(sym);
     auto access = fieldSymbol->getAccessType();
 

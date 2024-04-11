@@ -19,7 +19,7 @@ namespace lyric_assembler {
         TypeHandle *structType;
         StructSymbol *superStruct;
         tu_uint32 allocatorTrap;
-        absl::flat_hash_map<std::string, SymbolBinding> members;
+        absl::flat_hash_map<std::string, DataReference> members;
         absl::flat_hash_set<std::string> initializedMembers;
         absl::flat_hash_map<std::string, BoundMethod> methods;
         absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *> impls;
@@ -65,17 +65,17 @@ namespace lyric_assembler {
          * struct member management
          */
         bool hasMember(const std::string &name) const;
-        Option<SymbolBinding> getMember(const std::string &name) const;
-        absl::flat_hash_map<std::string, SymbolBinding>::const_iterator membersBegin() const;
-        absl::flat_hash_map<std::string, SymbolBinding>::const_iterator membersEnd() const;
+        Option<DataReference> getMember(const std::string &name) const;
+        absl::flat_hash_map<std::string, DataReference>::const_iterator membersBegin() const;
+        absl::flat_hash_map<std::string, DataReference>::const_iterator membersEnd() const;
         tu_uint32 numMembers() const;
 
-        tempo_utils::Result<SymbolBinding> declareMember(
+        tempo_utils::Result<DataReference> declareMember(
             const std::string &name,
             const lyric_parser::Assignable &memberSpec,
             const lyric_common::SymbolUrl &init = {});
 
-        tempo_utils::Result<SymbolBinding> resolveMember(
+        tempo_utils::Result<DataReference> resolveMember(
             const std::string &name,
             AbstractMemberReifier &reifier,
             const lyric_common::TypeDef &receiverType,

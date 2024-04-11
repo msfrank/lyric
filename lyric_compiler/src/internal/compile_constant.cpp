@@ -219,22 +219,22 @@ compile_symbol_constant(
             tempo_tracing::LogSeverity::kError,
             "invalid symbol constant {}", symbolPath.toString());
 
-    lyric_assembler::SymbolBinding symbolVar;
+    lyric_assembler::DataReference constantRef;
 
     for (const auto &identifier : symbolPath.getPath()) {
-        auto resolveBindingResult = block->resolveBinding(identifier);
+        auto resolveBindingResult = block->resolveReference(identifier);
         if (resolveBindingResult.isStatus())
             return tempo_utils::Result<lyric_common::TypeDef>(resolveBindingResult.getStatus());
-        symbolVar = resolveBindingResult.getResult();
+        constantRef = resolveBindingResult.getResult();
 
-        if (symbolVar.binding != lyric_parser::BindingType::DESCRIPTOR)
+        if (constantRef.referenceType != lyric_assembler::ReferenceType::Descriptor)
             return block->logAndContinue(lyric_compiler::CompilerCondition::kMissingSymbol,
                 tempo_tracing::LogSeverity::kError,
                 "missing symbol {}", symbolPath.toString());
 
-        auto *symbol = block->blockState()->symbolCache()->getSymbol(symbolVar.symbol);
+        auto *symbol = block->blockState()->symbolCache()->getSymbol(constantRef.symbolUrl);
         if (symbol == nullptr)
-            block->throwAssemblerInvariant("missing symbol {}", symbolVar.symbol.toString());
+            block->throwAssemblerInvariant("missing symbol {}", constantRef.symbolUrl.toString());
 
         switch (symbol->getSymbolType()) {
             case lyric_assembler::SymbolType::CLASS: {
@@ -260,14 +260,14 @@ compile_symbol_constant(
             default:
                 return block->logAndContinue(lyric_compiler::CompilerCondition::kInvalidSymbol,
                     tempo_tracing::LogSeverity::kError,
-                    "invalid symbol constant {}", symbolVar.symbol.toString());
+                    "invalid symbol constant {}", constantRef.symbolUrl.toString());
         }
     }
 
-    auto status = block->load(symbolVar);
+    auto status = block->load(constantRef);
     if (status.notOk())
         return status;
-    return symbolVar.type;
+    return constantRef.typeDef;
 }
 
 tempo_utils::Result<lyric_common::TypeDef>

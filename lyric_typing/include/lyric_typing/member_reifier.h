@@ -33,7 +33,7 @@ namespace lyric_typing {
 
         bool isValid() const override;
 
-        tempo_utils::Result<lyric_assembler::SymbolBinding> reifyMember(
+        tempo_utils::Result<lyric_assembler::DataReference> reifyMember(
             const std::string &name,
             const lyric_assembler::FieldSymbol *fieldSymbol) override;
 
@@ -41,7 +41,7 @@ namespace lyric_typing {
         lyric_common::SymbolUrl m_templateUrl;
         std::vector<lyric_object::TemplateParameter> m_templateParameters;
         std::vector<lyric_common::TypeDef> m_reifiedPlaceholders;
-        absl::flat_hash_map<std::string, lyric_assembler::SymbolBinding> m_memberCache;
+        absl::flat_hash_map<std::string, lyric_assembler::DataReference> m_memberCache;
         TypeSystem *m_typeSystem;
 
         tempo_utils::Status checkPlaceholder(

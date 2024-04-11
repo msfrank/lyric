@@ -44,7 +44,7 @@ write_instance(
     std::vector<tu_uint32> members(instanceSymbol->numMembers());
     for (auto iterator = instanceSymbol->membersBegin(); iterator != instanceSymbol->membersEnd(); iterator++) {
         const auto &var = iterator->second;
-        auto *sym = symbolCache->getSymbol(var.symbol);
+        auto *sym = symbolCache->getSymbol(var.symbolUrl);
         if (sym == nullptr || sym->getSymbolType() != lyric_assembler::SymbolType::FIELD)
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid field symbol");

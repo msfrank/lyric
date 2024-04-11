@@ -4,6 +4,7 @@
 
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
+#include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/internal/compile_call.h>
@@ -26,6 +27,7 @@ lyric_compiler::internal::compile_placement(
     TU_ASSERT (walker.isValid());
     auto *typeSystem = moduleEntry.getTypeSystem();
     auto *state = moduleEntry.getState();
+    auto *symbolCache = state->symbolCache();
 
     auto placementBegin = invoker.placementBegin();
     auto placementEnd = invoker.placementEnd();
@@ -103,9 +105,11 @@ lyric_compiler::internal::compile_placement(
                     if (!invoker.hasInitializer(param->name))
                         bindingBlock->throwAssemblerInvariant("invalid parameter");
                     auto initializerUrl = invoker.getInitializer(param->name);
-                    auto *sym = state->symbolCache()->getSymbol(initializerUrl);
-                    if (sym == nullptr)
+
+                    auto *sym = symbolCache->getSymbol(initializerUrl);
+                    if (sym == nullptr) {
                         bindingBlock->throwAssemblerInvariant("missing initializer {}", initializerUrl.toString());
+                    }
                     if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
                         bindingBlock->throwAssemblerInvariant("invalid initializer {}", initializerUrl.toString());
                     lyric_assembler::CallInvoker call(cast_symbol_to_call(sym));
@@ -147,9 +151,9 @@ lyric_compiler::internal::compile_placement(
                         if (result.isStatus())
                             return result.getStatus();
                         auto ctxUrl = result.getResult().getConcreteUrl();
-                        if (!state->symbolCache()->hasSymbol(ctxUrl))
+                        if (!symbolCache->hasSymbol(ctxUrl))
                             bindingBlock->throwAssemblerInvariant("missing ctx symbol {}", ctxUrl.toString());
-                        auto *ctxSym = state->symbolCache()->getSymbol(ctxUrl);
+                        auto *ctxSym = symbolCache->getSymbol(ctxUrl);
                         if (ctxSym->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
                             bindingBlock->throwAssemblerInvariant("invalid ctx symbol {}", ctxUrl.toString());
                         auto *ctxInstance = cast_symbol_to_instance(ctxSym);
@@ -165,7 +169,7 @@ lyric_compiler::internal::compile_placement(
                     if (resolveInstanceResult.isStatus())
                         return resolveInstanceResult.getStatus();
                     auto evUrl = resolveInstanceResult.getResult();
-                    auto *evSymbol = state->symbolCache()->getSymbol(evUrl);
+                    auto *evSymbol = symbolCache->getSymbol(evUrl);
                     if (evSymbol == nullptr)
                         bindingBlock->throwAssemblerInvariant("missing ctx symbol {}", evUrl.toString());
                     if (evSymbol->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)

@@ -33,7 +33,7 @@ namespace lyric_assembler {
             ConceptSymbol *conceptSymbol,
             ActionSymbol *actionSymbol,
             const lyric_common::TypeDef &receiverType,
-            const SymbolBinding &var);
+            const DataReference &ref);
 
         bool isValid() const;
 
@@ -56,7 +56,7 @@ namespace lyric_assembler {
         ProcHandle *m_proc;
         ConceptSymbol *m_concept;
         ActionSymbol *m_action;
-        SymbolBinding m_var;
+        DataReference m_ref;
 
         std::vector<lyric_object::Parameter> m_parameters;
         Option<lyric_object::Parameter> m_rest;

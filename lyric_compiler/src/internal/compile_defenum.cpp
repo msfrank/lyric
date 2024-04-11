@@ -135,6 +135,8 @@ compile_defenum_def(
     if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         enumBlock->throwAssemblerInvariant("invalid call symbol {}", methodUrl.toString());
     auto *call = cast_symbol_to_call(sym);
+
+    // add initializers to the call
     for (const auto &entry : initializers) {
         call->putInitializer(entry.first, entry.second);
     }
@@ -255,10 +257,10 @@ compile_defenum_base_init(
             baseEnum->getAssignableType(), lyric_parser::BindingType::VALUE);
         if (declareThisResult.isStatus())
             return declareThisResult.getStatus();
-        auto var = declareThisResult.getResult();
+        auto thisRef = declareThisResult.getResult();
 
         // store instance in $this
-        status = initBlock.store(var);
+        status = initBlock.store(thisRef);
         if (!status.isOk())
             return status;
 
@@ -273,7 +275,7 @@ compile_defenum_base_init(
             return status;
 
         // load $this onto top of the stack
-        status = initBlock.load(var);
+        status = initBlock.load(thisRef);
         if (!status.isOk())
             return status;
     }
@@ -558,6 +560,8 @@ compile_defenum_impl_def(
     if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         implBlock->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
     auto *call = cast_symbol_to_call(sym);
+
+    // add initializers to the call
     for (const auto &entry : initializers) {
         call->putInitializer(entry.first, entry.second);
     }

@@ -15,7 +15,7 @@
 #include <lyric_typing/member_reifier.h>
 #include <tempo_utils/log_stream.h>
 
-static tempo_utils::Result<lyric_assembler::SymbolBinding>
+static tempo_utils::Result<lyric_assembler::DataReference>
 resolve_unwrap_instance(
     lyric_assembler::BlockHandle *block,
     const lyric_common::TypeDef &unwrapType,
@@ -43,8 +43,8 @@ resolve_unwrap_instance(
     // if the result is a valid symbol, then return symbol binding
     auto concreteInstanceUrl = resolveConcreteInstanceResult.getResult();
     if (concreteInstanceUrl.isValid())
-        return lyric_assembler::SymbolBinding(concreteInstanceUrl,
-            concreteReceiverType, lyric_parser::BindingType::VALUE);
+        return lyric_assembler::DataReference(concreteInstanceUrl,
+            concreteReceiverType, lyric_assembler::ReferenceType::Value);
 
     // resolve the instance for a generic unwrap type with a concrete tuple type
     auto *unwrapSymbol = state->symbolCache()->getSymbol(unwrapType.getConcreteUrl());
@@ -61,8 +61,8 @@ resolve_unwrap_instance(
     // if the result is a valid symbol, then return symbol binding
     auto genericConcreteInstanceUrl = resolveGenericConcreteInstanceResult.getResult();
     if (genericConcreteInstanceUrl.isValid())
-        return lyric_assembler::SymbolBinding(genericConcreteInstanceUrl,
-            genericConcreteReceiverType, lyric_parser::BindingType::VALUE);
+        return lyric_assembler::DataReference(genericConcreteInstanceUrl,
+            genericConcreteReceiverType, lyric_assembler::ReferenceType::Value);
 
     // resolve the instance for a generic unwrap type with a generic tuple type of the same arity
     auto genericUnwrapTypeArguments = genericUnwrapType.getConcreteArguments();
@@ -80,8 +80,8 @@ resolve_unwrap_instance(
     if (resolveGenericGenericInstanceResult.isStatus())
         return resolveGenericGenericInstanceResult.getStatus();
 
-    return lyric_assembler::SymbolBinding(resolveGenericGenericInstanceResult.getResult(),
-        genericGenericReceiverType, lyric_parser::BindingType::VALUE);
+    return lyric_assembler::DataReference(resolveGenericGenericInstanceResult.getResult(),
+        genericGenericReceiverType, lyric_assembler::ReferenceType::Value);
 }
 
 tempo_utils::Status
@@ -89,13 +89,14 @@ lyric_compiler::internal::compile_unwrap(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
     const lyric_common::TypeDef &unwrapType,
-    const lyric_assembler::SymbolBinding &target,
+    const lyric_assembler::DataReference &targetRef,
     ModuleEntry &moduleEntry)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
     auto *typeSystem = moduleEntry.getTypeSystem();
     auto *state = moduleEntry.getState();
+    auto *symbolCache = state->symbolCache();
 
     tempo_utils::Status status;
 
@@ -103,7 +104,7 @@ lyric_compiler::internal::compile_unwrap(
     if (walker.hasAttr(lyric_parser::kLyricAstIdentifier)) {
         std::string identifier;
         moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
-        auto declareAliasResult = block->declareAlias(identifier, target, unwrapType);
+        auto declareAliasResult = block->declareAlias(identifier, targetRef, unwrapType);
         if (declareAliasResult.isStatus())
             return declareAliasResult.getStatus();
     }
@@ -114,7 +115,7 @@ lyric_compiler::internal::compile_unwrap(
 
     // parse the unwrap list and declare locals for each param
     std::vector<lyric_common::TypeDef> tupleTypeArguments;
-    std::vector<std::pair<std::string,lyric_assembler::SymbolBinding>> unwrapVars;
+    std::vector<std::pair<std::string,lyric_assembler::DataReference>> unwrapRefs;
     for (int i = 0; i < walker.numChildren(); i++) {
         auto param = walker.getChild(i);
         moduleEntry.checkClassOrThrow(param, lyric_schema::kLyricAstParamClass);
@@ -134,7 +135,7 @@ lyric_compiler::internal::compile_unwrap(
             paramName, paramType, lyric_parser::BindingType::VARIABLE);
         if (declareParamResult.isStatus())
             return declareParamResult.getStatus();
-        unwrapVars.emplace_back(paramName, declareParamResult.getResult());
+        unwrapRefs.emplace_back(paramName, declareParamResult.getResult());
     }
 
     // resolve the instance implementing unwrap() for the specified unwrap type and tuple type
@@ -142,30 +143,30 @@ lyric_compiler::internal::compile_unwrap(
         tupleTypeArguments, moduleEntry);
     if (resolveUnwrapInstanceResult.isStatus())
         return resolveUnwrapInstanceResult.getStatus();
-    auto binding = resolveUnwrapInstanceResult.getResult();
-    auto *symbol = state->symbolCache()->getSymbol(binding.symbol);
+    auto instanceRef = resolveUnwrapInstanceResult.getResult();
+    auto *symbol = symbolCache->getSymbol(instanceRef.symbolUrl);
     if (symbol == nullptr)
-        block->throwAssemblerInvariant("missing instance symbol {}", binding.symbol.toString());
+        block->throwAssemblerInvariant("missing instance symbol {}", instanceRef.symbolUrl.toString());
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
-        block->throwAssemblerInvariant("invalid instance symbol {}", binding.symbol.toString());
+        block->throwAssemblerInvariant("invalid instance symbol {}", instanceRef.symbolUrl.toString());
     auto *instanceSymbol = cast_symbol_to_instance(symbol);
 
     // resolve Unwrap magnet
-    auto *impl = instanceSymbol->getImpl(binding.type);
+    auto *impl = instanceSymbol->getImpl(instanceRef.typeDef);
     if (impl == nullptr)
         return block->logAndContinue(CompilerCondition::kMissingImpl,
             tempo_tracing::LogSeverity::kError,
-            "missing impl for {}", binding.type.toString());
+            "missing impl for {}", instanceRef.typeDef.toString());
 
     auto extensionOption = impl->getExtension(kUnwrapExtensionName);
     if (extensionOption.isEmpty())
         return block->logAndContinue(CompilerCondition::kMissingAction,
             tempo_tracing::LogSeverity::kError,
-            "missing extension {} for impl {}", kUnwrapExtensionName, binding.type.toString());
+            "missing extension {} for impl {}", kUnwrapExtensionName, instanceRef.typeDef.toString());
     auto extension = extensionOption.getValue();
 
     auto extensionUrl = extension.methodCall;
-    symbol = state->symbolCache()->getSymbol(extensionUrl);
+    symbol = symbolCache->getSymbol(extensionUrl);
     if (symbol == nullptr)
         block->throwAssemblerInvariant("missing call symbol {}", extensionUrl.toString());
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
@@ -176,26 +177,26 @@ lyric_compiler::internal::compile_unwrap(
     if (extensionCall->isInline()) {
         extensionInvoker = lyric_assembler::ExtensionInvoker(extensionCall, extensionCall->callProc());
     } else if (extensionCall->isBound()) {
-        symbol = state->symbolCache()->getSymbol(binding.type.getConcreteUrl());
+        symbol = symbolCache->getSymbol(instanceRef.typeDef.getConcreteUrl());
         if (symbol == nullptr)
-            block->throwAssemblerInvariant("missing concept symbol {}", binding.type.getConcreteUrl().toString());
+            block->throwAssemblerInvariant("missing concept symbol {}", instanceRef.typeDef.getConcreteUrl().toString());
         if (symbol->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
-            block->throwAssemblerInvariant("invalid concept symbol {}", binding.type.getConcreteUrl().toString());
+            block->throwAssemblerInvariant("invalid concept symbol {}", instanceRef.typeDef.getConcreteUrl().toString());
         auto *conceptSymbol = cast_symbol_to_concept(symbol);
 
         auto resolveActionResult = conceptSymbol->getAction(kUnwrapExtensionName);
         if (resolveActionResult.isEmpty())
             block->throwAssemblerInvariant("missing action {} for concept symbol {}",
-                kUnwrapExtensionName, binding.type.getConcreteUrl().toString());
+                kUnwrapExtensionName, instanceRef.typeDef.getConcreteUrl().toString());
         auto action = resolveActionResult.getValue();
-        symbol = state->symbolCache()->getSymbol(action.methodAction);
+        symbol = symbolCache->getSymbol(action.methodAction);
         if (symbol->getSymbolType() != lyric_assembler::SymbolType::ACTION)
             block->throwAssemblerInvariant("invalid action symbol {}", action.methodAction.toString());
         auto *actionSymbol = cast_symbol_to_action(symbol);
 
         instanceSymbol->touch();
 
-        extensionInvoker = lyric_assembler::ExtensionInvoker(conceptSymbol, actionSymbol, binding.type, binding);
+        extensionInvoker = lyric_assembler::ExtensionInvoker(conceptSymbol, actionSymbol, instanceRef.typeDef, instanceRef);
     } else {
         block->throwAssemblerInvariant("invalid extension call {}", extensionUrl.toString());
     }
@@ -204,7 +205,7 @@ lyric_compiler::internal::compile_unwrap(
     lyric_typing::CallsiteReifier reifier(extensionInvoker.getParameters(), extensionInvoker.getRest(),
         extensionInvoker.getTemplateUrl(), extensionInvoker.getTemplateParameters(),
         extensionInvoker.getTemplateArguments(), typeSystem);
-    status = block->load(target);
+    status = block->load(targetRef);
     if (!status.isOk())
         return status;
     status = reifier.reifyNextArgument(unwrapType);
@@ -220,11 +221,11 @@ lyric_compiler::internal::compile_unwrap(
     for (tu_uint32 i = 0; i < tupleTypeArguments.size(); i++) {
         auto tupleMember = absl::StrCat("t", i);
 
-        if (!state->symbolCache()->hasSymbol(tupleUrl))
+        if (!symbolCache->hasSymbol(tupleUrl))
             block->throwAssemblerInvariant("missing receiver symbol {}", tupleUrl.toString());
-        auto *receiver = state->symbolCache()->getSymbol(tupleUrl);
+        auto *receiver = symbolCache->getSymbol(tupleUrl);
 
-        lyric_assembler::SymbolBinding tupleVar;
+        lyric_assembler::DataReference tupleRef;
         switch (receiver->getSymbolType()) {
             case lyric_assembler::SymbolType::CLASS: {
                 auto *classSymbol = cast_symbol_to_class(receiver);
@@ -232,7 +233,7 @@ lyric_compiler::internal::compile_unwrap(
                 auto resolveMemberResult = classSymbol->resolveMember(tupleMember, memberReifier, tupleType);
                 if (resolveMemberResult.isStatus())
                     return resolveMemberResult.getStatus();
-                tupleVar = resolveMemberResult.getResult();
+                tupleRef = resolveMemberResult.getResult();
                 break;
             }
             default:
@@ -240,13 +241,13 @@ lyric_compiler::internal::compile_unwrap(
         }
 
         // load member from tuple onto the top of the stack
-        status = block->load(tupleVar);
+        status = block->load(tupleRef);
         if (!status.isOk())
             return status;
 
         // drop the previous result from the stack
-        auto unwrapVar = unwrapVars[i];
-        status = block->store(unwrapVar.second);
+        auto unwrapRef = unwrapRefs[i];
+        status = block->store(unwrapRef.second);
         if (!status.isOk())
             return status;
     }

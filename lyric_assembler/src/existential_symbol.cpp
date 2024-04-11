@@ -64,6 +64,10 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     auto *priv = getPriv();
     priv->existentialTemplate = existentialTemplate;
     TU_ASSERT(priv->existentialTemplate != nullptr);
+    for (auto it = existentialTemplate->templateParametersBegin(); it != existentialTemplate->templateParametersEnd(); it++) {
+        const auto &tp = *it;
+        TU_RAISE_IF_STATUS (priv->existentialBlock->declareAlias(tp.name, existentialTemplate->getTemplateUrl(), tp.index));
+    }
 }
 
 lyric_assembler::ExistentialSymbol::ExistentialSymbol(

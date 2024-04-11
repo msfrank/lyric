@@ -54,6 +54,7 @@ lyric_compiler::internal::compile_new(
 
     sym->touch();
 
+    // allocate the ctor invoker
     lyric_assembler::CtorInvoker ctor;
     switch (sym->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {
@@ -78,14 +79,14 @@ lyric_compiler::internal::compile_new(
                 "cannot construct new instance of {}", newType.toString());
     }
 
-    // push ctx argument values onto the stack
+    // construct the callsite reifier
     std::vector<lyric_common::TypeDef> newTypeArguments(
         newType.concreteArgumentsBegin(), newType.concreteArgumentsEnd());
     lyric_typing::CallsiteReifier ctorReifier(ctor.getParameters(), ctor.getRest(),
         ctor.getTemplateUrl(), ctor.getTemplateParameters(),
         newTypeArguments, typeSystem);
 
-    // apply the remainder of the parameters
+    // place the ctor arguments on the stack
     auto status = compile_placement(block, block, ctor, ctorReifier, walker, moduleEntry);
     if (!status.isOk())
         return status;

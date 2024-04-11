@@ -12,7 +12,7 @@ namespace lyric_compiler::internal {
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,
         const lyric_common::TypeDef &unwrapType,
-        const lyric_assembler::SymbolBinding &target,
+        const lyric_assembler::DataReference &targetRef,
         lyric_compiler::ModuleEntry &moduleEntry);
 }
 

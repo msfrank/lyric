@@ -69,19 +69,19 @@ compile_set_name(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(name, lyric_parser::kLyricAstIdentifier, identifier);
 
-    auto resolveVariableResult = block->resolveBinding(identifier);
+    auto resolveVariableResult = block->resolveReference(identifier);
     if (resolveVariableResult.isStatus())
         return resolveVariableResult.getStatus();
-    auto var = resolveVariableResult.getResult();
-    if (var.binding == lyric_parser::BindingType::VALUE)
+    auto ref = resolveVariableResult.getResult();
+    if (ref.referenceType == lyric_assembler::ReferenceType::Value)
         return state->logAndContinue(lyric_compiler::CompilerCondition::kInvalidBinding,
             tempo_tracing::LogSeverity::kError,
             "value {} cannot be assigned to", identifier);
-    auto targetType = var.type;
+    auto targetType = ref.typeDef;
 
-    auto *symbol = state->symbolCache()->getSymbol(var.symbol);
+    auto *symbol = state->symbolCache()->getSymbol(ref.symbolUrl);
     if (symbol == nullptr)
-        state->throwAssemblerInvariant("missing var symbol {}", var.symbol.toString());
+        state->throwAssemblerInvariant("missing var symbol {}", ref.symbolUrl.toString());
     if (symbol->getSymbolType() == lyric_assembler::SymbolType::STATIC)
         symbol->touch();
 
@@ -95,7 +95,7 @@ compile_set_name(
         rvalueType = exprResult.getResult();
     } else {
         // load the lhs onto the stack, then perform the inplace assignment
-        auto status = block->load(var);
+        auto status = block->load(ref);
         if (!status.isOk())
             return status;
         auto inplaceResult = compile_inplace_assignment(block, targetType, assignmentId, expression, moduleEntry);
@@ -232,7 +232,7 @@ compile_set_member(
     moduleEntry.parseAttrOrThrow(curr, lyric_parser::kLyricAstIdentifier, identifier);
 
     // resolve member variable binding
-    lyric_assembler::SymbolBinding var;
+    lyric_assembler::DataReference ref;
     bool isInitialized;
     switch (receiver->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {
@@ -243,7 +243,7 @@ compile_set_member(
             if (resolveMemberResult.isStatus())
                 return resolveMemberResult.getStatus();
             isInitialized = classSymbol->isMemberInitialized(identifier);
-            var = resolveMemberResult.getResult();
+            ref = resolveMemberResult.getResult();
             break;
         }
         case lyric_assembler::SymbolType::INSTANCE: {
@@ -254,7 +254,7 @@ compile_set_member(
             if (resolveMemberResult.isStatus())
                 return resolveMemberResult.getStatus();
             isInitialized = instanceSymbol->isMemberInitialized(identifier);
-            var = resolveMemberResult.getResult();
+            ref = resolveMemberResult.getResult();
             break;
         }
         case lyric_assembler::SymbolType::ENUM: {
@@ -265,7 +265,7 @@ compile_set_member(
             if (resolveMemberResult.isStatus())
                 return resolveMemberResult.getStatus();
             isInitialized = enumSymbol->isMemberInitialized(identifier);
-            var = resolveMemberResult.getResult();
+            ref = resolveMemberResult.getResult();
             break;
         }
         case lyric_assembler::SymbolType::STRUCT: {
@@ -276,7 +276,7 @@ compile_set_member(
             if (resolveMemberResult.isStatus())
                 return resolveMemberResult.getStatus();
             isInitialized = structSymbol->isMemberInitialized(identifier);
-            var = resolveMemberResult.getResult();
+            ref = resolveMemberResult.getResult();
             break;
         }
         default:
@@ -284,17 +284,16 @@ compile_set_member(
     }
 
     //
-    switch (var.binding) {
-        case lyric_parser::BindingType::VARIABLE:
+    switch (ref.referenceType) {
+        case lyric_assembler::ReferenceType::Variable:
             break;
-        case lyric_parser::BindingType::VALUE: {
+        case lyric_assembler::ReferenceType::Value: {
             if (isCtor && thisReceiver && !isInitialized)
                 break;
             return state->logAndContinue(lyric_compiler::CompilerCondition::kInvalidBinding,
                 tempo_tracing::LogSeverity::kError,
                 "value {} cannot be assigned to", identifier);
         }
-        case lyric_parser::BindingType::DESCRIPTOR:
         default:
             block->throwAssemblerInvariant("invalid deref receiver");
     }
@@ -310,10 +309,10 @@ compile_set_member(
         rvalueType = exprResult.getResult();
     } else {
         // load the lhs onto the stack, then perform the inplace assignment
-        auto status = block->load(var);
+        auto status = block->load(ref);
         if (!status.isOk())
             return status;
-        auto inplaceResult = compile_inplace_assignment(block, var.type, assignmentId, expression, moduleEntry);
+        auto inplaceResult = compile_inplace_assignment(block, ref.typeDef, assignmentId, expression, moduleEntry);
         if (inplaceResult.isStatus())
             return status;
         rvalueType = inplaceResult.getResult();
@@ -322,14 +321,14 @@ compile_set_member(
     bool isAssignable;
 
     // check that the rhs is assignable to the member type
-    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(var.type, rvalueType));
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(ref.typeDef, rvalueType));
     if (!isAssignable)
         return state->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "member does not match rvalue type {}", rvalueType.toString());
 
     // store expression result
-    auto status = block->store(var);
+    auto status = block->store(ref);
     if (status.notOk())
         return status;
 

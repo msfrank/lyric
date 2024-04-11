@@ -64,6 +64,10 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     auto *priv = getPriv();
     priv->conceptTemplate = conceptTemplate;
     TU_ASSERT(priv->conceptTemplate != nullptr);
+    for (auto it = conceptTemplate->templateParametersBegin(); it != conceptTemplate->templateParametersEnd(); it++) {
+        const auto &tp = *it;
+        TU_RAISE_IF_STATUS (priv->conceptBlock->declareAlias(tp.name, conceptTemplate->getTemplateUrl(), tp.index));
+    }
 }
 
 lyric_assembler::ConceptSymbol::ConceptSymbol(

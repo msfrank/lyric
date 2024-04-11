@@ -44,7 +44,7 @@ write_namespace(
          symbolIterator != namespaceBlock->symbolsEnd();
          symbolIterator++) {
         const auto &var = symbolIterator->second;
-        auto *sym = symbolCache->getSymbol(var.symbol);
+        auto *sym = symbolCache->getSymbol(var.symbolUrl);
         lyo1::DescriptorSection binding_type = lyo1::DescriptorSection::Invalid;
         uint32_t binding_descriptor;
 
@@ -53,7 +53,7 @@ write_namespace(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "namespace contains invalid symbol");
 
         // skip symbols which are not in the current module
-        if (var.symbol.isAbsolute()) {
+        if (var.symbolUrl.isAbsolute()) {
             if (location != sym->getSymbolUrl().getAssemblyLocation()) {
                 TU_LOG_INFO << "ignoring namespace binding " << symbolIterator->first << " for " << sym->getSymbolUrl();
                 continue;
@@ -127,7 +127,7 @@ write_namespace(
             }
             default: {
                 TU_LOG_VV << "ignoring namespace binding " << symbolIterator->first
-                          << " for " << var.symbol.toString();
+                          << " for " << var.symbolUrl.toString();
                 binding_type = lyo1::DescriptorSection::Invalid;
                 break;
             }

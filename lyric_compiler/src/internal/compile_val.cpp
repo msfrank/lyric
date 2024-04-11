@@ -48,13 +48,13 @@ lyric_compiler::internal::compile_val(
         auto declareStaticResult = block->declareStatic(identifier, valType, lyric_parser::BindingType::VALUE);
         if (declareStaticResult.isStatus())
             return declareStaticResult.getStatus();
-        auto var = declareStaticResult.getResult();
+        auto ref = declareStaticResult.getResult();
 
-        auto *sym = state->symbolCache()->getSymbol(var.symbol);
+        auto *sym = state->symbolCache()->getSymbol(ref.symbolUrl);
         if (sym == nullptr)
-            state->throwAssemblerInvariant("missing static symbol {}", var.symbol.toString());
+            state->throwAssemblerInvariant("missing static symbol {}", ref.symbolUrl.toString());
         if (sym->getSymbolType() != lyric_assembler::SymbolType::STATIC)
-            state->throwAssemblerInvariant("invalid static symbol {}", var.symbol.toString());
+            state->throwAssemblerInvariant("invalid static symbol {}", ref.symbolUrl.toString());
         auto *staticSymbol = cast_symbol_to_static(sym);
 
         return compile_static_initializer(staticSymbol, walker.getChild(0), moduleEntry);

@@ -69,7 +69,7 @@ lyric_assembler::SymbolCache::getEnvBinding(const std::string &name) const
 {
     if (m_envBindings.contains(name))
         return m_envBindings.at(name);
-    return {{}, {}, lyric_parser::BindingType::VALUE};
+    return {};
 }
 
 tempo_utils::Status

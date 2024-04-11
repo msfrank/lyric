@@ -48,14 +48,14 @@ namespace lyric_assembler {
             BlockHandle *parentBlock,
             AssemblyState *state);
         BlockHandle(
-            const absl::flat_hash_map<std::string, SymbolBinding> &initialVars,
+            const absl::flat_hash_map<std::string, SymbolBinding> &initialBindings,
             ProcHandle *blockProc,
             CodeBuilder *blockCode,
             BlockHandle *parentBlock,
             AssemblyState *state);
         BlockHandle(
             const lyric_common::SymbolUrl &definition,
-            const absl::flat_hash_map<std::string, SymbolBinding> &importedVars,
+            const absl::flat_hash_map<std::string, SymbolBinding> &importedBindings,
             AssemblyState *state);
 
         NamespaceSymbol *blockNs();
@@ -74,6 +74,12 @@ namespace lyric_assembler {
         absl::flat_hash_map<lyric_common::TypeDef, lyric_common::SymbolUrl>::const_iterator instancesBegin() const;
         absl::flat_hash_map<lyric_common::TypeDef, lyric_common::SymbolUrl>::const_iterator instancesEnd() const;
 
+        bool hasBinding(const std::string &name) const;
+        SymbolBinding getBinding(const std::string &name) const;
+
+        tempo_utils::Result<lyric_assembler::SymbolBinding>
+        resolveBinding(const std::vector<std::string> &path);
+
         tempo_utils::Result<lyric_common::TypeDef> resolveSingular(
             const lyric_parser::Assignable &assignableSpec);
 
@@ -84,30 +90,26 @@ namespace lyric_assembler {
             const std::vector<std::string> &typePath);
         tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
             const lyric_common::SymbolPath &symbolPath);
-//        tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
-//            const lyric_runtime::LiteralCell &literalCell);
 
-        tempo_utils::Result<SymbolBinding> declareVariable(
+        tempo_utils::Result<DataReference> declareVariable(
             const std::string &name,
             const lyric_common::TypeDef &assignableType,
             lyric_parser::BindingType binding);
 
-        tempo_utils::Result<SymbolBinding> declareTemporary(
+        tempo_utils::Result<DataReference> declareTemporary(
             const lyric_common::TypeDef &assignableType,
             lyric_parser::BindingType binding);
 
-        tempo_utils::Result<SymbolBinding> declareStatic(
+        tempo_utils::Result<DataReference> declareStatic(
             const std::string &name,
             const lyric_common::TypeDef &assignableType,
             lyric_parser::BindingType binding,
             bool declOnly = false);
 
-        bool hasBinding(const std::string &name) const;
-        SymbolBinding getBinding(const std::string &name) const;
-        tempo_utils::Result<SymbolBinding> resolveBinding(const std::string &name);
+        tempo_utils::Result<DataReference> resolveReference(const std::string &name);
 
-        tempo_utils::Status load(const SymbolBinding &var);
-        tempo_utils::Status store(const SymbolBinding &var);
+        tempo_utils::Status load(const DataReference &ref);
+        tempo_utils::Status store(const DataReference &ref);
 
         tempo_utils::Result<lyric_common::SymbolUrl> declareFunction(
             const std::string &name,
@@ -197,13 +199,23 @@ namespace lyric_assembler {
 
         tempo_utils::Result<SymbolBinding> declareAlias(
             const std::string &alias,
-            const lyric_common::SymbolUrl &target,
+            const lyric_common::SymbolUrl &targetUrl,
             const lyric_common::TypeDef &aliasType = {});
 
         tempo_utils::Result<SymbolBinding> declareAlias(
             const std::string &alias,
-            const SymbolBinding &target,
+            const SymbolBinding &targetBinding,
             const lyric_common::TypeDef &aliasType = {});
+
+        tempo_utils::Result<SymbolBinding> declareAlias(
+            const std::string &alias,
+            const DataReference &targetRef,
+            const lyric_common::TypeDef &aliasType = {});
+
+        tempo_utils::Result<SymbolBinding> declareAlias(
+            const std::string &alias,
+            const lyric_common::SymbolUrl &templateUrl,
+            int placeholderIndex);
 
         lyric_common::SymbolUrl makeSymbolUrl(const std::string &name) const;
 
@@ -215,7 +227,7 @@ namespace lyric_assembler {
         BlockHandle *m_parentBlock;
         AssemblyState *m_state;
         bool m_isRoot;
-        absl::flat_hash_map<std::string, SymbolBinding> m_vars;
+        absl::flat_hash_map<std::string, SymbolBinding> m_bindings;
         absl::flat_hash_map<lyric_common::TypeDef, lyric_common::SymbolUrl> m_impls;
 
     public:

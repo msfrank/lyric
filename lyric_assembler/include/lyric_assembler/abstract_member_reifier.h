@@ -20,7 +20,7 @@ namespace lyric_assembler {
 
         virtual bool isValid() const = 0;
 
-        virtual tempo_utils::Result<SymbolBinding> reifyMember(
+        virtual tempo_utils::Result<DataReference> reifyMember(
             const std::string &name,
             const FieldSymbol *fieldSymbol) = 0;
     };

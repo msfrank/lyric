@@ -80,6 +80,8 @@ lyric_compiler::internal::compile_def(
     if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         block->throwAssemblerInvariant("invalid call symbol");
     auto *call = cast_symbol_to_call(sym);
+
+    // add initializers to the call
     for (const auto &entry : initializers) {
         call->putInitializer(entry.first, entry.second);
     }

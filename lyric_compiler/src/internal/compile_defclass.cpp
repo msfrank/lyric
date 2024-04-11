@@ -169,6 +169,11 @@ compile_defclass_init(
         classBlock->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
     auto *ctor = cast_symbol_to_call(ctorSym);
 
+    // add initializers to the ctor
+    for (const auto &entry : initializers) {
+        ctor->putInitializer(entry.first, entry.second);
+    }
+
     auto *proc = ctor->callProc();
     auto *code = proc->procCode();
     auto *ctorBlock = proc->procBlock();
@@ -217,15 +222,15 @@ compile_defclass_init(
             continue;
 
         // resolve the member binding
-        auto maybeBinding = classSymbol->getMember(memberName);
-        if (maybeBinding.isEmpty())
+        auto maybeMember = classSymbol->getMember(memberName);
+        if (maybeMember.isEmpty())
             classBlock->throwAssemblerInvariant("missing class member {}", memberName);
-        auto fieldVar = maybeBinding.getValue();
-        if (!state->symbolCache()->hasSymbol(fieldVar.symbol))
-            classBlock->throwAssemblerInvariant("missing class field {}", fieldVar.symbol.toString());
-        auto *sym = state->symbolCache()->getSymbol(fieldVar.symbol);
+        auto fieldRef = maybeMember.getValue();
+        if (!state->symbolCache()->hasSymbol(fieldRef.symbolUrl))
+            classBlock->throwAssemblerInvariant("missing class field {}", fieldRef.symbolUrl.toString());
+        auto *sym = state->symbolCache()->getSymbol(fieldRef.symbolUrl);
         if (sym->getSymbolType() != lyric_assembler::SymbolType::FIELD)
-            classBlock->throwAssemblerInvariant("invalid class field {}", fieldVar.symbol.toString());
+            classBlock->throwAssemblerInvariant("invalid class field {}", fieldRef.symbolUrl.toString());
         auto *fieldSymbol = cast_symbol_to_field(sym);
         auto fieldInitializerUrl = fieldSymbol->getInitializer();
         if (!fieldInitializerUrl.isValid())
@@ -253,7 +258,7 @@ compile_defclass_init(
             return invokeInitializerResult.getStatus();
 
         // store default value in class field
-        status = ctorBlock->store(fieldVar);
+        status = ctorBlock->store(fieldRef);
         if (!status.isOk())
             return status;
 
@@ -344,6 +349,8 @@ compile_defclass_def(
     if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         classBlock->throwAssemblerInvariant("invalid call symbol {}", methodUrl.toString());
     auto *call = cast_symbol_to_call(sym);
+
+    // add initializers to the call
     for (const auto &entry : initializers) {
         call->putInitializer(entry.first, entry.second);
     }
@@ -443,6 +450,8 @@ compile_defclass_impl_def(
     if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         implBlock->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
     auto *call = cast_symbol_to_call(sym);
+
+    // add initializers to the call
     for (const auto &entry : initializers) {
         call->putInitializer(entry.first, entry.second);
     }

@@ -377,10 +377,10 @@ lyric_compiler::internal::compile_operator_call(
             block->throwAssemblerInvariant("invalid action symbol {}", action.methodAction.toString());
         auto *actionSymbol = cast_symbol_to_action(symbol);
 
-        lyric_assembler::SymbolBinding binding = { instanceUrl, operatorType, lyric_parser::BindingType::VALUE };
+        lyric_assembler::DataReference ref{instanceUrl, operatorType, lyric_assembler::ReferenceType::Variable};
         instanceSymbol->touch();
 
-        extensionInvoker = lyric_assembler::ExtensionInvoker(conceptSymbol, actionSymbol, operatorType, binding);
+        extensionInvoker = lyric_assembler::ExtensionInvoker(conceptSymbol, actionSymbol, operatorType, ref);
     } else {
         block->throwAssemblerInvariant("invalid extension call {}", extensionUrl.toString());
     }

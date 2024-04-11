@@ -68,7 +68,7 @@ lyric_typing::MemberReifier::isValid() const
     return m_typeSystem != nullptr;
 }
 
-tempo_utils::Result<lyric_assembler::SymbolBinding>
+tempo_utils::Result<lyric_assembler::DataReference>
 lyric_typing::MemberReifier::reifyMember(
     const std::string &name,
     const lyric_assembler::FieldSymbol *fieldSymbol)
@@ -100,18 +100,19 @@ lyric_typing::MemberReifier::reifyMember(
             state->throwAssemblerInvariant("invalid field type", fieldType.toString());
     }
 
-    lyric_assembler::SymbolBinding var;
-    var.symbol = fieldSymbol->getSymbolUrl();
-    var.type = reifiedType;
-    var.binding = fieldSymbol->isVariable()? lyric_parser::BindingType::VARIABLE : lyric_parser::BindingType::VALUE;
-    m_memberCache[name] = var;
+    lyric_assembler::DataReference ref;
+    ref.symbolUrl = fieldSymbol->getSymbolUrl();
+    ref.typeDef = reifiedType;
+    ref.referenceType = fieldSymbol->isVariable()?
+        lyric_assembler::ReferenceType::Variable : lyric_assembler::ReferenceType::Value;
+    m_memberCache[name] = ref;
 
     // if there is no type handle for type, then create it
-    if (!state->typeCache()->hasType(var.type)) {
-        state->typeCache()->makeType(var.type);
+    if (!state->typeCache()->hasType(ref.typeDef)) {
+        state->typeCache()->makeType(ref.typeDef);
     }
 
-    return var;
+    return ref;
 }
 
 tempo_utils::Status

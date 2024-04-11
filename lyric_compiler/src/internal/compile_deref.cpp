@@ -20,7 +20,7 @@
 #include <lyric_typing/callsite_reifier.h>
 #include <lyric_typing/member_reifier.h>
 
-static tempo_utils::Result<lyric_assembler::SymbolBinding>
+static tempo_utils::Result<lyric_assembler::DataReference>
 resolve_binding(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
@@ -30,7 +30,7 @@ resolve_binding(
 
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
-    auto resolveBindingResult = block->resolveBinding(identifier);
+    auto resolveBindingResult = block->resolveReference(identifier);
     if (resolveBindingResult.isStatus())
         return resolveBindingResult.getStatus();
     return resolveBindingResult.getResult();
@@ -61,17 +61,17 @@ compile_deref_namespace(
         auto resolveBindingResult = resolve_binding(currBlock, element, moduleEntry);
         if (resolveBindingResult.isStatus())
             return resolveBindingResult.getStatus();
-        auto var = resolveBindingResult.getResult();
+        auto ref = resolveBindingResult.getResult();
 
         // if deref element resolves to a symbol binding which is not a descriptor, then we are done
-        if (var.binding != lyric_parser::BindingType::DESCRIPTOR)
+        if (ref.referenceType != lyric_assembler::ReferenceType::Descriptor)
             return lyric_compiler::CompilerStatus::ok();
 
-        if (!state->symbolCache()->hasSymbol(var.symbol))
+        if (!state->symbolCache()->hasSymbol(ref.symbolUrl))
             return (*block)->logAndContinue(lyric_compiler::CompilerCondition::kMissingSymbol,
                 tempo_tracing::LogSeverity::kError,
-                "missing symbol {}", var.symbol.toString());
-        auto *sym = state->symbolCache()->getSymbol(var.symbol);
+                "missing symbol {}", ref.symbolUrl.toString());
+        auto *sym = state->symbolCache()->getSymbol(ref.symbolUrl);
 
         // if symbol binding is not a namespace, then we are done
         if (sym->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
@@ -94,19 +94,19 @@ lyric_compiler::internal::compile_deref_this(
 {
     TU_ASSERT (walker.isValid());
 
-    auto resolveVariableResult = loadBlock->resolveBinding("$this");
+    auto resolveVariableResult = loadBlock->resolveReference("$this");
     if (resolveVariableResult.isStatus())
         return resolveVariableResult.getStatus();
-    auto var = resolveVariableResult.getResult();
+    auto ref = resolveVariableResult.getResult();
     auto *state = loadBlock->blockState();
-    auto *symbol = state->symbolCache()->getSymbol(var.symbol);
+    auto *symbol = state->symbolCache()->getSymbol(ref.symbolUrl);
     TU_ASSERT (symbol != nullptr);
 
-    auto status = loadBlock->load(var);
+    auto status = loadBlock->load(ref);
     if (!status.isOk())
         return status;
 
-    return var.type;
+    return ref.typeDef;
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
@@ -122,12 +122,12 @@ lyric_compiler::internal::compile_deref_name(
     auto resolveVariableResult = resolve_binding(bindingBlock, walker, moduleEntry);
     if (resolveVariableResult.isStatus())
         return resolveVariableResult.getStatus();
-    auto var = resolveVariableResult.getResult();
-    auto *symbol = state->symbolCache()->getSymbol(var.symbol);
+    auto ref = resolveVariableResult.getResult();
+    auto *symbol = state->symbolCache()->getSymbol(ref.symbolUrl);
     if (symbol == nullptr)
-        bindingBlock->throwAssemblerInvariant("missing symbol {}", var.symbol.toString());
+        bindingBlock->throwAssemblerInvariant("missing symbol {}", ref.symbolUrl.toString());
 
-    if (var.binding == lyric_parser::BindingType::DESCRIPTOR) {
+    if (ref.referenceType == lyric_assembler::ReferenceType::Descriptor) {
         lyric_common::SymbolUrl ctorOrInitUrl;
 
         switch (symbol->getSymbolType()) {
@@ -143,7 +143,7 @@ lyric_compiler::internal::compile_deref_name(
             default:
                 return bindingBlock->logAndContinue(lyric_compiler::CompilerCondition::kMissingVariable,
                     tempo_tracing::LogSeverity::kError,
-                    "cannot dereference symbol {}", var.symbol.toString());
+                    "cannot dereference symbol {}", ref.symbolUrl.toString());
         }
 
         // ensure that links are created for the symbol and its ctor/initializer
@@ -153,11 +153,11 @@ lyric_compiler::internal::compile_deref_name(
         }
     }
 
-    auto status = loadBlock->load(var);
+    auto status = loadBlock->load(ref);
     if (!status.isOk())
         return status;
 
-    return var.type;
+    return ref.typeDef;
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
@@ -359,7 +359,7 @@ lyric_compiler::internal::compile_deref_member(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
-    lyric_assembler::SymbolBinding var;
+    lyric_assembler::DataReference ref;
     switch (receiver->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {
             auto *classSymbol = cast_symbol_to_class(receiver);
@@ -368,7 +368,7 @@ lyric_compiler::internal::compile_deref_member(
                 identifier, reifier, receiverType, thisReceiver);
             if (resolveMemberResult.isStatus())
                 return resolveMemberResult.getStatus();
-            var = resolveMemberResult.getResult();
+            ref = resolveMemberResult.getResult();
             break;
         }
         case lyric_assembler::SymbolType::STRUCT: {
@@ -378,7 +378,7 @@ lyric_compiler::internal::compile_deref_member(
                 identifier, reifier, receiverType, thisReceiver);
             if (resolveMemberResult.isStatus())
                 return resolveMemberResult.getStatus();
-            var = resolveMemberResult.getResult();
+            ref = resolveMemberResult.getResult();
             break;
         }
         case lyric_assembler::SymbolType::INSTANCE: {
@@ -388,7 +388,7 @@ lyric_compiler::internal::compile_deref_member(
                 identifier, reifier, receiverType, thisReceiver);
             if (resolveMemberResult.isStatus())
                 return resolveMemberResult.getStatus();
-            var = resolveMemberResult.getResult();
+            ref = resolveMemberResult.getResult();
             break;
         }
         case lyric_assembler::SymbolType::ENUM: {
@@ -398,14 +398,14 @@ lyric_compiler::internal::compile_deref_member(
                 identifier, reifier, receiverType, thisReceiver);
             if (resolveMemberResult.isStatus())
                 return resolveMemberResult.getStatus();
-            var = resolveMemberResult.getResult();
+            ref = resolveMemberResult.getResult();
             break;
         }
         default:
             block->throwAssemblerInvariant("invalid receiver symbol {}", receiverUrl.toString());
     }
 
-    auto status = block->load(var);
+    auto status = block->load(ref);
     if (!status.isOk())
         return status;
 
@@ -416,7 +416,7 @@ lyric_compiler::internal::compile_deref_member(
     if (!status.isOk())
         return status;
 
-    return var.type;
+    return ref.typeDef;
 }
 
 tempo_utils::Result<lyric_common::TypeDef>

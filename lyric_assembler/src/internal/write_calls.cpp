@@ -163,8 +163,7 @@ write_call(
         }
         uint8_t nameOffset = names.size();
         names.emplace_back(param.name);
-        parameters.emplace_back(lyo1::Parameter(flags, paramType,
-            paramDefault, nameOffset, lyric_runtime::INVALID_OFFSET_U8));
+        parameters.emplace_back(flags, paramType, paramDefault, nameOffset, lyric_runtime::INVALID_OFFSET_U8);
     }
 
     // FIXME: call must have a result type

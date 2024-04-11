@@ -82,11 +82,11 @@ lyric_assembler::StructSymbol::load()
         FieldSymbol *fieldSymbol;
         TU_ASSIGN_OR_RAISE (fieldSymbol, importCache->importField(iterator->second));
 
-        SymbolBinding memberBinding;
-        memberBinding.symbol = iterator->second;
-        memberBinding.type = fieldSymbol->getAssignableType();
-        memberBinding.binding = fieldSymbol->isVariable()? lyric_parser::BindingType::VARIABLE : lyric_parser::BindingType::VALUE;
-        priv->members[iterator->first] = memberBinding;
+        DataReference memberRef;
+        memberRef.symbolUrl = iterator->second;
+        memberRef.typeDef = fieldSymbol->getAssignableType();
+        memberRef.referenceType = fieldSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
+        priv->members[iterator->first] = memberRef;
     }
 
     for (auto iterator = m_structImport->methodsBegin(); iterator != m_structImport->methodsEnd(); iterator++) {
@@ -205,23 +205,23 @@ lyric_assembler::StructSymbol::hasMember(const std::string &name) const
     return priv->members.contains(name);
 }
 
-Option<lyric_assembler::SymbolBinding>
+Option<lyric_assembler::DataReference>
 lyric_assembler::StructSymbol::getMember(const std::string &name) const
 {
     auto *priv = getPriv();
     if (priv->members.contains(name))
-        return Option<SymbolBinding>(priv->members.at(name));
-    return Option<SymbolBinding>();
+        return Option<DataReference>(priv->members.at(name));
+    return Option<DataReference>();
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::SymbolBinding>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::DataReference>::const_iterator
 lyric_assembler::StructSymbol::membersBegin() const
 {
     auto *priv = getPriv();
     return priv->members.cbegin();
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::SymbolBinding>::const_iterator
+absl::flat_hash_map<std::string,lyric_assembler::DataReference>::const_iterator
 lyric_assembler::StructSymbol::membersEnd() const
 {
     auto *priv = getPriv();
@@ -235,7 +235,7 @@ lyric_assembler::StructSymbol::numMembers() const
     return static_cast<tu_uint32>(priv->members.size());
 }
 
-tempo_utils::Result<lyric_assembler::SymbolBinding>
+tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::StructSymbol::declareMember(
     const std::string &name,
     const lyric_parser::Assignable &memberSpec,
@@ -293,16 +293,16 @@ lyric_assembler::StructSymbol::declareMember(
 
     m_state->typeCache()->touchType(memberType);
 
-    SymbolBinding var;
-    var.symbol = memberUrl;
-    var.type = memberType;
-    var.binding = lyric_parser::BindingType::VALUE;
-    priv->members[name] = var;
+    DataReference ref;
+    ref.symbolUrl = memberUrl;
+    ref.typeDef = memberType;
+    ref.referenceType = ReferenceType::Value;
+    priv->members[name] = ref;
 
-    return var;
+    return ref;
 }
 
-tempo_utils::Result<lyric_assembler::SymbolBinding>
+tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::StructSymbol::resolveMember(
     const std::string &name,
     AbstractMemberReifier &reifier,
@@ -320,11 +320,11 @@ lyric_assembler::StructSymbol::resolveMember(
     }
 
     const auto &member = priv->members.at(name);
-    if (!m_state->symbolCache()->hasSymbol(member.symbol))
-        m_state->throwAssemblerInvariant("missing field symbol {}", member.symbol.toString());
-    auto *sym = m_state->symbolCache()->getSymbol(member.symbol);
+    if (!m_state->symbolCache()->hasSymbol(member.symbolUrl))
+        m_state->throwAssemblerInvariant("missing field symbol {}", member.symbolUrl.toString());
+    auto *sym = m_state->symbolCache()->getSymbol(member.symbolUrl);
     if (sym->getSymbolType() != SymbolType::FIELD)
-        m_state->throwAssemblerInvariant("invalid field symbol {}", member.symbol.toString());
+        m_state->throwAssemblerInvariant("invalid field symbol {}", member.symbolUrl.toString());
     auto *fieldSymbol = cast_symbol_to_field(sym);
     auto access = fieldSymbol->getAccessType();
 
