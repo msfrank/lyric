@@ -233,9 +233,8 @@ compile_defenum_base_init(
         return resolveSuperCtorResult.getStatus();
     auto superCtor = resolveSuperCtorResult.getResult();
 
-    lyric_typing::CallsiteReifier reifier(superCtor.getParameters(), superCtor.getRest(),
-        superCtor.getTemplateUrl(), superCtor.getTemplateParameters(),
-        superCtor.getTemplateArguments(), typeSystem);
+    lyric_typing::CallsiteReifier reifier(superCtor.getParameters(), superCtor.getRest(), typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize());
 
     //
     auto status = code->loadSynthetic(lyric_assembler::SyntheticType::THIS);
@@ -326,9 +325,8 @@ compile_defenum_base_default_init(
         return resolveSuperCtorResult.getStatus();
     auto superCtor = resolveSuperCtorResult.getResult();
 
-    lyric_typing::CallsiteReifier reifier(superCtor.getParameters(), superCtor.getRest(),
-        superCtor.getTemplateUrl(), superCtor.getTemplateParameters(),
-        superCtor.getTemplateArguments(), typeSystem);
+    lyric_typing::CallsiteReifier reifier(superCtor.getParameters(), superCtor.getRest(), typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize());
 
     //
     auto status = code->loadSynthetic(lyric_assembler::SyntheticType::THIS);
@@ -406,9 +404,8 @@ compile_defenum_case_init(
         return resolveSuperCtorResult.getStatus();
     auto superCtor = resolveSuperCtorResult.getResult();
 
-    lyric_typing::CallsiteReifier reifier(superCtor.getParameters(), superCtor.getRest(),
-        superCtor.getTemplateUrl(), superCtor.getTemplateParameters(),
-        superCtor.getTemplateArguments(), typeSystem);
+    lyric_typing::CallsiteReifier reifier(superCtor.getParameters(), superCtor.getRest(), typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize());
 
     tempo_utils::Status status;
 

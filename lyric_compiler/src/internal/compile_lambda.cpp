@@ -186,6 +186,7 @@ lyric_compiler::internal::compile_lambda(
     lyric_typing::CallsiteReifier closureReifier(closureCtor.getParameters(), closureCtor.getRest(),
         closureCtor.getTemplateUrl(), closureCtor.getTemplateParameters(), ctorTypeArguments,
         typeSystem);
+    TU_RETURN_IF_NOT_OK (closureReifier.initialize());
 
     // push the proc descriptor onto the top of the stack as first positional arg
     status = block->blockCode()->loadCall(lambdaCall->getAddress());
@@ -203,13 +204,12 @@ lyric_compiler::internal::compile_lambda(
     TU_RETURN_IF_NOT_OK (builderCode->writeOpcode(lyric_object::Opcode::OP_RETURN));
 
     /*
-     * step 4: invoke the lambda assembly
+     * step 4: invoke the lambda builder
      */
 
     lyric_assembler::CallInvoker builder(builderCall);
-    lyric_typing::CallsiteReifier builderReifier(builder.getParameters(), builder.getRest(),
-        builder.getTemplateUrl(), builder.getTemplateParameters(), builder.getTemplateArguments(),
-        typeSystem);
+    lyric_typing::CallsiteReifier builderReifier(builder.getParameters(), builder.getRest(), typeSystem);
+    TU_RETURN_IF_NOT_OK (builderReifier.initialize());
 
     // the return value of the lambda assembly is the lambda closure
     auto invokeBuilderResult = builder.invoke(block, builderReifier);

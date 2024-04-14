@@ -380,14 +380,14 @@ lyric_compiler::internal::compile_operator_call(
         lyric_assembler::DataReference ref{instanceUrl, operatorType, lyric_assembler::ReferenceType::Variable};
         instanceSymbol->touch();
 
-        extensionInvoker = lyric_assembler::ExtensionInvoker(conceptSymbol, actionSymbol, operatorType, ref);
+        extensionInvoker = lyric_assembler::ExtensionInvoker(conceptSymbol, actionSymbol, ref);
     } else {
         block->throwAssemblerInvariant("invalid extension call {}", extensionUrl.toString());
     }
 
     lyric_typing::CallsiteReifier reifier(extensionInvoker.getParameters(), extensionInvoker.getRest(),
-        extensionInvoker.getTemplateUrl(), extensionInvoker.getTemplateParameters(),
-        extensionInvoker.getTemplateArguments(), typeSystem);
+        extensionInvoker.getTemplateUrl(), extensionInvoker.getTemplateParameters(), {}, typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize());
     for (const auto &arg : argList) {
         auto status = reifier.reifyNextArgument(arg);
         if (!status.isOk())

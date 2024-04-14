@@ -113,8 +113,9 @@ get_or_construct_iterator(
 
     // invoke Iterate()
     lyric_typing::CallsiteReifier reifier(invoker.getParameters(), invoker.getRest(),
-        invoker.getTemplateUrl(), invoker.getTemplateParameters(), invoker.getTemplateArguments(),
-        typeSystem);
+        invoker.getTemplateUrl(), invoker.getTemplateParameters(), {targetType}, typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize());
+
     return invoker.invoke(block, reifier);
 }
 
@@ -221,8 +222,8 @@ lyric_compiler::internal::compile_for(
 
     // invoke valid method
     lyric_typing::CallsiteReifier validReifier(valid.getParameters(), valid.getRest(),
-        valid.getTemplateUrl(), valid.getTemplateParameters(), valid.getTemplateArguments(),
-        typeSystem);
+        valid.getTemplateUrl(), valid.getTemplateParameters(), {target.typeDef}, typeSystem);
+    TU_RETURN_IF_NOT_OK (validReifier.initialize());
     auto invokeValidResult = valid.invoke(&forBlock, validReifier);
     if (invokeValidResult.isStatus())
         return invokeValidResult.getStatus();
@@ -254,8 +255,8 @@ lyric_compiler::internal::compile_for(
 
     // invoke next()
     lyric_typing::CallsiteReifier nextReifier(next.getParameters(), next.getRest(),
-        next.getTemplateUrl(), next.getTemplateParameters(), next.getTemplateArguments(),
-        typeSystem);
+        next.getTemplateUrl(), next.getTemplateParameters(), {target.typeDef}, typeSystem);
+    TU_RETURN_IF_NOT_OK (nextReifier.initialize());
     auto invokeNextResult = next.invoke(&forBlock, nextReifier);
     if (invokeNextResult.isStatus())
         return invokeNextResult.getStatus();

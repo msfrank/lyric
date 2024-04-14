@@ -154,9 +154,8 @@ compile_definstance_init(
         return resolveSuperCtorResult.getStatus();
     auto superCtor = resolveSuperCtorResult.getResult();
 
-    lyric_typing::CallsiteReifier reifier(superCtor.getParameters(), superCtor.getRest(),
-        superCtor.getTemplateUrl(), superCtor.getTemplateParameters(),
-        superCtor.getTemplateArguments(), typeSystem);
+    lyric_typing::CallsiteReifier reifier(superCtor.getParameters(), superCtor.getRest(), typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize());
 
     //
     auto status = code->loadSynthetic(lyric_assembler::SyntheticType::THIS);
@@ -203,10 +202,9 @@ compile_definstance_init(
 
         // invoke initializer to place default value onto the top of the stack
         lyric_assembler::CallInvoker initializerInvoker(initializerCall);
-        lyric_typing::CallsiteReifier initializerReifier(
-            initializerInvoker.getParameters(), initializerInvoker.getRest(),
-            initializerInvoker.getTemplateUrl(), initializerInvoker.getTemplateParameters(),
-            initializerInvoker.getTemplateArguments(), typeSystem);
+        lyric_typing::CallsiteReifier initializerReifier(initializerInvoker.getParameters(),
+            initializerInvoker.getRest(), typeSystem);
+        TU_RETURN_IF_NOT_OK (initializerReifier.initialize());
         auto invokeInitializerResult = initializerInvoker.invoke(ctorBlock, initializerReifier);
         if (invokeInitializerResult.isStatus())
             return invokeInitializerResult.getStatus();

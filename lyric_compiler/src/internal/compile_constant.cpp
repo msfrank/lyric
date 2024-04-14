@@ -145,9 +145,8 @@ new_struct_from_utf8_literal(
         return resolveCtorResult.getStatus();
     auto ctor = resolveCtorResult.getResult();
 
-    lyric_typing::CallsiteReifier ctorReifier(ctor.getParameters(), ctor.getRest(),
-        ctor.getTemplateUrl(), ctor.getTemplateParameters(),
-        ctor.getTemplateArguments(), typeSystem);
+    lyric_typing::CallsiteReifier ctorReifier(ctor.getParameters(), ctor.getRest(), typeSystem);
+    TU_RETURN_IF_NOT_OK (ctorReifier.initialize());
 
     // push the utf16 literal onto the top of the stack as second arg
     TU_RETURN_IF_NOT_OK (block->blockCode()->loadLiteral(utf8));

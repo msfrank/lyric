@@ -441,7 +441,7 @@ lyric_assembler::ConceptSymbol::resolveAction(
     if (methodSym->getSymbolType() != SymbolType::ACTION)
         m_state->throwAssemblerInvariant("invalid action symbol {}", actionMethod.methodAction.toString());
     auto *action = static_cast<ActionSymbol *>(methodSym);
-    return ActionInvoker(action, getAddress(), receiverType);
+    return ActionInvoker(action, getAddress());
 }
 
 bool

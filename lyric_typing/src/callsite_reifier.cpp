@@ -20,14 +20,15 @@ lyric_typing::CallsiteReifier::CallsiteReifier(
     const Option<lyric_object::Parameter> &rest,
     const lyric_common::SymbolUrl &templateUrl,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
-    const std::vector<lyric_common::TypeDef> &templateArguments,
+    const std::vector<lyric_common::TypeDef> &callsiteArguments,
     TypeSystem *typeSystem)
     : m_parameters(parameters),
       m_rest(rest),
       m_templateUrl(templateUrl),
       m_templateParameters(templateParameters),
-      m_reifiedPlaceholders(templateArguments),
-      m_typeSystem(typeSystem)
+      m_callsiteArguments(callsiteArguments),
+      m_typeSystem(typeSystem),
+      m_initialized(false)
 {
     TU_ASSERT (m_typeSystem != nullptr);
 }
@@ -38,7 +39,8 @@ lyric_typing::CallsiteReifier::CallsiteReifier(
     TypeSystem *typeSystem)
     : m_parameters(parameters),
       m_rest(rest),
-      m_typeSystem(typeSystem)
+      m_typeSystem(typeSystem),
+      m_initialized(false)
 {
     TU_ASSERT (m_typeSystem != nullptr);
 }
@@ -49,23 +51,53 @@ lyric_typing::CallsiteReifier::isValid() const
     return m_typeSystem != nullptr;
 }
 
+std::vector<lyric_common::TypeDef>
+lyric_typing::CallsiteReifier::getCallsiteArguments() const
+{
+    return m_callsiteArguments;
+}
+
+tempo_utils::Status
+lyric_typing::CallsiteReifier::initialize()
+{
+    TU_ASSERT (!m_initialized);
+
+    m_reifiedPlaceholders.resize(m_templateParameters.size());
+    if (!m_callsiteArguments.empty()) {
+        for (int i = 0; i < m_callsiteArguments.size(); i++) {
+            const auto &arg = m_callsiteArguments.at(i);
+            if (!arg.isValid())
+                return TypingStatus::forCondition(TypingCondition::kInvalidType,
+                    "callsite type argument {} is invalid", i);
+            m_reifiedPlaceholders[i] = arg;
+        }
+    }
+    m_initialized = true;
+
+    return {};
+}
+
 lyric_common::TypeDef
 lyric_typing::CallsiteReifier::getArgument(int index) const
 {
+    TU_ASSERT (m_initialized);
+
     if (0 <= index && std::cmp_less(index, m_argumentTypes.size()))
         return m_argumentTypes[index];
-    return lyric_common::TypeDef();
+    return {};
 }
 
 std::vector<lyric_common::TypeDef>
 lyric_typing::CallsiteReifier::getArguments() const
 {
+    TU_ASSERT (m_initialized);
     return m_argumentTypes;
 }
 
 int
 lyric_typing::CallsiteReifier::numArguments() const
 {
+    TU_ASSERT (m_initialized);
     return m_argumentTypes.size();
 }
 
@@ -99,6 +131,15 @@ lyric_typing::CallsiteReifier::checkPlaceholder(
         arg.toString(), tp.typeDef.toString());
 }
 
+/**
+ * Given the specified simple or parametric parameter type `paramType` from the call declaration and the
+ * specified argument type `argType` from the call invocation, reify all placeholders in `paramType` which
+ * were declared via template parameters and return the reified parameter type.
+ *
+ * @param paramType The simple or parametric parameter type from the call declaration.
+ * @param argType The argument type from the call invocation.
+ * @return The parameter type with all template parameter placeholders reified.
+ */
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::CallsiteReifier::reifySingular(
     const lyric_common::TypeDef &paramType,
@@ -131,7 +172,7 @@ lyric_typing::CallsiteReifier::reifySingular(
         default:
             return state->logAndContinue(TypingCondition::kTypingInvariant,
                 tempo_tracing::LogSeverity::kError,
-                "cannot reify param type {} using argument type {}", paramType.toString(), argType.toString());
+                "cannot reify parameter type {} using argument type {}", paramType.toString(), argType.toString());
     }
 
     std::vector<lyric_common::TypeDef> paramTypeArguments;
@@ -223,10 +264,20 @@ lyric_typing::CallsiteReifier::reifySingular(
             return lyric_common::TypeDef::forPlaceholder(baseType.getPlaceholderIndex(),
                 baseType.getPlaceholderTemplateUrl(), reifiedParameters);
         default:
-            state->throwAssemblerInvariant("invalid param type", paramType.toString());
+            state->throwAssemblerInvariant("invalid parameter type", paramType.toString());
     }
 }
 
+
+/**
+ * Given the specified union parameter type `paramType` from the call declaration and the specified argument
+ * type `argType` from the call invocation, reify all placeholders in `paramType` which were declared via
+ * template parameters and return the reified parameter type.
+ *
+ * @param paramType The union parameter type from the call declaration.
+ * @param argType The argument type from the call invocation.
+ * @return The parameter type with all template parameter placeholders reified.
+ */
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::CallsiteReifier::reifyUnion(
     const lyric_common::TypeDef &paramType,
@@ -249,7 +300,7 @@ lyric_typing::CallsiteReifier::reifyUnion(
      */
 
     if (paramType.getType() != lyric_common::TypeDefType::Union)
-        state->throwAssemblerInvariant("invalid param type", paramType.toString());
+        state->throwAssemblerInvariant("invalid parameter type {}", paramType.toString());
 
     std::vector<lyric_common::TypeDef> argMembers;
     switch (argType.getType()) {
@@ -266,92 +317,117 @@ lyric_typing::CallsiteReifier::reifyUnion(
             state->throwAssemblerInvariant("invalid argument type", argType.toString());
     }
 
-    absl::flat_hash_map<lyric_common::SymbolUrl,lyric_common::TypeDef> paramBaseMap;
-    for (auto iterator = paramType.unionMembersBegin(); iterator != paramType.unionMembersEnd(); iterator++) {
-        if (iterator->getType() != lyric_common::TypeDefType::Concrete)
-            state->throwAssemblerInvariant("param type has invalid union member {}", iterator->toString());
-        auto paramBaseUrl = iterator->getConcreteUrl();
-        if (paramBaseMap.contains(paramBaseUrl))
-            state->throwAssemblerInvariant("param type has duplicate union member {}", iterator->toString());
-        paramBaseMap[paramBaseUrl] = *iterator;
-    }
-
-    absl::flat_hash_map<lyric_common::SymbolUrl,lyric_common::TypeDef> argBaseMap;
-    for (const auto &argMember : argMembers) {
-        if (argMember.getType() != lyric_common::TypeDefType::Concrete)
-            state->throwAssemblerInvariant("argument type has invalid union member {}", argMember.toString());
-        auto argBaseUrl = argMember.getConcreteUrl();
-        if (argBaseMap.contains(argBaseUrl))
-            state->throwAssemblerInvariant("argument type has duplicate union member {}", argMember.toString());
-        argBaseMap[argBaseUrl] = argMember;
-    }
-
-    std::vector<lyric_common::TypeDef> unionMembers;
-    for (const auto &argBase : argBaseMap) {
-        if (paramBaseMap.contains(argBase.first)) {
-            // exact arg type is present in the param type union
-            auto paramBase = paramBaseMap.extract(argBase.first);
-            auto reifyParameterResult = reifySingular(paramBase.mapped(), argBase.second);
-            if (reifyParameterResult.isStatus())
-                return reifyParameterResult.getStatus();
-            unionMembers.push_back(reifyParameterResult.getResult());
-        } else {
-            // exact arg type is not present in the param type union, so check for sealed supertype
-            if (!state->symbolCache()->hasSymbol(argBase.first))
-                return state->logAndContinue(lyric_assembler::AssemblerCondition::kMissingSymbol,
-                    tempo_tracing::LogSeverity::kError,
-                    "missing symbol {}", argBase.first.toString());
-            auto *argSym = state->symbolCache()->getSymbol(argBase.first);
-
-            lyric_assembler::TypeHandle *argTypeHandle;
-            switch (argSym->getSymbolType()) {
-                case lyric_assembler::SymbolType::CLASS:
-                    argTypeHandle = cast_symbol_to_class(argSym)->classType();
-                    break;
-                case lyric_assembler::SymbolType::ENUM:
-                    argTypeHandle = cast_symbol_to_enum(argSym)->enumType();
-                    break;
-                case lyric_assembler::SymbolType::EXISTENTIAL:
-                    argTypeHandle = cast_symbol_to_existential(argSym)->existentialType();
-                    break;
-                case lyric_assembler::SymbolType::INSTANCE:
-                    argTypeHandle = cast_symbol_to_instance(argSym)->instanceType();
-                    break;
-                case lyric_assembler::SymbolType::STRUCT:
-                    argTypeHandle = cast_symbol_to_struct(argSym)->structType();
-                    break;
-                default:
-                    state->throwAssemblerInvariant("invalid argument symbol {}", argSym->getSymbolUrl().toString());
+    // build a mapping from parameter base url to parameter type. if the parameter is a placeholder
+    // then the base url is the constraint type of the associated type bound. the placeholder must have
+    // Extends bounds or None bounds (which is the same thing as extends Any).
+    absl::flat_hash_map<lyric_common::SymbolUrl,lyric_common::TypeDef> paramBaseUrlToParamTypeMap;
+    for (auto it = paramType.unionMembersBegin(); it != paramType.unionMembersEnd(); it++) {
+        const auto &member = *it;
+        lyric_common::SymbolUrl paramBaseUrl;
+        switch (member.getType()) {
+            case lyric_common::TypeDefType::Concrete: {
+                paramBaseUrl = member.getConcreteUrl();
+                break;
             }
-            auto *argSupertypeHandle = argTypeHandle->getSuperType();
-            if (argSupertypeHandle == nullptr)
-                return state->logAndContinue(lyric_assembler::AssemblerCondition::kIncompatibleType,
-                    tempo_tracing::LogSeverity::kError,
-                    "argument type {} is incompatible with {}", argBase.second.toString(), paramType.toString());
-            auto argSuperType = argSupertypeHandle->getTypeDef();
-            auto paramBase = paramBaseMap.extract(argSuperType.getConcreteUrl());
-            if (paramBase.empty())
-                return state->logAndContinue(lyric_assembler::AssemblerCondition::kIncompatibleType,
-                    tempo_tracing::LogSeverity::kError,
-                    "argument type {} is incompatible with {}", argBase.second.toString(), paramType.toString());
-
-            auto reifyParameterResult = reifySingular(paramBase.mapped(), argBase.second);
-            if (reifyParameterResult.isStatus())
-                return reifyParameterResult.getStatus();
-            unionMembers.push_back(reifyParameterResult.getResult());
+            case lyric_common::TypeDefType::Placeholder: {
+                std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
+                TU_ASSIGN_OR_RETURN (bound, m_typeSystem->resolveBound(member));
+                if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
+                    return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
+                        "incompatible union member type {}; type bounds must be Extends", member.toString());
+                auto constraintType = bound.second;
+                if (constraintType.getType() != lyric_common::TypeDefType::Concrete)
+                    state->throwAssemblerInvariant(
+                        "invalid union member {}; constraint type must be concrete but found {}",
+                        member.toString(), constraintType.toString());
+                paramBaseUrl = constraintType.getConcreteUrl();
+                break;
+            }
+            default:
+                state->throwAssemblerInvariant("parameter type has invalid union member {}", member.toString());
         }
+        if (paramBaseUrlToParamTypeMap.contains(paramBaseUrl))
+            state->throwAssemblerInvariant("parameter type has duplicate union member {}", member.toString());
+        paramBaseUrlToParamTypeMap[paramBaseUrl] = member;
     }
 
-    auto resolveUnionResult = state->typeCache()->resolveUnion(unionMembers);
-    if (resolveUnionResult.isStatus())
-        return resolveUnionResult.getStatus();
+    // build a mapping of parameter base url to argument type
+    absl::flat_hash_map<lyric_common::SymbolUrl,lyric_common::TypeDef> paramBaseUrlToArgTypeMap;
+    for (const auto &member : argMembers) {
+        lyric_common::SymbolUrl argBaseUrl;
+        switch (member.getType()) {
+            case lyric_common::TypeDefType::Concrete: {
+                argBaseUrl = member.getConcreteUrl();
+                break;
+            }
+            case lyric_common::TypeDefType::Placeholder: {
+                std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
+                TU_ASSIGN_OR_RETURN (bound, m_typeSystem->resolveBound(member));
+                if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
+                    return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
+                        "incompatible union member type {}; type bounds must be Extends", member.toString());
+                auto constraintType = bound.second;
+                if (constraintType.getType() != lyric_common::TypeDefType::Concrete)
+                    state->throwAssemblerInvariant(
+                        "invalid union member {}; constraint type must be concrete but found {}",
+                        member.toString(), constraintType.toString());
+                argBaseUrl = constraintType.getConcreteUrl();
+                break;
+            }
+            default:
+                state->throwAssemblerInvariant("argument type has invalid union member {}", member.toString());
+        }
 
-    return resolveUnionResult.getResult();
+        // find the parameter member which maps to the argument member
+        lyric_common::SymbolUrl paramBaseUrl;
+        for (const auto &paramBase : paramBaseUrlToParamTypeMap) {
+            lyric_runtime::TypeComparison cmp;
+            TU_ASSIGN_OR_RETURN (cmp, m_typeSystem->compareAssignable(
+                lyric_common::TypeDef::forConcrete(paramBase.first), lyric_common::TypeDef::forConcrete(argBaseUrl)));
+            if (cmp == lyric_runtime::TypeComparison::EQUAL || cmp == lyric_runtime::TypeComparison::EXTENDS) {
+                paramBaseUrl = paramBase.first;
+                break;
+            }
+        }
+
+        //
+        if (!paramBaseUrl.isValid())
+            return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
+                "incompatible union member type {}; no such matching member in parameter type", member.toString());
+
+        //
+        if (paramBaseUrlToArgTypeMap.contains(argBaseUrl))
+            return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
+                "incompatible union;  member type {} is not disjoint with {}",
+                member.toString(), paramBaseUrlToArgTypeMap.at(argBaseUrl).toString());
+
+        paramBaseUrlToArgTypeMap[paramBaseUrl] = member;
+    }
+
+    std::vector<lyric_common::TypeDef> reifiedMembers;
+
+    //
+    for (auto &entry : paramBaseUrlToParamTypeMap) {
+        const auto &paramMemberType = entry.second;
+
+        lyric_common::TypeDef reifiedType;
+        if (paramBaseUrlToArgTypeMap.contains(entry.first)) {
+            const auto &argMemberType = paramBaseUrlToArgTypeMap.at(entry.first);
+            TU_ASSIGN_OR_RETURN (reifiedType, reifySingular(paramMemberType, argMemberType));
+        } else {
+            reifiedType = paramMemberType;
+        }
+
+        reifiedMembers.push_back(reifiedType);
+    }
+
+    return state->typeCache()->resolveUnion(reifiedMembers);
 }
 
 tempo_utils::Status
 lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &argumentType)
 {
+    TU_ASSERT (m_initialized);
     auto *state = m_typeSystem->getState();
 
     bool isAssignable;
@@ -453,6 +529,7 @@ lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &ar
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::CallsiteReifier::reifyNextContext()
 {
+    TU_ASSERT (m_initialized);
     auto *state = m_typeSystem->getState();
 
     if (m_parameters.size() <= m_argumentTypes.size())
@@ -516,6 +593,7 @@ lyric_typing::CallsiteReifier::reifyNextContext()
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::CallsiteReifier::reifyResult(const lyric_common::TypeDef &returnType) const
 {
+    TU_ASSERT (m_initialized);
     auto *state = m_typeSystem->getState();
 
     lyric_common::TypeDef baseType;

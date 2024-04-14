@@ -22,7 +22,7 @@ namespace lyric_typing {
             const Option<lyric_object::Parameter> &rest,
             const lyric_common::SymbolUrl &templateUrl,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
-            const std::vector<lyric_common::TypeDef> &templateArguments,
+            const std::vector<lyric_common::TypeDef> &callsiteArguments,
             TypeSystem *typeSystem);
         CallsiteReifier(
             const std::vector<lyric_object::Parameter> &parameters,
@@ -30,6 +30,10 @@ namespace lyric_typing {
             TypeSystem *typeSystem);
 
         bool isValid() const override;
+
+        std::vector<lyric_common::TypeDef> getCallsiteArguments() const;
+
+        tempo_utils::Status initialize();
 
         lyric_common::TypeDef getArgument(int index) const override;
         std::vector<lyric_common::TypeDef> getArguments() const override;
@@ -46,10 +50,13 @@ namespace lyric_typing {
         Option<lyric_object::Parameter> m_rest;
         lyric_common::SymbolUrl m_templateUrl;
         std::vector<lyric_object::TemplateParameter> m_templateParameters;
+        std::vector<lyric_common::TypeDef> m_callsiteArguments;
+        TypeSystem *m_typeSystem;
+
+        bool m_initialized;
         std::vector<lyric_common::TypeDef> m_reifiedPlaceholders;
         std::vector<lyric_common::TypeDef> m_argumentTypes;
         lyric_common::TypeDef m_restType;
-        TypeSystem *m_typeSystem;
 
         tempo_utils::Status checkPlaceholder(
             const lyric_object::TemplateParameter &tp,

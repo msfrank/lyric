@@ -753,7 +753,7 @@ lyric_assembler::EnumSymbol::resolveMethod(
     if (!callSymbol->isBound())
         m_state->throwAssemblerInvariant("invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-    return MethodInvoker(callSymbol, receiverType);
+    return MethodInvoker(callSymbol);
 }
 
 bool

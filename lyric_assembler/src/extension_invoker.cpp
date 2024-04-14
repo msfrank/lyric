@@ -26,7 +26,6 @@ lyric_assembler::ExtensionInvoker::ExtensionInvoker(CallSymbol *callSymbol, Proc
     auto *callTemplate = m_call->callTemplate();
     if (callTemplate != nullptr) {
         m_templateParameters = callTemplate->getTemplateParameters();
-        m_templateArguments.resize(m_templateParameters.size());
         m_templateUrl = callTemplate->getTemplateUrl();
     }
 }
@@ -34,7 +33,6 @@ lyric_assembler::ExtensionInvoker::ExtensionInvoker(CallSymbol *callSymbol, Proc
 lyric_assembler::ExtensionInvoker::ExtensionInvoker(
     ConceptSymbol *conceptSymbol,
     ActionSymbol *actionSymbol,
-    const lyric_common::TypeDef &receiverType,
     const DataReference &ref)
     : m_type(InvokeType::VIRTUAL),
       m_call(nullptr),
@@ -45,25 +43,12 @@ lyric_assembler::ExtensionInvoker::ExtensionInvoker(
 {
     TU_ASSERT (m_concept != nullptr);
     TU_ASSERT (m_action != nullptr);
-    TU_ASSERT (receiverType.isValid());
 
     m_parameters = m_action->getParameters();
     m_rest = m_action->getRest();
     auto *actionTemplate = m_action->actionTemplate();
     if (actionTemplate != nullptr) {
         m_templateParameters = actionTemplate->getTemplateParameters();
-        switch (receiverType.getType()) {
-            case lyric_common::TypeDefType::Concrete:
-                m_templateArguments = std::vector<lyric_common::TypeDef>(
-                    receiverType.concreteArgumentsBegin(), receiverType.concreteArgumentsEnd());
-                break;
-            case lyric_common::TypeDefType::Placeholder:
-                m_templateArguments = std::vector<lyric_common::TypeDef>(
-                    receiverType.placeholderArgumentsBegin(), receiverType.placeholderArgumentsEnd());
-                break;
-            default:
-                TU_UNREACHABLE();
-        }
         m_templateUrl = actionTemplate->getTemplateUrl();
     }
 }
@@ -96,12 +81,6 @@ std::vector<lyric_object::TemplateParameter>
 lyric_assembler::ExtensionInvoker::getTemplateParameters() const
 {
     return m_templateParameters;
-}
-
-std::vector<lyric_common::TypeDef>
-lyric_assembler::ExtensionInvoker::getTemplateArguments() const
-{
-    return m_templateArguments;
 }
 
 std::vector<lyric_object::Parameter>::const_iterator

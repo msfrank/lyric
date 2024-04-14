@@ -196,15 +196,18 @@ lyric_compiler::internal::compile_unwrap(
 
         instanceSymbol->touch();
 
-        extensionInvoker = lyric_assembler::ExtensionInvoker(conceptSymbol, actionSymbol, instanceRef.typeDef, instanceRef);
+        extensionInvoker = lyric_assembler::ExtensionInvoker(conceptSymbol, actionSymbol, instanceRef);
     } else {
         block->throwAssemblerInvariant("invalid extension call {}", extensionUrl.toString());
     }
 
     // call unwrap() on the target, putting the tuple on the top of the stack
+    auto callsiteTypeArguments = instanceRef.typeDef.getConcreteArguments();
     lyric_typing::CallsiteReifier reifier(extensionInvoker.getParameters(), extensionInvoker.getRest(),
         extensionInvoker.getTemplateUrl(), extensionInvoker.getTemplateParameters(),
-        extensionInvoker.getTemplateArguments(), typeSystem);
+        std::vector<lyric_common::TypeDef>(callsiteTypeArguments.begin(), callsiteTypeArguments.end()),
+        typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize());
     status = block->load(targetRef);
     if (!status.isOk())
         return status;

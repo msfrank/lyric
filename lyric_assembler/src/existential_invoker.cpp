@@ -26,15 +26,13 @@ lyric_assembler::ExistentialInvoker::ExistentialInvoker(CallSymbol *callSymbol, 
     auto *callTemplate = m_call->callTemplate();
     if (callTemplate != nullptr) {
         m_templateParameters = callTemplate->getTemplateParameters();
-        m_templateArguments.resize(m_templateParameters.size());
         m_templateUrl = callTemplate->getTemplateUrl();
     }
 }
 
 lyric_assembler::ExistentialInvoker::ExistentialInvoker(
     ExistentialSymbol *existentialSymbol,
-    CallSymbol *callSymbol,
-    const lyric_common::TypeDef &receiverType)
+    CallSymbol *callSymbol)
     : m_type(InvokeType::VIRTUAL),
       m_call(callSymbol),
       m_proc(nullptr),
@@ -42,25 +40,12 @@ lyric_assembler::ExistentialInvoker::ExistentialInvoker(
 {
     TU_ASSERT (m_call != nullptr);
     TU_ASSERT (m_existential != nullptr);
-    TU_ASSERT (receiverType.isValid());
 
     m_parameters = m_call->getParameters();
     m_rest = m_call->getRest();
     auto *callTemplate = m_call->callTemplate();
     if (callTemplate != nullptr) {
         m_templateParameters = callTemplate->getTemplateParameters();
-        switch (receiverType.getType()) {
-            case lyric_common::TypeDefType::Concrete:
-                m_templateArguments = std::vector<lyric_common::TypeDef>(
-                    receiverType.concreteArgumentsBegin(), receiverType.concreteArgumentsEnd());
-                break;
-            case lyric_common::TypeDefType::Placeholder:
-                m_templateArguments = std::vector<lyric_common::TypeDef>(
-                    receiverType.placeholderArgumentsBegin(), receiverType.placeholderArgumentsEnd());
-                break;
-            default:
-                TU_UNREACHABLE();
-        }
         m_templateUrl = callTemplate->getTemplateUrl();
     }
 }
@@ -93,12 +78,6 @@ std::vector<lyric_object::TemplateParameter>
 lyric_assembler::ExistentialInvoker::getTemplateParameters() const
 {
     return m_templateParameters;
-}
-
-std::vector<lyric_common::TypeDef>
-lyric_assembler::ExistentialInvoker::getTemplateArguments() const
-{
-    return m_templateArguments;
 }
 
 std::vector<lyric_object::Parameter>::const_iterator

@@ -115,8 +115,9 @@ lyric_compiler::internal::compile_placement(
                     lyric_assembler::CallInvoker call(cast_symbol_to_call(sym));
 
                     lyric_typing::CallsiteReifier initReifier(call.getParameters(), call.getRest(),
-                        call.getTemplateUrl(), call.getTemplateParameters(), call.getTemplateArguments(),
+                        call.getTemplateUrl(), call.getTemplateParameters(), reifier.getCallsiteArguments(),
                         typeSystem);
+                    TU_RETURN_IF_NOT_OK (initReifier.initialize());
                     auto invokeInitializerResult = call.invoke(invokeBlock, initReifier);
                     if (invokeInitializerResult.isStatus())
                         return invokeInitializerResult.getStatus();
@@ -219,9 +220,12 @@ lyric_compiler::internal::compile_function_call(
         return resolveFunctionResult.getStatus();
     auto function = resolveFunctionResult.getResult();
 
+    // FIXME: support callsite type arguments on function
     lyric_typing::CallsiteReifier reifier(function.getParameters(), function.getRest(),
-        function.getTemplateUrl(), function.getTemplateParameters(), function.getTemplateArguments(),
+        function.getTemplateUrl(), function.getTemplateParameters(), {},
         typeSystem);
+
+    TU_RETURN_IF_NOT_OK (reifier.initialize());
 
     auto status = compile_placement(bindingBlock, invokeBlock, function, reifier, walker, moduleEntry);
     if (!status.isOk())

@@ -30,8 +30,7 @@ namespace lyric_assembler {
         ExistentialInvoker(CallSymbol *callSymbol, ProcHandle *procHandle);
         ExistentialInvoker(
             ExistentialSymbol *existentialSymbol,
-            CallSymbol *callSymbol,
-            const lyric_common::TypeDef &receiverType);
+            CallSymbol *callSymbol);
 
         bool isValid() const;
 
@@ -39,7 +38,6 @@ namespace lyric_assembler {
         Option<lyric_object::Parameter> getRest() const;
         lyric_common::SymbolUrl getTemplateUrl() const;
         std::vector<lyric_object::TemplateParameter> getTemplateParameters() const;
-        std::vector<lyric_common::TypeDef> getTemplateArguments() const;
 
         std::vector<lyric_object::Parameter>::const_iterator placementBegin() const override;
         std::vector<lyric_object::Parameter>::const_iterator placementEnd() const override;
@@ -57,7 +55,6 @@ namespace lyric_assembler {
         std::vector<lyric_object::Parameter> m_parameters;
         Option<lyric_object::Parameter> m_rest;
         std::vector<lyric_object::TemplateParameter> m_templateParameters;
-        std::vector<lyric_common::TypeDef> m_templateArguments;
         lyric_common::SymbolUrl m_templateUrl;
     };
 }

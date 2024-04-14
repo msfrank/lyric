@@ -21,7 +21,6 @@ lyric_assembler::CallInvoker::CallInvoker(CallSymbol *call)
     auto *callTemplate = m_call->callTemplate();
     if (callTemplate != nullptr) {
         m_templateParameters = callTemplate->getTemplateParameters();
-        m_templateArguments.resize(m_templateParameters.size());
         m_templateUrl = callTemplate->getTemplateUrl();
     }
 }
@@ -38,7 +37,6 @@ lyric_assembler::CallInvoker::CallInvoker(CallSymbol *call, ProcHandle *proc)
     auto *callTemplate = m_call->callTemplate();
     if (callTemplate != nullptr) {
         m_templateParameters = callTemplate->getTemplateParameters();
-        m_templateArguments.resize(m_templateParameters.size());
         m_templateUrl = callTemplate->getTemplateUrl();
     }
 }
@@ -71,12 +69,6 @@ std::vector<lyric_object::TemplateParameter>
 lyric_assembler::CallInvoker::getTemplateParameters() const
 {
     return m_templateParameters;
-}
-
-std::vector<lyric_common::TypeDef>
-lyric_assembler::CallInvoker::getTemplateArguments() const
-{
-    return m_templateArguments;
 }
 
 std::vector<lyric_object::Parameter>::const_iterator

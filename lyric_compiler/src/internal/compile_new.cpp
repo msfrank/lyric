@@ -83,17 +83,13 @@ lyric_compiler::internal::compile_new(
     std::vector<lyric_common::TypeDef> newTypeArguments(
         newType.concreteArgumentsBegin(), newType.concreteArgumentsEnd());
     lyric_typing::CallsiteReifier ctorReifier(ctor.getParameters(), ctor.getRest(),
-        ctor.getTemplateUrl(), ctor.getTemplateParameters(),
-        newTypeArguments, typeSystem);
+        ctor.getTemplateUrl(), ctor.getTemplateParameters(), newTypeArguments,
+        typeSystem);
+    TU_RETURN_IF_NOT_OK (ctorReifier.initialize());
 
     // place the ctor arguments on the stack
-    auto status = compile_placement(block, block, ctor, ctorReifier, walker, moduleEntry);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (compile_placement(block, block, ctor, ctorReifier, walker, moduleEntry));
 
     // invoke the ctor
-    auto invokeNewResult = ctor.invokeNew(block, ctorReifier);
-    if (invokeNewResult.isStatus())
-        return invokeNewResult.getStatus();
-    return invokeNewResult.getResult();
+    return ctor.invokeNew(block, ctorReifier);
 }

@@ -187,9 +187,13 @@ lyric_compiler::internal::compile_deref_method(
     auto *state = moduleEntry.getState();
 
     // resolve receiver
-    if (!receiverType.isValid())
+    if (receiverType.getType() != lyric_common::TypeDefType::Concrete)
         block->throwAssemblerInvariant("invalid receiver type {}", receiverType.toString());
     auto receiverUrl = receiverType.getConcreteUrl();
+
+    // extract the type arguments from the receiver type
+    auto concreteArguments = receiverType.getConcreteArguments();
+    std::vector<lyric_common::TypeDef> callsiteArguments(concreteArguments.begin(), concreteArguments.end());
 
     if (!state->symbolCache()->hasSymbol(receiverUrl))
         return block->logAndContinue(CompilerCondition::kMissingSymbol,
@@ -212,7 +216,8 @@ lyric_compiler::internal::compile_deref_method(
 
             lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
                 method.getTemplateUrl(), method.getTemplateParameters(),
-                method.getTemplateArguments(), typeSystem);
+                callsiteArguments, typeSystem);
+            TU_RETURN_IF_NOT_OK (reifier.initialize());
 
             auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
             if (!status.isOk())
@@ -233,7 +238,8 @@ lyric_compiler::internal::compile_deref_method(
 
             lyric_typing::CallsiteReifier reifier(action.getParameters(), action.getRest(),
                 action.getTemplateUrl(), action.getTemplateParameters(),
-                action.getTemplateArguments(), typeSystem);
+                callsiteArguments, typeSystem);
+            TU_RETURN_IF_NOT_OK (reifier.initialize());
 
             auto status = compile_placement(block, block, action, reifier, walker, moduleEntry);
             if (!status.isOk())
@@ -254,7 +260,8 @@ lyric_compiler::internal::compile_deref_method(
 
             lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
                 method.getTemplateUrl(), method.getTemplateParameters(),
-                method.getTemplateArguments(), typeSystem);
+                callsiteArguments, typeSystem);
+            TU_RETURN_IF_NOT_OK (reifier.initialize());
 
             auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
             if (!status.isOk())
@@ -275,7 +282,8 @@ lyric_compiler::internal::compile_deref_method(
 
             lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
                 method.getTemplateUrl(), method.getTemplateParameters(),
-                method.getTemplateArguments(), typeSystem);
+                callsiteArguments, typeSystem);
+            TU_RETURN_IF_NOT_OK (reifier.initialize());
 
             auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
             if (!status.isOk())
@@ -296,7 +304,8 @@ lyric_compiler::internal::compile_deref_method(
 
             lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
                 method.getTemplateUrl(), method.getTemplateParameters(),
-                method.getTemplateArguments(), typeSystem);
+                callsiteArguments, typeSystem);
+            TU_RETURN_IF_NOT_OK (reifier.initialize());
 
             auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
             if (!status.isOk())
@@ -317,7 +326,8 @@ lyric_compiler::internal::compile_deref_method(
 
             lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
                 method.getTemplateUrl(), method.getTemplateParameters(),
-                method.getTemplateArguments(), typeSystem);
+                callsiteArguments, typeSystem);
+            TU_RETURN_IF_NOT_OK (reifier.initialize());
 
             auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
             if (!status.isOk())

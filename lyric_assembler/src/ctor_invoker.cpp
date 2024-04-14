@@ -76,7 +76,6 @@ lyric_assembler::CtorInvoker::CtorInvoker(CallSymbol *ctor)
     auto *callTemplate = m_ctor->callTemplate();
     if (callTemplate != nullptr) {
         m_templateParameters = callTemplate->getTemplateParameters();
-        m_templateArguments.resize(m_templateParameters.size());
         m_templateUrl = callTemplate->getTemplateUrl();
     }
 }
@@ -109,12 +108,6 @@ std::vector<lyric_object::TemplateParameter>
 lyric_assembler::CtorInvoker::getTemplateParameters() const
 {
     return m_templateParameters;
-}
-
-std::vector<lyric_common::TypeDef>
-lyric_assembler::CtorInvoker::getTemplateArguments() const
-{
-    return m_templateArguments;
 }
 
 std::vector<lyric_object::Parameter>::const_iterator

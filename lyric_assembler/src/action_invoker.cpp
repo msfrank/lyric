@@ -9,10 +9,7 @@ lyric_assembler::ActionInvoker::ActionInvoker()
 {
 }
 
-lyric_assembler::ActionInvoker::ActionInvoker(
-    ActionSymbol *action,
-    const ConceptAddress &address,
-    const lyric_common::TypeDef &receiverType)
+lyric_assembler::ActionInvoker::ActionInvoker(ActionSymbol *action, const ConceptAddress &address)
     : m_action(action),
       m_address(address)
 {
@@ -23,18 +20,6 @@ lyric_assembler::ActionInvoker::ActionInvoker(
     auto *actionTemplate = m_action->actionTemplate();
     if (actionTemplate != nullptr) {
         m_templateParameters = actionTemplate->getTemplateParameters();
-        switch (receiverType.getType()) {
-            case lyric_common::TypeDefType::Concrete:
-                m_templateArguments = std::vector<lyric_common::TypeDef>(
-                    receiverType.concreteArgumentsBegin(), receiverType.concreteArgumentsEnd());
-                break;
-            case lyric_common::TypeDefType::Placeholder:
-                m_templateArguments = std::vector<lyric_common::TypeDef>(
-                    receiverType.placeholderArgumentsBegin(), receiverType.placeholderArgumentsEnd());
-                break;
-            default:
-                TU_UNREACHABLE();
-        }
         m_templateUrl = actionTemplate->getTemplateUrl();
     }
 }
@@ -67,12 +52,6 @@ std::vector<lyric_object::TemplateParameter>
 lyric_assembler::ActionInvoker::getTemplateParameters() const
 {
     return m_templateParameters;
-}
-
-std::vector<lyric_common::TypeDef>
-lyric_assembler::ActionInvoker::getTemplateArguments() const
-{
-    return m_templateArguments;
 }
 
 std::vector<lyric_object::Parameter>::const_iterator
