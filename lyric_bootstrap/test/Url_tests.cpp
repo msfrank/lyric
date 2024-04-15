@@ -13,7 +13,7 @@ TEST(CoreUrl, TestEvaluateNewUrl)
 
     ASSERT_THAT (result,
                  ContainsResult(
-                     RunModule(Return(IsRefType(preludeSymbol("Url"))))));
+                     RunModule(Return(DataCellUrl("https://zuri.dev/example/uri.html")))));
 }
 
 TEST(CoreUrl, TestEvaluateNewEmptyUrl)
@@ -25,19 +25,7 @@ TEST(CoreUrl, TestEvaluateNewEmptyUrl)
 
     ASSERT_THAT (result,
                  ContainsResult(
-                     RunModule(Return(IsRefType(preludeSymbol("Url"))))));
-}
-
-TEST(CoreUrl, TestEvaluateNewUrlInSandbox)
-{
-    auto result = runModule(R"(
-        val uri: Url = `https://zuri.dev/example/uri.html`
-        uri
-    )");
-
-    ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(IsRefType(preludeSymbol("Url"))))));
+                     RunModule(Return(DataCellUrl("")))));
 }
 
 TEST(CoreUrl, TestEvaluateIsEq)

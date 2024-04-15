@@ -79,8 +79,6 @@ lyric_assembler::FundamentalCache::FundamentalCache(
         fundamentalTypeToSymbolPath(FundamentalSymbol::Unwrap));
     m_fundamentalUrl = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Url));
-    m_fundamentalUtf8 = lyric_common::SymbolUrl(preludeLocation,
-        fundamentalTypeToSymbolPath(FundamentalSymbol::Utf8));
 
     // cache symbol urls for statuses
     m_fundamentalCancelled = lyric_common::SymbolUrl(preludeLocation,
@@ -273,8 +271,6 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalUnwrap;
         case FundamentalSymbol::Url:
             return m_fundamentalUrl;
-        case FundamentalSymbol::Utf8:
-            return m_fundamentalUtf8;
 
         case FundamentalSymbol::Cancelled:
             return m_fundamentalCancelled;
@@ -391,8 +387,6 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(const lyric_runtime::Litera
             return getFundamentalUrl(FundamentalSymbol::Float);
         case lyric_runtime::LiteralCellType::CHAR32:
             return getFundamentalUrl(FundamentalSymbol::Char);
-        case lyric_runtime::LiteralCellType::UTF8:
-            return getFundamentalUrl(FundamentalSymbol::Utf8);
         default:
             m_tracer->throwAssemblerInvariant("cannot resolve definition for literal {}", literalCell.toString());
     }

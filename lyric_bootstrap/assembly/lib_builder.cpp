@@ -75,7 +75,8 @@ main(int argc, char *argv[])
     auto *CharExistential = declare_core_Char(state, IntrinsicExistential);
     auto *IntExistential = declare_core_Int(state, IntrinsicExistential);
     auto *FloatExistential = declare_core_Float(state, IntrinsicExistential);
-    auto *Utf8Existential = declare_core_Utf8(state, IntrinsicExistential);
+    auto *StringExistential = declare_core_String(state, IntrinsicExistential);
+    auto *UrlExistential = declare_core_Url(state, IntrinsicExistential);
 
     // define Descriptor type
     auto *DescriptorExistential = build_core_Descriptor(state, AnyExistential);
@@ -108,7 +109,8 @@ main(int argc, char *argv[])
     build_core_Char(state, CharExistential);
     build_core_Int(state, IntExistential);
     build_core_Float(state, FloatExistential);
-    build_core_Utf8(state, Utf8Existential);
+    build_core_String(state, StringExistential, IntExistential->existentialType, CharExistential->existentialType);
+    build_core_Url(state, UrlExistential);
 
     // define Function classes
     for (int i = 0; i <= NUM_FUNCTION_CLASSES; i++) {
@@ -134,30 +136,24 @@ main(int argc, char *argv[])
     auto *IterableConcept = build_core_Iterable(state, IdeaConcept, IteratorConcept);
     //build_core_Rest(state, AnyType, VarargsConcept, IntType);
 
-    // core structs
-    auto *StringStruct = build_core_String(state, RecordStruct, Utf8Existential->existentialType,
-        IntExistential->existentialType, CharExistential->existentialType);
-    auto *UrlStruct = build_core_Url(state, RecordStruct, Utf8Existential->existentialType,
-        IntExistential->existentialType, CharExistential->existentialType);
-
     // core status structs
-    auto *StatusStruct = build_core_Status(state, StringStruct->structType);
-    build_core_Status_code("Cancelled", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("InvalidArgument", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("DeadlineExceeded", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("NotFound", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("AlreadyExists", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("PermissionDenied", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("Unauthenticated", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("ResourceExhausted", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("FailedPrecondition", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("Aborted", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("Unavailable", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("OutOfRange", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("Unimplemented", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("Internal", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("DataLoss", state, StatusStruct, StringStruct->structType);
-    build_core_Status_code("Unknown", state, StatusStruct, StringStruct->structType);
+    auto *StatusStruct = build_core_Status(state, StringExistential->existentialType);
+    build_core_Status_code("Cancelled", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("InvalidArgument", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("DeadlineExceeded", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("NotFound", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("AlreadyExists", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("PermissionDenied", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("Unauthenticated", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("ResourceExhausted", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("FailedPrecondition", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("Aborted", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("Unavailable", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("OutOfRange", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("Unimplemented", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("Internal", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("DataLoss", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code("Unknown", state, StatusStruct, StringExistential->existentialType);
 
     // core instances
     build_core_BoolInstance(state, BoolExistential->existentialType, SingletonInstance,
@@ -172,10 +168,10 @@ main(int argc, char *argv[])
     build_core_FloatInstance(state, FloatExistential->existentialType, SingletonInstance,
         ArithmeticConcept, ComparisonConcept, EqualityConcept, OrderedConcept,
         IntExistential->existentialType, BoolExistential->existentialType);
-    build_core_StringInstance(state, StringStruct->structType, SingletonInstance,
+    build_core_StringInstance(state, StringExistential->existentialType, SingletonInstance,
         ComparisonConcept, EqualityConcept, OrderedConcept,
         CharExistential->existentialType, IntExistential->existentialType, BoolExistential->existentialType);
-    build_core_UrlInstance(state, UrlStruct->structType, SingletonInstance,
+    build_core_UrlInstance(state, UrlExistential->existentialType, SingletonInstance,
         EqualityConcept,
         IntExistential->existentialType, BoolExistential->existentialType);
 

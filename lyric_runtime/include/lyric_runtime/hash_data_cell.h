@@ -22,14 +22,19 @@ namespace lyric_runtime {
                 return H::combine(std::move(h), cell.type, cell.data.dbl);
             case DataCellType::CHAR32:
                 return H::combine(std::move(h), cell.type, cell.data.chr);
-            case DataCellType::UTF8: {
-                auto state = H::combine(std::move(h), cell.type);
-                return H::combine_contiguous(std::move(state), cell.data.utf8.data, cell.data.utf8.size);
-            }
+
+            case DataCellType::STRING:
+                // NOTE: we hash the pointer value in this case, not the ref contents
+                return H::combine(std::move(h), cell.type, cell.data.str);
+
+            case DataCellType::URL:
+                // NOTE: we hash the pointer value in this case, not the ref contents
+                return H::combine(std::move(h), cell.type, cell.data.url);
+
             case DataCellType::REF:
                 // NOTE: we hash the pointer value in this case, not the ref contents
                 return H::combine(std::move(h), cell.type, cell.data.ref);
-                break;
+
             case DataCellType::CLASS:
             case DataCellType::STRUCT:
             case DataCellType::INSTANCE:

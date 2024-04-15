@@ -13,7 +13,7 @@ TEST(CoreString, TestEvaluateNewString)
 
     ASSERT_THAT (result,
                  ContainsResult(
-                     RunModule(Return(IsRefType(preludeSymbol("String"))))));
+                     RunModule(Return(DataCellString("Hello, world!")))));
 }
 
 TEST(CoreString, TestEvaluateNewEmptyString)
@@ -25,14 +25,14 @@ TEST(CoreString, TestEvaluateNewEmptyString)
 
     ASSERT_THAT (result,
                  ContainsResult(
-                     RunModule(Return(IsRefType(preludeSymbol("String"))))));
+                     RunModule(Return(DataCellString("")))));
 }
 
 TEST(CoreString, TestEvaluateStringSize)
 {
     auto result = runModule(R"(
         val string: String = "Hello, world!"
-        string.length()
+        string.Length()
     )");
 
     ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(13)))));
@@ -42,7 +42,7 @@ TEST(CoreString, TestEvaluateStringAt)
 {
     auto result = runModule(R"(
         val string: String = "Hello, world!"
-        string.at(0)
+        string.At(0)
     )");
 
     ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellChar(static_cast<UChar32>('H'))))));

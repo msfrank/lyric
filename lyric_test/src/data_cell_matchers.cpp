@@ -3,6 +3,8 @@
 #include <gmock/gmock.h>
 #include <absl/strings/str_split.h>
 
+#include <lyric_runtime/string_ref.h>
+#include <lyric_runtime/url_ref.h>
 #include <lyric_test/data_cell_matchers.h>
 #include <lyric_test/test_result.h>
 #include <tempo_utils/unicode.h>
@@ -18,9 +20,15 @@ lyric_test::matchers::DataCellMatcher::DataCellMatcher(const lyric_runtime::Data
 {
 }
 
-lyric_test::matchers::DataCellMatcher::DataCellMatcher(const std::string &utf8)
-    : m_type(MatcherType::DATA_CELL_UTF8),
-      m_utf8(utf8)
+lyric_test::matchers::DataCellMatcher::DataCellMatcher(const std::string &str)
+    : m_type(MatcherType::DATA_CELL_STRING),
+      m_str(str)
+{
+}
+
+lyric_test::matchers::DataCellMatcher::DataCellMatcher(const tempo_utils::Url &url)
+    : m_type(MatcherType::DATA_CELL_URL),
+      m_url(url)
 {
 }
 
@@ -72,7 +80,8 @@ lyric_test::matchers::DataCellMatcher::DataCellMatcher(lyric_runtime::DataCellTy
 lyric_test::matchers::DataCellMatcher::DataCellMatcher(const DataCellMatcher &other)
     : m_type(other.m_type),
       m_cell(other.m_cell),
-      m_utf8(other.m_utf8)
+      m_str(other.m_str),
+      m_url(other.m_url)
 {
 }
 
@@ -84,20 +93,27 @@ lyric_test::matchers::DataCellMatcher::MatchAndExplain(
     switch (m_type) {
         case MatcherType::INVALID:
             return false;
-        case MatcherType::DATA_CELL: {
+        case MatcherType::DATA_CELL:
             return cell == m_cell;
-        }
-        case MatcherType::DATA_CELL_UTF8: {
-            if (cell.type != lyric_runtime::DataCellType::UTF8)
+        case MatcherType::DATA_CELL_STRING: {
+            if (cell.type != lyric_runtime::DataCellType::STRING)
                 return false;
-            return std::string_view(cell.data.utf8.data, cell.data.utf8.size) == m_utf8;
+            std::string str;
+            if (!cell.data.str->utf8Value(str))
+                return false;
+            return m_str == str;
         }
-        case MatcherType::DATA_CELL_DESCRIPTOR: {
+        case MatcherType::DATA_CELL_URL: {
+            if (cell.type != lyric_runtime::DataCellType::URL)
+                return false;
+            tempo_utils::Url url;
+            if (!cell.data.url->uriValue(url))
+                return false;
+            return m_url == url;
+        }
+        case MatcherType::DATA_CELL_DESCRIPTOR:
+        case MatcherType::DATA_CELL_TYPE:
             return cell.type == m_cell.type;
-        }
-        case MatcherType::DATA_CELL_TYPE: {
-            return cell.type == m_cell.type;
-        }
     }
     TU_UNREACHABLE();
 }
@@ -109,8 +125,11 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
         case MatcherType::DATA_CELL:
             *os << m_cell.toString();
             break;
-        case MatcherType::DATA_CELL_UTF8:
-            *os << "cell contains utf8 string " << m_utf8;
+        case MatcherType::DATA_CELL_STRING:
+            *os << "cell contains string " << m_str;
+            break;
+        case MatcherType::DATA_CELL_URL:
+            *os << "cell contains url " << m_url.toString();
             break;
         case MatcherType::DATA_CELL_DESCRIPTOR:
             switch (m_cell.type) {
@@ -136,7 +155,8 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
                 case lyric_runtime::DataCellType::I64:         *os << "cell contains i64 cell"; break;
                 case lyric_runtime::DataCellType::DBL:         *os << "cell contains dbl cell"; break;
                 case lyric_runtime::DataCellType::CHAR32:      *os << "cell contains chr cell"; break;
-                case lyric_runtime::DataCellType::UTF8:        *os << "cell contains utf8 cell"; break;
+                case lyric_runtime::DataCellType::STRING:      *os << "cell contains string cell"; break;
+                case lyric_runtime::DataCellType::URL:         *os << "cell contains url cell"; break;
                 case lyric_runtime::DataCellType::REF:         *os << "cell contains ref cell"; break;
                 case lyric_runtime::DataCellType::TYPE:        *os << "cell contains type cell"; break;
                 case lyric_runtime::DataCellType::CLASS:       *os << "cell contains class cell"; break;
@@ -194,13 +214,25 @@ lyric_test::matchers::DataCellChar(UChar32 chr)
 }
 
 testing::Matcher<lyric_runtime::DataCell>
-lyric_test::matchers::DataCellUtf8(const std::string &utf8)
+lyric_test::matchers::DataCellString(std::string_view str)
 {
-    return DataCellMatcher(utf8);
+    return DataCellMatcher(std::string(str));
 }
 
 testing::Matcher<lyric_runtime::DataCell>
-lyric_test::matchers::MatchesDescriptorSection(const lyric_object::LinkageSection section)
+lyric_test::matchers::DataCellUrl(const tempo_utils::Url &url)
+{
+    return DataCellMatcher(url);
+}
+
+testing::Matcher<lyric_runtime::DataCell>
+lyric_test::matchers::DataCellUrl(std::string_view str)
+{
+    return DataCellMatcher(tempo_utils::Url::fromString(str));
+}
+
+testing::Matcher<lyric_runtime::DataCell>
+lyric_test::matchers::MatchesDescriptorSection(lyric_object::LinkageSection section)
 {
     return DataCellMatcher(section);
 }

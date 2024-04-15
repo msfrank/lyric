@@ -143,6 +143,24 @@ lyric_assembler::CodeBuilder::loadChar(UChar32 chr)
 }
 
 tempo_utils::Status
+lyric_assembler::CodeBuilder::loadString(const LiteralAddress &stringAddress)
+{
+    auto status = writeOpcode(lyric_object::Opcode::OP_STRING);
+    if (!status.isOk())
+        return status;
+    return writeU32(stringAddress.addr);
+}
+
+tempo_utils::Status
+lyric_assembler::CodeBuilder::loadUrl(const LiteralAddress &urlAddress)
+{
+    auto status = writeOpcode(lyric_object::Opcode::OP_URL);
+    if (!status.isOk())
+        return status;
+    return writeU32(urlAddress.addr);
+}
+
+tempo_utils::Status
 lyric_assembler::CodeBuilder::loadLiteral(const LiteralAddress &literalAddress)
 {
     auto status = writeOpcode(lyric_object::Opcode::OP_LITERAL);

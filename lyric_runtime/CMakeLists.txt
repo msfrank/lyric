@@ -38,10 +38,12 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/segment_manager.h
     include/lyric_runtime/serialize_value.h
     include/lyric_runtime/stackful_coroutine.h
+    include/lyric_runtime/string_ref.h
     include/lyric_runtime/subroutine_manager.h
     include/lyric_runtime/system_scheduler.h
     include/lyric_runtime/task.h
     include/lyric_runtime/type_manager.h
+    include/lyric_runtime/url_ref.h
     include/lyric_runtime/virtual_table.h
     )
 set_target_properties(lyric_runtime PROPERTIES PUBLIC_HEADER "${LYRIC_RUNTIME_INCLUDES}")
@@ -70,10 +72,12 @@ target_sources(lyric_runtime PRIVATE
     src/segment_manager.cpp
     src/serialize_value.cpp
     src/stackful_coroutine.cpp
+    src/string_ref.cpp
     src/subroutine_manager.cpp
     src/system_scheduler.cpp
     src/task.cpp
     src/type_manager.cpp
+    src/url_ref.cpp
     src/virtual_table.cpp
 
     include/lyric_runtime/internal/get_class_virtual_table.h

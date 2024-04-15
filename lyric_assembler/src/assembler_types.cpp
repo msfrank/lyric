@@ -74,8 +74,6 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Unwrap";
         case FundamentalSymbol::Url:
             return "Url";
-        case FundamentalSymbol::Utf8:
-            return "Utf8";
 
         case FundamentalSymbol::Cancelled:
             return "Cancelled";

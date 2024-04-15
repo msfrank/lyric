@@ -1,31 +1,18 @@
 
 #include "compile_url.h"
 
-const CoreStruct *
-build_core_Url(
-    BuilderState &state,
-    const CoreStruct *RecordStruct,
-    const CoreType *Utf8Type,
-    const CoreType *IntegerType,
-    const CoreType *CharType)
+CoreExistential *
+declare_core_Url(BuilderState &state, const CoreExistential *IntrinsicExistential)
 {
-    lyric_common::SymbolPath structPath({"Url"});
+    lyric_common::SymbolPath existentialPath({"Url"});
+    auto *UrlExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::Url,
+        lyo1::ExistentialFlags::Final, IntrinsicExistential);
+    return UrlExistential;
+}
 
-    auto *UrlStruct = state.addStruct(structPath, lyo1::StructFlags::Final, RecordStruct);
-
-    {
-        lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::URI_CTOR)));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addStructCtor(UrlStruct,
-            {
-                {"utf8", Utf8Type, nullptr, lyo1::ParameterFlags::NONE},
-            },
-            code);
-        state.setStructAllocator(UrlStruct, lyric_bootstrap::internal::BootstrapTrap::URI_ALLOC);
-    }
-
-    return UrlStruct;
+void
+build_core_Url(BuilderState &state, const CoreExistential *UrlExistential)
+{
 }
 
 CoreInstance *
@@ -49,7 +36,7 @@ build_core_UrlInstance(
 
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::URI_EQUALS)));
+        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::URL_EQUALS)));
         state.addImplExtension("equals", UrlEqualityImpl,
             {{"lhs", UrlType}, {"rhs", UrlType}}, {},
             code, BoolType, false);

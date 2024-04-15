@@ -48,9 +48,9 @@ namespace lyric_bootstrap::internal {
         STRING_COMPARE,
         STRING_CTOR,
         STRING_LENGTH,
-        URI_ALLOC,
-        URI_CTOR,
-        URI_EQUALS,
+        URL_ALLOC,
+        URL_CTOR,
+        URL_EQUALS,
         LAST_,
     };
 }

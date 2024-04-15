@@ -38,6 +38,10 @@ namespace lyric_runtime {
             lyric_object::LinkageSection section,
             tu_uint32 address,
             tempo_utils::Status &status);
+        virtual LiteralCell resolveLiteral(
+            const BytecodeSegment *sp,
+            tu_uint32 address,
+            tempo_utils::Status &status);
 
         virtual const ExistentialTable *resolveExistentialTable(
             const DataCell &descriptor,
@@ -61,8 +65,8 @@ namespace lyric_runtime {
             tempo_utils::Status &status);
 
         virtual tempo_utils::Status pushLiteralOntoStack(
+            const BytecodeSegment *sp,
             tu_uint32 address,
-            const BytecodeSegment **ptr,
             StackfulCoroutine *currentCoro);
         virtual tempo_utils::Status pushDescriptorOntoStack(
             const BytecodeSegment *sp,

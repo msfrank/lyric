@@ -115,50 +115,50 @@ compile_float_constant(
     return block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
 }
 
-static inline tempo_utils::Result<lyric_common::TypeDef>
-new_struct_from_utf8_literal(
-    lyric_typing::TypeSystem *typeSystem,
-    lyric_assembler::BlockHandle *block,
-    lyric_assembler::LiteralAddress utf8,
-    lyric_common::TypeDef structType)
-{
-    block->blockState()->typeCache()->touchType(structType);
-
-    // resolve the struct
-    auto structUrl = structType.getConcreteUrl();
-    if (!block->blockState()->symbolCache()->hasSymbol(structUrl))
-        return block->logAndContinue(lyric_compiler::CompilerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "missing symbol {}", structUrl.toString());
-    auto *sym = block->blockState()->symbolCache()->getSymbol(structUrl);
-    if (sym == nullptr)
-        block->throwAssemblerInvariant("invalid struct");
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::STRUCT)
-        block->throwAssemblerInvariant("invalid struct");
-    auto *structSymbol = cast_symbol_to_struct(sym);
-
-    structSymbol->touch();
-
-    // push ctx argument values onto the stack
-    auto resolveCtorResult = structSymbol->resolveCtor();
-    if (resolveCtorResult.isStatus())
-        return resolveCtorResult.getStatus();
-    auto ctor = resolveCtorResult.getResult();
-
-    lyric_typing::CallsiteReifier ctorReifier(ctor.getParameters(), ctor.getRest(), typeSystem);
-    TU_RETURN_IF_NOT_OK (ctorReifier.initialize());
-
-    // push the utf16 literal onto the top of the stack as second arg
-    TU_RETURN_IF_NOT_OK (block->blockCode()->loadLiteral(utf8));
-    auto utf16Type = block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Utf8);
-    TU_RETURN_IF_NOT_OK (ctorReifier.reifyNextArgument(utf16Type));
-
-    // invoke the ctor
-    auto invokeNewResult = ctor.invokeNew(block, ctorReifier);
-    if (invokeNewResult.isStatus())
-        return invokeNewResult.getStatus();
-    return invokeNewResult.getResult();
-}
+//static inline tempo_utils::Result<lyric_common::TypeDef>
+//new_struct_from_utf8_literal(
+//    lyric_typing::TypeSystem *typeSystem,
+//    lyric_assembler::BlockHandle *block,
+//    lyric_assembler::LiteralAddress utf8,
+//    lyric_common::TypeDef structType)
+//{
+//    block->blockState()->typeCache()->touchType(structType);
+//
+//    // resolve the struct
+//    auto structUrl = structType.getConcreteUrl();
+//    if (!block->blockState()->symbolCache()->hasSymbol(structUrl))
+//        return block->logAndContinue(lyric_compiler::CompilerCondition::kMissingSymbol,
+//            tempo_tracing::LogSeverity::kError,
+//            "missing symbol {}", structUrl.toString());
+//    auto *sym = block->blockState()->symbolCache()->getSymbol(structUrl);
+//    if (sym == nullptr)
+//        block->throwAssemblerInvariant("invalid struct");
+//    if (sym->getSymbolType() != lyric_assembler::SymbolType::STRUCT)
+//        block->throwAssemblerInvariant("invalid struct");
+//    auto *structSymbol = cast_symbol_to_struct(sym);
+//
+//    structSymbol->touch();
+//
+//    // push ctx argument values onto the stack
+//    auto resolveCtorResult = structSymbol->resolveCtor();
+//    if (resolveCtorResult.isStatus())
+//        return resolveCtorResult.getStatus();
+//    auto ctor = resolveCtorResult.getResult();
+//
+//    lyric_typing::CallsiteReifier ctorReifier(ctor.getParameters(), ctor.getRest(), typeSystem);
+//    TU_RETURN_IF_NOT_OK (ctorReifier.initialize());
+//
+//    // push the utf16 literal onto the top of the stack as second arg
+//    TU_RETURN_IF_NOT_OK (block->blockCode()->loadLiteral(utf8));
+//    auto utf16Type = block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Utf8);
+//    TU_RETURN_IF_NOT_OK (ctorReifier.reifyNextArgument(utf16Type));
+//
+//    // invoke the ctor
+//    auto invokeNewResult = ctor.invokeNew(block, ctorReifier);
+//    if (invokeNewResult.isStatus())
+//        return invokeNewResult.getStatus();
+//    return invokeNewResult.getResult();
+//}
 
 inline tempo_utils::Result<lyric_common::TypeDef>
 compile_string_constant(
@@ -167,18 +167,27 @@ compile_string_constant(
     lyric_compiler::ModuleEntry &moduleEntry)
 {
     TU_ASSERT (walker.isValid());
+    auto *state = moduleEntry.getState();
+    auto *fundamentalCache = state->fundamentalCache();
+    auto *literalCache = state->literalCache();
+    auto *typeCache = state->typeCache();
 
     std::string literalValue;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstLiteralValue, literalValue);
 
-    auto compileStringResult = lyric_parser::parse_string_literal(literalValue);
-    if (compileStringResult.isStatus())
-        return compileStringResult.getStatus();
-    auto result = block->blockState()->literalCache()->makeLiteralUtf8(compileStringResult.getResult());
-    if (result.isStatus())
-        return result.getStatus();
-    return new_struct_from_utf8_literal(moduleEntry.getTypeSystem(), block, result.getResult(),
-        block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::String));
+    auto parseLiteralResult = lyric_parser::parse_string_literal(literalValue);
+    if (parseLiteralResult.isStatus())
+        return parseLiteralResult.getStatus();
+    auto makeLiteralResult = literalCache->makeLiteralUtf8(parseLiteralResult.getResult());
+    if (makeLiteralResult.isStatus())
+        return makeLiteralResult.getStatus();
+
+    auto *code = block->blockCode();
+    TU_RETURN_IF_NOT_OK (code->loadString(makeLiteralResult.getResult()));
+
+    auto StringType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::String);
+    typeCache->touchType(StringType);
+    return StringType;
 }
 
 inline tempo_utils::Result<lyric_common::TypeDef>
@@ -188,18 +197,27 @@ compile_url_constant(
     lyric_compiler::ModuleEntry &moduleEntry)
 {
     TU_ASSERT (walker.isValid());
+    auto *state = moduleEntry.getState();
+    auto *fundamentalCache = state->fundamentalCache();
+    auto *literalCache = state->literalCache();
+    auto *typeCache = state->typeCache();
 
     std::string literalValue;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstLiteralValue, literalValue);
 
-    auto compileStringResult = lyric_parser::parse_string_literal(literalValue);
-    if (compileStringResult.isStatus())
-        return compileStringResult.getStatus();
-    auto result = block->blockState()->literalCache()->makeLiteralUtf8(compileStringResult.getResult());
-    if (result.isStatus())
-        return result.getStatus();
-    return new_struct_from_utf8_literal(moduleEntry.getTypeSystem(), block, result.getResult(),
-        block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Url));
+    auto parseLiteralResult = lyric_parser::parse_string_literal(literalValue);
+    if (parseLiteralResult.isStatus())
+        return parseLiteralResult.getStatus();
+    auto makeLiteralResult = literalCache->makeLiteralUtf8(parseLiteralResult.getResult());
+    if (makeLiteralResult.isStatus())
+        return makeLiteralResult.getStatus();
+
+    auto *code = block->blockCode();
+    TU_RETURN_IF_NOT_OK (code->loadUrl(makeLiteralResult.getResult()));
+
+    auto UrlType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Url);
+    typeCache->touchType(UrlType);
+    return UrlType;
 }
 
 inline tempo_utils::Result<lyric_common::TypeDef>

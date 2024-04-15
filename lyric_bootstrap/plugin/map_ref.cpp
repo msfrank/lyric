@@ -9,12 +9,21 @@ is_equal(const lyric_runtime::DataCell &lhs, const lyric_runtime::DataCell &rhs)
 {
     if (lhs.type != rhs.type)
         return false;
-    if (lhs.type == lyric_runtime::DataCellType::REF) {
-        if (lhs.data.ref->getVirtualTable() != rhs.data.ref->getVirtualTable())
-            return false;
-        return lhs.data.ref->equals(rhs.data.ref);
+    switch (lhs.type) {
+        case lyric_runtime::DataCellType::REF: {
+            if (lhs.data.ref->getVirtualTable() != rhs.data.ref->getVirtualTable())
+                return false;
+            return lhs.data.ref->equals(rhs.data.ref);
+        }
+        case lyric_runtime::DataCellType::STRING: {
+            return lhs.data.str->equals(rhs.data.str);
+        }
+        case lyric_runtime::DataCellType::URL: {
+            return lhs.data.url->equals(rhs.data.url);
+        }
+        default:
+            return lhs == rhs;
     }
-    return lhs == rhs;
 }
 
 static IndexMapNode *

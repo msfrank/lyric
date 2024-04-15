@@ -189,15 +189,32 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 currentCoro->pushData(DataCell(op.operands.immediate_chr.chr));
                 break;
 
-            // push a literal value onto the stack
+            // push literal value onto the stack
             case lyric_object::Opcode::OP_LITERAL: {
                 auto status = segmentManager->pushLiteralOntoStack(
-                    op.operands.address_u32.address, nullptr, currentCoro);
+                    currentCoro->peekSP(), op.operands.address_u32.address, currentCoro);
                 if (status.notOk())
                     return onError(op, status);
                 break;
             }
 
+            // push string onto the stack
+            case lyric_object::Opcode::OP_STRING: {
+                auto status = heapManager->loadLiteralStringOntoStack(op.operands.address_u32.address);
+                if (status.notOk())
+                    return onError(op, status);
+                break;
+            }
+
+            // push url onto the stack
+            case lyric_object::Opcode::OP_URL: {
+                auto status = heapManager->loadLiteralUrlOntoStack(op.operands.address_u32.address);
+                if (status.notOk())
+                    return onError(op, status);
+                break;
+            }
+
+            // push synthetic onto the stack
             case lyric_object::Opcode::OP_SYNTHETIC: {
                 const auto &activation = currentCoro->peekCall();
                 auto synthetic = op.operands.type_u8.type;
@@ -215,7 +232,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 break;
             }
 
-            // push a descriptor value onto the stack
+            // push descriptor value onto the stack
             case lyric_object::Opcode::OP_DESCRIPTOR: {
                 auto section = op.operands.flags_u8_address_u32.flags;
                 auto address = op.operands.flags_u8_address_u32.address;

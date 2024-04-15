@@ -58,7 +58,6 @@ namespace lyric_assembler {
         Struct,
         Unwrap,
         Url,
-        Utf8,
 
         // statuses
         Cancelled,

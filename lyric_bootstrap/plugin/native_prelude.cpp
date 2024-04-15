@@ -14,7 +14,7 @@
 #include "singleton_ref.h"
 #include "status_ref.h"
 #include "string_ref.h"
-#include "uri_ref.h"
+#include "url_ref.h"
 
 lyric_runtime::NativeFunc
 NativeCore::getTrap(uint32_t index) const
@@ -95,22 +95,14 @@ NativeCore::getTrap(uint32_t index) const
             return singleton_alloc;
         case lyric_bootstrap::internal::BootstrapTrap::STATUS_ALLOC:
             return status_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::STRING_ALLOC:
-            return string_alloc;
         case lyric_bootstrap::internal::BootstrapTrap::STRING_AT:
             return string_at;
         case lyric_bootstrap::internal::BootstrapTrap::STRING_COMPARE:
             return string_compare;
-        case lyric_bootstrap::internal::BootstrapTrap::STRING_CTOR:
-            return string_ctor;
         case lyric_bootstrap::internal::BootstrapTrap::STRING_LENGTH:
             return string_length;
-        case lyric_bootstrap::internal::BootstrapTrap::URI_ALLOC:
-            return uri_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::URI_CTOR:
-            return uri_ctor;
-        case lyric_bootstrap::internal::BootstrapTrap::URI_EQUALS:
-            return uri_equals;
+        case lyric_bootstrap::internal::BootstrapTrap::URL_EQUALS:
+            return url_equals;
         case lyric_bootstrap::internal::BootstrapTrap::LAST_:
         default:
             return nullptr;

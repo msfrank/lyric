@@ -123,7 +123,6 @@ lyric_runtime::internal::resolve_link(
     return segment->getLink(index);
 }
 
-
 lyric_runtime::DataCell
 lyric_runtime::internal::resolve_descriptor(
     const BytecodeSegment *sp,
@@ -178,6 +177,63 @@ lyric_runtime::internal::resolve_descriptor(
         default:
             status = InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "unknown descriptor type");
+            return {};
+    }
+}
+
+lyric_runtime::LiteralCell
+lyric_runtime::internal::resolve_literal(
+    const BytecodeSegment *sp,
+    tu_uint32 address,
+    SegmentManagerData *segmentManagerData,
+    tempo_utils::Status &status)
+{
+    TU_ASSERT (sp != nullptr);
+
+    lyric_object::ObjectWalker object;
+    tu_uint32 index;
+
+    if (lyric_object::IS_NEAR(address)) {
+        object = sp->getObject().getObject();
+        index = lyric_object::GET_DESCRIPTOR_OFFSET(address);
+    } else {
+        auto link = sp->getObject().getObject().getLink(lyric_object::GET_LINK_OFFSET(address));
+        const auto *linkage = resolve_link(sp, link, segmentManagerData, status);
+        if (linkage == nullptr)
+            return {};          // failed to resolve dynamic link
+        if (linkage->linkage != lyric_object::LinkageSection::Literal) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid linkage for literal");
+            return {};          // wrong descriptor type
+        }
+        auto *segment = segmentManagerData->segments[linkage->assembly];
+        object = segment->getObject().getObject();
+        index = linkage->value;
+    }
+
+    auto literal = object.getLiteral(index);
+    if (!literal.isValid()) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "missing literal");
+        return {};
+    }
+
+    switch (literal.getValueType()) {
+        case lyric_object::ValueType::Nil:
+            return LiteralCell::nil();
+        case lyric_object::ValueType::Bool:
+            return LiteralCell(literal.boolValue());
+        case lyric_object::ValueType::Int64:
+            return LiteralCell(literal.int64Value());
+        case lyric_object::ValueType::Float64:
+            return LiteralCell(literal.float64Value());
+        case lyric_object::ValueType::Char:
+            return LiteralCell(literal.charValue());
+        case lyric_object::ValueType::String:
+            return LiteralCell(literal.stringValue());
+        default:
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "unknown literal type");
             return {};
     }
 }

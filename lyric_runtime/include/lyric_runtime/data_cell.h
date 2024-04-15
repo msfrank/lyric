@@ -12,6 +12,10 @@ namespace lyric_runtime {
 
     // forward declarations
     class BaseRef;
+    class BytesRef;
+    class StatusRef;
+    class StringRef;
+    class UrlRef;
 
     enum class DataCellType : uint8_t {
         INVALID,
@@ -21,8 +25,9 @@ namespace lyric_runtime {
         I64,
         DBL,
         CHAR32,
-        UTF8,
         REF,
+        STRING,
+        URL,
         CLASS,
         STRUCT,
         INSTANCE,
@@ -56,8 +61,10 @@ namespace lyric_runtime {
         static DataCell nil();
         static DataCell present();
         static DataCell forLiteral(const lyric_runtime::LiteralCell &literal);
-        static DataCell forUtf8(const char *data, tu_int32 size);
         static DataCell forRef(BaseRef *ref);
+        static DataCell forString(StringRef *str);
+        static DataCell forUrl(UrlRef *url);
+
         static DataCell forClass(tu_uint32 assemblyIndex, tu_uint32 classIndex);
         static DataCell forStruct(tu_uint32 assemblyIndex, tu_uint32 structIndex);
         static DataCell forInstance(tu_uint32 assemblyIndex, tu_uint32 instanceIndex);
@@ -77,14 +84,14 @@ namespace lyric_runtime {
             double dbl;
             UChar32 chr;
             struct {
-                const char *data;
-                tu_int32 size;
-            } utf8;
-            struct {
                 tu_uint32 assembly;
                 tu_uint32 value;
             } descriptor;
             BaseRef *ref;
+            BytesRef *bytes;
+            StatusRef *status;
+            StringRef *str;
+            UrlRef *url;
         } data;
     };
 

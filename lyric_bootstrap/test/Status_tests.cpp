@@ -29,5 +29,5 @@ TEST(CoreStatus, TestEvaluateStatusMessage)
 
     ASSERT_THAT (result,
                  ContainsResult(
-                     RunModule(Return(IsRefType(preludeSymbol("String"))))));
+                     RunModule(Return(DataCellString("operation was cancelled")))));
 }

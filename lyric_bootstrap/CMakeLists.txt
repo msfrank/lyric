@@ -147,8 +147,8 @@ add_library(prelude-plugin SHARED
     plugin/status_ref.h
     plugin/string_ref.cpp
     plugin/string_ref.h
-    plugin/uri_ref.cpp
-    plugin/uri_ref.h
+    plugin/url_ref.cpp
+    plugin/url_ref.h
     plugin/utf8_traps.cpp
     plugin/utf8_traps.h
     )

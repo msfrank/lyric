@@ -35,11 +35,11 @@ lyric_runtime::LiteralCell::LiteralCell(UChar32 chr)
     literal.chr = chr;
 }
 
-lyric_runtime::LiteralCell::LiteralCell(const char *data, int32_t size)
+lyric_runtime::LiteralCell::LiteralCell(std::string_view sv)
 {
     type = LiteralCellType::UTF8;
-    literal.utf8.data = data;
-    literal.utf8.size = size;
+    literal.utf8.data = sv.data();
+    literal.utf8.size = static_cast<tu_int32>(sv.size());
 }
 
 lyric_runtime::LiteralCell::LiteralCell(const LiteralCell &other) : LiteralCell()

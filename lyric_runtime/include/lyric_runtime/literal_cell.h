@@ -26,7 +26,7 @@ namespace lyric_runtime {
         explicit LiteralCell(int64_t i64);
         explicit LiteralCell(double dbl);
         explicit LiteralCell(UChar32 chr);
-        LiteralCell(const char *data, int32_t size);
+        explicit LiteralCell(std::string_view sv);
         LiteralCell(const LiteralCell &other);
         LiteralCell(LiteralCell &&other) noexcept;
 

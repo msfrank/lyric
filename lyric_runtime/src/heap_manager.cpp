@@ -2,6 +2,8 @@
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/heap_manager.h>
 #include <lyric_runtime/system_scheduler.h>
+#include <lyric_runtime/string_ref.h>
+#include <lyric_runtime/url_ref.h>
 #include <tempo_utils/big_endian.h>
 
 lyric_runtime::HeapManager::HeapManager(
@@ -13,6 +15,76 @@ lyric_runtime::HeapManager::HeapManager(
       m_heap(std::move(heap))
 {
     TU_ASSERT (m_heap != nullptr);
+}
+
+tempo_utils::Status
+lyric_runtime::HeapManager::loadLiteralStringOntoStack(tu_uint32 address)
+{
+    auto *currentCoro = m_systemScheduler->currentCoro();
+    TU_ASSERT(currentCoro != nullptr);
+    auto *sp = currentCoro->peekSP();
+    TU_ASSERT (sp != nullptr);
+
+    LiteralCell literal;
+    tempo_utils::Status status;
+    literal = m_segmentManager->resolveLiteral(sp, address, status);
+    TU_RETURN_IF_NOT_OK (status);
+
+    auto *instance = new StringRef(literal);
+    m_heap->insertInstance(instance);
+    auto cell = DataCell::forString(instance);
+    currentCoro->pushData(cell);
+
+    return status;
+}
+
+tempo_utils::Status
+lyric_runtime::HeapManager::loadStringOntoStack(std::string_view string)
+{
+    auto *currentCoro = m_systemScheduler->currentCoro();
+    TU_ASSERT(currentCoro != nullptr);
+
+    auto *instance = new StringRef(string.data(), string.size());
+    m_heap->insertInstance(instance);
+    auto cell = DataCell::forString(instance);
+    currentCoro->pushData(cell);
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_runtime::HeapManager::loadLiteralUrlOntoStack(tu_uint32 address)
+{
+    auto *currentCoro = m_systemScheduler->currentCoro();
+    TU_ASSERT(currentCoro != nullptr);
+    auto *sp = currentCoro->peekSP();
+    TU_ASSERT (sp != nullptr);
+
+    LiteralCell literal;
+    tempo_utils::Status status;
+    literal = m_segmentManager->resolveLiteral(sp, address, status);
+    TU_RETURN_IF_NOT_OK (status);
+
+    auto *instance = new UrlRef(literal);
+    m_heap->insertInstance(instance);
+    auto cell = DataCell::forUrl(instance);
+    currentCoro->pushData(cell);
+
+    return status;
+}
+
+tempo_utils::Status
+lyric_runtime::HeapManager::loadUrlOntoStack(const tempo_utils::Url &url)
+{
+    auto *currentCoro = m_systemScheduler->currentCoro();
+    TU_ASSERT(currentCoro != nullptr);
+
+    auto *instance = new UrlRef(url);
+    m_heap->insertInstance(instance);
+    auto cell = DataCell::forUrl(instance);
+    currentCoro->pushData(cell);
+
+    return {};
 }
 
 lyric_runtime::NativeFunc

@@ -1,54 +1,73 @@
 
 #include "compile_string.h"
 
-const CoreStruct *
+CoreExistential *
+declare_core_String(BuilderState &state, const CoreExistential *IntrinsicExistential)
+{
+    lyric_common::SymbolPath existentialPath({"String"});
+    auto *StringExistential = state.addExistential(existentialPath, lyo1::IntrinsicType::String,
+        lyo1::ExistentialFlags::Final, IntrinsicExistential);
+    return StringExistential;
+}
+
+void
 build_core_String(
     BuilderState &state,
-    const CoreStruct *RecordStruct,
-    const CoreType *Utf8Type,
-    const CoreType *IntegerType,
+    const CoreExistential *StringExistential,
+    const CoreType *IntType,
     const CoreType *CharType)
 {
-    lyric_common::SymbolPath structPath({"String"});
-
-    auto *StringStruct = state.addStruct(structPath, lyo1::StructFlags::Final, RecordStruct);
-
-    {
-        lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_CTOR)));
-        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addStructCtor(StringStruct,
-            {
-                {"utf8", Utf8Type, nullptr, lyo1::ParameterFlags::NONE},
-            },
-            code);
-        state.setStructAllocator(StringStruct, lyric_bootstrap::internal::BootstrapTrap::STRING_ALLOC);
-    }
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_LENGTH)));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addStructMethod("length",
-            StringStruct,
+        state.addExistentialMethod("Length",
+            StringExistential,
             lyo1::CallFlags::GlobalVisibility,
             {},
-            code, IntegerType);
+            code, IntType);
     }
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_AT)));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-        state.addStructMethod("at",
-            StringStruct,
+        state.addExistentialMethod("At",
+            StringExistential,
             lyo1::CallFlags::GlobalVisibility,
             {
-                {"index", IntegerType, nullptr, lyo1::ParameterFlags::NONE}
+                {"index", IntType, nullptr, lyo1::ParameterFlags::NONE}
             },
             code, CharType);
     }
-
-    return StringStruct;
 }
+
+//const CoreStruct *
+//build_core_String(
+//    BuilderState &state,
+//    const CoreStruct *RecordStruct,
+//    const CoreType *Utf8Type,
+//    const CoreType *IntegerType,
+//    const CoreType *CharType)
+//{
+//    lyric_common::SymbolPath structPath({"String"});
+//
+//    auto *StringStruct = state.addStruct(structPath, lyo1::StructFlags::Final, RecordStruct);
+//
+//    {
+//        lyric_object::BytecodeBuilder code;
+//        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_CTOR)));
+//        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+//        state.addStructCtor(StringStruct,
+//            {
+//                {"utf8", Utf8Type, nullptr, lyo1::ParameterFlags::NONE},
+//            },
+//            code);
+//        state.setStructAllocator(StringStruct, lyric_bootstrap::internal::BootstrapTrap::STRING_ALLOC);
+//    }
+
+//
+//    return StringStruct;
+//}
 
 CoreInstance *
 build_core_StringInstance(

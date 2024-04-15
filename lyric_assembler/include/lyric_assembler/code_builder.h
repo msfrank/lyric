@@ -32,6 +32,8 @@ namespace lyric_assembler {
         tempo_utils::Status loadInt(int64_t i64);
         tempo_utils::Status loadFloat(double dbl);
         tempo_utils::Status loadChar(UChar32 chr);
+        tempo_utils::Status loadString(const LiteralAddress &stringAddress);
+        tempo_utils::Status loadUrl(const LiteralAddress &urlAddress);
         tempo_utils::Status loadLiteral(const LiteralAddress &literalAddress);
         tempo_utils::Status loadArgument(const ArgumentOffset &argumentOffset);
         tempo_utils::Status loadLocal(const LocalOffset &localOffset);

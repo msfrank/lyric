@@ -3,16 +3,14 @@
 
 #include "builder_state.h"
 
-const CoreStruct *
-build_core_String(
+CoreExistential *declare_core_String(BuilderState &state, const CoreExistential *IntrinsicExistential);
+void build_core_String(
     BuilderState &state,
-    const CoreStruct *RecordStruct,
-    const CoreType *Utf8Type,
-    const CoreType *IntegerType,
+    const CoreExistential *StringExistential,
+    const CoreType *IntType,
     const CoreType *CharType);
 
-CoreInstance *
-build_core_StringInstance(
+CoreInstance *build_core_StringInstance(
     BuilderState &state,
     const CoreType *StringType,
     const CoreInstance *SingletonInstance,

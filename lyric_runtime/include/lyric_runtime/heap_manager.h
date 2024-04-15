@@ -15,6 +15,12 @@ namespace lyric_runtime {
             std::shared_ptr<AbstractHeap> heap);
         virtual ~HeapManager() = default;
 
+        virtual tempo_utils::Status loadLiteralStringOntoStack(tu_uint32 address);
+        virtual tempo_utils::Status loadStringOntoStack(std::string_view string);
+
+        virtual tempo_utils::Status loadLiteralUrlOntoStack(tu_uint32 address);
+        virtual tempo_utils::Status loadUrlOntoStack(const tempo_utils::Url &url);
+
         virtual NativeFunc prepareNew(tu_uint8 newType, tu_uint32 address, tempo_utils::Status &status);
         virtual bool constructNew(std::vector<DataCell> &args, tempo_utils::Status &status);
         virtual tempo_utils::Status collectGarbage();

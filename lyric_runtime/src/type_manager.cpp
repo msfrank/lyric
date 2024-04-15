@@ -47,10 +47,12 @@ lyric_runtime::TypeManager::typeOf(const DataCell &value)
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Namespace)];
         case DataCellType::NIL:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Nil)];
+        case DataCellType::STRING:
+            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::String)];
         case DataCellType::STRUCT:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Struct)];
-        case DataCellType::UTF8:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Utf8)];
+        case DataCellType::URL:
+            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Url)];
         case DataCellType::REF:
             return value.data.ref->getVirtualTable()->getType();
         case DataCellType::TYPE:

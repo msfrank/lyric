@@ -21,7 +21,8 @@ namespace lyric_test {
             enum class MatcherType {
                 INVALID,
                 DATA_CELL,
-                DATA_CELL_UTF8,
+                DATA_CELL_STRING,
+                DATA_CELL_URL,
                 DATA_CELL_DESCRIPTOR,
                 DATA_CELL_TYPE,
             };
@@ -29,7 +30,8 @@ namespace lyric_test {
         public:
             DataCellMatcher();
             DataCellMatcher(const lyric_runtime::DataCell &cell);
-            DataCellMatcher(const std::string &utf8);
+            DataCellMatcher(const std::string &str);
+            DataCellMatcher(const tempo_utils::Url &url);
             DataCellMatcher(lyric_object::LinkageSection section);
             DataCellMatcher(const lyric_common::SymbolUrl &symbolUrl);
             DataCellMatcher(lyric_runtime::DataCellType type);
@@ -45,7 +47,8 @@ namespace lyric_test {
         private:
             MatcherType m_type;
             lyric_runtime::DataCell m_cell;
-            std::string m_utf8;
+            std::string m_str;
+            tempo_utils::Url m_url;
         };
 
         Matcher<lyric_runtime::DataCell> DataCellNil();
@@ -53,8 +56,10 @@ namespace lyric_test {
         Matcher<lyric_runtime::DataCell> DataCellInt(int64_t i64);
         Matcher<lyric_runtime::DataCell> DataCellFloat(double dbl);
         Matcher<lyric_runtime::DataCell> DataCellChar(UChar32 chr);
-        Matcher<lyric_runtime::DataCell> DataCellUtf8(const std::string &utf8);
-        Matcher<lyric_runtime::DataCell> MatchesDescriptorSection(const lyric_object::LinkageSection section);
+        Matcher<lyric_runtime::DataCell> DataCellString(std::string_view str);
+        Matcher<lyric_runtime::DataCell> DataCellUrl(std::string_view url);
+        Matcher<lyric_runtime::DataCell> DataCellUrl(const tempo_utils::Url &url);
+        Matcher<lyric_runtime::DataCell> MatchesDescriptorSection(lyric_object::LinkageSection section);
         Matcher<lyric_runtime::DataCell> MatchesDataCellType(lyric_runtime::DataCellType type);
     }
 }

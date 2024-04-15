@@ -3,16 +3,10 @@
 
 #include "builder_state.h"
 
-const CoreStruct *
-build_core_Url(
-    BuilderState &state,
-    const CoreStruct *RecordStruct,
-    const CoreType *Utf8Type,
-    const CoreType *IntegerType,
-    const CoreType *CharType);
+CoreExistential *declare_core_Url(BuilderState &state, const CoreExistential *IntrinsicExistential);
+void build_core_Url(BuilderState &state, const CoreExistential *UrlExistential);
 
-CoreInstance *
-build_core_UrlInstance(
+CoreInstance *build_core_UrlInstance(
     BuilderState &state,
     const CoreType *UrlType,
     const CoreInstance *SingletonInstance,

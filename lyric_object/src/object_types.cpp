@@ -45,6 +45,12 @@ tempo_utils::LogMessage&& lyric_object::operator<<(tempo_utils::LogMessage&& mes
         case Opcode::OP_LITERAL:
             std::forward<tempo_utils::LogMessage>(message) << "OP_LITERAL";
             break;
+        case Opcode::OP_STRING:
+            std::forward<tempo_utils::LogMessage>(message) << "OP_STRING";
+            break;
+        case Opcode::OP_URL:
+            std::forward<tempo_utils::LogMessage>(message) << "OP_URL";
+            break;
         case Opcode::OP_STATIC:
             std::forward<tempo_utils::LogMessage>(message) << "OP_STATIC";
             break;

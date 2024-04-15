@@ -3,6 +3,8 @@
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/literal_cell.h>
+#include <lyric_runtime/string_ref.h>
+#include <lyric_runtime/url_ref.h>
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
@@ -59,10 +61,13 @@ lyric_runtime::DataCell::DataCell(const DataCell &other) : DataCell()
             type = other.type;
             data.chr = other.data.chr;
             break;
-        case DataCellType::UTF8:
+        case DataCellType::STRING:
             type = other.type;
-            data.utf8.data = other.data.utf8.data;
-            data.utf8.size = other.data.utf8.size;
+            data.str = other.data.str;
+            break;
+        case DataCellType::URL:
+            type = other.type;
+            data.url = other.data.url;
             break;
         case DataCellType::REF:
             type = other.type;
@@ -104,9 +109,11 @@ lyric_runtime::DataCell::DataCell(DataCell &&other) noexcept : DataCell()
         case DataCellType::CHAR32:
             data.chr = other.data.chr;
             break;
-        case DataCellType::UTF8:
-            data.utf8.data = other.data.utf8.data;
-            data.utf8.size = other.data.utf8.size;
+        case DataCellType::STRING:
+            data.str = other.data.str;
+            break;
+        case DataCellType::URL:
+            data.url = other.data.url;
             break;
         case DataCellType::REF:
             data.ref = other.data.ref;
@@ -176,11 +183,6 @@ lyric_runtime::DataCell::forLiteral(const lyric_runtime::LiteralCell &literal)
             cell.type = DataCellType::CHAR32;
             cell.data.chr = literal.literal.chr;
             break;
-        case lyric_runtime::LiteralCellType::UTF8:
-            cell.type = DataCellType::UTF8;
-            cell.data.utf8.data = literal.literal.utf8.data;
-            cell.data.utf8.size = literal.literal.utf8.size;
-            break;
         default:
             TU_UNREACHABLE();
     }
@@ -188,24 +190,32 @@ lyric_runtime::DataCell::forLiteral(const lyric_runtime::LiteralCell &literal)
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forUtf8(const char *data, tu_int32 size)
+lyric_runtime::DataCell::forRef(BaseRef *ref)
 {
-    TU_ASSERT (data != nullptr);
-    TU_ASSERT (size >= 0);
+    TU_ASSERT (ref != nullptr);
     DataCell cell;
-    cell.type = DataCellType::UTF8;
-    cell.data.utf8.data = data;
-    cell.data.utf8.size = size;
+    cell.type = DataCellType::REF;
+    cell.data.ref = ref;
     return cell;
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forRef(BaseRef *instance)
+lyric_runtime::DataCell::forString(StringRef *str)
 {
-    TU_ASSERT (instance != nullptr);
+    TU_ASSERT (str != nullptr);
     DataCell cell;
-    cell.type = DataCellType::REF;
-    cell.data.ref = instance;
+    cell.type = DataCellType::STRING;
+    cell.data.str = str;
+    return cell;
+}
+
+lyric_runtime::DataCell
+lyric_runtime::DataCell::forUrl(UrlRef *url)
+{
+    TU_ASSERT (url != nullptr);
+    DataCell cell;
+    cell.type = DataCellType::URL;
+    cell.data.url = url;
     return cell;
 }
 
@@ -355,10 +365,13 @@ lyric_runtime::DataCell::operator=(const DataCell &other)
             type = other.type;
             data.chr = other.data.chr;
             break;
-        case DataCellType::UTF8:
+        case DataCellType::STRING:
             type = other.type;
-            data.utf8.data = other.data.utf8.data;
-            data.utf8.size = other.data.utf8.size;
+            data.str = other.data.str;
+            break;
+        case DataCellType::URL:
+            type = other.type;
+            data.url = other.data.url;
             break;
         case DataCellType::REF:
             type = other.type;
@@ -403,9 +416,11 @@ lyric_runtime::DataCell::operator=(DataCell &&other) noexcept
             case DataCellType::CHAR32:
                 data.chr = other.data.chr;
                 break;
-            case DataCellType::UTF8:
-                data.utf8.data = other.data.utf8.data;
-                data.utf8.size = other.data.utf8.size;
+            case DataCellType::STRING:
+                data.str = other.data.str;
+                break;
+            case DataCellType::URL:
+                data.url = other.data.url;
                 break;
             case DataCellType::REF:
                 data.ref = other.data.ref;
@@ -442,7 +457,8 @@ lyric_runtime::DataCell::isValid() const
         case DataCellType::I64:
         case DataCellType::DBL:
         case DataCellType::CHAR32:
-        case DataCellType::UTF8:
+        case DataCellType::STRING:
+        case DataCellType::URL:
         case DataCellType::REF:
         case DataCellType::TYPE:
         case DataCellType::CLASS:
@@ -467,9 +483,9 @@ lyric_runtime::DataCell::toString() const
 {
     switch (type) {
         case DataCellType::NIL:
-            return "Nil";
+            return "nil";
         case DataCellType::PRESENT:
-            return "Present";
+            return "present";
         case DataCellType::BOOL:
             return data.b ? "true" : "false";
         case DataCellType::I64:
@@ -478,8 +494,10 @@ lyric_runtime::DataCell::toString() const
             return absl::StrCat(data.dbl);
         case DataCellType::CHAR32:
             return tempo_utils::convert_to_utf8(data.chr);
-        case DataCellType::UTF8:
-            return std::string(data.utf8.data, data.utf8.size);
+        case DataCellType::STRING:
+            return data.str->toString();
+        case DataCellType::URL:
+            return data.url->toString();
         case DataCellType::REF:
             return data.ref->toString();
         case DataCellType::CLASS:
@@ -541,10 +559,12 @@ lyric_runtime::operator==(const DataCell &lhs, const DataCell &rhs)
             return lhs.data.dbl == rhs.data.dbl;
         case DataCellType::CHAR32:
             return lhs.data.chr == rhs.data.chr;
-        case DataCellType::UTF8:
-            if (lhs.data.utf8.size != rhs.data.utf8.size)
-                return false;
-            return std::memcmp(lhs.data.utf8.data, rhs.data.utf8.data, lhs.data.utf8.size) == 0;
+        case DataCellType::STRING:
+            return lhs.data.str == rhs.data.str;
+        case DataCellType::URL:
+            return lhs.data.url == rhs.data.url;
+        case DataCellType::REF:
+            return lhs.data.ref == rhs.data.ref;
         case DataCellType::CLASS:
         case DataCellType::STRUCT:
         case DataCellType::INSTANCE:
@@ -558,8 +578,6 @@ lyric_runtime::operator==(const DataCell &lhs, const DataCell &rhs)
         case DataCellType::NAMESPACE:
             return lhs.data.descriptor.assembly == rhs.data.descriptor.assembly
                 && lhs.data.descriptor.value == rhs.data.descriptor.value;
-        case DataCellType::REF:
-            return lhs.data.ref == rhs.data.ref;
     }
 
     TU_UNREACHABLE();
@@ -592,10 +610,13 @@ lyric_runtime::operator<<(tempo_utils::LogMessage &&message, const lyric_runtime
                 << absl::Substitute("DataCell(char=$0)",
                     tempo_utils::convert_to_utf8(cell.data.chr));
             break;
-        case DataCellType::UTF8:
+        case DataCellType::STRING:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(utf8=$0)",
-                    std::string(cell.data.utf8.data, cell.data.utf8.size));
+                << absl::Substitute("DataCell(str=$0)", cell.data.str->toString());
+            break;
+        case DataCellType::URL:
+            std::forward<tempo_utils::LogMessage>(message)
+                << absl::Substitute("DataCell(url=$0)", cell.data.url->toString());
             break;
         case DataCellType::REF:
             std::forward<tempo_utils::LogMessage>(message)
