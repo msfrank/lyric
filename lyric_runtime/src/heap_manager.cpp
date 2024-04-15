@@ -17,6 +17,14 @@ lyric_runtime::HeapManager::HeapManager(
     TU_ASSERT (m_heap != nullptr);
 }
 
+lyric_runtime::DataCell
+lyric_runtime::HeapManager::allocateString(std::string_view string)
+{
+    auto *instance = new StringRef(string.data(), string.size());
+    m_heap->insertInstance(instance);
+    return DataCell::forString(instance);
+}
+
 tempo_utils::Status
 lyric_runtime::HeapManager::loadLiteralStringOntoStack(tu_uint32 address)
 {
@@ -50,6 +58,14 @@ lyric_runtime::HeapManager::loadStringOntoStack(std::string_view string)
     currentCoro->pushData(cell);
 
     return {};
+}
+
+lyric_runtime::DataCell
+lyric_runtime::HeapManager::allocateUrl(const tempo_utils::Url &url)
+{
+    auto *instance = new UrlRef(url);
+    m_heap->insertInstance(instance);
+    return DataCell::forUrl(instance);
 }
 
 tempo_utils::Status
