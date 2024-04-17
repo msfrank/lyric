@@ -121,6 +121,12 @@ lyric_object::BytecodeBuilder::loadNil()
 }
 
 tempo_utils::Status
+lyric_object::BytecodeBuilder::loadUndef()
+{
+    return writeOpcode(Opcode::OP_UNDEF);
+}
+
+tempo_utils::Status
 lyric_object::BytecodeBuilder::loadBool(bool b)
 {
     return b ? writeOpcode(Opcode::OP_TRUE) : writeOpcode(Opcode::OP_FALSE);

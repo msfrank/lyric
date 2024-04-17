@@ -39,10 +39,19 @@ lyric_object::LiteralWalker::getValueType() const
         return ValueType::Invalid;
 
     switch (literalDescriptor->literal_value_type()) {
-        case lyo1::Value::TrueFalseNilValue:
-            if (literalDescriptor->literal_value_as_TrueFalseNilValue()->tfn() == lyo1::TrueFalseNil::Nil)
-                return ValueType::Nil;
-            return ValueType::Bool;
+        case lyo1::Value::TFNUValue: {
+            switch (literalDescriptor->literal_value_as_TFNUValue()->tfnu()) {
+                case lyo1::TrueFalseNilUndef::Nil:
+                    return ValueType::Nil;
+                case lyo1::TrueFalseNilUndef::Undef:
+                    return ValueType::Undef;
+                case lyo1::TrueFalseNilUndef::True:
+                case lyo1::TrueFalseNilUndef::False:
+                    return ValueType::Bool;
+                default:
+                    return ValueType::Invalid;
+            }
+        }
         case lyo1::Value::CharValue:
             return ValueType::Char;
         case lyo1::Value::Int64Value:
@@ -64,9 +73,9 @@ lyric_object::LiteralWalker::boolValue() const
     auto *literalDescriptor = m_reader->getLiteral(m_literalOffset);
     if (literalDescriptor == nullptr)
         return false;
-    if (literalDescriptor->literal_value_type() != lyo1::Value::TrueFalseNilValue)
+    if (literalDescriptor->literal_value_type() != lyo1::Value::TFNUValue)
         return false;
-    return literalDescriptor->literal_value_as_TrueFalseNilValue()->tfn() == lyo1::TrueFalseNil::True;
+    return literalDescriptor->literal_value_as_TFNUValue()->tfnu() == lyo1::TrueFalseNilUndef::True;
 }
 
 UChar32

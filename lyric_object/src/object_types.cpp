@@ -27,6 +27,9 @@ tempo_utils::LogMessage&& lyric_object::operator<<(tempo_utils::LogMessage&& mes
         case Opcode::OP_NIL:
             std::forward<tempo_utils::LogMessage>(message) << "OP_NIL";
             break;
+        case Opcode::OP_UNDEF:
+            std::forward<tempo_utils::LogMessage>(message) << "OP_UNDEF";
+            break;
         case Opcode::OP_TRUE:
             std::forward<tempo_utils::LogMessage>(message) << "OP_TRUE";
             break;

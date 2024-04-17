@@ -12,7 +12,7 @@ namespace lyric_runtime {
         switch (cell.type) {
             case DataCellType::INVALID:
             case DataCellType::NIL:
-            case DataCellType::PRESENT:
+            case DataCellType::UNDEF:
                 return H::combine(std::move(h), cell.type);
             case DataCellType::BOOL:
                 return H::combine(std::move(h), cell.type, cell.data.b);

@@ -15,6 +15,7 @@ namespace lyric_parser::internal {
 
         void exitTrueLiteral(ModuleParser::TrueLiteralContext *ctx);
         void exitFalseLiteral(ModuleParser::FalseLiteralContext *ctx);
+        void exitUndefLiteral(ModuleParser::UndefLiteralContext *ctx);
         void exitNilLiteral(ModuleParser::NilLiteralContext *ctx);
 
         void exitSymbolLiteral(ModuleParser::SymbolLiteralContext *ctx);

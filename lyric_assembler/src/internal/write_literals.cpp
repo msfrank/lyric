@@ -16,21 +16,27 @@ lyric_assembler::internal::write_literals(
 
         switch (literalHandle->getType()) {
             case lyric_runtime::LiteralCellType::NIL: {
-                auto value = lyo1::CreateTrueFalseNilValue(buffer, lyo1::TrueFalseNil::Nil);
+                auto value = lyo1::CreateTFNUValue(buffer, lyo1::TrueFalseNilUndef::Nil);
                 literals_vector.push_back(
                     lyo1::CreateLiteralDescriptor(
-                        buffer, lyo1::Value::TrueFalseNilValue, value.Union()));
+                        buffer, lyo1::Value::TFNUValue, value.Union()));
+                break;
+            }
+            case lyric_runtime::LiteralCellType::UNDEF: {
+                auto value = lyo1::CreateTFNUValue(buffer, lyo1::TrueFalseNilUndef::Undef);
+                literals_vector.push_back(
+                    lyo1::CreateLiteralDescriptor(
+                        buffer, lyo1::Value::TFNUValue, value.Union()));
                 break;
             }
             case lyric_runtime::LiteralCellType::BOOL: {
-                auto value = lyo1::CreateTrueFalseNilValue(buffer,
-                    literalHandle->getBool() ? lyo1::TrueFalseNil::True : lyo1::TrueFalseNil::False);
+                auto value = lyo1::CreateTFNUValue(buffer,
+                    literalHandle->getBool() ? lyo1::TrueFalseNilUndef::True : lyo1::TrueFalseNilUndef::False);
                 literals_vector.push_back(
                     lyo1::CreateLiteralDescriptor(
-                        buffer, lyo1::Value::TrueFalseNilValue, value.Union()));
+                        buffer, lyo1::Value::TFNUValue, value.Union()));
                 break;
             }
-
             case lyric_runtime::LiteralCellType::I64: {
                 auto value = lyo1::CreateInt64Value(buffer, literalHandle->getInt64());
                 literals_vector.push_back(

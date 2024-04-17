@@ -15,6 +15,7 @@ namespace lyric_schema {
 
         //
         Nil,                       // nil literal
+        Undef,                     // undef literal
         False,                     // false literal
         True,                      // true literal
         Integer,                   // integer literal
@@ -140,6 +141,8 @@ namespace lyric_schema {
 
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNilClass(
         &kLyricAstNs, LyricAstId::Nil, "Nil");
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUndefClass(
+        &kLyricAstNs, LyricAstId::Undef, "Undef");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstFalseClass(
         &kLyricAstNs, LyricAstId::False, "False");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTrueClass(
@@ -401,6 +404,7 @@ namespace lyric_schema {
     kLyricAstResources = {
 
         &kLyricAstNilClass,                       // nil literal
+        &kLyricAstUndefClass,                     // undef literal
         &kLyricAstFalseClass,                     // false literal
         &kLyricAstTrueClass,                      // true literal
         &kLyricAstIntegerClass,                   // integer literal

@@ -9,3 +9,5 @@ dist
 *.swp
 /.idea
 *.collapsed
+*.tokens
+*.interp

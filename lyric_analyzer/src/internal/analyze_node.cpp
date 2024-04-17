@@ -100,6 +100,7 @@ lyric_analyzer::internal::analyze_node(
 
         // ignored literal forms
         case lyric_schema::LyricAstId::Nil:
+        case lyric_schema::LyricAstId::Undef:
         case lyric_schema::LyricAstId::False:
         case lyric_schema::LyricAstId::True:
         case lyric_schema::LyricAstId::Integer:

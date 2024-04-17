@@ -36,6 +36,7 @@ namespace lyric_object {
         tempo_utils::Status writeU64(tu_uint64 u64);
 
         tempo_utils::Status loadNil();
+        tempo_utils::Status loadUndef();
         tempo_utils::Status loadBool(bool b);
         tempo_utils::Status loadInt(tu_int64 i64);
         tempo_utils::Status loadFloat(double dbl);

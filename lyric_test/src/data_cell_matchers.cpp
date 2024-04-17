@@ -141,7 +141,7 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
                 case lyric_runtime::DataCellType::CALL:        *os << "cell contains call descriptor"; break;
                 case lyric_runtime::DataCellType::FIELD:       *os << "cell contains field descriptor"; break;
                 case lyric_runtime::DataCellType::ACTION:      *os << "cell contains action descriptor"; break;
-                case lyric_runtime::DataCellType::NAMESPACE:   *os << "cell contains action descriptor"; break;
+                case lyric_runtime::DataCellType::NAMESPACE:   *os << "cell contains namespace descriptor"; break;
                 default:
                     TU_UNREACHABLE();
             }
@@ -150,7 +150,7 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
             switch (m_cell.type) {
                 case lyric_runtime::DataCellType::INVALID:     *os << "cell contains invalid cell"; break;
                 case lyric_runtime::DataCellType::NIL:         *os << "cell contains nil cell"; break;
-                case lyric_runtime::DataCellType::PRESENT:     *os << "cell contains present cell"; break;
+                case lyric_runtime::DataCellType::UNDEF:       *os << "cell contains undef cell"; break;
                 case lyric_runtime::DataCellType::BOOL:        *os << "cell contains bool cell"; break;
                 case lyric_runtime::DataCellType::I64:         *os << "cell contains i64 cell"; break;
                 case lyric_runtime::DataCellType::DBL:         *os << "cell contains dbl cell"; break;
@@ -187,6 +187,12 @@ testing::Matcher<lyric_runtime::DataCell>
 lyric_test::matchers::DataCellNil()
 {
     return DataCellMatcher(lyric_runtime::DataCell::nil());
+}
+
+testing::Matcher<lyric_runtime::DataCell>
+lyric_test::matchers::DataCellUndef()
+{
+    return DataCellMatcher(lyric_runtime::DataCell::undef());
 }
 
 testing::Matcher<lyric_runtime::DataCell>

@@ -47,6 +47,7 @@ lyric_runtime::LiteralCell::LiteralCell(const LiteralCell &other) : LiteralCell(
     switch (other.type) {
         case LiteralCellType::INVALID:
         case LiteralCellType::NIL:
+        case LiteralCellType::UNDEF:
             type = other.type;
             break;
         case LiteralCellType::BOOL:
@@ -81,6 +82,7 @@ lyric_runtime::LiteralCell::LiteralCell(LiteralCell &&other) noexcept : LiteralC
     switch (other.type) {
         case LiteralCellType::INVALID:
         case LiteralCellType::NIL:
+        case LiteralCellType::UNDEF:
             break;
         case LiteralCellType::BOOL:
             literal.b = other.literal.b;
@@ -110,6 +112,7 @@ lyric_runtime::LiteralCell::operator=(const LiteralCell &other)
     switch (other.type) {
         case LiteralCellType::INVALID:
         case LiteralCellType::NIL:
+        case LiteralCellType::UNDEF:
             type = other.type;
             break;
         case LiteralCellType::BOOL:
@@ -146,6 +149,7 @@ lyric_runtime::LiteralCell::operator=(LiteralCell &&other) noexcept
     switch (other.type) {
         case LiteralCellType::INVALID:
         case LiteralCellType::NIL:
+        case LiteralCellType::UNDEF:
             break;
         case LiteralCellType::BOOL:
             literal.b = other.literal.b;
@@ -175,6 +179,7 @@ lyric_runtime::LiteralCell::isValid() const
 {
     switch (type) {
         case LiteralCellType::NIL:
+        case LiteralCellType::UNDEF:
         case LiteralCellType::BOOL:
         case LiteralCellType::I64:
         case LiteralCellType::DBL:
@@ -195,6 +200,7 @@ lyric_runtime::LiteralCell::operator==(const LiteralCell &other) const
     switch (type) {
         case LiteralCellType::INVALID:
         case LiteralCellType::NIL:
+        case LiteralCellType::UNDEF:
             return true;
         case LiteralCellType::BOOL:
             return literal.b == other.literal.b;
@@ -228,6 +234,14 @@ lyric_runtime::LiteralCell::nil()
     return cell;
 }
 
+lyric_runtime::LiteralCell
+lyric_runtime::LiteralCell::undef()
+{
+    LiteralCell cell;
+    cell.type = LiteralCellType::UNDEF;
+    return cell;
+}
+
 std::string
 lyric_runtime::LiteralCell::toString() const
 {
@@ -235,11 +249,13 @@ lyric_runtime::LiteralCell::toString() const
         case LiteralCellType::INVALID:
             return "LiteralCell(INVALID)";
         case LiteralCellType::NIL:
-            return "LiteralCell(Nil)";
+            return "LiteralCell(nil)";
+        case LiteralCellType::UNDEF:
+            return "LiteralCell(undef)";
         case LiteralCellType::BOOL:
             return literal.b? "LiteralCell(bool=true)" : "LiteralCell(bool=false)";
         case LiteralCellType::I64:
-            return absl::Substitute("LiteralCell(integer=$0)", literal.i64);
+            return absl::Substitute("LiteralCell(int=$0)", literal.i64);
         case LiteralCellType::DBL:
             return absl::Substitute("LiteralCell(float=$0)", literal.dbl);
         case LiteralCellType::CHAR32:

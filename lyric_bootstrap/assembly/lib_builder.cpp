@@ -27,7 +27,7 @@
 #include "compile_map.h"
 #include "compile_namespace.h"
 #include "compile_nil.h"
-#include "compile_present.h"
+#include "compile_undef.h"
 #include "compile_object.h"
 #include "compile_ordered.h"
 #include "compile_pair.h"
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
     auto *IntrinsicExistential = build_core_Intrinsic(state, AnyExistential);
 
     // declare intrinsic subtypes
-    build_core_Present(state, IntrinsicExistential);
+    build_core_Undef(state, IntrinsicExistential);
     auto *BoolExistential = declare_core_Bool(state, IntrinsicExistential);
     auto *CharExistential = declare_core_Char(state, IntrinsicExistential);
     auto *IntExistential = declare_core_Int(state, IntrinsicExistential);

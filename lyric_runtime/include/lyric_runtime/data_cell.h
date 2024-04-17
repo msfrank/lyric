@@ -20,7 +20,7 @@ namespace lyric_runtime {
     enum class DataCellType : uint8_t {
         INVALID,
         NIL,
-        PRESENT,
+        UNDEF,
         BOOL,
         I64,
         DBL,
@@ -59,7 +59,8 @@ namespace lyric_runtime {
         std::string toString() const;
 
         static DataCell nil();
-        static DataCell present();
+        static DataCell undef();
+
         static DataCell forLiteral(const lyric_runtime::LiteralCell &literal);
         static DataCell forRef(BaseRef *ref);
         static DataCell forString(StringRef *str);

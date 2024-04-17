@@ -117,6 +117,7 @@ namespace lyric_object {
     enum class IntrinsicType {
         Invalid,
         Nil,
+        Undef,
         Bool,
         Char,
         Float,
@@ -141,6 +142,7 @@ namespace lyric_object {
     enum class ValueType {
         Invalid,
         Nil,
+        Undef,
         Bool,
         Int64,
         Float64,
@@ -211,6 +213,7 @@ namespace lyric_object {
 
         // load and store
         OP_NIL,
+        OP_UNDEF,
         OP_TRUE,
         OP_FALSE,
         OP_I64,

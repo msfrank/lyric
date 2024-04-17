@@ -210,6 +210,11 @@ void lyric_parser::internal::ModuleArchetype::exitFalseLiteral(ModuleParser::Fal
     return ModuleConstantOps::exitFalseLiteral(ctx);
 }
 
+void lyric_parser::internal::ModuleArchetype::exitUndefLiteral(ModuleParser::UndefLiteralContext *ctx)
+{
+    return ModuleConstantOps::exitUndefLiteral(ctx);
+}
+
 void lyric_parser::internal::ModuleArchetype::exitNilLiteral(ModuleParser::NilLiteralContext *ctx)
 {
     return ModuleConstantOps::exitNilLiteral(ctx);

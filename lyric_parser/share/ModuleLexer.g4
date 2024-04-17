@@ -172,6 +172,7 @@ NotKeyword              : 'not' ;
 ReturnKeyword           : 'return' ;
 TrueKeyword             : 'true' ;
 FalseKeyword            : 'false' ;
+UndefKeyword            : 'undef' ;
 NilKeyword              : 'nil' ;
 
 // an identifier is can be a variable, function, or state symbol

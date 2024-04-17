@@ -48,7 +48,6 @@ namespace lyric_assembler {
         Object,
         Ordered,
         Pair,
-        Present,
         Proposition,
         Record,
         Seq,
@@ -56,6 +55,7 @@ namespace lyric_assembler {
         Status,
         String,
         Struct,
+        Undef,
         Unwrap,
         Url,
 
@@ -535,17 +535,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &methodAction);
     };
 
-//    struct InstanceImpl {
-//        lyric_common::TypeDef implType;
-//        int index;
-//        absl::flat_hash_map<std::string, ExtensionMethod> extensions;
-//        InstanceImpl();
-//        InstanceImpl(
-//            const lyric_common::TypeDef &implType,
-//            int index,
-//            const absl::flat_hash_map<std::string, ExtensionMethod> &extensions);
-//    };
-
     struct ParameterSpec {
         lyric_parser::NodeWalker node;          // the node of the parameter in the archetype
         std::string name;                       // name of the parameter
@@ -575,38 +564,6 @@ namespace lyric_assembler {
             const Option<ParameterSpec> &restSpec,
             const std::vector<ParameterSpec> &ctxSpec);
     };
-
-//    struct Parameter {
-//        std::string name;                       // name of the parameter
-//        int index;                              // placement index
-//        std::string label;                      // optional parameter label
-//        PlacementType placement;                // parameter placement
-//        Assignable type;                        // type of the parameter
-//        lyric_parser::BindingType binding;      // parameter binding type
-//        Parameter();
-//        Parameter(
-//            const std::string &name,
-//            int index,
-//            const std::string &label,
-//            PlacementType placement,
-//            const Assignable &type,
-//            lyric_parser::BindingType binding);
-//    };
-//
-//    struct TemplateParameter {
-//        std::string name;
-//        int index;
-//        Assignable type;
-//        lyric_parser::VarianceType variance;
-//        lyric_parser::BoundType bound;
-//        TemplateParameter();
-//        TemplateParameter(
-//            const std::string &name,
-//            int index,
-//            const Assignable &type,
-//            lyric_parser::VarianceType variance,
-//            lyric_parser::BoundType bound);
-//    };
 
     struct TemplateSpec {
         lyric_parser::NodeWalker node;              // the node of the template in the archetype

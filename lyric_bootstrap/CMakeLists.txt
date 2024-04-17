@@ -60,8 +60,8 @@ add_executable(prelude-builder
     assembly/compile_map.h
     assembly/compile_namespace.cpp
     assembly/compile_namespace.h
-    assembly/compile_present.cpp
-    assembly/compile_present.h
+    assembly/compile_undef.cpp
+    assembly/compile_undef.h
     assembly/compile_object.cpp
     assembly/compile_object.h
     assembly/compile_ordered.cpp

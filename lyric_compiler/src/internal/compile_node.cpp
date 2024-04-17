@@ -128,9 +128,10 @@ lyric_compiler::internal::compile_expression(
     moduleEntry.parseIdOrThrow(walker, lyric_schema::kLyricAstVocabulary, id);
 
     switch (id) {
+        case lyric_schema::LyricAstId::Nil:
+        case lyric_schema::LyricAstId::Undef:
         case lyric_schema::LyricAstId::True:
         case lyric_schema::LyricAstId::False:
-        case lyric_schema::LyricAstId::Nil:
         case lyric_schema::LyricAstId::Integer:
         case lyric_schema::LyricAstId::Float:
         case lyric_schema::LyricAstId::Char:
@@ -260,9 +261,10 @@ lyric_compiler::internal::compile_node(
     switch (id) {
 
         // expression forms
+        case lyric_schema::LyricAstId::Nil:
+        case lyric_schema::LyricAstId::Undef:
         case lyric_schema::LyricAstId::True:
         case lyric_schema::LyricAstId::False:
-        case lyric_schema::LyricAstId::Nil:
         case lyric_schema::LyricAstId::Integer:
         case lyric_schema::LyricAstId::Float:
         case lyric_schema::LyricAstId::Char:

@@ -85,6 +85,7 @@ namespace lyric_parser::internal {
         // implemented by ModuleConstantOps
         void exitTrueLiteral(ModuleParser::TrueLiteralContext *ctx) override;
         void exitFalseLiteral(ModuleParser::FalseLiteralContext *ctx) override;
+        void exitUndefLiteral(ModuleParser::UndefLiteralContext *ctx) override;
         void exitNilLiteral(ModuleParser::NilLiteralContext *ctx) override;
         void exitDecimalInteger(ModuleParser::DecimalIntegerContext *ctx) override;
         void exitHexInteger(ModuleParser::HexIntegerContext *ctx) override;

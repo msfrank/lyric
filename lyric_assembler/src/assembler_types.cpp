@@ -54,8 +54,6 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Ordered";
         case FundamentalSymbol::Pair:
             return "Pair";
-        case FundamentalSymbol::Present:
-            return "Present";
         case FundamentalSymbol::Proposition:
             return "Proposition";
         case FundamentalSymbol::Record:
@@ -70,6 +68,8 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "String";
         case FundamentalSymbol::Struct:
             return "Struct";
+        case FundamentalSymbol::Undef:
+            return "Undef";
         case FundamentalSymbol::Unwrap:
             return "Unwrap";
         case FundamentalSymbol::Url:
@@ -329,29 +329,6 @@ lyric_assembler::ExtensionMethod::ExtensionMethod(
       methodAction(methodAction)
 {
 }
-
-//lyric_assembler::InstanceImpl::InstanceImpl()
-//    : index(-1)
-//{
-//}
-//
-//lyric_assembler::InstanceImpl::InstanceImpl()
-//    : implConcept(),
-//      implType(),
-//      index(-1),
-//      access(lyric_object::AccessType::Private)
-//{
-//}
-//
-//lyric_assembler::InstanceImpl::InstanceImpl(
-//    const lyric_common::TypeDef &implType,
-//    int index,
-//    const absl::flat_hash_map<std::string, ExtensionMethod> &extensions)
-//    : implType(implType),
-//      index(index),
-//      extensions(extensions)
-//{
-//}
 
 lyric_assembler::ParameterSpec::ParameterSpec()
     : name(),

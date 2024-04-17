@@ -1,5 +1,7 @@
 
 #include <lyric_runtime/serialize_value.h>
+#include <lyric_runtime/string_ref.h>
+#include <lyric_runtime/url_ref.h>
 #include <lyric_serde/patchset_value.h>
 
 tu_uint32
@@ -37,6 +39,26 @@ lyric_runtime::serialize_value(const DataCell &value, lyric_serde::PatchsetState
 
         case DataCellType::CHAR32: {
             auto appendValueResult = state.appendValue(tempo_utils::AttrValue(static_cast<tu_uint32>(value.data.chr)));
+            if (appendValueResult.isStatus())
+                return INVALID_ADDRESS_U32;
+            return appendValueResult.getResult()->getAddress().getAddress();
+        }
+
+        case DataCellType::STRING: {
+            std::string utf8;
+            if (!value.data.str->utf8Value(utf8))
+                return INVALID_ADDRESS_U32;
+            auto appendValueResult = state.appendValue(tempo_utils::AttrValue(utf8));
+            if (appendValueResult.isStatus())
+                return INVALID_ADDRESS_U32;
+            return appendValueResult.getResult()->getAddress().getAddress();
+        }
+
+        case DataCellType::URL: {
+            tempo_utils::Url url;
+            if (!value.data.str->uriValue(url))
+                return INVALID_ADDRESS_U32;
+            auto appendValueResult = state.appendValue(tempo_utils::AttrValue(url.toString()));
             if (appendValueResult.isStatus())
                 return INVALID_ADDRESS_U32;
             return appendValueResult.getResult()->getAddress().getAddress();

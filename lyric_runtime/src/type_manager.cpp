@@ -51,6 +51,8 @@ lyric_runtime::TypeManager::typeOf(const DataCell &value)
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::String)];
         case DataCellType::STRUCT:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Struct)];
+        case DataCellType::UNDEF:
+            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Undef)];
         case DataCellType::URL:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Url)];
         case DataCellType::REF:

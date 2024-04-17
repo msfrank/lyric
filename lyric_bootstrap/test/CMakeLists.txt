@@ -23,12 +23,14 @@ set(TEST_CASES
     match_tests.cpp
     namespace_tests.cpp
     new_tests.cpp
+    Nil_tests.cpp
     Option_tests.cpp
     Pair_tests.cpp
     Seq_tests.cpp
     Status_tests.cpp
     String_tests.cpp
     Tuple_tests.cpp
+    Undef_tests.cpp
     Url_tests.cpp
     Utf16_tests.cpp
     val_tests.cpp

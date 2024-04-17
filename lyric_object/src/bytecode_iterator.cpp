@@ -9,6 +9,7 @@ lyric_object::OpInfo ops[] = {
     { lyric_object::Opcode::OP_UNKNOWN,             lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_NOOP,                lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_NIL,                 lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_UNDEF,               lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_TRUE,                lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_FALSE,               lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_I64,                 lyric_object::OpInfoType::IMMEDIATE_I64 },

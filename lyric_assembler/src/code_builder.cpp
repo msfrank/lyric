@@ -98,6 +98,12 @@ lyric_assembler::CodeBuilder::loadNil()
 }
 
 tempo_utils::Status
+lyric_assembler::CodeBuilder::loadUndef()
+{
+    return writeOpcode(lyric_object::Opcode::OP_UNDEF);
+}
+
+tempo_utils::Status
 lyric_assembler::CodeBuilder::loadBool(bool b)
 {
     return b ? writeOpcode(lyric_object::Opcode::OP_TRUE) : writeOpcode(lyric_object::Opcode::OP_FALSE);

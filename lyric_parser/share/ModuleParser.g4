@@ -364,7 +364,7 @@ derefSpec           : DotOperator Identifier ParenOpen argList? ParenClose      
 
 // literal structures
 
-literal             : numberLiteral | textLiteral | symbolLiteral | trueLiteral | falseLiteral | nilLiteral ;
+literal             : numberLiteral | textLiteral | symbolLiteral | keywordLiteral ;
 
 decimalInteger      : DecimalInteger ;
 hexInteger          : HexInteger ;
@@ -389,7 +389,9 @@ symbolLiteral       : HashOperator Identifier ( DotOperator Identifier)* ;
 
 trueLiteral         : TrueKeyword ;
 falseLiteral        : FalseKeyword ;
+undefLiteral        : UndefKeyword ;
 nilLiteral          : NilKeyword ;
+keywordLiteral      : trueLiteral | falseLiteral | undefLiteral | nilLiteral ;
 
 
 // comment

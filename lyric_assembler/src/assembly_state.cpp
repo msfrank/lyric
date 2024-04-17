@@ -117,7 +117,10 @@ lyric_assembler::AssemblyState::initialize()
         TU_ASSERT (symbolUrl.isValid());
 
         auto *sym = m_symbolcache->getSymbol(symbolUrl);
-        TU_ASSERT (sym != nullptr);
+        if (sym == nullptr)
+            return logAndContinue(AssemblerCondition::kImportError,
+                tempo_tracing::LogSeverity::kError,
+                "prelude is missing symbol {}", symbolUrl.toString());
 
         auto symbolName = symbolUrl.getSymbolPath().getName();
         if (m_symbolcache->hasEnvBinding(symbolName))

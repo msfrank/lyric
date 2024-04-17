@@ -11,7 +11,7 @@ namespace lyric_runtime {
     enum class LiteralCellType : uint8_t {
         INVALID,
         NIL,
-        PRESENT,
+        UNDEF,
         BOOL,
         I64,
         DBL,
@@ -41,7 +41,7 @@ namespace lyric_runtime {
         std::string toString() const;
 
         static LiteralCell nil();
-        static LiteralCell present();
+        static LiteralCell undef();
 
         LiteralCellType type;
         union {
@@ -63,7 +63,7 @@ namespace lyric_runtime {
         switch (cell.type) {
             case LiteralCellType::INVALID:
             case LiteralCellType::NIL:
-            case LiteralCellType::PRESENT:
+            case LiteralCellType::UNDEF:
                 return H::combine(std::move(h), cell.type);
             case LiteralCellType::BOOL:
                 return H::combine(std::move(h), cell.type, cell.literal.b);

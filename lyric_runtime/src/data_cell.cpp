@@ -42,7 +42,7 @@ lyric_runtime::DataCell::DataCell(const DataCell &other) : DataCell()
     switch (other.type) {
         case DataCellType::INVALID:
         case DataCellType::NIL:
-        case DataCellType::PRESENT:
+        case DataCellType::UNDEF:
             type = other.type;
             break;
         case DataCellType::BOOL:
@@ -146,10 +146,10 @@ lyric_runtime::DataCell::nil()
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::present()
+lyric_runtime::DataCell::undef()
 {
     DataCell cell;
-    cell.type = DataCellType::PRESENT;
+    cell.type = DataCellType::UNDEF;
     return cell;
 }
 
@@ -164,8 +164,8 @@ lyric_runtime::DataCell::forLiteral(const lyric_runtime::LiteralCell &literal)
         case lyric_runtime::LiteralCellType::NIL:
             cell.type = DataCellType::NIL;
             break;
-        case lyric_runtime::LiteralCellType::PRESENT:
-            cell.type = DataCellType::PRESENT;
+        case lyric_runtime::LiteralCellType::UNDEF:
+            cell.type = DataCellType::UNDEF;
             break;
         case lyric_runtime::LiteralCellType::BOOL:
             cell.type = DataCellType::BOOL;
@@ -346,7 +346,7 @@ lyric_runtime::DataCell::operator=(const DataCell &other)
     switch (other.type) {
         case DataCellType::INVALID:
         case DataCellType::NIL:
-        case DataCellType::PRESENT:
+        case DataCellType::UNDEF:
             type = other.type;
             break;
         case DataCellType::BOOL:
@@ -452,7 +452,7 @@ lyric_runtime::DataCell::isValid() const
 {
     switch (type) {
         case DataCellType::NIL:
-        case DataCellType::PRESENT:
+        case DataCellType::UNDEF:
         case DataCellType::BOOL:
         case DataCellType::I64:
         case DataCellType::DBL:
@@ -484,8 +484,8 @@ lyric_runtime::DataCell::toString() const
     switch (type) {
         case DataCellType::NIL:
             return "nil";
-        case DataCellType::PRESENT:
-            return "present";
+        case DataCellType::UNDEF:
+            return "undef";
         case DataCellType::BOOL:
             return data.b ? "true" : "false";
         case DataCellType::I64:
@@ -549,7 +549,7 @@ lyric_runtime::operator==(const DataCell &lhs, const DataCell &rhs)
     switch (lhs.type) {
         case DataCellType::INVALID:
         case DataCellType::NIL:
-        case DataCellType::PRESENT:
+        case DataCellType::UNDEF:
             return true;
         case DataCellType::BOOL:
             return lhs.data.b == rhs.data.b;
@@ -588,18 +588,18 @@ lyric_runtime::operator<<(tempo_utils::LogMessage &&message, const lyric_runtime
 {
     switch (cell.type) {
         case DataCellType::NIL:
-            std::forward<tempo_utils::LogMessage>(message) << "DataCell(Nil)";
+            std::forward<tempo_utils::LogMessage>(message) << "DataCell(nil)";
             break;
-        case DataCellType::PRESENT:
-            std::forward<tempo_utils::LogMessage>(message) << "DataCell(Present)";
+        case DataCellType::UNDEF:
+            std::forward<tempo_utils::LogMessage>(message) << "DataCell(undef)";
             break;
         case DataCellType::BOOL:
             std::forward<tempo_utils::LogMessage>(message)
-                << (cell.data.b ? "DataCell(boolean=true)" : "DataCell(boolean=false)");
+                << (cell.data.b ? "DataCell(boolean=true)" : "DataCell(bool=false)");
             break;
         case DataCellType::I64:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::StrCat("DataCell(integer=", cell.data.i64, ")");
+                << absl::StrCat("DataCell(int=", cell.data.i64, ")");
             break;
         case DataCellType::DBL:
             std::forward<tempo_utils::LogMessage>(message)
@@ -612,7 +612,7 @@ lyric_runtime::operator<<(tempo_utils::LogMessage &&message, const lyric_runtime
             break;
         case DataCellType::STRING:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(str=$0)", cell.data.str->toString());
+                << absl::Substitute("DataCell(string=$0)", cell.data.str->toString());
             break;
         case DataCellType::URL:
             std::forward<tempo_utils::LogMessage>(message)

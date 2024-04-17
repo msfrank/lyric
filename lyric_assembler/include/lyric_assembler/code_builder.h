@@ -28,6 +28,7 @@ namespace lyric_assembler {
         tempo_utils::Status writeU64(uint64_t u64);
 
         tempo_utils::Status loadNil();
+        tempo_utils::Status loadUndef();
         tempo_utils::Status loadBool(bool b);
         tempo_utils::Status loadInt(int64_t i64);
         tempo_utils::Status loadFloat(double dbl);

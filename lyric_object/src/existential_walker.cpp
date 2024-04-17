@@ -218,6 +218,7 @@ lyric_object::ExistentialWalker::getIntrinsicType() const
 
     switch (existentialDescriptor->intrinsic_mapping()) {
         case lyo1::IntrinsicType::Nil:          return IntrinsicType::Nil;
+        case lyo1::IntrinsicType::Undef:        return IntrinsicType::Undef;
         case lyo1::IntrinsicType::Bool:         return IntrinsicType::Bool;
         case lyo1::IntrinsicType::Char:         return IntrinsicType::Char;
         case lyo1::IntrinsicType::Float64:      return IntrinsicType::Float;

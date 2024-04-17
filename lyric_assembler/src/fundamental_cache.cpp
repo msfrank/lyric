@@ -59,8 +59,6 @@ lyric_assembler::FundamentalCache::FundamentalCache(
         fundamentalTypeToSymbolPath(FundamentalSymbol::Ordered));
     m_fundamentalPair = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Pair));
-    m_fundamentalPresent = lyric_common::SymbolUrl(preludeLocation,
-        fundamentalTypeToSymbolPath(FundamentalSymbol::Present));
     m_fundamentalProposition = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Proposition));
     m_fundamentalRecord = lyric_common::SymbolUrl(preludeLocation,
@@ -75,6 +73,8 @@ lyric_assembler::FundamentalCache::FundamentalCache(
         fundamentalTypeToSymbolPath(FundamentalSymbol::String));
     m_fundamentalStruct = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Struct));
+    m_fundamentalUndef = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::Undef));
     m_fundamentalUnwrap = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Unwrap));
     m_fundamentalUrl = lyric_common::SymbolUrl(preludeLocation,
@@ -251,8 +251,6 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalOrdered;
         case FundamentalSymbol::Pair:
             return m_fundamentalPair;
-        case FundamentalSymbol::Present:
-            return m_fundamentalPresent;
         case FundamentalSymbol::Proposition:
             return m_fundamentalProposition;
         case FundamentalSymbol::Record:
@@ -267,6 +265,8 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalString;
         case FundamentalSymbol::Struct:
             return m_fundamentalStruct;
+        case FundamentalSymbol::Undef:
+            return m_fundamentalUndef;
         case FundamentalSymbol::Unwrap:
             return m_fundamentalUnwrap;
         case FundamentalSymbol::Url:
@@ -379,6 +379,8 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(const lyric_runtime::Litera
             m_tracer->throwAssemblerInvariant("cannot resolve definition for invalid literal");
         case lyric_runtime::LiteralCellType::NIL:
             return getFundamentalUrl(FundamentalSymbol::Nil);
+        case lyric_runtime::LiteralCellType::UNDEF:
+            return getFundamentalUrl(FundamentalSymbol::Undef);
         case lyric_runtime::LiteralCellType::BOOL:
             return getFundamentalUrl(FundamentalSymbol::Bool);
         case lyric_runtime::LiteralCellType::I64:

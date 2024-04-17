@@ -164,6 +164,11 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 currentCoro->pushData(DataCell::nil());
                 break;
 
+            // push undef onto the stack
+            case lyric_object::Opcode::OP_UNDEF:
+                currentCoro->pushData(DataCell::undef());
+                break;
+
             // push true onto the stack
             case lyric_object::Opcode::OP_TRUE:
                 currentCoro->pushData(DataCell(true));

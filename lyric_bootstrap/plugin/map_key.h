@@ -17,7 +17,7 @@ H AbslHashValue(H state, const MapKey &key) {
         case lyric_runtime::DataCellType::INVALID:
         case lyric_runtime::DataCellType::NIL:
             return H::combine(std::move(state), 0);
-        case lyric_runtime::DataCellType::PRESENT:
+        case lyric_runtime::DataCellType::UNDEF:
             return H::combine(std::move(state), 1);
         case lyric_runtime::DataCellType::BOOL:
             return H::combine(std::move(state), cell.data.b);

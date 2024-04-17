@@ -52,6 +52,7 @@ namespace lyric_test {
         };
 
         Matcher<lyric_runtime::DataCell> DataCellNil();
+        Matcher<lyric_runtime::DataCell> DataCellUndef();
         Matcher<lyric_runtime::DataCell> DataCellBool(bool b);
         Matcher<lyric_runtime::DataCell> DataCellInt(int64_t i64);
         Matcher<lyric_runtime::DataCell> DataCellFloat(double dbl);

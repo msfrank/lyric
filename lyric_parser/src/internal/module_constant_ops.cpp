@@ -35,6 +35,14 @@ lyric_parser::internal::ModuleConstantOps::exitFalseLiteral(ModuleParser::FalseL
 }
 
 void
+lyric_parser::internal::ModuleConstantOps::exitUndefLiteral(ModuleParser::UndefLiteralContext *ctx)
+{
+    auto *token = ctx->UndefKeyword()->getSymbol();
+    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUndefClass, token);
+    m_state->pushNode(literalNode);
+}
+
+void
 lyric_parser::internal::ModuleConstantOps::exitNilLiteral(ModuleParser::NilLiteralContext *ctx)
 {
     auto *token = ctx->NilKeyword()->getSymbol();
