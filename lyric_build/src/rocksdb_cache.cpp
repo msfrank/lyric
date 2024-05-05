@@ -592,7 +592,7 @@ lyric_build::RocksdbCache::loadDiagnostics(const TraceId &traceId)
         return {};
     TU_ASSERT (status.ok());
 
-    auto bytes = std::make_shared<const std::string>(std::move(v));
+    auto bytes = tempo_utils::MemoryBytes::copy(v);
     tempo_tracing::TempoSpanset spanset(bytes);
     if (!spanset.isValid())
         return {};
@@ -611,8 +611,8 @@ lyric_build::RocksdbCache::storeDiagnostics(const TraceId &traceId, const tempo_
     std::string s = write_trace_id(traceId);
     rocksdb::Slice k(s);
 
-    auto bytes = spanset.getBytes();
-    auto v = rocksdb::Slice(bytes->data(), bytes->size());
+    auto bytes = spanset.bytesView();
+    auto v = rocksdb::Slice((const char *) bytes.data(), bytes.size());
     status = m_db->Put(options, m_traces, k, v);
     TU_ASSERT (status.ok());
 }

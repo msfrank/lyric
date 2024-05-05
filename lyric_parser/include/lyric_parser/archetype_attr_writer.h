@@ -9,7 +9,7 @@ namespace lyric_parser {
 
     class ArchetypeAttrWriter : public tempo_utils::AbstractAttrWriter {
     public:
-        explicit ArchetypeAttrWriter(const tempo_utils::AttrKey &key, ArchetypeState *state);
+        ArchetypeAttrWriter(const tempo_utils::AttrKey &key, ArchetypeState *state);
         tempo_utils::Result<tu_uint32> putNamespace(const tempo_utils::Url &nsUrl) override;
         tempo_utils::Result<tu_uint32> putNil() override;
         tempo_utils::Result<tu_uint32> putBool(bool b) override;

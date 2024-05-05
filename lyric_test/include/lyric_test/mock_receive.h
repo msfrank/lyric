@@ -8,7 +8,7 @@ namespace lyric_test {
     class MockReceive : public BaseProtocolMock {
 
     public:
-        MockReceive(const std::vector<lyric_serde::LyricPatchset> &messages);
+        explicit MockReceive(const std::vector<lyric_serde::LyricPatchset> &messages);
 
         tempo_utils::Status handle(Receive receive) override;
 

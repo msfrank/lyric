@@ -28,7 +28,7 @@ lyric_parser::LyricArchetype::LyricArchetype(const lyric_parser::LyricArchetype 
 bool
 lyric_parser::LyricArchetype::isValid() const
 {
-    return m_reader != nullptr;
+    return m_reader && m_reader->isValid();
 }
 
 lyric_parser::ArchetypeVersion

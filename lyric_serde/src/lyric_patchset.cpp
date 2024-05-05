@@ -51,6 +51,8 @@ lyric_serde::LyricPatchset::getABI() const
 lyric_serde::PatchsetWalker
 lyric_serde::LyricPatchset::getPatchset() const
 {
+    if (m_reader == nullptr)
+        return {};
     return PatchsetWalker(m_reader);
 }
 
