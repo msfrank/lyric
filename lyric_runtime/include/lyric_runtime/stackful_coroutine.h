@@ -23,6 +23,7 @@ namespace lyric_runtime {
         void pushCall(const CallCell &value, const lyric_object::BytecodeIterator &ip, BytecodeSegment *sp);
         CallCell popCall();
         CallCell& peekCall(int offset = -1);
+        const CallCell& peekCall(int offset = -1) const;
         void dropCall(int offset = -1);
         int callStackSize() const;
         std::vector<CallCell>::const_reverse_iterator callsBegin() const;
@@ -32,6 +33,7 @@ namespace lyric_runtime {
         DataCell popData();
         std::vector<DataCell> popData(int count);
         DataCell& peekData(int offset = -1);
+        const DataCell& peekData(int offset = -1) const;
         void dropData(int offset = -1);
         int dataStackSize() const;
         void extendDataStack(int count);
@@ -41,7 +43,7 @@ namespace lyric_runtime {
 
         void pushGuard(int stackGuard = -1);
         int popGuard();
-        int peekGuard();
+        int peekGuard() const;
         bool checkGuard() const;
         int guardStackSize() const;
 

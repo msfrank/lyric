@@ -25,8 +25,8 @@ namespace lyric_test {
                     MatchStatus,
                 };
         public:
-            TestComputationMatcher(lyric_build::TaskState::Status status);
-            TestComputationMatcher(const Matcher<tempo_tracing::TempoSpanset> &spansetMatcher);
+            explicit TestComputationMatcher(lyric_build::TaskState::Status status);
+            explicit TestComputationMatcher(const Matcher<tempo_tracing::TempoSpanset> &spansetMatcher);
 
             bool MatchAndExplain(const lyric_test::TestComputation &testComputation, std::ostream *os) const;
             void DescribeTo(std::ostream *os) const;
@@ -64,7 +64,7 @@ namespace lyric_test {
         class RunModuleMatcher {
 
         public:
-            RunModuleMatcher(const Matcher<lyric_runtime::Return> &matcher);
+            explicit RunModuleMatcher(const Matcher<lyric_runtime::DataCell> &matcher);
             bool MatchAndExplain(const lyric_test::RunModule &runModule, std::ostream *os) const;
             void DescribeTo(std::ostream *os) const;
             void DescribeNegationTo(std::ostream *os) const;
@@ -73,10 +73,10 @@ namespace lyric_test {
             using is_gtest_matcher = void;
 
         private:
-            Matcher<lyric_runtime::Return> m_matcher;
+            Matcher<lyric_runtime::DataCell> m_matcher;
         };
 
-        Matcher<lyric_test::RunModule> RunModule(const Matcher<lyric_runtime::Return> &matcher);
+        Matcher<lyric_test::RunModule> RunModule(const Matcher<lyric_runtime::DataCell> &matcher);
         Matcher<lyric_test::RunModule> RunModule(const Matcher<tempo_tracing::TempoSpanset> &matcher);
     }
 }

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -14,8 +15,8 @@ TEST(CoreDefstruct, EvaluateNewInstanceWithDefaultConstructor)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(IsRefType(lyric_common::SymbolPath({"Foo"}))))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST(CoreDefstruct, EvaluateNewInstanceWithConstructor)
@@ -31,7 +32,7 @@ TEST(CoreDefstruct, EvaluateNewInstanceWithConstructor)
         foo.value
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(100)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }
 
 TEST(CoreDefstruct, EvaluateDerefPublicVarMember)
@@ -44,7 +45,7 @@ TEST(CoreDefstruct, EvaluateDerefPublicVarMember)
         foo.value
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(100)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }
 
 TEST(CoreDefstruct, EvaluateInvokeMethod)
@@ -60,5 +61,5 @@ TEST(CoreDefstruct, EvaluateInvokeMethod)
         foo.plus10()
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(110)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(110))));
 }

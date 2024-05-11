@@ -2,6 +2,7 @@
 
 #include <lyric_assembler/assembler_result.h>
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -15,8 +16,8 @@ TEST(CoreDefclass, EvaluateNewInstanceWithDefaultConstructor)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(RunModule(
-                     Return(IsRefType(lyric_common::SymbolPath({"Foo"}))))));
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST(CoreDefclass, EvaluateNewInstanceFromDefaultSuperclass)
@@ -29,8 +30,8 @@ TEST(CoreDefclass, EvaluateNewInstanceFromDefaultSuperclass)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(RunModule(
-                     Return(IsRefType(lyric_common::SymbolPath({"Foo"}))))));
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST(CoreDefclass, EvaluateNewInstanceFromSuperclass)
@@ -43,8 +44,8 @@ TEST(CoreDefclass, EvaluateNewInstanceFromSuperclass)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(RunModule(
-                     Return(IsRefType(lyric_common::SymbolPath({"Foo"}))))));
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST(CoreDefclass, EvaluateNewInstanceWithDefaultInitializedMember)
@@ -58,8 +59,8 @@ TEST(CoreDefclass, EvaluateNewInstanceWithDefaultInitializedMember)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(RunModule(
-                     Return(IsRefType(lyric_common::SymbolPath({"Foo"}))))));
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST(CoreDefclass, EvaluateNewInstanceWithDefaultConstructorAndDefaultInitializedMember)
@@ -72,8 +73,8 @@ TEST(CoreDefclass, EvaluateNewInstanceWithDefaultConstructorAndDefaultInitialize
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(RunModule(
-                     Return(IsRefType(lyric_common::SymbolPath({"Foo"}))))));
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
 TEST(CoreDefclass, EvaluateDerefPublicVarMember)
@@ -90,8 +91,8 @@ TEST(CoreDefclass, EvaluateDerefPublicVarMember)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellInt(100)))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellInt(100))));
 }
 
 TEST(CoreDefclass, EvaluateDerefPublicVarDefaultInitializedMember)
@@ -105,8 +106,8 @@ TEST(CoreDefclass, EvaluateDerefPublicVarDefaultInitializedMember)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(RunModule(
-                     Return(DataCellInt(100)))));
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellInt(100))));
 }
 
 TEST(CoreDefclass, EvaluateDerefThisProtectedVarMember)
@@ -129,8 +130,8 @@ TEST(CoreDefclass, EvaluateDerefThisProtectedVarMember)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(RunModule(
-                     Return(DataCellInt(200)))));
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellInt(200))));
 }
 
 TEST(CoreDefclass, EvaluateDerefProtectedVarMemberFails)
@@ -146,9 +147,9 @@ TEST(CoreDefclass, EvaluateDerefProtectedVarMemberFails)
         foo._i
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         CompileModule(
-            SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidAccess))));
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidAccess))));
 }
 
 TEST(CoreDefclass, EvaluateDerefThisPrivateVarMember)
@@ -173,9 +174,7 @@ TEST(CoreDefclass, EvaluateDerefThisPrivateVarMember)
         bar.add(100)
     )");
 
-    ASSERT_THAT (result,
-                 ContainsResult(RunModule(
-                     Return(DataCellInt(200)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(200))));
 }
 
 TEST(CoreDefclass, EvaluateDerefPrivateVarMemberFails)
@@ -191,9 +190,9 @@ TEST(CoreDefclass, EvaluateDerefPrivateVarMemberFails)
         foo.__i
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         CompileModule(
-            SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidAccess))));
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidAccess))));
 }
 
 TEST(CoreDefclass, EvaluateInvokeMethod)
@@ -213,8 +212,7 @@ TEST(CoreDefclass, EvaluateInvokeMethod)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(RunModule(
-                     Return(DataCellInt(100)))));
+                 tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }
 
 TEST(CoreDefclass, EvaluateDefGenericClass)
@@ -235,6 +233,6 @@ TEST(CoreDefclass, EvaluateDefGenericClass)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(RunModule(
-                     Return(DataCellInt(100)))));
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellInt(100))));
 }

@@ -3,6 +3,7 @@
 #include <gmock/gmock.h>
 #include <absl/strings/str_split.h>
 
+#include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/string_ref.h>
 #include <lyric_runtime/url_ref.h>
 #include <lyric_test/data_cell_matchers.h>
@@ -29,6 +30,12 @@ lyric_test::matchers::DataCellMatcher::DataCellMatcher(const std::string &str)
 lyric_test::matchers::DataCellMatcher::DataCellMatcher(const tempo_utils::Url &url)
     : m_type(MatcherType::DATA_CELL_URL),
       m_url(url)
+{
+}
+
+lyric_test::matchers::DataCellMatcher::DataCellMatcher(const lyric_common::SymbolUrl &symbolUrl)
+    : m_type(MatcherType::DATA_CELL_SYMBOL),
+      m_sym(symbolUrl)
 {
 }
 
@@ -81,7 +88,8 @@ lyric_test::matchers::DataCellMatcher::DataCellMatcher(const DataCellMatcher &ot
     : m_type(other.m_type),
       m_cell(other.m_cell),
       m_str(other.m_str),
-      m_url(other.m_url)
+      m_url(other.m_url),
+      m_sym(other.m_sym)
 {
 }
 
@@ -111,6 +119,17 @@ lyric_test::matchers::DataCellMatcher::MatchAndExplain(
                 return false;
             return m_url == url;
         }
+        case MatcherType::DATA_CELL_SYMBOL: {
+            if (cell.type != lyric_runtime::DataCellType::REF)
+                return false;
+            auto *vtable = cell.data.ref->getVirtualTable();
+            if (vtable == nullptr)
+                return false;
+            auto sym = vtable->getSymbolUrl();
+            if (!m_sym.getAssemblyLocation().isValid())
+                return sym.getSymbolPath() == m_sym.getSymbolPath();
+            return m_sym == sym;
+        }
         case MatcherType::DATA_CELL_DESCRIPTOR:
         case MatcherType::DATA_CELL_TYPE:
             return cell.type == m_cell.type;
@@ -130,6 +149,9 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
             break;
         case MatcherType::DATA_CELL_URL:
             *os << "cell contains url " << m_url.toString();
+            break;
+        case MatcherType::DATA_CELL_SYMBOL:
+            *os << "cell contains instance of " << m_sym.toString();
             break;
         case MatcherType::DATA_CELL_DESCRIPTOR:
             switch (m_cell.type) {
@@ -235,6 +257,18 @@ testing::Matcher<lyric_runtime::DataCell>
 lyric_test::matchers::DataCellUrl(std::string_view str)
 {
     return DataCellMatcher(tempo_utils::Url::fromString(str));
+}
+
+testing::Matcher<lyric_runtime::DataCell>
+lyric_test::matchers::DataCellRef(const lyric_common::SymbolUrl &symbolUrl)
+{
+    return DataCellMatcher(symbolUrl);
+}
+
+testing::Matcher<lyric_runtime::DataCell>
+lyric_test::matchers::DataCellRef(const lyric_common::SymbolPath &symbolPath)
+{
+    return DataCellMatcher(lyric_common::SymbolUrl(symbolPath));
 }
 
 testing::Matcher<lyric_runtime::DataCell>

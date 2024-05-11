@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -12,7 +13,7 @@ TEST(CoreTuple, TestEvaluateTuple1)
         i
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(42)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
 }
 
 TEST(CoreTuple, TestEvaluateTuple2)
@@ -23,7 +24,7 @@ TEST(CoreTuple, TestEvaluateTuple2)
         i
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(42)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
 }
 
 TEST(CoreTuple, TestEvaluateTuple3)
@@ -34,5 +35,5 @@ TEST(CoreTuple, TestEvaluateTuple3)
         i
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(42)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
 }

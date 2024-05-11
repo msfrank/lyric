@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -12,8 +13,8 @@ TEST(CoreSeq, TestEvaluateNewSeq)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(IsRefType(preludeSymbol("Seq"))))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellRef(preludeSymbol("Seq")))));
 }
 
 TEST(CoreSeq, TestEvaluateSeqSize)
@@ -23,7 +24,7 @@ TEST(CoreSeq, TestEvaluateSeqSize)
         seq.Size()
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(3)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
 TEST(CoreSeq, TestEvaluateSeqGet)
@@ -33,7 +34,7 @@ TEST(CoreSeq, TestEvaluateSeqGet)
         seq.GetOrElse(0, 0)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(1)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
 TEST(CoreSeq, TestEvaluateSeqAppend)
@@ -44,7 +45,7 @@ TEST(CoreSeq, TestEvaluateSeqAppend)
         seq2.GetOrElse(5, 0)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(6)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
 }
 
 TEST(CoreSeq, TestEvaluateSeqExtend)
@@ -56,7 +57,7 @@ TEST(CoreSeq, TestEvaluateSeqExtend)
         seq3.GetOrElse(5, 0)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(6)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
 }
 
 TEST(CoreSeq, TestEvaluateSeqSlice)
@@ -67,7 +68,7 @@ TEST(CoreSeq, TestEvaluateSeqSlice)
         seq2.GetOrElse(1, 0)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(4)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(4))));
 }
 
 TEST(CoreSeq, TestEvaluateSeqIterateImpl)
@@ -81,5 +82,5 @@ TEST(CoreSeq, TestEvaluateSeqIterateImpl)
         count
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(6)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
 }

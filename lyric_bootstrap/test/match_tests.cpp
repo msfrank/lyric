@@ -3,6 +3,7 @@
 
 #include <lyric_assembler/assembler_result.h>
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -12,7 +13,7 @@ TEST(CoreMatch, TestIsAEquals)
         Object{} ^? Object
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
 TEST(CoreMatch, TestIsASubtype)
@@ -21,7 +22,7 @@ TEST(CoreMatch, TestIsASubtype)
         Object{} ^? Any
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
 TEST(CoreMatch, TestIsADisjointType)
@@ -33,7 +34,7 @@ TEST(CoreMatch, TestIsADisjointType)
         Object{} ^? Test
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreMatch, TestIsAPlaceholderType)
@@ -45,7 +46,7 @@ TEST(CoreMatch, TestIsAPlaceholderType)
         generic(42)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
 TEST(CoreMatch, TestIsAPlaceholderTypeNoMatch)
@@ -57,7 +58,7 @@ TEST(CoreMatch, TestIsAPlaceholderTypeNoMatch)
         generic(42)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreMatch, TestIsABoundedPlaceholderType)
@@ -69,7 +70,7 @@ TEST(CoreMatch, TestIsABoundedPlaceholderType)
         generic(42)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
 TEST(CoreMatch, TestIsABoundedPlaceholderTypeNoMatch)
@@ -81,7 +82,7 @@ TEST(CoreMatch, TestIsABoundedPlaceholderTypeNoMatch)
         generic(42)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreMatch, TestIsABoundedPlaceholderTypeDisjoint)
@@ -93,9 +94,9 @@ TEST(CoreMatch, TestIsABoundedPlaceholderTypeDisjoint)
         generic(42)
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         CompileModule(
-            SpansetContainsError(lyric_assembler::AssemblerCondition::kSyntaxError))));
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kSyntaxError))));
 }
 
 TEST(CoreMatch, TestMatchIntrinsic)
@@ -110,7 +111,7 @@ TEST(CoreMatch, TestMatchIntrinsic)
         }
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(2)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
 }
 
 TEST(CoreMatch, TestMatchPlaceholderType)
@@ -125,7 +126,7 @@ TEST(CoreMatch, TestMatchPlaceholderType)
         generic(42)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
 TEST(CoreMatch, TestMatchPlaceholderTypeNoMatch)
@@ -140,7 +141,7 @@ TEST(CoreMatch, TestMatchPlaceholderTypeNoMatch)
         generic(42)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreMatch, TestMatchBoundedPlaceholderType)
@@ -155,7 +156,7 @@ TEST(CoreMatch, TestMatchBoundedPlaceholderType)
         generic(42)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
 TEST(CoreMatch, TestMatchBoundedPlaceholderTypeNoMatch)
@@ -170,7 +171,7 @@ TEST(CoreMatch, TestMatchBoundedPlaceholderTypeNoMatch)
         generic(42)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreMatch, TestMatchBoundedPlaceholderTypeDisjoint)
@@ -185,9 +186,9 @@ TEST(CoreMatch, TestMatchBoundedPlaceholderTypeDisjoint)
         generic(42)
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         CompileModule(
-            SpansetContainsError(lyric_assembler::AssemblerCondition::kSyntaxError))));
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kSyntaxError))));
 }
 
 TEST(CoreMatch, TestMatchClass)
@@ -211,7 +212,7 @@ TEST(CoreMatch, TestMatchClass)
         }
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(3)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
 TEST(CoreMatch, TestMatchEnum)
@@ -237,7 +238,7 @@ TEST(CoreMatch, TestMatchEnum)
         }
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(4)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(4))));
 }
 
 TEST(CoreMatch, TestMatchDerefAlias)
@@ -260,7 +261,7 @@ TEST(CoreMatch, TestMatchDerefAlias)
         }
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(42)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
 }
 
 TEST(CoreMatch, TestMatchUnwrapGenericClass)
@@ -273,5 +274,5 @@ TEST(CoreMatch, TestMatchUnwrapGenericClass)
         }
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(6)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
 }

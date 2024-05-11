@@ -19,7 +19,10 @@ lyric_runtime::InterpreterState::InterpreterState()
       m_subroutineManager(nullptr),
       m_systemScheduler(nullptr),
       m_portMultiplexer(nullptr),
-      m_heapManager(nullptr)
+      m_heapManager(nullptr),
+      m_reloadEpochMillis(0),
+      m_statusCode(tempo_utils::StatusCode::kUnknown),
+      m_active(false)
 {
 }
 
@@ -39,7 +42,10 @@ lyric_runtime::InterpreterState::InterpreterState(
       m_subroutineManager(subroutineManager),
       m_systemScheduler(systemScheduler),
       m_portMultiplexer(portMultiplexer),
-      m_heapManager(heapManager)
+      m_heapManager(heapManager),
+      m_reloadEpochMillis(0),
+      m_statusCode(tempo_utils::StatusCode::kUnknown),
+      m_active(false)
 {
     TU_ASSERT (m_loop != nullptr);
     TU_ASSERT (m_heap != nullptr);
@@ -259,6 +265,30 @@ err:
     return status;
 }
 
+lyric_common::AssemblyLocation
+lyric_runtime::InterpreterState::getMainLocation() const
+{
+    return m_mainLocation;
+}
+
+tu_uint64
+lyric_runtime::InterpreterState::getReloadEpochMillis() const
+{
+    return m_reloadEpochMillis;
+}
+
+tempo_utils::StatusCode
+lyric_runtime::InterpreterState::getStatusCode() const
+{
+    return m_statusCode;
+}
+
+bool
+lyric_runtime::InterpreterState::isActive() const
+{
+    return m_active;
+}
+
 lyric_runtime::StackfulCoroutine *
 lyric_runtime::InterpreterState::currentCoro() const
 {
@@ -377,7 +407,26 @@ lyric_runtime::InterpreterState::reload(const lyric_common::AssemblyLocation &ma
     m_systemScheduler->resumeTask(mainTask);
     m_systemScheduler->selectNextReady();
 
+    // initialize process accounting
+    m_mainLocation = mainLocation;
+    m_reloadEpochMillis = ToUnixMillis(absl::Now());
+    m_statusCode = tempo_utils::StatusCode::kUnknown;
+    m_active = true;
+
     return InterpreterStatus::ok();
+}
+
+tempo_utils::Status
+lyric_runtime::InterpreterState::halt(tempo_utils::StatusCode statusCode)
+{
+    if (!m_active)
+        return InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "cannot halt inactive interpreter");
+
+    m_statusCode = statusCode;
+    m_active = false;
+
+    return {};
 }
 
 lyric_runtime::RefHandle

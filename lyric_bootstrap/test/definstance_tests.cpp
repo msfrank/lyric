@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -13,7 +14,7 @@ TEST(CoreDefinstance, EvaluateInstanceValMember)
         Foo.i
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(100)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }
 
 TEST(CoreDefinstance, EvaluateInstanceVarMember)
@@ -25,7 +26,7 @@ TEST(CoreDefinstance, EvaluateInstanceVarMember)
         Foo.i
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(100)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }
 
 TEST(CoreDefinstance, EvaluateInstanceMethod)
@@ -39,7 +40,7 @@ TEST(CoreDefinstance, EvaluateInstanceMethod)
         Foo.identity(42)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(42)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
 }
 
 TEST(CoreDefinstance, EvaluateInstanceApplication)
@@ -64,7 +65,7 @@ TEST(CoreDefinstance, EvaluateInstanceApplication)
         max(1, 2, ord = IntReverseOrdering)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(1)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
 TEST(CoreDefinstance, EvaluateUsingInstanceApplication)
@@ -91,5 +92,5 @@ TEST(CoreDefinstance, EvaluateUsingInstanceApplication)
         max(1, 2)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(1)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -12,8 +13,8 @@ TEST(CoreUrl, TestEvaluateNewUrl)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellUrl("https://zuri.dev/example/uri.html")))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellUrl("https://zuri.dev/example/uri.html"))));
 }
 
 TEST(CoreUrl, TestEvaluateNewEmptyUrl)
@@ -24,8 +25,8 @@ TEST(CoreUrl, TestEvaluateNewEmptyUrl)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellUrl("")))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellUrl(""))));
 }
 
 TEST(CoreUrl, TestEvaluateIsEq)
@@ -35,6 +36,6 @@ TEST(CoreUrl, TestEvaluateIsEq)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellBool(true)))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellBool(true))));
 }

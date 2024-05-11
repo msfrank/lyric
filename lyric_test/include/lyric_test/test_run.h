@@ -154,22 +154,22 @@ namespace lyric_test {
             std::shared_ptr<AbstractTester> tester,
             const lyric_build::TargetComputation &computation,
             std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics,
-            const lyric_runtime::Return &ret);
+            std::shared_ptr<lyric_runtime::InterpreterState> state,
+            const lyric_runtime::InterpreterExit &exit);
         RunModule(
             std::shared_ptr<AbstractTester> tester,
             const lyric_build::TargetComputation &computation,
             std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics);
         RunModule(const RunModule &other);
 
-        bool hasReturn() const;
-        lyric_runtime::Return getReturn() const;
+        bool hasInterpreterState() const;
+        std::weak_ptr<lyric_runtime::InterpreterState> getInterpreterState() const;
+        lyric_runtime::InterpreterExit getInterpreterExit() const;
 
     private:
-        bool m_hasReturn;
-        lyric_runtime::Return m_ret;
+        std::shared_ptr<lyric_runtime::InterpreterState> m_state;
+        lyric_runtime::InterpreterExit m_exit;
     };
-
-
 }
 
 #endif // LYRIC_TEST_TEST_RUN_H

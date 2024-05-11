@@ -22,20 +22,20 @@ lyric_runtime::BytecodeInterpreter::BytecodeInterpreter(
     TU_ASSERT (m_state != nullptr);
 }
 
-tempo_utils::Result<lyric_runtime::Return>
+tempo_utils::Result<lyric_runtime::InterpreterExit>
 lyric_runtime::BytecodeInterpreter::run()
 {
-    auto result = runSubinterpreter();
-    if (result.isStatus())
-        return result.getStatus();
-    auto cell = result.getResult();
+    InterpreterExit interpreterExit;
 
-    if (cell.type == DataCellType::REF) {
-        auto handle = m_state->createHandle(cell);
-        return Return(handle);
-    }
+    TU_ASSERT (m_recursionDepth == 0);
+    TU_ASSIGN_OR_RETURN (interpreterExit.mainReturn, runSubinterpreter());
+    TU_ASSERT (m_recursionDepth == 0);
 
-    return Return(cell);
+    interpreterExit.statusCode = m_state->getStatusCode();
+    interpreterExit.interpreterStartEpochMillis = m_state->getReloadEpochMillis();
+    interpreterExit.instructionCount = m_instructionCounter;
+
+    return interpreterExit;
 }
 
 tempo_utils::Status
@@ -132,11 +132,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             Task *currentTask = systemScheduler->currentTask();
 
             // if current task is the main task then halt
-            if (currentTask->getTaskType() == TaskType::Main) {
-                if (currentCoro->dataStackSize() > 0)
-                    return onHalt(op, currentCoro->popData());
-                return onHalt(op, DataCell::nil());
-            }
+            if (currentTask->getTaskType() == TaskType::Main)
+                return onHalt(op);
 
             // otherwise this is a worker task, get the result and terminate the task
             systemScheduler->terminateTask(currentTask);
@@ -1115,11 +1112,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                     if (status.notOk())
                         return onError(op, status);
                     // if we're executing the main task and we have no return address then halt
-                    if (systemScheduler->currentTask()->getTaskType() == TaskType::Main) {
-                        if (currentCoro->dataStackSize() > 0)
-                            return onHalt(op, currentCoro->popData());
-                        return onHalt(op, DataCell::nil());
-                    }
+                    if (systemScheduler->currentTask()->getTaskType() == TaskType::Main)
+                        return onHalt(op);
                     // otherwise we're executing a worker task, so we do nothing
                     break;
                 }
@@ -1221,14 +1215,12 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // exit the interpreter.  if there is a value on the stack, return it, otherwise return nil.
             case lyric_object::Opcode::OP_HALT: {
-                if (currentCoro->dataStackSize() > 0)
-                    return onHalt(op, currentCoro->popData());
-                return onHalt(op, DataCell::nil());
+                return onHalt(op);
             }
 
             // abort the interpreter.  if there is a value on the stack, return it, otherwise return nil.
             case lyric_object::Opcode::OP_ABORT: {
-                return onError(op, InterpreterStatus::forCondition( InterpreterCondition::kAborted));
+                return onError(op, InterpreterStatus::forCondition(InterpreterCondition::kAborted));
             }
 
             // unknown opcode
@@ -1292,6 +1284,7 @@ lyric_runtime::BytecodeInterpreter::incrementRecursionDepth()
 void
 lyric_runtime::BytecodeInterpreter::decrementRecursionDepth()
 {
+    TU_ASSERT (m_recursionDepth > 0);
     m_recursionDepth--;
 }
 
@@ -1314,12 +1307,20 @@ lyric_runtime::BytecodeInterpreter::onError(const lyric_object::OpCell &op, cons
 }
 
 tempo_utils::Result<lyric_runtime::DataCell>
-lyric_runtime::BytecodeInterpreter::onHalt(const lyric_object::OpCell &op, const DataCell &cell)
+lyric_runtime::BytecodeInterpreter::onHalt(const lyric_object::OpCell &op)
 {
     TU_LOG_VV << "halting interpreter";
+
+    auto *currentCoro = m_state->currentCoro();
+    auto mainReturn = currentCoro->dataStackSize() > 0? currentCoro->popData() : DataCell::nil();
+
+    if (m_state->isActive()) {
+        m_state->halt(tempo_utils::StatusCode::kOk);
+    }
+
     if (m_inspector)
-        return m_inspector->onHalt(op, cell, this, m_state.get());
-    return cell;
+        return m_inspector->onHalt(op, mainReturn, this, m_state.get());
+    return mainReturn;
 }
 
 lyric_runtime::RecursionLocker::RecursionLocker(lyric_runtime::BytecodeInterpreter *interp)

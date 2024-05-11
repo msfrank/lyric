@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -34,9 +35,9 @@ TEST(CoreIterator, TestForLoopWithExplicitTargetAndIteratorTypes)
         count
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            Return(DataCellInt(3)))));
+            DataCellInt(3))));
 }
 
 TEST(CoreIterator, TestForLoopWithExplicitTargetTypeAndInferredIteratorType)
@@ -68,7 +69,7 @@ TEST(CoreIterator, TestForLoopWithExplicitTargetTypeAndInferredIteratorType)
         count
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            Return(DataCellInt(3)))));
+            DataCellInt(3))));
 }

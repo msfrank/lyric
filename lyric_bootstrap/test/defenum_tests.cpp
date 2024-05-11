@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/result_matchers.h>
 
 #include "test_helpers.h"
 
@@ -17,8 +18,8 @@ TEST(CoreDefenum, EvaluateEnum)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(IsRefType(lyric_common::SymbolPath({"Direction"}))))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellRef(lyric_common::SymbolPath({"Direction"})))));
 }
 
 TEST(CoreDefenum, EvaluateEnumCase)
@@ -34,8 +35,8 @@ TEST(CoreDefenum, EvaluateEnumCase)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(IsRefType(lyric_common::SymbolPath({"North"}))))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellRef(lyric_common::SymbolPath({"North"})))));
 }
 
 TEST(CoreDefenum, EvaluateEnumCaseVal)
@@ -54,7 +55,7 @@ TEST(CoreDefenum, EvaluateEnumCaseVal)
         North.index
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(1)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
 TEST(CoreDefenum, EvaluateEnumCaseDef)
@@ -82,5 +83,5 @@ TEST(CoreDefenum, EvaluateEnumCaseDef)
         East.indexOf()
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(3)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }

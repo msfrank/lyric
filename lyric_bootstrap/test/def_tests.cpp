@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/result_matchers.h>
 
 #include "test_helpers.h"
 
@@ -13,9 +14,9 @@ TEST(CoreDef, EvaluateDefUnaryFunction)
         add10(5)
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            Return(DataCellInt(15)))));
+            DataCellInt(15))));
 }
 
 TEST(CoreDef, EvaluateDefBinaryFunction)
@@ -27,9 +28,9 @@ TEST(CoreDef, EvaluateDefBinaryFunction)
         subtractInts(5, 4)
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            Return(DataCellInt(1)))));
+            DataCellInt(1))));
 }
 
 TEST(CoreDef, EvaluateDefFunctionWithNamedParams)
@@ -41,9 +42,9 @@ TEST(CoreDef, EvaluateDefFunctionWithNamedParams)
         subtractInts(5, y = 4)
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            Return(DataCellInt(1)))));
+            DataCellInt(1))));
 }
 
 TEST(CoreDef, EvaluateDefFunctionWithDefaultInitializer)
@@ -55,9 +56,9 @@ TEST(CoreDef, EvaluateDefFunctionWithDefaultInitializer)
         subtractInts(5)
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            Return(DataCellInt(4)))));
+            DataCellInt(4))));
 }
 
 //TEST(CoreDef, EvaluateDefFunctionWithVariadicParam)
@@ -98,9 +99,9 @@ TEST(CoreDef, EvaluateDefGenericFunction)
         sum
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            Return(DataCellInt(10)))));
+            DataCellInt(10))));
 }
 
 TEST(CoreDef, EvaluateDefGenericFunctionWithUpperBound)
@@ -112,9 +113,9 @@ TEST(CoreDef, EvaluateDefGenericFunctionWithUpperBound)
         identity(5)
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            Return(DataCellInt(5)))));
+            DataCellInt(5))));
 }
 
 TEST(CoreDef, EvaluateDefGenericFunctionWithCtxParameter)
@@ -126,7 +127,7 @@ TEST(CoreDef, EvaluateDefGenericFunctionWithCtxParameter)
         sum(5, 5)
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            Return(DataCellInt(10)))));
+            DataCellInt(10))));
 }

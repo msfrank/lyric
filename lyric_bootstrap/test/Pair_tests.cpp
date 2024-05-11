@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -12,8 +13,8 @@ TEST(CorePair, TestEvaluateNewPair)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(IsRefType(preludeSymbol("Pair"))))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellRef(preludeSymbol("Pair")))));
 }
 
 TEST(CorePair, TestEvaluatePairFirst)
@@ -23,7 +24,7 @@ TEST(CorePair, TestEvaluatePairFirst)
         pair.first()
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(1)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
 TEST(CorePair, TestEvaluatePairSecond)
@@ -33,5 +34,5 @@ TEST(CorePair, TestEvaluatePairSecond)
         pair.second()
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(2)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
 }

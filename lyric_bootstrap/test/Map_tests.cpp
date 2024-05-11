@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -11,7 +12,7 @@ TEST(CoreMap, TestEvaluateMapContainsNoEntries)
         names.Contains("one")
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreMap, TestEvaluateMapContainsSingleEntry)
@@ -21,7 +22,7 @@ TEST(CoreMap, TestEvaluateMapContainsSingleEntry)
         names.Contains("one")
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
 TEST(CoreMap, TestEvaluateMapContainsMultipleEntries)
@@ -35,7 +36,7 @@ TEST(CoreMap, TestEvaluateMapContainsMultipleEntries)
         names.Contains("three")
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
 TEST(CoreMap, TestEvaluateMapGetSingleEntry)
@@ -45,7 +46,7 @@ TEST(CoreMap, TestEvaluateMapGetSingleEntry)
         names.GetOrElse("one", 0)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(1)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
 TEST(CoreMap, TestEvaluateMapGetMultipleEntries)
@@ -59,7 +60,7 @@ TEST(CoreMap, TestEvaluateMapGetMultipleEntries)
         names.GetOrElse("three", 0)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(3)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
 TEST(CoreMap, TestEvaluateMapSizeMultipleEntries)
@@ -73,7 +74,7 @@ TEST(CoreMap, TestEvaluateMapSizeMultipleEntries)
         names.Size()
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(3)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
 TEST(CoreMap, TestEvaluateMapUpdate)
@@ -87,7 +88,7 @@ TEST(CoreMap, TestEvaluateMapUpdate)
         names.GetOrElse("three", 0)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(3)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
 TEST(CoreMap, TestEvaluateMapRemove)
@@ -102,7 +103,7 @@ TEST(CoreMap, TestEvaluateMapRemove)
         names.Contains("three")
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreMap, TestEvaluateMapIterateImpl)
@@ -120,5 +121,5 @@ TEST(CoreMap, TestEvaluateMapIterateImpl)
         count
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(3)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }

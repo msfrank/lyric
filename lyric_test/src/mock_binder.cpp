@@ -7,7 +7,7 @@ lyric_test::MockBinder::MockBinder(
 {
 }
 
-tempo_utils::Result<lyric_runtime::Return>
+tempo_utils::Result<lyric_runtime::InterpreterExit>
 lyric_test::MockBinder::run(lyric_runtime::BytecodeInterpreter *interp)
 {
     auto *state = interp->interpreterState();

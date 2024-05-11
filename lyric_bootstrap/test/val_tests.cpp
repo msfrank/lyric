@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -11,5 +12,5 @@ TEST(CoreVal, EvaluateVal)
         foo
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(100)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }

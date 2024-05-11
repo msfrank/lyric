@@ -300,8 +300,7 @@ lyric_test::PackageModule::getURI() const
 }
 
 lyric_test::RunModule::RunModule()
-    : TestComputation(),
-      m_hasReturn(false)
+    : TestComputation()
 {
 }
 
@@ -309,37 +308,44 @@ lyric_test::RunModule::RunModule(
     std::shared_ptr<AbstractTester> tester,
     const lyric_build::TargetComputation &computation,
     std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics,
-    const lyric_runtime::Return &ret)
+    std::shared_ptr<lyric_runtime::InterpreterState> state,
+    const lyric_runtime::InterpreterExit &exit)
     : TestComputation(tester, computation, diagnostics),
-      m_hasReturn(true),
-      m_ret(ret)
+      m_state(state),
+      m_exit(exit)
 {
+    TU_ASSERT (m_state != nullptr);
 }
 
 lyric_test::RunModule::RunModule(
     std::shared_ptr<AbstractTester> tester,
     const lyric_build::TargetComputation &computation,
     std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics)
-    : TestComputation(tester, computation, diagnostics),
-      m_hasReturn(false)
+    : TestComputation(tester, computation, diagnostics)
 {
 }
 
 lyric_test::RunModule::RunModule(const RunModule &other)
     : TestComputation(other),
-      m_hasReturn(other.m_hasReturn),
-      m_ret(other.m_ret)
+      m_state(other.m_state),
+      m_exit(other.m_exit)
 {
 }
 
 bool
-lyric_test::RunModule::hasReturn() const
+lyric_test::RunModule::hasInterpreterState() const
 {
-    return m_hasReturn;
+    return m_state != nullptr;
 }
 
-lyric_runtime::Return
-lyric_test::RunModule::getReturn() const
+std::weak_ptr<lyric_runtime::InterpreterState>
+lyric_test::RunModule::getInterpreterState() const
 {
-    return m_ret;
+    return m_state;
+}
+
+lyric_runtime::InterpreterExit
+lyric_test::RunModule::getInterpreterExit() const
+{
+    return m_exit;
 }

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -12,8 +13,8 @@ TEST(CoreString, TestEvaluateNewString)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellString("Hello, world!")))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellString("Hello, world!"))));
 }
 
 TEST(CoreString, TestEvaluateNewEmptyString)
@@ -24,8 +25,8 @@ TEST(CoreString, TestEvaluateNewEmptyString)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellString("")))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellString(""))));
 }
 
 TEST(CoreString, TestEvaluateStringSize)
@@ -35,7 +36,7 @@ TEST(CoreString, TestEvaluateStringSize)
         string.Length()
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(13)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(13))));
 }
 
 TEST(CoreString, TestEvaluateStringAt)
@@ -45,7 +46,7 @@ TEST(CoreString, TestEvaluateStringAt)
         string.At(0)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellChar(static_cast<UChar32>('H'))))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellChar(static_cast<UChar32>('H')))));
 }
 
 TEST(CoreString, TestEvaluateIsEq)
@@ -54,7 +55,7 @@ TEST(CoreString, TestEvaluateIsEq)
         "Hello" == "Hello"
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
 TEST(CoreString, TestEvaluateIsLt)
@@ -63,7 +64,7 @@ TEST(CoreString, TestEvaluateIsLt)
         "hello" < "goodbye"
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreString, TestEvaluateIsGt)
@@ -72,7 +73,7 @@ TEST(CoreString, TestEvaluateIsGt)
         "hello" > "goodbye"
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
 TEST(CoreString, TestEvaluateIsLe)
@@ -81,7 +82,7 @@ TEST(CoreString, TestEvaluateIsLe)
         "hello" <= "goodbye"
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreString, TestEvaluateIsGe)
@@ -90,5 +91,5 @@ TEST(CoreString, TestEvaluateIsGe)
         "hello" >= "goodbye"
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }

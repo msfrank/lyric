@@ -106,7 +106,7 @@ lyric_test::LyricProtocolTester::runModuleInMockSandbox(
     if (binderRunResult.isStatus())
         return binderRunResult.getStatus();
     return RunModule(m_runner, targetComputation,
-        targetComputationSet.getDiagnostics(), binderRunResult.getResult());
+        targetComputationSet.getDiagnostics(), state, binderRunResult.getResult());
 }
 
 tempo_utils::Result<lyric_test::RunModule>

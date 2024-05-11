@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -11,6 +12,6 @@ TEST(CoreNew, TestNewObject)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(IsRefType(preludeSymbol("Object"))))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellRef(preludeSymbol("Object")))));
 }

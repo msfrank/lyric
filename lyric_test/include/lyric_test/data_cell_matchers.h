@@ -23,6 +23,7 @@ namespace lyric_test {
                 DATA_CELL,
                 DATA_CELL_STRING,
                 DATA_CELL_URL,
+                DATA_CELL_SYMBOL,
                 DATA_CELL_DESCRIPTOR,
                 DATA_CELL_TYPE,
             };
@@ -32,8 +33,8 @@ namespace lyric_test {
             DataCellMatcher(const lyric_runtime::DataCell &cell);
             DataCellMatcher(const std::string &str);
             DataCellMatcher(const tempo_utils::Url &url);
-            DataCellMatcher(lyric_object::LinkageSection section);
             DataCellMatcher(const lyric_common::SymbolUrl &symbolUrl);
+            DataCellMatcher(lyric_object::LinkageSection section);
             DataCellMatcher(lyric_runtime::DataCellType type);
             DataCellMatcher(const DataCellMatcher &other);
 
@@ -49,6 +50,7 @@ namespace lyric_test {
             lyric_runtime::DataCell m_cell;
             std::string m_str;
             tempo_utils::Url m_url;
+            lyric_common::SymbolUrl m_sym;
         };
 
         Matcher<lyric_runtime::DataCell> DataCellNil();
@@ -60,6 +62,8 @@ namespace lyric_test {
         Matcher<lyric_runtime::DataCell> DataCellString(std::string_view str);
         Matcher<lyric_runtime::DataCell> DataCellUrl(std::string_view url);
         Matcher<lyric_runtime::DataCell> DataCellUrl(const tempo_utils::Url &url);
+        Matcher<lyric_runtime::DataCell> DataCellRef(const lyric_common::SymbolUrl &symbolUrl);
+        Matcher<lyric_runtime::DataCell> DataCellRef(const lyric_common::SymbolPath &symbolPath);
         Matcher<lyric_runtime::DataCell> MatchesDescriptorSection(lyric_object::LinkageSection section);
         Matcher<lyric_runtime::DataCell> MatchesDataCellType(lyric_runtime::DataCellType type);
     }

@@ -1,6 +1,8 @@
 #ifndef LYRIC_RUNTIME_BYTECODE_INTERPRETER_H
 #define LYRIC_RUNTIME_BYTECODE_INTERPRETER_H
 
+#include <tempo_utils/hdr_histogram.h>
+
 #include "abstract_inspector.h"
 #include "data_cell.h"
 #include "interpreter_state.h"
@@ -11,31 +13,31 @@
 
 namespace lyric_runtime {
 
-    enum class ReturnType {
-        INVALID,
-        VALUE,
-        REF,
-        EXCEPTION,
+    /**
+     *
+     */
+    struct InterpreterExit {
+        tempo_utils::StatusCode statusCode;         /**< Status code returned by the program. */
+        DataCell mainReturn;                        /**< The return value of the main task. */
+        tu_uint64 interpreterStartEpochMillis;      /**< Timestamp when the interpreter started, in milliseconds since the epoch. */
+        tu_uint64 instructionCount;                 /**< Total count of instructions executed by the interpreter. */
     };
 
-    struct Return {
-        ReturnType type;
-        DataCell value;
-        RefHandle ref;
-        Return() : type(ReturnType::INVALID) {};
-        Return(const DataCell &value) : type(ReturnType::VALUE), value(value) {};
-        Return(const RefHandle &ref) : type(ReturnType::REF), ref(ref) {};
+    struct InterpreterStats {
+        tu_uint64 instructionCount;
+        std::unique_ptr<tempo_utils::HdrHistogram> instructionsPerSlice;
+        std::unique_ptr<tempo_utils::HdrHistogram> microsecondsPerPoll;
     };
 
     class BytecodeInterpreter {
 
     public:
-        BytecodeInterpreter(std::shared_ptr<InterpreterState> state, AbstractInspector *inspector = nullptr);
+        explicit BytecodeInterpreter(std::shared_ptr<InterpreterState> state, AbstractInspector *inspector = nullptr);
 
         InterpreterState *interpreterState() const;
         AbstractInspector *interpreterInspector() const;
 
-        tempo_utils::Result<Return> run();
+        tempo_utils::Result<InterpreterExit> run();
         tempo_utils::Result<DataCell> runSubinterpreter();
         tempo_utils::Status interrupt();
 
@@ -55,7 +57,7 @@ namespace lyric_runtime {
 
         tempo_utils::Status onInterrupt(const DataCell &cell);
         tempo_utils::Result<DataCell> onError(const lyric_object::OpCell &op, const tempo_utils::Status &status);
-        tempo_utils::Result<DataCell> onHalt(const lyric_object::OpCell &op, const DataCell &cell);
+        tempo_utils::Result<DataCell> onHalt(const lyric_object::OpCell &op);
     };
 
     class RecursionLocker {

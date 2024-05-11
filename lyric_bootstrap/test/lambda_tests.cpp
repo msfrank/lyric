@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -14,8 +15,8 @@ TEST(CoreLambda, TestEvaluatePureLambda)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(IsRefType(preludeSymbol("Function1"))))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellRef(preludeSymbol("Function1")))));
 }
 
 TEST(CoreLambda, TestEvaluateInvokePureLambda)
@@ -27,7 +28,7 @@ TEST(CoreLambda, TestEvaluateInvokePureLambda)
         f.apply(2)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(3)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
 TEST(CoreLambda, TestEvaluateLambdaClosure)
@@ -41,8 +42,8 @@ TEST(CoreLambda, TestEvaluateLambdaClosure)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(IsRefType(preludeSymbol("Function1"))))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellRef(preludeSymbol("Function1")))));
 }
 
 TEST(CoreLambda, TestEvaluateInvokeLambdaClosure)
@@ -55,5 +56,5 @@ TEST(CoreLambda, TestEvaluateInvokeLambdaClosure)
         f.apply(2)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(3)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }

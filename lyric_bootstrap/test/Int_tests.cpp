@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -10,7 +11,7 @@ TEST(CoreInt, EvaluateDecimalInt)
         10
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(10)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(10))));
 }
 
 TEST(CoreInt, EvaluateOctalInt)
@@ -19,7 +20,7 @@ TEST(CoreInt, EvaluateOctalInt)
         010
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(8)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(8))));
 }
 
 TEST(CoreInt, EvaluateHexInt)
@@ -28,7 +29,7 @@ TEST(CoreInt, EvaluateHexInt)
         0x10
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(16)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(16))));
 }
 
 TEST(CoreInt, EvaluateAddition)
@@ -37,7 +38,7 @@ TEST(CoreInt, EvaluateAddition)
         1 + 2
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(3)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
 
@@ -47,7 +48,7 @@ TEST(CoreInt, EvaluateSubtraction)
         2 - 1
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(1)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
 TEST(CoreInt, EvaluateMultiplication)
@@ -56,7 +57,7 @@ TEST(CoreInt, EvaluateMultiplication)
         2 * 3
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(6)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
 }
 
 TEST(CoreInt, EvaluateDivision)
@@ -65,7 +66,7 @@ TEST(CoreInt, EvaluateDivision)
         20 / 5
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(4)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(4))));
 }
 
 TEST(CoreInt, EvaluateNegation)
@@ -74,7 +75,7 @@ TEST(CoreInt, EvaluateNegation)
         -(5)
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(-5)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(-5))));
 }
 
 //TEST(CoreInt, EvaluateDirectAddition)
@@ -128,7 +129,7 @@ TEST(CoreInt, EvaluateIsEq)
         5 == 0
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreInt, EvaluateIsLt)
@@ -137,7 +138,7 @@ TEST(CoreInt, EvaluateIsLt)
         5 < 0
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreInt, EvaluateIsGt)
@@ -146,7 +147,7 @@ TEST(CoreInt, EvaluateIsGt)
         5 > 0
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
 TEST(CoreInt, EvaluateIsLe)
@@ -155,7 +156,7 @@ TEST(CoreInt, EvaluateIsLe)
         5 <= 0
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreInt, EvaluateIsGe)
@@ -164,5 +165,5 @@ TEST(CoreInt, EvaluateIsGe)
         5 >= 0
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }

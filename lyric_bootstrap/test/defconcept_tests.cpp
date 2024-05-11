@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/result_matchers.h>
 
 #include "test_helpers.h"
 
@@ -14,8 +15,8 @@ TEST(CoreDefconcept, EvaluateDefconcept)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(RunModule(
-                     Return(MatchesDescriptorSection(lyric_object::LinkageSection::Concept)))));
+                 tempo_test::ContainsResult(RunModule(
+                     MatchesDescriptorSection(lyric_object::LinkageSection::Concept))));
 }
 
 TEST(CoreDefconcept, EvaluateDefconceptImplementation)
@@ -40,8 +41,8 @@ TEST(CoreDefconcept, EvaluateDefconceptImplementation)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellInt(5)))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellInt(5))));
 }
 
 TEST(CoreDefconcept, EvaluateDefconceptAction)
@@ -64,6 +65,6 @@ TEST(CoreDefconcept, EvaluateDefconceptAction)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellInt(5)))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellInt(5))));
 }

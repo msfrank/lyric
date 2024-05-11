@@ -18,7 +18,7 @@ namespace lyric_test {
                 tempo_utils::Url,
                 std::shared_ptr<BaseProtocolMock>> &protocolMocks);
 
-        tempo_utils::Result<lyric_runtime::Return> run(lyric_runtime::BytecodeInterpreter *interp);
+        tempo_utils::Result<lyric_runtime::InterpreterExit> run(lyric_runtime::BytecodeInterpreter *interp);
 
     private:
         absl::flat_hash_map<tempo_utils::Url, std::shared_ptr<BaseProtocolMock>> m_protocolMocks;

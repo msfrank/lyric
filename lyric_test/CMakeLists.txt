@@ -11,7 +11,6 @@ set(LYRIC_TEST_INCLUDES
     include/lyric_test/base_protocol_mock.h
     include/lyric_test/computation_matchers.h
     include/lyric_test/data_cell_matchers.h
-    include/lyric_test/diagnostic_matchers.h
     include/lyric_test/lyric_protocol_tester.h
     include/lyric_test/lyric_tester.h
     include/lyric_test/matchers.h
@@ -19,9 +18,6 @@ set(LYRIC_TEST_INCLUDES
     include/lyric_test/mock_receive.h
     include/lyric_test/mock_send.h
     include/lyric_test/ref_handle_matchers.h
-    include/lyric_test/result_matchers.h
-    include/lyric_test/return_matchers.h
-    include/lyric_test/status_matchers.h
     include/lyric_test/test_inspector.h
     include/lyric_test/test_result.h
     include/lyric_test/test_run.h
@@ -34,21 +30,18 @@ target_sources(lyric_test PRIVATE
     src/base_protocol_mock.cpp
     src/computation_matchers.cpp
     src/data_cell_matchers.cpp
-    src/diagnostic_matchers.cpp
     src/lyric_protocol_tester.cpp
     src/lyric_tester.cpp
     src/mock_binder.cpp
     src/mock_receive.cpp
     src/mock_send.cpp
     src/ref_handle_matchers.cpp
-    src/result_matchers.cpp
-    src/return_matchers.cpp
-    src/status_matchers.cpp
     src/test_inspector.cpp
     src/test_result.cpp
     src/test_run.cpp
     src/test_run_matchers.cpp
     src/test_runner.cpp
+    ${LYRIC_TEST_INCLUDES}
     )
 
 # set the library version
@@ -70,6 +63,7 @@ target_include_directories(lyric_test PUBLIC
 target_link_libraries(lyric_test
     PUBLIC
     lyric::lyric_build
+    tempo::tempo_test
     tempo::tempo_utils
     gtest::gtest
     )

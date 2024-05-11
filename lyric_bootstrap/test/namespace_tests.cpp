@@ -2,6 +2,7 @@
 #include <gmock/gmock.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -14,5 +15,5 @@ TEST(CoreNamespace, EvaluateDeclareNamespace)
         foo.bar()
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(42)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
 }

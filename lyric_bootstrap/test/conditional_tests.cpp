@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -12,7 +13,7 @@ TEST(CoreConditional, EvaluateIf)
         x
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(1)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
 TEST(CoreConditional, EvaluateCondIf)
@@ -31,7 +32,7 @@ TEST(CoreConditional, EvaluateCondIf)
         y
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(2)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
 }
 
 TEST(CoreConditional, EvaluateIfThenElse)
@@ -40,7 +41,7 @@ TEST(CoreConditional, EvaluateIfThenElse)
         if false then 1 else 0
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(0)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(0))));
 }
 
 TEST(CoreConditional, EvaluateCond)
@@ -55,7 +56,7 @@ TEST(CoreConditional, EvaluateCond)
         }
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(3)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
 TEST(CoreConditional, EvaluateCondElse)
@@ -70,5 +71,5 @@ TEST(CoreConditional, EvaluateCondElse)
         }
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellInt(0)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(0))));
 }

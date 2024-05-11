@@ -91,7 +91,7 @@ lyric_test::LyricTester::runModule(const std::string &code, const std::filesyste
     // return the interpreter result
     if (execResult.isStatus())
         return execResult.getStatus();
-    return RunModule(m_runner, targetComputation, testRun.getDiagnostics(), execResult.getResult());
+    return RunModule(m_runner, targetComputation, testRun.getDiagnostics(), state, execResult.getResult());
 }
 
 tempo_utils::Result<lyric_test::RunModule>
@@ -143,7 +143,7 @@ lyric_test::LyricTester::runModule(
     // return the interpreter result
     if (execResult.isStatus())
         return execResult.getStatus();
-    return RunModule(m_runner, testRun.getComputation(), testRun.getDiagnostics(), execResult.getResult());
+    return RunModule(m_runner, testRun.getComputation(), testRun.getDiagnostics(), state, execResult.getResult());
 }
 
 tempo_utils::Result<lyric_test::PackageModule>

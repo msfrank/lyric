@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/result_matchers.h>
 
 #include "test_helpers.h"
 
@@ -10,7 +11,7 @@ TEST(CoreBoolean, EvaluateLogicalAnd)
         true and false
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(false)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
 TEST(CoreBoolean, EvaluateLogicalOr)
@@ -19,7 +20,7 @@ TEST(CoreBoolean, EvaluateLogicalOr)
         true or false
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
 TEST(CoreBoolean, EvaluateLogicalNot)
@@ -28,5 +29,5 @@ TEST(CoreBoolean, EvaluateLogicalNot)
         not false
     )");
 
-    ASSERT_THAT (result, ContainsResult(RunModule(Return(DataCellBool(true)))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }

@@ -65,6 +65,14 @@ lyric_runtime::StackfulCoroutine::peekCall(int offset)
     return m_callStack[offset];
 }
 
+const lyric_runtime::CallCell&
+lyric_runtime::StackfulCoroutine::peekCall(int offset) const
+{
+    if (offset < 0)
+        return m_callStack[m_callStack.size() + offset];
+    return m_callStack[offset];
+}
+
 void
 lyric_runtime::StackfulCoroutine::dropCall(int offset)
 {
@@ -123,6 +131,14 @@ lyric_runtime::StackfulCoroutine::popData(int count)
 
 lyric_runtime::DataCell&
 lyric_runtime::StackfulCoroutine::peekData(int offset)
+{
+    if (offset < 0)
+        return m_dataStack[m_dataStack.size() + offset];
+    return m_dataStack[offset];
+}
+
+const lyric_runtime::DataCell&
+lyric_runtime::StackfulCoroutine::peekData(int offset) const
 {
     if (offset < 0)
         return m_dataStack[m_dataStack.size() + offset];
@@ -191,7 +207,7 @@ lyric_runtime::StackfulCoroutine::popGuard()
 }
 
 int
-lyric_runtime::StackfulCoroutine::peekGuard()
+lyric_runtime::StackfulCoroutine::peekGuard() const
 {
     TU_ASSERT (!m_guardStack.empty());
     return m_guardStack.back();

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/tempo_test.h>
 
 #include "test_helpers.h"
 
@@ -12,8 +13,8 @@ TEST(CoreStatus, TestEvaluateNewStatus)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(IsRefType(preludeSymbol("Cancelled"))))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellRef(preludeSymbol("Cancelled")))));
 }
 
 TEST(CoreStatus, TestEvaluateStatusMessage)
@@ -28,6 +29,6 @@ TEST(CoreStatus, TestEvaluateStatusMessage)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellString("operation was cancelled")))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellString("operation was cancelled"))));
 }

@@ -2,6 +2,8 @@
 #include <gmock/gmock.h>
 
 #include <lyric_test/matchers.h>
+#include <tempo_test/result_matchers.h>
+#include <tempo_test/spanset_matchers.h>
 
 #include "test_helpers.h"
 
@@ -12,9 +14,9 @@ TEST(CoreAssignment, EvaluateValAssignmentFails)
         set foo = 1
     )");
 
-    ASSERT_THAT (result, ContainsResult(
+    ASSERT_THAT (result, tempo_test::ContainsResult(
         CompileModule(
-            SpansetContainsError(lyric_compiler::CompilerCondition::kInvalidBinding))));
+            tempo_test::SpansetContainsError(lyric_compiler::CompilerCondition::kInvalidBinding))));
 }
 
 TEST(CoreAssignment, EvaluateVarAssignment)
@@ -26,8 +28,8 @@ TEST(CoreAssignment, EvaluateVarAssignment)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellInt(1)))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellInt(1))));
 }
 
 TEST(CoreAssignment, EvaluateVarInplaceAdd)
@@ -39,8 +41,8 @@ TEST(CoreAssignment, EvaluateVarInplaceAdd)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellInt(110)))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellInt(110))));
 }
 
 TEST(CoreAssignment, EvaluateVarInplaceSubtract)
@@ -52,8 +54,8 @@ TEST(CoreAssignment, EvaluateVarInplaceSubtract)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellInt(90)))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellInt(90))));
 }
 
 TEST(CoreAssignment, EvaluateVarInplaceMultiply)
@@ -65,8 +67,8 @@ TEST(CoreAssignment, EvaluateVarInplaceMultiply)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellInt(500)))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellInt(500))));
 }
 
 TEST(CoreAssignment, EvaluateVarInplaceDivide)
@@ -78,6 +80,6 @@ TEST(CoreAssignment, EvaluateVarInplaceDivide)
     )");
 
     ASSERT_THAT (result,
-                 ContainsResult(
-                     RunModule(Return(DataCellInt(2)))));
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellInt(2))));
 }

@@ -34,6 +34,11 @@ namespace lyric_runtime {
             const lyric_common::AssemblyLocation &mainLocation = {});
         virtual ~InterpreterState();
 
+        lyric_common::AssemblyLocation getMainLocation() const;
+        tu_uint64 getReloadEpochMillis() const;
+        tempo_utils::StatusCode getStatusCode() const;
+        bool isActive() const;
+
         // subsystems
 
         virtual StackfulCoroutine *currentCoro() const;
@@ -46,6 +51,7 @@ namespace lyric_runtime {
         virtual uv_loop_t *mainLoop() const;
 
         tempo_utils::Status reload(const lyric_common::AssemblyLocation &mainLocation);
+        tempo_utils::Status halt(tempo_utils::StatusCode statusCode);
 
         // heap management
 
@@ -60,6 +66,11 @@ namespace lyric_runtime {
         SystemScheduler *m_systemScheduler;
         PortMultiplexer *m_portMultiplexer;
         HeapManager *m_heapManager;
+
+        lyric_common::AssemblyLocation m_mainLocation;
+        tu_uint64 m_reloadEpochMillis;
+        tempo_utils::StatusCode m_statusCode;
+        bool m_active;
 
         InterpreterState(
             uv_loop_t *loop,
@@ -81,6 +92,7 @@ namespace lyric_runtime {
             PortMultiplexer *portMultiplexer,
             HeapManager *heapManager);
 
+        friend class BytecodeInterpreter;
         friend class RefHandle;
     };
 }
