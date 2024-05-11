@@ -18,23 +18,9 @@ class Lyric(ConanFile):
 
     exports_sources = (
         'CMakeLists.txt',
+        'bin/*',
         'cmake/*',
-        'lyric_analyzer/*',
-        'lyric_assembler/*',
-        'lyric_bootstrap/*',
-        'lyric_build/*',
-        'lyric_common/*',
-        'lyric_compiler/*',
-        'lyric_importer/*',
-        'lyric_object/*',
-        'lyric_packaging/*',
-        'lyric_parser/*',
-        'lyric_runtime/*',
-        'lyric_schema/*',
-        'lyric_serde/*',
-        'lyric_symbolizer/*',
-        'lyric_test/*',
-        'lyric_typing/*',
+        'lib/*',
         )
 
     requires = (

@@ -152,7 +152,8 @@ dump_lyric_object(int argc, const char *argv[])
 }
 
 int
-main(int argc, const char *argv[]) {
+main(int argc, const char *argv[])
+{
     if (argc == 0 || argv == nullptr)
         return -1;
 

@@ -154,17 +154,6 @@ target_link_libraries(lyric_object
     icu::icu
     )
 
-add_executable(dump-lyric-object sbin/dump_lyric_object.cpp)
-
-set_target_properties(dump-lyric-object PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-target_link_libraries(dump-lyric-object PRIVATE
-    lyric::lyric_object
-    tempo::tempo_command
-    tempo::tempo_config
-    flatbuffers::flatbuffers
-    )
-
 # install targets
 install(TARGETS lyric_object EXPORT lyric-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
