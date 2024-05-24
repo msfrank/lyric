@@ -19,16 +19,15 @@ compare_concrete_to_concept(
 {
     auto *symbolCache = state->symbolCache();
 
+    lyric_assembler::AbstractSymbol *symbol;
+
     // if toConcept is not a concept then the types are disjoint
-    auto *symbol = symbolCache->getSymbol(toConcept.getConcreteUrl());
-    TU_ASSERT (symbol != nullptr);
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(toConcept.getConcreteUrl()));
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
         return lyric_runtime::TypeComparison::DISJOINT;
 
     // otherwise check if fromConcrete symbol implements the concept
-    symbol = symbolCache->getSymbol(fromConcrete.getConcreteUrl());
-    TU_ASSERT (symbol != nullptr);
-
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fromConcrete.getConcreteUrl()));
     switch (symbol->getSymbolType()) {
 
         case lyric_assembler::SymbolType::CLASS: {
@@ -325,11 +324,8 @@ compare_union_to_union(
         }
 
         // exact arg type is not present in the param type union, so check for sealed supertype
-        if (!state->symbolCache()->hasSymbol(fromBase.first))
-            return state->logAndContinue(lyric_typing::TypingCondition::kInvalidType,
-                tempo_tracing::LogSeverity::kError,
-                "{} contains unknown union member {}", fromUnion.toString(), fromBase.first.toString());
-        auto *fromSym = state->symbolCache()->getSymbol(fromBase.first);
+        lyric_assembler::AbstractSymbol *fromSym;
+        TU_ASSIGN_OR_RETURN (fromSym, state->symbolCache()->getOrImportSymbol(fromBase.first));
 
         lyric_assembler::TypeHandle *fromTypeHandle;
         switch (fromSym->getSymbolType()) {
@@ -457,21 +453,15 @@ lyric_typing::is_implementable(
 
     auto *symbolCache = state->symbolCache();
 
-    auto *toSym = symbolCache->getSymbol(toConcept.getConcreteUrl());
-    if (toSym == nullptr)
-        return state->logAndContinue(TypingCondition::kMissingType,
-            tempo_tracing::LogSeverity::kError,
-            "missing symbol for concept type {}", toConcept.toString());
+    lyric_assembler::AbstractSymbol *toSym;
+    TU_ASSIGN_OR_RETURN (toSym, symbolCache->getOrImportSymbol(toConcept.getConcreteUrl()));
     if (toSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
         return state->logAndContinue(TypingCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "incompatible type {}; expected concept", toConcept.toString());
 
-    auto *fromSym = symbolCache->getSymbol(fromRef.getConcreteUrl());
-    if (fromSym == nullptr)
-        return state->logAndContinue(TypingCondition::kMissingType,
-            tempo_tracing::LogSeverity::kError,
-            "missing symbol for type {}", fromRef.toString());
+    lyric_assembler::AbstractSymbol *fromSym;
+    TU_ASSIGN_OR_RETURN (fromSym, symbolCache->getOrImportSymbol(fromRef.getConcreteUrl()));
 
     auto toUrl = toConcept.getConcreteUrl();
     lyric_assembler::ImplHandle *implHandle = nullptr;

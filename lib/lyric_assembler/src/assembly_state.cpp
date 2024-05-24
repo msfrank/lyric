@@ -72,6 +72,97 @@ lyric_assembler::AssemblyState::getOptions() const
     return &m_options;
 }
 
+inline lyric_assembler::SymbolBinding
+make_action_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::ActionImport *symbolImport)
+{
+    lyric_assembler::SymbolBinding binding;
+    binding.symbolUrl = symbolUrl;
+    binding.typeDef = {};
+    binding.bindingType = lyric_assembler::BindingType::Descriptor;
+    return binding;
+}
+
+inline lyric_assembler::SymbolBinding
+make_call_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::CallImport *symbolImport)
+{
+    lyric_assembler::SymbolBinding binding;
+    binding.symbolUrl = symbolUrl;
+    binding.typeDef = symbolImport->getCallType()->getTypeDef();
+    binding.bindingType = lyric_assembler::BindingType::Descriptor;
+    return binding;
+}
+
+inline lyric_assembler::SymbolBinding
+make_class_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::ClassImport *symbolImport)
+{
+    lyric_assembler::SymbolBinding binding;
+    binding.symbolUrl = symbolUrl;
+    binding.typeDef = symbolImport->getClassType()->getTypeDef();
+    binding.bindingType = lyric_assembler::BindingType::Descriptor;
+    return binding;
+}
+
+inline lyric_assembler::SymbolBinding
+make_concept_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::ConceptImport *symbolImport)
+{
+    lyric_assembler::SymbolBinding binding;
+    binding.symbolUrl = symbolUrl;
+    binding.typeDef = symbolImport->getConceptType()->getTypeDef();
+    binding.bindingType = lyric_assembler::BindingType::Descriptor;
+    return binding;
+}
+
+inline lyric_assembler::SymbolBinding
+make_enum_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::EnumImport *symbolImport)
+{
+    lyric_assembler::SymbolBinding binding;
+    binding.symbolUrl = symbolUrl;
+    binding.typeDef = symbolImport->getEnumType()->getTypeDef();
+    binding.bindingType = lyric_assembler::BindingType::Descriptor;
+    return binding;
+}
+
+inline lyric_assembler::SymbolBinding
+make_existential_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::ExistentialImport *symbolImport)
+{
+    lyric_assembler::SymbolBinding binding;
+    binding.symbolUrl = symbolUrl;
+    binding.typeDef = symbolImport->getExistentialType()->getTypeDef();
+    binding.bindingType = lyric_assembler::BindingType::Descriptor;
+    return binding;
+}
+
+inline lyric_assembler::SymbolBinding
+make_instance_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::InstanceImport *symbolImport)
+{
+    lyric_assembler::SymbolBinding binding;
+    binding.symbolUrl = symbolUrl;
+    binding.typeDef = symbolImport->getInstanceType()->getTypeDef();
+    binding.bindingType = lyric_assembler::BindingType::Descriptor;
+    return binding;
+}
+
+inline lyric_assembler::SymbolBinding
+make_static_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::StaticImport *symbolImport)
+{
+    lyric_assembler::SymbolBinding binding;
+    binding.symbolUrl = symbolUrl;
+    binding.typeDef = symbolImport->getStaticType()->getTypeDef();
+    binding.bindingType = symbolImport->isVariable() ?
+        lyric_assembler::BindingType::Variable : lyric_assembler::BindingType::Value;
+    return binding;
+}
+
+inline lyric_assembler::SymbolBinding
+make_struct_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::StructImport *symbolImport)
+{
+    lyric_assembler::SymbolBinding binding;
+    binding.symbolUrl = symbolUrl;
+    binding.typeDef = symbolImport->getStructType()->getTypeDef();
+    binding.bindingType = lyric_assembler::BindingType::Descriptor;
+    return binding;
+}
+
 /**
  * Initialize the assembler state. Notably, this process ensures that all fundamental symbols exist,
  * are imported into the symbol cache, and are bound to the environment.
@@ -89,102 +180,113 @@ lyric_assembler::AssemblyState::initialize()
     // construct the assembler component classes
     m_tracer = new AssemblerTracer(m_scopeManager);
     m_literalcache = new LiteralCache(m_tracer);
-    m_symbolcache = new SymbolCache(m_tracer);
     m_fundamentalcache = new FundamentalCache(m_options.preludeLocation, m_tracer);
-    m_importcache = new ImportCache(this, m_options.workspaceLoader, m_systemModuleCache, m_symbolcache, m_tracer);
+    m_symbolcache = new SymbolCache(this, m_tracer);
     m_typecache = new TypeCache(this, m_tracer);
     m_implcache = new ImplCache(this, m_tracer);
+    m_importcache = new ImportCache(this, m_options.workspaceLoader, m_systemModuleCache, m_symbolcache, m_tracer);
 
     // load the prelude object
     std::shared_ptr<lyric_importer::ModuleImport> preludeImport;
-    TU_ASSIGN_OR_RETURN (preludeImport, m_systemModuleCache->importModule(m_options.preludeLocation));
+    TU_ASSIGN_OR_RETURN (preludeImport, m_importcache->importModule(
+        m_options.preludeLocation, ImportFlags::SystemBootstrap));
     auto preludeObject = preludeImport->getObject().getObject();
 
-    // add the prelude to the import cache
-    TU_RETURN_IF_NOT_OK (m_importcache->insertImport(m_options.preludeLocation, ImportFlags::SystemBootstrap));
-
-    // import all symbols (fundamental or not) from the prelude into the symbol cache
+    // import all prelude symbols into the environment
     for (int i = 0; i < preludeObject.numSymbols(); i++) {
         auto symbolWalker = preludeObject.getSymbol(i);
-        lyric_common::SymbolUrl symbolUrl(m_options.preludeLocation, symbolWalker.getSymbolPath());
-        TU_RETURN_IF_STATUS (m_importcache->importSymbol(symbolUrl));
-    }
+        TU_ASSERT (symbolWalker.isValid());
 
-    // bind all fundamental symbols from the prelude into the environment
-    for (int i = 0; i < static_cast<int>(FundamentalSymbol::NUM_SYMBOLS); i++) {
-        auto fundamental = static_cast<lyric_assembler::FundamentalSymbol>(i);
-        auto symbolUrl = m_fundamentalcache->getFundamentalUrl(fundamental);
+        auto symbolPath = symbolWalker.getSymbolPath();
+        if (symbolPath.isEnclosed())
+            continue;
+
+        auto symbolName = symbolPath.getName();
+        lyric_common::SymbolUrl symbolUrl(m_options.preludeLocation, symbolWalker.getSymbolPath());
         TU_ASSERT (symbolUrl.isValid());
 
-        auto *sym = m_symbolcache->getSymbol(symbolUrl);
-        if (sym == nullptr)
-            return logAndContinue(AssemblerCondition::kImportError,
-                tempo_tracing::LogSeverity::kError,
-                "prelude is missing symbol {}", symbolUrl.toString());
+//        auto *sym = m_symbolcache->getSymbol(symbolUrl);
+//        if (sym == nullptr)
+//            return logAndContinue(AssemblerCondition::kImportError,
+//                tempo_tracing::LogSeverity::kError,
+//                "prelude is missing symbol {}", symbolUrl.toString());
+//
+//        if (m_symbolcache->hasEnvBinding(symbolName))
+//            return logAndContinue(AssemblerCondition::kImportError,
+//                tempo_tracing::LogSeverity::kError,
+//                "environment already contains binding {} referencing symbol {}",
+//                symbolName, m_symbolcache->getEnvBinding(symbolName).symbolUrl.toString());
 
-        auto symbolName = symbolUrl.getSymbolPath().getName();
-        if (m_symbolcache->hasEnvBinding(symbolName))
-            return logAndContinue(AssemblerCondition::kImportError,
-                tempo_tracing::LogSeverity::kError,
-                "environment already contains binding {} referencing symbol {}",
-                symbolName, m_symbolcache->getEnvBinding(symbolName).symbolUrl.toString());
+        switch (symbolWalker.getLinkageSection()) {
 
-        switch (sym->getSymbolType()) {
-
-            case lyric_assembler::SymbolType::EXISTENTIAL:
-            case lyric_assembler::SymbolType::CONSTANT:
-            case lyric_assembler::SymbolType::ACTION:
-            case lyric_assembler::SymbolType::CALL:
-            case lyric_assembler::SymbolType::CLASS:
-            case lyric_assembler::SymbolType::CONCEPT:
-            case lyric_assembler::SymbolType::STRUCT:
-            case lyric_assembler::SymbolType::ENUM:
-            {
-                lyric_assembler::SymbolBinding binding;
-                binding.symbolUrl = symbolUrl;
-                binding.typeDef = sym->getAssignableType();
-                binding.bindingType = BindingType::Descriptor;
-                m_symbolcache->insertEnvBinding(symbolName, binding);
+            case lyric_object::LinkageSection::Action: {
+                auto *symbolImport = preludeImport->getAction(symbolWalker.getLinkageIndex());
+                auto binding = make_action_env_binding(symbolUrl, symbolImport);
+                TU_RETURN_IF_NOT_OK (m_symbolcache->insertEnvBinding(symbolName, binding));
+                break;
+            }
+            case lyric_object::LinkageSection::Call: {
+                auto *symbolImport = preludeImport->getCall(symbolWalker.getLinkageIndex());
+                auto binding = make_call_env_binding(symbolUrl, symbolImport);
+                TU_RETURN_IF_NOT_OK (m_symbolcache->insertEnvBinding(symbolName, binding));
+                break;
+            }
+            case lyric_object::LinkageSection::Class: {
+                auto *symbolImport = preludeImport->getClass(symbolWalker.getLinkageIndex());
+                auto binding = make_class_env_binding(symbolUrl, symbolImport);
+                TU_RETURN_IF_NOT_OK (m_symbolcache->insertEnvBinding(symbolName, binding));
+                break;
+            }
+            case lyric_object::LinkageSection::Concept: {
+                auto *symbolImport = preludeImport->getConcept(symbolWalker.getLinkageIndex());
+                auto binding = make_concept_env_binding(symbolUrl, symbolImport);
+                TU_RETURN_IF_NOT_OK (m_symbolcache->insertEnvBinding(symbolName, binding));
+                break;
+            }
+            case lyric_object::LinkageSection::Enum: {
+                auto *symbolImport = preludeImport->getEnum(symbolWalker.getLinkageIndex());
+                auto binding = make_enum_env_binding(symbolUrl, symbolImport);
+                TU_RETURN_IF_NOT_OK (m_symbolcache->insertEnvBinding(symbolName, binding));
+                break;
+            }
+            case lyric_object::LinkageSection::Existential: {
+                auto *symbolImport = preludeImport->getExistential(symbolWalker.getLinkageIndex());
+                auto binding = make_existential_env_binding(symbolUrl, symbolImport);
+                TU_RETURN_IF_NOT_OK (m_symbolcache->insertEnvBinding(symbolName, binding));
+                break;
+            }
+            case lyric_object::LinkageSection::Static: {
+                auto *symbolImport = preludeImport->getStatic(symbolWalker.getLinkageIndex());
+                auto binding = make_static_env_binding(symbolUrl, symbolImport);
+                TU_RETURN_IF_NOT_OK (m_symbolcache->insertEnvBinding(symbolName, binding));
+                break;
+            }
+            case lyric_object::LinkageSection::Struct: {
+                auto *symbolImport = preludeImport->getStruct(symbolWalker.getLinkageIndex());
+                auto binding = make_struct_env_binding(symbolUrl, symbolImport);
+                TU_RETURN_IF_NOT_OK (m_symbolcache->insertEnvBinding(symbolName, binding));
                 break;
             }
 
-            case lyric_assembler::SymbolType::STATIC:
-            {
-                lyric_assembler::SymbolBinding binding;
-                binding.symbolUrl = symbolUrl;
-                binding.typeDef = sym->getAssignableType();
-                binding.bindingType = cast_symbol_to_static(sym)->isVariable()?
-                    BindingType::Variable : BindingType::Value;
-                m_symbolcache->insertEnvBinding(symbolName, binding);
-                break;
-            }
-
-            case lyric_assembler::SymbolType::INSTANCE:
-            {
-                lyric_assembler::SymbolBinding binding;
-                binding.symbolUrl = symbolUrl;
-                binding.typeDef = sym->getAssignableType();
-                binding.bindingType = BindingType::Descriptor;
-                m_symbolcache->insertEnvBinding(symbolName, binding);
-                auto *instanceSymbol = cast_symbol_to_instance(sym);
-                for (auto iterator = instanceSymbol->implsBegin(); iterator != instanceSymbol->implsEnd(); iterator++) {
-                    auto *implHandle = iterator->second;
-                    auto implType = implHandle->implType()->getTypeDef();
-                    if (m_symbolcache->hasEnvInstance(implType))
-                        return logAndContinue(AssemblerCondition::kImportError,
-                            tempo_tracing::LogSeverity::kError,
-                            "environment already contains instance {}", implType.toString());
-                    m_symbolcache->insertEnvInstance(implType, symbolUrl);
+            case lyric_object::LinkageSection::Instance: {
+                auto *symbolImport = preludeImport->getInstance(symbolWalker.getLinkageIndex());
+                auto binding = make_instance_env_binding(symbolUrl, symbolImport);
+                TU_RETURN_IF_NOT_OK (m_symbolcache->insertEnvBinding(symbolName, binding));
+                for (auto iterator = symbolImport->implsBegin(); iterator != symbolImport->implsEnd(); iterator++) {
+                    auto *implImport = iterator->second;
+                    auto implType = implImport->getImplType()->getTypeDef();
+                    TU_RETURN_IF_NOT_OK (m_symbolcache->insertEnvInstance(implType, symbolUrl));
                 }
                 break;
             }
 
             default:
+                TU_LOG_WARN << "ignoring prelude symbol " << symbolUrl;
                 break;
         }
     }
 
-    return AssemblerStatus::ok();
+    return {};
 }
 
 lyric_assembler::FundamentalCache *

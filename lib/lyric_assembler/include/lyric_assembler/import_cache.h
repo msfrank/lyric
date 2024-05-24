@@ -25,10 +25,17 @@ namespace lyric_assembler {
             AssemblerTracer *tracer);
         ~ImportCache();
 
+        tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>> importModule(
+            const lyric_common::AssemblyLocation &importLocation,
+            ImportFlags importFlags);
+
         tempo_utils::Status importModule(
             const lyric_common::AssemblyLocation &importLocation,
             BlockHandle *block,
-            const absl::flat_hash_set<ImportRef> &importRefs = {});
+            const absl::flat_hash_set<ImportRef> &importRefs = {},
+            bool preload = false);
+
+        std::shared_ptr<lyric_importer::ModuleImport> getModule(const lyric_common::AssemblyLocation &importLocation);
 
         tempo_utils::Result<ActionSymbol *> importAction(const lyric_common::SymbolUrl &actionUrl);
         tempo_utils::Result<CallSymbol *> importCall(const lyric_common::SymbolUrl &callUrl);
@@ -46,9 +53,6 @@ namespace lyric_assembler {
 
         bool hasImport(const lyric_common::AssemblyLocation &importLocation) const;
         ImportHandle *getImport(const lyric_common::AssemblyLocation &importLocation) const;
-        tempo_utils::Status insertImport(
-            const lyric_common::AssemblyLocation &importLocation,
-            ImportFlags importFlags);
         tempo_utils::Status touchImport(const lyric_common::AssemblyLocation &importLocation);
         std::vector<lyric_common::AssemblyLocation>::const_iterator importsBegin() const;
         std::vector<lyric_common::AssemblyLocation>::const_iterator importsEnd() const;
@@ -69,6 +73,10 @@ namespace lyric_assembler {
         std::vector<lyric_common::AssemblyLocation> m_imports;
         std::vector<RequestedLink> m_links;
         absl::flat_hash_map<lyric_common::AssemblyLocation, ImportHandle *> m_importcache;
+
+        tempo_utils::Status insertImport(
+            const lyric_common::AssemblyLocation &importLocation,
+            ImportFlags importFlags);
 
     public:
         /**

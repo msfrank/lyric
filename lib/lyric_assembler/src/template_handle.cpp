@@ -106,9 +106,7 @@ lyric_assembler::TemplateHandle::resolveSingular(const lyric_parser::Assignable 
     }
 
     // if there is no type handle for type, then create it
-    if (!m_state->typeCache()->hasType(assignableType)) {
-        m_state->typeCache()->makeType(assignableType);
-    }
+    TU_RETURN_IF_STATUS (m_state->typeCache()->getOrMakeType(assignableType));
 
     return assignableType;
 }
@@ -240,25 +238,26 @@ lyric_assembler::TemplateHandle::touch()
     if (m_address.isValid())
         return;
 
-    TU_ASSERT (m_state->symbolCache()->hasSymbol(m_templateUrl));
-    auto *sym = m_state->symbolCache()->getSymbol(m_templateUrl);
-    sym->touch();
+    //TU_ASSERT (m_state->symbolCache()->hasSymbol(m_templateUrl));
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RAISE (symbol, m_state->symbolCache()->getOrImportSymbol(m_templateUrl));
+    symbol->touch();
 
-    switch (sym->getSymbolType()) {
+    switch (symbol->getSymbolType()) {
         case SymbolType::EXISTENTIAL:
-            m_address = TemplateAddress(cast_symbol_to_existential(sym)->getAddress().getAddress());
+            m_address = TemplateAddress(cast_symbol_to_existential(symbol)->getAddress().getAddress());
             break;
         case SymbolType::ACTION:
-            m_address = TemplateAddress(cast_symbol_to_action(sym)->getAddress().getAddress());
+            m_address = TemplateAddress(cast_symbol_to_action(symbol)->getAddress().getAddress());
             break;
         case SymbolType::CALL:
-            m_address = TemplateAddress(cast_symbol_to_call(sym)->getAddress().getAddress());
+            m_address = TemplateAddress(cast_symbol_to_call(symbol)->getAddress().getAddress());
             break;
         case SymbolType::CLASS:
-            m_address = TemplateAddress(cast_symbol_to_class(sym)->getAddress().getAddress());
+            m_address = TemplateAddress(cast_symbol_to_class(symbol)->getAddress().getAddress());
             break;
         case SymbolType::CONCEPT:
-            m_address = TemplateAddress(cast_symbol_to_concept(sym)->getAddress().getAddress());
+            m_address = TemplateAddress(cast_symbol_to_concept(symbol)->getAddress().getAddress());
             break;
         default:
             TU_UNREACHABLE();

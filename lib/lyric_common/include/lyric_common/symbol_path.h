@@ -28,6 +28,8 @@ namespace lyric_common {
         SymbolPath &operator=(SymbolPath &&other) noexcept;
 
         bool isValid() const;
+        bool isEnclosed() const;
+        int getEnclosureDepth() const;
         std::vector<std::string> getPath() const;
         std::vector<std::string> getEnclosure() const;
         std::string getName() const;

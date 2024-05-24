@@ -79,11 +79,9 @@ compile_set_name(
             "value {} cannot be assigned to", identifier);
     auto targetType = ref.typeDef;
 
-    auto *symbol = state->symbolCache()->getSymbol(ref.symbolUrl);
-    if (symbol == nullptr)
-        state->throwAssemblerInvariant("missing var symbol {}", ref.symbolUrl.toString());
-    if (symbol->getSymbolType() == lyric_assembler::SymbolType::STATIC)
-        symbol->touch();
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
+    symbol->touch();
 
     // evaluation of the rhs is expected to push the value onto the stack
     lyric_common::TypeDef rvalueType;
@@ -209,9 +207,9 @@ compile_set_member(
     // if assigning to this, then determine whether we are in a constructor
     bool isCtor = false;
     if (thisReceiver) {
-        auto activation = block->blockProc()->getActivation();
-        auto *activationSym = block->blockState()->symbolCache()->getSymbol(activation);
-        TU_ASSERT (activationSym != nullptr);
+        auto activationUrl = block->blockProc()->getActivation();
+        lyric_assembler::AbstractSymbol *activationSym;
+        TU_ASSIGN_OR_RETURN (activationSym, block->blockState()->symbolCache()->getOrImportSymbol(activationUrl));
         if (activationSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
             block->throwAssemblerInvariant("invalid block definition");
         auto *activationCall = cast_symbol_to_call(activationSym);
@@ -220,11 +218,8 @@ compile_set_member(
 
     auto *state = moduleEntry.getState();
     auto receiverUrl = receiverType.getConcreteUrl();
-    if (!state->symbolCache()->hasSymbol(receiverUrl))
-        return state->logAndContinue(lyric_compiler::CompilerCondition::kMissingType,
-            tempo_tracing::LogSeverity::kError,
-            "missing type for receiver {}", receiverType.toString());
-    auto *receiver = state->symbolCache()->getSymbol(receiverUrl);
+    lyric_assembler::AbstractSymbol *receiver;
+    TU_ASSIGN_OR_RETURN (receiver, state->symbolCache()->getOrImportSymbol(receiverUrl));
 
     curr = target.getChild(i);
     moduleEntry.checkClassOrThrow(curr, lyric_schema::kLyricAstNameClass);

@@ -108,10 +108,7 @@ lyric_typing::MemberReifier::reifyMember(
     m_memberCache[name] = ref;
 
     // if there is no type handle for type, then create it
-    if (!state->typeCache()->hasType(ref.typeDef)) {
-        state->typeCache()->makeType(ref.typeDef);
-    }
-
+    TU_RETURN_IF_STATUS (state->typeCache()->getOrMakeType(ref.typeDef));
     return ref;
 }
 

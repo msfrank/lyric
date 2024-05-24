@@ -135,12 +135,11 @@ compile_defstruct_init(
             if (mayberMember.isEmpty())
                 structBlock->throwAssemblerInvariant("missing struct member {}", memberName);
             auto fieldRef = mayberMember.getValue();
-            if (!state->symbolCache()->hasSymbol(fieldRef.symbolUrl))
-                structBlock->throwAssemblerInvariant("missing struct field {}", fieldRef.symbolUrl.toString());
-            auto *sym = state->symbolCache()->getSymbol(fieldRef.symbolUrl);
-            if (sym->getSymbolType() != lyric_assembler::SymbolType::FIELD)
+            lyric_assembler::AbstractSymbol *symbol;
+            TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(fieldRef.symbolUrl));
+            if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
                 structBlock->throwAssemblerInvariant("invalid struct field {}", fieldRef.symbolUrl.toString());
-            auto *fieldSymbol = cast_symbol_to_field(sym);
+            auto *fieldSymbol = cast_symbol_to_field(symbol);
             auto fieldInitializerUrl = fieldSymbol->getInitializer();
 
             lyric_assembler::ParameterSpec p;
@@ -167,9 +166,8 @@ compile_defstruct_init(
     if (declareCtorResult.isStatus())
         return declareCtorResult.getStatus();
     auto ctorUrl = declareCtorResult.getResult();
-    auto *ctorSym = state->symbolCache()->getSymbol(ctorUrl);
-    if (ctorSym == nullptr)
-        structBlock->throwAssemblerInvariant("missing call symbol {}", ctorUrl.toString());
+    lyric_assembler::AbstractSymbol *ctorSym;
+    TU_ASSIGN_OR_RETURN (ctorSym, state->symbolCache()->getOrImportSymbol(ctorUrl));
     if (ctorSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         structBlock->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
     auto *ctor = cast_symbol_to_call(ctorSym);
@@ -256,26 +254,24 @@ compile_defstruct_init(
         if (structSymbol->isMemberInitialized(memberName))
             continue;
 
+        lyric_assembler::AbstractSymbol *symbol;
+
         // resolve the member binding
         auto maybeMember = structSymbol->getMember(memberName);
         if (maybeMember.isEmpty())
             structBlock->throwAssemblerInvariant("missing struct member {}", memberName);
         auto fieldRef = maybeMember.getValue();
-        if (!state->symbolCache()->hasSymbol(fieldRef.symbolUrl))
-            structBlock->throwAssemblerInvariant("missing struct field {}", fieldRef.symbolUrl.toString());
-        auto *sym = state->symbolCache()->getSymbol(fieldRef.symbolUrl);
-        if (sym->getSymbolType() != lyric_assembler::SymbolType::FIELD)
+        TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(fieldRef.symbolUrl));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
             structBlock->throwAssemblerInvariant("invalid struct field {}", fieldRef.symbolUrl.toString());
-        auto *fieldSymbol = cast_symbol_to_field(sym);
+        auto *fieldSymbol = cast_symbol_to_field(symbol);
         auto fieldInitializerUrl = fieldSymbol->getInitializer();
         if (!fieldInitializerUrl.isValid())
             structBlock->throwAssemblerInvariant("missing field initializer {}", fieldInitializerUrl.toString());
-        if (!state->symbolCache()->hasSymbol(fieldInitializerUrl))
-            structBlock->throwAssemblerInvariant("missing field initializer {}", fieldInitializerUrl.toString());
-        sym = state->symbolCache()->getSymbol(fieldInitializerUrl);
-        if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+        TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(fieldInitializerUrl));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
             structBlock->throwAssemblerInvariant("invalid field initializer {}", fieldInitializerUrl.toString());
-        auto *initializerCall = cast_symbol_to_call(sym);
+        auto *initializerCall = cast_symbol_to_call(symbol);
 
         // load $this onto the top of the stack
         status = code->loadSynthetic(lyric_assembler::SyntheticType::THIS);
@@ -369,12 +365,11 @@ compile_defstruct_def(
     if (declareMethodResult.isStatus())
         return declareMethodResult.getStatus();
     auto methodUrl = declareMethodResult.getResult();
-    auto *sym = structBlock->blockState()->symbolCache()->getSymbol(methodUrl);
-    if (sym == nullptr)
-        structBlock->throwAssemblerInvariant("missing call symbol {}", methodUrl.toString());
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, structBlock->blockState()->symbolCache()->getOrImportSymbol(methodUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         structBlock->throwAssemblerInvariant("invalid call symbol {}", methodUrl.toString());
-    auto *call = cast_symbol_to_call(sym);
+    auto *call = cast_symbol_to_call(symbol);
 
     // add initializers to the call
     for (const auto &entry : initializers) {
@@ -469,12 +464,11 @@ compile_defstruct_impl_def(
     lyric_assembler::ExtensionMethod extension;
     TU_ASSIGN_OR_RETURN (extension, implHandle->declareExtension(
         identifier, packSpec.parameterSpec, packSpec.restSpec, packSpec.ctxSpec, returnSpec));
-    auto *sym = state->symbolCache()->getSymbol(extension.methodCall);
-    if (sym == nullptr)
-        implBlock->throwAssemblerInvariant("missing call symbol {}", extension.methodCall.toString());
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(extension.methodCall));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         implBlock->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
-    auto *call = cast_symbol_to_call(sym);
+    auto *call = cast_symbol_to_call(symbol);
 
     // add initializers to the call
     for (const auto &entry : initializers) {
@@ -661,12 +655,11 @@ lyric_compiler::internal::compile_defstruct(
     }
 
     //
-    auto *superStructSym = state->symbolCache()->getSymbol(superStructUrl);
-    if (superStructSym == nullptr)
-        block->throwAssemblerInvariant("missing struct symbol {}", superStructUrl.toString());
-    if (superStructSym->getSymbolType() != lyric_assembler::SymbolType::STRUCT)
+    lyric_assembler::AbstractSymbol *superstructSym;
+    TU_ASSIGN_OR_RETURN (superstructSym, state->symbolCache()->getOrImportSymbol(superStructUrl));
+    if (superstructSym->getSymbolType() != lyric_assembler::SymbolType::STRUCT)
         block->throwAssemblerInvariant("invalid struct symbol {}", superStructUrl.toString());
-    auto *superStruct = cast_symbol_to_struct(superStructSym);
+    auto *superStruct = cast_symbol_to_struct(superstructSym);
 
     auto declStructResult = block->declareStruct(
         identifier, superStruct, lyric_object::AccessType::Public);
@@ -674,12 +667,11 @@ lyric_compiler::internal::compile_defstruct(
         return declStructResult.getStatus();
     auto structUrl = declStructResult.getResult();
 
-    auto *sym = state->symbolCache()->getSymbol(structUrl);
-    if (sym == nullptr)
-        block->throwAssemblerInvariant("missing struct symbol {}", structUrl.toString());
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::STRUCT)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(structUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::STRUCT)
         block->throwAssemblerInvariant("invalid struct symbol {}", structUrl.toString());
-    auto *structSymbol = cast_symbol_to_struct(sym);
+    auto *structSymbol = cast_symbol_to_struct(symbol);
 
     TU_LOG_INFO << "declared struct " << identifier << " with url " << structUrl;
 

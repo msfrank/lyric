@@ -24,9 +24,8 @@ address_cmp(const lyric_assembler::TypeLevel *lhs, const lyric_assembler::TypeLe
 tempo_utils::Status
 lyric_assembler::DisjointTypeSet::putType(const lyric_common::TypeDef &type)
 {
-    auto *typeHandle = m_state->typeCache()->getType(type);
-    if (typeHandle == nullptr)
-        m_state->throwAssemblerInvariant("missing type {} in type cache", type.toString());
+    TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->getOrMakeType(type));
     typeHandle->touch();
 
     auto signature = typeHandle->getTypeSignature();
@@ -81,9 +80,8 @@ lyric_assembler::UnifiedTypeSet::~UnifiedTypeSet()
 tempo_utils::Status
 lyric_assembler::UnifiedTypeSet::putType(const lyric_common::TypeDef &type)
 {
-    auto *typeHandle = m_state->typeCache()->getType(type);
-    if (typeHandle == nullptr)
-        m_state->throwAssemblerInvariant("missing type {} in type cache", type.toString());
+    TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->getOrMakeType(type));
     typeHandle->touch();
 
     auto signature = typeHandle->getTypeSignature();

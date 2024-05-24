@@ -40,15 +40,16 @@ lyric_symbolizer::internal::EntryPoint::initialize(const lyric_common::AssemblyL
         m_state->throwAssemblerInvariant("missing Function0 symbol");
     m_state->symbolCache()->touchSymbol(functionClassUrl);
 
+    lyric_assembler::TypeCache *typeCache = m_state->typeCache();
     tempo_utils::Status status;
 
     // ensure that NoReturn is in the type cache
     auto returnType = lyric_common::TypeDef::noReturn();
-    TU_RETURN_IF_NOT_OK (m_state->typeCache()->makeType(returnType));
-    m_state->typeCache()->touchType(returnType);
+    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(returnType));
+    typeCache->touchType(returnType);
 
     lyric_assembler::TypeHandle *entryTypeHandle;
-    TU_ASSIGN_OR_RETURN (entryTypeHandle, m_state->typeCache()->declareFunctionType(returnType, {}, {}));
+    TU_ASSIGN_OR_RETURN (entryTypeHandle, typeCache->declareFunctionType(returnType, {}, {}));
     entryTypeHandle->touch();
 
     // create the $entry call
@@ -64,9 +65,8 @@ lyric_symbolizer::internal::EntryPoint::initialize(const lyric_common::AssemblyL
 
     // resolve the Namespace type
     auto namespaceType = m_state->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Namespace);
-    auto *namespaceTypeHandle = m_state->typeCache()->getType(namespaceType);
-    if (namespaceTypeHandle == nullptr)
-        m_state->throwAssemblerInvariant("missing Namespace type");
+    lyric_assembler::TypeHandle *namespaceTypeHandle;
+    TU_ASSIGN_OR_RETURN (namespaceTypeHandle, typeCache->getOrMakeType(namespaceType));
 
     // create the root namespace
     lyric_common::SymbolUrl rootUrl(location, lyric_common::SymbolPath({"$root"}));

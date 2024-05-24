@@ -45,20 +45,16 @@ lyric_assembler::ImportCache::~ImportCache()
     }
 }
 
-inline tempo_utils::Result<lyric_common::SymbolUrl>
+inline tempo_utils::Status
 insert_symbol_into_cache(
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport,
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::SymbolUrl &symbolUrl,
     lyric_object::SymbolWalker &symbolWalker,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_assembler::AssemblyState *state)
 {
-    auto symbolPath = symbolWalker.getSymbolPath();
-    auto symbolUrl = lyric_common::SymbolUrl(location, symbolPath);
-
-    // if symbol is not in the cache then load it
     if (symbolCache->hasSymbol(symbolUrl))
-        return symbolUrl;
+        return {};
 
     lyric_assembler::AbstractSymbol *symbolPtr = nullptr;
 
@@ -122,7 +118,7 @@ insert_symbol_into_cache(
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kImportError,
                 "error importing module {}; invalid symbol {}",
-                location.toString(), symbolPath.toString());
+                symbolUrl.getAssemblyLocation().toString(), symbolUrl.getSymbolPath().toString());
     }
 
     auto status = symbolCache->insertSymbol(symbolUrl, symbolPtr);
@@ -131,7 +127,7 @@ insert_symbol_into_cache(
         return status;
     }
 
-    return symbolUrl;
+    return {};
 }
 
 static tempo_utils::Status
@@ -140,7 +136,8 @@ import_module_symbols(
     const lyric_common::AssemblyLocation &location,
     const absl::flat_hash_set<lyric_assembler::ImportRef> &importSymbols,
     lyric_assembler::SymbolCache *symbolCache,
-    lyric_assembler::BlockHandle *block)
+    lyric_assembler::BlockHandle *block,
+    bool preload)
 {
     auto *state = block->blockState();
 
@@ -149,6 +146,14 @@ import_module_symbols(
     for (const auto &importRef : importSymbols) {
         auto symbolPath = importRef.getPath();
         auto symbolName = importRef.getName();
+        auto symbolUrl = lyric_common::SymbolUrl(location, symbolPath);
+
+        // it's an error to attempt to import an internal symbol
+        if (symbolName.starts_with("$"))
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kSyntaxError,
+                "error importing symbol {} from {}; cannot import an internal symbol",
+                symbolPath.toString(), location.toString());
 
         // it's an error if a binding already exists for the specified name
         if (block->hasBinding(symbolName))
@@ -165,10 +170,11 @@ import_module_symbols(
                 "error importing module {}; missing symbol {}",
                 location.toString(), symbolPath.toString());
 
-        // load the symbol into the symbol cache
-        lyric_common::SymbolUrl symbolUrl;
-        TU_ASSIGN_OR_RETURN(symbolUrl,
-            insert_symbol_into_cache(moduleImport, location, symbolWalker, symbolCache, state));
+        // load the symbol into the symbol cache immediately if preload is specified
+        if (preload) {
+            TU_RETURN_IF_NOT_OK(insert_symbol_into_cache(
+                moduleImport, symbolUrl, symbolWalker, symbolCache, state));
+        }
 
         // bind the symbol to the block
         TU_RETURN_IF_STATUS (block->declareAlias(symbolName, symbolUrl));
@@ -182,7 +188,8 @@ import_module(
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport,
     const lyric_common::AssemblyLocation &location,
     lyric_assembler::SymbolCache *symbolCache,
-    lyric_assembler::BlockHandle *block)
+    lyric_assembler::BlockHandle *block,
+    bool preload)
 {
     auto *state = block->blockState();
 
@@ -191,12 +198,16 @@ import_module(
     for (int i = 0; i < object.numSymbols(); i++) {
         auto symbolWalker = object.getSymbol(i);
         auto symbolPath = symbolWalker.getSymbolPath();
+        auto symbolUrl = lyric_common::SymbolUrl(location, symbolPath);
 
         // ignore symbols which are inside a namespace
         if (symbolPath.getPath().size() > 1)
             continue;
 
+        // ignore internal symbols (those that start with $)
         auto symbolName = symbolPath.getName();
+        if (symbolName.starts_with("$"))
+            continue;
 
         // it's an error if a binding already exists for the specified name
         if (block->hasBinding(symbolName))
@@ -205,16 +216,41 @@ import_module(
                 "error importing symbol {} from {}; block already contains binding {}",
                 symbolPath.toString(), moduleImport->getLocation().toString(), symbolName);
 
-        // load the symbol into the symbol cache
-        lyric_common::SymbolUrl symbolUrl;
-        TU_ASSIGN_OR_RETURN(symbolUrl,
-            insert_symbol_into_cache(moduleImport, location, symbolWalker, symbolCache, state));
+        // load the symbol into the symbol cache immediately if preload is specified
+        if (preload) {
+            TU_RETURN_IF_NOT_OK(insert_symbol_into_cache(
+                moduleImport, symbolUrl, symbolWalker, symbolCache, state));
+        }
 
         // bind the symbol to the block
         TU_RETURN_IF_STATUS (block->declareAlias(symbolName, symbolUrl));
     }
 
     return lyric_assembler::AssemblerStatus::ok();
+}
+
+tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
+lyric_assembler::ImportCache::importModule(
+    const lyric_common::AssemblyLocation &importLocation,
+    ImportFlags importFlags)
+{
+    std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
+
+    // get the shared module import
+    if (!importLocation.hasScheme() && !importLocation.hasAuthority()) {
+        TU_ASSIGN_OR_RETURN (moduleImport, m_privateModuleCache->importModule(importLocation));
+    } else {
+        TU_ASSIGN_OR_RETURN (moduleImport, m_sharedModuleCache->importModule(importLocation));
+    }
+
+    auto location = moduleImport->getLocation();
+
+    // insert import handle into the cache if one doesn't exist
+    if (!m_importcache.contains(location)) {
+        TU_RETURN_IF_NOT_OK (insertImport(location, importFlags));
+    }
+
+    return moduleImport;
 }
 
 /**
@@ -228,7 +264,8 @@ tempo_utils::Status
 lyric_assembler::ImportCache::importModule(
     const lyric_common::AssemblyLocation &importLocation,
     BlockHandle *block,
-    const absl::flat_hash_set<ImportRef> &importSymbols)
+    const absl::flat_hash_set<ImportRef> &importSymbols,
+    bool preload)
 {
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
 
@@ -242,10 +279,11 @@ lyric_assembler::ImportCache::importModule(
 
     if (!importSymbols.empty()) {
         // if import symbols is not empty, then import only the specified symbols
-        TU_RETURN_IF_NOT_OK (import_module_symbols(moduleImport, location, importSymbols, m_symbolCache, block));
+        TU_RETURN_IF_NOT_OK (import_module_symbols(
+            moduleImport, location, importSymbols, m_symbolCache, block, preload));
     } else {
         // otherwise import all symbols which are not inside a namespace
-        TU_RETURN_IF_NOT_OK (import_module(moduleImport, location, m_symbolCache, block));
+        TU_RETURN_IF_NOT_OK (import_module(moduleImport, location, m_symbolCache, block, preload));
     }
 
     // insert import handle into the cache if one doesn't exist
@@ -254,6 +292,20 @@ lyric_assembler::ImportCache::importModule(
     }
 
     return AssemblerStatus::ok();
+}
+
+std::shared_ptr<lyric_importer::ModuleImport>
+lyric_assembler::ImportCache::getModule(const lyric_common::AssemblyLocation &importLocation)
+{
+    auto entry = m_importcache.find(importLocation);
+    if (entry == m_importcache.cend())
+        return {};
+
+    if (entry->second->isShared) {
+        return m_sharedModuleCache->getModule(importLocation);
+    } else {
+        return m_privateModuleCache->getModule(importLocation);
+    }
 }
 
 tempo_utils::Result<lyric_assembler::AbstractSymbol *>
@@ -280,7 +332,7 @@ lyric_assembler::ImportCache::importSymbol(const lyric_common::SymbolUrl &symbol
             location.toString(), symbolPath.toString());
 
     // load the symbol into the symbol cache
-    TU_RETURN_IF_STATUS(insert_symbol_into_cache(moduleImport, location, symbolWalker, m_symbolCache, m_state));
+    TU_RETURN_IF_NOT_OK(insert_symbol_into_cache(moduleImport, symbolUrl, symbolWalker, m_symbolCache, m_state));
 
     // insert import handle into the cache if one doesn't exist
     if (!m_importcache.contains(location)) {
@@ -288,7 +340,7 @@ lyric_assembler::ImportCache::importSymbol(const lyric_common::SymbolUrl &symbol
     }
 
     // return the symbol
-    auto *symbol = m_symbolCache->getSymbol(symbolUrl);
+    auto *symbol = m_symbolCache->getSymbolOrNull(symbolUrl);
     TU_ASSERT (symbol != nullptr);
     return symbol;
 }
@@ -448,7 +500,8 @@ lyric_assembler::ImportCache::insertImport(
         return m_tracer->logAndContinue(AssemblerCondition::kImportError,
             tempo_tracing::LogSeverity::kError,
             "assembly {} is already imported", importLocation.toString());
-    auto *importHandle = new ImportHandle{importLocation, lyric_runtime::INVALID_ADDRESS_U32, importFlags};
+    bool isPrivate = !importLocation.hasScheme() && !importLocation.hasAuthority();
+    auto *importHandle = new ImportHandle{importLocation, lyric_runtime::INVALID_ADDRESS_U32, importFlags, !isPrivate};
     m_importcache[importLocation] = importHandle;
     return AssemblerStatus::ok();
 }

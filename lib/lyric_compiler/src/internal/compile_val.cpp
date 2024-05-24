@@ -50,12 +50,11 @@ lyric_compiler::internal::compile_val(
             return declareStaticResult.getStatus();
         auto ref = declareStaticResult.getResult();
 
-        auto *sym = state->symbolCache()->getSymbol(ref.symbolUrl);
-        if (sym == nullptr)
-            state->throwAssemblerInvariant("missing static symbol {}", ref.symbolUrl.toString());
-        if (sym->getSymbolType() != lyric_assembler::SymbolType::STATIC)
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::STATIC)
             state->throwAssemblerInvariant("invalid static symbol {}", ref.symbolUrl.toString());
-        auto *staticSymbol = cast_symbol_to_static(sym);
+        auto *staticSymbol = cast_symbol_to_static(symbol);
 
         return compile_static_initializer(staticSymbol, walker.getChild(0), moduleEntry);
     }

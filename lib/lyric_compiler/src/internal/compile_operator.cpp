@@ -243,7 +243,8 @@ compile_is_a(
     // push isA type descriptor onto the stack
     switch (isAType.getType()) {
         case lyric_common::TypeDefType::Concrete: {
-            auto *typeHandle = state->typeCache()->getType(isAType);
+            lyric_assembler::TypeHandle *typeHandle;
+            TU_ASSIGN_OR_RETURN (typeHandle, state->typeCache()->getOrMakeType(isAType));
             status = code->loadType(typeHandle->getAddress());
             if (status.notOk())
                 return status;
@@ -326,9 +327,8 @@ lyric_compiler::internal::compile_operator_call(
     if (resolveInstanceResult.isStatus())
         return resolveInstanceResult.getStatus();
     auto instanceUrl = resolveInstanceResult.getResult();
-    auto *symbol = state->symbolCache()->getSymbol(instanceUrl);
-    if (symbol == nullptr)
-        block->throwAssemblerInvariant("missing instance symbol {}", instanceUrl.toString());
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(instanceUrl));
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
         block->throwAssemblerInvariant("invalid instance symbol {}", instanceUrl.toString());
     auto *instanceSymbol = cast_symbol_to_instance(symbol);
@@ -349,9 +349,7 @@ lyric_compiler::internal::compile_operator_call(
     auto extension = extensionOption.getValue();
 
     auto extensionUrl = extension.methodCall;
-    symbol = block->blockState()->symbolCache()->getSymbol(extensionUrl);
-    if (symbol == nullptr)
-        block->throwAssemblerInvariant("missing call symbol {}", extensionUrl.toString());
+    TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(extensionUrl));
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         block->throwAssemblerInvariant("invalid call symbol {}", extensionUrl.toString());
     auto *extensionCall = cast_symbol_to_call(symbol);
@@ -360,9 +358,7 @@ lyric_compiler::internal::compile_operator_call(
     if (extensionCall->isInline()) {
         extensionInvoker = lyric_assembler::ExtensionInvoker(extensionCall, extensionCall->callProc());
     } else if (extensionCall->isBound()) {
-        symbol = block->blockState()->symbolCache()->getSymbol(operatorType.getConcreteUrl());
-        if (symbol == nullptr)
-            block->throwAssemblerInvariant("missing concept symbol {}", operatorType.getConcreteUrl().toString());
+        TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(operatorType.getConcreteUrl()));
         if (symbol->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
             block->throwAssemblerInvariant("invalid concept symbol {}", operatorType.getConcreteUrl().toString());
         auto *conceptSymbol = cast_symbol_to_concept(symbol);
@@ -372,7 +368,7 @@ lyric_compiler::internal::compile_operator_call(
             block->throwAssemblerInvariant("missing action {} for concept symbol {}",
                 extensionName, operatorType.getConcreteUrl().toString());
         auto action = resolveActionResult.getValue();
-        symbol = block->blockState()->symbolCache()->getSymbol(action.methodAction);
+        TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(action.methodAction));
         if (symbol->getSymbolType() != lyric_assembler::SymbolType::ACTION)
             block->throwAssemblerInvariant("invalid action symbol {}", action.methodAction.toString());
         auto *actionSymbol = cast_symbol_to_action(symbol);

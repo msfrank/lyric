@@ -33,12 +33,11 @@ lyric_compiler::internal::compile_default_initializer(
     if (declareInitializerResult.isStatus())
         return declareInitializerResult.getStatus();
     auto initializerUrl = declareInitializerResult.getResult();
-    auto *sym = block->blockState()->symbolCache()->getSymbol(initializerUrl);
-    if (sym == nullptr)
-        block->throwAssemblerInvariant("missing call symbol {}", initializerUrl.toString());
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(initializerUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         block->throwAssemblerInvariant("invalid call symbol {}", initializerUrl.toString());
-    auto *call = cast_symbol_to_call(sym);
+    auto *call = cast_symbol_to_call(symbol);
     auto *proc = call->callProc();
 
     // compile the initializer body
@@ -115,12 +114,11 @@ lyric_compiler::internal::compile_static_initializer(
     if (declareInitializerResult.isStatus())
         return declareInitializerResult.getStatus();
     auto initializerUrl = declareInitializerResult.getResult();
-    auto *sym = state->symbolCache()->getSymbol(initializerUrl);
-    if (sym == nullptr)
-        state->throwAssemblerInvariant("missing call symbol {}", initializerUrl.toString());
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(initializerUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         state->throwAssemblerInvariant("invalid call symbol {}", initializerUrl.toString());
-    auto *call = cast_symbol_to_call(sym);
+    auto *call = cast_symbol_to_call(symbol);
     auto *proc = call->callProc();
     auto *code = proc->procCode();
     auto *block = proc->procBlock();

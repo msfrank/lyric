@@ -4,16 +4,18 @@
 #include "abstract_symbol.h"
 #include "assembler_tracer.h"
 #include "assembler_types.h"
+#include "assembly_state.h"
 
 namespace lyric_assembler {
 
     class SymbolCache {
     public:
-        explicit SymbolCache(AssemblerTracer *tracer);
+        SymbolCache(AssemblyState *state, AssemblerTracer *tracer);
         ~SymbolCache();
 
         bool hasSymbol(const lyric_common::SymbolUrl &symbolUrl) const;
-        AbstractSymbol *getSymbol(const lyric_common::SymbolUrl &symbolUrl) const;
+        AbstractSymbol *getSymbolOrNull(const lyric_common::SymbolUrl &symbolUrl) const;
+        tempo_utils::Result<AbstractSymbol *> getOrImportSymbol(const lyric_common::SymbolUrl &symbolUrl) const;
         tempo_utils::Status insertSymbol(const lyric_common::SymbolUrl &symbolUrl, AbstractSymbol *abstractSymbol);
         tempo_utils::Status touchSymbol(const lyric_common::SymbolUrl &sym);
         int numSymbols() const;
@@ -27,6 +29,7 @@ namespace lyric_assembler {
         tempo_utils::Status insertEnvInstance(const lyric_common::TypeDef &type, const lyric_common::SymbolUrl &url);
 
     private:
+        AssemblyState *m_state;
         AssemblerTracer *m_tracer;
         absl::flat_hash_map<lyric_common::SymbolUrl, AbstractSymbol *> m_symcache;
         absl::flat_hash_map<std::string, SymbolBinding> m_envBindings;

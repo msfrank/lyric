@@ -67,6 +67,31 @@ lyric_common::SymbolPath::isValid() const
     return !m_priv->parts->empty();
 }
 
+/**
+ * Returns true if the symbol is within an enclosure (such as a namespace), otherwise returns false.
+ *
+ * @return true if the symbol is enclosed, otherwise false.
+ */
+bool
+lyric_common::SymbolPath::isEnclosed() const
+{
+    return m_priv->parts->size() > 1;
+}
+
+/**
+ * Returns the count of the symbol path parts which are part of the enclosure. If the symbol is not
+ * enclosed or the symbol path is not valid then this method returns 0.
+ *
+ * @return The count of symbol path parts which are part of the enclosure.
+ */
+int
+lyric_common::SymbolPath::getEnclosureDepth() const
+{
+    if (!m_priv->parts->empty())
+        return m_priv->parts->size() - 1;
+    return 0;
+}
+
 std::vector<std::string>
 lyric_common::SymbolPath::getPath() const
 {

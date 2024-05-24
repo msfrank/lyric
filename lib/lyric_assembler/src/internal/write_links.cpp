@@ -36,5 +36,5 @@ lyric_assembler::internal::write_links(
     // create the links vector
     linksOffset = buffer.CreateVector(links_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

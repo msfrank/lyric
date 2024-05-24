@@ -255,13 +255,10 @@ lyric_assembler::InstanceSymbol::declareMember(
             tempo_tracing::LogSeverity::kError,
             "member {} already defined for instance {}", name, m_instanceUrl.toString());
 
-    auto resolveMemberTypeResult = priv->instanceBlock->resolveAssignable(memberSpec);
-    if (resolveMemberTypeResult.isStatus())
-        return resolveMemberTypeResult.getStatus();
-    auto memberType = resolveMemberTypeResult.getResult();
-    if (!m_state->typeCache()->hasType(memberType))
-        m_state->throwAssemblerInvariant("missing type {}", memberType.toString());
-    auto *fieldType = m_state->typeCache()->getType(memberType);
+    lyric_common::TypeDef memberType;
+    TU_ASSIGN_OR_RETURN (memberType, priv->instanceBlock->resolveAssignable(memberSpec));
+    lyric_assembler::TypeHandle *fieldType;
+    TU_ASSIGN_OR_RETURN (fieldType, m_state->typeCache()->getOrMakeType(memberType));
 
     auto memberPath = m_instanceUrl.getSymbolPath().getPath();
     memberPath.push_back(name);
@@ -312,12 +309,11 @@ lyric_assembler::InstanceSymbol::resolveMember(
     }
 
     const auto &member = priv->members.at(name);
-    if (!m_state->symbolCache()->hasSymbol(member.symbolUrl))
-        m_state->throwAssemblerInvariant("missing field symbol {}", member.symbolUrl.toString());
-    auto *sym = m_state->symbolCache()->getSymbol(member.symbolUrl);
-    if (sym->getSymbolType() != SymbolType::FIELD)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(member.symbolUrl));
+    if (symbol->getSymbolType() != SymbolType::FIELD)
         m_state->throwAssemblerInvariant("invalid field symbol {}", member.symbolUrl.toString());
-    auto *fieldSymbol = cast_symbol_to_field(sym);
+    auto *fieldSymbol = cast_symbol_to_field(symbol);
     auto access = fieldSymbol->getAccessType();
 
     bool thisSymbol = receiverType.getConcreteUrl() == m_instanceUrl;
@@ -409,9 +405,9 @@ lyric_assembler::InstanceSymbol::declareCtor(lyric_object::AccessType access, tu
     m_state->typeCache()->touchType(returnType);
 
     auto fundamentalInstance = m_state->fundamentalCache()->getFundamentalUrl(FundamentalSymbol::Instance);
-    if (!m_state->symbolCache()->hasSymbol(fundamentalInstance))
-        m_state->throwAssemblerInvariant("missing fundamental symbol Instance");
-    m_state->symbolCache()->touchSymbol(fundamentalInstance);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(fundamentalInstance));
+    symbol->touch();
 
 //    auto deriveTypeResult = m_state->declareParameterizedType(fundamentalInstance, {returnType});
 //    if (deriveTypeResult.isStatus())
@@ -452,16 +448,11 @@ lyric_assembler::InstanceSymbol::resolveCtor()
     lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(m_instanceUrl.getSymbolPath().getPath(), "$ctor");
     auto ctorUrl = lyric_common::SymbolUrl(m_instanceUrl.getAssemblyLocation(), ctorPath);
 
-    if (!m_state->symbolCache()->hasSymbol(ctorUrl))
-        return m_state->logAndContinue(AssemblerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "missing ctor for instance {}", m_instanceUrl.toString());
-    auto *ctorSym = m_state->symbolCache()->getSymbol(ctorUrl);
-    if (ctorSym == nullptr)
-        m_state->throwAssemblerInvariant("missing call symbol {}", ctorUrl.toString());
-    if (ctorSym->getSymbolType() != SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(ctorUrl));
+    if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
-    auto *call = static_cast<CallSymbol *>(ctorSym);
+    auto *call = cast_symbol_to_call(symbol);
 
     return CtorInvoker(call, this);
 }
@@ -681,12 +672,11 @@ lyric_assembler::InstanceSymbol::resolveMethod(
     }
 
     const auto &method = priv->methods.at(name);
-    auto *methodSym = m_state->symbolCache()->getSymbol(method.methodCall);
-    if (methodSym == nullptr)
-        m_state->throwAssemblerInvariant("missing call symbol {}", method.methodCall.toString());
-    if (methodSym->getSymbolType() != SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(method.methodCall));
+    if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", method.methodCall.toString());
-    auto *callSymbol = static_cast<CallSymbol *>(methodSym);
+    auto *callSymbol = cast_symbol_to_call(symbol);
     auto access = callSymbol->getAccessType();
 
     bool thisSymbol = receiverType.getConcreteUrl() == m_instanceUrl;
@@ -789,10 +779,9 @@ lyric_assembler::InstanceSymbol::declareImpl(const lyric_parser::Assignable &imp
             "impl for concept {} already defined for instance {}", implUrl.toString(), m_instanceUrl.toString());
 
     // touch the impl type
-    auto *implTypeHandle = m_state->typeCache()->getType(implType);
-    if (implTypeHandle == nullptr)
-        m_state->throwAssemblerInvariant("missing type {}", implType.toString());
-    TU_RETURN_IF_NOT_OK (m_state->typeCache()->touchType(implType));
+    lyric_assembler::TypeHandle *implTypeHandle;
+    TU_ASSIGN_OR_RETURN (implTypeHandle, m_state->typeCache()->getOrMakeType(implType));
+    implTypeHandle->touch();
 
     // confirm that the impl concept exists
     auto implConcept = implType.getConcreteUrl();
@@ -800,10 +789,11 @@ lyric_assembler::InstanceSymbol::declareImpl(const lyric_parser::Assignable &imp
         m_state->throwAssemblerInvariant("missing concept symbol {}", implConcept.toString());
 
     // resolve the concept symbol
-    auto *conceptSym = m_state->symbolCache()->getSymbol(implConcept);
-    if (conceptSym->getSymbolType() != SymbolType::CONCEPT)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(implConcept));
+    if (symbol->getSymbolType() != SymbolType::CONCEPT)
         m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
-    auto *conceptSymbol = cast_symbol_to_concept(conceptSym);
+    auto *conceptSymbol = cast_symbol_to_concept(symbol);
 
     conceptSymbol->touch();
 
@@ -859,17 +849,17 @@ lyric_assembler::InstanceSymbol::putSealedType(const lyric_common::TypeDef &seal
             tempo_tracing::LogSeverity::kError,
             "invalid derived type {} for sealed instance {}", sealedType.toString(), m_instanceUrl.toString());
     auto sealedUrl = sealedType.getConcreteUrl();
-    if (!m_state->symbolCache()->hasSymbol(sealedUrl))
-        m_state->throwAssemblerInvariant("missing symbol {}", sealedUrl.toString());
-    auto *sym = m_state->symbolCache()->getSymbol(sealedType.getConcreteUrl());
-    TU_ASSERT (sym != nullptr);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(sealedUrl));
+    if (symbol->getSymbolType() != SymbolType::INSTANCE)
+        m_state->throwAssemblerInvariant("invalid instance symbol {}", sealedUrl.toString());
 
-    if (sym->getSymbolType() != SymbolType::INSTANCE || cast_symbol_to_instance(sym)->superInstance() != this)
+    if (cast_symbol_to_instance(symbol)->superInstance() != this)
         return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
             tempo_tracing::LogSeverity::kError,
             "{} does not derive from sealed instance {}", sealedType.toString(), m_instanceUrl.toString());
 
     priv->sealedTypes.insert(sealedType);
 
-    return AssemblerStatus::ok();
+    return {};
 }

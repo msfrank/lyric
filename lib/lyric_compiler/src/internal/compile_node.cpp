@@ -95,12 +95,11 @@ lyric_compiler::internal::compile_namespace(
     auto nsUrl = declareNamespaceResult.getResult();
 
     // get the namespace symbol
-    if (!state->symbolCache()->hasSymbol(nsUrl))
-        block->throwAssemblerInvariant("missing namespace symbol");
-    auto *sym = state->symbolCache()->getSymbol(nsUrl);
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(nsUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
         block->throwAssemblerInvariant("invalid namespace symbol");
-    auto *namespaceSymbol = cast_symbol_to_namespace(sym);
+    auto *namespaceSymbol = cast_symbol_to_namespace(symbol);
 
     // compile the namespace block
     auto compileBlockResult = compile_block(namespaceSymbol->namespaceBlock(), child, moduleEntry);

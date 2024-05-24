@@ -76,5 +76,5 @@ lyric_assembler::internal::write_literals(
     // create the literals vector
     literalsOffset = buffer.CreateVector(literals_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

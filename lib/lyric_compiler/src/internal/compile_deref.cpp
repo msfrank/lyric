@@ -67,17 +67,14 @@ compile_deref_namespace(
         if (ref.referenceType != lyric_assembler::ReferenceType::Descriptor)
             return lyric_compiler::CompilerStatus::ok();
 
-        if (!state->symbolCache()->hasSymbol(ref.symbolUrl))
-            return (*block)->logAndContinue(lyric_compiler::CompilerCondition::kMissingSymbol,
-                tempo_tracing::LogSeverity::kError,
-                "missing symbol {}", ref.symbolUrl.toString());
-        auto *sym = state->symbolCache()->getSymbol(ref.symbolUrl);
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
 
         // if symbol binding is not a namespace, then we are done
-        if (sym->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
             return lyric_compiler::CompilerStatus::ok();
 
-        currBlock = cast_symbol_to_namespace(sym)->namespaceBlock();
+        currBlock = cast_symbol_to_namespace(symbol)->namespaceBlock();
 
         index++;
         *block = currBlock;
@@ -99,8 +96,9 @@ lyric_compiler::internal::compile_deref_this(
         return resolveVariableResult.getStatus();
     auto ref = resolveVariableResult.getResult();
     auto *state = loadBlock->blockState();
-    auto *symbol = state->symbolCache()->getSymbol(ref.symbolUrl);
-    TU_ASSERT (symbol != nullptr);
+
+    // ensure symbol for $this is loaded
+    TU_RETURN_IF_STATUS(state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
 
     auto status = loadBlock->load(ref);
     if (!status.isOk())
@@ -123,9 +121,8 @@ lyric_compiler::internal::compile_deref_name(
     if (resolveVariableResult.isStatus())
         return resolveVariableResult.getStatus();
     auto ref = resolveVariableResult.getResult();
-    auto *symbol = state->symbolCache()->getSymbol(ref.symbolUrl);
-    if (symbol == nullptr)
-        bindingBlock->throwAssemblerInvariant("missing symbol {}", ref.symbolUrl.toString());
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
 
     if (ref.referenceType == lyric_assembler::ReferenceType::Descriptor) {
         lyric_common::SymbolUrl ctorOrInitUrl;
@@ -195,11 +192,8 @@ lyric_compiler::internal::compile_deref_method(
     auto concreteArguments = receiverType.getConcreteArguments();
     std::vector<lyric_common::TypeDef> callsiteArguments(concreteArguments.begin(), concreteArguments.end());
 
-    if (!state->symbolCache()->hasSymbol(receiverUrl))
-        return block->logAndContinue(CompilerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "missing symbol {}", receiverUrl.toString());
-    auto *receiver = state->symbolCache()->getSymbol(receiverUrl);
+    lyric_assembler::AbstractSymbol *receiver;
+    TU_ASSIGN_OR_RETURN (receiver, state->symbolCache()->getOrImportSymbol(receiverUrl));
 
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
@@ -360,11 +354,8 @@ lyric_compiler::internal::compile_deref_member(
         block->throwAssemblerInvariant("invalid receiver type {}", receiverType.toString());
     auto receiverUrl = receiverType.getConcreteUrl();
 
-    if (!state->symbolCache()->hasSymbol(receiverUrl))
-        return block->logAndContinue(CompilerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "missing symbol {}", receiverUrl.toString());
-    auto *receiver = state->symbolCache()->getSymbol(receiverUrl);
+    lyric_assembler::AbstractSymbol *receiver;
+    TU_ASSIGN_OR_RETURN (receiver, state->symbolCache()->getOrImportSymbol(receiverUrl));
 
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);

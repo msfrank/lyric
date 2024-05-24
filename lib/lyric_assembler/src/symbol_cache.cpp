@@ -1,9 +1,12 @@
 
+#include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/symbol_cache.h>
 
-lyric_assembler::SymbolCache::SymbolCache(lyric_assembler::AssemblerTracer *tracer)
-    : m_tracer(tracer)
+lyric_assembler::SymbolCache::SymbolCache(AssemblyState *state, AssemblerTracer *tracer)
+    : m_state(state),
+      m_tracer(tracer)
 {
+    TU_ASSERT (m_state != nullptr);
     TU_ASSERT (m_tracer != nullptr);
 }
 
@@ -14,19 +17,51 @@ lyric_assembler::SymbolCache::~SymbolCache()
     }
 }
 
+/**
+ * Returns true if the symbol cache contains the given symbol `symbolUrl`, otherwise returns false.
+ *
+ * @param symbolUrl The symbol url which uniquely identifies the symbol.
+ * @return  true if the cache contains the symbol, otherwise false.
+ */
 bool
 lyric_assembler::SymbolCache::hasSymbol(const lyric_common::SymbolUrl &symbolUrl) const
 {
     return m_symcache.contains(symbolUrl);
 }
 
+/**
+ * Returns a pointer to the given symbol `symbolUrl` if the symbol is present in the symbol cache,
+ * otherwise returns nullptr.
+ *
+ * @param symbolUrl The symbol url which uniquely identifies the symbol.
+ * @return A pointer to the AbstractSymbol.
+ */
 lyric_assembler::AbstractSymbol *
-lyric_assembler::SymbolCache::getSymbol(const lyric_common::SymbolUrl &symbolUrl) const
+lyric_assembler::SymbolCache::getSymbolOrNull(const lyric_common::SymbolUrl &symbolUrl) const
 {
     auto iterator = m_symcache.find(symbolUrl);
-    if (iterator == m_symcache.cend())
-        return nullptr;
-    return iterator->second;
+    if (iterator != m_symcache.cend())
+        return iterator->second;
+    return nullptr;
+}
+
+/**
+ * Returns a pointer to the given symbol `symbolUrl`, importing it into the symbol cache if necessary.
+ * If the symbol is not present in the symbol cache and could not be imported then a `tempo_utils::Status`
+ * is returned containing the failure.
+ *
+ * @param symbolUrl The symbol url which uniquely identifies the symbol.
+ * @return A `tempo_utils::Result` containing a pointer to the AbstractSymbol on success, otherwise
+ *     a `tempo_utils::Status` on failure.
+ */
+tempo_utils::Result<lyric_assembler::AbstractSymbol *>
+lyric_assembler::SymbolCache::getOrImportSymbol(const lyric_common::SymbolUrl &symbolUrl) const
+{
+    auto iterator = m_symcache.find(symbolUrl);
+    if (iterator != m_symcache.cend())
+        return iterator->second;
+    auto *importCache = m_state->importCache();
+    return importCache->importSymbol(symbolUrl);
 }
 
 tempo_utils::Status
@@ -37,7 +72,7 @@ lyric_assembler::SymbolCache::insertSymbol(const lyric_common::SymbolUrl &symbol
             tempo_tracing::LogSeverity::kError,
             "symbol {} is already defined", symbolUrl.toString());
     m_symcache[symbolUrl] = abstractSymbol;
-    return AssemblerStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -45,11 +80,10 @@ lyric_assembler::SymbolCache::touchSymbol(const lyric_common::SymbolUrl &symbolU
 {
     if (!symbolUrl.isValid())
         m_tracer->throwAssemblerInvariant("invalid symbol {}", symbolUrl.toString());
-    auto iterator = m_symcache.find(symbolUrl);
-    if (iterator == m_symcache.cend())
-        m_tracer->throwAssemblerInvariant("missing symbol {}", symbolUrl.toString());
-    iterator->second->touch();
-    return AssemblerStatus::ok();
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(symbolUrl));
+    sym->touch();
+    return {};
 }
 
 int
@@ -67,9 +101,10 @@ lyric_assembler::SymbolCache::hasEnvBinding(const std::string &name) const
 lyric_assembler::SymbolBinding
 lyric_assembler::SymbolCache::getEnvBinding(const std::string &name) const
 {
-    if (m_envBindings.contains(name))
-        return m_envBindings.at(name);
-    return {};
+    auto iterator = m_envBindings.find(name);
+    if (iterator == m_envBindings.cend())
+        return {};
+    return iterator->second;
 }
 
 tempo_utils::Status
@@ -80,7 +115,7 @@ lyric_assembler::SymbolCache::insertEnvBinding(const std::string &name, const Sy
             tempo_tracing::LogSeverity::kError,
             "env binding {} is already set", name);
     m_envBindings[name] = binding;
-    return AssemblerStatus::ok();
+    return {};
 }
 
 bool
@@ -105,5 +140,5 @@ lyric_assembler::SymbolCache::insertEnvInstance(const lyric_common::TypeDef &typ
             tempo_tracing::LogSeverity::kError,
             "env instance {} is already set", type.toString());
     m_envInstances[type] = url;
-    return AssemblerStatus::ok();
+    return {};
 }

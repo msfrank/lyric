@@ -28,8 +28,8 @@ TEST_F(CallsiteReifierTP0Out, NullaryFunctionGivenT_IntCallsiteTypeArgument_retu
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
     ASSERT_TRUE (typeCache->makeTemplate(templateUrl, {tp}, proc->procBlock()).isOk());
-    lyric_assembler::TemplateHandle *templateHandle = typeCache->getTemplate(templateUrl);
-    ASSERT_TRUE (templateHandle != nullptr);
+    lyric_assembler::TemplateHandle *templateHandle;
+    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->getOrImportTemplate(templateUrl));
 
     // simulate the function f[T](): T with the given callsite type arguments [Int]
     lyric_typing::CallsiteReifier reifier({}, {}, templateUrl, templateHandle->getTemplateParameters(),

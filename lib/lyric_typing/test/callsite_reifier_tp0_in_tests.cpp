@@ -29,8 +29,8 @@ TEST_F(CallsiteReifierTP0In, UnaryFunctionGivenT_P0takesT_returnsBool)
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
     ASSERT_TRUE (typeCache->makeTemplate(templateUrl, {tp}, proc->procBlock()).isOk());
-    lyric_assembler::TemplateHandle *templateHandle = typeCache->getTemplate(templateUrl);
-    ASSERT_TRUE (templateHandle != nullptr);
+    lyric_assembler::TemplateHandle *templateHandle;
+    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->getOrImportTemplate(templateUrl));
 
     lyric_object::Parameter p0;
     p0.index = 0;

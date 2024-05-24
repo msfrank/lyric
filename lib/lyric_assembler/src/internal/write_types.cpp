@@ -8,7 +8,7 @@
 #include <lyric_assembler/internal/write_types.h>
 #include <lyric_assembler/struct_symbol.h>
 
-static lyric_assembler::AssemblerStatus
+static tempo_utils::Status
 write_type(
     lyric_assembler::TypeCache *typeCache,
     const lyric_assembler::TypeHandle *typeHandle,
@@ -23,43 +23,43 @@ write_type(
     switch (assignableType.getType()) {
 
         case lyric_common::TypeDefType::Concrete: {
-            auto *sym = symbolCache->getSymbol(assignableType.getConcreteUrl());
-            TU_ASSERT (sym != nullptr);
+            lyric_assembler::AbstractSymbol *symbol;
+            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(assignableType.getConcreteUrl()));
             lyo1::TypeSection concreteSection;
-            uint32_t concreteDescriptor;
-            std::vector<uint32_t> parameters;
-            switch (sym->getSymbolType()) {
+            tu_uint32 concreteDescriptor;
+            std::vector<tu_uint32> parameters;
+            switch (symbol->getSymbolType()) {
                 case lyric_assembler::SymbolType::EXISTENTIAL:
                     concreteSection = lyo1::TypeSection::Existential;
-                    concreteDescriptor = cast_symbol_to_existential(sym)->getAddress().getAddress();
+                    concreteDescriptor = cast_symbol_to_existential(symbol)->getAddress().getAddress();
                     break;
                 case lyric_assembler::SymbolType::CLASS:
                     concreteSection = lyo1::TypeSection::Class;
-                    concreteDescriptor = cast_symbol_to_class(sym)->getAddress().getAddress();
+                    concreteDescriptor = cast_symbol_to_class(symbol)->getAddress().getAddress();
                     break;
                 case lyric_assembler::SymbolType::CONCEPT:
                     concreteSection = lyo1::TypeSection::Concept;
-                    concreteDescriptor = cast_symbol_to_concept(sym)->getAddress().getAddress();
+                    concreteDescriptor = cast_symbol_to_concept(symbol)->getAddress().getAddress();
                     break;
                 case lyric_assembler::SymbolType::INSTANCE:
                     concreteSection = lyo1::TypeSection::Instance;
-                    concreteDescriptor = cast_symbol_to_instance(sym)->getAddress().getAddress();
+                    concreteDescriptor = cast_symbol_to_instance(symbol)->getAddress().getAddress();
                     break;
                 case lyric_assembler::SymbolType::ENUM:
                     concreteSection = lyo1::TypeSection::Enum;
-                    concreteDescriptor = cast_symbol_to_enum(sym)->getAddress().getAddress();
+                    concreteDescriptor = cast_symbol_to_enum(symbol)->getAddress().getAddress();
                     break;
                 case lyric_assembler::SymbolType::STRUCT:
                     concreteSection = lyo1::TypeSection::Struct;
-                    concreteDescriptor = cast_symbol_to_struct(sym)->getAddress().getAddress();
+                    concreteDescriptor = cast_symbol_to_struct(symbol)->getAddress().getAddress();
                     break;
                 default:
                     return lyric_assembler::AssemblerStatus::forCondition(
                         lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid type");
             }
             for (auto it = typeHandle->typeArgumentsBegin(); it != typeHandle->typeArgumentsEnd(); it++) {
-                const auto *t = typeCache->getType(*it);
-                TU_ASSERT (t != nullptr);
+                lyric_assembler::TypeHandle *t;
+                TU_ASSIGN_OR_RETURN (t, typeCache->getOrMakeType(*it));
                 auto address = t->getAddress();
                 TU_ASSERT (address.isValid());
                 parameters.emplace_back(address.getAddress());
@@ -73,14 +73,14 @@ write_type(
 
         case lyric_common::TypeDefType::Placeholder: {
             auto templateUrl = assignableType.getPlaceholderTemplateUrl();
-            auto *templateHandle = typeCache->getTemplate(templateUrl);
-            TU_ASSERT (templateHandle != nullptr);
-            uint32_t placeholderTemplate = templateHandle->getAddress().getAddress();
+            lyric_assembler::TemplateHandle *templateHandle;
+            TU_ASSIGN_OR_RETURN (templateHandle, typeCache->getOrImportTemplate(templateUrl));
+            tu_uint32 placeholderTemplate = templateHandle->getAddress().getAddress();
             TU_ASSERT (placeholderTemplate != lyric_runtime::INVALID_ADDRESS_U32);
-            std::vector<uint32_t> parameters;
+            std::vector<tu_uint32> parameters;
             for (auto it = typeHandle->typeArgumentsBegin(); it != typeHandle->typeArgumentsEnd(); it++) {
-                const auto *t = typeCache->getType(*it);
-                TU_ASSERT (t != nullptr);
+                lyric_assembler::TypeHandle *t;
+                TU_ASSIGN_OR_RETURN (t, typeCache->getOrMakeType(*it));
                 auto address = t->getAddress();
                 TU_ASSERT (address.isValid());
                 parameters.emplace_back(address.getAddress());
@@ -93,10 +93,10 @@ write_type(
         }
 
         case lyric_common::TypeDefType::Union: {
-            std::vector<uint32_t> members;
+            std::vector<tu_uint32> members;
             for (const auto &member : typeHandle->getTypeDef().getUnionMembers()) {
-                const auto *t = typeCache->getType(member);
-                TU_ASSERT (t != nullptr);
+                lyric_assembler::TypeHandle *t;
+                TU_ASSIGN_OR_RETURN (t, typeCache->getOrMakeType(member));
                 auto address = t->getAddress();
                 TU_ASSERT (address.isValid());
                 members.emplace_back(address.getAddress());
@@ -108,10 +108,10 @@ write_type(
         }
 
         case lyric_common::TypeDefType::Intersection: {
-            std::vector<uint32_t> members;
+            std::vector<tu_uint32> members;
             for (const auto &member : typeHandle->getTypeDef().getIntersectionMembers()) {
-                const auto *t = typeCache->getType(member);
-                TU_ASSERT (t != nullptr);
+                lyric_assembler::TypeHandle *t;
+                TU_ASSIGN_OR_RETURN (t, typeCache->getOrMakeType(member));
                 auto address = t->getAddress();
                 TU_ASSERT (address.isValid());
                 members.emplace_back(address.getAddress());
@@ -134,7 +134,7 @@ write_type(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid type");
     }
 
-    uint32_t superType = lyric_runtime::INVALID_ADDRESS_U32;
+    tu_uint32 superType = lyric_runtime::INVALID_ADDRESS_U32;
     if (typeHandle->getSuperType() != nullptr) {
         auto address = typeHandle->getSuperType()->getAddress();
         TU_ASSERT(address.isValid());
@@ -142,7 +142,7 @@ write_type(
     }
 
     types_vector.push_back(lyo1::CreateTypeDescriptor(buffer, unionType, assignableUnion, superType));
-    return lyric_assembler::AssemblerStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -164,5 +164,5 @@ lyric_assembler::internal::write_types(
     // create the types vector
     typesOffset = buffer.CreateVector(types_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

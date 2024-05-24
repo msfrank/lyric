@@ -170,6 +170,7 @@ namespace lyric_assembler {
         lyric_common::AssemblyLocation location;
         tu_uint32 importIndex;
         ImportFlags flags;
+        bool isShared;
     };
 
     struct RequestedLink {

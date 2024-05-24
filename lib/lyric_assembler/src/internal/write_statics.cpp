@@ -4,7 +4,7 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
-static lyric_assembler::AssemblerStatus
+static tempo_utils::Status
 write_static(
     lyric_assembler::StaticSymbol *staticSymbol,
     lyric_assembler::TypeCache *typeCache,
@@ -13,12 +13,13 @@ write_static(
     std::vector<flatbuffers::Offset<lyo1::StaticDescriptor>> &statics_vector,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    auto index = static_cast<uint32_t>(statics_vector.size());
+    auto index = static_cast<tu_uint32>(statics_vector.size());
 
     auto staticPathString = staticSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fb_fullyQualifiedName = buffer.CreateSharedString(staticPathString);
-    auto staticType = staticSymbol->getAssignableType();
-    auto *typeHandle = typeCache->getType(staticType);
+    lyric_assembler::TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(staticSymbol->getAssignableType()));
+    tu_uint32 staticType = typeHandle->getAddress().getAddress();
 
     lyo1::StaticFlags staticFlags = lyo1::StaticFlags::NONE;
 
@@ -28,25 +29,23 @@ write_static(
         staticFlags |= lyo1::StaticFlags::Var;
 
     // get static initializer
-    auto initUrl = staticSymbol->getInitializer();
-    if (!symbolCache->hasSymbol(initUrl))
+    auto initializerUrl = staticSymbol->getInitializer();
+    lyric_assembler::AbstractSymbol *initializer;
+    TU_ASSIGN_OR_RETURN (initializer, symbolCache->getOrImportSymbol(initializerUrl));
+    if (initializer->getSymbolType() != lyric_assembler::SymbolType::CALL)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing static init");
-    auto *sym = symbolCache->getSymbol(initUrl);
-    if (sym == nullptr || sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing static init");
-    auto initCall = cast_symbol_to_call(sym)->getAddress().getAddress();
+    auto initCall = cast_symbol_to_call(initializer)->getAddress().getAddress();
 
     // add static descriptor
     statics_vector.push_back(lyo1::CreateStaticDescriptor(buffer,
-        fb_fullyQualifiedName, typeHandle->getAddress().getAddress(), staticFlags, initCall));
+        fb_fullyQualifiedName, staticType, staticFlags, initCall));
 
     // add symbol descriptor
     symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fb_fullyQualifiedName,
         lyo1::DescriptorSection::Static, index));
 
-    return lyric_assembler::AssemblerStatus::ok();
+    return {};
 }
 
 
@@ -72,5 +71,5 @@ lyric_assembler::internal::write_statics(
     // create the statics vector
     staticsOffset = buffer.CreateVector(statics_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

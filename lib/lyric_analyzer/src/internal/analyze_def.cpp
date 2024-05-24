@@ -60,12 +60,11 @@ lyric_analyzer::internal::analyze_def(
     if (declareFunctionResult.isStatus())
         return declareFunctionResult.getStatus();
     auto functionUrl = declareFunctionResult.getResult();
-    auto *sym = block->blockState()->symbolCache()->getSymbol(functionUrl);
-    if (sym == nullptr)
-        block->throwAssemblerInvariant("missing call symbol {}", functionUrl.toString());
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(functionUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         block->throwAssemblerInvariant("invalid call symbol {}", functionUrl.toString());
-    auto *call = cast_symbol_to_call(sym);
+    auto *call = cast_symbol_to_call(symbol);
 
     // analyze the function body
     auto body = walker.getChild(1);

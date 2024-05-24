@@ -275,8 +275,8 @@ resolve_binding_tail_recursive(
             "missing symbol {}", lyric_common::SymbolPath(path).toString());
 
     auto *state = block->blockState();
-    auto *symbol = state->symbolCache()->getSymbol(binding.symbolUrl);
-    TU_ASSERT (symbol != nullptr);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(binding.symbolUrl));
 
     // if there are subsequent segments then the symbol must be a namespace
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
@@ -313,8 +313,8 @@ lyric_assembler::BlockHandle::resolveBinding(const std::vector<std::string> &pat
     // if definition is not found in any reachable block, then check env
     if (m_state->symbolCache()->hasEnvBinding(*curr)) {
         auto binding = m_state->symbolCache()->getEnvBinding(*curr);
-        auto *symbol = m_state->symbolCache()->getSymbol(binding.symbolUrl);
-        TU_ASSERT (symbol != nullptr);
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(binding.symbolUrl));
 
         // if there are no more path segments then return the binding
         if (++curr == path.cend())
@@ -410,12 +410,8 @@ lyric_assembler::BlockHandle::resolveSingular(const lyric_parser::Assignable &as
 
     auto *typeCache = m_state->typeCache();
 
-    // if type is in the typecache then we're done
-    if (typeCache->hasType(typeDef))
-        return typeDef;
-
-    // otherwise add the type to the typecache
-    TU_RETURN_IF_NOT_OK (typeCache->makeType(typeDef));
+    // add the type to the typecache if it doesn't already exist
+    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(typeDef));
 
     return typeDef;
 }
@@ -427,8 +423,8 @@ lyric_assembler::BlockHandle::resolveDefinition(const std::vector<std::string> &
     TU_ASSIGN_OR_RETURN (binding, resolveBinding(path));
 
     auto *symbolCache = m_state->symbolCache();
-    auto *symbol = symbolCache->getSymbol(binding.symbolUrl);
-    TU_ASSERT (symbol != nullptr);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(binding.symbolUrl));
 
     switch (symbol->getSymbolType()) {
         case SymbolType::CALL:
@@ -484,15 +480,13 @@ lyric_assembler::BlockHandle::declareVariable(
     }
 
     // make type handle if it doesn't exist already (for example union or intersection types)
-    auto status = m_state->typeCache()->makeType(assignableType);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_STATUS (m_state->typeCache()->getOrMakeType(assignableType));
 
     // if this is a root block then create a static variable, otherwise create a local
     auto localUrl = makeSymbolUrl(name);
     auto address = m_blockProc->allocateLocal();
     auto *localVariable = new LocalVariable(localUrl, assignableType, address);
-    status = m_state->symbolCache()->insertSymbol(localUrl, localVariable);
+    auto status = m_state->symbolCache()->insertSymbol(localUrl, localVariable);
     if (status.notOk()) {
         delete localVariable;
         return status;
@@ -533,22 +527,19 @@ lyric_assembler::BlockHandle::declareTemporary(
     }
 
     // make type handle if it doesn't exist already (for example union or intersection types)
-    auto status = m_state->typeCache()->makeType(assignableType);
-    if (!status.isOk())
-        return status;
-
-    SymbolBinding binding;
+    TU_RETURN_IF_STATUS (m_state->typeCache()->getOrMakeType(assignableType));
 
     // temporary variables are always local
     auto localUrl = makeSymbolUrl(name);
     auto address = m_blockProc->allocateLocal();
     auto *localVariable = new LocalVariable(localUrl, assignableType, address);
-    status = m_state->symbolCache()->insertSymbol(localUrl, localVariable);
+    auto status = m_state->symbolCache()->insertSymbol(localUrl, localVariable);
     if (status.notOk()) {
         delete localVariable;
         return status;
     }
 
+    SymbolBinding binding;
     binding.symbolUrl = localUrl;
     binding.typeDef = assignableType;
     binding.bindingType = bindingType_;
@@ -585,11 +576,8 @@ lyric_assembler::BlockHandle::declareStatic(
     }
 
     // make type handle if it doesn't exist already (for example union or intersection types)
-    auto status = m_state->typeCache()->makeType(assignableType);
-    if (!status.isOk())
-        return status;
-
-    auto *staticType = m_state->typeCache()->getType(assignableType);
+    lyric_assembler::TypeHandle *staticType;
+    TU_ASSIGN_OR_RETURN (staticType, m_state->typeCache()->getOrMakeType(assignableType));
     staticType->touch();
 
     auto staticUrl = makeSymbolUrl(name);
@@ -599,7 +587,7 @@ lyric_assembler::BlockHandle::declareStatic(
     if (!declOnly)
         address = StaticAddress::near(m_state->numStatics());
     auto *staticSymbol = new StaticSymbol(staticUrl, isVariable, address, staticType, this, m_state);
-    status = m_state->appendStatic(staticSymbol);
+    auto status = m_state->appendStatic(staticSymbol);
     if (status.notOk()) {
         delete staticSymbol;
         return status;
@@ -641,8 +629,8 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
     for (; block != nullptr && block->m_blockProc == m_blockProc; block = block->m_parentBlock) {
         if (block->m_bindings.contains(name)) {
             const auto &binding = block->m_bindings[name];
-            auto *symbol = m_state->symbolCache()->getSymbol(binding.symbolUrl);
-            TU_ASSERT (symbol != nullptr);
+            lyric_assembler::AbstractSymbol *symbol;
+            TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(binding.symbolUrl));
 
             switch (symbol->getSymbolType()) {
                 case SymbolType::ARGUMENT:
@@ -674,8 +662,8 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
     for (; block != nullptr; block = block->m_parentBlock) {
         if (block->m_bindings.contains(name)) {
             const auto &binding = block->m_bindings[name];
-            auto *symbol = m_state->symbolCache()->getSymbol(binding.symbolUrl);
-            TU_ASSERT (symbol != nullptr);
+            lyric_assembler::AbstractSymbol *symbol;
+            TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(binding.symbolUrl));
 
             lyric_assembler::LexicalTarget lexicalTarget;
             uint32_t targetOffset = lyric_runtime::INVALID_ADDRESS_U32;
@@ -715,8 +703,8 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
 
             auto activation = block->blockProc()->getActivation();
             TU_ASSERT (m_state->symbolCache()->hasSymbol(activation));
-            auto *activationSym = m_state->symbolCache()->getSymbol(activation);
-            TU_ASSERT (activationSym->getSymbolType() == SymbolType::CALL);
+            lyric_assembler::AbstractSymbol *activationSym;
+            TU_ASSIGN_OR_RETURN (activationSym, m_state->symbolCache()->getOrImportSymbol(activation));
             auto activationAddress = cast_symbol_to_call(activationSym)->getAddress();
 
             // import lexical variable into this env, and return it
@@ -738,8 +726,8 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
     // if variable is not found in any reachable block, then check env
     if (m_state->symbolCache()->hasEnvBinding(name)) {
         const auto binding = m_state->symbolCache()->getEnvBinding(name);
-        auto *symbol = m_state->symbolCache()->getSymbol(binding.symbolUrl);
-        TU_ASSERT (symbol != nullptr);
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(binding.symbolUrl));
 
         switch (symbol->getSymbolType()) {
             case SymbolType::EXISTENTIAL:
@@ -773,9 +761,10 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
 tempo_utils::Status
 lyric_assembler::BlockHandle::load(const DataReference &ref)
 {
-    auto *symbol = m_state->symbolCache()->getSymbol(ref.symbolUrl);
-    TU_ASSERT (symbol != nullptr);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
     symbol->touch();
+
     switch (symbol->getSymbolType()) {
         case SymbolType::ARGUMENT:
             return m_blockCode->loadArgument(cast_symbol_to_argument(symbol)->getOffset());
@@ -812,9 +801,10 @@ lyric_assembler::BlockHandle::load(const DataReference &ref)
 tempo_utils::Status
 lyric_assembler::BlockHandle::store(const DataReference &ref)
 {
-    auto *symbol = m_state->symbolCache()->getSymbol(ref.symbolUrl);
-    TU_ASSERT (symbol != nullptr);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
     symbol->touch();
+
     switch (symbol->getSymbolType()) {
         case SymbolType::ARGUMENT:
             return m_blockCode->storeArgument(cast_symbol_to_argument(symbol)->getOffset());
@@ -855,10 +845,8 @@ lyric_assembler::BlockHandle::declareFunction(
     // create the template if there are any template parameters
     TemplateHandle *functionTemplate = nullptr;
     if (!templateParameters.empty()) {
-        auto status = m_state->typeCache()->makeTemplate(functionUrl, templateParameters, this);
-        if (!status.isOk())
-            return status;
-        functionTemplate = m_state->typeCache()->getTemplate(functionUrl);
+        TU_RETURN_IF_NOT_OK (m_state->typeCache()->makeTemplate(functionUrl, templateParameters, this));
+        TU_ASSIGN_OR_RETURN (functionTemplate, m_state->typeCache()->getOrImportTemplate(functionUrl));
     }
 
     AbstractResolver *resolver = functionTemplate? (AbstractResolver *) functionTemplate : this;
@@ -1021,12 +1009,11 @@ lyric_assembler::BlockHandle::resolveFunction(const std::string &name)
         return resolveDefinitionResult.getStatus();
 
     auto functionUrl = resolveDefinitionResult.getResult();
-    auto *sym = m_state->symbolCache()->getSymbol(functionUrl);
-    if (sym == nullptr)
-        throwAssemblerInvariant("missing call symbol {}", functionUrl.toString());
-    if (sym->getSymbolType() != SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(functionUrl));
+    if (symbol->getSymbolType() != SymbolType::CALL)
         throwAssemblerInvariant("invalid call symbol {}", functionUrl.toString());
-    auto *call = cast_symbol_to_call(sym);
+    auto *call = cast_symbol_to_call(symbol);
 
     return CallInvoker(call);
 }
@@ -1126,10 +1113,9 @@ lyric_assembler::BlockHandle::resolveStruct(const lyric_parser::Assignable &stru
         return resolveDefinitionResult.getStatus();
 
     auto structUrl = resolveDefinitionResult.getResult();
-    auto *sym = m_state->symbolCache()->getSymbol(structUrl);
-    if (sym == nullptr)
-        throwAssemblerInvariant("missing struct symbol {}", structUrl.toString());
-    if (sym->getSymbolType() != SymbolType::STRUCT)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(structUrl));
+    if (symbol->getSymbolType() != SymbolType::STRUCT)
         return logAndContinue(AssemblerCondition::kInvalidSymbol,
             tempo_tracing::LogSeverity::kError,
             "type {} is not a struct", structSpec.toString());
@@ -1171,10 +1157,8 @@ lyric_assembler::BlockHandle::declareClass(
     // create the template if there are any template parameters
     TemplateHandle *classTemplate = nullptr;
     if (!templateParameters.empty()) {
-        auto status = m_state->typeCache()->makeTemplate(classUrl, templateParameters, this);
-        if (!status.isOk())
-            return status;
-        classTemplate = m_state->typeCache()->getTemplate(classUrl);
+        TU_RETURN_IF_NOT_OK (m_state->typeCache()->makeTemplate(classUrl, templateParameters, this));
+        TU_ASSIGN_OR_RETURN (classTemplate, m_state->typeCache()->getOrImportTemplate(classUrl));
     }
 
    // create the type
@@ -1229,10 +1213,9 @@ lyric_assembler::BlockHandle::resolveClass(const lyric_parser::Assignable &class
         return resolveDefinitionResult.getStatus();
 
     auto classUrl = resolveDefinitionResult.getResult();
-    auto *sym = m_state->symbolCache()->getSymbol(classUrl);
-    if (sym == nullptr)
-        throwAssemblerInvariant("missing class symbol {}", classUrl.toString());
-    if (sym->getSymbolType() != SymbolType::CLASS)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(classUrl));
+    if (symbol->getSymbolType() != SymbolType::CLASS)
         return logAndContinue(AssemblerCondition::kInvalidSymbol,
             tempo_tracing::LogSeverity::kError,
             "type {} is not a class", classSpec.toString());
@@ -1261,10 +1244,8 @@ lyric_assembler::BlockHandle::declareConcept(
     // create the template if there are any template parameters
     TemplateHandle *conceptTemplate = nullptr;
     if (!templateParameters.empty()) {
-        auto status = m_state->typeCache()->makeTemplate(conceptUrl, templateParameters, this);
-        if (!status.isOk())
-            return status;
-        conceptTemplate = m_state->typeCache()->getTemplate(conceptUrl);
+        TU_RETURN_IF_NOT_OK (m_state->typeCache()->makeTemplate(conceptUrl, templateParameters, this));
+        TU_ASSIGN_OR_RETURN (conceptTemplate, m_state->typeCache()->getOrImportTemplate(conceptUrl));
     }
 
     // create the type
@@ -1319,10 +1300,9 @@ lyric_assembler::BlockHandle::resolveConcept(const lyric_parser::Assignable &con
         return resolveDefinitionResult.getStatus();
 
     auto conceptUrl = resolveDefinitionResult.getResult();
-    auto *sym = m_state->symbolCache()->getSymbol(conceptUrl);
-    if (sym == nullptr)
-        throwAssemblerInvariant("missing concept symbol {}", conceptUrl.toString());
-    if (sym->getSymbolType() != SymbolType::CONCEPT)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(conceptUrl));
+    if (symbol->getSymbolType() != SymbolType::CONCEPT)
         return logAndContinue(AssemblerCondition::kInvalidSymbol,
             tempo_tracing::LogSeverity::kError,
             "type {} is not a concept", conceptSpec.toString());
@@ -1401,14 +1381,13 @@ lyric_assembler::BlockHandle::resolveEnum(const lyric_parser::Assignable &enumSp
         return resolveDefinitionResult.getStatus();
 
     auto enumUrl = resolveDefinitionResult.getResult();
-    auto *sym = m_state->symbolCache()->getSymbol(enumUrl);
-    if (sym == nullptr)
-        throwAssemblerInvariant("missing enum symbol {}", enumSpec.toString());
-    if (sym->getSymbolType() != SymbolType::ENUM)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(enumUrl));
+    if (symbol->getSymbolType() != SymbolType::ENUM)
         return logAndContinue(AssemblerCondition::kInvalidSymbol,
             tempo_tracing::LogSeverity::kError,
             "type {} is not an enum", enumSpec.toString());
-    auto *enumSymbol = cast_symbol_to_enum(sym);
+    auto *enumSymbol = cast_symbol_to_enum(symbol);
 
     return SymbolBinding(enumUrl, enumSymbol->getAssignableType(), BindingType::Value);
 }
@@ -1484,14 +1463,13 @@ lyric_assembler::BlockHandle::resolveInstance(const lyric_parser::Assignable &in
         return resolveDefinitionResult.getStatus();
 
     auto instanceUrl = resolveDefinitionResult.getResult();
-    auto *sym = m_state->symbolCache()->getSymbol(instanceUrl);
-    if (sym == nullptr)
-        throwAssemblerInvariant("missing instance symbol {}", instanceSpec.toString());
-    if (sym->getSymbolType() != SymbolType::INSTANCE)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(instanceUrl));
+    if (symbol->getSymbolType() != SymbolType::INSTANCE)
         return logAndContinue(AssemblerCondition::kInvalidSymbol,
             tempo_tracing::LogSeverity::kError,
             "type {} is not an instance", instanceSpec.toString());
-    auto *instanceSymbol = cast_symbol_to_instance(sym);
+    auto *instanceSymbol = cast_symbol_to_instance(symbol);
 
     return SymbolBinding(instanceUrl, instanceSymbol->getAssignableType(), BindingType::Value);
 }
@@ -1501,48 +1479,45 @@ lyric_assembler::BlockHandle::useSymbol(
     const lyric_common::SymbolUrl &symbolUrl,
     const absl::flat_hash_set<lyric_common::TypeDef> &implTypes)
 {
-    auto *sym = m_state->symbolCache()->getSymbol(symbolUrl);
-    if (sym == nullptr)
-        return logAndContinue(AssemblerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "missing symbol {}", symbolUrl.toString());
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(symbolUrl));
 
     absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsBegin;
     absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsEnd;
 
-    switch (sym->getSymbolType()) {
+    switch (symbol->getSymbolType()) {
         case SymbolType::CLASS: {
-            auto *classSymbol = cast_symbol_to_class(sym);
+            auto *classSymbol = cast_symbol_to_class(symbol);
             implsBegin = classSymbol->implsBegin();
             implsEnd = classSymbol->implsEnd();
             break;
         }
         case SymbolType::CONCEPT: {
-            auto *conceptSymbol = cast_symbol_to_concept(sym);
+            auto *conceptSymbol = cast_symbol_to_concept(symbol);
             implsBegin = conceptSymbol->implsBegin();
             implsEnd = conceptSymbol->implsEnd();
             break;
         }
         case SymbolType::ENUM: {
-            auto *enumSymbol = cast_symbol_to_enum(sym);
+            auto *enumSymbol = cast_symbol_to_enum(symbol);
             implsBegin = enumSymbol->implsBegin();
             implsEnd = enumSymbol->implsEnd();
             break;
         }
         case SymbolType::EXISTENTIAL: {
-            auto *existentialSymbol = cast_symbol_to_existential(sym);
+            auto *existentialSymbol = cast_symbol_to_existential(symbol);
             implsBegin = existentialSymbol->implsBegin();
             implsEnd = existentialSymbol->implsEnd();
             break;
         }
         case SymbolType::INSTANCE: {
-            auto *instanceSymbol = cast_symbol_to_instance(sym);
+            auto *instanceSymbol = cast_symbol_to_instance(symbol);
             implsBegin = instanceSymbol->implsBegin();
             implsEnd = instanceSymbol->implsEnd();
             break;
         }
         case SymbolType::STRUCT: {
-            auto *structSymbol = cast_symbol_to_struct(sym);
+            auto *structSymbol = cast_symbol_to_struct(symbol);
             implsBegin = structSymbol->implsBegin();
             implsEnd = structSymbol->implsEnd();
             break;
@@ -1623,11 +1598,8 @@ lyric_assembler::BlockHandle::declareAlias(
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
             "cannot declare alias {}; symbol is already defined", alias);
-    if (!m_state->symbolCache()->hasSymbol(targetUrl))
-        return logAndContinue(AssemblerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "cannot declare alias {}; missing symbol {}", alias, targetUrl.toString());
-    auto *symbol = m_state->symbolCache()->getSymbol(targetUrl);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(targetUrl));
 
     SymbolBinding binding;
     binding.symbolUrl = targetUrl;
@@ -1677,10 +1649,7 @@ lyric_assembler::BlockHandle::declareAlias(
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
             "cannot declare alias {}; symbol is already defined", alias);
-    if (!m_state->symbolCache()->hasSymbol(targetBinding.symbolUrl))
-        return logAndContinue(AssemblerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "cannot declare alias {}; missing symbol {}", alias, targetBinding.symbolUrl.toString());
+    TU_RETURN_IF_STATUS (m_state->symbolCache()->getOrImportSymbol(targetBinding.symbolUrl));
 
     SymbolBinding binding;
     binding.symbolUrl = targetBinding.symbolUrl;
@@ -1705,10 +1674,7 @@ lyric_assembler::BlockHandle::declareAlias(
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
             "cannot declare alias {}; symbol is already defined", alias);
-    if (!m_state->symbolCache()->hasSymbol(targetRef.symbolUrl))
-        return logAndContinue(AssemblerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "cannot declare alias {}; missing symbol {}", alias, targetRef.symbolUrl.toString());
+    TU_RETURN_IF_STATUS (m_state->symbolCache()->getOrImportSymbol(targetRef.symbolUrl));
 
     SymbolBinding binding;
     binding.symbolUrl = targetRef.symbolUrl;
@@ -1771,13 +1737,11 @@ lyric_assembler::BlockHandle::declareNamespace(
 
     // resolve the type
     auto fundamentalNamespace = m_state->fundamentalCache()->getFundamentalUrl(FundamentalSymbol::Namespace);
-    if (!m_state->symbolCache()->hasSymbol(fundamentalNamespace))
-        throwAssemblerInvariant("missing fundamental symbol Namespace");
-    auto *nsDescriptor = m_state->symbolCache()->getSymbol(fundamentalNamespace);
-    auto nsDescriptorType = nsDescriptor->getAssignableType();
-    if (!m_state->typeCache()->hasType(nsDescriptorType))
-        throwAssemblerInvariant("missing type for {}", fundamentalNamespace.toString());
-    auto *typeHandle = m_state->typeCache()->getType(nsDescriptorType);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(fundamentalNamespace));
+    auto nsDescriptorType = symbol->getAssignableType();
+    lyric_assembler::TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->getOrMakeType(nsDescriptorType));
 
     auto address = NamespaceAddress::near(m_state->numNamespaces());
     auto *superNs = blockNs();

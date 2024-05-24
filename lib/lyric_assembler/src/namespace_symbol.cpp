@@ -79,7 +79,8 @@ lyric_assembler::NamespaceSymbol::load()
 
     priv->access = lyric_object::AccessType::Public;
 
-    priv->namespaceType = typeCache->getType(fundamentalCache->getFundamentalType(FundamentalSymbol::Namespace));
+    TU_ASSIGN_OR_RAISE (priv->namespaceType, typeCache->getOrMakeType(
+        fundamentalCache->getFundamentalType(FundamentalSymbol::Namespace)));
 
     auto superNamespaceUrl = m_namespaceImport->getSuperNamespace();
     if (superNamespaceUrl.isValid()) {

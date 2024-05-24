@@ -129,12 +129,11 @@ compile_defenum_def(
     if (declareMethodResult.isStatus())
         return declareMethodResult.getStatus();
     auto methodUrl = declareMethodResult.getResult();
-    auto *sym = state->symbolCache()->getSymbol(methodUrl);
-    if (sym == nullptr)
-        enumBlock->throwAssemblerInvariant("missing call symbol {}", methodUrl.toString());
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(methodUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         enumBlock->throwAssemblerInvariant("invalid call symbol {}", methodUrl.toString());
-    auto *call = cast_symbol_to_call(sym);
+    auto *call = cast_symbol_to_call(symbol);
 
     // add initializers to the call
     for (const auto &entry : initializers) {
@@ -216,9 +215,8 @@ compile_defenum_base_init(
     if (declareBaseCtor.isStatus())
         return declareBaseCtor.getStatus();
     auto baseCtorUrl = declareBaseCtor.getResult();
-    auto *baseCtorSym = state->symbolCache()->getSymbol(baseCtorUrl);
-    if (baseCtorSym == nullptr)
-        baseBlock->throwAssemblerInvariant("missing call symbol {}", baseCtorUrl.toString());
+    lyric_assembler::AbstractSymbol *baseCtorSym;
+    TU_ASSIGN_OR_RETURN (baseCtorSym, state->symbolCache()->getOrImportSymbol(baseCtorUrl));
     if (baseCtorSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         baseBlock->throwAssemblerInvariant("invalid call symbol {}", baseCtorUrl.toString());
     auto *baseCtor = cast_symbol_to_call(baseCtorSym);
@@ -308,9 +306,8 @@ compile_defenum_base_default_init(
     if (declareBaseCtor.isStatus())
         return declareBaseCtor.getStatus();
     auto baseCtorUrl = declareBaseCtor.getResult();
-    auto *baseCtorSym = state->symbolCache()->getSymbol(baseCtorUrl);
-    if (baseCtorSym == nullptr)
-        baseBlock->throwAssemblerInvariant("missing call symbol {}", baseCtorUrl.toString());
+    lyric_assembler::AbstractSymbol *baseCtorSym;
+    TU_ASSIGN_OR_RETURN (baseCtorSym, state->symbolCache()->getOrImportSymbol(baseCtorUrl));
     if (baseCtorSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         baseBlock->throwAssemblerInvariant("invalid call symbol {}", baseCtorUrl.toString());
     auto *baseCtor = cast_symbol_to_call(baseCtorSym);
@@ -387,9 +384,8 @@ compile_defenum_case_init(
     if (declareCtorResult.isStatus())
         return declareCtorResult.getStatus();
     auto caseCtorUrl = declareCtorResult.getResult();
-    auto *caseCtorSym = state->symbolCache()->getSymbol(caseCtorUrl);
-    if (caseCtorSym == nullptr)
-        caseBlock->throwAssemblerInvariant("missing call symbol {}", caseCtorUrl.toString());
+    lyric_assembler::AbstractSymbol *caseCtorSym;
+    TU_ASSIGN_OR_RETURN (caseCtorSym, state->symbolCache()->getOrImportSymbol(caseCtorUrl));
     if (caseCtorSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         caseBlock->throwAssemblerInvariant("invalid call symbol {}", caseCtorUrl.toString());
     auto *caseCtor= cast_symbol_to_call(caseCtorSym);
@@ -482,9 +478,8 @@ compile_defenum_case(
         return declCaseResult.getStatus();
     auto enumCaseUrl = declCaseResult.getResult();
 
-    auto *enumCaseSym = state->symbolCache()->getSymbol(enumCaseUrl);
-    if (enumCaseSym == nullptr)
-        block->throwAssemblerInvariant("missing enum symbol {}", enumCaseUrl.toString());
+    lyric_assembler::AbstractSymbol *enumCaseSym;
+    TU_ASSIGN_OR_RETURN (enumCaseSym, state->symbolCache()->getOrImportSymbol(enumCaseUrl));
     if (enumCaseSym->getSymbolType() != lyric_assembler::SymbolType::ENUM)
         block->throwAssemblerInvariant("invalid enum symbol {}", enumCaseUrl.toString());
     auto *caseEnum = cast_symbol_to_enum(enumCaseSym);
@@ -551,12 +546,11 @@ compile_defenum_impl_def(
     lyric_assembler::ExtensionMethod extension;
     TU_ASSIGN_OR_RETURN (extension, implHandle->declareExtension(
         identifier, packSpec.parameterSpec, packSpec.restSpec, packSpec.ctxSpec, returnSpec));
-    auto *sym = state->symbolCache()->getSymbol(extension.methodCall);
-    if (sym == nullptr)
-        implBlock->throwAssemblerInvariant("missing call symbol {}", extension.methodCall.toString());
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(extension.methodCall));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         implBlock->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
-    auto *call = cast_symbol_to_call(sym);
+    auto *call = cast_symbol_to_call(symbol);
 
     // add initializers to the call
     for (const auto &entry : initializers) {
@@ -698,9 +692,8 @@ lyric_compiler::internal::compile_defenum(
     // the super enum of the base is Category
     auto fundamentalCategory = state->fundamentalCache()->getFundamentalUrl(
         lyric_assembler::FundamentalSymbol::Category);
-    auto *categorySym = state->symbolCache()->getSymbol(fundamentalCategory);
-    if (categorySym == nullptr)
-        block->throwAssemblerInvariant("missing enum symbol {}", fundamentalCategory.toString());
+    lyric_assembler::AbstractSymbol *categorySym;
+    TU_ASSIGN_OR_RETURN (categorySym, state->symbolCache()->getOrImportSymbol(fundamentalCategory));
     if (categorySym->getSymbolType() != lyric_assembler::SymbolType::ENUM)
         block->throwAssemblerInvariant("invalid enum symbol {}", fundamentalCategory.toString());
     auto *categoryEnum = cast_symbol_to_enum(categorySym);
@@ -712,9 +705,8 @@ lyric_compiler::internal::compile_defenum(
         return declareBaseEnum.getStatus();
     auto baseEnumUrl = declareBaseEnum.getResult();
 
-    auto *baseEnumSym = state->symbolCache()->getSymbol(baseEnumUrl);
-    if (baseEnumSym == nullptr)
-        block->throwAssemblerInvariant("missing enum symbol {}", baseEnumUrl.toString());
+    lyric_assembler::AbstractSymbol *baseEnumSym;
+    TU_ASSIGN_OR_RETURN (baseEnumSym, state->symbolCache()->getOrImportSymbol(baseEnumUrl));
     if (baseEnumSym->getSymbolType() != lyric_assembler::SymbolType::ENUM)
         block->throwAssemblerInvariant("invalid enum symbol {}", baseEnumUrl.toString());
     auto *baseEnum = cast_symbol_to_enum(baseEnumSym);

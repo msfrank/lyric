@@ -11,6 +11,19 @@ lyric_runtime::SubroutineManager::SubroutineManager(SegmentManager *segmentManag
     TU_ASSERT (m_segmentManager != nullptr);
 }
 
+/**
+ * Constructs a frame for the call specified by `callIndex` in the segment specified by `segment` and
+ * pushes it onto the call stack. The `procOffset` is expected to be the index of the start of the call
+ * proc in the bytecode of the segment.
+ *
+ * @param callIndex
+ * @param segment
+ * @param procOffset
+ * @param args
+ * @param currentCoro
+ * @param status
+ * @return
+ */
 bool
 lyric_runtime::SubroutineManager::callProc(
     tu_uint32 callIndex,
@@ -110,6 +123,16 @@ lyric_runtime::SubroutineManager::callProc(
     return true;
 }
 
+/**
+ * Constructs a frame for the call specified by `address` and pushes it onto the call stack. The address
+ * is resolved in relation to the SP of the `currentCoro`.
+ *
+ * @param address
+ * @param args
+ * @param currentCoro
+ * @param status
+ * @return
+ */
 bool
 lyric_runtime::SubroutineManager::callStatic(
     tu_uint32 address,
@@ -256,6 +279,17 @@ lyric_runtime::SubroutineManager::callStatic(
     return true;
 }
 
+/**
+ * Constructs a frame for the call specified by `address` in the vtable of the specified `receiver` and
+ * pushes it onto the call stack. The address is resolved in relation to the SP of the `currentCoro`.
+ *
+ * @param receiver
+ * @param address
+ * @param args
+ * @param currentCoro
+ * @param status
+ * @return
+ */
 bool
 lyric_runtime::SubroutineManager::callVirtual(
     const DataCell &receiver,

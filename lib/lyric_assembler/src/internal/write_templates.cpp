@@ -1,7 +1,7 @@
 
 #include <lyric_assembler/internal/write_templates.h>
 
-static lyric_assembler::AssemblerStatus
+static tempo_utils::Status
 write_template(
     lyric_assembler::TypeCache *typeCache,
     const lyric_assembler::TemplateHandle *templateHandle,
@@ -18,10 +18,10 @@ write_template(
     for (int i = 0; i < templateHandle->numTemplateParameters(); i++) {
         const auto &tp = templateHandle->getTemplateParameter(i);
 
-        uint32_t name_offset = names.size();
+        tu_uint32 name_offset = names.size();
         names.push_back(tp.name);
 
-        uint32_t placeholder_offset = placeholders.size();
+        tu_uint32 placeholder_offset = placeholders.size();
         lyo1::PlaceholderVariance variance;
         switch (tp.variance) {
             case lyric_object::VarianceType::Invariant:
@@ -63,8 +63,9 @@ write_template(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant,
                     "missing constraint type");
 
-            auto address = typeCache->getType(tp.typeDef)->getAddress();
-            constraints.emplace_back(placeholder_offset, bound, address.getAddress());
+            lyric_assembler::TypeHandle *typeHandle;
+            TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(tp.typeDef));
+            constraints.emplace_back(placeholder_offset, bound, typeHandle->getAddress().getAddress());
         }
     }
 
@@ -73,7 +74,7 @@ write_template(
         buffer.CreateVectorOfStructs(placeholders), buffer.CreateVectorOfStructs(constraints),
         buffer.CreateVectorOfStrings(names)));
 
-    return lyric_assembler::AssemblerStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -94,5 +95,5 @@ lyric_assembler::internal::write_templates(
     // create the templates vector
     templatesOffset = buffer.CreateVector(templates_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

@@ -90,7 +90,8 @@ lyric_assembler::CallSymbol::CallSymbol(
 
     // if call is bound, then synthesize the $this variable
     TU_ASSERT (m_state->symbolCache()->hasSymbol(receiverUrl));
-    auto *receiverSymbol = m_state->symbolCache()->getSymbol(receiverUrl);
+    AbstractSymbol *receiverSymbol;
+    TU_ASSIGN_OR_RAISE (receiverSymbol, m_state->symbolCache()->getOrImportSymbol(receiverUrl));
     auto thisPath = callUrl.getSymbolPath().getPath();
     thisPath.push_back("$this");
     auto thisUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(thisPath));

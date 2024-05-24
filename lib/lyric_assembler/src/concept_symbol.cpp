@@ -435,12 +435,11 @@ lyric_assembler::ConceptSymbol::resolveAction(
             tempo_tracing::LogSeverity::kError,
             "missing action {}", name);
     const auto &actionMethod = priv->actions.at(name);
-    auto *methodSym = m_state->symbolCache()->getSymbol(actionMethod.methodAction);
-    if (methodSym == nullptr)
-        m_state->throwAssemblerInvariant("missing action symbol {}", actionMethod.methodAction.toString());
-    if (methodSym->getSymbolType() != SymbolType::ACTION)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(actionMethod.methodAction));
+    if (symbol->getSymbolType() != SymbolType::ACTION)
         m_state->throwAssemblerInvariant("invalid action symbol {}", actionMethod.methodAction.toString());
-    auto *action = static_cast<ActionSymbol *>(methodSym);
+    auto *action = cast_symbol_to_action(symbol);
     return ActionInvoker(action, getAddress());
 }
 
@@ -522,10 +521,9 @@ lyric_assembler::ConceptSymbol::declareImpl(const lyric_parser::Assignable &impl
             "impl {} already defined for concept {}", implType.toString(), m_conceptUrl.toString());
 
     // touch the impl type
-    auto *implTypeHandle = m_state->typeCache()->getType(implType);
-    if (implTypeHandle == nullptr)
-        m_state->throwAssemblerInvariant("missing type {}", implType.toString());
-    TU_RETURN_IF_NOT_OK (m_state->typeCache()->touchType(implType));
+    lyric_assembler::TypeHandle *implTypeHandle;
+    TU_ASSIGN_OR_RETURN (implTypeHandle, m_state->typeCache()->getOrMakeType(implType));
+    implTypeHandle->touch();
 
     // confirm that the impl concept exists
     auto implConcept = implType.getConcreteUrl();
@@ -533,10 +531,11 @@ lyric_assembler::ConceptSymbol::declareImpl(const lyric_parser::Assignable &impl
         m_state->throwAssemblerInvariant("missing concept symbol {}", implConcept.toString());
 
     // resolve the concept symbol
-    auto *conceptSym = m_state->symbolCache()->getSymbol(implConcept);
-    if (conceptSym->getSymbolType() != SymbolType::CONCEPT)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(implConcept));
+    if (symbol->getSymbolType() != SymbolType::CONCEPT)
         m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
-    auto *conceptSymbol = cast_symbol_to_concept(conceptSym);
+    auto *conceptSymbol = cast_symbol_to_concept(symbol);
 
     conceptSymbol->touch();
 
@@ -597,17 +596,17 @@ lyric_assembler::ConceptSymbol::putSealedType(const lyric_common::TypeDef &seale
             tempo_tracing::LogSeverity::kError,
             "invalid derived type {} for sealed concept {}", sealedType.toString(), m_conceptUrl.toString());
     auto sealedUrl = sealedType.getConcreteUrl();
-    if (!m_state->symbolCache()->hasSymbol(sealedUrl))
-        m_state->throwAssemblerInvariant("missing symbol {}", sealedUrl.toString());
-    auto *sym = m_state->symbolCache()->getSymbol(sealedType.getConcreteUrl());
-    TU_ASSERT (sym != nullptr);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(sealedUrl));
+    if (symbol->getSymbolType() != SymbolType::CONCEPT)
+        m_state->throwAssemblerInvariant("invalid concept symbol {}", sealedUrl.toString());
 
-    if (sym->getSymbolType() != SymbolType::CONCEPT || cast_symbol_to_concept(sym)->superConcept() != this)
+    if (cast_symbol_to_concept(symbol)->superConcept() != this)
         return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
             tempo_tracing::LogSeverity::kError,
             "{} does not derive from sealed concept {}", sealedType.toString(), m_conceptUrl.toString());
 
     priv->sealedTypes.insert(sealedType);
 
-    return AssemblerStatus::ok();
+    return {};
 }

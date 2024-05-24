@@ -106,13 +106,11 @@ lyric_compiler::internal::compile_placement(
                         bindingBlock->throwAssemblerInvariant("invalid parameter");
                     auto initializerUrl = invoker.getInitializer(param->name);
 
-                    auto *sym = symbolCache->getSymbol(initializerUrl);
-                    if (sym == nullptr) {
-                        bindingBlock->throwAssemblerInvariant("missing initializer {}", initializerUrl.toString());
-                    }
-                    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+                    lyric_assembler::AbstractSymbol *symbol;
+                    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(initializerUrl));
+                    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
                         bindingBlock->throwAssemblerInvariant("invalid initializer {}", initializerUrl.toString());
-                    lyric_assembler::CallInvoker call(cast_symbol_to_call(sym));
+                    lyric_assembler::CallInvoker call(cast_symbol_to_call(symbol));
 
                     lyric_typing::CallsiteReifier initReifier(call.getParameters(), call.getRest(),
                         call.getTemplateUrl(), call.getTemplateParameters(), reifier.getCallsiteArguments(),
@@ -154,7 +152,8 @@ lyric_compiler::internal::compile_placement(
                         auto ctxUrl = result.getResult().getConcreteUrl();
                         if (!symbolCache->hasSymbol(ctxUrl))
                             bindingBlock->throwAssemblerInvariant("missing ctx symbol {}", ctxUrl.toString());
-                        auto *ctxSym = symbolCache->getSymbol(ctxUrl);
+                        lyric_assembler::AbstractSymbol *ctxSym;
+                        TU_ASSIGN_OR_RETURN (ctxSym, symbolCache->getOrImportSymbol(ctxUrl));
                         if (ctxSym->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
                             bindingBlock->throwAssemblerInvariant("invalid ctx symbol {}", ctxUrl.toString());
                         auto *ctxInstance = cast_symbol_to_instance(ctxSym);
@@ -170,12 +169,11 @@ lyric_compiler::internal::compile_placement(
                     if (resolveInstanceResult.isStatus())
                         return resolveInstanceResult.getStatus();
                     auto evUrl = resolveInstanceResult.getResult();
-                    auto *evSymbol = symbolCache->getSymbol(evUrl);
-                    if (evSymbol == nullptr)
-                        bindingBlock->throwAssemblerInvariant("missing ctx symbol {}", evUrl.toString());
-                    if (evSymbol->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
+                    lyric_assembler::AbstractSymbol *evSym;
+                    TU_ASSIGN_OR_RETURN (evSym, symbolCache->getOrImportSymbol(evUrl));
+                    if (evSym->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
                         bindingBlock->throwAssemblerInvariant("invalid ctx symbol {}", evUrl.toString());
-                    auto *instance = cast_symbol_to_instance(evSymbol);
+                    auto *instance = cast_symbol_to_instance(evSym);
                     instance->touch();
                     auto *code = invokeBlock->blockCode();
                     auto status = code->loadInstance(instance->getAddress());

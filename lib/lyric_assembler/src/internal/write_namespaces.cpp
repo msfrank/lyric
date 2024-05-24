@@ -11,7 +11,7 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
-static lyric_assembler::AssemblerStatus
+static tempo_utils::Status
 write_namespace(
     lyric_assembler::NamespaceSymbol *namespaceSymbol,
     const lyric_common::AssemblyLocation &location,
@@ -21,7 +21,7 @@ write_namespace(
     std::vector<flatbuffers::Offset<lyo1::NamespaceDescriptor>> &namespaces_vector,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    auto index = static_cast<uint32_t>(namespaces_vector.size());
+    auto index = static_cast<tu_uint32>(namespaces_vector.size());
 
     auto namespacePathString = namespaceSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(namespacePathString);
@@ -44,25 +44,23 @@ write_namespace(
          symbolIterator != namespaceBlock->symbolsEnd();
          symbolIterator++) {
         const auto &var = symbolIterator->second;
-        auto *sym = symbolCache->getSymbol(var.symbolUrl);
-        lyo1::DescriptorSection binding_type = lyo1::DescriptorSection::Invalid;
-        uint32_t binding_descriptor;
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(var.symbolUrl));
 
-        if (sym == nullptr)
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "namespace contains invalid symbol");
+        lyo1::DescriptorSection binding_type = lyo1::DescriptorSection::Invalid;
+        tu_uint32 binding_descriptor;
 
         // skip symbols which are not in the current module
         if (var.symbolUrl.isAbsolute()) {
-            if (location != sym->getSymbolUrl().getAssemblyLocation()) {
-                TU_LOG_INFO << "ignoring namespace binding " << symbolIterator->first << " for " << sym->getSymbolUrl();
+            if (location != symbol->getSymbolUrl().getAssemblyLocation()) {
+                TU_LOG_INFO << "ignoring namespace binding " << symbolIterator->first << " for " << symbol->getSymbolUrl();
                 continue;
             }
         }
 
-        switch (sym->getSymbolType()) {
+        switch (symbol->getSymbolType()) {
             case lyric_assembler::SymbolType::CALL: {
-                auto *callSymbol = cast_symbol_to_call(sym);
+                auto *callSymbol = cast_symbol_to_call(symbol);
                 binding_type = lyo1::DescriptorSection::Call;
                 auto address = callSymbol->getAddress();
                 TU_ASSERT (address.isValid());
@@ -70,7 +68,7 @@ write_namespace(
                 break;
             }
             case lyric_assembler::SymbolType::CLASS: {
-                auto *classSymbol = cast_symbol_to_class(sym);
+                auto *classSymbol = cast_symbol_to_class(symbol);
                 binding_type = lyo1::DescriptorSection::Class;
                 auto address = classSymbol->getAddress();
                 TU_ASSERT (address.isValid());
@@ -78,7 +76,7 @@ write_namespace(
                 break;
             }
             case lyric_assembler::SymbolType::CONCEPT: {
-                auto *conceptSymbol = cast_symbol_to_concept(sym);
+                auto *conceptSymbol = cast_symbol_to_concept(symbol);
                 binding_type = lyo1::DescriptorSection::Concept;
                 auto address = conceptSymbol->getAddress();
                 TU_ASSERT (address.isValid());
@@ -86,7 +84,7 @@ write_namespace(
                 break;
             }
             case lyric_assembler::SymbolType::ENUM: {
-                auto *enumSymbol = cast_symbol_to_enum(sym);
+                auto *enumSymbol = cast_symbol_to_enum(symbol);
                 binding_type = lyo1::DescriptorSection::Enum;
                 auto address = enumSymbol->getAddress();
                 TU_ASSERT (address.isValid());
@@ -94,7 +92,7 @@ write_namespace(
                 break;
             }
             case lyric_assembler::SymbolType::INSTANCE: {
-                auto *instanceSymbol = cast_symbol_to_instance(sym);
+                auto *instanceSymbol = cast_symbol_to_instance(symbol);
                 binding_type = lyo1::DescriptorSection::Instance;
                 auto address = instanceSymbol->getAddress();
                 TU_ASSERT (address.isValid());
@@ -102,7 +100,7 @@ write_namespace(
                 break;
             }
             case lyric_assembler::SymbolType::NAMESPACE: {
-                auto *namespaceSymbol_ = cast_symbol_to_namespace(sym);
+                auto *namespaceSymbol_ = cast_symbol_to_namespace(symbol);
                 binding_type = lyo1::DescriptorSection::Namespace;
                 auto address = namespaceSymbol_->getAddress();
                 TU_ASSERT (address.isValid());
@@ -110,7 +108,7 @@ write_namespace(
                 break;
             }
             case lyric_assembler::SymbolType::STATIC: {
-                auto *staticSymbol = cast_symbol_to_static(sym);
+                auto *staticSymbol = cast_symbol_to_static(symbol);
                 binding_type = lyo1::DescriptorSection::Static;
                 auto address = staticSymbol->getAddress();
                 TU_ASSERT (address.isValid());
@@ -118,7 +116,7 @@ write_namespace(
                 break;
             }
             case lyric_assembler::SymbolType::STRUCT: {
-                auto *structSymbol = cast_symbol_to_struct(sym);
+                auto *structSymbol = cast_symbol_to_struct(symbol);
                 binding_type = lyo1::DescriptorSection::Struct;
                 auto address = structSymbol->getAddress();
                 TU_ASSERT (address.isValid());
@@ -147,7 +145,7 @@ write_namespace(
     symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,
         lyo1::DescriptorSection::Namespace, index));
 
-    return lyric_assembler::AssemblerStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -172,5 +170,5 @@ lyric_assembler::internal::write_namespaces(
     // create the namespaces vector
     namespacesOffset = buffer.CreateVector(namespaces_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

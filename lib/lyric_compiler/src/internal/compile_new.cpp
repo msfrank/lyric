@@ -48,17 +48,15 @@ lyric_compiler::internal::compile_new(
 
     // resolve the symbol ctor
     auto newUrl = newType.getConcreteUrl();
-    if (!block->blockState()->symbolCache()->hasSymbol(newUrl))
-        block->throwAssemblerInvariant("missing new symbol {}", newUrl.toString());
-    auto *sym = block->blockState()->symbolCache()->getSymbol(newUrl);
-
-    sym->touch();
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(newUrl));
+    symbol->touch();
 
     // allocate the ctor invoker
     lyric_assembler::CtorInvoker ctor;
-    switch (sym->getSymbolType()) {
+    switch (symbol->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {
-            auto *classSymbol = cast_symbol_to_class(sym);
+            auto *classSymbol = cast_symbol_to_class(symbol);
             auto resolveCtorResult = classSymbol->resolveCtor();
             if (resolveCtorResult.isStatus())
                 return resolveCtorResult.getStatus();
@@ -66,7 +64,7 @@ lyric_compiler::internal::compile_new(
             break;
         }
         case lyric_assembler::SymbolType::STRUCT: {
-            auto *structSymbol = cast_symbol_to_struct(sym);
+            auto *structSymbol = cast_symbol_to_struct(symbol);
             auto resolveCtorResult = structSymbol->resolveCtor();
             if (resolveCtorResult.isStatus())
                 return resolveCtorResult.getStatus();

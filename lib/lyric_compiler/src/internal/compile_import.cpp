@@ -29,9 +29,8 @@ lyric_compiler::internal::compile_import_module(
     if (declareNamespaceResult.isStatus())
         return declareNamespaceResult.getStatus();
     auto nsUrl = declareNamespaceResult.getResult();
-    if (!state->symbolCache()->hasSymbol(nsUrl))
-        block->throwAssemblerInvariant("missing namespace symbol {}", nsUrl.toString());
-    auto *nsSym = state->symbolCache()->getSymbol(nsUrl);
+    lyric_assembler::AbstractSymbol *nsSym;
+    TU_ASSIGN_OR_RETURN (nsSym, state->symbolCache()->getOrImportSymbol(nsUrl));
     if (nsSym->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
         block->throwAssemblerInvariant("invalid namespace symbol {}", nsUrl.toString());
     auto *ns = cast_symbol_to_namespace(nsSym);

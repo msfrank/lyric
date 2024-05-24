@@ -64,12 +64,7 @@ lyric_typing::resolve_S_or_P_type(
     }
 
     // if type is in the typecache then we're done
-    if (state->typeCache()->hasType(assignableType))
-        return assignableType;
-
-    status = state->typeCache()->makeType(assignableType);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_STATUS (state->typeCache()->getOrMakeType(assignableType));
     return assignableType;
 }
 

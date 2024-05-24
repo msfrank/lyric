@@ -5,7 +5,7 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
-static lyric_assembler::AssemblerStatus
+static tempo_utils::Status
 write_struct(
     lyric_assembler::StructSymbol *structSymbol,
     lyric_assembler::TypeCache *typeCache,
@@ -14,7 +14,7 @@ write_struct(
     std::vector<flatbuffers::Offset<lyo1::StructDescriptor>> &structs_vector,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    auto index = static_cast<uint32_t>(structs_vector.size());
+    auto index = static_cast<tu_uint32>(structs_vector.size());
 
     auto classPathString = structSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(classPathString);
@@ -46,11 +46,12 @@ write_struct(
     std::vector<tu_uint32> members;
     for (auto iterator = structSymbol->membersBegin(); iterator != structSymbol->membersEnd(); iterator++) {
         const auto &var = iterator->second;
-        auto *sym = symbolCache->getSymbol(var.symbolUrl);
-        if (sym == nullptr || sym->getSymbolType() != lyric_assembler::SymbolType::FIELD)
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(var.symbolUrl));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid field symbol");
-        auto *fieldSymbol = cast_symbol_to_field(sym);
+        auto *fieldSymbol = cast_symbol_to_field(symbol);
 
         members.push_back(fieldSymbol->getAddress().getAddress());
     }
@@ -59,11 +60,12 @@ write_struct(
     std::vector<tu_uint32> methods;
     for (auto iterator = structSymbol->methodsBegin(); iterator != structSymbol->methodsEnd(); iterator++) {
         const auto &boundMethod = iterator->second;
-        const auto *sym = symbolCache->getSymbol(boundMethod.methodCall);
-        if (sym == nullptr || sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(boundMethod.methodCall));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid call symbol");
-        const auto *callSymbol = cast_symbol_to_call(sym);
+        const auto *callSymbol = cast_symbol_to_call(symbol);
 
         methods.push_back(callSymbol->getAddress().getAddress());
     }
@@ -77,22 +79,21 @@ write_struct(
 
     // get struct ctor
     auto ctorUrl = structSymbol->getCtor();
-    if (!symbolCache->hasSymbol(ctorUrl))
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ctorUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing struct ctor");
-    auto *sym = symbolCache->getSymbol(ctorUrl);
-    if (sym == nullptr || sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing struct ctor");
-    auto ctorCall = cast_symbol_to_call(sym)->getAddress().getAddress();
+    auto ctorCall = cast_symbol_to_call(symbol)->getAddress().getAddress();
 
     // serialize the sealed subtypes
-    std::vector<uint32_t> sealedSubtypes;
+    std::vector<tu_uint32> sealedSubtypes;
     for (auto iterator = structSymbol->sealedTypesBegin(); iterator != structSymbol->sealedTypesEnd(); iterator++) {
         if (!typeCache->hasType(*iterator))
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing sealed subtype");
-        auto *typeHandle = typeCache->getType(*iterator);
+        lyric_assembler::TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(*iterator));
         sealedSubtypes.push_back(typeHandle->getAddress().getAddress());
     }
 
@@ -106,7 +107,7 @@ write_struct(
     symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,
         lyo1::DescriptorSection::Struct, index));
 
-    return lyric_assembler::AssemblerStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -131,5 +132,5 @@ lyric_assembler::internal::write_structs(
     // create the structs vector
     structsOffset = buffer.CreateVector(structs_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

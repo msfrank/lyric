@@ -3,6 +3,8 @@
 
 #include <absl/container/flat_hash_map.h>
 
+#include <lyric_importer/concept_import.h>
+
 #include "abstract_symbol.h"
 #include "action_invoker.h"
 #include "assembly_state.h"

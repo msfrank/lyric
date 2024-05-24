@@ -4,7 +4,7 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
-static lyric_assembler::AssemblerStatus
+static tempo_utils::Status
 write_field(
     lyric_assembler::FieldSymbol *fieldSymbol,
     lyric_assembler::TypeCache *typeCache,
@@ -13,12 +13,13 @@ write_field(
     std::vector<flatbuffers::Offset<lyo1::FieldDescriptor>> &fields_vector,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    auto index = static_cast<uint32_t>(fields_vector.size());
+    auto index = static_cast<tu_uint32>(fields_vector.size());
 
     auto fieldPathString = fieldSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(fieldPathString);
-    auto fieldType = fieldSymbol->getAssignableType();
-    auto *typeHandle = typeCache->getType(fieldType);
+    lyric_assembler::TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(fieldSymbol->getAssignableType()));
+    tu_uint32 fieldType = typeHandle->getAddress().getAddress();
 
     lyo1::FieldFlags fieldFlags = lyo1::FieldFlags::NONE;
     if (fieldSymbol->isVariable())
@@ -41,14 +42,13 @@ write_field(
     }
 
     // add field descriptor
-    fields_vector.push_back(lyo1::CreateFieldDescriptor(buffer, fullyQualifiedName,
-        typeHandle->getAddress().getAddress(), fieldFlags));
+    fields_vector.push_back(lyo1::CreateFieldDescriptor(buffer, fullyQualifiedName, fieldType, fieldFlags));
 
     // add symbol descriptor
     symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,
         lyo1::DescriptorSection::Field, index));
 
-    return lyric_assembler::AssemblerStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -73,5 +73,5 @@ lyric_assembler::internal::write_fields(
     // create the fields vector
     fieldsOffset = buffer.CreateVector(fields_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

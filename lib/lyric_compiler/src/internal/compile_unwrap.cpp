@@ -47,10 +47,9 @@ resolve_unwrap_instance(
             concreteReceiverType, lyric_assembler::ReferenceType::Value);
 
     // resolve the instance for a generic unwrap type with a concrete tuple type
-    auto *unwrapSymbol = state->symbolCache()->getSymbol(unwrapType.getConcreteUrl());
-    if (unwrapSymbol == nullptr)
-        block->throwAssemblerInvariant("missing unwrap symbol {}", unwrapType.getConcreteUrl().toString());
-    auto genericUnwrapType = unwrapSymbol->getAssignableType();
+    lyric_assembler::AbstractSymbol *unwrapSym;
+    TU_ASSIGN_OR_RETURN (unwrapSym, state->symbolCache()->getOrImportSymbol(unwrapType.getConcreteUrl()));
+    auto genericUnwrapType = unwrapSym->getAssignableType();
     auto genericConcreteReceiverType = lyric_common::TypeDef::forConcrete(
         fundamentalUnwrap, {genericUnwrapType, tupleType});
     auto resolveGenericConcreteInstanceResult = block->resolveImpl(genericConcreteReceiverType,
@@ -144,9 +143,8 @@ lyric_compiler::internal::compile_unwrap(
     if (resolveUnwrapInstanceResult.isStatus())
         return resolveUnwrapInstanceResult.getStatus();
     auto instanceRef = resolveUnwrapInstanceResult.getResult();
-    auto *symbol = symbolCache->getSymbol(instanceRef.symbolUrl);
-    if (symbol == nullptr)
-        block->throwAssemblerInvariant("missing instance symbol {}", instanceRef.symbolUrl.toString());
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(instanceRef.symbolUrl));
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
         block->throwAssemblerInvariant("invalid instance symbol {}", instanceRef.symbolUrl.toString());
     auto *instanceSymbol = cast_symbol_to_instance(symbol);
@@ -166,9 +164,7 @@ lyric_compiler::internal::compile_unwrap(
     auto extension = extensionOption.getValue();
 
     auto extensionUrl = extension.methodCall;
-    symbol = symbolCache->getSymbol(extensionUrl);
-    if (symbol == nullptr)
-        block->throwAssemblerInvariant("missing call symbol {}", extensionUrl.toString());
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(extensionUrl));
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         block->throwAssemblerInvariant("invalid call symbol {}", extensionUrl.toString());
     auto *extensionCall = cast_symbol_to_call(symbol);
@@ -177,9 +173,7 @@ lyric_compiler::internal::compile_unwrap(
     if (extensionCall->isInline()) {
         extensionInvoker = lyric_assembler::ExtensionInvoker(extensionCall, extensionCall->callProc());
     } else if (extensionCall->isBound()) {
-        symbol = symbolCache->getSymbol(instanceRef.typeDef.getConcreteUrl());
-        if (symbol == nullptr)
-            block->throwAssemblerInvariant("missing concept symbol {}", instanceRef.typeDef.getConcreteUrl().toString());
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(instanceRef.typeDef.getConcreteUrl()));
         if (symbol->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
             block->throwAssemblerInvariant("invalid concept symbol {}", instanceRef.typeDef.getConcreteUrl().toString());
         auto *conceptSymbol = cast_symbol_to_concept(symbol);
@@ -189,7 +183,7 @@ lyric_compiler::internal::compile_unwrap(
             block->throwAssemblerInvariant("missing action {} for concept symbol {}",
                 kUnwrapExtensionName, instanceRef.typeDef.getConcreteUrl().toString());
         auto action = resolveActionResult.getValue();
-        symbol = symbolCache->getSymbol(action.methodAction);
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(action.methodAction));
         if (symbol->getSymbolType() != lyric_assembler::SymbolType::ACTION)
             block->throwAssemblerInvariant("invalid action symbol {}", action.methodAction.toString());
         auto *actionSymbol = cast_symbol_to_action(symbol);
@@ -224,9 +218,8 @@ lyric_compiler::internal::compile_unwrap(
     for (tu_uint32 i = 0; i < tupleTypeArguments.size(); i++) {
         auto tupleMember = absl::StrCat("t", i);
 
-        if (!symbolCache->hasSymbol(tupleUrl))
-            block->throwAssemblerInvariant("missing receiver symbol {}", tupleUrl.toString());
-        auto *receiver = symbolCache->getSymbol(tupleUrl);
+        lyric_assembler::AbstractSymbol *receiver;
+        TU_ASSIGN_OR_RETURN (receiver, symbolCache->getOrImportSymbol(tupleUrl));
 
         lyric_assembler::DataReference tupleRef;
         switch (receiver->getSymbolType()) {

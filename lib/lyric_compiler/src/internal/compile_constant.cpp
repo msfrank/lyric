@@ -137,7 +137,6 @@ compile_string_constant(
     auto *state = moduleEntry.getState();
     auto *fundamentalCache = state->fundamentalCache();
     auto *literalCache = state->literalCache();
-    auto *typeCache = state->typeCache();
 
     std::string literalValue;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstLiteralValue, literalValue);
@@ -152,9 +151,12 @@ compile_string_constant(
     auto *code = block->blockCode();
     TU_RETURN_IF_NOT_OK (code->loadString(makeLiteralResult.getResult()));
 
-    auto StringType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::String);
-    typeCache->touchType(StringType);
-    return StringType;
+    auto fundamentalString = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::String);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(fundamentalString));
+    symbol->touch();
+
+    return fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::String);
 }
 
 inline tempo_utils::Result<lyric_common::TypeDef>
@@ -167,7 +169,6 @@ compile_url_constant(
     auto *state = moduleEntry.getState();
     auto *fundamentalCache = state->fundamentalCache();
     auto *literalCache = state->literalCache();
-    auto *typeCache = state->typeCache();
 
     std::string literalValue;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstLiteralValue, literalValue);
@@ -182,9 +183,12 @@ compile_url_constant(
     auto *code = block->blockCode();
     TU_RETURN_IF_NOT_OK (code->loadUrl(makeLiteralResult.getResult()));
 
-    auto UrlType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Url);
-    typeCache->touchType(UrlType);
-    return UrlType;
+    auto fundamentalUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Url);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(fundamentalUrl));
+    symbol->touch();
+
+    return fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Url);
 }
 
 inline tempo_utils::Result<lyric_common::TypeDef>
@@ -216,9 +220,8 @@ compile_symbol_constant(
                 tempo_tracing::LogSeverity::kError,
                 "missing symbol {}", symbolPath.toString());
 
-        auto *symbol = block->blockState()->symbolCache()->getSymbol(constantRef.symbolUrl);
-        if (symbol == nullptr)
-            block->throwAssemblerInvariant("missing symbol {}", constantRef.symbolUrl.toString());
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(constantRef.symbolUrl));
 
         switch (symbol->getSymbolType()) {
             case lyric_assembler::SymbolType::CLASS: {

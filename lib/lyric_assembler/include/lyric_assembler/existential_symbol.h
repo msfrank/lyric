@@ -1,6 +1,8 @@
 #ifndef LYRIC_ASSEMBLER_EXISTENTIAL_SYMBOL_H
 #define LYRIC_ASSEMBLER_EXISTENTIAL_SYMBOL_H
 
+#include <lyric_importer/existential_import.h>
+
 #include "abstract_symbol.h"
 #include "assembly_state.h"
 #include "base_symbol.h"

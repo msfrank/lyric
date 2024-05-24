@@ -5,7 +5,7 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
-static lyric_assembler::AssemblerStatus
+static tempo_utils::Status
 write_class(
     lyric_assembler::ClassSymbol *classSymbol,
     lyric_assembler::TypeCache *typeCache,
@@ -14,13 +14,13 @@ write_class(
     std::vector<flatbuffers::Offset<lyo1::ClassDescriptor>> &classes_vector,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    auto index = static_cast<uint32_t>(classes_vector.size());
+    auto index = static_cast<tu_uint32>(classes_vector.size());
 
     auto classPathString = classSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(classPathString);
     auto typeIndex = classSymbol->classType()->getAddress().getAddress();
 
-    uint32_t classTemplate = lyric_runtime::INVALID_ADDRESS_U32;
+    tu_uint32 classTemplate = lyric_runtime::INVALID_ADDRESS_U32;
     if (classSymbol->classTemplate() != nullptr)
         classTemplate = classSymbol->classTemplate()->getAddress().getAddress();
 
@@ -50,11 +50,12 @@ write_class(
     std::vector<tu_uint32> members;
     for (auto iterator = classSymbol->membersBegin(); iterator != classSymbol->membersEnd(); iterator++) {
         const auto &var = iterator->second;
-        auto *sym = symbolCache->getSymbol(var.symbolUrl);
-        if (sym == nullptr || sym->getSymbolType() != lyric_assembler::SymbolType::FIELD)
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(var.symbolUrl));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid field symbol");
-        auto *fieldSymbol = cast_symbol_to_field(sym);
+        auto *fieldSymbol = cast_symbol_to_field(symbol);
 
         members.push_back(fieldSymbol->getAddress().getAddress());
     }
@@ -63,11 +64,12 @@ write_class(
     std::vector<tu_uint32> methods;
     for (auto iterator = classSymbol->methodsBegin(); iterator != classSymbol->methodsEnd(); iterator++) {
         const auto &boundMethod = iterator->second;
-        const auto *sym = symbolCache->getSymbol(boundMethod.methodCall);
-        if (sym == nullptr || sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(boundMethod.methodCall));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid call symbol");
-        const auto *callSymbol = cast_symbol_to_call(sym);
+        const auto *callSymbol = cast_symbol_to_call(symbol);
 
         methods.push_back(callSymbol->getAddress().getAddress());
     }
@@ -81,22 +83,21 @@ write_class(
 
     // get class ctor
     auto ctorUrl = classSymbol->getCtor();
-    if (!symbolCache->hasSymbol(ctorUrl))
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ctorUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing class ctor");
-    auto *sym = symbolCache->getSymbol(ctorUrl);
-    if (sym == nullptr || sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing class ctor");
-    auto ctorCall = cast_symbol_to_call(sym)->getAddress().getAddress();
+    auto ctorCall = cast_symbol_to_call(symbol)->getAddress().getAddress();
 
     // serialize the sealed subtypes
-    std::vector<uint32_t> sealedSubtypes;
+    std::vector<tu_uint32> sealedSubtypes;
     for (auto iterator = classSymbol->sealedTypesBegin(); iterator != classSymbol->sealedTypesEnd(); iterator++) {
         if (!typeCache->hasType(*iterator))
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing sealed subtype");
-        auto *typeHandle = typeCache->getType(*iterator);
+        lyric_assembler::TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(*iterator));
         sealedSubtypes.push_back(typeHandle->getAddress().getAddress());
     }
 
@@ -110,7 +111,7 @@ write_class(
     symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,
         lyo1::DescriptorSection::Class, index));
 
-    return lyric_assembler::AssemblerStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -135,5 +136,5 @@ lyric_assembler::internal::write_classes(
     // create the classes vector
     classesOffset = buffer.CreateVector(classes_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

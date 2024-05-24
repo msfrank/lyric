@@ -65,7 +65,8 @@ compile_predicate(
     }
 
     // push match type descriptor onto the stack
-    auto *typeHandle = typeCache->getType(matchType);
+    lyric_assembler::TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(matchType));
     TU_RETURN_IF_NOT_OK (code->loadType(typeHandle->getAddress()));
 
     // verify that the target type can be a subtype of match type
@@ -104,25 +105,22 @@ compile_match_case_symbol_ref(
     if (resolveMatchCaseSymbol.isStatus())
         return resolveMatchCaseSymbol.getStatus();
     auto matchCaseSymbolUrl = resolveMatchCaseSymbol.getResult();
-    if (!state->symbolCache()->hasSymbol(matchCaseSymbolUrl))
-        return block->logAndContinue(lyric_compiler::CompilerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "missing symbol {}", matchCaseSymbolUrl.toString());
-    auto *sym = state->symbolCache()->getSymbol(matchCaseSymbolUrl);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(matchCaseSymbolUrl));
 
     // determine the predicate type
     lyric_common::TypeDef predicateType;
-    switch (sym->getSymbolType()) {
+    switch (symbol->getSymbolType()) {
         case lyric_assembler::SymbolType::INSTANCE:
-            predicateType = cast_symbol_to_instance(sym)->getAssignableType();
+            predicateType = cast_symbol_to_instance(symbol)->getAssignableType();
             break;
         case lyric_assembler::SymbolType::ENUM:
-            predicateType = cast_symbol_to_enum(sym)->getAssignableType();
+            predicateType = cast_symbol_to_enum(symbol)->getAssignableType();
             break;
         default:
             return block->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
-                "invalid match case {}; predicate must be an instance or an enum", sym->getSymbolUrl().toString());
+                "invalid match case {}; predicate must be an instance or an enum", symbol->getSymbolUrl().toString());
     }
 
     // body is the consequent block
@@ -247,18 +245,15 @@ check_concrete_target_is_exhaustive(
     TU_ASSERT (targetType.getType() == lyric_common::TypeDefType::Concrete);
     auto *state = moduleEntry.getState();
 
-    auto *sym = state->symbolCache()->getSymbol(targetType.getConcreteUrl());
-    if (sym == nullptr)
-        return block->logAndContinue(lyric_compiler::CompilerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "missing symbol {}", targetType.getConcreteUrl().toString());
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(targetType.getConcreteUrl()));
 
     lyric_object::DeriveType derive;
     absl::flat_hash_set<lyric_common::TypeDef> targetSet;
 
-    switch (sym->getSymbolType()) {
+    switch (symbol->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {
-            auto *classSymbol = cast_symbol_to_class(sym);
+            auto *classSymbol = cast_symbol_to_class(symbol);
             derive = classSymbol->getDeriveType();
             if (derive == lyric_object::DeriveType::Sealed) {
                 targetSet.insert(classSymbol->sealedTypesBegin(), classSymbol->sealedTypesEnd());
@@ -266,7 +261,7 @@ check_concrete_target_is_exhaustive(
             break;
         }
         case lyric_assembler::SymbolType::ENUM: {
-            auto *enumSymbol = cast_symbol_to_enum(sym);
+            auto *enumSymbol = cast_symbol_to_enum(symbol);
             derive = enumSymbol->getDeriveType();
             if (derive == lyric_object::DeriveType::Sealed) {
                 targetSet.insert(enumSymbol->sealedTypesBegin(), enumSymbol->sealedTypesEnd());
@@ -274,7 +269,7 @@ check_concrete_target_is_exhaustive(
             break;
         }
         case lyric_assembler::SymbolType::EXISTENTIAL: {
-            auto *existentialSymbol = cast_symbol_to_existential(sym);
+            auto *existentialSymbol = cast_symbol_to_existential(symbol);
             derive = existentialSymbol->getDeriveType();
             if (derive == lyric_object::DeriveType::Sealed) {
                 targetSet.insert(existentialSymbol->sealedTypesBegin(), existentialSymbol->sealedTypesEnd());
@@ -282,7 +277,7 @@ check_concrete_target_is_exhaustive(
             break;
         }
         case lyric_assembler::SymbolType::INSTANCE: {
-            auto *instanceSymbol = cast_symbol_to_instance(sym);
+            auto *instanceSymbol = cast_symbol_to_instance(symbol);
             derive = instanceSymbol->getDeriveType();
             if (derive == lyric_object::DeriveType::Sealed) {
                 targetSet.insert(instanceSymbol->sealedTypesBegin(), instanceSymbol->sealedTypesEnd());
@@ -290,7 +285,7 @@ check_concrete_target_is_exhaustive(
             break;
         }
         case lyric_assembler::SymbolType::STRUCT: {
-            auto *structSymbol = cast_symbol_to_struct(sym);
+            auto *structSymbol = cast_symbol_to_struct(symbol);
             derive = structSymbol->getDeriveType();
             if (derive == lyric_object::DeriveType::Sealed) {
                 targetSet.insert(structSymbol->sealedTypesBegin(), structSymbol->sealedTypesEnd());

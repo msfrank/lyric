@@ -157,9 +157,8 @@ lyric_compiler::internal::compile_for(
     // look up the Iterator concept symbol
     auto fundamentalIterator = state->fundamentalCache()->getFundamentalUrl(
         lyric_assembler::FundamentalSymbol::Iterator);
-    auto *iteratorSym = state->symbolCache()->getSymbol(fundamentalIterator);
-    if (iteratorSym == nullptr)
-        block->throwAssemblerInvariant("missing concept symbol {}", fundamentalIterator.toString());
+    lyric_assembler::AbstractSymbol *iteratorSym;
+    TU_ASSIGN_OR_RETURN (iteratorSym, state->symbolCache()->getOrImportSymbol(fundamentalIterator));
     if (iteratorSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
         block->throwAssemblerInvariant("invalid concept symbol {}", fundamentalIterator.toString());
     auto *iteratorConcept = cast_symbol_to_concept(iteratorSym);
@@ -167,9 +166,8 @@ lyric_compiler::internal::compile_for(
     // look up the Iterable concept symbol
     auto fundamentalIterable = state->fundamentalCache()->getFundamentalUrl(
         lyric_assembler::FundamentalSymbol::Iterable);
-    auto *iterableSym = state->symbolCache()->getSymbol(fundamentalIterable);
-    if (iterableSym == nullptr)
-        block->throwAssemblerInvariant("missing concept symbol {}", fundamentalIterator.toString());
+    lyric_assembler::AbstractSymbol *iterableSym;
+    TU_ASSIGN_OR_RETURN (iterableSym, state->symbolCache()->getOrImportSymbol(fundamentalIterable));
     if (iterableSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
         block->throwAssemblerInvariant("invalid concept symbol {}", fundamentalIterator.toString());
     auto *iterableConcept = cast_symbol_to_concept(iterableSym);

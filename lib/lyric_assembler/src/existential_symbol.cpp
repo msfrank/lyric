@@ -161,6 +161,7 @@ lyric_assembler::TypeSignature
 lyric_assembler::ExistentialSymbol::getTypeSignature() const
 {
     auto *priv = getPriv();
+    priv->existentialType->touch();
     return priv->existentialType->getTypeSignature();
 }
 
@@ -424,12 +425,11 @@ lyric_assembler::ExistentialSymbol::resolveMethod(
     }
 
     const auto &method = priv->methods.at(name);
-    auto *methodSym = m_state->symbolCache()->getSymbol(method.methodCall);
-    if (methodSym == nullptr)
-        m_state->throwAssemblerInvariant("missing call symbol {}", method.methodCall.toString());
-    if (methodSym->getSymbolType() != SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(method.methodCall));
+    if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", method.methodCall.toString());
-    auto *callSymbol = cast_symbol_to_call(methodSym);
+    auto *callSymbol = cast_symbol_to_call(symbol);
 
     if (callSymbol->isInline())
         return ExistentialInvoker(callSymbol, callSymbol->callProc());
@@ -517,10 +517,9 @@ lyric_assembler::ExistentialSymbol::declareImpl(const lyric_parser::Assignable &
             "impl {} already defined for existential {}", implType.toString(), m_existentialUrl.toString());
 
     // touch the impl type
-    auto *implTypeHandle = m_state->typeCache()->getType(implType);
-    if (implTypeHandle == nullptr)
-        m_state->throwAssemblerInvariant("missing type {}", implType.toString());
-    TU_RETURN_IF_NOT_OK (m_state->typeCache()->touchType(implType));
+    lyric_assembler::TypeHandle *implTypeHandle;
+    TU_ASSIGN_OR_RETURN (implTypeHandle, m_state->typeCache()->getOrMakeType(implType));
+    implTypeHandle->touch();
 
     // confirm that the impl concept exists
     auto implConcept = implType.getConcreteUrl();
@@ -528,10 +527,11 @@ lyric_assembler::ExistentialSymbol::declareImpl(const lyric_parser::Assignable &
         m_state->throwAssemblerInvariant("missing concept symbol {}", implConcept.toString());
 
     // resolve the concept symbol
-    auto *conceptSym = m_state->symbolCache()->getSymbol(implConcept);
-    if (conceptSym->getSymbolType() != SymbolType::CONCEPT)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(implConcept));
+    if (symbol->getSymbolType() != SymbolType::CONCEPT)
         m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
-    auto *conceptSymbol = cast_symbol_to_concept(conceptSym);
+    auto *conceptSymbol = cast_symbol_to_concept(symbol);
 
     conceptSymbol->touch();
 
@@ -594,27 +594,27 @@ lyric_assembler::ExistentialSymbol::putSealedType(const lyric_common::TypeDef &s
             "invalid derived type {} for sealed existential {}",
             sealedType.toString(), m_existentialUrl.toString());
     auto sealedUrl = sealedType.getConcreteUrl();
-    if (!m_state->symbolCache()->hasSymbol(sealedUrl))
-        m_state->throwAssemblerInvariant("missing symbol {}", sealedUrl.toString());
-    auto *sym = m_state->symbolCache()->getSymbol(sealedType.getConcreteUrl());
-    TU_ASSERT (sym != nullptr);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(sealedUrl));
+    if (symbol->getSymbolType() != SymbolType::EXISTENTIAL)
+        m_state->throwAssemblerInvariant("invalid existential symbol {}", sealedUrl.toString());
 
     TypeHandle *derivedType = nullptr;
-    switch (sym->getSymbolType()) {
+    switch (symbol->getSymbolType()) {
         case SymbolType::CLASS:
-            derivedType = cast_symbol_to_class(sym)->classType();
+            derivedType = cast_symbol_to_class(symbol)->classType();
             break;
         case SymbolType::ENUM:
-            derivedType = cast_symbol_to_enum(sym)->enumType();
+            derivedType = cast_symbol_to_enum(symbol)->enumType();
             break;
         case SymbolType::EXISTENTIAL:
-            derivedType = cast_symbol_to_existential(sym)->existentialType();
+            derivedType = cast_symbol_to_existential(symbol)->existentialType();
             break;
         case SymbolType::INSTANCE:
-            derivedType = cast_symbol_to_instance(sym)->instanceType();
+            derivedType = cast_symbol_to_instance(symbol)->instanceType();
             break;
         case SymbolType::STRUCT:
-            derivedType = cast_symbol_to_struct(sym)->structType();
+            derivedType = cast_symbol_to_struct(symbol)->structType();
             break;
         default:
             break;
@@ -628,5 +628,5 @@ lyric_assembler::ExistentialSymbol::putSealedType(const lyric_common::TypeDef &s
 
     priv->sealedTypes.insert(sealedType);
 
-    return AssemblerStatus::ok();
+    return {};
 }

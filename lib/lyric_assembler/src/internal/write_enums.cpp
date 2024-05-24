@@ -5,7 +5,7 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
-static lyric_assembler::AssemblerStatus
+static tempo_utils::Status
 write_enum(
     lyric_assembler::EnumSymbol *enumSymbol,
     lyric_assembler::TypeCache *typeCache,
@@ -14,7 +14,7 @@ write_enum(
     std::vector<flatbuffers::Offset<lyo1::EnumDescriptor>> &enums_vector,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    auto index = static_cast<uint32_t>(enums_vector.size());
+    auto index = static_cast<tu_uint32>(enums_vector.size());
 
     auto enumPathString = enumSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(enumPathString);
@@ -44,11 +44,12 @@ write_enum(
     std::vector<tu_uint32> members;
     for (auto iterator = enumSymbol->membersBegin(); iterator != enumSymbol->membersEnd(); iterator++) {
         const auto &var = iterator->second;
-        auto *sym = symbolCache->getSymbol(var.symbolUrl);
-        if (sym == nullptr || sym->getSymbolType() != lyric_assembler::SymbolType::FIELD)
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(var.symbolUrl));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid field symbol");
-        auto *fieldSymbol = cast_symbol_to_field(sym);
+        auto *fieldSymbol = cast_symbol_to_field(symbol);
 
         members.push_back(fieldSymbol->getAddress().getAddress());
     }
@@ -57,11 +58,12 @@ write_enum(
     std::vector<tu_uint32> methods;
     for (auto iterator = enumSymbol->methodsBegin(); iterator != enumSymbol->methodsEnd(); iterator++) {
         const auto &boundMethod = iterator->second;
-        const auto *sym = symbolCache->getSymbol(boundMethod.methodCall);
-        if (sym == nullptr || sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(boundMethod.methodCall));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid call symbol");
-        const auto *callSymbol = cast_symbol_to_call(sym);
+        const auto *callSymbol = cast_symbol_to_call(symbol);
 
         methods.push_back(callSymbol->getAddress().getAddress());
     }
@@ -75,22 +77,21 @@ write_enum(
 
     // get enum ctor
     auto ctorUrl = enumSymbol->getCtor();
-    if (!symbolCache->hasSymbol(ctorUrl))
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ctorUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing enum ctor");
-    auto *sym = symbolCache->getSymbol(ctorUrl);
-    if (sym == nullptr || sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing enum ctor");
-    auto ctorCall = cast_symbol_to_call(sym)->getAddress().getAddress();
+    auto ctorCall = cast_symbol_to_call(symbol)->getAddress().getAddress();
 
     // serialize the sealed subtypes
-    std::vector<uint32_t> sealedSubtypes;
+    std::vector<tu_uint32> sealedSubtypes;
     for (auto iterator = enumSymbol->sealedTypesBegin(); iterator != enumSymbol->sealedTypesEnd(); iterator++) {
         if (!typeCache->hasType(*iterator))
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing sealed subtype");
-        auto *typeHandle = typeCache->getType(*iterator);
+        lyric_assembler::TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(*iterator));
         sealedSubtypes.push_back(typeHandle->getAddress().getAddress());
     }
 
@@ -104,7 +105,7 @@ write_enum(
     symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,
         lyo1::DescriptorSection::Enum, index));
 
-    return lyric_assembler::AssemblerStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -129,5 +130,5 @@ lyric_assembler::internal::write_enums(
     // create the enums vector
     enumsOffset = buffer.CreateVector(enums_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

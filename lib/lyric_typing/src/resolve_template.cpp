@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/fundamental_cache.h>
+#include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
@@ -113,18 +114,23 @@ lyric_typing::resolve_bound(
     TU_ASSERT (state != nullptr);
 
     auto *typeCache = state->typeCache();
-    auto *templateHandle = typeCache->getTemplate(placeholderType.getPlaceholderTemplateUrl());
-    if (templateHandle == nullptr)
-        state->throwAssemblerInvariant("no template for placeholder type {}", placeholderType.toString());
-
+    lyric_assembler::TemplateHandle *templateHandle;
+    TU_ASSIGN_OR_RETURN (templateHandle, typeCache->getOrImportTemplate(placeholderType.getPlaceholderTemplateUrl()));
     auto tp = templateHandle->getTemplateParameter(placeholderType.getPlaceholderIndex());
+
+    std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
 
     // we treat None bound as extending Any
     if (tp.bound == lyric_object::BoundType::None) {
         auto *fundamentalCache = state->fundamentalCache();
         auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
-        return std::pair{lyric_object::BoundType::Extends, AnyType};
+        bound = {lyric_object::BoundType::Extends, AnyType};
+    } else {
+        bound = std::pair{tp.bound, tp.typeDef};
     }
 
-    return std::pair{tp.bound, tp.typeDef};
+    // ensure the bound type exists in the type cache
+    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(bound.second));
+
+    return bound;
 }

@@ -1,6 +1,8 @@
 #ifndef LYRIC_ASSEMBLER_STRUCT_SYMBOL_H
 #define LYRIC_ASSEMBLER_STRUCT_SYMBOL_H
 
+#include <lyric_importer/struct_import.h>
+
 #include "abstract_member_reifier.h"
 #include "abstract_symbol.h"
 #include "assembly_state.h"

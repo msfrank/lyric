@@ -38,5 +38,5 @@ lyric_assembler::internal::write_imports(
     // create the imports vector
     importsOffset = buffer.CreateVector(imports_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

@@ -22,13 +22,13 @@ lyric_compiler::internal::compile_return(
         return compileExpressionResult.getStatus();
     auto exitType = compileExpressionResult.getResult();
 
-    auto activation = block->blockProc()->getActivation();
-    if (!block->blockState()->symbolCache()->hasSymbol(activation))
-        block->throwAssemblerInvariant("missing call symbol {}", activation.toString());
-    auto *sym = block->blockState()->symbolCache()->getSymbol(activation);
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        block->throwAssemblerInvariant("invalid call symbol {}", activation.toString());
+    auto activationUrl = block->blockProc()->getActivation();
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(activationUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
+        block->throwAssemblerInvariant("invalid call symbol {}", activationUrl.toString());
 
-    cast_symbol_to_call(sym)->putExitType(exitType);
+    cast_symbol_to_call(symbol)->putExitType(exitType);
+
     return CompilerStatus::ok();
 }

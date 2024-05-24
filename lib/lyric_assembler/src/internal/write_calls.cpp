@@ -11,7 +11,7 @@
 #include <lyric_assembler/template_handle.h>
 #include <tempo_utils/bytes_appender.h>
 
-static lyric_assembler::AssemblerStatus
+static tempo_utils::Status
 write_call(
     lyric_assembler::CallSymbol *callSymbol,
     lyric_assembler::TypeCache *typeCache,
@@ -21,11 +21,11 @@ write_call(
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector,
     std::vector<uint8_t> &bytecode)
 {
-    auto index = static_cast<uint32_t>(calls_vector.size());
+    auto index = static_cast<tu_uint32>(calls_vector.size());
 
     auto *proc = callSymbol->callProc();
     auto *code = proc->procCode();
-    auto bytecodeOffset = static_cast<uint32_t>(bytecode.size());
+    auto bytecodeOffset = static_cast<tu_uint32>(bytecode.size());
 
     // build the proc prologue
     tempo_utils::BytesAppender prologue;
@@ -69,32 +69,33 @@ write_call(
                 "invalid call access");
     }
 
-    uint32_t callTemplate = lyric_runtime::INVALID_ADDRESS_U32;
+    tu_uint32 callTemplate = lyric_runtime::INVALID_ADDRESS_U32;
     if (callSymbol->callTemplate() != nullptr)
         callTemplate = callSymbol->callTemplate()->getAddress().getAddress();
 
     lyo1::TypeSection receiverSection = lyo1::TypeSection::Invalid;
-    uint32_t receiverDescriptor = lyric_runtime::INVALID_ADDRESS_U32;
+    tu_uint32 receiverDescriptor = lyric_runtime::INVALID_ADDRESS_U32;
 
     auto receiverUrl = callSymbol->getReceiverUrl();
-    if (receiverUrl.isValid() && symbolCache->hasSymbol(receiverUrl)) {
-        auto *sym = symbolCache->getSymbol(receiverUrl);
-        switch (sym->getSymbolType()) {
+    if (receiverUrl.isValid()) {
+        lyric_assembler::AbstractSymbol *receiver;
+        TU_ASSIGN_OR_RETURN (receiver, symbolCache->getOrImportSymbol(receiverUrl));
+        switch (receiver->getSymbolType()) {
             case lyric_assembler::SymbolType::CLASS:
                 receiverSection = lyo1::TypeSection::Class;
-                receiverDescriptor = cast_symbol_to_class(sym)->getAddress().getAddress();
+                receiverDescriptor = cast_symbol_to_class(receiver)->getAddress().getAddress();
                 break;
             case lyric_assembler::SymbolType::ENUM:
                 receiverSection = lyo1::TypeSection::Enum;
-                receiverDescriptor = cast_symbol_to_enum(sym)->getAddress().getAddress();
+                receiverDescriptor = cast_symbol_to_enum(receiver)->getAddress().getAddress();
                 break;
             case lyric_assembler::SymbolType::INSTANCE:
                 receiverSection = lyo1::TypeSection::Instance;
-                receiverDescriptor = cast_symbol_to_instance(sym)->getAddress().getAddress();
+                receiverDescriptor = cast_symbol_to_instance(receiver)->getAddress().getAddress();
                 break;
             case lyric_assembler::SymbolType::STRUCT:
                 receiverSection = lyo1::TypeSection::Struct;
-                receiverDescriptor = cast_symbol_to_struct(sym)->getAddress().getAddress();
+                receiverDescriptor = cast_symbol_to_struct(receiver)->getAddress().getAddress();
                 break;
             default:
                 return lyric_assembler::AssemblerStatus::forCondition(
@@ -116,7 +117,7 @@ write_call(
     }
 
     // FIXME: call must have a type
-    uint32_t callType = lyric_runtime::INVALID_ADDRESS_U32;
+    tu_uint32 callType = lyric_runtime::INVALID_ADDRESS_U32;
     if (callSymbol->callType() != nullptr)
         callType = callSymbol->callType()->getAddress().getAddress();
 
@@ -142,23 +143,22 @@ write_call(
         }
         if (param.isVariable)
             flags |= lyo1::ParameterFlags::Var;
-        uint32_t paramType = typeCache->getType(param.typeDef)->getAddress().getAddress();
-        uint32_t paramDefault = lyric_runtime::INVALID_ADDRESS_U32;
+        lyric_assembler::TypeHandle *paramTypeHandle;
+        TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(param.typeDef));
+        tu_uint32 paramType = paramTypeHandle->getAddress().getAddress();
+        tu_uint32 paramDefault = lyric_runtime::INVALID_ADDRESS_U32;
         if (callSymbol->hasInitializer(param.name)) {
             if (param.placement != lyric_object::PlacementType::Opt)
                 return lyric_assembler::AssemblerStatus::forCondition(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid placement");
             auto initializerUrl = callSymbol->getInitializer(param.name);
-            auto *sym = symbolCache->getSymbol(initializerUrl);
-            if (sym == nullptr)
-                return lyric_assembler::AssemblerStatus::forCondition(
-                    lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                    "missing initializer {}", initializerUrl.toString());
-            if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+            lyric_assembler::AbstractSymbol *initializer;
+            TU_ASSIGN_OR_RETURN (initializer, symbolCache->getOrImportSymbol(initializerUrl));
+            if (initializer->getSymbolType() != lyric_assembler::SymbolType::CALL)
                 return lyric_assembler::AssemblerStatus::forCondition(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant,
                     "invalid initializer {}", initializerUrl.toString());
-            auto *initSymbol = cast_symbol_to_call(sym);
+            auto *initSymbol = cast_symbol_to_call(initializer);
             paramDefault = initSymbol->getAddress().getAddress();
         }
         uint8_t nameOffset = names.size();
@@ -166,16 +166,17 @@ write_call(
         parameters.emplace_back(flags, paramType, paramDefault, nameOffset, lyric_runtime::INVALID_OFFSET_U8);
     }
 
-    // FIXME: call must have a result type
-    uint32_t resultType = lyric_runtime::INVALID_ADDRESS_U32;
-    if (typeCache->getType(callSymbol->getReturnType()) != nullptr)
-        resultType = typeCache->getType(callSymbol->getReturnType())->getAddress().getAddress();
+    lyric_assembler::TypeHandle *returnTypeHandle;
+    TU_ASSIGN_OR_RETURN (returnTypeHandle, typeCache->getOrMakeType(callSymbol->getReturnType()));
+    tu_uint32 resultType = returnTypeHandle->getAddress().getAddress();
 
     auto restParam = callSymbol->getRest();
     if (!restParam.isEmpty()) {
         const auto &param = restParam.getValue();
         lyo1::ParameterFlags flags = lyo1::ParameterFlags::Rest;
-        uint32_t paramType = typeCache->getType(param.typeDef)->getAddress().getAddress();
+        lyric_assembler::TypeHandle *paramTypeHandle;
+        TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(param.typeDef));
+        tu_uint32 paramType = paramTypeHandle->getAddress().getAddress();
         uint8_t nameOffset = lyric_runtime::INVALID_OFFSET_U8;
         if (!param.name.empty()) {
             nameOffset = names.size();
@@ -203,7 +204,7 @@ write_call(
     symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,
         lyo1::DescriptorSection::Call, index));
 
-    return lyric_assembler::AssemblerStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -229,5 +230,5 @@ lyric_assembler::internal::write_calls(
     // create the calls vector
     callsOffset = buffer.CreateVector(calls_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

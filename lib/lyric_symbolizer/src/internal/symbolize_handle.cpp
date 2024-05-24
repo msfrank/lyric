@@ -60,14 +60,12 @@ lyric_symbolizer::internal::SymbolizeHandle::declareSymbol(
 tempo_utils::Status
 lyric_symbolizer::internal::SymbolizeHandle::declareImport(const lyric_common::AssemblyLocation &location)
 {
-    if (!m_state->importCache()->hasImport(location)) {
-        tempo_utils::Status status;
-        status = m_state->importCache()->insertImport(location, lyric_assembler::ImportFlags::ApiLinkage);
-        if (status.notOk())
-            return status;
-        status = m_state->importCache()->touchImport(location);
-        if (status.notOk())
-            return status;
+    auto *importCache = m_state->importCache();
+
+    if (!importCache->hasImport(location)) {
+        std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
+        TU_ASSIGN_OR_RETURN (moduleImport, importCache->importModule(location, lyric_assembler::ImportFlags::ApiLinkage));
+        TU_RETURN_IF_NOT_OK (importCache->touchImport(moduleImport->getLocation()));
     }
     return SymbolizerStatus::ok();
 }

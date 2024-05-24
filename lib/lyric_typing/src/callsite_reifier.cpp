@@ -479,7 +479,8 @@ lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &ar
         m_argumentTypes.push_back(argumentType);
 
         // if there is no type handle for type, then create it
-        return state->typeCache()->makeType(argumentType);
+        TU_RETURN_IF_STATUS (state->typeCache()->getOrMakeType(argumentType));
+        return {};
     }
 
     // otherwise the next argument must be a rest parameter
@@ -523,7 +524,8 @@ lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &ar
     m_argumentTypes.push_back(argumentType);
 
     // if there is no type handle for type, then create it
-    return state->typeCache()->makeType(argumentType);
+    TU_RETURN_IF_STATUS (state->typeCache()->getOrMakeType(argumentType));
+    return {};
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
@@ -583,10 +585,7 @@ lyric_typing::CallsiteReifier::reifyNextContext()
     m_argumentTypes.push_back(reifiedType);
 
     // if there is no type handle for type, then create it
-    auto status = state->typeCache()->makeType(reifiedType);
-    if (status.notOk())
-        return status;
-
+    TU_RETURN_IF_STATUS (state->typeCache()->getOrMakeType(reifiedType));
     return reifiedType;
 }
 
@@ -690,7 +689,6 @@ lyric_typing::CallsiteReifier::reifyResult(const lyric_common::TypeDef &returnTy
     }
 
     // if there is no type handle for type, then create it
-    TU_RETURN_IF_NOT_OK (state->typeCache()->makeType(reifiedType));
-
+    TU_RETURN_IF_STATUS (state->typeCache()->getOrMakeType(reifiedType));
     return reifiedType;
 }

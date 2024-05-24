@@ -5,7 +5,7 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
-static lyric_assembler::AssemblerStatus
+static tempo_utils::Status
 write_concept(
     lyric_assembler::ConceptSymbol *conceptSymbol,
     lyric_assembler::TypeCache *typeCache,
@@ -14,13 +14,13 @@ write_concept(
     std::vector<flatbuffers::Offset<lyo1::ConceptDescriptor>> &concepts_vector,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    auto index = static_cast<uint32_t>(concepts_vector.size());
+    auto index = static_cast<tu_uint32>(concepts_vector.size());
 
     auto conceptPathString = conceptSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(conceptPathString);
     auto typeIndex = conceptSymbol->conceptType()->getAddress().getAddress();
 
-    uint32_t conceptTemplate = lyric_runtime::INVALID_ADDRESS_U32;
+    tu_uint32 conceptTemplate = lyric_runtime::INVALID_ADDRESS_U32;
     if (conceptSymbol->conceptTemplate() != nullptr)
         conceptTemplate = conceptSymbol->conceptTemplate()->getAddress().getAddress();
 
@@ -38,11 +38,12 @@ write_concept(
     std::vector<tu_uint32> actions;
     for (auto iterator = conceptSymbol->actionsBegin(); iterator != conceptSymbol->actionsEnd(); iterator++) {
         const auto &actionMethod = iterator->second;
-        const auto *sym = symbolCache->getSymbol(actionMethod.methodAction);
-        if (sym == nullptr || sym->getSymbolType() != lyric_assembler::SymbolType::ACTION)
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(actionMethod.methodAction));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::ACTION)
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid action symbol");
-        const auto *actionSymbol = cast_symbol_to_action(sym);
+        const auto *actionSymbol = cast_symbol_to_action(symbol);
 
         actions.push_back(actionSymbol->getAddress().getAddress());
     }
@@ -55,12 +56,13 @@ write_concept(
     }
 
     // serialize the sealed subtypes
-    std::vector<uint32_t> sealedSubtypes;
+    std::vector<tu_uint32> sealedSubtypes;
     for (auto iterator = conceptSymbol->sealedTypesBegin(); iterator != conceptSymbol->sealedTypesEnd(); iterator++) {
         if (!typeCache->hasType(*iterator))
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing sealed subtype");
-        auto *typeHandle = typeCache->getType(*iterator);
+        lyric_assembler::TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(*iterator));
         sealedSubtypes.push_back(typeHandle->getAddress().getAddress());
     }
 
@@ -73,7 +75,7 @@ write_concept(
     symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,
         lyo1::DescriptorSection::Concept, index));
 
-    return lyric_assembler::AssemblerStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -98,5 +100,5 @@ lyric_assembler::internal::write_concepts(
     // create the concepts vector
     conceptsOffset = buffer.CreateVector(concepts_vector);
 
-    return AssemblerStatus::ok();
+    return {};
 }

@@ -162,9 +162,8 @@ compile_defclass_init(
     if (declareCtorResult.isStatus())
         return declareCtorResult.getStatus();
     auto ctorUrl = declareCtorResult.getResult();
-    auto *ctorSym = state->symbolCache()->getSymbol(ctorUrl);
-    if (ctorSym == nullptr)
-        classBlock->throwAssemblerInvariant("missing call symbol {}", ctorUrl.toString());
+    lyric_assembler::AbstractSymbol *ctorSym;
+    TU_ASSIGN_OR_RETURN (ctorSym, state->symbolCache()->getOrImportSymbol(ctorUrl));
     if (ctorSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         classBlock->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
     auto *ctor = cast_symbol_to_call(ctorSym);
@@ -220,26 +219,24 @@ compile_defclass_init(
         if (classSymbol->isMemberInitialized(memberName))
             continue;
 
+        lyric_assembler::AbstractSymbol *symbol;
+
         // resolve the member binding
         auto maybeMember = classSymbol->getMember(memberName);
         if (maybeMember.isEmpty())
             classBlock->throwAssemblerInvariant("missing class member {}", memberName);
         auto fieldRef = maybeMember.getValue();
-        if (!state->symbolCache()->hasSymbol(fieldRef.symbolUrl))
-            classBlock->throwAssemblerInvariant("missing class field {}", fieldRef.symbolUrl.toString());
-        auto *sym = state->symbolCache()->getSymbol(fieldRef.symbolUrl);
-        if (sym->getSymbolType() != lyric_assembler::SymbolType::FIELD)
+        TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(fieldRef.symbolUrl));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
             classBlock->throwAssemblerInvariant("invalid class field {}", fieldRef.symbolUrl.toString());
-        auto *fieldSymbol = cast_symbol_to_field(sym);
+        auto *fieldSymbol = cast_symbol_to_field(symbol);
         auto fieldInitializerUrl = fieldSymbol->getInitializer();
         if (!fieldInitializerUrl.isValid())
             classBlock->throwAssemblerInvariant("missing field initializer {}", fieldInitializerUrl.toString());
-        if (!state->symbolCache()->hasSymbol(fieldInitializerUrl))
-            classBlock->throwAssemblerInvariant("missing field initializer {}", fieldInitializerUrl.toString());
-        sym = state->symbolCache()->getSymbol(fieldInitializerUrl);
-        if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+        TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(fieldInitializerUrl));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
             classBlock->throwAssemblerInvariant("invalid field initializer {}", fieldInitializerUrl.toString());
-        auto *initializerCall = cast_symbol_to_call(sym);
+        auto *initializerCall = cast_symbol_to_call(symbol);
 
         // load $this onto the top of the stack
         status = code->loadSynthetic(lyric_assembler::SyntheticType::THIS);
@@ -342,12 +339,11 @@ compile_defclass_def(
     if (declareMethodResult.isStatus())
         return declareMethodResult.getStatus();
     auto methodUrl = declareMethodResult.getResult();
-    auto *sym = classBlock->blockState()->symbolCache()->getSymbol(methodUrl);
-    if (sym == nullptr)
-        classBlock->throwAssemblerInvariant("missing call symbol {}", methodUrl.toString());
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, classBlock->blockState()->symbolCache()->getOrImportSymbol(methodUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         classBlock->throwAssemblerInvariant("invalid call symbol {}", methodUrl.toString());
-    auto *call = cast_symbol_to_call(sym);
+    auto *call = cast_symbol_to_call(symbol);
 
     // add initializers to the call
     for (const auto &entry : initializers) {
@@ -443,12 +439,11 @@ compile_defclass_impl_def(
     lyric_assembler::ExtensionMethod extension;
     TU_ASSIGN_OR_RETURN (extension, implHandle->declareExtension(
         identifier, packSpec.parameterSpec, packSpec.restSpec, packSpec.ctxSpec, returnSpec));
-    auto *sym = state->symbolCache()->getSymbol(extension.methodCall);
-    if (sym == nullptr)
-        implBlock->throwAssemblerInvariant("missing call symbol {}", extension.methodCall.toString());
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(extension.methodCall));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
         implBlock->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
-    auto *call = cast_symbol_to_call(sym);
+    auto *call = cast_symbol_to_call(symbol);
 
     // add initializers to the call
     for (const auto &entry : initializers) {
@@ -653,9 +648,8 @@ lyric_compiler::internal::compile_defclass(
     }
 
     //
-    auto *superclassSym = block->blockState()->symbolCache()->getSymbol(superClassUrl);
-    if (superclassSym == nullptr)
-        block->throwAssemblerInvariant("missing class symbol {}", superClassUrl.toString());
+    lyric_assembler::AbstractSymbol *superclassSym;
+    TU_ASSIGN_OR_RETURN (superclassSym, block->blockState()->symbolCache()->getOrImportSymbol(superClassUrl));
     if (superclassSym->getSymbolType() != lyric_assembler::SymbolType::CLASS)
         block->throwAssemblerInvariant("invalid class symbol {}", superClassUrl.toString());
     auto *superClass = cast_symbol_to_class(superclassSym);
@@ -667,12 +661,11 @@ lyric_compiler::internal::compile_defclass(
         return declClassResult.getStatus();
     auto classUrl = declClassResult.getResult();
 
-    auto *sym = block->blockState()->symbolCache()->getSymbol(classUrl);
-    if (sym == nullptr)
-        block->throwAssemblerInvariant("missing class symbol {}", classUrl.toString());
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::CLASS)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(classUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CLASS)
         block->throwAssemblerInvariant("invalid class symbol {}", classUrl.toString());
-    auto *classSymbol = cast_symbol_to_class(sym);
+    auto *classSymbol = cast_symbol_to_class(symbol);
 
     TU_LOG_INFO << "declared class " << identifier << " from " << superClassUrl << " with url " << classUrl;
 

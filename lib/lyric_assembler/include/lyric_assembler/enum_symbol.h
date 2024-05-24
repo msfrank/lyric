@@ -3,6 +3,8 @@
 
 #include <absl/container/flat_hash_map.h>
 
+#include <lyric_importer/enum_import.h>
+
 #include "abstract_member_reifier.h"
 #include "abstract_symbol.h"
 #include "assembly_state.h"

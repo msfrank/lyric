@@ -81,11 +81,13 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             currentCoro = m_state->currentCoro();
         }
 
-        // poll for events again if there are no ready tasks
+        // block the interpreter polling for events until there is a ready task
         if (currentCoro == nullptr) {
-            // perform blocking poll. this may not block if there is a ready task available.
-            systemScheduler->blockingPoll();
-            nextReady = systemScheduler->selectNextReady();
+            do {
+                // perform blocking poll. this may not block if there is a ready task available.
+                systemScheduler->blockingPoll();
+                nextReady = systemScheduler->selectNextReady();
+            } while (nextReady == nullptr);
             currentCoro = m_state->currentCoro();
             TU_ASSERT (currentCoro != nullptr);
         }

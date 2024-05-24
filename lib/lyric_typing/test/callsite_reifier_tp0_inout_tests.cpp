@@ -29,8 +29,8 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesT_returnsT)
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
     ASSERT_TRUE (typeCache->makeTemplate(templateUrl, {tp0}, proc->procBlock()).isOk());
-    lyric_assembler::TemplateHandle *templateHandle = typeCache->getTemplate(templateUrl);
-    ASSERT_TRUE (templateHandle != nullptr);
+    lyric_assembler::TemplateHandle *templateHandle;
+    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->getOrImportTemplate(templateUrl));
 
     lyric_object::Parameter p0;
     p0.index = 0;
@@ -77,13 +77,14 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returns
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
     ASSERT_TRUE (typeCache->makeTemplate(templateUrl, {tp0}, proc->procBlock()).isOk());
-    lyric_assembler::TemplateHandle *templateHandle = typeCache->getTemplate(templateUrl);
-    ASSERT_TRUE (templateHandle != nullptr);
+    lyric_assembler::TemplateHandle *templateHandle;
+    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->getOrImportTemplate(templateUrl));
 
     auto *symbolCache = m_assemblyState->symbolCache();
-    auto *ObjectClass = lyric_assembler::cast_symbol_to_class(
-        symbolCache->getSymbol(
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RAISE (symbol, symbolCache->getOrImportSymbol(
             fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Object)));
+    auto *ObjectClass = lyric_assembler::cast_symbol_to_class(symbol);
 
     lyric_common::SymbolUrl collectionUrl;
     TU_ASSIGN_OR_RAISE (collectionUrl,
@@ -137,8 +138,8 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesUnionOfTandNil_return
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
     ASSERT_TRUE (typeCache->makeTemplate(templateUrl, {tp0}, proc->procBlock()).isOk());
-    lyric_assembler::TemplateHandle *templateHandle = typeCache->getTemplate(templateUrl);
-    ASSERT_TRUE (templateHandle != nullptr);
+    lyric_assembler::TemplateHandle *templateHandle;
+    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->getOrImportTemplate(templateUrl));
 
     lyric_object::Parameter p0;
     p0.index = 0;

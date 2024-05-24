@@ -65,9 +65,8 @@ lyric_compiler::internal::compile_lambda(
     if (declareLambdaResult.isStatus())
         return declareLambdaResult.getStatus();
     auto lambdaUrl = declareLambdaResult.getResult();
-    auto *lambdaSym = block->blockState()->symbolCache()->getSymbol(lambdaUrl);
-    if (lambdaSym == nullptr)
-        block->throwAssemblerInvariant("missing call symbol {}", lambdaUrl.toString());
+    lyric_assembler::AbstractSymbol *lambdaSym;
+    TU_ASSIGN_OR_RETURN (lambdaSym, block->blockState()->symbolCache()->getOrImportSymbol(lambdaUrl));
     if (lambdaSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         block->throwAssemblerInvariant("invalid call symbol {}", lambdaUrl.toString());
     auto *lambdaCall = cast_symbol_to_call(lambdaSym);
@@ -115,9 +114,8 @@ lyric_compiler::internal::compile_lambda(
     if (!lambdaFunctionUrl.isValid())
         block->throwAssemblerInvariant("lambda arity is too large");
 
-    auto *closureSym = state->symbolCache()->getSymbol(lambdaFunctionUrl);
-    if (closureSym == nullptr)
-        block->throwAssemblerInvariant("missing class symbol {}", lambdaFunctionUrl.toString());
+    lyric_assembler::AbstractSymbol *closureSym;
+    TU_ASSIGN_OR_RETURN (closureSym, block->blockState()->symbolCache()->getOrImportSymbol(lambdaFunctionUrl));
     if (closureSym->getSymbolType() != lyric_assembler::SymbolType::CLASS)
         block->throwAssemblerInvariant("invalid class symbol {}", lambdaFunctionUrl.toString());
 
@@ -153,9 +151,8 @@ lyric_compiler::internal::compile_lambda(
     if (declareBuilderResult.isStatus())
         return declareBuilderResult.getStatus();
     auto builderUrl = declareBuilderResult.getResult();
-    auto *builderSym = block->blockState()->symbolCache()->getSymbol(builderUrl);
-    if (builderSym == nullptr)
-        block->throwAssemblerInvariant("missing call symbol {}", builderUrl.toString());
+    lyric_assembler::AbstractSymbol *builderSym;
+    TU_ASSIGN_OR_RETURN (builderSym, block->blockState()->symbolCache()->getOrImportSymbol(builderUrl));
     if (builderSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
         block->throwAssemblerInvariant("invalid call symbol {}", builderUrl.toString());
     auto *builderCall = cast_symbol_to_call(builderSym);

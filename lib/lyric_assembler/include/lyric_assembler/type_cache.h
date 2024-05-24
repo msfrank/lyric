@@ -17,13 +17,13 @@ namespace lyric_assembler {
         ~TypeCache();
 
         bool hasType(const lyric_common::TypeDef &assignableType) const;
-        TypeHandle *getType(const lyric_common::TypeDef &assignableType) const;
+        //TypeHandle *getType(const lyric_common::TypeDef &assignableType) const;
         TypeHandle *getType(TypeAddress typeAddress) const;
         std::vector<TypeHandle *>::const_iterator typesBegin() const;
         std::vector<TypeHandle *>::const_iterator typesEnd() const;
         int numTypes() const;
 
-        tempo_utils::Status makeType(const lyric_common::TypeDef &assignableType);
+        tempo_utils::Result<TypeHandle *> getOrMakeType(const lyric_common::TypeDef &assignableType);
         tempo_utils::Result<TypeHandle *> importType(lyric_importer::TypeImport *typeImport);
         tempo_utils::Status touchType(TypeHandle *typeHandle);
         tempo_utils::Status touchType(const lyric_common::TypeDef &type);
@@ -43,7 +43,8 @@ namespace lyric_assembler {
             const Option<lyric_object::Parameter> &functionRest);
 
         bool hasTemplate(const lyric_common::SymbolUrl &templateUrl) const;
-        TemplateHandle *getTemplate(const lyric_common::SymbolUrl &templateUrl) const;
+        //TemplateHandle *getTemplate(const lyric_common::SymbolUrl &templateUrl) const;
+        tempo_utils::Result<TemplateHandle *> getOrImportTemplate(const lyric_common::SymbolUrl &templateUrl);
         std::vector<TemplateHandle *>::const_iterator templatesBegin() const;
         std::vector<TemplateHandle *>::const_iterator templatesEnd() const;
         int numTemplates() const;
@@ -56,7 +57,7 @@ namespace lyric_assembler {
         tempo_utils::Status touchTemplateParameters(const std::vector<lyric_object::TemplateParameter> &parameters);
 
         tempo_utils::Result<lyric_common::TypeDef> resolveConcrete(
-            const lyric_common::SymbolUrl &concreteUrl, const std::vector<lyric_common::TypeDef> typeArguments = {});
+            const lyric_common::SymbolUrl &concreteUrl, const std::vector<lyric_common::TypeDef> &typeArguments = {});
 
         tempo_utils::Result<lyric_common::TypeDef> resolveUnion(
             const std::vector<lyric_common::TypeDef> &unionMembers);

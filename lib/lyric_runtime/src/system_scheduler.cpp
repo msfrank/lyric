@@ -91,6 +91,12 @@ lyric_runtime::SystemScheduler::firstWaitingTask() const
     return m_waitQueue;
 }
 
+/**
+ * Select the next ready task an return a pointer to the task. If there is no ready task available
+ * then return nullptr.
+ *
+ * @return A pointer to the next ready task, or nullptr if there is no ready task available.
+ */
 lyric_runtime::Task *
 lyric_runtime::SystemScheduler::selectNextReady()
 {
@@ -98,8 +104,10 @@ lyric_runtime::SystemScheduler::selectNextReady()
     if (m_currentTask == nullptr) {
         m_currentTask = m_readyQueue;
         if (m_currentTask) {
+            // if ready queue has an available task then set it to running state
             m_currentTask->setTaskState(TaskState::Running);
         }
+        // return the current task, which may be null!
         return m_currentTask;
     }
 
@@ -487,7 +495,8 @@ lyric_runtime::SystemScheduler::poll()
 /**
  * If there are no ready tasks then block the interpreter waiting for an event, and return after the
  * event has been handled. If there is at least one ready task then return immediately without running
- * the event loop.
+ * the event loop. Note that it is not guaranteed there will be an available ready task after this
+ * call returns.
  *
  * @return true if an event was processed, otherwise false.
  */

@@ -71,12 +71,11 @@ compile_defconcept_def(
     if (declareActionResult.isStatus())
         return declareActionResult.getStatus();
     auto actionUrl = declareActionResult.getResult();
-    auto *sym = state->symbolCache()->getSymbol(actionUrl);
-    if (sym == nullptr)
-        conceptBlock->throwAssemblerInvariant("missing action symbol");
-    if (sym->getSymbolType() != lyric_assembler::SymbolType::ACTION)
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(actionUrl));
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::ACTION)
         conceptBlock->throwAssemblerInvariant("invalid action symbol");
-    auto *actionSymbol = cast_symbol_to_action(sym);
+    auto *actionSymbol = cast_symbol_to_action(symbol);
     for (const auto &entry : initializers) {
         actionSymbol->putInitializer(entry.first, entry.second);
     }
@@ -130,9 +129,8 @@ lyric_compiler::internal::compile_defconcept(
 
     //
     auto fundamentalIdea = state->fundamentalCache()->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Idea);
-    auto *superconceptSym = state->symbolCache()->getSymbol(fundamentalIdea);
-    if (superconceptSym == nullptr)
-        block->throwAssemblerInvariant("missing concept symbol");
+    lyric_assembler::AbstractSymbol *superconceptSym;
+    TU_ASSIGN_OR_RETURN (superconceptSym, state->symbolCache()->getOrImportSymbol(fundamentalIdea));
     if (superconceptSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
         block->throwAssemblerInvariant("invalid concept symbol");
     auto *superConcept = cast_symbol_to_concept(superconceptSym);
@@ -144,9 +142,8 @@ lyric_compiler::internal::compile_defconcept(
         return declConceptResult.getStatus();
     auto conceptUrl = declConceptResult.getResult();
 
-    auto *conceptSym = state->symbolCache()->getSymbol(conceptUrl);
-    if (conceptSym == nullptr)
-        block->throwAssemblerInvariant("missing concept symbol");
+    lyric_assembler::AbstractSymbol *conceptSym;
+    TU_ASSIGN_OR_RETURN (conceptSym, state->symbolCache()->getOrImportSymbol(conceptUrl));
     if (conceptSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
         block->throwAssemblerInvariant("invalid concept symbol");
     auto *conceptSymbol = cast_symbol_to_concept(conceptSym);

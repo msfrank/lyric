@@ -182,9 +182,8 @@ lyric_assembler::StaticSymbol::resolveInitializer()
         return m_state->logAndContinue(AssemblerCondition::kMissingSymbol,
             tempo_tracing::LogSeverity::kError,
             "missing init for static {}", m_staticUrl.toString());
-    auto *initSym = m_state->symbolCache()->getSymbol(initializerUrl);
-    if (initSym == nullptr)
-        m_state->throwAssemblerInvariant("missing call symbol {}", initializerUrl.toString());
+    AbstractSymbol *initSym;
+    TU_ASSIGN_OR_RETURN (initSym, m_state->symbolCache()->getOrImportSymbol(initializerUrl));
     if (initSym->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", initializerUrl.toString());
     auto *init = cast_symbol_to_call(initSym);
