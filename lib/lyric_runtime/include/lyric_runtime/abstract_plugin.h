@@ -10,6 +10,10 @@ namespace lyric_runtime {
     public:
         virtual ~AbstractPlugin() = default;
 
+        virtual bool load(BytecodeSegment *segment) const = 0;
+
+        virtual void unload() const = 0;
+
         virtual NativeFunc getTrap(tu_uint32 index) const = 0;
 
         virtual tu_uint32 numTraps() const = 0;

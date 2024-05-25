@@ -109,6 +109,17 @@ NativeCore::getTrap(uint32_t index) const
     }
 }
 
+bool
+NativeCore::load(lyric_runtime::BytecodeSegment *segment) const
+{
+    return true;
+}
+
+void
+NativeCore::unload() const
+{
+}
+
 uint32_t
 NativeCore::numTraps() const
 {

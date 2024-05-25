@@ -2,8 +2,17 @@
 #include <lyric_runtime/internal/assembly_reader.h>
 #include <lyric_runtime/internal/resolve_link.h>
 
+/**
+ * Get the segment for the specified location. If no segment exists then attempt to load it. If load
+ * succeeds then the segment is inserted into the segment cache. If the segment could not be loaded then
+ * return nullptr to signal failure.
+ *
+ * @param location The location of the object
+ * @param segmentManagerData Segment manager data
+ * @return A pointer to the segment, otherwise nullptr if the segment could not be loaded.
+ */
 lyric_runtime::BytecodeSegment *
-lyric_runtime::internal::load_assembly(
+lyric_runtime::internal::get_or_load_segment(
     const lyric_common::AssemblyLocation &location,
     SegmentManagerData *segmentManagerData)
 {
@@ -11,9 +20,10 @@ lyric_runtime::internal::load_assembly(
     if (!location.isValid())
         return nullptr;
 
-    // if assembly is already loaded then return the segment
-    if (segmentManagerData->segmentcache.contains(location))
-        return segmentManagerData->segments[segmentManagerData->segmentcache[location]];
+    // if segment is already loaded then return it
+    auto entry = segmentManagerData->segmentcache.find(location);
+    if (entry != segmentManagerData->segmentcache.cend())
+        return segmentManagerData->segments[entry->second];
 
     auto loadAssemblyResult = segmentManagerData->loader->loadAssembly(location);
     if (loadAssemblyResult.isStatus()) {
@@ -36,28 +46,44 @@ lyric_runtime::internal::load_assembly(
     auto pluginOption = loadPluginResult.getResult();
     auto plugin = pluginOption.getOrDefault({});
 
+    // allocate the segment
     auto segmentIndex = segmentManagerData->segments.size();
     auto *segment = new lyric_runtime::BytecodeSegment(segmentIndex, location, assembly, plugin);
+
+    // if there is a plugin then load it
+    if (plugin != nullptr) {
+        if (!plugin->load(segment)) {
+            delete segment;
+            return nullptr;
+        }
+    }
+
+    // add the segment to the segment cache and return it
     segmentManagerData->segments.push_back(segment);
     segmentManagerData->segmentcache[location] = segmentIndex;
     return segment;
 }
 
+/**
+ * Resolve the link at the specified index of the object in the current segment specified by `sp` and
+ * return a pointer to the link entry. If the target segment does not exist in the cache then it will be
+ * loaded as a side effect. If the index is invalid, or the target segment could not be loaded, or the
+ * symbol could not be found within the target segment, then returns nullptr.
+ *
+ * @param sp The current segment
+ * @param index The offset of the link in the current segment
+ * @param segmentManagerData Segment manager data
+ * @param status If the link could not be resolved then status is set
+ * @return The resolved link entry, or nullptr if the link could not be resolved.
+ */
 const lyric_runtime::LinkEntry *
 lyric_runtime::internal::resolve_link(
     const lyric_runtime::BytecodeSegment *sp,
-    const lyric_object::LinkWalker &link,
+    tu_uint32 index,
     SegmentManagerData *segmentManagerData,
     tempo_utils::Status &status)
 {
-    if (!link.isValid()) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid address for link");
-        return nullptr;
-    }
-
-    //auto index = address & 0x7FFFFFFF;
-    auto index = link.getDescriptorOffset();
+    // if there is no linkage then return null to signal error
     auto *linkageEntry = sp->getLink(index);
     if (linkageEntry == nullptr) {
         status = InterpreterStatus::forCondition(
@@ -65,7 +91,7 @@ lyric_runtime::internal::resolve_link(
         return nullptr;
     }
 
-    // if linkageType is not UNKNOWN, then dynamic linking has completed, so return the linkage entry
+    // if linkage section is not invalid, then dynamic linking has completed, so return the linkage entry
     if (linkageEntry->linkage != lyric_object::LinkageSection::Invalid)
         return linkageEntry;
 
@@ -84,7 +110,7 @@ lyric_runtime::internal::resolve_link(
 
     // get the segment containing the linked symbol
     auto location = referenceUrl.getAssemblyLocation();
-    auto *segment = load_assembly(location, segmentManagerData);
+    auto *segment = get_or_load_segment(location, segmentManagerData);
     if (segment == nullptr) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kMissingAssembly, location.toString());
@@ -140,8 +166,8 @@ lyric_runtime::internal::resolve_descriptor(
         segmentIndex = sp->getSegmentIndex();
         valueIndex = lyric_object::GET_DESCRIPTOR_OFFSET(address);
     } else {
-        auto link = sp->getObject().getObject().getLink(lyric_object::GET_LINK_OFFSET(address));
-        const auto *linkage = resolve_link(sp, link, segmentManagerData, status);
+        auto index = lyric_object::GET_LINK_OFFSET(address);
+        const auto *linkage = resolve_link(sp, index, segmentManagerData, status);
         if (linkage == nullptr)
             return {};          // failed to resolve dynamic link
         if (linkage->linkage != section) {
@@ -190,15 +216,15 @@ lyric_runtime::internal::resolve_literal(
 {
     TU_ASSERT (sp != nullptr);
 
-    lyric_object::ObjectWalker object;
-    tu_uint32 index;
+    lyric_object::ObjectWalker literalObject;
+    tu_uint32 literalIndex;
 
     if (lyric_object::IS_NEAR(address)) {
-        object = sp->getObject().getObject();
-        index = lyric_object::GET_DESCRIPTOR_OFFSET(address);
+        literalObject = sp->getObject().getObject();
+        literalIndex = lyric_object::GET_DESCRIPTOR_OFFSET(address);
     } else {
-        auto link = sp->getObject().getObject().getLink(lyric_object::GET_LINK_OFFSET(address));
-        const auto *linkage = resolve_link(sp, link, segmentManagerData, status);
+        auto index = lyric_object::GET_LINK_OFFSET(address);
+        const auto *linkage = resolve_link(sp, index, segmentManagerData, status);
         if (linkage == nullptr)
             return {};          // failed to resolve dynamic link
         if (linkage->linkage != lyric_object::LinkageSection::Literal) {
@@ -207,11 +233,11 @@ lyric_runtime::internal::resolve_literal(
             return {};          // wrong descriptor type
         }
         auto *segment = segmentManagerData->segments[linkage->assembly];
-        object = segment->getObject().getObject();
-        index = linkage->value;
+        literalObject = segment->getObject().getObject();
+        literalIndex = linkage->value;
     }
 
-    auto literal = object.getLiteral(index);
+    auto literal = literalObject.getLiteral(literalIndex);
     if (!literal.isValid()) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "missing literal");

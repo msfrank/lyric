@@ -11,6 +11,18 @@ lyric_runtime::LibraryPlugin::LibraryPlugin(
     TU_ASSERT (m_iface != nullptr);
 }
 
+bool
+lyric_runtime::LibraryPlugin::load(BytecodeSegment *segment) const
+{
+    return m_iface->load(segment);
+}
+
+void
+lyric_runtime::LibraryPlugin::unload() const
+{
+    m_iface->unload();
+}
+
 lyric_runtime::NativeFunc
 lyric_runtime::LibraryPlugin::getTrap(tu_uint32 index) const
 {

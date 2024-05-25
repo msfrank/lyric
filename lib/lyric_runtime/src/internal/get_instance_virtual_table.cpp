@@ -48,8 +48,8 @@ lyric_runtime::internal::get_instance_virtual_table(
 
         switch (instanceDescriptor.superInstanceAddressType()) {
             case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(instanceSegment, instanceDescriptor.getFarSuperInstance(),
-                    segmentManagerData, status);
+                auto *link = resolve_link(instanceSegment,
+                    instanceDescriptor.getFarSuperInstance().getDescriptorOffset(), segmentManagerData, status);
                 if (!link || link->linkage != lyric_object::LinkageSection::Instance) {
                     status = InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid super instance");
@@ -86,7 +86,8 @@ lyric_runtime::internal::get_instance_virtual_table(
 
         switch (member.memberAddressType()) {
             case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(instanceSegment, member.getFarField(), segmentManagerData, status);
+                auto *link = resolve_link(instanceSegment,
+                    member.getFarField().getDescriptorOffset(), segmentManagerData, status);
                 if (!link || link->linkage != lyric_object::LinkageSection::Field) {
                     status = InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid instance member linkage");
@@ -124,7 +125,8 @@ lyric_runtime::internal::get_instance_virtual_table(
 
         switch (method.methodAddressType()) {
             case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(instanceSegment, method.getFarCall(), segmentManagerData, status);
+                auto *link = resolve_link(instanceSegment,
+                    method.getFarCall().getDescriptorOffset(), segmentManagerData, status);
                 if (!link || link->linkage != lyric_object::LinkageSection::Call) {
                     status = InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid instance method linkage");
@@ -168,7 +170,8 @@ lyric_runtime::internal::get_instance_virtual_table(
 
             switch (extension.actionAddressType()) {
                 case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(instanceSegment, extension.getFarAction(), segmentManagerData, status);
+                    auto *link = resolve_link(instanceSegment,
+                        extension.getFarAction().getDescriptorOffset(), segmentManagerData, status);
                     if (!link || link->linkage != lyric_object::LinkageSection::Action) {
                         status = InterpreterStatus::forCondition(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
@@ -195,7 +198,8 @@ lyric_runtime::internal::get_instance_virtual_table(
 
             switch (extension.callAddressType()) {
                 case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(instanceSegment, extension.getFarCall(), segmentManagerData, status);
+                    auto *link = resolve_link(instanceSegment,
+                        extension.getFarCall().getDescriptorOffset(), segmentManagerData, status);
                     if (!link || link->linkage != lyric_object::LinkageSection::Call) {
                         status = InterpreterStatus::forCondition(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
@@ -234,8 +238,8 @@ lyric_runtime::internal::get_instance_virtual_table(
         DataCell conceptKey;
         auto address = implConceptType.getLinkageIndex();
         if (lyric_object::IS_FAR(address)) {
-            auto link = instanceObject.getLink(lyric_object::GET_LINK_OFFSET(address));
-            auto *linkage = resolve_link(instanceSegment, link, segmentManagerData, status);
+            auto *linkage = resolve_link(instanceSegment,
+                lyric_object::GET_LINK_OFFSET(address), segmentManagerData, status);
             if (linkage == nullptr)
                 return {};
             if (linkage->linkage != lyric_object::LinkageSection::Concept) {

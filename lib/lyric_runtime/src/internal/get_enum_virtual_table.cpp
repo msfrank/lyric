@@ -46,8 +46,8 @@ lyric_runtime::internal::get_enum_virtual_table(
 
         switch (enumDescriptor.superEnumAddressType()) {
             case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(enumSegment, enumDescriptor.getFarSuperEnum(),
-                    segmentManagerData, status);
+                auto *link = resolve_link(enumSegment,
+                    enumDescriptor.getFarSuperEnum().getDescriptorOffset(), segmentManagerData, status);
                 if (!link || link->linkage != lyric_object::LinkageSection::Enum) {
                     status = InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid super enum");
@@ -84,7 +84,8 @@ lyric_runtime::internal::get_enum_virtual_table(
 
         switch (member.memberAddressType()) {
             case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(enumSegment, member.getFarField(), segmentManagerData, status);
+                auto *link = resolve_link(enumSegment,
+                    member.getFarField().getDescriptorOffset(), segmentManagerData, status);
                 if (!link || link->linkage != lyric_object::LinkageSection::Field) {
                     status = InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid enum member linkage");
@@ -122,7 +123,8 @@ lyric_runtime::internal::get_enum_virtual_table(
 
         switch (method.methodAddressType()) {
             case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(enumSegment, method.getFarCall(), segmentManagerData, status);
+                auto *link = resolve_link(enumSegment,
+                    method.getFarCall().getDescriptorOffset(), segmentManagerData, status);
                 if (!link || link->linkage != lyric_object::LinkageSection::Call) {
                     status = InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid enum method linkage");
@@ -166,7 +168,8 @@ lyric_runtime::internal::get_enum_virtual_table(
 
             switch (extension.actionAddressType()) {
                 case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(enumSegment, extension.getFarAction(), segmentManagerData, status);
+                    auto *link = resolve_link(enumSegment,
+                        extension.getFarAction().getDescriptorOffset(), segmentManagerData, status);
                     if (!link || link->linkage != lyric_object::LinkageSection::Action) {
                         status = InterpreterStatus::forCondition(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
@@ -193,7 +196,8 @@ lyric_runtime::internal::get_enum_virtual_table(
 
             switch (extension.callAddressType()) {
                 case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(enumSegment, extension.getFarCall(), segmentManagerData, status);
+                    auto *link = resolve_link(enumSegment,
+                        extension.getFarCall().getDescriptorOffset(), segmentManagerData, status);
                     if (!link || link->linkage != lyric_object::LinkageSection::Call) {
                         status = InterpreterStatus::forCondition(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
@@ -232,8 +236,8 @@ lyric_runtime::internal::get_enum_virtual_table(
         DataCell conceptKey;
         auto address = implConceptType.getLinkageIndex();
         if (lyric_object::IS_FAR(address)) {
-            auto link = enumObject.getLink(lyric_object::GET_LINK_OFFSET(address));
-            auto *linkage = resolve_link(enumSegment, link, segmentManagerData, status);
+            auto *linkage = resolve_link(enumSegment,
+                lyric_object::GET_LINK_OFFSET(address), segmentManagerData, status);
             if (linkage == nullptr)
                 return {};
             if (linkage->linkage != lyric_object::LinkageSection::Concept) {

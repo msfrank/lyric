@@ -162,7 +162,8 @@ lyric_runtime::SubroutineManager::callStatic(
         callIndex = address;
         procOffset = call.getProcOffset();
     } else {
-        const auto *linkage = m_segmentManager->resolveLink(sp, address, status);
+        const auto *linkage = m_segmentManager->resolveLink(
+            sp, lyric_object::GET_LINK_OFFSET(address), status);
         if (!linkage || linkage->linkage != lyric_object::LinkageSection::Call) {
             status = InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "invalid call linkage");
@@ -674,7 +675,8 @@ lyric_runtime::SubroutineManager::initStatic(
         object = sp->getObject().getObject();
         static_ = object.getStatic(address);
     } else {
-        const auto *linkage = m_segmentManager->resolveLink(sp, address, status);
+        const auto *linkage = m_segmentManager->resolveLink(
+            sp, lyric_object::GET_LINK_OFFSET(address), status);
         if (linkage == nullptr)
             return false;                   // failed to resolve dynamic link
         if (linkage->linkage != lyric_object::LinkageSection::Static) {

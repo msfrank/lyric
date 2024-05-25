@@ -41,7 +41,7 @@ lyric_runtime::internal::push_symbol_descriptor_onto_stack(
     StackfulCoroutine *currentCoro,
     SegmentManagerData *segmentManagerData)
 {
-    auto *segment = load_assembly(symbolUrl.getAssemblyLocation(), segmentManagerData);
+    auto *segment = get_or_load_segment(symbolUrl.getAssemblyLocation(), segmentManagerData);
     if (segment == nullptr)
         return InterpreterStatus::forCondition(
             InterpreterCondition::kMissingAssembly, symbolUrl.getAssemblyLocation().toString());

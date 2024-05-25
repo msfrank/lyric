@@ -39,24 +39,27 @@ lyric_runtime::SegmentManager::getSegment(tu_uint32 segmentIndex)
 }
 
 lyric_runtime::BytecodeSegment *
-lyric_runtime::SegmentManager::loadAssembly(const lyric_common::AssemblyLocation &location)
+lyric_runtime::SegmentManager::getSegment(const lyric_common::AssemblyLocation &location)
 {
-    return internal::load_assembly(location, &m_data);
+    auto entry = m_data.segmentcache.find(location);
+    if (entry != m_data.segmentcache.cend())
+        return getSegment(entry->second);
+    return nullptr;
+}
+
+lyric_runtime::BytecodeSegment *
+lyric_runtime::SegmentManager::getOrLoadSegment(const lyric_common::AssemblyLocation &location)
+{
+    return internal::get_or_load_segment(location, &m_data);
 }
 
 const lyric_runtime::LinkEntry *
 lyric_runtime::SegmentManager::resolveLink(
     const BytecodeSegment *sp,
-    tu_uint32 address,
+    tu_uint32 index,
     tempo_utils::Status &status)
 {
-    auto link = sp->getObject().getObject().getLink(lyric_object::GET_LINK_OFFSET(address));
-    if (!link.isValid()) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid link address");
-        return {};          // invalid address
-    }
-    return internal::resolve_link(sp, link, &m_data, status);
+    return internal::resolve_link(sp, index, &m_data, status);
 }
 
 lyric_runtime::DataCell
@@ -164,7 +167,7 @@ lyric_runtime::SegmentManager::loadStatic(
     if (lyric_object::IS_NEAR(address))
         return sp->getStatic(address);
 
-    const auto *linkage = resolveLink(sp, address, status);
+    const auto *linkage = resolveLink(sp, lyric_object::GET_LINK_OFFSET(address), status);
     if (linkage == nullptr)
         return {};
     if (linkage->linkage != lyric_object::LinkageSection::Static) {
@@ -188,7 +191,7 @@ lyric_runtime::SegmentManager::storeStatic(
     if (lyric_object::IS_NEAR(address))
         return sp->setStatic(address, value);
 
-    const auto *linkage = resolveLink(sp, address, status);
+    const auto *linkage = resolveLink(sp, lyric_object::GET_LINK_OFFSET(address), status);
     if (linkage == nullptr)
         return false;                   // failed to resolve dynamic link
     if (linkage->linkage != lyric_object::LinkageSection::Static) {
@@ -211,7 +214,7 @@ lyric_runtime::SegmentManager::loadInstance(
     if (lyric_object::IS_NEAR(address))
         return sp->getInstance(address);
 
-    const auto *linkage = resolveLink(sp, address, status);
+    const auto *linkage = resolveLink(sp, lyric_object::GET_LINK_OFFSET(address), status);
     if (linkage == nullptr)
         return {};               // failed to resolve dynamic link
     if (linkage->linkage != lyric_object::LinkageSection::Instance) {
@@ -235,7 +238,7 @@ lyric_runtime::SegmentManager::storeInstance(
     if (lyric_object::IS_NEAR(address))
         return sp->setInstance(address, value);
 
-    const auto *linkage = resolveLink(sp, address, status);
+    const auto *linkage = resolveLink(sp, lyric_object::GET_LINK_OFFSET(address), status);
     if (linkage == nullptr)
         return false;                   // failed to resolve dynamic link
     if (linkage->linkage != lyric_object::LinkageSection::Instance) {
@@ -258,7 +261,7 @@ lyric_runtime::SegmentManager::loadEnum(
     if (lyric_object::IS_NEAR(address))
         return sp->getEnum(address);
 
-    const auto *linkage = resolveLink(sp, address, status);
+    const auto *linkage = resolveLink(sp, lyric_object::GET_LINK_OFFSET(address), status);
     if (linkage == nullptr)
         return {};               // failed to resolve dynamic link
     if (linkage->linkage != lyric_object::LinkageSection::Enum) {
@@ -282,7 +285,7 @@ lyric_runtime::SegmentManager::storeEnum(
     if (lyric_object::IS_NEAR(address))
         return sp->setEnum(address, value);
 
-    const auto *linkage = resolveLink(sp, address, status);
+    const auto *linkage = resolveLink(sp, lyric_object::GET_LINK_OFFSET(address), status);
     if (linkage == nullptr)
         return false;                   // failed to resolve dynamic link
     if (linkage->linkage != lyric_object::LinkageSection::Enum) {

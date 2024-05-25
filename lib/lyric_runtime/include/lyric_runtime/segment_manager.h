@@ -26,13 +26,15 @@ namespace lyric_runtime {
         virtual ~SegmentManager();
 
         virtual BytecodeSegment *getSegment(tu_uint32 segmentIndex);
+        virtual BytecodeSegment *getSegment(const lyric_common::AssemblyLocation &location);
 
-        virtual BytecodeSegment *loadAssembly(const lyric_common::AssemblyLocation &location);
+        virtual BytecodeSegment *getOrLoadSegment(const lyric_common::AssemblyLocation &location);
 
         virtual const LinkEntry *resolveLink(
             const BytecodeSegment *sp,
-            tu_uint32 address,
+            tu_uint32 index,
             tempo_utils::Status &status);
+
         virtual DataCell resolveDescriptor(
             const BytecodeSegment *sp,
             lyric_object::LinkageSection section,

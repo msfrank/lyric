@@ -9,6 +9,10 @@
 
 namespace lyric_runtime {
 
+    /**
+     * The bytecode segment is a runtime structure containing the readonly bytecode, virtual tables, and
+     * static storage areas for the object at a specified assembly location.
+     */
     class BytecodeSegment {
 
     public:
@@ -39,6 +43,9 @@ namespace lyric_runtime {
 
         NativeFunc getTrap(tu_uint32 address) const;
 
+        void *getData() const;
+        void setData(void *data);
+
     private:
         tu_uint32 m_segmentIndex;
         lyric_common::AssemblyLocation m_location;
@@ -56,6 +63,7 @@ namespace lyric_runtime {
         DataCell *m_statics;
         DataCell *m_instances;
         DataCell *m_enums;
+        void *m_data;
     };
 }
 

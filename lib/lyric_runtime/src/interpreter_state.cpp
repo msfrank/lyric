@@ -83,7 +83,7 @@ detect_bootstrap(
     TU_ASSERT (bootstrapLocation != nullptr);
 
     // load segment for the main assembly from the specified location
-    auto *segment = segmentManager->loadAssembly(mainLocation);
+    auto *segment = segmentManager->getOrLoadSegment(mainLocation);
     if (segment == nullptr)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kMissingAssembly,
@@ -125,9 +125,8 @@ allocate_type_manager(
     TU_ASSERT (segmentManager != nullptr);
     TU_ASSERT (typeManagerPtr != nullptr);
 
-    // load the prelude assembly
-    // FIXME: import hash should be required for prelude assembly
-    auto *bootstrapSegment = segmentManager->loadAssembly(preludeLocation);
+    // get the prelude segment
+    auto *bootstrapSegment = segmentManager->getOrLoadSegment(preludeLocation);
     if (bootstrapSegment == nullptr)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant,
@@ -341,7 +340,7 @@ tempo_utils::Status
 lyric_runtime::InterpreterState::reload(const lyric_common::AssemblyLocation &mainLocation)
 {
     // load segment for the main assembly from the specified main location
-    auto *segment = m_segmentManager->loadAssembly(mainLocation);
+    auto *segment = m_segmentManager->getOrLoadSegment(mainLocation);
     if (segment == nullptr)
         return InterpreterStatus::forCondition(
             InterpreterCondition::kMissingAssembly,

@@ -44,8 +44,8 @@ lyric_runtime::internal::get_existential_table(
 
         switch (existentialDescriptor.superExistentialAddressType()) {
             case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(existentialSegment, existentialDescriptor.getFarSuperExistential(),
-                    segmentManagerData, status);
+                auto *link = resolve_link(existentialSegment,
+                    existentialDescriptor.getFarSuperExistential().getDescriptorOffset(), segmentManagerData, status);
                 if (!link || link->linkage != lyric_object::LinkageSection::Existential) {
                     status = InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid super existential");
@@ -82,7 +82,8 @@ lyric_runtime::internal::get_existential_table(
 
         switch (method.methodAddressType()) {
             case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(existentialSegment, method.getFarCall(), segmentManagerData, status);
+                auto *link = resolve_link(existentialSegment,
+                    method.getFarCall().getDescriptorOffset(), segmentManagerData, status);
                 if (!link || link->linkage != lyric_object::LinkageSection::Call) {
                     status = InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid existential method linkage");
@@ -126,7 +127,8 @@ lyric_runtime::internal::get_existential_table(
 
             switch (extension.actionAddressType()) {
                 case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(existentialSegment, extension.getFarAction(), segmentManagerData, status);
+                    auto *link = resolve_link(existentialSegment,
+                        extension.getFarAction().getDescriptorOffset(), segmentManagerData, status);
                     if (!link || link->linkage != lyric_object::LinkageSection::Action) {
                         status = InterpreterStatus::forCondition(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
@@ -153,7 +155,8 @@ lyric_runtime::internal::get_existential_table(
 
             switch (extension.callAddressType()) {
                 case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(existentialSegment, extension.getFarCall(), segmentManagerData, status);
+                    auto *link = resolve_link(existentialSegment,
+                        extension.getFarCall().getDescriptorOffset(), segmentManagerData, status);
                     if (!link || link->linkage != lyric_object::LinkageSection::Call) {
                         status = InterpreterStatus::forCondition(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
@@ -192,8 +195,8 @@ lyric_runtime::internal::get_existential_table(
         DataCell conceptKey;
         auto address = implConceptType.getLinkageIndex();
         if (lyric_object::IS_FAR(address)) {
-            auto link = existentialObject.getLink(lyric_object::GET_LINK_OFFSET(address));
-            auto *linkage = resolve_link(existentialSegment, link, segmentManagerData, status);
+            auto *linkage = resolve_link(existentialSegment,
+                lyric_object::GET_LINK_OFFSET(address), segmentManagerData, status);
             if (linkage == nullptr)
                 return {};
             if (linkage->linkage != lyric_object::LinkageSection::Concept) {

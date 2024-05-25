@@ -12,7 +12,8 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
     : m_segmentIndex(segmentIndex),
       m_location(location),
       m_object(object),
-      m_plugin(plugin)
+      m_plugin(plugin),
+      m_data(nullptr)
 {
     TU_ASSERT (m_object.isValid());
     m_bytecodeSize = m_object.getBytecodeSize();
@@ -32,6 +33,10 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
 
 lyric_runtime::BytecodeSegment::~BytecodeSegment()
 {
+    if (m_plugin != nullptr) {
+        m_plugin->unload();
+    }
+
     delete[] m_links;
     delete[] m_statics;
     delete[] m_instances;
@@ -142,4 +147,16 @@ lyric_runtime::BytecodeSegment::getTrap(tu_uint32 address) const
     if (m_plugin == nullptr)
         return nullptr;
     return m_plugin->getTrap(address);
+}
+
+void *
+lyric_runtime::BytecodeSegment::getData() const
+{
+    return m_data;
+}
+
+void
+lyric_runtime::BytecodeSegment::setData(void *data)
+{
+    m_data = data;
 }

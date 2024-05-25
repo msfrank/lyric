@@ -7,13 +7,13 @@
 
 namespace lyric_runtime::internal {
 
-    BytecodeSegment *load_assembly(
+    BytecodeSegment *get_or_load_segment(
         const lyric_common::AssemblyLocation &location,
         SegmentManagerData *segmentManagerData);
 
     const LinkEntry *resolve_link(
         const BytecodeSegment *sp,
-        const lyric_object::LinkWalker &link,
+        tu_uint32 index,
         SegmentManagerData *segmentManagerData,
         tempo_utils::Status &status);
 

@@ -42,8 +42,8 @@ lyric_runtime::internal::get_concept_table(
 
         switch (conceptDescriptor.superConceptAddressType()) {
             case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(conceptSegment, conceptDescriptor.getFarSuperConcept(),
-                    segmentManagerData, status);
+                auto *link = resolve_link(conceptSegment,
+                    conceptDescriptor.getFarSuperConcept().getDescriptorOffset(), segmentManagerData, status);
                 if (!link || link->linkage != lyric_object::LinkageSection::Concept) {
                     status = InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid super concept");
@@ -84,7 +84,8 @@ lyric_runtime::internal::get_concept_table(
 
             switch (extension.actionAddressType()) {
                 case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(conceptSegment, extension.getFarAction(), segmentManagerData, status);
+                    auto *link = resolve_link(conceptSegment,
+                        extension.getFarAction().getDescriptorOffset(), segmentManagerData, status);
                     if (!link || link->linkage != lyric_object::LinkageSection::Action) {
                         status = InterpreterStatus::forCondition(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
@@ -111,7 +112,8 @@ lyric_runtime::internal::get_concept_table(
 
             switch (extension.callAddressType()) {
                 case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(conceptSegment, extension.getFarCall(), segmentManagerData, status);
+                    auto *link = resolve_link(conceptSegment,
+                        extension.getFarCall().getDescriptorOffset(), segmentManagerData, status);
                     if (!link || link->linkage != lyric_object::LinkageSection::Call) {
                         status = InterpreterStatus::forCondition(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
@@ -150,8 +152,8 @@ lyric_runtime::internal::get_concept_table(
         DataCell conceptKey;
         auto address = implConceptType.getLinkageIndex();
         if (lyric_object::IS_FAR(address)) {
-            auto link = conceptObject.getLink(lyric_object::GET_LINK_OFFSET(address));
-            auto *linkage = resolve_link(conceptSegment, link, segmentManagerData, status);
+            auto *linkage = resolve_link(conceptSegment,
+                lyric_object::GET_LINK_OFFSET(address), segmentManagerData, status);
             if (linkage == nullptr)
                 return {};
             if (linkage->linkage != lyric_object::LinkageSection::Concept) {
