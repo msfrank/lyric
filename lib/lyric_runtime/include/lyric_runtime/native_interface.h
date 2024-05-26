@@ -44,7 +44,7 @@ namespace lyric_runtime {
          * data to the segment then the data should be released in this method.
          *
          */
-        virtual void unload() const = 0;
+        virtual void unload(BytecodeSegment *segment) const = 0;
 
         /**
          * Returns the function pointer to the trap at the specified `index`.

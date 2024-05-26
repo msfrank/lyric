@@ -116,7 +116,7 @@ NativeCore::load(lyric_runtime::BytecodeSegment *segment) const
 }
 
 void
-NativeCore::unload() const
+NativeCore::unload(lyric_runtime::BytecodeSegment *segment) const
 {
 }
 

@@ -12,7 +12,7 @@ namespace lyric_runtime {
         LibraryPlugin(std::shared_ptr<tempo_utils::LibraryLoader> loader, const NativeInterface *iface);
 
         bool load(BytecodeSegment *segment) const override;
-        void unload() const override;
+        void unload(BytecodeSegment *segment) const override;
         NativeFunc getTrap(tu_uint32 index) const override;
         tu_uint32 numTraps() const override;
 

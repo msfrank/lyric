@@ -18,9 +18,9 @@ lyric_runtime::LibraryPlugin::load(BytecodeSegment *segment) const
 }
 
 void
-lyric_runtime::LibraryPlugin::unload() const
+lyric_runtime::LibraryPlugin::unload(BytecodeSegment *segment) const
 {
-    m_iface->unload();
+    m_iface->unload(segment);
 }
 
 lyric_runtime::NativeFunc

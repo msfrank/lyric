@@ -12,7 +12,7 @@ namespace lyric_runtime {
 
         virtual bool load(BytecodeSegment *segment) const = 0;
 
-        virtual void unload() const = 0;
+        virtual void unload(BytecodeSegment *segment) const = 0;
 
         virtual NativeFunc getTrap(tu_uint32 index) const = 0;
 

@@ -25,6 +25,12 @@ namespace lyric_runtime {
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
+        bool callStatic(
+            const DataCell &descriptor,
+            std::vector<DataCell> &args,
+            StackfulCoroutine *currentCoro,
+            tempo_utils::Status &status);
+
         bool callVirtual(
             const DataCell &receiver,
             tu_uint32 address,

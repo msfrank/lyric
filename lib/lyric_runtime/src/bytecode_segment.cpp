@@ -33,10 +33,12 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
 
 lyric_runtime::BytecodeSegment::~BytecodeSegment()
 {
+    // unload must happen first in the destructor
     if (m_plugin != nullptr) {
-        m_plugin->unload();
+        m_plugin->unload(this);
     }
 
+    // free the static storage area
     delete[] m_links;
     delete[] m_statics;
     delete[] m_instances;

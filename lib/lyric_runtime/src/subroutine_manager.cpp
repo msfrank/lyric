@@ -123,87 +123,40 @@ lyric_runtime::SubroutineManager::callProc(
     return true;
 }
 
-/**
- * Constructs a frame for the call specified by `address` and pushes it onto the call stack. The address
- * is resolved in relation to the SP of the `currentCoro`.
- *
- * @param address
- * @param args
- * @param currentCoro
- * @param status
- * @return
- */
-bool
-lyric_runtime::SubroutineManager::callStatic(
-    tu_uint32 address,
-    std::vector<DataCell> &args,
-    StackfulCoroutine *currentCoro,
+static bool
+call_static(
+    lyric_runtime::StackfulCoroutine *currentCoro,
+    lyric_runtime::BytecodeSegment *segment,
+    tu_uint32 callIndex,
+    lyric_object::CallWalker call,
+    std::vector<lyric_runtime::DataCell> &args,
     tempo_utils::Status &status)
 {
-    TU_ASSERT (currentCoro != nullptr);
-
-    BytecodeSegment *segment = nullptr;
-    tu_uint32 callIndex;
-    tu_uint32 procOffset;
-    lyric_object::CallWalker call;
-
-    auto *sp = currentCoro->peekSP();
-
-    // resolve the segment and call proc
-    if (lyric_object::IS_NEAR(address)) {
-        segment = sp;
-        auto object = segment->getObject().getObject();
-        call = object.getCall(address);
-        if (!call.isValid()) {
-            status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "missing call");
-            return false;
-        }
-        callIndex = address;
-        procOffset = call.getProcOffset();
-    } else {
-        const auto *linkage = m_segmentManager->resolveLink(
-            sp, lyric_object::GET_LINK_OFFSET(address), status);
-        if (!linkage || linkage->linkage != lyric_object::LinkageSection::Call) {
-            status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "invalid call linkage");
-            return false;
-        }
-        segment = m_segmentManager->getSegment(linkage->assembly);
-        auto object = segment->getObject().getObject();
-        call = object.getCall(linkage->value);
-        if (!call.isValid()) {
-            status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "missing call");
-            return false;
-        }
-        callIndex = linkage->value;
-        procOffset = call.getProcOffset();
-    }
-
     // validate call descriptor
     if (call.getMode() == lyric_object::CallMode::Constructor) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid call flags");
+        status = lyric_runtime::InterpreterStatus::forCondition(
+            lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid call flags");
         return false;
     }
     if (call.isBound()) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid call flags");
+        status = lyric_runtime::InterpreterStatus::forCondition(
+            lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid call flags");
         return false;
     }
+
+    tu_uint32 procOffset = call.getProcOffset();
 
     // proc offset must be within the segment bytecode
     auto *bytecodeData = segment->getBytecodeData();
     auto bytecodeSize = segment->getBytecodeSize();
     if (bytecodeSize <= procOffset) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
+        status = lyric_runtime::InterpreterStatus::forCondition(
+            lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
         return false;
     }
 
     const uint8_t *header = bytecodeData + procOffset;
-    const BytecodeSegment *returnSP = sp;
+    const lyric_runtime::BytecodeSegment *returnSP = currentCoro->peekSP();
     const lyric_object::BytecodeIterator returnIP = currentCoro->peekIP();
     auto stackGuard = currentCoro->dataStackSize();
 
@@ -216,22 +169,22 @@ lyric_runtime::SubroutineManager::callStatic(
 
     // maximum number of args is 2^16
     if (std::numeric_limits<uint16_t>::max() <= args.size()) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "too many arguments");
+        status = lyric_runtime::InterpreterStatus::forCondition(
+            lyric_runtime::InterpreterCondition::kRuntimeInvariant, "too many arguments");
         return false;
     }
 
     // all required args must be present
     if (args.size() < numArguments) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "not enough arguments");
+        status = lyric_runtime::InterpreterStatus::forCondition(
+            lyric_runtime::InterpreterCondition::kRuntimeInvariant, "not enough arguments");
         return false;
     }
 
     auto numRest = static_cast<uint16_t>(args.size()) - numArguments;
 
     // construct the activation call frame
-    CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
+    lyric_runtime::CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
         returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args);
 
     // import each lexical from the latest activation and push it onto the stack
@@ -259,16 +212,16 @@ lyric_runtime::SubroutineManager::callStatic(
                     frame.setLexical(i, ancestor.getLocal(targetOffset));
                     break;
                 default:
-                    status = InterpreterStatus::forCondition(
-                        InterpreterCondition::kRuntimeInvariant, "invalid lexical target");
+                    status = lyric_runtime::InterpreterStatus::forCondition(
+                        lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid lexical target");
                     return false;
             }
             found = true;                       // we found the lexical, break loop early
             break;
         }
         if (!found) {
-            status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "missing lexical");
+            status = lyric_runtime::InterpreterStatus::forCondition(
+                lyric_runtime::InterpreterCondition::kRuntimeInvariant, "missing lexical");
             return false;
         }
     }
@@ -278,6 +231,87 @@ lyric_runtime::SubroutineManager::callStatic(
     TU_LOG_V << "moved ip to " << ip;
 
     return true;
+}
+
+/**
+ * Constructs a frame for the call specified by `address` and pushes it onto the call stack. The address
+ * is resolved in relation to the SP of the `currentCoro`.
+ *
+ * @param address
+ * @param args
+ * @param currentCoro
+ * @param status
+ * @return
+ */
+bool
+lyric_runtime::SubroutineManager::callStatic(
+    tu_uint32 address,
+    std::vector<DataCell> &args,
+    StackfulCoroutine *currentCoro,
+    tempo_utils::Status &status)
+{
+    TU_ASSERT (currentCoro != nullptr);
+
+    BytecodeSegment *segment = nullptr;
+    tu_uint32 callIndex;
+    lyric_object::CallWalker call;
+
+    auto *sp = currentCoro->peekSP();
+
+    // resolve the segment and call proc
+    if (lyric_object::IS_NEAR(address)) {
+        segment = sp;
+        auto object = segment->getObject().getObject();
+        call = object.getCall(address);
+        if (!call.isValid()) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "missing call");
+            return false;
+        }
+        callIndex = address;
+    } else {
+        const auto *linkage = m_segmentManager->resolveLink(
+            sp, lyric_object::GET_LINK_OFFSET(address), status);
+        if (!linkage || linkage->linkage != lyric_object::LinkageSection::Call) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid call linkage");
+            return false;
+        }
+        segment = m_segmentManager->getSegment(linkage->assembly);
+        auto object = segment->getObject().getObject();
+        call = object.getCall(linkage->value);
+        if (!call.isValid()) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "missing call");
+            return false;
+        }
+        callIndex = linkage->value;
+    }
+
+    return call_static(currentCoro, segment, callIndex, call, args, status);
+}
+
+bool
+lyric_runtime::SubroutineManager::callStatic(
+    const DataCell &descriptor,
+    std::vector<DataCell> &args,
+    StackfulCoroutine *currentCoro,
+    tempo_utils::Status &status)
+{
+    TU_ASSERT (descriptor.type == DataCellType::CALL);
+    TU_ASSERT (currentCoro != nullptr);
+
+    auto callIndex = descriptor.data.descriptor.value;
+    auto *segment = m_segmentManager->getSegment(descriptor.data.descriptor.assembly);
+    auto object = segment->getObject().getObject();
+    auto call = object.getCall(callIndex);
+    if (!call.isValid()) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "missing call");
+        return false;
+    }
+
+    return call_static(currentCoro, segment, callIndex, call, args, status);
 }
 
 /**
