@@ -5,9 +5,11 @@
 #include <lyric_assembler/block_handle.h>
 #include <lyric_parser/node_walker.h>
 
+#include "typing_types.h"
+
 namespace lyric_typing {
 
-    tempo_utils::Result<lyric_assembler::PackSpec>
+    tempo_utils::Result<PackSpec>
     parse_pack(
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,

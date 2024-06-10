@@ -38,7 +38,10 @@ build_core_UrlInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::URL_EQUALS)));
         state.addImplExtension("equals", UrlEqualityImpl,
-            {{"lhs", UrlType}, {"rhs", UrlType}}, {},
+            {
+                make_list_param("lhs", UrlType),
+                make_list_param("rhs", UrlType),
+            },
             code, BoolType, false);
     }
     {

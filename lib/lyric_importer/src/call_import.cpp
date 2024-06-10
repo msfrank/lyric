@@ -12,8 +12,9 @@ namespace lyric_importer {
         TypeImport *returnType;
         lyric_object::AccessType access;
         lyric_object::CallMode callMode;
-        std::vector<Parameter> parameters;
-        Option<Parameter> rest;
+        std::vector<Parameter> listParameters;
+        std::vector<Parameter> namedParameters;
+        Option<Parameter> restParameter;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
         std::vector<tu_uint8> inlineBytecode;
     };
@@ -77,47 +78,77 @@ lyric_importer::CallImport::getCallMode()
 }
 
 lyric_importer::Parameter
-lyric_importer::CallImport::getParameter(tu_uint8 index)
+lyric_importer::CallImport::getListParameter(tu_uint8 index)
 {
     load();
-    if (index < m_priv->parameters.size())
-        return m_priv->parameters.at(index);
+    if (index < m_priv->listParameters.size())
+        return m_priv->listParameters.at(index);
     return {};
 }
 
 std::vector<lyric_importer::Parameter>::const_iterator
-lyric_importer::CallImport::parametersBegin()
+lyric_importer::CallImport::listParametersBegin()
 {
     load();
-    return m_priv->parameters.cbegin();
+    return m_priv->listParameters.cbegin();
 }
 
 std::vector<lyric_importer::Parameter>::const_iterator
-lyric_importer::CallImport::parametersEnd()
+lyric_importer::CallImport::listParametersEnd()
 {
     load();
-    return m_priv->parameters.cend();
+    return m_priv->listParameters.cend();
 }
 
 tu_uint8
-lyric_importer::CallImport::numParameters()
+lyric_importer::CallImport::numListParameters()
 {
     load();
-    return m_priv->parameters.size();
-}
-
-bool
-lyric_importer::CallImport::hasRest()
-{
-    load();
-    return !m_priv->rest.isEmpty();
+    return m_priv->listParameters.size();
 }
 
 lyric_importer::Parameter
-lyric_importer::CallImport::getRest()
+lyric_importer::CallImport::getNamedParameter(tu_uint8 index)
 {
     load();
-    return m_priv->rest.getOrDefault({});
+    if (index < m_priv->namedParameters.size())
+        return m_priv->namedParameters.at(index);
+    return {};
+}
+
+std::vector<lyric_importer::Parameter>::const_iterator
+lyric_importer::CallImport::namedParametersBegin()
+{
+    load();
+    return m_priv->namedParameters.cbegin();
+}
+
+std::vector<lyric_importer::Parameter>::const_iterator
+lyric_importer::CallImport::namedParametersEnd()
+{
+    load();
+    return m_priv->namedParameters.cend();
+}
+
+tu_uint8
+lyric_importer::CallImport::numNamedParameters()
+{
+    load();
+    return m_priv->namedParameters.size();
+}
+
+bool
+lyric_importer::CallImport::hasRestParameter()
+{
+    load();
+    return !m_priv->restParameter.isEmpty();
+}
+
+lyric_importer::Parameter
+lyric_importer::CallImport::getRestParameter()
+{
+    load();
+    return m_priv->restParameter.getOrDefault({});
 }
 
 lyric_common::SymbolUrl
@@ -203,51 +234,82 @@ lyric_importer::CallImport::load()
 
     priv->returnType = m_moduleImport->getType(callWalker.getResultType().getDescriptorOffset());
 
-    // get call parameters
-    for (tu_uint8 i = 0; i < callWalker.numParameters(); i++) {
-        auto parameter = callWalker.getParameter(i);
+    // get list parameters
+    for (tu_uint8 i = 0; i < callWalker.numListParameters(); i++) {
+        auto parameter = callWalker.getListParameter(i);
 
         Parameter p;
         p.index = i;
         p.name = parameter.getParameterName();
-        p.label = parameter.getParameterLabel();
         p.type = m_moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
         p.placement = parameter.getPlacement();
         p.isVariable = parameter.isVariable();
 
-        if (p.placement == lyric_object::PlacementType::Opt) {
-            lyric_common::SymbolUrl initializerCallUrl;
+        lyric_common::SymbolUrl initializerCallUrl;
 
-            switch (parameter.initializerAddressType()) {
-                case lyric_object::AddressType::Near: {
-                    initializerCallUrl = lyric_common::SymbolUrl(
-                        location, parameter.getNearInitializer().getSymbolPath());
-                    break;
-                }
-                case lyric_object::AddressType::Far: {
-                    initializerCallUrl = parameter.getFarInitializer().getLinkUrl();
-                    break;
-                }
-                default:
-                    throw tempo_utils::StatusException(
-                        ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
-                            "cannot import call at index {} in assembly {}; invalid parameter at index {}",
-                            callWalker.getDescriptorOffset(), location.toString(), i));
+        switch (parameter.initializerAddressType()) {
+            case lyric_object::AddressType::Near: {
+                initializerCallUrl = lyric_common::SymbolUrl(
+                    location, parameter.getNearInitializer().getSymbolPath());
+                break;
             }
-
-            priv->initializers[p.name] = initializerCallUrl;
+            case lyric_object::AddressType::Far: {
+                initializerCallUrl = parameter.getFarInitializer().getLinkUrl();
+                break;
+            }
+            default:
+                throw tempo_utils::StatusException(
+                    ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                        "cannot import call at index {} in assembly {}; invalid list parameter at index {}",
+                        callWalker.getDescriptorOffset(), location.toString(), i));
         }
 
-        priv->parameters.push_back(p);
+        priv->initializers[p.name] = initializerCallUrl;
+
+        priv->listParameters.push_back(p);
     }
 
-    if (callWalker.hasRest()) {
-        auto parameter = callWalker.getRest();
+    // get named parameters
+    for (tu_uint8 i = 0; i < callWalker.numNamedParameters(); i++) {
+        auto parameter = callWalker.getNamedParameter(i);
+
+        Parameter p;
+        p.index = i;
+        p.name = parameter.getParameterName();
+        p.type = m_moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
+        p.placement = parameter.getPlacement();
+        p.isVariable = parameter.isVariable();
+
+        lyric_common::SymbolUrl initializerCallUrl;
+
+        switch (parameter.initializerAddressType()) {
+            case lyric_object::AddressType::Near: {
+                initializerCallUrl = lyric_common::SymbolUrl(
+                    location, parameter.getNearInitializer().getSymbolPath());
+                break;
+            }
+            case lyric_object::AddressType::Far: {
+                initializerCallUrl = parameter.getFarInitializer().getLinkUrl();
+                break;
+            }
+            default:
+                throw tempo_utils::StatusException(
+                    ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                        "cannot import call at index {} in assembly {}; invalid parameter at index {}",
+                        callWalker.getDescriptorOffset(), location.toString(), i));
+        }
+
+        priv->initializers[p.name] = initializerCallUrl;
+
+        priv->namedParameters.push_back(p);
+    }
+
+    if (callWalker.hasRestParameter()) {
+        auto parameter = callWalker.getRestParameter();
 
         Parameter p;
         p.index = -1;
         p.name = parameter.getParameterName();
-        p.label = {};
         p.type = m_moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
         p.placement = parameter.getPlacement();
         p.isVariable = parameter.isVariable();
@@ -259,7 +321,7 @@ lyric_importer::CallImport::load()
                     callWalker.getDescriptorOffset(), location.toString()));
         // FIXME: need additional validation? (can't have initializer, etc)
 
-        priv->rest = Option(p);
+        priv->restParameter = Option(p);
     }
 
     if (callWalker.getAccess() == lyric_object::AccessType::Invalid)

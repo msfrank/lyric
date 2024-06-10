@@ -1,8 +1,7 @@
-
 #include <lyric_object/call_parameter_walker.h>
 #include <lyric_object/call_walker.h>
 #include <lyric_object/internal/object_reader.h>
-#include <lyric_object/rest_parameter_walker.h>
+#include <lyric_object/parameter_walker.h>
 #include <lyric_object/symbol_walker.h>
 #include <tempo_utils/big_endian.h>
 
@@ -183,56 +182,96 @@ lyric_object::CallWalker::getReceiver() const
 }
 
 tu_uint8
-lyric_object::CallWalker::numParameters() const
+lyric_object::CallWalker::numListParameters() const
 {
     if (!isValid())
         return 0;
     auto *callDescriptor = m_reader->getCall(m_callOffset);
     if (callDescriptor == nullptr)
         return 0;
-    if (callDescriptor->parameters() == nullptr)
+    if (callDescriptor->list_parameters() == nullptr)
         return 0;
-    return callDescriptor->parameters()->size();
+    return callDescriptor->list_parameters()->size();
 }
 
-lyric_object::CallParameterWalker
-lyric_object::CallWalker::getParameter(tu_uint8 index) const
+lyric_object::ParameterWalker
+lyric_object::CallWalker::getListParameter(tu_uint8 index) const
 {
     if (!isValid())
         return {};
     auto *callDescriptor = m_reader->getCall(m_callOffset);
     if (callDescriptor == nullptr)
         return {};
-    if (callDescriptor->parameters() == nullptr)
+    if (callDescriptor->list_parameters() == nullptr)
         return {};
-    if (callDescriptor->parameters()->size() <= index)
+    auto *listParameters = callDescriptor->list_parameters();
+
+    if (listParameters->size() <= index)
         return {};
-    return CallParameterWalker(m_reader, (void *) callDescriptor, index);
+    auto *parameter = listParameters->Get(index);
+    auto placement = parameter->initializer_call() == INVALID_ADDRESS_U32? PlacementType::List
+        : PlacementType::ListOpt;
+
+    return ParameterWalker(m_reader, (void *) parameter, index, placement);
+}
+
+tu_uint8
+lyric_object::CallWalker::numNamedParameters() const
+{
+    if (!isValid())
+        return false;
+    auto *callDescriptor = m_reader->getCall(m_callOffset);
+    if (callDescriptor == nullptr)
+        return {};
+    if (callDescriptor->named_parameters() == nullptr)
+        return 0;
+    return callDescriptor->named_parameters()->size();
+}
+
+lyric_object::ParameterWalker
+lyric_object::CallWalker::getNamedParameter(tu_uint8 index) const
+{
+    if (!isValid())
+        return {};
+    auto *callDescriptor = m_reader->getCall(m_callOffset);
+    if (callDescriptor == nullptr)
+        return {};
+    if (callDescriptor->named_parameters() == nullptr)
+        return {};
+    auto *namedParameters = callDescriptor->named_parameters();
+
+    if (namedParameters->size() <= index)
+        return {};
+    auto *parameter = namedParameters->Get(index);
+    auto placement = parameter->initializer_call() == INVALID_ADDRESS_U32? PlacementType::Named
+        : PlacementType::NamedOpt;
+
+    return ParameterWalker(m_reader, (void *) parameter, index, placement);
 }
 
 bool
-lyric_object::CallWalker::hasRest() const
+lyric_object::CallWalker::hasRestParameter() const
 {
     if (!isValid())
         return false;
     auto *callDescriptor = m_reader->getCall(m_callOffset);
     if (callDescriptor == nullptr)
         return false;
-    return callDescriptor->rest() != nullptr;
+    return callDescriptor->rest_parameter() != nullptr;
 }
 
-lyric_object::RestParameterWalker
-lyric_object::CallWalker::getRest() const
+lyric_object::ParameterWalker
+lyric_object::CallWalker::getRestParameter() const
 {
     if (!isValid())
         return {};
     auto *callDescriptor = m_reader->getCall(m_callOffset);
     if (callDescriptor == nullptr)
         return {};
-    auto *rest =  callDescriptor->rest();
-    if (rest == nullptr)
+    auto *parameter =  callDescriptor->rest_parameter();
+    if (parameter == nullptr)
         return {};
-    return RestParameterWalker(m_reader, (void *) rest, (void *) callDescriptor->names());
+    return ParameterWalker(m_reader, (void *) parameter, 0, PlacementType::Rest);
 }
 
 inline void

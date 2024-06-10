@@ -17,8 +17,8 @@ build_core_Iterator(BuilderState &state, const CoreConcept *IdeaConcept, const C
     auto *IteratorConcept = state.addGenericConcept(classPath, IteratorTemplate,
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
-    state.addConceptAction("Valid", IteratorConcept, {}, {}, BoolType);
-    state.addConceptAction("Next", IteratorConcept, {}, {}, TType);
+    state.addConceptAction("Valid", IteratorConcept, {}, BoolType);
+    state.addConceptAction("Next", IteratorConcept, {}, TType);
 
     return IteratorConcept;
 }

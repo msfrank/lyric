@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/internal/write_statics.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/symbol_cache.h>

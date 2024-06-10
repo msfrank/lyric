@@ -32,12 +32,12 @@ build_core_FunctionN(BuilderState &state, int arity, const CoreClass *FunctionNC
 
     auto *FunctionNTemplate = FunctionNClass->classTemplate;
 
-    std::vector<std::pair<std::string, const CoreType *>> applyParams;
+    std::vector<CoreParam> applyParams;
     for (int i = 0; i < arity; i++) {
         auto offset = i;
         auto name = absl::StrCat("p", offset);
         auto *PType = FunctionNTemplate->types.at(FunctionNTemplate->names.at(offset));
-        applyParams.push_back({name, PType});
+        applyParams.push_back(make_list_param(name, PType));
     }
 
     auto *RType = FunctionNTemplate->types.at("R");
@@ -48,7 +48,7 @@ build_core_FunctionN(BuilderState &state, int arity, const CoreClass *FunctionNC
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addClassCtor(FunctionNClass,
             {
-                {"$call", CallType, nullptr, lyo1::ParameterFlags::NONE}
+                make_list_param("$call", CallType),
             },
             code);
         state.setClassAllocator(FunctionNClass, lyric_bootstrap::internal::BootstrapTrap::CLOSURE_ALLOC);
@@ -62,7 +62,7 @@ build_core_FunctionN(BuilderState &state, int arity, const CoreClass *FunctionNC
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
 
         state.addClassMethod("apply", FunctionNClass,
-            lyo1::CallFlags::GlobalVisibility, applyParams, {},
+            lyo1::CallFlags::GlobalVisibility, applyParams,
             code, RType);
     }
 }

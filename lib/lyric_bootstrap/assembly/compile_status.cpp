@@ -39,7 +39,7 @@ build_core_Status(BuilderState &state, const CoreType *StringType)
         state.setStructAllocator(StatusStruct, lyric_bootstrap::internal::BootstrapTrap::STATUS_ALLOC);
         state.addStructCtor(StatusStruct,
             {
-                {"message", StringType, nullptr, lyo1::ParameterFlags::Named},
+                make_named_param("message", StringType),
             },
             code);
     }
@@ -68,7 +68,7 @@ build_core_Status_code(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructCtor(StatusCodeStruct,
             {
-                {"message", StringType, nullptr, lyo1::ParameterFlags::Named},
+                make_named_param("message", StringType),
             },
             code);
     }

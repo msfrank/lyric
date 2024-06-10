@@ -10,8 +10,7 @@
 namespace lyric_object {
 
     // forward declarations
-    class CallParameterWalker;
-    class RestParameterWalker;
+    class ParameterWalker;
     class SymbolWalker;
     class TypeWalker;
 
@@ -38,11 +37,14 @@ namespace lyric_object {
         bool hasReceiver() const;
         SymbolWalker getReceiver() const;
 
-        tu_uint8 numParameters() const;
-        CallParameterWalker getParameter(tu_uint8 index) const;
+        tu_uint8 numListParameters() const;
+        ParameterWalker getListParameter(tu_uint8 index) const;
 
-        bool hasRest() const;
-        RestParameterWalker getRest() const;
+        tu_uint8 numNamedParameters() const;
+        ParameterWalker getNamedParameter(tu_uint8 index) const;
+
+        bool hasRestParameter() const;
+        ParameterWalker getRestParameter() const;
 
         std::span<const tu_uint8> getProc() const;
         ProcHeader getProcHeader() const;
@@ -60,8 +62,6 @@ namespace lyric_object {
 
         CallWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 callOffset);
 
-        friend class ActionParameterWalker;
-        friend class CallParameterWalker;
         friend class ClassMethod;
         friend class ClassWalker;
         friend class EnumMethod;
@@ -72,6 +72,7 @@ namespace lyric_object {
         friend class InstanceMethod;
         friend class InstanceWalker;
         friend class ObjectWalker;
+        friend class ParameterWalker;
         friend class StaticWalker;
         friend class StructMethod;
         friend class StructWalker;

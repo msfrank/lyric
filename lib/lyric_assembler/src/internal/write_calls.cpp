@@ -70,8 +70,9 @@ write_call(
     }
 
     tu_uint32 callTemplate = lyric_runtime::INVALID_ADDRESS_U32;
-    if (callSymbol->callTemplate() != nullptr)
+    if (callSymbol->callTemplate() != nullptr) {
         callTemplate = callSymbol->callTemplate()->getAddress().getAddress();
+    }
 
     lyo1::TypeSection receiverSection = lyo1::TypeSection::Invalid;
     tu_uint32 receiverDescriptor = lyric_runtime::INVALID_ADDRESS_U32;
@@ -116,39 +117,39 @@ write_call(
             break;
     }
 
-    // FIXME: call must have a type
+    // FIXME: i think we should remove the call type field. the function type can be synthesized as needed.
     tu_uint32 callType = lyric_runtime::INVALID_ADDRESS_U32;
-    if (callSymbol->callType() != nullptr)
+    if (callSymbol->callType() != nullptr) {
         callType = callSymbol->callType()->getAddress().getAddress();
+    }
 
-    std::vector<lyo1::Parameter> parameters;
-    std::vector<std::string> names;
+    std::vector<flatbuffers::Offset<lyo1::Parameter>> listParameters;
+    for (auto it = callSymbol->listPlacementBegin(); it != callSymbol->listPlacementEnd(); it++) {
+        const auto &param = *it;
 
-    for (const auto &param : callSymbol->getParameters()) {
-        lyo1::ParameterFlags flags = lyo1::ParameterFlags::NONE;
+        lyo1::ParameterT p;
+        p.parameter_name = param.name;
+
+        p.flags = lyo1::ParameterFlags::NONE;
         switch (param.placement) {
-            case lyric_object::PlacementType::Ctx:
-                flags |= lyo1::ParameterFlags::Ctx;
-                break;
-            case lyric_object::PlacementType::Named:
-            case lyric_object::PlacementType::Opt:
-                flags |= lyo1::ParameterFlags::Named;
-                break;
             case lyric_object::PlacementType::List:
+            case lyric_object::PlacementType::ListOpt:
                 break;
             default:
                 return lyric_assembler::AssemblerStatus::forCondition(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant,
                     "invalid placement type");
         }
-        if (param.isVariable)
-            flags |= lyo1::ParameterFlags::Var;
+        if (param.isVariable) {
+            p.flags |= lyo1::ParameterFlags::Var;
+        }
+
         lyric_assembler::TypeHandle *paramTypeHandle;
         TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(param.typeDef));
-        tu_uint32 paramType = paramTypeHandle->getAddress().getAddress();
-        tu_uint32 paramDefault = lyric_runtime::INVALID_ADDRESS_U32;
+        p.parameter_type = paramTypeHandle->getAddress().getAddress();
+        p.initializer_call = lyric_runtime::INVALID_ADDRESS_U32;
         if (callSymbol->hasInitializer(param.name)) {
-            if (param.placement != lyric_object::PlacementType::Opt)
+            if (param.placement != lyric_object::PlacementType::ListOpt)
                 return lyric_assembler::AssemblerStatus::forCondition(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid placement");
             auto initializerUrl = callSymbol->getInitializer(param.name);
@@ -159,46 +160,87 @@ write_call(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant,
                     "invalid initializer {}", initializerUrl.toString());
             auto *initSymbol = cast_symbol_to_call(initializer);
-            paramDefault = initSymbol->getAddress().getAddress();
+            p.initializer_call = initSymbol->getAddress().getAddress();
         }
-        uint8_t nameOffset = names.size();
-        names.emplace_back(param.name);
-        parameters.emplace_back(flags, paramType, paramDefault, nameOffset, lyric_runtime::INVALID_OFFSET_U8);
+
+        listParameters.push_back(lyo1::CreateParameter(buffer, &p));
+    }
+    auto fb_listParameters = buffer.CreateVector(listParameters);
+
+    std::vector<flatbuffers::Offset<lyo1::Parameter>> namedParameters;
+    for (auto it = callSymbol->namedPlacementBegin(); it != callSymbol->namedPlacementEnd(); it++) {
+        const auto &param = *it;
+
+        lyo1::ParameterT p;
+        p.parameter_name = param.name;
+
+        p.flags = lyo1::ParameterFlags::NONE;
+        switch (param.placement) {
+            case lyric_object::PlacementType::Ctx:
+                p.flags |= lyo1::ParameterFlags::Ctx;
+                break;
+            case lyric_object::PlacementType::Named:
+            case lyric_object::PlacementType::NamedOpt:
+                break;
+            default:
+                return lyric_assembler::AssemblerStatus::forCondition(
+                    lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                    "invalid placement type");
+        }
+        if (param.isVariable) {
+            p.flags |= lyo1::ParameterFlags::Var;
+        }
+
+        lyric_assembler::TypeHandle *paramTypeHandle;
+        TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(param.typeDef));
+        p.parameter_type = paramTypeHandle->getAddress().getAddress();
+        p.initializer_call = lyric_runtime::INVALID_ADDRESS_U32;
+        if (callSymbol->hasInitializer(param.name)) {
+            if (param.placement != lyric_object::PlacementType::NamedOpt)
+                return lyric_assembler::AssemblerStatus::forCondition(
+                    lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid placement");
+            auto initializerUrl = callSymbol->getInitializer(param.name);
+            lyric_assembler::AbstractSymbol *initializer;
+            TU_ASSIGN_OR_RETURN (initializer, symbolCache->getOrImportSymbol(initializerUrl));
+            if (initializer->getSymbolType() != lyric_assembler::SymbolType::CALL)
+                return lyric_assembler::AssemblerStatus::forCondition(
+                    lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                    "invalid initializer {}", initializerUrl.toString());
+            auto *initSymbol = cast_symbol_to_call(initializer);
+            p.initializer_call = initSymbol->getAddress().getAddress();
+        }
+
+        namedParameters.push_back(lyo1::CreateParameter(buffer, &p));
+    }
+    auto fb_namedParameters = buffer.CreateVector(namedParameters);
+
+    ::flatbuffers::Offset<lyo1::Parameter> fb_restParameter = 0;
+    auto *rest = callSymbol->restPlacement();
+    if (rest != nullptr) {
+        lyo1::ParameterT p;
+        p.parameter_name = rest->name;
+
+        p.flags = lyo1::ParameterFlags::NONE;
+        if (rest->isVariable) {
+            p.flags |= lyo1::ParameterFlags::Var;
+        }
+
+        lyric_assembler::TypeHandle *paramTypeHandle;
+        TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(rest->typeDef));
+        p.parameter_type = paramTypeHandle->getAddress().getAddress();
+        p.initializer_call = 0;
+
+        fb_restParameter = lyo1::CreateParameter(buffer, &p);
     }
 
     lyric_assembler::TypeHandle *returnTypeHandle;
     TU_ASSIGN_OR_RETURN (returnTypeHandle, typeCache->getOrMakeType(callSymbol->getReturnType()));
     tu_uint32 resultType = returnTypeHandle->getAddress().getAddress();
 
-    auto restParam = callSymbol->getRest();
-    if (!restParam.isEmpty()) {
-        const auto &param = restParam.getValue();
-        lyo1::ParameterFlags flags = lyo1::ParameterFlags::Rest;
-        lyric_assembler::TypeHandle *paramTypeHandle;
-        TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(param.typeDef));
-        tu_uint32 paramType = paramTypeHandle->getAddress().getAddress();
-        uint8_t nameOffset = lyric_runtime::INVALID_OFFSET_U8;
-        if (!param.name.empty()) {
-            nameOffset = names.size();
-            names.emplace_back(param.name);
-            flags |= lyo1::ParameterFlags::Named;
-        }
-        if (param.isVariable)
-            flags |= lyo1::ParameterFlags::Var;
-        auto rest = lyo1::Parameter(flags, paramType,
-            lyric_runtime::INVALID_ADDRESS_U32, nameOffset, lyric_runtime::INVALID_OFFSET_U8);
-        calls_vector.push_back(lyo1::CreateCallDescriptor(buffer, fullyQualifiedName,
-            callTemplate, receiverSection, receiverDescriptor,
-            callType, bytecodeOffset, callFlags,
-            buffer.CreateVectorOfStructs(parameters), &rest,
-            buffer.CreateVectorOfStrings(names), resultType));
-    } else {
-        calls_vector.push_back(lyo1::CreateCallDescriptor(buffer, fullyQualifiedName,
-            callTemplate, receiverSection, receiverDescriptor,
-            callType, bytecodeOffset, callFlags,
-            buffer.CreateVectorOfStructs(parameters), nullptr,
-            buffer.CreateVectorOfStrings(names), resultType));
-    }
+    // add call descriptor
+    calls_vector.push_back(lyo1::CreateCallDescriptor(buffer, fullyQualifiedName,
+        callTemplate, receiverSection, receiverDescriptor, callType, bytecodeOffset, callFlags,
+        fb_listParameters, fb_namedParameters, fb_restParameter, resultType));
 
     // add symbol descriptor
     symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,

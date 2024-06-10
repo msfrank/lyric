@@ -13,8 +13,6 @@
 #include <lyric_runtime/runtime_types.h>
 #include <tempo_utils/option_template.h>
 
-#include "assignable_type.h"
-
 namespace lyric_assembler {
 
     /** */
@@ -510,6 +508,21 @@ namespace lyric_assembler {
             ReferenceType referenceType);
     };
 
+    struct Parameter {
+        tu_uint8 index;
+        std::string name;                           // name of the parameter
+        std::string label;                          // optional parameter label
+        lyric_common::TypeDef typeDef;              // type of the parameter
+        lyric_object::PlacementType placement;
+        bool isVariable;
+    };
+
+    struct ParameterPack {
+        std::vector<Parameter> listParameters;
+        std::vector<Parameter> namedParameters;
+        Option<Parameter> restParameter;
+    };
+
     struct ActionMethod {
         lyric_common::SymbolUrl methodAction;
         ActionMethod();
@@ -534,45 +547,6 @@ namespace lyric_assembler {
         ExtensionMethod(
             const lyric_common::SymbolUrl &methodCall,
             const lyric_common::SymbolUrl &methodAction);
-    };
-
-    struct ParameterSpec {
-        lyric_parser::NodeWalker node;          // the node of the parameter in the archetype
-        std::string name;                       // name of the parameter
-        std::string label;                      // optional parameter label
-        lyric_parser::Assignable type;          // type of the parameter
-        lyric_parser::BindingType binding;      // fixed or variable binding
-        Option<lyric_parser::NodeWalker> init;  // node containing the default initializer, can be empty
-        ParameterSpec();
-        ParameterSpec(
-            const lyric_parser::NodeWalker &node,
-            const std::string &name,
-            const std::string &label,
-            const lyric_parser::Assignable &type,
-            lyric_parser::BindingType binding,
-            const Option<lyric_parser::NodeWalker> &init = {});
-    };
-
-    struct PackSpec {
-        lyric_parser::NodeWalker node;              // the node of the pack in the archetype
-        std::vector<ParameterSpec> parameterSpec;   // list of pack parameters
-        Option<ParameterSpec> restSpec;             // rest parameter, or empty if there is no rest parameter
-        std::vector<ParameterSpec> ctxSpec;         // list of using parameters
-        PackSpec();
-        PackSpec(
-            const lyric_parser::NodeWalker &node,
-            const std::vector<ParameterSpec> &parameterSpec,
-            const Option<ParameterSpec> &restSpec,
-            const std::vector<ParameterSpec> &ctxSpec);
-    };
-
-    struct TemplateSpec {
-        lyric_parser::NodeWalker node;              // the node of the template in the archetype
-        std::vector<lyric_object::TemplateParameter> templateParameters;
-        TemplateSpec();
-        TemplateSpec(
-            const lyric_parser::NodeWalker &node,
-            const std::vector<lyric_object::TemplateParameter> &templateParameters);
     };
 
     class CondCasePatch {

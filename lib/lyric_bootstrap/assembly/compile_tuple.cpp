@@ -37,7 +37,7 @@ build_core_TupleN(BuilderState &state, int arity, const CoreClass *ObjectClass)
         for (int i = 0; i < arity; i++) {
             auto name = absl::StrCat("t", i);
             auto *TType = TupleTemplate->types[TupleTemplate->names[i]];
-            ctorParams.push_back({name, TType, nullptr, lyo1::ParameterFlags::NONE});
+            ctorParams.push_back(make_list_param(name, TType));
             ctorTypeParams.push_back(TType);
         }
 
@@ -79,7 +79,9 @@ build_core_TupleNInstance(
         lyric_object::BytecodeBuilder code;
         code.loadArgument(0);
         state.addImplExtension("unwrap", TupleUnwrapImpl,
-            {{"wrapped", TupleNClass->classType}}, {},
+            {
+                make_list_param("wrapped", TupleNClass->classType),
+            },
             code, TupleNClass->classType, false);
     }
     {

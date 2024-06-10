@@ -19,7 +19,9 @@ CoreConcept *build_core_Unwrap(BuilderState &state, const CoreConcept *IdeaConce
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
     state.addConceptAction("unwrap", UnwrapConcept,
-        {{"wrapped", WType}}, {},
+        {
+            make_list_param("wrapped", WType),
+        },
         TType);
 
     return UnwrapConcept;

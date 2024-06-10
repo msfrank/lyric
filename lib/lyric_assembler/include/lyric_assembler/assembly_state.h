@@ -25,30 +25,29 @@
 namespace lyric_assembler {
 
     // forward declarations
-    class FundamentalCache;
-    class ImportCache;
-    class LiteralCache;
-    class SymbolCache;
-    class TypeCache;
-    class ImplCache;
-    class TypeHandle;
-    class TemplateHandle;
-    class LiteralHandle;
-    class ProcHandle;
-    class BlockHandle;
-    class CodeBuilder;
-    class ExistentialSymbol;
-    class StaticSymbol;
-    class CallSymbol;
-    class FieldSymbol;
     class ActionSymbol;
-    class ConceptSymbol;
-    class ImplHandle;
+    class BlockHandle;
+    class CallSymbol;
     class ClassSymbol;
-    class InstanceSymbol;
+    class CodeBuilder;
+    class ConceptSymbol;
     class EnumSymbol;
-    class StructSymbol;
+    class ExistentialSymbol;
+    class FieldSymbol;
+    class FundamentalCache;
+    class ImplCache;
+    class ImportCache;
+    class InstanceSymbol;
+    class LiteralCache;
+    class LiteralHandle;
     class NamespaceSymbol;
+    class ProcHandle;
+    class StaticSymbol;
+    class StructSymbol;
+    class SymbolCache;
+    class TemplateHandle;
+    class TypeCache;
+    class TypeHandle;
     class UndeclaredSymbol;
 
     struct AssemblyStateOptions {

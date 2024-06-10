@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/internal/write_concepts.h>

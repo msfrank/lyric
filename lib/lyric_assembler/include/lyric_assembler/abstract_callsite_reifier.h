@@ -3,10 +3,6 @@
 
 #include <lyric_common/symbol_url.h>
 
-#include "action_symbol.h"
-#include "assembly_state.h"
-#include "call_symbol.h"
-#include "assembler_result.h"
 #include "assembler_types.h"
 
 namespace lyric_assembler {
@@ -16,13 +12,12 @@ namespace lyric_assembler {
     public:
         virtual ~AbstractCallsiteReifier() = default;
 
-        virtual bool isValid() const = 0;
+        //virtual bool isValid() const = 0;
+        //virtual lyric_common::TypeDef getArgument(int index) const = 0;
+        //virtual std::vector<lyric_common::TypeDef> getArguments() const = 0;
+        //virtual int numArguments() const = 0;
 
-        virtual lyric_common::TypeDef getArgument(int index) const = 0;
-
-        virtual std::vector<lyric_common::TypeDef> getArguments() const = 0;
-
-        virtual int numArguments() const = 0;
+        virtual size_t numReifiedArguments() const = 0;
 
         virtual tempo_utils::Status reifyNextArgument(const lyric_common::TypeDef &argumentType) = 0;
 

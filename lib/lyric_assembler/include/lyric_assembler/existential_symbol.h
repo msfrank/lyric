@@ -6,7 +6,7 @@
 #include "abstract_symbol.h"
 #include "assembly_state.h"
 #include "base_symbol.h"
-#include "existential_invoker.h"
+#include "impl_handle.h"
 #include "template_handle.h"
 #include "type_handle.h"
 
@@ -74,15 +74,14 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string, BoundMethod>::const_iterator methodsEnd() const;
         tu_uint32 numMethods() const;
 
-        tempo_utils::Result<lyric_common::SymbolUrl> declareMethod(
+        tempo_utils::Result<lyric_assembler::CallSymbol *> declareMethod(
             const std::string &name,
-            const std::vector<ParameterSpec> &parameterSpec,
-            const Option<ParameterSpec> &restSpec,
-            const std::vector<ParameterSpec> &ctxSpec,
-            const lyric_parser::Assignable &returnSpec);
-        tempo_utils::Result<ExistentialInvoker> resolveMethod(
+            lyric_object::AccessType access);
+
+        tempo_utils::Status prepareMethod(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
+            CallableInvoker &invoker,
             bool isReceiver = false);
 
         /*
@@ -96,7 +95,7 @@ namespace lyric_assembler {
         absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsEnd() const;
         tu_uint32 numImpls() const;
 
-        tempo_utils::Result<lyric_common::TypeDef> declareImpl(const lyric_parser::Assignable &implSpec);
+        tempo_utils::Result<ImplHandle *> declareImpl(const lyric_common::TypeDef &implType);
 
         /*
          * subtype tracking for sealed existential

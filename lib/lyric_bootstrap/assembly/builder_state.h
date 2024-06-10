@@ -56,17 +56,25 @@ struct CoreAction {
     lyo1::TypeSection receiverSection;
     tu_uint32 receiverDescriptor;
     lyo1::ActionFlags flags;
-    std::vector<lyo1::Parameter> parameters;
-    Option<lyo1::Parameter> rest;
-    std::vector<std::string> names;
+    std::vector<lyo1::ParameterT> listParameters;
+    std::vector<lyo1::ParameterT> namedParameters;
+    Option<lyo1::ParameterT> restParameter;
 };
 
 struct CoreParam {
     std::string paramName;
+    lyric_object::PlacementType paramPlacement;
     const CoreType *paramType;
     const CoreCall *paramDefault;
-    lyo1::ParameterFlags flags;
+    bool isVariable;
+    bool isCtx;
 };
+
+CoreParam make_list_param(std::string_view name, const CoreType *type, bool isVariable = false);
+CoreParam make_named_param(std::string_view name, const CoreType *type, bool isVariable = false);
+CoreParam make_named_opt_param(std::string_view name, const CoreType *type, const CoreCall *dfl, bool isVariable = false);
+CoreParam make_ctx_param(std::string_view name, const CoreType *type);
+CoreParam make_rest_param(const CoreType *type);
 
 struct CoreField {
     tu_uint32 field_index;
@@ -84,9 +92,9 @@ struct CoreCall {
     lyo1::TypeSection receiverSection;
     tu_uint32 receiverDescriptor;
     lyo1::CallFlags flags;
-    std::vector<lyo1::Parameter> parameters;
-    Option<lyo1::Parameter> rest;
-    std::vector<std::string> names;
+    std::vector<lyo1::ParameterT> listParameters;
+    std::vector<lyo1::ParameterT> namedParameters;
+    Option<lyo1::ParameterT> restParameter;
     lyric_object::BytecodeBuilder code;
 };
 
@@ -298,8 +306,7 @@ struct BuilderState {
     CoreAction *addConceptAction(
         const std::string &actionName,
         const CoreConcept *receiver,
-        const std::vector<std::pair<std::string, const CoreType *>> &parameters,
-        const Option<std::pair<std::string, const CoreType *>> &rest,
+        const std::vector<CoreParam> &parameters,
         const CoreType *returnType);
     void addConceptSealedSubtype(const CoreConcept *receiver, const CoreConcept *subtypeConcept);
 
@@ -330,8 +337,7 @@ struct BuilderState {
         const std::string &methodName,
         const CoreClass *receiver,
         lyo1::CallFlags callFlags,
-        const std::vector<std::pair<std::string, const CoreType *>> &parameters,
-        const Option<std::pair<std::string, const CoreType *>> &rest,
+        const std::vector<CoreParam> &parameters,
         const lyric_object::BytecodeBuilder &code,
         const CoreType *returnType,
         bool isInline = false);
@@ -387,8 +393,7 @@ struct BuilderState {
         const std::string &methodName,
         const CoreInstance *receiver,
         lyo1::CallFlags callFlags,
-        const std::vector<std::pair<std::string, const CoreType *>> &parameters,
-        const Option<std::pair<std::string, const CoreType *>> &rest,
+        const std::vector<CoreParam> &parameters,
         const lyric_object::BytecodeBuilder &code,
         const CoreType *returnType,
         bool isInline = false);
@@ -404,8 +409,7 @@ struct BuilderState {
     CoreCall *addImplExtension(
         const std::string &extensionName,
         const CoreImpl *receiver,
-        const std::vector<std::pair<std::string, const CoreType *>> &parameters,
-        const Option<std::pair<std::string, const CoreType *>> &rest,
+        const std::vector<CoreParam> &parameters,
         const lyric_object::BytecodeBuilder &code,
         const CoreType *returnType,
         bool isInline = false);
@@ -432,8 +436,7 @@ struct BuilderState {
         const std::string &methodName,
         const CoreEnum *receiver,
         lyo1::CallFlags callFlags,
-        const std::vector<std::pair<std::string, const CoreType *>> &parameters,
-        const Option<std::pair<std::string, const CoreType *>> &rest,
+        const std::vector<CoreParam> &parameters,
         const lyric_object::BytecodeBuilder &code,
         const CoreType *returnType,
         bool isInline = false);

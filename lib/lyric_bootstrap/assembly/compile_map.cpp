@@ -25,7 +25,7 @@ build_core_Map(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructCtor(MapStruct,
             {
-                {{}, DataType, nullptr, lyo1::ParameterFlags::Rest},
+                make_rest_param(DataType),
             },
             code);
         state.setStructAllocator(MapStruct, lyric_bootstrap::internal::BootstrapTrap::MAP_ALLOC);
@@ -49,7 +49,7 @@ build_core_Map(
             MapStruct,
             lyo1::CallFlags::GlobalVisibility,
             {
-                {"key", DataType, nullptr, lyo1::ParameterFlags::NONE},
+                make_list_param("key", DataType),
             },
             code,
             BoolType);
@@ -62,8 +62,8 @@ build_core_Map(
             MapStruct,
             lyo1::CallFlags::GlobalVisibility,
             {
-                {"key", DataType, nullptr, lyo1::ParameterFlags::NONE},
-                {"default", DataType, nullptr, lyo1::ParameterFlags::NONE},
+                make_list_param("key", DataType),
+                make_list_param("default", DataType),
             },
             code,
             DataType);
@@ -76,8 +76,8 @@ build_core_Map(
             MapStruct,
             lyo1::CallFlags::GlobalVisibility,
             {
-                {"key", DataType, nullptr, lyo1::ParameterFlags::NONE},
-                {"value", DataType, nullptr, lyo1::ParameterFlags::NONE},
+                make_list_param("key", DataType),
+                make_list_param("value", DataType),
             },
             code,
             MapStruct->structType);
@@ -90,7 +90,7 @@ build_core_Map(
             MapStruct,
             lyo1::CallFlags::GlobalVisibility,
             {
-                {"key", DataType, nullptr, lyo1::ParameterFlags::NONE},
+                make_list_param("key", DataType),
             },
             code,
             MapStruct->structType);
@@ -103,7 +103,7 @@ build_core_Map(
         code.loadClass(MapIteratorClass->class_index);
         code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATE));
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addImplExtension("Iterate", IterableImpl, {}, {}, code, DataIteratorType);
+        state.addImplExtension("Iterate", IterableImpl, {}, code, DataIteratorType);
     }
 
     return MapStruct;
@@ -137,13 +137,13 @@ build_core_MapIterator(
         lyric_object::BytecodeBuilder code;
         code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_VALID));
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addImplExtension("Valid", IteratorImpl, {}, {}, code, BoolType);
+        state.addImplExtension("Valid", IteratorImpl, {}, code, BoolType);
     }
     {
         lyric_object::BytecodeBuilder code;
         code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_NEXT));
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addImplExtension("Next", IteratorImpl, {}, {}, code, DataType);
+        state.addImplExtension("Next", IteratorImpl, {}, code, DataType);
     }
 
     return MapIteratorClass;

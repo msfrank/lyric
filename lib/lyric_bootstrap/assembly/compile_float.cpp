@@ -84,7 +84,10 @@ build_core_FloatInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_DBL_ADD));
         state.addImplExtension("add", FloatArithmeticImpl,
-            {{"lhs", FloatType}, {"rhs", FloatType}}, {},
+            {
+                make_list_param("lhs", FloatType),
+                make_list_param("rhs", FloatType),
+            },
             code, FloatType, true);
     }
     {
@@ -93,7 +96,10 @@ build_core_FloatInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_DBL_SUB));
         state.addImplExtension("subtract", FloatArithmeticImpl,
-            {{"lhs", FloatType}, {"rhs", FloatType}}, {},
+            {
+                make_list_param("lhs", FloatType),
+                make_list_param("rhs", FloatType),
+            },
             code, FloatType, true);
     }
     {
@@ -102,7 +108,10 @@ build_core_FloatInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_DBL_MUL));
         state.addImplExtension("multiply", FloatArithmeticImpl,
-            {{"lhs", FloatType}, {"rhs", FloatType}}, {},
+            {
+                make_list_param("lhs", FloatType),
+                make_list_param("rhs", FloatType),
+            },
             code, FloatType, true);
     }
     {
@@ -111,7 +120,10 @@ build_core_FloatInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_DBL_DIV));
         state.addImplExtension("divide", FloatArithmeticImpl,
-            {{"lhs", FloatType}, {"rhs", FloatType}}, {},
+            {
+                make_list_param("lhs", FloatType),
+                make_list_param("rhs", FloatType),
+            },
             code, FloatType, true);
     }
     {
@@ -119,7 +131,9 @@ build_core_FloatInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_DBL_NEG));
         state.addImplExtension("negate", FloatArithmeticImpl,
-            {{"lhs", FloatType}}, {},
+            {
+                make_list_param("lhs", FloatType),
+            },
             code, FloatType, true);
     }
     {
@@ -138,7 +152,10 @@ build_core_FloatInstance(
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
         state.addImplExtension("equals", FloatEqualityImpl,
-            {{"lhs", FloatType}, {"rhs", FloatType}}, {},
+            {
+                make_list_param("lhs", FloatType),
+                make_list_param("rhs", FloatType),
+            },
             code, BoolType, true);
     }
     {
@@ -157,7 +174,10 @@ build_core_FloatInstance(
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
         state.addImplExtension("lessthan", FloatComparisonImpl,
-            {{"lhs", FloatType}, {"rhs", FloatType}}, {},
+            {
+                make_list_param("lhs", FloatType),
+                make_list_param("rhs", FloatType),
+            },
             code, BoolType, true);
     }
     {
@@ -176,7 +196,10 @@ build_core_FloatInstance(
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
         state.addImplExtension("greaterthan", FloatComparisonImpl,
-            {{"lhs", FloatType}, {"rhs", FloatType}}, {},
+            {
+                make_list_param("lhs", FloatType),
+                make_list_param("rhs", FloatType),
+            },
             code, BoolType, true);
     }
     {
@@ -195,7 +218,10 @@ build_core_FloatInstance(
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
         state.addImplExtension("lessequals", FloatComparisonImpl,
-            {{"lhs", FloatType}, {"rhs", FloatType}}, {},
+            {
+                make_list_param("lhs", FloatType),
+                make_list_param("rhs", FloatType),
+            },
             code, BoolType, true);
     }
     {
@@ -214,7 +240,10 @@ build_core_FloatInstance(
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
         state.addImplExtension("greaterequals", FloatComparisonImpl,
-            {{"lhs", FloatType}, {"rhs", FloatType}}, {},
+            {
+                make_list_param("lhs", FloatType),
+                make_list_param("rhs", FloatType),
+            },
             code, BoolType, true);
     }
     {
@@ -223,7 +252,10 @@ build_core_FloatInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_DBL_CMP));
         state.addImplExtension("compare", FloatOrderedImpl,
-            {{"lhs", FloatType}, {"rhs", FloatType}}, {},
+            {
+                make_list_param("lhs", FloatType),
+                make_list_param("rhs", FloatType),
+            },
             code, IntegerType, true);
     }
     {

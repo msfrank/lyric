@@ -1,8 +1,12 @@
 
+#include <lyric_assembler/action_symbol.h>
+#include <lyric_assembler/block_handle.h>
+#include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
+#include <lyric_assembler/extension_callable.h>
 #include <lyric_assembler/impl_cache.h>
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/instance_symbol.h>

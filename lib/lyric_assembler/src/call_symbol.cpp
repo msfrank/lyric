@@ -31,6 +31,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     priv->isNoReturn =  true;
     priv->callType = callType;
     priv->callTemplate = nullptr;
+    priv->parentBlock = nullptr;
     priv->proc = std::make_unique<ProcHandle>(entryUrl, m_state);
 
     TU_ASSERT (priv->returnType.getType() == lyric_common::TypeDefType::NoReturn);
@@ -55,14 +56,10 @@ lyric_assembler::CallSymbol::CallSymbol(
  */
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
-    const std::vector<lyric_object::Parameter> &parameters,
-    const Option<lyric_object::Parameter> &rest,
-    const lyric_common::TypeDef &returnType,
     const lyric_common::SymbolUrl &receiverUrl,
     lyric_object::AccessType access,
     CallAddress address,
     lyric_object::CallMode mode,
-    TypeHandle *callType,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new CallSymbolPriv()),
@@ -70,66 +67,20 @@ lyric_assembler::CallSymbol::CallSymbol(
       m_state(state)
 {
     TU_ASSERT (m_callUrl.isValid());
-    TU_ASSERT (parentBlock != nullptr);
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->parameters = parameters;
-    priv->rest = rest;
-    priv->returnType = returnType;
     priv->receiverUrl = receiverUrl;
     priv->access = access;
     priv->mode = mode;
-    priv->callType = callType;
+    priv->callType = nullptr;
     priv->callTemplate = nullptr;
+    priv->parentBlock = parentBlock;
 
     TU_ASSERT (priv->receiverUrl.isValid());
-    TU_ASSERT (priv->callType != nullptr);
-
-    absl::flat_hash_map<std::string,SymbolBinding> bindings;
-
-    // if call is bound, then synthesize the $this variable
-    TU_ASSERT (m_state->symbolCache()->hasSymbol(receiverUrl));
-    AbstractSymbol *receiverSymbol;
-    TU_ASSIGN_OR_RAISE (receiverSymbol, m_state->symbolCache()->getOrImportSymbol(receiverUrl));
-    auto thisPath = callUrl.getSymbolPath().getPath();
-    thisPath.push_back("$this");
-    auto thisUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(thisPath));
-    auto thisType = receiverSymbol->getAssignableType();
-    auto *thisSymbol = new SyntheticSymbol(thisUrl, SyntheticType::THIS, thisType);
-    m_state->symbolCache()->insertSymbol(thisUrl, thisSymbol);
-    SymbolBinding thisBinding;
-    thisBinding.symbolUrl = thisUrl;
-    thisBinding.typeDef = thisType;
-    thisBinding.bindingType = BindingType::Value;
-    bindings["$this"] = thisBinding;
-
-    // instantiate argument variables for ctx params
-    for (const auto &param : parameters) {
-
-        auto paramPath = callUrl.getSymbolPath().getPath();
-        paramPath.push_back(param.name);
-        auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
-        auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
-        ArgumentOffset offset(static_cast<uint32_t>(param.index));
-        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
-        m_state->symbolCache()->insertSymbol(paramUrl, paramSymbol);
-
-        SymbolBinding argBinding;
-        argBinding.symbolUrl = paramUrl;
-        argBinding.typeDef = param.typeDef;
-        argBinding.bindingType = bindingType;
-
-        if (!param.label.empty()) {
-            bindings[param.label] = argBinding;
-        } else {
-            bindings[param.name] = argBinding;
-        }
-    }
-
-    // FIXME: instantiate argument variable for collector param, if specified
-
-    priv->proc = std::make_unique<ProcHandle>(callUrl, bindings, priv->parameters.size(), state, parentBlock);
+    TU_ASSERT (priv->access != lyric_object::AccessType::Invalid);
+    TU_ASSERT (priv->mode != lyric_object::CallMode::Invalid);
+    TU_ASSERT (priv->parentBlock != nullptr);
 }
 
 /**
@@ -138,38 +89,25 @@ lyric_assembler::CallSymbol::CallSymbol(
  */
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
-    const std::vector<lyric_object::Parameter> &parameters,
-    const Option<lyric_object::Parameter> &rest,
-    const lyric_common::TypeDef &returnType,
     const lyric_common::SymbolUrl &receiverUrl,
     lyric_object::AccessType access,
     CallAddress address,
     lyric_object::CallMode mode,
-    TypeHandle *callType,
     TemplateHandle *callTemplate,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : CallSymbol(
         callUrl,
-        parameters,
-        rest,
-        returnType,
         receiverUrl,
         access,
         address,
         mode,
-        callType,
         parentBlock,
         state)
 {
     auto *priv = getPriv();
     priv->callTemplate = callTemplate;
     TU_ASSERT (priv->callTemplate != nullptr);
-    auto *callBlock = priv->proc->procBlock();
-    for (auto it = callTemplate->templateParametersBegin(); it != callTemplate->templateParametersEnd(); it++) {
-        const auto &tp = *it;
-        TU_RAISE_IF_STATUS (callBlock->declareAlias(tp.name, callTemplate->getTemplateUrl(), tp.index));
-    }
 }
 
 
@@ -189,13 +127,9 @@ lyric_assembler::CallSymbol::CallSymbol(
  */
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
-    const std::vector<lyric_object::Parameter> &parameters,
-    const Option<lyric_object::Parameter> &rest,
-    const lyric_common::TypeDef &returnType,
     lyric_object::AccessType access,
     CallAddress address,
     lyric_object::CallMode mode,
-    TypeHandle *callType,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new CallSymbolPriv()),
@@ -203,48 +137,18 @@ lyric_assembler::CallSymbol::CallSymbol(
       m_state(state)
 {
     TU_ASSERT (m_callUrl.isValid());
-    TU_ASSERT (parentBlock != nullptr);
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->parameters = parameters;
-    priv->rest = rest;
-    priv->returnType = returnType;
     priv->access = access;
     priv->mode = mode;
-    priv->callType = callType;
+    priv->callType = nullptr;
     priv->callTemplate = nullptr;
+    priv->parentBlock = parentBlock;
 
-    TU_ASSERT (priv->callType != nullptr);
-
-    absl::flat_hash_map<std::string,SymbolBinding> bindings;
-
-    // instantiate argument variables for ctx params
-    for (const auto &param : parameters) {
-
-        auto paramPath = callUrl.getSymbolPath().getPath();
-        paramPath.push_back(param.name);
-        auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
-        auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
-        ArgumentOffset offset(static_cast<uint32_t>(param.index));
-        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
-        m_state->symbolCache()->insertSymbol(paramUrl, paramSymbol);
-
-        SymbolBinding argBinding;
-        argBinding.symbolUrl = paramUrl;
-        argBinding.typeDef = param.typeDef;
-        argBinding.bindingType = bindingType;
-
-        if (!param.label.empty()) {
-            bindings[param.label] = argBinding;
-        } else {
-            bindings[param.name] = argBinding;
-        }
-    }
-
-    // FIXME: instantiate argument variable for collector param, if specified
-
-    priv->proc = std::make_unique<ProcHandle>(callUrl, bindings, priv->parameters.size(), state, parentBlock);
+    TU_ASSERT (priv->access != lyric_object::AccessType::Invalid);
+    TU_ASSERT (priv->mode != lyric_object::CallMode::Invalid);
+    TU_ASSERT (priv->parentBlock != nullptr);
 }
 
 /**
@@ -253,36 +157,23 @@ lyric_assembler::CallSymbol::CallSymbol(
  */
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
-    const std::vector<lyric_object::Parameter> &parameters,
-    const Option<lyric_object::Parameter> &rest,
-    const lyric_common::TypeDef &returnType,
     lyric_object::AccessType access,
     CallAddress address,
     lyric_object::CallMode mode,
-    TypeHandle *callType,
     TemplateHandle *callTemplate,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : CallSymbol(
         callUrl,
-        parameters,
-        rest,
-        returnType,
         access,
         address,
         mode,
-        callType,
         parentBlock,
         state)
 {
     auto *priv = getPriv();
     priv->callTemplate = callTemplate;
     TU_ASSERT (priv->callTemplate != nullptr);
-    auto *callBlock = priv->proc->procBlock();
-    for (auto it = callTemplate->templateParametersBegin(); it != callTemplate->templateParametersEnd(); it++) {
-        const auto &tp = *it;
-        TU_RAISE_IF_STATUS (callBlock->declareAlias(tp.name, callTemplate->getTemplateUrl(), tp.index));
-    }
 }
 
 /**
@@ -309,36 +200,48 @@ lyric_assembler::CallSymbol::load()
 
     auto priv = std::make_unique<CallSymbolPriv>();
 
-    for (auto it = m_callImport->parametersBegin(); it != m_callImport->parametersEnd(); it++) {
-        lyric_object::Parameter p;
+    for (auto it = m_callImport->listParametersBegin(); it != m_callImport->listParametersEnd(); it++) {
+        Parameter p;
         p.index = it->index;
         p.name = it->name;
-        p.label = it->label;
-        p.isVariable = it->isVariable;
         p.placement = it->placement;
+        p.isVariable = it->isVariable;
 
         TypeHandle *paramType = nullptr;
         TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(it->type));
         p.typeDef = paramType->getTypeDef();
 
-        priv->parameters.push_back(p);
+        priv->listParameters.push_back(p);
     }
 
-    if (m_callImport->hasRest()) {
-        auto rest = m_callImport->getRest();
+    for (auto it = m_callImport->namedParametersBegin(); it != m_callImport->namedParametersEnd(); it++) {
+        Parameter p;
+        p.index = it->index;
+        p.name = it->name;
+        p.placement = it->placement;
+        p.isVariable = it->isVariable;
 
-        lyric_object::Parameter p;
-        p.index = rest.index;
+        TypeHandle *paramType = nullptr;
+        TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(it->type));
+        p.typeDef = paramType->getTypeDef();
+
+        priv->listParameters.push_back(p);
+    }
+
+    if (m_callImport->hasRestParameter()) {
+        auto rest = m_callImport->getRestParameter();
+
+        Parameter p;
+        p.index = 0;
         p.name = rest.name;
-        p.label = rest.label;
-        p.isVariable = rest.isVariable;
         p.placement = rest.placement;
+        p.isVariable = rest.isVariable;
 
         TypeHandle *paramType = nullptr;
         TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(rest.type));
         p.typeDef = paramType->getTypeDef();
 
-        priv->rest = Option(p);
+        priv->restParameter = Option(p);
     }
 
     priv->access = m_callImport->getAccess();
@@ -393,13 +296,13 @@ lyric_assembler::CallSymbol::getSymbolUrl() const
 lyric_common::TypeDef
 lyric_assembler::CallSymbol::getAssignableType() const
 {
-    return lyric_common::TypeDef();
+    return {};
 }
 
 lyric_assembler::TypeSignature
 lyric_assembler::CallSymbol::getTypeSignature() const
 {
-    return TypeSignature();
+    return {};
 }
 
 void
@@ -410,18 +313,101 @@ lyric_assembler::CallSymbol::touch()
     m_state->touchCall(this);
 }
 
-std::vector<lyric_object::Parameter>
-lyric_assembler::CallSymbol::getParameters() const
+tempo_utils::Result<lyric_assembler::ProcHandle *>
+lyric_assembler::CallSymbol::defineCall(
+    const ParameterPack &parameterPack,
+    const lyric_common::TypeDef &returnType)
 {
     auto *priv = getPriv();
-    return priv->parameters;
-}
 
-Option<lyric_object::Parameter>
-lyric_assembler::CallSymbol::getRest() const
-{
-    auto *priv = getPriv();
-    return priv->rest;
+    if (priv->proc != nullptr)
+        m_state->throwAssemblerInvariant("cannot redefine call {}", m_callUrl.toString());
+
+    auto *symbolCache = m_state->symbolCache();
+
+    priv->listParameters = parameterPack.listParameters;
+    priv->namedParameters = parameterPack.namedParameters;
+    priv->restParameter = parameterPack.restParameter;
+    priv->returnType = returnType;
+
+    absl::flat_hash_map<std::string,SymbolBinding> bindings;
+
+    // if call is bound, then synthesize the $this variable
+    if (priv->receiverUrl.isValid()) {
+        AbstractSymbol *receiverSymbol;
+        TU_ASSIGN_OR_RAISE (receiverSymbol, symbolCache->getOrImportSymbol(priv->receiverUrl));
+        auto thisPath = m_callUrl.getSymbolPath().getPath();
+        thisPath.emplace_back("$this");
+        auto thisUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(thisPath));
+        auto thisType = receiverSymbol->getAssignableType();
+        auto *thisSymbol = new SyntheticSymbol(thisUrl, SyntheticType::THIS, thisType);
+        symbolCache->insertSymbol(thisUrl, thisSymbol);
+        SymbolBinding thisBinding;
+        thisBinding.symbolUrl = thisUrl;
+        thisBinding.typeDef = thisType;
+        thisBinding.bindingType = BindingType::Value;
+        bindings["$this"] = thisBinding;
+    }
+
+    // create bindings for list parameters
+    for (const auto &param : priv->listParameters) {
+        auto paramPath = m_callUrl.getSymbolPath().getPath();
+        paramPath.push_back(param.name);
+        auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
+        auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
+        ArgumentOffset offset(static_cast<tu_uint32>(param.index));
+        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
+        m_state->symbolCache()->insertSymbol(paramUrl, paramSymbol);
+
+        SymbolBinding argBinding;
+        argBinding.symbolUrl = paramUrl;
+        argBinding.typeDef = param.typeDef;
+        argBinding.bindingType = bindingType;
+
+        if (!param.label.empty()) {
+            bindings[param.label] = argBinding;
+        } else {
+            bindings[param.name] = argBinding;
+        }
+    }
+
+    // create bindings for named parameters
+    for (const auto &param : priv->namedParameters) {
+        auto paramPath = m_callUrl.getSymbolPath().getPath();
+        paramPath.push_back(param.name);
+        auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
+        auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
+        ArgumentOffset offset(static_cast<tu_uint32>(param.index));
+        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
+        m_state->symbolCache()->insertSymbol(paramUrl, paramSymbol);
+
+        SymbolBinding argBinding;
+        argBinding.symbolUrl = paramUrl;
+        argBinding.typeDef = param.typeDef;
+        argBinding.bindingType = bindingType;
+
+        if (!param.label.empty()) {
+            bindings[param.label] = argBinding;
+        } else {
+            bindings[param.name] = argBinding;
+        }
+    }
+
+    // TODO: create binding for rest collector parameter if specified
+
+    priv->proc = std::make_unique<ProcHandle>(m_callUrl, bindings, priv->listParameters.size(),
+        priv->namedParameters.size(), !priv->restParameter.isEmpty(), m_state, priv->parentBlock);
+
+    if (priv->callTemplate != nullptr) {
+        auto *callTemplate = priv->callTemplate;
+        auto *callBlock = priv->proc->procBlock();
+        for (auto it = callTemplate->templateParametersBegin(); it != callTemplate->templateParametersEnd(); it++) {
+            const auto &tp = *it;
+            TU_RAISE_IF_STATUS (callBlock->declareAlias(tp.name, callTemplate->getTemplateUrl(), tp.index));
+        }
+    }
+
+    return priv->proc.get();
 }
 
 lyric_common::TypeDef
@@ -473,6 +459,15 @@ lyric_assembler::CallSymbol::isCtor() const
     return priv->mode == lyric_object::CallMode::Constructor;
 }
 
+lyric_assembler::AbstractResolver *
+lyric_assembler::CallSymbol::callResolver()
+{
+    auto *priv = getPriv();
+    if (priv->callTemplate != nullptr)
+        return priv->callTemplate;
+    return priv->parentBlock;
+}
+
 lyric_assembler::TypeHandle *
 lyric_assembler::CallSymbol::callType()
 {
@@ -492,6 +487,43 @@ lyric_assembler::CallSymbol::callProc()
 {
     auto *priv = getPriv();
     return priv->proc.get();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::CallSymbol::listPlacementBegin() const
+{
+    auto *priv = getPriv();
+    return priv->listParameters.cbegin();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::CallSymbol::listPlacementEnd() const
+{
+    auto *priv = getPriv();
+    return priv->listParameters.cend();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::CallSymbol::namedPlacementBegin() const
+{
+    auto *priv = getPriv();
+    return priv->namedParameters.cbegin();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::CallSymbol::namedPlacementEnd() const
+{
+    auto *priv = getPriv();
+    return priv->namedParameters.cend();
+}
+
+const lyric_assembler::Parameter *
+lyric_assembler::CallSymbol::restPlacement() const
+{
+    auto *priv = getPriv();
+    if (priv->restParameter.isEmpty())
+        return nullptr;
+    return &priv->restParameter.peekValue();
 }
 
 bool
@@ -518,35 +550,4 @@ lyric_assembler::CallSymbol::putInitializer(const std::string &name, const lyric
             "can't put initializer on imported call {}", m_callUrl.toString());
     auto *priv = getPriv();
     priv->initializers[name] = initializer;
-}
-
-void
-lyric_assembler::CallSymbol::putExitType(const lyric_common::TypeDef &exitType)
-{
-    if (isImported())
-        m_state->throwAssemblerInvariant(
-            "can't put exit type on imported call {}", m_callUrl.toString());
-    auto *priv = getPriv();
-    priv->exitTypes.insert(exitType);
-}
-
-absl::flat_hash_set<lyric_common::TypeDef>
-lyric_assembler::CallSymbol::listExitTypes() const
-{
-    auto *priv = getPriv();
-    return priv->exitTypes;
-}
-
-std::vector<lyric_object::Parameter>::const_iterator
-lyric_assembler::CallSymbol::placementBegin() const
-{
-    auto *priv = getPriv();
-    return priv->parameters.cbegin();
-}
-
-std::vector<lyric_object::Parameter>::const_iterator
-lyric_assembler::CallSymbol::placementEnd() const
-{
-    auto *priv = getPriv();
-    return priv->parameters.cend();
 }

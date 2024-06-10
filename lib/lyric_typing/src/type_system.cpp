@@ -3,6 +3,7 @@
 #include <lyric_typing/parse_assignable.h>
 #include <lyric_typing/parse_pack.h>
 #include <lyric_typing/resolve_assignable.h>
+#include <lyric_typing/resolve_pack.h>
 #include <lyric_typing/resolve_template.h>
 #include <lyric_typing/type_system.h>
 #include <lyric_typing/unify_assignable.h>
@@ -27,7 +28,7 @@ lyric_typing::TypeSystem::parseAssignable(
     return parse_assignable(block, walker, m_state);
 }
 
-tempo_utils::Result<lyric_assembler::PackSpec>
+tempo_utils::Result<lyric_typing::PackSpec>
 lyric_typing::TypeSystem::parsePack(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker)
@@ -35,12 +36,20 @@ lyric_typing::TypeSystem::parsePack(
     return parse_pack(block, walker, m_state);
 }
 
+tempo_utils::Result<lyric_assembler::ParameterPack>
+lyric_typing::TypeSystem::resolvePack(
+    lyric_assembler::AbstractResolver *resolver,
+    const PackSpec &packSpec)
+{
+    return resolve_pack(packSpec, resolver, m_state);
+}
+
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::TypeSystem::resolveAssignable(
-    lyric_assembler::BlockHandle *block,
-    const lyric_parser::NodeWalker &walker)
+    lyric_assembler::AbstractResolver *resolver,
+    const lyric_parser::Assignable &assignable)
 {
-    return resolve_assignable(block, walker, m_state);
+    return resolve_assignable(assignable, resolver, m_state);
 }
 
 tempo_utils::Result<lyric_runtime::TypeComparison>
@@ -61,8 +70,8 @@ lyric_typing::TypeSystem::isAssignable(
     return (cmp == lyric_runtime::TypeComparison::EQUAL || cmp == lyric_runtime::TypeComparison::EXTENDS);
 }
 
-tempo_utils::Result<lyric_assembler::TemplateSpec>
-lyric_typing::TypeSystem::resolveTemplate(
+tempo_utils::Result<lyric_typing::TemplateSpec>
+lyric_typing::TypeSystem::parseTemplate(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker)
 {

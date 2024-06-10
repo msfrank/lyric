@@ -3,9 +3,7 @@
 
 #include <tempo_utils/integer_types.h>
 
-#include "action_parameter_walker.h"
 #include "action_walker.h"
-#include "call_parameter_walker.h"
 #include "call_walker.h"
 #include "class_walker.h"
 #include "concept_walker.h"
@@ -22,8 +20,8 @@
 #include "literal_walker.h"
 #include "namespace_walker.h"
 #include "object_types.h"
+#include "parameter_walker.h"
 #include "placeholder_type_walker.h"
-#include "rest_parameter_walker.h"
 #include "static_walker.h"
 #include "struct_walker.h"
 #include "symbol_walker.h"

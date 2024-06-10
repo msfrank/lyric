@@ -5,6 +5,7 @@
 
 #include <lyric_importer/impl_import.h>
 
+#include "abstract_callable.h"
 #include "assembly_state.h"
 #include "base_handle.h"
 #include "block_handle.h"
@@ -63,12 +64,17 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string, ExtensionMethod>::const_iterator methodsEnd() const;
         tu_uint32 numExtensions() const;
 
-        tempo_utils::Result<ExtensionMethod> declareExtension(
+        tempo_utils::Result<ProcHandle *> defineExtension(
             const std::string &name,
-            const std::vector<ParameterSpec> &parameterSpec,
-            const Option<ParameterSpec> &restSpec,
-            const std::vector<ParameterSpec> &ctxSpec,
-            const lyric_parser::Assignable &returnSpec);
+            const ParameterPack &parameterPack,
+            const lyric_common::TypeDef &returnType);
+
+        tempo_utils::Status prepareExtension(
+            const std::string &name,
+            const DataReference &ref,
+            CallableInvoker &invoker);
+
+        bool isCompletelyDefined() const;
 
     private:
         lyric_importer::ImplImport *m_implImport = nullptr;

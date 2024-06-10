@@ -9,6 +9,7 @@
 
 class BaseFixture : public ::testing::Test {
 protected:
+    lyric_common::AssemblyLocation m_location;
     std::unique_ptr<tempo_tracing::ScopeManager> m_scopeManager;
     std::unique_ptr<lyric_assembler::AssemblyState> m_assemblyState;
     std::unique_ptr<lyric_typing::TypeSystem> m_typeSystem;

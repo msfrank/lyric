@@ -20,7 +20,7 @@ lyric_parser::internal::ModuleParameterOps::enterParamSpec(ModuleParser::ParamSp
 }
 
 void
-lyric_parser::internal::ModuleParameterOps::exitBareParam(ModuleParser::BareParamContext *ctx)
+lyric_parser::internal::ModuleParameterOps::exitPositionalParam(ModuleParser::PositionalParamContext *ctx)
 {
     auto id = ctx->Identifier()->getText();
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
@@ -38,6 +38,13 @@ lyric_parser::internal::ModuleParameterOps::exitBareParam(ModuleParser::BarePara
     paramNode->putAttr(identifierAttr);
     paramNode->putAttr(typeOffsetAttr);
     paramNode->putAttr(bindingEnumAttr);
+
+    if (ctx->paramDefault()) {
+        auto *defaultNode = m_state->popNode();
+        auto *defaultOffsetAttr = m_state->appendAttrOrThrow(kLyricAstDefaultOffset,
+            static_cast<tu_uint32>(defaultNode->getAddress().getAddress()));
+        paramNode->putAttr(defaultOffsetAttr);
+    }
 
     // if ancestor node is not a kPack, then report internal violation
     if (m_state->isEmpty())

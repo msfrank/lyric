@@ -4,6 +4,119 @@
 
 #include "builder_state.h"
 
+static void
+process_parameters(
+    const std::vector<CoreParam> &parameterSpec,
+    std::vector<lyo1::ParameterT> &listParameters,
+    std::vector<lyo1::ParameterT> &namedParameters,
+    Option<lyo1::ParameterT> &restParameter)
+{
+    absl::flat_hash_set<std::string> usedNames;
+    bool encounteredListOptParameter = false;
+
+    // process list and listopt parameters
+    auto it = parameterSpec.cbegin();
+    for (; it != parameterSpec.cend(); it++) {
+        TU_ASSERT (!usedNames.contains(it->paramName));
+
+        lyo1::ParameterT p;
+        p.parameter_name = it->paramName;
+        p.parameter_type = it->paramType->type_index;
+        if (it->isVariable) {
+            p.flags |= lyo1::ParameterFlags::Var;
+        }
+
+        if (it->paramPlacement == lyric_object::PlacementType::List) {
+            TU_ASSERT (it->isCtx == false);
+            TU_ASSERT (!encounteredListOptParameter);
+            p.initializer_call = lyric_object::INVALID_ADDRESS_U32;
+        }
+        else if (it->paramPlacement == lyric_object::PlacementType::ListOpt) {
+            TU_ASSERT (it->isCtx == false);
+            TU_ASSERT (it->paramDefault != nullptr);
+            p.initializer_call = it->paramDefault->call_index;
+            encounteredListOptParameter = true;
+        } else {
+            break;
+        }
+
+        usedNames.insert(it->paramName);
+        listParameters.push_back(p);
+    }
+
+    // process named, namedopt, and ctx parameters
+    for (; it != parameterSpec.cend(); it++) {
+        TU_ASSERT (it->paramPlacement != lyric_object::PlacementType::List);
+        TU_ASSERT (it->paramPlacement != lyric_object::PlacementType::ListOpt);
+        TU_ASSERT (!usedNames.contains(it->paramName));
+
+        lyo1::ParameterT p;
+        p.parameter_name = it->paramName;
+        p.parameter_type = it->paramType->type_index;
+        if (it->isVariable) {
+            p.flags |= lyo1::ParameterFlags::Var;
+        }
+
+        if (it->paramPlacement == lyric_object::PlacementType::Named) {
+            p.initializer_call = lyric_object::INVALID_ADDRESS_U32;
+        } else if (it->paramPlacement == lyric_object::PlacementType::NamedOpt) {
+            TU_ASSERT (it->paramDefault != nullptr);
+            p.initializer_call = it->paramDefault->call_index;
+        } else if (it->paramPlacement == lyric_object::PlacementType::Ctx) {
+            p.initializer_call = lyric_object::INVALID_ADDRESS_U32;
+            p.flags |= lyo1::ParameterFlags::Ctx;
+        } else {
+            break;
+        }
+
+        usedNames.insert(it->paramName);
+        namedParameters.push_back(p);
+    }
+
+    // process rest parameter
+    if (it != parameterSpec.cend()) {
+        TU_ASSERT (it->paramPlacement == lyric_object::PlacementType::Rest);
+        TU_ASSERT (it->paramDefault == nullptr);
+        TU_ASSERT (it->isVariable == false);
+        TU_ASSERT (it->isCtx == false);
+        TU_ASSERT (it->paramName.empty());
+
+        lyo1::ParameterT p;
+        p.parameter_type = it->paramType->type_index;
+        p.initializer_call = lyric_object::INVALID_ADDRESS_U32;
+        restParameter = Option(p);
+
+        it++;
+    }
+
+    TU_ASSERT (it == parameterSpec.cend());
+}
+
+CoreParam make_list_param(std::string_view name, const CoreType *type, bool isVariable)
+{
+    return {std::string(name), lyric_object::PlacementType::List, type, nullptr, isVariable, false};
+}
+
+CoreParam make_named_param(std::string_view name, const CoreType *type, bool isVariable)
+{
+    return {std::string(name), lyric_object::PlacementType::Named, type, nullptr, isVariable, false};
+}
+
+CoreParam make_named_opt_param(std::string_view name, const CoreType *type, const CoreCall *dfl, bool isVariable)
+{
+    return {std::string(name), lyric_object::PlacementType::NamedOpt, type, dfl, isVariable, false};
+}
+
+CoreParam make_ctx_param(std::string_view name, const CoreType *type)
+{
+    return {std::string(name), lyric_object::PlacementType::Ctx, type, nullptr, false, true};
+}
+
+CoreParam make_rest_param(const CoreType *type)
+{
+    return {{}, lyric_object::PlacementType::Rest, type, nullptr, false, false};
+}
+
 BuilderState::BuilderState(const absl::flat_hash_map<std::string,std::string> &plugins)
     : plugins(plugins)
 {
@@ -197,41 +310,10 @@ BuilderState::addExistentialMethod(
     Call->receiverSection = lyo1::TypeSection::Existential;
     Call->receiverDescriptor = receiver->existential_index;
     Call->flags = callFlags;
+    process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = returnType;
     calls.push_back(Call);
-
-    absl::flat_hash_set<std::string> usedNames;
-    bool restIsLastParameter = true;
-
-    for (const auto &param : parameters) {
-        TU_ASSERT (restIsLastParameter);
-        TU_ASSERT (param.paramType != nullptr);
-
-        uint8_t name_offset = lyric_object::INVALID_OFFSET_U8;
-        if (!param.paramName.empty()) {
-            const auto &name = param.paramName;
-            TU_ASSERT (!usedNames.contains(name));
-            usedNames.insert(name);
-            name_offset = Call->names.size();
-            Call->names.emplace_back(name);
-        }
-
-        tu_uint32 param_dfl = lyric_object::INVALID_ADDRESS_U32;
-        if (param.paramDefault)
-            param_dfl = param.paramDefault->call_index;
-
-        if (bool(param.flags & lyo1::ParameterFlags::Rest)) {
-            TU_ASSERT (param_dfl == lyric_object::INVALID_ADDRESS_U32);
-            Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(param.flags, param.paramType->type_index,
-                lyric_object::INVALID_ADDRESS_U32, name_offset, lyric_object::INVALID_OFFSET_U8));
-            restIsLastParameter = false;
-        } else {
-            TU_ASSERT (name_offset != lyric_object::INVALID_OFFSET_U8);
-            Call->parameters.emplace_back(lyo1::Parameter(param.flags, param.paramType->type_index,
-                param_dfl, name_offset, lyric_object::INVALID_OFFSET_U8));
-        }
-    }
 
     ReceiverExistential->methods.push_back(Call);
 
@@ -286,41 +368,10 @@ BuilderState::addFunction(
     Call->receiverSection = lyo1::TypeSection::Invalid;
     Call->receiverDescriptor = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = callFlags;
+    process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = returnType;
     calls.push_back(Call);
-
-    absl::flat_hash_set<std::string> usedNames;
-    bool restIsLastParameter = true;
-
-    for (const auto &param : parameters) {
-        TU_ASSERT (restIsLastParameter);
-        TU_ASSERT (param.paramType != nullptr);
-
-        uint8_t name_offset = lyric_object::INVALID_OFFSET_U8;
-        if (!param.paramName.empty()) {
-            const auto &name = param.paramName;
-            TU_ASSERT (!usedNames.contains(name));
-            usedNames.insert(name);
-            name_offset = Call->names.size();
-            Call->names.emplace_back(name);
-        }
-
-        tu_uint32 param_dfl = lyric_object::INVALID_ADDRESS_U32;
-        if (param.paramDefault)
-            param_dfl = param.paramDefault->call_index;
-
-        if (bool(param.flags & lyo1::ParameterFlags::Rest)) {
-            TU_ASSERT (param_dfl == lyric_object::INVALID_ADDRESS_U32);
-            Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(param.flags,
-                param.paramType->type_index, lyric_object::INVALID_ADDRESS_U32, name_offset, lyric_object::INVALID_OFFSET_U8));
-            restIsLastParameter = false;
-        } else {
-            TU_ASSERT (name_offset != lyric_object::INVALID_OFFSET_U8);
-            Call->parameters.emplace_back(lyo1::Parameter(param.flags, param.paramType->type_index,
-                param_dfl, name_offset, lyric_object::INVALID_OFFSET_U8));
-        }
-    }
 
     auto *Symbol = new CoreSymbol();
     Symbol->symbolPath = Call->callPath;
@@ -359,41 +410,10 @@ BuilderState::addGenericFunction(
     Call->receiverSection = lyo1::TypeSection::Invalid;
     Call->receiverDescriptor = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = callFlags;
+    process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = returnType;
     calls.push_back(Call);
-
-    absl::flat_hash_set<std::string> usedNames;
-    bool restIsLastParameter = true;
-
-    for (const auto &param : parameters) {
-        TU_ASSERT (restIsLastParameter);
-        TU_ASSERT (param.paramType != nullptr);
-
-        uint8_t name_offset = lyric_object::INVALID_OFFSET_U8;
-        if (!param.paramName.empty()) {
-            const auto &name = param.paramName;
-            TU_ASSERT (!usedNames.contains(name));
-            usedNames.insert(name);
-            name_offset = Call->names.size();
-            Call->names.emplace_back(name);
-        }
-
-        tu_uint32 param_dfl = lyric_object::INVALID_ADDRESS_U32;
-        if (param.paramDefault)
-            param_dfl = param.paramDefault->call_index;
-
-        if (bool(param.flags & lyo1::ParameterFlags::Rest)) {
-            TU_ASSERT (param_dfl == lyric_object::INVALID_ADDRESS_U32);
-            Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(param.flags,
-                param.paramType->type_index, lyric_object::INVALID_ADDRESS_U32, name_offset, lyric_object::INVALID_OFFSET_U8));
-            restIsLastParameter = false;
-        } else {
-            TU_ASSERT (name_offset != lyric_object::INVALID_OFFSET_U8);
-            Call->parameters.emplace_back(lyo1::Parameter(param.flags, param.paramType->type_index,
-                param_dfl, name_offset, lyric_object::INVALID_OFFSET_U8));
-        }
-    }
 
     auto *Symbol = new CoreSymbol();
     Symbol->symbolPath = Call->callPath;
@@ -480,8 +500,7 @@ CoreAction *
 BuilderState::addConceptAction(
     const std::string &actionName,
     const CoreConcept *receiver,
-    const std::vector<std::pair<std::string, const CoreType *>> &parameters,
-    const Option<std::pair<std::string, const CoreType *>> &rest,
+    const std::vector<CoreParam> &parameters,
     const CoreType *returnType)
 {
     TU_ASSERT (!actionName.empty());
@@ -501,31 +520,8 @@ BuilderState::addConceptAction(
     Action->receiverDescriptor = ReceiverConcept->concept_index;
     Action->returnType = returnType;
     Action->flags = lyo1::ActionFlags::NONE;
+    process_parameters(parameters, Action->listParameters, Action->namedParameters, Action->restParameter);
     actions.push_back(Action);
-
-    absl::flat_hash_set<std::string> usedNames;
-    for (const auto &param : parameters) {
-        const auto &paramName = param.first;
-        const auto *ParamType = param.second;
-        TU_ASSERT (!usedNames.contains(paramName));
-        Action->parameters.emplace_back(lyo1::Parameter(lyo1::ParameterFlags::NONE,
-            ParamType->type_index, lyric_object::INVALID_ADDRESS_U32, Action->names.size(),
-            lyric_object::INVALID_OFFSET_U8));
-        Action->names.emplace_back(paramName);
-        usedNames.insert(paramName);
-    }
-
-    if (!rest.isEmpty()) {
-        const auto &p = rest.getValue();
-        const auto &name = p.first;
-        const auto *ParamType = p.second;
-        TU_ASSERT (!usedNames.contains(name));
-        Action->rest = Option<lyo1::Parameter>(lyo1::Parameter(lyo1::ParameterFlags::Rest,
-            ParamType->type_index, lyric_object::INVALID_ADDRESS_U32, Action->names.size(),
-            lyric_object::INVALID_OFFSET_U8));
-        Action->names.emplace_back(name);
-        usedNames.insert(name);
-    }
 
     ReceiverConcept->actions.push_back(Action);
 
@@ -669,43 +665,12 @@ BuilderState::addClassCtor(
     Call->receiverSection = lyo1::TypeSection::Class;
     Call->receiverDescriptor = receiver->class_index;
     Call->flags = ctorFlags;
+    process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = ReceiverClass->classType;
     calls.push_back(Call);
+
     ReceiverClass->classCtor = Call;
-
-    absl::flat_hash_set<std::string> usedNames;
-    bool restIsLastParameter = true;
-
-    for (const auto &param : parameters) {
-        TU_ASSERT (restIsLastParameter);
-        TU_ASSERT (param.paramType != nullptr);
-
-        uint8_t name_offset = lyric_object::INVALID_OFFSET_U8;
-        if (!param.paramName.empty()) {
-            const auto &name = param.paramName;
-            TU_ASSERT (!usedNames.contains(name));
-            usedNames.insert(name);
-            name_offset = Call->names.size();
-            Call->names.emplace_back(name);
-        }
-
-        tu_uint32 param_dfl = lyric_object::INVALID_ADDRESS_U32;
-        if (param.paramDefault)
-            param_dfl = param.paramDefault->call_index;
-
-        if (bool(param.flags & lyo1::ParameterFlags::Rest)) {
-            TU_ASSERT (param_dfl == lyric_object::INVALID_ADDRESS_U32);
-            Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(param.flags, param.paramType->type_index,
-                lyric_object::INVALID_ADDRESS_U32, name_offset, lyric_object::INVALID_OFFSET_U8));
-            restIsLastParameter = false;
-        } else {
-            TU_ASSERT (name_offset != lyric_object::INVALID_OFFSET_U8);
-            Call->parameters.emplace_back(lyo1::Parameter(param.flags, param.paramType->type_index,
-                param_dfl, name_offset, lyric_object::INVALID_OFFSET_U8));
-        }
-    }
-
     ReceiverClass->methods.push_back(Call);
 
     auto *Symbol = new CoreSymbol();
@@ -756,8 +721,7 @@ BuilderState::addClassMethod(
     const std::string &methodName,
     const CoreClass *receiver,
     lyo1::CallFlags callFlags,
-    const std::vector<std::pair<std::string, const CoreType *>> &parameters,
-    const Option<std::pair<std::string, const CoreType *>> &rest,
+    const std::vector<CoreParam> &parameters,
     const lyric_object::BytecodeBuilder &code,
     const CoreType *returnType,
     bool isInline)
@@ -785,33 +749,10 @@ BuilderState::addClassMethod(
     Call->receiverSection = lyo1::TypeSection::Class;
     Call->receiverDescriptor = receiver->class_index;
     Call->flags = callFlags;
+    process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = returnType;
     calls.push_back(Call);
-
-    absl::flat_hash_set<std::string> usedNames;
-    for (const auto &param : parameters) {
-        const auto &paramName = param.first;
-        const auto *ParamType = param.second;
-        TU_ASSERT (!usedNames.contains(paramName));
-        Call->parameters.emplace_back(lyo1::Parameter(lyo1::ParameterFlags::NONE,
-            ParamType->type_index, lyric_object::INVALID_ADDRESS_U32, Call->names.size(),
-            lyric_object::INVALID_OFFSET_U8));
-        Call->names.emplace_back(paramName);
-        usedNames.insert(paramName);
-    }
-
-    if (!rest.isEmpty()) {
-        const auto &p = rest.getValue();
-        const auto &name = p.first;
-        const auto *ParamType = p.second;
-        TU_ASSERT (!usedNames.contains(name));
-        Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(lyo1::ParameterFlags::Rest,
-            ParamType->type_index, lyric_object::INVALID_ADDRESS_U32, Call->names.size(),
-            lyric_object::INVALID_OFFSET_U8));
-        Call->names.emplace_back(name);
-        usedNames.insert(name);
-    }
 
     ReceiverClass->methods.push_back(Call);
 
@@ -912,43 +853,12 @@ BuilderState::addStructCtor(
     Call->receiverSection = lyo1::TypeSection::Struct;
     Call->receiverDescriptor = receiver->struct_index;
     Call->flags = ctorFlags;
+    process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = ReceiverStruct->structType;
     calls.push_back(Call);
+
     ReceiverStruct->structCtor = Call;
-
-    absl::flat_hash_set<std::string> usedNames;
-    bool restIsLastParameter = true;
-
-    for (const auto &param : parameters) {
-        TU_ASSERT (restIsLastParameter);
-        TU_ASSERT (param.paramType != nullptr);
-
-        uint8_t name_offset = lyric_object::INVALID_OFFSET_U8;
-        if (!param.paramName.empty()) {
-            const auto &name = param.paramName;
-            TU_ASSERT (!usedNames.contains(name));
-            usedNames.insert(name);
-            name_offset = Call->names.size();
-            Call->names.emplace_back(name);
-        }
-
-        tu_uint32 param_dfl = lyric_object::INVALID_ADDRESS_U32;
-        if (param.paramDefault)
-            param_dfl = param.paramDefault->call_index;
-
-        if (bool(param.flags & lyo1::ParameterFlags::Rest)) {
-            TU_ASSERT (param_dfl == lyric_object::INVALID_ADDRESS_U32);
-            Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(param.flags, param.paramType->type_index,
-                lyric_object::INVALID_ADDRESS_U32, name_offset, lyric_object::INVALID_OFFSET_U8));
-            restIsLastParameter = false;
-        } else {
-            TU_ASSERT (name_offset != lyric_object::INVALID_OFFSET_U8);
-            Call->parameters.emplace_back(lyo1::Parameter(param.flags, param.paramType->type_index,
-                param_dfl, name_offset, lyric_object::INVALID_OFFSET_U8));
-        }
-    }
-
     ReceiverStruct->methods.push_back(Call);
 
     auto *Symbol = new CoreSymbol();
@@ -1027,41 +937,10 @@ BuilderState::addStructMethod(
     Call->receiverSection = lyo1::TypeSection::Struct;
     Call->receiverDescriptor = receiver->struct_index;
     Call->flags = callFlags;
+    process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = returnType;
     calls.push_back(Call);
-
-    absl::flat_hash_set<std::string> usedNames;
-    bool restIsLastParameter = true;
-
-    for (const auto &param : parameters) {
-        TU_ASSERT (restIsLastParameter);
-        TU_ASSERT (param.paramType != nullptr);
-
-        uint8_t name_offset = lyric_object::INVALID_OFFSET_U8;
-        if (!param.paramName.empty()) {
-            const auto &name = param.paramName;
-            TU_ASSERT (!usedNames.contains(name));
-            usedNames.insert(name);
-            name_offset = Call->names.size();
-            Call->names.emplace_back(name);
-        }
-
-        tu_uint32 param_dfl = lyric_object::INVALID_ADDRESS_U32;
-        if (param.paramDefault)
-            param_dfl = param.paramDefault->call_index;
-
-        if (bool(param.flags & lyo1::ParameterFlags::Rest)) {
-            TU_ASSERT (param_dfl == lyric_object::INVALID_ADDRESS_U32);
-            Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(param.flags,
-                param.paramType->type_index, lyric_object::INVALID_ADDRESS_U32, name_offset, lyric_object::INVALID_OFFSET_U8));
-            restIsLastParameter = false;
-        } else {
-            TU_ASSERT (name_offset != lyric_object::INVALID_OFFSET_U8);
-            Call->parameters.emplace_back(lyo1::Parameter(param.flags, param.paramType->type_index,
-                param_dfl, name_offset, lyric_object::INVALID_OFFSET_U8));
-        }
-    }
 
     ReceiverStruct->methods.push_back(Call);
 
@@ -1162,43 +1041,12 @@ BuilderState::addInstanceCtor(
     Call->receiverSection = lyo1::TypeSection::Instance;
     Call->receiverDescriptor = receiver->instance_index;
     Call->flags = ctorFlags;
+    process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = ReceiverInstance->instanceType;
     calls.push_back(Call);
+
     ReceiverInstance->instanceCtor = Call;
-
-    absl::flat_hash_set<std::string> usedNames;
-    bool restIsLastParameter = true;
-
-    for (const auto &param : parameters) {
-        TU_ASSERT (restIsLastParameter);
-        TU_ASSERT (param.paramType != nullptr);
-
-        uint8_t name_offset = lyric_object::INVALID_OFFSET_U8;
-        if (!param.paramName.empty()) {
-            const auto &name = param.paramName;
-            TU_ASSERT (!usedNames.contains(name));
-            usedNames.insert(name);
-            name_offset = Call->names.size();
-            Call->names.emplace_back(name);
-        }
-
-        tu_uint32 param_dfl = lyric_object::INVALID_ADDRESS_U32;
-        if (param.paramDefault)
-            param_dfl = param.paramDefault->call_index;
-
-        if (bool(param.flags & lyo1::ParameterFlags::Rest)) {
-            TU_ASSERT (param_dfl == lyric_object::INVALID_ADDRESS_U32);
-            Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(param.flags, param.paramType->type_index,
-                lyric_object::INVALID_ADDRESS_U32, name_offset, lyric_object::INVALID_OFFSET_U8));
-            restIsLastParameter = false;
-        } else {
-            TU_ASSERT (name_offset != lyric_object::INVALID_OFFSET_U8);
-            Call->parameters.emplace_back(lyo1::Parameter(param.flags, param.paramType->type_index,
-                param_dfl, name_offset, lyric_object::INVALID_OFFSET_U8));
-        }
-    }
-
     ReceiverInstance->methods.push_back(Call);
 
     auto *Symbol = new CoreSymbol();
@@ -1250,8 +1098,7 @@ BuilderState::addInstanceMethod(
     const std::string &methodName,
     const CoreInstance *receiver,
     lyo1::CallFlags callFlags,
-    const std::vector<std::pair<std::string, const CoreType *>> &parameters,
-    const Option<std::pair<std::string, const CoreType *>> &rest,
+    const std::vector<CoreParam> &parameters,
     const lyric_object::BytecodeBuilder &code,
     const CoreType *returnType,
     bool isInline)
@@ -1280,33 +1127,10 @@ BuilderState::addInstanceMethod(
     Call->receiverSection = lyo1::TypeSection::Instance;
     Call->receiverDescriptor = receiver->instance_index;
     Call->flags = callFlags;
+    process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = returnType;
     calls.push_back(Call);
-
-    absl::flat_hash_set<std::string> usedNames;
-    for (const auto &param : parameters) {
-        const auto &paramName = param.first;
-        const auto *ParamType = param.second;
-        TU_ASSERT (!usedNames.contains(paramName));
-        Call->parameters.emplace_back(lyo1::Parameter(lyo1::ParameterFlags::NONE,
-            ParamType->type_index, lyric_object::INVALID_ADDRESS_U32, Call->names.size(),
-            lyric_object::INVALID_OFFSET_U8));
-        Call->names.emplace_back(paramName);
-        usedNames.insert(paramName);
-    }
-
-    if (!rest.isEmpty()) {
-        const auto &p = rest.getValue();
-        const auto &name = p.first;
-        const auto *ParamType = p.second;
-        TU_ASSERT (!usedNames.contains(name));
-        Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(lyo1::ParameterFlags::Rest,
-            ParamType->type_index, lyric_object::INVALID_ADDRESS_U32, Call->names.size(),
-            lyric_object::INVALID_OFFSET_U8));
-        Call->names.emplace_back(name);
-        usedNames.insert(name);
-    }
 
     ReceiverInstance->methods.push_back(Call);
 
@@ -1416,8 +1240,7 @@ CoreCall *
 BuilderState::addImplExtension(
     const std::string &extensionName,
     const CoreImpl *receiver,
-    const std::vector<std::pair<std::string, const CoreType *>> &parameters,
-    const Option<std::pair<std::string, const CoreType *>> &rest,
+    const std::vector<CoreParam> &parameters,
     const lyric_object::BytecodeBuilder &code,
     const CoreType *returnType,
     bool isInline)
@@ -1451,33 +1274,10 @@ BuilderState::addImplExtension(
     Call->receiverSection = receiver->receiverSection;
     Call->receiverDescriptor = receiver->receiverDescriptor;
     Call->flags = callFlags;
+    process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = returnType;
     calls.push_back(Call);
-
-    absl::flat_hash_set<std::string> usedNames;
-    for (const auto &param : parameters) {
-        const auto &paramName = param.first;
-        const auto *ParamType = param.second;
-        TU_ASSERT (!usedNames.contains(paramName));
-        Call->parameters.emplace_back(lyo1::Parameter(lyo1::ParameterFlags::NONE,
-            ParamType->type_index, lyric_object::INVALID_ADDRESS_U32, Call->names.size(),
-            lyric_object::INVALID_OFFSET_U8));
-        Call->names.emplace_back(paramName);
-        usedNames.insert(paramName);
-    }
-
-    if (!rest.isEmpty()) {
-        const auto &p = rest.getValue();
-        const auto &name = p.first;
-        const auto *ParamType = p.second;
-        TU_ASSERT (!usedNames.contains(name));
-        Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(lyo1::ParameterFlags::Rest,
-            ParamType->type_index, lyric_object::INVALID_ADDRESS_U32, Call->names.size(),
-            lyric_object::INVALID_OFFSET_U8));
-        Call->names.emplace_back(name);
-        usedNames.insert(name);
-    }
 
     MutableImpl->extensions.emplace_back(lyo1::ImplExtension(ConceptAction->index, Call->call_index));
 
@@ -1562,43 +1362,12 @@ BuilderState::addEnumCtor(
     Call->receiverSection = lyo1::TypeSection::Enum;
     Call->receiverDescriptor = receiver->enum_index;
     Call->flags = ctorFlags;
+    process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = ReceiverEnum->enumType;
     calls.push_back(Call);
+
     ReceiverEnum->enumCtor = Call;
-
-    absl::flat_hash_set<std::string> usedNames;
-    bool restIsLastParameter = true;
-
-    for (const auto &param : parameters) {
-        TU_ASSERT (restIsLastParameter);
-        TU_ASSERT (param.paramType != nullptr);
-
-        uint8_t name_offset = lyric_object::INVALID_OFFSET_U8;
-        if (!param.paramName.empty()) {
-            const auto &name = param.paramName;
-            TU_ASSERT (!usedNames.contains(name));
-            usedNames.insert(name);
-            name_offset = Call->names.size();
-            Call->names.emplace_back(name);
-        }
-
-        tu_uint32 param_dfl = lyric_object::INVALID_ADDRESS_U32;
-        if (param.paramDefault)
-            param_dfl = param.paramDefault->call_index;
-
-        if (bool(param.flags & lyo1::ParameterFlags::Rest)) {
-            TU_ASSERT (param_dfl == lyric_object::INVALID_ADDRESS_U32);
-            Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(param.flags, param.paramType->type_index,
-                lyric_object::INVALID_ADDRESS_U32, name_offset, lyric_object::INVALID_OFFSET_U8));
-            restIsLastParameter = false;
-        } else {
-            TU_ASSERT (name_offset != lyric_object::INVALID_OFFSET_U8);
-            Call->parameters.emplace_back(lyo1::Parameter(param.flags, param.paramType->type_index,
-                param_dfl, name_offset, lyric_object::INVALID_OFFSET_U8));
-        }
-    }
-
     ReceiverEnum->methods.push_back(Call);
 
     auto *Symbol = new CoreSymbol();
@@ -1649,8 +1418,7 @@ BuilderState::addEnumMethod(
     const std::string &methodName,
     const CoreEnum *receiver,
     lyo1::CallFlags callFlags,
-    const std::vector<std::pair<std::string, const CoreType *>> &parameters,
-    const Option<std::pair<std::string, const CoreType *>> &rest,
+    const std::vector<CoreParam> &parameters,
     const lyric_object::BytecodeBuilder &code,
     const CoreType *returnType,
     bool isInline)
@@ -1678,33 +1446,10 @@ BuilderState::addEnumMethod(
     Call->receiverSection = lyo1::TypeSection::Instance;
     Call->receiverDescriptor = receiver->enum_index;
     Call->flags = callFlags;
+    process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = returnType;
     calls.push_back(Call);
-
-    absl::flat_hash_set<std::string> usedNames;
-    for (const auto &param : parameters) {
-        const auto &paramName = param.first;
-        const auto *ParamType = param.second;
-        TU_ASSERT (!usedNames.contains(paramName));
-        Call->parameters.emplace_back(lyo1::Parameter(lyo1::ParameterFlags::NONE,
-            ParamType->type_index, lyric_object::INVALID_ADDRESS_U32, Call->names.size(),
-            lyric_object::INVALID_OFFSET_U8));
-        Call->names.emplace_back(paramName);
-        usedNames.insert(paramName);
-    }
-
-    if (!rest.isEmpty()) {
-        const auto &p = rest.getValue();
-        const auto &name = p.first;
-        const auto *ParamType = p.second;
-        TU_ASSERT (!usedNames.contains(name));
-        Call->rest = Option<lyo1::Parameter>(lyo1::Parameter(lyo1::ParameterFlags::Rest,
-            ParamType->type_index, lyric_object::INVALID_ADDRESS_U32, Call->names.size(),
-            lyric_object::INVALID_OFFSET_U8));
-        Call->names.emplace_back(name);
-        usedNames.insert(name);
-    }
 
     ReceiverEnum->methods.push_back(Call);
 
@@ -1855,22 +1600,32 @@ BuilderState::toBytes() const
     // write the action descriptors
     for (const auto *Action : actions) {
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Action->actionPath.toString());
-        auto fb_names = buffer.CreateVectorOfStrings(Action->names);
-        auto fb_parameters = buffer.CreateVectorOfStructs(Action->parameters);
+
+        std::vector<flatbuffers::Offset<lyo1::Parameter>> list_parameters;
+        for (const auto &p : Action->listParameters) {
+            list_parameters.push_back(lyo1::CreateParameter(buffer, &p));
+        }
+        auto fb_list_parameters = buffer.CreateVector(list_parameters);
+
+        std::vector<flatbuffers::Offset<lyo1::Parameter>> named_parameters;
+        for (const auto &p : Action->namedParameters) {
+            named_parameters.push_back(lyo1::CreateParameter(buffer, &p));
+        }
+        auto fb_named_parameters = buffer.CreateVector(named_parameters);
+
+        flatbuffers::Offset<lyo1::Parameter> fb_rest_parameter = 0;
+        if (!Action->restParameter.isEmpty()) {
+            auto p = Action->restParameter.getValue();
+            fb_rest_parameter = lyo1::CreateParameter(buffer, &p);
+        }
 
         tu_uint32 actionTemplate = Action->actionTemplate? Action->actionTemplate->template_index
             : lyric_object::INVALID_ADDRESS_U32;
 
-        if (!Action->rest.isEmpty()) {
-            const auto rest = Action->rest.getValue();
-            actions_vector.push_back(lyo1::CreateActionDescriptor(buffer,
-                fb_fullyQualifiedName, actionTemplate, Action->receiverSection, Action->receiverDescriptor,
-                Action->flags, fb_parameters, &rest, fb_names, Action->returnType->type_index));
-        } else {
-            actions_vector.push_back(lyo1::CreateActionDescriptor(buffer,
-                fb_fullyQualifiedName, actionTemplate, Action->receiverSection, Action->receiverDescriptor,
-                Action->flags, fb_parameters, nullptr, fb_names, Action->returnType->type_index));
-        }
+        actions_vector.push_back(lyo1::CreateActionDescriptor(buffer,
+            fb_fullyQualifiedName, actionTemplate, Action->receiverSection, Action->receiverDescriptor,
+            Action->flags, fb_list_parameters, fb_named_parameters, fb_rest_parameter,
+            Action->returnType->type_index));
     }
 
     // write the field descriptors
@@ -1884,16 +1639,33 @@ BuilderState::toBytes() const
     // write the call descriptors
     for (const auto *Call : calls) {
         auto fb_fullyQualifiedName = buffer.CreateSharedString(Call->callPath.toString());
-        auto fb_names = buffer.CreateVectorOfStrings(Call->names);
-        auto fb_parameters = buffer.CreateVectorOfStructs(Call->parameters);
+
+        std::vector<flatbuffers::Offset<lyo1::Parameter>> list_parameters;
+        for (const auto &p : Call->listParameters) {
+            list_parameters.push_back(lyo1::CreateParameter(buffer, &p));
+        }
+        auto fb_list_parameters = buffer.CreateVector(list_parameters);
+
+        std::vector<flatbuffers::Offset<lyo1::Parameter>> named_parameters;
+        for (const auto &p : Call->namedParameters) {
+            named_parameters.push_back(lyo1::CreateParameter(buffer, &p));
+        }
+        auto fb_named_parameters = buffer.CreateVector(named_parameters);
+
+        flatbuffers::Offset<lyo1::Parameter> fb_rest_parameter = 0;
+        if (!Call->restParameter.isEmpty()) {
+            auto p = Call->restParameter.getValue();
+            fb_rest_parameter = lyo1::CreateParameter(buffer, &p);
+        }
 
         tu_uint32 callTemplate = Call->callTemplate? Call->callTemplate->template_index
             : lyric_object::INVALID_ADDRESS_U32;
         tu_uint32 returnType = Call->returnType->type_index;
 
         // build the proc prologue
+        auto numArguments = static_cast<tu_uint16>(list_parameters.size() + named_parameters.size());
         tempo_utils::BytesAppender prologue;
-        prologue.appendU16(static_cast<tu_uint16>(Call->parameters.size()));    // append numArguments
+        prologue.appendU16(numArguments);                                       // append numArguments
         prologue.appendU16(0);                                                  // append numLocals
         prologue.appendU16(0);                                                  // append numLexicals
 
@@ -1907,16 +1679,10 @@ BuilderState::toBytes() const
         bytecode.insert(bytecode.cend(), prologue.bytesBegin(), prologue.bytesEnd());
         bytecode.insert(bytecode.cend(), Call->code.bytecodeBegin(), Call->code.bytecodeEnd());
 
-        if (!Call->rest.isEmpty()) {
-            const auto rest = Call->rest.getValue();
-            calls_vector.push_back(lyo1::CreateCallDescriptor(buffer, fb_fullyQualifiedName,
-                callTemplate, Call->receiverSection, Call->receiverDescriptor, Call->callType->type_index,
-                bytecodeOffset, Call->flags, fb_parameters, &rest, fb_names, returnType));
-        } else {
-            calls_vector.push_back(lyo1::CreateCallDescriptor(buffer, fb_fullyQualifiedName,
-                callTemplate, Call->receiverSection, Call->receiverDescriptor, Call->callType->type_index,
-                bytecodeOffset, Call->flags, fb_parameters, nullptr /* rest */, fb_names, returnType));
-        }
+        calls_vector.push_back(lyo1::CreateCallDescriptor(buffer, fb_fullyQualifiedName,
+            callTemplate, Call->receiverSection, Call->receiverDescriptor, Call->callType->type_index,
+            bytecodeOffset, Call->flags, fb_list_parameters, fb_named_parameters, fb_rest_parameter,
+            returnType));
     }
 
     // write the impl descriptors

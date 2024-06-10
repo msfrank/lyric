@@ -116,6 +116,9 @@ union Assignable {
     SpecialAssignable,
 }
 
+//
+//
+
 table TypeDescriptor {
     type_assignable: Assignable;                // the assignable type union
     super_type: uint32 = 0xFFFFFFFF;            // super type of the type
@@ -142,6 +145,9 @@ struct Constraint {
     constraint_bound: ConstraintBound;          // type of bound for the constraint type
     constraint_type: uint32;                    // offset of the constraint type in the types section
 }
+
+//
+//
 
 table TemplateDescriptor {
     fqsn: string;                               // fully qualified name of symbol which declares the template
@@ -173,6 +179,20 @@ table ExistentialDescriptor {
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
 
+// flags which apply to a Parameter
+
+enum ParameterFlags : uint16 (bit_flags) {
+    Var,                                        // parameter argument binding is variable
+    Ctx,                                        // parameter is a context parameter
+}
+
+table Parameter {
+    parameter_name: string;                     // the parameter name
+    parameter_type: uint32;                     // offset of the parameter type in the types section
+    initializer_call: uint32;                   // offset of the initializer call in the calls section, or 0xFFFFFFFF if no initializer
+    flags: ParameterFlags;                      // bitfield containing parameter flags
+}
+
 // flags which apply to a CallDescriptor
 
 enum CallFlags : uint16 (bit_flags) {
@@ -183,23 +203,6 @@ enum CallFlags : uint16 (bit_flags) {
     InheritVisibility,                          // visible to enclosing symbol and inheriting symbols
     GlobalVisibility,                           // visible to all symbols
     DeclOnly,                                   // call descriptor is only a declaration
-}
-
-// flags which apply to a Parameter
-
-enum ParameterFlags : uint16 (bit_flags) {
-    Var,                                        // parameter argument binding is variable
-    Named,                                      // parameter is named
-    Rest,                                       // parameter describes the rest argument
-    Ctx,                                        // parameter is a context parameter
-}
-
-struct Parameter {
-    flags: ParameterFlags;                      // bitfield containing parameter flags
-    parameter_type: uint32;                     // offset of the parameter type in the types section
-    initializer_call: uint32;                   // offset of the initializer call in the calls section, or 0xFFFFFFFF if no initializer
-    name_offset: uint8;                         // offset of the parameter name in the names array, or 0xFF
-    label_offset: uint8;                        // offset of the parameter label in the names array, or 0xFF
 }
 
 // a CallDescriptor describes a lambda, function or method.  a call is a
@@ -213,9 +216,9 @@ table CallDescriptor {
     call_type: uint32 = 0xFFFFFFFF;             // offset of the call type in the types section
     bytecode_offset: uint32 = 0xFFFFFFFF;       // offset of the start of the proc in the bytecode section
     flags: CallFlags;                           // bitfield containing call flags
-    parameters: [Parameter];                    // array of call parameters
-    rest: Parameter;                            // if present, the parameter describing any additional arguments
-    names: [string];                            // array of parameter names and labels
+    list_parameters: [Parameter];               // array of list parameters
+    named_parameters: [Parameter];              // array of named parameters
+    rest_parameter: Parameter;                  // the rest parameter, which is empty if the call does not have a rest parameter
     result_type: uint32 = 0xFFFFFFFF;           // offset of the result type in the types section, or 0xFFFFFFFF if the call is marked NoReturn
 }
 
@@ -255,9 +258,9 @@ table ActionDescriptor {
     receiver_section: TypeSection = Invalid;    // object section containing the descriptor for the receiver, or Invalid if the call is not bound
     receiver_descriptor: uint32 = 0xFFFFFFFF;   // index of the descriptor for the receiver in the specified section, or 0xFFFFFFFF if the call is not bound
     flags: ActionFlags;                         // bitfield containing action flags
-    parameters: [Parameter];                    // array of action parameters
-    rest: Parameter;                            // if present, the parameter describing any additional arguments
-    names: [string];                            // array of parameter names and labels
+    list_parameters: [Parameter];               // array of list parameters
+    named_parameters: [Parameter];              // array of named parameters
+    rest_parameter: Parameter;                  // the rest parameter, which is empty if the action does not have a rest parameter
     result_type: uint32 = 0xFFFFFFFF;           // offset of the result type in the types section, or 0xFFFFFFFF if the action is marked NoReturn
 }
 

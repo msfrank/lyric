@@ -25,7 +25,7 @@ build_core_Seq(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructCtor(SeqStruct,
             {
-                {{}, DataType, nullptr, lyo1::ParameterFlags::Rest},
+                make_rest_param(DataType),
             },
             code);
         state.setStructAllocator(SeqStruct, lyric_bootstrap::internal::BootstrapTrap::SEQ_ALLOC);
@@ -49,8 +49,8 @@ build_core_Seq(
             SeqStruct,
             lyo1::CallFlags::GlobalVisibility,
             {
-                {"index", IntegerType, nullptr, lyo1::ParameterFlags::NONE},
-                {"default", DataType, nullptr, lyo1::ParameterFlags::NONE},
+                make_list_param("index", IntegerType),
+                make_list_param("default", DataType),
             },
             code,
             DataType);
@@ -63,8 +63,8 @@ build_core_Seq(
             SeqStruct,
             lyo1::CallFlags::GlobalVisibility,
             {
-                {"first", DataType, nullptr, lyo1::ParameterFlags::NONE},
-                {{}, DataType, nullptr, lyo1::ParameterFlags::Rest},
+                make_list_param("first", DataType),
+                make_rest_param(DataType),
             },
             code,
             SeqStruct->structType);
@@ -77,7 +77,7 @@ build_core_Seq(
             SeqStruct,
             lyo1::CallFlags::GlobalVisibility,
             {
-                {"other", SeqStruct->structType, nullptr, lyo1::ParameterFlags::NONE},
+                make_list_param("other", SeqStruct->structType),
             },
             code,
             SeqStruct->structType);
@@ -90,8 +90,8 @@ build_core_Seq(
             SeqStruct,
             lyo1::CallFlags::GlobalVisibility,
             {
-                {"start", IntegerType, nullptr, lyo1::ParameterFlags::NONE},
-                {"length", IntegerType, nullptr, lyo1::ParameterFlags::NONE},
+                make_list_param("start", IntegerType),
+                make_list_param("length", IntegerType),
             },
             code,
             SeqStruct->structType);
@@ -104,7 +104,7 @@ build_core_Seq(
         code.loadClass(SeqIteratorClass->class_index);
         code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATE));
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addImplExtension("Iterate", IterableImpl, {}, {}, code, DataIteratorType);
+        state.addImplExtension("Iterate", IterableImpl, {}, code, DataIteratorType);
     }
 
     return SeqStruct;
@@ -138,13 +138,13 @@ build_core_SeqIterator(
         lyric_object::BytecodeBuilder code;
         code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_VALID));
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addImplExtension("Valid", IteratorImpl, {}, {}, code, BoolType);
+        state.addImplExtension("Valid", IteratorImpl, {}, code, BoolType);
     }
     {
         lyric_object::BytecodeBuilder code;
         code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_NEXT));
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.addImplExtension("Next", IteratorImpl, {}, {}, code, DataType);
+        state.addImplExtension("Next", IteratorImpl, {}, code, DataType);
     }
 
     return SeqIteratorClass;

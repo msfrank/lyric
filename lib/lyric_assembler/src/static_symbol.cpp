@@ -125,8 +125,8 @@ lyric_assembler::StaticSymbol::getInitializer() const
     return priv->initCall->getSymbolUrl();
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
-lyric_assembler::StaticSymbol::declareInitializer()
+tempo_utils::Result<lyric_assembler::ProcHandle *>
+lyric_assembler::StaticSymbol::defineInitializer()
 {
     if (isImported())
         m_state->throwAssemblerInvariant(
@@ -151,9 +151,8 @@ lyric_assembler::StaticSymbol::declareInitializer()
     auto address = CallAddress::near(callIndex);
 
     // construct call symbol
-    auto *initSymbol = new CallSymbol(initializerUrl, parameters, {}, returnType,
-        lyric_object::AccessType::Public, address, lyric_object::CallMode::Normal, priv->staticType,
-        priv->staticBlock.get(), m_state);
+    auto *initSymbol = new CallSymbol(initializerUrl, lyric_object::AccessType::Public, address,
+        lyric_object::CallMode::Normal, priv->staticBlock.get(), m_state);
 
     auto status = m_state->appendCall(initSymbol);
     if (status.notOk()) {
@@ -163,11 +162,11 @@ lyric_assembler::StaticSymbol::declareInitializer()
 
     priv->initCall = initSymbol;
 
-    return initializerUrl;
+    return priv->initCall->defineCall({}, returnType);
 }
 
-tempo_utils::Result<lyric_assembler::CallInvoker>
-lyric_assembler::StaticSymbol::resolveInitializer()
+tempo_utils::Status
+lyric_assembler::StaticSymbol::prepareInitializer(CallableInvoker &invoker)
 {
     auto *priv = getPriv();
 
@@ -188,5 +187,6 @@ lyric_assembler::StaticSymbol::resolveInitializer()
         m_state->throwAssemblerInvariant("invalid call symbol {}", initializerUrl.toString());
     auto *init = cast_symbol_to_call(initSym);
 
-    return CallInvoker(init);
+    auto callable = std::make_unique<FunctionCallable>(init);
+    return invoker.initialize(std::move(callable));
 }

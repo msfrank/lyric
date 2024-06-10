@@ -1,11 +1,10 @@
 
-#include <lyric_object/action_parameter_walker.h>
 #include <lyric_object/action_walker.h>
 #include <lyric_object/concept_walker.h>
 #include <lyric_object/internal/object_reader.h>
 #include <lyric_object/link_walker.h>
+#include <lyric_object/parameter_walker.h>
 #include <lyric_object/symbol_walker.h>
-#include <lyric_object/rest_parameter_walker.h>
 #include <lyric_object/template_walker.h>
 #include <lyric_object/type_walker.h>
 #include <tempo_utils/big_endian.h>
@@ -91,56 +90,96 @@ lyric_object::ActionWalker::getTemplate() const
 }
 
 tu_uint8
-lyric_object::ActionWalker::numParameters() const
+lyric_object::ActionWalker::numListParameters() const
 {
     if (!isValid())
         return false;
     auto *actionDescriptor = m_reader->getAction(m_actionOffset);
     if (actionDescriptor == nullptr)
         return {};
-    if (actionDescriptor->parameters() == nullptr)
+    if (actionDescriptor->list_parameters() == nullptr)
         return 0;
-    return actionDescriptor->parameters()->size();
+    return actionDescriptor->list_parameters()->size();
 }
 
-lyric_object::ActionParameterWalker
-lyric_object::ActionWalker::getParameter(tu_uint8 index) const
+lyric_object::ParameterWalker
+lyric_object::ActionWalker::getListParameter(tu_uint8 index) const
 {
     if (!isValid())
         return {};
     auto *actionDescriptor = m_reader->getAction(m_actionOffset);
     if (actionDescriptor == nullptr)
         return {};
-    if (actionDescriptor->parameters() == nullptr)
+    if (actionDescriptor->list_parameters() == nullptr)
         return {};
-    if (actionDescriptor->parameters()->size() <= index)
+    auto *listParameters = actionDescriptor->list_parameters();
+
+    if (listParameters->size() <= index)
         return {};
-    return ActionParameterWalker(m_reader, (void *) actionDescriptor, index);
+    auto *parameter = listParameters->Get(index);
+    auto placement = parameter->initializer_call() == INVALID_ADDRESS_U32? PlacementType::List
+        : PlacementType::ListOpt;
+
+    return ParameterWalker(m_reader, (void *) parameter, index, placement);
+}
+
+tu_uint8
+lyric_object::ActionWalker::numNamedParameters() const
+{
+    if (!isValid())
+        return false;
+    auto *actionDescriptor = m_reader->getAction(m_actionOffset);
+    if (actionDescriptor == nullptr)
+        return {};
+    if (actionDescriptor->named_parameters() == nullptr)
+        return 0;
+    return actionDescriptor->named_parameters()->size();
+}
+
+lyric_object::ParameterWalker
+lyric_object::ActionWalker::getNamedParameter(tu_uint8 index) const
+{
+    if (!isValid())
+        return {};
+    auto *actionDescriptor = m_reader->getAction(m_actionOffset);
+    if (actionDescriptor == nullptr)
+        return {};
+    if (actionDescriptor->named_parameters() == nullptr)
+        return {};
+    auto *namedParameters = actionDescriptor->named_parameters();
+
+    if (namedParameters->size() <= index)
+        return {};
+    auto *parameter = namedParameters->Get(index);
+    auto placement = parameter->initializer_call() == INVALID_ADDRESS_U32? PlacementType::Named
+        : PlacementType::NamedOpt;
+
+    return ParameterWalker(m_reader, (void *) parameter, index, placement);
 }
 
 bool
-lyric_object::ActionWalker::hasRest() const
+lyric_object::ActionWalker::hasRestParameter() const
 {
     if (!isValid())
         return false;
     auto *actionDescriptor = m_reader->getAction(m_actionOffset);
     if (actionDescriptor == nullptr)
         return {};
-    return actionDescriptor->rest() != nullptr;
+    return actionDescriptor->rest_parameter() != nullptr;
 }
 
-lyric_object::RestParameterWalker
-lyric_object::ActionWalker::getRest() const
+lyric_object::ParameterWalker
+lyric_object::ActionWalker::getRestParameter() const
 {
     if (!isValid())
         return {};
     auto *actionDescriptor = m_reader->getAction(m_actionOffset);
     if (actionDescriptor == nullptr)
         return {};
-    auto *rest =  actionDescriptor->rest();
-    if (rest == nullptr)
+    auto *parameter =  actionDescriptor->rest_parameter();
+    if (parameter == nullptr)
         return {};
-    return RestParameterWalker(m_reader, (void *) rest, (void *) actionDescriptor->names());
+    return ParameterWalker(m_reader, (void *) parameter, 0, PlacementType::Rest);
 }
 
 lyric_object::TypeWalker

@@ -259,7 +259,7 @@ namespace lyric_parser::internal {
 
         // implemented by ModuleParameterOps
         void enterParamSpec(ModuleParser::ParamSpecContext *ctx) override;
-        void exitBareParam(ModuleParser::BareParamContext *ctx) override;
+        void exitPositionalParam(ModuleParser::PositionalParamContext *ctx) override;
         void exitNamedParam(ModuleParser::NamedParamContext *ctx) override;
         void exitRenamedParam(ModuleParser::RenamedParamContext *ctx) override;
         void exitNamedCtx(ModuleParser::NamedCtxContext *ctx) override;

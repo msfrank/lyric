@@ -12,7 +12,8 @@
 
 #include "abstract_resolver.h"
 #include "assembly_state.h"
-#include "call_invoker.h"
+#include "callable_invoker.h"
+#include "function_callable.h"
 #include "namespace_symbol.h"
 #include "type_handle.h"
 
@@ -81,10 +82,14 @@ namespace lyric_assembler {
         resolveBinding(const std::vector<std::string> &path);
 
         tempo_utils::Result<lyric_common::TypeDef> resolveSingular(
-            const lyric_parser::Assignable &assignableSpec);
+            const lyric_common::SymbolPath &typePath,
+            const std::vector<lyric_common::TypeDef> &typeArguments) override;
 
-        tempo_utils::Result<lyric_common::TypeDef> resolveAssignable(
-            const lyric_parser::Assignable &assignableSpec) override;
+//        tempo_utils::Result<lyric_common::TypeDef> resolveSingular(
+//            const lyric_parser::Assignable &assignableSpec);
+//
+//        tempo_utils::Result<lyric_common::TypeDef> resolveAssignable(
+//            const lyric_parser::Assignable &assignableSpec) override;
 
         tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
             const std::vector<std::string> &typePath);
@@ -111,21 +116,18 @@ namespace lyric_assembler {
         tempo_utils::Status load(const DataReference &ref);
         tempo_utils::Status store(const DataReference &ref);
 
-        tempo_utils::Result<lyric_common::SymbolUrl> declareFunction(
+        tempo_utils::Result<CallSymbol *> declareFunction(
             const std::string &name,
-            const std::vector<ParameterSpec> &parameterSpec,
-            const Option<ParameterSpec> &restSpec,
-            const std::vector<ParameterSpec> &ctxSpec,
-            const lyric_parser::Assignable &returnSpec,
             lyric_object::AccessType access,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             bool declOnly = false);
 
-        tempo_utils::Result<CallInvoker> resolveFunction(const std::string &name);
+        tempo_utils::Status prepareFunction(const std::string &name, CallableInvoker &invoker);
 
-        tempo_utils::Result<CallInvoker> resolveExtension(
+        tempo_utils::Status prepareExtension(
             const lyric_common::TypeDef &receiverType,
-            const std::string &name);
+            const std::string &name,
+            CallableInvoker &invoker);
 
         tempo_utils::Result<lyric_common::SymbolUrl> declareStruct(
             const std::string &name,

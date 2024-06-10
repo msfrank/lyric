@@ -11,13 +11,12 @@ namespace lyric_assembler {
     public:
         virtual ~AbstractResolver() = default;
 
-        /**
-         *
-         * @param assignableSpec
-         * @return
-         */
-        virtual tempo_utils::Result<lyric_common::TypeDef> resolveAssignable(
-            const lyric_parser::Assignable &assignableSpec) = 0;
+        virtual tempo_utils::Result<lyric_common::TypeDef> resolveSingular(
+            const lyric_common::SymbolPath &typePath,
+            const std::vector<lyric_common::TypeDef> &typeArguments) = 0;
+
+//        virtual tempo_utils::Result<lyric_common::TypeDef> resolveAssignable(
+//            const lyric_parser::Assignable &assignableSpec) = 0;
     };
 }
 

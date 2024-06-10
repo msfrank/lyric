@@ -64,35 +64,49 @@ build_core_BoolInstance(
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
         state.addImplExtension("equals", BoolEqualityImpl,
-            {{"lhs", BoolType}, {"rhs", BoolType}}, {},
+            {
+                make_list_param("lhs", BoolType),
+                make_list_param("rhs", BoolType),
+            },
             code, BoolType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_BOOL_CMP));
         state.addImplExtension("compare", BoolOrderedImpl,
-            {{"lhs", BoolType}, {"rhs", BoolType}}, {},
+            {
+                make_list_param("lhs", BoolType),
+                make_list_param("rhs", BoolType),
+            },
             code, IntegerType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_LOGICAL_AND));
         state.addImplExtension("conjunct", BoolPropositionImpl,
-            {{"lhs", BoolType}, {"rhs", BoolType}}, {},
+            {
+                make_list_param("lhs", BoolType),
+                make_list_param("rhs", BoolType),
+            },
             code, BoolType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_LOGICAL_OR));
         state.addImplExtension("disjunct", BoolPropositionImpl,
-            {{"lhs", BoolType}, {"rhs", BoolType}}, {},
+            {
+                make_list_param("lhs", BoolType),
+                make_list_param("rhs", BoolType),
+            },
             code, BoolType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_LOGICAL_NOT));
         state.addImplExtension("complement", BoolPropositionImpl,
-            {{"lhs", BoolType}}, {},
+            {
+                make_list_param("lhs", BoolType),
+            },
             code, BoolType, true);
     }
     {

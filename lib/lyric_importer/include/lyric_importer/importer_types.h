@@ -20,7 +20,6 @@ namespace lyric_importer {
     struct Parameter {
         std::string name;                       /**< name of the parameter */
         int index;                              /**< placement index */
-        std::string label;                      /**< optional parameter label */
         TypeImport *type;                       /**< type of the parameter */
         lyric_object::PlacementType placement;  /**< parameter placement */
         bool isVariable;                        /**< true if the parameter has variable binding, otherwise false */

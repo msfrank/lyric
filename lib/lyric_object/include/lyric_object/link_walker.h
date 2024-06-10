@@ -32,9 +32,7 @@ namespace lyric_object {
 
         LinkWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 linkOffset);
 
-        friend class ActionParameterWalker;
         friend class ActionWalker;
-        friend class CallParameterWalker;
         friend class ClassMember;
         friend class ClassMethod;
         friend class ClassWalker;
@@ -53,6 +51,7 @@ namespace lyric_object {
         friend class InstanceWalker;
         friend class NamespaceWalker;
         friend class ObjectWalker;
+        friend class ParameterWalker;
         friend class PlaceholderTypeWalker;
         friend class StaticWalker;
         friend class StructMember;

@@ -13,9 +13,11 @@ set(LYRIC_TYPING_INCLUDES
     include/lyric_typing/parse_assignable.h
     include/lyric_typing/parse_pack.h
     include/lyric_typing/resolve_assignable.h
+    include/lyric_typing/resolve_pack.h
     include/lyric_typing/resolve_template.h
     include/lyric_typing/type_system.h
     include/lyric_typing/typing_result.h
+    include/lyric_typing/typing_types.h
     include/lyric_typing/unify_assignable.h
     )
 set_target_properties(lyric_typing PROPERTIES PUBLIC_HEADER "${LYRIC_TYPING_INCLUDES}")
@@ -27,9 +29,11 @@ target_sources(lyric_typing PRIVATE
     src/parse_assignable.cpp
     src/parse_pack.cpp
     src/resolve_assignable.cpp
+    src/resolve_pack.cpp
     src/resolve_template.cpp
     src/type_system.cpp
     src/typing_result.cpp
+    src/typing_types.cpp
     src/unify_assignable.cpp
     )
 

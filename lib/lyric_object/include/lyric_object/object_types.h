@@ -175,8 +175,9 @@ namespace lyric_object {
     enum class PlacementType {
         Invalid,
         List,
+        ListOpt,
         Named,
-        Opt,
+        NamedOpt,
         Rest,
         Ctx,
     };
@@ -342,7 +343,6 @@ namespace lyric_object {
     struct Parameter {
         std::string name = {};                               /**< name of the parameter */
         int index = -1;                                      /**< placement index */
-        std::string label = {};                              /**< optional parameter label */
         PlacementType placement = PlacementType::Invalid;    /**< parameter placement */
         lyric_common::TypeDef typeDef = {};                  /**< type of the parameter */
         bool isVariable = false;                             /**< true if the parameter has variable binding, otherwise false */

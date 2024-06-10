@@ -4,12 +4,14 @@
 
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
+#include <lyric_assembler/ctor_constructable.h>
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/impl_cache.h>
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/method_callable.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
@@ -239,7 +241,7 @@ lyric_assembler::InstanceSymbol::numMembers() const
 tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::InstanceSymbol::declareMember(
     const std::string &name,
-    const lyric_parser::Assignable &memberSpec,
+    const lyric_common::TypeDef &memberType,
     bool isVariable,
     lyric_object::AccessType access,
     const lyric_common::SymbolUrl &init)
@@ -255,8 +257,6 @@ lyric_assembler::InstanceSymbol::declareMember(
             tempo_tracing::LogSeverity::kError,
             "member {} already defined for instance {}", name, m_instanceUrl.toString());
 
-    lyric_common::TypeDef memberType;
-    TU_ASSIGN_OR_RETURN (memberType, priv->instanceBlock->resolveAssignable(memberSpec));
     lyric_assembler::TypeHandle *fieldType;
     TU_ASSIGN_OR_RETURN (fieldType, m_state->typeCache()->getOrMakeType(memberType));
 
@@ -382,8 +382,10 @@ lyric_assembler::InstanceSymbol::getAllocatorTrap() const
     return priv->allocatorTrap;
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
-lyric_assembler::InstanceSymbol::declareCtor(lyric_object::AccessType access, tu_uint32 allocatorTrap)
+tempo_utils::Result<lyric_assembler::CallSymbol *>
+lyric_assembler::InstanceSymbol::declareCtor(
+    lyric_object::AccessType access,
+    tu_uint32 allocatorTrap)
 {
     if (isImported())
         m_state->throwAssemblerInvariant(
@@ -400,28 +402,17 @@ lyric_assembler::InstanceSymbol::declareCtor(lyric_object::AccessType access, tu
             tempo_tracing::LogSeverity::kError,
             "ctor already defined for instance {}", m_instanceUrl.toString());
 
-    //
-    auto returnType = getAssignableType();
-    m_state->typeCache()->touchType(returnType);
-
     auto fundamentalInstance = m_state->fundamentalCache()->getFundamentalUrl(FundamentalSymbol::Instance);
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(fundamentalInstance));
     symbol->touch();
 
-//    auto deriveTypeResult = m_state->declareParameterizedType(fundamentalInstance, {returnType});
-//    if (deriveTypeResult.isStatus())
-//        return tempo_utils::Result<lyric_common::SymbolUrl>(deriveTypeResult.getStatus());
-//    auto ctorClassType = deriveTypeResult.getResult();
-//    m_state->touchType(ctorClassType);
-
-    std::vector<lyric_object::Parameter> parameters;
     auto callIndex = m_state->numCalls();
     auto address = CallAddress::near(callIndex);
 
     // construct call symbol
-    auto *ctorSymbol = new CallSymbol(ctorUrl, parameters, {}, returnType, m_instanceUrl, access,
-        address, lyric_object::CallMode::Constructor, priv->instanceType, priv->instanceBlock.get(), m_state);
+    auto *ctorSymbol = new CallSymbol(ctorUrl, m_instanceUrl, access, address,
+        lyric_object::CallMode::Constructor, priv->instanceBlock.get(), m_state);
 
     auto status = m_state->appendCall(ctorSymbol);
     if (status.notOk()) {
@@ -439,11 +430,11 @@ lyric_assembler::InstanceSymbol::declareCtor(lyric_object::AccessType access, tu
     // set allocator trap
     priv->allocatorTrap = allocatorTrap;
 
-    return ctorUrl;
+    return ctorSymbol;
 }
 
-tempo_utils::Result<lyric_assembler::CtorInvoker>
-lyric_assembler::InstanceSymbol::resolveCtor()
+tempo_utils::Status
+lyric_assembler::InstanceSymbol::prepareCtor(ConstructableInvoker &invoker)
 {
     lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(m_instanceUrl.getSymbolPath().getPath(), "$ctor");
     auto ctorUrl = lyric_common::SymbolUrl(m_instanceUrl.getAssemblyLocation(), ctorPath);
@@ -454,7 +445,8 @@ lyric_assembler::InstanceSymbol::resolveCtor()
         m_state->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
     auto *call = cast_symbol_to_call(symbol);
 
-    return CtorInvoker(call, this);
+    auto constructable = std::make_unique<CtorConstructable>(call, this);
+    return invoker.initialize(std::move(constructable));
 }
 
 bool
@@ -494,13 +486,9 @@ lyric_assembler::InstanceSymbol::numMethods() const
     return priv->methods.size();
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
+tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::InstanceSymbol::declareMethod(
     const std::string &name,
-    const std::vector<lyric_assembler::ParameterSpec> &parameterSpec,
-    const Option<lyric_assembler::ParameterSpec> &restSpec,
-    const std::vector<lyric_assembler::ParameterSpec> &ctxSpec,
-    const lyric_parser::Assignable &returnSpec,
     lyric_object::AccessType access)
 {
     if (isImported())
@@ -514,124 +502,6 @@ lyric_assembler::InstanceSymbol::declareMethod(
             tempo_tracing::LogSeverity::kError,
             "method {} already defined for instance {}", name, m_instanceUrl.toString());
 
-    std::vector<lyric_object::Parameter> parameters;
-    Option<lyric_object::Parameter> rest;
-    absl::flat_hash_set<std::string> names;
-    absl::flat_hash_set<std::string> labels;
-
-    for (const auto &p : parameterSpec) {
-        auto resolveParamTypeResult = priv->instanceBlock->resolveAssignable(p.type);
-        if (resolveParamTypeResult.isStatus())
-            return resolveParamTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.name = p.name;
-        param.label = !p.label.empty()? p.label : p.name;
-        param.placement = !p.label.empty()? lyric_object::PlacementType::Named : lyric_object::PlacementType::List;
-        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE? true : false;
-        param.typeDef = resolveParamTypeResult.getResult();
-
-        if (!p.init.isEmpty()) {
-            if (param.placement != lyric_object::PlacementType::Named) {
-                return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
-                    "invalid initializer for positional parameter {}; only named parameters can be default-initialized",
-                    p.name);
-            } else {
-                param.placement = lyric_object::PlacementType::Opt;
-            }
-        }
-
-        if (names.contains(p.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for method {} on instance {}",
-                p.name, name, m_instanceUrl.toString());
-        names.insert(p.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for method {} on instance {}",
-                p.label, name, m_instanceUrl.toString());
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        parameters.push_back(param);
-    }
-
-    for (const auto &p : ctxSpec) {
-        auto resolveParamTypeResult = priv->instanceBlock->resolveAssignable(p.type);
-        if (resolveParamTypeResult.isStatus())
-            return resolveParamTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.placement = lyric_object::PlacementType::Ctx;
-        param.isVariable = false;
-        param.typeDef = resolveParamTypeResult.getResult();
-
-        // if ctx parameter name is not specified, then generate a unique name
-        param.name = p.name.empty()? absl::StrCat("$ctx", parameters.size()) : p.name;
-        param.label = param.name;
-
-        if (names.contains(param.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for method {} on instance {}",
-                p.name, name, m_instanceUrl.toString());
-        names.insert(param.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for method {} on instance {}",
-                p.label, name, m_instanceUrl.toString());
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        parameters.push_back(param);
-    }
-
-    if (!restSpec.isEmpty()) {
-        const auto &p = restSpec.getValue();
-        auto resolveRestTypeResult = priv->instanceBlock->resolveAssignable(p.type);
-        if (resolveRestTypeResult.isStatus())
-            return resolveRestTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.name = p.name;
-        param.label = param.name;
-        param.placement = lyric_object::PlacementType::Rest;
-        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE? true : false;
-        param.typeDef = resolveRestTypeResult.getResult();
-
-        if (names.contains(p.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for method {} on instance {}",
-                p.name, name, m_instanceUrl.toString());
-        names.insert(p.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for method {} on instance {}",
-                p.label, name, m_instanceUrl.toString());
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        rest = Option<lyric_object::Parameter>(param);
-    }
-
-    auto resolveReturnTypeResult = priv->instanceBlock->resolveAssignable(returnSpec);
-    if (resolveReturnTypeResult.isStatus())
-        return resolveReturnTypeResult.getStatus();
-    auto returnType = resolveReturnTypeResult.getResult();
-    m_state->typeCache()->touchType(returnType);
-
     // build reference path to function
     auto methodPath = m_instanceUrl.getSymbolPath().getPath();
     methodPath.push_back(name);
@@ -640,8 +510,8 @@ lyric_assembler::InstanceSymbol::declareMethod(
     auto address = CallAddress::near(callIndex);
 
     // construct call symbol
-    auto *callSymbol = new CallSymbol(methodUrl, parameters, rest, returnType, m_instanceUrl,
-        access, address, lyric_object::CallMode::Normal, priv->instanceType, priv->instanceBlock.get(), m_state);
+    auto *callSymbol = new CallSymbol(methodUrl, m_instanceUrl, access, address,
+        lyric_object::CallMode::Normal, priv->instanceBlock.get(), m_state);
 
     auto status = m_state->appendCall(callSymbol);
     if (status.notOk()) {
@@ -652,13 +522,14 @@ lyric_assembler::InstanceSymbol::declareMethod(
     // add bound method
     priv->methods[name] = { methodUrl, access, true /* final */ };
 
-    return methodUrl;
+    return callSymbol;
 }
 
-tempo_utils::Result<lyric_assembler::MethodInvoker>
-lyric_assembler::InstanceSymbol::resolveMethod(
+tempo_utils::Status
+lyric_assembler::InstanceSymbol::prepareMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
+    CallableInvoker &invoker,
     bool thisReceiver) const
 {
     auto *priv = getPriv();
@@ -668,7 +539,7 @@ lyric_assembler::InstanceSymbol::resolveMethod(
             return m_state->logAndContinue(AssemblerCondition::kMissingMethod,
                 tempo_tracing::LogSeverity::kError,
                 "missing method {}", name);
-        return priv->superInstance->resolveMethod(name, receiverType);
+        return priv->superInstance->prepareMethod(name, receiverType, invoker);
     }
 
     const auto &method = priv->methods.at(name);
@@ -693,12 +564,16 @@ lyric_assembler::InstanceSymbol::resolveMethod(
                 "invocation of protected method {} is not allowed", name);
     }
 
-    if (callSymbol->isInline())
-        return MethodInvoker(callSymbol, callSymbol->callProc());
+    if (callSymbol->isInline()) {
+        auto callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->callProc());
+        return invoker.initialize(std::move(callable));
+    }
+
     if (!callSymbol->isBound())
         m_state->throwAssemblerInvariant("invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-    return MethodInvoker(callSymbol);
+    auto callable = std::make_unique<MethodCallable>(callSymbol);
+    return invoker.initialize(std::move(callable));
 }
 
 bool
@@ -755,19 +630,14 @@ lyric_assembler::InstanceSymbol::numImpls() const
     return priv->impls.size();
 }
 
-tempo_utils::Result<lyric_common::TypeDef>
-lyric_assembler::InstanceSymbol::declareImpl(const lyric_parser::Assignable &implSpec)
+tempo_utils::Result<lyric_assembler::ImplHandle *>
+lyric_assembler::InstanceSymbol::declareImpl(const lyric_common::TypeDef &implType)
 {
     if (isImported())
         m_state->throwAssemblerInvariant(
             "can't declare impl on imported instance {}", m_instanceUrl.toString());
 
     auto *priv = getPriv();
-
-    auto resolveImplTypeResult = priv->instanceBlock->resolveAssignable(implSpec);
-    if (resolveImplTypeResult.isStatus())
-        return resolveImplTypeResult.getStatus();
-    auto implType = resolveImplTypeResult.getResult();
 
     if (implType.getType() != lyric_common::TypeDefType::Concrete)
         m_state->throwAssemblerInvariant("invalid impl type {}", implType.toString());
@@ -807,7 +677,7 @@ lyric_assembler::InstanceSymbol::declareImpl(const lyric_parser::Assignable &imp
 
     priv->impls[implUrl] = implHandle;
 
-    return implType;
+    return implHandle;
 }
 
 bool

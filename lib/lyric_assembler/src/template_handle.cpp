@@ -67,30 +67,24 @@ lyric_assembler::TemplateHandle::getTemplateUrl() const
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
-lyric_assembler::TemplateHandle::resolveSingular(const lyric_parser::Assignable &assignableSpec)     // NOLINT(misc-no-recursion)
+lyric_assembler::TemplateHandle::resolveSingular(
+    const lyric_common::SymbolPath &typePath,
+    const std::vector<lyric_common::TypeDef> &typeArguments)        // NOLINT(misc-no-recursion)
 {
-    if (assignableSpec.getType() != lyric_parser::AssignableType::SINGULAR)
-        m_state->throwAssemblerInvariant(
-            "attempted to resolve assignable for non singular type {}", assignableSpec.toString());
-
-    std::vector<lyric_common::TypeDef> typeArguments;
-    for (const auto &parameter : assignableSpec.getTypeParameters()) {
-        auto resolveParameterResult = resolveAssignable(parameter);
-        if (resolveParameterResult.isStatus())
-            return resolveParameterResult;
-        typeArguments.push_back(resolveParameterResult.getResult());
-    }
+    if (!typePath.isValid())
+        m_state->throwAssemblerInvariant("invalid type path {}", typePath.toString());
 
     lyric_common::TypeDef assignableType;
 
-    // if type path is a placeholder, then resolve the placeholder type
-    if (!m_parameterIndex.empty()) {
-        auto name = absl::StrJoin(assignableSpec.getTypePath().getPath(), ".");
-        if (m_parameterIndex.contains(name)) {
+    // if type path is possibly a placeholder, then try to resolve the placeholder type
+    if (!typePath.isEnclosed()) {
+        auto name = typePath.getName();
+        auto entry = m_parameterIndex.find(name);
+        if (entry != m_parameterIndex.cend()) {
             if (typeArguments.empty()) {
-                assignableType = m_placeholders[m_parameterIndex[name]];    // use memoized instance
+                assignableType = m_placeholders[entry->second];     // use memoized instance
             } else {
-                auto placeholder = m_placeholders[m_parameterIndex[name]];
+                auto placeholder = m_placeholders[entry->second];
                 assignableType = lyric_common::TypeDef::forPlaceholder(placeholder.getPlaceholderIndex(),
                     placeholder.getPlaceholderTemplateUrl(), typeArguments);
             }
@@ -99,10 +93,9 @@ lyric_assembler::TemplateHandle::resolveSingular(const lyric_parser::Assignable 
 
     // otherwise if type path is not a placeholder, then resolve the concrete type
     if (!assignableType.isValid()) {
-        auto resolveTypePathResult = m_parentBlock->resolveDefinition(assignableSpec.getTypePath());
-        if (resolveTypePathResult.isStatus())
-            return resolveTypePathResult.getStatus();
-        assignableType = lyric_common::TypeDef::forConcrete(resolveTypePathResult.getResult(), typeArguments);
+        lyric_common::SymbolUrl concreteUrl;
+        TU_ASSIGN_OR_RETURN (concreteUrl, m_parentBlock->resolveDefinition(typePath));
+        assignableType = lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments);
     }
 
     // if there is no type handle for type, then create it
@@ -111,35 +104,80 @@ lyric_assembler::TemplateHandle::resolveSingular(const lyric_parser::Assignable 
     return assignableType;
 }
 
-tempo_utils::Result<lyric_common::TypeDef>
-lyric_assembler::TemplateHandle::resolveAssignable(const lyric_parser::Assignable &assignableSpec)
-{
-    if (assignableSpec.getType() == lyric_parser::AssignableType::SINGULAR)
-        return resolveSingular(assignableSpec);
-
-    if (assignableSpec.getType() == lyric_parser::AssignableType::UNION) {
-        std::vector<lyric_common::TypeDef> unionMembers;
-        for (const auto &memberSpec : assignableSpec.getUnion()) {
-            auto resolveMemberResult = resolveSingular(memberSpec);
-            if (resolveMemberResult.isStatus())
-                return resolveMemberResult;
-            unionMembers.push_back(resolveMemberResult.getResult());
-        }
-        return m_state->typeCache()->resolveUnion(unionMembers);
-    }
-    if (assignableSpec.getType() == lyric_parser::AssignableType::INTERSECTION) {
-        std::vector<lyric_common::TypeDef> intersectionMembers;
-        for (const auto &memberSpec : assignableSpec.getIntersection()) {
-            auto resolveMemberResult = resolveSingular(memberSpec);
-            if (resolveMemberResult.isStatus())
-                return resolveMemberResult;
-            intersectionMembers.push_back(resolveMemberResult.getResult());
-        }
-        return m_state->typeCache()->resolveIntersection(intersectionMembers);
-    }
-
-    m_state->throwAssemblerInvariant("failed to resolve non singular base type {}", assignableSpec.toString());
-}
+//tempo_utils::Result<lyric_common::TypeDef>
+//lyric_assembler::TemplateHandle::resolveSingular(const lyric_parser::Assignable &assignableSpec)     // NOLINT(misc-no-recursion)
+//{
+//    if (assignableSpec.getType() != lyric_parser::AssignableType::SINGULAR)
+//        m_state->throwAssemblerInvariant(
+//            "attempted to resolve assignable for non singular type {}", assignableSpec.toString());
+//
+//    std::vector<lyric_common::TypeDef> typeArguments;
+//    for (const auto &parameter : assignableSpec.getTypeParameters()) {
+//        auto resolveParameterResult = resolveAssignable(parameter);
+//        if (resolveParameterResult.isStatus())
+//            return resolveParameterResult;
+//        typeArguments.push_back(resolveParameterResult.getResult());
+//    }
+//
+//    lyric_common::TypeDef assignableType;
+//
+//    // if type path is a placeholder, then resolve the placeholder type
+//    if (!m_parameterIndex.empty()) {
+//        auto name = absl::StrJoin(assignableSpec.getTypePath().getPath(), ".");
+//        if (m_parameterIndex.contains(name)) {
+//            if (typeArguments.empty()) {
+//                assignableType = m_placeholders[m_parameterIndex[name]];    // use memoized instance
+//            } else {
+//                auto placeholder = m_placeholders[m_parameterIndex[name]];
+//                assignableType = lyric_common::TypeDef::forPlaceholder(placeholder.getPlaceholderIndex(),
+//                    placeholder.getPlaceholderTemplateUrl(), typeArguments);
+//            }
+//        }
+//    }
+//
+//    // otherwise if type path is not a placeholder, then resolve the concrete type
+//    if (!assignableType.isValid()) {
+//        auto resolveTypePathResult = m_parentBlock->resolveDefinition(assignableSpec.getTypePath());
+//        if (resolveTypePathResult.isStatus())
+//            return resolveTypePathResult.getStatus();
+//        assignableType = lyric_common::TypeDef::forConcrete(resolveTypePathResult.getResult(), typeArguments);
+//    }
+//
+//    // if there is no type handle for type, then create it
+//    TU_RETURN_IF_STATUS (m_state->typeCache()->getOrMakeType(assignableType));
+//
+//    return assignableType;
+//}
+//
+//tempo_utils::Result<lyric_common::TypeDef>
+//lyric_assembler::TemplateHandle::resolveAssignable(const lyric_parser::Assignable &assignableSpec)
+//{
+//    if (assignableSpec.getType() == lyric_parser::AssignableType::SINGULAR)
+//        return resolveSingular(assignableSpec);
+//
+//    if (assignableSpec.getType() == lyric_parser::AssignableType::UNION) {
+//        std::vector<lyric_common::TypeDef> unionMembers;
+//        for (const auto &memberSpec : assignableSpec.getUnion()) {
+//            auto resolveMemberResult = resolveSingular(memberSpec);
+//            if (resolveMemberResult.isStatus())
+//                return resolveMemberResult;
+//            unionMembers.push_back(resolveMemberResult.getResult());
+//        }
+//        return m_state->typeCache()->resolveUnion(unionMembers);
+//    }
+//    if (assignableSpec.getType() == lyric_parser::AssignableType::INTERSECTION) {
+//        std::vector<lyric_common::TypeDef> intersectionMembers;
+//        for (const auto &memberSpec : assignableSpec.getIntersection()) {
+//            auto resolveMemberResult = resolveSingular(memberSpec);
+//            if (resolveMemberResult.isStatus())
+//                return resolveMemberResult;
+//            intersectionMembers.push_back(resolveMemberResult.getResult());
+//        }
+//        return m_state->typeCache()->resolveIntersection(intersectionMembers);
+//    }
+//
+//    m_state->throwAssemblerInvariant("failed to resolve non singular base type {}", assignableSpec.toString());
+//}
 
 lyric_assembler::TemplateAddress
 lyric_assembler::TemplateHandle::getAddress()

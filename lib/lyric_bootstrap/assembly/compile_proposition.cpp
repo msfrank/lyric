@@ -19,13 +19,21 @@ CoreConcept *build_core_Proposition(BuilderState &state, const CoreConcept *Idea
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
     state.addConceptAction("conjunct", PropositionConcept,
-        {{"lhs", LType}, {"rhs", RType}}, {},
+        {
+            make_list_param("lhs", LType),
+            make_list_param("rhs", RType),
+        },
         BoolType);
     state.addConceptAction("disjunct", PropositionConcept,
-        {{"lhs", LType}, {"rhs", RType}}, {},
+        {
+            make_list_param("lhs", LType),
+            make_list_param("rhs", RType),
+        },
         BoolType);
     state.addConceptAction("complement", PropositionConcept,
-        {{"lhs", LType}}, {},
+        {
+            make_list_param("lhs", LType),
+        },
         BoolType);
 
     return PropositionConcept;

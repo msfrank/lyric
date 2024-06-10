@@ -7,11 +7,10 @@
 
 lyric_assembler::ActionSymbol::ActionSymbol(
     const lyric_common::SymbolUrl &actionUrl,
-    const std::vector<lyric_object::Parameter> &parameters,
-    const Option<lyric_object::Parameter> &rest,
-    const lyric_common::TypeDef &returnType,
     const lyric_common::SymbolUrl &receiverUrl,
+    lyric_object::AccessType access,
     ActionAddress address,
+    BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new ActionSymbolPriv()),
       m_actionUrl(actionUrl),
@@ -21,29 +20,29 @@ lyric_assembler::ActionSymbol::ActionSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->parameters = parameters;
-    priv->rest = rest;
-    priv->returnType = returnType;
     priv->receiverUrl = receiverUrl;
     priv->actionTemplate = nullptr;
+    priv->parentBlock = parentBlock;
+
+    TU_ASSERT (priv->receiverUrl.isValid());
+    TU_ASSERT (priv->access != lyric_object::AccessType::Invalid);
+    TU_ASSERT (priv->parentBlock != nullptr);
 }
 
 lyric_assembler::ActionSymbol::ActionSymbol(
     const lyric_common::SymbolUrl &actionUrl,
-    const std::vector<lyric_object::Parameter> &parameters,
-    const Option<lyric_object::Parameter> &rest,
-    const lyric_common::TypeDef &returnType,
     const lyric_common::SymbolUrl &receiverUrl,
+    lyric_object::AccessType access,
     ActionAddress address,
     TemplateHandle *actionTemplate,
+    BlockHandle *parentBlock,
     AssemblyState *state)
     : ActionSymbol(
         actionUrl,
-        parameters,
-        rest,
-        returnType,
         receiverUrl,
+        access,
         address,
+        parentBlock,
         state)
 {
     auto *priv = getPriv();
@@ -71,36 +70,48 @@ lyric_assembler::ActionSymbol::load()
 
     auto priv = std::make_unique<ActionSymbolPriv>();
 
-    for (auto it = m_actionImport->parametersBegin(); it != m_actionImport->parametersEnd(); it++) {
-        lyric_object::Parameter p;
+    for (auto it = m_actionImport->listParametersBegin(); it != m_actionImport->listParametersEnd(); it++) {
+        Parameter p;
         p.index = it->index;
         p.name = it->name;
-        p.label = it->label;
-        p.isVariable = it->isVariable;
         p.placement = it->placement;
+        p.isVariable = it->isVariable;
 
         TypeHandle *paramType = nullptr;
         TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(it->type));
         p.typeDef = paramType->getTypeDef();
 
-        priv->parameters.push_back(p);
+        priv->listParameters.push_back(p);
     }
 
-    if (m_actionImport->hasRest()) {
-        auto rest = m_actionImport->getRest();
+    for (auto it = m_actionImport->namedParametersBegin(); it != m_actionImport->namedParametersEnd(); it++) {
+        Parameter p;
+        p.index = it->index;
+        p.name = it->name;
+        p.placement = it->placement;
+        p.isVariable = it->isVariable;
 
-        lyric_object::Parameter p;
-        p.index = rest.index;
+        TypeHandle *paramType = nullptr;
+        TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(it->type));
+        p.typeDef = paramType->getTypeDef();
+
+        priv->listParameters.push_back(p);
+    }
+
+    if (m_actionImport->hasRestParameter()) {
+        auto rest = m_actionImport->getRestParameter();
+
+        Parameter p;
+        p.index = 0;
         p.name = rest.name;
-        p.label = rest.label;
-        p.isVariable = rest.isVariable;
         p.placement = rest.placement;
+        p.isVariable = rest.isVariable;
 
         TypeHandle *paramType = nullptr;
         TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(rest.type));
         p.typeDef = paramType->getTypeDef();
 
-        priv->rest = Option(p);
+        priv->restParameter = Option(p);
     }
 
     priv->receiverUrl = m_actionImport->getReceiverUrl();
@@ -141,13 +152,13 @@ lyric_assembler::ActionSymbol::getSymbolUrl() const
 lyric_common::TypeDef
 lyric_assembler::ActionSymbol::getAssignableType() const
 {
-    return lyric_common::TypeDef();
+    return {};
 }
 
 lyric_assembler::TypeSignature
 lyric_assembler::ActionSymbol::getTypeSignature() const
 {
-    return TypeSignature();
+    return {};
 }
 
 void
@@ -158,18 +169,22 @@ lyric_assembler::ActionSymbol::touch()
     m_state->touchAction(this);
 }
 
-std::vector<lyric_object::Parameter>
-lyric_assembler::ActionSymbol::getParameters() const
+tempo_utils::Status
+lyric_assembler::ActionSymbol::defineAction(
+    const ParameterPack &parameterPack,
+    const lyric_common::TypeDef &returnType)
 {
     auto *priv = getPriv();
-    return priv->parameters;
-}
 
-Option<lyric_object::Parameter>
-lyric_assembler::ActionSymbol::getRest() const
-{
-    auto *priv = getPriv();
-    return priv->rest;
+    if (priv->returnType.isValid())
+        m_state->throwAssemblerInvariant("cannot redefine action {}", m_actionUrl.toString());
+
+    priv->listParameters = parameterPack.listParameters;
+    priv->namedParameters = parameterPack.namedParameters;
+    priv->restParameter = parameterPack.restParameter;
+    priv->returnType = returnType;
+
+    return {};
 }
 
 lyric_common::TypeDef
@@ -186,6 +201,15 @@ lyric_assembler::ActionSymbol::getReceiverUrl() const
     return priv->receiverUrl;
 }
 
+lyric_assembler::AbstractResolver *
+lyric_assembler::ActionSymbol::actionResolver()
+{
+    auto *priv = getPriv();
+    if (priv->actionTemplate != nullptr)
+        return priv->actionTemplate;
+    return priv->parentBlock;
+}
+
 lyric_assembler::TemplateHandle *
 lyric_assembler::ActionSymbol::actionTemplate()
 {
@@ -193,18 +217,41 @@ lyric_assembler::ActionSymbol::actionTemplate()
     return priv->actionTemplate;
 }
 
-std::vector<lyric_object::Parameter>::const_iterator
-lyric_assembler::ActionSymbol::placementBegin() const
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::ActionSymbol::listPlacementBegin() const
 {
     auto *priv = getPriv();
-    return priv->parameters.cbegin();
+    return priv->listParameters.cbegin();
 }
 
-std::vector<lyric_object::Parameter>::const_iterator
-lyric_assembler::ActionSymbol::placementEnd() const
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::ActionSymbol::listPlacementEnd() const
 {
     auto *priv = getPriv();
-    return priv->parameters.cend();
+    return priv->listParameters.cend();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::ActionSymbol::namedPlacementBegin() const
+{
+    auto *priv = getPriv();
+    return priv->namedParameters.cbegin();
+}
+
+std::vector<lyric_assembler::Parameter>::const_iterator
+lyric_assembler::ActionSymbol::namedPlacementEnd() const
+{
+    auto *priv = getPriv();
+    return priv->namedParameters.cend();
+}
+
+const lyric_assembler::Parameter *
+lyric_assembler::ActionSymbol::restPlacement() const
+{
+    auto *priv = getPriv();
+    if (priv->restParameter.isEmpty())
+        return nullptr;
+    return &priv->restParameter.peekValue();
 }
 
 bool

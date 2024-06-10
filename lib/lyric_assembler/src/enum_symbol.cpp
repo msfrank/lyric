@@ -4,13 +4,15 @@
 
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/code_builder.h>
+#include <lyric_assembler/concept_symbol.h>
+#include <lyric_assembler/ctor_constructable.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/impl_cache.h>
 #include <lyric_assembler/import_cache.h>
+#include <lyric_assembler/method_callable.h>
 #include <lyric_assembler/proc_handle.h>
-#include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_importer/enum_import.h>
@@ -238,7 +240,7 @@ lyric_assembler::EnumSymbol::numMembers() const
 tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::EnumSymbol::declareMember(
     const std::string &name,
-    const lyric_parser::Assignable &memberSpec,
+    const lyric_common::TypeDef &memberType,
     bool isVariable,
     lyric_object::AccessType access,
     const lyric_common::SymbolUrl &init)
@@ -254,8 +256,6 @@ lyric_assembler::EnumSymbol::declareMember(
             tempo_tracing::LogSeverity::kError,
             "member {} already defined for enum {}", name, m_enumUrl.toString());
 
-    lyric_common::TypeDef memberType;
-    TU_ASSIGN_OR_RETURN (memberType, priv->enumBlock->resolveAssignable(memberSpec));
     lyric_assembler::TypeHandle *fieldType;
     TU_ASSIGN_OR_RETURN (fieldType, m_state->typeCache()->getOrMakeType(memberType));
 
@@ -379,9 +379,8 @@ lyric_assembler::EnumSymbol::getAllocatorTrap() const
     return priv->allocatorTrap;
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
+tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::EnumSymbol::declareCtor(
-    const std::vector<lyric_assembler::ParameterSpec> &parameterSpec,
     lyric_object::AccessType access,
     tu_uint32 allocatorTrap)
 {
@@ -400,75 +399,17 @@ lyric_assembler::EnumSymbol::declareCtor(
             tempo_tracing::LogSeverity::kError,
             "ctor already defined for enum {}", m_enumUrl.toString());
 
-    //
-    auto returnType = getAssignableType();
-    m_state->typeCache()->touchType(returnType);
-
     auto fundamentalEnum = m_state->fundamentalCache()->getFundamentalUrl(FundamentalSymbol::Enum);
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(fundamentalEnum));
     symbol->touch();
 
-//    auto deriveTypeResult = m_state->declareParameterizedType(fundamentalEnum, {returnType});
-//    if (deriveTypeResult.isStatus())
-//        return tempo_utils::Result<lyric_common::SymbolUrl>(deriveTypeResult.getStatus());
-//    auto ctorClassType = deriveTypeResult.getResult();
-//    m_state->touchType(ctorClassType);
-
-    std::vector<lyric_object::Parameter> parameters;
-    absl::flat_hash_set<std::string> names;
-    absl::flat_hash_set<std::string> labels;
-
-    AbstractResolver *resolver = priv->enumBlock.get();
-
-    for (const auto &p : parameterSpec) {
-        auto resolveParamTypeResult = resolver->resolveAssignable(p.type);
-        if (resolveParamTypeResult.isStatus())
-            return resolveParamTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.name = p.name;
-        param.label = !p.label.empty()? p.label : p.name;
-        param.placement = !p.label.empty()? lyric_object::PlacementType::Named : lyric_object::PlacementType::List;
-        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE? true : false;
-        param.typeDef = resolveParamTypeResult.getResult();
-
-        if (!p.init.isEmpty()) {
-            if (param.placement != lyric_object::PlacementType::Named) {
-                return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
-                    "invalid initializer for positional parameter {}; only named parameters can be default-initialized",
-                    p.name);
-            } else {
-                param.placement = lyric_object::PlacementType::Opt;
-            }
-        }
-
-        if (names.contains(p.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for ctor on enum {}",
-                p.name, m_enumUrl.toString());
-        names.insert(p.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for ctor on enum {}",
-                p.label, m_enumUrl.toString());
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        parameters.push_back(param);
-    }
-
     auto callIndex = m_state->numCalls();
     auto address = CallAddress::near(callIndex);
 
     // construct call symbol
-    auto *ctorSymbol = new CallSymbol(ctorUrl, parameters, {}, returnType, m_enumUrl, access,
-        address, lyric_object::CallMode::Constructor, priv->enumType, priv->enumBlock.get(), m_state);
+    auto *ctorSymbol = new CallSymbol(ctorUrl, m_enumUrl, access, address,
+        lyric_object::CallMode::Constructor, priv->enumBlock.get(), m_state);
 
     auto status = m_state->appendCall(ctorSymbol);
     if (status.notOk()) {
@@ -486,11 +427,11 @@ lyric_assembler::EnumSymbol::declareCtor(
     // set allocator trap
     priv->allocatorTrap = allocatorTrap;
 
-    return ctorUrl;
+    return ctorSymbol;
 }
 
-tempo_utils::Result<lyric_assembler::CtorInvoker>
-lyric_assembler::EnumSymbol::resolveCtor()
+tempo_utils::Status
+lyric_assembler::EnumSymbol::prepareCtor(ConstructableInvoker &invoker)
 {
     lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(m_enumUrl.getSymbolPath().getPath(), "$ctor");
     auto ctorUrl = lyric_common::SymbolUrl(m_enumUrl.getAssemblyLocation(), ctorPath);
@@ -501,7 +442,8 @@ lyric_assembler::EnumSymbol::resolveCtor()
         m_state->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
     auto *call = cast_symbol_to_call(symbol);
 
-    return CtorInvoker(call, this);
+    auto constructable = std::make_unique<CtorConstructable>(call, this);
+    return invoker.initialize(std::move(constructable));
 }
 
 bool
@@ -541,13 +483,9 @@ lyric_assembler::EnumSymbol::numMethods() const
     return priv->methods.size();
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
+tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::EnumSymbol::declareMethod(
     const std::string &name,
-    const std::vector<lyric_assembler::ParameterSpec> &parameterSpec,
-    const Option<lyric_assembler::ParameterSpec> &restSpec,
-    const std::vector<lyric_assembler::ParameterSpec> &ctxSpec,
-    const lyric_parser::Assignable &returnSpec,
     lyric_object::AccessType access)
 {
     if (isImported())
@@ -561,124 +499,6 @@ lyric_assembler::EnumSymbol::declareMethod(
             tempo_tracing::LogSeverity::kError,
             "method {} already defined for enum {}", name, m_enumUrl.toString());
 
-    std::vector<lyric_object::Parameter> parameters;
-    Option<lyric_object::Parameter> rest;
-    absl::flat_hash_set<std::string> names;
-    absl::flat_hash_set<std::string> labels;
-
-    for (const auto &p : parameterSpec) {
-        auto resolveParamTypeResult = priv->enumBlock->resolveAssignable(p.type);
-        if (resolveParamTypeResult.isStatus())
-            return resolveParamTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.name = p.name;
-        param.label = !p.label.empty()? p.label : p.name;
-        param.placement = !p.label.empty()? lyric_object::PlacementType::Named : lyric_object::PlacementType::List;
-        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE? true : false;
-        param.typeDef = resolveParamTypeResult.getResult();
-
-        if (!p.init.isEmpty()) {
-            if (param.placement != lyric_object::PlacementType::Named) {
-                return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
-                    "invalid initializer for positional parameter {}; only named parameters can be default-initialized",
-                    p.name);
-            } else {
-                param.placement = lyric_object::PlacementType::Opt;
-            }
-        }
-
-        if (names.contains(p.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for method {} on enum {}",
-                p.name, name, m_enumUrl.toString());
-        names.insert(p.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for method {} on enum {}",
-                p.label, name, m_enumUrl.toString());
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        parameters.push_back(param);
-    }
-
-    for (const auto &p : ctxSpec) {
-        auto resolveParamTypeResult = priv->enumBlock->resolveAssignable(p.type);
-        if (resolveParamTypeResult.isStatus())
-            return resolveParamTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.placement = lyric_object::PlacementType::Ctx;
-        param.isVariable = false;
-        param.typeDef = resolveParamTypeResult.getResult();
-
-        // if ctx parameter name is not specified, then generate a unique name
-        param.name = p.name.empty()? absl::StrCat("$ctx", parameters.size()) : p.name;
-        param.label = param.name;
-
-        if (names.contains(param.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for method {} on enum {}",
-                p.name, name, m_enumUrl.toString());
-        names.insert(param.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for method {} on enum {}",
-                p.label, name, m_enumUrl.toString());
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        parameters.push_back(param);
-    }
-
-    if (!restSpec.isEmpty()) {
-        const auto &p = restSpec.getValue();
-        auto resolveRestTypeResult = priv->enumBlock->resolveAssignable(p.type);
-        if (resolveRestTypeResult.isStatus())
-            return resolveRestTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.name = p.name;
-        param.label = param.name;
-        param.placement = lyric_object::PlacementType::Rest;
-        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE? true : false;
-        param.typeDef = resolveRestTypeResult.getResult();
-
-        if (names.contains(p.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for method {} on enum {}",
-                p.name, name, m_enumUrl.toString());
-        names.insert(p.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for method {} on enum {}",
-                p.label, name, m_enumUrl.toString());
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        rest = Option<lyric_object::Parameter>(param);
-    }
-
-    auto resolveReturnTypeResult = priv->enumBlock->resolveAssignable(returnSpec);
-    if (resolveReturnTypeResult.isStatus())
-        return resolveReturnTypeResult.getStatus();
-    auto returnType = resolveReturnTypeResult.getResult();
-    m_state->typeCache()->touchType(returnType);
-
     // build reference path to function
     auto methodPath = m_enumUrl.getSymbolPath().getPath();
     methodPath.push_back(name);
@@ -687,8 +507,8 @@ lyric_assembler::EnumSymbol::declareMethod(
     auto address = CallAddress::near(callIndex);
 
     // construct call symbol
-    auto *callSymbol = new CallSymbol(methodUrl, parameters, rest, returnType, m_enumUrl,
-        access, address, lyric_object::CallMode::Normal, priv->enumType, priv->enumBlock.get(), m_state);
+    auto *callSymbol = new CallSymbol(methodUrl, m_enumUrl, access, address,
+        lyric_object::CallMode::Normal, priv->enumBlock.get(), m_state);
 
     auto status = m_state->appendCall(callSymbol);
     if (status.notOk()) {
@@ -699,13 +519,14 @@ lyric_assembler::EnumSymbol::declareMethod(
     // add bound method
     priv->methods[name] = { methodUrl, access, true /* final */ };
 
-    return methodUrl;
+    return callSymbol;
 }
 
-tempo_utils::Result<lyric_assembler::MethodInvoker>
-lyric_assembler::EnumSymbol::resolveMethod(
+tempo_utils::Status
+lyric_assembler::EnumSymbol::prepareMethod(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
+    CallableInvoker &invoker,
     bool thisReceiver) const
 {
     auto *priv = getPriv();
@@ -715,7 +536,7 @@ lyric_assembler::EnumSymbol::resolveMethod(
             return m_state->logAndContinue(AssemblerCondition::kMissingMethod,
                 tempo_tracing::LogSeverity::kError,
                 "missing method {}", name);
-        return priv->superEnum->resolveMethod(name, receiverType);
+        return priv->superEnum->prepareMethod(name, receiverType, invoker);
     }
 
     const auto &method = priv->methods.at(name);
@@ -740,12 +561,16 @@ lyric_assembler::EnumSymbol::resolveMethod(
                 "cannot access protected method {} on {}", name, m_enumUrl.toString());
     }
 
-    if (callSymbol->isInline())
-        return MethodInvoker(callSymbol, callSymbol->callProc());
+    if (callSymbol->isInline()) {
+        auto callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->callProc());
+        return invoker.initialize(std::move(callable));
+    }
+
     if (!callSymbol->isBound())
         m_state->throwAssemblerInvariant("invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-    return MethodInvoker(callSymbol);
+    auto callable = std::make_unique<MethodCallable>(callSymbol);
+    return invoker.initialize(std::move(callable));
 }
 
 bool
@@ -802,19 +627,14 @@ lyric_assembler::EnumSymbol::numImpls() const
     return priv->impls.size();
 }
 
-tempo_utils::Result<lyric_common::TypeDef>
-lyric_assembler::EnumSymbol::declareImpl(const lyric_parser::Assignable &implSpec)
+tempo_utils::Result<lyric_assembler::ImplHandle *>
+lyric_assembler::EnumSymbol::declareImpl(const lyric_common::TypeDef &implType)
 {
     if (isImported())
         m_state->throwAssemblerInvariant(
             "can't declare impl on imported enum {}", m_enumUrl.toString());
 
     auto *priv = getPriv();
-
-    auto resolveImplTypeResult = priv->enumBlock->resolveAssignable(implSpec);
-    if (resolveImplTypeResult.isStatus())
-        return resolveImplTypeResult.getStatus();
-    auto implType = resolveImplTypeResult.getResult();
 
     if (implType.getType() != lyric_common::TypeDefType::Concrete)
         m_state->throwAssemblerInvariant("invalid impl type {}", implType.toString());
@@ -854,7 +674,7 @@ lyric_assembler::EnumSymbol::declareImpl(const lyric_parser::Assignable &implSpe
 
     priv->impls[implUrl] = implHandle;
 
-    return implType;
+    return implHandle;
 }
 
 bool

@@ -7,7 +7,7 @@ build_core_prelude_trap(
     const CoreExistential *IntegerExistential,
     const CoreExistential *EmptyExistential)
 {
-    lyric_common::SymbolPath callPath({"trap"});
+    lyric_common::SymbolPath callPath({"Trap"});
 
     lyric_object::BytecodeBuilder code;
     code.loadArgument(0);
@@ -15,7 +15,7 @@ build_core_prelude_trap(
     auto *TrapCall = state.addFunction(
         callPath,
         {
-            {"index", IntegerExistential->existentialType, nullptr, lyo1::ParameterFlags::NONE},
+            make_list_param("index", IntegerExistential->existentialType),
         },
         code,
         EmptyExistential->existentialType,

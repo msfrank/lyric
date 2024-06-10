@@ -5,6 +5,8 @@
 #include <lyric_assembler/block_handle.h>
 #include <lyric_parser/node_walker.h>
 
+#include "typing_types.h"
+
 namespace lyric_typing {
 
     class TypeSystem {
@@ -19,10 +21,25 @@ namespace lyric_typing {
             lyric_assembler::BlockHandle *block,
             const lyric_parser::NodeWalker &walker);
 
-        tempo_utils::Result<lyric_assembler::PackSpec>
+        tempo_utils::Result<PackSpec>
         parsePack(
             lyric_assembler::BlockHandle *block,
             const lyric_parser::NodeWalker &walker);
+
+        tempo_utils::Result<TemplateSpec>
+        parseTemplate(
+            lyric_assembler::BlockHandle *block,
+            const lyric_parser::NodeWalker &walker);
+
+        tempo_utils::Result<lyric_common::TypeDef>
+        resolveAssignable(
+            lyric_assembler::AbstractResolver *resolver,
+            const lyric_parser::Assignable &assignable);
+
+        tempo_utils::Result<lyric_assembler::ParameterPack>
+        resolvePack(
+            lyric_assembler::AbstractResolver *resolver,
+            const PackSpec &packSpec);
 
         tempo_utils::Result<lyric_runtime::TypeComparison> compareAssignable(
             const lyric_common::TypeDef &toRef,
@@ -32,18 +49,8 @@ namespace lyric_typing {
             const lyric_common::TypeDef &toRef,
             const lyric_common::TypeDef &fromRef);
 
-        tempo_utils::Result<lyric_common::TypeDef>
-        resolveAssignable(
-            lyric_assembler::BlockHandle *block,
-            const lyric_parser::NodeWalker &walker);
-
         tempo_utils::Result<std::pair<lyric_object::BoundType,lyric_common::TypeDef>>
         resolveBound(const lyric_common::TypeDef &placeholderType);
-
-        tempo_utils::Result<lyric_assembler::TemplateSpec>
-        resolveTemplate(
-            lyric_assembler::BlockHandle *block,
-            const lyric_parser::NodeWalker &walker);
 
         tempo_utils::Result<lyric_common::TypeDef> unifyAssignable(
             const lyric_common::TypeDef &toRef,

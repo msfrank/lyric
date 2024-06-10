@@ -6,6 +6,7 @@
 #include <lyric_typing/callsite_reifier.h>
 
 #include "base_fixture.h"
+#include "test_callable.h"
 
 class CallsiteReifierTP0Out : public BaseFixture {};
 
@@ -31,11 +32,13 @@ TEST_F(CallsiteReifierTP0Out, NullaryFunctionGivenT_IntCallsiteTypeArgument_retu
     lyric_assembler::TemplateHandle *templateHandle;
     TU_ASSIGN_OR_RAISE (templateHandle, typeCache->getOrImportTemplate(templateUrl));
 
+    lyric_assembler::CallableInvoker invoker;
+    auto callable = std::unique_ptr<TestCallable>(new TestCallable({}, {}, {}, templateHandle));
+    ASSERT_TRUE (invoker.initialize(std::move(callable)).isOk());
+
     // simulate the function f[T](): T with the given callsite type arguments [Int]
-    lyric_typing::CallsiteReifier reifier({}, {}, templateUrl, templateHandle->getTemplateParameters(),
-        {IntType}, m_typeSystem.get());
-    ASSERT_TRUE (reifier.initialize().isOk());
-    ASSERT_TRUE (reifier.isValid());
+    lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
+    ASSERT_TRUE (reifier.initialize(invoker, {IntType}).isOk());
 
     // result type should be Int
     auto reifyReturnResult = reifier.reifyResult(templateHandle->getPlaceholder(0));
@@ -44,5 +47,5 @@ TEST_F(CallsiteReifierTP0Out, NullaryFunctionGivenT_IntCallsiteTypeArgument_retu
     ASSERT_EQ (IntType, resultType);
 
     // verify 0 arguments have been reified
-    ASSERT_EQ (0, reifier.numArguments());
+    ASSERT_EQ (0, reifier.numReifiedArguments());
 }

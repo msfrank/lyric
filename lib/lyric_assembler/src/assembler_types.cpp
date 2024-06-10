@@ -330,60 +330,6 @@ lyric_assembler::ExtensionMethod::ExtensionMethod(
 {
 }
 
-lyric_assembler::ParameterSpec::ParameterSpec()
-    : name(),
-      label(),
-      type(),
-      binding(lyric_parser::BindingType::VALUE),
-      init()
-{
-}
-
-lyric_assembler::ParameterSpec::ParameterSpec(
-    const lyric_parser::NodeWalker &node,
-    const std::string &name,
-    const std::string &label,
-    const lyric_parser::Assignable &type,
-    lyric_parser::BindingType binding,
-    const Option<lyric_parser::NodeWalker> &init)
-    : node(node),
-      name(name),
-      label(label),
-      type(type),
-      binding(binding),
-      init(init)
-{
-}
-
-lyric_assembler::PackSpec::PackSpec()
-{
-}
-
-lyric_assembler::PackSpec::PackSpec(
-    const lyric_parser::NodeWalker &node,
-    const std::vector<ParameterSpec> &parameterSpec,
-    const Option<ParameterSpec> &restSpec,
-    const std::vector<ParameterSpec> &ctxSpec)
-    : node(node),
-      parameterSpec(parameterSpec),
-      restSpec(restSpec),
-      ctxSpec(ctxSpec)
-{
-}
-
-lyric_assembler::TemplateSpec::TemplateSpec()
-{
-}
-
-lyric_assembler::TemplateSpec::TemplateSpec(
-    const lyric_parser::NodeWalker &node,
-    const std::vector<lyric_object::TemplateParameter> &templateParameters)
-    : node(node),
-      templateParameters(templateParameters)
-{
-    TU_ASSERT (node.isValid());
-}
-
 lyric_assembler::CondCasePatch::CondCasePatch()
     : m_predicateLabel(),
       m_predicateJump(),

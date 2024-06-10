@@ -8,7 +8,9 @@
  */
 lyric_assembler::ProcHandle::ProcHandle(const lyric_common::SymbolUrl &activation)
     : m_activation(activation),
-      m_arity(0),
+      m_numListParameters(0),
+      m_numNamedParameters(0),
+      m_hasRestParameter(false),
       m_block(nullptr),
       m_numLocals(0)
 {
@@ -24,7 +26,9 @@ lyric_assembler::ProcHandle::ProcHandle(
     const lyric_common::SymbolUrl &activation,
     const std::vector<tu_uint8> &bytecode)
     : m_activation(activation),
-      m_arity(0),
+      m_numListParameters(0),
+      m_numNamedParameters(0),
+      m_hasRestParameter(false),
       m_code(bytecode),
       m_block(nullptr),
       m_numLocals(0)
@@ -41,7 +45,9 @@ lyric_assembler::ProcHandle::ProcHandle(
     const std::vector<tu_uint8> &bytecode,
     int numLocals)
     : m_activation(activation),
-      m_arity(0),
+      m_numListParameters(0),
+      m_numNamedParameters(0),
+      m_hasRestParameter(false),
       m_code(bytecode),
       m_block(nullptr),
       m_numLocals(numLocals)
@@ -57,7 +63,9 @@ lyric_assembler::ProcHandle::ProcHandle(
     const lyric_common::SymbolUrl &activation,
     AssemblyState *state)
     : m_activation(activation),
-      m_arity(0),
+      m_numListParameters(0),
+      m_numNamedParameters(0),
+      m_hasRestParameter(false),
       m_numLocals(0)
 {
     TU_ASSERT (state != nullptr);
@@ -72,17 +80,21 @@ lyric_assembler::ProcHandle::ProcHandle(
  */
 lyric_assembler::ProcHandle::ProcHandle(
     const lyric_common::SymbolUrl &activation,
-    const absl::flat_hash_map<std::string,SymbolBinding> &parameters,
-    int arity,
+    const absl::flat_hash_map<std::string,SymbolBinding> &initialBindings,
+    tu_uint8 numListParameters,
+    tu_uint8 numNamedParameters,
+    bool hasRestParameter,
     AssemblyState *state,
     BlockHandle *parent)
     : m_activation(activation),
-      m_arity(arity),
+      m_numListParameters(numListParameters),
+      m_numNamedParameters(numNamedParameters),
+      m_hasRestParameter(hasRestParameter),
       m_numLocals(0)
 {
     TU_ASSERT (state != nullptr);
     TU_ASSERT (parent != nullptr);
-    m_block = new BlockHandle(parameters, this, &m_code, parent, state);
+    m_block = new BlockHandle(initialBindings, this, &m_code, parent, state);
 }
 
 lyric_assembler::ProcHandle::~ProcHandle()
@@ -111,7 +123,7 @@ lyric_assembler::ProcHandle::getActivation() const
 int
 lyric_assembler::ProcHandle::getArity() const
 {
-    return m_arity;
+    return m_numListParameters + m_numNamedParameters;
 }
 
 lyric_assembler::LocalOffset
@@ -125,6 +137,24 @@ int
 lyric_assembler::ProcHandle::numLocals() const
 {
     return m_numLocals;
+}
+
+int
+lyric_assembler::ProcHandle::numListParameters() const
+{
+    return m_numListParameters;
+}
+
+int
+lyric_assembler::ProcHandle::numNamedParameters() const
+{
+    return m_numNamedParameters;
+}
+
+bool
+lyric_assembler::ProcHandle::hasRestParameter() const
+{
+    return m_hasRestParameter;
 }
 
 lyric_assembler::LexicalOffset
@@ -158,4 +188,23 @@ int
 lyric_assembler::ProcHandle::numLexicals() const
 {
     return m_lexicals.size();
+}
+
+void
+lyric_assembler::ProcHandle::putExitType(const lyric_common::TypeDef &exitType)
+{
+    TU_ASSERT (exitType.isValid());
+    m_exitTypes.insert(exitType);
+}
+
+absl::flat_hash_set<lyric_common::TypeDef>::const_iterator
+lyric_assembler::ProcHandle::exitTypesBegin() const
+{
+    return m_exitTypes.cbegin();
+}
+
+absl::flat_hash_set<lyric_common::TypeDef>::const_iterator
+lyric_assembler::ProcHandle::exitTypesEnd() const
+{
+    return m_exitTypes.cend();
 }

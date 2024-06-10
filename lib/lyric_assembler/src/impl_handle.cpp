@@ -1,9 +1,11 @@
 
+#include "lyric_assembler/call_symbol.h"
+#include "lyric_assembler/class_symbol.h"
 #include <lyric_assembler/concept_symbol.h>
+#include <lyric_assembler/extension_callable.h>
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/type_cache.h>
-#include "lyric_assembler/class_symbol.h"
 
 lyric_assembler::ImplHandle::ImplHandle(
     ImplOffset offset,
@@ -144,13 +146,11 @@ lyric_assembler::ImplHandle::numExtensions() const
     return priv->extensions.size();
 }
 
-tempo_utils::Result<lyric_assembler::ExtensionMethod>
-lyric_assembler::ImplHandle::declareExtension(
+tempo_utils::Result<lyric_assembler::ProcHandle *>
+lyric_assembler::ImplHandle::defineExtension(
     const std::string &name,
-    const std::vector<ParameterSpec> &parameterSpec,
-    const Option<ParameterSpec> &restSpec,
-    const std::vector<ParameterSpec> &ctxSpec,
-    const lyric_parser::Assignable &returnSpec)
+    const ParameterPack &parameterPack,
+    const lyric_common::TypeDef &returnType)
 {
     auto *priv = getPriv();
 
@@ -171,149 +171,27 @@ lyric_assembler::ImplHandle::declareExtension(
             tempo_tracing::LogSeverity::kError,
             "no such action {} for concept {}",
             name, priv->implConcept->getSymbolUrl().toString());
-
-    auto &extension = priv->extensions[name];
-    extension.methodAction = actionOption.getValue().methodAction;
+    auto actionUrl = actionOption.getValue().methodAction;
 
     // touch the action symbol
-    m_state->symbolCache()->touchSymbol(extension.methodAction);
-
-    std::vector<lyric_object::Parameter> parameters;
-    Option<lyric_object::Parameter> rest;
-    absl::flat_hash_set<std::string> names;
-    absl::flat_hash_set<std::string> labels;
-
-    AbstractResolver *resolver = priv->receiverTemplate?
-        (AbstractResolver *) priv->receiverTemplate : priv->implBlock.get();
-
-    for (const auto &p : parameterSpec) {
-        auto resolveParamTypeResult = resolver->resolveAssignable(p.type);
-        if (resolveParamTypeResult.isStatus())
-            return resolveParamTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.name = p.name;
-        param.label = !p.label.empty()? p.label : p.name;
-        param.placement = !p.label.empty()? lyric_object::PlacementType::Named : lyric_object::PlacementType::List;
-        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE? true : false;
-        param.typeDef = resolveParamTypeResult.getResult();
-
-        if (!p.init.isEmpty()) {
-            if (param.placement != lyric_object::PlacementType::Named) {
-                return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
-                    "invalid initializer for positional parameter {}; only named parameters can be default-initialized",
-                    p.name);
-            } else {
-                param.placement = lyric_object::PlacementType::Opt;
-            }
-        }
-
-        if (names.contains(p.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for extension {}", p.name, name);
-        names.insert(p.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for extension {}", p.label, name);
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        parameters.push_back(param);
-    }
-
-    for (const auto &p : ctxSpec) {
-        auto resolveParamTypeResult = resolver->resolveAssignable(p.type);
-        if (resolveParamTypeResult.isStatus())
-            return resolveParamTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.placement = lyric_object::PlacementType::Ctx;
-        param.isVariable = false;
-        param.typeDef = resolveParamTypeResult.getResult();
-
-        // if ctx parameter name is not specified, then generate a unique name
-        param.name = p.name.empty()? absl::StrCat("$ctx", parameters.size()) : p.name;
-        param.label = param.name;
-
-        if (names.contains(param.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for extension {}", p.name, name);
-        names.insert(param.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for extension {}", p.label, name);
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        parameters.push_back(param);
-    }
-
-    if (!restSpec.isEmpty()) {
-        const auto &p = restSpec.getValue();
-        auto resolveRestTypeResult = resolver->resolveAssignable(p.type);
-        if (resolveRestTypeResult.isStatus())
-            return resolveRestTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.name = p.name;
-        param.label = param.name;
-        param.placement = lyric_object::PlacementType::Rest;
-        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE? true : false;
-        param.typeDef = resolveRestTypeResult.getResult();
-
-        if (names.contains(p.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for extension {}", p.name, name);
-        names.insert(p.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for extension {}", p.label, name);
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        rest = Option<lyric_object::Parameter>(param);
-    }
-
-    auto resolveReturnTypeResult = resolver->resolveAssignable(returnSpec);
-    if (resolveReturnTypeResult.isStatus())
-        return resolveReturnTypeResult.getStatus();
-    auto returnType = resolveReturnTypeResult.getResult();
-    m_state->typeCache()->touchType(returnType);
+    m_state->symbolCache()->touchSymbol(actionUrl);
 
     // build reference path to function
     auto methodPath = priv->receiverUrl.getSymbolPath().getPath();
     methodPath.push_back(absl::StrCat(priv->name, "$", name));
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
     auto callIndex = m_state->numCalls();
+    auto access = lyric_object::AccessType::Public;
     auto address = CallAddress::near(callIndex);
-
-    // create the type
-    TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareFunctionType(returnType, parameters, rest));
 
     // construct call symbol
     CallSymbol *callSymbol;
     if (priv->receiverTemplate != nullptr) {
-        callSymbol = new CallSymbol(methodUrl, parameters, rest, returnType, priv->receiverUrl,
-            lyric_object::AccessType::Public, address, lyric_object::CallMode::Normal, typeHandle,
-            priv->receiverTemplate, priv->implBlock.get(), m_state);
+        callSymbol = new CallSymbol(methodUrl, priv->receiverUrl, access, address,
+            lyric_object::CallMode::Normal, priv->receiverTemplate, priv->implBlock.get(), m_state);
     } else {
-        callSymbol = new CallSymbol(methodUrl, parameters, rest, returnType, priv->receiverUrl,
-            lyric_object::AccessType::Public, address, lyric_object::CallMode::Normal, typeHandle,
-            priv->implBlock.get(), m_state);
+        callSymbol = new CallSymbol(methodUrl, priv->receiverUrl, access, address,
+            lyric_object::CallMode::Normal, priv->implBlock.get(), m_state);
     }
 
     auto status = m_state->appendCall(callSymbol);
@@ -322,10 +200,72 @@ lyric_assembler::ImplHandle::declareExtension(
         return status;
     }
 
-    // update extension method call field
-    extension.methodCall = methodUrl;
+    // TODO: validate that the parameter types and return type match the action
 
-    return extension;
+    ProcHandle *extensionProc;
+    TU_ASSIGN_OR_RETURN (extensionProc, callSymbol->defineCall(parameterPack, returnType));
+
+    // add extension method
+    ExtensionMethod extension;
+    extension.methodAction = actionUrl;
+    extension.methodCall = methodUrl;
+    priv->extensions[name] = extension;
+
+    return extensionProc;
+}
+
+tempo_utils::Status
+lyric_assembler::ImplHandle::prepareExtension(
+    const std::string &name,
+    const DataReference &ref,
+    CallableInvoker &invoker)
+{
+    auto *priv = getPriv();
+
+    if (!priv->extensions.contains(name))
+        return m_state->logAndContinue(AssemblerCondition::kMissingMethod,
+            tempo_tracing::LogSeverity::kError,
+            "missing extension {}", name);
+
+    if (ref.symbolUrl != priv->receiverUrl)
+        m_state->throwAssemblerInvariant(
+            "ref {} does not match receiver {}", ref.symbolUrl.toString(), priv->receiverUrl.toString());
+
+    const auto &extension = priv->extensions.at(name);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(extension.methodCall));
+    if (symbol->getSymbolType() != SymbolType::CALL)
+        m_state->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
+    auto *callSymbol = cast_symbol_to_call(symbol);
+    auto access = callSymbol->getAccessType();
+
+    if (access != lyric_object::AccessType::Public)
+        m_state->throwAssemblerInvariant("extension method {} must be public", name);
+
+    if (callSymbol->isInline()) {
+        auto callable = std::make_unique<ExtensionCallable>(callSymbol, callSymbol->callProc());
+        return invoker.initialize(std::move(callable));
+    }
+
+    if (!callSymbol->isBound())
+        m_state->throwAssemblerInvariant("invalid extension call {}", extension.methodCall.toString());
+
+    auto callable = std::make_unique<ExtensionCallable>(callSymbol, ref);
+    return invoker.initialize(std::move(callable));
+}
+
+bool
+lyric_assembler::ImplHandle::isCompletelyDefined() const
+{
+    auto *priv = getPriv();
+
+    auto *conceptSymbol = priv->implConcept;
+    for (auto it = conceptSymbol->actionsBegin(); it != conceptSymbol->actionsEnd(); it++) {
+        const auto &name = it->first;
+        if (!priv->extensions.contains(name))
+            return false;
+    }
+    return  true;
 }
 
 lyric_assembler::ImplHandlePriv *

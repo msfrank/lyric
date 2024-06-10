@@ -1,6 +1,7 @@
 #ifndef LYRIC_ASSEMBLER_ACTION_SYMBOL_H
 #define LYRIC_ASSEMBLER_ACTION_SYMBOL_H
 
+#include "abstract_resolver.h"
 #include "abstract_symbol.h"
 #include "base_symbol.h"
 #include "assembly_state.h"
@@ -8,11 +9,14 @@
 namespace lyric_assembler {
 
     struct ActionSymbolPriv {
-        std::vector<lyric_object::Parameter> parameters;
-        Option<lyric_object::Parameter> rest;
+        std::vector<Parameter> listParameters;
+        std::vector<Parameter> namedParameters;
+        Option<Parameter> restParameter;
         lyric_common::TypeDef returnType;
         lyric_common::SymbolUrl receiverUrl;
-        TemplateHandle *actionTemplate = nullptr;
+        lyric_object::AccessType access;
+        TemplateHandle *actionTemplate;
+        BlockHandle *parentBlock;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
     };
 
@@ -20,21 +24,19 @@ namespace lyric_assembler {
     public:
         ActionSymbol(
             const lyric_common::SymbolUrl &actionUrl,
-            const std::vector<lyric_object::Parameter> &parameters,
-            const Option<lyric_object::Parameter> &rest,
-            const lyric_common::TypeDef &returnType,
             const lyric_common::SymbolUrl &receiverUrl,
+            lyric_object::AccessType access,
             ActionAddress address,
             TemplateHandle *actionTemplate,
+            BlockHandle *parentBlock,
             AssemblyState *state);
 
         ActionSymbol(
             const lyric_common::SymbolUrl &actionUrl,
-            const std::vector<lyric_object::Parameter> &parameters,
-            const Option<lyric_object::Parameter> &rest,
-            const lyric_common::TypeDef &returnType,
             const lyric_common::SymbolUrl &receiverUrl,
+            lyric_object::AccessType access,
             ActionAddress address,
+            BlockHandle *parentBlock,
             AssemblyState *state);
 
         ActionSymbol(
@@ -50,15 +52,21 @@ namespace lyric_assembler {
         TypeSignature getTypeSignature() const override;
         void touch() override;
 
-        std::vector<lyric_object::Parameter> getParameters() const;
-        Option<lyric_object::Parameter> getRest() const;
+        tempo_utils::Status defineAction(
+            const ParameterPack &parameterPack,
+            const lyric_common::TypeDef &returnType);
+
         lyric_common::TypeDef getReturnType() const;
         lyric_common::SymbolUrl getReceiverUrl() const;
 
+        AbstractResolver *actionResolver();
         TemplateHandle *actionTemplate();
 
-        std::vector<lyric_object::Parameter>::const_iterator placementBegin() const;
-        std::vector<lyric_object::Parameter>::const_iterator placementEnd() const;
+        std::vector<Parameter>::const_iterator listPlacementBegin() const;
+        std::vector<Parameter>::const_iterator listPlacementEnd() const;
+        std::vector<Parameter>::const_iterator namedPlacementBegin() const;
+        std::vector<Parameter>::const_iterator namedPlacementEnd() const;
+        const Parameter *restPlacement() const;
 
         bool hasInitializer(const std::string &name) const;
         lyric_common::SymbolUrl getInitializer(const std::string &name) const;

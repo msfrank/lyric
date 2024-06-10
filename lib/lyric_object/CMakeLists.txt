@@ -8,11 +8,9 @@ add_library(lyric::lyric_object ALIAS lyric_object)
 
 set(LYRIC_OBJECT_INCLUDES
     include/lyric_object/action_walker.h
-    include/lyric_object/action_parameter_walker.h
     include/lyric_object/bytecode_builder.h
     include/lyric_object/bytecode_iterator.h
     include/lyric_object/call_walker.h
-    include/lyric_object/call_parameter_walker.h
     include/lyric_object/class_walker.h
     include/lyric_object/concept_walker.h
     include/lyric_object/concrete_type_walker.h
@@ -31,9 +29,9 @@ set(LYRIC_OBJECT_INCLUDES
     include/lyric_object/object_result.h
     include/lyric_object/object_types.h
     include/lyric_object/object_walker.h
+    include/lyric_object/parameter_walker.h
     include/lyric_object/placeholder_type_walker.h
     include/lyric_object/plugin_specifier.h
-    include/lyric_object/rest_parameter_walker.h
     include/lyric_object/static_walker.h
     include/lyric_object/struct_walker.h
     include/lyric_object/symbol_walker.h
@@ -75,11 +73,9 @@ add_custom_command(
 
 target_sources(lyric_object PRIVATE
     src/action_walker.cpp
-    src/action_parameter_walker.cpp
     src/bytecode_builder.cpp
     src/bytecode_iterator.cpp
     src/call_walker.cpp
-    src/call_parameter_walker.cpp
     src/class_walker.cpp
     src/concept_walker.cpp
     src/concrete_type_walker.cpp
@@ -98,9 +94,9 @@ target_sources(lyric_object PRIVATE
     src/object_result.cpp
     src/object_types.cpp
     src/object_walker.cpp
+    src/parameter_walker.cpp
     src/placeholder_type_walker.cpp
     src/plugin_specifier.cpp
-    src/rest_parameter_walker.cpp
     src/struct_walker.cpp
     src/static_walker.cpp
     src/symbol_walker.cpp

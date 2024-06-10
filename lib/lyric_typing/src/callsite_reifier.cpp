@@ -10,45 +10,12 @@
 #include <lyric_typing/callsite_reifier.h>
 #include <lyric_typing/typing_result.h>
 
-lyric_typing::CallsiteReifier::CallsiteReifier()
-    : m_typeSystem(nullptr)
-{
-}
-
-lyric_typing::CallsiteReifier::CallsiteReifier(
-    const std::vector<lyric_object::Parameter> &parameters,
-    const Option<lyric_object::Parameter> &rest,
-    const lyric_common::SymbolUrl &templateUrl,
-    const std::vector<lyric_object::TemplateParameter> &templateParameters,
-    const std::vector<lyric_common::TypeDef> &callsiteArguments,
-    TypeSystem *typeSystem)
-    : m_parameters(parameters),
-      m_rest(rest),
-      m_templateUrl(templateUrl),
-      m_templateParameters(templateParameters),
-      m_callsiteArguments(callsiteArguments),
-      m_typeSystem(typeSystem),
+lyric_typing::CallsiteReifier::CallsiteReifier(TypeSystem *typeSystem)
+    : m_typeSystem(typeSystem),
+      m_invokerTemplate(nullptr),
       m_initialized(false)
 {
     TU_ASSERT (m_typeSystem != nullptr);
-}
-
-lyric_typing::CallsiteReifier::CallsiteReifier(
-    const std::vector<lyric_object::Parameter> &parameters,
-    const Option<lyric_object::Parameter> &rest,
-    TypeSystem *typeSystem)
-    : m_parameters(parameters),
-      m_rest(rest),
-      m_typeSystem(typeSystem),
-      m_initialized(false)
-{
-    TU_ASSERT (m_typeSystem != nullptr);
-}
-
-bool
-lyric_typing::CallsiteReifier::isValid() const
-{
-    return m_typeSystem != nullptr;
 }
 
 std::vector<lyric_common::TypeDef>
@@ -58,46 +25,130 @@ lyric_typing::CallsiteReifier::getCallsiteArguments() const
 }
 
 tempo_utils::Status
-lyric_typing::CallsiteReifier::initialize()
+lyric_typing::CallsiteReifier::initialize(
+    const lyric_assembler::ConstructableInvoker &invoker,
+    const std::vector<lyric_common::TypeDef> &callsiteArguments)
 {
-    TU_ASSERT (!m_initialized);
+    if (m_initialized)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "callsite reifier is already initialized");
 
-    m_reifiedPlaceholders.resize(m_templateParameters.size());
-    if (!m_callsiteArguments.empty()) {
-        for (int i = 0; i < m_callsiteArguments.size(); i++) {
-            const auto &arg = m_callsiteArguments.at(i);
-            if (!arg.isValid())
-                return TypingStatus::forCondition(TypingCondition::kInvalidType,
-                    "callsite type argument {} is invalid", i);
-            m_reifiedPlaceholders[i] = arg;
-        }
+    auto *constructable = invoker.getConstructable();
+    if (constructable == nullptr)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "invoker is not initialized");
+
+    m_unifiedParameters.insert(m_unifiedParameters.begin(),
+        constructable->listPlacementBegin(), constructable->listPlacementEnd());
+    m_unifiedParameters.insert(m_unifiedParameters.end(),
+        constructable->namedPlacementBegin(), constructable->namedPlacementEnd());
+    auto *restPlacement = constructable->restPlacement();
+    if (restPlacement != nullptr) {
+        m_restParameter = Option(*restPlacement);
     }
+
+    auto *invokerTemplate = constructable->getTemplate();
+
+    if (invokerTemplate != nullptr) {
+        m_invokerTemplate = invokerTemplate;
+        m_callsiteArguments = callsiteArguments;
+
+        m_reifiedPlaceholders.resize(invokerTemplate->numTemplateParameters());
+        if (!m_callsiteArguments.empty()) {
+            for (int i = 0; i < m_callsiteArguments.size(); i++) {
+                const auto &arg = m_callsiteArguments.at(i);
+                if (!arg.isValid())
+                    return TypingStatus::forCondition(TypingCondition::kInvalidType,
+                        "callsite type argument {} is invalid", i);
+                m_reifiedPlaceholders[i] = arg;
+            }
+        }
+    } else {
+        if (!callsiteArguments.empty())
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "unexpected callsite type arguments");
+    }
+
     m_initialized = true;
-
     return {};
 }
 
-lyric_common::TypeDef
-lyric_typing::CallsiteReifier::getArgument(int index) const
+tempo_utils::Status
+lyric_typing::CallsiteReifier::initialize(
+    const lyric_assembler::CallableInvoker &invoker,
+    const std::vector<lyric_common::TypeDef> &callsiteArguments)
 {
-    TU_ASSERT (m_initialized);
+    if (m_initialized)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "callsite reifier is already initialized");
 
-    if (0 <= index && std::cmp_less(index, m_argumentTypes.size()))
-        return m_argumentTypes[index];
+    auto *callable = invoker.getCallable();
+    if (callable == nullptr)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "invoker is not initialized");
+
+    m_unifiedParameters.insert(m_unifiedParameters.begin(),
+        callable->listPlacementBegin(), callable->listPlacementEnd());
+    m_unifiedParameters.insert(m_unifiedParameters.end(),
+        callable->namedPlacementBegin(), callable->namedPlacementEnd());
+    auto *restPlacement = callable->restPlacement();
+    if (restPlacement != nullptr) {
+        m_restParameter = Option(*restPlacement);
+    }
+
+    auto *invokerTemplate = callable->getTemplate();
+
+    if (invokerTemplate != nullptr) {
+        m_invokerTemplate = invokerTemplate;
+        m_callsiteArguments = callsiteArguments;
+
+        m_reifiedPlaceholders.resize(invokerTemplate->numTemplateParameters());
+        if (!m_callsiteArguments.empty()) {
+            for (int i = 0; i < m_callsiteArguments.size(); i++) {
+                const auto &arg = m_callsiteArguments.at(i);
+                if (!arg.isValid())
+                    return TypingStatus::forCondition(TypingCondition::kInvalidType,
+                        "callsite type argument {} is invalid", i);
+                m_reifiedPlaceholders[i] = arg;
+            }
+        }
+    } else {
+        if (!callsiteArguments.empty())
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "unexpected callsite type arguments");
+    }
+
+    m_initialized = true;
     return {};
 }
 
-std::vector<lyric_common::TypeDef>
-lyric_typing::CallsiteReifier::getArguments() const
-{
-    TU_ASSERT (m_initialized);
-    return m_argumentTypes;
-}
+//lyric_common::TypeDef
+//lyric_typing::CallsiteReifier::getArgument(int index) const
+//{
+//    TU_ASSERT (m_initialized);
+//
+//    if (0 <= index && std::cmp_less(index, m_argumentTypes.size()))
+//        return m_argumentTypes[index];
+//    return {};
+//}
+//
+//std::vector<lyric_common::TypeDef>
+//lyric_typing::CallsiteReifier::getArguments() const
+//{
+//    TU_ASSERT (m_initialized);
+//    return m_argumentTypes;
+//}
+//
+//int
+//lyric_typing::CallsiteReifier::numArguments() const
+//{
+//    TU_ASSERT (m_initialized);
+//    return m_argumentTypes.size();
+//}
 
-int
-lyric_typing::CallsiteReifier::numArguments() const
+size_t
+lyric_typing::CallsiteReifier::numReifiedArguments() const
 {
-    TU_ASSERT (m_initialized);
     return m_argumentTypes.size();
 }
 
@@ -194,11 +245,11 @@ lyric_typing::CallsiteReifier::reifySingular(
 
         case lyric_common::TypeDefType::Placeholder: {
             // if the placeholder template matches the callsite template then we can reify the placeholder
-            if (paramType.getPlaceholderTemplateUrl() == m_templateUrl) {
+            if (paramType.getPlaceholderTemplateUrl() == m_invokerTemplate->getTemplateUrl()) {
                 auto index = paramType.getPlaceholderIndex();
                 // if placeholder slot is not reified, then perform reification and validate against the arg type
                 if (!m_reifiedPlaceholders[index].isValid()) {
-                    const auto &tp = m_templateParameters[index];
+                    const auto tp = m_invokerTemplate->getTemplateParameter(index);
                     auto status = checkPlaceholder(tp, argType);
                     if (!status.isOk())
                         return status;
@@ -427,22 +478,27 @@ lyric_typing::CallsiteReifier::reifyUnion(
 tempo_utils::Status
 lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &argumentType)
 {
-    TU_ASSERT (m_initialized);
+    if (!m_initialized)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "callsite reifier is not initialized");
+
     auto *state = m_typeSystem->getState();
 
     bool isAssignable;
 
     // next argument is part of the fixed parameter list
-    if (m_argumentTypes.size() < m_parameters.size()) {
+    if (m_argumentTypes.size() < m_unifiedParameters.size()) {
         int index = m_argumentTypes.size();
-        const auto &param = m_parameters[index];
+        const auto &param = m_unifiedParameters[index];
 
         switch (param.placement) {
-            case lyric_object::PlacementType::Ctx:
-            case lyric_object::PlacementType::Named:
-            case lyric_object::PlacementType::Opt:
             case lyric_object::PlacementType::List:
+            case lyric_object::PlacementType::ListOpt:
+            case lyric_object::PlacementType::Named:
+            case lyric_object::PlacementType::NamedOpt:
                 break;
+            case lyric_object::PlacementType::Ctx:
+                state->throwAssemblerInvariant("unexpected ctx parameter {} at offset {}", param.name, param.index);
             default:
                 state->throwAssemblerInvariant("invalid parameter {} at offset {}", param.name, param.index);
         }
@@ -484,12 +540,12 @@ lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &ar
     }
 
     // otherwise the next argument must be a rest parameter
-    if (m_rest.isEmpty())
+    if (m_restParameter.isEmpty())
         return state->logAndContinue(lyric_assembler::AssemblerCondition::kUnexpectedArgument,
             tempo_tracing::LogSeverity::kError,
             "wrong number of arguments; expected {} but found {}",
-            m_parameters.size(), m_argumentTypes.size() + 1);
-    auto rest = m_rest.getValue();
+            m_unifiedParameters.size(), m_argumentTypes.size() + 1);
+    auto rest = m_restParameter.getValue();
 
     lyric_common::TypeDef paramType;
     switch (rest.typeDef.getType()) {
@@ -531,16 +587,19 @@ lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &ar
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::CallsiteReifier::reifyNextContext()
 {
-    TU_ASSERT (m_initialized);
+    if (!m_initialized)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "callsite reifier is not initialized");
+
     auto *state = m_typeSystem->getState();
 
-    if (m_parameters.size() <= m_argumentTypes.size())
+    if (m_unifiedParameters.size() <= m_argumentTypes.size())
         return state->logAndContinue(lyric_assembler::AssemblerCondition::kUnexpectedArgument,
             tempo_tracing::LogSeverity::kError,
             "wrong number of arguments; expected {} but found {}",
-            m_parameters.size(), m_argumentTypes.size() + 1);
+            m_unifiedParameters.size(), m_argumentTypes.size() + 1);
 
-    const auto &param = m_parameters[m_argumentTypes.size()];
+    const auto &param = m_unifiedParameters[m_argumentTypes.size()];
     if (param.placement != lyric_object::PlacementType::Ctx)
         state->throwAssemblerInvariant("expected ctx parameter {} at offset {}", param.name, param.index);
 
@@ -592,7 +651,10 @@ lyric_typing::CallsiteReifier::reifyNextContext()
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::CallsiteReifier::reifyResult(const lyric_common::TypeDef &returnType) const
 {
-    TU_ASSERT (m_initialized);
+    if (!m_initialized)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "callsite reifier is not initialized");
+
     auto *state = m_typeSystem->getState();
 
     lyric_common::TypeDef baseType;
@@ -613,7 +675,7 @@ lyric_typing::CallsiteReifier::reifyResult(const lyric_common::TypeDef &returnTy
 
         case lyric_common::TypeDefType::Placeholder: {
             // if the placeholder template matches the callsite template then we can reify the placeholder
-            if (returnType.getPlaceholderTemplateUrl() == m_templateUrl) {
+            if (returnType.getPlaceholderTemplateUrl() == m_invokerTemplate->getTemplateUrl()) {
                 auto index = returnType.getPlaceholderIndex();
                 // the placeholder slot must have been reified
                 if (!m_reifiedPlaceholders[index].isValid())

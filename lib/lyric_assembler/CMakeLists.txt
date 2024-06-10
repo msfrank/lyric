@@ -9,11 +9,12 @@ add_library(lyric::lyric_assembler ALIAS lyric_assembler)
 set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/abstract_callsite_reifier.h
     include/lyric_assembler/abstract_importer.h
-    include/lyric_assembler/abstract_invoker.h
+    include/lyric_assembler/abstract_callable.h
+    include/lyric_assembler/abstract_constructable.h
     include/lyric_assembler/abstract_member_reifier.h
     include/lyric_assembler/abstract_resolver.h
     include/lyric_assembler/abstract_symbol.h
-    include/lyric_assembler/action_invoker.h
+    include/lyric_assembler/action_callable.h
     include/lyric_assembler/action_symbol.h
     include/lyric_assembler/argument_variable.h
     include/lyric_assembler/assembler_result.h
@@ -24,19 +25,20 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/base_handle.h
     include/lyric_assembler/base_symbol.h
     include/lyric_assembler/block_handle.h
-    include/lyric_assembler/call_invoker.h
+    include/lyric_assembler/callable_invoker.h
     include/lyric_assembler/call_symbol.h
     include/lyric_assembler/class_symbol.h
     include/lyric_assembler/code_builder.h
     include/lyric_assembler/concept_symbol.h
-    include/lyric_assembler/ctor_invoker.h
-    include/lyric_assembler/type_set.h
+    include/lyric_assembler/constructable_invoker.h
+    include/lyric_assembler/ctor_constructable.h
     include/lyric_assembler/enum_symbol.h
-    include/lyric_assembler/existential_invoker.h
+    include/lyric_assembler/existential_callable.h
     include/lyric_assembler/existential_symbol.h
-    include/lyric_assembler/extension_invoker.h
+    include/lyric_assembler/extension_callable.h
     include/lyric_assembler/field_symbol.h
     include/lyric_assembler/fundamental_cache.h
+    include/lyric_assembler/function_callable.h
     include/lyric_assembler/impl_cache.h
     include/lyric_assembler/impl_handle.h
     include/lyric_assembler/import_cache.h
@@ -45,7 +47,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/literal_cache.h
     include/lyric_assembler/literal_handle.h
     include/lyric_assembler/local_variable.h
-    include/lyric_assembler/method_invoker.h
+    include/lyric_assembler/method_callable.h
     include/lyric_assembler/namespace_symbol.h
     include/lyric_assembler/proc_handle.h
     include/lyric_assembler/static_symbol.h
@@ -55,12 +57,13 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/template_handle.h
     include/lyric_assembler/type_cache.h
     include/lyric_assembler/type_handle.h
+    include/lyric_assembler/type_set.h
     include/lyric_assembler/undeclared_symbol.h
     )
 set_target_properties(lyric_assembler PROPERTIES PUBLIC_HEADER "${LYRIC_ASSEMBLER_INCLUDES}")
 
 target_sources(lyric_assembler PRIVATE
-    src/action_invoker.cpp
+    src/action_callable.cpp
     src/action_symbol.cpp
     src/argument_variable.cpp
     src/assembler_result.cpp
@@ -69,18 +72,19 @@ target_sources(lyric_assembler PRIVATE
     src/assembly_state.cpp
     src/assignable_type.cpp
     src/block_handle.cpp
-    src/call_invoker.cpp
+    src/callable_invoker.cpp
     src/call_symbol.cpp
     src/class_symbol.cpp
     src/code_builder.cpp
     src/concept_symbol.cpp
-    src/ctor_invoker.cpp
-    src/type_set.cpp
+    src/constructable_invoker.cpp
+    src/ctor_constructable.cpp
     src/enum_symbol.cpp
-    src/existential_invoker.cpp
+    src/existential_callable.cpp
     src/existential_symbol.cpp
-    src/extension_invoker.cpp
+    src/extension_callable.cpp
     src/field_symbol.cpp
+    src/function_callable.cpp
     src/fundamental_cache.cpp
     src/impl_cache.cpp
     src/impl_handle.cpp
@@ -90,7 +94,7 @@ target_sources(lyric_assembler PRIVATE
     src/literal_cache.cpp
     src/literal_handle.cpp
     src/local_variable.cpp
-    src/method_invoker.cpp
+    src/method_callable.cpp
     src/namespace_symbol.cpp
     src/proc_handle.cpp
     src/static_symbol.cpp
@@ -100,6 +104,7 @@ target_sources(lyric_assembler PRIVATE
     src/template_handle.cpp
     src/type_cache.cpp
     src/type_handle.cpp
+    src/type_set.cpp
     src/undeclared_symbol.cpp
 
     include/lyric_assembler/internal/write_actions.h

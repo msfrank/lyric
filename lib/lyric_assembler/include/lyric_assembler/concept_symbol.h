@@ -6,10 +6,10 @@
 #include <lyric_importer/concept_import.h>
 
 #include "abstract_symbol.h"
-#include "action_invoker.h"
+#include "action_callable.h"
 #include "assembly_state.h"
 #include "base_symbol.h"
-#include "call_invoker.h"
+#include "impl_handle.h"
 #include "type_handle.h"
 
 namespace lyric_assembler {
@@ -77,17 +77,14 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string, ActionMethod>::const_iterator actionsEnd() const;
         tu_uint32 numActions() const;
 
-        tempo_utils::Result<lyric_common::SymbolUrl> declareAction(
+        tempo_utils::Result<ActionSymbol *> declareAction(
             const std::string &name,
-            const std::vector<ParameterSpec> &parameterSpec,
-            const Option<ParameterSpec> &restSpec,
-            const std::vector<ParameterSpec> &ctxSpec,
-            const lyric_parser::Assignable &returnSpec,
             lyric_object::AccessType access);
 
-        tempo_utils::Result<ActionInvoker> resolveAction(
+        tempo_utils::Status prepareAction(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
+            CallableInvoker &invoker,
             bool isReceiver = false) const;
 
         /*
@@ -101,7 +98,7 @@ namespace lyric_assembler {
         absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsEnd() const;
         tu_uint32 numImpls() const;
 
-        tempo_utils::Result<lyric_common::TypeDef> declareImpl(const lyric_parser::Assignable &implSpec);
+        tempo_utils::Result<ImplHandle *> declareImpl(const lyric_common::TypeDef &implType);
 
         /*
          * subtype tracking for sealed concept

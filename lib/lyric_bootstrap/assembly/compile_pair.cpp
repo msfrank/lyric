@@ -16,8 +16,8 @@ build_core_Pair(BuilderState &state, const CoreStruct *RecordStruct, const CoreT
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructCtor(PairStruct,
             {
-                {"first", DataType, nullptr, lyo1::ParameterFlags::Named},
-                {"second", DataType, nullptr, lyo1::ParameterFlags::Named},
+                make_named_param("first", DataType),
+                make_named_param("second", DataType),
             },
             code);
         state.setStructAllocator(PairStruct, lyric_bootstrap::internal::BootstrapTrap::PAIR_ALLOC);

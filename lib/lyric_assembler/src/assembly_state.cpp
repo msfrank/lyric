@@ -11,13 +11,11 @@
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/impl_cache.h>
-#include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/internal/write_object.h>
 #include <lyric_assembler/literal_cache.h>
 #include <lyric_assembler/namespace_symbol.h>
-#include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -606,7 +604,7 @@ lyric_assembler::AssemblyState::touchAction(ActionSymbol *actionSymbol)
 
     // action has been touched already, nothing to do
     if (actionSymbol->getAddress().isValid())
-        return AssemblerStatus::ok();
+        return {};
 
     // verify that the action is in the symbol cache
     auto actionUrl = actionSymbol->getSymbolUrl();
@@ -624,41 +622,32 @@ lyric_assembler::AssemblyState::touchAction(ActionSymbol *actionSymbol)
     auto location = actionUrl.getAssemblyLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
-    auto status = m_importcache->touchImport(location);
-    if (status.notOk())
-        return status;
 
-    status = m_importcache->linkFarSymbol(actionSymbol);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (m_importcache->touchImport(location));
+    TU_RETURN_IF_NOT_OK (m_importcache->linkFarSymbol(actionSymbol));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->touchSymbol(receiverUrl));
 
-    status = m_symbolcache->touchSymbol(receiverUrl);
-    if (status.notOk())
-        return status;
-
-    for (const auto &p : actionSymbol->getParameters()) {
-        status = m_typecache->touchType(p.typeDef);
-        if (status.notOk())
-            return status;
+    for (auto it = actionSymbol->listPlacementBegin(); it != actionSymbol->listPlacementEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (m_typecache->touchType(it->typeDef));
     }
 
-    auto restOption = actionSymbol->getRest();
-    if (!restOption.isEmpty()) {
-        status = m_typecache->touchType(restOption.getValue().typeDef);
-        if (status.notOk())
-            return status;
+    for (auto it = actionSymbol->namedPlacementBegin(); it != actionSymbol->namedPlacementEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (m_typecache->touchType(it->typeDef));
     }
 
-    status = m_typecache->touchType(actionSymbol->getReturnType());
-    if (status.notOk())
-        return status;
+    auto *rest = actionSymbol->restPlacement();
+    if (rest != nullptr) {
+        TU_RETURN_IF_NOT_OK (m_typecache->touchType(rest->typeDef));
+    }
+
+    TU_RETURN_IF_NOT_OK (m_typecache->touchType(actionSymbol->getReturnType()));
 
     auto *actionTemplate = actionSymbol->actionTemplate();
     if (actionTemplate) {
         actionTemplate->touch();
     }
 
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::ActionSymbol *>::const_iterator
@@ -698,7 +687,7 @@ lyric_assembler::AssemblyState::touchCall(CallSymbol *callSymbol)
 
     // call has been touched already, nothing to do
     if (callSymbol->getAddress().isValid())
-        return AssemblerStatus::ok();
+        return {};
 
     // verify that the call is in the symbol cache
     auto callUrl = callSymbol->getSymbolUrl();
@@ -716,47 +705,37 @@ lyric_assembler::AssemblyState::touchCall(CallSymbol *callSymbol)
     auto location = callUrl.getAssemblyLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
-    auto status = m_importcache->touchImport(location);
-    if (status.notOk())
-        return status;
 
-    status = m_importcache->linkFarSymbol(callSymbol);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (m_importcache->touchImport(location));
+    TU_RETURN_IF_NOT_OK (m_importcache->linkFarSymbol(callSymbol));
 
     if (receiverUrl.isValid()) {
-        status = m_symbolcache->touchSymbol(receiverUrl);
-        if (status.notOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (m_symbolcache->touchSymbol(receiverUrl));
     }
 
-    status = m_typecache->touchType(callSymbol->callType());
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (m_typecache->touchType(callSymbol->callType()));
 
-    for (const auto &p : callSymbol->getParameters()) {
-        status = m_typecache->touchType(p.typeDef);
-        if (status.notOk())
-            return status;
+    for (auto it = callSymbol->listPlacementBegin(); it != callSymbol->listPlacementEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (m_typecache->touchType(it->typeDef));
     }
 
-    auto restOption = callSymbol->getRest();
-    if (!restOption.isEmpty()) {
-        status = m_typecache->touchType(restOption.getValue().typeDef);
-        if (status.notOk())
-            return status;
+    for (auto it = callSymbol->namedPlacementBegin(); it != callSymbol->namedPlacementEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (m_typecache->touchType(it->typeDef));
     }
 
-    status = m_typecache->touchType(callSymbol->getReturnType());
-    if (status.notOk())
-        return status;
+    auto *rest = callSymbol->restPlacement();
+    if (rest != nullptr) {
+        TU_RETURN_IF_NOT_OK (m_typecache->touchType(rest->typeDef));
+    }
+
+    TU_RETURN_IF_NOT_OK (m_typecache->touchType(callSymbol->getReturnType()));
 
     auto *callTemplate = callSymbol->callTemplate();
     if (callTemplate) {
         callTemplate->touch();
     }
 
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::CallSymbol *>::const_iterator

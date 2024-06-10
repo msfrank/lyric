@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/internal/write_structs.h>
 #include <lyric_assembler/struct_symbol.h>

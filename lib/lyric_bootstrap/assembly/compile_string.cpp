@@ -35,39 +35,11 @@ build_core_String(
             StringExistential,
             lyo1::CallFlags::GlobalVisibility,
             {
-                {"index", IntType, nullptr, lyo1::ParameterFlags::NONE}
+                make_list_param("index", IntType),
             },
             code, CharType);
     }
 }
-
-//const CoreStruct *
-//build_core_String(
-//    BuilderState &state,
-//    const CoreStruct *RecordStruct,
-//    const CoreType *Utf8Type,
-//    const CoreType *IntegerType,
-//    const CoreType *CharType)
-//{
-//    lyric_common::SymbolPath structPath({"String"});
-//
-//    auto *StringStruct = state.addStruct(structPath, lyo1::StructFlags::Final, RecordStruct);
-//
-//    {
-//        lyric_object::BytecodeBuilder code;
-//        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_CTOR)));
-//        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
-//        state.addStructCtor(StringStruct,
-//            {
-//                {"utf8", Utf8Type, nullptr, lyo1::ParameterFlags::NONE},
-//            },
-//            code);
-//        state.setStructAllocator(StringStruct, lyric_bootstrap::internal::BootstrapTrap::STRING_ALLOC);
-//    }
-
-//
-//    return StringStruct;
-//}
 
 CoreInstance *
 build_core_StringInstance(
@@ -117,7 +89,10 @@ build_core_StringInstance(
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
         state.addImplExtension("equals", StringEqualityImpl,
-            {{"lhs", StringType}, {"rhs", StringType}}, {},
+            {
+                make_list_param("lhs", StringType),
+                make_list_param("rhs", StringType),
+            },
             code, BoolType, false);
     }
     {
@@ -134,7 +109,10 @@ build_core_StringInstance(
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
         state.addImplExtension("lessthan", StringComparisonImpl,
-            {{"lhs", StringType}, {"rhs", StringType}}, {},
+            {
+                make_list_param("lhs", StringType),
+                make_list_param("rhs", StringType),
+            },
             code, BoolType, false);
     }
     {
@@ -151,7 +129,10 @@ build_core_StringInstance(
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
         state.addImplExtension("greaterthan", StringComparisonImpl,
-            {{"lhs", StringType}, {"rhs", StringType}}, {},
+            {
+                make_list_param("lhs", StringType),
+                make_list_param("rhs", StringType),
+            },
             code, BoolType, false);
     }
     {
@@ -168,7 +149,10 @@ build_core_StringInstance(
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
         state.addImplExtension("lessequals", StringComparisonImpl,
-            {{"lhs", StringType}, {"rhs", StringType}}, {},
+            {
+                make_list_param("lhs", StringType),
+                make_list_param("rhs", StringType),
+            },
             code, BoolType, false);
     }
     {
@@ -185,14 +169,20 @@ build_core_StringInstance(
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
         state.addImplExtension("greaterequals", StringComparisonImpl,
-            {{"lhs", StringType}, {"rhs", StringType}}, {},
+            {
+                make_list_param("lhs", StringType),
+                make_list_param("rhs", StringType),
+            },
             code, BoolType, false);
     }
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_COMPARE)));
         state.addImplExtension("compare", StringOrderedImpl,
-            {{"lhs", StringType}, {"rhs", StringType}}, {},
+            {
+                make_list_param("lhs", StringType),
+                make_list_param("rhs", StringType),
+            },
             code, IntegerType, false);
     }
     {

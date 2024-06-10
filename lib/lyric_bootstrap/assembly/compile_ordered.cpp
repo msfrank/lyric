@@ -19,7 +19,10 @@ CoreConcept *build_core_Ordered(BuilderState &state, const CoreConcept *IdeaConc
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
     state.addConceptAction("compare", OrderedConcept,
-        {{"lhs", TType}, {"rhs", TType}}, {},
+        {
+            make_list_param("lhs", TType),
+            make_list_param("rhs", TType),
+        },
         IntegerType);
 
     return OrderedConcept;

@@ -19,13 +19,18 @@ namespace lyric_importer {
         lyric_object::AccessType getAccess();
         lyric_object::CallMode getCallMode();
 
-        Parameter getParameter(tu_uint8 index);
-        std::vector<Parameter>::const_iterator parametersBegin();
-        std::vector<Parameter>::const_iterator parametersEnd();
-        tu_uint8 numParameters();
+        Parameter getListParameter(tu_uint8 index);
+        std::vector<Parameter>::const_iterator listParametersBegin();
+        std::vector<Parameter>::const_iterator listParametersEnd();
+        tu_uint8 numListParameters();
 
-        bool hasRest();
-        Parameter getRest();
+        Parameter getNamedParameter(tu_uint8 index);
+        std::vector<Parameter>::const_iterator namedParametersBegin();
+        std::vector<Parameter>::const_iterator namedParametersEnd();
+        tu_uint8 numNamedParameters();
+
+        bool hasRestParameter();
+        Parameter getRestParameter();
 
         lyric_common::SymbolUrl getInitializer(std::string_view name);
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator initializersBegin();

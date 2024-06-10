@@ -4,7 +4,8 @@
 #include "abstract_symbol.h"
 #include "assembly_state.h"
 #include "base_symbol.h"
-#include "call_invoker.h"
+#include "callable_invoker.h"
+#include "function_callable.h"
 #include "type_handle.h"
 
 namespace lyric_assembler {
@@ -43,8 +44,8 @@ namespace lyric_assembler {
         bool isVariable() const;
 
         lyric_common::SymbolUrl getInitializer() const;
-        tempo_utils::Result<lyric_common::SymbolUrl> declareInitializer();
-        tempo_utils::Result<CallInvoker> resolveInitializer();
+        tempo_utils::Result<ProcHandle *> defineInitializer();
+        tempo_utils::Status prepareInitializer(CallableInvoker &invoker);
 
     private:
         lyric_common::SymbolUrl m_staticUrl;

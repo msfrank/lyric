@@ -8,10 +8,9 @@
 namespace lyric_object {
 
     // forward declarations
-    class ActionParameterWalker;
     class ConceptWalker;
     class LinkWalker;
-    class RestParameterWalker;
+    class ParameterWalker;
     class SymbolWalker;
     class TemplateWalker;
     class TypeWalker;
@@ -31,11 +30,14 @@ namespace lyric_object {
         bool hasTemplate() const;
         TemplateWalker getTemplate() const;
 
-        tu_uint8 numParameters() const;
-        ActionParameterWalker getParameter(tu_uint8 index) const;
+        tu_uint8 numListParameters() const;
+        ParameterWalker getListParameter(tu_uint8 index) const;
 
-        bool hasRest() const;
-        RestParameterWalker getRest() const;
+        tu_uint8 numNamedParameters() const;
+        ParameterWalker getNamedParameter(tu_uint8 index) const;
+
+        bool hasRestParameter() const;
+        ParameterWalker getRestParameter() const;
 
         TypeWalker getResultType() const;
 

@@ -7,14 +7,14 @@
 
 namespace lyric_typing {
 
-    tempo_utils::Result<lyric_common::TypeDef> resolve_S_or_P_type(
-        lyric_assembler::BlockHandle *block,
-        const lyric_parser::NodeWalker &walker,
+    tempo_utils::Result<lyric_common::TypeDef> resolve_singular(
+        const lyric_parser::Assignable &assignable,
+        lyric_assembler::AbstractResolver *resolver,
         lyric_assembler::AssemblyState *state);
 
     tempo_utils::Result<lyric_common::TypeDef> resolve_assignable(
-        lyric_assembler::BlockHandle *block,
-        const lyric_parser::NodeWalker &walker,
+        const lyric_parser::Assignable &assignable,
+        lyric_assembler::AbstractResolver *resolver,
         lyric_assembler::AssemblyState *state);
 }
 

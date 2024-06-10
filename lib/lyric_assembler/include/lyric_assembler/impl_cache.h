@@ -9,6 +9,9 @@
 
 namespace lyric_assembler {
 
+    // forward declarations
+    class ImplHandle;
+
     class ImplCache {
     public:
         ImplCache(AssemblyState *assemblyState, AssemblerTracer *tracer);

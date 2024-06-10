@@ -33,8 +33,10 @@ namespace lyric_assembler {
         ProcHandle(const lyric_common::SymbolUrl &activation, AssemblyState *state);
         ProcHandle(
             const lyric_common::SymbolUrl &activation,
-            const absl::flat_hash_map<std::string, SymbolBinding> &parameters,
-            int arity,
+            const absl::flat_hash_map<std::string, SymbolBinding> &initialBindings,
+            tu_uint8 numListParameters,
+            tu_uint8 numNamedParameters,
+            bool hasRestParameter,
             AssemblyState *state,
             BlockHandle *parent);
         ~ProcHandle();
@@ -46,6 +48,9 @@ namespace lyric_assembler {
         int getArity() const;
         LocalOffset allocateLocal();
         int numLocals() const;
+        int numListParameters() const;
+        int numNamedParameters() const;
+        bool hasRestParameter() const;
 
         LexicalOffset allocateLexical(
             LexicalTarget lexicalTarget,
@@ -55,13 +60,20 @@ namespace lyric_assembler {
         std::vector<ProcLexical>::const_iterator lexicalsEnd() const;
         int numLexicals() const;
 
+        void putExitType(const lyric_common::TypeDef &exitType);
+        absl::flat_hash_set<lyric_common::TypeDef>::const_iterator exitTypesBegin() const;
+        absl::flat_hash_set<lyric_common::TypeDef>::const_iterator exitTypesEnd() const;
+
     private:
         lyric_common::SymbolUrl m_activation;
-        int m_arity;
+        tu_uint8 m_numListParameters;
+        tu_uint8 m_numNamedParameters;
+        bool m_hasRestParameter;
         CodeBuilder m_code;
         BlockHandle *m_block;
         int m_numLocals;
         std::vector<ProcLexical> m_lexicals;
+        absl::flat_hash_set<lyric_common::TypeDef> m_exitTypes;
     };
 }
 

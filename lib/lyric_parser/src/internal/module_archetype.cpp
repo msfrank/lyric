@@ -973,9 +973,9 @@ lyric_parser::internal::ModuleArchetype::enterParamSpec(ModuleParser::ParamSpecC
 }
 
 void
-lyric_parser::internal::ModuleArchetype::exitBareParam(ModuleParser::BareParamContext *ctx)
+lyric_parser::internal::ModuleArchetype::exitPositionalParam(ModuleParser::PositionalParamContext *ctx)
 {
-    return ModuleParameterOps::exitBareParam(ctx);
+    return ModuleParameterOps::exitPositionalParam(ctx);
 }
 
 void

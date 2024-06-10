@@ -22,7 +22,7 @@ build_core_Iterable(
     auto *IteratorTType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
         IteratorConcept->concept_index, {TType});
 
-    state.addConceptAction("Iterate", IterableConcept, {}, {}, IteratorTType);
+    state.addConceptAction("Iterate", IterableConcept, {}, IteratorTType);
 
     return IterableConcept;
 }

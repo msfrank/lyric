@@ -9,9 +9,9 @@
 #include "abstract_symbol.h"
 #include "assembly_state.h"
 #include "base_symbol.h"
-#include "call_invoker.h"
-#include "ctor_invoker.h"
-#include "method_invoker.h"
+#include "callable_invoker.h"
+#include "constructable_invoker.h"
+#include "impl_handle.h"
 #include "type_handle.h"
 
 namespace lyric_assembler {
@@ -76,7 +76,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<DataReference> declareMember(
             const std::string &name,
-            const lyric_parser::Assignable &memberSpec,
+            const lyric_common::TypeDef &memberType,
             bool isVariable,
             lyric_object::AccessType access,
             const lyric_common::SymbolUrl &init = {});
@@ -96,11 +96,10 @@ namespace lyric_assembler {
          */
         lyric_common::SymbolUrl getCtor() const;
         tu_uint32 getAllocatorTrap() const;
-        tempo_utils::Result<lyric_common::SymbolUrl> declareCtor(
-            const std::vector<ParameterSpec> &parameterSpec,
+        tempo_utils::Result<lyric_assembler::CallSymbol *> declareCtor(
             lyric_object::AccessType access,
             tu_uint32 allocatorTrap = lyric_runtime::INVALID_ADDRESS_U32);
-        tempo_utils::Result<CtorInvoker> resolveCtor();
+        tempo_utils::Status prepareCtor(ConstructableInvoker &invoker);
 
         /*
          * enum method management
@@ -111,17 +110,14 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string, BoundMethod>::const_iterator methodsEnd() const;
         tu_uint32 numMethods() const;
 
-        tempo_utils::Result<lyric_common::SymbolUrl> declareMethod(
+        tempo_utils::Result<lyric_assembler::CallSymbol *> declareMethod(
             const std::string &name,
-            const std::vector<ParameterSpec> &parameterSpec,
-            const Option<ParameterSpec> &restSpec,
-            const std::vector<ParameterSpec> &ctxSpec,
-            const lyric_parser::Assignable &returnSpec,
             lyric_object::AccessType access);
 
-        tempo_utils::Result<MethodInvoker> resolveMethod(
+        tempo_utils::Status prepareMethod(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
+            CallableInvoker &invoker,
             bool isReceiver = false) const;
 
         /*
@@ -135,7 +131,7 @@ namespace lyric_assembler {
         absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsEnd() const;
         tu_uint32 numImpls() const;
 
-        tempo_utils::Result<lyric_common::TypeDef> declareImpl(const lyric_parser::Assignable &implSpec);
+        tempo_utils::Result<ImplHandle *> declareImpl(const lyric_common::TypeDef &implType);
 
         /*
          * subtype tracking for sealed enum

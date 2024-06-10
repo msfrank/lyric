@@ -20,30 +20,30 @@ CoreConcept *build_core_Comparison(BuilderState &state, const CoreConcept *IdeaC
     auto *ComparisonConcept = state.addGenericConcept(conceptPath, ComparisonTemplate,
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
-    state.addConceptAction("lessthan",
-                           ComparisonConcept,
-                           {{"lhs", LType},
-                            {"rhs", RType}},
-                           {},
-                           BoolType);
-    state.addConceptAction("greaterthan",
-                           ComparisonConcept,
-                           {{"lhs", LType},
-                            {"rhs", RType}},
-                           {},
-                           BoolType);
-    state.addConceptAction("lessequals",
-                           ComparisonConcept,
-                           {{"lhs", LType},
-                            {"rhs", RType}},
-                           {},
-                           BoolType);
-    state.addConceptAction("greaterequals",
-                           ComparisonConcept,
-                           {{"lhs", LType},
-                            {"rhs", RType}},
-                           {},
-                           BoolType);
+    state.addConceptAction("lessthan", ComparisonConcept,
+        {
+            make_list_param("lhs", LType),
+            make_list_param("rhs", RType),
+        },
+        BoolType);
+    state.addConceptAction("greaterthan", ComparisonConcept,
+        {
+            make_list_param("lhs", LType),
+            make_list_param("rhs", RType),
+        },
+        BoolType);
+    state.addConceptAction("lessequals", ComparisonConcept,
+        {
+            make_list_param("lhs", LType),
+            make_list_param("rhs", RType),
+        },
+        BoolType);
+    state.addConceptAction("greaterequals", ComparisonConcept,
+        {
+            make_list_param("lhs", LType),
+            make_list_param("rhs", RType),
+        },
+        BoolType);
 
     return ComparisonConcept;
 }

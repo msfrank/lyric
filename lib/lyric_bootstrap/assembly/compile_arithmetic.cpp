@@ -21,19 +21,34 @@ CoreConcept *build_core_Arithmetic(BuilderState &state, const CoreConcept *IdeaC
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
     state.addConceptAction("add", ArithmeticConcept,
-        {{"lhs", LType}, {"rhs", RType}}, {},
+        {
+            make_list_param("lhs", LType),
+            make_list_param("rhs", RType),
+        },
         LType);
     state.addConceptAction("subtract", ArithmeticConcept,
-        {{"lhs", LType}, {"rhs", RType}}, {},
+        {
+            make_list_param("lhs", LType),
+            make_list_param("rhs", RType),
+        },
         LType);
     state.addConceptAction("multiply", ArithmeticConcept,
-        {{"lhs", LType}, {"rhs", RType}}, {},
+        {
+            make_list_param("lhs", LType),
+            make_list_param("rhs", RType),
+        },
         LType);
     state.addConceptAction("divide", ArithmeticConcept,
-        {{"lhs", LType}, {"rhs", RType}}, {},
+        {
+            make_list_param("lhs", LType),
+            make_list_param("rhs", RType),
+        },
         LType);
     state.addConceptAction("negate", ArithmeticConcept,
-        {{"lhs", LType}}, {}, LType);
+        {
+            make_list_param("lhs", LType)
+        },
+        LType);
 
     return ArithmeticConcept;
 }

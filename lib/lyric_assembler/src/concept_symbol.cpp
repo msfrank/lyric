@@ -252,13 +252,9 @@ lyric_assembler::ConceptSymbol::numActions() const
     return static_cast<tu_uint32>(priv->actions.size());
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
+tempo_utils::Result<lyric_assembler::ActionSymbol *>
 lyric_assembler::ConceptSymbol::declareAction(
     const std::string &name,
-    const std::vector<lyric_assembler::ParameterSpec> &parameterSpec,
-    const Option<lyric_assembler::ParameterSpec> &restSpec,
-    const std::vector<lyric_assembler::ParameterSpec> &ctxSpec,
-    const lyric_parser::Assignable &returnSpec,
     lyric_object::AccessType access)
 {
     if (isImported())
@@ -272,127 +268,6 @@ lyric_assembler::ConceptSymbol::declareAction(
             tempo_tracing::LogSeverity::kError,
             "action {} already defined for concept {}", name, m_conceptUrl.toString());
 
-    AbstractResolver *resolver = priv->conceptTemplate?
-        (AbstractResolver *) priv->conceptTemplate : priv->conceptBlock.get();
-
-    std::vector<lyric_object::Parameter> parameters;
-    Option<lyric_object::Parameter> rest;
-    absl::flat_hash_set<std::string> names;
-    absl::flat_hash_set<std::string> labels;
-
-    for (const auto &p : parameterSpec) {
-        auto resolveParamTypeResult = resolver->resolveAssignable(p.type);
-        if (resolveParamTypeResult.isStatus())
-            return resolveParamTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.name = p.name;
-        param.label = !p.label.empty()? p.label : p.name;
-        param.placement = !p.label.empty()? lyric_object::PlacementType::Named : lyric_object::PlacementType::List;
-        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE? true : false;
-        param.typeDef = resolveParamTypeResult.getResult();
-
-        if (!p.init.isEmpty()) {
-            if (param.placement != lyric_object::PlacementType::Named) {
-                return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
-                    "invalid initializer for positional parameter {}; only named parameters can be default-initialized",
-                    p.name);
-            } else {
-                param.placement = lyric_object::PlacementType::Opt;
-            }
-        }
-
-        if (names.contains(p.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for action {} on concept {}",
-                p.name, name, m_conceptUrl.toString());
-        names.insert(p.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for action {} on concept {}",
-                p.label, name, m_conceptUrl.toString());
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        parameters.push_back(param);
-    }
-
-    for (const auto &p : ctxSpec) {
-        auto resolveParamTypeResult = resolver->resolveAssignable(p.type);
-        if (resolveParamTypeResult.isStatus())
-            return resolveParamTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.placement = lyric_object::PlacementType::Ctx;
-        param.isVariable = false;
-        param.typeDef = resolveParamTypeResult.getResult();
-
-        // if ctx parameter name is not specified, then generate a unique name
-        param.name = p.name.empty()? absl::StrCat("$ctx", parameters.size()) : p.name;
-        param.label = param.name;
-
-        if (names.contains(param.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for action {} on concept {}",
-                p.name, name, m_conceptUrl.toString());
-        names.insert(param.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for action {} on concept {}",
-                p.label, name, m_conceptUrl.toString());
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        parameters.push_back(param);
-    }
-
-    if (!restSpec.isEmpty()) {
-        const auto &p = restSpec.getValue();
-        auto resolveRestTypeResult = resolver->resolveAssignable(p.type);
-        if (resolveRestTypeResult.isStatus())
-            return resolveRestTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.name = p.name;
-        param.label = param.name;
-        param.placement = lyric_object::PlacementType::Rest;
-        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE? true : false;
-        param.typeDef = resolveRestTypeResult.getResult();
-
-        if (names.contains(p.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for action {} on concept {}",
-                p.name, name, m_conceptUrl.toString());
-        names.insert(p.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for action {} on concept {}",
-                p.label, name, m_conceptUrl.toString());
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        rest = Option<lyric_object::Parameter>(param);
-    }
-
-    auto resolveReturnTypeResult = resolver->resolveAssignable(returnSpec);
-    if (resolveReturnTypeResult.isStatus())
-        return resolveReturnTypeResult.getStatus();
-    auto returnType = resolveReturnTypeResult.getResult();
-    m_state->typeCache()->touchType(returnType);
-
     // build reference path to function
     auto methodPath = m_conceptUrl.getSymbolPath().getPath();
     methodPath.push_back(name);
@@ -403,11 +278,11 @@ lyric_assembler::ConceptSymbol::declareAction(
     // construct action symbol
     ActionSymbol *actionSymbol;
     if (priv->conceptTemplate != nullptr) {
-        actionSymbol = new ActionSymbol(methodUrl, parameters, rest, returnType,
-            m_conceptUrl, address, priv->conceptTemplate, m_state);
+        actionSymbol = new ActionSymbol(methodUrl, m_conceptUrl, access, address,
+            priv->conceptTemplate, priv->conceptBlock.get(), m_state);
     } else {
-        actionSymbol = new ActionSymbol(methodUrl, parameters, rest, returnType,
-            m_conceptUrl, address, m_state);
+        actionSymbol = new ActionSymbol(methodUrl, m_conceptUrl, access, address,
+            priv->conceptBlock.get(), m_state);
     }
 
     auto status = m_state->appendAction(actionSymbol);
@@ -418,14 +293,14 @@ lyric_assembler::ConceptSymbol::declareAction(
 
     // add bound method
     priv->actions[name] = { methodUrl };
-
-    return methodUrl;
+    return actionSymbol;
 }
 
-tempo_utils::Result<lyric_assembler::ActionInvoker>
-lyric_assembler::ConceptSymbol::resolveAction(
+tempo_utils::Status
+lyric_assembler::ConceptSymbol::prepareAction(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
+    CallableInvoker &invoker,
     bool thisReceiver) const
 {
     auto *priv = getPriv();
@@ -440,7 +315,8 @@ lyric_assembler::ConceptSymbol::resolveAction(
     if (symbol->getSymbolType() != SymbolType::ACTION)
         m_state->throwAssemblerInvariant("invalid action symbol {}", actionMethod.methodAction.toString());
     auto *action = cast_symbol_to_action(symbol);
-    return ActionInvoker(action, getAddress());
+    auto callable = std::make_unique<ActionCallable>(action, getAddress());
+    return invoker.initialize(std::move(callable));
 }
 
 bool
@@ -497,19 +373,14 @@ lyric_assembler::ConceptSymbol::numImpls() const
     return priv->impls.size();
 }
 
-tempo_utils::Result<lyric_common::TypeDef>
-lyric_assembler::ConceptSymbol::declareImpl(const lyric_parser::Assignable &implSpec)
+tempo_utils::Result<lyric_assembler::ImplHandle *>
+lyric_assembler::ConceptSymbol::declareImpl(const lyric_common::TypeDef &implType)
 {
     if (isImported())
         m_state->throwAssemblerInvariant(
             "can't declare impl on imported concept {}", m_conceptUrl.toString());
 
     auto *priv = getPriv();
-
-    auto resolveImplTypeResult = priv->conceptBlock->resolveAssignable(implSpec);
-    if (resolveImplTypeResult.isStatus())
-        return resolveImplTypeResult.getStatus();
-    auto implType = resolveImplTypeResult.getResult();
 
     if (implType.getType() != lyric_common::TypeDefType::Concrete)
         m_state->throwAssemblerInvariant("invalid impl type {}", implType.toString());
@@ -554,7 +425,7 @@ lyric_assembler::ConceptSymbol::declareImpl(const lyric_parser::Assignable &impl
 
     priv->impls[implUrl] = implHandle;
 
-    return implType;
+    return implHandle;
 }
 
 bool

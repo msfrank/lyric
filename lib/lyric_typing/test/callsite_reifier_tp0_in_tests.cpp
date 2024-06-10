@@ -6,6 +6,7 @@
 #include <lyric_typing/callsite_reifier.h>
 
 #include "base_fixture.h"
+#include "test_callable.h"
 
 class CallsiteReifierTP0In : public BaseFixture {};
 
@@ -32,16 +33,18 @@ TEST_F(CallsiteReifierTP0In, UnaryFunctionGivenT_P0takesT_returnsBool)
     lyric_assembler::TemplateHandle *templateHandle;
     TU_ASSIGN_OR_RAISE (templateHandle, typeCache->getOrImportTemplate(templateUrl));
 
-    lyric_object::Parameter p0;
+    lyric_assembler::Parameter p0;
     p0.index = 0;
     p0.typeDef = templateHandle->getPlaceholder(0);
     p0.placement = lyric_object::PlacementType::List;
 
+    lyric_assembler::CallableInvoker invoker;
+    auto callable = std::unique_ptr<TestCallable>(new TestCallable({p0}, {}, {}, templateHandle));
+    ASSERT_TRUE (invoker.initialize(std::move(callable)).isOk());
+
     // simulate the function f[T](p0: T): Bool
-    lyric_typing::CallsiteReifier reifier({p0}, {}, templateUrl, templateHandle->getTemplateParameters(),
-        {}, m_typeSystem.get());
-    ASSERT_TRUE (reifier.initialize().isOk());
-    ASSERT_TRUE (reifier.isValid());
+    lyric_typing::CallsiteReifier reifier(m_typeSystem.get());
+    ASSERT_TRUE (reifier.initialize(invoker).isOk());
 
     // apply Int argument
     ASSERT_TRUE (reifier.reifyNextArgument(IntType).isOk());
@@ -53,5 +56,5 @@ TEST_F(CallsiteReifierTP0In, UnaryFunctionGivenT_P0takesT_returnsBool)
     ASSERT_EQ (BoolType, resultType);
 
     // verify 1 argument has been reified
-    ASSERT_EQ (1, reifier.numArguments());
+    ASSERT_EQ (1, reifier.numReifiedArguments());
 }

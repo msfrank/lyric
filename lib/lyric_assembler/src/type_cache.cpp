@@ -606,6 +606,11 @@ get_placeholder_bound(
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::TypeCache::resolveUnion(const std::vector<lyric_common::TypeDef> &unionMembers)
 {
+    if (unionMembers.empty())
+        return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
+            tempo_tracing::LogSeverity::kError,
+            "invalid union set; set must be non-empty");
+
     DisjointTypeSet disjointTypeSet(m_assemblyState);
 
     // validate union member invariants
@@ -657,6 +662,11 @@ lyric_assembler::TypeCache::resolveUnion(const std::vector<lyric_common::TypeDef
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::TypeCache::resolveIntersection(const std::vector<lyric_common::TypeDef> &intersectionMembers)
 {
+    if (intersectionMembers.empty())
+        return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
+            tempo_tracing::LogSeverity::kError,
+            "invalid intersection set; set must be non-empty");
+
     absl::flat_hash_set<lyric_common::SymbolUrl> memberSet;
 
     // validate intersection member invariants

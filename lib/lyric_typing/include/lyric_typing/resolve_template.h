@@ -1,14 +1,16 @@
 #ifndef LYRIC_TYPING_RESOLVE_TEMPLATE_H
 #define LYRIC_TYPING_RESOLVE_TEMPLATE_H
 
-#include "tempo_utils/result.h"
-#include "lyric_assembler/assembler_types.h"
-#include "lyric_parser/node_walker.h"
-#include "lyric_assembler/block_handle.h"
+#include <lyric_assembler/assembler_types.h>
+#include <lyric_assembler/block_handle.h>
+#include <lyric_parser/node_walker.h>
+#include <tempo_utils/result.h>
+
+#include "typing_types.h"
 
 namespace lyric_typing {
 
-    tempo_utils::Result<lyric_assembler::TemplateSpec>
+    tempo_utils::Result<TemplateSpec>
     resolve_template(
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,

@@ -14,7 +14,7 @@ namespace lyric_parser::internal {
         virtual ~ModuleParameterOps() = default;
 
         void enterParamSpec(ModuleParser::ParamSpecContext *ctx);
-        void exitBareParam(ModuleParser::BareParamContext *ctx);
+        void exitPositionalParam(ModuleParser::PositionalParamContext *ctx);
         void exitNamedParam(ModuleParser::NamedParamContext *ctx);
         void exitRenamedParam(ModuleParser::RenamedParamContext *ctx);
         void exitNamedCtx(ModuleParser::NamedCtxContext *ctx);

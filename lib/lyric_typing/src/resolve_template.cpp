@@ -7,8 +7,9 @@
 #include <lyric_typing/resolve_template.h>
 #include <lyric_typing/typing_result.h>
 #include <lyric_typing/resolve_assignable.h>
+#include "lyric_typing/parse_assignable.h"
 
-tempo_utils::Result<lyric_assembler::TemplateSpec>
+tempo_utils::Result<lyric_typing::TemplateSpec>
 lyric_typing::resolve_template(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
@@ -22,7 +23,7 @@ lyric_typing::resolve_template(
     if (walker.numChildren() == 0)
         block->throwSyntaxError(walker, "template must contain at least one placeholder");
 
-    lyric_assembler::TemplateSpec templateSpec;
+    TemplateSpec templateSpec;
     absl::flat_hash_set<std::string> usedPlaceholderNames;
 
     auto *fundamentalCache = state->fundamentalCache();
@@ -90,12 +91,11 @@ lyric_typing::resolve_template(
             status = constraint.parseAttr(lyric_parser::kLyricAstTypeOffset, typeOffset);
             if (status.notOk())
                 return status;
-            auto assignedType = walker.getNodeAtOffset(typeOffset);
+            auto typeNode = walker.getNodeAtOffset(typeOffset);
 
-            auto resolveAssignedTypeResult = resolve_assignable(block, assignedType, state);
-            if (resolveAssignedTypeResult.isStatus())
-                return resolveAssignedTypeResult.getStatus();
-            tp.typeDef = resolveAssignedTypeResult.getResult();
+            lyric_parser::Assignable assignable;
+            TU_ASSIGN_OR_RETURN (assignable, parse_assignable(block, typeNode, state));
+            TU_ASSIGN_OR_RETURN (tp.typeDef, resolve_assignable(assignable, block, state));
         }
 
         usedPlaceholderNames.insert(tp.name);

@@ -28,10 +28,11 @@ namespace lyric_assembler {
             AssemblyState *state);
 
         tempo_utils::Result<lyric_common::TypeDef> resolveSingular(
-            const lyric_parser::Assignable &assignableSpec);
+            const lyric_common::SymbolPath &typePath,
+            const std::vector<lyric_common::TypeDef> &typeArguments) override;
 
-        tempo_utils::Result<lyric_common::TypeDef> resolveAssignable(
-            const lyric_parser::Assignable &assignableSpec) override;
+//        tempo_utils::Result<lyric_common::TypeDef> resolveAssignable(
+//            const lyric_parser::Assignable &assignableSpec) override;
 
         lyric_common::SymbolUrl getTemplateUrl() const;
         TemplateAddress getAddress();

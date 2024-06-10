@@ -57,7 +57,10 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         state.addImplExtension("lessthan", CharComparisonImpl,
-            {{"lhs", CharType}, {"rhs", CharType}}, {},
+            {
+                make_list_param("lhs", CharType),
+                make_list_param("rhs", CharType),
+            },
             code, BoolType, true);
     }
     {
@@ -73,7 +76,10 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         state.addImplExtension("greaterthan", CharComparisonImpl,
-            {{"lhs", CharType}, {"rhs", CharType}}, {},
+            {
+                make_list_param("lhs", CharType),
+                make_list_param("rhs", CharType),
+            },
             code, BoolType, true);
     }
     {
@@ -89,7 +95,10 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         state.addImplExtension("lessequals", CharComparisonImpl,
-            {{"lhs", CharType}, {"rhs", CharType}}, {},
+            {
+                make_list_param("lhs", CharType),
+                make_list_param("rhs", CharType),
+            },
             code, BoolType, true);
     }
     {
@@ -105,7 +114,10 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         state.addImplExtension("greaterequals", CharComparisonImpl,
-            {{"lhs", CharType}, {"rhs", CharType}}, {},
+            {
+                make_list_param("lhs", CharType),
+                make_list_param("rhs", CharType),
+            },
             code, BoolType, true);
     }
     {
@@ -121,14 +133,20 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         state.addImplExtension("equals", CharEqualityImpl,
-            {{"lhs", CharType}, {"rhs", CharType}}, {},
+            {
+                make_list_param("lhs", CharType),
+                make_list_param("rhs", CharType),
+            },
             code, BoolType, true);
     }
     {
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CHR_CMP));
         state.addImplExtension("compare", CharOrderedImpl,
-            {{"lhs", CharType}, {"rhs", CharType}}, {},
+            {
+                make_list_param("lhs", CharType),
+                make_list_param("rhs", CharType),
+            },
             code, IntegerType, true);
     }
     {

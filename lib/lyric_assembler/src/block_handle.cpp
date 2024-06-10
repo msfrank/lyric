@@ -1,10 +1,9 @@
 
 #include <absl/container/flat_hash_set.h>
 
-#include <lyric_assembler/abstract_importer.h>
 #include <lyric_assembler/argument_variable.h>
 #include <lyric_assembler/block_handle.h>
-#include <lyric_assembler/call_invoker.h>
+#include <lyric_assembler/function_callable.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/code_builder.h>
@@ -343,60 +342,96 @@ lyric_assembler::BlockHandle::resolveBinding(const std::vector<std::string> &pat
         "missing symbol {}", lyric_common::SymbolPath(path).toString());
 }
 
+//tempo_utils::Result<lyric_common::TypeDef>
+//lyric_assembler::BlockHandle::resolveAssignable(const lyric_parser::Assignable &assignableSpec) // NOLINT(misc-no-recursion)
+//{
+//    if (assignableSpec.getType() == lyric_parser::AssignableType::SINGULAR)
+//        return resolveSingular(assignableSpec);
+//
+//    if (assignableSpec.getType() == lyric_parser::AssignableType::UNION) {
+//        std::vector<lyric_common::TypeDef> unionMembers;
+//        for (const auto &memberSpec : assignableSpec.getUnion()) {
+//            auto resolveMemberResult = resolveSingular(memberSpec);
+//            if (resolveMemberResult.isStatus())
+//                return resolveMemberResult;
+//            unionMembers.push_back(resolveMemberResult.getResult());
+//        }
+//        return m_state->typeCache()->resolveUnion(unionMembers);
+//    }
+//    if (assignableSpec.getType() == lyric_parser::AssignableType::INTERSECTION) {
+//        std::vector<lyric_common::TypeDef> intersectionMembers;
+//        for (const auto &memberSpec : assignableSpec.getIntersection()) {
+//            auto resolveMemberResult = resolveSingular(memberSpec);
+//            if (resolveMemberResult.isStatus())
+//                return resolveMemberResult;
+//            intersectionMembers.push_back(resolveMemberResult.getResult());
+//        }
+//        return m_state->typeCache()->resolveIntersection(intersectionMembers);
+//    }
+//
+//    m_state->throwAssemblerInvariant("failed to resolve non singular base type {}", assignableSpec.toString());
+//}
+//
+//tempo_utils::Result<lyric_common::TypeDef>
+//lyric_assembler::BlockHandle::resolveSingular(const lyric_parser::Assignable &assignableSpec) // NOLINT(misc-no-recursion)
+//{
+//    if (assignableSpec.getType() != lyric_parser::AssignableType::SINGULAR)
+//        throwAssemblerInvariant("{} is a non-singular type", assignableSpec.toString());
+//
+//    // if spec has parameters, then resolve them to types first
+//    std::vector<lyric_common::TypeDef> typeParameters;
+//    for (const auto &parameter : assignableSpec.getTypeParameters()) {
+//        auto resolveParameterResult = resolveAssignable(parameter);
+//        if (resolveParameterResult.isStatus())
+//            return resolveParameterResult;
+//        typeParameters.push_back(resolveParameterResult.getResult());
+//    }
+//
+//    // resolve the base to a binding
+//    SymbolBinding binding;
+//    TU_ASSIGN_OR_RETURN (binding, resolveBinding(assignableSpec.getTypePath().getPath()));
+//
+//    // we expect the binding is either a descriptor or placeholder
+//    lyric_common::TypeDef typeDef;
+//    switch (binding.bindingType) {
+//        case BindingType::Descriptor:
+//            typeDef = lyric_common::TypeDef::forConcrete(binding.symbolUrl, typeParameters);
+//            break;
+//        case BindingType::Placeholder:
+//            typeDef = binding.typeDef;
+//            break;
+//        default:
+//            return logAndContinue(
+//                lyric_assembler::AssemblerCondition::kMissingSymbol,
+//                tempo_tracing::LogSeverity::kError,
+//                "{} is not a valid type", assignableSpec.getTypePath().toString());
+//    }
+//
+//    auto *typeCache = m_state->typeCache();
+//
+//    // add the type to the typecache if it doesn't already exist
+//    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(typeDef));
+//
+//    return typeDef;
+//}
+
 tempo_utils::Result<lyric_common::TypeDef>
-lyric_assembler::BlockHandle::resolveAssignable(const lyric_parser::Assignable &assignableSpec) // NOLINT(misc-no-recursion)
+lyric_assembler::BlockHandle::resolveSingular(
+    const lyric_common::SymbolPath &typePath,
+    const std::vector<lyric_common::TypeDef> &typeArguments) // NOLINT(misc-no-recursion)
 {
-    if (assignableSpec.getType() == lyric_parser::AssignableType::SINGULAR)
-        return resolveSingular(assignableSpec);
+    if (!typePath.isValid())
+        m_state->throwAssemblerInvariant("invalid type path {}", typePath.toString());
 
-    if (assignableSpec.getType() == lyric_parser::AssignableType::UNION) {
-        std::vector<lyric_common::TypeDef> unionMembers;
-        for (const auto &memberSpec : assignableSpec.getUnion()) {
-            auto resolveMemberResult = resolveSingular(memberSpec);
-            if (resolveMemberResult.isStatus())
-                return resolveMemberResult;
-            unionMembers.push_back(resolveMemberResult.getResult());
-        }
-        return m_state->typeCache()->resolveUnion(unionMembers);
-    }
-    if (assignableSpec.getType() == lyric_parser::AssignableType::INTERSECTION) {
-        std::vector<lyric_common::TypeDef> intersectionMembers;
-        for (const auto &memberSpec : assignableSpec.getIntersection()) {
-            auto resolveMemberResult = resolveSingular(memberSpec);
-            if (resolveMemberResult.isStatus())
-                return resolveMemberResult;
-            intersectionMembers.push_back(resolveMemberResult.getResult());
-        }
-        return m_state->typeCache()->resolveIntersection(intersectionMembers);
-    }
-
-    m_state->throwAssemblerInvariant("failed to resolve non singular base type {}", assignableSpec.toString());
-}
-
-tempo_utils::Result<lyric_common::TypeDef>
-lyric_assembler::BlockHandle::resolveSingular(const lyric_parser::Assignable &assignableSpec) // NOLINT(misc-no-recursion)
-{
-    if (assignableSpec.getType() != lyric_parser::AssignableType::SINGULAR)
-        throwAssemblerInvariant("{} is a non-singular type", assignableSpec.toString());
-
-    // if spec has parameters, then resolve them to types first
-    std::vector<lyric_common::TypeDef> typeParameters;
-    for (const auto &parameter : assignableSpec.getTypeParameters()) {
-        auto resolveParameterResult = resolveAssignable(parameter);
-        if (resolveParameterResult.isStatus())
-            return resolveParameterResult;
-        typeParameters.push_back(resolveParameterResult.getResult());
-    }
-
-    // resolve the base to a binding
+    // resolve the type path to a binding
     SymbolBinding binding;
-    TU_ASSIGN_OR_RETURN (binding, resolveBinding(assignableSpec.getTypePath().getPath()));
+    TU_ASSIGN_OR_RETURN (binding, resolveBinding(typePath.getPath()));
 
     // we expect the binding is either a descriptor or placeholder
     lyric_common::TypeDef typeDef;
     switch (binding.bindingType) {
         case BindingType::Descriptor:
-            typeDef = lyric_common::TypeDef::forConcrete(binding.symbolUrl, typeParameters);
+            typeDef = lyric_common::TypeDef::forConcrete(binding.symbolUrl, typeArguments);
             break;
         case BindingType::Placeholder:
             typeDef = binding.typeDef;
@@ -405,7 +440,7 @@ lyric_assembler::BlockHandle::resolveSingular(const lyric_parser::Assignable &as
             return logAndContinue(
                 lyric_assembler::AssemblerCondition::kMissingSymbol,
                 tempo_tracing::LogSeverity::kError,
-                "{} is not a valid type", assignableSpec.getTypePath().toString());
+                "{} does not refer to a valid type", typePath.toString());
     }
 
     auto *typeCache = m_state->typeCache();
@@ -606,15 +641,15 @@ inline lyric_assembler::DataReference
 symbol_binding_to_data_reference(const lyric_assembler::SymbolBinding &binding)
 {
     switch (binding.bindingType) {
-        case lyric_assembler::BindingType::Descriptor:
-            return lyric_assembler::DataReference{binding.symbolUrl, binding.typeDef,
-                lyric_assembler::ReferenceType::Descriptor};
         case lyric_assembler::BindingType::Value:
-            return lyric_assembler::DataReference{binding.symbolUrl, binding.typeDef,
-                lyric_assembler::ReferenceType::Value};
+            return lyric_assembler::DataReference{binding.symbolUrl,
+                binding.typeDef, lyric_assembler::ReferenceType::Value};
         case lyric_assembler::BindingType::Variable:
-            return lyric_assembler::DataReference{binding.symbolUrl, binding.typeDef,
-                lyric_assembler::ReferenceType::Variable};
+            return lyric_assembler::DataReference{binding.symbolUrl,
+                binding.typeDef, lyric_assembler::ReferenceType::Variable};
+        case lyric_assembler::BindingType::Descriptor:
+            return lyric_assembler::DataReference{binding.symbolUrl,
+                {}, lyric_assembler::ReferenceType::Descriptor};
         default:
             return lyric_assembler::DataReference{{}, {}, lyric_assembler::ReferenceType::Invalid};
     }
@@ -824,13 +859,9 @@ lyric_assembler::BlockHandle::store(const DataReference &ref)
         "cannot store data at reference {}", ref.symbolUrl.toString());
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
+tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::BlockHandle::declareFunction(
     const std::string &name,
-    const std::vector<lyric_assembler::ParameterSpec> &parameterSpec,
-    const Option<lyric_assembler::ParameterSpec> &restSpec,
-    const std::vector<lyric_assembler::ParameterSpec> &ctxSpec,
-    const lyric_parser::Assignable &returnSpec,
     lyric_object::AccessType access,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     bool declOnly)
@@ -849,129 +880,6 @@ lyric_assembler::BlockHandle::declareFunction(
         TU_ASSIGN_OR_RETURN (functionTemplate, m_state->typeCache()->getOrImportTemplate(functionUrl));
     }
 
-    AbstractResolver *resolver = functionTemplate? (AbstractResolver *) functionTemplate : this;
-
-    std::vector<lyric_object::Parameter> parameters;
-    Option<lyric_object::Parameter> rest;
-    absl::flat_hash_set<std::string> names;
-    absl::flat_hash_set<std::string> labels;
-
-    for (const auto &p : parameterSpec) {
-        auto resolveParamTypeResult = resolver->resolveAssignable(p.type);
-        if (resolveParamTypeResult.isStatus())
-            return resolveParamTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.name = p.name;
-        param.label = !p.label.empty()? p.label : p.name;
-        param.placement = !p.label.empty()? lyric_object::PlacementType::Named : lyric_object::PlacementType::List;
-        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE;
-        param.typeDef = resolveParamTypeResult.getResult();
-
-        if (!p.init.isEmpty()) {
-            if (param.placement != lyric_object::PlacementType::Named) {
-                return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
-                    "invalid positional parameter {}; only named parameters can be default-initialized",
-                    p.name);
-            } else {
-                param.placement = lyric_object::PlacementType::Opt;
-            }
-        }
-
-        if (names.contains(p.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for function {}",
-                p.name, name);
-        names.insert(p.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for function {}",
-                p.label, name);
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        parameters.push_back(param);
-    }
-
-    for (const auto &p : ctxSpec) {
-        auto resolveParamTypeResult = resolver->resolveAssignable(p.type);
-        if (resolveParamTypeResult.isStatus())
-            return resolveParamTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.placement = lyric_object::PlacementType::Ctx;
-        param.isVariable = false;
-        param.typeDef = resolveParamTypeResult.getResult();
-
-        // if ctx parameter name is not specified, then generate a unique name
-        param.name = p.name.empty()? absl::StrCat("$ctx", parameters.size()) : p.name;
-        param.label = param.name;
-
-        if (names.contains(param.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for function {}",
-                p.name, name);
-        names.insert(param.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for function {}",
-                p.label, name);
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        parameters.push_back(param);
-    }
-
-    if (!restSpec.isEmpty()) {
-        const auto &p = restSpec.getValue();
-        auto resolveRestTypeResult = resolver->resolveAssignable(p.type);
-        if (resolveRestTypeResult.isStatus())
-            return resolveRestTypeResult.getStatus();
-
-        lyric_object::Parameter param;
-        param.index = parameters.size();
-        param.name = p.name;
-        param.label = param.name;
-        param.placement = lyric_object::PlacementType::Rest;
-        param.isVariable = p.binding == lyric_parser::BindingType::VARIABLE? true : false;
-        param.typeDef = resolveRestTypeResult.getResult();
-
-        if (names.contains(p.name))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "parameter {} already defined for function {}",
-                p.name, name);
-        names.insert(p.name);
-
-        if (labels.contains(param.label))
-            return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
-                "label {} already defined for function {}",
-                p.label, name);
-        labels.insert(param.label);
-
-        m_state->typeCache()->touchType(param.typeDef);
-        rest = Option<lyric_object::Parameter>(param);
-    }
-
-    auto resolveReturnTypeResult = resolver->resolveAssignable(returnSpec);
-    if (resolveReturnTypeResult.isStatus())
-        return resolveReturnTypeResult.getStatus();
-    auto returnType = resolveReturnTypeResult.getResult();
-    m_state->typeCache()->touchType(returnType);
-
-    TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareFunctionType(returnType, parameters, rest));
-
     CallAddress address;
     if (!declOnly)
         address = CallAddress::near(m_state->numCalls());
@@ -979,11 +887,11 @@ lyric_assembler::BlockHandle::declareFunction(
     // create the call
     CallSymbol *callSymbol;
     if (functionTemplate) {
-        callSymbol = new CallSymbol(functionUrl, parameters, rest, returnType, access, address,
-            lyric_object::CallMode::Normal, typeHandle, functionTemplate, functionTemplate->parentBlock(), m_state);
+        callSymbol = new CallSymbol(functionUrl, access, address, lyric_object::CallMode::Normal,
+            functionTemplate, functionTemplate->parentBlock(), m_state);
     } else {
-        callSymbol = new CallSymbol(functionUrl, parameters, rest, returnType, access, address,
-            lyric_object::CallMode::Normal, typeHandle, this, m_state);
+        callSymbol = new CallSymbol(functionUrl, access, address, lyric_object::CallMode::Normal,
+            this, m_state);
     }
 
     auto status = m_state->appendCall(callSymbol);
@@ -994,15 +902,14 @@ lyric_assembler::BlockHandle::declareFunction(
 
     SymbolBinding binding;
     binding.symbolUrl = functionUrl;
-    binding.typeDef = typeHandle->getTypeDef();
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 
-    return functionUrl;
+    return callSymbol;
 }
 
-tempo_utils::Result<lyric_assembler::CallInvoker>
-lyric_assembler::BlockHandle::resolveFunction(const std::string &name)
+tempo_utils::Status
+lyric_assembler::BlockHandle::prepareFunction(const std::string &name, CallableInvoker &invoker)
 {
     auto resolveDefinitionResult = resolveDefinition({name});
     if (resolveDefinitionResult.isStatus())
@@ -1015,11 +922,15 @@ lyric_assembler::BlockHandle::resolveFunction(const std::string &name)
         throwAssemblerInvariant("invalid call symbol {}", functionUrl.toString());
     auto *call = cast_symbol_to_call(symbol);
 
-    return CallInvoker(call);
+    auto callable = std::make_unique<FunctionCallable>(call);
+    return invoker.initialize(std::move(callable));
 }
 
-tempo_utils::Result<lyric_assembler::CallInvoker>
-lyric_assembler::BlockHandle::resolveExtension(const lyric_common::TypeDef &receiverType, const std::string &name)
+tempo_utils::Status
+lyric_assembler::BlockHandle::prepareExtension(
+    const lyric_common::TypeDef &receiverType,
+    const std::string &name,
+    CallableInvoker &invoker)
 {
 //    auto resolveDefinitionResult = resolveReference(QStringList(name));
 //    if (resolveDefinitionResult.isStatus())
@@ -1588,6 +1499,45 @@ lyric_assembler::BlockHandle::resolveImpl(const lyric_common::TypeDef &implType,
     }
 }
 
+inline tempo_utils::Result<lyric_common::TypeDef>
+determine_binding_type(
+    lyric_assembler::AbstractSymbol *targetSymbol,
+    const lyric_common::TypeDef &aliasType,
+    lyric_assembler::BlockHandle *block)
+{
+    if (!aliasType.isValid())
+        return targetSymbol->getAssignableType();
+
+    auto *state = block->blockState();
+    auto *typeCache = state->typeCache();
+
+    lyric_assembler::TypeHandle *aliasTypeHandle;
+    TU_ASSIGN_OR_RETURN (aliasTypeHandle, typeCache->getOrMakeType(aliasType));
+
+    auto targetSig = targetSymbol->getTypeSignature();
+    auto aliasSig = aliasTypeHandle->getTypeSignature();
+    auto cmp = targetSig.compare(aliasSig);
+    if (cmp != lyric_runtime::TypeComparison::EXTENDS)
+        block->logAndContinue(lyric_assembler::AssemblerCondition::kIncompatibleType,
+            tempo_tracing::LogSeverity::kError,
+            "alias target must extend or equal alias type {}", aliasType.toString());
+
+    return aliasType;
+}
+
+inline tempo_utils::Result<lyric_common::TypeDef>
+determine_binding_type(
+    const lyric_common::SymbolUrl &targetUrl,
+    const lyric_common::TypeDef &aliasType,
+    lyric_assembler::BlockHandle *block)
+{
+    auto *state = block->blockState();
+    auto *symbolCache = state->symbolCache();
+    lyric_assembler::AbstractSymbol *targetSymbol;
+    TU_ASSIGN_OR_RETURN (targetSymbol, symbolCache->getOrImportSymbol(targetUrl));
+    return determine_binding_type(targetSymbol, aliasType, block);
+}
+
 tempo_utils::Result<lyric_assembler::SymbolBinding>
 lyric_assembler::BlockHandle::declareAlias(
     const std::string &alias,
@@ -1602,7 +1552,6 @@ lyric_assembler::BlockHandle::declareAlias(
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(targetUrl));
 
     SymbolBinding binding;
-    binding.symbolUrl = targetUrl;
 
     // set binding type
     switch (symbol->getSymbolType()) {
@@ -1615,24 +1564,25 @@ lyric_assembler::BlockHandle::declareAlias(
         case SymbolType::INSTANCE:
         case SymbolType::NAMESPACE:
         case SymbolType::STRUCT:
+            binding.symbolUrl = targetUrl;
             binding.bindingType = BindingType::Descriptor;
+            if (aliasType.isValid())
+                return logAndContinue(AssemblerCondition::kIncompatibleType,
+                    tempo_tracing::LogSeverity::kError,
+                    "cannot declare alias {}; alias type {} is valid for target", alias, aliasType.toString());
             break;
-        case SymbolType::STATIC:
+
+        case SymbolType::STATIC: {
+            binding.symbolUrl = targetUrl;
             binding.bindingType = BindingType::Value;
+            TU_ASSIGN_OR_RETURN (binding.typeDef, determine_binding_type(symbol, aliasType, this));
             break;
+        }
+
         default:
             return logAndContinue(AssemblerCondition::kMissingSymbol,
                 tempo_tracing::LogSeverity::kError,
                 "cannot declare alias {}; {} is not a valid target", alias, targetUrl.toString());
-    }
-
-    // TODO: perform validation here? at least check if symbol type and alias type are disjoint
-    if (aliasType.isValid()) {
-        // if aliasType is specified, then use it for the binding
-        binding.typeDef = aliasType;
-    } else {
-        // otherwise use the declared assignable type of the symbol
-        binding.typeDef = symbol->getAssignableType();
     }
 
     m_bindings[alias] = binding;
@@ -1652,13 +1602,31 @@ lyric_assembler::BlockHandle::declareAlias(
     TU_RETURN_IF_STATUS (m_state->symbolCache()->getOrImportSymbol(targetBinding.symbolUrl));
 
     SymbolBinding binding;
-    binding.symbolUrl = targetBinding.symbolUrl;
-    binding.bindingType = targetBinding.bindingType;
-    // TODO: perform validation here? at least check if target type and alias type are disjoint
-    binding.typeDef = aliasType.isValid()? aliasType : targetBinding.typeDef;
-    if (targetBinding.bindingType == BindingType::Invalid)
+
+    switch (targetBinding.bindingType) {
+        case BindingType::Descriptor:
+        case BindingType::Placeholder:
+            binding.symbolUrl = targetBinding.symbolUrl;
+            binding.bindingType = targetBinding.bindingType;
+            if (aliasType.isValid())
+                return logAndContinue(AssemblerCondition::kIncompatibleType,
+                    tempo_tracing::LogSeverity::kError,
+                    "cannot declare alias {}; alias type {} is valid for target", alias, aliasType.toString());
+            break;
+
+        case BindingType::Variable:
+        case BindingType::Value: {
+            binding.symbolUrl = targetBinding.symbolUrl;
+            binding.bindingType = targetBinding.bindingType;
+            TU_ASSIGN_OR_RETURN (binding.typeDef, determine_binding_type(targetBinding.symbolUrl, aliasType, this));
+            break;
+        }
+
+        default:
             throwAssemblerInvariant("failed to declare alias to {}; invalid binding type",
                 targetBinding.symbolUrl.toString());
+    }
+    binding.typeDef = aliasType.isValid()? aliasType : targetBinding.typeDef;
 
     m_bindings[alias] = binding;
     return binding;
@@ -1677,19 +1645,31 @@ lyric_assembler::BlockHandle::declareAlias(
     TU_RETURN_IF_STATUS (m_state->symbolCache()->getOrImportSymbol(targetRef.symbolUrl));
 
     SymbolBinding binding;
-    binding.symbolUrl = targetRef.symbolUrl;
+
     // TODO: perform validation here? at least check if target type and alias type are disjoint
     binding.typeDef = aliasType.isValid()? aliasType : targetRef.typeDef;
     switch (targetRef.referenceType) {
-        case ReferenceType::Descriptor:
+        case ReferenceType::Descriptor: {
+            binding.symbolUrl = targetRef.symbolUrl;
             binding.bindingType = BindingType::Descriptor;
+            if (aliasType.isValid())
+                return logAndContinue(AssemblerCondition::kIncompatibleType,
+                    tempo_tracing::LogSeverity::kError,
+                    "cannot declare alias {}; alias type {} is valid for target", alias, aliasType.toString());
             break;
-        case ReferenceType::Value:
+        }
+        case ReferenceType::Value: {
+            binding.symbolUrl = targetRef.symbolUrl;
             binding.bindingType = BindingType::Value;
+            TU_ASSIGN_OR_RETURN (binding.typeDef, determine_binding_type(targetRef.symbolUrl, aliasType, this));
             break;
-        case ReferenceType::Variable:
+        }
+        case ReferenceType::Variable: {
+            binding.symbolUrl = targetRef.symbolUrl;
             binding.bindingType = BindingType::Variable;
+            TU_ASSIGN_OR_RETURN (binding.typeDef, determine_binding_type(targetRef.symbolUrl, aliasType, this));
             break;
+        }
         default:
             throwAssemblerInvariant("failed to declare alias to {}; invalid reference type",
                 targetRef.symbolUrl.toString());
@@ -1758,7 +1738,6 @@ lyric_assembler::BlockHandle::declareNamespace(
 
     SymbolBinding binding;
     binding.symbolUrl = nsUrl;
-    binding.typeDef = namespaceSymbol->getAssignableType();
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 

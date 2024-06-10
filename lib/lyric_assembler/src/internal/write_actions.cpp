@@ -42,33 +42,33 @@ write_action(
                 "invalid action receiver");
     }
 
-    std::vector<lyo1::Parameter> parameters;
-    std::vector<std::string> names;
+    std::vector<flatbuffers::Offset<lyo1::Parameter>> listParameters;
+    for (auto it = actionSymbol->listPlacementBegin(); it != actionSymbol->listPlacementEnd(); it++) {
+        const auto &param = *it;
 
-    for (const auto &param : actionSymbol->getParameters()) {
-        lyo1::ParameterFlags flags = lyo1::ParameterFlags::NONE;
+        lyo1::ParameterT p;
+        p.parameter_name = param.name;
+
+        p.flags = lyo1::ParameterFlags::NONE;
         switch (param.placement) {
-            case lyric_object::PlacementType::Ctx:
-                flags |= lyo1::ParameterFlags::Ctx;
-                break;
-            case lyric_object::PlacementType::Named:
-            case lyric_object::PlacementType::Opt:
-                flags |= lyo1::ParameterFlags::Named;
-                break;
             case lyric_object::PlacementType::List:
+            case lyric_object::PlacementType::ListOpt:
                 break;
             default:
                 return lyric_assembler::AssemblerStatus::forCondition(
-                    lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid placement type");
+                    lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                    "invalid placement type");
         }
-        if (param.isVariable)
-            flags |= lyo1::ParameterFlags::Var;
+        if (param.isVariable) {
+            p.flags |= lyo1::ParameterFlags::Var;
+        }
+
         lyric_assembler::TypeHandle *paramTypeHandle;
         TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(param.typeDef));
-        tu_uint32 paramType = paramTypeHandle->getAddress().getAddress();
-        tu_uint32 paramDefault = lyric_runtime::INVALID_ADDRESS_U32;
+        p.parameter_type = paramTypeHandle->getAddress().getAddress();
+        p.initializer_call = lyric_runtime::INVALID_ADDRESS_U32;
         if (actionSymbol->hasInitializer(param.name)) {
-            if (param.placement != lyric_object::PlacementType::Opt)
+            if (param.placement != lyric_object::PlacementType::ListOpt)
                 return lyric_assembler::AssemblerStatus::forCondition(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid placement");
             auto initializerUrl = actionSymbol->getInitializer(param.name);
@@ -78,49 +78,88 @@ write_action(
                 return lyric_assembler::AssemblerStatus::forCondition(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant,
                     "invalid initializer {}", initializerUrl.toString());
-            auto *initSymbol = cast_symbol_to_call(initializer);
-            paramDefault = initSymbol->getAddress().getAddress();
+            auto *initSymbol = cast_symbol_to_action(initializer);
+            p.initializer_call = initSymbol->getAddress().getAddress();
         }
-        uint8_t nameOffset = names.size();
-        names.emplace_back(param.name);
-        parameters.emplace_back(lyo1::Parameter(flags, paramType,
-            paramDefault, nameOffset, lyric_runtime::INVALID_OFFSET_U8));
+
+        listParameters.push_back(lyo1::CreateParameter(buffer, &p));
+    }
+    auto fb_listParameters = buffer.CreateVector(listParameters);
+
+    std::vector<flatbuffers::Offset<lyo1::Parameter>> namedParameters;
+    for (auto it = actionSymbol->namedPlacementBegin(); it != actionSymbol->namedPlacementEnd(); it++) {
+        const auto &param = *it;
+
+        lyo1::ParameterT p;
+        p.parameter_name = param.name;
+
+        p.flags = lyo1::ParameterFlags::NONE;
+        switch (param.placement) {
+            case lyric_object::PlacementType::Ctx:
+                p.flags |= lyo1::ParameterFlags::Ctx;
+                break;
+            case lyric_object::PlacementType::Named:
+            case lyric_object::PlacementType::NamedOpt:
+                break;
+            default:
+                return lyric_assembler::AssemblerStatus::forCondition(
+                    lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                    "invalid placement type");
+        }
+        if (param.isVariable) {
+            p.flags |= lyo1::ParameterFlags::Var;
+        }
+
+        lyric_assembler::TypeHandle *paramTypeHandle;
+        TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(param.typeDef));
+        p.parameter_type = paramTypeHandle->getAddress().getAddress();
+        p.initializer_call = lyric_runtime::INVALID_ADDRESS_U32;
+        if (actionSymbol->hasInitializer(param.name)) {
+            if (param.placement != lyric_object::PlacementType::NamedOpt)
+                return lyric_assembler::AssemblerStatus::forCondition(
+                    lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid placement");
+            auto initializerUrl = actionSymbol->getInitializer(param.name);
+            lyric_assembler::AbstractSymbol *initializer;
+            TU_ASSIGN_OR_RETURN (initializer, symbolCache->getOrImportSymbol(initializerUrl));
+            if (initializer->getSymbolType() != lyric_assembler::SymbolType::CALL)
+                return lyric_assembler::AssemblerStatus::forCondition(
+                    lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                    "invalid initializer {}", initializerUrl.toString());
+            auto *initSymbol = cast_symbol_to_action(initializer);
+            p.initializer_call = initSymbol->getAddress().getAddress();
+        }
+
+        namedParameters.push_back(lyo1::CreateParameter(buffer, &p));
+    }
+    auto fb_namedParameters = buffer.CreateVector(namedParameters);
+
+    ::flatbuffers::Offset<lyo1::Parameter> fb_restParameter = 0;
+    auto *rest = actionSymbol->restPlacement();
+    if (rest != nullptr) {
+        lyo1::ParameterT p;
+        p.parameter_name = rest->name;
+
+        p.flags = lyo1::ParameterFlags::NONE;
+        if (rest->isVariable) {
+            p.flags |= lyo1::ParameterFlags::Var;
+        }
+
+        lyric_assembler::TypeHandle *paramTypeHandle;
+        TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(rest->typeDef));
+        p.parameter_type = paramTypeHandle->getAddress().getAddress();
+        p.initializer_call = 0;
+
+        fb_restParameter = lyo1::CreateParameter(buffer, &p);
     }
 
-    if (!typeCache->hasType(actionSymbol->getReturnType()))
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing action result type");
     lyric_assembler::TypeHandle *returnTypeHandle;
     TU_ASSIGN_OR_RETURN (returnTypeHandle, typeCache->getOrMakeType(actionSymbol->getReturnType()));
     tu_uint32 resultType = returnTypeHandle->getAddress().getAddress();
 
-    auto restParam = actionSymbol->getRest();
-    if (!restParam.isEmpty()) {
-        const auto &param = restParam.getValue();
-        lyo1::ParameterFlags flags = lyo1::ParameterFlags::Rest;
-        lyric_assembler::TypeHandle *paramTypeHandle;
-        TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(param.typeDef));
-        tu_uint32 paramType = paramTypeHandle->getAddress().getAddress();
-        uint8_t nameOffset = lyric_runtime::INVALID_OFFSET_U8;
-        if (!param.name.empty()) {
-            nameOffset = names.size();
-            names.emplace_back(param.name);
-            flags |= lyo1::ParameterFlags::Named;
-        }
-        if (param.isVariable)
-            flags |= lyo1::ParameterFlags::Var;
-        auto rest = lyo1::Parameter(flags, paramType,
-            lyric_runtime::INVALID_ADDRESS_U32, nameOffset, lyric_runtime::INVALID_OFFSET_U8);
-        actions_vector.push_back(lyo1::CreateActionDescriptor(buffer, fullyQualifiedName,
-            actionTemplate, receiverSection, receiverDescriptor, actionFlags,
-            buffer.CreateVectorOfStructs(parameters), &rest,
-            buffer.CreateVectorOfStrings(names), resultType));
-    } else {
-        actions_vector.push_back(lyo1::CreateActionDescriptor(buffer, fullyQualifiedName,
-            actionTemplate, receiverSection, receiverDescriptor, actionFlags,
-            buffer.CreateVectorOfStructs(parameters), nullptr,
-            buffer.CreateVectorOfStrings(names), resultType));
-    }
+    // add action descriptor
+    actions_vector.push_back(lyo1::CreateActionDescriptor(buffer, fullyQualifiedName,
+        actionTemplate, receiverSection, receiverDescriptor, actionFlags,
+        fb_listParameters, fb_namedParameters, fb_restParameter, resultType));
 
     // add symbol descriptor
     symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,

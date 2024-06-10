@@ -15,7 +15,11 @@ set(TEST_CASES
 
 # define test suite driver
 
-add_executable(lyric_typing_testsuite ${TEST_CASES} base_fixture.cpp base_fixture.h)
+add_executable(lyric_typing_testsuite
+    ${TEST_CASES}
+    base_fixture.cpp base_fixture.h
+    test_callable.cpp test_callable.h
+    )
 target_compile_definitions(lyric_typing_testsuite PRIVATE
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
     )
@@ -28,7 +32,11 @@ gtest_discover_tests(lyric_typing_testsuite DISCOVERY_TIMEOUT 30)
 
 # define test suite static library
 
-add_library(LyricTypingTestSuite OBJECT ${TEST_CASES} base_fixture.cpp base_fixture.h)
+add_library(LyricTypingTestSuite OBJECT
+    ${TEST_CASES}
+    base_fixture.cpp base_fixture.h
+    test_callable.cpp test_callable.h
+    )
 target_compile_definitions(LyricTypingTestSuite PRIVATE
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
     )

@@ -91,12 +91,12 @@ defaultInitializer  : assignableType CurlyOpen argList? CurlyClose              
 
 paramType           : ColonOperator assignableType ;
 paramDefault        : AssignOperator defaultInitializer ;
-bareParam           : VarKeyword? Identifier paramType ;
+positionalParam     : VarKeyword? Identifier paramType paramDefault? ;
 namedParam          : VarKeyword? NamedKeyword Identifier paramType paramDefault? ;
 renamedParam        : VarKeyword? Identifier NamedKeyword Identifier paramType paramDefault? ;
 namedCtx            : UsingKeyword Identifier paramType ;
 renamedCtx          : Identifier UsingKeyword Identifier paramType ;
-param               : bareParam | namedParam | renamedParam | namedCtx | renamedCtx ;
+param               : positionalParam | namedParam | renamedParam | namedCtx | renamedCtx ;
 restParam           : VarKeyword? Identifier paramType ;
 rest                : EllipsisOperator restParam? ;
 

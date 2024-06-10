@@ -57,14 +57,16 @@ lyric_object::CallParameterWalker::getPlacement() const
         return PlacementType::Invalid;
     auto *parameter = callDescriptor->parameters()->Get(m_parameterOffset);
 
-    if (bool(parameter->flags() & lyo1::ParameterFlags::Named)) {
-        return hasInitializer()? PlacementType::Opt : PlacementType::Named;
-    }
-    if (bool(parameter->flags() & lyo1::ParameterFlags::Rest))
-        return PlacementType::Rest;
     if (bool(parameter->flags() & lyo1::ParameterFlags::Ctx))
         return PlacementType::Ctx;
-    return PlacementType::List;
+    if (bool(parameter->flags() & lyo1::ParameterFlags::Rest))
+        return PlacementType::Rest;
+
+    bool hasInit = hasInitializer();
+    if (bool(parameter->flags() & lyo1::ParameterFlags::Named)) {
+        return hasInit? PlacementType::NamedOpt : PlacementType::Named;
+    }
+    return hasInit? PlacementType::ListOpt : PlacementType::List;
 }
 
 bool
