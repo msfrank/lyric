@@ -12,7 +12,7 @@ namespace lyric_compiler::internal {
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,
         lyric_compiler::ModuleEntry &moduleEntry,
-        const lyric_parser::Assignable &typeHint = {});
+        const lyric_common::TypeDef &typeHint = {});
 }
 
 #endif // LYRIC_COMPILER_COMPILE_NEW_H

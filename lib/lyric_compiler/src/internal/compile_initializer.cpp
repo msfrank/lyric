@@ -13,32 +13,27 @@
 #include <lyric_schema/ast_schema.h>
 
 tempo_utils::Result<lyric_common::SymbolUrl>
-lyric_compiler::internal::compile_default_initializer(
+lyric_compiler::internal::compile_param_initializer(
     lyric_assembler::BlockHandle *block,
-    const std::string &name,
-    const std::vector<lyric_object::TemplateParameter> &templateParameters,
-    const lyric_parser::Assignable &type,
     const lyric_parser::NodeWalker &walker,
+    const lyric_assembler::Parameter &param,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
     ModuleEntry &moduleEntry)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
     auto *typeSystem = moduleEntry.getTypeSystem();
 
-    auto identifier = absl::StrCat("$init$", name);
+    auto identifier = absl::StrCat("$init$", param.name);
 
     // declare the initializer
-    auto declareInitializerResult = block->declareFunction(identifier,
-        {}, {}, {}, type, lyric_object::AccessType::Public, templateParameters);
-    if (declareInitializerResult.isStatus())
-        return declareInitializerResult.getStatus();
-    auto initializerUrl = declareInitializerResult.getResult();
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(initializerUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        block->throwAssemblerInvariant("invalid call symbol {}", initializerUrl.toString());
-    auto *call = cast_symbol_to_call(symbol);
-    auto *proc = call->callProc();
+    lyric_assembler::CallSymbol *callSymbol;
+    TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(
+        identifier, lyric_object::AccessType::Public, templateParameters));
+
+    // define the initializer
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall({}, param.typeDef));
 
     // compile the initializer body
     lyric_schema::LyricAstId initializerId{};
@@ -47,7 +42,8 @@ lyric_compiler::internal::compile_default_initializer(
 
     switch (initializerId) {
         case lyric_schema::LyricAstId::New: {
-            auto compileNewResult = compile_new(proc->procBlock(), walker, moduleEntry, type);
+            auto compileNewResult = compile_new(procHandle->procBlock(),
+                walker, moduleEntry, param.typeDef);
             if (compileNewResult.isStatus())
                 return compileNewResult.getStatus();
             bodyType = compileNewResult.getResult();
@@ -62,40 +58,113 @@ lyric_compiler::internal::compile_default_initializer(
         case lyric_schema::LyricAstId::String:
         case lyric_schema::LyricAstId::Url:
         case lyric_schema::LyricAstId::SymbolRef: {
-            auto compileConstantResult = compile_constant(proc->procBlock(), walker, moduleEntry);
-            if (compileConstantResult.isStatus())
-                return compileConstantResult.getStatus();
-            bodyType = compileConstantResult.getResult();
+            TU_ASSIGN_OR_RETURN (bodyType, compile_constant(procHandle->procBlock(), walker, moduleEntry));
             break;
         }
         default:
-            block->throwSyntaxError(walker, "invalid initializer");
+            block->throwSyntaxError(walker, "invalid param initializer");
     }
 
     // add return instruction
-    auto status = proc->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
 
     bool isReturnable;
 
     // validate that body returns the expected type
-    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(param.typeDef, bodyType));
     if (!isReturnable)
         return block->logAndContinue(CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
-            "initializer is incompatible with type {}", call->getReturnType().toString());
+            "param initializer is incompatible with type {}", param.typeDef.toString());
 
     // validate that each exit returns the expected type
-    for (const auto &exitType : call->listExitTypes()) {
-        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+    for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(param.typeDef, *it));
         if (!isReturnable)
             return block->logAndContinue(CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
-                "initializer is incompatible with type {}", call->getReturnType().toString());
+                "param initializer is incompatible with type {}", param.typeDef.toString());
     }
 
-    return initializerUrl;
+    return callSymbol->getSymbolUrl();
+}
+
+tempo_utils::Result<lyric_common::SymbolUrl>
+lyric_compiler::internal::compile_member_initializer(
+    lyric_assembler::BlockHandle *block,
+    const lyric_parser::NodeWalker &walker,
+    const std::string &memberName,
+    const lyric_common::TypeDef &memberType,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
+    lyric_compiler::ModuleEntry &moduleEntry)
+{
+    TU_ASSERT (block != nullptr);
+    TU_ASSERT (walker.isValid());
+    auto *typeSystem = moduleEntry.getTypeSystem();
+
+    auto identifier = absl::StrCat("$init$", memberName);
+
+    // declare the initializer
+    lyric_assembler::CallSymbol *callSymbol;
+    TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(
+        identifier, lyric_object::AccessType::Public, templateParameters));
+
+    // define the initializer
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall({}, memberType));
+
+    // compile the initializer body
+    lyric_schema::LyricAstId initializerId{};
+    moduleEntry.parseIdOrThrow(walker, lyric_schema::kLyricAstVocabulary, initializerId);
+    lyric_common::TypeDef bodyType;
+
+    switch (initializerId) {
+        case lyric_schema::LyricAstId::New: {
+            auto compileNewResult = compile_new(procHandle->procBlock(),
+                walker, moduleEntry, memberType);
+            if (compileNewResult.isStatus())
+                return compileNewResult.getStatus();
+            bodyType = compileNewResult.getResult();
+            break;
+        }
+        case lyric_schema::LyricAstId::Nil:
+        case lyric_schema::LyricAstId::True:
+        case lyric_schema::LyricAstId::False:
+        case lyric_schema::LyricAstId::Char:
+        case lyric_schema::LyricAstId::Integer:
+        case lyric_schema::LyricAstId::Float:
+        case lyric_schema::LyricAstId::String:
+        case lyric_schema::LyricAstId::Url:
+        case lyric_schema::LyricAstId::SymbolRef: {
+            TU_ASSIGN_OR_RETURN (bodyType, compile_constant(procHandle->procBlock(), walker, moduleEntry));
+            break;
+        }
+        default:
+            block->throwSyntaxError(walker, "invalid member initializer");
+    }
+
+    // add return instruction
+    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
+
+    bool isReturnable;
+
+    // validate that body returns the expected type
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(memberType, bodyType));
+    if (!isReturnable)
+        return block->logAndContinue(CompilerCondition::kIncompatibleType,
+            tempo_tracing::LogSeverity::kError,
+            "member initializer is incompatible with type {}", memberType.toString());
+
+    // validate that each exit returns the expected type
+    for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(memberType, *it));
+        if (!isReturnable)
+            return block->logAndContinue(CompilerCondition::kIncompatibleType,
+                tempo_tracing::LogSeverity::kError,
+                "member initializer is incompatible with type {}", memberType.toString());
+    }
+
+    return callSymbol->getSymbolUrl();
 }
 
 tempo_utils::Status
@@ -107,50 +176,40 @@ lyric_compiler::internal::compile_static_initializer(
     TU_ASSERT (staticSymbol != nullptr);
     TU_ASSERT (walker.isValid());
     auto *typeSystem = moduleEntry.getTypeSystem();
-    auto *state = moduleEntry.getState();
 
     // declare the initializer
-    auto declareInitializerResult = staticSymbol->declareInitializer();
-    if (declareInitializerResult.isStatus())
-        return declareInitializerResult.getStatus();
-    auto initializerUrl = declareInitializerResult.getResult();
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(initializerUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        state->throwAssemblerInvariant("invalid call symbol {}", initializerUrl.toString());
-    auto *call = cast_symbol_to_call(symbol);
-    auto *proc = call->callProc();
-    auto *code = proc->procCode();
-    auto *block = proc->procBlock();
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, staticSymbol->defineInitializer());
+    auto *code = procHandle->procCode();
+    auto *block = procHandle->procBlock();
 
     // compile the initializer body
-    auto exprResult = compile_expression(block, walker, moduleEntry);
-    if (exprResult.isStatus())
-        return exprResult.getStatus();
-    auto bodyType = exprResult.getResult();
+    lyric_common::TypeDef bodyType;
+    TU_ASSIGN_OR_RETURN (bodyType, compile_expression(block, walker, moduleEntry));
 
     // add return instruction
     auto status = code->writeOpcode(lyric_object::Opcode::OP_RETURN);
     if (!status.isOk())
         return status;
 
+    auto staticType = staticSymbol->getAssignableType();
     bool isReturnable;
 
     // validate that body returns the expected type
-    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(staticType, bodyType));
     if (!isReturnable)
         return block->logAndContinue(CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
-            "initializer is incompatible with type {}", call->getReturnType().toString());
+            "static initializer is incompatible with type {}", staticType.toString());
 
     // validate that each exit returns the expected type
-    for (const auto &exitType : call->listExitTypes()) {
-        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+    for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(staticType, *it));
         if (!isReturnable)
             return block->logAndContinue(CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
-                "initializer is incompatible with type {}", call->getReturnType().toString());
+                "static initializer is incompatible with type {}", staticType.toString());
     }
 
-    return CompilerStatus::ok();
+    return {};
 }

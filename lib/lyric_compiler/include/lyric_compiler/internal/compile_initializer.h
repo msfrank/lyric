@@ -7,12 +7,20 @@
 namespace lyric_compiler::internal {
 
     tempo_utils::Result<lyric_common::SymbolUrl>
-    compile_default_initializer(
+    compile_param_initializer(
         lyric_assembler::BlockHandle *block,
-        const std::string &name,
-        const std::vector<lyric_object::TemplateParameter> &templateParameters,
-        const lyric_parser::Assignable &type,
         const lyric_parser::NodeWalker &walker,
+        const lyric_assembler::Parameter &param,
+        const std::vector<lyric_object::TemplateParameter> &templateParameters,
+        lyric_compiler::ModuleEntry &moduleEntry);
+
+    tempo_utils::Result<lyric_common::SymbolUrl>
+    compile_member_initializer(
+        lyric_assembler::BlockHandle *block,
+        const lyric_parser::NodeWalker &walker,
+        const std::string &memberName,
+        const lyric_common::TypeDef &memberType,
+        const std::vector<lyric_object::TemplateParameter> &templateParameters,
         lyric_compiler::ModuleEntry &moduleEntry);
 
     tempo_utils::Status

@@ -234,37 +234,65 @@ lyric_importer::CallImport::load()
 
     priv->returnType = m_moduleImport->getType(callWalker.getResultType().getDescriptorOffset());
 
+    tu_uint8 currparam = 0;
+
     // get list parameters
     for (tu_uint8 i = 0; i < callWalker.numListParameters(); i++) {
         auto parameter = callWalker.getListParameter(i);
 
         Parameter p;
-        p.index = i;
+        p.index = currparam++;
         p.name = parameter.getParameterName();
         p.type = m_moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
         p.placement = parameter.getPlacement();
         p.isVariable = parameter.isVariable();
 
-        lyric_common::SymbolUrl initializerCallUrl;
 
-        switch (parameter.initializerAddressType()) {
-            case lyric_object::AddressType::Near: {
-                initializerCallUrl = lyric_common::SymbolUrl(
-                    location, parameter.getNearInitializer().getSymbolPath());
-                break;
-            }
-            case lyric_object::AddressType::Far: {
-                initializerCallUrl = parameter.getFarInitializer().getLinkUrl();
-                break;
-            }
-            default:
+        if (p.placement == lyric_object::PlacementType::List) {
+            if (parameter.hasInitializer())
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
                         "cannot import call at index {} in assembly {}; invalid list parameter at index {}",
                         callWalker.getDescriptorOffset(), location.toString(), i));
         }
+        else if (p.placement == lyric_object::PlacementType::ListOpt) {
+            lyric_common::SymbolUrl initializerCallUrl;
 
-        priv->initializers[p.name] = initializerCallUrl;
+            switch (parameter.initializerAddressType()) {
+                case lyric_object::AddressType::Near: {
+                    auto initializer = parameter.getNearInitializer();
+                    if (!initializer.isValid())
+                        throw tempo_utils::StatusException(
+                            ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                                "cannot import call at index {} in assembly {}; invalid list parameter at index {}",
+                                callWalker.getDescriptorOffset(), location.toString(), i));
+                    initializerCallUrl = lyric_common::SymbolUrl(location, initializer.getSymbolPath());
+                    break;
+                }
+                case lyric_object::AddressType::Far: {
+                    auto initializer = parameter.getFarInitializer();
+                    if (!initializer.isValid())
+                        throw tempo_utils::StatusException(
+                            ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                                "cannot import call at index {} in assembly {}; invalid list parameter at index {}",
+                                callWalker.getDescriptorOffset(), location.toString(), i));
+                    initializerCallUrl = initializer.getLinkUrl();
+                    break;
+                }
+                default:
+                    throw tempo_utils::StatusException(
+                        ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                            "cannot import call at index {} in assembly {}; invalid list parameter at index {}",
+                            callWalker.getDescriptorOffset(), location.toString(), i));
+            }
+            priv->initializers[p.name] = initializerCallUrl;
+        }
+        else {
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                    "cannot import call at index {} in assembly {}; invalid list parameter at index {}",
+                    callWalker.getDescriptorOffset(), location.toString(), i));
+        }
 
         priv->listParameters.push_back(p);
     }
@@ -274,32 +302,58 @@ lyric_importer::CallImport::load()
         auto parameter = callWalker.getNamedParameter(i);
 
         Parameter p;
-        p.index = i;
+        p.index = currparam++;
         p.name = parameter.getParameterName();
         p.type = m_moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
         p.placement = parameter.getPlacement();
         p.isVariable = parameter.isVariable();
 
-        lyric_common::SymbolUrl initializerCallUrl;
-
-        switch (parameter.initializerAddressType()) {
-            case lyric_object::AddressType::Near: {
-                initializerCallUrl = lyric_common::SymbolUrl(
-                    location, parameter.getNearInitializer().getSymbolPath());
-                break;
-            }
-            case lyric_object::AddressType::Far: {
-                initializerCallUrl = parameter.getFarInitializer().getLinkUrl();
-                break;
-            }
-            default:
+        if (p.placement == lyric_object::PlacementType::Named) {
+            if (parameter.hasInitializer())
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
-                        "cannot import call at index {} in assembly {}; invalid parameter at index {}",
+                        "cannot import call at index {} in assembly {}; invalid named parameter at index {}",
                         callWalker.getDescriptorOffset(), location.toString(), i));
         }
+        else if (p.placement == lyric_object::PlacementType::NamedOpt) {
+            lyric_common::SymbolUrl initializerCallUrl;
 
-        priv->initializers[p.name] = initializerCallUrl;
+            switch (parameter.initializerAddressType()) {
+                case lyric_object::AddressType::Near: {
+                    auto initializer = parameter.getNearInitializer();
+                    if (!initializer.isValid())
+                        throw tempo_utils::StatusException(
+                            ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                                "cannot import call at index {} in assembly {}; invalid named parameter at index {}",
+                                callWalker.getDescriptorOffset(), location.toString(), i));
+                    initializerCallUrl = lyric_common::SymbolUrl(
+                        location, parameter.getNearInitializer().getSymbolPath());
+                    break;
+                }
+                case lyric_object::AddressType::Far: {
+                    auto initializer = parameter.getFarInitializer();
+                    if (!initializer.isValid())
+                        throw tempo_utils::StatusException(
+                            ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                                "cannot import call at index {} in assembly {}; invalid named parameter at index {}",
+                                callWalker.getDescriptorOffset(), location.toString(), i));
+                    initializerCallUrl = parameter.getFarInitializer().getLinkUrl();
+                    break;
+                }
+                default:
+                    throw tempo_utils::StatusException(
+                        ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                            "cannot import call at index {} in assembly {}; invalid named parameter at index {}",
+                            callWalker.getDescriptorOffset(), location.toString(), i));
+            }
+            priv->initializers[p.name] = initializerCallUrl;
+        }
+        else {
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                    "cannot import call at index {} in assembly {}; invalid named parameter at index {}",
+                    callWalker.getDescriptorOffset(), location.toString(), i));
+        }
 
         priv->namedParameters.push_back(p);
     }
@@ -319,7 +373,11 @@ lyric_importer::CallImport::load()
                 ImporterStatus::forCondition(ImporterCondition::kImportError,
                     "cannot import call at index {} in assembly {}; invalid rest parameter",
                     callWalker.getDescriptorOffset(), location.toString()));
-        // FIXME: need additional validation? (can't have initializer, etc)
+        if (parameter.hasInitializer())
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(ImporterCondition::kImportError,
+                    "cannot import call at index {} in assembly {}; invalid rest parameter",
+                    callWalker.getDescriptorOffset(), location.toString()));
 
         priv->restParameter = Option(p);
     }

@@ -31,11 +31,10 @@ lyric_compiler::internal::compile_var(
     if (walker.hasAttr(lyric_parser::kLyricAstTypeOffset)) {
         tu_uint32 typeOffset;
         moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-        auto assignedType = walker.getNodeAtOffset(typeOffset);
-        auto resolveVarTypeResult = typeSystem->resolveAssignable(block, assignedType);
-        if (resolveVarTypeResult.isStatus())
-            return resolveVarTypeResult.getStatus();
-        varType = resolveVarTypeResult.getResult();
+        auto type = walker.getNodeAtOffset(typeOffset);
+        lyric_parser::Assignable varSpec;
+        TU_ASSIGN_OR_RETURN (varSpec, typeSystem->parseAssignable(block, type));
+        TU_ASSIGN_OR_RETURN (varType, typeSystem->resolveAssignable(block, varSpec));
     }
 
     // if this is a root block, then the val is a static

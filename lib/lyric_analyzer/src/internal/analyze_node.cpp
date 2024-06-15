@@ -22,11 +22,11 @@ lyric_analyzer::internal::analyze_val(
 
     tu_uint32 typeOffset;
     entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-    auto assignedType = walker.getNodeAtOffset(typeOffset);
-    auto resolveValTypeResult = typeSystem->resolveAssignable(block, assignedType);
-    if (resolveValTypeResult.isStatus())
-        return resolveValTypeResult.getStatus();
-    auto valType = resolveValTypeResult.getResult();
+    auto type = walker.getNodeAtOffset(typeOffset);
+    lyric_parser::Assignable valSpec;
+    TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(block, type));
+    lyric_common::TypeDef valType;
+    TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(block, valSpec));
 
     auto declareVariableResult = block->declareStatic(identifier,
         valType, lyric_parser::BindingType::VALUE, true);
@@ -53,11 +53,11 @@ lyric_analyzer::internal::analyze_var(
 
     tu_uint32 typeOffset;
     entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-    auto assignedType = walker.getNodeAtOffset(typeOffset);
-    auto resolveVarTypeResult = typeSystem->resolveAssignable(block, assignedType);
-    if (resolveVarTypeResult.isStatus())
-        return resolveVarTypeResult.getStatus();
-    auto varType = resolveVarTypeResult.getResult();
+    auto type = walker.getNodeAtOffset(typeOffset);
+    lyric_parser::Assignable varSpec;
+    TU_ASSIGN_OR_RETURN (varSpec, typeSystem->parseAssignable(block, type));
+    lyric_common::TypeDef varType;
+    TU_ASSIGN_OR_RETURN (varType, typeSystem->resolveAssignable(block, varSpec));
 
     auto declareVariableResult = block->declareStatic(identifier,
         varType, lyric_parser::BindingType::VARIABLE, true);

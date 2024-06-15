@@ -269,7 +269,7 @@ void
 lyric_assembler::TemplateHandle::touch()
 {
     for (const auto &placeholder : m_placeholders) {
-        m_state->typeCache()->touchType(placeholder);
+        TU_RAISE_IF_STATUS (m_state->typeCache()->getOrMakeType(placeholder));
     }
     m_state->typeCache()->touchTemplateParameters(m_templateParameters);
 

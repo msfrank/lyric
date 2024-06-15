@@ -225,7 +225,7 @@ lyric_assembler::CallSymbol::load()
         TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(it->type));
         p.typeDef = paramType->getTypeDef();
 
-        priv->listParameters.push_back(p);
+        priv->namedParameters.push_back(p);
     }
 
     if (m_callImport->hasRestParameter()) {
@@ -324,6 +324,7 @@ lyric_assembler::CallSymbol::defineCall(
         m_state->throwAssemblerInvariant("cannot redefine call {}", m_callUrl.toString());
 
     auto *symbolCache = m_state->symbolCache();
+    auto *typeCache = m_state->typeCache();
 
     priv->listParameters = parameterPack.listParameters;
     priv->namedParameters = parameterPack.namedParameters;
@@ -357,7 +358,11 @@ lyric_assembler::CallSymbol::defineCall(
         auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
         ArgumentOffset offset(static_cast<tu_uint32>(param.index));
         auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
-        m_state->symbolCache()->insertSymbol(paramUrl, paramSymbol);
+        symbolCache->insertSymbol(paramUrl, paramSymbol);
+
+        TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(param.typeDef));
+        typeHandle->touch();
 
         SymbolBinding argBinding;
         argBinding.symbolUrl = paramUrl;
@@ -379,7 +384,11 @@ lyric_assembler::CallSymbol::defineCall(
         auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
         ArgumentOffset offset(static_cast<tu_uint32>(param.index));
         auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
-        m_state->symbolCache()->insertSymbol(paramUrl, paramSymbol);
+        symbolCache->insertSymbol(paramUrl, paramSymbol);
+
+        TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(param.typeDef));
+        typeHandle->touch();
 
         SymbolBinding argBinding;
         argBinding.symbolUrl = paramUrl;
@@ -393,7 +402,18 @@ lyric_assembler::CallSymbol::defineCall(
         }
     }
 
+    if (!priv->restParameter.isEmpty()) {
+        auto &param = priv->restParameter.peekValue();
+        TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(param.typeDef));
+        typeHandle->touch();
+    }
+
     // TODO: create binding for rest collector parameter if specified
+
+    TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(priv->returnType));
+    typeHandle->touch();
 
     priv->proc = std::make_unique<ProcHandle>(m_callUrl, bindings, priv->listParameters.size(),
         priv->namedParameters.size(), !priv->restParameter.isEmpty(), m_state, priv->parentBlock);

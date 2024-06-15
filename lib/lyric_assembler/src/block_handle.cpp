@@ -649,7 +649,7 @@ symbol_binding_to_data_reference(const lyric_assembler::SymbolBinding &binding)
                 binding.typeDef, lyric_assembler::ReferenceType::Variable};
         case lyric_assembler::BindingType::Descriptor:
             return lyric_assembler::DataReference{binding.symbolUrl,
-                {}, lyric_assembler::ReferenceType::Descriptor};
+                binding.typeDef, lyric_assembler::ReferenceType::Descriptor};
         default:
             return lyric_assembler::DataReference{{}, {}, lyric_assembler::ReferenceType::Invalid};
     }
@@ -920,9 +920,10 @@ lyric_assembler::BlockHandle::prepareFunction(const std::string &name, CallableI
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(functionUrl));
     if (symbol->getSymbolType() != SymbolType::CALL)
         throwAssemblerInvariant("invalid call symbol {}", functionUrl.toString());
-    auto *call = cast_symbol_to_call(symbol);
+    auto *callSymbol = cast_symbol_to_call(symbol);
+    callSymbol->touch();
 
-    auto callable = std::make_unique<FunctionCallable>(call);
+    auto callable = std::make_unique<FunctionCallable>(callSymbol);
     return invoker.initialize(std::move(callable));
 }
 
@@ -1738,6 +1739,7 @@ lyric_assembler::BlockHandle::declareNamespace(
 
     SymbolBinding binding;
     binding.symbolUrl = nsUrl;
+    binding.typeDef = nsDescriptorType;
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 

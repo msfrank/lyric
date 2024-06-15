@@ -1,7 +1,7 @@
 
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
-#include <lyric_assembler/extension_invoker.h>
+#include <lyric_assembler/extension_callable.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -212,30 +212,26 @@ compile_is_a(
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
+    auto *typeSystem = moduleEntry.getTypeSystem();
     auto *state = moduleEntry.getState();
 
     moduleEntry.checkClassAndChildCountOrThrow(walker, lyric_schema::kLyricAstIsAClass, 2);
 
     auto *code = block->blockCode();
-    tempo_utils::Status status;
 
     // push lhs expression onto the stack
-    auto compileExprResult = lyric_compiler::internal::compile_expression(block, walker.getChild(0), moduleEntry);
-    if (compileExprResult.isStatus())
-        return compileExprResult.getStatus();
-    auto targetType = compileExprResult.getResult();
+    lyric_common::TypeDef targetType;
+    TU_ASSIGN_OR_RETURN (targetType, lyric_compiler::internal::compile_expression(
+        block, walker.getChild(0), moduleEntry));
 
     // pop expression result and push expression type descriptor onto the stack
-    status = code->writeOpcode(lyric_object::Opcode::OP_TYPE_OF);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_TYPE_OF));
 
     // resolve isA type
-    auto *typeSystem = moduleEntry.getTypeSystem();
-    auto resolveAssignableType = typeSystem->resolveAssignable(block, walker.getChild(1));
-    if (resolveAssignableType.isStatus())
-        return resolveAssignableType;
-    auto isAType = resolveAssignableType.getResult();
+    lyric_parser::Assignable isASpec;
+    TU_ASSIGN_OR_RETURN (isASpec, typeSystem->parseAssignable(block, walker.getChild(1)));
+    lyric_common::TypeDef isAType;
+    TU_ASSIGN_OR_RETURN (isAType, typeSystem->resolveAssignable(block, isASpec));
     if (!state->typeCache()->hasType(isAType))
         block->throwAssemblerInvariant("missing type {}", isAType.toString());
     state->typeCache()->touchType(isAType);
@@ -245,9 +241,7 @@ compile_is_a(
         case lyric_common::TypeDefType::Concrete: {
             lyric_assembler::TypeHandle *typeHandle;
             TU_ASSIGN_OR_RETURN (typeHandle, state->typeCache()->getOrMakeType(isAType));
-            status = code->loadType(typeHandle->getAddress());
-            if (status.notOk())
-                return status;
+            TU_RETURN_IF_NOT_OK (code->loadType(typeHandle->getAddress()));
             break;
         }
         default:
@@ -260,32 +254,20 @@ compile_is_a(
     TU_RETURN_IF_NOT_OK (lyric_compiler::internal::match_types(targetType, isAType, walker, block, moduleEntry));
 
     // perform type comparison
-    status = code->writeOpcode(lyric_object::Opcode::OP_TYPE_CMP);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_TYPE_CMP));
 
     // if lhs type equals or extends rhs, then push true onto the stack
-    auto predicateJumpResult = code->jumpIfGreaterThan();
-    if (predicateJumpResult.isStatus())
-        return predicateJumpResult.getStatus();
-    auto predicateJump = predicateJumpResult.getResult();
-    status = code->loadBool(true);
-    if (!status.isOk())
-        return status;
+    lyric_assembler::PatchOffset predicateJump;
+    TU_ASSIGN_OR_RETURN (predicateJump, code->jumpIfGreaterThan());
+    TU_RETURN_IF_NOT_OK (code->loadBool(true));
 
-    auto consequentJumpResult = code->jump();
-    if (consequentJumpResult.isStatus())
-        return consequentJumpResult.getStatus();
-    auto consequentJump = consequentJumpResult.getResult();
+    lyric_assembler::PatchOffset consequentJump;
+    TU_ASSIGN_OR_RETURN (consequentJump, code->jump());
 
     // otherwise if lhs does not equal or extend rhs, then push false onto the stack
-    auto alternativeEnterResult = code->makeLabel();
-    if (alternativeEnterResult.isStatus())
-        return alternativeEnterResult.getStatus();
-    auto alternativeEnter = alternativeEnterResult.getResult();
-    status = code->loadBool(false);
-    if (!status.isOk())
-        return status;
+    lyric_assembler::JumpLabel alternativeEnter;
+    TU_ASSIGN_OR_RETURN (alternativeEnter, code->makeLabel());
+    TU_RETURN_IF_NOT_OK (code->loadBool(false));
 
     auto alternativeExitResult = code->makeLabel();
     if (alternativeExitResult.isStatus())
@@ -293,14 +275,10 @@ compile_is_a(
     auto alternativeExit = alternativeExitResult.getResult();
 
     // patch predicate jump to alternative enter label
-    status = code->patch(predicateJump, alternativeEnter);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (code->patch(predicateJump, alternativeEnter));
 
     // patch consequent jump to alternative exit label
-    status = code->patch(consequentJump, alternativeExit);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (code->patch(consequentJump, alternativeExit));
 
     // result is always a Bool
     return block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
@@ -323,10 +301,8 @@ lyric_compiler::internal::compile_operator_call(
         block->throwAssemblerInvariant("invalid type {}", operatorType.toString());
 
     // resolve Operator instance for the receiver
-    auto resolveInstanceResult = block->resolveImpl(operatorType);
-    if (resolveInstanceResult.isStatus())
-        return resolveInstanceResult.getStatus();
-    auto instanceUrl = resolveInstanceResult.getResult();
+    lyric_common::SymbolUrl instanceUrl;
+    TU_ASSIGN_OR_RETURN (instanceUrl, block->resolveImpl(operatorType));
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(instanceUrl));
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
@@ -341,59 +317,17 @@ lyric_compiler::internal::compile_operator_call(
             "missing impl for {}", operatorType.toString());
 
     auto extensionName = operation_type_to_action_name(operationId);
-    auto extensionOption = impl->getExtension(extensionName);
-    if (extensionOption.isEmpty())
-        return block->logAndContinue(CompilerCondition::kMissingAction,
-            tempo_tracing::LogSeverity::kError,
-            "missing extension {} for impl {}", extensionName, operatorType.toString());
-    auto extension = extensionOption.getValue();
+    lyric_assembler::DataReference instanceRef{instanceUrl, operatorType, lyric_assembler::ReferenceType::Value};
+    lyric_assembler::CallableInvoker extensionInvoker;
+    TU_RETURN_IF_NOT_OK (impl->prepareExtension(extensionName, instanceRef, extensionInvoker));
 
-    auto extensionUrl = extension.methodCall;
-    TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(extensionUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        block->throwAssemblerInvariant("invalid call symbol {}", extensionUrl.toString());
-    auto *extensionCall = cast_symbol_to_call(symbol);
-
-    lyric_assembler::ExtensionInvoker extensionInvoker;
-    if (extensionCall->isInline()) {
-        extensionInvoker = lyric_assembler::ExtensionInvoker(extensionCall, extensionCall->callProc());
-    } else if (extensionCall->isBound()) {
-        TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(operatorType.getConcreteUrl()));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
-            block->throwAssemblerInvariant("invalid concept symbol {}", operatorType.getConcreteUrl().toString());
-        auto *conceptSymbol = cast_symbol_to_concept(symbol);
-
-        auto resolveActionResult = conceptSymbol->getAction(extensionName);
-        if (resolveActionResult.isEmpty())
-            block->throwAssemblerInvariant("missing action {} for concept symbol {}",
-                extensionName, operatorType.getConcreteUrl().toString());
-        auto action = resolveActionResult.getValue();
-        TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(action.methodAction));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::ACTION)
-            block->throwAssemblerInvariant("invalid action symbol {}", action.methodAction.toString());
-        auto *actionSymbol = cast_symbol_to_action(symbol);
-
-        lyric_assembler::DataReference ref{instanceUrl, operatorType, lyric_assembler::ReferenceType::Variable};
-        instanceSymbol->touch();
-
-        extensionInvoker = lyric_assembler::ExtensionInvoker(conceptSymbol, actionSymbol, ref);
-    } else {
-        block->throwAssemblerInvariant("invalid extension call {}", extensionUrl.toString());
-    }
-
-    lyric_typing::CallsiteReifier reifier(extensionInvoker.getParameters(), extensionInvoker.getRest(),
-        extensionInvoker.getTemplateUrl(), extensionInvoker.getTemplateParameters(), {}, typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize());
+    lyric_typing::CallsiteReifier reifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(extensionInvoker));
     for (const auto &arg : argList) {
-        auto status = reifier.reifyNextArgument(arg);
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(arg));
     }
 
-    auto invokeExtensionResult = extensionInvoker.invoke(block, reifier);
-    if (invokeExtensionResult.isStatus())
-        return invokeExtensionResult.getStatus();
-    return invokeExtensionResult.getResult();
+    return extensionInvoker.invoke(block, reifier);
 }
 
 tempo_utils::Result<lyric_common::TypeDef>

@@ -314,8 +314,10 @@ lyric_assembler::ConceptSymbol::prepareAction(
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(actionMethod.methodAction));
     if (symbol->getSymbolType() != SymbolType::ACTION)
         m_state->throwAssemblerInvariant("invalid action symbol {}", actionMethod.methodAction.toString());
-    auto *action = cast_symbol_to_action(symbol);
-    auto callable = std::make_unique<ActionCallable>(action, getAddress());
+    auto *actionSymbol = cast_symbol_to_action(symbol);
+    actionSymbol->touch();
+
+    auto callable = std::make_unique<ActionCallable>(actionSymbol, getAddress());
     return invoker.initialize(std::move(callable));
 }
 

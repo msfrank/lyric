@@ -191,6 +191,7 @@ lyric_runtime::internal::get_enum_virtual_table(
             }
 
             BytecodeSegment *callSegment;
+            tu_uint32 callAssembly;
             tu_uint32 callIndex;
             tu_uint32 procOffset;
 
@@ -204,12 +205,14 @@ lyric_runtime::internal::get_enum_virtual_table(
                         return nullptr;
                     }
                     callSegment = segmentManagerData->segments[link->assembly];
+                    callAssembly = link->assembly;
                     callIndex = link->value;
                     procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
                     break;
                 }
                 case lyric_object::AddressType::Near: {
                     callSegment = enumSegment;
+                    callAssembly = assemblyIndex;
                     callIndex = extension.getNearCall().getDescriptorOffset();
                     procOffset = extension.getNearCall().getProcOffset();
                     break;
@@ -222,6 +225,10 @@ lyric_runtime::internal::get_enum_virtual_table(
 
             auto actionKey = DataCell::forAction(actionAssembly, actionIndex);
             extensions.try_emplace(actionKey, callSegment, callIndex, procOffset);
+
+            // add extension to methods as well
+            auto key = DataCell::forCall(callAssembly, callIndex);
+            methods.try_emplace(key, callSegment, callIndex, procOffset);
         }
 
         // resolve the concept for the impl

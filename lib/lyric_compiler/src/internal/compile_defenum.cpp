@@ -33,10 +33,10 @@ compile_defenum_val(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    auto parseAssignableResult = typeSystem->parseAssignable(enumBlock, type);
-    if (parseAssignableResult.isStatus())
-        return parseAssignableResult.getStatus();
-    auto valType = parseAssignableResult.getResult();
+    lyric_parser::Assignable valSpec;
+    TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(enumBlock, type));
+    lyric_common::TypeDef valType;
+    TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(enumBlock, valSpec));
 
     // determine the access type
     lyric_object::AccessType accessType = lyric_object::AccessType::Public;
@@ -52,18 +52,11 @@ compile_defenum_val(
         tu_uint32 defaultOffset;
         moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultOffset);
         auto defaultInit = walker.getNodeAtOffset(defaultOffset);
-        auto compileDefaultResult = lyric_compiler::internal::compile_default_initializer(
-            baseEnum->enumBlock(), identifier, {}, valType, defaultInit, moduleEntry);
-        if (compileDefaultResult.isStatus())
-            return compileDefaultResult.getStatus();
-        init = compileDefaultResult.getResult();
+        TU_ASSIGN_OR_RETURN (init, lyric_compiler::internal::compile_member_initializer(
+            baseEnum->enumBlock(), defaultInit, identifier, valType, {}, moduleEntry));
     }
 
-    auto declareMemberResult = baseEnum->declareMember(identifier, valType,
-        false, accessType, init);
-    if (declareMemberResult.isStatus())
-        return declareMemberResult.getStatus();
-
+    TU_RETURN_IF_STATUS (baseEnum->declareMember(identifier, valType, false, accessType, init));
     TU_LOG_INFO << "declared val member " << identifier << " for " << baseEnum->getSymbolUrl();
 
     return identifier;
@@ -78,7 +71,6 @@ compile_defenum_def(
     TU_ASSERT (baseEnum != nullptr);
     TU_ASSERT(walker.isValid());
     auto *enumBlock = baseEnum->enumBlock();
-    auto *state = moduleEntry.getState();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
     if (walker.numChildren() < 2)
@@ -88,93 +80,94 @@ compile_defenum_def(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
-    // get method return type
+    // determine the access level
+    lyric_object::AccessType access = lyric_object::AccessType::Public;
+    if (absl::StartsWith(identifier, "__")) {
+        access = lyric_object::AccessType::Private;
+    } else if (absl::StartsWith(identifier, "_")) {
+        access = lyric_object::AccessType::Protected;
+    }
+
+    // parse the return type
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    auto parseAssignableResult = typeSystem->parseAssignable(enumBlock, type);
-    if (parseAssignableResult.isStatus())
-        return parseAssignableResult.getStatus();
-    auto returnSpec = parseAssignableResult.getResult();
+    lyric_parser::Assignable returnSpec;
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(enumBlock, type));
 
-    // compile the parameter list
+    // parse the parameter list
     auto pack = walker.getChild(0);
-    auto parsePackResult = typeSystem->parsePack(enumBlock, pack);
-    if (parsePackResult.isStatus())
-        return parsePackResult.getStatus();
-    auto packSpec = parsePackResult.getResult();
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(enumBlock, pack));
 
-    // compile initializers
-    absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
-    for (const auto &p : packSpec.parameterSpec) {
-        if (!p.init.isEmpty()) {
-            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(
-                enumBlock, p.name, {}, p.type, p.init.getValue(), moduleEntry);
-            if (compileInitializerResult.isStatus())
-                return compileInitializerResult.getStatus();
-            initializers[p.name] = compileInitializerResult.getResult();
+    // declare the method
+    lyric_assembler::CallSymbol *callSymbol;
+    TU_ASSIGN_OR_RETURN (callSymbol, baseEnum->declareMethod(identifier, access));
+
+    auto *resolver = callSymbol->callResolver();
+
+    // resolve the parameter pack
+    lyric_assembler::ParameterPack parameterPack;
+    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
+
+    // resolve the return type
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, returnSpec));
+
+    // compile list parameter initializers
+    for (const auto &p : parameterPack.listParameters) {
+        auto entry = packSpec.initializers.find(p.name);
+        if (entry != packSpec.initializers.cend()) {
+            lyric_common::SymbolUrl initializerUrl;
+            TU_ASSIGN_OR_RETURN (initializerUrl, lyric_compiler::internal::compile_param_initializer(
+                enumBlock, entry->second, p, {}, moduleEntry));
+            callSymbol->putInitializer(p.name, initializerUrl);
         }
     }
 
-    lyric_object::AccessType accessType = lyric_object::AccessType::Public;
-    if (absl::StartsWith(identifier, "__")) {
-        accessType = lyric_object::AccessType::Private;
-    } else if (absl::StartsWith(identifier, "_")) {
-        accessType = lyric_object::AccessType::Protected;
-    }
-
-    // declare the method
-    auto declareMethodResult = baseEnum->declareMethod(identifier, packSpec.parameterSpec,
-        packSpec.restSpec, packSpec.ctxSpec, returnSpec, accessType);
-    if (declareMethodResult.isStatus())
-        return declareMethodResult.getStatus();
-    auto methodUrl = declareMethodResult.getResult();
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(methodUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        enumBlock->throwAssemblerInvariant("invalid call symbol {}", methodUrl.toString());
-    auto *call = cast_symbol_to_call(symbol);
-
-    // add initializers to the call
-    for (const auto &entry : initializers) {
-        call->putInitializer(entry.first, entry.second);
+    // compile named parameter initializers
+    for (const auto &p : parameterPack.namedParameters) {
+        auto entry = packSpec.initializers.find(p.name);
+        if (entry != packSpec.initializers.cend()) {
+            lyric_common::SymbolUrl initializerUrl;
+            TU_ASSIGN_OR_RETURN (initializerUrl, lyric_compiler::internal::compile_param_initializer(
+                enumBlock, entry->second, p, {}, moduleEntry));
+            callSymbol->putInitializer(p.name, initializerUrl);
+        }
     }
 
     // compile the method body
     auto body = walker.getChild(1);
-    auto *proc = call->callProc();
-    auto compileBodyResult = lyric_compiler::internal::compile_block(proc->procBlock(), body, moduleEntry);
-    if (compileBodyResult.isStatus())
-        return compileBodyResult.getStatus();
-    auto bodyType = compileBodyResult.getResult();
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnType));
+    lyric_common::TypeDef bodyType;
+    TU_ASSIGN_OR_RETURN (bodyType, lyric_compiler::internal::compile_block(
+        procHandle->procBlock(), body, moduleEntry));
 
     // add return instruction
-    auto status = proc->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN);
-    if (!status.isOk())
-        return status;
-
-    bool isReturnable;
+    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
 
     // validate that body returns the expected type
-    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    bool isReturnable;
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
         return enumBlock->logAndContinue(body,
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
-            "def body does not match return type {}", call->getReturnType().toString());
+            "def body does not match return type {}", returnType.toString());
 
     // validate that each exit returns the expected type
-    for (const auto &exitType : call->listExitTypes()) {
-        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+    for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
             return enumBlock->logAndContinue(body,
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
-                "def body does not match return type {}", call->getReturnType().toString());
+                "def body does not match return type {}", returnType.toString());
     }
 
     // return control to the caller
-    return lyric_compiler::CompilerStatus::ok();
+    return {};
 }
 
 static tempo_utils::Status
@@ -186,109 +179,87 @@ compile_defenum_base_init(
     TU_ASSERT (baseEnum != nullptr);
     TU_ASSERT(walker.isValid());
     auto *baseBlock = baseEnum->enumBlock();
-    auto *state = moduleEntry.getState();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
     if (walker.numChildren() < 1)
         baseBlock->throwSyntaxError(walker, "invalid init");
 
-    // compile the parameter list
+    // parse the parameter list
     auto pack = walker.getChild(0);
-    auto parsePackResult = typeSystem->parsePack(baseBlock, pack);
-    if (parsePackResult.isStatus())
-        return parsePackResult.getStatus();
-    auto packSpec = parsePackResult.getResult();
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(baseBlock, pack));
 
-    for (const auto &p : packSpec.parameterSpec) {
-        if (!p.label.empty())
-            baseBlock->throwSyntaxError(pack, "named parameters are not allowed for enum constructor");
-        if (!p.init.isEmpty())
-            baseBlock->throwSyntaxError(pack, "default initialization is not supported for enum constructor");
+    // check for initializers
+    if (!packSpec.initializers.empty()) {
+        for (const auto &p: packSpec.listParameterSpec) {
+            if (!p.init.isEmpty())
+                baseBlock->throwSyntaxError(p.init.getValue(),
+                    "list parameter '{}' has unexpected initializer", p.name);
+        }
+        for (const auto &p : packSpec.namedParameterSpec) {
+            if (!p.init.isEmpty())
+                baseBlock->throwSyntaxError(p.init.getValue(),
+                    "named parameter '{}' has unexpected initializer", p.name);
+        }
     }
-    if (!packSpec.restSpec.isEmpty())
-        baseBlock->throwSyntaxError(pack, "rest parameter is not allowed for enum constructor");
-    if (!packSpec.ctxSpec.empty())
-        baseBlock->throwSyntaxError(pack, "ctx parameter is not allowed for enum constructor");
+
+    // check for ctx parameters
+    if (!packSpec.ctxParameterSpec.empty()) {
+        auto &p = packSpec.ctxParameterSpec.front();
+        baseBlock->throwSyntaxError(p.node, "unexpected ctx parameter '{}'", p.name);
+    }
+
+    // check for rest parameter
+    if (!packSpec.restParameterSpec.isEmpty()) {
+        auto p = packSpec.restParameterSpec.getValue();
+        baseBlock->throwSyntaxError(p.node, "unexpected rest parameter");
+    }
 
     // declare the base constructor
-    auto declareBaseCtor = baseEnum->declareCtor(packSpec.parameterSpec, lyric_object::AccessType::Public);
-    if (declareBaseCtor.isStatus())
-        return declareBaseCtor.getStatus();
-    auto baseCtorUrl = declareBaseCtor.getResult();
-    lyric_assembler::AbstractSymbol *baseCtorSym;
-    TU_ASSIGN_OR_RETURN (baseCtorSym, state->symbolCache()->getOrImportSymbol(baseCtorUrl));
-    if (baseCtorSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        baseBlock->throwAssemblerInvariant("invalid call symbol {}", baseCtorUrl.toString());
-    auto *baseCtor = cast_symbol_to_call(baseCtorSym);
+    lyric_assembler::CallSymbol *ctorSymbol;
+    TU_ASSIGN_OR_RETURN (ctorSymbol, baseEnum->declareCtor(lyric_object::AccessType::Public));
 
-    auto *proc = baseCtor->callProc();
-    auto *code = proc->procCode();
-    auto *ctorBlock = proc->procBlock();
+    auto *resolver = ctorSymbol->callResolver();
+
+    // resolve the parameter pack
+    lyric_assembler::ParameterPack parameterPack;
+    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
+
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
+
+    auto *code = procHandle->procCode();
+    auto *ctorBlock = procHandle->procBlock();
 
     // find the superenum ctor
-    auto resolveSuperCtorResult = baseEnum->superEnum()->resolveCtor();
-    if (resolveSuperCtorResult.isStatus())
-        return resolveSuperCtorResult.getStatus();
-    auto superCtor = resolveSuperCtorResult.getResult();
+    lyric_assembler::ConstructableInvoker superCtor;
+    TU_RETURN_IF_NOT_OK (baseEnum->superEnum()->prepareCtor(superCtor));
 
-    lyric_typing::CallsiteReifier reifier(superCtor.getParameters(), superCtor.getRest(), typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize());
+    lyric_typing::CallsiteReifier reifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
 
-    //
-    auto status = code->loadSynthetic(lyric_assembler::SyntheticType::THIS);
-    if (status.notOk())
-        return status;
+    // load the uninitialized class onto the top of the stack
+    TU_RETURN_IF_NOT_OK (code->loadSynthetic(lyric_assembler::SyntheticType::THIS));
 
-    // call super ctor, enum is now on the top of the stack
-    auto invokeSuperCtorResult = superCtor.invoke(ctorBlock, reifier);
-    if (invokeSuperCtorResult.isStatus())
-        return invokeSuperCtorResult.getStatus();
+    // call super ctor
+    TU_RETURN_IF_STATUS (superCtor.invoke(ctorBlock, reifier, 0));
 
-    // compile the constructor body if defined
+    // compile the constructor body if it exists
     if (walker.numChildren() == 2) {
         auto body = walker.getChild(1);
-
-        // create block for init and declare synthetic $this variable
-        lyric_assembler::BlockHandle initBlock(proc, code, ctorBlock, ctorBlock->blockState());
-        auto declareThisResult = initBlock.declareVariable("$this",
-            baseEnum->getAssignableType(), lyric_parser::BindingType::VALUE);
-        if (declareThisResult.isStatus())
-            return declareThisResult.getStatus();
-        auto thisRef = declareThisResult.getResult();
-
-        // store instance in $this
-        status = initBlock.store(thisRef);
-        if (!status.isOk())
-            return status;
-
-        // compile body
-        auto result = lyric_compiler::internal::compile_block(&initBlock, body, moduleEntry);
-        if (result.isStatus())
-            return result.getStatus();
-
-        // discard return value of constructor body
-        status = code->popValue();
-        if (!status.isOk())
-            return status;
-
-        // load $this onto top of the stack
-        status = initBlock.load(thisRef);
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_STATUS (lyric_compiler::internal::compile_block(ctorBlock, body, moduleEntry));
     }
 
-    TU_LOG_INFO << "declared ctor " << baseCtorUrl << " for " << baseEnum->getSymbolUrl();
+    TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << baseEnum->getSymbolUrl();
 
     // add return instruction
-    status = code->writeOpcode(lyric_object::Opcode::OP_RETURN);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_RETURN));
 
     if (!baseEnum->isCompletelyInitialized())
         baseBlock->throwAssemblerInvariant("enum {} is not completely initialized",
             baseEnum->getSymbolUrl().toString());
 
-    return status;
+    return {};
 }
 
 static tempo_utils::Status
@@ -298,73 +269,41 @@ compile_defenum_base_default_init(
 {
     TU_ASSERT (baseEnum != nullptr);
     auto *typeSystem = moduleEntry.getTypeSystem();
-    auto *state = moduleEntry.getState();
     auto *baseBlock = baseEnum->enumBlock();
 
-    // declare the default no-parameters constructor
-    auto declareBaseCtor = baseEnum->declareCtor({}, lyric_object::AccessType::Public);
-    if (declareBaseCtor.isStatus())
-        return declareBaseCtor.getStatus();
-    auto baseCtorUrl = declareBaseCtor.getResult();
-    lyric_assembler::AbstractSymbol *baseCtorSym;
-    TU_ASSIGN_OR_RETURN (baseCtorSym, state->symbolCache()->getOrImportSymbol(baseCtorUrl));
-    if (baseCtorSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        baseBlock->throwAssemblerInvariant("invalid call symbol {}", baseCtorUrl.toString());
-    auto *baseCtor = cast_symbol_to_call(baseCtorSym);
+    // declare the constructor
+    lyric_assembler::CallSymbol *ctorSymbol;
+    TU_ASSIGN_OR_RETURN (ctorSymbol, baseEnum->declareCtor(lyric_object::AccessType::Public));
 
-    auto *proc = baseCtor->callProc();
-    auto *code = proc->procCode();
-    auto *ctorBlock = proc->procBlock();
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
+
+    auto *code = procHandle->procCode();
+    auto *ctorBlock = procHandle->procBlock();
 
     // find the superenum ctor
-    auto resolveSuperCtorResult = baseEnum->superEnum()->resolveCtor();
-    if (resolveSuperCtorResult.isStatus())
-        return resolveSuperCtorResult.getStatus();
-    auto superCtor = resolveSuperCtorResult.getResult();
+    lyric_assembler::ConstructableInvoker superCtor;
+    TU_RETURN_IF_NOT_OK (baseEnum->superEnum()->prepareCtor(superCtor));
 
-    lyric_typing::CallsiteReifier reifier(superCtor.getParameters(), superCtor.getRest(), typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize());
+    lyric_typing::CallsiteReifier reifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
 
-    //
-    auto status = code->loadSynthetic(lyric_assembler::SyntheticType::THIS);
-    if (status.notOk())
-        return status;
+    // load the uninitialized enum onto the top of the stack
+    TU_RETURN_IF_NOT_OK (code->loadSynthetic(lyric_assembler::SyntheticType::THIS));
 
-    // call super ctor, enum is now on the top of the stack
-    auto invokeSuperCtorResult = superCtor.invoke(ctorBlock, reifier);
-    if (invokeSuperCtorResult.isStatus())
-        return invokeSuperCtorResult.getStatus();
+    // call super ctor
+    TU_RETURN_IF_STATUS (superCtor.invoke(ctorBlock, reifier, 0));
 
-    // create block for init and declare synthetic $this variable
-    lyric_assembler::BlockHandle initBlock(proc, code, ctorBlock, ctorBlock->blockState());
-    auto declareThisResult = initBlock.declareVariable("$this",
-        baseEnum->getAssignableType(), lyric_parser::BindingType::VALUE);
-    if (declareThisResult.isStatus())
-        return declareThisResult.getStatus();
-    auto var = declareThisResult.getResult();
-
-    // store enum in $this
-    status = initBlock.store(var);
-    if (!status.isOk())
-        return status;
-
-    // load $this onto top of the stack
-    status = initBlock.load(var);
-    if (!status.isOk())
-        return status;
-
-    TU_LOG_INFO << "declared ctor " << baseCtorUrl << " for " << baseEnum->getSymbolUrl();
+    TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << baseEnum->getSymbolUrl();
 
     // add return instruction
-    status = code->writeOpcode(lyric_object::Opcode::OP_RETURN);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_RETURN));
 
     if (!baseEnum->isCompletelyInitialized())
         baseBlock->throwAssemblerInvariant("enum {} is not completely initialized",
             baseEnum->getSymbolUrl().toString());
 
-    return status;
+    return {};
 }
 
 static tempo_utils::Status
@@ -376,80 +315,45 @@ compile_defenum_case_init(
     TU_ASSERT (caseEnum != nullptr);
     TU_ASSERT (walker.isValid());
     auto *typeSystem = moduleEntry.getTypeSystem();
-    auto *state = moduleEntry.getState();
     auto *caseBlock = caseEnum->enumBlock();
 
     // declare the constructor
-    auto declareCtorResult = caseEnum->declareCtor({}, lyric_object::AccessType::Public);
-    if (declareCtorResult.isStatus())
-        return declareCtorResult.getStatus();
-    auto caseCtorUrl = declareCtorResult.getResult();
-    lyric_assembler::AbstractSymbol *caseCtorSym;
-    TU_ASSIGN_OR_RETURN (caseCtorSym, state->symbolCache()->getOrImportSymbol(caseCtorUrl));
-    if (caseCtorSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        caseBlock->throwAssemblerInvariant("invalid call symbol {}", caseCtorUrl.toString());
-    auto *caseCtor= cast_symbol_to_call(caseCtorSym);
+    lyric_assembler::CallSymbol *ctorSymbol;
+    TU_ASSIGN_OR_RETURN (ctorSymbol, caseEnum->declareCtor(lyric_object::AccessType::Public));
 
-    auto *proc = caseCtor->callProc();
-    auto *code = proc->procCode();
-    auto *ctorBlock = proc->procBlock();
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
+
+    auto *code = procHandle->procCode();
+    auto *ctorBlock = procHandle->procBlock();
 
     // find the superenum ctor
-    auto resolveSuperCtorResult = caseEnum->superEnum()->resolveCtor();
-    if (resolveSuperCtorResult.isStatus())
-        return resolveSuperCtorResult.getStatus();
-    auto superCtor = resolveSuperCtorResult.getResult();
+    lyric_assembler::ConstructableInvoker superCtor;
+    TU_RETURN_IF_NOT_OK (caseEnum->superEnum()->prepareCtor(superCtor));
 
-    lyric_typing::CallsiteReifier reifier(superCtor.getParameters(), superCtor.getRest(), typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize());
+    lyric_typing::CallsiteReifier reifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
 
-    tempo_utils::Status status;
+    // load the uninitialized enum onto the top of the stack
+    TU_RETURN_IF_NOT_OK (code->loadSynthetic(lyric_assembler::SyntheticType::THIS));
 
-    status = code->loadSynthetic(lyric_assembler::SyntheticType::THIS);
-    if (status.notOk())
-        return status;
+    // place arguments
+    TU_RETURN_IF_NOT_OK (lyric_compiler::internal::compile_placement(
+        superCtor.getConstructable(), ctorBlock, ctorBlock, reifier, walker, moduleEntry));
 
-    // apply the remainder of the parameters
-    status = lyric_compiler::internal::compile_placement(ctorBlock, ctorBlock, superCtor,
-        reifier, walker, moduleEntry);
-    if (!status.isOk())
-        return status;
+    // call super ctor
+    TU_RETURN_IF_STATUS (superCtor.invoke(ctorBlock, reifier, 0));
 
-    // call super ctor, enum is now on the top of the stack
-    auto invokeSuperCtorResult = superCtor.invoke(ctorBlock, reifier);
-    if (invokeSuperCtorResult.isStatus())
-        return invokeSuperCtorResult.getStatus();
-
-    // create block for init and declare synthetic $this variable
-    lyric_assembler::BlockHandle initBlock(proc, code, ctorBlock, ctorBlock->blockState());
-    auto declareThisResult = initBlock.declareVariable("$this",
-        caseEnum->getAssignableType(), lyric_parser::BindingType::VALUE);
-    if (declareThisResult.isStatus())
-        return declareThisResult.getStatus();
-    auto var = declareThisResult.getResult();
-
-    // store enum in $this
-    status = initBlock.store(var);
-    if (!status.isOk())
-        return status;
-
-    // load $this onto top of the stack
-    status = initBlock.load(var);
-    if (!status.isOk())
-        return status;
-
-    TU_LOG_INFO << "declared ctor " << caseCtorUrl << " for " << caseEnum->getSymbolUrl();
+    TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << caseEnum->getSymbolUrl();
 
     // add return instruction
-    status = code->writeOpcode(lyric_object::Opcode::OP_RETURN);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_RETURN));
 
     if (!caseEnum->isCompletelyInitialized())
         caseBlock->throwAssemblerInvariant("enum {} is not completely initialized",
             caseEnum->getSymbolUrl().toString());
 
-    return status;
+    return {};
 }
 
 static tempo_utils::Status
@@ -503,95 +407,83 @@ compile_defenum_impl_def(
 {
     TU_ASSERT (implHandle != nullptr);
     TU_ASSERT(walker.isValid());
-    auto *state = moduleEntry.getState();
+    auto *implBlock = implHandle->implBlock();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
     moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDefClass, 2);
-
-    auto *implBlock = implHandle->implBlock();
 
     // get method name
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
-    // get method return type
+    // parse the return type
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    auto parseAssignableResult = typeSystem->parseAssignable(implBlock, type);
-    if (parseAssignableResult.isStatus())
-        return parseAssignableResult.getStatus();
-    auto returnSpec = parseAssignableResult.getResult();
+    lyric_parser::Assignable returnSpec;
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(implBlock, type));
 
-    // compile the parameter list
+    // parse the parameter list
     auto pack = walker.getChild(0);
-    auto parsePackResult = typeSystem->parsePack(implBlock, pack);
-    if (parsePackResult.isStatus())
-        return parsePackResult.getStatus();
-    auto packSpec = parsePackResult.getResult();
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(implBlock, pack));
 
-    // compile initializers
-    absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
-    for (const auto &p : packSpec.parameterSpec) {
-        if (!p.init.isEmpty()) {
-            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(
-                implBlock, p.name, {}, p.type, p.init.getValue(), moduleEntry);
-            if (compileInitializerResult.isStatus())
-                return compileInitializerResult.getStatus();
-            initializers[p.name] = compileInitializerResult.getResult();
+    // check for initializers
+    if (!packSpec.initializers.empty()) {
+        for (const auto &p : packSpec.listParameterSpec) {
+            if (!p.init.isEmpty())
+                implBlock->throwSyntaxError(p.init.getValue(),
+                    "list parameter '{}' has unexpected initializer", p.name);
+        }
+        for (const auto &p : packSpec.namedParameterSpec) {
+            if (!p.init.isEmpty())
+                implBlock->throwSyntaxError(p.init.getValue(),
+                    "named parameter '{}' has unexpected initializer", p.name);
         }
     }
 
-    // declare the impl extension
-    lyric_assembler::ExtensionMethod extension;
-    TU_ASSIGN_OR_RETURN (extension, implHandle->declareExtension(
-        identifier, packSpec.parameterSpec, packSpec.restSpec, packSpec.ctxSpec, returnSpec));
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(extension.methodCall));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        implBlock->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
-    auto *call = cast_symbol_to_call(symbol);
+    // resolve the parameter pack
+    lyric_assembler::ParameterPack parameterPack;
+    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(implBlock, packSpec));
 
-    // add initializers to the call
-    for (const auto &entry : initializers) {
-        call->putInitializer(entry.first, entry.second);
-    }
+    // resolve the return type
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(implBlock, returnSpec));
+
+    // define the extension
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, implHandle->defineExtension(identifier, parameterPack, returnType));
 
     // compile the method body
     auto body = walker.getChild(1);
-    auto *proc = call->callProc();
-    auto compileBodyResult = lyric_compiler::internal::compile_block(proc->procBlock(), body, moduleEntry);
-    if (compileBodyResult.isStatus())
-        return compileBodyResult.getStatus();
-    auto bodyType = compileBodyResult.getResult();
+    lyric_common::TypeDef bodyType;
+    TU_ASSIGN_OR_RETURN (bodyType, lyric_compiler::internal::compile_block(
+        procHandle->procBlock(), body, moduleEntry));
 
     // add return instruction
-    auto status = proc->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN);
-    if (!status.isOk())
-        return status;
-
-    bool isReturnable;
+    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
 
     // validate that body returns the expected type
-    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    bool isReturnable;
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
         return implBlock->logAndContinue(body,
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
-            "body does not match return type {}", call->getReturnType().toString());
+            "body does not match return type {}", returnType.toString());
 
     // validate that each exit returns the expected type
-    for (const auto &exitType : call->listExitTypes()) {
-        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+    for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
             return implBlock->logAndContinue(body,
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
-                "body does not match return type {}", call->getReturnType().toString());
+                "body does not match return type {}", returnType.toString());
     }
 
     // return control to the caller
-    return lyric_compiler::CompilerStatus::ok();
+    return {};
 }
 
 static tempo_utils::Status
@@ -605,21 +497,20 @@ compile_defenum_impl(
     auto *enumBlock = enumSymbol->enumBlock();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
-    // get impl type
+    // parse the impl type
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    auto parseAssignableResult = typeSystem->parseAssignable(enumBlock, type);
-    if (parseAssignableResult.isStatus())
-        return parseAssignableResult.getStatus();
-    auto implSpec = parseAssignableResult.getResult();
+    lyric_parser::Assignable implSpec;
+    TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(enumBlock, type));
 
-    tempo_utils::Status status;
+    // resolve the impl type
+    lyric_common::TypeDef implType;
+    TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(enumBlock, implSpec));
 
     // declare the enum impl
-    lyric_common::TypeDef implType;
-    TU_ASSIGN_OR_RETURN (implType, enumSymbol->declareImpl(implSpec));
-    auto *implHandle = enumSymbol->getImpl(implType);
+    lyric_assembler::ImplHandle *implHandle;
+    TU_ASSIGN_OR_RETURN (implHandle, enumSymbol->declareImpl(implType));
 
     // compile each impl def
     for (int i = 0; i < walker.numChildren(); i++) {
@@ -628,16 +519,14 @@ compile_defenum_impl(
         moduleEntry.parseIdOrThrow(child, lyric_schema::kLyricAstVocabulary, childId);
         switch (childId) {
             case lyric_schema::LyricAstId::Def:
-                status = compile_defenum_impl_def(implHandle, child, moduleEntry);
+                TU_RETURN_IF_NOT_OK (compile_defenum_impl_def(implHandle, child, moduleEntry));
                 break;
             default:
                 enumBlock->throwSyntaxError(child, "expected impl def");
         }
-        if (!status.isOk())
-            return status;
     }
 
-    return lyric_compiler::CompilerStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -760,5 +649,5 @@ lyric_compiler::internal::compile_defenum(
         *enumSymbolPtr = baseEnum;
     }
 
-    return CompilerStatus::ok();
+    return {};
 }

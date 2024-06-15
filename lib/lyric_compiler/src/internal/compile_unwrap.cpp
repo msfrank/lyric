@@ -1,7 +1,7 @@
 
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/code_builder.h>
-#include <lyric_assembler/extension_invoker.h>
+#include <lyric_assembler/extension_callable.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/instance_symbol.h>
@@ -97,20 +97,16 @@ lyric_compiler::internal::compile_unwrap(
     auto *state = moduleEntry.getState();
     auto *symbolCache = state->symbolCache();
 
-    tempo_utils::Status status;
-
     // if an identifier is specified, then declare an alias of the target but with unwrap type
     if (walker.hasAttr(lyric_parser::kLyricAstIdentifier)) {
         std::string identifier;
         moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
-        auto declareAliasResult = block->declareAlias(identifier, targetRef, unwrapType);
-        if (declareAliasResult.isStatus())
-            return declareAliasResult.getStatus();
+        TU_RETURN_IF_STATUS (block->declareAlias(identifier, targetRef, unwrapType));
     }
 
     // if there are no unwrap params, then we are done
     if (walker.numChildren() == 0)
-        return CompilerStatus::ok();
+        return {};
 
     // parse the unwrap list and declare locals for each param
     std::vector<lyric_common::TypeDef> tupleTypeArguments;
@@ -122,27 +118,24 @@ lyric_compiler::internal::compile_unwrap(
         tu_uint32 typeOffset;
         moduleEntry.parseAttrOrThrow(param, lyric_parser::kLyricAstTypeOffset, typeOffset);
         auto type = param.getNodeAtOffset(typeOffset);
-        auto resolveParamTypeResult = typeSystem->resolveAssignable(block, type);
-        if (resolveParamTypeResult.isStatus())
-            return resolveParamTypeResult.getStatus();
-        auto paramType = resolveParamTypeResult.getResult();
+        lyric_parser::Assignable paramSpec;
+        TU_ASSIGN_OR_RETURN (paramSpec, typeSystem->parseAssignable(block, type));
+        lyric_common::TypeDef paramType;
+        TU_ASSIGN_OR_RETURN (paramType, typeSystem->resolveAssignable(block, paramSpec));
         tupleTypeArguments.push_back(paramType);
 
         std::string paramName;
         moduleEntry.parseAttrOrThrow(param, lyric_parser::kLyricAstIdentifier, paramName);
-        auto declareParamResult = block->declareVariable(
-            paramName, paramType, lyric_parser::BindingType::VARIABLE);
-        if (declareParamResult.isStatus())
-            return declareParamResult.getStatus();
-        unwrapRefs.emplace_back(paramName, declareParamResult.getResult());
+        lyric_assembler::DataReference ref;
+        TU_ASSIGN_OR_RETURN (ref, block->declareVariable(
+            paramName, paramType, lyric_parser::BindingType::VARIABLE));
+        unwrapRefs.emplace_back(paramName, ref);
     }
 
     // resolve the instance implementing unwrap() for the specified unwrap type and tuple type
-    auto resolveUnwrapInstanceResult = resolve_unwrap_instance(block, unwrapType,
-        tupleTypeArguments, moduleEntry);
-    if (resolveUnwrapInstanceResult.isStatus())
-        return resolveUnwrapInstanceResult.getStatus();
-    auto instanceRef = resolveUnwrapInstanceResult.getResult();
+    lyric_assembler::DataReference instanceRef;
+    TU_ASSIGN_OR_RETURN (instanceRef, resolve_unwrap_instance(block, unwrapType,
+        tupleTypeArguments, moduleEntry));
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(instanceRef.symbolUrl));
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
@@ -156,58 +149,18 @@ lyric_compiler::internal::compile_unwrap(
             tempo_tracing::LogSeverity::kError,
             "missing impl for {}", instanceRef.typeDef.toString());
 
-    auto extensionOption = impl->getExtension(kUnwrapExtensionName);
-    if (extensionOption.isEmpty())
-        return block->logAndContinue(CompilerCondition::kMissingAction,
-            tempo_tracing::LogSeverity::kError,
-            "missing extension {} for impl {}", kUnwrapExtensionName, instanceRef.typeDef.toString());
-    auto extension = extensionOption.getValue();
+    lyric_assembler::CallableInvoker extensionInvoker;
+    TU_RETURN_IF_NOT_OK (impl->prepareExtension(kUnwrapExtensionName, instanceRef, extensionInvoker));
 
-    auto extensionUrl = extension.methodCall;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(extensionUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        block->throwAssemblerInvariant("invalid call symbol {}", extensionUrl.toString());
-    auto *extensionCall = cast_symbol_to_call(symbol);
+    auto instanceTypeArguments = instanceRef.typeDef.getConcreteArguments();
+    std::vector<lyric_common::TypeDef> callsiteTypeArguments(
+        instanceTypeArguments.begin(), instanceTypeArguments.end());
+    lyric_typing::CallsiteReifier reifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(extensionInvoker, callsiteTypeArguments));
 
-    lyric_assembler::ExtensionInvoker extensionInvoker;
-    if (extensionCall->isInline()) {
-        extensionInvoker = lyric_assembler::ExtensionInvoker(extensionCall, extensionCall->callProc());
-    } else if (extensionCall->isBound()) {
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(instanceRef.typeDef.getConcreteUrl()));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
-            block->throwAssemblerInvariant("invalid concept symbol {}", instanceRef.typeDef.getConcreteUrl().toString());
-        auto *conceptSymbol = cast_symbol_to_concept(symbol);
+    TU_RETURN_IF_NOT_OK (block->load(targetRef));
+    TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(unwrapType));
 
-        auto resolveActionResult = conceptSymbol->getAction(kUnwrapExtensionName);
-        if (resolveActionResult.isEmpty())
-            block->throwAssemblerInvariant("missing action {} for concept symbol {}",
-                kUnwrapExtensionName, instanceRef.typeDef.getConcreteUrl().toString());
-        auto action = resolveActionResult.getValue();
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(action.methodAction));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::ACTION)
-            block->throwAssemblerInvariant("invalid action symbol {}", action.methodAction.toString());
-        auto *actionSymbol = cast_symbol_to_action(symbol);
-
-        instanceSymbol->touch();
-
-        extensionInvoker = lyric_assembler::ExtensionInvoker(conceptSymbol, actionSymbol, instanceRef);
-    } else {
-        block->throwAssemblerInvariant("invalid extension call {}", extensionUrl.toString());
-    }
-
-    // call unwrap() on the target, putting the tuple on the top of the stack
-    auto callsiteTypeArguments = instanceRef.typeDef.getConcreteArguments();
-    lyric_typing::CallsiteReifier reifier(extensionInvoker.getParameters(), extensionInvoker.getRest(),
-        extensionInvoker.getTemplateUrl(), extensionInvoker.getTemplateParameters(),
-        std::vector<lyric_common::TypeDef>(callsiteTypeArguments.begin(), callsiteTypeArguments.end()),
-        typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize());
-    status = block->load(targetRef);
-    if (!status.isOk())
-        return status;
-    status = reifier.reifyNextArgument(unwrapType);
-    if (!status.isOk())
-        return status;
     auto invokeUnwrapResult = extensionInvoker.invoke(block, reifier);
     if (invokeUnwrapResult.isStatus())
         return invokeUnwrapResult.getStatus();
@@ -237,21 +190,15 @@ lyric_compiler::internal::compile_unwrap(
         }
 
         // load member from tuple onto the top of the stack
-        status = block->load(tupleRef);
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (block->load(tupleRef));
 
         // drop the previous result from the stack
         auto unwrapRef = unwrapRefs[i];
-        status = block->store(unwrapRef.second);
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (block->store(unwrapRef.second));
     }
 
     // pop the tuple off the stack
-    status = block->blockCode()->popValue();
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (block->blockCode()->popValue());
 
-    return CompilerStatus::ok();
+    return {};
 }

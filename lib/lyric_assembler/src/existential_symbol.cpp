@@ -302,6 +302,7 @@ lyric_assembler::ExistentialSymbol::prepareMethod(
     if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", method.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
+    callSymbol->touch();
 
     if (callSymbol->isInline()) {
         auto callable = std::make_unique<ExistentialCallable>(callSymbol, callSymbol->callProc());

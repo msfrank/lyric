@@ -20,7 +20,8 @@ lyric_compiler::internal::compile_module(
     if (result.isStatus())
         return result.getStatus();
     auto *entry = moduleEntry.getEntry();
-    entry->putExitType(result.getResult());
+    auto *entryProc = entry->callProc();
+    entryProc->putExitType(result.getResult());
 
     // add return instruction
     // FIXME: a jump offset which points to the end of the proc requires a pad

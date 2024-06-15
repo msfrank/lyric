@@ -186,9 +186,10 @@ lyric_assembler::ImplHandle::defineExtension(
 
     // construct call symbol
     CallSymbol *callSymbol;
-    if (priv->receiverTemplate != nullptr) {
+    TemplateHandle *conceptTemplate = priv->implConcept->conceptTemplate();
+    if (conceptTemplate != nullptr) {
         callSymbol = new CallSymbol(methodUrl, priv->receiverUrl, access, address,
-            lyric_object::CallMode::Normal, priv->receiverTemplate, priv->implBlock.get(), m_state);
+            lyric_object::CallMode::Normal, conceptTemplate, priv->implBlock.get(), m_state);
     } else {
         callSymbol = new CallSymbol(methodUrl, priv->receiverUrl, access, address,
             lyric_object::CallMode::Normal, priv->implBlock.get(), m_state);
@@ -237,6 +238,8 @@ lyric_assembler::ImplHandle::prepareExtension(
     if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
+    callSymbol->touch();
+
     auto access = callSymbol->getAccessType();
 
     if (access != lyric_object::AccessType::Public)

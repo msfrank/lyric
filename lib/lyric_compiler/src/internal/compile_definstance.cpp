@@ -36,10 +36,10 @@ compile_definstance_val(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    auto resolveValSpecResult = typeSystem->parseAssignable(instanceBlock, type);
-    if (resolveValSpecResult.isStatus())
-        return resolveValSpecResult.getStatus();
-    auto valType = resolveValSpecResult.getResult();
+    lyric_parser::Assignable valSpec;
+    TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(instanceBlock, type));
+    lyric_common::TypeDef valType;
+    TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(instanceBlock, valSpec));
 
     lyric_object::AccessType accessType = lyric_object::AccessType::Public;
     if (absl::StartsWith(identifier, "__")) {
@@ -52,18 +52,11 @@ compile_definstance_val(
     lyric_common::SymbolUrl init;
     if (walker.numChildren() > 0) {
         auto defaultInit = walker.getChild(0);
-        auto compileDefaultResult = lyric_compiler::internal::compile_default_initializer(
-            instanceSymbol->instanceBlock(), identifier, {}, valType, defaultInit, moduleEntry);
-        if (compileDefaultResult.isStatus())
-            return compileDefaultResult.getStatus();
-        init = compileDefaultResult.getResult();
+        TU_ASSIGN_OR_RETURN (init, lyric_compiler::internal::compile_member_initializer(
+            instanceSymbol->instanceBlock(), defaultInit, identifier, valType, {}, moduleEntry));
     }
 
-    auto declareMemberResult = instanceSymbol->declareMember(identifier, resolveValSpecResult.getResult(),
-        false, accessType, init);
-    if (declareMemberResult.isStatus())
-        return declareMemberResult.getStatus();
-
+    TU_RETURN_IF_STATUS (instanceSymbol->declareMember(identifier, valType, false, accessType, init));
     TU_LOG_INFO << "declared val member" << identifier << "for" << instanceSymbol->getSymbolUrl();
 
     return identifier;
@@ -88,10 +81,10 @@ compile_definstance_var(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    auto resolveVarSpecResult = typeSystem->parseAssignable(instanceBlock, type);
-    if (resolveVarSpecResult.isStatus())
-        return resolveVarSpecResult.getStatus();
-    auto varType = resolveVarSpecResult.getResult();
+    lyric_parser::Assignable varSpec;
+    TU_ASSIGN_OR_RETURN (varSpec, typeSystem->parseAssignable(instanceBlock, type));
+    lyric_common::TypeDef varType;
+    TU_ASSIGN_OR_RETURN (varType, typeSystem->resolveAssignable(instanceBlock, varSpec));
 
     lyric_object::AccessType accessType = lyric_object::AccessType::Public;
     if (absl::StartsWith(identifier, "__")) {
@@ -104,18 +97,11 @@ compile_definstance_var(
     lyric_common::SymbolUrl init;
     if (walker.numChildren() > 0) {
         auto defaultInit = walker.getChild(0);
-        auto compileDefaultResult = lyric_compiler::internal::compile_default_initializer(
-            instanceSymbol->instanceBlock(), identifier, {}, varType, defaultInit, moduleEntry);
-        if (compileDefaultResult.isStatus())
-            return compileDefaultResult.getStatus();
-        init = compileDefaultResult.getResult();
+        TU_ASSIGN_OR_RETURN (init, lyric_compiler::internal::compile_member_initializer(
+            instanceSymbol->instanceBlock(), defaultInit, identifier, varType, {}, moduleEntry));
     }
 
-    auto declareMemberResult = instanceSymbol->declareMember(identifier, resolveVarSpecResult.getResult(),
-        true, accessType, init);
-    if (declareMemberResult.isStatus())
-        return declareMemberResult.getStatus();
-
+    TU_RETURN_IF_STATUS (instanceSymbol->declareMember(identifier, varType, true, accessType, init));
     TU_LOG_INFO << "declared var member" << identifier << "for" << instanceSymbol->getSymbolUrl();
 
     return identifier;
@@ -133,38 +119,27 @@ compile_definstance_init(
     auto *instanceBlock = instanceSymbol->instanceBlock();
 
     // declare the constructor
-    auto declareCtorResult = instanceSymbol->declareCtor(lyric_object::AccessType::Public);
-    if (declareCtorResult.isStatus())
-        return declareCtorResult.getStatus();
-    auto ctorUrl = declareCtorResult.getResult();
-    lyric_assembler::AbstractSymbol *ctorSym;
-    TU_ASSIGN_OR_RETURN (ctorSym, state->symbolCache()->getOrImportSymbol(ctorUrl));
-    if (ctorSym->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        instanceBlock->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
-    auto *ctor = cast_symbol_to_call(ctorSym);
+    lyric_assembler::CallSymbol *ctorSymbol;
+    TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(lyric_object::AccessType::Public));
 
-    auto *proc = ctor->callProc();
-    auto *code = proc->procCode();
-    auto *ctorBlock = proc->procBlock();
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
+
+    auto *code = procHandle->procCode();
+    auto *ctorBlock = procHandle->procBlock();
 
     // find the superinstance ctor
-    auto resolveSuperCtorResult = instanceSymbol->superInstance()->resolveCtor();
-    if (resolveSuperCtorResult.isStatus())
-        return resolveSuperCtorResult.getStatus();
-    auto superCtor = resolveSuperCtorResult.getResult();
+    lyric_assembler::ConstructableInvoker superCtor;
+    TU_RETURN_IF_NOT_OK (instanceSymbol->superInstance()->prepareCtor(superCtor));
 
-    lyric_typing::CallsiteReifier reifier(superCtor.getParameters(), superCtor.getRest(), typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize());
+    lyric_typing::CallsiteReifier reifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
 
-    //
-    auto status = code->loadSynthetic(lyric_assembler::SyntheticType::THIS);
-    if (status.notOk())
-        return status;
+    // load the uninitialized instance onto the top of the stack
+    TU_RETURN_IF_NOT_OK (code->loadSynthetic(lyric_assembler::SyntheticType::THIS));
 
-    // call super ctor, instance is now on the top of the stack
-    auto invokeSuperCtorResult = superCtor.invoke(ctorBlock, reifier);
-    if (invokeSuperCtorResult.isStatus())
-        return invokeSuperCtorResult.getStatus();
+    // call super ctor
+    TU_RETURN_IF_STATUS (superCtor.invoke(ctorBlock, reifier, 0));
 
     // if any members are uninitialized, then try to default-initialize them
     for (const auto &memberName : instanceMemberNames) {
@@ -193,42 +168,33 @@ compile_definstance_init(
         auto *initializerCall = cast_symbol_to_call(symbol);
 
         // load $this onto the top of the stack
-        status = code->loadSynthetic(lyric_assembler::SyntheticType::THIS);
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (code->loadSynthetic(lyric_assembler::SyntheticType::THIS));
 
         // invoke initializer to place default value onto the top of the stack
-        lyric_assembler::CallInvoker initializerInvoker(initializerCall);
-        lyric_typing::CallsiteReifier initializerReifier(initializerInvoker.getParameters(),
-            initializerInvoker.getRest(), typeSystem);
-        TU_RETURN_IF_NOT_OK (initializerReifier.initialize());
-        auto invokeInitializerResult = initializerInvoker.invoke(ctorBlock, initializerReifier);
-        if (invokeInitializerResult.isStatus())
-            return invokeInitializerResult.getStatus();
+        auto callable = std::make_unique<lyric_assembler::FunctionCallable>(initializerCall);
+        lyric_assembler::CallableInvoker invoker;
+        TU_RETURN_IF_NOT_OK (invoker.initialize(std::move(callable)));
+        lyric_typing::CallsiteReifier initializerReifier(typeSystem);
+        TU_RETURN_IF_NOT_OK (initializerReifier.initialize(invoker));
+        TU_RETURN_IF_STATUS (invoker.invoke(ctorBlock, initializerReifier));
 
         // store default value in instance field
-        status = ctorBlock->store(fieldRef);
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (ctorBlock->store(fieldRef));
 
         // mark member as initialized
-        status = instanceSymbol->setMemberInitialized(memberName);
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (instanceSymbol->setMemberInitialized(memberName));
     }
 
-    TU_LOG_INFO << "declared ctor " << ctorUrl << " for " << instanceSymbol->getSymbolUrl();
+    TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << instanceSymbol->getSymbolUrl();
 
     // add return instruction
-    status = code->writeOpcode(lyric_object::Opcode::OP_RETURN);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_RETURN));
 
     if (!instanceSymbol->isCompletelyInitialized())
         instanceBlock->throwAssemblerInvariant("instance {} is not completely initialized",
             instanceSymbol->getSymbolUrl().toString());
 
-    return status;
+    return {};
 }
 
 static tempo_utils::Status
@@ -239,104 +205,103 @@ compile_definstance_def(
 {
     TU_ASSERT (instanceSymbol != nullptr);
     TU_ASSERT(walker.isValid());
-    auto *state = moduleEntry.getState();
+    auto *instanceBlock = instanceSymbol->instanceBlock();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
     moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDefClass, 2);
-
-    auto *instanceBlock = instanceSymbol->instanceBlock();
 
     // get method name
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
-    // get method return type
+    // determine the access level
+    lyric_object::AccessType access = lyric_object::AccessType::Public;
+    if (absl::StartsWith(identifier, "__")) {
+        access = lyric_object::AccessType::Private;
+    } else if (absl::StartsWith(identifier, "_")) {
+        access = lyric_object::AccessType::Protected;
+    }
+
+    // parse the return type
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    auto compileTypeResult = typeSystem->parseAssignable(instanceBlock, type);
-    if (compileTypeResult.isStatus())
-        return compileTypeResult.getStatus();
-    auto returnSpec = compileTypeResult.getResult();
+    lyric_parser::Assignable returnSpec;
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(instanceBlock, type));
 
-    // compile the parameter list
+    // parse the parameter list
     auto pack = walker.getChild(0);
-    auto compilePackResult = typeSystem->parsePack(instanceBlock, pack);
-    if (compilePackResult.isStatus())
-        return compilePackResult.getStatus();
-    auto packSpec = compilePackResult.getResult();
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(instanceBlock, pack));
 
-    // compile initializers
-    absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
-    for (const auto &p : packSpec.parameterSpec) {
-        if (!p.init.isEmpty()) {
-            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(
-                instanceBlock, p.name, {}, p.type, p.init.getValue(), moduleEntry);
-            if (compileInitializerResult.isStatus())
-                return compileInitializerResult.getStatus();
-            initializers[p.name] = compileInitializerResult.getResult();
+    // declare the method
+    lyric_assembler::CallSymbol *callSymbol;
+    TU_ASSIGN_OR_RETURN (callSymbol, instanceSymbol->declareMethod(identifier, access));
+
+    auto *resolver = callSymbol->callResolver();
+
+    // resolve the parameter pack
+    lyric_assembler::ParameterPack parameterPack;
+    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
+
+    // resolve the return type
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, returnSpec));
+
+    // compile list parameter initializers
+    for (const auto &p : parameterPack.listParameters) {
+        auto entry = packSpec.initializers.find(p.name);
+        if (entry != packSpec.initializers.cend()) {
+            lyric_common::SymbolUrl initializerUrl;
+            TU_ASSIGN_OR_RETURN (initializerUrl, lyric_compiler::internal::compile_param_initializer(
+                instanceBlock, entry->second, p, {}, moduleEntry));
+            callSymbol->putInitializer(p.name, initializerUrl);
         }
     }
 
-    lyric_object::AccessType accessType = lyric_object::AccessType::Public;
-    if (absl::StartsWith(identifier, "__")) {
-        accessType = lyric_object::AccessType::Private;
-    } else if (absl::StartsWith(identifier, "_")) {
-        accessType = lyric_object::AccessType::Protected;
-    }
-
-    // declare the method
-    auto declareMethodResult = instanceSymbol->declareMethod(identifier, packSpec.parameterSpec,
-        packSpec.restSpec, packSpec.ctxSpec, returnSpec, accessType);
-    if (declareMethodResult.isStatus())
-        return declareMethodResult.getStatus();
-    auto methodUrl = declareMethodResult.getResult();
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(methodUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        instanceBlock->throwAssemblerInvariant("invalid call symbol {}", methodUrl.toString());
-    auto *call = cast_symbol_to_call(symbol);
-
-    // add initializers to the call
-    for (const auto &entry : initializers) {
-        call->putInitializer(entry.first, entry.second);
+    // compile named parameter initializers
+    for (const auto &p : parameterPack.namedParameters) {
+        auto entry = packSpec.initializers.find(p.name);
+        if (entry != packSpec.initializers.cend()) {
+            lyric_common::SymbolUrl initializerUrl;
+            TU_ASSIGN_OR_RETURN (initializerUrl, lyric_compiler::internal::compile_param_initializer(
+                instanceBlock, entry->second, p, {}, moduleEntry));
+            callSymbol->putInitializer(p.name, initializerUrl);
+        }
     }
 
     // compile the method body
     auto body = walker.getChild(1);
-    auto *proc = call->callProc();
-    auto compileBodyResult = lyric_compiler::internal::compile_block(proc->procBlock(), body, moduleEntry);
-    if (compileBodyResult.isStatus())
-        return compileBodyResult.getStatus();
-    auto bodyType = compileBodyResult.getResult();
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnType));
+    lyric_common::TypeDef bodyType;
+    TU_ASSIGN_OR_RETURN (bodyType, lyric_compiler::internal::compile_block(
+        procHandle->procBlock(), body, moduleEntry));
 
     // add return instruction
-    auto status = proc->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN);
-    if (!status.isOk())
-        return status;
-
-    bool isReturnable;
+    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
 
     // validate that body returns the expected type
-    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    bool isReturnable;
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
         return instanceBlock->logAndContinue(body,
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
-            "body does not match return type {}", call->getReturnType().toString());
+            "body does not match return type {}", returnType.toString());
 
     // validate that each exit returns the expected type
-    for (const auto &exitType : call->listExitTypes()) {
-        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+    for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
             return instanceBlock->logAndContinue(body,
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
-                "body does not match return type {}", call->getReturnType().toString());
+                "body does not match return type {}", returnType.toString());
     }
 
     // return control to the caller
-    return lyric_compiler::CompilerStatus::ok();
+    return {};
 }
 
 static tempo_utils::Status
@@ -347,95 +312,83 @@ compile_definstance_impl_def(
 {
     TU_ASSERT (implHandle != nullptr);
     TU_ASSERT(walker.isValid());
-    auto *state = moduleEntry.getState();
+    auto *implBlock = implHandle->implBlock();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
     moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDefClass, 2);
-
-    auto *implBlock = implHandle->implBlock();
 
     // get method name
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
-    // get method return type
+    // parse the return type
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    auto parseAssignableResult = typeSystem->parseAssignable(implBlock, type);
-    if (parseAssignableResult.isStatus())
-        return parseAssignableResult.getStatus();
-    auto returnSpec = parseAssignableResult.getResult();
+    lyric_parser::Assignable returnSpec;
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(implBlock, type));
 
-    // compile the parameter list
+    // parse the parameter list
     auto pack = walker.getChild(0);
-    auto parsePackResult = typeSystem->parsePack(implBlock, pack);
-    if (parsePackResult.isStatus())
-        return parsePackResult.getStatus();
-    auto packSpec = parsePackResult.getResult();
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(implBlock, pack));
 
-    // compile initializers
-    absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
-    for (const auto &p : packSpec.parameterSpec) {
-        if (!p.init.isEmpty()) {
-            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(
-                implBlock, p.name, {}, p.type, p.init.getValue(), moduleEntry);
-            if (compileInitializerResult.isStatus())
-                return compileInitializerResult.getStatus();
-            initializers[p.name] = compileInitializerResult.getResult();
+    // check for initializers
+    if (!packSpec.initializers.empty()) {
+        for (const auto &p : packSpec.listParameterSpec) {
+            if (!p.init.isEmpty())
+                implBlock->throwSyntaxError(p.init.getValue(),
+                    "list parameter '{}' has unexpected initializer", p.name);
+        }
+        for (const auto &p : packSpec.namedParameterSpec) {
+            if (!p.init.isEmpty())
+                implBlock->throwSyntaxError(p.init.getValue(),
+                    "named parameter '{}' has unexpected initializer", p.name);
         }
     }
 
-    // declare the impl extension
-    lyric_assembler::ExtensionMethod extension;
-    TU_ASSIGN_OR_RETURN (extension, implHandle->declareExtension(
-        identifier, packSpec.parameterSpec, packSpec.restSpec, packSpec.ctxSpec, returnSpec));
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(extension.methodCall));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        implBlock->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
-    auto *call = cast_symbol_to_call(symbol);
+    // resolve the parameter pack
+    lyric_assembler::ParameterPack parameterPack;
+    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(implBlock, packSpec));
 
-    // add initializers to the call
-    for (const auto &entry : initializers) {
-        call->putInitializer(entry.first, entry.second);
-    }
+    // resolve the return type
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(implBlock, returnSpec));
+
+    // define the extension
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, implHandle->defineExtension(identifier, parameterPack, returnType));
 
     // compile the method body
     auto body = walker.getChild(1);
-    auto *proc = call->callProc();
-    auto compileBodyResult = lyric_compiler::internal::compile_block(proc->procBlock(), body, moduleEntry);
-    if (compileBodyResult.isStatus())
-        return compileBodyResult.getStatus();
-    auto bodyType = compileBodyResult.getResult();
+    lyric_common::TypeDef bodyType;
+    TU_ASSIGN_OR_RETURN (bodyType, lyric_compiler::internal::compile_block(
+        procHandle->procBlock(), body, moduleEntry));
 
     // add return instruction
-    auto status = proc->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN);
-    if (!status.isOk())
-        return status;
-
-    bool isReturnable;
+    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
 
     // validate that body returns the expected type
-    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), bodyType));
+    bool isReturnable;
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
         return implBlock->logAndContinue(body,
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
-            "body does not match return type {}", call->getReturnType().toString());
+            "body does not match return type {}", returnType.toString());
 
     // validate that body returns the expected type
-    for (const auto &exitType : call->listExitTypes()) {
-        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(call->getReturnType(), exitType));
+    for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
+        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
             return implBlock->logAndContinue(body,
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
-                "body does not match return type {}", call->getReturnType().toString());
+                "body does not match return type {}", returnType.toString());
     }
 
     // return control to the caller
-    return lyric_compiler::CompilerStatus::ok();
+    return {};
 }
 
 static tempo_utils::Status
@@ -449,21 +402,20 @@ compile_definstance_impl(
     auto *instanceBlock = instanceSymbol->instanceBlock();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
-    // get impl type
+    // parse the impl type
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    auto parseAssignableResult = typeSystem->parseAssignable(instanceBlock, type);
-    if (parseAssignableResult.isStatus())
-        return parseAssignableResult.getStatus();
-    auto implSpec = parseAssignableResult.getResult();
+    lyric_parser::Assignable implSpec;
+    TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(instanceBlock, type));
 
-    tempo_utils::Status status;
+    // resolve the impl type
+    lyric_common::TypeDef implType;
+    TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(instanceBlock, implSpec));
 
     // declare the instance impl
-    lyric_common::TypeDef implType;
-    TU_ASSIGN_OR_RETURN (implType, instanceSymbol->declareImpl(implSpec));
-    auto *implHandle = instanceSymbol->getImpl(implType);
+    lyric_assembler::ImplHandle *implHandle;
+    TU_ASSIGN_OR_RETURN (implHandle, instanceSymbol->declareImpl(implType));
 
     // compile each impl def
     for (int i = 0; i < walker.numChildren(); i++) {
@@ -472,16 +424,14 @@ compile_definstance_impl(
         moduleEntry.parseIdOrThrow(child, lyric_schema::kLyricAstVocabulary, childId);
         switch (childId) {
             case lyric_schema::LyricAstId::Def:
-                status = compile_definstance_impl_def(implHandle, child, moduleEntry);
+                TU_RETURN_IF_NOT_OK (compile_definstance_impl_def(implHandle, child, moduleEntry));
                 break;
             default:
                 instanceBlock->throwSyntaxError(child, "expected impl def");
         }
-        if (!status.isOk())
-            return status;
     }
 
-    return lyric_compiler::CompilerStatus::ok();
+    return {};
 }
 
 tempo_utils::Status

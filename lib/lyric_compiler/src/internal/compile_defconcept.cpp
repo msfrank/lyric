@@ -23,7 +23,6 @@ compile_defconcept_def(
 {
     TU_ASSERT (conceptSymbol != nullptr);
     TU_ASSERT(walker.isValid());
-    auto *state = moduleEntry.getState();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
     moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDefClass, 1);
@@ -38,49 +37,56 @@ compile_defconcept_def(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    auto parseAssignableResult = typeSystem->parseAssignable(conceptBlock, type);
-    if (parseAssignableResult.isStatus())
-        return parseAssignableResult.getStatus();
-    auto returnSpec = parseAssignableResult.getResult();
+    lyric_parser::Assignable returnSpec;
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(conceptBlock, type));
 
-    // compile the parameter list
+    // parse the parameter list
     auto pack = walker.getChild(0);
-    auto parsePackResult = typeSystem->parsePack(conceptBlock, pack);
-    if (parsePackResult.isStatus())
-        return parsePackResult.getStatus();
-    auto packSpec = parsePackResult.getResult();
-
-    // compile initializers
-    absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
-    for (const auto &p : packSpec.parameterSpec) {
-        if (!p.init.isEmpty()) {
-            auto compileInitializerResult = lyric_compiler::internal::compile_default_initializer(
-                conceptBlock, p.name, templateParameters, p.type, p.init.getValue(), moduleEntry);
-            if (compileInitializerResult.isStatus())
-                return compileInitializerResult.getStatus();
-            initializers[p.name] = compileInitializerResult.getResult();
-        }
-    }
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(conceptBlock, pack));
 
     lyric_object::AccessType accessType = absl::StartsWith(identifier, "_") ?
         lyric_object::AccessType::Private : lyric_object::AccessType::Public;
 
-    // declare the action
-    auto declareActionResult = conceptSymbol->declareAction(identifier, packSpec.parameterSpec,
-        packSpec.restSpec, packSpec.ctxSpec, returnSpec, accessType);
-    if (declareActionResult.isStatus())
-        return declareActionResult.getStatus();
-    auto actionUrl = declareActionResult.getResult();
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(actionUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::ACTION)
-        conceptBlock->throwAssemblerInvariant("invalid action symbol");
-    auto *actionSymbol = cast_symbol_to_action(symbol);
-    for (const auto &entry : initializers) {
-        actionSymbol->putInitializer(entry.first, entry.second);
+    // declare the concept action
+    lyric_assembler::ActionSymbol *actionSymbol;
+    TU_ASSIGN_OR_RETURN (actionSymbol, conceptSymbol->declareAction(identifier, accessType));
+
+    auto *resolver = actionSymbol->actionResolver();
+
+    // resolve the parameter pack
+    lyric_assembler::ParameterPack parameterPack;
+    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
+
+    // resolve the return type
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, returnSpec));
+
+    // compile list parameter initializers
+    for (const auto &p : parameterPack.listParameters) {
+        auto entry = packSpec.initializers.find(p.name);
+        if (entry != packSpec.initializers.cend()) {
+            lyric_common::SymbolUrl initializerUrl;
+            TU_ASSIGN_OR_RETURN (initializerUrl, lyric_compiler::internal::compile_param_initializer(
+                conceptBlock, entry->second, p, templateParameters, moduleEntry));
+            actionSymbol->putInitializer(p.name, initializerUrl);
+        }
     }
 
-    return lyric_compiler::CompilerStatus::ok();
+    // compile named parameter initializers
+    for (const auto &p : parameterPack.namedParameters) {
+        auto entry = packSpec.initializers.find(p.name);
+        if (entry != packSpec.initializers.cend()) {
+            lyric_common::SymbolUrl initializerUrl;
+            TU_ASSIGN_OR_RETURN (initializerUrl, lyric_compiler::internal::compile_param_initializer(
+                conceptBlock, entry->second, p, templateParameters, moduleEntry));
+            actionSymbol->putInitializer(p.name, initializerUrl);
+        }
+    }
+
+    TU_RETURN_IF_NOT_OK (actionSymbol->defineAction(parameterPack, returnType));
+
+    return {};
 }
 
 tempo_utils::Status
@@ -99,16 +105,13 @@ lyric_compiler::internal::compile_defconcept(
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
     // if concept is generic, then compile the template parameter list
-    lyric_assembler::TemplateSpec templateSpec;
+    lyric_typing::TemplateSpec templateSpec;
     if (walker.hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         tu_uint32 genericOffset;
         moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstGenericOffset, genericOffset);
         auto generic = walker.getNodeAtOffset(genericOffset);
         auto *typeSystem = moduleEntry.getTypeSystem();
-        auto resolveTemplateResult = typeSystem->resolveTemplate(block, generic);
-        if (resolveTemplateResult.isStatus())
-            return resolveTemplateResult.getStatus();
-        templateSpec = resolveTemplateResult.getResult();
+        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(block, generic));
     }
 
     std::vector<lyric_parser::NodeWalker> defs;

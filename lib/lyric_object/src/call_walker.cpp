@@ -1,4 +1,4 @@
-#include <lyric_object/call_parameter_walker.h>
+
 #include <lyric_object/call_walker.h>
 #include <lyric_object/internal/object_reader.h>
 #include <lyric_object/parameter_walker.h>
@@ -243,8 +243,15 @@ lyric_object::CallWalker::getNamedParameter(tu_uint8 index) const
     if (namedParameters->size() <= index)
         return {};
     auto *parameter = namedParameters->Get(index);
-    auto placement = parameter->initializer_call() == INVALID_ADDRESS_U32? PlacementType::Named
-        : PlacementType::NamedOpt;
+
+    PlacementType placement = PlacementType::Invalid;
+    if (bool(parameter->flags() & lyo1::ParameterFlags::Ctx)) {
+        placement = PlacementType::Ctx;
+    } else if (parameter->initializer_call() != INVALID_ADDRESS_U32) {
+        placement = PlacementType::NamedOpt;
+    } else {
+        placement = PlacementType::Named;
+    }
 
     return ParameterWalker(m_reader, (void *) parameter, index, placement);
 }

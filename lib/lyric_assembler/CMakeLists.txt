@@ -7,11 +7,12 @@ add_library(lyric_assembler SHARED)
 add_library(lyric::lyric_assembler ALIAS lyric_assembler)
 
 set(LYRIC_ASSEMBLER_INCLUDES
-    include/lyric_assembler/abstract_callsite_reifier.h
-    include/lyric_assembler/abstract_importer.h
     include/lyric_assembler/abstract_callable.h
+    include/lyric_assembler/abstract_callsite_reifier.h
     include/lyric_assembler/abstract_constructable.h
+    include/lyric_assembler/abstract_importer.h
     include/lyric_assembler/abstract_member_reifier.h
+    include/lyric_assembler/abstract_placement.h
     include/lyric_assembler/abstract_resolver.h
     include/lyric_assembler/abstract_symbol.h
     include/lyric_assembler/action_callable.h
@@ -49,6 +50,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/local_variable.h
     include/lyric_assembler/method_callable.h
     include/lyric_assembler/namespace_symbol.h
+    include/lyric_assembler/pack_builder.h
     include/lyric_assembler/proc_handle.h
     include/lyric_assembler/static_symbol.h
     include/lyric_assembler/struct_symbol.h
@@ -96,6 +98,7 @@ target_sources(lyric_assembler PRIVATE
     src/local_variable.cpp
     src/method_callable.cpp
     src/namespace_symbol.cpp
+    src/pack_builder.cpp
     src/proc_handle.cpp
     src/static_symbol.cpp
     src/struct_symbol.cpp

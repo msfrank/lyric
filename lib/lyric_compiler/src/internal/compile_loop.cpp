@@ -106,16 +106,12 @@ get_or_construct_iterator(
             "generator type {} is not iterable", generatorType.toString());
 
     // resolve the Iterate impl method
-    auto resolveIterateMethodResult = iterableConcept->resolveAction("Iterate", iterableType);
-    if (resolveIterateMethodResult.isStatus())
-        return resolveIterateMethodResult.getStatus();
-    auto invoker = resolveIterateMethodResult.getResult();
+    lyric_assembler::CallableInvoker invoker;
+    TU_RETURN_IF_NOT_OK (iterableConcept->prepareAction("Iterate", iterableType, invoker));
 
     // invoke Iterate()
-    lyric_typing::CallsiteReifier reifier(invoker.getParameters(), invoker.getRest(),
-        invoker.getTemplateUrl(), invoker.getTemplateParameters(), {targetType}, typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize());
-
+    lyric_typing::CallsiteReifier reifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(invoker, {targetType}));
     return invoker.invoke(block, reifier);
 }
 
@@ -140,19 +136,16 @@ lyric_compiler::internal::compile_for(
     if (walker.hasAttr(lyric_parser::kLyricAstTypeOffset)) {
         tu_uint32 typeOffset;
         moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-        auto assignedType = walker.getNodeAtOffset(typeOffset);
-        auto resolveTargetTypeResult = typeSystem->resolveAssignable(block, assignedType);
-        if (resolveTargetTypeResult.isStatus())
-            return resolveTargetTypeResult.getStatus();
-        targetType = resolveTargetTypeResult.getResult();
+        auto type = walker.getNodeAtOffset(typeOffset);
+        lyric_parser::Assignable targetSpec;
+        TU_ASSIGN_OR_RETURN (targetSpec, typeSystem->parseAssignable(block, type));
+        TU_ASSIGN_OR_RETURN (targetType, typeSystem->resolveAssignable(block, targetSpec));
     }
 
     // invoke the generator expression
     auto forGenerator = walker.getChild(0);
-    auto compileGeneratorResult = compile_expression(block, forGenerator, moduleEntry);
-    if (compileGeneratorResult.isStatus())
-        return compileGeneratorResult.getStatus();
-    auto generatorType = compileGeneratorResult.getResult();
+    lyric_common::TypeDef generatorType;
+    TU_ASSIGN_OR_RETURN (generatorType, compile_expression(block, forGenerator, moduleEntry));
 
     // look up the Iterator concept symbol
     auto fundamentalIterator = state->fundamentalCache()->getFundamentalUrl(
@@ -180,85 +173,61 @@ lyric_compiler::internal::compile_for(
         block, typeSystem, iteratorConcept, iterableConcept, generatorType, targetType));
 
     // declare temp variable to store the iterator
-    auto declareTempResult = block->declareTemporary(iteratorType, lyric_parser::BindingType::VALUE);
-    if (declareTempResult.isStatus())
-        return declareTempResult.getStatus();
-    auto iterator = declareTempResult.getResult();
+    lyric_assembler::DataReference iterator;
+    TU_ASSIGN_OR_RETURN (iterator, block->declareTemporary(iteratorType, lyric_parser::BindingType::VALUE));
 
     // store the iterator in the temp variable
-    auto status = block->store(iterator);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (block->store(iterator));
 
     auto *code = block->blockCode();
 
     // create a new block for the body of the loop
     lyric_assembler::BlockHandle forBlock(block->blockProc(), code, block, state);
-
-    auto topOfLoopResult = code->makeLabel();
-    if (topOfLoopResult.isStatus())
-        return topOfLoopResult.getStatus();
-    auto topOfLoop = topOfLoopResult.getResult();
+    lyric_assembler::JumpLabel topOfLoop;
+    TU_ASSIGN_OR_RETURN (topOfLoop, code->makeLabel());
 
     // declare the target variable which stores the value yielded from the iterator on each loop iteration
-    auto declareTargetResult = forBlock.declareVariable(
-        identifier, targetType, lyric_parser::BindingType::VARIABLE);
-    if (declareTargetResult.isStatus())
-        return declareTargetResult.getStatus();
-    auto target = declareTargetResult.getResult();
+    lyric_assembler::DataReference target;
+    TU_ASSIGN_OR_RETURN (target, forBlock.declareVariable(
+        identifier, targetType, lyric_parser::BindingType::VARIABLE));
 
     // push the iterator onto the stack, and invoke valid() method
-    status = forBlock.load(iterator);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (forBlock.load(iterator));
 
     // resolve Iterator.valid() method
-    auto resolveValidMethodResult = iteratorConcept->resolveAction("Valid", iteratorType);
-    if (resolveValidMethodResult.isStatus())
-        return resolveValidMethodResult.getStatus();
-    auto valid = resolveValidMethodResult.getResult();
+    lyric_assembler::CallableInvoker validInvoker;
+    TU_RETURN_IF_NOT_OK (iteratorConcept->prepareAction("Valid", iteratorType, validInvoker));
 
     // invoke valid method
-    lyric_typing::CallsiteReifier validReifier(valid.getParameters(), valid.getRest(),
-        valid.getTemplateUrl(), valid.getTemplateParameters(), {target.typeDef}, typeSystem);
-    TU_RETURN_IF_NOT_OK (validReifier.initialize());
-    auto invokeValidResult = valid.invoke(&forBlock, validReifier);
-    if (invokeValidResult.isStatus())
-        return invokeValidResult.getStatus();
-    auto validReturnType = invokeValidResult.getResult();
+    lyric_typing::CallsiteReifier validReifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (validReifier.initialize(validInvoker, {target.typeDef}));
+
+    lyric_common::TypeDef validReturnType;
+    TU_ASSIGN_OR_RETURN (validReturnType, validInvoker.invoke(&forBlock, validReifier));
 
     auto boolType = state->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
-    bool isAssignable;
 
+    bool isAssignable;
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(boolType, validReturnType));
     if (!isAssignable)
         forBlock.throwAssemblerInvariant("expected Valid method to return {}; found {}",
             boolType.toString(), validReturnType.toString());
 
-    auto predicateJumpResult = code->jumpIfFalse();
-    if (predicateJumpResult.isStatus())
-        return predicateJumpResult.getStatus();
-    auto predicateJump = predicateJumpResult.getResult();
+    lyric_assembler::PatchOffset predicateJump;
+    TU_ASSIGN_OR_RETURN (predicateJump, code->jumpIfFalse());
 
     // push the iterator onto the stack, and invoke next() method
-    status = forBlock.load(iterator);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (forBlock.load(iterator));
 
     // resolve Iterator.next() method
-    auto resolveNextMethodResult = iteratorConcept->resolveAction("Next", iteratorType);
-    if (resolveNextMethodResult.isStatus())
-        return resolveNextMethodResult.getStatus();
-    auto next = resolveNextMethodResult.getResult();
+    lyric_assembler::CallableInvoker nextInvoker;
+    TU_RETURN_IF_NOT_OK (iteratorConcept->prepareAction("Next", iteratorType, nextInvoker));
 
     // invoke next()
-    lyric_typing::CallsiteReifier nextReifier(next.getParameters(), next.getRest(),
-        next.getTemplateUrl(), next.getTemplateParameters(), {target.typeDef}, typeSystem);
-    TU_RETURN_IF_NOT_OK (nextReifier.initialize());
-    auto invokeNextResult = next.invoke(&forBlock, nextReifier);
-    if (invokeNextResult.isStatus())
-        return invokeNextResult.getStatus();
-    auto nextReturnType = invokeNextResult.getResult();
+    lyric_typing::CallsiteReifier nextReifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (nextReifier.initialize(nextInvoker, {target.typeDef}));
+    lyric_common::TypeDef nextReturnType;
+    TU_ASSIGN_OR_RETURN (nextReturnType, nextInvoker.invoke(&forBlock, nextReifier));
 
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(targetType, nextReturnType));
     if (!isAssignable)
@@ -266,28 +235,22 @@ lyric_compiler::internal::compile_for(
             targetType.toString(), nextReturnType.toString());
 
     // store the next value in the target variable
-    status = forBlock.store(target);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (forBlock.store(target));
 
     // execute the body of the for loop
     auto forBody = walker.getChild(1);
-    auto blockResult = compile_node(&forBlock, forBody, moduleEntry);
-    if (blockResult.isStatus())
-        return blockResult.getStatus();
+    lyric_common::TypeDef blockReturnType;
+    TU_ASSIGN_OR_RETURN (blockReturnType, compile_node(&forBlock, forBody, moduleEntry));
 
     // if block returns a value, then pop it off the top of the stack
-    if (blockResult.getResult().isValid())
+    if (blockReturnType.getType() != lyric_common::TypeDefType::NoReturn) {
         code->popValue();
+    }
 
-    status = code->jump(topOfLoop);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (code->jump(topOfLoop));
 
-    auto exitLoopResult = code->makeLabel();
-    if (exitLoopResult.isStatus())
-        return exitLoopResult.getStatus();
-    auto exitLoop = exitLoopResult.getResult();
+    lyric_assembler::JumpLabel exitLoop;
+    TU_ASSIGN_OR_RETURN (exitLoop, code->makeLabel());
 
     return code->patch(predicateJump, exitLoop);
 }

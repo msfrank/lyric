@@ -1,5 +1,4 @@
 
-#include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/internal/compile_node.h>
@@ -17,18 +16,11 @@ lyric_compiler::internal::compile_return(
     TU_ASSERT (walker.isValid());
     moduleEntry.checkClassAndChildCountOrThrow(walker, lyric_schema::kLyricAstReturnClass, 1);
 
-    auto compileExpressionResult = compile_expression(block, walker.getChild(0), moduleEntry);
-    if (compileExpressionResult.isStatus())
-        return compileExpressionResult.getStatus();
-    auto exitType = compileExpressionResult.getResult();
+    lyric_common::TypeDef exitType;
+    TU_ASSIGN_OR_RETURN (exitType, compile_expression(block, walker.getChild(0), moduleEntry));
 
-    auto activationUrl = block->blockProc()->getActivation();
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(activationUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        block->throwAssemblerInvariant("invalid call symbol {}", activationUrl.toString());
+    auto *procHandle = block->blockProc();
+    procHandle->putExitType(exitType);
 
-    cast_symbol_to_call(symbol)->putExitType(exitType);
-
-    return CompilerStatus::ok();
+    return {};
 }

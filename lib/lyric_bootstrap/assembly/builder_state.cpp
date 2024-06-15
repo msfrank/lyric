@@ -1262,14 +1262,14 @@ BuilderState::addImplExtension(
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
     auto *MutableImpl = impls.at(receiver->impl_index);
 
-    auto callFlags = lyo1::CallFlags::Bound;
+    auto callFlags = lyo1::CallFlags::Bound | lyo1::CallFlags::GlobalVisibility;
     if (isInline)
         callFlags |= lyo1::CallFlags::Inline;
 
     auto *Call = new CoreCall();
     Call->call_index = calls.size();
     Call->callPath = callPath;
-    Call->callTemplate = nullptr;
+    Call->callTemplate = ImplConcept->conceptTemplate;
     Call->callType = FunctionClass->classType;
     Call->receiverSection = receiver->receiverSection;
     Call->receiverDescriptor = receiver->receiverDescriptor;

@@ -160,17 +160,18 @@ compile_match_case_unpack(
     TU_ASSERT (block != nullptr);
     TU_ASSERT (unpack.isValid());
     TU_ASSERT (body.isValid());
+    auto *typeSystem = moduleEntry.getTypeSystem();
 
     auto *code = block->blockCode();
 
     // get the assignable type of the unpack
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(unpack, lyric_parser::kLyricAstTypeOffset, typeOffset);
-    auto assignedType = unpack.getNodeAtOffset(typeOffset);
-    auto *typeSystem = moduleEntry.getTypeSystem();
-
+    auto type = unpack.getNodeAtOffset(typeOffset);
+    lyric_parser::Assignable predicateSpec;
+    TU_ASSIGN_OR_RETURN (predicateSpec, typeSystem->parseAssignable(block, type));
     lyric_common::TypeDef predicateType;
-    TU_ASSIGN_OR_RETURN (predicateType, typeSystem->resolveAssignable(block, assignedType));
+    TU_ASSIGN_OR_RETURN (predicateType, typeSystem->resolveAssignable(block, predicateSpec));
 
     // body is the consequent block
     moduleEntry.checkClassOrThrow(body, lyric_schema::kLyricAstBlockClass);

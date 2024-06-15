@@ -50,8 +50,8 @@ namespace lyric_compiler {
             std::string_view utf8,
             lyric_assembler::BlockHandle *block);
 
-        void putExitType(const lyric_common::TypeDef &exitType);
-        absl::flat_hash_set<lyric_common::TypeDef> listExitTypes() const;
+//        void putExitType(const lyric_common::TypeDef &exitType);
+//        absl::flat_hash_set<lyric_common::TypeDef> listExitTypes() const;
 
     private:
         lyric_assembler::AssemblyState *m_state;

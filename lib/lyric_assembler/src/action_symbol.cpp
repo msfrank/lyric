@@ -21,6 +21,7 @@ lyric_assembler::ActionSymbol::ActionSymbol(
 
     auto *priv = getPriv();
     priv->receiverUrl = receiverUrl;
+    priv->access = access;
     priv->actionTemplate = nullptr;
     priv->parentBlock = parentBlock;
 
@@ -95,7 +96,7 @@ lyric_assembler::ActionSymbol::load()
         TU_ASSIGN_OR_RAISE (paramType, typeCache->importType(it->type));
         p.typeDef = paramType->getTypeDef();
 
-        priv->listParameters.push_back(p);
+        priv->namedParameters.push_back(p);
     }
 
     if (m_actionImport->hasRestParameter()) {
@@ -179,10 +180,35 @@ lyric_assembler::ActionSymbol::defineAction(
     if (priv->returnType.isValid())
         m_state->throwAssemblerInvariant("cannot redefine action {}", m_actionUrl.toString());
 
+    auto *typeCache = m_state->typeCache();
+
     priv->listParameters = parameterPack.listParameters;
     priv->namedParameters = parameterPack.namedParameters;
     priv->restParameter = parameterPack.restParameter;
     priv->returnType = returnType;
+
+    for (const auto &param : priv->listParameters) {
+        TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(param.typeDef));
+        typeHandle->touch();
+    }
+
+    for (const auto &param : priv->namedParameters) {
+        TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(param.typeDef));
+        typeHandle->touch();
+    }
+
+    if (!priv->restParameter.isEmpty()) {
+        auto &param = priv->restParameter.peekValue();
+        TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(param.typeDef));
+        typeHandle->touch();
+    }
+
+    TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(priv->returnType));
+    typeHandle->touch();
 
     return {};
 }

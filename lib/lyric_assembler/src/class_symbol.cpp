@@ -499,9 +499,10 @@ lyric_assembler::ClassSymbol::prepareCtor(ConstructableInvoker &invoker)
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(ctorUrl));
     if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
-    auto *call = cast_symbol_to_call(symbol);
+    auto *callSymbol = cast_symbol_to_call(symbol);
+    callSymbol->touch();
 
-    auto constructable = std::make_unique<CtorConstructable>(call, this);
+    auto constructable = std::make_unique<CtorConstructable>(callSymbol, this);
     return invoker.initialize(std::move(constructable));
 }
 
@@ -614,6 +615,8 @@ lyric_assembler::ClassSymbol::prepareMethod(
     if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", method.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
+    callSymbol->touch();
+
     auto access = callSymbol->getAccessType();
 
     bool thisSymbol = receiverType.getConcreteUrl() == m_classUrl;

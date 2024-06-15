@@ -1,6 +1,6 @@
 
 #include <lyric_assembler/argument_variable.h>
-#include <lyric_assembler/call_invoker.h>
+#include <lyric_assembler/function_callable.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/concept_symbol.h>
@@ -198,144 +198,55 @@ lyric_compiler::internal::compile_deref_method(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    lyric_assembler::CallableInvoker invoker;
+
     // invoke method on receiver
     switch (receiver->getSymbolType()) {
 
         case lyric_assembler::SymbolType::CLASS: {
             auto *classSymbol = cast_symbol_to_class(receiver);
-            auto resolveMethodResult = classSymbol->resolveMethod(identifier, receiverType, thisReceiver);
-            if (resolveMethodResult.isStatus())
-                return resolveMethodResult.getStatus();
-            auto method = resolveMethodResult.getResult();
-
-            lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
-                method.getTemplateUrl(), method.getTemplateParameters(),
-                callsiteArguments, typeSystem);
-            TU_RETURN_IF_NOT_OK (reifier.initialize());
-
-            auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
-            if (!status.isOk())
-                return status;
-
-            auto invokeMethodResult = method.invoke(block, reifier);
-            if (invokeMethodResult.isStatus())
-                return invokeMethodResult.getStatus();
-            return invokeMethodResult.getResult();
+            TU_RETURN_IF_NOT_OK (classSymbol->prepareMethod(identifier, receiverType, invoker, thisReceiver));
+            break;
         }
 
         case lyric_assembler::SymbolType::CONCEPT: {
             auto *conceptSymbol = cast_symbol_to_concept(receiver);
-            auto resolveActionResult = conceptSymbol->resolveAction(identifier, receiverType, thisReceiver);
-            if (resolveActionResult.isStatus())
-                return resolveActionResult.getStatus();
-            auto action = resolveActionResult.getResult();
-
-            lyric_typing::CallsiteReifier reifier(action.getParameters(), action.getRest(),
-                action.getTemplateUrl(), action.getTemplateParameters(),
-                callsiteArguments, typeSystem);
-            TU_RETURN_IF_NOT_OK (reifier.initialize());
-
-            auto status = compile_placement(block, block, action, reifier, walker, moduleEntry);
-            if (!status.isOk())
-                return status;
-
-            auto invokeActionResult = action.invoke(block, reifier);
-            if (invokeActionResult.isStatus())
-                return invokeActionResult.getStatus();
-            return invokeActionResult.getResult();
+            TU_RETURN_IF_NOT_OK (conceptSymbol->prepareAction(identifier, receiverType, invoker, thisReceiver));
+            break;
         }
 
         case lyric_assembler::SymbolType::ENUM: {
             auto *enumSymbol = cast_symbol_to_enum(receiver);
-            auto resolveMethodResult = enumSymbol->resolveMethod(identifier, receiverType, thisReceiver);
-            if (resolveMethodResult.isStatus())
-                return resolveMethodResult.getStatus();
-            auto method = resolveMethodResult.getResult();
-
-            lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
-                method.getTemplateUrl(), method.getTemplateParameters(),
-                callsiteArguments, typeSystem);
-            TU_RETURN_IF_NOT_OK (reifier.initialize());
-
-            auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
-            if (!status.isOk())
-                return status;
-
-            auto invokeMethodResult = method.invoke(block, reifier);
-            if (invokeMethodResult.isStatus())
-                return invokeMethodResult.getStatus();
-            return invokeMethodResult.getResult();
+            TU_RETURN_IF_NOT_OK (enumSymbol->prepareMethod(identifier, receiverType, invoker, thisReceiver));
+            break;
         }
 
         case lyric_assembler::SymbolType::EXISTENTIAL: {
             auto *existentialSymbol = cast_symbol_to_existential(receiver);
-            auto resolveMethodResult = existentialSymbol->resolveMethod(identifier, receiverType, thisReceiver);
-            if (resolveMethodResult.isStatus())
-                return resolveMethodResult.getStatus();
-            auto method = resolveMethodResult.getResult();
-
-            lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
-                method.getTemplateUrl(), method.getTemplateParameters(),
-                callsiteArguments, typeSystem);
-            TU_RETURN_IF_NOT_OK (reifier.initialize());
-
-            auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
-            if (!status.isOk())
-                return status;
-
-            auto invokeMethodResult = method.invoke(block, reifier);
-            if (invokeMethodResult.isStatus())
-                return invokeMethodResult.getStatus();
-            return invokeMethodResult.getResult();
+            TU_RETURN_IF_NOT_OK (existentialSymbol->prepareMethod(identifier, receiverType, invoker, thisReceiver));
+            break;
         }
 
         case lyric_assembler::SymbolType::INSTANCE: {
             auto *instanceSymbol = cast_symbol_to_instance(receiver);
-            auto resolveMethodResult = instanceSymbol->resolveMethod(identifier, receiverType, thisReceiver);
-            if (resolveMethodResult.isStatus())
-                return resolveMethodResult.getStatus();
-            auto method = resolveMethodResult.getResult();
-
-            lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
-                method.getTemplateUrl(), method.getTemplateParameters(),
-                callsiteArguments, typeSystem);
-            TU_RETURN_IF_NOT_OK (reifier.initialize());
-
-            auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
-            if (!status.isOk())
-                return status;
-
-            auto invokeMethodResult = method.invoke(block, reifier);
-            if (invokeMethodResult.isStatus())
-                return invokeMethodResult.getStatus();
-            return invokeMethodResult.getResult();
+            TU_RETURN_IF_NOT_OK (instanceSymbol->prepareMethod(identifier, receiverType, invoker, thisReceiver));
+            break;
         }
 
         case lyric_assembler::SymbolType::STRUCT: {
             auto *structSymbol = cast_symbol_to_struct(receiver);
-            auto resolveMethodResult = structSymbol->resolveMethod(identifier, receiverType, thisReceiver);
-            if (resolveMethodResult.isStatus())
-                return resolveMethodResult.getStatus();
-            auto method = resolveMethodResult.getResult();
-
-            lyric_typing::CallsiteReifier reifier(method.getParameters(), method.getRest(),
-                method.getTemplateUrl(), method.getTemplateParameters(),
-                callsiteArguments, typeSystem);
-            TU_RETURN_IF_NOT_OK (reifier.initialize());
-
-            auto status = compile_placement(block, block, method, reifier, walker, moduleEntry);
-            if (!status.isOk())
-                return status;
-
-            auto invokeMethodResult = method.invoke(block, reifier);
-            if (invokeMethodResult.isStatus())
-                return invokeMethodResult.getStatus();
-            return invokeMethodResult.getResult();
+            TU_RETURN_IF_NOT_OK (structSymbol->prepareMethod(identifier, receiverType, invoker, thisReceiver));
+            break;
         }
 
         default:
             block->throwAssemblerInvariant("invalid receiver symbol {}", receiverUrl.toString());
     }
+
+    lyric_typing::CallsiteReifier reifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(invoker, callsiteArguments));
+    TU_RETURN_IF_NOT_OK (compile_placement(invoker.getCallable(), block, block, reifier, walker, moduleEntry));
+    return invoker.invoke(block, reifier);
 }
 
 tempo_utils::Result<lyric_common::TypeDef>

@@ -17,57 +17,53 @@ lyric_analyzer::internal::analyze_def(
 {
     TU_ASSERT(block != nullptr);
     TU_ASSERT(walker.isValid());
+    auto *typeSystem = entryPoint.getTypeSystem();
+
     entryPoint.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDefClass, 2);
 
     // get function name
     std::string identifier;
     entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
-    auto *typeSystem = entryPoint.getTypeSystem();
-
-    // get function return type
+    // parse the return type
     tu_uint32 typeOffset;
     entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    auto compileTypeResult = typeSystem->parseAssignable(block, type);
-    if (compileTypeResult.isStatus())
-        return compileTypeResult.getStatus();
-    auto returnSpec = compileTypeResult.getResult();
+    lyric_parser::Assignable returnSpec;
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(block, type));
 
-    // compile the parameter list
+    // parse the parameter list
     auto pack = walker.getChild(0);
-    auto parsePackResult = typeSystem->parsePack(block, pack);
-    if (parsePackResult.isStatus())
-        return parsePackResult.getStatus();
-    auto packSpec = parsePackResult.getResult();
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(block, pack));
 
-    // if function is generic, then compile the template parameter list
-    lyric_assembler::TemplateSpec templateSpec;
+    // if function is generic, then parse the template parameter list
+    lyric_typing::TemplateSpec templateSpec;
     if (walker.hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         tu_uint32 genericOffset;
         entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstGenericOffset, genericOffset);
         auto generic = walker.getNodeAtOffset(genericOffset);
-        auto resolveTemplateResult = typeSystem->resolveTemplate(block, generic);
-        if (resolveTemplateResult.isStatus())
-            return resolveTemplateResult.getStatus();
-        templateSpec = resolveTemplateResult.getResult();
+        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(block, generic));
     }
 
-    // declare the function
-    auto declareFunctionResult = block->declareFunction(identifier,
-        packSpec.parameterSpec, packSpec.restSpec, packSpec.ctxSpec,
-        returnSpec, lyric_object::AccessType::Public, templateSpec.templateParameters, true);
-    if (declareFunctionResult.isStatus())
-        return declareFunctionResult.getStatus();
-    auto functionUrl = declareFunctionResult.getResult();
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(functionUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        block->throwAssemblerInvariant("invalid call symbol {}", functionUrl.toString());
-    auto *call = cast_symbol_to_call(symbol);
+    // declare the function call
+    lyric_assembler::CallSymbol *callSymbol;
+    TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(identifier,
+        lyric_object::AccessType::Public, templateSpec.templateParameters));
+
+    auto *resolver = callSymbol->callResolver();
+
+    // resolve the parameter pack
+    lyric_assembler::ParameterPack parameterPack;
+    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
+
+    // resolve the return type
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, returnSpec));
 
     // analyze the function body
     auto body = walker.getChild(1);
-    auto *proc = call->callProc();
-    return analyze_block(proc->procBlock(), body, entryPoint);
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnType));
+    return analyze_block(procHandle->procBlock(), body, entryPoint);
 }

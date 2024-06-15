@@ -27,9 +27,6 @@ namespace lyric_symbolizer::internal {
         lyric_assembler::CallSymbol *getEntry() const;
         lyric_typing::TypeSystem *getTypeSystem() const;
 
-        void putExitType(const lyric_common::TypeDef &exitType);
-        absl::flat_hash_set<lyric_common::TypeDef> listExitTypes() const;
-
     private:
         lyric_assembler::AssemblyState *m_state;
         lyric_common::AssemblyLocation m_location;

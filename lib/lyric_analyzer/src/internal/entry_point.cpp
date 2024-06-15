@@ -107,15 +107,3 @@ lyric_analyzer::internal::EntryPoint::getTypeSystem() const
 {
     return m_typeSystem;
 }
-
-void
-lyric_analyzer::internal::EntryPoint::putExitType(const lyric_common::TypeDef &exitType)
-{
-    m_entry->putExitType(exitType);
-}
-
-absl::flat_hash_set<lyric_common::TypeDef>
-lyric_analyzer::internal::EntryPoint::listExitTypes() const
-{
-    return m_entry->listExitTypes();
-}

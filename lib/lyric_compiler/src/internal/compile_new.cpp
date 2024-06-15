@@ -15,7 +15,7 @@ lyric_compiler::internal::compile_new(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
     ModuleEntry &moduleEntry,
-    const lyric_parser::Assignable &typeHint)
+    const lyric_common::TypeDef &typeHint)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
@@ -26,17 +26,17 @@ lyric_compiler::internal::compile_new(
         // resolve the new type from the type offset of the new node
         tu_uint32 typeOffset;
         moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-        auto assignedType = walker.getNodeAtOffset(typeOffset);
-        auto resolveNewTypeResult = typeSystem->resolveAssignable(block, assignedType);
-        if (resolveNewTypeResult.isStatus())
-            return resolveNewTypeResult;
-        newType = resolveNewTypeResult.getResult();
+        auto type = walker.getNodeAtOffset(typeOffset);
+        lyric_parser::Assignable newSpec;
+        TU_ASSIGN_OR_RETURN (newSpec, typeSystem->parseAssignable(block, type));
+        TU_ASSIGN_OR_RETURN (newType, typeSystem->resolveAssignable(block, newSpec));
     } else if (typeHint.isValid()) {
-        // resolve the new type from the specified type hint
-        auto resolveNewTypeResult = block->resolveAssignable(typeHint);
-        if (resolveNewTypeResult.isStatus())
-            return resolveNewTypeResult.getStatus();
-        newType = resolveNewTypeResult.getResult();
+//        // resolve the new type from the specified type hint
+//        auto resolveNewTypeResult = block->resolveAssignable(typeHint);
+//        if (resolveNewTypeResult.isStatus())
+//            return resolveNewTypeResult.getStatus();
+//        newType = resolveNewTypeResult.getResult();
+        newType = typeHint;
     } else {
         block->throwSyntaxError(walker, "missing type offset");
     }
@@ -53,22 +53,16 @@ lyric_compiler::internal::compile_new(
     symbol->touch();
 
     // allocate the ctor invoker
-    lyric_assembler::CtorInvoker ctor;
+    lyric_assembler::ConstructableInvoker ctorInvoker;
     switch (symbol->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {
             auto *classSymbol = cast_symbol_to_class(symbol);
-            auto resolveCtorResult = classSymbol->resolveCtor();
-            if (resolveCtorResult.isStatus())
-                return resolveCtorResult.getStatus();
-            ctor = resolveCtorResult.getResult();
+            TU_RETURN_IF_NOT_OK (classSymbol->prepareCtor(ctorInvoker));
             break;
         }
         case lyric_assembler::SymbolType::STRUCT: {
             auto *structSymbol = cast_symbol_to_struct(symbol);
-            auto resolveCtorResult = structSymbol->resolveCtor();
-            if (resolveCtorResult.isStatus())
-                return resolveCtorResult.getStatus();
-            ctor = resolveCtorResult.getResult();
+            TU_RETURN_IF_NOT_OK (structSymbol->prepareCtor(ctorInvoker));
             break;
         }
         default:
@@ -77,17 +71,17 @@ lyric_compiler::internal::compile_new(
                 "cannot construct new instance of {}", newType.toString());
     }
 
-    // construct the callsite reifier
     std::vector<lyric_common::TypeDef> newTypeArguments(
         newType.concreteArgumentsBegin(), newType.concreteArgumentsEnd());
-    lyric_typing::CallsiteReifier ctorReifier(ctor.getParameters(), ctor.getRest(),
-        ctor.getTemplateUrl(), ctor.getTemplateParameters(), newTypeArguments,
-        typeSystem);
-    TU_RETURN_IF_NOT_OK (ctorReifier.initialize());
+
+    // construct the callsite reifier
+    lyric_typing::CallsiteReifier ctorReifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (ctorReifier.initialize(ctorInvoker, newTypeArguments));
 
     // place the ctor arguments on the stack
-    TU_RETURN_IF_NOT_OK (compile_placement(block, block, ctor, ctorReifier, walker, moduleEntry));
+    TU_RETURN_IF_NOT_OK (compile_placement(
+        ctorInvoker.getConstructable(), block, block, ctorReifier, walker, moduleEntry));
 
     // invoke the ctor
-    return ctor.invokeNew(block, ctorReifier);
+    return ctorInvoker.invokeNew(block, ctorReifier, 0);
 }

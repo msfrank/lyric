@@ -122,30 +122,6 @@ lyric_typing::CallsiteReifier::initialize(
     return {};
 }
 
-//lyric_common::TypeDef
-//lyric_typing::CallsiteReifier::getArgument(int index) const
-//{
-//    TU_ASSERT (m_initialized);
-//
-//    if (0 <= index && std::cmp_less(index, m_argumentTypes.size()))
-//        return m_argumentTypes[index];
-//    return {};
-//}
-//
-//std::vector<lyric_common::TypeDef>
-//lyric_typing::CallsiteReifier::getArguments() const
-//{
-//    TU_ASSERT (m_initialized);
-//    return m_argumentTypes;
-//}
-//
-//int
-//lyric_typing::CallsiteReifier::numArguments() const
-//{
-//    TU_ASSERT (m_initialized);
-//    return m_argumentTypes.size();
-//}
-
 size_t
 lyric_typing::CallsiteReifier::numReifiedArguments() const
 {

@@ -125,7 +125,8 @@ lyric_assembler::ExtensionCallable::invoke(
         case InvokeType::VIRTUAL: {
             m_call->touch();
             TU_RETURN_IF_NOT_OK (block->load(m_implRef));
-            TU_RETURN_IF_NOT_OK (code->callVirtual(m_call->getAddress(), placementSize));
+            TU_RETURN_IF_NOT_OK (code->callVirtual(
+                m_call->getAddress(), placementSize, lyric_object::CALL_RECEIVER_FOLLOWS));
             return reifier.reifyResult(m_call->getReturnType());
         }
 
