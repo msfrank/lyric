@@ -82,6 +82,31 @@ lyric_assembler::TypeCache::numTypes() const
 inline lyric_assembler::TypeHandle *
 get_symbol_type_handle(const lyric_common::SymbolUrl &symbolUrl, lyric_assembler::AssemblyState *state)
 {
+    // if the symbol url does not have a location then check the assembly state only
+    if (symbolUrl.isRelative()) {
+        auto *symbolCache = state->symbolCache();
+        auto getSymbolResult = symbolCache->getOrImportSymbol(symbolUrl);
+        if (getSymbolResult.isStatus())
+            return nullptr;
+        auto *sym = getSymbolResult.getResult();
+        switch (sym->getSymbolType()) {
+            case lyric_assembler::SymbolType::CLASS:
+                return cast_symbol_to_class(sym)->classType();
+            case lyric_assembler::SymbolType::CONCEPT:
+                return cast_symbol_to_concept(sym)->conceptType();
+            case lyric_assembler::SymbolType::ENUM:
+                return cast_symbol_to_enum(sym)->enumType();
+            case lyric_assembler::SymbolType::EXISTENTIAL:
+                return cast_symbol_to_existential(sym)->existentialType();
+            case lyric_assembler::SymbolType::INSTANCE:
+                return cast_symbol_to_instance(sym)->instanceType();
+            case lyric_assembler::SymbolType::STRUCT:
+                return cast_symbol_to_struct(sym)->structType();
+            default:
+                return nullptr;
+        }
+    }
+
     auto *importCache = state->importCache();
     auto *typeCache = state->typeCache();
 
@@ -129,6 +154,13 @@ get_symbol_type_handle(const lyric_common::SymbolUrl &symbolUrl, lyric_assembler
     return typeCache->importType(typeImport).orElseThrow();
 }
 
+/**
+ * Creates a type handle for the specified type if it does not exist in the type cache. The resulting
+ * type handle is not touched.
+ *
+ * @param assignableType The type to insert into the typecache.
+ * @returns A `tempo_utils::Result` containing the type handle for the type.
+ */
 tempo_utils::Result<lyric_assembler::TypeHandle *>
 lyric_assembler::TypeCache::getOrMakeType(const lyric_common::TypeDef &assignableType)
 {
@@ -147,6 +179,8 @@ lyric_assembler::TypeCache::getOrMakeType(const lyric_common::TypeDef &assignabl
             // import the type handle for the concrete url (this inserts the handle into the cache)
             auto concreteUrl = assignableType.getConcreteUrl();
             auto *concreteTypeHandle = get_symbol_type_handle(concreteUrl, m_assemblyState);
+            if (concreteTypeHandle == nullptr)
+                m_tracer->throwAssemblerInvariant("failed to make type {}; invalid type", assignableType.toString());
 
             // if concrete type is not parameterized then we are done, return the handle
             auto it = assignableType.concreteArgumentsBegin();
@@ -296,41 +330,61 @@ lyric_assembler::TypeCache::touchType(const lyric_common::TypeDef &typeDef)
     return touchType(m_typecache[typeDef]);
 }
 
+/**
+ * Create a type handle for the incompletely defined symbol specified by `subTypeUrl`. If `subTypePlaceholders`
+ * is specified then each element must be a placeholder type. The resulting type handle is touched.
+ *
+ */
 tempo_utils::Result<lyric_assembler::TypeHandle *>
 lyric_assembler::TypeCache::declareSubType(
-    const lyric_common::SymbolUrl &subUrl,
-    const std::vector<lyric_common::TypeDef> &subTypeArguments,
+    const lyric_common::SymbolUrl &subTypeUrl,
+    const std::vector<lyric_common::TypeDef> &subTypePlaceholders,
     const lyric_common::TypeDef &superType)
 {
-    TU_ASSERT (subUrl.isValid());
+    TU_ASSERT (subTypeUrl.isValid());
     TU_ASSERT (superType.isValid());
 
-    if (m_assemblyState->symbolCache()->hasSymbol(subUrl))
+    if (m_assemblyState->symbolCache()->hasSymbol(subTypeUrl))
         return m_tracer->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError, "symbol {} is already defined", subUrl.toString());
+            tempo_tracing::LogSeverity::kError, "symbol {} is already defined", subTypeUrl.toString());
 
     auto siterator = m_typecache.find(superType);
     if (siterator == m_typecache.cend())
         return m_tracer->logAndContinue(AssemblerCondition::kMissingType,
-            tempo_tracing::LogSeverity::kError, "missing type {}", superType.toString());
+            tempo_tracing::LogSeverity::kError, "missing super type {}", superType.toString());
     auto *superTypeHandle = siterator->second;
+
+    for (const auto &placeholder : subTypePlaceholders) {
+        if (placeholder.getType() != lyric_common::TypeDefType::Placeholder)
+            return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
+                tempo_tracing::LogSeverity::kError, "invalid type placeholder {}", placeholder.toString());
+    }
+
+    auto subTypeDef = lyric_common::TypeDef::forConcrete(subTypeUrl, subTypePlaceholders);
+    if (m_typecache.contains(subTypeDef))
+        return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
+            tempo_tracing::LogSeverity::kError, "type {} is already defined", subTypeDef.toString());
+
+    for (const auto &placeholderType : subTypePlaceholders) {
+        TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, getOrMakeType(placeholderType));
+        typeHandle->touch();
+    }
 
     auto type_index = m_types.size();
     auto typeAddress = TypeAddress::near(type_index);
-    auto *typeHandle = new TypeHandle(subUrl, subTypeArguments, typeAddress, superTypeHandle, m_assemblyState);
-    auto subType = typeHandle->getTypeDef();
-    if (m_typecache.contains(subType)) {
-        delete typeHandle;
-        touchType(subType);
-        TU_UNREACHABLE();
-    } else {
-        m_types.push_back(typeHandle);
-        m_typecache[typeHandle->getTypeDef()] = typeHandle;
-    }
+    auto *typeHandle = new TypeHandle(subTypeUrl, subTypePlaceholders, typeAddress, superTypeHandle, m_assemblyState);
+
+    m_types.push_back(typeHandle);
+    m_typecache[typeHandle->getTypeDef()] = typeHandle;
 
     return typeHandle;
 }
 
+/**
+ * Create a type handle for the symbol specified by `baseUrl` with the specified `typeArguments` substituted
+ * for the symbol type parameters. The resulting type handle is touched.
+ */
 tempo_utils::Result<lyric_assembler::TypeHandle *>
 lyric_assembler::TypeCache::declareParameterizedType(
     const lyric_common::SymbolUrl &baseUrl,
@@ -376,6 +430,12 @@ lyric_assembler::TypeCache::declareParameterizedType(
     auto *superTypeHandle = siterator->second;
     superTypeHandle->touch();
 
+    for (const auto &argType : typeArguments) {
+        TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, getOrMakeType(argType));
+        typeHandle->touch();
+    }
+
     auto type_index = m_types.size();
     auto typeAddress = TypeAddress::near(type_index);
     auto *typeHandle = new TypeHandle(baseUrl, typeArguments, typeAddress, superTypeHandle, m_assemblyState);
@@ -391,7 +451,7 @@ lyric_assembler::TypeCache::declareFunctionType(
     const std::vector<Parameter> &functionParameters,
     const Option<Parameter> &functionRest)
 {
-    TU_RETURN_IF_NOT_OK (touchType(functionReturn));
+    TU_RETURN_IF_STATUS(getOrMakeType(functionReturn));
 
     // FIXME: if rest param exists then resolve RestFunction instead
     if (!functionRest.isEmpty())

@@ -29,8 +29,8 @@ namespace lyric_assembler {
         tempo_utils::Status touchType(const lyric_common::TypeDef &type);
 
         tempo_utils::Result<TypeHandle *> declareSubType(
-            const lyric_common::SymbolUrl &subUrl,
-            const std::vector<lyric_common::TypeDef> &subTypeArguments,
+            const lyric_common::SymbolUrl &subTypeUrl,
+            const std::vector<lyric_common::TypeDef> &subTypePlaceholders,
             const lyric_common::TypeDef &superType);
 
         tempo_utils::Result<TypeHandle *> declareParameterizedType(

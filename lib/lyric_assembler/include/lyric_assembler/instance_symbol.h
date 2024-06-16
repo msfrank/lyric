@@ -11,6 +11,7 @@
 #include "base_symbol.h"
 #include "callable_invoker.h"
 #include "constructable_invoker.h"
+#include "impl_handle.h"
 #include "type_handle.h"
 
 namespace lyric_assembler {
