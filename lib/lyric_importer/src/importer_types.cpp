@@ -95,7 +95,7 @@
 //    return typeIndex < m_importedTypes.size();
 //}
 //
-//lyric_assembler::Assignable
+//lyric_assembler::TypeSpec
 //lyric_importer::ImportedAssembly::getType(tu_uint32 typeIndex) const
 //{
 //    if (typeIndex < m_importedTypes.size())
@@ -106,7 +106,7 @@
 //tempo_utils::Status
 //lyric_importer::ImportedAssembly::insertType(
 //    tu_uint32 typeIndex,
-//    const lyric_assembler::Assignable &type)
+//    const lyric_assembler::TypeSpec &type)
 //{
 //    if (typeIndex != m_importedTypes.size())
 //        return ImporterStatus::forCondition(ImporterCondition::kImporterInvariant,

@@ -20,7 +20,7 @@ namespace lyric_typing {
         lyric_parser::NodeWalker node;          // the node of the parameter in the archetype
         std::string name;                       // name of the parameter
         std::string label;                      // optional parameter label
-        lyric_parser::Assignable type;          // type of the parameter
+        lyric_parser::TypeSpec type;          // type of the parameter
         lyric_parser::BindingType binding;      // fixed or variable binding
         Option<lyric_parser::NodeWalker> init;  // node containing the default initializer, can be empty
         ParameterSpec();
@@ -28,7 +28,7 @@ namespace lyric_typing {
             const lyric_parser::NodeWalker &node,
             const std::string &name,
             const std::string &label,
-            const lyric_parser::Assignable &type,
+            const lyric_parser::TypeSpec &type,
             lyric_parser::BindingType binding,
             const Option<lyric_parser::NodeWalker> &init = {});
     };

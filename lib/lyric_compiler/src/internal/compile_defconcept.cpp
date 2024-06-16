@@ -37,7 +37,7 @@ compile_defconcept_def(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable returnSpec;
+    lyric_parser::TypeSpec returnSpec;
     TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(conceptBlock, type));
 
     // parse the parameter list

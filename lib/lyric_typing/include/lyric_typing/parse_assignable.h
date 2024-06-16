@@ -8,7 +8,7 @@
 
 namespace lyric_typing {
 
-    tempo_utils::Result<lyric_parser::Assignable>
+    tempo_utils::Result<lyric_parser::TypeSpec>
     parse_assignable(
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,

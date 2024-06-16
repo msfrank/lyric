@@ -137,7 +137,7 @@ lyric_compiler::internal::compile_for(
         tu_uint32 typeOffset;
         moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
         auto type = walker.getNodeAtOffset(typeOffset);
-        lyric_parser::Assignable targetSpec;
+        lyric_parser::TypeSpec targetSpec;
         TU_ASSIGN_OR_RETURN (targetSpec, typeSystem->parseAssignable(block, type));
         TU_ASSIGN_OR_RETURN (targetType, typeSystem->resolveAssignable(block, targetSpec));
     }

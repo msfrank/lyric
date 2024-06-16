@@ -16,7 +16,7 @@ namespace lyric_typing {
 
         lyric_assembler::AssemblyState *getState() const;
 
-        tempo_utils::Result<lyric_parser::Assignable>
+        tempo_utils::Result<lyric_parser::TypeSpec>
         parseAssignable(
             lyric_assembler::BlockHandle *block,
             const lyric_parser::NodeWalker &walker);
@@ -34,7 +34,7 @@ namespace lyric_typing {
         tempo_utils::Result<lyric_common::TypeDef>
         resolveAssignable(
             lyric_assembler::AbstractResolver *resolver,
-            const lyric_parser::Assignable &assignable);
+            const lyric_parser::TypeSpec &assignable);
 
         tempo_utils::Result<lyric_assembler::ParameterPack>
         resolvePack(

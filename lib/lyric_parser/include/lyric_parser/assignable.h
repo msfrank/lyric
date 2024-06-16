@@ -19,50 +19,50 @@ namespace lyric_parser {
         UNION,
     };
 
-    class Assignable {
+    class TypeSpec {
 
     public:
-        Assignable();
-        Assignable(const Assignable &other);
+        TypeSpec();
+        TypeSpec(const TypeSpec &other);
 
         bool isValid() const;
 
         AssignableType getType() const;
         lyric_common::AssemblyLocation getTypeLocation() const;
         lyric_common::SymbolPath getTypePath() const;
-        std::vector<Assignable> getTypeParameters() const;
-        std::vector<Assignable> getIntersection() const;
-        std::vector<Assignable> getUnion() const;
+        std::vector<TypeSpec> getTypeParameters() const;
+        std::vector<TypeSpec> getIntersection() const;
+        std::vector<TypeSpec> getUnion() const;
 
         std::string toString() const;
 
-        bool operator==(const Assignable &other) const;
-        bool operator!=(const Assignable &other) const;
+        bool operator==(const TypeSpec &other) const;
+        bool operator!=(const TypeSpec &other) const;
 
-        static Assignable forSingular(
+        static TypeSpec forSingular(
             const lyric_common::SymbolPath &symbolPath,
-            const std::vector<Assignable> &parameters = {});
-        static Assignable forSingular(
+            const std::vector<TypeSpec> &parameters = {});
+        static TypeSpec forSingular(
             std::initializer_list<std::string> symbolPath,
-            const std::vector<Assignable> &parameters = {});
-        static Assignable forSingular(
+            const std::vector<TypeSpec> &parameters = {});
+        static TypeSpec forSingular(
             const lyric_common::SymbolUrl &symbolUrl,
-            const std::vector<Assignable> &parameters = {});
-        static Assignable forSingular(
+            const std::vector<TypeSpec> &parameters = {});
+        static TypeSpec forSingular(
             const tempo_utils::Url &location,
             const lyric_common::SymbolPath &path,
-            const std::vector<Assignable> &parameters = {});
-        static Assignable forSingular(
+            const std::vector<TypeSpec> &parameters = {});
+        static TypeSpec forSingular(
             const tempo_utils::Url &location,
             std::initializer_list<std::string> symbolPath,
-            const std::vector<Assignable> &parameters = {});
-        static Assignable forIntersection(const std::vector<Assignable> &members);
-        static Assignable forUnion(const std::vector<Assignable> &members);
+            const std::vector<TypeSpec> &parameters = {});
+        static TypeSpec forIntersection(const std::vector<TypeSpec> &members);
+        static TypeSpec forUnion(const std::vector<TypeSpec> &members);
 
-        static Assignable fromTypeDef(const lyric_common::TypeDef &typeDef);
+        static TypeSpec fromTypeDef(const lyric_common::TypeDef &typeDef);
 
         template<typename H>
-        friend H AbslHashValue(H h, const Assignable &assignable) {
+        friend H AbslHashValue(H h, const TypeSpec &assignable) {
             switch (assignable.getType()) {
                 case AssignableType::SINGULAR:
                     return H::combine(std::move(h), assignable.m_symbolUrl, assignable.m_parameters);
@@ -78,15 +78,15 @@ namespace lyric_parser {
     private:
         AssignableType m_type;
         lyric_common::SymbolUrl m_symbolUrl;
-        std::vector<Assignable> m_parameters;
+        std::vector<TypeSpec> m_parameters;
 
-        Assignable(
+        TypeSpec(
             AssignableType type,
             const lyric_common::SymbolUrl &symbolUrl,
-            const std::vector<Assignable> &parameters);
+            const std::vector<TypeSpec> &parameters);
     };
 
-    tempo_utils::LogMessage &&operator<<(tempo_utils::LogMessage &&message, const Assignable &assignable);
+    tempo_utils::LogMessage &&operator<<(tempo_utils::LogMessage &&message, const TypeSpec &assignable);
 
 }
 

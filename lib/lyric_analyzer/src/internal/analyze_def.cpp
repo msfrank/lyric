@@ -29,7 +29,7 @@ lyric_analyzer::internal::analyze_def(
     tu_uint32 typeOffset;
     entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable returnSpec;
+    lyric_parser::TypeSpec returnSpec;
     TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(block, type));
 
     // parse the parameter list

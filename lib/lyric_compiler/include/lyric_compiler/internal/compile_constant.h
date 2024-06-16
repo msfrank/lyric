@@ -1,7 +1,6 @@
 #ifndef LYRIC_COMPILER_COMPILE_CONSTANT_H
 #define LYRIC_COMPILER_COMPILE_CONSTANT_H
 
-#include <lyric_assembler/assignable_type.h>
 #include <lyric_assembler/block_handle.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/module_entry.h>

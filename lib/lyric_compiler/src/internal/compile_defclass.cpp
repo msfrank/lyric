@@ -38,7 +38,7 @@ compile_defclass_val(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable valSpec;
+    lyric_parser::TypeSpec valSpec;
     TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(classBlock, type));
     lyric_common::TypeDef valType;
     TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(classBlock, valSpec));
@@ -84,7 +84,7 @@ compile_defclass_var(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable varSpec;
+    lyric_parser::TypeSpec varSpec;
     TU_ASSIGN_OR_RETURN (varSpec, typeSystem->parseAssignable(classBlock, type));
     lyric_common::TypeDef varType;
     TU_ASSIGN_OR_RETURN (varType, typeSystem->resolveAssignable(classBlock, varSpec));
@@ -278,7 +278,7 @@ compile_defclass_def(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable returnSpec;
+    lyric_parser::TypeSpec returnSpec;
     TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(classBlock, type));
 
     // parse the parameter list
@@ -378,7 +378,7 @@ compile_defclass_impl_def(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable returnSpec;
+    lyric_parser::TypeSpec returnSpec;
     TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(implBlock, type));
 
     // parse the parameter list
@@ -460,7 +460,7 @@ compile_defclass_impl(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable implSpec;
+    lyric_parser::TypeSpec implSpec;
     TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(classBlock, type));
 
     // resolve the impl type
@@ -552,8 +552,7 @@ lyric_compiler::internal::compile_defclass(
     lyric_parser::NodeWalker initPack;
     lyric_parser::NodeWalker initSuper;
     lyric_parser::NodeWalker initBody;
-    lyric_common::SymbolUrl superClassUrl = state->fundamentalCache()->getFundamentalUrl(
-        lyric_assembler::FundamentalSymbol::Object);
+    auto superClassType = state->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
 
     // if init was specified then process it
     if (init.isValid()) {
@@ -587,23 +586,16 @@ lyric_compiler::internal::compile_defclass(
         if (initSuper.isValid()) {
             tu_uint32 typeOffset;
             moduleEntry.parseAttrOrThrow(initSuper, lyric_parser::kLyricAstTypeOffset, typeOffset);
-            auto superType = initSuper.getNodeAtOffset(typeOffset);
-            auto parseAssignableResult = typeSystem->parseAssignable(block, superType);
-            if (parseAssignableResult.isStatus())
-                return parseAssignableResult.getStatus();
-            auto resolveSuperClassResult = block->resolveClass(parseAssignableResult.getResult());
-            if (resolveSuperClassResult.isStatus())
-                return resolveSuperClassResult.getStatus();
-            superClassUrl = resolveSuperClassResult.getResult();
+            auto type = initSuper.getNodeAtOffset(typeOffset);
+            lyric_parser::TypeSpec superSpec;
+            TU_ASSIGN_OR_RETURN (superSpec, typeSystem->parseAssignable(block, type));
+            TU_ASSIGN_OR_RETURN (superClassType, typeSystem->resolveAssignable(block, superSpec));
         }
     }
 
     //
-    lyric_assembler::AbstractSymbol *superclassSym;
-    TU_ASSIGN_OR_RETURN (superclassSym, block->blockState()->symbolCache()->getOrImportSymbol(superClassUrl));
-    if (superclassSym->getSymbolType() != lyric_assembler::SymbolType::CLASS)
-        block->throwAssemblerInvariant("invalid class symbol {}", superClassUrl.toString());
-    auto *superClass = cast_symbol_to_class(superclassSym);
+    lyric_assembler::ClassSymbol *superClass;
+    TU_ASSIGN_OR_RETURN (superClass, block->resolveClass(superClassType));
 
     auto declClassResult = block->declareClass(
         identifier, superClass, lyric_object::AccessType::Public,
@@ -618,8 +610,7 @@ lyric_compiler::internal::compile_defclass(
         block->throwAssemblerInvariant("invalid class symbol {}", classUrl.toString());
     auto *classSymbol = cast_symbol_to_class(symbol);
 
-    TU_LOG_INFO << "declared class " << identifier << " from " << superClassUrl << " with url " << classUrl;
-
+    TU_LOG_INFO << "declared class " << classUrl << " from " << superClass->getSymbolUrl();
 
     absl::flat_hash_set<std::string> classMemberNames;
 

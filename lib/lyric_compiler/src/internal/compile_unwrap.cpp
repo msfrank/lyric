@@ -118,7 +118,7 @@ lyric_compiler::internal::compile_unwrap(
         tu_uint32 typeOffset;
         moduleEntry.parseAttrOrThrow(param, lyric_parser::kLyricAstTypeOffset, typeOffset);
         auto type = param.getNodeAtOffset(typeOffset);
-        lyric_parser::Assignable paramSpec;
+        lyric_parser::TypeSpec paramSpec;
         TU_ASSIGN_OR_RETURN (paramSpec, typeSystem->parseAssignable(block, type));
         lyric_common::TypeDef paramType;
         TU_ASSIGN_OR_RETURN (paramType, typeSystem->resolveAssignable(block, paramSpec));

@@ -37,7 +37,7 @@ compile_definstance_val(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable valSpec;
+    lyric_parser::TypeSpec valSpec;
     TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(instanceBlock, type));
     lyric_common::TypeDef valType;
     TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(instanceBlock, valSpec));
@@ -82,7 +82,7 @@ compile_definstance_var(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable varSpec;
+    lyric_parser::TypeSpec varSpec;
     TU_ASSIGN_OR_RETURN (varSpec, typeSystem->parseAssignable(instanceBlock, type));
     lyric_common::TypeDef varType;
     TU_ASSIGN_OR_RETURN (varType, typeSystem->resolveAssignable(instanceBlock, varSpec));
@@ -227,7 +227,7 @@ compile_definstance_def(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable returnSpec;
+    lyric_parser::TypeSpec returnSpec;
     TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(instanceBlock, type));
 
     // parse the parameter list
@@ -326,7 +326,7 @@ compile_definstance_impl_def(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable returnSpec;
+    lyric_parser::TypeSpec returnSpec;
     TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(implBlock, type));
 
     // parse the parameter list
@@ -407,7 +407,7 @@ compile_definstance_impl(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable implSpec;
+    lyric_parser::TypeSpec implSpec;
     TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(instanceBlock, type));
 
     // resolve the impl type

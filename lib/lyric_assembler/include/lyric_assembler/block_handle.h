@@ -85,12 +85,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolPath &typePath,
             const std::vector<lyric_common::TypeDef> &typeArguments) override;
 
-//        tempo_utils::Result<lyric_common::TypeDef> resolveSingular(
-//            const lyric_parser::Assignable &assignableSpec);
-//
-//        tempo_utils::Result<lyric_common::TypeDef> resolveAssignable(
-//            const lyric_parser::Assignable &assignableSpec) override;
-
         tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
             const std::vector<std::string> &typePath);
         tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
@@ -129,17 +123,6 @@ namespace lyric_assembler {
             const std::string &name,
             CallableInvoker &invoker);
 
-        tempo_utils::Result<lyric_common::SymbolUrl> declareStruct(
-            const std::string &name,
-            StructSymbol *superStruct,
-            lyric_object::AccessType access,
-            lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
-            bool isAbstract = false,
-            bool declOnly = false);
-
-        tempo_utils::Result<lyric_common::SymbolUrl> resolveStruct(
-            const lyric_parser::Assignable &structSpec);
-
         tempo_utils::Result<lyric_common::SymbolUrl> declareClass(
             const std::string &name,
             ClassSymbol *superClass,
@@ -149,8 +132,7 @@ namespace lyric_assembler {
             bool isAbstract = false,
             bool declOnly = false);
 
-        tempo_utils::Result<lyric_common::SymbolUrl> resolveClass(
-            const lyric_parser::Assignable &classSpec);
+        tempo_utils::Result<ClassSymbol *> resolveClass(const lyric_common::TypeDef &classType);
 
         tempo_utils::Result<lyric_common::SymbolUrl> declareConcept(
             const std::string &name,
@@ -160,8 +142,7 @@ namespace lyric_assembler {
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool declOnly = false);
 
-        tempo_utils::Result<lyric_common::SymbolUrl> resolveConcept(
-            const lyric_parser::Assignable &conceptSpec);
+        tempo_utils::Result<ConceptSymbol *> resolveConcept(const lyric_common::TypeDef &conceptType);
 
         tempo_utils::Result<lyric_common::SymbolUrl> declareEnum(
             const std::string &name,
@@ -171,8 +152,7 @@ namespace lyric_assembler {
             bool isAbstract = false,
             bool declOnly = false);
 
-        tempo_utils::Result<SymbolBinding> resolveEnum(
-            const lyric_parser::Assignable &enumSpec);
+        tempo_utils::Result<SymbolBinding> resolveEnum(const lyric_common::TypeDef &enumType);
 
         tempo_utils::Result<lyric_common::SymbolUrl> declareInstance(
             const std::string &name,
@@ -182,8 +162,17 @@ namespace lyric_assembler {
             bool isAbstract = false,
             bool declOnly = false);
 
-        tempo_utils::Result<SymbolBinding> resolveInstance(
-            const lyric_parser::Assignable &instanceSpec);
+        tempo_utils::Result<SymbolBinding> resolveInstance(const lyric_common::TypeDef &instanceType);
+
+        tempo_utils::Result<lyric_common::SymbolUrl> declareStruct(
+            const std::string &name,
+            StructSymbol *superStruct,
+            lyric_object::AccessType access,
+            lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
+            bool isAbstract = false,
+            bool declOnly = false);
+
+        tempo_utils::Result<StructSymbol *> resolveStruct(const lyric_common::TypeDef &structType);
 
         tempo_utils::Status useSymbol(
             const lyric_common::SymbolUrl &symbolUrl,

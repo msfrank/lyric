@@ -1,7 +1,6 @@
 #ifndef LYRIC_COMPILER_COMPILE_NODE_H
 #define LYRIC_COMPILER_COMPILE_NODE_H
 
-#include <lyric_assembler/assignable_type.h>
 #include <lyric_assembler/block_handle.h>
 #include <lyric_compiler/module_entry.h>
 #include <lyric_parser/node_walker.h>

@@ -22,7 +22,6 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/assembler_tracer.h
     include/lyric_assembler/assembler_types.h
     include/lyric_assembler/assembly_state.h
-    include/lyric_assembler/assignable_type.h
     include/lyric_assembler/base_handle.h
     include/lyric_assembler/base_symbol.h
     include/lyric_assembler/block_handle.h
@@ -72,7 +71,6 @@ target_sources(lyric_assembler PRIVATE
     src/assembler_tracer.cpp
     src/assembler_types.cpp
     src/assembly_state.cpp
-    src/assignable_type.cpp
     src/block_handle.cpp
     src/callable_invoker.cpp
     src/call_symbol.cpp

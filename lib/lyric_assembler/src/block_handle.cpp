@@ -343,7 +343,7 @@ lyric_assembler::BlockHandle::resolveBinding(const std::vector<std::string> &pat
 }
 
 //tempo_utils::Result<lyric_common::TypeDef>
-//lyric_assembler::BlockHandle::resolveAssignable(const lyric_parser::Assignable &assignableSpec) // NOLINT(misc-no-recursion)
+//lyric_assembler::BlockHandle::resolveAssignable(const lyric_parser::TypeSpec &assignableSpec) // NOLINT(misc-no-recursion)
 //{
 //    if (assignableSpec.getType() == lyric_parser::AssignableType::SINGULAR)
 //        return resolveSingular(assignableSpec);
@@ -373,7 +373,7 @@ lyric_assembler::BlockHandle::resolveBinding(const std::vector<std::string> &pat
 //}
 //
 //tempo_utils::Result<lyric_common::TypeDef>
-//lyric_assembler::BlockHandle::resolveSingular(const lyric_parser::Assignable &assignableSpec) // NOLINT(misc-no-recursion)
+//lyric_assembler::BlockHandle::resolveSingular(const lyric_parser::TypeSpec &assignableSpec) // NOLINT(misc-no-recursion)
 //{
 //    if (assignableSpec.getType() != lyric_parser::AssignableType::SINGULAR)
 //        throwAssemblerInvariant("{} is a non-singular type", assignableSpec.toString());
@@ -955,87 +955,6 @@ lyric_assembler::BlockHandle::prepareExtension(
 }
 
 tempo_utils::Result<lyric_common::SymbolUrl>
-lyric_assembler::BlockHandle::declareStruct(
-    const std::string &name,
-    StructSymbol *superStruct,
-    lyric_object::AccessType access,
-    lyric_object::DeriveType derive,
-    bool isAbstract,
-    bool declOnly)
-{
-    if (m_bindings.contains(name))
-        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
-            "cannot declare struct {}; symbol is already defined", name);
-
-    superStruct->touch();
-
-    auto superDerive = superStruct->getDeriveType();
-    if (superDerive == lyric_object::DeriveType::Final)
-        return logAndContinue(AssemblerCondition::kInvalidAccess,
-            tempo_tracing::LogSeverity::kError,
-            "cannot derive struct {} from {}; base struct is marked final",
-            name, superStruct->getSymbolUrl().toString());
-    if (superDerive == lyric_object::DeriveType::Sealed && lyric_object::IS_FAR(superStruct->getAddress().getAddress()))
-        return logAndContinue(AssemblerCondition::kInvalidAccess,
-            tempo_tracing::LogSeverity::kError,
-            "cannot derive struct {} from {}; sealed base struct must be located in the same module",
-            name, superStruct->getSymbolUrl().toString());
-
-    auto structUrl = makeSymbolUrl(name);
-
-    // create the type
-    TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
-        structUrl, {}, superStruct->getAssignableType()));
-
-    StructAddress address;
-    if (!declOnly)
-        address = StructAddress::near(m_state->numStructs());
-
-    // create the struct
-    auto *structSymbol = new StructSymbol(structUrl, access, derive, isAbstract, address,
-        typeHandle, superStruct, this, m_state);
-
-    auto status = m_state->appendStruct(structSymbol);
-    if (status.notOk()) {
-        delete structSymbol;
-        return status;
-    }
-
-    SymbolBinding binding;
-    binding.symbolUrl = structUrl;
-    binding.typeDef = structSymbol->getAssignableType();
-    binding.bindingType = BindingType::Descriptor;
-    m_bindings[name] = binding;
-
-    return structUrl;
-}
-
-tempo_utils::Result<lyric_common::SymbolUrl>
-lyric_assembler::BlockHandle::resolveStruct(const lyric_parser::Assignable &structSpec)
-{
-    if (structSpec.getType() != lyric_parser::AssignableType::SINGULAR)
-        return logAndContinue(AssemblerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
-            "invalid struct type {}", structSpec.toString());
-
-    auto resolveDefinitionResult = resolveDefinition(structSpec.getTypePath());
-    if (resolveDefinitionResult.isStatus())
-        return resolveDefinitionResult.getStatus();
-
-    auto structUrl = resolveDefinitionResult.getResult();
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(structUrl));
-    if (symbol->getSymbolType() != SymbolType::STRUCT)
-        return logAndContinue(AssemblerCondition::kInvalidSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "type {} is not a struct", structSpec.toString());
-
-    return structUrl;
-}
-
-tempo_utils::Result<lyric_common::SymbolUrl>
 lyric_assembler::BlockHandle::declareClass(
     const std::string &name,
     ClassSymbol *superClass,
@@ -1112,27 +1031,26 @@ lyric_assembler::BlockHandle::declareClass(
     return classUrl;
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
-lyric_assembler::BlockHandle::resolveClass(const lyric_parser::Assignable &classSpec)
+tempo_utils::Result<lyric_assembler::ClassSymbol *>
+lyric_assembler::BlockHandle::resolveClass(const lyric_common::TypeDef &classType)
 {
-    if (classSpec.getType() != lyric_parser::AssignableType::SINGULAR)
+    if (classType.getType() != lyric_common::TypeDefType::Concrete)
         return logAndContinue(AssemblerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
-            "invalid class type {}", classSpec.toString());
+            "invalid class type {}", classType.toString());
+    auto classUrl = classType.getConcreteUrl();
 
-    auto resolveDefinitionResult = resolveDefinition(classSpec.getTypePath());
-    if (resolveDefinitionResult.isStatus())
-        return resolveDefinitionResult.getStatus();
+    lyric_common::SymbolUrl resolvedUrl;
+    TU_ASSIGN_OR_RETURN (resolvedUrl, resolveDefinition(classUrl.getSymbolPath()));
 
-    auto classUrl = resolveDefinitionResult.getResult();
     lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(classUrl));
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(resolvedUrl));
     if (symbol->getSymbolType() != SymbolType::CLASS)
         return logAndContinue(AssemblerCondition::kInvalidSymbol,
             tempo_tracing::LogSeverity::kError,
-            "type {} is not a class", classSpec.toString());
+            "type {} is not a class", classType.toString());
 
-    return classUrl;
+    return cast_symbol_to_class(symbol);
 }
 
 tempo_utils::Result<lyric_common::SymbolUrl>
@@ -1199,27 +1117,26 @@ lyric_assembler::BlockHandle::declareConcept(
     return conceptUrl;
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
-lyric_assembler::BlockHandle::resolveConcept(const lyric_parser::Assignable &conceptSpec)
+tempo_utils::Result<lyric_assembler::ConceptSymbol *>
+lyric_assembler::BlockHandle::resolveConcept(const lyric_common::TypeDef &conceptType)
 {
-    if (conceptSpec.getType() != lyric_parser::AssignableType::SINGULAR)
+    if (conceptType.getType() != lyric_common::TypeDefType::Concrete)
         return logAndContinue(AssemblerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
-            "invalid concept type {}", conceptSpec.toString());
+            "invalid concept type {}", conceptType.toString());
+    auto conceptUrl = conceptType.getConcreteUrl();
 
-    auto resolveDefinitionResult = resolveDefinition(conceptSpec.getTypePath());
-    if (resolveDefinitionResult.isStatus())
-        return resolveDefinitionResult.getStatus();
+    lyric_common::SymbolUrl resolvedUrl;
+    TU_ASSIGN_OR_RETURN (resolvedUrl, resolveDefinition(conceptUrl.getSymbolPath()));
 
-    auto conceptUrl = resolveDefinitionResult.getResult();
     lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(conceptUrl));
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(resolvedUrl));
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
         return logAndContinue(AssemblerCondition::kInvalidSymbol,
             tempo_tracing::LogSeverity::kError,
-            "type {} is not a concept", conceptSpec.toString());
+            "type {} is not a concept", conceptType.toString());
 
-    return conceptUrl;
+    return cast_symbol_to_concept(symbol);
 }
 
 tempo_utils::Result<lyric_common::SymbolUrl>
@@ -1281,24 +1198,23 @@ lyric_assembler::BlockHandle::declareEnum(
 }
 
 tempo_utils::Result<lyric_assembler::SymbolBinding>
-lyric_assembler::BlockHandle::resolveEnum(const lyric_parser::Assignable &enumSpec)
+lyric_assembler::BlockHandle::resolveEnum(const lyric_common::TypeDef &enumType)
 {
-    if (enumSpec.getType() != lyric_parser::AssignableType::SINGULAR)
+    if (enumType.getType() != lyric_common::TypeDefType::Concrete)
         return logAndContinue(AssemblerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
-            "invalid enum type {}", enumSpec.toString());
+            "invalid enum type {}", enumType.toString());
+    auto enumUrl = enumType.getConcreteUrl();
 
-    auto resolveDefinitionResult = resolveDefinition(enumSpec.getTypePath());
-    if (resolveDefinitionResult.isStatus())
-        return resolveDefinitionResult.getStatus();
+    lyric_common::SymbolUrl resolvedUrl;
+    TU_ASSIGN_OR_RETURN (resolvedUrl, resolveDefinition(enumUrl.getSymbolPath()));
 
-    auto enumUrl = resolveDefinitionResult.getResult();
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(enumUrl));
     if (symbol->getSymbolType() != SymbolType::ENUM)
         return logAndContinue(AssemblerCondition::kInvalidSymbol,
             tempo_tracing::LogSeverity::kError,
-            "type {} is not an enum", enumSpec.toString());
+            "type {} is not an enum", enumType.toString());
     auto *enumSymbol = cast_symbol_to_enum(symbol);
 
     return SymbolBinding(enumUrl, enumSymbol->getAssignableType(), BindingType::Value);
@@ -1363,27 +1279,106 @@ lyric_assembler::BlockHandle::declareInstance(
 }
 
 tempo_utils::Result<lyric_assembler::SymbolBinding>
-lyric_assembler::BlockHandle::resolveInstance(const lyric_parser::Assignable &instanceSpec)
+lyric_assembler::BlockHandle::resolveInstance(const lyric_common::TypeDef &instanceType)
 {
-    if (instanceSpec.getType() != lyric_parser::AssignableType::SINGULAR)
+    if (instanceType.getType() != lyric_common::TypeDefType::Concrete)
         return logAndContinue(AssemblerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
-            "invalid instance type {}", instanceSpec.toString());
+            "invalid instance type {}", instanceType.toString());
+    auto instanceUrl = instanceType.getConcreteUrl();
 
-    auto resolveDefinitionResult = resolveDefinition(instanceSpec.getTypePath());
-    if (resolveDefinitionResult.isStatus())
-        return resolveDefinitionResult.getStatus();
+    lyric_common::SymbolUrl resolvedUrl;
+    TU_ASSIGN_OR_RETURN (resolvedUrl, resolveDefinition(instanceUrl.getSymbolPath()));
 
-    auto instanceUrl = resolveDefinitionResult.getResult();
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(instanceUrl));
     if (symbol->getSymbolType() != SymbolType::INSTANCE)
         return logAndContinue(AssemblerCondition::kInvalidSymbol,
             tempo_tracing::LogSeverity::kError,
-            "type {} is not an instance", instanceSpec.toString());
+            "type {} is not an instance", instanceType.toString());
     auto *instanceSymbol = cast_symbol_to_instance(symbol);
 
     return SymbolBinding(instanceUrl, instanceSymbol->getAssignableType(), BindingType::Value);
+}
+
+tempo_utils::Result<lyric_common::SymbolUrl>
+lyric_assembler::BlockHandle::declareStruct(
+    const std::string &name,
+    StructSymbol *superStruct,
+    lyric_object::AccessType access,
+    lyric_object::DeriveType derive,
+    bool isAbstract,
+    bool declOnly)
+{
+    if (m_bindings.contains(name))
+        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+            tempo_tracing::LogSeverity::kError,
+            "cannot declare struct {}; symbol is already defined", name);
+
+    superStruct->touch();
+
+    auto superDerive = superStruct->getDeriveType();
+    if (superDerive == lyric_object::DeriveType::Final)
+        return logAndContinue(AssemblerCondition::kInvalidAccess,
+            tempo_tracing::LogSeverity::kError,
+            "cannot derive struct {} from {}; base struct is marked final",
+            name, superStruct->getSymbolUrl().toString());
+    if (superDerive == lyric_object::DeriveType::Sealed && lyric_object::IS_FAR(superStruct->getAddress().getAddress()))
+        return logAndContinue(AssemblerCondition::kInvalidAccess,
+            tempo_tracing::LogSeverity::kError,
+            "cannot derive struct {} from {}; sealed base struct must be located in the same module",
+            name, superStruct->getSymbolUrl().toString());
+
+    auto structUrl = makeSymbolUrl(name);
+
+    // create the type
+    TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
+        structUrl, {}, superStruct->getAssignableType()));
+
+    StructAddress address;
+    if (!declOnly)
+        address = StructAddress::near(m_state->numStructs());
+
+    // create the struct
+    auto *structSymbol = new StructSymbol(structUrl, access, derive, isAbstract, address,
+        typeHandle, superStruct, this, m_state);
+
+    auto status = m_state->appendStruct(structSymbol);
+    if (status.notOk()) {
+        delete structSymbol;
+        return status;
+    }
+
+    SymbolBinding binding;
+    binding.symbolUrl = structUrl;
+    binding.typeDef = structSymbol->getAssignableType();
+    binding.bindingType = BindingType::Descriptor;
+    m_bindings[name] = binding;
+
+    return structUrl;
+}
+
+tempo_utils::Result<lyric_assembler::StructSymbol *>
+lyric_assembler::BlockHandle::resolveStruct(const lyric_common::TypeDef &structType)
+{
+    if (structType.getType() != lyric_common::TypeDefType::Concrete)
+        return logAndContinue(AssemblerCondition::kIncompatibleType,
+            tempo_tracing::LogSeverity::kError,
+            "invalid struct type {}", structType.toString());
+    auto structUrl = structType.getConcreteUrl();
+
+    lyric_common::SymbolUrl resolvedUrl;
+    TU_ASSIGN_OR_RETURN (resolvedUrl, resolveDefinition(structUrl.getSymbolPath()));
+
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(resolvedUrl));
+    if (symbol->getSymbolType() != SymbolType::STRUCT)
+        return logAndContinue(AssemblerCondition::kInvalidSymbol,
+            tempo_tracing::LogSeverity::kError,
+            "type {} is not a struct", structType.toString());
+
+    return cast_symbol_to_struct(symbol);
 }
 
 tempo_utils::Status

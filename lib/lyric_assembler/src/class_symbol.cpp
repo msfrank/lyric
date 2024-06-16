@@ -379,7 +379,7 @@ lyric_assembler::ClassSymbol::resolveMember(
 //    auto typeParameters = receiverType.getTypeParameters();
 //    MemberReifier reifier(members, m_classTemplate->getTemplateUrl(),
 //        m_classTemplate->getTemplateParameters(),
-//        std::vector<Assignable>(typeParameters.cbegin(), typeParameters.cend()),
+//        std::vector<TypeSpec>(typeParameters.cbegin(), typeParameters.cend()),
 //        m_state);
 
     return reifier.reifyMember(name, fieldSymbol);

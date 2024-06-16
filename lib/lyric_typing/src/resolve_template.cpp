@@ -93,7 +93,7 @@ lyric_typing::resolve_template(
                 return status;
             auto typeNode = walker.getNodeAtOffset(typeOffset);
 
-            lyric_parser::Assignable assignable;
+            lyric_parser::TypeSpec assignable;
             TU_ASSIGN_OR_RETURN (assignable, parse_assignable(block, typeNode, state));
             TU_ASSIGN_OR_RETURN (tp.typeDef, resolve_assignable(assignable, block, state));
         }

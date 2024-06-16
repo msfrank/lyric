@@ -4,7 +4,7 @@
 #include <lyric_typing/parse_assignable.h>
 #include <lyric_typing/typing_result.h>
 
-static tempo_utils::Result<lyric_parser::Assignable>
+static tempo_utils::Result<lyric_parser::TypeSpec>
 parse_s_or_p_type(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
@@ -31,7 +31,7 @@ parse_s_or_p_type(
     if (status.notOk())
         return status;
 
-    std::vector<lyric_parser::Assignable> typeParameters;
+    std::vector<lyric_parser::TypeSpec> typeParameters;
     for (int i = 0; i < walker.numChildren(); i++) {
         auto compileTypeParameterResult = lyric_typing::parse_assignable(block, walker.getChild(i), state);
         if (compileTypeParameterResult.isStatus())
@@ -39,10 +39,10 @@ parse_s_or_p_type(
         typeParameters.push_back(compileTypeParameterResult.getResult());
     }
 
-    return lyric_parser::Assignable::forSingular(symbolPath, typeParameters);
+    return lyric_parser::TypeSpec::forSingular(symbolPath, typeParameters);
 }
 
-static tempo_utils::Result<lyric_parser::Assignable>
+static tempo_utils::Result<lyric_parser::TypeSpec>
 parse_i_type(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
@@ -56,7 +56,7 @@ parse_i_type(
     if (walker.numChildren() == 0)
         block->throwSyntaxError(walker, "intersection type must contain at least one member");
 
-    std::vector<lyric_parser::Assignable> intersectionMembers;
+    std::vector<lyric_parser::TypeSpec> intersectionMembers;
     for (int i = 0; i < walker.numChildren(); i++) {
         auto compileTypeParameterResult = lyric_typing::parse_assignable(block, walker.getChild(i), state);
         if (compileTypeParameterResult.isStatus())
@@ -64,10 +64,10 @@ parse_i_type(
         intersectionMembers.push_back(compileTypeParameterResult.getResult());
     }
 
-    return lyric_parser::Assignable::forIntersection(intersectionMembers);
+    return lyric_parser::TypeSpec::forIntersection(intersectionMembers);
 }
 
-static tempo_utils::Result<lyric_parser::Assignable>
+static tempo_utils::Result<lyric_parser::TypeSpec>
 parse_u_type(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
@@ -81,7 +81,7 @@ parse_u_type(
     if (walker.numChildren() == 0)
         block->throwSyntaxError(walker, "union type must contain at least one member");
 
-    std::vector<lyric_parser::Assignable> unionMembers;
+    std::vector<lyric_parser::TypeSpec> unionMembers;
     for (int i = 0; i < walker.numChildren(); i++) {
         auto compileTypeParameterResult = lyric_typing::parse_assignable(block, walker.getChild(i), state);
         if (compileTypeParameterResult.isStatus())
@@ -89,10 +89,10 @@ parse_u_type(
         unionMembers.push_back(compileTypeParameterResult.getResult());
     }
 
-    return lyric_parser::Assignable::forUnion(unionMembers);
+    return lyric_parser::TypeSpec::forUnion(unionMembers);
 }
 
-tempo_utils::Result<lyric_parser::Assignable>
+tempo_utils::Result<lyric_parser::TypeSpec>
 lyric_typing::parse_assignable(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,

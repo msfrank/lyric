@@ -38,7 +38,7 @@ compile_defstruct_val(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable valSpec;
+    lyric_parser::TypeSpec valSpec;
     TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(structBlock, type));
     lyric_common::TypeDef valType;
     TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(structBlock, valSpec));
@@ -311,7 +311,7 @@ compile_defstruct_def(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable returnSpec;
+    lyric_parser::TypeSpec returnSpec;
     TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(structBlock, type));
 
     // parse the parameter list
@@ -410,7 +410,7 @@ compile_defstruct_impl_def(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable returnSpec;
+    lyric_parser::TypeSpec returnSpec;
     TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(implBlock, type));
 
     // parse the parameter list
@@ -491,7 +491,7 @@ compile_defstruct_impl(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::Assignable implSpec;
+    lyric_parser::TypeSpec implSpec;
     TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(structBlock, type));
 
     // resolve the impl type
@@ -569,8 +569,7 @@ lyric_compiler::internal::compile_defstruct(
     lyric_parser::NodeWalker initPack;
     lyric_parser::NodeWalker initSuper;
     lyric_parser::NodeWalker initBody;
-    lyric_common::SymbolUrl superStructUrl = state->fundamentalCache()->getFundamentalUrl(
-        lyric_assembler::FundamentalSymbol::Record);
+    auto superStructType = state->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
 
     // if init was specified then process it
     if (init.isValid()) {
@@ -604,23 +603,16 @@ lyric_compiler::internal::compile_defstruct(
         if (initSuper.isValid()) {
             tu_uint32 typeOffset;
             moduleEntry.parseAttrOrThrow(initSuper, lyric_parser::kLyricAstTypeOffset, typeOffset);
-            auto superType = initSuper.getNodeAtOffset(typeOffset);
-            auto parseAssignableResult = typeSystem->parseAssignable(block, superType);
-            if (parseAssignableResult.isStatus())
-                return parseAssignableResult.getStatus();
-            auto resolveSuperClassResult = block->resolveClass(parseAssignableResult.getResult());
-            if (resolveSuperClassResult.isStatus())
-                return resolveSuperClassResult.getStatus();
-            superStructUrl = resolveSuperClassResult.getResult();
+            auto type = initSuper.getNodeAtOffset(typeOffset);
+            lyric_parser::TypeSpec superSpec;
+            TU_ASSIGN_OR_RETURN (superSpec, typeSystem->parseAssignable(block, type));
+            TU_ASSIGN_OR_RETURN (superStructType, typeSystem->resolveAssignable(block, superSpec));
         }
     }
 
     //
-    lyric_assembler::AbstractSymbol *superstructSym;
-    TU_ASSIGN_OR_RETURN (superstructSym, state->symbolCache()->getOrImportSymbol(superStructUrl));
-    if (superstructSym->getSymbolType() != lyric_assembler::SymbolType::STRUCT)
-        block->throwAssemblerInvariant("invalid struct symbol {}", superStructUrl.toString());
-    auto *superStruct = cast_symbol_to_struct(superstructSym);
+    lyric_assembler::StructSymbol *superStruct;
+    TU_ASSIGN_OR_RETURN (superStruct, block->resolveStruct(superStructType));
 
     auto declStructResult = block->declareStruct(
         identifier, superStruct, lyric_object::AccessType::Public);
@@ -634,7 +626,7 @@ lyric_compiler::internal::compile_defstruct(
         block->throwAssemblerInvariant("invalid struct symbol {}", structUrl.toString());
     auto *structSymbol = cast_symbol_to_struct(symbol);
 
-    TU_LOG_INFO << "declared struct " << identifier << " with url " << structUrl;
+    TU_LOG_INFO << "declared struct " << structUrl << " from " << superStruct->getSymbolUrl();
 
     tempo_utils::Status status;
     absl::flat_hash_set<std::string> structMemberNames;

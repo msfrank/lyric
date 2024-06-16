@@ -71,7 +71,7 @@
 //
 //tempo_utils::Result<lyric_common::TypeDef>
 //lyric_typing::resolve_assignable(
-//    const lyric_parser::Assignable &assignable,
+//    const lyric_parser::TypeSpec &assignable,
 //    lyric_assembler::AbstractResolver *resolver,
 //    lyric_assembler::AssemblyState *state)
 //{
@@ -129,7 +129,7 @@
 
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::resolve_singular(
-    const lyric_parser::Assignable &assignable,
+    const lyric_parser::TypeSpec &assignable,
     lyric_assembler::AbstractResolver *resolver,
     lyric_assembler::AssemblyState *state)
 {
@@ -161,7 +161,7 @@ lyric_typing::resolve_singular(
 
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::resolve_assignable(
-    const lyric_parser::Assignable &assignable,
+    const lyric_parser::TypeSpec &assignable,
     lyric_assembler::AbstractResolver *resolver,
     lyric_assembler::AssemblyState *state)
 {
