@@ -39,8 +39,8 @@ namespace lyric_assembler {
 
         tempo_utils::Result<TypeHandle *> declareFunctionType(
             const lyric_common::TypeDef &functionReturn,
-            const std::vector<lyric_object::Parameter> &functionParameters,
-            const Option<lyric_object::Parameter> &functionRest);
+            const std::vector<Parameter> &functionParameters,
+            const Option<Parameter> &functionRest);
 
         bool hasTemplate(const lyric_common::SymbolUrl &templateUrl) const;
         //TemplateHandle *getTemplate(const lyric_common::SymbolUrl &templateUrl) const;

@@ -4,6 +4,7 @@
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
+#include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_lambda.h>
 #include <lyric_compiler/internal/compile_node.h>
 #include <lyric_compiler/internal/compile_initializer.h>

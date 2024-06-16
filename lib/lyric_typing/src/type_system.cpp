@@ -1,4 +1,6 @@
 
+#include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/type_set.h>
 #include <lyric_typing/compare_assignable.h>
 #include <lyric_typing/parse_assignable.h>
 #include <lyric_typing/parse_pack.h>

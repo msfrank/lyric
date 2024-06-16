@@ -713,7 +713,7 @@ lyric_assembler::AssemblyState::touchCall(CallSymbol *callSymbol)
         TU_RETURN_IF_NOT_OK (m_symbolcache->touchSymbol(receiverUrl));
     }
 
-    TU_RETURN_IF_NOT_OK (m_typecache->touchType(callSymbol->callType()));
+//    TU_RETURN_IF_NOT_OK (m_typecache->touchType(callSymbol->callType()));
 
     for (auto it = callSymbol->listPlacementBegin(); it != callSymbol->listPlacementEnd(); it++) {
         TU_RETURN_IF_NOT_OK (m_typecache->touchType(it->typeDef));

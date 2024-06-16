@@ -2,6 +2,7 @@
 
 #include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/fundamental_cache.h>
+#include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_conditional.h>
 #include <lyric_compiler/internal/compile_node.h>
 #include <lyric_parser/ast_attrs.h>

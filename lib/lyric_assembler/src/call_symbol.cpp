@@ -1,12 +1,14 @@
 
 #include <lyric_assembler/argument_variable.h>
 #include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/synthetic_symbol.h>
 #include <lyric_assembler/template_handle.h>
 #include <lyric_assembler/type_cache.h>
+#include <lyric_assembler/type_set.h>
 
 /**
  * @brief Construct a call symbol for the $entry call.
@@ -248,8 +250,8 @@ lyric_assembler::CallSymbol::load()
     priv->mode = m_callImport->getCallMode();
     priv->receiverUrl = m_callImport->getReceiverUrl();
 
-    auto *callType = m_callImport->getCallType();
-    TU_ASSIGN_OR_RAISE (priv->callType, typeCache->importType(callType));
+//    auto *callType = m_callImport->getCallType();
+//    TU_ASSIGN_OR_RAISE (priv->callType, typeCache->importType(callType));
 
     auto *callTemplate = m_callImport->getCallTemplate();
     if (callTemplate != nullptr) {
@@ -318,6 +320,9 @@ lyric_assembler::CallSymbol::defineCall(
     const ParameterPack &parameterPack,
     const lyric_common::TypeDef &returnType)
 {
+    if (isImported())
+        m_state->throwAssemblerInvariant(
+            "can't put initializer on imported call {}", m_callUrl.toString());
     auto *priv = getPriv();
 
     if (priv->proc != nullptr)
@@ -411,9 +416,12 @@ lyric_assembler::CallSymbol::defineCall(
 
     // TODO: create binding for rest collector parameter if specified
 
-    TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(priv->returnType));
-    typeHandle->touch();
+    // if return type was explicitly declared then touch it
+    if (priv->returnType.isValid()) {
+        TypeHandle *typeHandle;
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(priv->returnType));
+        typeHandle->touch();
+    }
 
     priv->proc = std::make_unique<ProcHandle>(m_callUrl, bindings, priv->listParameters.size(),
         priv->namedParameters.size(), !priv->restParameter.isEmpty(), m_state, priv->parentBlock);
@@ -492,6 +500,19 @@ lyric_assembler::TypeHandle *
 lyric_assembler::CallSymbol::callType()
 {
     auto *priv = getPriv();
+    if (priv->callType != nullptr)
+        return priv->callType;
+
+    std::vector<Parameter> functionParameters;
+    functionParameters.insert(functionParameters.begin(),
+        priv->listParameters.cbegin(), priv->listParameters.cend());
+    functionParameters.insert(functionParameters.end(),
+        priv->namedParameters.cbegin(), priv->namedParameters.cend());
+
+    auto *typeCache = m_state->typeCache();
+    TU_ASSIGN_OR_RAISE (priv->callType, typeCache->declareFunctionType(
+        priv->returnType, functionParameters, priv->restParameter));
+
     return priv->callType;
 }
 
@@ -570,4 +591,31 @@ lyric_assembler::CallSymbol::putInitializer(const std::string &name, const lyric
             "can't put initializer on imported call {}", m_callUrl.toString());
     auto *priv = getPriv();
     priv->initializers[name] = initializer;
+}
+
+tempo_utils::Status
+lyric_assembler::CallSymbol::finalizeCall()
+{
+    if (isImported())
+        m_state->throwAssemblerInvariant(
+            "can't put initializer on imported call {}", m_callUrl.toString());
+    auto *priv = getPriv();
+
+    // if return type was not explicitly defined then set it
+    if (!priv->returnType.isValid()) {
+        lyric_assembler::UnifiedTypeSet typeSet(m_state);
+        for (auto it = priv->proc->exitTypesBegin(); it != priv->proc->exitTypesEnd(); it++) {
+            TU_RETURN_IF_NOT_OK (typeSet.putType(*it));
+        }
+        priv->returnType = typeSet.getUnifiedType();
+    }
+
+    auto *typeCache = m_state->typeCache();
+
+    // ensure return type exists in cache and is addressable
+    TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(priv->returnType));
+    typeHandle->touch();
+
+    return {};
 }

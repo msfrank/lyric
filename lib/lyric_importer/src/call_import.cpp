@@ -308,7 +308,7 @@ lyric_importer::CallImport::load()
         p.placement = parameter.getPlacement();
         p.isVariable = parameter.isVariable();
 
-        if (p.placement == lyric_object::PlacementType::Named) {
+        if (p.placement == lyric_object::PlacementType::Named || p.placement == lyric_object::PlacementType::Ctx) {
             if (parameter.hasInitializer())
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,

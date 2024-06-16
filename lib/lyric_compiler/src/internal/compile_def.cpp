@@ -3,6 +3,7 @@
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
+#include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_def.h>
 #include <lyric_compiler/internal/compile_node.h>
 #include <lyric_compiler/internal/compile_initializer.h>
@@ -86,34 +87,10 @@ lyric_compiler::internal::compile_def(
         }
     }
 
-    // compile the function body
     auto body = walker.getChild(1);
-    lyric_assembler::ProcHandle *procHandle;
-    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnType));
-    lyric_common::TypeDef bodyType;
-    TU_ASSIGN_OR_RETURN (bodyType, compile_block(procHandle->procBlock(), body, moduleEntry));
 
-    // add return instruction
-    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
-
-    // validate that body returns the expected type
-    bool isReturnable;
-    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
-    if (!isReturnable)
-        return block->logAndContinue(body,
-            lyric_compiler::CompilerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
-            "body does not match return type {}", returnType.toString());
-
-    // validate that each exit returns the expected type
-    for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
-        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
-        if (!isReturnable)
-            return block->logAndContinue(body,
-                lyric_compiler::CompilerCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
-                "body does not match return type {}", returnType.toString());
-    }
+    // compile the function body
+    TU_RETURN_IF_NOT_OK (compile_proc_block(callSymbol, parameterPack, returnType, body, moduleEntry));
 
     if (callSymbolPtr != nullptr) {
         *callSymbolPtr = callSymbol;

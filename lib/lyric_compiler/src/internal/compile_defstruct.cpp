@@ -8,6 +8,7 @@
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/synthetic_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
+#include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_call.h>
 #include <lyric_compiler/internal/compile_defstruct.h>
 #include <lyric_compiler/internal/compile_node.h>

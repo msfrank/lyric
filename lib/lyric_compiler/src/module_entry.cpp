@@ -6,6 +6,7 @@
 #include <lyric_compiler/internal/compile_node.h>
 #include <lyric_compiler/module_entry.h>
 #include <lyric_parser/lyric_parser.h>
+#include "lyric_compiler/internal/compile_block.h"
 #include "lyric_compiler/internal/compile_defclass.h"
 #include "lyric_compiler/internal/compile_defenum.h"
 #include "lyric_compiler/internal/compile_definstance.h"

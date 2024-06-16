@@ -388,8 +388,8 @@ lyric_assembler::TypeCache::declareParameterizedType(
 tempo_utils::Result<lyric_assembler::TypeHandle *>
 lyric_assembler::TypeCache::declareFunctionType(
     const lyric_common::TypeDef &functionReturn,
-    const std::vector<lyric_object::Parameter> &functionParameters,
-    const Option<lyric_object::Parameter> &functionRest)
+    const std::vector<Parameter> &functionParameters,
+    const Option<Parameter> &functionRest)
 {
     TU_RETURN_IF_NOT_OK (touchType(functionReturn));
 

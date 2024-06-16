@@ -9,6 +9,7 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_compiler/compiler_result.h>
+#include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_match.h>
 #include <lyric_compiler/internal/compile_node.h>
 #include <lyric_compiler/internal/compile_operator.h>

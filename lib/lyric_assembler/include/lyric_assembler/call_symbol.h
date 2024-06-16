@@ -98,7 +98,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<ProcHandle *> defineCall(
             const ParameterPack &parameterPack,
-            const lyric_common::TypeDef &returnType);
+            const lyric_common::TypeDef &returnType = {});
 
         lyric_common::TypeDef getReturnType() const;
         lyric_common::SymbolUrl getReceiverUrl() const;
@@ -123,6 +123,8 @@ namespace lyric_assembler {
         bool hasInitializer(const std::string &name) const;
         lyric_common::SymbolUrl getInitializer(const std::string &name) const;
         void putInitializer(const std::string &name, const lyric_common::SymbolUrl &initializer);
+
+        tempo_utils::Status finalizeCall();
 
     private:
         lyric_common::SymbolUrl m_callUrl;

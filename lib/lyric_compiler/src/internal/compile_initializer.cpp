@@ -31,9 +31,9 @@ lyric_compiler::internal::compile_param_initializer(
     TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(
         identifier, lyric_object::AccessType::Public, templateParameters));
 
-    // define the initializer
+    // define the initializer without a return type
     lyric_assembler::ProcHandle *procHandle;
-    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall({}, param.typeDef));
+    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall({}));
 
     // compile the initializer body
     lyric_schema::LyricAstId initializerId{};
@@ -65,8 +65,13 @@ lyric_compiler::internal::compile_param_initializer(
             block->throwSyntaxError(walker, "invalid param initializer");
     }
 
+    procHandle->putExitType(bodyType);
+
     // add return instruction
     TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
+
+    // finalize the initializer to set the return type
+    TU_RETURN_IF_NOT_OK (callSymbol->finalizeCall());
 
     bool isReturnable;
 
@@ -109,9 +114,9 @@ lyric_compiler::internal::compile_member_initializer(
     TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(
         identifier, lyric_object::AccessType::Public, templateParameters));
 
-    // define the initializer
+    // define the initializer without a return type
     lyric_assembler::ProcHandle *procHandle;
-    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall({}, memberType));
+    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall({}));
 
     // compile the initializer body
     lyric_schema::LyricAstId initializerId{};
@@ -143,8 +148,13 @@ lyric_compiler::internal::compile_member_initializer(
             block->throwSyntaxError(walker, "invalid member initializer");
     }
 
+    procHandle->putExitType(bodyType);
+
     // add return instruction
     TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
+
+    // finalize the initializer to set the return type
+    TU_RETURN_IF_NOT_OK (callSymbol->finalizeCall());
 
     bool isReturnable;
 

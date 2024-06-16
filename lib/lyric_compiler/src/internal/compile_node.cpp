@@ -4,6 +4,7 @@
 #include <lyric_assembler/namespace_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/internal/compile_assignment.h>
+#include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_conditional.h>
 #include <lyric_compiler/internal/compile_def.h>
 #include <lyric_compiler/internal/compile_defclass.h>
@@ -16,6 +17,7 @@
 #include <lyric_compiler/internal/compile_lambda.h>
 #include <lyric_compiler/internal/compile_constant.h>
 #include <lyric_compiler/internal/compile_loop.h>
+#include <lyric_compiler/internal/compile_namespace.h>
 #include <lyric_compiler/internal/compile_new.h>
 #include <lyric_compiler/internal/compile_match.h>
 #include <lyric_compiler/internal/compile_node.h>
@@ -26,88 +28,6 @@
 #include <lyric_compiler/internal/compile_var.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
-
-/**
- *
- * @param builder
- * @param block
- * @return
- */
-tempo_utils::Result<lyric_common::TypeDef>
-lyric_compiler::internal::compile_block(
-    lyric_assembler::BlockHandle *block,
-    const lyric_parser::NodeWalker &walker,
-    ModuleEntry &moduleEntry)
-{
-    TU_ASSERT(walker.isValid());
-    moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstBlockClass, 1);
-
-    auto *code = block->blockCode();
-
-    lyric_common::TypeDef resultType;
-
-    for (int i = 0, last = walker.numChildren() - 1; i <= last; i++) {
-        auto compileNodeResult = compile_node(block, walker.getChild(i), moduleEntry);
-        if (compileNodeResult.isStatus())
-            return compileNodeResult;
-        resultType = compileNodeResult.getResult();
-        if (!resultType.isValid())
-            block->throwSyntaxError(walker.getChild(0),
-                "block form returns an invalid result");
-        // discard intermediate expression result
-        if (i < last && resultType.getType() != lyric_common::TypeDefType::NoReturn) {
-            code->popValue();
-        }
-    }
-
-    return resultType;
-}
-
-/**
- *
- * @param block
- * @param walker
- * @return
- */
-tempo_utils::Status
-lyric_compiler::internal::compile_namespace(
-    lyric_assembler::BlockHandle *block,
-    const lyric_parser::NodeWalker &walker,
-    ModuleEntry &moduleEntry)
-{
-    TU_ASSERT(walker.isValid());
-    moduleEntry.checkClassAndChildCountOrThrow(walker, lyric_schema::kLyricAstNamespaceClass, 1);
-
-    // get namespace identifer
-    std::string identifier;
-    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
-
-    // get namespace block
-    auto child = walker.getChild(0);
-    moduleEntry.checkClassOrThrow(child, lyric_schema::kLyricAstBlockClass);
-
-    auto *state = block->blockState();
-
-    // declare the namespace
-    auto declareNamespaceResult = block->declareNamespace(identifier, lyric_object::AccessType::Public);
-    if (declareNamespaceResult.isStatus())
-        return declareNamespaceResult.getStatus();
-    auto nsUrl = declareNamespaceResult.getResult();
-
-    // get the namespace symbol
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(nsUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
-        block->throwAssemblerInvariant("invalid namespace symbol");
-    auto *namespaceSymbol = cast_symbol_to_namespace(symbol);
-
-    // compile the namespace block
-    auto compileBlockResult = compile_block(namespaceSymbol->namespaceBlock(), child, moduleEntry);
-    if (compileBlockResult.isStatus())
-        return compileBlockResult.getStatus();
-
-    return CompilerStatus::ok();
-}
 
 /**
  *

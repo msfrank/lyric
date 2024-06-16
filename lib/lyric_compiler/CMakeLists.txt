@@ -20,6 +20,8 @@ target_sources(lyric_compiler PRIVATE
 
     include/lyric_compiler/internal/compile_assignment.h
     src/internal/compile_assignment.cpp
+    include/lyric_compiler/internal/compile_block.h
+    src/internal/compile_block.cpp
     include/lyric_compiler/internal/compile_call.h
     src/internal/compile_call.cpp
     include/lyric_compiler/internal/compile_conditional.h
@@ -50,6 +52,8 @@ target_sources(lyric_compiler PRIVATE
     src/internal/compile_match.cpp
     include/lyric_compiler/internal/compile_module.h
     src/internal/compile_module.cpp
+    include/lyric_compiler/internal/compile_namespace.h
+    src/internal/compile_namespace.cpp
     include/lyric_compiler/internal/compile_node.h
     src/internal/compile_node.cpp
     include/lyric_compiler/internal/compile_new.h
