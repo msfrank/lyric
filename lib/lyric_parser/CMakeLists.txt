@@ -13,7 +13,6 @@ set(LYRIC_PARSER_INCLUDES
     include/lyric_parser/archetype_namespace.h
     include/lyric_parser/archetype_node.h
     include/lyric_parser/archetype_state.h
-    include/lyric_parser/assignable.h
     include/lyric_parser/ast_attrs.h
     include/lyric_parser/lyric_archetype.h
     include/lyric_parser/lyric_parser.h
@@ -91,7 +90,6 @@ target_sources(lyric_parser
     src/archetype_namespace.cpp
     src/archetype_node.cpp
     src/archetype_state.cpp
-    src/assignable.cpp
     src/ast_attrs.cpp
     src/lyric_archetype.cpp
     src/lyric_parser.cpp

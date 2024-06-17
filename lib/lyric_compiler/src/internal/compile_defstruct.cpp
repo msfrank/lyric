@@ -38,7 +38,7 @@ compile_defstruct_val(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::TypeSpec valSpec;
+    lyric_typing::TypeSpec valSpec;
     TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(structBlock, type));
     lyric_common::TypeDef valType;
     TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(structBlock, valSpec));
@@ -311,7 +311,7 @@ compile_defstruct_def(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::TypeSpec returnSpec;
+    lyric_typing::TypeSpec returnSpec;
     TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(structBlock, type));
 
     // parse the parameter list
@@ -410,7 +410,7 @@ compile_defstruct_impl_def(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::TypeSpec returnSpec;
+    lyric_typing::TypeSpec returnSpec;
     TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(implBlock, type));
 
     // parse the parameter list
@@ -491,7 +491,7 @@ compile_defstruct_impl(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::TypeSpec implSpec;
+    lyric_typing::TypeSpec implSpec;
     TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(structBlock, type));
 
     // resolve the impl type
@@ -604,7 +604,7 @@ lyric_compiler::internal::compile_defstruct(
             tu_uint32 typeOffset;
             moduleEntry.parseAttrOrThrow(initSuper, lyric_parser::kLyricAstTypeOffset, typeOffset);
             auto type = initSuper.getNodeAtOffset(typeOffset);
-            lyric_parser::TypeSpec superSpec;
+            lyric_typing::TypeSpec superSpec;
             TU_ASSIGN_OR_RETURN (superSpec, typeSystem->parseAssignable(block, type));
             TU_ASSIGN_OR_RETURN (superStructType, typeSystem->resolveAssignable(block, superSpec));
         }

@@ -23,7 +23,7 @@ lyric_analyzer::internal::analyze_val(
     tu_uint32 typeOffset;
     entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::TypeSpec valSpec;
+    lyric_typing::TypeSpec valSpec;
     TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(block, type));
     lyric_common::TypeDef valType;
     TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(block, valSpec));
@@ -54,7 +54,7 @@ lyric_analyzer::internal::analyze_var(
     tu_uint32 typeOffset;
     entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::TypeSpec varSpec;
+    lyric_typing::TypeSpec varSpec;
     TU_ASSIGN_OR_RETURN (varSpec, typeSystem->parseAssignable(block, type));
     lyric_common::TypeDef varType;
     TU_ASSIGN_OR_RETURN (varType, typeSystem->resolveAssignable(block, varSpec));

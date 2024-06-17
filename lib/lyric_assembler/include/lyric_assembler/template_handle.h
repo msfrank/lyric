@@ -32,7 +32,7 @@ namespace lyric_assembler {
             const std::vector<lyric_common::TypeDef> &typeArguments) override;
 
 //        tempo_utils::Result<lyric_common::TypeDef> resolveAssignable(
-//            const lyric_parser::TypeSpec &assignableSpec) override;
+//            const lyric_typing::TypeSpec &assignableSpec) override;
 
         lyric_common::SymbolUrl getTemplateUrl() const;
         TemplateAddress getAddress();

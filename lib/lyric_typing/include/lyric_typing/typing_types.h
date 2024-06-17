@@ -2,8 +2,9 @@
 #define LYRIC_TYPING_TYPING_TYPES_H
 
 #include <lyric_object/object_types.h>
-#include <lyric_parser/assignable.h>
 #include <lyric_parser/node_walker.h>
+
+#include "type_spec.h"
 
 namespace lyric_typing {
 
@@ -20,7 +21,7 @@ namespace lyric_typing {
         lyric_parser::NodeWalker node;          // the node of the parameter in the archetype
         std::string name;                       // name of the parameter
         std::string label;                      // optional parameter label
-        lyric_parser::TypeSpec type;          // type of the parameter
+        TypeSpec type;                          // type of the parameter
         lyric_parser::BindingType binding;      // fixed or variable binding
         Option<lyric_parser::NodeWalker> init;  // node containing the default initializer, can be empty
         ParameterSpec();
@@ -28,7 +29,7 @@ namespace lyric_typing {
             const lyric_parser::NodeWalker &node,
             const std::string &name,
             const std::string &label,
-            const lyric_parser::TypeSpec &type,
+            const TypeSpec &type,
             lyric_parser::BindingType binding,
             const Option<lyric_parser::NodeWalker> &init = {});
     };

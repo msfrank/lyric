@@ -4,15 +4,17 @@
 #include <lyric_assembler/block_handle.h>
 #include <lyric_parser/node_walker.h>
 
+#include "type_spec.h"
+
 namespace lyric_typing {
 
     tempo_utils::Result<lyric_common::TypeDef> resolve_singular(
-        const lyric_parser::TypeSpec &assignable,
+        const TypeSpec &typeSpec,
         lyric_assembler::AbstractResolver *resolver,
         lyric_assembler::AssemblyState *state);
 
     tempo_utils::Result<lyric_common::TypeDef> resolve_assignable(
-        const lyric_parser::TypeSpec &assignable,
+        const TypeSpec &typeSpec,
         lyric_assembler::AbstractResolver *resolver,
         lyric_assembler::AssemblyState *state);
 }

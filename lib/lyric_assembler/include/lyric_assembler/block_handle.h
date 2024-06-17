@@ -4,7 +4,6 @@
 #include <absl/container/flat_hash_map.h>
 
 #include <lyric_common/symbol_url.h>
-#include <lyric_parser/assignable.h>
 #include <lyric_parser/node_walker.h>
 #include <lyric_runtime/literal_cell.h>
 #include <tempo_tracing/span_log.h>

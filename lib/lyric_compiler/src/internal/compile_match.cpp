@@ -169,7 +169,7 @@ compile_match_case_unpack(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(unpack, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = unpack.getNodeAtOffset(typeOffset);
-    lyric_parser::TypeSpec predicateSpec;
+    lyric_typing::TypeSpec predicateSpec;
     TU_ASSIGN_OR_RETURN (predicateSpec, typeSystem->parseAssignable(block, type));
     lyric_common::TypeDef predicateType;
     TU_ASSIGN_OR_RETURN (predicateType, typeSystem->resolveAssignable(block, predicateSpec));

@@ -34,7 +34,7 @@ compile_defenum_val(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::TypeSpec valSpec;
+    lyric_typing::TypeSpec valSpec;
     TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(enumBlock, type));
     lyric_common::TypeDef valType;
     TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(enumBlock, valSpec));
@@ -93,7 +93,7 @@ compile_defenum_def(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::TypeSpec returnSpec;
+    lyric_typing::TypeSpec returnSpec;
     TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(enumBlock, type));
 
     // parse the parameter list
@@ -421,7 +421,7 @@ compile_defenum_impl_def(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::TypeSpec returnSpec;
+    lyric_typing::TypeSpec returnSpec;
     TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(implBlock, type));
 
     // parse the parameter list
@@ -502,7 +502,7 @@ compile_defenum_impl(
     tu_uint32 typeOffset;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
     auto type = walker.getNodeAtOffset(typeOffset);
-    lyric_parser::TypeSpec implSpec;
+    lyric_typing::TypeSpec implSpec;
     TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(enumBlock, type));
 
     // resolve the impl type

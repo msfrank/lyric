@@ -71,7 +71,7 @@
 //
 //tempo_utils::Result<lyric_common::TypeDef>
 //lyric_typing::resolve_assignable(
-//    const lyric_parser::TypeSpec &assignable,
+//    const lyric_typing::TypeSpec &assignable,
 //    lyric_assembler::AbstractResolver *resolver,
 //    lyric_assembler::AssemblyState *state)
 //{
@@ -129,12 +129,12 @@
 
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::resolve_singular(
-    const lyric_parser::TypeSpec &assignable,
+    const TypeSpec &assignable,
     lyric_assembler::AbstractResolver *resolver,
     lyric_assembler::AssemblyState *state)
 {
     TU_ASSERT (assignable.isValid());
-    TU_ASSERT (assignable.getType() == lyric_parser::AssignableType::SINGULAR);
+    TU_ASSERT (assignable.getType() == TypeSpecType::Singular);
     TU_ASSERT (resolver != nullptr);
     TU_ASSERT (state != nullptr);
 
@@ -161,7 +161,7 @@ lyric_typing::resolve_singular(
 
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::resolve_assignable(
-    const lyric_parser::TypeSpec &assignable,
+    const TypeSpec &assignable,
     lyric_assembler::AbstractResolver *resolver,
     lyric_assembler::AssemblyState *state)
 {
@@ -170,10 +170,10 @@ lyric_typing::resolve_assignable(
     TU_ASSERT (state != nullptr);
 
     switch (assignable.getType()) {
-        case lyric_parser::AssignableType::SINGULAR:
+        case TypeSpecType::Singular:
             return resolve_singular(assignable, resolver, state);
 
-        case lyric_parser::AssignableType::INTERSECTION: {
+        case TypeSpecType::Intersection: {
             std::vector<lyric_common::TypeDef> intersectionMembers;
             for (const auto &member : assignable.getIntersection()) {
                 lyric_common::TypeDef memberType;
@@ -183,7 +183,7 @@ lyric_typing::resolve_assignable(
             return state->typeCache()->resolveIntersection(intersectionMembers);
         }
 
-        case lyric_parser::AssignableType::UNION: {
+        case TypeSpecType::Union: {
             std::vector<lyric_common::TypeDef> unionMembers;
             for (const auto &member : assignable.getUnion()) {
                 lyric_common::TypeDef memberType;

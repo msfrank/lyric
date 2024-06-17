@@ -27,7 +27,7 @@ lyric_typing::ParameterSpec::ParameterSpec(
     const lyric_parser::NodeWalker &node,
     const std::string &name,
     const std::string &label,
-    const lyric_parser::TypeSpec &type,
+    const TypeSpec &type,
     lyric_parser::BindingType binding,
     const Option<lyric_parser::NodeWalker> &init)
     : node(node),

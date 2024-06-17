@@ -2,7 +2,6 @@
 #define LYRIC_ASSEMBLER_ABSTRACT_RESOLVER_H
 
 #include <lyric_common/type_def.h>
-#include <lyric_parser/assignable.h>
 #include <tempo_utils/result.h>
 
 namespace lyric_assembler {

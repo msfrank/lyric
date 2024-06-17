@@ -15,6 +15,7 @@ set(LYRIC_TYPING_INCLUDES
     include/lyric_typing/resolve_assignable.h
     include/lyric_typing/resolve_pack.h
     include/lyric_typing/resolve_template.h
+    include/lyric_typing/type_spec.h
     include/lyric_typing/type_system.h
     include/lyric_typing/typing_result.h
     include/lyric_typing/typing_types.h
@@ -31,6 +32,7 @@ target_sources(lyric_typing PRIVATE
     src/resolve_assignable.cpp
     src/resolve_pack.cpp
     src/resolve_template.cpp
+    src/type_spec.cpp
     src/type_system.cpp
     src/typing_result.cpp
     src/typing_types.cpp

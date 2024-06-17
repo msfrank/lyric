@@ -343,7 +343,7 @@ lyric_assembler::BlockHandle::resolveBinding(const std::vector<std::string> &pat
 }
 
 //tempo_utils::Result<lyric_common::TypeDef>
-//lyric_assembler::BlockHandle::resolveAssignable(const lyric_parser::TypeSpec &assignableSpec) // NOLINT(misc-no-recursion)
+//lyric_assembler::BlockHandle::resolveAssignable(const lyric_typing::TypeSpec &assignableSpec) // NOLINT(misc-no-recursion)
 //{
 //    if (assignableSpec.getType() == lyric_parser::AssignableType::SINGULAR)
 //        return resolveSingular(assignableSpec);
@@ -373,7 +373,7 @@ lyric_assembler::BlockHandle::resolveBinding(const std::vector<std::string> &pat
 //}
 //
 //tempo_utils::Result<lyric_common::TypeDef>
-//lyric_assembler::BlockHandle::resolveSingular(const lyric_parser::TypeSpec &assignableSpec) // NOLINT(misc-no-recursion)
+//lyric_assembler::BlockHandle::resolveSingular(const lyric_typing::TypeSpec &assignableSpec) // NOLINT(misc-no-recursion)
 //{
 //    if (assignableSpec.getType() != lyric_parser::AssignableType::SINGULAR)
 //        throwAssemblerInvariant("{} is a non-singular type", assignableSpec.toString());

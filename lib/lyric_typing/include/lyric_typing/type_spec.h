@@ -1,5 +1,5 @@
-#ifndef LYRIC_PARSER_ASSIGNABLE_H
-#define LYRIC_PARSER_ASSIGNABLE_H
+#ifndef LYRIC_TYPING_TYPE_SPEC_H
+#define LYRIC_TYPING_TYPE_SPEC_H
 
 #include <absl/hash/hash.h>
 
@@ -8,15 +8,13 @@
 #include <tempo_utils/log_message.h>
 #include <tempo_utils/url.h>
 
-#include "parser_types.h"
+namespace lyric_typing {
 
-namespace lyric_parser {
-
-    enum class AssignableType {
-        INVALID,
-        SINGULAR,
-        INTERSECTION,
-        UNION,
+    enum class TypeSpecType {
+        Invalid,
+        Singular,
+        Intersection,
+        Union,
     };
 
     class TypeSpec {
@@ -27,7 +25,7 @@ namespace lyric_parser {
 
         bool isValid() const;
 
-        AssignableType getType() const;
+        TypeSpecType getType() const;
         lyric_common::AssemblyLocation getTypeLocation() const;
         lyric_common::SymbolPath getTypePath() const;
         std::vector<TypeSpec> getTypeParameters() const;
@@ -64,24 +62,24 @@ namespace lyric_parser {
         template<typename H>
         friend H AbslHashValue(H h, const TypeSpec &assignable) {
             switch (assignable.getType()) {
-                case AssignableType::SINGULAR:
+                case TypeSpecType::Singular:
                     return H::combine(std::move(h), assignable.m_symbolUrl, assignable.m_parameters);
-                case AssignableType::INTERSECTION:
+                case TypeSpecType::Intersection:
                     return H::combine(std::move(h), assignable.m_parameters);
-                case AssignableType::UNION:
+                case TypeSpecType::Union:
                     return H::combine(std::move(h), assignable.m_parameters);
-                case AssignableType::INVALID:
+                case TypeSpecType::Invalid:
                     return H::combine(std::move(h), assignable.m_type);
             }
         }
 
     private:
-        AssignableType m_type;
+        TypeSpecType m_type;
         lyric_common::SymbolUrl m_symbolUrl;
         std::vector<TypeSpec> m_parameters;
 
         TypeSpec(
-            AssignableType type,
+            TypeSpecType type,
             const lyric_common::SymbolUrl &symbolUrl,
             const std::vector<TypeSpec> &parameters);
     };
@@ -90,4 +88,4 @@ namespace lyric_parser {
 
 }
 
-#endif // LYRIC_PARSER_ASSIGNABLE_H
+#endif // LYRIC_TYPING_TYPE_SPEC_H

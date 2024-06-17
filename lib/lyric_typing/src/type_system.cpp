@@ -22,7 +22,7 @@ lyric_typing::TypeSystem::getState() const
     return m_state;
 }
 
-tempo_utils::Result<lyric_parser::TypeSpec>
+tempo_utils::Result<lyric_typing::TypeSpec>
 lyric_typing::TypeSystem::parseAssignable(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker)
@@ -49,7 +49,7 @@ lyric_typing::TypeSystem::resolvePack(
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::TypeSystem::resolveAssignable(
     lyric_assembler::AbstractResolver *resolver,
-    const lyric_parser::TypeSpec &assignable)
+    const TypeSpec &assignable)
 {
     return resolve_assignable(assignable, resolver, m_state);
 }

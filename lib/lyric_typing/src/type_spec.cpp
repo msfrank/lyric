@@ -1,18 +1,18 @@
 
 #include <absl/strings/str_join.h>
 
-#include <lyric_parser/assignable.h>
+#include <lyric_typing/type_spec.h>
 #include <tempo_utils/log_stream.h>
 
-lyric_parser::TypeSpec::TypeSpec()
-  : m_type(AssignableType::INVALID),
+lyric_typing::TypeSpec::TypeSpec()
+  : m_type(TypeSpecType::Invalid),
     m_symbolUrl(),
     m_parameters()
 {
 }
 
-lyric_parser::TypeSpec::TypeSpec(
-    lyric_parser::AssignableType type,
+lyric_typing::TypeSpec::TypeSpec(
+    lyric_typing::TypeSpecType type,
     const lyric_common::SymbolUrl &symbolUrl,
     const std::vector<TypeSpec> &parameters)
     : m_type(type),
@@ -21,36 +21,36 @@ lyric_parser::TypeSpec::TypeSpec(
 {
 }
 
-lyric_parser::TypeSpec
-lyric_parser::TypeSpec::forSingular(
+lyric_typing::TypeSpec
+lyric_typing::TypeSpec::forSingular(
     const lyric_common::SymbolPath &symbolPath,
     const std::vector<TypeSpec> &typeParameters)
 {
     if (!symbolPath.isValid())
         return {};
-    return TypeSpec(AssignableType::SINGULAR, lyric_common::SymbolUrl(symbolPath), typeParameters);
+    return TypeSpec(TypeSpecType::Singular, lyric_common::SymbolUrl(symbolPath), typeParameters);
 }
 
-lyric_parser::TypeSpec
-lyric_parser::TypeSpec::forSingular(
+lyric_typing::TypeSpec
+lyric_typing::TypeSpec::forSingular(
     std::initializer_list<std::string> symbolPath,
     const std::vector<TypeSpec> &typeParameters)
 {
     return forSingular(lyric_common::SymbolPath(symbolPath), typeParameters);
 }
 
-lyric_parser::TypeSpec
-lyric_parser::TypeSpec::forSingular(
+lyric_typing::TypeSpec
+lyric_typing::TypeSpec::forSingular(
     const lyric_common::SymbolUrl &symbolUrl,
     const std::vector<TypeSpec> &typeParameters)
 {
     if (!symbolUrl.isValid())
         return {};
-    return TypeSpec(AssignableType::SINGULAR, symbolUrl, typeParameters);
+    return TypeSpec(TypeSpecType::Singular, symbolUrl, typeParameters);
 }
 
-lyric_parser::TypeSpec
-lyric_parser::TypeSpec::forSingular(
+lyric_typing::TypeSpec
+lyric_typing::TypeSpec::forSingular(
     const tempo_utils::Url &location,
     const lyric_common::SymbolPath &path,
     const std::vector<TypeSpec> &parameters)
@@ -61,8 +61,8 @@ lyric_parser::TypeSpec::forSingular(
         parameters);
 }
 
-lyric_parser::TypeSpec
-lyric_parser::TypeSpec::forSingular(
+lyric_typing::TypeSpec
+lyric_typing::TypeSpec::forSingular(
     const tempo_utils::Url &location,
     std::initializer_list<std::string> symbolPath,
     const std::vector<TypeSpec> &parameters)
@@ -73,30 +73,30 @@ lyric_parser::TypeSpec::forSingular(
         parameters);
 }
 
-lyric_parser::TypeSpec
-lyric_parser::TypeSpec::forIntersection(const std::vector<TypeSpec> &members)
+lyric_typing::TypeSpec
+lyric_typing::TypeSpec::forIntersection(const std::vector<TypeSpec> &members)
 {
     TU_ASSERT (!members.empty());
-    return TypeSpec(AssignableType::INTERSECTION, {}, members);
+    return TypeSpec(TypeSpecType::Intersection, {}, members);
 }
 
-lyric_parser::TypeSpec
-lyric_parser::TypeSpec::forUnion(const std::vector<TypeSpec> &members)
+lyric_typing::TypeSpec
+lyric_typing::TypeSpec::forUnion(const std::vector<TypeSpec> &members)
 {
     TU_ASSERT (!members.empty());
-    return TypeSpec(AssignableType::UNION, {}, members);
+    return TypeSpec(TypeSpecType::Union, {}, members);
 }
 
-lyric_parser::TypeSpec
-lyric_parser::TypeSpec::fromTypeDef(const lyric_common::TypeDef &typeDef)
+lyric_typing::TypeSpec
+lyric_typing::TypeSpec::fromTypeDef(const lyric_common::TypeDef &typeDef)
 {
     switch (typeDef.getType()) {
         case lyric_common::TypeDefType::Concrete: {
-            std::vector<lyric_parser::TypeSpec> parameters;
+            std::vector<lyric_typing::TypeSpec> parameters;
             for (auto iterator = typeDef.concreteArgumentsBegin(); iterator != typeDef.concreteArgumentsEnd(); iterator++) {
                 parameters.push_back(TypeSpec::fromTypeDef(*iterator));
             }
-            return lyric_parser::TypeSpec::forSingular(typeDef.getConcreteUrl(), parameters);
+            return lyric_typing::TypeSpec::forSingular(typeDef.getConcreteUrl(), parameters);
         }
         case lyric_common::TypeDefType::Placeholder: {
             auto templateUrl = typeDef.getPlaceholderTemplateUrl();
@@ -104,32 +104,32 @@ lyric_parser::TypeSpec::fromTypeDef(const lyric_common::TypeDef &typeDef)
             auto path = templateUrl.getSymbolPath().getPath();
             auto placeholder = absl::StrCat(typeDef.getPlaceholderIndex());
             lyric_common::SymbolUrl placeholderUrl(location, lyric_common::SymbolPath(path, placeholder));
-            std::vector<lyric_parser::TypeSpec> parameters;
+            std::vector<lyric_typing::TypeSpec> parameters;
             for (auto iterator = typeDef.placeholderArgumentsBegin(); iterator != typeDef.placeholderArgumentsEnd(); iterator++) {
                 parameters.push_back(TypeSpec::fromTypeDef(*iterator));
             }
-            return lyric_parser::TypeSpec::forSingular(placeholderUrl, parameters);
+            return lyric_typing::TypeSpec::forSingular(placeholderUrl, parameters);
         }
         case lyric_common::TypeDefType::Intersection: {
-            std::vector<lyric_parser::TypeSpec> members;
+            std::vector<lyric_typing::TypeSpec> members;
             for (auto iterator = typeDef.intersectionMembersBegin(); iterator != typeDef.intersectionMembersEnd(); iterator++) {
                 members.push_back(TypeSpec::fromTypeDef(*iterator));
             }
-            return lyric_parser::TypeSpec::forIntersection(members);
+            return lyric_typing::TypeSpec::forIntersection(members);
         }
         case lyric_common::TypeDefType::Union: {
-            std::vector<lyric_parser::TypeSpec> members;
+            std::vector<lyric_typing::TypeSpec> members;
             for (auto iterator = typeDef.unionMembersBegin(); iterator != typeDef.unionMembersEnd(); iterator++) {
                 members.push_back(TypeSpec::fromTypeDef(*iterator));
             }
-            return lyric_parser::TypeSpec::forUnion(members);
+            return lyric_typing::TypeSpec::forUnion(members);
         }
         default:
             return {};
     }
 }
 
-lyric_parser::TypeSpec::TypeSpec(const TypeSpec &other)
+lyric_typing::TypeSpec::TypeSpec(const TypeSpec &other)
 {
     m_type = other.m_type;
     m_symbolUrl = other.m_symbolUrl;
@@ -137,60 +137,60 @@ lyric_parser::TypeSpec::TypeSpec(const TypeSpec &other)
 }
 
 bool
-lyric_parser::TypeSpec::isValid() const
+lyric_typing::TypeSpec::isValid() const
 {
-    return m_type != AssignableType::INVALID;
+    return m_type != TypeSpecType::Invalid;
 }
 
-lyric_parser::AssignableType
-lyric_parser::TypeSpec::getType() const
+lyric_typing::TypeSpecType
+lyric_typing::TypeSpec::getType() const
 {
     return m_type;
 }
 
 lyric_common::AssemblyLocation
-lyric_parser::TypeSpec::getTypeLocation() const
+lyric_typing::TypeSpec::getTypeLocation() const
 {
     return m_symbolUrl.getAssemblyLocation();
 }
 
 lyric_common::SymbolPath
-lyric_parser::TypeSpec::getTypePath() const
+lyric_typing::TypeSpec::getTypePath() const
 {
-    if (m_type != AssignableType::SINGULAR)
+    if (m_type != TypeSpecType::Singular)
         return {};
     return m_symbolUrl.getSymbolPath();
 }
 
-std::vector<lyric_parser::TypeSpec>
-lyric_parser::TypeSpec::getTypeParameters() const
+std::vector<lyric_typing::TypeSpec>
+lyric_typing::TypeSpec::getTypeParameters() const
 {
-    if (m_type != AssignableType::SINGULAR)
+    if (m_type != TypeSpecType::Singular)
         return {};
     return m_parameters;
 }
 
-std::vector<lyric_parser::TypeSpec>
-lyric_parser::TypeSpec::getIntersection() const
+std::vector<lyric_typing::TypeSpec>
+lyric_typing::TypeSpec::getIntersection() const
 {
-    if (m_type != AssignableType::INTERSECTION)
+    if (m_type != TypeSpecType::Intersection)
         return {};
     return m_parameters;
 }
 
-std::vector<lyric_parser::TypeSpec>
-lyric_parser::TypeSpec::getUnion() const
+std::vector<lyric_typing::TypeSpec>
+lyric_typing::TypeSpec::getUnion() const
 {
-    if (m_type != AssignableType::UNION)
+    if (m_type != TypeSpecType::Union)
         return {};
     return m_parameters;
 }
 
 std::string
-lyric_parser::TypeSpec::toString() const
+lyric_typing::TypeSpec::toString() const
 {
     switch (m_type) {
-        case AssignableType::SINGULAR: {
+        case TypeSpecType::Singular: {
             if (!m_symbolUrl.isValid())
                 return "???";
             std::string string = m_symbolUrl.toString();
@@ -206,7 +206,7 @@ lyric_parser::TypeSpec::toString() const
             string.append("]");
             return string;
         }
-        case AssignableType::INTERSECTION: {
+        case TypeSpecType::Intersection: {
             auto iterator = m_parameters.cbegin();
             auto string = iterator->toString();
             for (++iterator; iterator != m_parameters.cend(); iterator++) {
@@ -215,7 +215,7 @@ lyric_parser::TypeSpec::toString() const
             }
             return string;
         }
-        case AssignableType::UNION: {
+        case TypeSpecType::Union: {
             auto iterator = m_parameters.cbegin();
             auto string = iterator->toString();
             for (++iterator; iterator != m_parameters.cend(); iterator++) {
@@ -224,14 +224,14 @@ lyric_parser::TypeSpec::toString() const
             }
             return string;
         }
-        case AssignableType::INVALID:
+        case TypeSpecType::Invalid:
             break;
     }
     return "???";
 }
 
 bool
-lyric_parser::TypeSpec::operator==(const TypeSpec &other) const
+lyric_typing::TypeSpec::operator==(const TypeSpec &other) const
 {
     return m_type == other.m_type
         && m_symbolUrl == other.m_symbolUrl
@@ -239,12 +239,12 @@ lyric_parser::TypeSpec::operator==(const TypeSpec &other) const
 }
 
 bool
-lyric_parser::TypeSpec::operator!=(const TypeSpec &other) const
+lyric_typing::TypeSpec::operator!=(const TypeSpec &other) const
 {
     return !(*this == other);
 }
 
-tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const lyric_parser::TypeSpec &assignable)
+tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const lyric_typing::TypeSpec &assignable)
 {
     std::forward<tempo_utils::LogMessage>(message) << "TypeSpec(" << assignable.toString() << ")";
     return std::move(message);

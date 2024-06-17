@@ -27,7 +27,7 @@ lyric_compiler::internal::compile_new(
         tu_uint32 typeOffset;
         moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
         auto type = walker.getNodeAtOffset(typeOffset);
-        lyric_parser::TypeSpec newSpec;
+        lyric_typing::TypeSpec newSpec;
         TU_ASSIGN_OR_RETURN (newSpec, typeSystem->parseAssignable(block, type));
         TU_ASSIGN_OR_RETURN (newType, typeSystem->resolveAssignable(block, newSpec));
     } else if (typeHint.isValid()) {

@@ -228,7 +228,7 @@ compile_is_a(
     TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_TYPE_OF));
 
     // resolve isA type
-    lyric_parser::TypeSpec isASpec;
+    lyric_typing::TypeSpec isASpec;
     TU_ASSIGN_OR_RETURN (isASpec, typeSystem->parseAssignable(block, walker.getChild(1)));
     lyric_common::TypeDef isAType;
     TU_ASSIGN_OR_RETURN (isAType, typeSystem->resolveAssignable(block, isASpec));
