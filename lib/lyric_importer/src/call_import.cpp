@@ -7,7 +7,6 @@ namespace lyric_importer {
     struct CallImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
         lyric_common::SymbolUrl receiverUrl;
-        TypeImport *callType;
         TemplateImport *callTemplate;
         TypeImport *returnType;
         lyric_object::AccessType access;
@@ -40,13 +39,6 @@ lyric_importer::CallImport::getReceiverUrl()
 {
     load();
     return m_priv->receiverUrl;
-}
-
-lyric_importer::TypeImport *
-lyric_importer::CallImport::getCallType()
-{
-    load();
-    return m_priv->callType;
 }
 
 lyric_importer::TemplateImport *
@@ -222,8 +214,6 @@ lyric_importer::CallImport::load()
                         callWalker.getDescriptorOffset(), location.toString()));
         }
     }
-
-    priv->callType = m_moduleImport->getType(callWalker.getCallType().getDescriptorOffset());
 
     if (callWalker.hasTemplate()) {
         priv->callTemplate = m_moduleImport->getTemplate(

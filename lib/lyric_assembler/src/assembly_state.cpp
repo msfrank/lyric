@@ -85,7 +85,7 @@ make_call_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::
 {
     lyric_assembler::SymbolBinding binding;
     binding.symbolUrl = symbolUrl;
-    binding.typeDef = symbolImport->getCallType()->getTypeDef();
+    binding.typeDef = {};
     binding.bindingType = lyric_assembler::BindingType::Descriptor;
     return binding;
 }

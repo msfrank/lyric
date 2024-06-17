@@ -117,12 +117,6 @@ write_call(
             break;
     }
 
-    // FIXME: i think we should remove the call type field. the function type can be synthesized as needed.
-    tu_uint32 callType = lyric_runtime::INVALID_ADDRESS_U32;
-//    if (callSymbol->callType() != nullptr) {
-//        callType = callSymbol->callType()->getAddress().getAddress();
-//    }
-
     std::vector<flatbuffers::Offset<lyo1::Parameter>> listParameters;
     for (auto it = callSymbol->listPlacementBegin(); it != callSymbol->listPlacementEnd(); it++) {
         const auto &param = *it;
@@ -239,7 +233,7 @@ write_call(
 
     // add call descriptor
     calls_vector.push_back(lyo1::CreateCallDescriptor(buffer, fullyQualifiedName,
-        callTemplate, receiverSection, receiverDescriptor, callType, bytecodeOffset, callFlags,
+        callTemplate, receiverSection, receiverDescriptor, bytecodeOffset, callFlags,
         fb_listParameters, fb_namedParameters, fb_restParameter, resultType));
 
     // add symbol descriptor

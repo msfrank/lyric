@@ -51,7 +51,6 @@ namespace lyric_object {
         tu_uint32 getProcOffset() const;
         BytecodeIterator getBytecodeIterator() const;
 
-        TypeWalker getCallType() const;
         TypeWalker getResultType() const;
 
         tu_uint32 getDescriptorOffset() const;

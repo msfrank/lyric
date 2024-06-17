@@ -213,7 +213,6 @@ table CallDescriptor {
     call_template: uint32 = 0xFFFFFFFF;         // offset of the template in the templates section, or 0xFFFFFFFF if not generic
     receiver_section: TypeSection = Invalid;    // object section containing the descriptor for the receiver, or Invalid if the call is not bound
     receiver_descriptor: uint32 = 0xFFFFFFFF;   // index of the descriptor for the receiver in the specified section, or 0xFFFFFFFF if the call is not bound
-    call_type: uint32 = 0xFFFFFFFF;             // offset of the call type in the types section
     bytecode_offset: uint32 = 0xFFFFFFFF;       // offset of the start of the proc in the bytecode section
     flags: CallFlags;                           // bitfield containing call flags
     list_parameters: [Parameter];               // array of list parameters

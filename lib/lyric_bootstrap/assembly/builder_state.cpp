@@ -1680,8 +1680,8 @@ BuilderState::toBytes() const
         bytecode.insert(bytecode.cend(), Call->code.bytecodeBegin(), Call->code.bytecodeEnd());
 
         calls_vector.push_back(lyo1::CreateCallDescriptor(buffer, fb_fullyQualifiedName,
-            callTemplate, Call->receiverSection, Call->receiverDescriptor, Call->callType->type_index,
-            bytecodeOffset, Call->flags, fb_list_parameters, fb_named_parameters, fb_rest_parameter,
+            callTemplate, Call->receiverSection, Call->receiverDescriptor, bytecodeOffset,
+            Call->flags, fb_list_parameters, fb_named_parameters, fb_rest_parameter,
             returnType));
     }
 

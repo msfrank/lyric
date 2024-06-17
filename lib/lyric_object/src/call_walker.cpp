@@ -378,19 +378,6 @@ lyric_object::CallWalker::getBytecodeIterator() const
 }
 
 lyric_object::TypeWalker
-lyric_object::CallWalker::getCallType() const
-{
-    if (!isValid())
-        return {};
-    auto *callDescriptor = m_reader->getCall(m_callOffset);
-    if (callDescriptor == nullptr)
-        return {};
-    if (callDescriptor->call_type() == INVALID_ADDRESS_U32)
-        return {};
-    return TypeWalker(m_reader, callDescriptor->call_type());
-}
-
-lyric_object::TypeWalker
 lyric_object::CallWalker::getResultType() const
 {
     if (!isValid())

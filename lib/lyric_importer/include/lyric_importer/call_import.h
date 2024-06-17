@@ -12,7 +12,6 @@ namespace lyric_importer {
 
         lyric_common::SymbolUrl getSymbolUrl();
         lyric_common::SymbolUrl getReceiverUrl();
-        TypeImport *getCallType();
         TemplateImport *getCallTemplate();
         TypeImport *getReturnType();
 
