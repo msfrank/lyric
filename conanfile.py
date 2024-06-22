@@ -61,15 +61,10 @@ class Lyric(ConanFile):
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
-        cmake.install()
 
     def package(self):
-        copy(self, "*.h", join(self.build_folder,'include'), join(self.package_folder,'include'))
-        copy(self, "*.dll", join(self.build_folder,'bin'), join(self.package_folder,'bin'), keep_path=False)
-        copy(self, "*.so", join(self.build_folder,'lib'), join(self.package_folder,'lib'), keep_path=False)
-        copy(self, "*.dylib", join(self.build_folder,'lib'), join(self.package_folder,'lib'), keep_path=False)
-        copy(self, "*.a", join(self.build_folder,'lib'), join(self.package_folder,'lib'), keep_path=False)
-        copy(self, "*", join(self.build_folder,'lib','cmake'), join(self.package_folder,'lib','cmake'))
+        cmake = CMake(self)
+        cmake.install()
 
     def package_info(self):
         self.cpp_info.set_property("cmake_find_mode", "none")

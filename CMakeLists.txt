@@ -91,13 +91,15 @@ endif()
 # set the optimization level
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPTIMIZATION_LEVEL}")
 
-# set rpath for executable targets based on relative path from the executable
+# define the rpath for executable and library targets
 if (APPLE)
-    set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
+    set(BIN_RPATH "@executable_path/../lib")
+    set(LIB_RPATH "@loader_path")
 elseif(WIN32)
     # do nothing
 else()
-    set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+    set(BIN_RPATH "$ORIGIN/../lib")
+    set(LIB_RPATH "$ORIGIN/")
 endif()
 
 #######################################################################

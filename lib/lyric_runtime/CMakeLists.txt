@@ -106,7 +106,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set_target_properties(lyric_runtime PROPERTIES MACOSX_RPATH TRUE)
 endif()
 
-set_target_properties(lyric_runtime PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+set_target_properties(lyric_runtime PROPERTIES
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+    INSTALL_RPATH ${LIB_RPATH}
+    )
 
 target_compile_definitions(lyric_runtime PRIVATE
     "ASSEMBLY_PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""

@@ -1,7 +1,10 @@
 
 add_executable(lyric-dump-object src/lyric_dump_object.cpp)
 
-set_target_properties(lyric-dump-object PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+set_target_properties(lyric-dump-object PROPERTIES
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+    INSTALL_RPATH ${BIN_RPATH}
+    )
 
 target_link_libraries(lyric-dump-object PRIVATE
     lyric::lyric_object

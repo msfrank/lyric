@@ -6,4 +6,5 @@ endif ()
 
 set(LYRIC_RUNTIME_BOOTSTRAP_DIR             "@PACKAGE_BOOTSTRAP_DIR_PREFIX@")
 
+# should be last
 check_required_components(lyric)
