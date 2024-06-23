@@ -4,7 +4,11 @@ if (NOT TARGET lyric::lyric_common)
   include(${CMAKE_CURRENT_LIST_DIR}/lyric-targets.cmake)
 endif ()
 
+# absolute paths
 set(LYRIC_RUNTIME_BOOTSTRAP_DIR             "@PACKAGE_BOOTSTRAP_DIR_PREFIX@")
+
+# relative paths
+set(LYRIC_BOOTSTRAP_DIR_PREFIX              "@BOOTSTRAP_DIR_PREFIX@")
 
 # should be last
 check_required_components(lyric)

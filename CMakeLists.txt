@@ -95,11 +95,13 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPTIMIZATION_LEVEL}")
 if (APPLE)
     set(BIN_RPATH "@executable_path/../lib")
     set(LIB_RPATH "@loader_path")
+    set(BOOTSTRAP_RPATH "@loader_path/..")
 elseif(WIN32)
     # do nothing
 else()
     set(BIN_RPATH "$ORIGIN/../lib")
     set(LIB_RPATH "$ORIGIN/")
+    set(BOOTSTRAP_RPATH "$ORIGIN/..")
 endif()
 
 #######################################################################
@@ -201,7 +203,7 @@ set(FULL_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}")
 message(STATUS "version is ${FULL_VERSION}")
 
 # install paths
-set(BOOTSTRAP_DIR_PREFIX            "${CMAKE_INSTALL_LIBDIR}/bootstrap")
+set(BOOTSTRAP_DIR_PREFIX            "${CMAKE_INSTALL_LIBDIR}/lyric-bootstrap-${FULL_VERSION}")
 
 # build paths
 set(LYRIC_BUILD_BOOTSTRAP_DIR       "${CMAKE_BINARY_DIR}/${BOOTSTRAP_DIR_PREFIX}")
