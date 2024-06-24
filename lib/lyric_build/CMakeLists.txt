@@ -146,9 +146,14 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 set_target_properties(lyric_build PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${LYRIC_BUILD_LIB_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE
     INSTALL_RPATH ${LIB_RPATH}
     )
+
+target_compile_definitions(lyric_build PRIVATE
+    "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
+)
 
 # set the public header include path differently on the target depending on the interface
 target_include_directories(lyric_build PUBLIC

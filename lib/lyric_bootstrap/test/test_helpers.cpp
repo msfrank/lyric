@@ -1,5 +1,4 @@
 
-#include <lyric_bootstrap/bootstrap_types.h>
 #include <lyric_test/lyric_tester.h>
 
 #include "test_helpers.h"
@@ -7,7 +6,7 @@
 lyric_common::AssemblyLocation
 preludeLocation()
 {
-    return lyric_common::AssemblyLocation::fromString(lyric_bootstrap::kLyricBootstrapPrelude);
+    return lyric_common::AssemblyLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
 }
 
 lyric_common::SymbolUrl

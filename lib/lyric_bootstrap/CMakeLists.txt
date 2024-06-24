@@ -188,8 +188,7 @@ add_dependencies(lyric_bootstrap prelude-assembly prelude-plugin)
 set(LYRIC_BOOTSTRAP_INCLUDES
     include/lyric_bootstrap/bootstrap_loader.h
     include/lyric_bootstrap/bootstrap_result.h
-    include/lyric_bootstrap/bootstrap_types.h
-    )
+)
 set_target_properties(lyric_bootstrap PROPERTIES PUBLIC_HEADER "${LYRIC_BOOTSTRAP_INCLUDES}")
 
 target_sources(lyric_bootstrap PRIVATE
@@ -206,6 +205,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 set_target_properties(lyric_bootstrap PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${LYRIC_BUILD_LIB_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE
     INSTALL_RPATH ${LIB_RPATH}
     )

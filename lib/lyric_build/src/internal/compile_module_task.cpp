@@ -1,5 +1,4 @@
 
-#include <lyric_bootstrap/bootstrap_types.h>
 #include <lyric_build/artifact_loader.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_attrs.h>
@@ -43,7 +42,7 @@ lyric_build::internal::CompileModuleTask::configure(const ConfigStore *config)
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "task key id {} is not a valid url", taskId.getId());
 
-    tempo_config::UrlParser sourceBaseUrlParser;
+    tempo_config::UrlParser sourceBaseUrlParser(tempo_utils::Url{});
 
     // determine the base url containing source files
     tempo_utils::Url baseUrl;
@@ -55,7 +54,7 @@ lyric_build::internal::CompileModuleTask::configure(const ConfigStore *config)
     TU_ASSIGN_OR_RETURN(moduleLocation, convert_source_url_to_assembly_location(m_sourceUrl, baseUrl));
 
     lyric_common::AssemblyLocationParser preludeLocationParser(
-        lyric_common::AssemblyLocation::fromString(lyric_bootstrap::kLyricBootstrapPrelude));
+        lyric_common::AssemblyLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION));
     tempo_config::PathParser envSymbolsPathParser(std::filesystem::path{});
     tempo_config::OptionTParser<std::filesystem::path> optEnvSymbolsPathParser(&envSymbolsPathParser);
     tempo_config::BooleanParser touchExternalSymbolsParser(false);

@@ -38,8 +38,10 @@ lyric_assembler::AssemblyState::AssemblyState(
     TU_ASSERT (m_location.isValid());
     TU_ASSERT (m_systemModuleCache != nullptr);
     TU_ASSERT (m_scopeManager != nullptr);
-    TU_ASSERT (m_options.preludeLocation.isValid());
 
+    if (!m_options.preludeLocation.isValid()) {
+        m_options.preludeLocation = lyric_common::AssemblyLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
+    }
 }
 
 lyric_assembler::AssemblyState::~AssemblyState()

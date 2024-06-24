@@ -48,6 +48,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 set_target_properties(lyric_typing PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${LYRIC_BUILD_LIB_DIR}
     INSTALL_RPATH_USE_LINK_PATH TRUE
     INSTALL_RPATH ${LIB_RPATH}
     )

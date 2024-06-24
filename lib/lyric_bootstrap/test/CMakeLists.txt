@@ -42,6 +42,7 @@ set(TEST_CASES
 
 add_executable(lyric_bootstrap_testsuite ${TEST_CASES} test_helpers.cpp test_helpers.h)
 target_compile_definitions(lyric_bootstrap_testsuite PRIVATE
+    "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
     )
 target_link_libraries(lyric_bootstrap_testsuite PUBLIC
@@ -55,6 +56,7 @@ gtest_discover_tests(lyric_bootstrap_testsuite DISCOVERY_TIMEOUT 30)
 
 add_library(LyricBootstrapTestSuite OBJECT ${TEST_CASES} test_helpers.cpp test_helpers.h)
 target_compile_definitions(LyricBootstrapTestSuite PRIVATE
+    "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
     )
 target_link_libraries(LyricBootstrapTestSuite PUBLIC

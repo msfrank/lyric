@@ -8,7 +8,6 @@
 #include <absl/container/flat_hash_set.h>
 #include <absl/container/node_hash_map.h>
 
-#include <lyric_bootstrap/bootstrap_types.h>
 #include <lyric_common/symbol_url.h>
 #include <lyric_importer/module_cache.h>
 #include <lyric_parser/parser_attrs.h>
@@ -55,7 +54,7 @@ namespace lyric_assembler {
         tu_uint32 minorVersion = 0;
         tu_uint32 patchVersion = 0;
         std::shared_ptr<lyric_runtime::AbstractLoader> workspaceLoader = {};
-        lyric_common::AssemblyLocation preludeLocation = {lyric_bootstrap::kLyricBootstrapPrelude};
+        lyric_common::AssemblyLocation preludeLocation = {};
         absl::flat_hash_map<std::string, std::string> pluginsMap = {};
     };
 

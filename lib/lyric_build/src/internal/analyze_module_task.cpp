@@ -41,7 +41,7 @@ lyric_build::internal::AnalyzeModuleTask::configure(const ConfigStore *config)
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "task key id {} is not a valid url", taskId.getId());
 
-    tempo_config::UrlParser sourceBaseUrlParser;
+    tempo_config::UrlParser sourceBaseUrlParser(tempo_utils::Url{});
 
     // determine the base url containing source files
     tempo_utils::Url baseUrl;
