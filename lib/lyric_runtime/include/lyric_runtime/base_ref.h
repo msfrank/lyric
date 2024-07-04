@@ -32,6 +32,7 @@ namespace lyric_runtime {
         bool awaitFuture(SystemScheduler *systemScheduler) override;
         bool resolveFuture(DataCell &result) override;
         bool applyClosure(Task *task, lyric_runtime::InterpreterState *state) override;
+        tempo_utils::StatusCode errorStatusCode() override;
         bool isReachable() const override;
         void setReachable() override;
         void clearReachable() override;

@@ -155,6 +155,13 @@ namespace lyric_runtime {
         virtual bool applyClosure(Task *task, lyric_runtime::InterpreterState *state) = 0;
 
         /**
+         * Returns the error status code. If the ref is not a subtype of Status then the method must return kOk.
+         *
+         * @return The `tempo_utils::StatusCode` containing the error status.
+         */
+        virtual tempo_utils::StatusCode errorStatusCode() = 0;
+
+        /**
          * Generate a human-readable representation which describes the ref.
          *
          * @return A string describing the ref.

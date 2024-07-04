@@ -104,6 +104,12 @@ lyric_runtime::StringRef::serializeValue(lyric_serde::PatchsetState &state, tu_u
     return true;
 }
 
+tempo_utils::StatusCode
+lyric_runtime::StringRef::errorStatusCode()
+{
+    return tempo_utils::StatusCode::kOk;
+}
+
 std::string
 lyric_runtime::StringRef::toString() const
 {

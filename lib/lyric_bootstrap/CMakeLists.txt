@@ -145,10 +145,10 @@ add_library(prelude-plugin SHARED
     plugin/singleton_ref.h
     plugin/status_ref.cpp
     plugin/status_ref.h
-    plugin/string_ref.cpp
-    plugin/string_ref.h
-    plugin/url_ref.cpp
-    plugin/url_ref.h
+    plugin/string_traps.cpp
+    plugin/string_traps.h
+    plugin/url_traps.cpp
+    plugin/url_traps.h
     plugin/utf8_traps.cpp
     plugin/utf8_traps.h
     )

@@ -17,13 +17,29 @@ TEST(CoreStatus, TestEvaluateNewStatus)
                      RunModule(DataCellRef(preludeSymbol("Cancelled")))));
 }
 
+TEST(CoreStatus, TestEvaluateStatusCode)
+{
+    auto result = runModule(R"(
+        val status: Status = Cancelled{message = "operation was cancelled"}
+        match status {
+            case s: Status
+                s.code
+            else nil
+        }
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellInt(1))));
+}
+
 TEST(CoreStatus, TestEvaluateStatusMessage)
 {
     auto result = runModule(R"(
         val status: Status = Cancelled{message = "operation was cancelled"}
         match status {
-            case c: Cancelled
-                c.message
+            case s: Status
+                s.message
             else nil
         }
     )");

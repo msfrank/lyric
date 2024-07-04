@@ -3,10 +3,11 @@
 
 #include "builder_state.h"
 
-const CoreStruct *build_core_Status(BuilderState &state, const CoreType *StringType);
+const CoreStruct *build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *StringType);
 
 const CoreType *build_core_Status_code(
-    std::string_view code,
+    tempo_utils::StatusCode statusCode,
+    std::string_view statusName,
     BuilderState &state,
     const CoreStruct *StatusStruct,
     const CoreType *StringType);

@@ -80,6 +80,12 @@ lyric_runtime::UrlRef::serializeValue(lyric_serde::PatchsetState &state, tu_uint
     return true;
 }
 
+tempo_utils::StatusCode
+lyric_runtime::UrlRef::errorStatusCode()
+{
+    return tempo_utils::StatusCode::kOk;
+}
+
 std::string
 lyric_runtime::UrlRef::toString() const
 {

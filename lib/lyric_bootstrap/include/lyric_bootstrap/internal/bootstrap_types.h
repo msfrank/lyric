@@ -43,6 +43,7 @@ namespace lyric_bootstrap::internal {
         SEQ_ITERATOR_NEXT,
         SINGLETON_ALLOC,
         STATUS_ALLOC,
+        STATUS_CTOR,
         STRING_ALLOC,
         STRING_AT,
         STRING_COMPARE,

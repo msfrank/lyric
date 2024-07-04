@@ -137,23 +137,38 @@ main(int argc, char *argv[])
     //build_core_Rest(state, AnyType, VarargsConcept, IntType);
 
     // core status structs
-    auto *StatusStruct = build_core_Status(state, StringExistential->existentialType);
-    build_core_Status_code("Cancelled", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("InvalidArgument", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("DeadlineExceeded", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("NotFound", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("AlreadyExists", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("PermissionDenied", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("Unauthenticated", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("ResourceExhausted", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("FailedPrecondition", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("Aborted", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("Unavailable", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("OutOfRange", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("Unimplemented", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("Internal", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("DataLoss", state, StatusStruct, StringExistential->existentialType);
-    build_core_Status_code("Unknown", state, StatusStruct, StringExistential->existentialType);
+    auto *StatusStruct = build_core_Status(
+        state, IntExistential->existentialType, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kCancelled,
+        "Cancelled", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kInvalidArgument,
+        "InvalidArgument", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kDeadlineExceeded,
+        "DeadlineExceeded", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kNotFound,
+        "NotFound", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kAlreadyExists,
+        "AlreadyExists", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kPermissionDenied,
+        "PermissionDenied", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kUnauthenticated,
+        "Unauthenticated", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kResourceExhausted,
+        "ResourceExhausted", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kFailedPrecondition,
+        "FailedPrecondition", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kAborted,
+        "Aborted", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kUnavailable,
+        "Unavailable", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kOutOfRange,
+        "OutOfRange", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kUnimplemented,
+        "Unimplemented", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kInternal,
+        "Internal", state, StatusStruct, StringExistential->existentialType);
+    build_core_Status_code(tempo_utils::StatusCode::kUnknown,
+        "Unknown", state, StatusStruct, StringExistential->existentialType);
 
     // core instances
     build_core_BoolInstance(state, BoolExistential->existentialType, SingletonInstance,

@@ -95,6 +95,12 @@ lyric_runtime::BaseRef::applyClosure(Task *task, lyric_runtime::InterpreterState
     return false;
 }
 
+tempo_utils::StatusCode
+lyric_runtime::BaseRef::errorStatusCode()
+{
+    return tempo_utils::StatusCode::kOk;
+}
+
 bool
 lyric_runtime::BaseRef::isReachable() const
 {

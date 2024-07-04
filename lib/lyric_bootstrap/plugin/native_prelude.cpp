@@ -13,8 +13,8 @@
 #include "seq_ref.h"
 #include "singleton_ref.h"
 #include "status_ref.h"
-#include "string_ref.h"
-#include "url_ref.h"
+#include "string_traps.h"
+#include "url_traps.h"
 
 lyric_runtime::NativeFunc
 NativeCore::getTrap(uint32_t index) const
@@ -95,6 +95,8 @@ NativeCore::getTrap(uint32_t index) const
             return singleton_alloc;
         case lyric_bootstrap::internal::BootstrapTrap::STATUS_ALLOC:
             return status_alloc;
+        case lyric_bootstrap::internal::BootstrapTrap::STATUS_CTOR:
+            return status_ctor;
         case lyric_bootstrap::internal::BootstrapTrap::STRING_AT:
             return string_at;
         case lyric_bootstrap::internal::BootstrapTrap::STRING_COMPARE:
