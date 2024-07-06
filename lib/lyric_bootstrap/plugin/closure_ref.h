@@ -14,7 +14,10 @@ public:
 
     lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
     lyric_runtime::DataCell setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value) override;
-    bool applyClosure(lyric_runtime::Task *task, lyric_runtime::InterpreterState *state) override;
+    bool applyClosure(
+        lyric_runtime::Task *task,
+        std::vector<lyric_runtime::DataCell> &args,
+        lyric_runtime::InterpreterState *state) override;
     std::string toString() const override;
 
     tu_uint32 getSegmentIndex() const;

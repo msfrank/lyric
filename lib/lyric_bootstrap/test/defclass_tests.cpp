@@ -236,3 +236,45 @@ TEST(CoreDefclass, EvaluateDefGenericClass)
                  tempo_test::ContainsResult(RunModule(
                      DataCellInt(100))));
 }
+
+TEST(CoreDefclass, EvaluateInvokeGenericMethod)
+{
+    auto result = runModule(R"(
+        defclass Foo {
+            var _i: Int
+            init(i: Int) from Object() {
+                set this._i = i
+            }
+            def i[T](t: T): Tuple2[T,Int] {
+                Tuple2[T,Int]{t, this._i}
+            }
+        }
+        var foo: Foo = Foo{100}
+        val tuple: Tuple2[Int,Int] = foo.i[Int](42)
+        tuple.t0 + tuple.t1
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(RunModule(DataCellInt(142))));
+}
+
+TEST(CoreDefclass, EvaluateInvokeGenericMethodForGenericClass)
+{
+    auto result = runModule(R"(
+        defclass Foo[S] {
+            var _s: S
+            init(s: S) from Object() {
+                set this._s = s
+            }
+            def i[T](t: T): Tuple2[T,S] {
+                Tuple2[T,S]{t, this._s}
+            }
+        }
+        var foo: Foo[Int] = Foo[Int]{100}
+        val tuple: Tuple2[Int,Int] = foo.i(42)
+        tuple.t0 + tuple.t1
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(RunModule(DataCellInt(142))));
+}

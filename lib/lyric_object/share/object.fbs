@@ -151,6 +151,7 @@ struct Constraint {
 
 table TemplateDescriptor {
     fqsn: string;                               // fully qualified name of symbol which declares the template
+    super_template: uint32 = 0xFFFFFFFF;        // offset of the super template in the templates section
     placeholders: [Placeholder];                // array of template placeholders
     constraints: [Constraint];                  // array of constraints on the placeholders
     names: [string];                            // array of placeholder names

@@ -17,6 +17,11 @@ namespace lyric_typing {
         const TypeSpec &typeSpec,
         lyric_assembler::AbstractResolver *resolver,
         lyric_assembler::AssemblyState *state);
+
+    tempo_utils::Result<std::vector<lyric_common::TypeDef>> resolve_type_arguments(
+        const std::vector<TypeSpec> &typeArgumentsSpec,
+        lyric_assembler::AbstractResolver *resolver,
+        lyric_assembler::AssemblyState *state);
 }
 
 #endif // LYRIC_TYPING_RESOLVE_ASSIGNABLE_H

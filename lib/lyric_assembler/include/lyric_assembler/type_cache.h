@@ -17,7 +17,6 @@ namespace lyric_assembler {
         ~TypeCache();
 
         bool hasType(const lyric_common::TypeDef &assignableType) const;
-        //TypeHandle *getType(const lyric_common::TypeDef &assignableType) const;
         TypeHandle *getType(TypeAddress typeAddress) const;
         std::vector<TypeHandle *>::const_iterator typesBegin() const;
         std::vector<TypeHandle *>::const_iterator typesEnd() const;
@@ -39,18 +38,22 @@ namespace lyric_assembler {
 
         tempo_utils::Result<TypeHandle *> declareFunctionType(
             const lyric_common::TypeDef &functionReturn,
-            const std::vector<Parameter> &functionParameters,
-            const Option<Parameter> &functionRest);
+            const std::vector<lyric_common::TypeDef> &functionParameters,
+            const Option<lyric_common::TypeDef> &functionRest);
 
         bool hasTemplate(const lyric_common::SymbolUrl &templateUrl) const;
-        //TemplateHandle *getTemplate(const lyric_common::SymbolUrl &templateUrl) const;
         tempo_utils::Result<TemplateHandle *> getOrImportTemplate(const lyric_common::SymbolUrl &templateUrl);
         std::vector<TemplateHandle *>::const_iterator templatesBegin() const;
         std::vector<TemplateHandle *>::const_iterator templatesEnd() const;
         int numTemplates() const;
 
-        tempo_utils::Status makeTemplate(
+        tempo_utils::Result<TemplateHandle *> makeTemplate(
             const lyric_common::SymbolUrl &templateUrl,
+            const std::vector<lyric_object::TemplateParameter> &templateParameters,
+            BlockHandle *parentBlock);
+        tempo_utils::Result<TemplateHandle *> makeTemplate(
+            const lyric_common::SymbolUrl &templateUrl,
+            TemplateHandle *superTemplate,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             BlockHandle *parentBlock);
         tempo_utils::Result<TemplateHandle *> importTemplate(lyric_importer::TemplateImport *templateImport);

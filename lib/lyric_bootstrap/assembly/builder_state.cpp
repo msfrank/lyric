@@ -1576,7 +1576,8 @@ BuilderState::toBytes() const
         auto fb_placeholders = buffer.CreateVectorOfStructs(Template->placeholders);
         auto fb_constraints = buffer.CreateVectorOfStructs(Template->constraints);
         auto fb_names = buffer.CreateVectorOfStrings(Template->names);
-        templates_vector.push_back(lyo1::CreateTemplateDescriptor(buffer, fb_fullyQualifiedName,
+        tu_uint32 superTemplate = lyric_object::INVALID_ADDRESS_U32;
+        templates_vector.push_back(lyo1::CreateTemplateDescriptor(buffer, fb_fullyQualifiedName, superTemplate,
             fb_placeholders, fb_constraints, fb_names));
     }
 

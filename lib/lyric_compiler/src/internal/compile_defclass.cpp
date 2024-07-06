@@ -286,9 +286,18 @@ compile_defclass_def(
     lyric_typing::PackSpec packSpec;
     TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(classBlock, pack));
 
+    // if function is generic, then parse the template parameter list
+    lyric_typing::TemplateSpec templateSpec;
+    if (walker.hasAttr(lyric_parser::kLyricAstGenericOffset)) {
+        tu_uint32 genericOffset;
+        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstGenericOffset, genericOffset);
+        auto generic = walker.getNodeAtOffset(genericOffset);
+        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(classBlock, generic));
+    }
+
     // declare the method
     lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, classSymbol->declareMethod(identifier, access));
+    TU_ASSIGN_OR_RETURN (callSymbol, classSymbol->declareMethod(identifier, access, templateSpec.templateParameters));
 
     auto *resolver = callSymbol->callResolver();
 

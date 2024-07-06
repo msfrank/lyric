@@ -36,6 +36,7 @@ namespace lyric_parser {
         ArchetypeNode *makeUType(ModuleParser::UnionTypeContext *ctx);
         ArchetypeNode *makeIType(ModuleParser::IntersectionTypeContext *ctx);
         ArchetypeNode *makeType(ModuleParser::AssignableTypeContext *ctx);
+        ArchetypeNode *makeTypeArguments(ModuleParser::TypeArgumentsContext *ctx);
 
         ArchetypeNode *makeGeneric(
             ModuleParser::PlaceholderSpecContext *pctx,

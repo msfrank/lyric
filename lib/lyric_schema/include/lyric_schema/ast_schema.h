@@ -49,6 +49,7 @@ namespace lyric_schema {
         PType,                     // parameterized type
         IType,                     // intersection type
         UType,                     // union type
+        TypeArguments,             // type arguments
 
         Set,                       // value assignment
         Target,                    // assignment target
@@ -135,6 +136,7 @@ namespace lyric_schema {
         RestOffset,
         GenericOffset,
         ImplementsOffset,
+        TypeArgumentsOffset,
 
         NUM_IDS,                    // must be last
     };
@@ -204,6 +206,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::IType, "IType");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUTypeClass(
         &kLyricAstNs, LyricAstId::UType, "UType");
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTypeArgumentsClass(
+        &kLyricAstNs, LyricAstId::TypeArguments, "TypeArguments");
 
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSetClass(
         &kLyricAstNs, LyricAstId::Set, "Set");
@@ -398,6 +402,10 @@ namespace lyric_schema {
     kLyricAstImplementsOffsetProperty(
         &kLyricAstNs, LyricAstId::ImplementsOffset, "ImplementsOffset", tempo_utils::PropertyType::kUInt32);
 
+    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+        kLyricAstTypeArgumentsOffsetProperty(
+        &kLyricAstNs, LyricAstId::TypeArgumentsOffset, "TypeArgumentsOffset", tempo_utils::PropertyType::kUInt32);
+
     constexpr std::array<
         const tempo_utils::SchemaResource<LyricAstNs,LyricAstId> *,
         static_cast<std::size_t>(LyricAstId::NUM_IDS)>
@@ -438,6 +446,7 @@ namespace lyric_schema {
         &kLyricAstPTypeClass,                     // parameterized type
         &kLyricAstITypeClass,                     // intersection type
         &kLyricAstUTypeClass,                     // union type
+        &kLyricAstTypeArgumentsClass,             // type arguments
 
         &kLyricAstSetClass,                       // value assignment
         &kLyricAstTargetClass,                    // assignment target
@@ -524,6 +533,7 @@ namespace lyric_schema {
         &kLyricAstRestOffsetProperty,
         &kLyricAstGenericOffsetProperty,
         &kLyricAstImplementsOffsetProperty,
+        &kLyricAstTypeArgumentsOffsetProperty,
     };
 
     constexpr tempo_utils::SchemaVocabulary<LyricAstNs, LyricAstId>

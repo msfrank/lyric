@@ -15,7 +15,6 @@
 #include <lyric_compiler/internal/compile_constant.h>
 #include <lyric_compiler/internal/compile_deref.h>
 #include <lyric_compiler/internal/compile_new.h>
-#include <lyric_compiler/internal/compile_node.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 #include <lyric_typing/callsite_reifier.h>
@@ -193,9 +192,23 @@ lyric_compiler::internal::compile_deref_method(
     auto concreteArguments = receiverType.getConcreteArguments();
     std::vector<lyric_common::TypeDef> callsiteArguments(concreteArguments.begin(), concreteArguments.end());
 
+    // if type arguments are specified at the callsite then append them
+    if (walker.hasAttr(lyric_parser::kLyricAstTypeArgumentsOffset)) {
+        tu_uint32 typeArgumentsOffset;
+        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeArgumentsOffset, typeArgumentsOffset);
+        auto typeArgumentsNode = walker.getNodeAtOffset(typeArgumentsOffset);
+        std::vector<lyric_typing::TypeSpec> typeArgumentsSpec;
+        TU_ASSIGN_OR_RETURN (typeArgumentsSpec, typeSystem->parseTypeArguments(block, typeArgumentsNode));
+        std::vector<lyric_common::TypeDef> typeArguments;
+        TU_ASSIGN_OR_RETURN (typeArguments, typeSystem->resolveTypeArguments(block, typeArgumentsSpec));
+        callsiteArguments.insert(callsiteArguments.end(), typeArguments.cbegin(), typeArguments.cend());
+    }
+
+    // get the symbol for the receiver
     lyric_assembler::AbstractSymbol *receiver;
     TU_ASSIGN_OR_RETURN (receiver, state->symbolCache()->getOrImportSymbol(receiverUrl));
 
+    // get the method name
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 

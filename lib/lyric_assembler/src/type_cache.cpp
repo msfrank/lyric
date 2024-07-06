@@ -327,7 +327,11 @@ tempo_utils::Status
 lyric_assembler::TypeCache::touchType(const lyric_common::TypeDef &typeDef)
 {
     TU_ASSERT (typeDef.isValid());
-    return touchType(m_typecache[typeDef]);
+    auto entry = m_typecache.find(typeDef);
+    if (entry == m_typecache.cend())
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kMissingType, "missing type {}", typeDef.toString());
+    return touchType(entry->second);
 }
 
 /**
@@ -448,8 +452,8 @@ lyric_assembler::TypeCache::declareParameterizedType(
 tempo_utils::Result<lyric_assembler::TypeHandle *>
 lyric_assembler::TypeCache::declareFunctionType(
     const lyric_common::TypeDef &functionReturn,
-    const std::vector<Parameter> &functionParameters,
-    const Option<Parameter> &functionRest)
+    const std::vector<lyric_common::TypeDef> &functionParameters,
+    const Option<lyric_common::TypeDef> &functionRest)
 {
     TU_RETURN_IF_STATUS(getOrMakeType(functionReturn));
 
@@ -464,11 +468,9 @@ lyric_assembler::TypeCache::declareFunctionType(
     std::vector<lyric_common::TypeDef> typeParameters;
     typeParameters.reserve(1 + functionParameters.size() + (functionRest.isEmpty()? 0 : 1));
     typeParameters.push_back(functionReturn);
-    for (const auto &p : functionParameters) {
-        typeParameters.push_back(p.typeDef);
-    }
+    typeParameters.insert(typeParameters.end(), functionParameters.cbegin(), functionParameters.cend());
     if (!functionRest.isEmpty()) {
-        typeParameters.push_back(functionRest.getValue().typeDef);
+        typeParameters.push_back(functionRest.getValue());
     }
 
     // create the type if it doesn't already exist
@@ -529,7 +531,7 @@ lyric_assembler::TypeCache::numTemplates() const
     return m_templates.size();
 }
 
-tempo_utils::Status
+tempo_utils::Result<lyric_assembler::TemplateHandle *>
 lyric_assembler::TypeCache::makeTemplate(
     const lyric_common::SymbolUrl &templateUrl,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
@@ -559,11 +561,47 @@ lyric_assembler::TypeCache::makeTemplate(
         m_typecache[typeHandle->getTypeDef()] = typeHandle;
     }
 
-    auto status = touchTemplateParameters(templateParameters);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (touchTemplateParameters(templateParameters));
 
-    return AssemblerStatus::ok();
+    return templateHandle;
+}
+
+tempo_utils::Result<lyric_assembler::TemplateHandle *>
+lyric_assembler::TypeCache::makeTemplate(
+    const lyric_common::SymbolUrl &templateUrl,
+    TemplateHandle *superTemplate,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
+    BlockHandle *parentBlock)
+{
+    TU_ASSERT (superTemplate != nullptr);
+
+    if (!templateUrl.isValid())
+        m_tracer->throwAssemblerInvariant("invalid template {}", templateUrl.toString());
+    if (templateParameters.empty())
+        m_tracer->throwAssemblerInvariant("cannot make template {}; missing template parameters", templateUrl.toString());
+    if (m_templatecache.contains(templateUrl))
+        m_tracer->throwAssemblerInvariant("template {} is already defined", templateUrl.toString());
+
+    // create the template handle
+    auto template_index = m_templates.size();
+    auto templateAddress = TemplateAddress::near(template_index);
+    auto *templateHandle = new TemplateHandle(templateUrl, templateParameters, templateAddress,
+        superTemplate, parentBlock, m_assemblyState);
+    m_templates.push_back(templateHandle);
+    m_templatecache[templateUrl] = templateHandle;
+
+    // create placeholder type for each template parameter
+    for (const auto &tp : templateParameters) {
+        auto type_index = m_types.size();
+        auto typeAddress = TypeAddress::near(type_index);
+        auto *typeHandle = new TypeHandle(tp.index, templateUrl, {}, typeAddress, m_assemblyState);
+        m_types.push_back(typeHandle);
+        m_typecache[typeHandle->getTypeDef()] = typeHandle;
+    }
+
+    TU_RETURN_IF_NOT_OK (touchTemplateParameters(templateParameters));
+
+    return templateHandle;
 }
 
 tempo_utils::Result<lyric_assembler::TemplateHandle *>
@@ -575,6 +613,12 @@ lyric_assembler::TypeCache::importTemplate(lyric_importer::TemplateImport *templ
     TU_ASSERT (templateUrl.isValid());
     if (m_templatecache.contains(templateUrl))
         return m_templatecache.at(templateUrl);
+
+    auto *superTemplateImport = templateImport->getSuperTemplate();
+    TemplateHandle *superTemplate = nullptr;
+    if (superTemplateImport != nullptr) {
+        TU_ASSIGN_OR_RETURN (superTemplate, importTemplate(superTemplateImport));
+    }
 
     std::vector<lyric_object::TemplateParameter> templateParameters;
     for (auto it = templateImport->templateParametersBegin(); it != templateImport->templateParametersEnd(); it++) {
@@ -604,9 +648,8 @@ lyric_assembler::TypeCache::importTemplate(lyric_importer::TemplateImport *templ
         templateParameters.push_back(tp);
     }
 
-    TU_ASSERT (!templateParameters.empty());
+    auto *templateHandle = new TemplateHandle(templateUrl, superTemplate, templateParameters, m_assemblyState);
 
-    auto *templateHandle = new TemplateHandle(templateUrl, templateParameters, m_assemblyState);
     m_templatecache[templateUrl] = templateHandle;
     return templateHandle;
 }

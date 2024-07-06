@@ -503,15 +503,22 @@ lyric_assembler::CallSymbol::callType()
     if (priv->callType != nullptr)
         return priv->callType;
 
-    std::vector<Parameter> functionParameters;
-    functionParameters.insert(functionParameters.begin(),
-        priv->listParameters.cbegin(), priv->listParameters.cend());
-    functionParameters.insert(functionParameters.end(),
-        priv->namedParameters.cbegin(), priv->namedParameters.cend());
+    std::vector<lyric_common::TypeDef> functionParameters;
+    for (const auto &p : priv->listParameters) {
+        functionParameters.push_back(p.typeDef);
+    }
+    for (const auto &p : priv->namedParameters) {
+        functionParameters.push_back(p.typeDef);
+    }
+
+    Option<lyric_common::TypeDef> functionRest;
+    if (priv->restParameter.hasValue()) {
+        functionRest = Option(priv->restParameter.getValue().typeDef);
+    }
 
     auto *typeCache = m_state->typeCache();
     TU_ASSIGN_OR_RAISE (priv->callType, typeCache->declareFunctionType(
-        priv->returnType, functionParameters, priv->restParameter));
+        priv->returnType, functionParameters, functionRest));
 
     return priv->callType;
 }

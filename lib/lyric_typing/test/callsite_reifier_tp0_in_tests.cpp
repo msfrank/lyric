@@ -29,9 +29,8 @@ TEST_F(CallsiteReifierTP0In, UnaryFunctionGivenT_P0takesT_returnsBool)
     tp.variance = lyric_object::VarianceType::Invariant;
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
-    ASSERT_TRUE (typeCache->makeTemplate(templateUrl, {tp}, proc->procBlock()).isOk());
     lyric_assembler::TemplateHandle *templateHandle;
-    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->getOrImportTemplate(templateUrl));
+    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->makeTemplate(templateUrl, {tp}, proc->procBlock()));
 
     lyric_assembler::Parameter p0;
     p0.index = 0;

@@ -152,7 +152,7 @@ namespace lyric_runtime {
          * @param task
          * @return true if the closure call frame has been pushed onto the task call stack, otherwise false.
          */
-        virtual bool applyClosure(Task *task, lyric_runtime::InterpreterState *state) = 0;
+        virtual bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) = 0;
 
         /**
          * Returns the error status code. If the ref is not a subtype of Status then the method must return kOk.

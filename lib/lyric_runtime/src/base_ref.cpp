@@ -90,7 +90,7 @@ lyric_runtime::BaseRef::resolveFuture(DataCell &result)
 }
 
 bool
-lyric_runtime::BaseRef::applyClosure(Task *task, lyric_runtime::InterpreterState *state)
+lyric_runtime::BaseRef::applyClosure(Task *task, std::vector<DataCell> &args, lyric_runtime::InterpreterState *state)
 {
     return false;
 }

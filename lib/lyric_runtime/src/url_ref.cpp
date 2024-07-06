@@ -145,13 +145,13 @@ lyric_runtime::UrlRef::getVirtualTable() const
 }
 
 lyric_runtime::DataCell
-lyric_runtime::UrlRef::getField(const lyric_runtime::DataCell &field) const
+lyric_runtime::UrlRef::getField(const DataCell &field) const
 {
     return {};
 }
 
 lyric_runtime::DataCell
-lyric_runtime::UrlRef::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
+lyric_runtime::UrlRef::setField(const DataCell &field, const DataCell &value)
 {
     return {};
 }
@@ -163,7 +163,7 @@ lyric_runtime::UrlRef::iteratorValid()
 }
 
 bool
-lyric_runtime::UrlRef::iteratorNext(lyric_runtime::DataCell &next)
+lyric_runtime::UrlRef::iteratorNext(DataCell &next)
 {
     return false;
 }
@@ -175,19 +175,19 @@ lyric_runtime::UrlRef::prepareFuture(std::shared_ptr<Promise> promise)
 }
 
 bool
-lyric_runtime::UrlRef::awaitFuture(lyric_runtime::SystemScheduler *systemScheduler)
+lyric_runtime::UrlRef::awaitFuture(SystemScheduler *systemScheduler)
 {
     return false;
 }
 
 bool
-lyric_runtime::UrlRef::resolveFuture(lyric_runtime::DataCell &result)
+lyric_runtime::UrlRef::resolveFuture(DataCell &result)
 {
     return false;
 }
 
 bool
-lyric_runtime::UrlRef::applyClosure(lyric_runtime::Task *task, lyric_runtime::InterpreterState *state)
+lyric_runtime::UrlRef::applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state)
 {
     return false;
 }

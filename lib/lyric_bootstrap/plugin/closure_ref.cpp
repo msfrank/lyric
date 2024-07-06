@@ -35,13 +35,23 @@ ClosureRef::setField(const lyric_runtime::DataCell &field, const lyric_runtime::
 }
 
 bool
-ClosureRef::applyClosure(lyric_runtime::Task *task, lyric_runtime::InterpreterState *state)
+ClosureRef::applyClosure(
+    lyric_runtime::Task *task,
+    std::vector<lyric_runtime::DataCell> &args,
+    lyric_runtime::InterpreterState *state)
 {
     auto *currentCoro = task->stackfulCoroutine();
+    auto dataStackGuard = currentCoro->dataStackSize();
 
-    //
-    TU_ASSERT (currentCoro->callStackSize() == 0);
-    TU_ASSERT (currentCoro->dataStackSize() == 0);
+    auto *sp = currentCoro->peekSP();
+    tu_uint32 returnSegment = lyric_object::INVALID_ADDRESS_U32;
+    lyric_object::BytecodeIterator returnIP{};
+
+    if (sp != nullptr) {
+        returnSegment = sp->getSegmentIndex();
+        returnIP = currentCoro->peekIP();
+    }
+
 
     auto *segment = state->segmentManager()->getSegment(getSegmentIndex());
     TU_ASSERT (segment != nullptr);
@@ -64,14 +74,14 @@ ClosureRef::applyClosure(lyric_runtime::Task *task, lyric_runtime::InterpreterSt
     auto numLexicals = tempo_utils::read_u16_and_advance(header);       // read numLexicals
 
     // maximum number of args is 2^16
-    if (numArguments != 0)
+    if (numArguments != args.size())
         throw tempo_utils::StatusException(
             lyric_runtime::InterpreterStatus::forCondition(
                 lyric_runtime::InterpreterCondition::kRuntimeInvariant, "too many arguments"));
 
     // construct the task activation call frame
-    lyric_runtime::CallCell frame(address, segment->getSegmentIndex(), procOffset, segment->getSegmentIndex(),
-        {}, 0, 0, 0, numLocals, numLexicals, {});
+    lyric_runtime::CallCell frame(address, segment->getSegmentIndex(), procOffset, returnSegment,
+        returnIP, dataStackGuard, numArguments, /* numRest= */ 0, numLocals, numLexicals, args);
 
     if (this->numLexicals() != numLexicals)
         throw tempo_utils::StatusException(
@@ -86,7 +96,7 @@ ClosureRef::applyClosure(lyric_runtime::Task *task, lyric_runtime::InterpreterSt
     // push the lambda onto the call stack
     auto ip = getIP();
     currentCoro->pushCall(frame, ip, segment);
-    TU_LOG_INFO << "initialized task " << task << " ip to " << ip;
+    TU_LOG_INFO << "moved ip to " << ip;
 
     return true;
 }

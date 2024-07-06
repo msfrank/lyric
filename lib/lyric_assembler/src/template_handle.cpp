@@ -20,11 +20,25 @@ lyric_assembler::TemplateHandle::TemplateHandle(
     const lyric_common::SymbolUrl &templateUrl,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     TemplateAddress address,
+    TemplateHandle *superTemplate,
+    BlockHandle *parentBlock,
+    AssemblyState *state)
+    : TemplateHandle(templateUrl, templateParameters, address, parentBlock, state)
+{
+    m_superTemplate = superTemplate;
+    TU_ASSERT (m_superTemplate != nullptr);
+}
+
+lyric_assembler::TemplateHandle::TemplateHandle(
+    const lyric_common::SymbolUrl &templateUrl,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters,
+    TemplateAddress address,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : m_templateUrl(templateUrl),
       m_templateParameters(templateParameters),
       m_address(address),
+      m_superTemplate(nullptr),
       m_parentBlock(parentBlock),
       m_state(state)
 {
@@ -43,10 +57,12 @@ lyric_assembler::TemplateHandle::TemplateHandle(
 
 lyric_assembler::TemplateHandle::TemplateHandle(
     const lyric_common::SymbolUrl &templateUrl,
+    TemplateHandle *superTemplate,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     AssemblyState *state)
     : m_templateUrl(templateUrl),
       m_templateParameters(templateParameters),
+      m_superTemplate(superTemplate),
       m_parentBlock(nullptr),
       m_state(state)
 {
@@ -66,10 +82,28 @@ lyric_assembler::TemplateHandle::getTemplateUrl() const
     return m_templateUrl;
 }
 
+lyric_common::TypeDef
+lyric_assembler::TemplateHandle::resolvePlaceholder(
+    std::string_view name,
+    const std::vector<lyric_common::TypeDef> &typeArguments) const      // NOLINT(misc-no-recursion)
+{
+    auto entry = m_parameterIndex.find(name);
+    if (entry != m_parameterIndex.cend()) {
+        if (typeArguments.empty())
+            return m_placeholders[entry->second];       // use memoized instance
+        auto placeholder = m_placeholders[entry->second];
+        return lyric_common::TypeDef::forPlaceholder(placeholder.getPlaceholderIndex(),
+            placeholder.getPlaceholderTemplateUrl(), typeArguments);
+    }
+    if (m_superTemplate != nullptr)
+        return m_superTemplate->resolvePlaceholder(name, typeArguments);
+    return {};
+}
+
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::TemplateHandle::resolveSingular(
     const lyric_common::SymbolPath &typePath,
-    const std::vector<lyric_common::TypeDef> &typeArguments)        // NOLINT(misc-no-recursion)
+    const std::vector<lyric_common::TypeDef> &typeArguments)            // NOLINT(misc-no-recursion)
 {
     if (!typePath.isValid())
         m_state->throwAssemblerInvariant("invalid type path {}", typePath.toString());
@@ -78,17 +112,7 @@ lyric_assembler::TemplateHandle::resolveSingular(
 
     // if type path is possibly a placeholder, then try to resolve the placeholder type
     if (!typePath.isEnclosed()) {
-        auto name = typePath.getName();
-        auto entry = m_parameterIndex.find(name);
-        if (entry != m_parameterIndex.cend()) {
-            if (typeArguments.empty()) {
-                assignableType = m_placeholders[entry->second];     // use memoized instance
-            } else {
-                auto placeholder = m_placeholders[entry->second];
-                assignableType = lyric_common::TypeDef::forPlaceholder(placeholder.getPlaceholderIndex(),
-                    placeholder.getPlaceholderTemplateUrl(), typeArguments);
-            }
-        }
+        assignableType = resolvePlaceholder(typePath.getName(), typeArguments);
     }
 
     // otherwise if type path is not a placeholder, then resolve the concrete type
@@ -105,15 +129,15 @@ lyric_assembler::TemplateHandle::resolveSingular(
 }
 
 lyric_assembler::TemplateAddress
-lyric_assembler::TemplateHandle::getAddress()
+lyric_assembler::TemplateHandle::getAddress() const
 {
     return m_address;
 }
 
-lyric_assembler::BlockHandle *
-lyric_assembler::TemplateHandle::parentBlock()
+lyric_assembler::TemplateHandle *
+lyric_assembler::TemplateHandle::superTemplate() const
 {
-    return m_parentBlock;
+    return m_superTemplate;
 }
 
 bool

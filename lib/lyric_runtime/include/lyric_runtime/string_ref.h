@@ -44,7 +44,7 @@ namespace lyric_runtime {
         bool prepareFuture(std::shared_ptr<Promise> promise) override;
         bool awaitFuture(SystemScheduler *systemScheduler) override;
         bool resolveFuture(DataCell &result) override;
-        bool applyClosure(Task *task, lyric_runtime::InterpreterState *state) override;
+        bool applyClosure(Task *task, std::vector<DataCell> &args, lyric_runtime::InterpreterState *state) override;
 
     private:
         bool m_owned;

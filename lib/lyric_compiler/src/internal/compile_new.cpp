@@ -19,6 +19,8 @@ lyric_compiler::internal::compile_new(
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
+    auto *state = moduleEntry.getState();
+    auto *typeCache = state->typeCache();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
     lyric_common::TypeDef newType;
@@ -44,7 +46,7 @@ lyric_compiler::internal::compile_new(
     if (newType.getType() != lyric_common::TypeDefType::Concrete)
         block->throwSyntaxError(walker, "new type {} is not constructable", newType.toString());
 
-    block->blockState()->typeCache()->touchType(newType);
+    TU_RETURN_IF_NOT_OK (typeCache->touchType(newType));
 
     // resolve the symbol ctor
     auto newUrl = newType.getConcreteUrl();

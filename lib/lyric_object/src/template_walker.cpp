@@ -43,6 +43,28 @@ lyric_object::TemplateWalker::getSymbolPath() const
     return lyric_common::SymbolPath::fromString(templateDescriptor->fqsn()->str());
 }
 
+bool
+lyric_object::TemplateWalker::hasSuperTemplate() const
+{
+    if (!isValid())
+        return false;
+    auto *templateDescriptor = m_reader->getTemplate(m_templateOffset);
+    if (templateDescriptor == nullptr)
+        return {};
+    return templateDescriptor->super_template() != INVALID_ADDRESS_U32;
+}
+
+lyric_object::TemplateWalker
+lyric_object::TemplateWalker::getSuperTemplate() const
+{
+    if (!hasSuperTemplate())
+        return {};
+    auto *templateDescriptor = m_reader->getTemplate(m_templateOffset);
+    if (templateDescriptor == nullptr)
+        return {};
+    return TemplateWalker(m_reader, GET_DESCRIPTOR_OFFSET(templateDescriptor->super_template()));
+}
+
 lyric_object::TemplateParameterWalker
 lyric_object::TemplateWalker::getTemplateParameter(tu_uint8 index) const
 {

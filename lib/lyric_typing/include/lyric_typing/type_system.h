@@ -21,6 +21,11 @@ namespace lyric_typing {
             lyric_assembler::BlockHandle *block,
             const lyric_parser::NodeWalker &walker);
 
+        tempo_utils::Result<std::vector<TypeSpec>>
+        parseTypeArguments(
+            lyric_assembler::BlockHandle *block,
+            const lyric_parser::NodeWalker &walker);
+
         tempo_utils::Result<PackSpec>
         parsePack(
             lyric_assembler::BlockHandle *block,
@@ -35,6 +40,11 @@ namespace lyric_typing {
         resolveAssignable(
             lyric_assembler::AbstractResolver *resolver,
             const TypeSpec &assignable);
+
+        tempo_utils::Result<std::vector<lyric_common::TypeDef>>
+        resolveTypeArguments(
+            lyric_assembler::AbstractResolver *resolver,
+            const std::vector<TypeSpec> &typeArgumentsSpec);
 
         tempo_utils::Result<lyric_assembler::ParameterPack>
         resolvePack(

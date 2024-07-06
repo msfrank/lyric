@@ -18,6 +18,9 @@ namespace lyric_object {
 
         lyric_common::SymbolPath getSymbolPath() const;
 
+        bool hasSuperTemplate() const;
+        TemplateWalker getSuperTemplate() const;
+
         TemplateParameterWalker getTemplateParameter(tu_uint8 index) const;
         tu_uint8 numTemplateParameters() const;
 

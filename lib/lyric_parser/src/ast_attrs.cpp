@@ -556,3 +556,4 @@ const tempo_utils::UInt32Attr lyric_parser::kLyricAstFinallyOffset(&lyric_schema
 const tempo_utils::UInt32Attr lyric_parser::kLyricAstRestOffset(&lyric_schema::kLyricAstRestOffsetProperty);
 const tempo_utils::UInt32Attr lyric_parser::kLyricAstGenericOffset(&lyric_schema::kLyricAstGenericOffsetProperty);
 const tempo_utils::UInt32Attr lyric_parser::kLyricAstImplementsOffset(&lyric_schema::kLyricAstImplementsOffsetProperty);
+const tempo_utils::UInt32Attr lyric_parser::kLyricAstTypeArgumentsOffset(&lyric_schema::kLyricAstTypeArgumentsOffsetProperty);

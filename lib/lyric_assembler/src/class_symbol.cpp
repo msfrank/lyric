@@ -546,7 +546,8 @@ lyric_assembler::ClassSymbol::numMethods() const
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::ClassSymbol::declareMethod(
     const std::string &name,
-    lyric_object::AccessType access)
+    lyric_object::AccessType access,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters)
 {
     if (isImported())
         m_state->throwAssemblerInvariant(
@@ -566,11 +567,27 @@ lyric_assembler::ClassSymbol::declareMethod(
     auto callIndex = m_state->numCalls();
     auto address = CallAddress::near(callIndex);
 
+    TemplateHandle *methodTemplate;
+
+    // if template parameters were specified then construct a template for the method0
+    if (!templateParameters.empty()) {
+        auto *typeCache = m_state->typeCache();
+        if (priv->classTemplate != nullptr) {
+            TU_ASSIGN_OR_RETURN (methodTemplate, typeCache->makeTemplate(
+                methodUrl, priv->classTemplate, templateParameters, priv->classBlock.get()));
+        } else {
+            TU_ASSIGN_OR_RETURN (methodTemplate, typeCache->makeTemplate(
+                methodUrl, templateParameters, priv->classBlock.get()));
+        }
+    } else {
+        methodTemplate = priv->classTemplate;
+    }
+
     // construct call symbol
     CallSymbol *callSymbol;
-    if (priv->classTemplate != nullptr) {
+    if (methodTemplate != nullptr) {
         callSymbol = new CallSymbol(methodUrl, m_classUrl, access, address,
-            lyric_object::CallMode::Normal, priv->classTemplate, priv->classBlock.get(), m_state);
+            lyric_object::CallMode::Normal, methodTemplate, priv->classBlock.get(), m_state);
     } else {
         callSymbol = new CallSymbol(methodUrl, m_classUrl, access, address,
             lyric_object::CallMode::Normal, priv->classBlock.get(), m_state);

@@ -11,6 +11,12 @@ write_template(
     auto templateUrlPathString = templateHandle->getTemplateUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(templateUrlPathString);
 
+    auto supertemplateIndex = lyric_runtime::INVALID_ADDRESS_U32;
+    auto *supertemplateHandle = templateHandle->superTemplate();
+    if (supertemplateHandle != nullptr) {
+        supertemplateIndex = supertemplateHandle->getAddress().getAddress();
+    }
+
     std::vector<lyo1::Placeholder> placeholders;
     std::vector<lyo1::Constraint> constraints;
     std::vector<std::string> names;
@@ -71,8 +77,8 @@ write_template(
 
     // add template descriptor
     templates_vector.push_back(lyo1::CreateTemplateDescriptor(buffer, fullyQualifiedName,
-        buffer.CreateVectorOfStructs(placeholders), buffer.CreateVectorOfStructs(constraints),
-        buffer.CreateVectorOfStrings(names)));
+        supertemplateIndex, buffer.CreateVectorOfStructs(placeholders),
+        buffer.CreateVectorOfStructs(constraints), buffer.CreateVectorOfStrings(names)));
 
     return {};
 }

@@ -283,6 +283,14 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDef(ModuleParser::ClassDefCo
     defNode->appendChild(packNode);
     defNode->appendChild(blockNode);
 
+    // generic information
+    if (ctx->placeholderSpec()) {
+        auto *genericNode = m_state->makeGeneric(ctx->placeholderSpec(), ctx->constraintSpec());
+        auto *genericOffsetAttr = m_state->appendAttrOrThrow(kLyricAstGenericOffset,
+            static_cast<tu_uint32>(genericNode->getAddress().getAddress()));
+        defNode->putAttr(genericOffsetAttr);
+    }
+
     // if ancestor node is not a kDefClass, then report internal violation
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(ctx->getStop());

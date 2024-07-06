@@ -15,6 +15,12 @@ namespace lyric_typing {
         const lyric_parser::NodeWalker &walker,
         lyric_assembler::AssemblyState *state);
 
+    tempo_utils::Result<std::vector<TypeSpec>>
+    parse_type_arguments(
+        lyric_assembler::BlockHandle *block,
+        const lyric_parser::NodeWalker &walker,
+        lyric_assembler::AssemblyState *state);
+
 }
 
 #endif // LYRIC_TYPING_PARSE_ASSIGNABLE_H

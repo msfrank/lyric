@@ -7,6 +7,7 @@
 namespace lyric_importer {
     struct TemplateImport::Priv {
         lyric_common::SymbolUrl templateUrl;
+        TemplateImport *superTemplate;
         std::vector<TemplateParameter> templateParameters;
     };
 }
@@ -24,6 +25,13 @@ lyric_importer::TemplateImport::getTemplateUrl()
 {
     load();
     return m_priv->templateUrl;
+}
+
+lyric_importer::TemplateImport *
+lyric_importer::TemplateImport::getSuperTemplate()
+{
+    load();
+    return m_priv->superTemplate;
 }
 
 lyric_importer::TemplateParameter
@@ -69,6 +77,13 @@ lyric_importer::TemplateImport::load()
     auto location = m_moduleImport->getLocation();
     auto templateWalker = m_moduleImport->getObject().getObject().getTemplate(m_templateOffset);
     priv->templateUrl = lyric_common::SymbolUrl(location, templateWalker.getSymbolPath());
+
+    if (templateWalker.hasSuperTemplate()) {
+        priv->superTemplate = m_moduleImport->getTemplate(
+            templateWalker.getSuperTemplate().getDescriptorOffset());
+    } else {
+        priv->superTemplate = nullptr;
+    }
 
     for (tu_uint8 i = 0; i < templateWalker.numTemplateParameters(); i++) {
         auto templateParameter = templateWalker.getTemplateParameter(i);

@@ -188,6 +188,25 @@ lyric_parser::ArchetypeState::makeType(ModuleParser::AssignableTypeContext *ctx)
 }
 
 lyric_parser::ArchetypeNode *
+lyric_parser::ArchetypeState::makeTypeArguments(ModuleParser::TypeArgumentsContext *ctx)
+{
+    TU_ASSERT (ctx != nullptr);
+    auto *token = ctx->getStart();
+
+    auto *typeArgumentsNode = appendNodeOrThrow(lyric_schema::kLyricAstTypeArgumentsClass, token);
+
+    for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
+        auto *argument = ctx->assignableType(i);
+        if (argument == nullptr)
+            continue;
+        ArchetypeNode *argumentNode = makeType(argument);
+        typeArgumentsNode->appendChild(argumentNode);
+    }
+
+    return typeArgumentsNode;
+}
+
+lyric_parser::ArchetypeNode *
 lyric_parser::ArchetypeState::makeGeneric(
     ModuleParser::PlaceholderSpecContext *pctx,
     ModuleParser::ConstraintSpecContext *cctx)

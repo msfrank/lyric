@@ -151,6 +151,7 @@ namespace lyric_parser {
     extern const tempo_utils::UInt32Attr kLyricAstRestOffset;
     extern const tempo_utils::UInt32Attr kLyricAstGenericOffset;
     extern const tempo_utils::UInt32Attr kLyricAstImplementsOffset;
+    extern const tempo_utils::UInt32Attr kLyricAstTypeArgumentsOffset;
 }
 
 

@@ -866,6 +866,8 @@ lyric_assembler::BlockHandle::declareFunction(
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     bool declOnly)
 {
+    auto *typeCache = m_state->typeCache();
+
     if (m_bindings.contains(name))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
@@ -876,8 +878,7 @@ lyric_assembler::BlockHandle::declareFunction(
     // create the template if there are any template parameters
     TemplateHandle *functionTemplate = nullptr;
     if (!templateParameters.empty()) {
-        TU_RETURN_IF_NOT_OK (m_state->typeCache()->makeTemplate(functionUrl, templateParameters, this));
-        TU_ASSIGN_OR_RETURN (functionTemplate, m_state->typeCache()->getOrImportTemplate(functionUrl));
+        TU_ASSIGN_OR_RETURN (functionTemplate, typeCache->makeTemplate(functionUrl, templateParameters, this));
     }
 
     CallAddress address;
@@ -888,7 +889,7 @@ lyric_assembler::BlockHandle::declareFunction(
     CallSymbol *callSymbol;
     if (functionTemplate) {
         callSymbol = new CallSymbol(functionUrl, access, address, lyric_object::CallMode::Normal,
-            functionTemplate, functionTemplate->parentBlock(), m_state);
+            functionTemplate, this, m_state);
     } else {
         callSymbol = new CallSymbol(functionUrl, access, address, lyric_object::CallMode::Normal,
             this, m_state);
@@ -964,6 +965,8 @@ lyric_assembler::BlockHandle::declareClass(
     bool isAbstract,
     bool declOnly)
 {
+    auto *typeCache = m_state->typeCache();
+
     if (m_bindings.contains(name))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
@@ -988,17 +991,16 @@ lyric_assembler::BlockHandle::declareClass(
     // create the template if there are any template parameters
     TemplateHandle *classTemplate = nullptr;
     if (!templateParameters.empty()) {
-        TU_RETURN_IF_NOT_OK (m_state->typeCache()->makeTemplate(classUrl, templateParameters, this));
-        TU_ASSIGN_OR_RETURN (classTemplate, m_state->typeCache()->getOrImportTemplate(classUrl));
+        TU_ASSIGN_OR_RETURN (classTemplate, typeCache->makeTemplate(classUrl, templateParameters, this));
     }
 
    // create the type
     TypeHandle *typeHandle;
     if (classTemplate) {
-        TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
             classUrl, classTemplate->getPlaceholders(), superClass->getAssignableType()));
     } else {
-        TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
             classUrl, {}, superClass->getAssignableType()));
     }
 
@@ -1010,7 +1012,7 @@ lyric_assembler::BlockHandle::declareClass(
     ClassSymbol *classSymbol;
     if (classTemplate) {
         classSymbol = new ClassSymbol(classUrl, access, derive, isAbstract, address, typeHandle,
-            classTemplate, superClass, classTemplate->parentBlock(), m_state);
+            classTemplate, superClass, this, m_state);
     } else {
         classSymbol = new ClassSymbol(classUrl, access, derive, isAbstract, address,
             typeHandle, superClass, this, m_state);
@@ -1062,6 +1064,8 @@ lyric_assembler::BlockHandle::declareConcept(
     lyric_object::DeriveType derive,
     bool declOnly)
 {
+    auto *typeCache = m_state->typeCache();
+
     if (m_bindings.contains(name))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
@@ -1074,17 +1078,16 @@ lyric_assembler::BlockHandle::declareConcept(
     // create the template if there are any template parameters
     TemplateHandle *conceptTemplate = nullptr;
     if (!templateParameters.empty()) {
-        TU_RETURN_IF_NOT_OK (m_state->typeCache()->makeTemplate(conceptUrl, templateParameters, this));
-        TU_ASSIGN_OR_RETURN (conceptTemplate, m_state->typeCache()->getOrImportTemplate(conceptUrl));
+        TU_ASSIGN_OR_RETURN (conceptTemplate, typeCache->makeTemplate(conceptUrl, templateParameters, this));
     }
 
     // create the type
     TypeHandle *typeHandle;
     if (conceptTemplate) {
-        TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
             conceptUrl, conceptTemplate->getPlaceholders(), superConcept->getAssignableType()));
     } else {
-        TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
             conceptUrl, {}, superConcept->getAssignableType()));
     }
 

@@ -30,26 +30,6 @@ lyric_compiler::internal::compile_placement(
     auto *state = moduleEntry.getState();
     auto *symbolCache = state->symbolCache();
 
-//    auto listPlacementBegin = invoker.listPlacementBegin();
-//    auto placementEnd = invoker.placementEnd();
-//
-//    // offset is the number of preloaded arguments
-//    int offset = reifier.numArguments();
-//
-//    // count the remaining positional arguments, including default initialized
-//    int numpos = 0;
-//    for (int i = 0; i < offset; i++) {
-//        const auto &param = *placementBegin++;
-//        switch (param.placement) {
-//            case lyric_object::PlacementType::List:
-//            case lyric_object::PlacementType::ListOpt:
-//                numpos++;
-//                break;
-//            default:
-//                break;
-//        }
-//    }
-
     std::vector<lyric_parser::NodeWalker> positionalArgs;
     absl::flat_hash_map<std::string,lyric_parser::NodeWalker> keywordArgs;
     absl::flat_hash_set<lyric_common::SymbolUrl> usedEvidence;
@@ -261,15 +241,24 @@ lyric_compiler::internal::compile_function_call(
     TU_ASSERT (walker.isValid());
     auto *typeSystem = moduleEntry.getTypeSystem();
 
+    std::vector<lyric_common::TypeDef> callsiteArguments;
+
+    // if type arguments are specified at the callsite then append them
+    if (walker.hasAttr(lyric_parser::kLyricAstTypeArgumentsOffset)) {
+        tu_uint32 typeArgumentsOffset;
+        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeArgumentsOffset, typeArgumentsOffset);
+        auto typeArgumentsNode = walker.getNodeAtOffset(typeArgumentsOffset);
+        std::vector<lyric_typing::TypeSpec> typeArgumentsSpec;
+        TU_ASSIGN_OR_RETURN (typeArgumentsSpec, typeSystem->parseTypeArguments(invokeBlock, typeArgumentsNode));
+        std::vector<lyric_common::TypeDef> typeArguments;
+        TU_ASSIGN_OR_RETURN (callsiteArguments, typeSystem->resolveTypeArguments(invokeBlock, typeArgumentsSpec));
+    }
+
     lyric_assembler::CallableInvoker invoker;
     TU_RETURN_IF_NOT_OK (bindingBlock->prepareFunction(functionName, invoker));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
-
-    // FIXME: support callsite type arguments on function
-    TU_RETURN_IF_NOT_OK (reifier.initialize(invoker));
-
-    //
+    TU_RETURN_IF_NOT_OK (reifier.initialize(invoker, callsiteArguments));
     TU_RETURN_IF_NOT_OK (compile_placement(
         invoker.getCallable(), bindingBlock, invokeBlock, reifier, walker, moduleEntry));
 

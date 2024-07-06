@@ -131,3 +131,18 @@ TEST(CoreDef, EvaluateDefGenericFunctionWithCtxParameter)
         RunModule(
             DataCellInt(10))));
 }
+
+TEST(CoreDef, EvaluateDefGenericFunctionWithCallsiteArgument)
+{
+    auto result = runModule(R"(
+        def identity[A](x: A): A {
+            x
+        }
+        val any: Any = identity[Any](5)
+        any
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(5))));
+}

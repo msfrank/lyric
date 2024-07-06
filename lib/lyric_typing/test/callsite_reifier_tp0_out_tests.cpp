@@ -28,9 +28,8 @@ TEST_F(CallsiteReifierTP0Out, NullaryFunctionGivenT_IntCallsiteTypeArgument_retu
     tp.variance = lyric_object::VarianceType::Invariant;
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
-    ASSERT_TRUE (typeCache->makeTemplate(templateUrl, {tp}, proc->procBlock()).isOk());
     lyric_assembler::TemplateHandle *templateHandle;
-    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->getOrImportTemplate(templateUrl));
+    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->makeTemplate(templateUrl, {tp}, proc->procBlock()));
 
     lyric_assembler::CallableInvoker invoker;
     auto callable = std::unique_ptr<TestCallable>(new TestCallable({}, {}, {}, templateHandle));

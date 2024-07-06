@@ -261,10 +261,11 @@ lyric_typing::CallsiteReifier::reifySingular(
         switch (paramTypeArgument.getType()) {
             case lyric_common::TypeDefType::Concrete:
             case lyric_common::TypeDefType::Placeholder: {
-                auto reifyParameterResult = reifySingular(paramTypeArgument, argTypeArgument);
-                if (reifyParameterResult.isStatus())
-                    return reifyParameterResult;
-                reifiedType = reifyParameterResult.getResult();
+                TU_ASSIGN_OR_RETURN (reifiedType, reifySingular(paramTypeArgument, argTypeArgument));
+                break;
+            }
+            case lyric_common::TypeDefType::Union: {
+                TU_ASSIGN_OR_RETURN (reifiedType, reifyUnion(paramTypeArgument, argTypeArgument));
                 break;
             }
             default:

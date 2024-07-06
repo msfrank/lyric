@@ -126,7 +126,8 @@ namespace lyric_assembler {
 
         tempo_utils::Result<CallSymbol *> declareMethod(
             const std::string &name,
-            lyric_object::AccessType access);
+            lyric_object::AccessType access,
+            const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
         tempo_utils::Status prepareMethod(
             const std::string &name,

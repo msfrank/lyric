@@ -29,9 +29,8 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesT_returnsT)
     tp0.variance = lyric_object::VarianceType::Invariant;
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
-    ASSERT_TRUE (typeCache->makeTemplate(templateUrl, {tp0}, proc->procBlock()).isOk());
     lyric_assembler::TemplateHandle *templateHandle;
-    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->getOrImportTemplate(templateUrl));
+    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->makeTemplate(templateUrl, {tp0}, proc->procBlock()));
 
     lyric_assembler::Parameter p0;
     p0.index = 0;
@@ -79,9 +78,8 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returns
     tp0.variance = lyric_object::VarianceType::Invariant;
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
-    ASSERT_TRUE (typeCache->makeTemplate(templateUrl, {tp0}, proc->procBlock()).isOk());
     lyric_assembler::TemplateHandle *templateHandle;
-    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->getOrImportTemplate(templateUrl));
+    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->makeTemplate(templateUrl, {tp0}, proc->procBlock()));
 
     auto *symbolCache = m_assemblyState->symbolCache();
     lyric_assembler::AbstractSymbol *symbol;
@@ -142,9 +140,8 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesUnionOfTandNil_return
     tp0.variance = lyric_object::VarianceType::Invariant;
 
     lyric_common::SymbolUrl templateUrl(lyric_common::SymbolPath({"sym"}));
-    ASSERT_TRUE (typeCache->makeTemplate(templateUrl, {tp0}, proc->procBlock()).isOk());
     lyric_assembler::TemplateHandle *templateHandle;
-    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->getOrImportTemplate(templateUrl));
+    TU_ASSIGN_OR_RAISE (templateHandle, typeCache->makeTemplate(templateUrl, {tp0}, proc->procBlock()));
 
     lyric_assembler::Parameter p0;
     p0.index = 0;

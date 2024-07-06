@@ -99,14 +99,11 @@ lyric_typing::parse_assignable(
     const lyric_parser::NodeWalker &walker,
     lyric_assembler::AssemblyState *state)
 {
-
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
 
     lyric_schema::LyricAstId typeId{};
-    auto status = walker.parseId(lyric_schema::kLyricAstVocabulary, typeId);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (walker.parseId(lyric_schema::kLyricAstVocabulary, typeId));
 
     switch (typeId) {
         case lyric_schema::LyricAstId::SType:
@@ -121,4 +118,30 @@ lyric_typing::parse_assignable(
     }
 
     block->throwSyntaxError(walker, "invalid type");
+}
+
+tempo_utils::Result<std::vector<lyric_typing::TypeSpec>>
+lyric_typing::parse_type_arguments(
+    lyric_assembler::BlockHandle *block,
+    const lyric_parser::NodeWalker &walker,
+    lyric_assembler::AssemblyState *state)
+{
+    TU_ASSERT (block != nullptr);
+    TU_ASSERT (walker.isValid());
+
+    lyric_schema::LyricAstId typeId{};
+    TU_RETURN_IF_NOT_OK (walker.parseId(lyric_schema::kLyricAstVocabulary, typeId));
+
+    if (typeId != lyric_schema::LyricAstId::TypeArguments)
+        block->throwSyntaxError(walker, "invalid type arguments");
+
+    std::vector<TypeSpec> typeArgumentsSpec;
+    for (tu_uint32 i = 0; i < walker.numChildren(); i++) {
+        auto child = walker.getChild(i);
+        TypeSpec argumentSpec;
+        TU_ASSIGN_OR_RETURN (argumentSpec, parse_assignable(block, child, state));
+        typeArgumentsSpec.push_back(argumentSpec);
+    }
+
+    return typeArgumentsSpec;
 }

@@ -30,6 +30,14 @@ lyric_typing::TypeSystem::parseAssignable(
     return parse_assignable(block, walker, m_state);
 }
 
+tempo_utils::Result<std::vector<lyric_typing::TypeSpec>>
+lyric_typing::TypeSystem::parseTypeArguments(
+    lyric_assembler::BlockHandle *block,
+    const lyric_parser::NodeWalker &walker)
+{
+    return parse_type_arguments(block, walker, m_state);
+}
+
 tempo_utils::Result<lyric_typing::PackSpec>
 lyric_typing::TypeSystem::parsePack(
     lyric_assembler::BlockHandle *block,
@@ -52,6 +60,14 @@ lyric_typing::TypeSystem::resolveAssignable(
     const TypeSpec &assignable)
 {
     return resolve_assignable(assignable, resolver, m_state);
+}
+
+tempo_utils::Result<std::vector<lyric_common::TypeDef>>
+lyric_typing::TypeSystem::resolveTypeArguments(
+    lyric_assembler::AbstractResolver *resolver,
+    const std::vector<TypeSpec> &typeArgumentsSpec)
+{
+    return resolve_type_arguments(typeArgumentsSpec, resolver, m_state);
 }
 
 tempo_utils::Result<lyric_runtime::TypeComparison>

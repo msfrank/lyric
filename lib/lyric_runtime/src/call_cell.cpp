@@ -5,16 +5,16 @@
 #include <tempo_utils/log_stream.h>
 
 lyric_runtime::CallCell::CallCell(
-    uint32_t callIndex,
-    uint32_t callSegment,
-    uint32_t procOffset,
-    uint32_t returnSegment,
+    tu_uint32 callIndex,
+    tu_uint32 callSegment,
+    tu_uint32 procOffset,
+    tu_uint32 returnSegment,
     lyric_object::BytecodeIterator returnIP,
     int stackGuard,
-    uint16_t numArguments,
-    uint16_t numRest,
-    uint16_t numLocals,
-    uint16_t numLexicals,
+    tu_uint16 numArguments,
+    tu_uint16 numRest,
+    tu_uint16 numLocals,
+    tu_uint16 numLexicals,
     const std::vector<DataCell> &data,
     const VirtualTable *vtable)
     : m_callIndex(callIndex),
@@ -35,16 +35,16 @@ lyric_runtime::CallCell::CallCell(
 }
 
 lyric_runtime::CallCell::CallCell(
-    uint32_t callIndex,
-    uint32_t callSegment,
-    uint32_t procOffset,
-    uint32_t returnSegment,
+    tu_uint32 callIndex,
+    tu_uint32 callSegment,
+    tu_uint32 procOffset,
+    tu_uint32 returnSegment,
     lyric_object::BytecodeIterator returnIP,
     int stackGuard,
-    uint16_t numArguments,
-    uint16_t numRest,
-    uint16_t numLocals,
-    uint16_t numLexicals,
+    tu_uint16 numArguments,
+    tu_uint16 numRest,
+    tu_uint16 numLocals,
+    tu_uint16 numLexicals,
     const std::vector<DataCell> &data,
     DataCell receiver)
     : m_callIndex(callIndex),
@@ -66,16 +66,16 @@ lyric_runtime::CallCell::CallCell(
 }
 
 lyric_runtime::CallCell::CallCell(
-    uint32_t callIndex,
-    uint32_t callSegment,
-    uint32_t procOffset,
-    uint32_t returnSegment,
+    tu_uint32 callIndex,
+    tu_uint32 callSegment,
+    tu_uint32 procOffset,
+    tu_uint32 returnSegment,
     lyric_object::BytecodeIterator returnIP,
     int stackGuard,
-    uint16_t numArguments,
-    uint16_t numRest,
-    uint16_t numLocals,
-    uint16_t numLexicals,
+    tu_uint16 numArguments,
+    tu_uint16 numRest,
+    tu_uint16 numLocals,
+    tu_uint16 numLexicals,
     const std::vector<DataCell> &data)
     : m_callIndex(callIndex),
       m_callSegment(callSegment),
@@ -202,25 +202,25 @@ lyric_runtime::CallCell::operator=(CallCell &&other) noexcept
     return *this;
 }
 
-uint32_t
+tu_uint32
 lyric_runtime::CallCell::getCallIndex() const
 {
     return m_callIndex;
 }
 
-uint32_t
+tu_uint32
 lyric_runtime::CallCell::getCallSegment() const
 {
     return m_callSegment;
 }
 
-uint32_t
+tu_uint32
 lyric_runtime::CallCell::getProcOffset() const
 {
     return m_procOffset;
 }
 
-uint32_t
+tu_uint32
 lyric_runtime::CallCell::getReturnSegment() const
 {
     return m_returnSegment;
@@ -265,7 +265,7 @@ lyric_runtime::CallCell::setArgument(int index, const DataCell &cell)
         m_data[index] = cell;
 }
 
-uint16_t
+tu_uint16
 lyric_runtime::CallCell::numArguments() const
 {
     return m_numArguments;
@@ -286,7 +286,7 @@ lyric_runtime::CallCell::setRest(int index, const DataCell &cell)
         m_data[m_numArguments + index] = cell;
 }
 
-uint16_t
+tu_uint16
 lyric_runtime::CallCell::numRest() const
 {
     return m_numRest;
@@ -307,7 +307,7 @@ lyric_runtime::CallCell::setLocal(int index, const DataCell &cell)
         m_data[m_numArguments + m_numRest + index] = cell;
 }
 
-uint16_t
+tu_uint16
 lyric_runtime::CallCell::numLocals() const
 {
     return m_numLocals;
@@ -328,7 +328,7 @@ lyric_runtime::CallCell::setLexical(int index, const DataCell &cell)
         m_data[m_numArguments + m_numRest + m_numLocals + index] = cell;
 }
 
-uint16_t
+tu_uint16
 lyric_runtime::CallCell::numLexicals() const
 {
     return m_numLexicals;

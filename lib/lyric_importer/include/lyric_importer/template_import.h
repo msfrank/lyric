@@ -11,6 +11,7 @@ namespace lyric_importer {
         TemplateImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 templateOffset);
 
         lyric_common::SymbolUrl getTemplateUrl();
+        TemplateImport *getSuperTemplate();
 
         TemplateParameter getTemplateParameter(int index);
         std::vector<TemplateParameter>::const_iterator templateParametersBegin();
