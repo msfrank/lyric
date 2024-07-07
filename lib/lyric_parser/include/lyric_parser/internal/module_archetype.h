@@ -21,6 +21,7 @@
 #include "module_deref_ops.h"
 #include "module_exception_ops.h"
 #include "module_logical_ops.h"
+#include "module_macro_ops.h"
 #include "module_match_ops.h"
 #include "module_parameter_ops.h"
 #include "module_symbol_ops.h"
@@ -46,6 +47,7 @@ namespace lyric_parser::internal {
           private ModuleDefineOps,
           private ModuleParameterOps,
           private ModuleExceptionOps,
+          private ModuleMacroOps,
           public ModuleParserBaseListener
     {
 
@@ -267,6 +269,12 @@ namespace lyric_parser::internal {
         void exitRest(ModuleParser::RestContext *ctx) override;
         void exitParamSpec(ModuleParser::ParamSpecContext *ctx) override;
 
+        // implemented by ModuleMacroOps
+        void enterMacro(ModuleParser::MacroContext *ctx) override;
+        void enterAnnotationList(ModuleParser::AnnotationListContext *ctx) override;
+        void exitMacroCall(ModuleParser::MacroCallContext *ctx) override;
+        void exitAnnotationList(ModuleParser::AnnotationListContext *ctx) override;
+        void exitMacro(ModuleParser::MacroContext *ctx) override;
     private:
         ArchetypeState *m_state;
     };

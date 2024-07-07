@@ -136,6 +136,8 @@ target_sources(lyric_parser
     src/internal/module_exception_ops.cpp
     include/lyric_parser/internal/module_logical_ops.h
     src/internal/module_logical_ops.cpp
+    include/lyric_parser/internal/module_macro_ops.h
+    src/internal/module_macro_ops.cpp
     include/lyric_parser/internal/module_match_ops.h
     src/internal/module_match_ops.cpp
     include/lyric_parser/internal/module_parameter_ops.h

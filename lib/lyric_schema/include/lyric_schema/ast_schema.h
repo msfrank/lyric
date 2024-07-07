@@ -13,7 +13,8 @@ namespace lyric_schema {
 
     enum class LyricAstId {
 
-        //
+        // AST classes
+
         Nil,                       // nil literal
         Undef,                     // undef literal
         False,                     // false literal
@@ -114,6 +115,11 @@ namespace lyric_schema {
         Using,                     // insert impls into the current environment
         SymbolRef,                 // symbol reference
 
+        MacroCall,                 // macro invocation
+        MacroList,                 // sequence of macro invocations
+
+        // AST properties
+
         LiteralValue,
 
         BaseEnum,
@@ -137,6 +143,7 @@ namespace lyric_schema {
         GenericOffset,
         ImplementsOffset,
         TypeArgumentsOffset,
+        MacroListOffset,
 
         NUM_IDS,                    // must be last
     };
@@ -326,6 +333,11 @@ namespace lyric_schema {
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSymbolRefClass(
         &kLyricAstNs, LyricAstId::SymbolRef, "SymbolRef");
 
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMacroCallClass(
+        &kLyricAstNs, LyricAstId::MacroCall, "MacroCall");
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMacroListClass(
+        &kLyricAstNs, LyricAstId::MacroList, "MacroList");
+
     constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstLiteralValueProperty(
         &kLyricAstNs, LyricAstId::LiteralValue, "LiteralValue", tempo_utils::PropertyType::kString);
@@ -406,110 +418,117 @@ namespace lyric_schema {
         kLyricAstTypeArgumentsOffsetProperty(
         &kLyricAstNs, LyricAstId::TypeArgumentsOffset, "TypeArgumentsOffset", tempo_utils::PropertyType::kUInt32);
 
+    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+        kLyricAstMacroListOffsetProperty(
+        &kLyricAstNs, LyricAstId::MacroListOffset, "MacroListOffset", tempo_utils::PropertyType::kUInt32);
+
     constexpr std::array<
         const tempo_utils::SchemaResource<LyricAstNs,LyricAstId> *,
         static_cast<std::size_t>(LyricAstId::NUM_IDS)>
     kLyricAstResources = {
 
-        &kLyricAstNilClass,                       // nil literal
-        &kLyricAstUndefClass,                     // undef literal
-        &kLyricAstFalseClass,                     // false literal
-        &kLyricAstTrueClass,                      // true literal
-        &kLyricAstIntegerClass,                   // integer literal
-        &kLyricAstFloatClass,                     // float literal
-        &kLyricAstCharClass,                      // char literal
-        &kLyricAstStringClass,                    // string literal
-        &kLyricAstUrlClass,                       // url literal
+        &kLyricAstNilClass,
+        &kLyricAstUndefClass,
+        &kLyricAstFalseClass,
+        &kLyricAstTrueClass,
+        &kLyricAstIntegerClass,
+        &kLyricAstFloatClass,
+        &kLyricAstCharClass,
+        &kLyricAstStringClass,
+        &kLyricAstUrlClass,
 
-        &kLyricAstPairClass,                      // pair container
-        &kLyricAstSeqClass,                       // seq container
-        &kLyricAstMapClass,                       // map container
-        &kLyricAstRowClass,                       // row container
+        &kLyricAstPairClass,
+        &kLyricAstSeqClass,
+        &kLyricAstMapClass,
+        &kLyricAstRowClass,
 
-        &kLyricAstAddClass,                       // addition operator
-        &kLyricAstSubClass,                       // subtraction operator
-        &kLyricAstMulClass,                       // multiplication operator
-        &kLyricAstDivClass,                       // division operator
-        &kLyricAstNegClass,                       // additive inverse operator
-        &kLyricAstIsEqClass,                      // equals operator
-        &kLyricAstIsLtClass,                      // less-than operator
-        &kLyricAstIsLeClass,                      // less-than-or-equals operator
-        &kLyricAstIsGtClass,                      // greater-than operator
-        &kLyricAstIsGeClass,                      // greater-than-or-equals operator
-        &kLyricAstIsAClass,                       // type-equals operator
+        &kLyricAstAddClass,
+        &kLyricAstSubClass,
+        &kLyricAstMulClass,
+        &kLyricAstDivClass,
+        &kLyricAstNegClass,
+        &kLyricAstIsEqClass,
+        &kLyricAstIsLtClass,
+        &kLyricAstIsLeClass,
+        &kLyricAstIsGtClass,
+        &kLyricAstIsGeClass,
+        &kLyricAstIsAClass,
 
-        &kLyricAstAndClass,                       // logical conjunction operator
-        &kLyricAstOrClass,                        // logical disjunction operator
-        &kLyricAstNotClass,                       // logical negation operator
+        &kLyricAstAndClass,
+        &kLyricAstOrClass,
+        &kLyricAstNotClass,
 
-        &kLyricAstSTypeClass,                     // simple type
-        &kLyricAstPTypeClass,                     // parameterized type
-        &kLyricAstITypeClass,                     // intersection type
-        &kLyricAstUTypeClass,                     // union type
-        &kLyricAstTypeArgumentsClass,             // type arguments
+        &kLyricAstSTypeClass,
+        &kLyricAstPTypeClass,
+        &kLyricAstITypeClass,
+        &kLyricAstUTypeClass,
+        &kLyricAstTypeArgumentsClass,
 
-        &kLyricAstSetClass,                       // value assignment
-        &kLyricAstTargetClass,                    // assignment target
-        &kLyricAstInplaceAddClass,                // inplace add assignment
-        &kLyricAstInplaceSubClass,                // inplace subtract assignment
-        &kLyricAstInplaceMulClass,                // inplace multiply assignment
-        &kLyricAstInplaceDivClass,                // inplace divide assignment
+        &kLyricAstSetClass,
+        &kLyricAstTargetClass,
+        &kLyricAstInplaceAddClass,
+        &kLyricAstInplaceSubClass,
+        &kLyricAstInplaceMulClass,
+        &kLyricAstInplaceDivClass,
 
-        &kLyricAstDerefClass,                     // dereference expression
-        &kLyricAstThisClass,                      // resolve this reference
-        &kLyricAstNameClass,                      // resolve symbol
-        &kLyricAstCallClass,                      // call named function or method
-        &kLyricAstKeywordClass,                   // keyword argument
+        &kLyricAstDerefClass,
+        &kLyricAstThisClass,
+        &kLyricAstNameClass,
+        &kLyricAstCallClass,
+        &kLyricAstKeywordClass,
 
-        &kLyricAstNewClass,                       // create object
-        &kLyricAstBuildClass,                     // build object
-        &kLyricAstDataClass,                      // create data
-        &kLyricAstLambdaClass,                    // anonymous function
+        &kLyricAstNewClass,
+        &kLyricAstBuildClass,
+        &kLyricAstDataClass,
+        &kLyricAstLambdaClass,
 
-        &kLyricAstBlockClass,                     // list of forms evaluated in order
-        &kLyricAstIfClass,                        // if statement
-        &kLyricAstCondClass,                      // conditional expression
-        &kLyricAstMatchClass,                     // match expression
-        &kLyricAstCaseClass,                      // case clause
-        &kLyricAstWhileClass,                     // while statement
-        &kLyricAstForClass,                       // for statement
-        &kLyricAstTryClass,                       // try statement
-        &kLyricAstReturnClass,                    // return immediately from call
+        &kLyricAstBlockClass,
+        &kLyricAstIfClass,
+        &kLyricAstCondClass,
+        &kLyricAstMatchClass,
+        &kLyricAstCaseClass,
+        &kLyricAstWhileClass,
+        &kLyricAstForClass,
+        &kLyricAstTryClass,
+        &kLyricAstReturnClass,
 
-        &kLyricAstValClass,                       // define val
-        &kLyricAstVarClass,                       // define var
-        &kLyricAstUnpackClass,                    // variable unpack
-        &kLyricAstPackClass,                      // parameter pack
-        &kLyricAstParamClass,                     // function parameter
-        &kLyricAstRestClass,                      // variadic parameter
-        &kLyricAstCtxClass,                       // ctx parameter
+        &kLyricAstValClass,
+        &kLyricAstVarClass,
+        &kLyricAstUnpackClass,
+        &kLyricAstPackClass,
+        &kLyricAstParamClass,
+        &kLyricAstRestClass,
+        &kLyricAstCtxClass,
 
-        &kLyricAstGenericClass,                   // generic type specification
-        &kLyricAstPlaceholderClass,               // type placeholder
-        &kLyricAstConstraintClass,                // type constraint
+        &kLyricAstGenericClass,
+        &kLyricAstPlaceholderClass,
+        &kLyricAstConstraintClass,
 
-        &kLyricAstDefClass,                       // define function
-        &kLyricAstDefAliasClass,                  // define alias
-        &kLyricAstDefClassClass,                  // define class
-        &kLyricAstDefConceptClass,                // define concept
-        &kLyricAstDefEnumClass,                   // define enumeration
-        &kLyricAstDefInstanceClass,               // define instance
-        &kLyricAstDefMagnetClass,                 // define magnet
-        &kLyricAstDefStructClass,                 // define struct
-        &kLyricAstNamespaceClass,                 // define namespace
+        &kLyricAstDefClass,
+        &kLyricAstDefAliasClass,
+        &kLyricAstDefClassClass,
+        &kLyricAstDefConceptClass,
+        &kLyricAstDefEnumClass,
+        &kLyricAstDefInstanceClass,
+        &kLyricAstDefMagnetClass,
+        &kLyricAstDefStructClass,
+        &kLyricAstNamespaceClass,
 
-        &kLyricAstSuperClass,                     // super statement
-        &kLyricAstInitClass,                      // init statement
-        &kLyricAstImplClass,                      // impl statement
+        &kLyricAstSuperClass,
+        &kLyricAstInitClass,
+        &kLyricAstImplClass,
 
-        &kLyricAstImportAllClass,                 // import all module symbols into environment
-        &kLyricAstImportSymbolsClass,             // import specified module symbols into environment
-        &kLyricAstImportModuleClass,              // import specified module symbols into environment
-        &kLyricAstExportAllClass,                 // export all module symbols from environment
-        &kLyricAstExportSymbolsClass,             // export specified module symbols from environment
-        &kLyricAstExportModuleClass,              // export specified module symbols from environment
-        &kLyricAstUsingClass,                     // insert impls into the current environment
-        &kLyricAstSymbolRefClass,                 // symbol reference
+        &kLyricAstImportAllClass,
+        &kLyricAstImportSymbolsClass,
+        &kLyricAstImportModuleClass,
+        &kLyricAstExportAllClass,
+        &kLyricAstExportSymbolsClass,
+        &kLyricAstExportModuleClass,
+        &kLyricAstUsingClass,
+        &kLyricAstSymbolRefClass,
+
+        &kLyricAstMacroCallClass,
+        &kLyricAstMacroListClass,
 
         &kLyricAstLiteralValueProperty,
 
@@ -534,6 +553,7 @@ namespace lyric_schema {
         &kLyricAstGenericOffsetProperty,
         &kLyricAstImplementsOffsetProperty,
         &kLyricAstTypeArgumentsOffsetProperty,
+        &kLyricAstMacroListOffsetProperty,
     };
 
     constexpr tempo_utils::SchemaVocabulary<LyricAstNs, LyricAstId>

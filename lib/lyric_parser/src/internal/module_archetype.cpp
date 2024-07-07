@@ -42,6 +42,7 @@ lyric_parser::internal::ModuleArchetype::ModuleArchetype(ArchetypeState *state)
       ModuleDefineOps(state),
       ModuleParameterOps(state),
       ModuleExceptionOps(state),
+      ModuleMacroOps(state),
       m_state(state)
 {
     TU_ASSERT (m_state != nullptr);
@@ -966,50 +967,71 @@ void lyric_parser::internal::ModuleArchetype::exitDefaliasStatement(ModuleParser
 /*
  * parameter ops
  */
-void
-lyric_parser::internal::ModuleArchetype::enterParamSpec(ModuleParser::ParamSpecContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterParamSpec(ModuleParser::ParamSpecContext *ctx)
 {
     return ModuleParameterOps::enterParamSpec(ctx);
 }
 
-void
-lyric_parser::internal::ModuleArchetype::exitPositionalParam(ModuleParser::PositionalParamContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitPositionalParam(ModuleParser::PositionalParamContext *ctx)
 {
     return ModuleParameterOps::exitPositionalParam(ctx);
 }
 
-void
-lyric_parser::internal::ModuleArchetype::exitNamedParam(ModuleParser::NamedParamContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitNamedParam(ModuleParser::NamedParamContext *ctx)
 {
     return ModuleParameterOps::exitNamedParam(ctx);
 }
 
-void
-lyric_parser::internal::ModuleArchetype::exitRenamedParam(ModuleParser::RenamedParamContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitRenamedParam(ModuleParser::RenamedParamContext *ctx)
 {
     return ModuleParameterOps::exitRenamedParam(ctx);
 }
 
-void
-lyric_parser::internal::ModuleArchetype::exitNamedCtx(ModuleParser::NamedCtxContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitNamedCtx(ModuleParser::NamedCtxContext *ctx)
 {
     return ModuleParameterOps::exitNamedCtx(ctx);
 }
 
-void
-lyric_parser::internal::ModuleArchetype::exitRenamedCtx(ModuleParser::RenamedCtxContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitRenamedCtx(ModuleParser::RenamedCtxContext *ctx)
 {
     return ModuleParameterOps::exitRenamedCtx(ctx);
 }
 
-void
-lyric_parser::internal::ModuleArchetype::exitRest(ModuleParser::RestContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitRest(ModuleParser::RestContext *ctx)
 {
     return ModuleParameterOps::exitRest(ctx);
 }
 
-void
-lyric_parser::internal::ModuleArchetype::exitParamSpec(ModuleParser::ParamSpecContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitParamSpec(ModuleParser::ParamSpecContext *ctx)
 {
     return ModuleParameterOps::exitParamSpec(ctx);
+}
+
+/*
+ * macro ops
+ */
+
+void lyric_parser::internal::ModuleArchetype::enterMacro(ModuleParser::MacroContext *ctx)
+{
+    return ModuleMacroOps::enterMacro(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::enterAnnotationList(ModuleParser::AnnotationListContext *ctx)
+{
+    return ModuleMacroOps::enterAnnotationList(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitMacroCall(ModuleParser::MacroCallContext *ctx)
+{
+    return ModuleMacroOps::exitMacroCall(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitAnnotationList(ModuleParser::AnnotationListContext *ctx)
+{
+    return ModuleMacroOps::exitAnnotationList(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitMacro(ModuleParser::MacroContext *ctx)
+{
+    return ModuleMacroOps::exitMacro(ctx);
 }

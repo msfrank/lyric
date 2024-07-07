@@ -124,6 +124,7 @@ DotOperator                 : '.' ;
 PipeOperator                : '|' ;
 AmpersandOperator           : '&' ;
 HashOperator                : '#' ;
+AtOperator                  : '@' ;
 
 
 // reserved keywords

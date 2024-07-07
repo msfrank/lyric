@@ -6,7 +6,7 @@ options { tokenVocab = ModuleLexer; }
 root                : block ;
 
 block               : form+ ;
-form                : statement | expression;
+form                : statement | expression | macro ;
 
 expression          : basicExpression
                     | lambdaExpression
@@ -397,6 +397,15 @@ falseLiteral        : FalseKeyword ;
 undefLiteral        : UndefKeyword ;
 nilLiteral          : NilKeyword ;
 keywordLiteral      : trueLiteral | falseLiteral | undefLiteral | nilLiteral ;
+
+
+// macros and annotations
+
+macroCall           : Identifier ( ParenOpen argList? ParenClose )? ;
+macro               : AtOperator CurlyOpen macroCall+ CurlyClose ;
+
+annotation          : AtOperator macroCall ;
+annotationList      : annotation+ ;
 
 
 // comment
