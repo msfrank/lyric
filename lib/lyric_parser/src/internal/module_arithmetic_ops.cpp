@@ -8,6 +8,7 @@
 #include <tempo_utils/log_message.h>
 
 #include <lyric_parser/internal/module_arithmetic_ops.h>
+#include <lyric_parser/internal/parser_utils.h>
 
 lyric_parser::internal::ModuleArithmeticOps::ModuleArithmeticOps(ArchetypeState *state)
     : m_state(state)
@@ -20,17 +21,18 @@ lyric_parser::internal::ModuleArithmeticOps::exitAddExpression(ModuleParser::Add
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p2 = m_state->popNode();
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p1 = m_state->popNode();
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *addNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstAddClass, token);
+    auto *addNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstAddClass, location);
     addNode->appendChild(p1);
     addNode->appendChild(p2);
     m_state->pushNode(addNode);
@@ -41,17 +43,18 @@ lyric_parser::internal::ModuleArithmeticOps::exitSubExpression(ModuleParser::Sub
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p2 = m_state->popNode();
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p1 = m_state->popNode();
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *subNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSubClass, token);
+    auto *subNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSubClass, location);
     subNode->appendChild(p1);
     subNode->appendChild(p2);
     m_state->pushNode(subNode);
@@ -62,17 +65,18 @@ lyric_parser::internal::ModuleArithmeticOps::exitMulExpression(ModuleParser::Mul
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p2 = m_state->popNode();
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p1 = m_state->popNode();
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *mulNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstMulClass, token);
+    auto *mulNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstMulClass, location);
     mulNode->appendChild(p1);
     mulNode->appendChild(p2);
     m_state->pushNode(mulNode);
@@ -83,17 +87,18 @@ lyric_parser::internal::ModuleArithmeticOps::exitDivExpression(ModuleParser::Div
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p2 = m_state->popNode();
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p1 = m_state->popNode();
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *divNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDivClass, token);
+    auto *divNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDivClass, location);
     divNode->appendChild(p1);
     divNode->appendChild(p2);
     m_state->pushNode(divNode);
@@ -104,12 +109,13 @@ lyric_parser::internal::ModuleArithmeticOps::exitNegExpression(ModuleParser::Neg
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p1 = m_state->popNode();
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *negNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNegClass, token);
+    auto *negNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNegClass, location);
     negNode->appendChild(p1);
     m_state->pushNode(negNode);
 }

@@ -1,6 +1,7 @@
 
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/internal/lexer_error_listener.h>
+#include <lyric_parser/internal/parser_utils.h>
 #include <lyric_parser/parse_result.h>
 #include <tempo_utils/log_stream.h>
 
@@ -27,7 +28,8 @@ lyric_parser::internal::LexerErrorListener::syntaxError(
     try {
         std::rethrow_exception(e);
     } catch(antlr4::LexerNoViableAltException &ex) {
-        m_state->throwSyntaxError(offendingSymbol, message);
+        auto location = get_token_location(offendingSymbol);
+        m_state->throwSyntaxError(location, message);
     } catch(antlr4::RuntimeException &ex) {
         throw tempo_utils::StatusException(
             tempo_utils::Status(tempo_utils::StatusCode::kInternal, message));

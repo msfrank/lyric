@@ -3,6 +3,7 @@
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/internal/module_definstance_ops.h>
+#include <lyric_parser/internal/parser_utils.h>
 #include <lyric_parser/parser_attrs.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
@@ -18,15 +19,15 @@ void
 lyric_parser::internal::ModuleDefinstanceOps::enterDefinstanceStatement(ModuleParser::DefinstanceStatementContext *ctx)
 {
     auto *token = ctx->getStart();
-    auto *definstanceNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefInstanceClass, token);
+    auto location = get_token_location(token);
+    auto *definstanceNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefInstanceClass, location);
     m_state->pushNode(definstanceNode);
 
     auto *scopeManager = m_state->scopeManager();
     auto span = scopeManager->makeSpan();
-    span->putTag(kLyricParserNodeOffset, static_cast<tu_int64>(definstanceNode->getAddress().getAddress()));
-    span->putTag(kLyricParserLineNumber, static_cast<tu_int64>(definstanceNode->getLineNumber()));
-    span->putTag(kLyricParserColumnNumber, static_cast<tu_int64>(definstanceNode->getColumnNumber()));
-    span->putTag(kLyricParserFileOffset, static_cast<tu_int64>(definstanceNode->getFileOffset()));
+    span->putTag(kLyricParserLineNumber, location.lineNumber);
+    span->putTag(kLyricParserColumnNumber, location.columnNumber);
+    span->putTag(kLyricParserFileOffset, location.fileOffset);
 }
 
 void
@@ -47,13 +48,13 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceVal(ModuleParser::Inst
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     // member type
-    auto *memberTypeNode = m_state->makeType(ctx->assignableType());
-    auto *memberTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(memberTypeNode->getAddress().getAddress()));
+    auto *memberTypeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *memberTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, memberTypeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, token);
+    auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, location);
     valNode->putAttr(identifierAttr);
     valNode->putAttr(memberTypeOffsetAttr);
 
@@ -61,16 +62,16 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceVal(ModuleParser::Inst
     if (ctx->defaultInitializer() != nullptr) {
         // if stack is empty, then mark source as incomplete
         if (m_state->isEmpty())
-            m_state->throwIncompleteModule(ctx->getStop());
+            m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
         auto *defaultNode = m_state->popNode();
         valNode->appendChild(defaultNode);
     }
 
     // if ancestor node is not a kDefInstance, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *definstanceNode = m_state->peekNode();
-    definstanceNode->checkClassOrThrow(lyric_schema::kLyricAstDefInstanceClass);
+    m_state->checkNodeOrThrow(definstanceNode, lyric_schema::kLyricAstDefInstanceClass);
 
     definstanceNode->appendChild(valNode);
 
@@ -98,13 +99,13 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceVar(ModuleParser::Inst
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     // member type
-    auto *memberTypeNode = m_state->makeType(ctx->assignableType());
-    auto *memberTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(memberTypeNode->getAddress().getAddress()));
+    auto *memberTypeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *memberTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, memberTypeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *varNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstVarClass, token);
+    auto *varNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstVarClass, location);
     varNode->putAttr(identifierAttr);
     varNode->putAttr(memberTypeOffsetAttr);
 
@@ -112,16 +113,16 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceVar(ModuleParser::Inst
     if (ctx->defaultInitializer() != nullptr) {
         // if stack is empty, then mark source as incomplete
         if (m_state->isEmpty())
-            m_state->throwIncompleteModule(ctx->getStop());
+            m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
         auto *defaultNode = m_state->popNode();
         varNode->appendChild(defaultNode);
     }
 
     // if ancestor node is not a kDefInstance, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *definstanceNode = m_state->peekNode();
-    definstanceNode->checkClassOrThrow(lyric_schema::kLyricAstDefInstanceClass);
+    m_state->checkNodeOrThrow(definstanceNode, lyric_schema::kLyricAstDefInstanceClass);
 
     definstanceNode->appendChild(varNode);
 
@@ -147,12 +148,12 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceDef(ModuleParser::Inst
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *blockNode = m_state->popNode();
 
     // the parameter list
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *packNode = m_state->popNode();
 
     // the function name
@@ -160,13 +161,13 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceDef(ModuleParser::Inst
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     // the function return type
-    auto *returnTypeNode = m_state->makeType(ctx->returnSpec()->assignableType());
-    auto *returnTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(returnTypeNode->getAddress().getAddress()));
+    auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
+    auto *returnTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, returnTypeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, token);
+    auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
     defNode->putAttr(identifierAttr);
     defNode->putAttr(returnTypeOffsetAttr);
     defNode->appendChild(packNode);
@@ -174,9 +175,9 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceDef(ModuleParser::Inst
 
     // if ancestor node is not a kDefInstance, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *definstanceNode = m_state->peekNode();
-    definstanceNode->checkClassOrThrow(lyric_schema::kLyricAstDefInstanceClass);
+    m_state->checkNodeOrThrow(definstanceNode, lyric_schema::kLyricAstDefInstanceClass);
 
     definstanceNode->appendChild(defNode);
 
@@ -190,15 +191,15 @@ void
 lyric_parser::internal::ModuleDefinstanceOps::enterInstanceImpl(ModuleParser::InstanceImplContext *ctx)
 {
     auto *token = ctx->getStart();
-    auto *implNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImplClass, token);
+    auto location = get_token_location(token);
+    auto *implNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImplClass, location);
     m_state->pushNode(implNode);
 
     auto *scopeManager = m_state->scopeManager();
     auto span = scopeManager->makeSpan();
-    span->putTag(kLyricParserNodeOffset, static_cast<tu_int64>(implNode->getAddress().getAddress()));
-    span->putTag(kLyricParserLineNumber, static_cast<tu_int64>(implNode->getLineNumber()));
-    span->putTag(kLyricParserColumnNumber, static_cast<tu_int64>(implNode->getColumnNumber()));
-    span->putTag(kLyricParserFileOffset, static_cast<tu_int64>(implNode->getFileOffset()));
+    span->putTag(kLyricParserLineNumber, location.lineNumber);
+    span->putTag(kLyricParserColumnNumber, location.columnNumber);
+    span->putTag(kLyricParserFileOffset, location.fileOffset);
 }
 
 void
@@ -208,24 +209,23 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceImpl(ModuleParser::Ins
     auto span = scopeManager->peekSpan();
 
     // the impl type
-    auto *implTypeNode = m_state->makeType(ctx->assignableType());
-    auto *implTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(implTypeNode->getAddress().getAddress()));
+    auto *implTypeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *implTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, implTypeNode);
 
     // pop impl off the stack
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *implNode = m_state->popNode();
-    implNode->checkClassOrThrow(lyric_schema::kLyricAstImplClass);
+    m_state->checkNodeOrThrow(implNode, lyric_schema::kLyricAstImplClass);
 
     // set the impl type
     implNode->putAttr(implTypeOffsetAttr);
 
     // if ancestor node is not a kDefInstance, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *definstanceNode = m_state->peekNode();
-    definstanceNode->checkClassOrThrow(lyric_schema::kLyricAstDefInstanceClass);
+    m_state->checkNodeOrThrow(definstanceNode, lyric_schema::kLyricAstDefInstanceClass);
 
     definstanceNode->appendChild(implNode);
 
@@ -245,9 +245,9 @@ lyric_parser::internal::ModuleDefinstanceOps::exitDefinstanceStatement(ModulePar
 
     // if ancestor node is not a kDefInstance, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *definstanceNode = m_state->peekNode();
-    definstanceNode->checkClassOrThrow(lyric_schema::kLyricAstDefInstanceClass);
+    m_state->checkNodeOrThrow(definstanceNode, lyric_schema::kLyricAstDefInstanceClass);
 
     definstanceNode->putAttr(identifierAttr);
 

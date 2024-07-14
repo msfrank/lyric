@@ -22,6 +22,7 @@
 #include <lyric_parser/internal/module_logical_ops.h>
 #include <lyric_parser/internal/module_match_ops.h>
 #include <lyric_parser/internal/module_parameter_ops.h>
+#include <lyric_parser/internal/parser_utils.h>
 
 lyric_parser::internal::ModuleArchetype::ModuleArchetype(ArchetypeState *state)
     : ModuleSymbolOps(state),
@@ -58,8 +59,8 @@ lyric_parser::internal::ModuleArchetype::enterRoot(ModuleParser::RootContext *ct
 void
 lyric_parser::internal::ModuleArchetype::enterBlock(ModuleParser::BlockContext *ctx)
 {
-    auto *token = ctx->getStart();
-    auto *blockNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstBlockClass, token);
+    auto location = get_token_location(ctx->getStart());
+    auto *blockNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstBlockClass, location);
     m_state->pushNode(blockNode);
 }
 
@@ -68,14 +69,14 @@ lyric_parser::internal::ModuleArchetype::exitForm(ModuleParser::FormContext *ctx
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *formNode = m_state->popNode();
 
     // if ancestor node is not a kBlock, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *blockNode = m_state->peekNode();
-    blockNode->checkClassOrThrow(lyric_schema::kLyricAstBlockClass);
+    m_state->checkNodeOrThrow(blockNode, lyric_schema::kLyricAstBlockClass);
 
     // otherwise append form to the block
     blockNode->appendChild(formNode);
@@ -89,16 +90,16 @@ lyric_parser::internal::ModuleArchetype::exitRoot(ModuleParser::RootContext *ctx
 
     // if ancestor node is not a kBlock, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto blockNode = m_state->peekNode();
-    blockNode->checkClassOrThrow(lyric_schema::kLyricAstBlockClass);
+    m_state->checkNodeOrThrow(blockNode, lyric_schema::kLyricAstBlockClass);
 
     // pop the kBlock off the stack
     m_state->popNode();
 
     // at this point m_stack should be empty
     if (!m_state->isEmpty())
-        m_state->throwParseInvariant(blockNode->getAddress(), "found extra nodes on the parse stack");
+        m_state->throwParseInvariant("found extra nodes on the parse stack");
 
     scopeManager->popSpan();
 }

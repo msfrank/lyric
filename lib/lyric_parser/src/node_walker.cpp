@@ -33,6 +33,17 @@ lyric_parser::NodeWalker::getAddress() const
     return NodeAddress(m_index);
 }
 
+lyric_parser::ParseLocation
+lyric_parser::NodeWalker::getLocation() const
+{
+    if (!isValid())
+        return {};
+    auto *node = m_reader->getNode(m_index);
+    TU_ASSERT (node != nullptr);
+    return ParseLocation(node->line_nr(), node->column_nr(), node->file_offset(), node->text_span());
+
+}
+
 uint32_t
 lyric_parser::NodeWalker::getLineNumber() const
 {

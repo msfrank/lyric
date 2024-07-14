@@ -35,11 +35,10 @@ lyric_compiler::internal::compile_lambda(
     auto lambdaName = absl::StrCat("$lambda", block->blockProc()->numLocals());
 
     // parse the return type
-    tu_uint32 typeOffset;
-    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-    auto type = walker.getNodeAtOffset(typeOffset);
+    lyric_parser::NodeWalker typeNode;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
     lyric_typing::TypeSpec returnSpec;
-    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(block, type));
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(block, typeNode));
 
     // parse the parameter list
     auto pack = walker.getChild(0);

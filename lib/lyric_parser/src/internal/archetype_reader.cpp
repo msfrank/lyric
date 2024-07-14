@@ -62,12 +62,12 @@ lyric_parser::internal::ArchetypeReader::numNodes() const
 }
 
 const
-lyi1::AttributeDescriptor *lyric_parser::internal::ArchetypeReader::getAttr(uint32_t index) const
+lyi1::AttrDescriptor *lyric_parser::internal::ArchetypeReader::getAttr(uint32_t index) const
 {
     if (m_archetype == nullptr)
         return nullptr;
-    if (m_archetype->attributes() && index < m_archetype->attributes()->size())
-        return m_archetype->attributes()->Get(index);
+    if (m_archetype->attrs() && index < m_archetype->attrs()->size())
+        return m_archetype->attrs()->Get(index);
     return nullptr;
 }
 
@@ -76,7 +76,7 @@ lyric_parser::internal::ArchetypeReader::numAttrs() const
 {
     if (m_archetype == nullptr)
         return 0;
-    return m_archetype->attributes()? m_archetype->attributes()->size() : 0;
+    return m_archetype->attrs()? m_archetype->attrs()->size() : 0;
 }
 
 std::span<const tu_uint8>

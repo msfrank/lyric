@@ -24,7 +24,7 @@ namespace lyric_parser::internal {
         const lyi1::NodeDescriptor *getNode(uint32_t index) const;
         uint32_t numNodes() const;
 
-        const lyi1::AttributeDescriptor *getAttr(uint32_t index) const;
+        const lyi1::AttrDescriptor *getAttr(uint32_t index) const;
         uint32_t numAttrs() const;
 
         std::span<const tu_uint8> bytesView() const;

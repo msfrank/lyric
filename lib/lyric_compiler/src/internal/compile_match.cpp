@@ -166,11 +166,10 @@ compile_match_case_unpack(
     auto *code = block->blockCode();
 
     // get the assignable type of the unpack
-    tu_uint32 typeOffset;
-    moduleEntry.parseAttrOrThrow(unpack, lyric_parser::kLyricAstTypeOffset, typeOffset);
-    auto type = unpack.getNodeAtOffset(typeOffset);
+    lyric_parser::NodeWalker typeNode;
+    moduleEntry.parseAttrOrThrow(unpack, lyric_parser::kLyricAstTypeOffset, typeNode);
     lyric_typing::TypeSpec predicateSpec;
-    TU_ASSIGN_OR_RETURN (predicateSpec, typeSystem->parseAssignable(block, type));
+    TU_ASSIGN_OR_RETURN (predicateSpec, typeSystem->parseAssignable(block, typeNode));
     lyric_common::TypeDef predicateType;
     TU_ASSIGN_OR_RETURN (predicateType, typeSystem->resolveAssignable(block, predicateSpec));
 
@@ -464,10 +463,9 @@ lyric_compiler::internal::compile_match(
     // evaluate the alternative block. if no alternative is specified, then by default we return Nil
     lyric_common::TypeDef alternativeType;
     if (walker.hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
-        tu_uint32 defaultOffset;
-        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultOffset);
-        auto defaultCase = walker.getNodeAtOffset(defaultOffset);
-        auto alternativeResult = compile_block(&alternative, defaultCase, moduleEntry);
+        lyric_parser::NodeWalker defaultNode;
+        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultNode);
+        auto alternativeResult = compile_block(&alternative, defaultNode, moduleEntry);
         if (alternativeResult.isStatus())
             return alternativeResult;
         alternativeType = alternativeResult.getResult();

@@ -61,6 +61,29 @@ namespace lyric_parser {
         SCIENTIFIC,
     };
 
+    enum class ArchetypeDescriptorType {
+        Invalid,
+        Namespace,
+        Node,
+        Attr,
+    };
+
+    class ArchetypeId {
+    public:
+        bool isValid() const;
+        ArchetypeDescriptorType getType() const;
+        tu_uint32 getId() const;
+        tu_uint32 getOffset() const;
+
+    private:
+        ArchetypeDescriptorType m_type;
+        tu_uint32 m_id;
+        tu_uint32 m_offset;
+
+        friend class ArchetypeState;
+        ArchetypeId(ArchetypeDescriptorType type, tu_uint32 id, tu_uint32 offset);
+    };
+
     struct NamespaceAddress {
     public:
         NamespaceAddress() : u32(INVALID_ADDRESS_U32) {};
@@ -97,24 +120,18 @@ namespace lyric_parser {
         tu_uint32 u32 = INVALID_ADDRESS_U32;
     };
 
-    struct AttrId {
-        AttrId();
-        AttrId(const NamespaceAddress &address, tu_uint32 type);
-        AttrId(const AttrId &other);
-
-        NamespaceAddress getAddress() const;
-        tu_uint32 getType() const;
-
-        bool operator==(const AttrId &other) const;
-
-        template <typename H>
-        friend H AbslHashValue(H h, const AttrId &id) {
-            return H::combine(std::move(h), id.m_address.getAddress(), id.m_type);
-        }
-
-    private:
-        NamespaceAddress m_address;
-        tu_uint32 m_type;
+    struct ParseLocation {
+        tu_int64 lineNumber;
+        tu_int64 columnNumber;
+        tu_int64 fileOffset;
+        tu_int64 textSpan;
+        ParseLocation();
+        ParseLocation(
+            tu_int64 lineNumber,
+            tu_int64 columnNumber,
+            tu_int64 fileOffset,
+            tu_int64 textSpan);
+        bool isValid() const;
     };
 
     // forward declarations

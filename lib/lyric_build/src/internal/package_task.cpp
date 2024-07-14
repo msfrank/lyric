@@ -141,7 +141,7 @@ write_assembly_artifacts(
     // construct the assembly filter
     lyric_build::MetadataWriter assemblyFilterWriter;
     assemblyFilterWriter.putAttr(lyric_packaging::kLyricPackagingContentType,
-        std::string(lyric_common::kAssemblyContentType));
+        std::string(lyric_common::kObjectContentType));
     auto toMetadataResult = assemblyFilterWriter.toMetadata();
     if (toMetadataResult.isStatus())
         return toMetadataResult.getStatus();
@@ -199,7 +199,7 @@ write_assembly_artifacts(
         auto content = loadContentResult.getResult();
 
         std::filesystem::path filename(entryPath.getFilename());
-        filename.replace_extension(lyric_common::kAssemblyFileDotSuffix);
+        filename.replace_extension(lyric_common::kObjectFileDotSuffix);
         auto putFileResult = packageWriter.putFile(directoryAddress, filename.string(), content);
         if (putFileResult.isStatus())
             return putFileResult.getStatus();

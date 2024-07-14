@@ -57,7 +57,7 @@ lyric_build::internal::ArchiveTask::configure(const ConfigStore *config)
     // determine the archive name, which is required
     TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_archiveName, archiveNameParser,
         config->getTaskNode(taskId, "archiveName")));
-    m_archiveName.append(lyric_common::kAssemblyFileDotSuffix);
+    m_archiveName.append(lyric_common::kObjectFileDotSuffix);
 
     return BuildStatus::ok();
 }

@@ -3,6 +3,7 @@
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/internal/module_defconcept_ops.h>
+#include <lyric_parser/internal/parser_utils.h>
 #include <lyric_parser/parser_attrs.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
@@ -18,15 +19,15 @@ void
 lyric_parser::internal::ModuleDefconceptOps::enterDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx)
 {
     auto *token = ctx->getStart();
-    auto *defconceptNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefConceptClass, token);
+    auto location = get_token_location(token);
+    auto *defconceptNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefConceptClass, location);
     m_state->pushNode(defconceptNode);
 
     auto *scopeManager = m_state->scopeManager();
     auto span = scopeManager->makeSpan();
-    span->putTag(kLyricParserNodeOffset, static_cast<tu_int64>(defconceptNode->getAddress().getAddress()));
-    span->putTag(kLyricParserLineNumber, static_cast<tu_int64>(defconceptNode->getLineNumber()));
-    span->putTag(kLyricParserColumnNumber, static_cast<tu_int64>(defconceptNode->getColumnNumber()));
-    span->putTag(kLyricParserFileOffset, static_cast<tu_int64>(defconceptNode->getFileOffset()));
+    span->putTag(kLyricParserLineNumber, location.lineNumber);
+    span->putTag(kLyricParserColumnNumber, location.columnNumber);
+    span->putTag(kLyricParserFileOffset, location.fileOffset);
 }
 
 void
@@ -45,7 +46,7 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptDef(ModuleParser::Concep
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *packNode = m_state->popNode();
 
     // the action name
@@ -53,22 +54,22 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptDef(ModuleParser::Concep
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     // the function return type
-    auto *returnTypeNode = m_state->makeType(ctx->returnSpec()->assignableType());
-    auto *returnTypeOffsetAttr = m_state->appendAttrOrThrow(
-        kLyricAstTypeOffset, returnTypeNode->getAddress().getAddress());
+    auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
+    auto *returnTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, returnTypeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, token);
+    auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
     defNode->putAttr(identifierAttr);
     defNode->putAttr(returnTypeOffsetAttr);
     defNode->appendChild(packNode);
 
     // if ancestor node is not a kDefConcept, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *defconceptNode = m_state->peekNode();
-    defconceptNode->checkClassOrThrow(lyric_schema::kLyricAstDefConceptClass);
+    m_state->checkNodeOrThrow(defconceptNode, lyric_schema::kLyricAstDefConceptClass);
 
     defconceptNode->appendChild(defNode);
 
@@ -82,15 +83,15 @@ void
 lyric_parser::internal::ModuleDefconceptOps::enterConceptImpl(ModuleParser::ConceptImplContext *ctx)
 {
     auto *token = ctx->getStart();
-    auto *implNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImplClass, token);
+    auto location = get_token_location(token);
+    auto *implNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImplClass, location);
     m_state->pushNode(implNode);
 
     auto *scopeManager = m_state->scopeManager();
     auto span = scopeManager->makeSpan();
-    span->putTag(kLyricParserNodeOffset, static_cast<tu_int64>(implNode->getAddress().getAddress()));
-    span->putTag(kLyricParserLineNumber, static_cast<tu_int64>(implNode->getLineNumber()));
-    span->putTag(kLyricParserColumnNumber, static_cast<tu_int64>(implNode->getColumnNumber()));
-    span->putTag(kLyricParserFileOffset, static_cast<tu_int64>(implNode->getFileOffset()));
+    span->putTag(kLyricParserLineNumber, location.lineNumber);
+    span->putTag(kLyricParserColumnNumber, location.columnNumber);
+    span->putTag(kLyricParserFileOffset, location.fileOffset);
 }
 
 void
@@ -100,26 +101,25 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptImpl(ModuleParser::Conce
     auto span = scopeManager->peekSpan();
 
     // the impl type
-    auto *implTypeNode = m_state->makeType(ctx->assignableType());
-    auto *implTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(implTypeNode->getAddress().getAddress()));
+    auto *implTypeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *implTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, implTypeNode);
 
     // pop impl off the stack
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *implNode = m_state->popNode();
-    implNode->checkClassOrThrow(lyric_schema::kLyricAstImplClass);
+    m_state->checkNodeOrThrow(implNode, lyric_schema::kLyricAstImplClass);
 
     // set the impl type
     implNode->putAttr(implTypeOffsetAttr);
 
     // if ancestor node is not a kDefConcept, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
-    auto *definstanceNode = m_state->peekNode();
-    definstanceNode->checkClassOrThrow(lyric_schema::kLyricAstDefConceptClass);
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
+    auto *defconceptNode = m_state->peekNode();
+    m_state->checkNodeOrThrow(defconceptNode, lyric_schema::kLyricAstDefConceptClass);
 
-    definstanceNode->appendChild(implNode);
+    defconceptNode->appendChild(implNode);
 
     scopeManager->popSpan();
 }
@@ -133,10 +133,9 @@ lyric_parser::internal::ModuleDefconceptOps::exitDefconceptStatement(ModuleParse
 
     // if ancestor node is not a kDefConcept, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *defconceptNode = m_state->peekNode();
-
-    defconceptNode->checkClassOrThrow(lyric_schema::kLyricAstDefConceptClass);
+    m_state->checkNodeOrThrow(defconceptNode, lyric_schema::kLyricAstDefConceptClass);
 
     // the concept name
     auto id = ctx->symbolIdentifier()->getText();
@@ -146,9 +145,8 @@ lyric_parser::internal::ModuleDefconceptOps::exitDefconceptStatement(ModuleParse
     // generic information
     if (ctx->genericConcept()) {
         auto *genericConcept = ctx->genericConcept();
-        auto *genericNode = m_state->makeGeneric(genericConcept->placeholderSpec(), genericConcept->constraintSpec());
-        auto *genericOffsetAttr = m_state->appendAttrOrThrow(
-            kLyricAstGenericOffset, genericNode->getAddress().getAddress());
+        auto *genericNode = make_Generic_node(m_state, genericConcept->placeholderSpec(), genericConcept->constraintSpec());
+        auto *genericOffsetAttr = m_state->appendAttrOrThrow(kLyricAstGenericOffset, genericNode);
         defconceptNode->putAttr(genericOffsetAttr);
     }
 

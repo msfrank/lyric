@@ -22,8 +22,6 @@ namespace lyric_build {
             tu_uint32 index,
             tempo_utils::AbstractAttrParser *parser,
             EntryType &value) const override;
-        tempo_utils::Status validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
-        std::string toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
     };
 
     extern const lyric_common::AssemblyLocationAttr kLyricBuildAssemblyLocation;

@@ -5,6 +5,7 @@
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/internal/module_symbol_ops.h>
+#include <lyric_parser/internal/parser_utils.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
 #include <tempo_utils/log_stream.h>
@@ -22,7 +23,8 @@ lyric_parser::internal::ModuleSymbolOps::enterNamespaceStatement(ModuleParser::N
     auto span = scopeManager->makeSpan();
 
     auto *token = ctx->getStart();
-    auto *namespaceNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNamespaceClass, token);
+    auto location = get_token_location(token);
+    auto *namespaceNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNamespaceClass, location);
     m_state->pushNode(namespaceNode);
 }
 
@@ -35,7 +37,7 @@ lyric_parser::internal::ModuleSymbolOps::exitNamespaceStatement(ModuleParser::Na
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *blockNode = m_state->popNode();
 
     // get the namespace identifier
@@ -44,9 +46,9 @@ lyric_parser::internal::ModuleSymbolOps::exitNamespaceStatement(ModuleParser::Na
 
     // if ancestor node is not a kNamespace, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *namespaceNode = m_state->peekNode();
-    namespaceNode->checkClassOrThrow(lyric_schema::kLyricAstNamespaceClass);
+    m_state->checkNodeOrThrow(namespaceNode, lyric_schema::kLyricAstNamespaceClass);
 
     namespaceNode->putAttr(identifierAttr);
     namespaceNode->appendChild(blockNode);
@@ -71,15 +73,16 @@ lyric_parser::internal::ModuleSymbolOps::exitUsingPath(ModuleParser::UsingPathCo
     auto *symbolPathAttr = m_state->appendAttrOrThrow(kLyricAstSymbolPath, symbolPath);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *symbolRefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolRefClass, token);
+    auto *symbolRefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolRefClass, location);
     symbolRefNode->putAttr(symbolPathAttr);
 
     // if ancestor node is not a kUsing, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *usingNode = m_state->peekNode();
-    usingNode->checkClassOrThrow(lyric_schema::kLyricAstUsingClass);
+    m_state->checkNodeOrThrow(usingNode, lyric_schema::kLyricAstUsingClass);
 
     // otherwise add symbol ref to the node
     usingNode->appendChild(symbolRefNode);
@@ -89,7 +92,8 @@ void
 lyric_parser::internal::ModuleSymbolOps::enterUsingFromStatement(ModuleParser::UsingFromStatementContext *ctx)
 {
     auto *token = ctx->getStart();
-    auto *usingNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUsingClass, token);
+    auto location = get_token_location(token);
+    auto *usingNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUsingClass, location);
     m_state->pushNode(usingNode);
 }
 
@@ -104,9 +108,9 @@ lyric_parser::internal::ModuleSymbolOps::exitUsingFromStatement(ModuleParser::Us
 
     // if ancestor node is not a kUsing, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *usingNode = m_state->peekNode();
-    usingNode->checkClassOrThrow(lyric_schema::kLyricAstUsingClass);
+    m_state->checkNodeOrThrow(usingNode, lyric_schema::kLyricAstUsingClass);
 
     // otherwise add assembly location attr to the node
     usingNode->putAttr(assemblyLocationAttr);
@@ -116,7 +120,8 @@ void
 lyric_parser::internal::ModuleSymbolOps::enterUsingLocalStatement(ModuleParser::UsingLocalStatementContext *ctx)
 {
     auto *token = ctx->getStart();
-    auto *usingNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUsingClass, token);
+    auto location = get_token_location(token);
+    auto *usingNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUsingClass, location);
     m_state->pushNode(usingNode);
 }
 
@@ -125,9 +130,9 @@ lyric_parser::internal::ModuleSymbolOps::exitUsingLocalStatement(ModuleParser::U
 {
     // if ancestor node is not a kUsing, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *usingNode = m_state->peekNode();
-    usingNode->checkClassOrThrow(lyric_schema::kLyricAstUsingClass);
+    m_state->checkNodeOrThrow(usingNode, lyric_schema::kLyricAstUsingClass);
 }
 
 void
@@ -144,8 +149,9 @@ lyric_parser::internal::ModuleSymbolOps::exitImportRef(ModuleParser::ImportRefCo
     auto *symbolPathAttr = m_state->appendAttrOrThrow(kLyricAstSymbolPath, symbolPath);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *symbolRefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolRefClass, token);
+    auto *symbolRefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolRefClass, location);
     symbolRefNode->putAttr(symbolPathAttr);
 
     if (ctx->symbolAlias() != nullptr) {
@@ -156,9 +162,9 @@ lyric_parser::internal::ModuleSymbolOps::exitImportRef(ModuleParser::ImportRefCo
 
     // if ancestor node is not a kImportSymbols, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *importSymbolsNode = m_state->peekNode();
-    importSymbolsNode->checkClassOrThrow(lyric_schema::kLyricAstImportSymbolsClass);
+    m_state->checkNodeOrThrow(importSymbolsNode, lyric_schema::kLyricAstImportSymbolsClass);
 
     // otherwise add symbol ref to the node
     importSymbolsNode->appendChild(symbolRefNode);
@@ -169,16 +175,17 @@ lyric_parser::internal::ModuleSymbolOps::exitImportModuleStatement(ModuleParser:
 {
     auto locationLiteral = ctx->moduleLocation()->StringLiteral()->getText();
     std::string locationString(locationLiteral.cbegin() + 1, locationLiteral.cend() - 1);
-    auto location = lyric_common::AssemblyLocation::fromString(locationString);
+    auto moduleLocation = lyric_common::AssemblyLocation::fromString(locationString);
 
-    auto *assemblyLocationAttr = m_state->appendAttrOrThrow(kLyricAstAssemblyLocation, location);
+    auto *assemblyLocationAttr = m_state->appendAttrOrThrow(kLyricAstAssemblyLocation, moduleLocation);
 
     auto id = ctx->Identifier()->getText();
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *importModuleNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImportModuleClass, token);
+    auto *importModuleNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImportModuleClass, location);
     importModuleNode->putAttr(assemblyLocationAttr);
     importModuleNode->putAttr(identifierAttr);
     m_state->pushNode(importModuleNode);
@@ -189,13 +196,14 @@ lyric_parser::internal::ModuleSymbolOps::exitImportAllStatement(ModuleParser::Im
 {
     auto locationLiteral = ctx->moduleLocation()->StringLiteral()->getText();
     std::string locationString(locationLiteral.cbegin() + 1, locationLiteral.cend() - 1);
-    auto location = lyric_common::AssemblyLocation::fromString(locationString);
+    auto moduleLocation = lyric_common::AssemblyLocation::fromString(locationString);
 
-    auto *assemblyLocationAttr = m_state->appendAttrOrThrow(kLyricAstAssemblyLocation, location);
+    auto *assemblyLocationAttr = m_state->appendAttrOrThrow(kLyricAstAssemblyLocation, moduleLocation);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *importAllNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImportAllClass, token);
+    auto *importAllNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImportAllClass, location);
     importAllNode->putAttr(assemblyLocationAttr);
     m_state->pushNode(importAllNode);
 }
@@ -204,7 +212,8 @@ void
 lyric_parser::internal::ModuleSymbolOps::enterImportSymbolsStatement(ModuleParser::ImportSymbolsStatementContext *ctx)
 {
     auto *token = ctx->getStart();
-    auto *importSymbolsNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImportSymbolsClass, token);
+    auto location = get_token_location(token);
+    auto *importSymbolsNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImportSymbolsClass, location);
     m_state->pushNode(importSymbolsNode);
 }
 
@@ -213,15 +222,15 @@ lyric_parser::internal::ModuleSymbolOps::exitImportSymbolsStatement(ModuleParser
 {
     auto locationLiteral = ctx->moduleLocation()->StringLiteral()->getText();
     std::string locationString(locationLiteral.cbegin() + 1, locationLiteral.cend() - 1);
-    auto location = lyric_common::AssemblyLocation::fromString(locationString);
+    auto moduleLocation = lyric_common::AssemblyLocation::fromString(locationString);
 
-    auto *assemblyLocationAttr = m_state->appendAttrOrThrow(kLyricAstAssemblyLocation, location);
+    auto *assemblyLocationAttr = m_state->appendAttrOrThrow(kLyricAstAssemblyLocation, moduleLocation);
 
     // if ancestor node is not a kImportFrom, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *importSymbolsNode = m_state->peekNode();
-    importSymbolsNode->checkClassOrThrow(lyric_schema::kLyricAstImportSymbolsClass);
+    m_state->checkNodeOrThrow(importSymbolsNode, lyric_schema::kLyricAstImportSymbolsClass);
 
     // otherwise add assembly location attr to the node
     importSymbolsNode->putAttr(assemblyLocationAttr);
@@ -241,8 +250,9 @@ lyric_parser::internal::ModuleSymbolOps::exitExportRef(ModuleParser::ExportRefCo
     auto *symbolPathAttr = m_state->appendAttrOrThrow(kLyricAstSymbolPath, symbolPath);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *symbolRefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolRefClass, token);
+    auto *symbolRefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolRefClass, location);
     symbolRefNode->putAttr(symbolPathAttr);
 
     if (ctx->symbolAlias() != nullptr) {
@@ -253,9 +263,9 @@ lyric_parser::internal::ModuleSymbolOps::exitExportRef(ModuleParser::ExportRefCo
 
     // if ancestor node is not a kImportFrom, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *exportSymbolsNode = m_state->peekNode();
-    exportSymbolsNode->checkClassOrThrow(lyric_schema::kLyricAstExportSymbolsClass);
+    m_state->checkNodeOrThrow(exportSymbolsNode, lyric_schema::kLyricAstExportSymbolsClass);
 
     // otherwise add symbol ref to the node
     exportSymbolsNode->appendChild(symbolRefNode);
@@ -266,16 +276,17 @@ lyric_parser::internal::ModuleSymbolOps::exitExportModuleStatement(ModuleParser:
 {
     auto locationLiteral = ctx->moduleLocation()->StringLiteral()->getText();
     std::string locationString(locationLiteral.cbegin() + 1, locationLiteral.cend() - 1);
-    auto location = lyric_common::AssemblyLocation::fromString(locationString);
+    auto moduleLocation = lyric_common::AssemblyLocation::fromString(locationString);
 
-    auto *assemblyLocationAttr = m_state->appendAttrOrThrow(kLyricAstAssemblyLocation, location);
+    auto *assemblyLocationAttr = m_state->appendAttrOrThrow(kLyricAstAssemblyLocation, moduleLocation);
 
     auto id = ctx->Identifier()->getText();
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *exportModuleNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstExportModuleClass, token);
+    auto *exportModuleNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstExportModuleClass, location);
     exportModuleNode->putAttr(assemblyLocationAttr);
     exportModuleNode->putAttr(identifierAttr);
     m_state->pushNode(exportModuleNode);
@@ -286,13 +297,14 @@ lyric_parser::internal::ModuleSymbolOps::exitExportAllStatement(ModuleParser::Ex
 {
     auto locationLiteral = ctx->moduleLocation()->StringLiteral()->getText();
     std::string locationString(locationLiteral.cbegin() + 1, locationLiteral.cend() - 1);
-    auto location = lyric_common::AssemblyLocation::fromString(locationString);
+    auto moduleLocation = lyric_common::AssemblyLocation::fromString(locationString);
 
-    auto *assemblyLocationAttr = m_state->appendAttrOrThrow(kLyricAstAssemblyLocation, location);
+    auto *assemblyLocationAttr = m_state->appendAttrOrThrow(kLyricAstAssemblyLocation, moduleLocation);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *exportAllNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstExportAllClass, token);
+    auto *exportAllNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstExportAllClass, location);
     exportAllNode->putAttr(assemblyLocationAttr);
     m_state->pushNode(exportAllNode);
 }
@@ -301,7 +313,8 @@ void
 lyric_parser::internal::ModuleSymbolOps::enterExportSymbolsStatement(ModuleParser::ExportSymbolsStatementContext *ctx)
 {
     auto *token = ctx->getStart();
-    auto *exportSymbolsNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstExportSymbolsClass, token);
+    auto location = get_token_location(token);
+    auto *exportSymbolsNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstExportSymbolsClass, location);
     m_state->pushNode(exportSymbolsNode);
 }
 
@@ -316,9 +329,9 @@ lyric_parser::internal::ModuleSymbolOps::exitExportSymbolsStatement(ModuleParser
 
     // if ancestor node is not a kExportFrom, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *exportSymbolsNode = m_state->peekNode();
-    exportSymbolsNode->checkClassOrThrow(lyric_schema::kLyricAstExportSymbolsClass);
+    m_state->checkNodeOrThrow(exportSymbolsNode, lyric_schema::kLyricAstExportSymbolsClass);
 
     // otherwise add assembly location attr to the node
     exportSymbolsNode->putAttr(assemblyLocationAttr);

@@ -71,7 +71,7 @@ lyric_build::DependencyLoader::create(
         auto generation = cache->loadTrace(traceId);
 
         MetadataWriter writer;
-        writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kAssemblyContentType));
+        writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
         LyricMetadata filter;
         TU_ASSIGN_OR_RETURN(filter, writer.toMetadata());
 

@@ -115,11 +115,10 @@ lyric_compiler::internal::compile_unwrap(
         auto param = walker.getChild(i);
         moduleEntry.checkClassOrThrow(param, lyric_schema::kLyricAstParamClass);
 
-        tu_uint32 typeOffset;
-        moduleEntry.parseAttrOrThrow(param, lyric_parser::kLyricAstTypeOffset, typeOffset);
-        auto type = param.getNodeAtOffset(typeOffset);
+        lyric_parser::NodeWalker typeNode;
+        moduleEntry.parseAttrOrThrow(param, lyric_parser::kLyricAstTypeOffset, typeNode);
         lyric_typing::TypeSpec paramSpec;
-        TU_ASSIGN_OR_RETURN (paramSpec, typeSystem->parseAssignable(block, type));
+        TU_ASSIGN_OR_RETURN (paramSpec, typeSystem->parseAssignable(block, typeNode));
         lyric_common::TypeDef paramType;
         TU_ASSIGN_OR_RETURN (paramType, typeSystem->resolveAssignable(block, paramSpec));
         tupleTypeArguments.push_back(paramType);

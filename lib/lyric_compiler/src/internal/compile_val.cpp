@@ -29,11 +29,10 @@ lyric_compiler::internal::compile_val(
 
     lyric_common::TypeDef valType;
     if (walker.hasAttr(lyric_parser::kLyricAstTypeOffset)) {
-        tu_uint32 typeOffset;
-        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-        auto type = walker.getNodeAtOffset(typeOffset);
+        lyric_parser::NodeWalker typeNode;
+        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
         lyric_typing::TypeSpec valSpec;
-        TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(block, type));
+        TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(block, typeNode));
         TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(block, valSpec));
     }
 

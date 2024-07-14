@@ -1,5 +1,6 @@
 
 #include <lyric_parser/ast_attrs.h>
+#include <lyric_parser/internal/archetype_reader.h>
 
 lyric_parser::BaseTypeAttr::BaseTypeAttr(const tempo_utils::ComparableResource *resource)
     : tempo_utils::AttrSerde<BaseType>(resource)
@@ -45,44 +46,6 @@ lyric_parser::BaseTypeAttr::parseAttr(tu_uint32 index, tempo_utils::AbstractAttr
     return value_to_base_type(value, binding);
 }
 
-tempo_utils::Status
-lyric_parser::BaseTypeAttr::validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return status;
-    BaseType base;
-    return value_to_base_type(value, base);
-}
-
-std::string
-lyric_parser::BaseTypeAttr::toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return "???";
-
-    BaseType base;
-    status = value_to_base_type(value, base);
-    if (status.notOk())
-        return "???";
-
-    switch (base) {
-        case BaseType::BINARY:
-            return "BINARY";
-        case BaseType::OCTAL:
-            return "OCTAL";
-        case BaseType::DECIMAL:
-            return "DECIMAL";
-        case BaseType::HEX:
-            return "HEX";
-        default:
-            return "???";
-    }
-}
-
 lyric_parser::NotationTypeAttr::NotationTypeAttr(const tempo_utils::ComparableResource *resource)
     : tempo_utils::AttrSerde<NotationType>(resource)
 {
@@ -119,40 +82,6 @@ lyric_parser::NotationTypeAttr::parseAttr(tu_uint32 index, tempo_utils::Abstract
     if (status.notOk())
         return status;
     return value_to_notation_type(value, notation);
-}
-
-tempo_utils::Status
-lyric_parser::NotationTypeAttr::validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return status;
-    NotationType notation;
-    return value_to_notation_type(value, notation);
-}
-
-std::string
-lyric_parser::NotationTypeAttr::toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return "???";
-
-    NotationType notation;
-    status = value_to_notation_type(value, notation);
-    if (status.notOk())
-        return "???";
-
-    switch (notation) {
-        case NotationType::FIXED:
-            return "VALUE";
-        case NotationType::SCIENTIFIC:
-            return "SCIENTIFIC";
-        default:
-            return "???";
-    }
 }
 
 lyric_parser::BindingTypeAttr::BindingTypeAttr(const tempo_utils::ComparableResource *resource)
@@ -196,42 +125,6 @@ lyric_parser::BindingTypeAttr::parseAttr(tu_uint32 index, tempo_utils::AbstractA
     return value_to_binding_type(value, binding);
 }
 
-tempo_utils::Status
-lyric_parser::BindingTypeAttr::validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return status;
-    BindingType binding;
-    return value_to_binding_type(value, binding);
-}
-
-std::string
-lyric_parser::BindingTypeAttr::toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return "???";
-
-    BindingType binding;
-    status = value_to_binding_type(value, binding);
-    if (status.notOk())
-        return "???";
-
-    switch (binding) {
-        case BindingType::DESCRIPTOR:
-            return "DESCRIPTOR";
-        case BindingType::VALUE:
-            return "VALUE";
-        case BindingType::VARIABLE:
-            return "VARIABLE";
-        default:
-            return "???";
-    }
-}
-
 lyric_parser::MutationTypeAttr::MutationTypeAttr(const tempo_utils::ComparableResource *resource)
     : tempo_utils::AttrSerde<MutationType>(resource)
 {
@@ -268,40 +161,6 @@ lyric_parser::MutationTypeAttr::parseAttr(tu_uint32 index, tempo_utils::Abstract
     if (status.notOk())
         return status;
     return value_to_mutation_type(value, mutation);
-}
-
-tempo_utils::Status
-lyric_parser::MutationTypeAttr::validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return status;
-    MutationType mutation;
-    return value_to_mutation_type(value, mutation);
-}
-
-std::string
-lyric_parser::MutationTypeAttr::toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return "???";
-
-    MutationType mutation;
-    status = value_to_mutation_type(value, mutation);
-    if (status.notOk())
-        return "???";
-
-    switch (mutation) {
-        case MutationType::IMMUTABLE:
-            return "IMMUTABLE";
-        case MutationType::MUTABLE:
-            return "MUTABLE";
-        default:
-            return "???";
-    }
 }
 
 lyric_parser::AccessTypeAttr::AccessTypeAttr(const tempo_utils::ComparableResource *resource)
@@ -345,42 +204,6 @@ lyric_parser::AccessTypeAttr::parseAttr(tu_uint32 index, tempo_utils::AbstractAt
     return value_to_access_type(value, access);
 }
 
-tempo_utils::Status
-lyric_parser::AccessTypeAttr::validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return status;
-    AccessType access;
-    return value_to_access_type(value, access);
-}
-
-std::string
-lyric_parser::AccessTypeAttr::toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return "???";
-
-    AccessType access;
-    status = value_to_access_type(value, access);
-    if (status.notOk())
-        return "???";
-
-    switch (access) {
-        case AccessType::PRIVATE:
-            return "PRIVATE";
-        case AccessType::PROTECTED:
-            return "PROTECTED";
-        case AccessType::PUBLIC:
-            return "PUBLIC";
-        default:
-            return "???";
-    }
-}
-
 lyric_parser::BoundTypeAttr::BoundTypeAttr(const tempo_utils::ComparableResource *resource)
     : tempo_utils::AttrSerde<BoundType>(resource)
 {
@@ -420,42 +243,6 @@ lyric_parser::BoundTypeAttr::parseAttr(tu_uint32 index, tempo_utils::AbstractAtt
     if (status.notOk())
         return status;
     return value_to_bound_type(value, bound);
-}
-
-tempo_utils::Status
-lyric_parser::BoundTypeAttr::validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return status;
-    BoundType bound;
-    return value_to_bound_type(value, bound);
-}
-
-std::string
-lyric_parser::BoundTypeAttr::toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return "???";
-
-    BoundType bound;
-    status = value_to_bound_type(value, bound);
-    if (status.notOk())
-        return "???";
-
-    switch (bound) {
-        case BoundType::EXTENDS:
-            return "EXTENDS";
-        case BoundType::SUPER:
-            return "SUPER";
-        case BoundType::NONE:
-            return "NONE";
-        default:
-            return "???";
-    }
 }
 
 lyric_parser::VarianceTypeAttr::VarianceTypeAttr(const tempo_utils::ComparableResource *resource)
@@ -499,40 +286,46 @@ lyric_parser::VarianceTypeAttr::parseAttr(tu_uint32 index, tempo_utils::Abstract
     return value_to_variance_type(value, variance);
 }
 
-tempo_utils::Status
-lyric_parser::VarianceTypeAttr::validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
+lyric_parser::NodeAttr::NodeAttr(const tempo_utils::ComparableResource *resource)
+    : tempo_utils::TypedSerde<
+        NodeWalker,
+        std::shared_ptr<const internal::ArchetypeReader>,
+        ArchetypeNode *,
+        ArchetypeState>(resource)
 {
+}
+
+tempo_utils::Result<tu_uint32>
+lyric_parser::NodeAttr::writeAttr(
+    tempo_utils::AbstractAttrWriterWithState<ArchetypeState> *writer,
+    ArchetypeNode * const &archetypeNode) const
+{
+    TU_ASSERT (writer != nullptr);
+    auto *stateptr = writer->getWriterState();
+    ArchetypeNamespace *ns;
+    TU_ASSIGN_OR_RETURN (ns, stateptr->putNamespace(getResource()->getNsUrl()));
+    AttrId id(ns, getResource()->getIdValue());
+    ArchetypeAttr *attr;
+    TU_ASSIGN_OR_RETURN (attr, stateptr->appendAttr(id, AttrValue(archetypeNode)));
+    auto *archetypeId = attr->getArchetypeId();
+    TU_RETURN_IF_NOT_OK (writer->putId(archetypeId->getId()));
+    return INVALID_ADDRESS_U32;
+}
+
+tempo_utils::Status
+lyric_parser::NodeAttr::parseAttr(
+    tu_uint32 index,
+    tempo_utils::AbstractAttrParserWithState<std::shared_ptr<const internal::ArchetypeReader>> *parser,
+    NodeWalker &walker) const
+{
+    TU_ASSERT (parser != nullptr);
     tu_uint32 value;
     auto status = parser->getUInt32(index, value);
     if (status.notOk())
         return status;
-    VarianceType variance;
-    return value_to_variance_type(value, variance);
-}
-
-std::string
-lyric_parser::VarianceTypeAttr::toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return "???";
-
-    VarianceType variance;
-    status = value_to_variance_type(value, variance);
-    if (status.notOk())
-        return "???";
-
-    switch (variance) {
-        case VarianceType::COVARIANT:
-            return "COVARIANT";
-        case VarianceType::CONTRAVARIANT:
-            return "CONTRAVARIANT";
-        case VarianceType::INVARIANT:
-            return "INVARIANT";
-        default:
-            return "???";
-    }
+    auto *readerptr = parser->getParserState();
+    walker = NodeWalker(*readerptr, value);
+    return {};
 }
 
 const tempo_utils::StringAttr lyric_parser::kLyricAstLiteralValue(&lyric_schema::kLyricAstLiteralValueProperty);
@@ -550,10 +343,10 @@ const lyric_common::SymbolPathAttr lyric_parser::kLyricAstSymbolPath(&lyric_sche
 const tempo_utils::StringAttr lyric_parser::kLyricAstIdentifier(&lyric_schema::kLyricAstIdentifierProperty);
 const tempo_utils::StringAttr lyric_parser::kLyricAstLabel(&lyric_schema::kLyricAstLabelProperty);
 
-const tempo_utils::UInt32Attr lyric_parser::kLyricAstTypeOffset(&lyric_schema::kLyricAstTypeOffsetProperty);
-const tempo_utils::UInt32Attr lyric_parser::kLyricAstDefaultOffset(&lyric_schema::kLyricAstDefaultOffsetProperty);
-const tempo_utils::UInt32Attr lyric_parser::kLyricAstFinallyOffset(&lyric_schema::kLyricAstFinallyOffsetProperty);
-const tempo_utils::UInt32Attr lyric_parser::kLyricAstRestOffset(&lyric_schema::kLyricAstRestOffsetProperty);
-const tempo_utils::UInt32Attr lyric_parser::kLyricAstGenericOffset(&lyric_schema::kLyricAstGenericOffsetProperty);
-const tempo_utils::UInt32Attr lyric_parser::kLyricAstImplementsOffset(&lyric_schema::kLyricAstImplementsOffsetProperty);
-const tempo_utils::UInt32Attr lyric_parser::kLyricAstTypeArgumentsOffset(&lyric_schema::kLyricAstTypeArgumentsOffsetProperty);
+const lyric_parser::NodeAttr lyric_parser::kLyricAstTypeOffset(&lyric_schema::kLyricAstTypeOffsetProperty);
+const lyric_parser::NodeAttr lyric_parser::kLyricAstDefaultOffset(&lyric_schema::kLyricAstDefaultOffsetProperty);
+const lyric_parser::NodeAttr lyric_parser::kLyricAstFinallyOffset(&lyric_schema::kLyricAstFinallyOffsetProperty);
+const lyric_parser::NodeAttr lyric_parser::kLyricAstRestOffset(&lyric_schema::kLyricAstRestOffsetProperty);
+const lyric_parser::NodeAttr lyric_parser::kLyricAstGenericOffset(&lyric_schema::kLyricAstGenericOffsetProperty);
+const lyric_parser::NodeAttr lyric_parser::kLyricAstImplementsOffset(&lyric_schema::kLyricAstImplementsOffsetProperty);
+const lyric_parser::NodeAttr lyric_parser::kLyricAstTypeArgumentsOffset(&lyric_schema::kLyricAstTypeArgumentsOffsetProperty);

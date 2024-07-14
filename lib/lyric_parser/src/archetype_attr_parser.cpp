@@ -10,25 +10,11 @@ lyric_parser::ArchetypeAttrParser::ArchetypeAttrParser(
     TU_ASSERT (m_reader != nullptr);
 }
 
-//tempo_utils::AttrResult<const lyi1::AttributeDescriptor *>
-//lyric_parser::ArchetypeAttrParser::getAttr(tu_uint32 index) const
-//{
-//    const auto *attr = m_archetype.getAttr(index);
-//    if (attr == nullptr)
-//        return tempo_utils::AttrStatus::forCondition(
-//            tempo_utils::AttrCondition::kMissingValue, "missing attr");
-//    const auto *ns = m_archetype.getNamespace(attr->attr_ns());
-//    if (ns == nullptr)
-//        return tempo_utils::AttrStatus::forCondition(
-//            tempo_utils::AttrCondition::kMissingValue, "missing attr");
-//    if (std::string_view(ns->ns_url()->data(), ns->ns_url()->size()) != std::string_view(m_key.ns))
-//        return tempo_utils::AttrStatus::forCondition(
-//            tempo_utils::AttrCondition::kMissingValue, "missing attr");
-//    if (attr->attr_type() != m_key.id)
-//        return tempo_utils::AttrStatus::forCondition(
-//            tempo_utils::AttrCondition::kMissingValue, "missing attr");
-//    return attr;
-//}
+std::shared_ptr<const lyric_parser::internal::ArchetypeReader> *
+lyric_parser::ArchetypeAttrParser::getParserState()
+{
+    return &m_reader;
+}
 
 tempo_utils::Status
 lyric_parser::ArchetypeAttrParser::getNil(tu_uint32 index, std::nullptr_t &nil)

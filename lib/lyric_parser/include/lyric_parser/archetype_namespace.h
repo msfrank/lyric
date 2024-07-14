@@ -3,24 +3,26 @@
 
 #include <tempo_utils/url.h>
 
-#include "archetype_state.h"
-
 namespace lyric_parser {
+
+    // forward declarations
+    class ArchetypeId;
+    class ArchetypeState;
 
     class ArchetypeNamespace {
 
     public:
         ArchetypeNamespace(
             const tempo_utils::Url &nsUrl,
-            NamespaceAddress address,
+            ArchetypeId *archetypeId,
             ArchetypeState *state);
 
         tempo_utils::Url getNsUrl() const;
-        NamespaceAddress getAddress() const;
+        ArchetypeId *getArchetypeId() const;
 
     private:
         tempo_utils::Url m_nsUrl;
-        NamespaceAddress m_address;
+        ArchetypeId *m_archetypeId;
         ArchetypeState *m_state;
     };
 }

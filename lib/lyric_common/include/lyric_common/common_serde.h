@@ -22,8 +22,6 @@ namespace lyric_common {
             tu_uint32 index,
             tempo_utils::AbstractAttrParser *parser,
             AssemblyLocation &value) const override;
-        tempo_utils::Status validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
-        std::string toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
     };
 
     class SymbolPathAttr : public tempo_utils::AttrSerde<SymbolPath> {
@@ -39,8 +37,6 @@ namespace lyric_common {
             tu_uint32 index,
             tempo_utils::AbstractAttrParser *parser,
             SymbolPath &value) const override;
-        tempo_utils::Status validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
-        std::string toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
     };
 }
 

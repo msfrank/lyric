@@ -29,29 +29,6 @@ lyric_common::AssemblyLocationAttr::parseAttr(
     return tempo_utils::AttrStatus::ok();
 }
 
-tempo_utils::Status
-lyric_common::AssemblyLocationAttr::validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    std::string value;
-    auto status = parser->getString(index, value);
-    if (status.notOk())
-        return status;
-    return tempo_utils::AttrStatus::ok();
-}
-
-std::string
-lyric_common::AssemblyLocationAttr::toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    std::string value;
-    auto status = parser->getString(index, value);
-    if (status.notOk())
-        return "???";
-    auto location = AssemblyLocation::fromString(value);
-    if (!location.isValid())
-        return "???";
-    return location.toString();
-}
-
 lyric_common::SymbolPathAttr::SymbolPathAttr(const tempo_utils::ComparableResource *resource)
     : AttrSerde<SymbolPath>(resource)
 {
@@ -78,27 +55,4 @@ lyric_common::SymbolPathAttr::parseAttr(
         return status;
     location = SymbolPath::fromString(value);
     return tempo_utils::AttrStatus::ok();
-}
-
-tempo_utils::Status
-lyric_common::SymbolPathAttr::validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    std::string value;
-    auto status = parser->getString(index, value);
-    if (status.notOk())
-        return status;
-    return tempo_utils::AttrStatus::ok();
-}
-
-std::string
-lyric_common::SymbolPathAttr::toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    std::string value;
-    auto status = parser->getString(index, value);
-    if (status.notOk())
-        return "???";
-    auto location = SymbolPath::fromString(value);
-    if (!location.isValid())
-        return "???";
-    return location.toString();
 }

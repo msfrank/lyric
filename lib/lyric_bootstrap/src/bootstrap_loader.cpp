@@ -34,7 +34,7 @@ lyric_bootstrap::BootstrapLoader::assemblyLocationToFilePath(
 
     // build the module path
     auto modulePath = location.getPath().toFilesystemPath(directoryPath);
-    modulePath.replace_extension(lyric_common::kAssemblyFileSuffix);
+    modulePath.replace_extension(lyric_common::kObjectFileSuffix);
 
     auto modulePathString = modulePath.string();
     auto directoryPathString = directoryPath.string();

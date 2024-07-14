@@ -34,11 +34,10 @@ compile_definstance_val(
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
     // get val type
-    tu_uint32 typeOffset;
-    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-    auto type = walker.getNodeAtOffset(typeOffset);
+    lyric_parser::NodeWalker typeNode;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
     lyric_typing::TypeSpec valSpec;
-    TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(instanceBlock, type));
+    TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(instanceBlock, typeNode));
     lyric_common::TypeDef valType;
     TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(instanceBlock, valSpec));
 
@@ -79,11 +78,10 @@ compile_definstance_var(
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
     // get var type
-    tu_uint32 typeOffset;
-    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-    auto type = walker.getNodeAtOffset(typeOffset);
+    lyric_parser::NodeWalker typeNode;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
     lyric_typing::TypeSpec varSpec;
-    TU_ASSIGN_OR_RETURN (varSpec, typeSystem->parseAssignable(instanceBlock, type));
+    TU_ASSIGN_OR_RETURN (varSpec, typeSystem->parseAssignable(instanceBlock, typeNode));
     lyric_common::TypeDef varType;
     TU_ASSIGN_OR_RETURN (varType, typeSystem->resolveAssignable(instanceBlock, varSpec));
 
@@ -224,11 +222,10 @@ compile_definstance_def(
     }
 
     // parse the return type
-    tu_uint32 typeOffset;
-    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-    auto type = walker.getNodeAtOffset(typeOffset);
+    lyric_parser::NodeWalker typeNode;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
     lyric_typing::TypeSpec returnSpec;
-    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(instanceBlock, type));
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(instanceBlock, typeNode));
 
     // parse the parameter list
     auto pack = walker.getChild(0);
@@ -323,11 +320,10 @@ compile_definstance_impl_def(
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
     // parse the return type
-    tu_uint32 typeOffset;
-    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-    auto type = walker.getNodeAtOffset(typeOffset);
+    lyric_parser::NodeWalker typeNode;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
     lyric_typing::TypeSpec returnSpec;
-    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(implBlock, type));
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(implBlock, typeNode));
 
     // parse the parameter list
     auto pack = walker.getChild(0);
@@ -404,11 +400,10 @@ compile_definstance_impl(
     auto *typeSystem = moduleEntry.getTypeSystem();
 
     // parse the impl type
-    tu_uint32 typeOffset;
-    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-    auto type = walker.getNodeAtOffset(typeOffset);
+    lyric_parser::NodeWalker typeNode;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
     lyric_typing::TypeSpec implSpec;
-    TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(instanceBlock, type));
+    TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(instanceBlock, typeNode));
 
     // resolve the impl type
     lyric_common::TypeDef implType;

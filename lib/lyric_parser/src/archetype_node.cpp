@@ -2,54 +2,52 @@
 #include <lyric_parser/archetype_attr.h>
 #include <lyric_parser/archetype_namespace.h>
 #include <lyric_parser/archetype_node.h>
+#include <lyric_parser/archetype_state.h>
+
+//lyric_parser::ArchetypeNode::ArchetypeNode(
+//    ArchetypeNamespace *nodeNamespace,
+//    tu_uint32 typeOffset,
+//    tu_uint32 lineNr,
+//    tu_uint32 columnNr,
+//    tu_uint32 fileOffset,
+//    tu_uint32 textSpan,
+//    ArchetypeId *archetypeId,
+//    ArchetypeState *state)
+//    : m_namespace(nodeNamespace),
+//      m_typeOffset(typeOffset),
+//      m_lineNr(lineNr),
+//      m_columnNr(columnNr),
+//      m_fileOffset(fileOffset),
+//      m_textSpan(textSpan),
+//      m_archetypeId(archetypeId),
+//      m_state(state)
+//{
+//    TU_ASSERT (m_namespace != nullptr);
+//    TU_ASSERT (m_archetypeId != nullptr);
+//    TU_ASSERT (m_state != nullptr);
+//}
 
 lyric_parser::ArchetypeNode::ArchetypeNode(
-    tu_uint32 nsOffset,
+    ArchetypeNamespace *nodeNamespace,
     tu_uint32 typeOffset,
-    tu_uint32 lineNr,
-    tu_uint32 columnNr,
-    tu_uint32 fileOffset,
-    tu_uint32 textSpan,
-    NodeAddress address,
+    const ParseLocation &location,
+    ArchetypeId *archetypeId,
     ArchetypeState *state)
-    : m_nsOffset(nsOffset),
+    : m_namespace(nodeNamespace),
       m_typeOffset(typeOffset),
-      m_lineNr(lineNr),
-      m_columnNr(columnNr),
-      m_fileOffset(fileOffset),
-      m_textSpan(textSpan),
-      m_address(address),
+      m_location(location),
+      m_archetypeId(archetypeId),
       m_state(state)
 {
-    TU_ASSERT (m_address.isValid());
+    TU_ASSERT (m_namespace != nullptr);
+    TU_ASSERT (m_archetypeId != nullptr);
     TU_ASSERT (m_state != nullptr);
 }
 
-lyric_parser::ArchetypeNode::ArchetypeNode(
-    tu_uint32 nsOffset,
-    tu_uint32 typeOffset,
-    antlr4::Token *token,
-    NodeAddress address,
-    ArchetypeState *state)
-    : m_nsOffset(nsOffset),
-      m_typeOffset(typeOffset),
-      m_address(address),
-      m_state(state)
+lyric_parser::ArchetypeNamespace *
+lyric_parser::ArchetypeNode::getNamespace() const
 {
-    TU_ASSERT (m_address.isValid());
-    TU_ASSERT (m_state != nullptr);
-
-    TU_ASSERT (token != nullptr);
-    m_lineNr = token->getLine();
-    m_columnNr = token->getCharPositionInLine();
-    m_fileOffset = token->getStartIndex();
-    m_textSpan = token->getStopIndex() - token->getStartIndex();
-}
-
-tu_uint32
-lyric_parser::ArchetypeNode::getNsOffset() const
-{
-    return m_nsOffset;
+    return m_namespace;
 }
 
 tu_uint32
@@ -58,34 +56,16 @@ lyric_parser::ArchetypeNode::getTypeOffset() const
     return m_typeOffset;
 }
 
-tu_uint32
-lyric_parser::ArchetypeNode::getFileOffset() const
+lyric_parser::ParseLocation
+lyric_parser::ArchetypeNode::getLocation() const
 {
-    return m_fileOffset;
+    return m_location;
 }
 
-tu_uint32
-lyric_parser::ArchetypeNode::getLineNumber() const
+lyric_parser::ArchetypeId *
+lyric_parser::ArchetypeNode::getArchetypeId() const
 {
-    return m_lineNr;
-}
-
-tu_uint32
-lyric_parser::ArchetypeNode::getColumnNumber() const
-{
-    return m_columnNr;
-}
-
-tu_uint32
-lyric_parser::ArchetypeNode::getTextSpan() const
-{
-    return m_textSpan;
-}
-
-lyric_parser::NodeAddress
-lyric_parser::ArchetypeNode::getAddress() const
-{
-    return m_address;
+    return m_archetypeId;
 }
 
 bool
@@ -94,12 +74,13 @@ lyric_parser::ArchetypeNode::hasAttr(const AttrId &attrId) const
     return m_attrs.contains(attrId);
 }
 
-lyric_parser::AttrAddress
+lyric_parser::ArchetypeAttr *
 lyric_parser::ArchetypeNode::getAttr(const AttrId &attrId) const
 {
-    if (m_attrs.contains(attrId))
-        return m_attrs.at(attrId);
-    return {};
+    auto entry = m_attrs.find(attrId);
+    if (entry != m_attrs.cend())
+        return entry->second;
+    return nullptr;
 }
 
 void
@@ -109,18 +90,18 @@ lyric_parser::ArchetypeNode::putAttr(ArchetypeAttr *attr)
 
     auto attrId = attr->getAttrId();
     if (m_attrs.contains(attrId)) {
-        m_state->throwParseInvariant(m_address, "node contains duplicate attr");
+        m_state->throwParseInvariant("node contains duplicate attr");
     }
-    m_attrs[attrId] = attr->getAddress();
+    m_attrs[attrId] = attr;
 }
 
-absl::flat_hash_map<lyric_parser::AttrId,lyric_parser::AttrAddress>::const_iterator
+absl::flat_hash_map<lyric_parser::AttrId,lyric_parser::ArchetypeAttr *>::const_iterator
 lyric_parser::ArchetypeNode::attrsBegin() const
 {
     return m_attrs.cbegin();
 }
 
-absl::flat_hash_map<lyric_parser::AttrId,lyric_parser::AttrAddress>::const_iterator
+absl::flat_hash_map<lyric_parser::AttrId,lyric_parser::ArchetypeAttr *>::const_iterator
 lyric_parser::ArchetypeNode::attrsEnd() const
 {
     return m_attrs.cend();
@@ -136,17 +117,17 @@ void
 lyric_parser::ArchetypeNode::prependChild(ArchetypeNode *child)
 {
     TU_ASSERT (child != nullptr);
-    m_children.insert(m_children.begin(), child->getAddress());
+    m_children.insert(m_children.begin(), child);
 }
 
 void
 lyric_parser::ArchetypeNode::appendChild(ArchetypeNode *child)
 {
     TU_ASSERT (child != nullptr);
-    m_children.push_back(child->getAddress());
+    m_children.push_back(child);
 }
 
-lyric_parser::NodeAddress
+lyric_parser::ArchetypeNode *
 lyric_parser::ArchetypeNode::getChild(int index) const
 {
     if (0 <= index && std::cmp_less(index, m_children.size()))
@@ -160,21 +141,20 @@ lyric_parser::ArchetypeNode::detachChild(int index)
     if (0 <= index && std::cmp_less(index, m_children.size())) {
         auto iterator = m_children.begin();
         std::advance(iterator, index);
-        auto address = *iterator;
-        auto *child = m_state->getNode(address.getAddress());
+        auto *child = *iterator;
         m_children.erase(iterator);
         return child;
     }
     return nullptr;
 }
 
-std::vector<lyric_parser::NodeAddress>::const_iterator
+std::vector<lyric_parser::ArchetypeNode *>::const_iterator
 lyric_parser::ArchetypeNode::childrenBegin() const
 {
     return m_children.cbegin();
 }
 
-std::vector<lyric_parser::NodeAddress>::const_iterator
+std::vector<lyric_parser::ArchetypeNode *>::const_iterator
 lyric_parser::ArchetypeNode::childrenEnd() const
 {
     return m_children.cend();
@@ -189,9 +169,7 @@ lyric_parser::ArchetypeNode::numChildren() const
 bool
 lyric_parser::ArchetypeNode::matchesNsAndId(const char *nsString, tu_uint32 idValue) const
 {
-    auto *ns = m_state->getNamespace(m_nsOffset);
-    TU_ASSERT (ns != nullptr);
-    auto nsUrl = ns->getNsUrl();
+    auto nsUrl = m_namespace->getNsUrl();
     TU_ASSERT (nsUrl.isValid());
     return idValue == m_typeOffset && std::string_view(nsString) == nsUrl.toString();
 }

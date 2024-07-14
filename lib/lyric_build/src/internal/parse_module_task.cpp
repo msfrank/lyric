@@ -103,7 +103,7 @@ lyric_build::internal::ParseModuleTask::runTask(
 
     auto span = getSpan();
 
-    TU_LOG_V << "parsing module from " << m_sourceUrl;
+    TU_LOG_V << "parsing source from " << m_sourceUrl;
     lyric_parser::LyricParser parser(m_parserOptions);
     auto parseResult = parser.parseModule(std::string_view((const char *) bytes->getData(), bytes->getSize()),
         m_sourceUrl, traceDiagnostics());

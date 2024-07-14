@@ -3,6 +3,7 @@
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/internal/module_construct_ops.h>
+#include <lyric_parser/internal/parser_utils.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
 #include <tempo_utils/log_stream.h>
@@ -18,17 +19,18 @@ lyric_parser::internal::ModuleConstructOps::exitPairExpression(ModuleParser::Pai
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p2 = m_state->popNode();
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p1 = m_state->popNode();
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *pairNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstPairClass, token);
+    auto *pairNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstPairClass, location);
     pairNode->appendChild(p1);
     pairNode->appendChild(p2);
     m_state->pushNode(pairNode);
@@ -37,13 +39,13 @@ lyric_parser::internal::ModuleConstructOps::exitPairExpression(ModuleParser::Pai
 void
 lyric_parser::internal::ModuleConstructOps::exitDerefNew(ModuleParser::DerefNewContext *ctx)
 {
-    auto *typeNode = m_state->makeType(ctx->assignableType());
-    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(typeNode->getAddress().getAddress()));
+    auto *typeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, typeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *newNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNewClass, token);
+    auto *newNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNewClass, location);
     newNode->putAttr(typeOffsetAttr);
 
     if (ctx->argList()) {
@@ -54,7 +56,7 @@ lyric_parser::internal::ModuleConstructOps::exitDerefNew(ModuleParser::DerefNewC
                 continue;
 
             if (m_state->isEmpty())
-                m_state->throwIncompleteModule(ctx->getStop());
+                m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
             auto *argNode = m_state->popNode();
 
             if (argSpec->Identifier() != nullptr) {
@@ -63,8 +65,9 @@ lyric_parser::internal::ModuleConstructOps::exitDerefNew(ModuleParser::DerefNewC
                 auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, label);
 
                 token = argSpec->getStart();
+                location = get_token_location(token);
 
-                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, token);
+                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
                 keywordNode->putAttr(identifierAttr);
                 keywordNode->appendChild(argNode);
                 argNode = keywordNode;
@@ -82,20 +85,20 @@ lyric_parser::internal::ModuleConstructOps::exitLambdaExpression(ModuleParser::L
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *blockNode = m_state->popNode();
 
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *packNode = m_state->popNode();
 
-    auto *typeNode = m_state->makeType(ctx->returnSpec()->assignableType());
-    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(typeNode->getAddress().getAddress()));
+    auto *typeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
+    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, typeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *lambdaNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstLambdaClass, token);
+    auto *lambdaNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstLambdaClass, location);
     lambdaNode->putAttr(typeOffsetAttr);
     lambdaNode->appendChild(packNode);
     lambdaNode->appendChild(blockNode);
@@ -105,13 +108,13 @@ lyric_parser::internal::ModuleConstructOps::exitLambdaExpression(ModuleParser::L
 void
 lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx)
 {
-    auto *typeNode = m_state->makeType(ctx->assignableType());
-    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(typeNode->getAddress().getAddress()));
+    auto *typeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, typeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *newNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNewClass, token);
+    auto *newNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNewClass, location);
     newNode->putAttr(typeOffsetAttr);
 
     if (ctx->argList()) {
@@ -122,7 +125,7 @@ lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerTypedNew(Modul
                 continue;
 
             if (m_state->isEmpty())
-                m_state->throwIncompleteModule(ctx->getStop());
+                m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
             auto *argNode = m_state->popNode();
 
             if (argSpec->Identifier() != nullptr) {
@@ -131,8 +134,9 @@ lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerTypedNew(Modul
                 auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, label);
 
                 token = argSpec->getStart();
+                location = get_token_location(token);
 
-                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, token);
+                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
                 keywordNode->putAttr(identifierAttr);
                 keywordNode->appendChild(argNode);
                 argNode = keywordNode;
@@ -149,8 +153,9 @@ void
 lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerNew(ModuleParser::DefaultInitializerNewContext *ctx)
 {
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *newNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNewClass, token);
+    auto *newNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNewClass, location);
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
@@ -160,7 +165,7 @@ lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerNew(ModulePars
                 continue;
 
             if (m_state->isEmpty())
-                m_state->throwIncompleteModule(ctx->getStop());
+                m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
             auto *argNode = m_state->popNode();
 
             if (argSpec->Identifier() != nullptr) {
@@ -169,8 +174,9 @@ lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerNew(ModulePars
                 auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, label);
 
                 token = argSpec->getStart();
+                location = get_token_location(token);
 
-                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, token);
+                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
                 keywordNode->putAttr(identifierAttr);
                 keywordNode->appendChild(argNode);
                 argNode = keywordNode;

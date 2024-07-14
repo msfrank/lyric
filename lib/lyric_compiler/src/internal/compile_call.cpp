@@ -245,9 +245,8 @@ lyric_compiler::internal::compile_function_call(
 
     // if type arguments are specified at the callsite then append them
     if (walker.hasAttr(lyric_parser::kLyricAstTypeArgumentsOffset)) {
-        tu_uint32 typeArgumentsOffset;
-        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeArgumentsOffset, typeArgumentsOffset);
-        auto typeArgumentsNode = walker.getNodeAtOffset(typeArgumentsOffset);
+        lyric_parser::NodeWalker typeArgumentsNode;
+        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeArgumentsOffset, typeArgumentsNode);
         std::vector<lyric_typing::TypeSpec> typeArgumentsSpec;
         TU_ASSIGN_OR_RETURN (typeArgumentsSpec, typeSystem->parseTypeArguments(invokeBlock, typeArgumentsNode));
         std::vector<lyric_common::TypeDef> typeArguments;

@@ -87,11 +87,8 @@ lyric_typing::resolve_template(
             }
 
             // get constraint assigned type
-            tu_uint32 typeOffset;
-            status = constraint.parseAttr(lyric_parser::kLyricAstTypeOffset, typeOffset);
-            if (status.notOk())
-                return status;
-            auto typeNode = walker.getNodeAtOffset(typeOffset);
+            lyric_parser::NodeWalker typeNode;
+            TU_RETURN_IF_NOT_OK (constraint.parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
 
             TypeSpec assignable;
             TU_ASSIGN_OR_RETURN (assignable, parse_assignable(block, typeNode, state));

@@ -30,11 +30,10 @@ lyric_compiler::internal::compile_def(
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
     // parse the return type
-    tu_uint32 typeOffset;
-    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-    auto type = walker.getNodeAtOffset(typeOffset);
+    lyric_parser::NodeWalker typeNode;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
     lyric_typing::TypeSpec returnSpec;
-    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(block, type));
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(block, typeNode));
 
     // parse the parameter list
     auto pack = walker.getChild(0);
@@ -44,10 +43,9 @@ lyric_compiler::internal::compile_def(
     // if function is generic, then parse the template parameter list
     lyric_typing::TemplateSpec templateSpec;
     if (walker.hasAttr(lyric_parser::kLyricAstGenericOffset)) {
-        tu_uint32 genericOffset;
-        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstGenericOffset, genericOffset);
-        auto generic = walker.getNodeAtOffset(genericOffset);
-        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(block, generic));
+        lyric_parser::NodeWalker genericNode;
+        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstGenericOffset, genericNode);
+        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(block, genericNode));
     }
 
     // declare the function call

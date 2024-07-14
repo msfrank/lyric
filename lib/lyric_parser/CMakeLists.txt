@@ -102,6 +102,8 @@ target_sources(lyric_parser
 
     include/lyric_parser/internal/archetype_reader.h
     src/internal/archetype_reader.cpp
+    include/lyric_parser/internal/archetype_writer.h
+    src/internal/archetype_writer.cpp
     include/lyric_parser/internal/lexer_error_listener.h
     src/internal/lexer_error_listener.cpp
     include/lyric_parser/internal/module_archetype.h
@@ -146,6 +148,8 @@ target_sources(lyric_parser
     src/internal/module_symbol_ops.cpp
     include/lyric_parser/internal/parser_error_listener.h
     src/internal/parser_error_listener.cpp
+    include/lyric_parser/internal/parser_utils.h
+    src/internal/parser_utils.cpp
 
     # antlr auto-generated sources
     ${CMAKE_CURRENT_BINARY_DIR}/src/ModuleLexer.cpp

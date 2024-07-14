@@ -29,7 +29,7 @@ lyric_packaging::DirectoryLoader::assemblyLocationToFilePath(
 
     // build the location path
     auto modulePath = location.getPath().toFilesystemPath(directoryPath);
-    modulePath.replace_extension(lyric_common::kAssemblyFileSuffix);
+    modulePath.replace_extension(lyric_common::kObjectFileSuffix);
 
     auto modulePathString = modulePath.string();
     auto directoryPathString = directoryPath.string();

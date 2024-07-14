@@ -126,6 +126,8 @@ target_sources(lyric_build PRIVATE
     src/internal/package_task.cpp
     include/lyric_build/internal/parse_module_task.h
     src/internal/parse_module_task.cpp
+    include/lyric_build/internal/rewrite_module_task.h
+    src/internal/rewrite_module_task.cpp
     include/lyric_build/internal/symbolize_module_task.h
     src/internal/symbolize_module_task.cpp
     include/lyric_build/internal/task_utils.h
@@ -169,6 +171,7 @@ target_link_libraries(lyric_build
     lyric::lyric_compiler
     lyric::lyric_packaging
     lyric::lyric_parser
+    lyric::lyric_rewriter
     lyric::lyric_runtime
     lyric::lyric_symbolizer
     tempo::tempo_tracing

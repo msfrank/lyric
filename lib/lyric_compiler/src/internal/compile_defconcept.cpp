@@ -34,11 +34,10 @@ compile_defconcept_def(
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
     // get action return type
-    tu_uint32 typeOffset;
-    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-    auto type = walker.getNodeAtOffset(typeOffset);
+    lyric_parser::NodeWalker typeNode;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
     lyric_typing::TypeSpec returnSpec;
-    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(conceptBlock, type));
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(conceptBlock, typeNode));
 
     // parse the parameter list
     auto pack = walker.getChild(0);
@@ -107,11 +106,10 @@ lyric_compiler::internal::compile_defconcept(
     // if concept is generic, then compile the template parameter list
     lyric_typing::TemplateSpec templateSpec;
     if (walker.hasAttr(lyric_parser::kLyricAstGenericOffset)) {
-        tu_uint32 genericOffset;
-        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstGenericOffset, genericOffset);
-        auto generic = walker.getNodeAtOffset(genericOffset);
+        lyric_parser::NodeWalker genericNode;
+        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstGenericOffset, genericNode);
         auto *typeSystem = moduleEntry.getTypeSystem();
-        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(block, generic));
+        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(block, genericNode));
     }
 
     std::vector<lyric_parser::NodeWalker> defs;

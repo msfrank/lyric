@@ -7,6 +7,8 @@
 #include <lyric_schema/ast_schema.h>
 #include <tempo_utils/attr.h>
 
+#include "archetype_node.h"
+#include "archetype_state.h"
 #include "parser_types.h"
 
 namespace lyric_parser {
@@ -24,8 +26,6 @@ namespace lyric_parser {
             tu_uint32 index,
             tempo_utils::AbstractAttrParser *parser,
             BaseType &value) const override;
-        tempo_utils::Status validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
-        std::string toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
     };
 
     class NotationTypeAttr : public tempo_utils::AttrSerde<NotationType> {
@@ -41,8 +41,6 @@ namespace lyric_parser {
             tu_uint32 index,
             tempo_utils::AbstractAttrParser *parser,
             NotationType &value) const override;
-        tempo_utils::Status validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
-        std::string toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
     };
 
     class BindingTypeAttr : public tempo_utils::AttrSerde<BindingType> {
@@ -58,8 +56,6 @@ namespace lyric_parser {
             tu_uint32 index,
             tempo_utils::AbstractAttrParser *parser,
             BindingType &value) const override;
-        tempo_utils::Status validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
-        std::string toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
     };
 
     class MutationTypeAttr : public tempo_utils::AttrSerde<MutationType> {
@@ -75,8 +71,6 @@ namespace lyric_parser {
             tu_uint32 index,
             tempo_utils::AbstractAttrParser *parser,
             MutationType &value) const override;
-        tempo_utils::Status validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
-        std::string toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
     };
 
     class AccessTypeAttr : public tempo_utils::AttrSerde<AccessType> {
@@ -92,8 +86,6 @@ namespace lyric_parser {
             tu_uint32 index,
             tempo_utils::AbstractAttrParser *parser,
             AccessType &value) const override;
-        tempo_utils::Status validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
-        std::string toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
     };
 
     class BoundTypeAttr : public tempo_utils::AttrSerde<BoundType> {
@@ -109,8 +101,6 @@ namespace lyric_parser {
             tu_uint32 index,
             tempo_utils::AbstractAttrParser *parser,
             BoundType &value) const override;
-        tempo_utils::Status validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
-        std::string toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
     };
 
     class VarianceTypeAttr : public tempo_utils::AttrSerde<VarianceType> {
@@ -126,8 +116,26 @@ namespace lyric_parser {
             tu_uint32 index,
             tempo_utils::AbstractAttrParser *parser,
             VarianceType &value) const override;
-        tempo_utils::Status validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
-        std::string toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const override;
+    };
+
+    class NodeAttr : public tempo_utils::TypedSerde<
+        NodeWalker,
+        std::shared_ptr<const internal::ArchetypeReader>,
+        ArchetypeNode *,
+        ArchetypeState> {
+
+        using ParseType = NodeWalker;
+        using WriteType = ArchetypeNode *;
+
+    public:
+        explicit NodeAttr(const tempo_utils::ComparableResource *resource);
+        tempo_utils::Result<tu_uint32> writeAttr(
+            tempo_utils::AbstractAttrWriterWithState<ArchetypeState> *writer,
+            ArchetypeNode * const &value) const override;
+        tempo_utils::Status parseAttr(
+            tu_uint32 index,
+            tempo_utils::AbstractAttrParserWithState<std::shared_ptr<const internal::ArchetypeReader>> *parser,
+            NodeWalker &value) const override;
     };
 
     extern const tempo_utils::StringAttr kLyricAstLiteralValue;
@@ -145,13 +153,13 @@ namespace lyric_parser {
     extern const tempo_utils::StringAttr kLyricAstIdentifier;
     extern const tempo_utils::StringAttr kLyricAstLabel;
 
-    extern const tempo_utils::UInt32Attr kLyricAstTypeOffset;
-    extern const tempo_utils::UInt32Attr kLyricAstDefaultOffset;
-    extern const tempo_utils::UInt32Attr kLyricAstFinallyOffset;
-    extern const tempo_utils::UInt32Attr kLyricAstRestOffset;
-    extern const tempo_utils::UInt32Attr kLyricAstGenericOffset;
-    extern const tempo_utils::UInt32Attr kLyricAstImplementsOffset;
-    extern const tempo_utils::UInt32Attr kLyricAstTypeArgumentsOffset;
+    extern const NodeAttr kLyricAstTypeOffset;
+    extern const NodeAttr kLyricAstDefaultOffset;
+    extern const NodeAttr kLyricAstFinallyOffset;
+    extern const NodeAttr kLyricAstRestOffset;
+    extern const NodeAttr kLyricAstGenericOffset;
+    extern const NodeAttr kLyricAstImplementsOffset;
+    extern const NodeAttr kLyricAstTypeArgumentsOffset;
 }
 
 

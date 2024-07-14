@@ -19,10 +19,11 @@ namespace lyric_parser {
         bool isValid() const;
 
         NodeAddress getAddress() const;
-        uint32_t getLineNumber() const;
-        uint32_t getColumnNumber() const;
-        uint32_t getFileOffset() const;
-        uint32_t getTextSpan() const;
+        ParseLocation getLocation() const;
+        tu_uint32 getLineNumber() const;
+        tu_uint32 getColumnNumber() const;
+        tu_uint32 getFileOffset() const;
+        tu_uint32 getTextSpan() const;
 
         bool isNamespace(const tempo_utils::SchemaNs &schemaNs) const;
 
@@ -40,6 +41,7 @@ namespace lyric_parser {
 
         NodeWalker(std::shared_ptr<const internal::ArchetypeReader> reader, tu_uint32 index);
         friend class LyricArchetype;
+        friend class NodeAttr;
 
         bool matchesNsAndId(const char *nsUrl, tu_uint32 idValue) const;
         tu_uint32 findIndexForAttr(const tempo_utils::AttrKey &key) const;

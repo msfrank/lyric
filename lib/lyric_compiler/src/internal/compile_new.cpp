@@ -26,11 +26,10 @@ lyric_compiler::internal::compile_new(
     lyric_common::TypeDef newType;
     if (walker.hasAttr(lyric_parser::kLyricAstTypeOffset)) {
         // resolve the new type from the type offset of the new node
-        tu_uint32 typeOffset;
-        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeOffset);
-        auto type = walker.getNodeAtOffset(typeOffset);
+        lyric_parser::NodeWalker typeNode;
+        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
         lyric_typing::TypeSpec newSpec;
-        TU_ASSIGN_OR_RETURN (newSpec, typeSystem->parseAssignable(block, type));
+        TU_ASSIGN_OR_RETURN (newSpec, typeSystem->parseAssignable(block, typeNode));
         TU_ASSIGN_OR_RETURN (newType, typeSystem->resolveAssignable(block, newSpec));
     } else if (typeHint.isValid()) {
 //        // resolve the new type from the specified type hint

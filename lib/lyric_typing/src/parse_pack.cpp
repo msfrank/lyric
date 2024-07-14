@@ -15,41 +15,28 @@ parse_parameter(
     TU_ASSERT (walker.isValid());
 
     std::string paramName;
-    auto status = walker.parseAttr(lyric_parser::kLyricAstIdentifier, paramName);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIdentifier, paramName));
 
-    tu_uint32 typeOffset;
-    status = walker.parseAttr(lyric_parser::kLyricAstTypeOffset, typeOffset);
-    if (status.notOk())
-        return status;
-    auto type = walker.getNodeAtOffset(typeOffset);
-    auto parseTypeResult = lyric_typing::parse_assignable(block, type, state);
-    if (parseTypeResult.isStatus())
-        return parseTypeResult.getStatus();
-    auto paramType = parseTypeResult.getResult();
+    lyric_parser::NodeWalker type;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstTypeOffset, type));
+    lyric_typing::TypeSpec paramType;
+    TU_ASSIGN_OR_RETURN (paramType, lyric_typing::parse_assignable(block, type, state));
 
     lyric_parser::BindingType paramBinding = lyric_parser::BindingType::VALUE;
     if (walker.hasAttr(lyric_parser::kLyricAstBindingType)) {
-        status = walker.parseAttr(lyric_parser::kLyricAstBindingType, paramBinding);
-        if (status.notOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstBindingType, paramBinding));
     }
 
     std::string paramLabel;
     if (walker.hasAttr(lyric_parser::kLyricAstLabel)) {
-        status = walker.parseAttr(lyric_parser::kLyricAstLabel, paramLabel);
-        if (status.notOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstLabel, paramLabel));
     }
 
     Option<lyric_parser::NodeWalker> maybeInit;
     if (walker.hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
-        tu_uint32 defaultOffset;
-        status = walker.parseAttr(lyric_parser::kLyricAstDefaultOffset, defaultOffset);
-        if (status.notOk())
-            return status;
-        maybeInit = Option(walker.getNodeAtOffset(defaultOffset));
+        lyric_parser::NodeWalker init;
+        TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstDefaultOffset, init));
+        maybeInit = Option(init);
     }
 
     return lyric_typing::ParameterSpec(walker, paramName, paramLabel, paramType, paramBinding, maybeInit);
@@ -103,11 +90,10 @@ lyric_typing::parse_pack(
     }
 
     if (walker.hasAttr(lyric_parser::kLyricAstRestOffset)) {
-        tu_uint32 restOffset;
-        TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstRestOffset, restOffset));
-        auto child = walker.getNodeAtOffset(restOffset);
+        lyric_parser::NodeWalker restNode;
+        TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstRestOffset, restNode));
         ParameterSpec param;
-        TU_ASSIGN_OR_RETURN (param, parse_parameter(block, child, state));
+        TU_ASSIGN_OR_RETURN (param, parse_parameter(block, restNode, state));
         restParameterSpec = Option(param);
     }
 

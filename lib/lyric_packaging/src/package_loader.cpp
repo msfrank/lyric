@@ -82,7 +82,7 @@ lyric_packaging::PackageLoader::assemblyLocationToFilePath(
     for (int i = 0; i < parts.numParts(); i++) {
         locationPath.append(parts.partView(i));
     }
-    locationPath.replace_extension(lyric_common::kAssemblyFileSuffix);
+    locationPath.replace_extension(lyric_common::kObjectFileSuffix);
 
     // build the module path
     auto modulePath = packagesPath / packageSpecifier.toString() / locationPath;
@@ -209,7 +209,7 @@ assembly_location_path_to_entry_path(const tempo_utils::UrlPath &locationPath)
     }
 
     std::filesystem::path filename(locationPath.lastView());
-    filename.replace_extension(lyric_common::kAssemblyFileSuffix);
+    filename.replace_extension(lyric_common::kObjectFileSuffix);
     return assemblyPath.traverse(filename.string());
 }
 
@@ -285,7 +285,7 @@ lyric_packaging::PackageLoader::loadAssembly(const lyric_common::AssemblyLocatio
                 absolutePath.string(), assemblyPath.toString());
         bytes = slice.toImmutableBytes();
     }
-    else if (absolutePath.extension() == std::string_view(lyric_common::kAssemblyFileDotSuffix)) {
+    else if (absolutePath.extension() == std::string_view(lyric_common::kObjectFileDotSuffix)) {
         // load the assembly from the filesystem
         tempo_utils::FileReader reader(absolutePath.string());
         if (!reader.isValid())
@@ -336,7 +336,7 @@ lyric_packaging::PackageLoader::loadPlugin(
         //    "failed to load plugin {}: scheme is unimplemented", location.toString());
         return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>();
     }
-    else if (absolutePath.extension() == std::string_view(lyric_common::kAssemblyFileDotSuffix)) {
+    else if (absolutePath.extension() == std::string_view(lyric_common::kObjectFileDotSuffix)) {
 
         auto platformId = absl::StrCat(ASSEMBLY_PLUGIN_SYSTEM_NAME, "-", ASSEMBLY_PLUGIN_ARCHITECTURE);
         auto pluginName = absl::StrCat(absolutePath.stem().string(), ".", platformId, ASSEMBLY_PLUGIN_SUFFIX);

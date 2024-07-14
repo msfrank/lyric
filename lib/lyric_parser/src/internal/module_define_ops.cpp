@@ -3,6 +3,7 @@
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/internal/module_define_ops.h>
+#include <lyric_parser/internal/parser_utils.h>
 #include <lyric_parser/parser_attrs.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
@@ -30,12 +31,12 @@ lyric_parser::internal::ModuleDefineOps::exitDefStatement(ModuleParser::DefState
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *blockNode = m_state->popNode();
 
     // the parameter list
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *packNode = m_state->popNode();
 
     // the function name
@@ -43,18 +44,17 @@ lyric_parser::internal::ModuleDefineOps::exitDefStatement(ModuleParser::DefState
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     // the function return type
-    auto *returnTypeNode = m_state->makeType(ctx->returnSpec()->assignableType());
-    auto *returnTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(returnTypeNode->getAddress().getAddress()));
+    auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
+    auto *returnTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, returnTypeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
     // allocate the node
-    auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, token);
-    span->putTag(kLyricParserNodeOffset, static_cast<tu_int64>(defNode->getAddress().getAddress()));
-    span->putTag(kLyricParserLineNumber, static_cast<tu_int64>(defNode->getLineNumber()));
-    span->putTag(kLyricParserColumnNumber, static_cast<tu_int64>(defNode->getColumnNumber()));
-    span->putTag(kLyricParserFileOffset, static_cast<tu_int64>(defNode->getFileOffset()));
+    auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
+    span->putTag(kLyricParserLineNumber, location.lineNumber);
+    span->putTag(kLyricParserColumnNumber, location.columnNumber);
+    span->putTag(kLyricParserFileOffset, location.fileOffset);
 
     defNode->putAttr(identifierAttr);
     defNode->putAttr(returnTypeOffsetAttr);
@@ -63,9 +63,8 @@ lyric_parser::internal::ModuleDefineOps::exitDefStatement(ModuleParser::DefState
 
     // generic information
     if (ctx->placeholderSpec()) {
-        auto *genericNode = m_state->makeGeneric(ctx->placeholderSpec(), ctx->constraintSpec());
-        auto *genericOffsetAttr = m_state->appendAttrOrThrow(kLyricAstGenericOffset,
-            static_cast<tu_uint32>(genericNode->getAddress().getAddress()));
+        auto *genericNode = make_Generic_node(m_state, ctx->placeholderSpec(), ctx->constraintSpec());
+        auto *genericOffsetAttr = m_state->appendAttrOrThrow(kLyricAstGenericOffset, genericNode);
         defNode->putAttr(genericOffsetAttr);
     }
 
@@ -93,12 +92,12 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *blockNode = m_state->popNode();
 
     // the parameter list
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *packNode = m_state->popNode();
 
     // the function name
@@ -106,13 +105,13 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     // the function return type
-    auto *returnTypeNode = m_state->makeType(ctx->returnSpec()->assignableType());
-    auto *returnTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(returnTypeNode->getAddress().getAddress()));
+    auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
+    auto *returnTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, returnTypeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, token);
+    auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
     defNode->putAttr(identifierAttr);
     defNode->putAttr(returnTypeOffsetAttr);
     defNode->appendChild(packNode);
@@ -120,9 +119,9 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
 
     // if ancestor node is not a kImpl, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *implNode = m_state->peekNode();
-    implNode->checkClassOrThrow(lyric_schema::kLyricAstImplClass);
+    m_state->checkNodeOrThrow(implNode, lyric_schema::kLyricAstImplClass);
 
     implNode->appendChild(defNode);
 
@@ -135,5 +134,7 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
 void
 lyric_parser::internal::ModuleDefineOps::exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx)
 {
-    m_state->throwSyntaxError(ctx->getStart(), "defalias unimplemented");
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+    m_state->throwSyntaxError(location, "defalias unimplemented");
 }

@@ -170,9 +170,9 @@ symbolize_cond(
     }
 
     if (walker.hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
-        tu_uint32 defaultOffset;
-        entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultOffset);
-        status = symbolize_node(block, walker.getNodeAtOffset(defaultOffset), entryPoint);
+        lyric_parser::NodeWalker defaultNode;
+        entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultNode);
+        status = symbolize_node(block, defaultNode, entryPoint);
         if (!status.isOk())
             return status;
     }
@@ -203,9 +203,9 @@ symbolize_if(
     }
 
     if (walker.hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
-        tu_uint32 defaultOffset;
-        entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultOffset);
-        status = symbolize_node(block, walker.getNodeAtOffset(defaultOffset), entryPoint);
+        lyric_parser::NodeWalker defaultNode;
+        entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultNode);
+        status = symbolize_node(block, defaultNode, entryPoint);
         if (!status.isOk())
             return status;
     }
@@ -239,9 +239,9 @@ symbolize_match(
     }
 
     if (walker.hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
-        tu_uint32 defaultOffset;
-        entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultOffset);
-        status = symbolize_block(block, walker.getNodeAtOffset(defaultOffset), entryPoint);
+        lyric_parser::NodeWalker defaultNode;
+        entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultNode);
+        status = symbolize_block(block, defaultNode, entryPoint);
         if (!status.isOk())
             return status;
     }

@@ -97,9 +97,9 @@ lyric_compiler::internal::compile_cond(
     // evaluate the alternative block. if no alternative is specified, then by default we return Nil
     lyric_common::TypeDef alternativeType;
     if (walker.hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
-        tu_uint32 defaultOffset;
-        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultOffset);
-        auto alternativeResult = compile_expression(&alternative, walker.getNodeAtOffset(defaultOffset), moduleEntry);
+        lyric_parser::NodeWalker defaultNode;
+        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultNode);
+        auto alternativeResult = compile_expression(&alternative, defaultNode, moduleEntry);
         if (alternativeResult.isStatus())
             return alternativeResult.getStatus();
         alternativeType = alternativeResult.getResult();
@@ -236,9 +236,9 @@ lyric_compiler::internal::compile_if(
 
     // evaluate the alternative block. if no alternative is specified, then by default we return Nil
     if (walker.hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
-        tu_uint32 defaultOffset;
-        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultOffset);
-        auto alternativeResult = compile_block(&alternative, walker.getNodeAtOffset(defaultOffset), moduleEntry);
+        lyric_parser::NodeWalker defaultNode;
+        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultNode);
+        auto alternativeResult = compile_block(&alternative, defaultNode, moduleEntry);
         if (alternativeResult.isStatus())
             return alternativeResult.getStatus();
         auto alternativeType = alternativeResult.getResult();

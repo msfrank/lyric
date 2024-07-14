@@ -3,6 +3,7 @@
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/internal/module_match_ops.h>
+#include <lyric_parser/internal/parser_utils.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
 #include <tempo_utils/log_stream.h>
@@ -17,7 +18,8 @@ void
 lyric_parser::internal::ModuleMatchOps::enterMatchExpression(ModuleParser::MatchExpressionContext *ctx)
 {
     auto *token = ctx->getStart();
-    auto *matchNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstMatchClass, token);
+    auto location = get_token_location(token);
+    auto *matchNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstMatchClass, location);
     m_state->pushNode(matchNode);
 }
 
@@ -26,14 +28,14 @@ lyric_parser::internal::ModuleMatchOps::exitMatchTarget(ModuleParser::MatchTarge
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *targetNode = m_state->popNode();
 
     // if ancestor node is not a kMatch, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *matchNode = m_state->peekNode();
-    matchNode->checkClassOrThrow(lyric_schema::kLyricAstMatchClass);
+    m_state->checkNodeOrThrow(matchNode, lyric_schema::kLyricAstMatchClass);
 
     // otherwise append target to the match
     matchNode->appendChild(targetNode);
@@ -44,7 +46,7 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnEnum(ModuleParser::MatchOnEnu
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *consequentNode = m_state->popNode();
 
     std::vector<std::string> parts;
@@ -58,19 +60,20 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnEnum(ModuleParser::MatchOnEnu
     auto *symbolPathAttr = m_state->appendAttrOrThrow(kLyricAstSymbolPath, symbolPath);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *symbolRefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolRefClass, token);
+    auto *symbolRefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolRefClass, location);
     symbolRefNode->putAttr(symbolPathAttr);
 
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, token);
+    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
     caseNode->appendChild(symbolRefNode);
     caseNode->appendChild(consequentNode);
 
     // if ancestor node is not a kMatch, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *matchNode = m_state->peekNode();
-    matchNode->checkClassOrThrow(lyric_schema::kLyricAstMatchClass);
+    m_state->checkNodeOrThrow(matchNode, lyric_schema::kLyricAstMatchClass);
 
     // otherwise append case to the match
     matchNode->appendChild(caseNode);
@@ -81,32 +84,32 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnType(ModuleParser::MatchOnTyp
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *consequentNode = m_state->popNode();
 
     auto id = ctx->Identifier()->getText();
 
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
-    auto *typeNode = m_state->makeType(ctx->assignableType());
-    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(typeNode->getAddress().getAddress()));
+    auto *typeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, typeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *unpackNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUnpackClass, token);
+    auto *unpackNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUnpackClass, location);
     unpackNode->putAttr(identifierAttr);
     unpackNode->putAttr(typeOffsetAttr);
 
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, token);
+    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
     caseNode->appendChild(unpackNode);
     caseNode->appendChild(consequentNode);
 
     // if ancestor node is not a kMatch, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *matchNode = m_state->peekNode();
-    matchNode->checkClassOrThrow(lyric_schema::kLyricAstMatchClass);
+    m_state->checkNodeOrThrow(matchNode, lyric_schema::kLyricAstMatchClass);
 
     // otherwise append case to the match
     matchNode->appendChild(caseNode);
@@ -117,20 +120,20 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnUnwrap(ModuleParser::MatchOnU
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *consequentNode = m_state->popNode();
 
     auto *unwrapSpec = ctx->unwrapSpec();
     if (unwrapSpec == nullptr)
-        m_state->throwSyntaxError(ctx->getStop(), "invalid unwrap spec");
+        m_state->throwSyntaxError(get_token_location(ctx->getStop()), "invalid unwrap spec");
 
-    auto *unwrapTypeNode = m_state->makeType(unwrapSpec->assignableType());
-    auto *unwrapTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(unwrapTypeNode->getAddress().getAddress()));
+    auto *unwrapTypeNode = make_Type_node(m_state, unwrapSpec->assignableType());
+    auto *unwrapTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, unwrapTypeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *unwrapNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUnpackClass, token);
+    auto *unwrapNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUnpackClass, location);
     unwrapNode->putAttr(unwrapTypeOffsetAttr);
 
     if (ctx->Identifier()) {
@@ -141,7 +144,7 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnUnwrap(ModuleParser::MatchOnU
 
     auto *unwrapList = ctx->unwrapSpec()->unwrapList();
     if (unwrapList == nullptr)
-        m_state->throwSyntaxError(ctx->getStop(), "invalid unwrap list");
+        m_state->throwSyntaxError(get_token_location(ctx->getStop()), "invalid unwrap list");
 
     for (uint32_t i = 0; i < unwrapList->getRuleIndex(); i++) {
         auto *unwrapParam = unwrapList->unwrapParam(i);
@@ -151,27 +154,27 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnUnwrap(ModuleParser::MatchOnU
         auto paramId = unwrapParam->Identifier()->getText();
         auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, paramId);
 
-        auto *paramTypeNode = m_state->makeType(unwrapParam->paramType()->assignableType());
-        auto *paramTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-            static_cast<tu_uint32>(paramTypeNode->getAddress().getAddress()));
+        auto *paramTypeNode = make_Type_node(m_state, unwrapParam->paramType()->assignableType());
+        auto *paramTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, paramTypeNode);
 
         auto *paramToken = ctx->getStart();
+        auto paramLocation = get_token_location(paramToken);
 
-        auto *paramNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstParamClass, paramToken);
+        auto *paramNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstParamClass, paramLocation);
         paramNode->putAttr(identifierAttr);
         paramNode->putAttr(paramTypeOffsetAttr);
         unwrapNode->appendChild(paramNode);
     }
 
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, token);
+    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
     caseNode->appendChild(unwrapNode);
     caseNode->appendChild(consequentNode);
 
     // if ancestor node is not a kMatch, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *matchNode = m_state->peekNode();
-    matchNode->checkClassOrThrow(lyric_schema::kLyricAstMatchClass);
+    m_state->checkNodeOrThrow(matchNode, lyric_schema::kLyricAstMatchClass);
 
     // otherwise append case to the match
     matchNode->appendChild(caseNode);
@@ -182,17 +185,16 @@ lyric_parser::internal::ModuleMatchOps::exitMatchElse(ModuleParser::MatchElseCon
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *alternativeNode = m_state->popNode();
 
-    auto *defaultOffsetAttr = m_state->appendAttrOrThrow(kLyricAstDefaultOffset,
-        static_cast<tu_uint32>(alternativeNode->getAddress().getAddress()));
+    auto *defaultOffsetAttr = m_state->appendAttrOrThrow(kLyricAstDefaultOffset, alternativeNode);
 
     // if ancestor node is not a kMatch, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *matchNode = m_state->peekNode();
-    matchNode->checkClassOrThrow(lyric_schema::kLyricAstMatchClass);
+    m_state->checkNodeOrThrow(matchNode, lyric_schema::kLyricAstMatchClass);
 
     // otherwise add defaultCase attribute to the match
     matchNode->putAttr(defaultOffsetAttr);

@@ -10,6 +10,7 @@
 #include <lyric_build/internal/orchestrate_task.h>
 #include <lyric_build/internal/package_task.h>
 #include <lyric_build/internal/parse_module_task.h>
+#include <lyric_build/internal/rewrite_module_task.h>
 #include <lyric_build/internal/symbolize_module_task.h>
 #include <lyric_build/internal/test_task.h>
 #include <lyric_build/task_registry.h>
@@ -31,6 +32,7 @@ static const Task tasks[] = {
     {"orchestrate",         lyric_build::internal::new_orchestrate_task},
     {"package",             lyric_build::internal::new_package_task},
     {"parse_module",        lyric_build::internal::new_parse_module_task},
+    {"rewrite_module",      lyric_build::internal::new_rewrite_module_task},
     {"symbolize_module",    lyric_build::internal::new_symbolize_module_task},
     {"test",                lyric_build::internal::new_test_task},
     {nullptr, nullptr}, // sentinel value, must be last

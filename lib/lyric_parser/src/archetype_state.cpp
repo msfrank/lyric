@@ -7,6 +7,7 @@
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/generated/archetype.h>
+#include <lyric_parser/internal/archetype_writer.h>
 #include <lyric_parser/lyric_archetype.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_parser/parse_result.h>
@@ -61,238 +62,27 @@ lyric_parser::ArchetypeState::scopeManager() const
     return m_scopeManager;
 }
 
-lyric_parser::ArchetypeNode *
-lyric_parser::ArchetypeState::makeSType(ModuleParser::SimpleTypeContext *ctx)
+lyric_parser::ArchetypeId *
+lyric_parser::ArchetypeState::makeId(ArchetypeDescriptorType type, tu_uint32 offset)
 {
-    TU_ASSERT (ctx != nullptr);
-    auto *token = ctx->getStart();
-
-    std::vector<std::string> parts;
-    for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
-        auto *part = ctx->Identifier(i);
-        if (part == nullptr)
-            continue;
-        parts.push_back(part->getText());
-    }
-    lyric_common::SymbolPath symbolPath(parts);
-
-    auto *symbolPathAttr = appendAttrOrThrow(kLyricAstSymbolPath, symbolPath);
-    auto *stypeNode = appendNodeOrThrow(lyric_schema::kLyricAstSTypeClass, token);
-    stypeNode->putAttr(symbolPathAttr);
-    return stypeNode;
+    tu_uint32 id = m_archetypeIds.size();
+    auto *archetypeId = new ArchetypeId(type, id, offset);
+    m_archetypeIds.push_back(archetypeId);
+    return archetypeId;
 }
 
-lyric_parser::ArchetypeNode *
-lyric_parser::ArchetypeState::makePType(ModuleParser::ParametricTypeContext *ctx)
+lyric_parser::ArchetypeId *
+lyric_parser::ArchetypeState::getId(int index) const
 {
-    TU_ASSERT (ctx != nullptr);
-    auto *token = ctx->getStart();
-
-    auto *simpleType = ctx->simpleType();
-    std::vector<std::string> parts;
-    for (size_t i = 0; i < simpleType->getRuleIndex(); i++) {
-        auto *part = simpleType->Identifier(i);
-        if (part == nullptr)
-            continue;
-        parts.push_back(part->getText());
-    }
-    lyric_common::SymbolPath symbolPath(parts);
-
-    auto *symbolPathAttr = appendAttrOrThrow(kLyricAstSymbolPath, symbolPath);
-    auto *ptypeNode = appendNodeOrThrow(lyric_schema::kLyricAstPTypeClass, token);
-    ptypeNode->putAttr(symbolPathAttr);
-
-    for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
-        auto *param = ctx->assignableType(i);
-        if (param == nullptr)
-            continue;
-        auto *typeNode = makeType(param);
-        ptypeNode->appendChild(typeNode);
-    }
-
-    return ptypeNode;
+    if (0 <= index && std::cmp_less(index, m_archetypeIds.size()))
+        return m_archetypeIds.at(index);
+    return nullptr;
 }
 
-lyric_parser::ArchetypeNode *
-lyric_parser::ArchetypeState::makeUType(ModuleParser::UnionTypeContext *ctx)
+int
+lyric_parser::ArchetypeState::numIds() const
 {
-    TU_ASSERT (ctx != nullptr);
-    auto *token = ctx->getStart();
-
-    auto *utypeNode = appendNodeOrThrow(lyric_schema::kLyricAstUTypeClass, token);
-
-    for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
-        auto *member = ctx->singularType(i);
-        if (member == nullptr)
-            continue;
-
-        ArchetypeNode *memberNode = nullptr;
-        if (member->parametricType()) {
-            memberNode = makePType(member->parametricType());
-        } else if (member->simpleType()) {
-            memberNode = makeSType(member->simpleType());
-        } else {
-            throwSyntaxError(member->getStart(), "illegal union type member");
-            TU_UNREACHABLE();
-        }
-
-        utypeNode->appendChild(memberNode);
-    }
-
-    return utypeNode;
-}
-
-lyric_parser::ArchetypeNode *
-lyric_parser::ArchetypeState::makeIType(ModuleParser::IntersectionTypeContext *ctx)
-{
-    TU_ASSERT (ctx != nullptr);
-    auto *token = ctx->getStart();
-
-    auto *itypeNode = appendNodeOrThrow(lyric_schema::kLyricAstITypeClass, token);
-
-    for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
-        auto *member = ctx->singularType(i);
-        if (member == nullptr)
-            continue;
-
-        ArchetypeNode *memberNode = nullptr;
-        if (member->parametricType()) {
-            memberNode = makePType(member->parametricType());
-        } else if (member->simpleType()) {
-            memberNode = makeSType(member->simpleType());
-        } else {
-            throwSyntaxError(member->getStart(), "illegal intersection type member");
-            TU_UNREACHABLE();
-        }
-
-        itypeNode->appendChild(memberNode);
-    }
-
-    return itypeNode;
-}
-
-lyric_parser::ArchetypeNode *
-lyric_parser::ArchetypeState::makeType(ModuleParser::AssignableTypeContext *ctx)
-{
-    if (ctx->singularType()) {
-        if (ctx->singularType()->parametricType())
-            return makePType(ctx->singularType()->parametricType());
-        return makeSType(ctx->singularType()->simpleType());
-    } else if (ctx->intersectionType()) {
-        return makeIType(ctx->intersectionType());
-    } else if (ctx->unionType()) {
-        return makeUType(ctx->unionType());
-    }
-    throwSyntaxError(ctx->getStart(), "illegal assignable type");
-    TU_UNREACHABLE();
-}
-
-lyric_parser::ArchetypeNode *
-lyric_parser::ArchetypeState::makeTypeArguments(ModuleParser::TypeArgumentsContext *ctx)
-{
-    TU_ASSERT (ctx != nullptr);
-    auto *token = ctx->getStart();
-
-    auto *typeArgumentsNode = appendNodeOrThrow(lyric_schema::kLyricAstTypeArgumentsClass, token);
-
-    for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
-        auto *argument = ctx->assignableType(i);
-        if (argument == nullptr)
-            continue;
-        ArchetypeNode *argumentNode = makeType(argument);
-        typeArgumentsNode->appendChild(argumentNode);
-    }
-
-    return typeArgumentsNode;
-}
-
-lyric_parser::ArchetypeNode *
-lyric_parser::ArchetypeState::makeGeneric(
-    ModuleParser::PlaceholderSpecContext *pctx,
-    ModuleParser::ConstraintSpecContext *cctx)
-{
-    TU_ASSERT (pctx != nullptr);
-    auto *token = pctx->getStart();
-
-    auto *genericNode = appendNodeOrThrow(lyric_schema::kLyricAstGenericClass, token);
-
-    absl::flat_hash_map<std::string,ArchetypeNode *> placeholderNodes;
-
-    for (size_t i = 0; i < pctx->getRuleIndex(); i++) {
-        if (!pctx->placeholder(i))
-            continue;
-        auto *p = pctx->placeholder(i);
-
-        std::string id;
-        VarianceType variance;
-
-        if (p->covariantPlaceholder()) {
-            id = p->covariantPlaceholder()->Identifier()->getText();
-            variance = VarianceType::COVARIANT;
-        } else if (p->contravariantPlaceholder()) {
-            id = p->contravariantPlaceholder()->Identifier()->getText();
-            variance = VarianceType::CONTRAVARIANT;
-        } else if (p->invariantPlaceholder()) {
-            id = p->invariantPlaceholder()->Identifier()->getText();
-            variance = VarianceType::INVARIANT;
-        } else {
-            throwParseInvariant(genericNode->getAddress(), p->getStart(), "illegal placeholder");
-            TU_UNREACHABLE();
-        }
-
-        auto *identifierAttr = appendAttrOrThrow(kLyricAstIdentifier, id);
-        auto *varianceAttr = appendAttrOrThrow(kLyricAstVarianceType, variance);
-
-        token = p->getStart();
-
-        auto *placeholderNode = appendNodeOrThrow(lyric_schema::kLyricAstPlaceholderClass, token);
-        placeholderNode->putAttr(identifierAttr);
-        placeholderNode->putAttr(varianceAttr);
-        genericNode->appendChild(placeholderNode);
-
-        placeholderNodes[id] = placeholderNode;
-    }
-
-    if (cctx) {
-        for (size_t i = 0; i < cctx->getRuleIndex(); i++) {
-            if (!cctx->constraint(i))
-                continue;
-            auto *c = cctx->constraint(i);
-
-            std::string id;
-            BoundType bound;
-            ArchetypeNode *constraintTypeNode;
-
-            if (c->extendsConstraint()) {
-                id = c->extendsConstraint()->Identifier()->getText();
-                bound = BoundType::EXTENDS;
-                constraintTypeNode = makeType(c->extendsConstraint()->assignableType());
-            } else if (c->superConstraint()) {
-                id = c->superConstraint()->Identifier()->getText();
-                bound = BoundType::SUPER;
-                constraintTypeNode = makeType(c->extendsConstraint()->assignableType());
-            } else {
-                throwParseInvariant(genericNode->getAddress(), c->getStart(), "illegal constraint");
-                TU_UNREACHABLE();
-            }
-
-            auto *boundAttr = appendAttrOrThrow(kLyricAstBoundType, bound);
-            auto *typeOffsetAttr = appendAttrOrThrow(kLyricAstTypeOffset, constraintTypeNode->getAddress().getAddress());
-
-            token = c->getStart();
-
-            auto *constraintNode = appendNodeOrThrow(lyric_schema::kLyricAstConstraintClass, token);
-            constraintNode->putAttr(boundAttr);
-            constraintNode->putAttr(typeOffsetAttr);
-
-            if (!placeholderNodes.contains(id))
-                throwSyntaxError(c->getStop(), "no such placeholder {} for constraint", id);
-            auto *placeholderNode = placeholderNodes.at(id);
-            placeholderNode->appendChild(constraintNode);
-        }
-    }
-
-    return genericNode;
+    return m_archetypeIds.size();
 }
 
 bool
@@ -328,22 +118,19 @@ lyric_parser::ArchetypeState::putNamespace(const tempo_utils::Url &nsUrl)
         TU_ASSERT (0 <= index && index < m_archetypeNamespaces.size());
         return m_archetypeNamespaces.at(index);
     }
-    NamespaceAddress address(m_archetypeNamespaces.size());
-    auto *ns = new ArchetypeNamespace(nsUrl, address, this);
+    tu_uint32 offset = m_archetypeNamespaces.size();
+    auto *archetypeId = makeId(ArchetypeDescriptorType::Namespace, offset);
+    auto *ns = new ArchetypeNamespace(nsUrl, archetypeId, this);
     m_archetypeNamespaces.push_back(ns);
-    m_namespaceIndex[nsUrl] = address.getAddress();
+    m_namespaceIndex[nsUrl] = archetypeId->getId();
     return ns;
 }
 
-tempo_utils::Result<tu_uint32>
+tempo_utils::Result<lyric_parser::ArchetypeNamespace *>
 lyric_parser::ArchetypeState::putNamespace(const char *nsString)
 {
     auto nsUrl = tempo_utils::Url::fromString(nsString);
-    auto putNamespaceResult = putNamespace(nsUrl);
-    if (putNamespaceResult.isStatus())
-        return putNamespaceResult.getStatus();
-    auto *archetypeNs = putNamespaceResult.getResult();
-    return archetypeNs->getAddress().getAddress();
+    return putNamespace(nsUrl);
 }
 
 std::vector<lyric_parser::ArchetypeNamespace *>::const_iterator
@@ -365,10 +152,11 @@ lyric_parser::ArchetypeState::numNamespaces() const
 }
 
 tempo_utils::Result<lyric_parser::ArchetypeAttr *>
-lyric_parser::ArchetypeState::appendAttr(AttrId id, tempo_utils::AttrValue value)
+lyric_parser::ArchetypeState::appendAttr(AttrId id, AttrValue value)
 {
-    AttrAddress address(m_archetypeAttrs.size());
-    auto *attr = new ArchetypeAttr(id, value, address, this);
+    tu_uint32 offset = m_archetypeAttrs.size();
+    auto *archetypeId = makeId(ArchetypeDescriptorType::Attr, offset);
+    auto *attr = new ArchetypeAttr(id, value, archetypeId, this);
     m_archetypeAttrs.push_back(attr);
     return attr;
 }
@@ -400,10 +188,14 @@ lyric_parser::ArchetypeState::numAttrs() const
 }
 
 tempo_utils::Result<lyric_parser::ArchetypeNode *>
-lyric_parser::ArchetypeState::appendNode(tu_uint32 nodeNs, tu_uint32 nodeId, antlr4::Token *token)
+lyric_parser::ArchetypeState::appendNode(
+    ArchetypeNamespace *nodeNamespace,
+    tu_uint32 nodeId,
+    const ParseLocation &location)
 {
-    NodeAddress address(m_archetypeNodes.size());
-    auto *node = new ArchetypeNode(nodeNs, nodeId, token, address, this);
+    tu_uint32 offset = m_archetypeNodes.size();
+    auto *archetypeId = makeId(ArchetypeDescriptorType::Node, offset);
+    auto *node = new ArchetypeNode(nodeNamespace, nodeId, location, archetypeId, this);
     m_archetypeNodes.push_back(node);
     return node;
 }
@@ -497,125 +289,72 @@ lyric_parser::ArchetypeState::currentSymbolString() const
     return symbolString;
 }
 
-static std::pair<lyi1::Value,flatbuffers::Offset<void>>
-serialize_value(flatbuffers::FlatBufferBuilder &buffer, const tempo_utils::AttrValue &value)
-{
-    switch (value.getType()) {
-        case tempo_utils::ValueType::Nil: {
-            auto type = lyi1::Value::TrueFalseNilValue;
-            auto offset = lyi1::CreateTrueFalseNilValue(buffer, lyi1::TrueFalseNil::Nil).Union();
-            return {type, offset};
-        }
-        case tempo_utils::ValueType::Bool: {
-            auto type = lyi1::Value::TrueFalseNilValue;
-            auto tfn = value.getBool()? lyi1::TrueFalseNil::True : lyi1::TrueFalseNil::False;
-            auto offset = lyi1::CreateTrueFalseNilValue(buffer, tfn).Union();
-            return {type, offset};
-        }
-        case tempo_utils::ValueType::Int64: {
-            auto type = lyi1::Value::Int64Value;
-            auto offset = lyi1::CreateInt64Value(buffer, value.getInt64()).Union();
-            return {type, offset};
-        }
-        case tempo_utils::ValueType::Float64: {
-            auto type = lyi1::Value::Float64Value;
-            auto offset = lyi1::CreateFloat64Value(buffer, value.getFloat64()).Union();
-            return {type, offset};
-        }
-        case tempo_utils::ValueType::UInt64: {
-            auto type = lyi1::Value::UInt64Value;
-            auto offset = lyi1::CreateUInt64Value(buffer, value.getUInt64()).Union();
-            return {type, offset};
-        }
-        case tempo_utils::ValueType::UInt32: {
-            auto type = lyi1::Value::UInt32Value;
-            auto offset = lyi1::CreateUInt32Value(buffer, value.getUInt32()).Union();
-            return {type, offset};
-        }
-        case tempo_utils::ValueType::UInt16: {
-            auto type = lyi1::Value::UInt16Value;
-            auto offset = lyi1::CreateUInt16Value(buffer, value.getUInt16()).Union();
-            return {type, offset};
-        }
-        case tempo_utils::ValueType::UInt8: {
-            auto type = lyi1::Value::UInt8Value;
-            auto offset = lyi1::CreateUInt8Value(buffer, value.getUInt8()).Union();
-            return {type, offset};
-        }
-        case tempo_utils::ValueType::String: {
-            auto type = lyi1::Value::StringValue;
-            auto offset = lyi1::CreateStringValue(buffer, buffer.CreateSharedString(value.stringView())).Union();
-            return {type, offset};
-        }
-        default:
-            TU_UNREACHABLE();
-    }
-}
-
 tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_parser::ArchetypeState::toArchetype() const
 {
-    flatbuffers::FlatBufferBuilder buffer;
+    return internal::ArchetypeWriter::createArchetype(this);
 
-    std::vector<flatbuffers::Offset<lyi1::NamespaceDescriptor>> namespaces_vector;
-    std::vector<flatbuffers::Offset<lyi1::AttributeDescriptor>> attributes_vector;
-    std::vector<flatbuffers::Offset<lyi1::NodeDescriptor>> nodes_vector;
-
-    // serialize namespaces
-    for (const auto *ns : m_archetypeNamespaces) {
-        auto fb_nsUrl = buffer.CreateString(ns->getNsUrl().toString());
-        namespaces_vector.push_back(lyi1::CreateNamespaceDescriptor(buffer, fb_nsUrl));
-    }
-    auto fb_namespaces = buffer.CreateVector(namespaces_vector);
-
-    // serialize attributes
-    for (const auto *attr : m_archetypeAttrs) {
-        auto id = attr->getAttrId();
-        auto value = attr->getAttrValue();
-        auto p = serialize_value(buffer, value);
-
-        attributes_vector.push_back(lyi1::CreateAttributeDescriptor(buffer,
-            id.getAddress().getAddress(), id.getType(), p.first, p.second));
-    }
-    auto fb_attributes = buffer.CreateVector(attributes_vector);
-
-    // serialize nodes
-    for (const auto *node : m_archetypeNodes) {
-
-        // serialize entry attrs
-        std::vector<uint32_t> node_attrs;
-        for (auto iterator = node->attrsBegin(); iterator != node->attrsEnd(); iterator++) {
-            node_attrs.push_back(iterator->second.getAddress());
-        }
-        auto fb_node_attrs = buffer.CreateVector(node_attrs);
-
-        // serialize entry children
-        std::vector<uint32_t> node_children;
-        for (auto iterator = node->childrenBegin(); iterator != node->childrenEnd(); iterator++) {
-            node_children.push_back(iterator->getAddress());
-        }
-        auto fb_node_children = buffer.CreateVector(node_children);
-
-        nodes_vector.push_back(lyi1::CreateNodeDescriptor(buffer,
-            node->getNsOffset(), node->getTypeOffset(),
-            fb_node_attrs, fb_node_children,
-            node->getFileOffset(), node->getLineNumber(), node->getColumnNumber(), node->getTextSpan()));
-    }
-    auto fb_nodes = buffer.CreateVector(nodes_vector);
-
-    // build archetype from buffer
-    lyi1::ArchetypeBuilder archetypeBuilder(buffer);
-
-    archetypeBuilder.add_abi(lyi1::ArchetypeVersion::Version1);
-    archetypeBuilder.add_namespaces(fb_namespaces);
-    archetypeBuilder.add_attributes(fb_attributes);
-    archetypeBuilder.add_nodes(fb_nodes);
-
-    // serialize archetype and mark the buffer as finished
-    auto archetype = archetypeBuilder.Finish();
-    buffer.Finish(archetype, lyi1::ArchetypeIdentifier());
-
-    // copy the flatbuffer into our own byte array and instantiate archetype
-    auto bytes = tempo_utils::MemoryBytes::copy(buffer.GetBufferSpan());
-    return lyric_parser::LyricArchetype(bytes);
+//    flatbuffers::FlatBufferBuilder buffer;
+//
+//    std::vector<flatbuffers::Offset<lyi1::NamespaceDescriptor>> namespaces_vector;
+//    std::vector<flatbuffers::Offset<lyi1::AttributeDescriptor>> attributes_vector;
+//    std::vector<flatbuffers::Offset<lyi1::NodeDescriptor>> nodes_vector;
+//
+//    // serialize namespaces
+//    for (const auto *ns : m_archetypeNamespaces) {
+//        auto fb_nsUrl = buffer.CreateString(ns->getNsUrl().toString());
+//        namespaces_vector.push_back(lyi1::CreateNamespaceDescriptor(buffer, fb_nsUrl));
+//    }
+//    auto fb_namespaces = buffer.CreateVector(namespaces_vector);
+//
+//    // serialize attributes
+//    for (const auto *attr : m_archetypeAttrs) {
+//        auto id = attr->getAttrId();
+//        auto value = attr->getAttrValue();
+//        auto p = serialize_value(buffer, value);
+//
+//        attributes_vector.push_back(lyi1::CreateAttributeDescriptor(buffer,
+//            id.getAddress().getAddress(), id.getType(), p.first, p.second));
+//    }
+//    auto fb_attributes = buffer.CreateVector(attributes_vector);
+//
+//    // serialize nodes
+//    for (const auto *node : m_archetypeNodes) {
+//
+//        // serialize entry attrs
+//        std::vector<tu_uint32> node_attrs;
+//        for (auto iterator = node->attrsBegin(); iterator != node->attrsEnd(); iterator++) {
+//            node_attrs.push_back(iterator->second.getAddress());
+//        }
+//        auto fb_node_attrs = buffer.CreateVector(node_attrs);
+//
+//        // serialize entry children
+//        std::vector<tu_uint32> node_children;
+//        for (auto iterator = node->childrenBegin(); iterator != node->childrenEnd(); iterator++) {
+//            node_children.push_back(iterator->getAddress());
+//        }
+//        auto fb_node_children = buffer.CreateVector(node_children);
+//
+//        nodes_vector.push_back(lyi1::CreateNodeDescriptor(buffer,
+//            node->getNsOffset(), node->getTypeOffset(),
+//            fb_node_attrs, fb_node_children,
+//            node->getFileOffset(), node->getLineNumber(), node->getColumnNumber(), node->getTextSpan()));
+//    }
+//    auto fb_nodes = buffer.CreateVector(nodes_vector);
+//
+//    // build archetype from buffer
+//    lyi1::ArchetypeBuilder archetypeBuilder(buffer);
+//
+//    archetypeBuilder.add_abi(lyi1::ArchetypeVersion::Version1);
+//    archetypeBuilder.add_namespaces(fb_namespaces);
+//    archetypeBuilder.add_attributes(fb_attributes);
+//    archetypeBuilder.add_nodes(fb_nodes);
+//
+//    // serialize archetype and mark the buffer as finished
+//    auto archetype = archetypeBuilder.Finish();
+//    buffer.Finish(archetype, lyi1::ArchetypeIdentifier());
+//
+//    // copy the flatbuffer into our own byte array and instantiate archetype
+//    auto bytes = tempo_utils::MemoryBytes::copy(buffer.GetBufferSpan());
+//    return lyric_parser::LyricArchetype(bytes);
 }

@@ -226,13 +226,13 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
 
     // generate the install path
     std::filesystem::path outlineInstallPath = generate_install_path(
-        getId().getDomain(), m_sourceUrl, lyric_common::kAssemblyFileDotSuffix);
+        getId().getDomain(), m_sourceUrl, lyric_common::kObjectFileDotSuffix);
 
     // store the outline assembly metadata in the cache
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
     writer.putAttr(kLyricBuildContentUrl, m_sourceUrl);
-    writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kAssemblyContentType));
+    writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
     writer.putAttr(kLyricBuildAssemblyLocation, m_moduleLocation);
     writer.putAttr(kLyricBuildInstallPath, outlineInstallPath.string());

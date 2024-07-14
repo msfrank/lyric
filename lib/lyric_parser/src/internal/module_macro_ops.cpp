@@ -3,6 +3,7 @@
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/internal/module_macro_ops.h>
+#include <lyric_parser/internal/parser_utils.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
 #include <tempo_utils/log_stream.h>
@@ -17,7 +18,8 @@ void
 lyric_parser::internal::ModuleMacroOps::enterMacro(ModuleParser::MacroContext *ctx)
 {
     auto *token = ctx->getStart();
-    auto *macroListNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstMacroListClass, token);
+    auto location = get_token_location(token);
+    auto *macroListNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstMacroListClass, location);
     m_state->pushNode(macroListNode);
 }
 
@@ -25,7 +27,8 @@ void
 lyric_parser::internal::ModuleMacroOps::enterAnnotationList(ModuleParser::AnnotationListContext *ctx)
 {
     auto *token = ctx->getStart();
-    auto *macroListNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstMacroListClass, token);
+    auto location = get_token_location(token);
+    auto *macroListNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstMacroListClass, location);
     m_state->pushNode(macroListNode);
 }
 
@@ -33,8 +36,9 @@ void
 lyric_parser::internal::ModuleMacroOps::exitMacroCall(ModuleParser::MacroCallContext *ctx)
 {
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *macroCallNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstMacroCallClass, token);
+    auto *macroCallNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstMacroCallClass, location);
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
@@ -44,7 +48,7 @@ lyric_parser::internal::ModuleMacroOps::exitMacroCall(ModuleParser::MacroCallCon
                 continue;
 
             if (m_state->isEmpty())
-                m_state->throwIncompleteModule(ctx->getStop());
+                m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
             auto *argNode = m_state->popNode();
 
             if (argSpec->Identifier() != nullptr) {
@@ -52,8 +56,9 @@ lyric_parser::internal::ModuleMacroOps::exitMacroCall(ModuleParser::MacroCallCon
                 auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, label);
 
                 token = argSpec->getStart();
+                location = get_token_location(token);
 
-                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, token);
+                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
                 keywordNode->putAttr(identifierAttr);
                 keywordNode->appendChild(argNode);
                 argNode = keywordNode;
@@ -69,9 +74,9 @@ lyric_parser::internal::ModuleMacroOps::exitMacroCall(ModuleParser::MacroCallCon
 
     // if ancestor node is not a kMacroList, then report internal violation
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *macroListNode = m_state->peekNode();
-    macroListNode->checkClassOrThrow(lyric_schema::kLyricAstMacroListClass);
+    m_state->checkNodeOrThrow(macroListNode, lyric_schema::kLyricAstMacroListClass);
 
     // otherwise append call to the macro list
     macroListNode->appendChild(macroCallNode);

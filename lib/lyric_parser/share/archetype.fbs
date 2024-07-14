@@ -1,6 +1,6 @@
 namespace lyi1;
 
-file_identifier "LYI1";                         // 4 byte magic for Lyric IR version 1
+file_identifier "LYI1";                         // 4 byte magic for Lyric Intermezzo version 1
 
 enum ArchetypeVersion : uint8 {
     Unknown,
@@ -33,7 +33,7 @@ table NamespaceDescriptor {
     ns_url: string;
 }
 
-table AttributeDescriptor {
+table AttrDescriptor {
     attr_ns: uint32;                            // namespace of the attribute
     attr_type: uint32;                          // the type of the attribute. this only has meaning relative to the ns!
     attr_value: Value;                          // value of the attribute
@@ -53,7 +53,7 @@ table NodeDescriptor {
 table Archetype {
     abi: ArchetypeVersion;                      // target ABI the archetype was generated for
     namespaces: [NamespaceDescriptor];          // array of namespace descriptors
-    attributes: [AttributeDescriptor];          // array of attribute descriptors
+    attrs: [AttrDescriptor];                    // array of attribute descriptors
     nodes: [NodeDescriptor];                    // array of node descriptors
 }
 

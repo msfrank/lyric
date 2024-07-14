@@ -176,13 +176,13 @@ lyric_build::internal::SymbolizeModuleTask::runTask(
 
     // generate the install path
     std::filesystem::path linkageInstallPath = generate_install_path(
-        getId().getDomain(), m_sourceUrl, lyric_common::kAssemblyFileDotSuffix);
+        getId().getDomain(), m_sourceUrl, lyric_common::kObjectFileDotSuffix);
 
     // store the assembly metadata in the build cache
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
     writer.putAttr(kLyricBuildContentUrl, m_sourceUrl);
-    writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kAssemblyContentType));
+    writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
     writer.putAttr(kLyricBuildAssemblyLocation, m_moduleLocation);
     writer.putAttr(kLyricBuildInstallPath, linkageInstallPath.string());

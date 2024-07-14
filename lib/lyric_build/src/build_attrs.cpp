@@ -42,42 +42,6 @@ lyric_build::EntryTypeAttr::parseAttr(tu_uint32 index, tempo_utils::AbstractAttr
     return value_to_base_type(value, binding);
 }
 
-tempo_utils::Status
-lyric_build::EntryTypeAttr::validateAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return status;
-    EntryType base;
-    return value_to_base_type(value, base);
-}
-
-std::string
-lyric_build::EntryTypeAttr::toString(tu_uint32 index, tempo_utils::AbstractAttrParser *parser) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return "???";
-
-    EntryType entryType;
-    status = value_to_base_type(value, entryType);
-    if (status.notOk())
-        return "???";
-
-    switch (entryType) {
-        case EntryType::File:
-            return "File";
-        case EntryType::Link:
-            return "Link";
-        case EntryType::Directory:
-            return "Directory";
-        default:
-            return "???";
-    }
-}
-
 const lyric_common::AssemblyLocationAttr lyric_build::kLyricBuildAssemblyLocation(
     &lyric_schema::kLyricBuildAssemblyLocationProperty);
 

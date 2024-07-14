@@ -3,6 +3,7 @@
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/internal/module_assign_ops.h>
+#include <lyric_parser/internal/parser_utils.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
 #include <tempo_utils/log_stream.h>
@@ -29,15 +30,16 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVal(ModuleParser::UntypedVal
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p1 = m_state->popNode();
 
     auto id = ctx->symbolIdentifier()->getText();
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, token);
+    auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, location);
     valNode->appendChild(p1);
     valNode->putAttr(identifierAttr);
     m_state->pushNode(valNode);
@@ -64,20 +66,20 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVal(ModuleParser::TypedValCont
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p1 = m_state->popNode();
 
     auto id = ctx->symbolIdentifier()->getText();
 
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
-    auto *typeNode = m_state->makeType(ctx->assignableType());
-    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(typeNode->getAddress().getAddress()));
+    auto *typeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, typeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, token);
+    auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, location);
     valNode->appendChild(p1);
     valNode->putAttr(identifierAttr);
     valNode->putAttr(typeOffsetAttr);
@@ -105,7 +107,7 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVar(ModuleParser::UntypedVar
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p1 = m_state->popNode();
 
     auto id = ctx->symbolIdentifier()->getText();
@@ -113,8 +115,9 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVar(ModuleParser::UntypedVar
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *varNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstVarClass, token);
+    auto *varNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstVarClass, location);
     varNode->appendChild(p1);
     varNode->putAttr(identifierAttr);
     m_state->pushNode(varNode);
@@ -141,20 +144,20 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVar(ModuleParser::TypedVarCont
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *p1 = m_state->popNode();
 
     auto id = ctx->symbolIdentifier()->getText();
 
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
-    auto *typeNode = m_state->makeType(ctx->assignableType());
-    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset,
-        static_cast<tu_uint32>(typeNode->getAddress().getAddress()));
+    auto *typeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, typeNode);
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *varNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstVarClass, token);
+    auto *varNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstVarClass, location);
     varNode->appendChild(p1);
     varNode->putAttr(identifierAttr);
     varNode->putAttr(typeOffsetAttr);
@@ -170,11 +173,12 @@ void
 lyric_parser::internal::ModuleAssignOps::exitNameAssignment(ModuleParser::NameAssignmentContext *ctx)
 {
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
     auto id = ctx->Identifier()->getText();
 
     auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-    auto *nameNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNameClass, token);
+    auto *nameNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNameClass, location);
     nameNode->putAttr(identifierAttr);
     m_state->pushNode(nameNode);
 }
@@ -183,12 +187,14 @@ void
 lyric_parser::internal::ModuleAssignOps::exitMemberAssignment(ModuleParser::MemberAssignmentContext *ctx)
 {
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
-    auto *targetNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstTargetClass, token);
+    auto *targetNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstTargetClass, location);
 
     if (ctx->ThisKeyword()) {
         token = ctx->ThisKeyword()->getSymbol();
-        auto *thisNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstThisClass, token);
+        location = get_token_location(token);
+        auto *thisNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstThisClass, location);
         targetNode->appendChild(thisNode);
     }
 
@@ -196,11 +202,12 @@ lyric_parser::internal::ModuleAssignOps::exitMemberAssignment(ModuleParser::Memb
         if (ctx->Identifier(i) == nullptr)
             continue;
         token = ctx->Identifier(i)->getSymbol();
+        location = get_token_location(token);
 
         auto id = ctx->Identifier(i)->getText();
 
         auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-        auto *nameNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNameClass, token);
+        auto *nameNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNameClass, location);
         nameNode->putAttr(identifierAttr);
         targetNode->appendChild(nameNode);
     }
@@ -213,30 +220,31 @@ lyric_parser::internal::ModuleAssignOps::exitSetStatement(ModuleParser::SetState
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *exprNode = m_state->popNode();
 
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
-        m_state->throwIncompleteModule(ctx->getStop());
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *targetNode = m_state->popNode();
 
     auto *token = ctx->getStart();
+    auto location = get_token_location(token);
 
     ArchetypeNode *setNode = nullptr;
     if (ctx->assignmentOp()->AssignOperator()) {
-        setNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSetClass, token);
+        setNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSetClass, location);
     } else if (ctx->assignmentOp()->PlusAssignOperator()) {
-        setNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstInplaceAddClass, token);
+        setNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstInplaceAddClass, location);
     } else if (ctx->assignmentOp()->MinusAssignOperator()) {
-        setNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstInplaceSubClass, token);
+        setNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstInplaceSubClass, location);
     } else if (ctx->assignmentOp()->StarAssignOperator()) {
-        setNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstInplaceMulClass, token);
+        setNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstInplaceMulClass, location);
     } else if (ctx->assignmentOp()->SlashAssignOperator()) {
-        setNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstInplaceDivClass, token);
+        setNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstInplaceDivClass, location);
     } else {
         // FIXME: this should be a parse invariant exception
-        m_state->throwSyntaxError(ctx->getStart(), "illegal set operator");
+        m_state->throwSyntaxError(location, "illegal set operator");
     }
 
     setNode->appendChild(targetNode);
