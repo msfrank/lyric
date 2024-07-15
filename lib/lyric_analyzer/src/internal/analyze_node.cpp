@@ -108,12 +108,6 @@ lyric_analyzer::internal::analyze_node(
         case lyric_schema::LyricAstId::Url:
             return AnalyzerStatus::ok();
 
-        // ignored element forms
-        case lyric_schema::LyricAstId::Seq:
-        case lyric_schema::LyricAstId::Map:
-        case lyric_schema::LyricAstId::Row:
-            return AnalyzerStatus::ok();
-
         // ignored expression forms
         case lyric_schema::LyricAstId::Name:
         case lyric_schema::LyricAstId::This:
@@ -126,7 +120,6 @@ lyric_analyzer::internal::analyze_node(
         case lyric_schema::LyricAstId::IsGe:
         case lyric_schema::LyricAstId::Deref:
         case lyric_schema::LyricAstId::New:
-        case lyric_schema::LyricAstId::Build:
 
         case lyric_schema::LyricAstId::Cond:
         case lyric_schema::LyricAstId::Match:

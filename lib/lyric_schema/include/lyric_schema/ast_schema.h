@@ -24,11 +24,7 @@ namespace lyric_schema {
         Char,                      // char literal
         String,                    // string literal
         Url,                       // url literal
-
         Pair,                      // pair container
-        Seq,                       // seq container
-        Map,                       // map container
-        Row,                       // row container
 
         Add,                       // addition operator
         Sub,                       // subtraction operator
@@ -66,8 +62,6 @@ namespace lyric_schema {
         Keyword,                   // keyword argument
 
         New,                       // create object
-        Build,                     // build object
-        Data,                      // create data
         Lambda,                    // anonymous function
 
         Block,                     // list of forms evaluated in order
@@ -168,12 +162,6 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::Url, "Url");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPairClass(
         &kLyricAstNs, LyricAstId::Pair, "Pair");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSeqClass(
-        &kLyricAstNs, LyricAstId::Seq, "Seq");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMapClass(
-        &kLyricAstNs, LyricAstId::Map, "Map");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstRowClass(
-        &kLyricAstNs, LyricAstId::Row, "Row");
 
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstAddClass(
         &kLyricAstNs, LyricAstId::Add, "Add");
@@ -242,10 +230,6 @@ namespace lyric_schema {
 
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNewClass(
         &kLyricAstNs, LyricAstId::New, "New");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstBuildClass(
-        &kLyricAstNs, LyricAstId::Build, "Build");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDataClass(
-        &kLyricAstNs, LyricAstId::Data, "Data");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstLambdaClass(
         &kLyricAstNs, LyricAstId::Lambda, "Lambda");
 
@@ -436,11 +420,7 @@ namespace lyric_schema {
         &kLyricAstCharClass,
         &kLyricAstStringClass,
         &kLyricAstUrlClass,
-
         &kLyricAstPairClass,
-        &kLyricAstSeqClass,
-        &kLyricAstMapClass,
-        &kLyricAstRowClass,
 
         &kLyricAstAddClass,
         &kLyricAstSubClass,
@@ -478,8 +458,6 @@ namespace lyric_schema {
         &kLyricAstKeywordClass,
 
         &kLyricAstNewClass,
-        &kLyricAstBuildClass,
-        &kLyricAstDataClass,
         &kLyricAstLambdaClass,
 
         &kLyricAstBlockClass,

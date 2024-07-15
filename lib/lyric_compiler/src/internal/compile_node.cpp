@@ -58,10 +58,6 @@ lyric_compiler::internal::compile_expression(
         case lyric_schema::LyricAstId::Url:
         case lyric_schema::LyricAstId::SymbolRef:
             return compile_constant(block, walker, moduleEntry);
-        case lyric_schema::LyricAstId::Seq:
-        case lyric_schema::LyricAstId::Map:
-        case lyric_schema::LyricAstId::Row:
-            break;  // NOTE: implemented as data expression
         case lyric_schema::LyricAstId::IsEq:
         case lyric_schema::LyricAstId::IsLt:
         case lyric_schema::LyricAstId::IsLe:
@@ -190,9 +186,6 @@ lyric_compiler::internal::compile_node(
         case lyric_schema::LyricAstId::String:
         case lyric_schema::LyricAstId::Url:
         case lyric_schema::LyricAstId::SymbolRef:
-        case lyric_schema::LyricAstId::Seq:
-        case lyric_schema::LyricAstId::Map:
-        case lyric_schema::LyricAstId::Row:
         case lyric_schema::LyricAstId::Name:
         case lyric_schema::LyricAstId::This:
         case lyric_schema::LyricAstId::Call:
@@ -212,8 +205,6 @@ lyric_compiler::internal::compile_node(
         case lyric_schema::LyricAstId::Not:
         case lyric_schema::LyricAstId::Deref:
         case lyric_schema::LyricAstId::New:
-        case lyric_schema::LyricAstId::Data:
-        case lyric_schema::LyricAstId::Build:
         case lyric_schema::LyricAstId::Block:
         case lyric_schema::LyricAstId::Cond:
         case lyric_schema::LyricAstId::Match:

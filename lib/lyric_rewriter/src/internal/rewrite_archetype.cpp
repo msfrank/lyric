@@ -54,9 +54,6 @@ lyric_rewriter::internal::rewrite_node(
         case lyric_schema::LyricAstId::String:
         case lyric_schema::LyricAstId::Url:
         case lyric_schema::LyricAstId::SymbolRef:
-        case lyric_schema::LyricAstId::Seq:
-        case lyric_schema::LyricAstId::Map:
-        case lyric_schema::LyricAstId::Row:
         case lyric_schema::LyricAstId::This:
         case lyric_schema::LyricAstId::Name:
         case lyric_schema::LyricAstId::Target:

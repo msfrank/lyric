@@ -386,9 +386,6 @@ lyric_symbolizer::internal::symbolize_node(
         case lyric_schema::LyricAstId::String:
         case lyric_schema::LyricAstId::Url:
         case lyric_schema::LyricAstId::SymbolRef:
-        case lyric_schema::LyricAstId::Seq:
-        case lyric_schema::LyricAstId::Map:
-        case lyric_schema::LyricAstId::Row:
         case lyric_schema::LyricAstId::This:
         case lyric_schema::LyricAstId::Name:
         case lyric_schema::LyricAstId::Target:
@@ -451,7 +448,6 @@ lyric_symbolizer::internal::symbolize_node(
         case lyric_schema::LyricAstId::Or:
             return symbolize_callable_binary(block, walker, entryPoint);
         case lyric_schema::LyricAstId::Call:
-        case lyric_schema::LyricAstId::Data:
         case lyric_schema::LyricAstId::New:
         case lyric_schema::LyricAstId::Super:
             return symbolize_callable_nary(block, walker, entryPoint);
@@ -467,7 +463,6 @@ lyric_symbolizer::internal::symbolize_node(
             return symbolize_import(block, walker, entryPoint);
 
         // unhandled forms
-        case lyric_schema::LyricAstId::Build:
         case lyric_schema::LyricAstId::Lambda:
         case lyric_schema::LyricAstId::Generic:
         default:
