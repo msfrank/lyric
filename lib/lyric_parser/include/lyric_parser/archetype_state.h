@@ -28,6 +28,8 @@ namespace lyric_parser {
     public:
         ArchetypeState(const tempo_utils::Url &sourceUrl, tempo_tracing::ScopeManager *scopeManager);
 
+        tempo_utils::Result<ArchetypeNode *> load(const LyricArchetype &archetype);
+
         ArchetypeId *getId(int index) const;
         int numIds() const;
 
@@ -35,19 +37,29 @@ namespace lyric_parser {
         ArchetypeNamespace *getNamespace(int index) const;
         ArchetypeNamespace *getNamespace(const tempo_utils::Url &nsUrl) const;
         tempo_utils::Result<ArchetypeNamespace *> putNamespace(const tempo_utils::Url &nsUrl);
+        tempo_utils::Result<ArchetypeNamespace *> putNamespace(std::string_view nsView);
         std::vector<ArchetypeNamespace *>::const_iterator namespacesBegin() const;
         std::vector<ArchetypeNamespace *>::const_iterator namespacesEnd() const;
         int numNamespaces() const;
 
         ArchetypeAttr *getAttr(int index) const;
+        tempo_utils::Result<ArchetypeAttr *> appendAttr(AttrId id, AttrValue value);
         std::vector<ArchetypeAttr *>::const_iterator attrsBegin() const;
         std::vector<ArchetypeAttr *>::const_iterator attrsEnd() const;
         int numAttrs() const;
 
         ArchetypeNode *getNode(int index) const;
+        tempo_utils::Result<ArchetypeNode *> appendNode(
+            ArchetypeNamespace *nodeNamespace,
+            tu_uint32 nodeId,
+            const ParseLocation &location);
         std::vector<ArchetypeNode *>::const_iterator nodesBegin() const;
         std::vector<ArchetypeNode *>::const_iterator nodesEnd() const;
         int numNodes() const;
+
+        bool hasRoot() const;
+        ArchetypeNode *getRoot() const;
+        void setRoot(ArchetypeNode *node);
 
         bool isEmpty();
         void pushNode(ArchetypeNode *node);
@@ -75,14 +87,9 @@ namespace lyric_parser {
         absl::flat_hash_map<tempo_utils::Url,tu_uint32> m_namespaceIndex;
         std::stack<ArchetypeNode *> m_nodeStack;
         std::vector<std::string> m_symbolStack;
+        ArchetypeNode *m_rootNode;
 
         ArchetypeId *makeId(ArchetypeDescriptorType type, tu_uint32 offset);
-        tempo_utils::Result<ArchetypeNamespace *> putNamespace(const char *nsString);
-        tempo_utils::Result<ArchetypeNode *> appendNode(
-            ArchetypeNamespace *nodeNamespace,
-            tu_uint32 nodeId,
-            const ParseLocation &location);
-        tempo_utils::Result<ArchetypeAttr *> appendAttr(AttrId id, AttrValue value);
 
         friend class ArchetypeAttrWriter;
         friend class NodeAttr;
@@ -109,6 +116,9 @@ namespace lyric_parser {
             return appendNode(nodeNamespace, nodeClass.getIdValue(), location);
         };
 
+        /**
+         *
+         */
         template<class NsType, class IdType>
         void checkNodeOrThrow(
             const ArchetypeNode *node,

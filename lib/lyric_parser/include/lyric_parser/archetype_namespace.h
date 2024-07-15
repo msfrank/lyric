@@ -1,6 +1,7 @@
 #ifndef LYRIC_PARSER_ARCHETYPE_NAMESPACE_H
 #define LYRIC_PARSER_ARCHETYPE_NAMESPACE_H
 
+#include <tempo_utils/schema.h>
 #include <tempo_utils/url.h>
 
 namespace lyric_parser {
@@ -18,6 +19,8 @@ namespace lyric_parser {
             ArchetypeState *state);
 
         tempo_utils::Url getNsUrl() const;
+        std::string_view namespaceView() const;
+        bool isNamespace(const tempo_utils::SchemaNs &schemaNs) const;
         ArchetypeId *getArchetypeId() const;
 
     private:

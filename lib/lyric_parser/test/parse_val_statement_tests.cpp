@@ -18,7 +18,7 @@ TEST(ParseValStatement, ParseTypedVal)
     ASSERT_TRUE(parseResult.isResult());
     auto archetype = parseResult.getResult();
 
-    auto blockNode = archetype.getNode(0);
+    auto blockNode = archetype.getRoot();
     ASSERT_TRUE (blockNode.isClass(lyric_schema::kLyricAstBlockClass));
     ASSERT_EQ (1, blockNode.numChildren());
 

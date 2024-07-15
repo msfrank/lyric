@@ -18,14 +18,16 @@ namespace lyric_parser::internal {
 
         lyi1::ArchetypeVersion getABI() const;
 
-        const lyi1::NamespaceDescriptor *getNamespace(uint32_t index) const;
-        uint32_t numNamespaces() const;
+        const lyi1::NamespaceDescriptor *getNamespace(tu_uint32 index) const;
+        tu_uint32 numNamespaces() const;
 
-        const lyi1::NodeDescriptor *getNode(uint32_t index) const;
-        uint32_t numNodes() const;
+        const lyi1::NodeDescriptor *getNode(tu_uint32 index) const;
+        tu_uint32 numNodes() const;
 
-        const lyi1::AttrDescriptor *getAttr(uint32_t index) const;
-        uint32_t numAttrs() const;
+        const lyi1::AttrDescriptor *getAttr(tu_uint32 index) const;
+        tu_uint32 numAttrs() const;
+
+        tu_uint32 getRoot() const;
 
         std::span<const tu_uint8> bytesView() const;
 

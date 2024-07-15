@@ -127,7 +127,7 @@ lyric_compiler::ModuleEntry::compileBlock(std::string_view utf8, lyric_assembler
     TU_ASSIGN_OR_RETURN (archetype, lyricParser.parseBlock(utf8, getLocation().toUrl(), m_state->scopeManager()));
 
     // compile the block code
-    return internal::compile_block(block, archetype.getNode(0), *this);
+    return internal::compile_block(block, archetype.getRoot(), *this);
 }
 
 tempo_utils::Result<lyric_assembler::ClassSymbol *>
@@ -143,7 +143,7 @@ lyric_compiler::ModuleEntry::compileClass(
 
     // compile the defclass code
     lyric_assembler::ClassSymbol *classSymbol;
-    TU_RETURN_IF_NOT_OK (internal::compile_defclass(block, archetype.getNode(0), *this, &classSymbol));
+    TU_RETURN_IF_NOT_OK (internal::compile_defclass(block, archetype.getRoot(), *this, &classSymbol));
     return classSymbol;
 }
 
@@ -160,7 +160,7 @@ lyric_compiler::ModuleEntry::compileConcept(
 
     // compile the defconcept code
     lyric_assembler::ConceptSymbol *conceptSymbol;
-    TU_RETURN_IF_NOT_OK (internal::compile_defconcept(block, archetype.getNode(0), *this, &conceptSymbol));
+    TU_RETURN_IF_NOT_OK (internal::compile_defconcept(block, archetype.getRoot(), *this, &conceptSymbol));
     return conceptSymbol;
 }
 
@@ -177,7 +177,7 @@ lyric_compiler::ModuleEntry::compileEnum(
 
     // compile the defenum code
     lyric_assembler::EnumSymbol *enumSymbol;
-    TU_RETURN_IF_NOT_OK (internal::compile_defenum(block, archetype.getNode(0), *this, &enumSymbol));
+    TU_RETURN_IF_NOT_OK (internal::compile_defenum(block, archetype.getRoot(), *this, &enumSymbol));
     return enumSymbol;
 }
 
@@ -194,7 +194,7 @@ lyric_compiler::ModuleEntry::compileFunction(
 
     // compile the def code
     lyric_assembler::CallSymbol *callSymbol;
-    TU_RETURN_IF_NOT_OK (internal::compile_def(block, archetype.getNode(0), *this, &callSymbol));
+    TU_RETURN_IF_NOT_OK (internal::compile_def(block, archetype.getRoot(), *this, &callSymbol));
     return callSymbol;
 }
 
@@ -211,7 +211,7 @@ lyric_compiler::ModuleEntry::compileInstance(
 
     // compile the definstance code
     lyric_assembler::InstanceSymbol *instanceSymbol;
-    TU_RETURN_IF_NOT_OK (internal::compile_definstance(block, archetype.getNode(0), *this, &instanceSymbol));
+    TU_RETURN_IF_NOT_OK (internal::compile_definstance(block, archetype.getRoot(), *this, &instanceSymbol));
     return instanceSymbol;
 }
 
@@ -228,7 +228,7 @@ lyric_compiler::ModuleEntry::compileStruct(
 
     // compile the defstruct code
     lyric_assembler::StructSymbol *structSymbol;
-    TU_RETURN_IF_NOT_OK (internal::compile_defstruct(block, archetype.getNode(0), *this, &structSymbol));
+    TU_RETURN_IF_NOT_OK (internal::compile_defstruct(block, archetype.getRoot(), *this, &structSymbol));
     return structSymbol;
 }
 

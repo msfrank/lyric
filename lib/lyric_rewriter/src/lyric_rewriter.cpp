@@ -32,7 +32,7 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
         return RewriterStatus::forCondition(
             RewriterCondition::kRewriterInvariant, "invalid source url");
 
-    auto walker = archetype.getNode(0);
+    auto walker = archetype.getRoot();
     if (!walker.isValid())
         return RewriterStatus::forCondition(
             RewriterCondition::kRewriterInvariant, "invalid archetype");

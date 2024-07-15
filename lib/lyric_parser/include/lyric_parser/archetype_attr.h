@@ -21,6 +21,8 @@ namespace lyric_parser {
 
         bool isValid() const;
         ArchetypeNamespace *getNamespace() const;
+        std::string_view namespaceView() const;
+        bool isNamespace(const tempo_utils::SchemaNs &schemaNs) const;
         tu_uint32 getType() const;
 
         bool operator==(const AttrId &other) const;

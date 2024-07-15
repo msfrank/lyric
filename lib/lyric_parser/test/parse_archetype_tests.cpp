@@ -19,7 +19,7 @@ TEST(ParseArchetype, ParseTrueConstant)
     auto archetype = parseResult.getResult();
 
     ASSERT_EQ (2, archetype.numNodes());
-    auto block = archetype.getNode(0);
+    auto block = archetype.getRoot();
     ASSERT_TRUE (block.isClass(lyric_schema::kLyricAstBlockClass));
     ASSERT_EQ (1, block.numChildren());
     auto child = block.getChild(0);

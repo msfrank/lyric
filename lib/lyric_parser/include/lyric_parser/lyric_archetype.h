@@ -25,6 +25,8 @@ namespace lyric_parser {
         NodeWalker getNode(tu_uint32 index) const;
         uint32_t numNodes() const;
 
+        NodeWalker getRoot() const;
+
         std::shared_ptr<const internal::ArchetypeReader> getReader() const;
         std::span<const tu_uint8> bytesView() const;
 

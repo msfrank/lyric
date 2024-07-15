@@ -145,3 +145,16 @@ lyric_parser::ArchetypeAttrParser::getString(tu_uint32 index, std::string &str)
     str = value->utf8()? value->utf8()->str() : std::string();
     return tempo_utils::AttrStatus::ok();
 }
+
+tempo_utils::Status
+lyric_parser::ArchetypeAttrParser::getHandle(tu_uint32 index, tempo_utils::AttrHandle &handle)
+{
+    auto *attr = m_reader->getAttr(index);
+    TU_ASSERT (attr != nullptr);
+    if (attr->attr_value_type() != lyi1::Value::NodeValue)
+        return tempo_utils::AttrStatus::forCondition(
+            tempo_utils::AttrCondition::kWrongType,"attr type mismatch");
+    auto *value = attr->attr_value_as_NodeValue();
+    handle = tempo_utils::AttrHandle{value->node()};
+    return tempo_utils::AttrStatus::ok();
+}

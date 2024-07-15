@@ -69,6 +69,18 @@ lyric_parser::AttrId::getNamespace() const
     return m_namespace;
 }
 
+std::string_view
+lyric_parser::AttrId::namespaceView() const
+{
+    return m_namespace->namespaceView();
+}
+
+bool
+lyric_parser::AttrId::isNamespace(const tempo_utils::SchemaNs &schemaNs) const
+{
+    return std::string_view(schemaNs.getNs()) == namespaceView();
+}
+
 tu_uint32
 lyric_parser::AttrId::getType() const
 {

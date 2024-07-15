@@ -5,6 +5,7 @@ include(GoogleTest)
 # define unit tests
 
 set(TEST_CASES
+    load_archetype_tests.cpp
     parse_archetype_tests.cpp
     parse_constant_tests.cpp
     parse_macro_tests.cpp

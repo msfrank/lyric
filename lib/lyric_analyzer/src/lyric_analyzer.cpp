@@ -31,7 +31,7 @@ lyric_analyzer::LyricAnalyzer::analyzeModule(
         return AnalyzerStatus::forCondition(
             AnalyzerCondition::kAnalyzerInvariant, "invalid assembly location");
 
-    auto walker = archetype.getNode(0);
+    auto walker = archetype.getRoot();
     if (!walker.isValid())
         return AnalyzerStatus::forCondition(
             AnalyzerCondition::kAnalyzerInvariant, "invalid archetype");

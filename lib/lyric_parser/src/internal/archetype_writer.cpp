@@ -51,8 +51,8 @@ lyric_parser::internal::ArchetypeWriter::writeValue(const lyric_parser::AttrValu
     if (value.isNode()) {
         NodeAddress nodeAddress;
         TU_ASSIGN_OR_RETURN (nodeAddress, writeNode(value.getNode()));
-        auto type = lyi1::Value::UInt32Value;
-        auto offset = lyi1::CreateUInt32Value(m_buffer, nodeAddress.getAddress()).Union();
+        auto type = lyi1::Value::NodeValue;
+        auto offset = lyi1::CreateNodeValue(m_buffer, nodeAddress.getAddress()).Union();
         return std::pair{type, offset};
     }
 

@@ -23,20 +23,14 @@ namespace lyric_parser {
             const ParseLocation &location,
             ArchetypeId *archetypeId,
             ArchetypeState *state);
-//        ArchetypeNode(
-//            ArchetypeNamespace *nodeNamespace,
-//            tu_uint32 typeOffset,
-//            tu_uint32 lineNr,
-//            tu_uint32 columnNr,
-//            tu_uint32 fileOffset,
-//            tu_uint32 textSpan,
-//            ArchetypeId *archetypeId,
-//            ArchetypeState *state);
 
         ArchetypeNamespace *getNamespace() const;
         tu_uint32 getTypeOffset() const;
         ParseLocation getLocation() const;
         ArchetypeId *getArchetypeId() const;
+
+        std::string_view namespaceView() const;
+        bool isNamespace(const tempo_utils::SchemaNs &schemaNs) const;
 
         bool hasAttr(const AttrId &attrId) const;
         ArchetypeAttr *getAttr(const AttrId &attrId) const;
@@ -63,6 +57,7 @@ namespace lyric_parser {
         std::vector<ArchetypeNode *> m_children;
 
         bool matchesNsAndId(const char *nsString, tu_uint32 idValue) const;
+        ArchetypeAttr *findAttr(const char *nsString, tu_uint32 idValue) const;
 
     public:
         /**
@@ -73,11 +68,47 @@ namespace lyric_parser {
          * @return
          */
         template<class NsType, class IdType>
-        bool isClass(const tempo_utils::SchemaClass<NsType,IdType> &schemaClass) const
+        bool
+        isClass(const tempo_utils::SchemaClass<NsType,IdType> &schemaClass) const
         {
             auto *nsUrl = schemaClass.getNsUrl();
             auto idValue = schemaClass.getIdValue();
             return matchesNsAndId(nsUrl, idValue);
+        }
+
+        template<class NsType, class IdType>
+        tempo_utils::Status
+        parseId(
+            const tempo_utils::SchemaVocabulary<NsType,IdType> &vocabulary,
+            IdType &id) const
+        {
+            auto *schemaNs = vocabulary.getNs();
+            if (!isNamespace(*schemaNs))
+                return ParseStatus::forCondition(ParseCondition::kSyntaxError,
+                    "expected node ns {}", vocabulary.getNs()->getNs());
+            auto *resource = vocabulary.getResource(m_typeOffset);
+            if (resource == nullptr)
+                return ParseStatus::forCondition(ParseCondition::kSyntaxError,
+                    "unknown node type {}", m_typeOffset);
+            id = resource->getId();
+            return ParseStatus::ok();
+        }
+
+        template<class NsType, class IdType>
+        ArchetypeAttr *
+        getAttr(const tempo_utils::SchemaProperty<NsType,IdType> &schemaProperty) const
+        {
+            return findAttr(schemaProperty.getNsUrl(), schemaProperty.getIdValue());
+        }
+
+        template<class NsType, class IdType>
+        AttrValue
+        getAttrValue(const tempo_utils::SchemaProperty<NsType,IdType> &schemaProperty) const
+        {
+            auto *attr = findAttr(schemaProperty.getNsUrl(), schemaProperty.getIdValue());
+            if (attr != nullptr)
+                return attr->getAttrValue();
+            return {};
         }
     };
 }

@@ -17,6 +17,7 @@ table UInt32Value       { u32: uint32; }
 table UInt16Value       { u16: uint16; }
 table UInt8Value        { u8: uint8; }
 table StringValue       { utf8: string; }
+table NodeValue         { node: uint32; }
 
 union Value {
     TrueFalseNilValue,
@@ -27,6 +28,7 @@ union Value {
     UInt16Value,
     UInt8Value,
     StringValue,
+    NodeValue,
 }
 
 table NamespaceDescriptor {
@@ -52,6 +54,7 @@ table NodeDescriptor {
 
 table Archetype {
     abi: ArchetypeVersion;                      // target ABI the archetype was generated for
+    root: uint32;                               // index of the root node
     namespaces: [NamespaceDescriptor];          // array of namespace descriptors
     attrs: [AttrDescriptor];                    // array of attribute descriptors
     nodes: [NodeDescriptor];                    // array of node descriptors

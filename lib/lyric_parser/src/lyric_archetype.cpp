@@ -34,7 +34,7 @@ lyric_parser::LyricArchetype::isValid() const
 lyric_parser::ArchetypeVersion
 lyric_parser::LyricArchetype::getABI() const
 {
-    if (m_reader == nullptr)
+    if (!isValid())
         return ArchetypeVersion::Unknown;
     switch (m_reader->getABI()) {
         case lyi1::ArchetypeVersion::Version1:
@@ -48,7 +48,7 @@ lyric_parser::LyricArchetype::getABI() const
 lyric_parser::NodeWalker
 lyric_parser::LyricArchetype::getNode(tu_uint32 index) const
 {
-    if (m_reader == nullptr)
+    if (!isValid())
         return {};
     return NodeWalker(m_reader, index);
 }
@@ -56,9 +56,17 @@ lyric_parser::LyricArchetype::getNode(tu_uint32 index) const
 uint32_t
 lyric_parser::LyricArchetype::numNodes() const
 {
-    if (m_reader == nullptr)
+    if (!isValid())
         return 0;
     return m_reader->numNodes();
+}
+
+lyric_parser::NodeWalker
+lyric_parser::LyricArchetype::getRoot() const
+{
+    if (!isValid())
+        return {};
+    return NodeWalker(m_reader, m_reader->getRoot());
 }
 
 std::shared_ptr<const lyric_parser::internal::ArchetypeReader>
@@ -70,7 +78,7 @@ lyric_parser::LyricArchetype::getReader() const
 std::span<const tu_uint8>
 lyric_parser::LyricArchetype::bytesView() const
 {
-    if (m_reader == nullptr)
+    if (!isValid())
         return {};
     return m_reader->bytesView();
 }

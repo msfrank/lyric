@@ -50,7 +50,7 @@ namespace lyric_parser {
         tempo_utils::Result<tu_uint32> putUInt16(tu_uint16 u16) override;
         tempo_utils::Result<tu_uint32> putUInt8(tu_uint8 u8) override;
         tempo_utils::Result<tu_uint32> putString(std::string_view str) override;
-        tempo_utils::Status putId(tu_uint32 id) override;
+        tempo_utils::Result<tu_uint32> putHandle(tempo_utils::AttrHandle handle) override;
     };
 }
 

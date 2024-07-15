@@ -308,8 +308,7 @@ lyric_parser::NodeAttr::writeAttr(
     ArchetypeAttr *attr;
     TU_ASSIGN_OR_RETURN (attr, stateptr->appendAttr(id, AttrValue(archetypeNode)));
     auto *archetypeId = attr->getArchetypeId();
-    TU_RETURN_IF_NOT_OK (writer->putId(archetypeId->getId()));
-    return INVALID_ADDRESS_U32;
+    return writer->putHandle(tempo_utils::AttrHandle{archetypeId->getId()});
 }
 
 tempo_utils::Status
@@ -319,12 +318,10 @@ lyric_parser::NodeAttr::parseAttr(
     NodeWalker &walker) const
 {
     TU_ASSERT (parser != nullptr);
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return status;
+    tempo_utils::AttrHandle value;
+    TU_RETURN_IF_NOT_OK (parser->getHandle(index, value));
     auto *readerptr = parser->getParserState();
-    walker = NodeWalker(*readerptr, value);
+    walker = NodeWalker(*readerptr, value.handle);
     return {};
 }
 

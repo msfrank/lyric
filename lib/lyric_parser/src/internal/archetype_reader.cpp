@@ -26,7 +26,7 @@ lyric_parser::internal::ArchetypeReader::getABI() const
 }
 
 const lyi1::NamespaceDescriptor *
-lyric_parser::internal::ArchetypeReader::getNamespace(uint32_t index) const
+lyric_parser::internal::ArchetypeReader::getNamespace(tu_uint32 index) const
 {
     if (m_archetype == nullptr)
         return nullptr;
@@ -35,7 +35,7 @@ lyric_parser::internal::ArchetypeReader::getNamespace(uint32_t index) const
     return nullptr;
 }
 
-uint32_t
+tu_uint32
 lyric_parser::internal::ArchetypeReader::numNamespaces() const
 {
     if (m_archetype == nullptr)
@@ -43,8 +43,8 @@ lyric_parser::internal::ArchetypeReader::numNamespaces() const
     return m_archetype->namespaces()? m_archetype->namespaces()->size() : 0;
 }
 
-const
-lyi1::NodeDescriptor *lyric_parser::internal::ArchetypeReader::getNode(uint32_t index) const
+const lyi1::NodeDescriptor *
+lyric_parser::internal::ArchetypeReader::getNode(tu_uint32 index) const
 {
     if (m_archetype == nullptr)
         return nullptr;
@@ -53,7 +53,7 @@ lyi1::NodeDescriptor *lyric_parser::internal::ArchetypeReader::getNode(uint32_t 
     return nullptr;
 }
 
-uint32_t
+tu_uint32
 lyric_parser::internal::ArchetypeReader::numNodes() const
 {
     if (m_archetype == nullptr)
@@ -61,8 +61,8 @@ lyric_parser::internal::ArchetypeReader::numNodes() const
     return m_archetype->nodes()? m_archetype->nodes()->size() : 0;
 }
 
-const
-lyi1::AttrDescriptor *lyric_parser::internal::ArchetypeReader::getAttr(uint32_t index) const
+const lyi1::AttrDescriptor *
+lyric_parser::internal::ArchetypeReader::getAttr(tu_uint32 index) const
 {
     if (m_archetype == nullptr)
         return nullptr;
@@ -71,12 +71,20 @@ lyi1::AttrDescriptor *lyric_parser::internal::ArchetypeReader::getAttr(uint32_t 
     return nullptr;
 }
 
-uint32_t
+tu_uint32
 lyric_parser::internal::ArchetypeReader::numAttrs() const
 {
     if (m_archetype == nullptr)
         return 0;
     return m_archetype->attrs()? m_archetype->attrs()->size() : 0;
+}
+
+tu_uint32
+lyric_parser::internal::ArchetypeReader::getRoot() const
+{
+    if (m_archetype == nullptr)
+        return 0;
+    return m_archetype->root();
 }
 
 std::span<const tu_uint8>

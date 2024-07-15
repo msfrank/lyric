@@ -31,7 +31,7 @@ lyric_symbolizer::LyricSymbolizer::symbolizeModule(
         return SymbolizerStatus::forCondition(
             SymbolizerCondition::kSymbolizerInvariant, "invalid assembly location");
 
-    auto walker = archetype.getNode(0);
+    auto walker = archetype.getRoot();
     if (!walker.isValid())
         return SymbolizerStatus::forCondition(
             SymbolizerCondition::kSymbolizerInvariant, "invalid archetype");

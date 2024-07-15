@@ -24,6 +24,7 @@ namespace lyric_parser {
         tempo_utils::Status getUInt16(tu_uint32 index, tu_uint16 &u16) override;
         tempo_utils::Status getUInt8(tu_uint32 index, tu_uint8 &u8) override;
         tempo_utils::Status getString(tu_uint32 index, std::string &str) override;
+        tempo_utils::Status getHandle(tu_uint32 index, tempo_utils::AttrHandle &handle) override;
 
     private:
         std::shared_ptr<const internal::ArchetypeReader> m_reader;

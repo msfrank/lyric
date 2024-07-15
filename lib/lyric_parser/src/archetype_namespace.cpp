@@ -20,6 +20,18 @@ lyric_parser::ArchetypeNamespace::getNsUrl() const
     return m_nsUrl;
 }
 
+std::string_view
+lyric_parser::ArchetypeNamespace::namespaceView() const
+{
+    return m_nsUrl.uriView();
+}
+
+bool
+lyric_parser::ArchetypeNamespace::isNamespace(const tempo_utils::SchemaNs &schemaNs) const
+{
+    return std::string_view(schemaNs.getNs()) == namespaceView();
+}
+
 lyric_parser::ArchetypeId *
 lyric_parser::ArchetypeNamespace::getArchetypeId() const
 {

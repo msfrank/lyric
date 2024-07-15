@@ -19,8 +19,94 @@ lyric_parser::ArchetypeState::ArchetypeState(
     const tempo_utils::Url &sourceUrl,
     tempo_tracing::ScopeManager *scopeManager)
     : m_sourceUrl(sourceUrl),
-      m_scopeManager(scopeManager)
+      m_scopeManager(scopeManager),
+      m_rootNode(nullptr)
 {
+}
+
+static tempo_utils::Result<lyric_parser::ArchetypeNode *>
+load_node(
+    const lyric_parser::LyricArchetype &archetype,
+    const lyric_parser::NodeWalker &node,
+    lyric_parser::ArchetypeState *state,
+    std::vector<lyric_parser::ArchetypeNode *> &nodeTable);
+
+static tempo_utils::Result<lyric_parser::ArchetypeAttr *>
+load_attr(
+    const lyric_parser::LyricArchetype &archetype,
+    const tempo_utils::AttrKey &key,
+    const tempo_utils::AttrValue &value,
+    lyric_parser::ArchetypeState *state,
+    std::vector<lyric_parser::ArchetypeNode *> &nodeTable)
+{
+    lyric_parser::ArchetypeNamespace *attrNamespace;
+    TU_ASSIGN_OR_RETURN (attrNamespace, state->putNamespace(key.ns));
+    lyric_parser::AttrId attrId(attrNamespace, key.id);
+
+    if (value.getType() == tempo_utils::ValueType::Handle) {
+        auto handleNode = archetype.getNode(value.getHandle().handle);
+        TU_ASSERT (handleNode.isValid());
+        lyric_parser::ArchetypeNode *attrNode;
+        TU_ASSIGN_OR_RETURN (attrNode, load_node(archetype, handleNode, state, nodeTable));
+        return state->appendAttr(attrId, lyric_parser::AttrValue(attrNode));
+    }
+
+    return state->appendAttr(attrId, lyric_parser::AttrValue(value));
+}
+
+static tempo_utils::Result<lyric_parser::ArchetypeNode *>
+load_node(
+    const lyric_parser::LyricArchetype &archetype,
+    const lyric_parser::NodeWalker &node,
+    lyric_parser::ArchetypeState *state,
+    std::vector<lyric_parser::ArchetypeNode *> &nodeTable)
+{
+    auto address = node.getAddress().getAddress();
+
+    // if node has already been loaded then return it immediately
+    auto *existingNode = nodeTable.at(address);
+    if (existingNode != nullptr)
+        return existingNode;
+
+    // load the node namespace
+    lyric_parser::ArchetypeNamespace *nodeNamespace;
+    TU_ASSIGN_OR_RETURN (nodeNamespace, state->putNamespace(node.namespaceView()));
+
+    // load the node
+    lyric_parser::ParseLocation location(
+        node.getLineNumber(), node.getColumnNumber(), node.getFileOffset(), node.getTextSpan());
+    lyric_parser::ArchetypeNode *archetypeNode;
+    TU_ASSIGN_OR_RETURN (archetypeNode, state->appendNode(nodeNamespace, node.getIdValue(), location));
+    nodeTable[address] = archetypeNode;
+
+    // load the node attrs
+    for (int i = 0; i < node.numAttrs(); i++) {
+        auto attr = node.getAttr(i);
+        lyric_parser::ArchetypeAttr *archetypeAttr;
+        TU_ASSIGN_OR_RETURN (archetypeAttr, load_attr(archetype, attr.first, attr.second, state, nodeTable));
+        archetypeNode->putAttr(archetypeAttr);
+    }
+
+    // load the node children
+    for (int i = 0; i < node.numChildren(); i++) {
+        auto childNode = node.getChild(i);
+        lyric_parser::ArchetypeNode *child;
+        TU_ASSIGN_OR_RETURN (child, load_node(archetype, childNode, state, nodeTable));
+        archetypeNode->appendChild(child);
+    }
+
+    return archetypeNode;
+}
+
+tempo_utils::Result<lyric_parser::ArchetypeNode *>
+lyric_parser::ArchetypeState::load(const LyricArchetype &archetype)
+{
+    if (!archetype.isValid())
+        return ParseStatus::forCondition(
+            ParseCondition::kParseInvariant, "failed to load archetype state: invalid archetype");
+    std::vector<ArchetypeNode *> nodeTable(archetype.numNodes(), nullptr);
+    auto rootNode = archetype.getRoot();
+    return load_node(archetype, rootNode, this, nodeTable);
 }
 
 bool
@@ -127,9 +213,9 @@ lyric_parser::ArchetypeState::putNamespace(const tempo_utils::Url &nsUrl)
 }
 
 tempo_utils::Result<lyric_parser::ArchetypeNamespace *>
-lyric_parser::ArchetypeState::putNamespace(const char *nsString)
+lyric_parser::ArchetypeState::putNamespace(std::string_view nsView)
 {
-    auto nsUrl = tempo_utils::Url::fromString(nsString);
+    auto nsUrl = tempo_utils::Url::fromString(nsView);
     return putNamespace(nsUrl);
 }
 
@@ -224,6 +310,24 @@ int
 lyric_parser::ArchetypeState::numNodes() const
 {
     return m_archetypeNodes.size();
+}
+
+bool
+lyric_parser::ArchetypeState::hasRoot() const
+{
+    return m_rootNode != nullptr;
+}
+
+lyric_parser::ArchetypeNode *
+lyric_parser::ArchetypeState::getRoot() const
+{
+    return m_rootNode;
+}
+
+void
+lyric_parser::ArchetypeState::setRoot(ArchetypeNode *node)
+{
+    m_rootNode = node;
 }
 
 void

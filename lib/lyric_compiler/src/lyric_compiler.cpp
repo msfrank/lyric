@@ -31,7 +31,7 @@ lyric_compiler::LyricCompiler::compileModule(
         return CompilerStatus::forCondition(
             CompilerCondition::kCompilerInvariant, "invalid assembly location");
 
-    auto walker = archetype.getNode(0);
+    auto walker = archetype.getRoot();
     if (!walker.isValid())
         return CompilerStatus::forCondition(
             CompilerCondition::kCompilerInvariant, "invalid archetype");

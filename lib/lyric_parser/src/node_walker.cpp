@@ -84,6 +84,18 @@ lyric_parser::NodeWalker::getTextSpan() const
     return node->text_span();
 }
 
+std::string_view
+lyric_parser::NodeWalker::namespaceView() const
+{
+    if (!isValid())
+        return {};
+    auto *node = m_reader->getNode(m_index);
+    TU_ASSERT (node != nullptr);
+    auto *ns = m_reader->getNamespace(node->node_ns());
+    TU_ASSERT (ns != nullptr);
+    return ns->ns_url()->string_view();
+}
+
 bool
 lyric_parser::NodeWalker::isNamespace(const tempo_utils::SchemaNs &schemaNs) const
 {
@@ -169,6 +181,61 @@ lyric_parser::NodeWalker::findIndexForAttr(const tempo_utils::AttrKey &key) cons
             return attrIndex;
     }
     return INVALID_ADDRESS_U32;
+}
+
+tempo_utils::AttrValue parse_attr_value(const lyi1::AttrDescriptor *attr)
+{
+    switch (attr->attr_value_type()) {
+        case lyi1::Value::TrueFalseNilValue: {
+            auto tfn = attr->attr_value_as_TrueFalseNilValue()->tfn();
+            if (tfn == lyi1::TrueFalseNil::Nil)
+                return tempo_utils::AttrValue(nullptr);
+            return tempo_utils::AttrValue(tfn == lyi1::TrueFalseNil::True);
+        }
+        case lyi1::Value::Int64Value:
+            return tempo_utils::AttrValue(attr->attr_value_as_Int64Value()->i64());
+        case lyi1::Value::Float64Value:
+            return tempo_utils::AttrValue(attr->attr_value_as_Float64Value()->f64());
+        case lyi1::Value::UInt64Value:
+            return tempo_utils::AttrValue(attr->attr_value_as_UInt64Value()->u64());
+        case lyi1::Value::UInt32Value:
+            return tempo_utils::AttrValue(attr->attr_value_as_UInt32Value()->u32());
+        case lyi1::Value::UInt16Value:
+            return tempo_utils::AttrValue(attr->attr_value_as_UInt16Value()->u16());
+        case lyi1::Value::UInt8Value:
+            return tempo_utils::AttrValue(attr->attr_value_as_UInt8Value()->u8());
+        case lyi1::Value::StringValue:
+            return tempo_utils::AttrValue(attr->attr_value_as_StringValue()->utf8()->c_str());
+        case lyi1::Value::NodeValue:
+            return tempo_utils::AttrValue(tempo_utils::AttrHandle{attr->attr_value_as_NodeValue()->node()});
+        default:
+            return {};
+    }
+}
+
+std::pair<tempo_utils::AttrKey,tempo_utils::AttrValue>
+lyric_parser::NodeWalker::getAttr(int index) const
+{
+    if (!isValid())
+        return {};
+    auto *node = m_reader->getNode(m_index);
+    TU_ASSERT (node != nullptr);
+    auto *attrs = node->node_attrs();
+    if (attrs == nullptr)    // node has no attrs
+        return {};
+    if (index < 0 || attrs->size() <= index)
+        return {};
+    tu_uint32 attr_index = attrs->Get(index);
+    auto *attr = m_reader->getAttr(attr_index);
+    TU_ASSERT (attr != nullptr);
+    auto *ns = m_reader->getNamespace(attr->attr_ns());
+    TU_ASSERT (ns != nullptr);
+    auto *nsUrl = ns->ns_url();
+    if (nsUrl == nullptr)
+        return {};
+    tempo_utils::AttrKey key{nsUrl->c_str(), attr->attr_type()};
+    auto value = parse_attr_value(attr);
+    return {key,value};
 }
 
 int

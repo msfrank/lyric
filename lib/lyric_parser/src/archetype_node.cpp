@@ -4,29 +4,6 @@
 #include <lyric_parser/archetype_node.h>
 #include <lyric_parser/archetype_state.h>
 
-//lyric_parser::ArchetypeNode::ArchetypeNode(
-//    ArchetypeNamespace *nodeNamespace,
-//    tu_uint32 typeOffset,
-//    tu_uint32 lineNr,
-//    tu_uint32 columnNr,
-//    tu_uint32 fileOffset,
-//    tu_uint32 textSpan,
-//    ArchetypeId *archetypeId,
-//    ArchetypeState *state)
-//    : m_namespace(nodeNamespace),
-//      m_typeOffset(typeOffset),
-//      m_lineNr(lineNr),
-//      m_columnNr(columnNr),
-//      m_fileOffset(fileOffset),
-//      m_textSpan(textSpan),
-//      m_archetypeId(archetypeId),
-//      m_state(state)
-//{
-//    TU_ASSERT (m_namespace != nullptr);
-//    TU_ASSERT (m_archetypeId != nullptr);
-//    TU_ASSERT (m_state != nullptr);
-//}
-
 lyric_parser::ArchetypeNode::ArchetypeNode(
     ArchetypeNamespace *nodeNamespace,
     tu_uint32 typeOffset,
@@ -68,6 +45,18 @@ lyric_parser::ArchetypeNode::getArchetypeId() const
     return m_archetypeId;
 }
 
+std::string_view
+lyric_parser::ArchetypeNode::namespaceView() const
+{
+    return m_namespace->namespaceView();
+}
+
+bool
+lyric_parser::ArchetypeNode::isNamespace(const tempo_utils::SchemaNs &schemaNs) const
+{
+    return std::string_view(schemaNs.getNs()) == namespaceView();
+}
+
 bool
 lyric_parser::ArchetypeNode::hasAttr(const AttrId &attrId) const
 {
@@ -80,6 +69,18 @@ lyric_parser::ArchetypeNode::getAttr(const AttrId &attrId) const
     auto entry = m_attrs.find(attrId);
     if (entry != m_attrs.cend())
         return entry->second;
+    return nullptr;
+}
+
+lyric_parser::ArchetypeAttr *
+lyric_parser::ArchetypeNode::findAttr(const char *nsString, tu_uint32 idValue) const
+{
+    std::string_view nsView(nsString);
+    for (const auto &entry : m_attrs) {
+        const auto &attrId = entry.first;
+        if (attrId.namespaceView() == nsView && attrId.getType() == idValue)
+            return entry.second;
+    }
     return nullptr;
 }
 

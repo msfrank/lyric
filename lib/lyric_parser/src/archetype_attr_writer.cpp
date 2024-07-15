@@ -125,11 +125,11 @@ lyric_parser::ArchetypeAttrWriter::putString(std::string_view str)
     return m_attr->getArchetypeId()->getId();
 }
 
-tempo_utils::Status
-lyric_parser::ArchetypeAttrWriter::putId(tu_uint32 id)
+tempo_utils::Result<tu_uint32>
+lyric_parser::ArchetypeAttrWriter::putHandle(tempo_utils::AttrHandle handle)
 {
-    auto *archetypeId = m_state->getId(id);
+    auto *archetypeId = m_state->getId(handle.handle);
     TU_ASSERT (archetypeId->getType() == ArchetypeDescriptorType::Attr);
     m_attr = m_state->getAttr(archetypeId->getOffset());
-    return {};
+    return m_attr->getArchetypeId()->getId();
 }
