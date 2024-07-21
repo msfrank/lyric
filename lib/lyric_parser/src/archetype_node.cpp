@@ -114,6 +114,14 @@ lyric_parser::ArchetypeNode::numAttrs() const
     return m_attrs.size();
 }
 
+lyric_parser::ArchetypeNode *
+lyric_parser::ArchetypeNode::getChild(int index) const
+{
+    if (0 <= index && std::cmp_less(index, m_children.size()))
+        return m_children.at(index);
+    return {};
+}
+
 void
 lyric_parser::ArchetypeNode::prependChild(ArchetypeNode *child)
 {
@@ -128,16 +136,45 @@ lyric_parser::ArchetypeNode::appendChild(ArchetypeNode *child)
     m_children.push_back(child);
 }
 
-lyric_parser::ArchetypeNode *
-lyric_parser::ArchetypeNode::getChild(int index) const
+void
+lyric_parser::ArchetypeNode::insertChild(int index, ArchetypeNode *child)
 {
-    if (0 <= index && std::cmp_less(index, m_children.size()))
-        return m_children.at(index);
-    return {};
+    TU_ASSERT (child != nullptr);
+    if (index == 0) {
+        prependChild(child);
+    } else if (index > 0) {
+        if (index < m_children.size()) {
+            auto it = m_children.begin();
+            std::advance(it, index);
+            m_children.insert(it, child);
+        } else {
+            appendChild(child);
+        }
+    } else {
+        if (m_children.size() + index >= 0) {
+            auto it = m_children.end();
+            std::advance(it, index + 1);
+            m_children.insert(it, child);
+        } else {
+            prependChild(child);
+        }
+    }
 }
 
 lyric_parser::ArchetypeNode *
-lyric_parser::ArchetypeNode::detachChild(int index)
+lyric_parser::ArchetypeNode::replaceChild(int index, ArchetypeNode *child)
+{
+    TU_ASSERT (child != nullptr);
+    if (0 <= index && std::cmp_less(index, m_children.size())) {
+        auto *prev = m_children.at(index);
+        m_children[index] = child;
+        return prev;
+    }
+    return nullptr;
+}
+
+lyric_parser::ArchetypeNode *
+lyric_parser::ArchetypeNode::removeChild(int index)
 {
     if (0 <= index && std::cmp_less(index, m_children.size())) {
         auto iterator = m_children.begin();

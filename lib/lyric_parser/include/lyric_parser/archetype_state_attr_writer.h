@@ -1,5 +1,5 @@
-#ifndef LYRIC_PARSER_ARCHETYPE_ATTR_WRITER_H
-#define LYRIC_PARSER_ARCHETYPE_ATTR_WRITER_H
+#ifndef LYRIC_PARSER_ARCHETYPE_STATE_ATTR_WRITER_H
+#define LYRIC_PARSER_ARCHETYPE_STATE_ATTR_WRITER_H
 
 #include <tempo_utils/attr.h>
 
@@ -8,7 +8,7 @@ namespace lyric_parser {
     class ArchetypeAttr;
     class ArchetypeState;
 
-    class ArchetypeAttrWriter : private tempo_utils::AbstractAttrWriterWithState<ArchetypeState> {
+    class ArchetypeStateAttrWriter : private tempo_utils::AbstractAttrWriterWithState<ArchetypeState> {
     public:
         template<class T>
         static tempo_utils::Result<ArchetypeAttr *> createAttr(
@@ -16,7 +16,7 @@ namespace lyric_parser {
             const tempo_utils::AttrSerde<T> &serde,
             const T &value)
         {
-            ArchetypeAttrWriter writer(serde.getKey(), state);
+            ArchetypeStateAttrWriter writer(serde.getKey(), state);
             TU_RETURN_IF_STATUS (serde.writeAttr(&writer, value));
             return writer.getAttr();
         }
@@ -27,7 +27,7 @@ namespace lyric_parser {
             const tempo_utils::TypedSerde<P,PS,W,WS> &serde,
             const W &value)
         {
-            ArchetypeAttrWriter writer(serde.getKey(), state);
+            ArchetypeStateAttrWriter writer(serde.getKey(), state);
             TU_RETURN_IF_STATUS (serde.writeAttr(&writer, value));
             return writer.getAttr();
         }
@@ -37,7 +37,7 @@ namespace lyric_parser {
         ArchetypeState *m_state;
         ArchetypeAttr *m_attr;
 
-        ArchetypeAttrWriter(const tempo_utils::AttrKey &key, ArchetypeState *state);
+        ArchetypeStateAttrWriter(const tempo_utils::AttrKey &key, ArchetypeState *state);
         ArchetypeAttr *getAttr();
         ArchetypeState *getWriterState() override;
         tempo_utils::Result<tu_uint32> putNamespace(const tempo_utils::Url &nsUrl) override;
@@ -54,4 +54,4 @@ namespace lyric_parser {
     };
 }
 
-#endif // LYRIC_PARSER_ARCHETYPE_ATTR_WRITER_H
+#endif // LYRIC_PARSER_ARCHETYPE_STATE_ATTR_WRITER_H

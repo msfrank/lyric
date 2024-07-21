@@ -4,7 +4,7 @@
 #include <tempo_utils/attr.h>
 #include <tempo_utils/integer_types.h>
 
-#include "archetype_attr_parser.h"
+#include "archetype_reader_attr_parser.h"
 #include "parser_types.h"
 #include "parse_result.h"
 
@@ -101,7 +101,7 @@ namespace lyric_parser {
             auto index = findIndexForAttr(attr.getKey());
             if (index == INVALID_ADDRESS_U32)
                 return ParseStatus::forCondition(ParseCondition::kParseInvariant, "missing attr in node");
-            ArchetypeAttrParser parser(m_reader);
+            ArchetypeReaderAttrParser parser(m_reader);
             return attr.parseAttr(index, &parser, value);
         }
     };

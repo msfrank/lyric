@@ -9,18 +9,25 @@
 namespace lyric_rewriter::internal {
 
     tempo_utils::Status
+    rewrite_macro_list(
+        lyric_parser::ArchetypeNode *blockNode,
+        int index,
+        lyric_parser::ArchetypeNode *macroListNode,
+        lyric_rewriter::internal::EntryPoint &entryPoint);
+
+    tempo_utils::Status
     rewrite_block(
-        const lyric_parser::NodeWalker &walker,
+        lyric_parser::ArchetypeNode *blockNode,
         EntryPoint &entryPoint);
 
     tempo_utils::Status
     rewrite_node(
-        const lyric_parser::NodeWalker &walker,
+        lyric_parser::ArchetypeNode *node,
         EntryPoint &entryPoint);
 
     tempo_utils::Result<lyric_parser::LyricArchetype>
     rewrite_root(
-        const lyric_parser::NodeWalker &walker,
+        lyric_parser::ArchetypeNode *root,
         EntryPoint &entryPoint);
 }
 

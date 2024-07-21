@@ -1,9 +1,9 @@
 
-#include <lyric_parser/archetype_attr_parser.h>
+#include <lyric_parser/archetype_reader_attr_parser.h>
 #include <lyric_parser/generated/archetype.h>
 #include <lyric_parser/internal/archetype_reader.h>
 
-lyric_parser::ArchetypeAttrParser::ArchetypeAttrParser(
+lyric_parser::ArchetypeReaderAttrParser::ArchetypeReaderAttrParser(
     std::shared_ptr<const internal::ArchetypeReader> reader)
     : m_reader(reader)
 {
@@ -11,13 +11,13 @@ lyric_parser::ArchetypeAttrParser::ArchetypeAttrParser(
 }
 
 std::shared_ptr<const lyric_parser::internal::ArchetypeReader> *
-lyric_parser::ArchetypeAttrParser::getParserState()
+lyric_parser::ArchetypeReaderAttrParser::getParserState()
 {
     return &m_reader;
 }
 
 tempo_utils::Status
-lyric_parser::ArchetypeAttrParser::getNil(tu_uint32 index, std::nullptr_t &nil)
+lyric_parser::ArchetypeReaderAttrParser::getNil(tu_uint32 index, std::nullptr_t &nil)
 {
     auto *attr = m_reader->getAttr(index);
     TU_ASSERT (attr != nullptr);
@@ -33,7 +33,7 @@ lyric_parser::ArchetypeAttrParser::getNil(tu_uint32 index, std::nullptr_t &nil)
 }
 
 tempo_utils::Status
-lyric_parser::ArchetypeAttrParser::getBool(tu_uint32 index, bool &b)
+lyric_parser::ArchetypeReaderAttrParser::getBool(tu_uint32 index, bool &b)
 {
     auto *attr = m_reader->getAttr(index);
     TU_ASSERT (attr != nullptr);
@@ -56,7 +56,7 @@ lyric_parser::ArchetypeAttrParser::getBool(tu_uint32 index, bool &b)
 }
 
 tempo_utils::Status
-lyric_parser::ArchetypeAttrParser::getInt64(tu_uint32 index, tu_int64 &i64)
+lyric_parser::ArchetypeReaderAttrParser::getInt64(tu_uint32 index, tu_int64 &i64)
 {
     auto *attr = m_reader->getAttr(index);
     TU_ASSERT (attr != nullptr);
@@ -69,7 +69,7 @@ lyric_parser::ArchetypeAttrParser::getInt64(tu_uint32 index, tu_int64 &i64)
 }
 
 tempo_utils::Status
-lyric_parser::ArchetypeAttrParser::getFloat64(tu_uint32 index, double &dbl)
+lyric_parser::ArchetypeReaderAttrParser::getFloat64(tu_uint32 index, double &dbl)
 {
     auto *attr = m_reader->getAttr(index);
     TU_ASSERT (attr != nullptr);
@@ -82,7 +82,7 @@ lyric_parser::ArchetypeAttrParser::getFloat64(tu_uint32 index, double &dbl)
 }
 
 tempo_utils::Status
-lyric_parser::ArchetypeAttrParser::getUInt64(tu_uint32 index, tu_uint64 &u64)
+lyric_parser::ArchetypeReaderAttrParser::getUInt64(tu_uint32 index, tu_uint64 &u64)
 {
     auto *attr = m_reader->getAttr(index);
     TU_ASSERT (attr != nullptr);
@@ -95,7 +95,7 @@ lyric_parser::ArchetypeAttrParser::getUInt64(tu_uint32 index, tu_uint64 &u64)
 }
 
 tempo_utils::Status
-lyric_parser::ArchetypeAttrParser::getUInt32(tu_uint32 index, tu_uint32 &u32)
+lyric_parser::ArchetypeReaderAttrParser::getUInt32(tu_uint32 index, tu_uint32 &u32)
 {
     auto *attr = m_reader->getAttr(index);
     TU_ASSERT (attr != nullptr);
@@ -108,7 +108,7 @@ lyric_parser::ArchetypeAttrParser::getUInt32(tu_uint32 index, tu_uint32 &u32)
 }
 
 tempo_utils::Status
-lyric_parser::ArchetypeAttrParser::getUInt16(tu_uint32 index, tu_uint16 &u16)
+lyric_parser::ArchetypeReaderAttrParser::getUInt16(tu_uint32 index, tu_uint16 &u16)
 {
     auto *attr = m_reader->getAttr(index);
     TU_ASSERT (attr != nullptr);
@@ -121,7 +121,7 @@ lyric_parser::ArchetypeAttrParser::getUInt16(tu_uint32 index, tu_uint16 &u16)
 }
 
 tempo_utils::Status
-lyric_parser::ArchetypeAttrParser::getUInt8(tu_uint32 index, tu_uint8 &u8)
+lyric_parser::ArchetypeReaderAttrParser::getUInt8(tu_uint32 index, tu_uint8 &u8)
 {
     auto *attr = m_reader->getAttr(index);
     TU_ASSERT (attr != nullptr);
@@ -134,7 +134,7 @@ lyric_parser::ArchetypeAttrParser::getUInt8(tu_uint32 index, tu_uint8 &u8)
 }
 
 tempo_utils::Status
-lyric_parser::ArchetypeAttrParser::getString(tu_uint32 index, std::string &str)
+lyric_parser::ArchetypeReaderAttrParser::getString(tu_uint32 index, std::string &str)
 {
     auto *attr = m_reader->getAttr(index);
     TU_ASSERT (attr != nullptr);
@@ -147,7 +147,7 @@ lyric_parser::ArchetypeAttrParser::getString(tu_uint32 index, std::string &str)
 }
 
 tempo_utils::Status
-lyric_parser::ArchetypeAttrParser::getHandle(tu_uint32 index, tempo_utils::AttrHandle &handle)
+lyric_parser::ArchetypeReaderAttrParser::getHandle(tu_uint32 index, tempo_utils::AttrHandle &handle)
 {
     auto *attr = m_reader->getAttr(index);
     TU_ASSERT (attr != nullptr);

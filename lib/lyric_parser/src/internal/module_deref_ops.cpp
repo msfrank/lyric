@@ -284,7 +284,7 @@ lyric_parser::internal::ModuleDerefOps::exitLiteralExpression(ModuleParser::Lite
 
     // if deref only contains one element, then simplify the expression
     if (derefNode->numChildren() == 1) {
-        auto *child = derefNode->detachChild(0);
+        auto *child = derefNode->removeChild(0);
         m_state->popNode();
         m_state->pushNode(child);
     }
@@ -301,7 +301,7 @@ lyric_parser::internal::ModuleDerefOps::exitGroupingExpression(ModuleParser::Gro
 
     // if deref only contains one element, then simplify the expression
     if (derefNode->numChildren() == 1) {
-        auto *child = derefNode->detachChild(0);
+        auto *child = derefNode->removeChild(0);
         m_state->popNode();
         m_state->pushNode(child);
     }

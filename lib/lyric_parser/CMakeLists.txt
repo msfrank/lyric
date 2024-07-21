@@ -8,11 +8,12 @@ add_library(lyric::lyric_parser ALIAS lyric_parser)
 
 set(LYRIC_PARSER_INCLUDES
     include/lyric_parser/archetype_attr.h
-    include/lyric_parser/archetype_attr_parser.h
-    include/lyric_parser/archetype_attr_writer.h
     include/lyric_parser/archetype_namespace.h
     include/lyric_parser/archetype_node.h
+    include/lyric_parser/archetype_reader_attr_parser.h
     include/lyric_parser/archetype_state.h
+    include/lyric_parser/archetype_state_attr_parser.h
+    include/lyric_parser/archetype_state_attr_writer.h
     include/lyric_parser/ast_attrs.h
     include/lyric_parser/lyric_archetype.h
     include/lyric_parser/lyric_parser.h
@@ -85,11 +86,12 @@ add_custom_command(
 target_sources(lyric_parser
     PRIVATE
     src/archetype_attr.cpp
-    src/archetype_attr_parser.cpp
-    src/archetype_attr_writer.cpp
     src/archetype_namespace.cpp
     src/archetype_node.cpp
+    src/archetype_reader_attr_parser.cpp
     src/archetype_state.cpp
+    src/archetype_state_attr_parser.cpp
+    src/archetype_state_attr_writer.cpp
     src/ast_attrs.cpp
     src/lyric_archetype.cpp
     src/lyric_parser.cpp

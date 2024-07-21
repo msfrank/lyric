@@ -141,7 +141,7 @@ lyric_build::internal::RewriteModuleTask::runTask(
     auto span = getSpan();
 
     // configure rewriter
-    lyric_rewriter::LyricRewriter rewriter(buildState->getSharedModuleCache(), m_rewriterOptions);
+    lyric_rewriter::LyricRewriter rewriter(m_rewriterOptions);
 
     // configure loader
     auto createDependencyLoaderResult = DependencyLoader::create(depStates, cache);

@@ -8,17 +8,13 @@
 #include <lyric_rewriter/rewriter_result.h>
 #include <tempo_utils/log_stream.h>
 
-lyric_rewriter::LyricRewriter::LyricRewriter(
-    std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
-    const RewriterOptions &options)
-    : m_systemModuleCache(std::move(systemModuleCache)),
-      m_options(options)
+lyric_rewriter::LyricRewriter::LyricRewriter(const RewriterOptions &options)
+    : m_options(options)
 {
 }
 
 lyric_rewriter::LyricRewriter::LyricRewriter(const LyricRewriter &other)
-    : m_systemModuleCache(other.m_systemModuleCache),
-      m_options(other.m_options)
+    : m_options(other.m_options)
 {
 }
 
@@ -32,8 +28,7 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
         return RewriterStatus::forCondition(
             RewriterCondition::kRewriterInvariant, "invalid source url");
 
-    auto walker = archetype.getRoot();
-    if (!walker.isValid())
+    if (!archetype.isValid())
         return RewriterStatus::forCondition(
             RewriterCondition::kRewriterInvariant, "invalid archetype");
 
@@ -46,17 +41,21 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
 
         lyric_parser::ArchetypeState archetypeState(sourceUrl, &scopeManager);
 
+        lyric_parser::ArchetypeNode *root;
+        TU_ASSIGN_OR_RETURN (root, archetypeState.load(archetype));
+        archetypeState.setRoot(root);
+
         // define the archetype entry point
-        lyric_rewriter::internal::EntryPoint entryPoint(&archetypeState);
+        lyric_rewriter::internal::EntryPoint entryPoint(&m_registry, &archetypeState);
 
         // rewrite archetype
-        auto symbolizeModuleResult = rewrite_root(walker, entryPoint);
-        if (symbolizeModuleResult.isStatus())
-            return symbolizeModuleResult.getStatus();
-        auto assembly = symbolizeModuleResult.getResult();
+        auto rewriteArchetypeResult = rewrite_root(root, entryPoint);
+        if (rewriteArchetypeResult.isStatus())
+            return rewriteArchetypeResult.getStatus();
+        auto rewritten = rewriteArchetypeResult.getResult();
 
-        TU_ASSERT (assembly.isValid());
-        return assembly;
+        TU_ASSERT (rewritten.isValid());
+        return rewritten;
 
     } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();

@@ -7,7 +7,7 @@
 #include <tempo_tracing/span_log.h>
 #include <tempo_tracing/trace_span.h>
 
-#include "archetype_attr_writer.h"
+#include "archetype_state_attr_writer.h"
 #include "archetype_attr.h"
 #include "archetype_namespace.h"
 #include "archetype_node.h"
@@ -91,7 +91,7 @@ namespace lyric_parser {
 
         ArchetypeId *makeId(ArchetypeDescriptorType type, tu_uint32 offset);
 
-        friend class ArchetypeAttrWriter;
+        friend class ArchetypeStateAttrWriter;
         friend class NodeAttr;
 
     public:
@@ -163,14 +163,14 @@ namespace lyric_parser {
         tempo_utils::Result<ArchetypeAttr *>
         appendAttr(const tempo_utils::AttrSerde<T> &serde, const T &value)
         {
-            return ArchetypeAttrWriter::createAttr(this, serde, value);
+            return ArchetypeStateAttrWriter::createAttr(this, serde, value);
         };
 
         template <class P, class PS, class W, class WS>
         tempo_utils::Result<ArchetypeAttr *>
         appendAttr(const tempo_utils::TypedSerde<P,PS,W,WS> &serde, const W &value)
         {
-            return ArchetypeAttrWriter::createAttr(this, serde, value);
+            return ArchetypeStateAttrWriter::createAttr(this, serde, value);
         };
 
         template <typename T>

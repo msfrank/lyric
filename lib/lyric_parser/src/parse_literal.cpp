@@ -90,11 +90,12 @@ lyric_parser::parse_char_literal(std::string_view literalValue)
 {
     // perform unescape on the string
     int32_t bufsize = literalValue.size() + 1;
-    UChar buf[bufsize];
-    auto nwritten = u_unescape(literalValue.data(), buf, bufsize);
+    std::vector<UChar> buf(bufsize, 0);
+
+    auto nwritten = u_unescape(literalValue.data(), buf.data(), bufsize);
 
     UChar32 chr;
-    U16_GET(buf, 0, 0, nwritten, chr);
+    U16_GET(buf.data(), 0, 0, nwritten, chr);
 
     return chr;
 }
@@ -124,8 +125,8 @@ lyric_parser::parse_string_literal(std::string_view literalValue, tu_int32 maxUn
             "utf8 literal is too large (size was {} code units)", unescapedSize);
 
     // perform unescape on the string
-    UChar unescaped[unescapedSize];
-    auto nwritten = u_unescape(literalValue.data(), unescaped, unescapedSize);
+    std::vector<UChar> unescaped(unescapedSize, 0);
+    auto nwritten = u_unescape(literalValue.data(), unescaped.data(), unescaped.size());
     if (nwritten <= 0)
         return ParseStatus::forCondition(ParseCondition::kParseInvariant,
             "unescape failed for utf8 literal");
@@ -133,7 +134,7 @@ lyric_parser::parse_string_literal(std::string_view literalValue, tu_int32 maxUn
     // perform preflight to determine size of dst buffer
     int32_t dstSize = -1;
     UErrorCode err = U_ZERO_ERROR;
-    u_strToUTF8(nullptr, 0, &dstSize, unescaped, unescapedSize, &err);
+    u_strToUTF8(nullptr, 0, &dstSize, unescaped.data(), unescaped.size(), &err);
     if (err != U_ZERO_ERROR && err != U_BUFFER_OVERFLOW_ERROR)
         return ParseStatus::forCondition(ParseCondition::kParseInvariant,
             "preflight failed for utf8 literal");
@@ -146,7 +147,7 @@ lyric_parser::parse_string_literal(std::string_view literalValue, tu_int32 maxUn
     // convert utf16 back to utf8
     std::string dst;
     dst.resize(dstSize);    // NOTE: dstSize is in utf8 code units, which is a single byte
-    u_strToUTF8(dst.data(), dstSize, &dstSize, unescaped, unescapedSize, &err);
+    u_strToUTF8(dst.data(), dstSize, &dstSize, unescaped.data(), unescaped.size(), &err);
     if (err != U_ZERO_ERROR && err != U_STRING_NOT_TERMINATED_WARNING)
         return ParseStatus::forCondition(ParseCondition::kParseInvariant,
             "invalid utf8 literal '{}'", literalValue);

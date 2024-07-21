@@ -1,10 +1,10 @@
 
 #include <lyric_parser/archetype_attr.h>
-#include <lyric_parser/archetype_attr_writer.h>
+#include <lyric_parser/archetype_state_attr_writer.h>
 #include <lyric_parser/archetype_namespace.h>
 #include <lyric_parser/archetype_state.h>
 
-lyric_parser::ArchetypeAttrWriter::ArchetypeAttrWriter(const tempo_utils::AttrKey &key, ArchetypeState *state)
+lyric_parser::ArchetypeStateAttrWriter::ArchetypeStateAttrWriter(const tempo_utils::AttrKey &key, ArchetypeState *state)
     : m_key(key),
       m_state(state),
       m_attr(nullptr)
@@ -13,19 +13,19 @@ lyric_parser::ArchetypeAttrWriter::ArchetypeAttrWriter(const tempo_utils::AttrKe
 }
 
 lyric_parser::ArchetypeAttr *
-lyric_parser::ArchetypeAttrWriter::getAttr()
+lyric_parser::ArchetypeStateAttrWriter::getAttr()
 {
     return m_attr;
 }
 
 lyric_parser::ArchetypeState *
-lyric_parser::ArchetypeAttrWriter::getWriterState()
+lyric_parser::ArchetypeStateAttrWriter::getWriterState()
 {
     return m_state;
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_parser::ArchetypeAttrWriter::putNamespace(const tempo_utils::Url &nsUrl)
+lyric_parser::ArchetypeStateAttrWriter::putNamespace(const tempo_utils::Url &nsUrl)
 {
     auto putNamespaceResult = m_state->putNamespace(nsUrl);
     if (putNamespaceResult.isStatus())
@@ -36,7 +36,7 @@ lyric_parser::ArchetypeAttrWriter::putNamespace(const tempo_utils::Url &nsUrl)
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_parser::ArchetypeAttrWriter::putNil()
+lyric_parser::ArchetypeStateAttrWriter::putNil()
 {
     ArchetypeNamespace *ns;
     TU_ASSIGN_OR_RETURN (ns, m_state->putNamespace(m_key.ns));
@@ -46,7 +46,7 @@ lyric_parser::ArchetypeAttrWriter::putNil()
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_parser::ArchetypeAttrWriter::putBool(bool b)
+lyric_parser::ArchetypeStateAttrWriter::putBool(bool b)
 {
     ArchetypeNamespace *ns;
     TU_ASSIGN_OR_RETURN (ns, m_state->putNamespace(m_key.ns));
@@ -56,7 +56,7 @@ lyric_parser::ArchetypeAttrWriter::putBool(bool b)
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_parser::ArchetypeAttrWriter::putInt64(tu_int64 i64)
+lyric_parser::ArchetypeStateAttrWriter::putInt64(tu_int64 i64)
 {
     ArchetypeNamespace *ns;
     TU_ASSIGN_OR_RETURN (ns, m_state->putNamespace(m_key.ns));
@@ -66,7 +66,7 @@ lyric_parser::ArchetypeAttrWriter::putInt64(tu_int64 i64)
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_parser::ArchetypeAttrWriter::putFloat64(double dbl)
+lyric_parser::ArchetypeStateAttrWriter::putFloat64(double dbl)
 {
     ArchetypeNamespace *ns;
     TU_ASSIGN_OR_RETURN (ns, m_state->putNamespace(m_key.ns));
@@ -76,7 +76,7 @@ lyric_parser::ArchetypeAttrWriter::putFloat64(double dbl)
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_parser::ArchetypeAttrWriter::putUInt64(tu_uint64 u64)
+lyric_parser::ArchetypeStateAttrWriter::putUInt64(tu_uint64 u64)
 {
     ArchetypeNamespace *ns;
     TU_ASSIGN_OR_RETURN (ns, m_state->putNamespace(m_key.ns));
@@ -86,7 +86,7 @@ lyric_parser::ArchetypeAttrWriter::putUInt64(tu_uint64 u64)
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_parser::ArchetypeAttrWriter::putUInt32(tu_uint32 u32)
+lyric_parser::ArchetypeStateAttrWriter::putUInt32(tu_uint32 u32)
 {
     ArchetypeNamespace *ns;
     TU_ASSIGN_OR_RETURN (ns, m_state->putNamespace(m_key.ns));
@@ -96,7 +96,7 @@ lyric_parser::ArchetypeAttrWriter::putUInt32(tu_uint32 u32)
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_parser::ArchetypeAttrWriter::putUInt16(tu_uint16 u16)
+lyric_parser::ArchetypeStateAttrWriter::putUInt16(tu_uint16 u16)
 {
     ArchetypeNamespace *ns;
     TU_ASSIGN_OR_RETURN (ns, m_state->putNamespace(m_key.ns));
@@ -106,7 +106,7 @@ lyric_parser::ArchetypeAttrWriter::putUInt16(tu_uint16 u16)
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_parser::ArchetypeAttrWriter::putUInt8(tu_uint8 u8)
+lyric_parser::ArchetypeStateAttrWriter::putUInt8(tu_uint8 u8)
 {
     ArchetypeNamespace *ns;
     TU_ASSIGN_OR_RETURN (ns, m_state->putNamespace(m_key.ns));
@@ -116,7 +116,7 @@ lyric_parser::ArchetypeAttrWriter::putUInt8(tu_uint8 u8)
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_parser::ArchetypeAttrWriter::putString(std::string_view str)
+lyric_parser::ArchetypeStateAttrWriter::putString(std::string_view str)
 {
     ArchetypeNamespace *ns;
     TU_ASSIGN_OR_RETURN (ns, m_state->putNamespace(m_key.ns));
@@ -126,7 +126,7 @@ lyric_parser::ArchetypeAttrWriter::putString(std::string_view str)
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_parser::ArchetypeAttrWriter::putHandle(tempo_utils::AttrHandle handle)
+lyric_parser::ArchetypeStateAttrWriter::putHandle(tempo_utils::AttrHandle handle)
 {
     auto *archetypeId = m_state->getId(handle.handle);
     TU_ASSERT (archetypeId->getType() == ArchetypeDescriptorType::Attr);

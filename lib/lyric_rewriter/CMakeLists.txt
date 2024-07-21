@@ -4,14 +4,21 @@ add_library(lyric_rewriter SHARED)
 add_library(lyric::lyric_rewriter ALIAS lyric_rewriter)
 
 set(LYRIC_REWRITER_INCLUDES
+    include/lyric_rewriter/abstract_macro.h
     include/lyric_rewriter/lyric_rewriter.h
+    include/lyric_rewriter/macro_block.h
+    include/lyric_rewriter/macro_registry.h
     include/lyric_rewriter/rewriter_result.h
+    include/lyric_rewriter/trap_macro.h
     )
 set_target_properties(lyric_rewriter PROPERTIES PUBLIC_HEADER "${LYRIC_REWRITER_INCLUDES}")
 
 target_sources(lyric_rewriter PRIVATE
     src/lyric_rewriter.cpp
+    src/macro_block.cpp
+    src/macro_registry.cpp
     src/rewriter_result.cpp
+    src/trap_macro.cpp
 
     include/lyric_rewriter/internal/entry_point.h
     src/internal/entry_point.cpp
@@ -60,4 +67,4 @@ install(TARGETS lyric_rewriter EXPORT lyric-targets
     )
 
 # add testing subdirectory
-#add_subdirectory(test)
+add_subdirectory(test)

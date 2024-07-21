@@ -6,6 +6,7 @@
 
 #include "archetype_attr.h"
 #include "archetype_namespace.h"
+#include "archetype_state_attr_parser.h"
 
 namespace lyric_parser {
 
@@ -39,10 +40,12 @@ namespace lyric_parser {
         absl::flat_hash_map<AttrId,ArchetypeAttr *>::const_iterator attrsEnd() const;
         int numAttrs() const;
 
+        ArchetypeNode *getChild(int index) const;
         void prependChild(ArchetypeNode *child);
         void appendChild(ArchetypeNode *child);
-        ArchetypeNode *getChild(int index) const;
-        ArchetypeNode *detachChild(int index);
+        void insertChild(int index, ArchetypeNode *child);
+        ArchetypeNode *replaceChild(int index, ArchetypeNode *child);
+        ArchetypeNode *removeChild(int index);
         std::vector<ArchetypeNode *>::const_iterator childrenBegin() const;
         std::vector<ArchetypeNode *>::const_iterator childrenEnd() const;
         int numChildren() const;
@@ -109,6 +112,27 @@ namespace lyric_parser {
             if (attr != nullptr)
                 return attr->getAttrValue();
             return {};
+        }
+
+        /**
+         *
+         * @tparam AttrType
+         * @tparam SerdeType
+         * @param attr
+         * @param value
+         * @return
+         */
+        template<class AttrType,
+            typename SerdeType = typename AttrType::SerdeType>
+        tempo_utils::Status
+        parseAttr(const AttrType &attr, SerdeType &value) const
+        {
+            auto key = attr.getKey();
+            auto *archetypeAttr = findAttr(key.ns, key.id);
+            if (archetypeAttr == nullptr)
+                return ParseStatus::forCondition(ParseCondition::kParseInvariant, "missing attr in node");
+            ArchetypeStateAttrParser parser(m_state);
+            return attr.parseAttr(index, &parser, value);
         }
     };
 }

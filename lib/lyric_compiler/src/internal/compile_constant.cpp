@@ -19,9 +19,7 @@ compile_nil_constant(
     const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
-    auto status = block->blockCode()->loadNil();
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (block->blockCode()->loadNil());
     return block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Nil);
 }
 
@@ -31,9 +29,7 @@ compile_undef_constant(
     const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
-    auto status = block->blockCode()->loadUndef();
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (block->blockCode()->loadUndef());
     return block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Undef);
 }
 
@@ -43,9 +39,7 @@ compile_true_constant(
     const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
-    auto status = block->blockCode()->loadBool(true);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (block->blockCode()->loadBool(true));
     return block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
 }
 
@@ -55,9 +49,7 @@ compile_false_constant(
     const lyric_parser::NodeWalker &walker,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
-    auto status = block->blockCode()->loadBool(false);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (block->blockCode()->loadBool(false));
     return block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
 }
 
@@ -72,12 +64,9 @@ compile_char_constant(
     std::string literalValue;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstLiteralValue, literalValue);
 
-    auto compileCharResult = lyric_parser::parse_char_literal(literalValue);
-    if (compileCharResult.isStatus())
-        return compileCharResult.getStatus();
-    auto status = block->blockCode()->loadChar(compileCharResult.getResult());
-    if (!status.isOk())
-        return status;
+    UChar32 chr;
+    TU_ASSIGN_OR_RETURN (chr, lyric_parser::parse_char_literal(literalValue));
+    TU_RETURN_IF_NOT_OK (block->blockCode()->loadChar(chr));
     return block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Char);
 }
 
@@ -94,12 +83,9 @@ compile_integer_constant(
     lyric_parser::BaseType base;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstBaseType, base);
 
-    auto compileIntegerResult = lyric_parser::parse_integer_literal(literalValue, base);
-    if (compileIntegerResult.isStatus())
-        return compileIntegerResult.getStatus();
-    auto status = block->blockCode()->loadInt(compileIntegerResult.getResult());
-    if (!status.isOk())
-        return status;
+    tu_int64 i64;
+    TU_ASSIGN_OR_RETURN (i64, lyric_parser::parse_integer_literal(literalValue, base));
+    TU_RETURN_IF_NOT_OK (block->blockCode()->loadInt(i64));
     return block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
 }
 
@@ -118,12 +104,9 @@ compile_float_constant(
     lyric_parser::NotationType notation;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstNotationType, notation);
 
-    auto compileFloatResult = lyric_parser::parse_float_literal(literalValue, base, notation);
-    if (compileFloatResult.isStatus())
-        return compileFloatResult.getStatus();
-    auto status = block->blockCode()->loadFloat(compileFloatResult.getResult());
-    if (!status.isOk())
-        return status;
+    double dbl;
+    TU_ASSIGN_OR_RETURN (dbl, lyric_parser::parse_float_literal(literalValue, base, notation));
+    TU_RETURN_IF_NOT_OK (block->blockCode()->loadFloat(dbl));
     return block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
 }
 
@@ -141,15 +124,13 @@ compile_string_constant(
     std::string literalValue;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstLiteralValue, literalValue);
 
-    auto parseLiteralResult = lyric_parser::parse_string_literal(literalValue);
-    if (parseLiteralResult.isStatus())
-        return parseLiteralResult.getStatus();
-    auto makeLiteralResult = literalCache->makeLiteralUtf8(parseLiteralResult.getResult());
-    if (makeLiteralResult.isStatus())
-        return makeLiteralResult.getStatus();
+    std::string str;
+    TU_ASSIGN_OR_RETURN (str, lyric_parser::parse_string_literal(literalValue));
+    lyric_assembler::LiteralAddress address;
+    TU_ASSIGN_OR_RETURN (address, literalCache->makeLiteralUtf8(str));
 
     auto *code = block->blockCode();
-    TU_RETURN_IF_NOT_OK (code->loadString(makeLiteralResult.getResult()));
+    TU_RETURN_IF_NOT_OK (code->loadString(address));
 
     auto fundamentalString = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::String);
     lyric_assembler::AbstractSymbol *symbol;
@@ -173,15 +154,13 @@ compile_url_constant(
     std::string literalValue;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstLiteralValue, literalValue);
 
-    auto parseLiteralResult = lyric_parser::parse_string_literal(literalValue);
-    if (parseLiteralResult.isStatus())
-        return parseLiteralResult.getStatus();
-    auto makeLiteralResult = literalCache->makeLiteralUtf8(parseLiteralResult.getResult());
-    if (makeLiteralResult.isStatus())
-        return makeLiteralResult.getStatus();
+    std::string str;
+    TU_ASSIGN_OR_RETURN (str, lyric_parser::parse_string_literal(literalValue));
+    lyric_assembler::LiteralAddress address;
+    TU_ASSIGN_OR_RETURN (address, literalCache->makeLiteralUtf8(str));
 
     auto *code = block->blockCode();
-    TU_RETURN_IF_NOT_OK (code->loadUrl(makeLiteralResult.getResult()));
+    TU_RETURN_IF_NOT_OK (code->loadUrl(address));
 
     auto fundamentalUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Url);
     lyric_assembler::AbstractSymbol *symbol;
@@ -210,10 +189,7 @@ compile_symbol_constant(
     lyric_assembler::DataReference constantRef;
 
     for (const auto &identifier : symbolPath.getPath()) {
-        auto resolveBindingResult = block->resolveReference(identifier);
-        if (resolveBindingResult.isStatus())
-            return tempo_utils::Result<lyric_common::TypeDef>(resolveBindingResult.getStatus());
-        constantRef = resolveBindingResult.getResult();
+        TU_ASSIGN_OR_RETURN (constantRef, block->resolveReference(identifier));
 
         if (constantRef.referenceType != lyric_assembler::ReferenceType::Descriptor)
             return block->logAndContinue(lyric_compiler::CompilerCondition::kMissingSymbol,
@@ -251,9 +227,7 @@ compile_symbol_constant(
         }
     }
 
-    auto status = block->load(constantRef);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (block->load(constantRef));
     return constantRef.typeDef;
 }
 

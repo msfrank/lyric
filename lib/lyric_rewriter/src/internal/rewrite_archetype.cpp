@@ -5,41 +5,78 @@
 #include <lyric_schema/ast_schema.h>
 
 tempo_utils::Status
-lyric_rewriter::internal::rewrite_block(
-    const lyric_parser::NodeWalker &walker,
+lyric_rewriter::internal::rewrite_macro_list(
+    lyric_parser::ArchetypeNode *blockNode,
+    int index,
+    lyric_parser::ArchetypeNode *macroListNode,
     lyric_rewriter::internal::EntryPoint &entryPoint)
 {
-    TU_ASSERT (walker.isValid());
-    entryPoint.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstBlockClass, 1);
+    auto *registry = entryPoint.getRegistry();
+    auto *state = entryPoint.getState();
 
-    for (int i = 0; i < walker.numChildren(); i++) {
-        auto status = rewrite_node(walker.getChild(i), entryPoint);
-        if (!status.isOk())
-            return status;
+    MacroBlock macroBlock(blockNode, index, state);
+
+    for (int i = 0; i < macroListNode->numChildren(); i++) {
+        auto *child = macroListNode->getChild(i);
+        lyric_schema::LyricAstId nodeId{};
+        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, nodeId));
+        if (nodeId != lyric_schema::LyricAstId::MacroCall)
+            return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant, "expected MacroCall");
+        auto value = child->getAttrValue(lyric_schema::kLyricAstIdentifierProperty);
+        if (!value.isLiteral())
+            return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant, "invalid MacroCall");
+        auto literal = value.getLiteral();
+        if (literal.getType() != tempo_utils::ValueType::String)
+            return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant, "invalid MacroCall");
+        auto identifier = literal.getString();
+        auto macro = registry->getMacro(identifier);
+        if (macro == nullptr)
+            return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant, "unknown macro '{}'", identifier);
+        TU_RETURN_IF_NOT_OK (macro->rewriteBlock(child, macroBlock, state));
     }
 
-    return lyric_rewriter::RewriterStatus::ok();
+    return {};
+}
+
+tempo_utils::Status
+lyric_rewriter::internal::rewrite_block(
+    lyric_parser::ArchetypeNode *blockNode,
+    lyric_rewriter::internal::EntryPoint &entryPoint)
+{
+    TU_ASSERT (blockNode != nullptr);
+    for (int i = 0; i < blockNode->numChildren(); i++) {
+        auto *child = blockNode->getChild(i);
+        lyric_schema::LyricAstId nodeId{};
+        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, nodeId));
+        if (nodeId == lyric_schema::LyricAstId::MacroList) {
+            TU_RETURN_IF_NOT_OK (rewrite_macro_list(blockNode, i, child, entryPoint));
+        } else {
+            TU_RETURN_IF_NOT_OK (rewrite_node(blockNode->getChild(i), entryPoint));
+        }
+    }
+    return {};
 }
 
 static tempo_utils::Status
 rewrite_namespace(
-    const lyric_parser::NodeWalker &walker,
+    lyric_parser::ArchetypeNode *namespaceNode,
     lyric_rewriter::internal::EntryPoint &entryPoint)
 {
-    TU_ASSERT (walker.isValid());
-    entryPoint.checkClassAndChildCountOrThrow(walker, lyric_schema::kLyricAstNamespaceClass, 1);
-    return rewrite_block(walker.getChild(0), entryPoint);
+    TU_ASSERT (namespaceNode != nullptr);
+    if (namespaceNode->numChildren() > 0)
+        return rewrite_block(namespaceNode->getChild(0), entryPoint);
+    return {};
 }
 
 tempo_utils::Status
 lyric_rewriter::internal::rewrite_node(
-    const lyric_parser::NodeWalker &walker,
+    lyric_parser::ArchetypeNode *node,
     EntryPoint &entryPoint)
 {
-    TU_ASSERT (walker.isValid());
+    TU_ASSERT (node != nullptr);
 
     lyric_schema::LyricAstId nodeId{};
-    entryPoint.parseIdOrThrow(walker, lyric_schema::kLyricAstVocabulary, nodeId);
+    TU_RETURN_IF_NOT_OK (node->parseId(lyric_schema::kLyricAstVocabulary, nodeId));
 
     switch (nodeId) {
 
@@ -65,30 +102,25 @@ lyric_rewriter::internal::rewrite_node(
 
         // handled forms
         case lyric_schema::LyricAstId::Block:
-            return rewrite_block(walker, entryPoint);
+            return rewrite_block(node, entryPoint);
         case lyric_schema::LyricAstId::Namespace:
-            return rewrite_namespace(walker, entryPoint);
+            return rewrite_namespace(node, entryPoint);
 
         default:
             return {};
     }
-
-    auto *state = entryPoint.getState();
-    state->throwParseInvariant(walker.getLocation(), "invalid node");
-    TU_UNREACHABLE();
 }
 
 tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_rewriter::internal::rewrite_root(
-    const lyric_parser::NodeWalker &walker,
+    lyric_parser::ArchetypeNode *root,
     EntryPoint &entryPoint)
 {
-    TU_ASSERT (walker.isValid());
     auto *state = entryPoint.getState();
 
-    // scan assembly starting at entry node
-    TU_RETURN_IF_NOT_OK (rewrite_node(walker, entryPoint));
+    // scan archetype starting at root node
+    TU_RETURN_IF_NOT_OK (rewrite_node(root, entryPoint));
 
-    // construct assembly from assembly state and return it
+    // construct rewritten archetype from state and return it
     return state->toArchetype();
 }
