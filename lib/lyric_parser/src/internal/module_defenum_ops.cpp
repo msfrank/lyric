@@ -99,19 +99,17 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumVal(ModuleParser::EnumValConte
     auto span = scopeManager->peekSpan();
     span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
+    // the member name
     auto id = ctx->symbolIdentifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-
-    // member type
+    // the member type
     auto *memberTypeNode = make_Type_node(m_state, ctx->assignableType());
-    auto *memberTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, memberTypeNode);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, location);
-    valNode->putAttr(identifierAttr);
-    valNode->putAttr(memberTypeOffsetAttr);
+    valNode->putAttr(kLyricAstIdentifier, id);
+    valNode->putAttr(kLyricAstTypeOffset, memberTypeNode);
 
     // if member initializer is specified then set dfl
     if (ctx->defaultInitializer() != nullptr) {
@@ -160,20 +158,17 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumDef(ModuleParser::EnumDefConte
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *packNode = m_state->popNode();
 
-    // the function name
+    // the method name
     auto id = ctx->symbolIdentifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-
-    // the function return type
+    // the method return type
     auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
-    auto *returnTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, returnTypeNode);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
-    defNode->putAttr(identifierAttr);
-    defNode->putAttr(returnTypeOffsetAttr);
+    defNode->putAttr(kLyricAstIdentifier, id);
+    defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
     defNode->appendChild(packNode);
     defNode->appendChild(blockNode);
 
@@ -223,15 +218,14 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
             auto *argNode = m_state->popNode();
 
             if (argSpec->Identifier() != nullptr) {
+                // the keyword label
                 auto label = argSpec->Identifier()->getText();
-
-                auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, label);
 
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
                 auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(identifierAttr);
+                keywordNode->putAttr(kLyricAstIdentifier, label);
                 keywordNode->appendChild(argNode);
                 argNode = keywordNode;
             }
@@ -245,8 +239,7 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
 
     // the enum case name
     auto id = ctx->symbolIdentifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-    callNode->putAttr(identifierAttr);
+    callNode->putAttr(kLyricAstIdentifier, id);
 
     // create the case
     auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
@@ -289,7 +282,6 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumImpl(ModuleParser::EnumImplCon
 
     // the impl type
     auto *implTypeNode = make_Type_node(m_state, ctx->assignableType());
-    auto *implTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, implTypeNode);
 
     // pop impl off the stack
     if (m_state->isEmpty())
@@ -298,7 +290,7 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumImpl(ModuleParser::EnumImplCon
     m_state->checkNodeOrThrow(implNode, lyric_schema::kLyricAstImplClass);
 
     // set the impl type
-    implNode->putAttr(implTypeOffsetAttr);
+    implNode->putAttr(kLyricAstTypeOffset, implTypeNode);
 
     // if ancestor node is not a kDefEnum, then report internal violation
     if (m_state->isEmpty())
@@ -320,7 +312,6 @@ lyric_parser::internal::ModuleDefenumOps::exitDefenumStatement(ModuleParser::Def
 
     // the enum name
     auto id = ctx->symbolIdentifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     // if ancestor node is not a kDefEnum, then report internal violation
     if (m_state->isEmpty())
@@ -328,7 +319,7 @@ lyric_parser::internal::ModuleDefenumOps::exitDefenumStatement(ModuleParser::Def
     auto *defenumNode = m_state->peekNode();
     m_state->checkNodeOrThrow(defenumNode, lyric_schema::kLyricAstDefEnumClass);
 
-    defenumNode->putAttr(identifierAttr);
+    defenumNode->putAttr(kLyricAstIdentifier, id);
 
     scopeManager->popSpan();
 

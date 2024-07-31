@@ -32,9 +32,8 @@ lyric_parser::internal::make_SType_node(
 
     lyric_common::SymbolPath symbolPath(parts);
 
-    auto *symbolPathAttr = state->appendAttrOrThrow(kLyricAstSymbolPath, symbolPath);
     auto *stypeNode = state->appendNodeOrThrow(lyric_schema::kLyricAstSTypeClass, location);
-    stypeNode->putAttr(symbolPathAttr);
+    stypeNode->putAttr(kLyricAstSymbolPath, symbolPath);
     return stypeNode;
 }
 
@@ -58,9 +57,8 @@ lyric_parser::internal::make_PType_node(
 
     lyric_common::SymbolPath symbolPath(parts);
 
-    auto *symbolPathAttr = state->appendAttrOrThrow(kLyricAstSymbolPath, symbolPath);
     auto *ptypeNode = state->appendNodeOrThrow(lyric_schema::kLyricAstPTypeClass, location);
-    ptypeNode->putAttr(symbolPathAttr);
+    ptypeNode->putAttr(kLyricAstSymbolPath, symbolPath);
 
     for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
         auto *param = ctx->assignableType(i);
@@ -213,15 +211,12 @@ lyric_parser::internal::make_Generic_node(
             TU_UNREACHABLE();
         }
 
-        auto *identifierAttr = state->appendAttrOrThrow(kLyricAstIdentifier, id);
-        auto *varianceAttr = state->appendAttrOrThrow(kLyricAstVarianceType, variance);
-
         token = p->getStart();
         location = get_token_location(token);
 
         auto *placeholderNode = state->appendNodeOrThrow(lyric_schema::kLyricAstPlaceholderClass, location);
-        placeholderNode->putAttr(identifierAttr);
-        placeholderNode->putAttr(varianceAttr);
+        placeholderNode->putAttr(kLyricAstIdentifier, id);
+        placeholderNode->putAttr(kLyricAstVarianceType, variance);
         genericNode->appendChild(placeholderNode);
 
         placeholderNodes[id] = placeholderNode;
@@ -250,15 +245,12 @@ lyric_parser::internal::make_Generic_node(
                 TU_UNREACHABLE();
             }
 
-            auto *boundAttr = state->appendAttrOrThrow(kLyricAstBoundType, bound);
-            auto *typeOffsetAttr = state->appendAttrOrThrow(kLyricAstTypeOffset, constraintTypeNode);
-
             token = c->getStart();
             location = get_token_location(token);
 
             auto *constraintNode = state->appendNodeOrThrow(lyric_schema::kLyricAstConstraintClass, location);
-            constraintNode->putAttr(boundAttr);
-            constraintNode->putAttr(typeOffsetAttr);
+            constraintNode->putAttr(kLyricAstBoundType, bound);
+            constraintNode->putAttr(kLyricAstTypeOffset, constraintTypeNode);
 
             if (!placeholderNodes.contains(id))
                 state->throwSyntaxError(get_token_location(c->getStop()), "no such placeholder {} for constraint", id);

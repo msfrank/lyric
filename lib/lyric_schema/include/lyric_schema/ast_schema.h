@@ -1,6 +1,8 @@
 #ifndef LYRIC_SCHEMA_AST_SCHEMA_H
 #define LYRIC_SCHEMA_AST_SCHEMA_H
 
+#include <array>
+
 #include <tempo_utils/schema.h>
 
 namespace lyric_schema {
@@ -399,11 +401,11 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::ImplementsOffset, "ImplementsOffset", tempo_utils::PropertyType::kUInt32);
 
     constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
-        kLyricAstTypeArgumentsOffsetProperty(
+    kLyricAstTypeArgumentsOffsetProperty(
         &kLyricAstNs, LyricAstId::TypeArgumentsOffset, "TypeArgumentsOffset", tempo_utils::PropertyType::kUInt32);
 
     constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
-        kLyricAstMacroListOffsetProperty(
+    kLyricAstMacroListOffsetProperty(
         &kLyricAstNs, LyricAstId::MacroListOffset, "MacroListOffset", tempo_utils::PropertyType::kUInt32);
 
     constexpr std::array<

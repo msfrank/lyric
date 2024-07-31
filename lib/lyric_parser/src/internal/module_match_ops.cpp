@@ -57,13 +57,11 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnEnum(ModuleParser::MatchOnEnu
     }
     lyric_common::SymbolPath symbolPath(parts);
 
-    auto *symbolPathAttr = m_state->appendAttrOrThrow(kLyricAstSymbolPath, symbolPath);
-
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *symbolRefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolRefClass, location);
-    symbolRefNode->putAttr(symbolPathAttr);
+    symbolRefNode->putAttr(kLyricAstSymbolPath, symbolPath);
 
     auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
     caseNode->appendChild(symbolRefNode);
@@ -89,17 +87,15 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnType(ModuleParser::MatchOnTyp
 
     auto id = ctx->Identifier()->getText();
 
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-
+    // the match type
     auto *typeNode = make_Type_node(m_state, ctx->assignableType());
-    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, typeNode);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *unpackNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUnpackClass, location);
-    unpackNode->putAttr(identifierAttr);
-    unpackNode->putAttr(typeOffsetAttr);
+    unpackNode->putAttr(kLyricAstIdentifier, id);
+    unpackNode->putAttr(kLyricAstTypeOffset, typeNode);
 
     auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
     caseNode->appendChild(unpackNode);
@@ -128,18 +124,16 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnUnwrap(ModuleParser::MatchOnU
         m_state->throwSyntaxError(get_token_location(ctx->getStop()), "invalid unwrap spec");
 
     auto *unwrapTypeNode = make_Type_node(m_state, unwrapSpec->assignableType());
-    auto *unwrapTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, unwrapTypeNode);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *unwrapNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUnpackClass, location);
-    unwrapNode->putAttr(unwrapTypeOffsetAttr);
+    unwrapNode->putAttr(kLyricAstTypeOffset, unwrapTypeNode);
 
     if (ctx->Identifier()) {
         auto id = ctx->Identifier()->getText();
-        auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-        unwrapNode->putAttr(identifierAttr);
+        unwrapNode->putAttr(kLyricAstIdentifier, id);
     }
 
     auto *unwrapList = ctx->unwrapSpec()->unwrapList();
@@ -152,17 +146,14 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnUnwrap(ModuleParser::MatchOnU
             continue;
 
         auto paramId = unwrapParam->Identifier()->getText();
-        auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, paramId);
-
         auto *paramTypeNode = make_Type_node(m_state, unwrapParam->paramType()->assignableType());
-        auto *paramTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, paramTypeNode);
 
         auto *paramToken = ctx->getStart();
         auto paramLocation = get_token_location(paramToken);
 
         auto *paramNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstParamClass, paramLocation);
-        paramNode->putAttr(identifierAttr);
-        paramNode->putAttr(paramTypeOffsetAttr);
+        paramNode->putAttr(kLyricAstIdentifier, paramId);
+        paramNode->putAttr(kLyricAstTypeOffset, paramTypeNode);
         unwrapNode->appendChild(paramNode);
     }
 
@@ -188,8 +179,6 @@ lyric_parser::internal::ModuleMatchOps::exitMatchElse(ModuleParser::MatchElseCon
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *alternativeNode = m_state->popNode();
 
-    auto *defaultOffsetAttr = m_state->appendAttrOrThrow(kLyricAstDefaultOffset, alternativeNode);
-
     // if ancestor node is not a kMatch, then report internal violation
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
@@ -197,5 +186,5 @@ lyric_parser::internal::ModuleMatchOps::exitMatchElse(ModuleParser::MatchElseCon
     m_state->checkNodeOrThrow(matchNode, lyric_schema::kLyricAstMatchClass);
 
     // otherwise add defaultCase attribute to the match
-    matchNode->putAttr(defaultOffsetAttr);
+    matchNode->putAttr(kLyricAstDefaultOffset, alternativeNode);
 }

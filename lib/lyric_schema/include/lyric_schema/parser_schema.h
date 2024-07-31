@@ -1,7 +1,9 @@
 #ifndef LYRIC_SCHEMA_PARSER_SCHEMA_H
 #define LYRIC_SCHEMA_PARSER_SCHEMA_H
 
-#include "tempo_utils/schema.h"
+#include <array>
+
+#include <tempo_utils/schema.h>
 
 namespace lyric_schema {
 

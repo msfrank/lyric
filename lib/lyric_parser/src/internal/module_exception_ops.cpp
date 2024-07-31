@@ -53,16 +53,14 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchOnType(ModuleParser::CatchO
 
     auto id = ctx->Identifier()->getText();
 
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
     auto *typeNode = make_Type_node(m_state, ctx->assignableType());
-    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, typeNode);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *unpackNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUnpackClass, location);
-    unpackNode->putAttr(identifierAttr);
-    unpackNode->putAttr(typeOffsetAttr);
+    unpackNode->putAttr(kLyricAstIdentifier, id);
+    unpackNode->putAttr(kLyricAstTypeOffset, typeNode);
 
     auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
     caseNode->appendChild(unpackNode);
@@ -91,18 +89,16 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchOnUnwrap(ModuleParser::Catc
         m_state->throwSyntaxError(get_token_location(ctx->getStop()), "invalid unwrap spec");
 
     auto *unwrapTypeNode = make_Type_node(m_state, unwrapSpec->assignableType());
-    auto *unwrapTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, unwrapTypeNode);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *unwrapNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUnpackClass, location);
-    unwrapNode->putAttr(unwrapTypeOffsetAttr);
+    unwrapNode->putAttr(kLyricAstTypeOffset, unwrapTypeNode);
 
     if (ctx->Identifier()) {
         auto id = ctx->Identifier()->getText();
-        auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-        unwrapNode->putAttr(identifierAttr);
+        unwrapNode->putAttr(kLyricAstIdentifier, id);
     }
 
     auto *unwrapList = ctx->unwrapSpec()->unwrapList();
@@ -115,16 +111,14 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchOnUnwrap(ModuleParser::Catc
             continue;
 
         auto paramId = unwrapParam->Identifier()->getText();
-        auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, paramId);
         auto *paramTypeNode = make_Type_node(m_state, unwrapParam->paramType()->assignableType());
-        auto *paramTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, paramTypeNode);
 
         auto *paramToken = ctx->getStart();
         auto paramLocation = get_token_location(paramToken);
 
         auto *paramNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstParamClass, paramLocation);
-        paramNode->putAttr(identifierAttr);
-        paramNode->putAttr(paramTypeOffsetAttr);
+        paramNode->putAttr(kLyricAstIdentifier, paramId);
+        paramNode->putAttr(kLyricAstTypeOffset, paramTypeNode);
         unwrapNode->appendChild(paramNode);
     }
 
@@ -150,8 +144,6 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchElse(ModuleParser::CatchEls
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *alternativeNode = m_state->popNode();
 
-    auto *defaultOffsetAttr = m_state->appendAttrOrThrow(kLyricAstDefaultOffset, alternativeNode);
-
     // if ancestor node is not a kTry, then report internal violation
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
@@ -159,7 +151,7 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchElse(ModuleParser::CatchEls
     m_state->checkNodeOrThrow(tryNode, lyric_schema::kLyricAstTryClass);
 
     // otherwise add defaultOffset attribute to the match
-    tryNode->putAttr(defaultOffsetAttr);
+    tryNode->putAttr(kLyricAstDefaultOffset, alternativeNode);
 }
 
 void
@@ -170,8 +162,6 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchFinally(ModuleParser::Catch
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *alwaysNode = m_state->popNode();
 
-    auto *finallyOffsetAttr = m_state->appendAttrOrThrow(kLyricAstFinallyOffset, alwaysNode);
-
     // if ancestor node is not a kTry, then report internal violation
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
@@ -179,5 +169,5 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchFinally(ModuleParser::Catch
     m_state->checkNodeOrThrow(tryNode, lyric_schema::kLyricAstTryClass);
 
     // otherwise add finallyOffset attribute to the match
-    tryNode->putAttr(finallyOffsetAttr);
+    tryNode->putAttr(kLyricAstFinallyOffset, alwaysNode);
 }

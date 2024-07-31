@@ -4,13 +4,17 @@
 #include <lyric_parser/parse_result.h>
 #include <tempo_utils/integer_types.h>
 
-#include "archetype_attr.h"
 #include "archetype_namespace.h"
 #include "archetype_state_attr_parser.h"
+#include "archetype_state_attr_writer.h"
+#include "attr_id.h"
+#include "attr_value.h"
+#include "stateful_attr.h"
 
 namespace lyric_parser {
 
     // forward declarations
+    class ArchetypeAttr;
     class ArchetypeId;
     class ArchetypeNamespace;
     class ArchetypeState;
@@ -61,6 +65,7 @@ namespace lyric_parser {
 
         bool matchesNsAndId(const char *nsString, tu_uint32 idValue) const;
         ArchetypeAttr *findAttr(const char *nsString, tu_uint32 idValue) const;
+        AttrValue getAttrValue(const char *nsString, tu_uint32 idValue) const;
 
     public:
         /**
@@ -108,10 +113,7 @@ namespace lyric_parser {
         AttrValue
         getAttrValue(const tempo_utils::SchemaProperty<NsType,IdType> &schemaProperty) const
         {
-            auto *attr = findAttr(schemaProperty.getNsUrl(), schemaProperty.getIdValue());
-            if (attr != nullptr)
-                return attr->getAttrValue();
-            return {};
+            return getAttrValue(schemaProperty.getNsUrl(), schemaProperty.getIdValue());
         }
 
         /**
@@ -134,6 +136,41 @@ namespace lyric_parser {
             ArchetypeStateAttrParser parser(m_state);
             return attr.parseAttr(index, &parser, value);
         }
+
+        template <typename T>
+        tempo_utils::Status
+        putAttr(const tempo_utils::AttrSerde<T> &serde, const T &value)
+        {
+            ArchetypeAttr *archetypeAttr;
+            TU_ASSIGN_OR_RETURN (archetypeAttr, ArchetypeStateAttrWriter::createAttr(m_state, serde, value));
+            putAttr(archetypeAttr);
+            return {};
+        };
+
+        template <class T>
+        tempo_utils::Status
+        putAttr(const StatefulAttr &attr, const T &value)
+        {
+            ArchetypeAttr *archetypeAttr;
+            auto key = attr.getKey();
+            TU_ASSIGN_OR_RETURN (archetypeAttr, ArchetypeStateAttrWriter::createAttr(m_state, key, attr, value));
+            putAttr(archetypeAttr);
+            return {};
+        };
+
+        template <typename T>
+        void
+        putAttrOrThrow(const tempo_utils::AttrSerde<T> &serde, const T &value)
+        {
+            TU_RAISE_IF_NOT_OK(putAttr(serde, value));
+        };
+
+        template <class T>
+        void
+        putAttrOrThrow(const StatefulAttr &attr, const T &value)
+        {
+            TU_RAISE_IF_NOT_OK(putAttr(attr, value));
+        };
     };
 }
 

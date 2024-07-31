@@ -11,6 +11,7 @@
 #include <lyric_runtime/abstract_loader.h>
 #include <tempo_tracing/trace_recorder.h>
 
+#include "abstract_rewrite_driver.h"
 #include "macro_registry.h"
 
 namespace lyric_rewriter {
@@ -32,6 +33,7 @@ namespace lyric_rewriter {
         tempo_utils::Result<lyric_parser::LyricArchetype> rewriteArchetype(
             const lyric_parser::LyricArchetype &archetype,
             const tempo_utils::Url &sourceUrl,
+            std::shared_ptr<AbstractRewriteDriver> rewriteDriver,
             std::shared_ptr<tempo_tracing::TraceRecorder> recorder);
 
     private:

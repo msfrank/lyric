@@ -53,13 +53,12 @@ lyric_parser::internal::ModuleMacroOps::exitMacroCall(ModuleParser::MacroCallCon
 
             if (argSpec->Identifier() != nullptr) {
                 auto label = argSpec->Identifier()->getText();
-                auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, label);
 
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
                 auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(identifierAttr);
+                keywordNode->putAttr(kLyricAstIdentifier, label);
                 keywordNode->appendChild(argNode);
                 argNode = keywordNode;
             }
@@ -69,8 +68,7 @@ lyric_parser::internal::ModuleMacroOps::exitMacroCall(ModuleParser::MacroCallCon
     }
 
     auto id = ctx->Identifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-    macroCallNode->putAttr(identifierAttr);
+    macroCallNode->putAttr(kLyricAstIdentifier, id);
 
     // if ancestor node is not a kMacroList, then report internal violation
     if (m_state->isEmpty())

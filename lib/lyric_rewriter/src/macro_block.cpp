@@ -10,8 +10,13 @@ lyric_rewriter::MacroBlock::MacroBlock(
       m_state(state)
 {
     TU_ASSERT (m_block != nullptr);
-    TU_ASSERT (0 <= m_index && m_index < m_block->numChildren());
     TU_ASSERT (m_state != nullptr);
+}
+
+lyric_parser::ArchetypeState *
+lyric_rewriter::MacroBlock::archetypeState() const
+{
+    return m_state;
 }
 
 tempo_utils::Status

@@ -77,10 +77,8 @@ lyric_parser::internal::ModuleConstantOps::exitSymbolLiteral(ModuleParser::Symbo
     if (parts.empty())
         m_state->throwSyntaxError(location, "symbol literal has no parts");
 
-    auto *symbolPathAttr = m_state->appendAttrOrThrow(kLyricAstSymbolPath, symbolPath);
-
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolRefClass, location);
-    literalNode->putAttr(symbolPathAttr);
+    literalNode->putAttr(kLyricAstSymbolPath, symbolPath);
     m_state->pushNode(literalNode);
 }
 
@@ -94,12 +92,9 @@ lyric_parser::internal::ModuleConstantOps::exitDecimalInteger(ModuleParser::Deci
     if (value.empty())
         m_state->throwSyntaxError(location, "invalid decimal integer");
 
-    auto *literalValueAttr = m_state->appendAttrOrThrow(kLyricAstLiteralValue, value);
-    auto *baseAttr = m_state->appendAttrOrThrow(kLyricAstBaseType, BaseType::DECIMAL);
-
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIntegerClass, location);
-    literalNode->putAttr(literalValueAttr);
-    literalNode->putAttr(baseAttr);
+    literalNode->putAttr(kLyricAstLiteralValue, value);
+    literalNode->putAttr(kLyricAstBaseType, BaseType::DECIMAL);
     m_state->pushNode(literalNode);
 }
 
@@ -117,12 +112,9 @@ lyric_parser::internal::ModuleConstantOps::exitHexInteger(ModuleParser::HexInteg
     if (value.empty())
         m_state->throwSyntaxError(location, "invalid hex integer");
 
-    auto *literalValueAttr = m_state->appendAttrOrThrow(kLyricAstLiteralValue, value);
-    auto *baseAttr = m_state->appendAttrOrThrow(kLyricAstBaseType, BaseType::HEX);
-
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIntegerClass, location);
-    literalNode->putAttr(literalValueAttr);
-    literalNode->putAttr(baseAttr);
+    literalNode->putAttr(kLyricAstLiteralValue, value);
+    literalNode->putAttr(kLyricAstBaseType, BaseType::HEX);
     m_state->pushNode(literalNode);
 }
 
@@ -140,12 +132,9 @@ lyric_parser::internal::ModuleConstantOps::exitOctalInteger(ModuleParser::OctalI
     if (value.empty())
         m_state->throwSyntaxError(location, "invalid octal integer");
 
-    auto *literalValueAttr = m_state->appendAttrOrThrow(kLyricAstLiteralValue, value);
-    auto *baseAttr = m_state->appendAttrOrThrow(kLyricAstBaseType, BaseType::OCTAL);
-
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIntegerClass, location);
-    literalNode->putAttr(literalValueAttr);
-    literalNode->putAttr(baseAttr);
+    literalNode->putAttr(kLyricAstLiteralValue, value);
+    literalNode->putAttr(kLyricAstBaseType, BaseType::OCTAL);
     m_state->pushNode(literalNode);
 }
 
@@ -159,14 +148,10 @@ lyric_parser::internal::ModuleConstantOps::exitDecimalFixedFloat(ModuleParser::D
     if (value.empty())
         m_state->throwSyntaxError(location, "invalid decimal fixed float");
 
-    auto *literalValueAttr = m_state->appendAttrOrThrow(kLyricAstLiteralValue, value);
-    auto *baseAttr = m_state->appendAttrOrThrow(kLyricAstBaseType, BaseType::DECIMAL);
-    auto *notationAttr = m_state->appendAttrOrThrow(kLyricAstNotationType, NotationType::FIXED);
-
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstFloatClass, location);
-    literalNode->putAttr(literalValueAttr);
-    literalNode->putAttr(baseAttr);
-    literalNode->putAttr(notationAttr);
+    literalNode->putAttr(kLyricAstLiteralValue, value);
+    literalNode->putAttr(kLyricAstBaseType, BaseType::DECIMAL);
+    literalNode->putAttr(kLyricAstNotationType, NotationType::FIXED);
     m_state->pushNode(literalNode);
 }
 
@@ -180,14 +165,10 @@ lyric_parser::internal::ModuleConstantOps::exitDecimalScientificFloat(ModulePars
     if (value.empty())
         m_state->throwSyntaxError(location, "invalid decimal scientific float");
 
-    auto *literalValueAttr = m_state->appendAttrOrThrow(kLyricAstLiteralValue, value);
-    auto *baseAttr = m_state->appendAttrOrThrow(kLyricAstBaseType, BaseType::DECIMAL);
-    auto *notationAttr = m_state->appendAttrOrThrow(kLyricAstNotationType, NotationType::SCIENTIFIC);
-
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstFloatClass, location);
-    literalNode->putAttr(literalValueAttr);
-    literalNode->putAttr(baseAttr);
-    literalNode->putAttr(notationAttr);
+    literalNode->putAttr(kLyricAstLiteralValue, value);
+    literalNode->putAttr(kLyricAstBaseType, BaseType::DECIMAL);
+    literalNode->putAttr(kLyricAstNotationType, NotationType::SCIENTIFIC);
     m_state->pushNode(literalNode);
 }
 
@@ -205,14 +186,10 @@ lyric_parser::internal::ModuleConstantOps::exitHexFloat(ModuleParser::HexFloatCo
     if (value.empty())
         m_state->throwSyntaxError(location, "invalid hex float");
 
-    auto *literalValueAttr = m_state->appendAttrOrThrow(kLyricAstLiteralValue, value);
-    auto *baseAttr = m_state->appendAttrOrThrow(kLyricAstBaseType, BaseType::HEX);
-    auto *notationAttr = m_state->appendAttrOrThrow(kLyricAstNotationType, NotationType::FIXED);
-
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstFloatClass, location);
-    literalNode->putAttr(literalValueAttr);
-    literalNode->putAttr(baseAttr);
-    literalNode->putAttr(notationAttr);
+    literalNode->putAttr(kLyricAstLiteralValue, value);
+    literalNode->putAttr(kLyricAstBaseType, BaseType::HEX);
+    literalNode->putAttr(kLyricAstNotationType, NotationType::FIXED);
     m_state->pushNode(literalNode);
 }
 
@@ -230,10 +207,8 @@ lyric_parser::internal::ModuleConstantOps::exitCharLiteral(ModuleParser::CharLit
     if (value.empty())
         m_state->throwSyntaxError(location, "invalid char literal");
 
-    auto *literalValueAttr = m_state->appendAttrOrThrow(kLyricAstLiteralValue, value);
-
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCharClass, location);
-    literalNode->putAttr(literalValueAttr);
+    literalNode->putAttr(kLyricAstLiteralValue, value);
     m_state->pushNode(literalNode);
 }
 
@@ -249,10 +224,8 @@ lyric_parser::internal::ModuleConstantOps::exitStringLiteral(ModuleParser::Strin
 
     auto value = std::string(src.cbegin() + 1, src.cend() - 1); // remove quotes
 
-    auto *literalValueAttr = m_state->appendAttrOrThrow(kLyricAstLiteralValue, value);
-
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstStringClass, location);
-    literalNode->putAttr(literalValueAttr);
+    literalNode->putAttr(kLyricAstLiteralValue, value);
     m_state->pushNode(literalNode);
 }
 
@@ -268,9 +241,7 @@ lyric_parser::internal::ModuleConstantOps::exitUrlLiteral(ModuleParser::UrlLiter
 
     auto value = std::string(src.cbegin() + 1, src.cend() - 1); // remove quotes
 
-    auto *literalValueAttr = m_state->appendAttrOrThrow(kLyricAstLiteralValue, value);
-
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUrlClass, location);
-    literalNode->putAttr(literalValueAttr);
+    literalNode->putAttr(kLyricAstLiteralValue, value);
     m_state->pushNode(literalNode);
 }

@@ -36,12 +36,11 @@ lyric_parser::internal::ModuleDefclassOps::exitClassSuper(ModuleParser::ClassSup
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    //
+    // the class super type
     auto *superTypeNode = make_Type_node(m_state, ctx->assignableType());
-    auto *superTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, superTypeNode);
 
     auto *superNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSuperClass, location);
-    superNode->putAttr(superTypeOffsetAttr);
+    superNode->putAttr(kLyricAstTypeOffset, superTypeNode);
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
@@ -56,13 +55,12 @@ lyric_parser::internal::ModuleDefclassOps::exitClassSuper(ModuleParser::ClassSup
 
             if (argSpec->Identifier() != nullptr) {
                 auto label = argSpec->Identifier()->getText();
-                auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, label);
 
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
                 auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(identifierAttr);
+                keywordNode->putAttr(kLyricAstIdentifier, label);
                 keywordNode->appendChild(argNode);
                 argNode = keywordNode;
             }
@@ -157,19 +155,18 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVal(ModuleParser::ClassValCo
     auto span = scopeManager->peekSpan();
     span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
+    // member name
     auto id = ctx->symbolIdentifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     // member type
     auto *memberTypeNode = make_Type_node(m_state, ctx->assignableType());
-    auto *memberTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, memberTypeNode);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, location);
-    valNode->putAttr(identifierAttr);
-    valNode->putAttr(memberTypeOffsetAttr);
+    valNode->putAttr(kLyricAstIdentifier, id);
+    valNode->putAttr(kLyricAstTypeOffset, memberTypeNode);
 
     // if member initializer is specified then set dfl
     if (ctx->defaultInitializer() != nullptr) {
@@ -208,19 +205,18 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVar(ModuleParser::ClassVarCo
     auto span = scopeManager->peekSpan();
     span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
+    // member name
     auto id = ctx->symbolIdentifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     // member type
     auto *memberTypeNode = make_Type_node(m_state, ctx->assignableType());
-    auto *memberTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, memberTypeNode);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *varNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstVarClass, location);
-    varNode->putAttr(identifierAttr);
-    varNode->putAttr(memberTypeOffsetAttr);
+    varNode->putAttr(kLyricAstIdentifier, id);
+    varNode->putAttr(kLyricAstTypeOffset, memberTypeNode);
 
     // if member initializer is specified then set dfl
     if (ctx->defaultInitializer() != nullptr) {
@@ -271,26 +267,23 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDef(ModuleParser::ClassDefCo
 
     // the method name
     auto id = ctx->symbolIdentifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
-    // the function return type
+    // the method return type
     auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
-    auto *returnTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, returnTypeNode);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
-    defNode->putAttr(identifierAttr);
-    defNode->putAttr(returnTypeOffsetAttr);
+    defNode->putAttr(kLyricAstIdentifier, id);
+    defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
     defNode->appendChild(packNode);
     defNode->appendChild(blockNode);
 
     // generic information
     if (ctx->placeholderSpec()) {
         auto *genericNode = make_Generic_node(m_state, ctx->placeholderSpec(), ctx->constraintSpec());
-        auto *genericOffsetAttr = m_state->appendAttrOrThrow(kLyricAstGenericOffset, genericNode);
-        defNode->putAttr(genericOffsetAttr);
+        defNode->putAttr(kLyricAstGenericOffset, genericNode);
     }
 
     // if ancestor node is not a kDefClass, then report internal violation
@@ -330,7 +323,6 @@ lyric_parser::internal::ModuleDefclassOps::exitClassImpl(ModuleParser::ClassImpl
 
     // the impl type
     auto *implTypeNode = make_Type_node(m_state, ctx->assignableType());
-    auto *implTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, implTypeNode);
 
     // pop impl off the stack
     if (m_state->isEmpty())
@@ -339,7 +331,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassImpl(ModuleParser::ClassImpl
     m_state->checkNodeOrThrow(implNode, lyric_schema::kLyricAstImplClass);
 
     // set the impl type
-    implNode->putAttr(implTypeOffsetAttr);
+    implNode->putAttr(kLyricAstTypeOffset, implTypeNode);
 
     // if ancestor node is not a kDefClass, then report internal violation
     if (m_state->isEmpty())
@@ -367,15 +359,13 @@ lyric_parser::internal::ModuleDefclassOps::exitDefclassStatement(ModuleParser::D
 
     // the class name
     auto id = ctx->symbolIdentifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-    defclassNode->putAttr(identifierAttr);
+    defclassNode->putAttr(kLyricAstIdentifier, id);
 
     // generic information
     if (ctx->genericClass()) {
         auto *genericClass = ctx->genericClass();
         auto *genericNode = make_Generic_node(m_state, genericClass->placeholderSpec(), genericClass->constraintSpec());
-        auto *genericOffsetAttr = m_state->appendAttrOrThrow(kLyricAstGenericOffset, genericNode);
-        defclassNode->putAttr(genericOffsetAttr);
+        defclassNode->putAttr(kLyricAstGenericOffset, genericNode);
     }
 
     scopeManager->popSpan();

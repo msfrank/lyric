@@ -121,13 +121,12 @@ void
 lyric_parser::internal::ModuleDerefOps::exitNameSpec(ModuleParser::NameSpecContext *ctx)
 {
     auto id = ctx->Identifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *nameNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNameClass, location);
-    nameNode->putAttr(identifierAttr);
+    nameNode->putAttr(kLyricAstIdentifier, id);
 
     // if ancestor node is not a kDeref, then report internal violation
     if (m_state->isEmpty())
@@ -149,8 +148,7 @@ lyric_parser::internal::ModuleDerefOps::exitCallSpec(ModuleParser::CallSpecConte
 
     if (ctx->typeArguments()) {
         auto *typeArgsNode = make_TypeArguments_node(m_state, ctx->typeArguments());
-        auto *typeArgsOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeArgumentsOffset, typeArgsNode);
-        callNode->putAttr(typeArgsOffsetAttr);
+        callNode->putAttr(kLyricAstTypeArgumentsOffset, typeArgsNode);
     }
 
     if (ctx->argList()) {
@@ -165,14 +163,14 @@ lyric_parser::internal::ModuleDerefOps::exitCallSpec(ModuleParser::CallSpecConte
             auto *argNode = m_state->popNode();
 
             if (argSpec->Identifier() != nullptr) {
+                // the keyword label
                 auto label = argSpec->Identifier()->getText();
-                auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, label);
 
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
                 auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(identifierAttr);
+                keywordNode->putAttr(kLyricAstIdentifier, label);
                 keywordNode->appendChild(argNode);
                 argNode = keywordNode;
             }
@@ -182,8 +180,7 @@ lyric_parser::internal::ModuleDerefOps::exitCallSpec(ModuleParser::CallSpecConte
     }
 
     auto id = ctx->Identifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-    callNode->putAttr(identifierAttr);
+    callNode->putAttr(kLyricAstIdentifier, id);
 
     // if ancestor node is not a kDeref, then report internal violation
     if (m_state->isEmpty())
@@ -199,13 +196,12 @@ void
 lyric_parser::internal::ModuleDerefOps::exitDerefMember(ModuleParser::DerefMemberContext *ctx)
 {
     auto id = ctx->Identifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *nameNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNameClass, location);
-    nameNode->putAttr(identifierAttr);
+    nameNode->putAttr(kLyricAstIdentifier, id);
 
     // if ancestor node is not a kDeref, then report internal violation
     if (m_state->isEmpty())
@@ -227,8 +223,7 @@ lyric_parser::internal::ModuleDerefOps::exitDerefMethod(ModuleParser::DerefMetho
 
     if (ctx->typeArguments()) {
         auto *typeArgsNode = make_TypeArguments_node(m_state, ctx->typeArguments());
-        auto *typeArgsOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeArgumentsOffset, typeArgsNode);
-        callNode->putAttr(typeArgsOffsetAttr);
+        callNode->putAttr(kLyricAstTypeArgumentsOffset, typeArgsNode);
     }
 
     if (ctx->argList()) {
@@ -244,13 +239,12 @@ lyric_parser::internal::ModuleDerefOps::exitDerefMethod(ModuleParser::DerefMetho
 
             if (argSpec->Identifier() != nullptr) {
                 auto label = argSpec->Identifier()->getText();
-                auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, label);
 
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
                 auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(identifierAttr);
+                keywordNode->putAttr(kLyricAstIdentifier, label);
                 keywordNode->appendChild(argNode);
                 argNode = keywordNode;
             }
@@ -260,8 +254,7 @@ lyric_parser::internal::ModuleDerefOps::exitDerefMethod(ModuleParser::DerefMetho
     }
 
     auto id = ctx->Identifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-    callNode->putAttr(identifierAttr);
+    callNode->putAttr(kLyricAstIdentifier, id);
 
     // if ancestor node is not a kDeref, then report internal violation
     if (m_state->isEmpty())

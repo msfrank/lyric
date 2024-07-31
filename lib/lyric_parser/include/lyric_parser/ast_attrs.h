@@ -10,6 +10,7 @@
 #include "archetype_node.h"
 #include "archetype_state.h"
 #include "parser_types.h"
+#include "stateful_attr.h"
 
 namespace lyric_parser {
 
@@ -118,20 +119,16 @@ namespace lyric_parser {
             VarianceType &value) const override;
     };
 
-    class NodeAttr : public tempo_utils::TypedSerde<
-        NodeWalker,
-        std::shared_ptr<const internal::ArchetypeReader>,
-        ArchetypeNode *,
-        ArchetypeState> {
-
-        using ParseType = NodeWalker;
-        using WriteType = ArchetypeNode *;
-
+    class NodeAttr : public StatefulAttr {
     public:
         explicit NodeAttr(const tempo_utils::ComparableResource *resource);
         tempo_utils::Result<tu_uint32> writeAttr(
             tempo_utils::AbstractAttrWriterWithState<ArchetypeState> *writer,
             ArchetypeNode * const &value) const override;
+        tempo_utils::Status parseAttr(
+            tu_uint32 index,
+            tempo_utils::AbstractAttrParserWithState<ArchetypeState> *parser,
+            ArchetypeNode * &value) const override;
         tempo_utils::Status parseAttr(
             tu_uint32 index,
             tempo_utils::AbstractAttrParserWithState<std::shared_ptr<const internal::ArchetypeReader>> *parser,

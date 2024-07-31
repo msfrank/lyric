@@ -9,6 +9,8 @@ namespace lyric_rewriter {
     public:
         MacroBlock(lyric_parser::ArchetypeNode *block, int index, lyric_parser::ArchetypeState *state);
 
+        lyric_parser::ArchetypeState *archetypeState() const;
+
         tempo_utils::Status appendNode(lyric_parser::ArchetypeNode *node);
 
     private:

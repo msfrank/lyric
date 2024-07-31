@@ -22,6 +22,7 @@ namespace lyric_parser {
     class ArchetypeNamespace;
     class ArchetypeNode;
     class ArchetypeAttr;
+    class StatefulAttr;
 
     class ArchetypeState {
 
@@ -152,46 +153,39 @@ namespace lyric_parser {
             throw tempo_utils::StatusException(appendNodeResult.getStatus());
         };
 
-        /**
-          *
-          * @tparam T
-          * @param serde
-          * @param value
-          * @return
-          */
-        template <typename T>
-        tempo_utils::Result<ArchetypeAttr *>
-        appendAttr(const tempo_utils::AttrSerde<T> &serde, const T &value)
-        {
-            return ArchetypeStateAttrWriter::createAttr(this, serde, value);
-        };
-
-        template <class P, class PS, class W, class WS>
-        tempo_utils::Result<ArchetypeAttr *>
-        appendAttr(const tempo_utils::TypedSerde<P,PS,W,WS> &serde, const W &value)
-        {
-            return ArchetypeStateAttrWriter::createAttr(this, serde, value);
-        };
-
-        template <typename T>
-        ArchetypeAttr *
-        appendAttrOrThrow(const tempo_utils::AttrSerde<T> &serde, const T &value)
-        {
-            auto appendAttrResult = appendAttr(serde, value);
-            if (appendAttrResult.isResult())
-                return appendAttrResult.getResult();
-            throw tempo_utils::StatusException(appendAttrResult.getStatus());
-        };
-
-        template <class P, class PS, class W, class WS>
-        ArchetypeAttr *
-        appendAttrOrThrow(const tempo_utils::TypedSerde<P,PS,W,WS> &serde, const W &value)
-        {
-            auto appendAttrResult = appendAttr(serde, value);
-            if (appendAttrResult.isResult())
-                return appendAttrResult.getResult();
-            throw tempo_utils::StatusException(appendAttrResult.getStatus());
-        };
+//        template <typename T>
+//        tempo_utils::Result<ArchetypeAttr *>
+//        appendAttr(const tempo_utils::AttrSerde<T> &serde, const T &value)
+//        {
+//            return ArchetypeStateAttrWriter::createAttr(this, serde, value);
+//        };
+//
+//        template <class W, class S>
+//        tempo_utils::Result<ArchetypeAttr *>
+//        appendAttr(const tempo_utils::StatefulWritingSerde<W,S> &serde, const W &value)
+//        {
+//            return ArchetypeStateAttrWriter::createAttr(this, serde, value);
+//        };
+//
+//        template <typename T>
+//        ArchetypeAttr *
+//        appendAttrOrThrow(const tempo_utils::AttrSerde<T> &serde, const T &value)
+//        {
+//            auto appendAttrResult = appendAttr(serde, value);
+//            if (appendAttrResult.isResult())
+//                return appendAttrResult.getResult();
+//            throw tempo_utils::StatusException(appendAttrResult.getStatus());
+//        };
+//
+//        template <class W, class S>
+//        ArchetypeAttr *
+//        appendAttrOrThrow(const tempo_utils::StatefulWritingSerde<W,S> &serde, const W &value)
+//        {
+//            auto appendAttrResult = appendAttr(serde, value);
+//            if (appendAttrResult.isResult())
+//                return appendAttrResult.getResult();
+//            throw tempo_utils::StatusException(appendAttrResult.getStatus());
+//        };
 
         /**
          *

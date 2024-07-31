@@ -5,6 +5,8 @@
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_rewriter/lyric_rewriter.h>
+#include <lyric_rewriter/macro_rewrite_driver.h>
+#include <lyric_rewriter/trap_macro.h>
 #include <tempo_test/status_matchers.h>
 #include <tempo_utils/logging.h>
 
@@ -14,7 +16,9 @@ TEST(RewriteTrap, TrapInBlock)
     auto recorder = tempo_tracing::TraceRecorder::create();
 
     auto parseResult = parser.parseModule(R"(
-        @{ Trap("TrapName") }
+        @{
+            Trap("TrapName")
+        }
     )", {}, recorder);
 
     ASSERT_TRUE(parseResult.isResult());
@@ -47,8 +51,13 @@ TEST(RewriteTrap, TrapInBlock)
 
     lyric_rewriter::LyricRewriter rewriter(options);
 
+    lyric_rewriter::MacroRegistry registry({
+        {"Trap", std::make_shared<lyric_rewriter::TrapMacro>()}
+    });
+    auto driver = std::make_shared<lyric_rewriter::MacroRewriteDriver>(&registry);
+
     auto sourceUrl = tempo_utils::Url::fromString("/test");
-    auto rewriteArchetypeResult = rewriter.rewriteArchetype(archetype, sourceUrl, recorder);
+    auto rewriteArchetypeResult = rewriter.rewriteArchetype(archetype, sourceUrl, driver, recorder);
     ASSERT_TRUE (rewriteArchetypeResult.isResult());
     auto rewritten = rewriteArchetypeResult.getResult();
 }

@@ -14,6 +14,8 @@ set(LYRIC_PARSER_INCLUDES
     include/lyric_parser/archetype_state.h
     include/lyric_parser/archetype_state_attr_parser.h
     include/lyric_parser/archetype_state_attr_writer.h
+    include/lyric_parser/attr_id.h
+    include/lyric_parser/attr_value.h
     include/lyric_parser/ast_attrs.h
     include/lyric_parser/lyric_archetype.h
     include/lyric_parser/lyric_parser.h
@@ -23,6 +25,7 @@ set(LYRIC_PARSER_INCLUDES
     include/lyric_parser/parse_result.h
     include/lyric_parser/parser_attrs.h
     include/lyric_parser/parser_types.h
+    include/lyric_parser/stateful_attr.h
 )
 set_target_properties(lyric_parser PROPERTIES PUBLIC_HEADER "${LYRIC_PARSER_INCLUDES}")
 
@@ -93,6 +96,8 @@ target_sources(lyric_parser
     src/archetype_state_attr_parser.cpp
     src/archetype_state_attr_writer.cpp
     src/ast_attrs.cpp
+    src/attr_id.cpp
+    src/attr_value.cpp
     src/lyric_archetype.cpp
     src/lyric_parser.cpp
     src/node_walker.cpp

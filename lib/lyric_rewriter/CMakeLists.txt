@@ -5,18 +5,39 @@ add_library(lyric::lyric_rewriter ALIAS lyric_rewriter)
 
 set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/abstract_macro.h
+    include/lyric_rewriter/abstract_rewrite_driver.h
+    include/lyric_rewriter/lyric_ast_base_visitor.h
+    include/lyric_rewriter/lyric_ast_binary_visitor.h
+    include/lyric_rewriter/lyric_ast_class_visitor.h
+    include/lyric_rewriter/lyric_ast_dynamic_visitor.h
+    include/lyric_rewriter/lyric_ast_sequence_visitor.h
+    include/lyric_rewriter/lyric_ast_terminal_visitor.h
+    include/lyric_rewriter/lyric_ast_unary_visitor.h
     include/lyric_rewriter/lyric_rewriter.h
     include/lyric_rewriter/macro_block.h
     include/lyric_rewriter/macro_registry.h
+    include/lyric_rewriter/macro_rewrite_driver.h
+    include/lyric_rewriter/rewrite_processor.h
     include/lyric_rewriter/rewriter_result.h
+    include/lyric_rewriter/schema_class_node_visitor.h
+    include/lyric_rewriter/schema_vocabulary_node_visitor.h
     include/lyric_rewriter/trap_macro.h
     )
 set_target_properties(lyric_rewriter PROPERTIES PUBLIC_HEADER "${LYRIC_REWRITER_INCLUDES}")
 
 target_sources(lyric_rewriter PRIVATE
+    src/lyric_ast_base_visitor.cpp
+    src/lyric_ast_binary_visitor.cpp
+    src/lyric_ast_class_visitor.cpp
+    src/lyric_ast_dynamic_visitor.cpp
+    src/lyric_ast_sequence_visitor.cpp
+    src/lyric_ast_terminal_visitor.cpp
+    src/lyric_ast_unary_visitor.cpp
     src/lyric_rewriter.cpp
     src/macro_block.cpp
     src/macro_registry.cpp
+    src/macro_rewrite_driver.cpp
+    src/rewrite_processor.cpp
     src/rewriter_result.cpp
     src/trap_macro.cpp
 
@@ -52,6 +73,7 @@ target_link_libraries(lyric_rewriter
     lyric::lyric_importer
     lyric::lyric_parser
     lyric::lyric_runtime
+    lyric::lyric_schema
     lyric::lyric_typing
     tempo::tempo_utils
     absl::flat_hash_map

@@ -1,6 +1,8 @@
 #ifndef LYRIC_SCHEMA_BUILD_SCHEMA_H
 #define LYRIC_SCHEMA_BUILD_SCHEMA_H
 
+#include <array>
+
 #include <tempo_utils/schema.h>
 
 namespace lyric_schema {

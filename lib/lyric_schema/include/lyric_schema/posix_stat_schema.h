@@ -1,7 +1,6 @@
 #ifndef LYRIC_SCHEMA_POSIX_STAT_SCHEMA_H
 #define LYRIC_SCHEMA_POSIX_STAT_SCHEMA_H
 
-#include <cstdint>
 #include <array>
 
 #include <tempo_utils/schema.h>

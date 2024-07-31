@@ -287,11 +287,7 @@ lyric_parser::VarianceTypeAttr::parseAttr(tu_uint32 index, tempo_utils::Abstract
 }
 
 lyric_parser::NodeAttr::NodeAttr(const tempo_utils::ComparableResource *resource)
-    : tempo_utils::TypedSerde<
-        NodeWalker,
-        std::shared_ptr<const internal::ArchetypeReader>,
-        ArchetypeNode *,
-        ArchetypeState>(resource)
+    : StatefulAttr(resource)
 {
 }
 
@@ -302,13 +298,31 @@ lyric_parser::NodeAttr::writeAttr(
 {
     TU_ASSERT (writer != nullptr);
     auto *stateptr = writer->getWriterState();
+    auto *resource = tempo_utils::AttrValidator::getResource();
     ArchetypeNamespace *ns;
-    TU_ASSIGN_OR_RETURN (ns, stateptr->putNamespace(getResource()->getNsUrl()));
-    AttrId id(ns, getResource()->getIdValue());
+    TU_ASSIGN_OR_RETURN (ns, stateptr->putNamespace(resource->getNsUrl()));
+    AttrId id(ns, resource->getIdValue());
     ArchetypeAttr *attr;
     TU_ASSIGN_OR_RETURN (attr, stateptr->appendAttr(id, AttrValue(archetypeNode)));
     auto *archetypeId = attr->getArchetypeId();
     return writer->putHandle(tempo_utils::AttrHandle{archetypeId->getId()});
+}
+
+tempo_utils::Status
+lyric_parser::NodeAttr::parseAttr(
+    tu_uint32 index,
+    tempo_utils::AbstractAttrParserWithState<ArchetypeState> *parser,
+    ArchetypeNode * &node) const
+{
+    TU_ASSERT (parser != nullptr);
+    tempo_utils::AttrHandle value;
+    TU_RETURN_IF_NOT_OK (parser->getHandle(index, value));
+    auto *readerptr = parser->getParserState();
+    auto *archetypeId = readerptr->getId(value.handle);
+    TU_ASSERT (archetypeId != nullptr);
+    TU_ASSERT (archetypeId->getType() == ArchetypeDescriptorType::Node);
+    node = readerptr->getNode(archetypeId->getOffset());
+    return {};
 }
 
 tempo_utils::Status

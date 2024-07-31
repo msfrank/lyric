@@ -51,18 +51,16 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptDef(ModuleParser::Concep
 
     // the action name
     auto id = ctx->symbolIdentifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
 
-    // the function return type
+    // the action return type
     auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
-    auto *returnTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, returnTypeNode);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
-    defNode->putAttr(identifierAttr);
-    defNode->putAttr(returnTypeOffsetAttr);
+    defNode->putAttr(kLyricAstIdentifier, id);
+    defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
     defNode->appendChild(packNode);
 
     // if ancestor node is not a kDefConcept, then report internal violation
@@ -102,7 +100,6 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptImpl(ModuleParser::Conce
 
     // the impl type
     auto *implTypeNode = make_Type_node(m_state, ctx->assignableType());
-    auto *implTypeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, implTypeNode);
 
     // pop impl off the stack
     if (m_state->isEmpty())
@@ -111,7 +108,7 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptImpl(ModuleParser::Conce
     m_state->checkNodeOrThrow(implNode, lyric_schema::kLyricAstImplClass);
 
     // set the impl type
-    implNode->putAttr(implTypeOffsetAttr);
+    implNode->putAttr(kLyricAstTypeOffset, implTypeNode);
 
     // if ancestor node is not a kDefConcept, then report internal violation
     if (m_state->isEmpty())
@@ -139,15 +136,13 @@ lyric_parser::internal::ModuleDefconceptOps::exitDefconceptStatement(ModuleParse
 
     // the concept name
     auto id = ctx->symbolIdentifier()->getText();
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-    defconceptNode->putAttr(identifierAttr);
+    defconceptNode->putAttr(kLyricAstIdentifier, id);
 
     // generic information
     if (ctx->genericConcept()) {
         auto *genericConcept = ctx->genericConcept();
         auto *genericNode = make_Generic_node(m_state, genericConcept->placeholderSpec(), genericConcept->constraintSpec());
-        auto *genericOffsetAttr = m_state->appendAttrOrThrow(kLyricAstGenericOffset, genericNode);
-        defconceptNode->putAttr(genericOffsetAttr);
+        defconceptNode->putAttr(kLyricAstGenericOffset, genericNode);
     }
 
     scopeManager->popSpan();

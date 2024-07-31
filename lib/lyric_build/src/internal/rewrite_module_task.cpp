@@ -17,6 +17,7 @@
 #include <lyric_compiler/lyric_compiler.h>
 #include <lyric_packaging/package_attrs.h>
 #include <lyric_runtime/chain_loader.h>
+#include <lyric_rewriter/macro_rewrite_driver.h>
 #include <tempo_config/base_conversions.h>
 #include <tempo_config/container_conversions.h>
 #include <tempo_config/parse_config.h>
@@ -152,9 +153,13 @@ lyric_build::internal::RewriteModuleTask::runTask(
     loaderChain.push_back(buildState->getLoaderChain());
     auto loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
 
+    //
+    auto macroDriver = std::make_shared<lyric_rewriter::MacroRewriteDriver>(&m_registry);
+
     // generate the rewritten archetype by applying all macros
     TU_LOG_V << "rewriting source from " << m_sourceUrl;
-    auto rewriteModuleResult = rewriter.rewriteArchetype(archetype, m_sourceUrl, traceDiagnostics());
+    auto rewriteModuleResult = rewriter.rewriteArchetype(
+        archetype, m_sourceUrl, macroDriver, traceDiagnostics());
     if (rewriteModuleResult.isStatus()) {
         span->logStatus(rewriteModuleResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
         return Option<tempo_utils::Status>(

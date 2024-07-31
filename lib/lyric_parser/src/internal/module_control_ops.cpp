@@ -64,10 +64,8 @@ lyric_parser::internal::ModuleControlOps::exitIfThenElseExpression(ModuleParser:
     caseNode->appendChild(conditionNode);
     caseNode->appendChild(consequentNode);
 
-    auto *defaultOffsetAttr = m_state->appendAttrOrThrow(kLyricAstDefaultOffset, alternativeNode);
-
     auto *condNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCondClass, location);
-    condNode->putAttr(defaultOffsetAttr);
+    condNode->putAttr(kLyricAstDefaultOffset, alternativeNode);
     condNode->appendChild(caseNode);
     m_state->pushNode(condNode);
 }
@@ -119,8 +117,6 @@ lyric_parser::internal::ModuleControlOps::exitCondElse(ModuleParser::CondElseCon
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *alternativeNode = m_state->popNode();
 
-    auto *defaultOffsetAttr = m_state->appendAttrOrThrow(kLyricAstDefaultOffset, alternativeNode);
-
     // if ancestor node is not a kCond, then report internal violation
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
@@ -128,7 +124,7 @@ lyric_parser::internal::ModuleControlOps::exitCondElse(ModuleParser::CondElseCon
     m_state->checkNodeOrThrow(condNode, lyric_schema::kLyricAstCondClass);
 
     // otherwise add defaultCase attribute to the cond
-    condNode->putAttr(defaultOffsetAttr);
+    condNode->putAttr(kLyricAstDefaultOffset, alternativeNode);
 }
 
 void
@@ -178,8 +174,6 @@ lyric_parser::internal::ModuleControlOps::exitCondIfElse(ModuleParser::CondIfEls
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *alternativeNode = m_state->popNode();
 
-    auto *defaultOffsetAttr = m_state->appendAttrOrThrow(kLyricAstDefaultOffset, alternativeNode);
-
     // if ancestor node is not a kIf, then report internal violation
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
@@ -187,7 +181,7 @@ lyric_parser::internal::ModuleControlOps::exitCondIfElse(ModuleParser::CondIfEls
     m_state->checkNodeOrThrow(ifNode, lyric_schema::kLyricAstIfClass);
 
     // otherwise add defaultCase attribute to the cond
-    ifNode->putAttr(defaultOffsetAttr);
+    ifNode->putAttr(kLyricAstDefaultOffset, alternativeNode);
 }
 
 void
@@ -252,13 +246,11 @@ lyric_parser::internal::ModuleControlOps::exitForStatement(ModuleParser::ForStat
     auto *forNode = m_state->peekNode();
     m_state->checkNodeOrThrow(forNode, lyric_schema::kLyricAstForClass);
 
-    auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, id);
-    forNode->putAttr(identifierAttr);
+    forNode->putAttr(kLyricAstIdentifier, id);
 
     if (ctx->assignableType()) {
         auto *typeNode = make_Type_node(m_state, ctx->assignableType());
-        auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, typeNode);
-        forNode->putAttr(typeOffsetAttr);
+        forNode->putAttr(kLyricAstTypeOffset, typeNode);
     }
 
     forNode->appendChild(iteratorNode);

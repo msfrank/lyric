@@ -84,6 +84,16 @@ lyric_parser::ArchetypeNode::findAttr(const char *nsString, tu_uint32 idValue) c
     return nullptr;
 }
 
+lyric_parser::AttrValue
+lyric_parser::ArchetypeNode::getAttrValue(const char *nsString, tu_uint32 idValue) const
+{
+    auto *attr = findAttr(nsString, idValue);
+    if (attr != nullptr)
+        return attr->getAttrValue();
+    return {};
+
+}
+
 void
 lyric_parser::ArchetypeNode::putAttr(ArchetypeAttr *attr)
 {

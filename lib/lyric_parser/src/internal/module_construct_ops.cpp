@@ -40,13 +40,12 @@ void
 lyric_parser::internal::ModuleConstructOps::exitDerefNew(ModuleParser::DerefNewContext *ctx)
 {
     auto *typeNode = make_Type_node(m_state, ctx->assignableType());
-    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, typeNode);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *newNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNewClass, location);
-    newNode->putAttr(typeOffsetAttr);
+    newNode->putAttr(kLyricAstTypeOffset, typeNode);
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
@@ -62,13 +61,11 @@ lyric_parser::internal::ModuleConstructOps::exitDerefNew(ModuleParser::DerefNewC
             if (argSpec->Identifier() != nullptr) {
                 auto label = argSpec->Identifier()->getText();
 
-                auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, label);
-
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
                 auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(identifierAttr);
+                keywordNode->putAttr(kLyricAstIdentifier, label);
                 keywordNode->appendChild(argNode);
                 argNode = keywordNode;
             }
@@ -92,14 +89,14 @@ lyric_parser::internal::ModuleConstructOps::exitLambdaExpression(ModuleParser::L
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *packNode = m_state->popNode();
 
-    auto *typeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
-    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, typeNode);
+    // the lambda return type
+    auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *lambdaNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstLambdaClass, location);
-    lambdaNode->putAttr(typeOffsetAttr);
+    lambdaNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
     lambdaNode->appendChild(packNode);
     lambdaNode->appendChild(blockNode);
     m_state->pushNode(lambdaNode);
@@ -109,13 +106,12 @@ void
 lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx)
 {
     auto *typeNode = make_Type_node(m_state, ctx->assignableType());
-    auto *typeOffsetAttr = m_state->appendAttrOrThrow(kLyricAstTypeOffset, typeNode);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *newNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNewClass, location);
-    newNode->putAttr(typeOffsetAttr);
+    newNode->putAttr(kLyricAstTypeOffset, typeNode);
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
@@ -131,13 +127,11 @@ lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerTypedNew(Modul
             if (argSpec->Identifier() != nullptr) {
                 auto label = argSpec->Identifier()->getText();
 
-                auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, label);
-
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
                 auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(identifierAttr);
+                keywordNode->putAttr(kLyricAstIdentifier, label);
                 keywordNode->appendChild(argNode);
                 argNode = keywordNode;
             }
@@ -171,13 +165,11 @@ lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerNew(ModulePars
             if (argSpec->Identifier() != nullptr) {
                 auto label = argSpec->Identifier()->getText();
 
-                auto *identifierAttr = m_state->appendAttrOrThrow(kLyricAstIdentifier, label);
-
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
                 auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(identifierAttr);
+                keywordNode->putAttr(kLyricAstIdentifier, label);
                 keywordNode->appendChild(argNode);
                 argNode = keywordNode;
             }

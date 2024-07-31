@@ -1,11 +1,12 @@
 
-#include <lyric_assembler/assembly_state.h>
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/node_walker.h>
-#include <lyric_rewriter/internal/rewrite_archetype.h>
+#include <lyric_rewriter/abstract_rewrite_driver.h>
 #include <lyric_rewriter/internal/entry_point.h>
+#include <lyric_rewriter/lyric_ast_sequence_visitor.h>
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_rewriter/rewriter_result.h>
+#include <lyric_rewriter/rewrite_processor.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_rewriter::LyricRewriter::LyricRewriter(const RewriterOptions &options)
@@ -18,10 +19,49 @@ lyric_rewriter::LyricRewriter::LyricRewriter(const LyricRewriter &other)
 {
 }
 
+struct DriverState {
+    std::shared_ptr<lyric_rewriter::AbstractRewriteDriver> driver;
+    lyric_parser::ArchetypeState *state;
+};
+
+static tempo_utils::Status
+arrange(
+    lyric_schema::LyricAstId astId,
+    lyric_parser::ArchetypeNode *node,
+    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children,
+    void *data)
+{
+    TU_LOG_INFO << "arrange " << lyric_schema::kLyricAstVocabulary.getResource(astId)->getName() << " children";
+    return {};
+}
+
+static tempo_utils::Status
+enter_node(
+    lyric_schema::LyricAstId astId,
+    lyric_parser::ArchetypeNode *node,
+    lyric_rewriter::VisitorContext &ctx,
+    void *data)
+{
+    auto *driverState = static_cast<DriverState *>(data);
+    return driverState->driver->enter(driverState->state, node, ctx);
+}
+
+static tempo_utils::Status
+exit_node(
+    lyric_schema::LyricAstId astId,
+    lyric_parser::ArchetypeNode *node,
+    const lyric_rewriter::VisitorContext &ctx,
+    void *data)
+{
+    auto *driverState = static_cast<DriverState *>(data);
+    return driverState->driver->exit(driverState->state, node, ctx);
+}
+
 tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_rewriter::LyricRewriter::rewriteArchetype(
     const lyric_parser::LyricArchetype &archetype,
     const tempo_utils::Url &sourceUrl,
+    std::shared_ptr<AbstractRewriteDriver> rewriteDriver,
     std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
     if (!sourceUrl.isValid())
@@ -45,14 +85,27 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
         TU_ASSIGN_OR_RETURN (root, archetypeState.load(archetype));
         archetypeState.setRoot(root);
 
-        // define the archetype entry point
-        lyric_rewriter::internal::EntryPoint entryPoint(&m_registry, &archetypeState);
+        // define the driver state
+        DriverState driverState;
+        driverState.driver = rewriteDriver;
+        driverState.state = &archetypeState;
+
+        // construct the root visitor
+        LyricAstOptions options;
+        options.arrange = arrange;
+        options.enter = enter_node;
+        options.exit = exit_node;
+        options.data = &driverState;
+
+        auto visitor = std::make_shared<LyricAstSequenceVisitor>(
+            lyric_schema::LyricAstId::Block, &options);
+
+        RewriteProcessor processor;
+        TU_RETURN_IF_NOT_OK (processor.process(&archetypeState, visitor));
 
         // rewrite archetype
-        auto rewriteArchetypeResult = rewrite_root(root, entryPoint);
-        if (rewriteArchetypeResult.isStatus())
-            return rewriteArchetypeResult.getStatus();
-        auto rewritten = rewriteArchetypeResult.getResult();
+        lyric_parser::LyricArchetype rewritten;
+        TU_ASSIGN_OR_RETURN (rewritten, archetypeState.toArchetype());
 
         TU_ASSERT (rewritten.isValid());
         return rewritten;

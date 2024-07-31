@@ -16,18 +16,20 @@ namespace lyric_parser {
             const tempo_utils::AttrSerde<T> &serde,
             const T &value)
         {
-            ArchetypeStateAttrWriter writer(serde.getKey(), state);
+            auto key = serde.getKey();
+            ArchetypeStateAttrWriter writer(key, state);
             TU_RETURN_IF_STATUS (serde.writeAttr(&writer, value));
             return writer.getAttr();
         }
 
-        template<class P, class PS, class W, class WS>
+        template<class W, class S>
         static tempo_utils::Result<ArchetypeAttr *> createAttr(
             ArchetypeState *state,
-            const tempo_utils::TypedSerde<P,PS,W,WS> &serde,
+            tempo_utils::AttrKey key,
+            const tempo_utils::StatefulWritingSerde<W,S> &serde,
             const W &value)
         {
-            ArchetypeStateAttrWriter writer(serde.getKey(), state);
+            ArchetypeStateAttrWriter writer(key, state);
             TU_RETURN_IF_STATUS (serde.writeAttr(&writer, value));
             return writer.getAttr();
         }

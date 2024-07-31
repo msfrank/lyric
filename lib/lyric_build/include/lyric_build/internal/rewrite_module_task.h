@@ -34,6 +34,7 @@ namespace lyric_build::internal {
         tempo_utils::Url m_sourceUrl;
         lyric_common::AssemblyLocation m_moduleLocation;
         lyric_rewriter::RewriterOptions m_rewriterOptions;
+        lyric_rewriter::MacroRegistry m_registry;
         TaskKey m_parseTarget;
 
         tempo_utils::Status configure(const ConfigStore *config);
