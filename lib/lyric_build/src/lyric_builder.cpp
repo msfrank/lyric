@@ -177,6 +177,13 @@ lyric_build::LyricBuilder::configure()
     }
     m_packageLoader = std::make_shared<lyric_packaging::PackageLoader>(pkgDirectoryPathList, packageMap);
 
+    // configure the task registry
+    if (m_options.taskRegistry == nullptr) {
+        m_taskRegistry = std::make_shared<TaskRegistry>();
+    } else {
+        m_taskRegistry = m_options.taskRegistry;
+    }
+
     // configure the shared module cache
     if (m_options.sharedModuleCache == nullptr) {
         std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
@@ -281,16 +288,13 @@ lyric_build::LyricBuilder::computeTargets(
     // construct a new Config with overrides merged in
     auto config = m_config.merge(globalOverrides, domainOverrides, taskOverrides);
 
-    // create a registry instance based on the merged config
-    TaskRegistry registry(config);
-
     // wrap the build cache and loader chain in a unique generation
     BuildGeneration buildGen(tempo_utils::UUID::randomUUID(), std::chrono::system_clock::now());
     auto state = std::make_shared<BuildState>(buildGen, m_cache, m_bootstrapLoader, m_packageLoader,
         m_fallbackLoader, m_sharedModuleCache, m_virtualFilesystem);
 
     // construct a new task manager for managing parallel tasks
-    BuildRunner runner(&config, state, m_cache, &registry,
+    BuildRunner runner(&config, state, m_cache, m_taskRegistry.get(),
         m_numThreads, m_waitTimeoutInMs, on_notification, this);
 
     // enqueue all tasks in parallel, and let the manager sequence them appropriately

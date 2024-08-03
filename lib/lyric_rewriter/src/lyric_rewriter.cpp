@@ -2,7 +2,6 @@
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/node_walker.h>
 #include <lyric_rewriter/abstract_rewrite_driver.h>
-#include <lyric_rewriter/internal/entry_point.h>
 #include <lyric_rewriter/lyric_ast_sequence_visitor.h>
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_rewriter/rewriter_result.h>
@@ -96,6 +95,7 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
         options.enter = enter_node;
         options.exit = exit_node;
         options.data = &driverState;
+        options.unknown = m_options.unknownVisitor;
 
         auto visitor = std::make_shared<LyricAstSequenceVisitor>(
             lyric_schema::LyricAstId::Block, &options);

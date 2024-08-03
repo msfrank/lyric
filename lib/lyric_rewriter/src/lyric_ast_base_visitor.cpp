@@ -5,6 +5,7 @@
 #include <lyric_rewriter/lyric_ast_sequence_visitor.h>
 #include <lyric_rewriter/lyric_ast_terminal_visitor.h>
 #include <lyric_rewriter/lyric_ast_unary_visitor.h>
+#include <lyric_rewriter/rewriter_result.h>
 
 lyric_rewriter::LyricAstBaseVisitor::LyricAstBaseVisitor(LyricAstOptions *options)
     : m_options(options)
@@ -25,9 +26,19 @@ lyric_rewriter::LyricAstBaseVisitor::getOptions() const
     return m_options;
 }
 
-std::shared_ptr<lyric_rewriter::AbstractNodeVisitor>
-lyric_rewriter::LyricAstBaseVisitor::makeVisitor(lyric_schema::LyricAstId astId)
+tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractNodeVisitor>>
+lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNode *node)
 {
+    if (!node->isNamespace(lyric_schema::kLyricAstNs)) {
+        if (m_options->unknown != nullptr)
+            return m_options->unknown;
+        return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant, "unknown node");
+    }
+
+    lyric_schema::LyricAstId astId;
+    TU_RETURN_IF_NOT_OK (node->parseId(lyric_schema::kLyricAstVocabulary, astId));
+    std::shared_ptr<AbstractNodeVisitor> visitor;
+
     switch (astId) {
 
         // terminal forms
@@ -43,12 +54,14 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(lyric_schema::LyricAstId astId)
         case lyric_schema::LyricAstId::SymbolRef:
         case lyric_schema::LyricAstId::This:
         case lyric_schema::LyricAstId::Name:
-            return std::make_shared<LyricAstTerminalVisitor>(astId, m_options);
+            visitor = std::make_shared<LyricAstTerminalVisitor>(astId, m_options);
+            break;
 
         // unary forms
         case lyric_schema::LyricAstId::Neg:
         case lyric_schema::LyricAstId::Not:
-            return std::make_shared<LyricAstUnaryVisitor>(astId, m_options);
+            visitor = std::make_shared<LyricAstUnaryVisitor>(astId, m_options);
+            break;
 
         // binary forms
         case lyric_schema::LyricAstId::And:
@@ -63,7 +76,8 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(lyric_schema::LyricAstId astId)
         case lyric_schema::LyricAstId::IsGt:
         case lyric_schema::LyricAstId::IsGe:
         case lyric_schema::LyricAstId::IsA:
-            return std::make_shared<LyricAstBinaryVisitor>(astId, m_options);
+            visitor = std::make_shared<LyricAstBinaryVisitor>(astId, m_options);
+            break;
 
         // sequence forms
         case lyric_schema::LyricAstId::Deref:
@@ -93,7 +107,8 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(lyric_schema::LyricAstId astId)
         case lyric_schema::LyricAstId::Using:
         case lyric_schema::LyricAstId::MacroList:
         case lyric_schema::LyricAstId::MacroCall:
-            return std::make_shared<LyricAstSequenceVisitor>(astId, m_options);
+            visitor = std::make_shared<LyricAstSequenceVisitor>(astId, m_options);
+            break;
 
         // dynamic forms
         case lyric_schema::LyricAstId::Call:
@@ -102,11 +117,17 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(lyric_schema::LyricAstId astId)
         case lyric_schema::LyricAstId::DefEnum:
         case lyric_schema::LyricAstId::DefInstance:
         case lyric_schema::LyricAstId::DefStruct:
-            return std::make_shared<LyricAstDynamicVisitor>(astId, m_options);
+            visitor = std::make_shared<LyricAstDynamicVisitor>(astId, m_options);
+            break;
 
         default:
-            TU_UNREACHABLE();
+            break;
     }
+
+    if (visitor == nullptr)
+        return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant, "unknown node");
+
+    return visitor;
 }
 
 tempo_utils::Status

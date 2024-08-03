@@ -27,6 +27,8 @@
 #include <lyric_compiler/internal/compile_val.h>
 #include <lyric_compiler/internal/compile_var.h>
 #include <lyric_parser/ast_attrs.h>
+#include <lyric_rewriter/assembler_attrs.h>
+#include <lyric_schema/assembler_schema.h>
 #include <lyric_schema/ast_schema.h>
 
 /**
@@ -169,6 +171,14 @@ lyric_compiler::internal::compile_node(
     ModuleEntry &moduleEntry)
 {
     TU_ASSERT (walker.isValid());
+
+    if (walker.isClass(lyric_schema::kLyricAssemblerTrapClass)) {
+        tu_uint32 trapNumber;
+        TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_rewriter::kLyricAssemblerTrapNumber, trapNumber));
+        auto *code = block->blockCode();
+        TU_RETURN_IF_NOT_OK (code->trap(trapNumber));
+        return lyric_common::TypeDef::noReturn();
+    }
 
     lyric_schema::LyricAstId id{};
     moduleEntry.parseIdOrThrow(walker, lyric_schema::kLyricAstVocabulary, id);

@@ -12,7 +12,6 @@
 #include <tempo_tracing/trace_recorder.h>
 
 #include "abstract_rewrite_driver.h"
-#include "macro_registry.h"
 
 namespace lyric_rewriter {
 
@@ -20,8 +19,12 @@ namespace lyric_rewriter {
      *
      */
     struct RewriterOptions {
+
         lyric_common::AssemblyLocation preludeLocation;
+
         std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache;
+
+        std::shared_ptr<AbstractNodeVisitor> unknownVisitor;
     };
 
     class LyricRewriter {
@@ -37,7 +40,6 @@ namespace lyric_rewriter {
             std::shared_ptr<tempo_tracing::TraceRecorder> recorder);
 
     private:
-        MacroRegistry m_registry;
         RewriterOptions m_options;
     };
 }

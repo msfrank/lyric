@@ -22,9 +22,8 @@ lyric_rewriter::LyricAstDynamicVisitor::enter(lyric_parser::ArchetypeNode *node,
     TU_RETURN_IF_NOT_OK (arrangeChildren(m_astId, node, children));
 
     for (auto &childAndIndex : children) {
-        lyric_schema::LyricAstId astId;
-        TU_RETURN_IF_NOT_OK (childAndIndex.first->parseId(lyric_schema::kLyricAstVocabulary, astId));
-        auto visitor = makeVisitor(astId);
+        std::shared_ptr<AbstractNodeVisitor> visitor;
+        TU_ASSIGN_OR_RETURN (visitor, makeVisitor(childAndIndex.first));
         ctx.push(childAndIndex.second, childAndIndex.first, visitor);
     }
 

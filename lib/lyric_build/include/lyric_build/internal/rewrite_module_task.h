@@ -10,6 +10,7 @@
 #include <lyric_build/config_store.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_rewriter/lyric_rewriter.h>
+#include <lyric_rewriter/macro_registry.h>
 
 namespace lyric_build::internal {
 

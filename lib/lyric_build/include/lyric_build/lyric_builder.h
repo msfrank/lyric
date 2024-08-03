@@ -65,6 +65,10 @@ namespace lyric_build {
          */
         int waitTimeoutInMs = 0;
         /**
+         * The task registry. If not specified then this option defaults to an internally allocated instance.
+         */
+        std::shared_ptr<TaskRegistry> taskRegistry = {};
+        /**
          * The shared module cache. If not specified then this option defaults to an internally allocated
          * ModuleCache instance.
          */
@@ -119,6 +123,7 @@ namespace lyric_build {
         std::shared_ptr<lyric_bootstrap::BootstrapLoader> m_bootstrapLoader;
         std::shared_ptr<lyric_packaging::PackageLoader> m_packageLoader;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_fallbackLoader;
+        std::shared_ptr<TaskRegistry> m_taskRegistry;
         std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;
         std::shared_ptr<AbstractFilesystem> m_virtualFilesystem;
         std::shared_ptr<AbstractCache> m_cache;

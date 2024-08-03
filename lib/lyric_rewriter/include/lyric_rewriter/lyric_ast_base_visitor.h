@@ -36,6 +36,7 @@ namespace lyric_rewriter {
         ExitFunc exit = nullptr;
         void *data = nullptr;
         ReleaseFunc release = nullptr;
+        std::shared_ptr<AbstractNodeVisitor> unknown = {};
     };
 
     class LyricAstBaseVisitor : public AbstractNodeVisitor {
@@ -44,7 +45,8 @@ namespace lyric_rewriter {
         ~LyricAstBaseVisitor() override;
 
     protected:
-        std::shared_ptr<lyric_rewriter::AbstractNodeVisitor> makeVisitor(lyric_schema::LyricAstId astId);
+        tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractNodeVisitor>> makeVisitor(
+            const lyric_parser::ArchetypeNode *node);
 
         tempo_utils::Status arrangeChildren(
             lyric_schema::LyricAstId astId,
@@ -62,7 +64,6 @@ namespace lyric_rewriter {
 
     private:
         LyricAstOptions *m_options;
-        std::shared_ptr<AbstractNodeVisitor> m_visitor;
     };
 }
 

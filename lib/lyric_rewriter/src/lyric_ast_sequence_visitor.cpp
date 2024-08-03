@@ -21,9 +21,8 @@ lyric_rewriter::LyricAstSequenceVisitor::enter(lyric_parser::ArchetypeNode *node
     while (0 < index) {
         index--;
         auto *child = node->getChild(index);
-        lyric_schema::LyricAstId astId;
-        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, astId));
-        auto visitor = makeVisitor(astId);
+        std::shared_ptr<AbstractNodeVisitor> visitor;
+        TU_ASSIGN_OR_RETURN (visitor, makeVisitor(child));
         ctx.push(index, child, visitor);
     }
 

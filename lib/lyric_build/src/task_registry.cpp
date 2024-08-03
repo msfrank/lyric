@@ -35,12 +35,25 @@ static const Task tasks[] = {
     {"rewrite_module",      lyric_build::internal::new_rewrite_module_task},
     {"symbolize_module",    lyric_build::internal::new_symbolize_module_task},
     {"test",                lyric_build::internal::new_test_task},
-    {nullptr, nullptr}, // sentinel value, must be last
+    {nullptr, nullptr},     // sentinel value, must be last
 };
 
-lyric_build::TaskRegistry::TaskRegistry(const ConfigStore &config)
-    : m_config(config)
+lyric_build::TaskRegistry::TaskRegistry()
 {
+    for (int i = 0; tasks[i].name != nullptr; i++) {
+        auto &task = tasks[i];
+        m_makeTaskFuncs[task.name] = task.func;
+    }
+}
+
+tempo_utils::Status
+lyric_build::TaskRegistry::registerTaskDomain(std::string_view domain, MakeTaskFunc func)
+{
+    if (m_makeTaskFuncs.contains(domain))
+        return BuildStatus::forCondition(
+            BuildCondition::kBuildInvariant, "task domain '{}' is already registered", domain);
+    m_makeTaskFuncs[domain] = func;
+    return {};
 }
 
 tempo_utils::Result<lyric_build::BaseTask *>
@@ -50,17 +63,13 @@ lyric_build::TaskRegistry::makeTask(
     std::shared_ptr<tempo_tracing::TraceSpan> span)
 {
     const auto domain = key.getDomain();
-
-    BaseTask *task = nullptr;
-    for (int i = 0; tasks[i].name != nullptr; i++) {
-        if (tasks[i].name == domain) {
-            task = tasks[i].func(generation, key, span);
-            break;
-        }
-    }
-
+    auto entry = m_makeTaskFuncs.find(domain);
+    if (entry == m_makeTaskFuncs.cend())
+        return BuildStatus::forCondition(
+            BuildCondition::kInvalidConfiguration, "unknown task domain '{}'", domain);
+    BaseTask *task = entry->second(generation, key, span);
     if (task == nullptr)
         return BuildStatus::forCondition(
-            BuildCondition::kInvalidConfiguration, "invalid task domain {}", key.getDomain());
+            BuildCondition::kBuildInvariant, "invalid task domain '{}'", domain);
     return task;
 }

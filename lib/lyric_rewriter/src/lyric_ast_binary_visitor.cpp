@@ -21,15 +21,15 @@ lyric_rewriter::LyricAstBinaryVisitor::enter(lyric_parser::ArchetypeNode *node, 
     if (ctx.skipChildren())
         return {};
 
-    lyric_schema::LyricAstId astId;
-
     auto *child1 = node->getChild(1);
-    TU_RETURN_IF_NOT_OK (child1->parseId(lyric_schema::kLyricAstVocabulary, astId));
-    ctx.push(1, child1, makeVisitor(astId));
+    std::shared_ptr<AbstractNodeVisitor> visitor1;
+    TU_ASSIGN_OR_RETURN (visitor1, makeVisitor(child1));
+    ctx.push(1, child1, visitor1);
 
     auto *child0 = node->getChild(0);
-    TU_RETURN_IF_NOT_OK (child0->parseId(lyric_schema::kLyricAstVocabulary, astId));
-    ctx.push(0, child0, makeVisitor(astId));
+    std::shared_ptr<AbstractNodeVisitor> visitor0;
+    TU_ASSIGN_OR_RETURN (visitor0, makeVisitor(child0));
+    ctx.push(0, child0, visitor0);
 
     return {};
 }

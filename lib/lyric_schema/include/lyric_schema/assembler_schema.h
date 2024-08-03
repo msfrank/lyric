@@ -14,18 +14,31 @@ namespace lyric_schema {
     constexpr LyricAssemblerNs kLyricAssemblerNs;
 
     enum class LyricAssemblerId {
-        Trap,
-        NUM_IDS,
+
+        // Assembler classes
+
+        Trap,                       // trap macro
+
+        // Assembler properties
+
+        TrapNumber,                 // integer identifying the trap in the plugin
+
+        NUM_IDS,                    // must be last
     };
 
     constexpr tempo_utils::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerTrapClass(
         &kLyricAssemblerNs, LyricAssemblerId::Trap, "Trap");
+
+    constexpr tempo_utils::SchemaProperty<LyricAssemblerNs,LyricAssemblerId>
+        kLyricAssemblerTrapNumberProperty(
+        &kLyricAssemblerNs, LyricAssemblerId::TrapNumber, "TrapNumber", tempo_utils::PropertyType::kUInt32);
 
     constexpr std::array<
         const tempo_utils::SchemaResource<LyricAssemblerNs,LyricAssemblerId> *,
         static_cast<std::size_t>(LyricAssemblerId::NUM_IDS)>
     kLyricAssemblerResources = {
         &kLyricAssemblerTrapClass,
+        &kLyricAssemblerTrapNumberProperty,
     };
 
     constexpr tempo_utils::SchemaVocabulary<LyricAssemblerNs, LyricAssemblerId>

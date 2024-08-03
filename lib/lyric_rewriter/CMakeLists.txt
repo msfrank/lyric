@@ -6,9 +6,9 @@ add_library(lyric::lyric_rewriter ALIAS lyric_rewriter)
 set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/abstract_macro.h
     include/lyric_rewriter/abstract_rewrite_driver.h
+    include/lyric_rewriter/assembler_attrs.h
     include/lyric_rewriter/lyric_ast_base_visitor.h
     include/lyric_rewriter/lyric_ast_binary_visitor.h
-    include/lyric_rewriter/lyric_ast_class_visitor.h
     include/lyric_rewriter/lyric_ast_dynamic_visitor.h
     include/lyric_rewriter/lyric_ast_sequence_visitor.h
     include/lyric_rewriter/lyric_ast_terminal_visitor.h
@@ -26,9 +26,9 @@ set(LYRIC_REWRITER_INCLUDES
 set_target_properties(lyric_rewriter PROPERTIES PUBLIC_HEADER "${LYRIC_REWRITER_INCLUDES}")
 
 target_sources(lyric_rewriter PRIVATE
+    src/assembler_attrs.cpp
     src/lyric_ast_base_visitor.cpp
     src/lyric_ast_binary_visitor.cpp
-    src/lyric_ast_class_visitor.cpp
     src/lyric_ast_dynamic_visitor.cpp
     src/lyric_ast_sequence_visitor.cpp
     src/lyric_ast_terminal_visitor.cpp
@@ -40,11 +40,6 @@ target_sources(lyric_rewriter PRIVATE
     src/rewrite_processor.cpp
     src/rewriter_result.cpp
     src/trap_macro.cpp
-
-    include/lyric_rewriter/internal/entry_point.h
-    src/internal/entry_point.cpp
-    include/lyric_rewriter/internal/rewrite_archetype.h
-    src/internal/rewrite_archetype.cpp
     )
 
 # set the library version

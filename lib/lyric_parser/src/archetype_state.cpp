@@ -188,9 +188,10 @@ lyric_parser::ArchetypeState::getNamespace(int index) const
 lyric_parser::ArchetypeNamespace *
 lyric_parser::ArchetypeState::getNamespace(const tempo_utils::Url &nsUrl) const
 {
-    if (!m_namespaceIndex.contains(nsUrl))
+    auto entry = m_namespaceIndex.find(nsUrl);
+    if (entry == m_namespaceIndex.cend())
         return nullptr;
-    auto nsOffset = m_namespaceIndex.at(nsUrl);
+    auto nsOffset = entry->second;
     if (0 <= nsOffset && nsOffset < m_archetypeNamespaces.size())
         return m_archetypeNamespaces.at(nsOffset);
     return nullptr;
@@ -199,16 +200,17 @@ lyric_parser::ArchetypeState::getNamespace(const tempo_utils::Url &nsUrl) const
 tempo_utils::Result<lyric_parser::ArchetypeNamespace *>
 lyric_parser::ArchetypeState::putNamespace(const tempo_utils::Url &nsUrl)
 {
-    if (m_namespaceIndex.contains(nsUrl)) {
-        auto index = m_namespaceIndex.at(nsUrl);
-        TU_ASSERT (0 <= index && index < m_archetypeNamespaces.size());
-        return m_archetypeNamespaces.at(index);
+    auto entry = m_namespaceIndex.find(nsUrl);
+    if (entry != m_namespaceIndex.cend()) {
+        auto offset = entry->second;
+        TU_ASSERT (0 <= offset && offset < m_archetypeNamespaces.size());
+        return m_archetypeNamespaces.at(offset);
     }
     tu_uint32 offset = m_archetypeNamespaces.size();
     auto *archetypeId = makeId(ArchetypeDescriptorType::Namespace, offset);
     auto *ns = new ArchetypeNamespace(nsUrl, archetypeId, this);
     m_archetypeNamespaces.push_back(ns);
-    m_namespaceIndex[nsUrl] = archetypeId->getId();
+    m_namespaceIndex[nsUrl] = archetypeId->getOffset();
     return ns;
 }
 

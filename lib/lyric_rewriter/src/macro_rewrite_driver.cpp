@@ -1,4 +1,5 @@
 
+#include <lyric_parser/ast_attrs.h>
 #include <lyric_rewriter/macro_rewrite_driver.h>
 #include <lyric_rewriter/rewriter_result.h>
 #include <lyric_schema/ast_schema.h>
@@ -39,28 +40,22 @@ lyric_rewriter::MacroRewriteDriver::rewriteMacroList(
 {
 
     for (int i = 0; i < macroListNode->numChildren(); i++) {
-        auto *child = macroListNode->getChild(i);
+        auto *macroCallNode = macroListNode->getChild(i);
 
         lyric_schema::LyricAstId nodeId{};
-        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, nodeId));
+        TU_RETURN_IF_NOT_OK (macroCallNode->parseId(lyric_schema::kLyricAstVocabulary, nodeId));
         if (nodeId != lyric_schema::LyricAstId::MacroCall)
             return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant, "expected MacroCall");
 
-        auto value = child->getAttrValue(lyric_schema::kLyricAstIdentifierProperty);
-        if (!value.isLiteral())
-            return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant, "invalid MacroCall");
+        std::string id;
+        TU_RETURN_IF_NOT_OK (macroCallNode->parseAttr(lyric_parser::kLyricAstIdentifier, id));
 
-        auto literal = value.getLiteral();
-        if (literal.getType() != tempo_utils::ValueType::String)
-            return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant, "invalid MacroCall");
-
-        auto identifier = literal.getString();
-        auto macro = m_registry->getMacro(identifier);
+        auto macro = m_registry->getMacro(id);
         if (macro == nullptr)
             return RewriterStatus::forCondition(
-                RewriterCondition::kRewriterInvariant, "unknown macro '{}'", identifier);
+                RewriterCondition::kRewriterInvariant, "unknown macro '{}'", id);
 
-        TU_RETURN_IF_NOT_OK (macro->rewriteBlock(child, macroBlock, macroBlock.archetypeState()));
+        TU_RETURN_IF_NOT_OK (macro->rewriteBlock(macroCallNode, macroBlock, macroBlock.archetypeState()));
     }
 
     return {};

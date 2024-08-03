@@ -100,6 +100,7 @@ target_link_libraries(lyric_compiler
     lyric::lyric_importer
     lyric::lyric_parser
     lyric::lyric_object
+    lyric::lyric_rewriter
     lyric::lyric_typing
     tempo::tempo_tracing
     tempo::tempo_utils

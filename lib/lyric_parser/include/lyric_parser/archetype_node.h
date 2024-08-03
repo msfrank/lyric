@@ -65,6 +65,7 @@ namespace lyric_parser {
 
         bool matchesNsAndId(const char *nsString, tu_uint32 idValue) const;
         ArchetypeAttr *findAttr(const char *nsString, tu_uint32 idValue) const;
+        tu_uint32 findAttrIndex(const char *nsString, tu_uint32 idValue) const;
         AttrValue getAttrValue(const char *nsString, tu_uint32 idValue) const;
 
     public:
@@ -130,8 +131,8 @@ namespace lyric_parser {
         parseAttr(const AttrType &attr, SerdeType &value) const
         {
             auto key = attr.getKey();
-            auto *archetypeAttr = findAttr(key.ns, key.id);
-            if (archetypeAttr == nullptr)
+            auto index = findAttrIndex(key.ns, key.id);
+            if (index == INVALID_ADDRESS_U32)
                 return ParseStatus::forCondition(ParseCondition::kParseInvariant, "missing attr in node");
             ArchetypeStateAttrParser parser(m_state);
             return attr.parseAttr(index, &parser, value);
