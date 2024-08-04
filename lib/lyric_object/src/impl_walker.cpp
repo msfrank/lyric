@@ -110,7 +110,8 @@ lyric_object::ImplWalker::getReceiver() const
             return {};
     }
     tu_uint32 index = implDescriptor->receiver_descriptor();
-    return SymbolWalker(m_reader, static_cast<tu_uint8>(section), index);
+    auto *symbol = m_reader->findSymbol(section, index);
+    return SymbolWalker(m_reader, (void *) symbol);
 }
 
 lyric_object::ExtensionWalker

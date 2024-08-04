@@ -178,7 +178,8 @@ lyric_object::CallWalker::getReceiver() const
             return {};
     }
     tu_uint32 index = callDescriptor->receiver_descriptor();
-    return SymbolWalker(m_reader, static_cast<tu_uint8>(section), index);
+    auto *symbol = m_reader->findSymbol(section, index);
+    return SymbolWalker(m_reader, (void *) symbol);
 }
 
 tu_uint8

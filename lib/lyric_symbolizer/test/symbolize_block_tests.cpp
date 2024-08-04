@@ -66,6 +66,7 @@ TEST(SymbolizeBlock, DeclareImport)
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getAssembly();
     auto root = object.getObject();
+    ASSERT_EQ (0, root.numSymbols());
     ASSERT_EQ (1, root.numImports());
 
     auto import1 = root.getImport(0);

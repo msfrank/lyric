@@ -106,12 +106,12 @@ lyric_assembler::internal::write_object(const AssemblyState *assemblyState)
     for (auto iterator = assemblyState->undeclaredBegin(); iterator != assemblyState->undeclaredEnd(); iterator++) {
         auto &undeclSymbol = *iterator;
 
-        auto staticPathString = undeclSymbol->getSymbolUrl().getSymbolPath().toString();
-        auto fb_fullyQualifiedName = buffer.CreateSharedString(staticPathString);
+        auto undeclPathString = undeclSymbol->getSymbolUrl().getSymbolPath().toString();
+        auto fb_fullyQualifiedName = buffer.CreateSharedString(undeclPathString);
         auto section = internal::linkage_to_descriptor_section(undeclSymbol->getLinkage());
         if (section == lyo1::DescriptorSection::Invalid)
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "invalid undeclared symbol {}: could not parse linkage", staticPathString);
+                "invalid undeclared symbol {}: could not parse linkage", undeclPathString);
 
         symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fb_fullyQualifiedName,
             section, lyric_runtime::INVALID_ADDRESS_U32));

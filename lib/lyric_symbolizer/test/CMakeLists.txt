@@ -6,6 +6,11 @@ include(GoogleTest)
 
 set(TEST_CASES
     symbolize_block_tests.cpp
+    symbolize_def_tests.cpp
+    symbolize_defclass_tests.cpp
+    symbolize_defconcept_tests.cpp
+    symbolize_namespace_tests.cpp
+    symbolize_static_tests.cpp
     )
 
 # define test suite driver

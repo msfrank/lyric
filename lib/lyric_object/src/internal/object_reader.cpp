@@ -422,6 +422,13 @@ lyric_object::internal::ObjectReader::findSymbol(const lyric_common::SymbolPath 
     return m_object->symbols() ? m_object->symbols()->LookupByKey(fullyQualifiedName.data()) : nullptr;
 }
 
+const lyo1::SymbolDescriptor *
+lyric_object::internal::ObjectReader::findSymbol(lyo1::DescriptorSection section, tu_uint32 index) const
+{
+    auto symbolPath = getSymbolPath(section, index);
+    return findSymbol(symbolPath);
+}
+
 tu_uint32
 lyric_object::internal::ObjectReader::getSymbolIndex(const lyo1::SymbolDescriptor *symbol) const
 {

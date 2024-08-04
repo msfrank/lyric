@@ -96,7 +96,7 @@ lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::Archet
         delete undecl;
         return status;
     }
-    TU_LOG_INFO << "declared static {}" << symbolUrl;
+    TU_LOG_INFO << "declared static " << symbolUrl;
 
     if (m_entry == nullptr) {
         lyric_common::SymbolPath entryPath({"$entry"});
@@ -107,7 +107,7 @@ lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::Archet
             delete m_entry;
             return status;
         }
-        TU_LOG_INFO << "declared entry {}" << entryUrl;
+        TU_LOG_INFO << "declared entry " << entryUrl;
     }
 
     return {};
@@ -131,7 +131,7 @@ lyric_symbolizer::SymbolizerScanDriver::pushDefinition(
         delete undecl;
     }
 
-    TU_LOG_INFO << "declared definition {}" << symbolUrl;
+    TU_LOG_INFO << "declared definition " << symbolUrl;
     return status;
 }
 

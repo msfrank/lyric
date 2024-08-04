@@ -335,7 +335,7 @@ lyric_object::ObjectWalker::getSymbol(tu_uint32 index) const
     auto *symbol = m_reader->getSymbol(index);
     if (symbol == nullptr)
         return {};
-    return SymbolWalker(m_reader, static_cast<tu_uint8>(symbol->symbol_type()), symbol->symbol_descriptor());
+    return SymbolWalker(m_reader, (void *) symbol);
 }
 
 lyric_object::SymbolWalker
@@ -344,7 +344,7 @@ lyric_object::ObjectWalker::findSymbol(const lyric_common::SymbolPath &symbolPat
     auto *symbol = m_reader->findSymbol(symbolPath);
     if (symbol == nullptr)
         return {};
-    return SymbolWalker(m_reader, static_cast<tu_uint8>(symbol->symbol_type()), symbol->symbol_descriptor());
+    return SymbolWalker(m_reader, (void *) symbol);
 }
 
 int lyric_object::ObjectWalker::numSymbols() const

@@ -21,10 +21,9 @@ namespace lyric_object {
 
     private:
         std::shared_ptr<const internal::ObjectReader> m_reader;
-        tu_uint8 m_section;
-        tu_uint32 m_descriptor;
+        void *m_symbol;
 
-        SymbolWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint8 section, tu_uint32 descriptor);
+        SymbolWalker(std::shared_ptr<const internal::ObjectReader> reader, void *symbol);
 
         friend class ActionWalker;
         friend class CallWalker;
