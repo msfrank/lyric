@@ -21,7 +21,7 @@ lyric_rewriter::LyricAstUnaryVisitor::enter(lyric_parser::ArchetypeNode *node, V
     if (ctx.skipChildren())
         return {};
 
-    auto *child0 = node->getChild(1);
+    auto *child0 = node->getChild(0);
     std::shared_ptr<AbstractNodeVisitor> visitor0;
     TU_ASSIGN_OR_RETURN (visitor0, makeVisitor(child0));
     ctx.push(0, child0, visitor0);

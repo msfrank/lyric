@@ -144,19 +144,17 @@ lyric_build::internal::SymbolizeModuleTask::runTask(
     // configure symbolizer
     lyric_symbolizer::LyricSymbolizer symbolizer(buildState->getSharedModuleCache(), m_symbolizerOptions);
 
-    // configure loader
+    // configure assembler
+    lyric_assembler::AssemblyStateOptions assemblyStateOptions = m_assemblyStateOptions;
     auto createDependencyLoaderResult = DependencyLoader::create(depStates, cache);
     if (createDependencyLoaderResult.isStatus())
         return Option(createDependencyLoaderResult.getStatus());
-    std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
-    loaderChain.push_back(createDependencyLoaderResult.getResult());
-    loaderChain.push_back(buildState->getLoaderChain());
-    auto loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
+    assemblyStateOptions.workspaceLoader = createDependencyLoaderResult.getResult();
 
     // generate the linkage assembly by symbolizing the archetype
     TU_LOG_V << "symbolizing module from " << m_sourceUrl;
-    auto symbolizeModuleResult = symbolizer.symbolizeModule(m_moduleLocation, archetype,
-        m_assemblyStateOptions, traceDiagnostics());
+    auto symbolizeModuleResult = symbolizer.symbolizeModule(
+        m_moduleLocation, archetype, assemblyStateOptions, traceDiagnostics());
     if (symbolizeModuleResult.isStatus()) {
         span->logStatus(symbolizeModuleResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
         return Option<tempo_utils::Status>(

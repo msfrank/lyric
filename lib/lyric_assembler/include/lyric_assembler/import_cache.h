@@ -53,10 +53,14 @@ namespace lyric_assembler {
 
         bool hasImport(const lyric_common::AssemblyLocation &importLocation) const;
         ImportHandle *getImport(const lyric_common::AssemblyLocation &importLocation) const;
-        tempo_utils::Status touchImport(const lyric_common::AssemblyLocation &importLocation);
         std::vector<lyric_common::AssemblyLocation>::const_iterator importsBegin() const;
         std::vector<lyric_common::AssemblyLocation>::const_iterator importsEnd() const;
         int numImports() const;
+
+        tempo_utils::Status insertImport(
+            const lyric_common::AssemblyLocation &importLocation,
+            ImportFlags importFlags);
+        tempo_utils::Status touchImport(const lyric_common::AssemblyLocation &importLocation);
 
         lyric_common::SymbolUrl getLinkUrl(tu_uint32 address) const;
         std::vector<RequestedLink>::const_iterator linksBegin() const;
@@ -73,10 +77,6 @@ namespace lyric_assembler {
         std::vector<lyric_common::AssemblyLocation> m_imports;
         std::vector<RequestedLink> m_links;
         absl::flat_hash_map<lyric_common::AssemblyLocation, ImportHandle *> m_importcache;
-
-        tempo_utils::Status insertImport(
-            const lyric_common::AssemblyLocation &importLocation,
-            ImportFlags importFlags);
 
     public:
         /**

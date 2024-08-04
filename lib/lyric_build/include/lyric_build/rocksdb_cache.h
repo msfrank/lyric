@@ -54,6 +54,8 @@ namespace lyric_build {
             const tempo_utils::Url &baseUrl,
             const LyricMetadata &filters) override;
 
+        tempo_utils::Result<std::vector<ArtifactId>> listArtifacts() override;
+
         bool containsTrace(const TraceId &traceId) override;
         tempo_utils::UUID loadTrace(const TraceId &traceId) override;
         void storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation) override;

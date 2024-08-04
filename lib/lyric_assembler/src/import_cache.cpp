@@ -506,20 +506,27 @@ lyric_assembler::ImportCache::insertImport(
     return AssemblerStatus::ok();
 }
 
+/**
+ *
+ * @param importLocation
+ */
 tempo_utils::Status
 lyric_assembler::ImportCache::touchImport(const lyric_common::AssemblyLocation &importLocation)
 {
     if (!m_importcache.contains(importLocation))
-        m_tracer->throwAssemblerInvariant("missing import {}", importLocation.toString());
+        return m_tracer->logAndContinue(AssemblerCondition::kAssemblerInvariant,
+            tempo_tracing::LogSeverity::kError,
+            "no such import {}", importLocation.toString());
+
     auto *importedAssembly = m_importcache[importLocation];
 
-    // already touched, nothing to do
-    if (importedAssembly->importIndex != lyric_runtime::INVALID_ADDRESS_U32)
-        return AssemblerStatus::ok();
+    // add handle to imports list if necessary
+    if (importedAssembly->importIndex == lyric_runtime::INVALID_ADDRESS_U32) {
+        importedAssembly->importIndex = m_imports.size();
+        m_imports.push_back(importLocation);
+    }
 
-    importedAssembly->importIndex = m_imports.size();
-    m_imports.push_back(importLocation);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_common::AssemblyLocation>::const_iterator

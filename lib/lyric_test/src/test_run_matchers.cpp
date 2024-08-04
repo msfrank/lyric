@@ -44,12 +44,6 @@ lyric_test::matchers::TestComputationMatcher::DescribeNegationTo(std::ostream *o
     m_matcher.DescribeNegationTo(os);
 }
 
-Matcher<lyric_test::TestComputation>
-lyric_test::matchers::FailedComputation(const Matcher<tempo_tracing::TempoSpanset> &matcher)
-{
-    return TestComputationMatcher(matcher);
-}
-
 void
 lyric_test::PrintTo(const TestComputation &testComputation, std::ostream *os)
 {
@@ -76,10 +70,39 @@ lyric_test::operator<<(std::ostream& os, const TestComputation &testComputation)
     }
 }
 
+Matcher<lyric_test::SymbolizeModule>
+lyric_test::matchers::SymbolizeModule(lyric_build::TaskState::Status status)
+{
+    return TestComputationMatcher(status);
+}
+
+Matcher<lyric_test::SymbolizeModule>
+lyric_test::matchers::SymbolizeModule(const Matcher<tempo_tracing::TempoSpanset> &matcher)
+{
+    return TestComputationMatcher(matcher);
+}
+
+Matcher<lyric_test::AnalyzeModule>
+lyric_test::matchers::AnalyzeModule(lyric_build::TaskState::Status status)
+{
+    return TestComputationMatcher(status);
+}
+
+Matcher<lyric_test::AnalyzeModule>
+lyric_test::matchers::AnalyzeModule(const Matcher<tempo_tracing::TempoSpanset> &matcher)
+{
+    return TestComputationMatcher(matcher);
+}
+
+Matcher<lyric_test::CompileModule>
+lyric_test::matchers::CompileModule(lyric_build::TaskState::Status status)
+{
+    return TestComputationMatcher(status);
+}
+
 Matcher<lyric_test::CompileModule>
 lyric_test::matchers::CompileModule(const Matcher<tempo_tracing::TempoSpanset> &matcher)
 {
-    //return RunModuleMatcher(matcher);
     return TestComputationMatcher(matcher);
 }
 

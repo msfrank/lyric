@@ -38,6 +38,7 @@ namespace lyric_parser {
         bool isNamespace(const tempo_utils::SchemaNs &schemaNs) const;
 
         bool hasAttr(const AttrId &attrId) const;
+        bool hasAttr(const tempo_utils::AttrValidator &validator) const;
         ArchetypeAttr *getAttr(const AttrId &attrId) const;
         void putAttr(ArchetypeAttr *attr);
         absl::flat_hash_map<AttrId,ArchetypeAttr *>::const_iterator attrsBegin() const;

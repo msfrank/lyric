@@ -1,10 +1,15 @@
 
 #include <lyric_rewriter/lyric_ast_base_visitor.h>
 #include <lyric_rewriter/lyric_ast_binary_visitor.h>
+#include <lyric_rewriter/lyric_ast_cond_visitor.h>
 #include <lyric_rewriter/lyric_ast_dynamic_visitor.h>
+#include <lyric_rewriter/lyric_ast_for_visitor.h>
+#include <lyric_rewriter/lyric_ast_if_visitor.h>
+#include <lyric_rewriter/lyric_ast_match_visitor.h>
 #include <lyric_rewriter/lyric_ast_sequence_visitor.h>
 #include <lyric_rewriter/lyric_ast_terminal_visitor.h>
 #include <lyric_rewriter/lyric_ast_unary_visitor.h>
+#include <lyric_rewriter/lyric_ast_while_visitor.h>
 #include <lyric_rewriter/rewriter_result.h>
 
 lyric_rewriter::LyricAstBaseVisitor::LyricAstBaseVisitor(LyricAstOptions *options)
@@ -83,8 +88,6 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::Deref:
         case lyric_schema::LyricAstId::New:
         case lyric_schema::LyricAstId::Block:
-        case lyric_schema::LyricAstId::Cond:
-        case lyric_schema::LyricAstId::Match:
         case lyric_schema::LyricAstId::Lambda:
         case lyric_schema::LyricAstId::Val:
         case lyric_schema::LyricAstId::Var:
@@ -97,9 +100,6 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::InplaceSub:
         case lyric_schema::LyricAstId::InplaceMul:
         case lyric_schema::LyricAstId::InplaceDiv:
-        case lyric_schema::LyricAstId::If:
-        case lyric_schema::LyricAstId::While:
-        case lyric_schema::LyricAstId::For:
         case lyric_schema::LyricAstId::Return:
         case lyric_schema::LyricAstId::ImportModule:
         case lyric_schema::LyricAstId::ImportSymbols:
@@ -108,6 +108,23 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::MacroList:
         case lyric_schema::LyricAstId::MacroCall:
             visitor = std::make_shared<LyricAstSequenceVisitor>(astId, m_options);
+            break;
+
+        // control forms
+        case lyric_schema::LyricAstId::Cond:
+            visitor = std::make_shared<LyricAstCondVisitor>(astId, m_options);
+            break;
+        case lyric_schema::LyricAstId::Match:
+            visitor = std::make_shared<LyricAstMatchVisitor>(astId, m_options);
+            break;
+        case lyric_schema::LyricAstId::If:
+            visitor = std::make_shared<LyricAstIfVisitor>(astId, m_options);
+            break;
+        case lyric_schema::LyricAstId::While:
+            visitor = std::make_shared<LyricAstWhileVisitor>(astId, m_options);
+            break;
+        case lyric_schema::LyricAstId::For:
+            visitor = std::make_shared<LyricAstForVisitor>(astId, m_options);
             break;
 
         // dynamic forms

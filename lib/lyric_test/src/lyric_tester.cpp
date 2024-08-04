@@ -35,6 +35,45 @@ lyric_test::LyricTester::getRunner() const
     return m_runner.get();
 }
 
+tempo_utils::Result<lyric_test::SymbolizeModule>
+lyric_test::LyricTester::symbolizeModule(
+    const std::string &code,
+    const std::filesystem::path &path)
+{
+    if (!m_runner->isConfigured())
+        return TestStatus::forCondition(TestCondition::kTestInvariant, "tester is unconfigured");
+    return m_runner->symbolizeModuleInternal(code, path);
+}
+
+tempo_utils::Result<lyric_test::AnalyzeModule>
+lyric_test::LyricTester::analyzeModule(
+    const std::string &code,
+    const std::filesystem::path &path)
+{
+    if (!m_runner->isConfigured())
+        return TestStatus::forCondition(TestCondition::kTestInvariant, "tester is unconfigured");
+    return m_runner->analyzeModuleInternal(code, path);
+}
+
+tempo_utils::Result<lyric_test::CompileModule>
+lyric_test::LyricTester::compileModule(
+    const std::string &code,
+    const std::filesystem::path &path)
+{
+    if (!m_runner->isConfigured())
+        return TestStatus::forCondition(TestCondition::kTestInvariant, "tester is unconfigured");
+    return m_runner->compileModuleInternal(code, path);
+}
+
+tempo_utils::Result<lyric_test::PackageModule>
+lyric_test::LyricTester::packageModule(
+    const lyric_packaging::PackageSpecifier &specifier,
+    const std::string &code,
+    const std::filesystem::path &path)
+{
+    return m_runner->packageModuleInternal(specifier, code, path);
+}
+
 tempo_utils::Result<lyric_test::RunModule>
 lyric_test::LyricTester::runModule(const std::string &code, const std::filesystem::path &path)
 {
@@ -144,15 +183,6 @@ lyric_test::LyricTester::runModule(
     if (execResult.isStatus())
         return execResult.getStatus();
     return RunModule(m_runner, testRun.getComputation(), testRun.getDiagnostics(), state, execResult.getResult());
-}
-
-tempo_utils::Result<lyric_test::PackageModule>
-lyric_test::LyricTester::packageModule(
-    const lyric_packaging::PackageSpecifier &specifier,
-    const std::string &code,
-    const std::filesystem::path &path)
-{
-    return m_runner->packageModuleInternal(specifier, code, path);
 }
 
 tempo_utils::Result<lyric_test::CompileModule>

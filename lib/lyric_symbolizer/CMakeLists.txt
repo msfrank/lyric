@@ -9,12 +9,14 @@ add_library(lyric::lyric_symbolizer ALIAS lyric_symbolizer)
 set(LYRIC_SYMBOLIZER_INCLUDES
     include/lyric_symbolizer/lyric_symbolizer.h
     include/lyric_symbolizer/symbolizer_result.h
+    include/lyric_symbolizer/symbolizer_scan_driver.h
     )
 set_target_properties(lyric_symbolizer PROPERTIES PUBLIC_HEADER "${LYRIC_SYMBOLIZER_INCLUDES}")
 
 target_sources(lyric_symbolizer PRIVATE
     src/lyric_symbolizer.cpp
     src/symbolizer_result.cpp
+    src/symbolizer_scan_driver.cpp
 
     include/lyric_symbolizer/internal/entry_point.h
     src/internal/entry_point.cpp
@@ -59,6 +61,7 @@ target_link_libraries(lyric_symbolizer
     lyric::lyric_assembler
     lyric::lyric_importer
     lyric::lyric_parser
+    lyric::lyric_rewriter
     lyric::lyric_runtime
     lyric::lyric_typing
     tempo::tempo_utils
@@ -75,4 +78,4 @@ install(TARGETS lyric_symbolizer EXPORT lyric-targets
     )
 
 # add testing subdirectory
-#add_subdirectory(test)
+add_subdirectory(test)

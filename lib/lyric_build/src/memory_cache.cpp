@@ -177,6 +177,18 @@ lyric_build::MemoryCache::findArtifacts(
     return matches;
 }
 
+tempo_utils::Result<std::vector<lyric_build::ArtifactId>>
+lyric_build::MemoryCache::listArtifacts()
+{
+    absl::MutexLock locker(&m_lock);
+
+    std::vector<ArtifactId> artifactIds;
+    for (const auto &entry : m_metadata) {
+        artifactIds.push_back(entry.first);
+    }
+    return artifactIds;
+}
+
 bool
 lyric_build::MemoryCache::containsTrace(const TraceId &traceId)
 {

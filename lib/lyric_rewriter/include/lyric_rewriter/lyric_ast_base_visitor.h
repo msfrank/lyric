@@ -16,17 +16,17 @@ namespace lyric_rewriter {
 
     using EnterFunc = std::function<
         tempo_utils::Status(
-            lyric_schema::LyricAstId,               // astId
-            lyric_parser::ArchetypeNode *,          // node
-            VisitorContext &,                       // ctx
-            void *)>;                               // data
+            lyric_schema::LyricAstId,                   // astId
+            lyric_parser::ArchetypeNode *,              // node
+            VisitorContext &,                           // ctx
+            void *)>;                                   // data
 
     using ExitFunc = std::function<
         tempo_utils::Status(
-            lyric_schema::LyricAstId,               // astId
-            lyric_parser::ArchetypeNode *,          // node
-            const VisitorContext &,                 // ctx
-            void *)>;                               // data
+            lyric_schema::LyricAstId,                   // astId
+            lyric_parser::ArchetypeNode *,              // node
+            const VisitorContext &,                     // ctx
+            void *)>;                                   // data
 
     using ReleaseFunc = std::function<void(void *)>;
 
@@ -34,8 +34,8 @@ namespace lyric_rewriter {
         ArrangeFunc arrange = nullptr;
         EnterFunc enter = nullptr;
         ExitFunc exit = nullptr;
-        void *data = nullptr;
         ReleaseFunc release = nullptr;
+        void *data = nullptr;
         std::shared_ptr<AbstractNodeVisitor> unknown = {};
     };
 

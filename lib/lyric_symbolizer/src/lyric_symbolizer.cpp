@@ -1,9 +1,10 @@
 
 #include <lyric_assembler/assembly_state.h>
-#include <lyric_parser/node_walker.h>
+#include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_symbolizer/internal/symbolize_module.h>
 #include <lyric_symbolizer/internal/entry_point.h>
 #include <lyric_symbolizer/lyric_symbolizer.h>
+#include <lyric_symbolizer/symbolizer_scan_driver.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_symbolizer::LyricSymbolizer::LyricSymbolizer(
@@ -43,28 +44,21 @@ lyric_symbolizer::LyricSymbolizer::symbolizeModule(
         auto span = scopeManager.makeSpan();
         span->setOperationName("symbolizeModule");
 
-        // construct the compiler state
+        // construct the assembler state
         lyric_assembler::AssemblyState assemblyState(
             location, m_systemModuleCache, &scopeManager, assemblyStateOptions);
-        lyric_typing::TypeSystem typeSystem(&assemblyState);
 
         // initialize the assembler
         TU_RETURN_IF_NOT_OK (assemblyState.initialize());
 
-        // define the module entry point
-        lyric_symbolizer::internal::EntryPoint entryPoint(&assemblyState);
-        auto status = entryPoint.initialize(assemblyState.getLocation());
-        if (status.notOk())
-            return status;
+        auto symbolizerDriver = std::make_shared<SymbolizerScanDriver>(&assemblyState);
 
-        // symbolize single module into assembly
-        auto symbolizeModuleResult = symbolize_module(walker, entryPoint);
-        if (symbolizeModuleResult.isStatus())
-            return symbolizeModuleResult.getStatus();
-        auto assembly = symbolizeModuleResult.getResult();
+        lyric_rewriter::RewriterOptions rewriterOptions;
+        lyric_rewriter::LyricRewriter rewriter(rewriterOptions);
+        rewriter.scanArchetype(archetype, location.toUrl(), symbolizerDriver, recorder);
 
-        TU_ASSERT (assembly.isValid());
-        return assembly;
+        // construct object from assembly state and return it
+        return assemblyState.toAssembly();
 
     } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();

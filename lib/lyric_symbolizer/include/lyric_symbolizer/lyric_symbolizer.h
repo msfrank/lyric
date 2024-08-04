@@ -3,6 +3,7 @@
 
 #include <absl/container/flat_hash_map.h>
 
+#include <lyric_assembler/assembly_state.h>
 #include <lyric_common/assembly_location.h>
 #include <lyric_common/symbol_url.h>
 #include <lyric_parser/lyric_archetype.h>

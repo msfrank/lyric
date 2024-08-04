@@ -41,24 +41,13 @@ namespace lyric_test {
             lyric_build::TaskState::Status m_status;
         };
 
-        Matcher<lyric_test::TestComputation> FailedComputation(const Matcher<tempo_tracing::TempoSpanset> &matcher);
+        Matcher<lyric_test::SymbolizeModule> SymbolizeModule(lyric_build::TaskState::Status status);
+        Matcher<lyric_test::SymbolizeModule> SymbolizeModule(const Matcher<tempo_tracing::TempoSpanset> &matcher);
 
-//        class CompileModuleMatcher {
-//
-//        public:
-//            CompileModuleMatcher(const Matcher<lyric_runtime::LyricAssembly> &matcher);
-//            bool MatchAndExplain(const lyric_test::CompileModule &runModule, std::ostream *os) const;
-//            void DescribeTo(std::ostream *os) const;
-//            void DescribeNegationTo(std::ostream *os) const;
-//
-//            using MatchesType = lyric_test::CompileModule;
-//            using is_gtest_matcher = void;
-//
-//        private:
-//            Matcher<lyric_runtime::Return> m_matcher;
-//        };
-//
-//        Matcher<lyric_test::RunModule> CompileModule(const Matcher<lyric_runtime::LyricAssembly> &matcher);
+        Matcher<lyric_test::AnalyzeModule> AnalyzeModule(lyric_build::TaskState::Status status);
+        Matcher<lyric_test::AnalyzeModule> AnalyzeModule(const Matcher<tempo_tracing::TempoSpanset> &matcher);
+
+        Matcher<lyric_test::CompileModule> CompileModule(lyric_build::TaskState::Status status);
         Matcher<lyric_test::CompileModule> CompileModule(const Matcher<tempo_tracing::TempoSpanset> &matcher);
 
         class RunModuleMatcher {
@@ -76,8 +65,9 @@ namespace lyric_test {
             Matcher<lyric_runtime::DataCell> m_matcher;
         };
 
-        Matcher<lyric_test::RunModule> RunModule(const Matcher<lyric_runtime::DataCell> &matcher);
+        Matcher<lyric_test::RunModule> RunModule(lyric_build::TaskState::Status status);
         Matcher<lyric_test::RunModule> RunModule(const Matcher<tempo_tracing::TempoSpanset> &matcher);
+        Matcher<lyric_test::RunModule> RunModule(const Matcher<lyric_runtime::DataCell> &matcher);
     }
 }
 

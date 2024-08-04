@@ -27,7 +27,7 @@ lyric_build::DependencyLoader::hasAssembly(const lyric_common::AssemblyLocation 
 tempo_utils::Result<Option<lyric_common::AssemblyLocation>>
 lyric_build::DependencyLoader::resolveAssembly(const lyric_common::AssemblyLocation &location) const
 {
-    return Option<lyric_common::AssemblyLocation>();
+    return Option(location);
 }
 
 tempo_utils::Result<Option<lyric_object::LyricObject>>
@@ -112,4 +112,27 @@ lyric_build::DependencyLoader::create(
     }
 
     return std::shared_ptr<DependencyLoader>(new DependencyLoader(assemblies));
+}
+
+tempo_utils::Result<std::shared_ptr<lyric_build::DependencyLoader>>
+lyric_build::DependencyLoader::create(
+    const TargetComputation &targetComputation,
+    std::shared_ptr<AbstractCache> cache)
+{
+    auto taskId = targetComputation.getId();
+    TaskKey taskKey(taskId.getDomain(), taskId.getId());
+    return create({{taskKey, targetComputation.getState()}}, cache);
+}
+
+tempo_utils::Result<std::shared_ptr<lyric_build::DependencyLoader>>
+lyric_build::DependencyLoader::create(
+    const TargetComputationSet &targetComputationSet,
+    std::shared_ptr<AbstractCache> cache)
+{
+    absl::flat_hash_map<TaskKey,TaskState> depStates;
+    for (auto it = targetComputationSet.targetsBegin(); it != targetComputationSet.targetsEnd(); it++) {
+        TaskKey taskKey(it->first.getDomain(), it->first.getId());
+        depStates[taskKey] = it->second.getState();
+    }
+    return create(depStates, cache);
 }

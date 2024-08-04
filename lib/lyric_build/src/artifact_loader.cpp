@@ -23,12 +23,9 @@ lyric_build::ArtifactLoader::ArtifactLoader(
     TU_ASSERT (m_cache != nullptr);
 }
 
-lyric_build::ArtifactLoader::ArtifactLoader(
-    const TaskState &state,
-    const std::string &hash,
-    std::shared_ptr<AbstractCache> cache)
+lyric_build::ArtifactLoader::ArtifactLoader(const TaskState &state, std::shared_ptr<AbstractCache> cache)
     : m_generation(state.getGeneration()),
-      m_hash(hash),
+      m_hash(state.getHash()),
       m_cache(cache)
 {
     TU_ASSERT (!m_generation.isNil());

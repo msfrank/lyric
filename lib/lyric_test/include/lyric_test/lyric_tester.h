@@ -33,16 +33,28 @@ namespace lyric_test {
 
         const TestRunner *getRunner() const;
 
-        tempo_utils::Result<RunModule> runModule(
+        tempo_utils::Result<SymbolizeModule> symbolizeModule(
             const std::string &code,
             const std::filesystem::path &path = {});
 
-        tempo_utils::Result<RunModule> runModule(
-            const lyric_packaging::PackageSpecifier &specifier,
+        tempo_utils::Result<AnalyzeModule> analyzeModule(
+            const std::string &code,
+            const std::filesystem::path &path = {});
+
+        tempo_utils::Result<CompileModule> compileModule(
             const std::string &code,
             const std::filesystem::path &path = {});
 
         tempo_utils::Result<PackageModule> packageModule(
+            const lyric_packaging::PackageSpecifier &specifier,
+            const std::string &code,
+            const std::filesystem::path &path = {});
+
+        tempo_utils::Result<RunModule> runModule(
+            const std::string &code,
+            const std::filesystem::path &path = {});
+
+        tempo_utils::Result<RunModule> runModule(
             const lyric_packaging::PackageSpecifier &specifier,
             const std::string &code,
             const std::filesystem::path &path = {});

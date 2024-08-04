@@ -500,6 +500,13 @@ lyric_build::RocksdbCache::findArtifacts(
     return matches;
 }
 
+tempo_utils::Result<std::vector<lyric_build::ArtifactId>>
+lyric_build::RocksdbCache::listArtifacts()
+{
+    std::vector<ArtifactId> artifactIds;
+    return artifactIds;
+}
+
 bool
 lyric_build::RocksdbCache::containsTrace(const TraceId &traceId)
 {

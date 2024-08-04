@@ -9,10 +9,15 @@ set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/assembler_attrs.h
     include/lyric_rewriter/lyric_ast_base_visitor.h
     include/lyric_rewriter/lyric_ast_binary_visitor.h
+    include/lyric_rewriter/lyric_ast_cond_visitor.h
     include/lyric_rewriter/lyric_ast_dynamic_visitor.h
+    include/lyric_rewriter/lyric_ast_for_visitor.h
+    include/lyric_rewriter/lyric_ast_if_visitor.h
+    include/lyric_rewriter/lyric_ast_match_visitor.h
     include/lyric_rewriter/lyric_ast_sequence_visitor.h
     include/lyric_rewriter/lyric_ast_terminal_visitor.h
     include/lyric_rewriter/lyric_ast_unary_visitor.h
+    include/lyric_rewriter/lyric_ast_while_visitor.h
     include/lyric_rewriter/lyric_rewriter.h
     include/lyric_rewriter/macro_block.h
     include/lyric_rewriter/macro_registry.h
@@ -29,10 +34,15 @@ target_sources(lyric_rewriter PRIVATE
     src/assembler_attrs.cpp
     src/lyric_ast_base_visitor.cpp
     src/lyric_ast_binary_visitor.cpp
+    src/lyric_ast_cond_visitor.cpp
     src/lyric_ast_dynamic_visitor.cpp
+    src/lyric_ast_for_visitor.cpp
+    src/lyric_ast_if_visitor.cpp
+    src/lyric_ast_match_visitor.cpp
     src/lyric_ast_sequence_visitor.cpp
     src/lyric_ast_terminal_visitor.cpp
     src/lyric_ast_unary_visitor.cpp
+    src/lyric_ast_while_visitor.cpp
     src/lyric_rewriter.cpp
     src/macro_block.cpp
     src/macro_registry.cpp

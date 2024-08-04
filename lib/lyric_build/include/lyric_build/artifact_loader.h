@@ -15,10 +15,7 @@ namespace lyric_build {
             const BuildGeneration &generation,
             const std::string &hash,
             std::shared_ptr<AbstractCache> cache);
-        ArtifactLoader(
-            const TaskState &state,
-            const std::string &hash,
-            std::shared_ptr<AbstractCache> cache);
+        ArtifactLoader(const TaskState &state, std::shared_ptr<AbstractCache> cache);
         ArtifactLoader(const ArtifactLoader &other);
 
         tempo_utils::Result<bool> hasAssembly(

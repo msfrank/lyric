@@ -65,6 +65,8 @@ namespace lyric_build {
             const tempo_utils::Url &baseUrl,
             const LyricMetadata &filters) = 0;
 
+        virtual tempo_utils::Result<std::vector<ArtifactId>> listArtifacts() = 0;
+
         virtual bool containsTrace(const TraceId &traceId) = 0;
 
         virtual tempo_utils::UUID loadTrace(const TraceId &traceId) = 0;

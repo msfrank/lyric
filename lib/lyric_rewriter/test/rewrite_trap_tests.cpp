@@ -4,13 +4,13 @@
 #include <lyric_bootstrap/bootstrap_loader.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
+#include <lyric_rewriter/assembler_attrs.h>
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_rewriter/macro_rewrite_driver.h>
 #include <lyric_rewriter/trap_macro.h>
 #include <lyric_schema/assembler_schema.h>
 #include <tempo_test/status_matchers.h>
 #include <tempo_utils/logging.h>
-#include "lyric_rewriter/assembler_attrs.h"
 
 TEST(RewriteTrap, TrapInBlock)
 {

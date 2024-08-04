@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <lyric_build/build_result.h>
+#include <lyric_build/dependency_loader.h>
 #include <lyric_common/common_types.h>
 #include <lyric_runtime/chain_loader.h>
 #include <lyric_test/test_runner.h>
@@ -182,9 +183,13 @@ lyric_test::TestRunner::writeNamedFileInternal(
 {
     auto relativePath = baseDir / path;
     auto absolutePath = m_testerDirectory / relativePath;
-    if (!std::filesystem::create_directories(absolutePath.parent_path()))
-        return TestStatus::forCondition(TestCondition::kTestInvariant,
-            "failed to create directory {}", absolutePath.string());
+    auto parentPath = absolutePath.parent_path();
+    std::error_code ec;
+    if (!std::filesystem::create_directories(parentPath, ec)) {
+        if (ec)
+            return TestStatus::forCondition(TestCondition::kTestInvariant,
+                "failed to create directory {}: {}", parentPath.string(), ec.message());
+    }
 
     tempo_utils::FileWriter writer(absolutePath.string(), code, tempo_utils::FileWriterMode::CREATE_OR_OVERWRITE);
     if (!writer.isValid())
@@ -201,9 +206,13 @@ lyric_test::TestRunner::writeTempFileInternal(
     const std::string &code)
 {
     auto absolutePath = m_testerDirectory / baseDir / templatePath;
-    if (!std::filesystem::create_directories(absolutePath.parent_path()))
-        return TestStatus::forCondition(TestCondition::kTestInvariant,
-            "failed to create directory {}", absolutePath.string());
+    auto parentPath = absolutePath.parent_path();
+    std::error_code ec;
+    if (!std::filesystem::create_directories(parentPath, ec)) {
+        if (ec)
+            return TestStatus::forCondition(TestCondition::kTestInvariant,
+                "failed to create directory {}: {}", parentPath.string(), ec.message());
+    }
 
     tempo_utils::TempfileMaker tempfileMaker(absolutePath.parent_path().string(),
         absolutePath.filename().string(), code);
@@ -301,24 +310,22 @@ lyric_test::TestRunner::compileModuleInternal(
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return CompileModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
-    auto cache = m_builder->getCache();
-    lyric_build::TraceId targetTrace(targetState.getHash(), target.getDomain(), target.getId());
-    auto generation = cache->loadTrace(targetTrace);
-
     // change the file extension
     std::filesystem::path modulePath = "/";
     modulePath /= sourcePath;
-    modulePath.replace_extension(lyric_common::kObjectFileSuffix);
-    auto moduleUrl = tempo_utils::Url::fromRelative(modulePath.string());
+    modulePath.replace_extension();
+    lyric_common::AssemblyLocation moduleLocation(modulePath.string());
 
-    lyric_build::ArtifactId targetArtifact(generation, targetState.getHash(), moduleUrl);
-    auto loadContentResult = cache->loadContentFollowingLinks(targetArtifact);
-    if (loadContentResult.isStatus())
-        return loadContentResult.getStatus();
+    std::shared_ptr<lyric_build::DependencyLoader> loader;
+    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, m_builder->getCache()));
+    Option<lyric_object::LyricObject> moduleOption;
+    TU_ASSIGN_OR_RETURN (moduleOption, loader->loadAssembly(moduleLocation));
+    if (moduleOption.isEmpty())
+        return TestStatus::forCondition(TestCondition::kTestInvariant,
+            "missing module {}", moduleLocation.toString());
 
-    lyric_object::LyricObject module(loadContentResult.getResult());
     return CompileModule(shared_from_this(), targetComputation,
-        targetComputationSet.getDiagnostics(), module);
+        targetComputationSet.getDiagnostics(), moduleOption.getValue());
 }
 
 tempo_utils::Result<lyric_test::AnalyzeModule>
@@ -346,24 +353,22 @@ lyric_test::TestRunner::analyzeModuleInternal(
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return AnalyzeModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
-    auto cache = m_builder->getCache();
-    lyric_build::TraceId targetTrace(targetState.getHash(), target.getDomain(), target.getId());
-    auto generation = cache->loadTrace(targetTrace);
-
     // change the file extension
     std::filesystem::path modulePath = "/";
     modulePath /= sourcePath;
-    modulePath.replace_extension(lyric_common::kObjectFileSuffix);
-    auto moduleUrl = tempo_utils::Url::fromRelative(modulePath.string());
+    modulePath.replace_extension();
+    lyric_common::AssemblyLocation moduleLocation(modulePath.string());
 
-    lyric_build::ArtifactId targetArtifact(generation, targetState.getHash(), moduleUrl);
-    auto loadContentResult = cache->loadContentFollowingLinks(targetArtifact);
-    if (loadContentResult.isStatus())
-        return loadContentResult.getStatus();
+    std::shared_ptr<lyric_build::DependencyLoader> loader;
+    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, m_builder->getCache()));
+    Option<lyric_object::LyricObject> moduleOption;
+    TU_ASSIGN_OR_RETURN (moduleOption, loader->loadAssembly(moduleLocation));
+    if (moduleOption.isEmpty())
+        return TestStatus::forCondition(TestCondition::kTestInvariant,
+            "missing module {}", moduleLocation.toString());
 
-    lyric_object::LyricObject module(loadContentResult.getResult());
     return AnalyzeModule(shared_from_this(), targetComputation,
-        targetComputationSet.getDiagnostics(), module);
+        targetComputationSet.getDiagnostics(), moduleOption.getValue());
 }
 
 tempo_utils::Result<lyric_test::SymbolizeModule>
@@ -391,24 +396,22 @@ lyric_test::TestRunner::symbolizeModuleInternal(
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return SymbolizeModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
-    auto cache = m_builder->getCache();
-    lyric_build::TraceId targetTrace(targetState.getHash(), target.getDomain(), target.getId());
-    auto generation = cache->loadTrace(targetTrace);
-
     // change the file extension
     std::filesystem::path modulePath = "/";
     modulePath /= sourcePath;
-    modulePath.replace_extension(lyric_common::kObjectFileSuffix);
-    auto moduleUrl = tempo_utils::Url::fromRelative(modulePath.string());
+    modulePath.replace_extension();
+    lyric_common::AssemblyLocation moduleLocation(modulePath.string());
 
-    lyric_build::ArtifactId targetArtifact(generation, targetState.getHash(), moduleUrl);
-    auto loadContentResult = cache->loadContentFollowingLinks(targetArtifact);
-    if (loadContentResult.isStatus())
-        return loadContentResult.getStatus();
+    std::shared_ptr<lyric_build::DependencyLoader> loader;
+    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, m_builder->getCache()));
+    Option<lyric_object::LyricObject> moduleOption;
+    TU_ASSIGN_OR_RETURN (moduleOption, loader->loadAssembly(moduleLocation));
+    if (moduleOption.isEmpty())
+        return TestStatus::forCondition(TestCondition::kTestInvariant,
+            "missing module {}", moduleLocation.toString());
 
-    lyric_object::LyricObject module(loadContentResult.getResult());
     return SymbolizeModule(shared_from_this(), targetComputation,
-        targetComputationSet.getDiagnostics(), module);
+        targetComputationSet.getDiagnostics(), moduleOption.getValue());
 }
 
 tempo_utils::Result<lyric_test::PackageModule>

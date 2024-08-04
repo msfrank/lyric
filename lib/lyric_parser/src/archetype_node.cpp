@@ -63,6 +63,13 @@ lyric_parser::ArchetypeNode::hasAttr(const AttrId &attrId) const
     return m_attrs.contains(attrId);
 }
 
+bool
+lyric_parser::ArchetypeNode::hasAttr(const tempo_utils::AttrValidator &validator) const
+{
+    auto key = validator.getKey();
+    return findAttr(key.ns, key.id) != nullptr;
+}
+
 lyric_parser::ArchetypeAttr *
 lyric_parser::ArchetypeNode::getAttr(const AttrId &attrId) const
 {
