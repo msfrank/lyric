@@ -53,10 +53,6 @@ TEST(SymbolizeBlock, DeclareImport)
     lyric_test::LyricTester tester(testerOptions);
     ASSERT_TRUE (tester.configure().isOk());
 
-    auto compileModuleResult = tester.compileModule("1 + 1", "mod1");
-    ASSERT_THAT (compileModuleResult,
-        tempo_test::ContainsResult(CompileModule(lyric_build::TaskState::Status::COMPLETED)));
-
     auto symbolizeModuleResult = tester.symbolizeModule(R"(
         import "/mod1" named mod1
     )");

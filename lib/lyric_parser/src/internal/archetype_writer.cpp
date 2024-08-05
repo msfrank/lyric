@@ -182,7 +182,7 @@ lyric_parser::internal::ArchetypeWriter::writeNode(const ArchetypeNode *node)
     auto location = node->getLocation();
 
     m_nodesVector[address] = lyi1::CreateNodeDescriptor(m_buffer,
-        nsAddress.getAddress(), node->getTypeOffset(),
+        nsAddress.getAddress(), node->getIdValue(),
         fb_node_attrs, fb_node_children,
         location.fileOffset, location.lineNumber, location.columnNumber, location.textSpan);
 

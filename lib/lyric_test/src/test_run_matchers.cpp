@@ -32,16 +32,54 @@ lyric_test::matchers::TestComputationMatcher::MatchAndExplain(
     }
 }
 
+inline std::string status_to_string(lyric_build::TaskState::Status status)
+{
+    switch (status) {
+        case lyric_build::TaskState::Status::COMPLETED:
+            return "COMPLETED";
+        case lyric_build::TaskState::Status::FAILED:
+            return "FAILED";
+        case lyric_build::TaskState::Status::BLOCKED:
+            return "BLOCKED";
+        case lyric_build::TaskState::Status::QUEUED:
+            return "QUEUED";
+        case lyric_build::TaskState::Status::RUNNING:
+            return "RUNNING";
+        case lyric_build::TaskState::Status::INVALID:
+            return "INVALID";
+    }
+}
+
 void
 lyric_test::matchers::TestComputationMatcher::DescribeTo(std::ostream *os) const
 {
-    m_matcher.DescribeTo(os);
+    switch (m_type) {
+        case Type::MatchStatus:
+            *os << "computation status is " << status_to_string(m_status);
+            break;
+        case Type::MatchSpanset:
+            m_matcher.DescribeTo(os);
+            break;
+        default:
+            *os << "!!! invalid matcher !!!";
+            break;
+    }
 }
 
 void
 lyric_test::matchers::TestComputationMatcher::DescribeNegationTo(std::ostream *os) const
 {
-    m_matcher.DescribeNegationTo(os);
+    switch (m_type) {
+        case Type::MatchStatus:
+            *os << "computation status is not " << status_to_string(m_status);
+            break;
+        case Type::MatchSpanset:
+            m_matcher.DescribeNegationTo(os);
+            break;
+        default:
+            *os << "!!! invalid matcher !!!";
+            break;
+    }
 }
 
 void

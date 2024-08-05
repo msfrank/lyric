@@ -24,15 +24,8 @@ lyric_parser::ArchetypeState::ArchetypeState(
 {
 }
 
-static tempo_utils::Result<lyric_parser::ArchetypeNode *>
-load_node(
-    const lyric_parser::LyricArchetype &archetype,
-    const lyric_parser::NodeWalker &node,
-    lyric_parser::ArchetypeState *state,
-    std::vector<lyric_parser::ArchetypeNode *> &nodeTable);
-
-static tempo_utils::Result<lyric_parser::ArchetypeAttr *>
-load_attr(
+tempo_utils::Result<lyric_parser::ArchetypeAttr *>
+lyric_parser::ArchetypeState::loadAttr(
     const lyric_parser::LyricArchetype &archetype,
     const tempo_utils::AttrKey &key,
     const tempo_utils::AttrValue &value,
@@ -47,15 +40,15 @@ load_attr(
         auto handleNode = archetype.getNode(value.getHandle().handle);
         TU_ASSERT (handleNode.isValid());
         lyric_parser::ArchetypeNode *attrNode;
-        TU_ASSIGN_OR_RETURN (attrNode, load_node(archetype, handleNode, state, nodeTable));
+        TU_ASSIGN_OR_RETURN (attrNode, loadNode(archetype, handleNode, state, nodeTable));
         return state->appendAttr(attrId, lyric_parser::AttrValue(attrNode));
     }
 
     return state->appendAttr(attrId, lyric_parser::AttrValue(value));
 }
 
-static tempo_utils::Result<lyric_parser::ArchetypeNode *>
-load_node(
+tempo_utils::Result<lyric_parser::ArchetypeNode *>
+lyric_parser::ArchetypeState::loadNode(
     const lyric_parser::LyricArchetype &archetype,
     const lyric_parser::NodeWalker &node,
     lyric_parser::ArchetypeState *state,
@@ -77,13 +70,19 @@ load_node(
         node.getLineNumber(), node.getColumnNumber(), node.getFileOffset(), node.getTextSpan());
     lyric_parser::ArchetypeNode *archetypeNode;
     TU_ASSIGN_OR_RETURN (archetypeNode, state->appendNode(nodeNamespace, node.getIdValue(), location));
+
+    tu_uint32 offset = m_archetypeNodes.size();
+    auto *archetypeId = makeId(ArchetypeDescriptorType::Node, offset);
+    archetypeNode = new ArchetypeNode(node, nodeNamespace, node.getIdValue(), location, archetypeId, this);
+    m_archetypeNodes.push_back(archetypeNode);
+
     nodeTable[address] = archetypeNode;
 
     // load the node attrs
     for (int i = 0; i < node.numAttrs(); i++) {
         auto attr = node.getAttr(i);
         lyric_parser::ArchetypeAttr *archetypeAttr;
-        TU_ASSIGN_OR_RETURN (archetypeAttr, load_attr(archetype, attr.first, attr.second, state, nodeTable));
+        TU_ASSIGN_OR_RETURN (archetypeAttr, loadAttr(archetype, attr.first, attr.second, state, nodeTable));
         archetypeNode->putAttr(archetypeAttr);
     }
 
@@ -91,7 +90,7 @@ load_node(
     for (int i = 0; i < node.numChildren(); i++) {
         auto childNode = node.getChild(i);
         lyric_parser::ArchetypeNode *child;
-        TU_ASSIGN_OR_RETURN (child, load_node(archetype, childNode, state, nodeTable));
+        TU_ASSIGN_OR_RETURN (child, loadNode(archetype, childNode, state, nodeTable));
         archetypeNode->appendChild(child);
     }
 
@@ -106,7 +105,7 @@ lyric_parser::ArchetypeState::load(const LyricArchetype &archetype)
             ParseCondition::kParseInvariant, "failed to load archetype state: invalid archetype");
     std::vector<ArchetypeNode *> nodeTable(archetype.numNodes(), nullptr);
     auto rootNode = archetype.getRoot();
-    return load_node(archetype, rootNode, this, nodeTable);
+    return loadNode(archetype, rootNode, this, nodeTable);
 }
 
 bool

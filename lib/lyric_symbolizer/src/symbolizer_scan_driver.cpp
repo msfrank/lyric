@@ -20,7 +20,7 @@ lyric_symbolizer::SymbolizerScanDriver::enter(
 {
     if (!node->isNamespace(lyric_schema::kLyricAstNs))
         return {};
-    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getTypeOffset());
+    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
     auto astId = resource->getId();
     switch (astId) {
@@ -53,7 +53,7 @@ lyric_symbolizer::SymbolizerScanDriver::exit(
 {
     if (!node->isNamespace(lyric_schema::kLyricAstNs))
         return {};
-    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getTypeOffset());
+    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
     auto astId = resource->getId();
     switch (astId) {

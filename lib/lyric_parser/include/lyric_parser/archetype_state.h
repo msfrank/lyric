@@ -95,6 +95,21 @@ namespace lyric_parser {
         friend class ArchetypeStateAttrWriter;
         friend class NodeAttr;
 
+        tempo_utils::Result<lyric_parser::ArchetypeAttr *>
+        loadAttr(
+            const lyric_parser::LyricArchetype &archetype,
+            const tempo_utils::AttrKey &key,
+            const tempo_utils::AttrValue &value,
+            lyric_parser::ArchetypeState *state,
+            std::vector<lyric_parser::ArchetypeNode *> &nodeTable);
+
+        tempo_utils::Result<lyric_parser::ArchetypeNode *>
+        loadNode(
+            const lyric_parser::LyricArchetype &archetype,
+            const lyric_parser::NodeWalker &node,
+            lyric_parser::ArchetypeState *state,
+            std::vector<lyric_parser::ArchetypeNode *> &nodeTable);
+
     public:
         /**
          *

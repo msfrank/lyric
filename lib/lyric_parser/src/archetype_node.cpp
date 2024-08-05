@@ -6,12 +6,12 @@
 
 lyric_parser::ArchetypeNode::ArchetypeNode(
     ArchetypeNamespace *nodeNamespace,
-    tu_uint32 typeOffset,
+    tu_uint32 idValue,
     const ParseLocation &location,
     ArchetypeId *archetypeId,
     ArchetypeState *state)
     : m_namespace(nodeNamespace),
-      m_typeOffset(typeOffset),
+      m_idValue(idValue),
       m_location(location),
       m_archetypeId(archetypeId),
       m_state(state)
@@ -21,6 +21,25 @@ lyric_parser::ArchetypeNode::ArchetypeNode(
     TU_ASSERT (m_state != nullptr);
 }
 
+lyric_parser::ArchetypeNode::ArchetypeNode(
+    const NodeWalker &archetypeNode,
+    ArchetypeNamespace *nodeNamespace,
+    tu_uint32 idValue,
+    const ParseLocation &location,
+    ArchetypeId *archetypeId,
+    ArchetypeState *state)
+    : ArchetypeNode(nodeNamespace, idValue, location, archetypeId, state)
+{
+    m_archetypeNode = archetypeNode;
+    TU_ASSERT (m_archetypeNode.isValid());
+}
+
+lyric_parser::NodeWalker
+lyric_parser::ArchetypeNode::getArchetypeNode() const
+{
+    return m_archetypeNode;
+}
+
 lyric_parser::ArchetypeNamespace *
 lyric_parser::ArchetypeNode::getNamespace() const
 {
@@ -28,9 +47,9 @@ lyric_parser::ArchetypeNode::getNamespace() const
 }
 
 tu_uint32
-lyric_parser::ArchetypeNode::getTypeOffset() const
+lyric_parser::ArchetypeNode::getIdValue() const
 {
-    return m_typeOffset;
+    return m_idValue;
 }
 
 lyric_parser::ParseLocation
@@ -236,5 +255,5 @@ lyric_parser::ArchetypeNode::matchesNsAndId(const char *nsString, tu_uint32 idVa
 {
     auto nsUrl = m_namespace->getNsUrl();
     TU_ASSERT (nsUrl.isValid());
-    return idValue == m_typeOffset && std::string_view(nsString) == nsUrl.toString();
+    return idValue == m_idValue && std::string_view(nsString) == nsUrl.toString();
 }

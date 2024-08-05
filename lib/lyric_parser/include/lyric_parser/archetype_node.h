@@ -9,6 +9,7 @@
 #include "archetype_state_attr_writer.h"
 #include "attr_id.h"
 #include "attr_value.h"
+#include "node_walker.h"
 #include "stateful_attr.h"
 
 namespace lyric_parser {
@@ -24,13 +25,15 @@ namespace lyric_parser {
     public:
         ArchetypeNode(
             ArchetypeNamespace *nodeNamespace,
-            tu_uint32 typeOffset,
+            tu_uint32 idValue,
             const ParseLocation &location,
             ArchetypeId *archetypeId,
             ArchetypeState *state);
 
+        NodeWalker getArchetypeNode() const;
+
         ArchetypeNamespace *getNamespace() const;
-        tu_uint32 getTypeOffset() const;
+        tu_uint32 getIdValue() const;
         ParseLocation getLocation() const;
         ArchetypeId *getArchetypeId() const;
 
@@ -56,8 +59,9 @@ namespace lyric_parser {
         int numChildren() const;
 
     private:
+        NodeWalker m_archetypeNode;
         ArchetypeNamespace *m_namespace;
-        tu_uint32 m_typeOffset;
+        tu_uint32 m_idValue;
         ParseLocation m_location;
         ArchetypeId *m_archetypeId;
         ArchetypeState *m_state;
@@ -68,6 +72,16 @@ namespace lyric_parser {
         ArchetypeAttr *findAttr(const char *nsString, tu_uint32 idValue) const;
         tu_uint32 findAttrIndex(const char *nsString, tu_uint32 idValue) const;
         AttrValue getAttrValue(const char *nsString, tu_uint32 idValue) const;
+
+        ArchetypeNode(
+            const NodeWalker &archetypeNode,
+            ArchetypeNamespace *nodeNamespace,
+            tu_uint32 idValue,
+            const ParseLocation &location,
+            ArchetypeId *archetypeId,
+            ArchetypeState *state);
+
+        friend class ArchetypeState;
 
     public:
         /**
@@ -96,10 +110,10 @@ namespace lyric_parser {
             if (!isNamespace(*schemaNs))
                 return ParseStatus::forCondition(ParseCondition::kSyntaxError,
                     "expected node ns {}", vocabulary.getNs()->getNs());
-            auto *resource = vocabulary.getResource(m_typeOffset);
+            auto *resource = vocabulary.getResource(m_idValue);
             if (resource == nullptr)
                 return ParseStatus::forCondition(ParseCondition::kSyntaxError,
-                    "unknown node type {}", m_typeOffset);
+                    "unknown node id {}", m_idValue);
             id = resource->getId();
             return ParseStatus::ok();
         }

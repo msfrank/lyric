@@ -8,12 +8,14 @@ add_library(lyric::lyric_analyzer ALIAS lyric_analyzer)
 
 set(LYRIC_ANALYZER_INCLUDES
     include/lyric_analyzer/analyzer_result.h
+    include/lyric_analyzer/analyzer_scan_driver.h
     include/lyric_analyzer/lyric_analyzer.h
     )
 set_target_properties(lyric_analyzer PROPERTIES PUBLIC_HEADER "${LYRIC_ANALYZER_INCLUDES}")
 
 target_sources(lyric_analyzer PRIVATE
     src/analyzer_result.cpp
+    src/analyzer_scan_driver.cpp
     src/lyric_analyzer.cpp
 
     include/lyric_analyzer/internal/analyze_def.h
@@ -52,6 +54,7 @@ target_link_libraries(lyric_analyzer
     PUBLIC
     lyric::lyric_importer
     lyric::lyric_parser
+    lyric::lyric_rewriter
     lyric::lyric_runtime
     lyric::lyric_typing
     tempo::tempo_utils
@@ -68,4 +71,4 @@ install(TARGETS lyric_analyzer EXPORT lyric-targets
     )
 
 # add testing subdirectory
-#add_subdirectory(test)
+add_subdirectory(test)

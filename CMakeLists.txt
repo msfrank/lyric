@@ -247,6 +247,7 @@ target_link_libraries(lyric_testsuite
     LyricObjectTestSuite
     LyricPackagingTestSuite
     LyricParserTestSuite
+    LyricSymbolizerTestSuite
     LyricTypingTestSuite
 )
 gtest_discover_tests(lyric_testsuite DISCOVERY_TIMEOUT 30)
