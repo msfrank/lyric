@@ -59,12 +59,16 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::SymbolRef:
         case lyric_schema::LyricAstId::This:
         case lyric_schema::LyricAstId::Name:
+        case lyric_schema::LyricAstId::Param:
+        case lyric_schema::LyricAstId::Ctx:
             visitor = std::make_shared<LyricAstTerminalVisitor>(astId, m_options);
             break;
 
         // unary forms
         case lyric_schema::LyricAstId::Neg:
         case lyric_schema::LyricAstId::Not:
+        case lyric_schema::LyricAstId::Keyword:
+        case lyric_schema::LyricAstId::Rest:
             visitor = std::make_shared<LyricAstUnaryVisitor>(astId, m_options);
             break;
 
@@ -81,6 +85,7 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::IsGt:
         case lyric_schema::LyricAstId::IsGe:
         case lyric_schema::LyricAstId::IsA:
+        case lyric_schema::LyricAstId::Case:
             visitor = std::make_shared<LyricAstBinaryVisitor>(astId, m_options);
             break;
 
@@ -93,6 +98,8 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::Var:
         case lyric_schema::LyricAstId::Def:
         case lyric_schema::LyricAstId::Namespace:
+        case lyric_schema::LyricAstId::Pack:
+        case lyric_schema::LyricAstId::Unpack:
         case lyric_schema::LyricAstId::Generic:
         case lyric_schema::LyricAstId::Init:
         case lyric_schema::LyricAstId::Set:
@@ -105,6 +112,10 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::ImportSymbols:
         case lyric_schema::LyricAstId::ImportAll:
         case lyric_schema::LyricAstId::Using:
+        case lyric_schema::LyricAstId::SType:
+        case lyric_schema::LyricAstId::PType:
+        case lyric_schema::LyricAstId::UType:
+        case lyric_schema::LyricAstId::IType:
         case lyric_schema::LyricAstId::MacroList:
         case lyric_schema::LyricAstId::MacroCall:
             visitor = std::make_shared<LyricAstSequenceVisitor>(astId, m_options);
@@ -141,8 +152,11 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
             break;
     }
 
-    if (visitor == nullptr)
-        return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant, "unknown node");
+    if (visitor == nullptr) {
+        auto *resource = lyric_schema::kLyricAstVocabulary.getResource(astId);
+        return RewriterStatus::forCondition(
+            RewriterCondition::kRewriterInvariant, "unhandled AST node {}", resource->getName());
+    }
 
     return visitor;
 }

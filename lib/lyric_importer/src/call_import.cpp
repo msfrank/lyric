@@ -9,6 +9,7 @@ namespace lyric_importer {
         lyric_common::SymbolUrl receiverUrl;
         TemplateImport *callTemplate;
         TypeImport *returnType;
+        bool isDeclOnly;
         lyric_object::AccessType access;
         lyric_object::CallMode callMode;
         std::vector<Parameter> listParameters;
@@ -34,6 +35,27 @@ lyric_importer::CallImport::getSymbolUrl()
     return m_priv->symbolUrl;
 }
 
+bool
+lyric_importer::CallImport::isDeclOnly()
+{
+    load();
+    return m_priv->isDeclOnly;
+}
+
+lyric_object::AccessType
+lyric_importer::CallImport::getAccess()
+{
+    load();
+    return m_priv->access;
+}
+
+lyric_object::CallMode
+lyric_importer::CallImport::getCallMode()
+{
+    load();
+    return m_priv->callMode;
+}
+
 lyric_common::SymbolUrl
 lyric_importer::CallImport::getReceiverUrl()
 {
@@ -53,20 +75,6 @@ lyric_importer::CallImport::getReturnType()
 {
     load();
     return m_priv->returnType;
-}
-
-lyric_object::AccessType
-lyric_importer::CallImport::getAccess()
-{
-    load();
-    return m_priv->access;
-}
-
-lyric_object::CallMode
-lyric_importer::CallImport::getCallMode()
-{
-    load();
-    return m_priv->callMode;
 }
 
 lyric_importer::Parameter
@@ -193,6 +201,8 @@ lyric_importer::CallImport::load()
     auto location = m_moduleImport->getLocation();
     auto callWalker = m_moduleImport->getObject().getObject().getCall(m_callOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, callWalker.getSymbolPath());
+
+    priv->isDeclOnly = callWalker.isDeclOnly();
 
     if (callWalker.hasReceiver()) {
         auto receiver = callWalker.getReceiver();

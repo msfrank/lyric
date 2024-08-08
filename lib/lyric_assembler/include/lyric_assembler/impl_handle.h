@@ -16,6 +16,7 @@ namespace lyric_assembler {
     struct ImplHandlePriv {
         ImplOffset offset;
         std::string name;
+        bool isDeclOnly = false;
         TypeHandle *implType = nullptr;
         ConceptSymbol *implConcept = nullptr;
         lyric_common::SymbolUrl receiverUrl;

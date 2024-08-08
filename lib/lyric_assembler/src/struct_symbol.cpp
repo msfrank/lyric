@@ -26,6 +26,7 @@ lyric_assembler::StructSymbol::StructSymbol(
     StructAddress address,
     TypeHandle *structType,
     StructSymbol *superStruct,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new StructSymbolPriv()),
@@ -39,6 +40,7 @@ lyric_assembler::StructSymbol::StructSymbol(
     priv->access = access;
     priv->derive = derive;
     priv->isAbstract = isAbstract;
+    priv->isDeclOnly = isDeclOnly;
     priv->structType = structType;
     priv->superStruct = superStruct;
     priv->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
@@ -71,6 +73,7 @@ lyric_assembler::StructSymbol::load()
     priv->access = lyric_object::AccessType::Public;
     priv->derive = m_structImport->getDerive();
     priv->isAbstract = m_structImport->isAbstract();
+    priv->isDeclOnly = m_structImport->isDeclOnly();
 
     auto *structType = m_structImport->getStructType();
     TU_ASSIGN_OR_RAISE (priv->structType, typeCache->importType(structType));
@@ -173,10 +176,18 @@ lyric_assembler::StructSymbol::getDeriveType() const
     return priv->derive;
 }
 
-bool lyric_assembler::StructSymbol::isAbstract() const
+bool
+lyric_assembler::StructSymbol::isAbstract() const
 {
     auto *priv = getPriv();
     return priv->isAbstract;
+}
+
+bool
+lyric_assembler::StructSymbol::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
 }
 
 lyric_assembler::StructSymbol *
@@ -276,10 +287,10 @@ lyric_assembler::StructSymbol::declareMember(
     FieldSymbol *fieldSymbol;
     if (init.isValid()) {
         fieldSymbol = new FieldSymbol(memberUrl, lyric_object::AccessType::Public,
-            false, init, address, fieldType, m_state);
+            false, init, address, fieldType, priv->isDeclOnly, m_state);
     } else {
         fieldSymbol = new FieldSymbol(memberUrl, lyric_object::AccessType::Public,
-            false, address, fieldType, m_state);
+            false, address, fieldType, priv->isDeclOnly, m_state);
     }
 
     auto status = m_state->appendField(fieldSymbol);
@@ -419,7 +430,7 @@ lyric_assembler::StructSymbol::declareCtor(
 
     // construct call symbol
     auto *ctorSymbol = new CallSymbol(ctorUrl, m_structUrl, access, address,
-        lyric_object::CallMode::Constructor, priv->structBlock.get(), m_state);
+        lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->structBlock.get(), m_state);
 
     auto status = m_state->appendCall(ctorSymbol);
     if (status.notOk()) {
@@ -519,7 +530,7 @@ lyric_assembler::StructSymbol::declareMethod(
 
     // construct call symbol
     auto *callSymbol = new CallSymbol(methodUrl, m_structUrl, acccess, address,
-        lyric_object::CallMode::Normal, priv->structBlock.get(), m_state);
+        lyric_object::CallMode::Normal, priv->isDeclOnly, priv->structBlock.get(), m_state);
 
     auto status = m_state->appendCall(callSymbol);
     if (status.notOk()) {

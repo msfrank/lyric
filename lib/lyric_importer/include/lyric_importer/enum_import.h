@@ -12,8 +12,11 @@ namespace lyric_importer {
         EnumImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 enumOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
+
         bool isAbstract();
+        bool isDeclOnly();
         lyric_object::DeriveType getDerive();
+
         TypeImport *getEnumType();
         TemplateImport *getEnumTemplate();
         lyric_common::SymbolUrl getSuperEnum();

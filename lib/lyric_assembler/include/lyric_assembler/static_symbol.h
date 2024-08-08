@@ -14,6 +14,7 @@ namespace lyric_assembler {
         bool isVariable;
         TypeHandle *staticType;
         CallSymbol *initCall;
+        bool isDeclOnly;
         std::unique_ptr<BlockHandle> staticBlock;
     };
 
@@ -25,6 +26,7 @@ namespace lyric_assembler {
             bool isVariable,
             StaticAddress address,
             TypeHandle *staticType,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
         StaticSymbol(
@@ -42,6 +44,7 @@ namespace lyric_assembler {
 
         std::string getName() const;
         bool isVariable() const;
+        bool isDeclOnly() const;
 
         lyric_common::SymbolUrl getInitializer() const;
         tempo_utils::Result<ProcHandle *> defineInitializer();

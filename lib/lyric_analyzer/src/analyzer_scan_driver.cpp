@@ -10,21 +10,18 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 
-lyric_analyzer::AnalyzerScanDriver::AnalyzerScanDriver(
-    const lyric_common::AssemblyLocation &location,
-    lyric_assembler::AssemblyState *state)
-    : m_location(location),
-      m_state(state),
+lyric_analyzer::AnalyzerScanDriver::AnalyzerScanDriver(lyric_assembler::AssemblyState *state)
+    : m_state(state),
       m_root(nullptr),
       m_entry(nullptr),
       m_typeSystem(nullptr)
 {
-    TU_ASSERT (m_location.isValid());
     TU_ASSERT (m_state != nullptr);
 }
 
 lyric_analyzer::AnalyzerScanDriver::~AnalyzerScanDriver()
 {
+    delete m_typeSystem;
 }
 
 tempo_utils::Status
@@ -38,6 +35,8 @@ lyric_analyzer::AnalyzerScanDriver::initialize()
     auto *fundamentalCache = m_state->fundamentalCache();
     auto *symbolCache = m_state->symbolCache();
     auto *typeCache = m_state->typeCache();
+
+    auto location = m_state->getLocation();
 
     // lookup the Function0 class and get its type handle
     auto functionClassUrl = fundamentalCache->getFunctionUrl(0);
@@ -58,7 +57,7 @@ lyric_analyzer::AnalyzerScanDriver::initialize()
     entryTypeHandle->touch();
 
     // create the $entry call
-    lyric_common::SymbolUrl entryUrl(m_location, lyric_common::SymbolPath({"$entry"}));
+    lyric_common::SymbolUrl entryUrl(location, lyric_common::SymbolPath({"$entry"}));
     auto entryAddress = lyric_assembler::CallAddress::near(m_state->numCalls());
     m_entry = new lyric_assembler::CallSymbol(entryUrl, returnType, entryAddress, entryTypeHandle, m_state);
     status = m_state->appendCall(m_entry);
@@ -74,7 +73,7 @@ lyric_analyzer::AnalyzerScanDriver::initialize()
     TU_ASSIGN_OR_RETURN (namespaceTypeHandle, typeCache->getOrMakeType(namespaceType));
 
     // create the root namespace
-    lyric_common::SymbolUrl rootUrl(m_location, lyric_common::SymbolPath({"$root"}));
+    lyric_common::SymbolUrl rootUrl(location, lyric_common::SymbolPath({"$root"}));
     auto nsAddress = lyric_assembler::NamespaceAddress::near(m_state->numNamespaces());
     m_root = new lyric_assembler::NamespaceSymbol(rootUrl, nsAddress, namespaceTypeHandle,
         m_entry->callProc(), m_state);
@@ -200,13 +199,12 @@ lyric_analyzer::AnalyzerScanDriver::pushDefinition(
 //
 //    TU_LOG_INFO << "declared definition " << symbolUrl;
 //    return status;
-    TU_UNREACHABLE();
+    return {};
 }
 
 tempo_utils::Status
 lyric_analyzer::AnalyzerScanDriver::popDefinition()
 {
 //    m_symbolPath.pop_back();
-//    return {};
-    TU_UNREACHABLE();
+    return {};
 }

@@ -33,6 +33,17 @@ lyric_object::ActionWalker::isValid() const
     return m_reader && m_reader->isValid() && m_actionOffset < m_reader->numActions();
 }
 
+bool
+lyric_object::ActionWalker::isDeclOnly() const
+{
+    if (!isValid())
+        return false;
+    auto *actionDescriptor = m_reader->getAction(m_actionOffset);
+    if (actionDescriptor == nullptr)
+        return false;
+    return bool(actionDescriptor->flags() & lyo1::ActionFlags::DeclOnly);
+}
+
 lyric_common::SymbolPath
 lyric_object::ActionWalker::getSymbolPath() const
 {

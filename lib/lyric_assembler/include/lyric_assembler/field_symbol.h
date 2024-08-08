@@ -11,6 +11,7 @@ namespace lyric_assembler {
     struct FieldSymbolPriv {
         lyric_object::AccessType access;
         bool isVariable;
+        bool isDeclOnly;
         lyric_common::SymbolUrl init;
         TypeHandle *fieldType;
     };
@@ -23,6 +24,7 @@ namespace lyric_assembler {
             bool isVariable,
             FieldAddress address,
             TypeHandle *fieldType,
+            bool isDeclOnly,
             AssemblyState *state);
         FieldSymbol(
             const lyric_common::SymbolUrl &fieldUrl,
@@ -31,6 +33,7 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &init,
             FieldAddress address,
             TypeHandle *fieldType,
+            bool isDeclOnly,
             AssemblyState *state);
         FieldSymbol(
             const lyric_common::SymbolUrl &fieldUrl,
@@ -48,6 +51,7 @@ namespace lyric_assembler {
         std::string getName() const;
         lyric_object::AccessType getAccessType() const;
         bool isVariable() const;
+        bool isDeclOnly() const;
 
         lyric_common::SymbolUrl getInitializer() const;
 

@@ -13,8 +13,11 @@ namespace lyric_importer {
         InstanceImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 instanceOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
+
         bool isAbstract();
+        bool isDeclOnly();
         lyric_object::DeriveType getDerive();
+
         TypeImport *getInstanceType();
         TemplateImport *getInstanceTemplate();
         lyric_common::SymbolUrl getSuperInstance();

@@ -14,7 +14,7 @@ lyric_rewriter::LyricAstCondVisitor::LyricAstCondVisitor(
 tempo_utils::Status
 lyric_rewriter::LyricAstCondVisitor::enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx)
 {
-    if (node->numChildren() < 2)
+    if (node->numChildren() < 1)
         return RewriterStatus::forCondition(RewriterCondition::kSyntaxError, "invalid Cond node");
 
     TU_RETURN_IF_NOT_OK (invokeEnter(m_astId, node, ctx));

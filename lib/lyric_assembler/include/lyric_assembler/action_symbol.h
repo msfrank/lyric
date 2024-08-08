@@ -16,6 +16,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl receiverUrl;
         lyric_object::AccessType access;
         TemplateHandle *actionTemplate;
+        bool isDeclOnly;
         BlockHandle *parentBlock;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
     };
@@ -28,6 +29,7 @@ namespace lyric_assembler {
             lyric_object::AccessType access,
             ActionAddress address,
             TemplateHandle *actionTemplate,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
 
@@ -36,6 +38,7 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &receiverUrl,
             lyric_object::AccessType access,
             ActionAddress address,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
 
@@ -51,6 +54,8 @@ namespace lyric_assembler {
         lyric_common::TypeDef getAssignableType() const override;
         TypeSignature getTypeSignature() const override;
         void touch() override;
+
+        bool isDeclOnly() const;
 
         tempo_utils::Status defineAction(
             const ParameterPack &parameterPack,

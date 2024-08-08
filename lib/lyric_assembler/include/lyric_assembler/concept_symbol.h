@@ -17,6 +17,7 @@ namespace lyric_assembler {
     struct ConceptSymbolPriv {
         lyric_object::AccessType access;
         lyric_object::DeriveType derive;
+        bool isDeclOnly;
         TypeHandle *conceptType;
         TemplateHandle *conceptTemplate;
         ConceptSymbol *superConcept;
@@ -37,6 +38,7 @@ namespace lyric_assembler {
             TypeHandle *conceptType,
             TemplateHandle *conceptTemplate,
             ConceptSymbol *superConcept,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
 
@@ -47,6 +49,7 @@ namespace lyric_assembler {
             ConceptAddress address,
             TypeHandle *conceptType,
             ConceptSymbol *superConcept,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
 
@@ -63,6 +66,7 @@ namespace lyric_assembler {
         TypeSignature getTypeSignature() const override;
         void touch() override;
 
+        bool isDeclOnly() const;
         lyric_object::AccessType getAccessType() const;
         lyric_object::DeriveType getDeriveType() const;
 

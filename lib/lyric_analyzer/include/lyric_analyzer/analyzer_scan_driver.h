@@ -9,9 +9,7 @@ namespace lyric_analyzer {
 
     class AnalyzerScanDriver : public lyric_rewriter::AbstractScanDriver {
     public:
-        AnalyzerScanDriver(
-            const lyric_common::AssemblyLocation &location,
-            lyric_assembler::AssemblyState *state);
+        explicit AnalyzerScanDriver(lyric_assembler::AssemblyState *state);
         ~AnalyzerScanDriver() override;
 
         tempo_utils::Status initialize();
@@ -27,7 +25,6 @@ namespace lyric_analyzer {
             const lyric_rewriter::VisitorContext &ctx) override;
 
     private:
-        lyric_common::AssemblyLocation m_location;
         lyric_assembler::AssemblyState *m_state;
         lyric_assembler::NamespaceSymbol *m_root;
         lyric_assembler::CallSymbol *m_entry;

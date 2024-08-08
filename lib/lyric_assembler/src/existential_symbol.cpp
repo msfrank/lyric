@@ -22,6 +22,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     ExistentialAddress address,
     TypeHandle *existentialType,
     ExistentialSymbol *superExistential,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new ExistentialSymbolPriv()),
@@ -34,6 +35,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     auto *priv = getPriv();
     priv->access = access;
     priv->derive = derive;
+    priv->isDeclOnly = isDeclOnly;
     priv->existentialType = existentialType;
     priv->existentialTemplate = nullptr;
     priv->superExistential = superExistential;
@@ -51,6 +53,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     TypeHandle *existentialType,
     TemplateHandle *existentialTemplate,
     ExistentialSymbol *superExistential,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : ExistentialSymbol(
@@ -60,6 +63,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
         address,
         existentialType,
         superExistential,
+        isDeclOnly,
         parentBlock,
         state)
 {
@@ -94,6 +98,7 @@ lyric_assembler::ExistentialSymbol::load()
     auto priv = std::make_unique<ExistentialSymbolPriv>();
     priv->access = lyric_object::AccessType::Public;
     priv->derive = m_existentialImport->getDerive();
+    priv->isDeclOnly = m_existentialImport->isDeclOnly();
 
     auto *existentialType = m_existentialImport->getExistentialType();
     TU_ASSIGN_OR_RAISE (priv->existentialType, typeCache->importType(existentialType));
@@ -173,6 +178,13 @@ lyric_assembler::ExistentialSymbol::touch()
     if (getAddress().isValid())
         return;
     m_state->touchExistential(this);
+}
+
+bool
+lyric_assembler::ExistentialSymbol::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
 }
 
 lyric_object::DeriveType
@@ -265,7 +277,7 @@ lyric_assembler::ExistentialSymbol::declareMethod(
 
     // construct call symbol
     auto *callSymbol = new CallSymbol(methodUrl, m_existentialUrl, access, address,
-        lyric_object::CallMode::Normal, priv->existentialBlock.get(), m_state);
+        lyric_object::CallMode::Normal, priv->isDeclOnly, priv->existentialBlock.get(), m_state);
 
     auto status = m_state->appendCall(callSymbol);
     if (status.notOk()) {

@@ -12,7 +12,10 @@ namespace lyric_importer {
         ConceptImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 conceptOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
+
+        bool isDeclOnly();
         lyric_object::DeriveType getDerive();
+
         TypeImport *getConceptType();
         TemplateImport *getConceptTemplate();
         lyric_common::SymbolUrl getSuperConcept();

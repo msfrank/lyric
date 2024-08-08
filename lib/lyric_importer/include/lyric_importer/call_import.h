@@ -11,12 +11,14 @@ namespace lyric_importer {
         CallImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 callOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
+
+        bool isDeclOnly();
+        lyric_object::AccessType getAccess();
+        lyric_object::CallMode getCallMode();
+
         lyric_common::SymbolUrl getReceiverUrl();
         TemplateImport *getCallTemplate();
         TypeImport *getReturnType();
-
-        lyric_object::AccessType getAccess();
-        lyric_object::CallMode getCallMode();
 
         Parameter getListParameter(tu_uint8 index);
         std::vector<Parameter>::const_iterator listParametersBegin();

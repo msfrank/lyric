@@ -101,7 +101,7 @@ lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::Archet
     if (m_entry == nullptr) {
         lyric_common::SymbolPath entryPath({"$entry"});
         lyric_common::SymbolUrl entryUrl(entryPath);
-        m_entry = new lyric_assembler::UndeclaredSymbol(symbolUrl, lyric_object::LinkageSection::Call);
+        m_entry = new lyric_assembler::UndeclaredSymbol(entryUrl, lyric_object::LinkageSection::Call);
         status = m_state->appendUndeclared(m_entry);
         if (status.notOk()) {
             delete m_entry;

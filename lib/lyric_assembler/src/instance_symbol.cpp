@@ -26,6 +26,7 @@ lyric_assembler::InstanceSymbol::InstanceSymbol(
     InstanceAddress address,
     TypeHandle *instanceType,
     InstanceSymbol *superInstance,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new InstanceSymbolPriv()),
@@ -39,6 +40,7 @@ lyric_assembler::InstanceSymbol::InstanceSymbol(
     priv->access = access;
     priv->derive = derive;
     priv->isAbstract = isAbstract;
+    priv->isDeclOnly = isDeclOnly;
     priv->instanceType = instanceType;
     priv->superInstance = superInstance;
     priv->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
@@ -71,6 +73,7 @@ lyric_assembler::InstanceSymbol::load()
     priv->access = lyric_object::AccessType::Public;
     priv->derive = m_instanceImport->getDerive();
     priv->isAbstract = m_instanceImport->isAbstract();
+    priv->isDeclOnly = m_instanceImport->isDeclOnly();
 
     auto *instanceType = m_instanceImport->getInstanceType();
     TU_ASSIGN_OR_RAISE (priv->instanceType, typeCache->importType(instanceType));
@@ -180,6 +183,13 @@ lyric_assembler::InstanceSymbol::isAbstract() const
     return priv->isAbstract;
 }
 
+bool
+lyric_assembler::InstanceSymbol::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
+}
+
 lyric_assembler::TypeHandle *
 lyric_assembler::InstanceSymbol::instanceType() const
 {
@@ -269,9 +279,11 @@ lyric_assembler::InstanceSymbol::declareMember(
     // construct the field symbol
     FieldSymbol *fieldSymbol;
     if (init.isValid()) {
-        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, init, address, fieldType, m_state);
+        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, init, address,
+            fieldType, priv->isDeclOnly, m_state);
     } else {
-        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, address, fieldType, m_state);
+        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, address,
+            fieldType, priv->isDeclOnly, m_state);
     }
 
     auto status = m_state->appendField(fieldSymbol);
@@ -412,7 +424,7 @@ lyric_assembler::InstanceSymbol::declareCtor(
 
     // construct call symbol
     auto *ctorSymbol = new CallSymbol(ctorUrl, m_instanceUrl, access, address,
-        lyric_object::CallMode::Constructor, priv->instanceBlock.get(), m_state);
+        lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->instanceBlock.get(), m_state);
 
     auto status = m_state->appendCall(ctorSymbol);
     if (status.notOk()) {
@@ -512,7 +524,7 @@ lyric_assembler::InstanceSymbol::declareMethod(
 
     // construct call symbol
     auto *callSymbol = new CallSymbol(methodUrl, m_instanceUrl, access, address,
-        lyric_object::CallMode::Normal, priv->instanceBlock.get(), m_state);
+        lyric_object::CallMode::Normal, priv->isDeclOnly, priv->instanceBlock.get(), m_state);
 
     auto status = m_state->appendCall(callSymbol);
     if (status.notOk()) {

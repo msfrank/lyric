@@ -28,7 +28,7 @@ lyric_analyzer::internal::analyze_val(
     TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(block, valSpec));
 
     auto declareVariableResult = block->declareStatic(identifier,
-        valType, lyric_parser::BindingType::VALUE);
+        valType, lyric_parser::BindingType::VALUE, true);
     if (declareVariableResult.isStatus())
         return declareVariableResult.getStatus();
     return AnalyzerStatus::ok();
@@ -58,7 +58,7 @@ lyric_analyzer::internal::analyze_var(
     TU_ASSIGN_OR_RETURN (varType, typeSystem->resolveAssignable(block, varSpec));
 
     auto declareVariableResult = block->declareStatic(identifier,
-        varType, lyric_parser::BindingType::VARIABLE);
+        varType, lyric_parser::BindingType::VARIABLE, true);
     if (declareVariableResult.isStatus())
         return declareVariableResult.getStatus();
     return AnalyzerStatus::ok();

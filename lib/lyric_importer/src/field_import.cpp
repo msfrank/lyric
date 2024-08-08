@@ -8,6 +8,7 @@ namespace lyric_importer {
         lyric_common::SymbolUrl symbolUrl;
         lyric_object::AccessType access;
         bool isVariable;
+        bool isDeclOnly;
         TypeImport *fieldType;
         lyric_common::SymbolUrl initializer;
     };
@@ -30,18 +31,25 @@ lyric_importer::FieldImport::getSymbolUrl()
     return m_priv->symbolUrl;
 }
 
-lyric_object::AccessType
-lyric_importer::FieldImport::getAccess()
-{
-    load();
-    return m_priv->access;
-}
-
 bool
 lyric_importer::FieldImport::isVariable()
 {
     load();
     return m_priv->isVariable;
+}
+
+bool
+lyric_importer::FieldImport::isDeclOnly()
+{
+    load();
+    return m_priv->isDeclOnly;
+}
+
+lyric_object::AccessType
+lyric_importer::FieldImport::getAccess()
+{
+    load();
+    return m_priv->access;
 }
 
 lyric_importer::TypeImport *
@@ -81,6 +89,7 @@ lyric_importer::FieldImport::load()
     priv->access = fieldWalker.getAccess();
 
     priv->isVariable = fieldWalker.isVariable();
+    priv->isDeclOnly = fieldWalker.isDeclOnly();
 
     priv->fieldType = m_moduleImport->getType(
         fieldWalker.getFieldType().getDescriptorOffset());

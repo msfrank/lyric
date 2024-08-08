@@ -23,6 +23,7 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     ClassAddress address,
     TypeHandle *classType,
     ClassSymbol *superClass,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new ClassSymbolPriv()),
@@ -36,6 +37,7 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     priv->access = access;
     priv->derive = derive;
     priv->isAbstract = isAbstract;
+    priv->isDeclOnly = isDeclOnly;
     priv->classType = classType;
     priv->classTemplate = nullptr;
     priv->superClass = superClass;
@@ -55,6 +57,7 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     TypeHandle *classType,
     TemplateHandle *classTemplate,
     ClassSymbol *superClass,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : ClassSymbol(
@@ -65,6 +68,7 @@ lyric_assembler::ClassSymbol::ClassSymbol(
         address,
         classType,
         superClass,
+        isDeclOnly,
         parentBlock,
         state)
 {
@@ -100,6 +104,7 @@ lyric_assembler::ClassSymbol::load()
     priv->access = lyric_object::AccessType::Public;
     priv->derive = m_classImport->getDerive();
     priv->isAbstract = m_classImport->isAbstract();
+    priv->isDeclOnly = m_classImport->isDeclOnly();
 
     auto *classType = m_classImport->getClassType();
     TU_ASSIGN_OR_RAISE (priv->classType, typeCache->importType(classType));
@@ -214,6 +219,13 @@ lyric_assembler::ClassSymbol::isAbstract() const
     return priv->isAbstract;
 }
 
+bool
+lyric_assembler::ClassSymbol::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
+}
+
 lyric_assembler::ClassSymbol *
 lyric_assembler::ClassSymbol::superClass() const
 {
@@ -310,9 +322,11 @@ lyric_assembler::ClassSymbol::declareMember(
     // construct the field symbol
     FieldSymbol *fieldSymbol;
     if (init.isValid()) {
-        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, init, address, fieldType, m_state);
+        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, init, address,
+            fieldType, priv->isDeclOnly, m_state);
     } else {
-        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, address, fieldType, m_state);
+        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, address,
+            fieldType, priv->isDeclOnly, m_state);
     }
 
     auto status = m_state->appendField(fieldSymbol);
@@ -463,11 +477,11 @@ lyric_assembler::ClassSymbol::declareCtor(
     // construct call symbol
     CallSymbol *ctorSymbol;
     if (priv->classTemplate != nullptr) {
-        ctorSymbol = new CallSymbol(ctorUrl, m_classUrl, access, address,
-            lyric_object::CallMode::Constructor, priv->classTemplate, priv->classBlock.get(), m_state);
+        ctorSymbol = new CallSymbol(ctorUrl, m_classUrl, access, address, lyric_object::CallMode::Constructor,
+            priv->classTemplate, priv->isDeclOnly, priv->classBlock.get(), m_state);
     } else {
-        ctorSymbol = new CallSymbol(ctorUrl, m_classUrl, access, address,
-            lyric_object::CallMode::Constructor, priv->classBlock.get(), m_state);
+        ctorSymbol = new CallSymbol(ctorUrl, m_classUrl, access, address, lyric_object::CallMode::Constructor,
+            priv->isDeclOnly, priv->classBlock.get(), m_state);
     }
 
     auto status = m_state->appendCall(ctorSymbol);
@@ -587,10 +601,10 @@ lyric_assembler::ClassSymbol::declareMethod(
     CallSymbol *callSymbol;
     if (methodTemplate != nullptr) {
         callSymbol = new CallSymbol(methodUrl, m_classUrl, access, address,
-            lyric_object::CallMode::Normal, methodTemplate, priv->classBlock.get(), m_state);
+            lyric_object::CallMode::Normal, methodTemplate, priv->isDeclOnly, priv->classBlock.get(), m_state);
     } else {
         callSymbol = new CallSymbol(methodUrl, m_classUrl, access, address,
-            lyric_object::CallMode::Normal, priv->classBlock.get(), m_state);
+            lyric_object::CallMode::Normal, priv->isDeclOnly, priv->classBlock.get(), m_state);
     }
 
     auto status = m_state->appendCall(callSymbol);

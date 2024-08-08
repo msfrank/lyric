@@ -25,6 +25,8 @@ namespace lyric_object {
 
         lyric_common::SymbolPath getSymbolPath() const;
 
+        bool isDeclOnly() const;
+
         SymbolWalker getReceiver() const;
 
         bool hasTemplate() const;

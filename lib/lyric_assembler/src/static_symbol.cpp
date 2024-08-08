@@ -11,6 +11,7 @@ lyric_assembler::StaticSymbol::StaticSymbol(
     bool isVariable,
     StaticAddress address,
     TypeHandle *staticType,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new StaticSymbolPriv()),
@@ -24,6 +25,7 @@ lyric_assembler::StaticSymbol::StaticSymbol(
     priv->isVariable = isVariable;
     priv->staticType = staticType;
     priv->initCall = nullptr;
+    priv->isDeclOnly = isDeclOnly;
     priv->staticBlock = std::make_unique<BlockHandle>(staticUrl, parentBlock, false);
 
     TU_ASSERT (priv->staticType != nullptr);
@@ -56,6 +58,8 @@ lyric_assembler::StaticSymbol::load()
 
     auto initializerUrl = m_staticImport->getInitializer();
     TU_ASSIGN_OR_RAISE (priv->initCall, importCache->importCall(initializerUrl));
+
+    priv->isDeclOnly = m_staticImport->isDeclOnly();
 
     priv->staticBlock = std::make_unique<BlockHandle>(
         m_staticUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
@@ -152,7 +156,7 @@ lyric_assembler::StaticSymbol::defineInitializer()
 
     // construct call symbol
     auto *initSymbol = new CallSymbol(initializerUrl, lyric_object::AccessType::Public, address,
-        lyric_object::CallMode::Normal, priv->staticBlock.get(), m_state);
+        lyric_object::CallMode::Normal, priv->isDeclOnly, priv->staticBlock.get(), m_state);
 
     auto status = m_state->appendCall(initSymbol);
     if (status.notOk()) {
@@ -189,4 +193,11 @@ lyric_assembler::StaticSymbol::prepareInitializer(CallableInvoker &invoker)
 
     auto callable = std::make_unique<FunctionCallable>(init);
     return invoker.initialize(std::move(callable));
+}
+
+bool
+lyric_assembler::StaticSymbol::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
 }

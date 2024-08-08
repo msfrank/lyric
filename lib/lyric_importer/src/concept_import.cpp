@@ -7,6 +7,7 @@
 namespace lyric_importer {
     struct ConceptImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
+        bool isDeclOnly;
         lyric_object::DeriveType derive;
         TypeImport *conceptType;
         TemplateImport *conceptTemplate;
@@ -32,6 +33,13 @@ lyric_importer::ConceptImport::getSymbolUrl()
 {
     load();
     return m_priv->symbolUrl;
+}
+
+bool
+lyric_importer::ConceptImport::isDeclOnly()
+{
+    load();
+    return m_priv->isDeclOnly;
 }
 
 lyric_object::DeriveType
@@ -147,6 +155,8 @@ lyric_importer::ConceptImport::load()
     auto location = m_moduleImport->getLocation();
     auto conceptWalker = m_moduleImport->getObject().getObject().getConcept(m_conceptOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, conceptWalker.getSymbolPath());
+
+    priv->isDeclOnly = conceptWalker.isDeclOnly();
 
     if (conceptWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
         throw tempo_utils::StatusException(

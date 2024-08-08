@@ -13,8 +13,11 @@ lyric_rewriter::LyricAstUnaryVisitor::LyricAstUnaryVisitor(
 tempo_utils::Status
 lyric_rewriter::LyricAstUnaryVisitor::enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx)
 {
-    if (node->numChildren() != 1)
-        return RewriterStatus::forCondition(RewriterCondition::kSyntaxError, "invalid unary node");
+    if (node->numChildren() != 1) {
+        auto *resource = lyric_schema::kLyricAstVocabulary.getResource(m_astId);
+        return RewriterStatus::forCondition(
+            RewriterCondition::kSyntaxError, "invalid AST node {}; expected unary node", resource->getName());
+    }
 
     TU_RETURN_IF_NOT_OK (invokeEnter(m_astId, node, ctx));
 

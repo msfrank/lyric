@@ -62,9 +62,7 @@ set(LYRIC_BUILD_INCLUDES
     include/lyric_build/metadata_walker.h
     include/lyric_build/metadata_writer.h
     include/lyric_build/rocksdb_cache.h
-    include/lyric_build/script_environment.h
     include/lyric_build/sha256_hash.h
-    include/lyric_build/symbol_map.h
     include/lyric_build/target_computation.h
     include/lyric_build/task_hasher.h
     include/lyric_build/task_notification.h
@@ -98,9 +96,7 @@ target_sources(lyric_build PRIVATE
     src/metadata_walker.cpp
     src/metadata_writer.cpp
     src/rocksdb_cache.cpp
-    src/script_environment.cpp
     src/sha256_hash.cpp
-    src/symbol_map.cpp
     src/target_computation.cpp
     src/task_hasher.cpp
     src/task_notification.cpp

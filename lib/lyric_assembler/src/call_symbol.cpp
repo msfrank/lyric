@@ -62,6 +62,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     lyric_object::AccessType access,
     CallAddress address,
     lyric_object::CallMode mode,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new CallSymbolPriv()),
@@ -74,6 +75,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     auto *priv = getPriv();
     priv->receiverUrl = receiverUrl;
     priv->access = access;
+    priv->isDeclOnly = isDeclOnly;
     priv->mode = mode;
     priv->callType = nullptr;
     priv->callTemplate = nullptr;
@@ -96,6 +98,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     CallAddress address,
     lyric_object::CallMode mode,
     TemplateHandle *callTemplate,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : CallSymbol(
@@ -104,6 +107,7 @@ lyric_assembler::CallSymbol::CallSymbol(
         access,
         address,
         mode,
+        isDeclOnly,
         parentBlock,
         state)
 {
@@ -132,6 +136,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     lyric_object::AccessType access,
     CallAddress address,
     lyric_object::CallMode mode,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new CallSymbolPriv()),
@@ -143,6 +148,7 @@ lyric_assembler::CallSymbol::CallSymbol(
 
     auto *priv = getPriv();
     priv->access = access;
+    priv->isDeclOnly = isDeclOnly;
     priv->mode = mode;
     priv->callType = nullptr;
     priv->callTemplate = nullptr;
@@ -163,6 +169,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     CallAddress address,
     lyric_object::CallMode mode,
     TemplateHandle *callTemplate,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : CallSymbol(
@@ -170,6 +177,7 @@ lyric_assembler::CallSymbol::CallSymbol(
         access,
         address,
         mode,
+        isDeclOnly,
         parentBlock,
         state)
 {
@@ -201,6 +209,8 @@ lyric_assembler::CallSymbol::load()
     auto *typeCache = m_state->typeCache();
 
     auto priv = std::make_unique<CallSymbolPriv>();
+
+    priv->isDeclOnly = m_callImport->isDeclOnly();
 
     for (auto it = m_callImport->listParametersBegin(); it != m_callImport->listParametersEnd(); it++) {
         Parameter p;
@@ -485,6 +495,13 @@ lyric_assembler::CallSymbol::isCtor() const
 {
     auto *priv = getPriv();
     return priv->mode == lyric_object::CallMode::Constructor;
+}
+
+bool
+lyric_assembler::CallSymbol::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
 }
 
 lyric_assembler::AbstractResolver *

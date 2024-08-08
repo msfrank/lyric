@@ -15,6 +15,7 @@ namespace lyric_assembler {
     struct ExistentialSymbolPriv {
         lyric_object::AccessType access;
         lyric_object::DeriveType derive;
+        bool isDeclOnly;
         TypeHandle *existentialType;
         TemplateHandle *existentialTemplate;
         ExistentialSymbol *superExistential;
@@ -34,6 +35,7 @@ namespace lyric_assembler {
             ExistentialAddress address,
             TypeHandle *existentialType,
             ExistentialSymbol *superExistential,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
         ExistentialSymbol(
@@ -44,6 +46,7 @@ namespace lyric_assembler {
             TypeHandle *existentialType,
             TemplateHandle *existentialTemplate,
             ExistentialSymbol *superExistential,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
         ExistentialSymbol(
@@ -59,6 +62,7 @@ namespace lyric_assembler {
         TypeSignature getTypeSignature() const override;
         void touch() override;
 
+        bool isDeclOnly() const;
         lyric_object::DeriveType getDeriveType() const;
 
         ExistentialSymbol *superExistential() const;

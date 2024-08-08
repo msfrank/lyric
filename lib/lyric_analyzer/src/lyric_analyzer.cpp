@@ -1,9 +1,10 @@
 
-#include <lyric_analyzer/internal/analyze_module.h>
-#include <lyric_analyzer/internal/entry_point.h>
+#include <lyric_analyzer/analyzer_result.h>
+#include <lyric_analyzer/analyzer_scan_driver.h>
 #include <lyric_analyzer/lyric_analyzer.h>
 #include <lyric_assembler/assembly_state.h>
 #include <lyric_parser/node_walker.h>
+#include <lyric_rewriter/lyric_rewriter.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_analyzer::LyricAnalyzer::LyricAnalyzer(
@@ -52,19 +53,29 @@ lyric_analyzer::LyricAnalyzer::analyzeModule(
         // initialize the assembler
         TU_RETURN_IF_NOT_OK (assemblyState.initialize());
 
-        // define the module entry point
-        internal::EntryPoint entryPoint(&assemblyState);
-        auto status = entryPoint.initialize(assemblyState.getLocation());
-        if (status.notOk())
-            return status;
+        auto analyzerDriver = std::make_shared<AnalyzerScanDriver>(&assemblyState);
+        TU_RETURN_IF_NOT_OK (analyzerDriver->initialize());
 
-        auto analyzeModuleResult = analyze_module(walker, entryPoint);
-        if (analyzeModuleResult.isStatus())
-            return analyzeModuleResult.getStatus();
-        assembly = analyzeModuleResult.getResult();
+        lyric_rewriter::RewriterOptions rewriterOptions;
+        lyric_rewriter::LyricRewriter rewriter(rewriterOptions);
+        TU_RETURN_IF_NOT_OK (rewriter.scanArchetype(archetype, location.toUrl(), analyzerDriver, recorder));
 
-        TU_ASSERT (assembly.isValid());
-        return assembly;
+//        // define the module entry point
+//        internal::EntryPoint entryPoint(&assemblyState);
+//        auto status = entryPoint.initialize(assemblyState.getLocation());
+//        if (status.notOk())
+//            return status;
+//
+//        auto analyzeModuleResult = analyze_module(walker, entryPoint);
+//        if (analyzeModuleResult.isStatus())
+//            return analyzeModuleResult.getStatus();
+//        assembly = analyzeModuleResult.getResult();
+//
+//        TU_ASSERT (assembly.isValid());
+//        return assembly;
+
+        // construct object from assembly state and return it
+        return assemblyState.toAssembly();
 
     } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();

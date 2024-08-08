@@ -10,7 +10,10 @@ namespace lyric_importer {
         StaticImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 staticOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
+
         bool isVariable();
+        bool isDeclOnly();
+
         TypeImport *getStaticType();
         lyric_common::SymbolUrl getInitializer();
 

@@ -37,13 +37,13 @@ table NamespaceDescriptor {
 
 table AttrDescriptor {
     attr_ns: uint32;                            // namespace of the attribute
-    attr_type: uint32;                          // the type of the attribute. this only has meaning relative to the ns!
+    attr_id: uint32;                            // the id of the attribute. this only has meaning relative to the ns!
     attr_value: Value;                          // value of the attribute
 }
 
 table NodeDescriptor {
     node_ns: uint32;                            // offset of the node namespace
-    node_type: uint32;                          // the type of the node. this only has meaning relative to the ns!
+    node_id: uint32;                            // the id of the node. this only has meaning relative to the ns!
     node_attrs: [uint32];                       // array of attributes bound to the node
     node_children: [uint32];                    // array of child nodes
     file_offset: uint32;                        // byte offset of the node in the source code text

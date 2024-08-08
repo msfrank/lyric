@@ -121,7 +121,7 @@ lyric_parser::NodeWalker::matchesNsAndId(const char *nsUrl, tu_uint32 idValue) c
     TU_ASSERT (ns != nullptr);
     auto *nsUrl__ = ns->ns_url();
     TU_ASSERT (nsUrl__ != nullptr);
-    return std::string_view(nsUrl) == nsUrl__->string_view() && idValue == node->node_type();
+    return std::string_view(nsUrl) == nsUrl__->string_view() && idValue == node->node_id();
 }
 
 const char *
@@ -143,7 +143,7 @@ lyric_parser::NodeWalker::getIdValue() const
         return INVALID_ADDRESS_U32;
     auto *node = m_reader->getNode(m_index);
     TU_ASSERT (node != nullptr);
-    return node->node_type();
+    return node->node_id();
 }
 
 bool
@@ -177,7 +177,7 @@ lyric_parser::NodeWalker::findIndexForAttr(const tempo_utils::AttrKey &key) cons
         auto *nsUrl = ns->ns_url();
         if (nsUrl == nullptr)
             continue;
-        if (std::string_view(key.ns) == nsUrl->string_view() && key.id == attr->attr_type())
+        if (std::string_view(key.ns) == nsUrl->string_view() && key.id == attr->attr_id())
             return attrIndex;
     }
     return INVALID_ADDRESS_U32;
@@ -233,7 +233,7 @@ lyric_parser::NodeWalker::getAttr(int index) const
     auto *nsUrl = ns->ns_url();
     if (nsUrl == nullptr)
         return {};
-    tempo_utils::AttrKey key{nsUrl->c_str(), attr->attr_type()};
+    tempo_utils::AttrKey key{nsUrl->c_str(), attr->attr_id()};
     auto value = parse_attr_value(attr);
     return {key,value};
 }

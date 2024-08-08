@@ -20,6 +20,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     ConceptAddress address,
     TypeHandle *conceptType,
     ConceptSymbol *superConcept,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new ConceptSymbolPriv()),
@@ -32,6 +33,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     auto *priv = getPriv();
     priv->access = access;
     priv->derive = derive;
+    priv->isDeclOnly = isDeclOnly;
     priv->conceptType = conceptType;
     priv->superConcept = superConcept;
     priv->conceptTemplate = nullptr;
@@ -49,6 +51,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     TypeHandle *conceptType,
     TemplateHandle *conceptTemplate,
     ConceptSymbol *superConcept,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : ConceptSymbol(
@@ -58,6 +61,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
         address,
         conceptType,
         superConcept,
+        isDeclOnly,
         parentBlock,
         state)
 {
@@ -91,6 +95,7 @@ lyric_assembler::ConceptSymbol::load()
 
     auto priv = std::make_unique<ConceptSymbolPriv>();
 
+    priv->isDeclOnly = m_conceptImport->isDeclOnly();
     priv->access = lyric_object::AccessType::Public;
     priv->derive = m_conceptImport->getDerive();
 
@@ -171,6 +176,13 @@ lyric_assembler::ConceptSymbol::touch()
     if (getAddress().isValid())
         return;
     m_state->touchConcept(this);
+}
+
+bool
+lyric_assembler::ConceptSymbol::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
 }
 
 lyric_object::AccessType
@@ -278,10 +290,10 @@ lyric_assembler::ConceptSymbol::declareAction(
     // construct action symbol
     ActionSymbol *actionSymbol;
     if (priv->conceptTemplate != nullptr) {
-        actionSymbol = new ActionSymbol(methodUrl, m_conceptUrl, access, address,
-            priv->conceptTemplate, priv->conceptBlock.get(), m_state);
+        actionSymbol = new ActionSymbol(methodUrl, m_conceptUrl, access, address, priv->conceptTemplate,
+            priv->isDeclOnly, priv->conceptBlock.get(), m_state);
     } else {
-        actionSymbol = new ActionSymbol(methodUrl, m_conceptUrl, access, address,
+        actionSymbol = new ActionSymbol(methodUrl, m_conceptUrl, access, address, priv->isDeclOnly,
             priv->conceptBlock.get(), m_state);
     }
 

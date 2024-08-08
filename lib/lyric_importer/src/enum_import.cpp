@@ -8,6 +8,7 @@ namespace lyric_importer {
     struct EnumImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
         bool isAbstract;
+        bool isDeclOnly;
         lyric_object::DeriveType derive;
         TypeImport *enumType;
         lyric_common::SymbolUrl superEnum;
@@ -41,6 +42,13 @@ lyric_importer::EnumImport::isAbstract()
 {
     load();
     return m_priv->isAbstract;
+}
+
+bool
+lyric_importer::EnumImport::isDeclOnly()
+{
+    load();
+    return m_priv->isDeclOnly;
 }
 
 lyric_object::DeriveType
@@ -193,6 +201,7 @@ lyric_importer::EnumImport::load()
     priv->symbolUrl = lyric_common::SymbolUrl(location, enumWalker.getSymbolPath());
 
     priv->isAbstract = enumWalker.isAbstract();
+    priv->isDeclOnly = enumWalker.isDeclOnly();
 
     if (enumWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
         throw tempo_utils::StatusException(

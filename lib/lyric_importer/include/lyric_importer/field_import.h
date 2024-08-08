@@ -11,8 +11,10 @@ namespace lyric_importer {
 
         lyric_common::SymbolUrl getSymbolUrl();
 
-        lyric_object::AccessType getAccess();
+        bool isDeclOnly();
         bool isVariable();
+        lyric_object::AccessType getAccess();
+
         TypeImport *getFieldType();
 
         lyric_common::SymbolUrl getInitializer();

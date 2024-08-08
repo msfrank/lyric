@@ -7,6 +7,7 @@ namespace lyric_importer {
     struct StaticImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
         bool isVariable;
+        bool isDeclOnly;
         TypeImport *staticType;
         lyric_common::SymbolUrl initializer;
     };
@@ -48,6 +49,13 @@ lyric_importer::StaticImport::getInitializer()
     return m_priv->initializer;
 }
 
+bool
+lyric_importer::StaticImport::isDeclOnly()
+{
+    load();
+    return m_priv->isDeclOnly;
+}
+
 void
 lyric_importer::StaticImport::load()
 {
@@ -63,6 +71,7 @@ lyric_importer::StaticImport::load()
     priv->symbolUrl = lyric_common::SymbolUrl(location, staticWalker.getSymbolPath());
 
     priv->isVariable = staticWalker.isVariable();
+    priv->isDeclOnly = staticWalker.isDeclOnly();
 
     priv->staticType = m_moduleImport->getType(staticWalker.getStaticType().getDescriptorOffset());
 

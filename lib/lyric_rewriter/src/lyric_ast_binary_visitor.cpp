@@ -13,8 +13,11 @@ lyric_rewriter::LyricAstBinaryVisitor::LyricAstBinaryVisitor(
 tempo_utils::Status
 lyric_rewriter::LyricAstBinaryVisitor::enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx)
 {
-    if (node->numChildren() != 2)
-        return RewriterStatus::forCondition(RewriterCondition::kSyntaxError, "invalid binary node");
+    if (node->numChildren() != 2) {
+        auto *resource = lyric_schema::kLyricAstVocabulary.getResource(m_astId);
+        return RewriterStatus::forCondition(
+            RewriterCondition::kSyntaxError, "invalid AST node {}; expected binary node", resource->getName());
+    }
 
     TU_RETURN_IF_NOT_OK (invokeEnter(m_astId, node, ctx));
 

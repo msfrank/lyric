@@ -12,8 +12,11 @@ namespace lyric_importer {
         StructImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 structOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
+
         bool isAbstract();
+        bool isDeclOnly();
         lyric_object::DeriveType getDerive();
+
         TypeImport *getStructType();
         lyric_common::SymbolUrl getSuperStruct();
 

@@ -9,7 +9,6 @@
 #include <lyric_build/build_runner.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/config_store.h>
-#include <lyric_build/script_environment.h>
 #include <lyric_build/target_computation.h>
 #include <lyric_build/task_notification.h>
 #include <lyric_build/task_registry.h>

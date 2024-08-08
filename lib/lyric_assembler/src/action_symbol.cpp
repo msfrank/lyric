@@ -10,6 +10,7 @@ lyric_assembler::ActionSymbol::ActionSymbol(
     const lyric_common::SymbolUrl &receiverUrl,
     lyric_object::AccessType access,
     ActionAddress address,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new ActionSymbolPriv()),
@@ -20,6 +21,7 @@ lyric_assembler::ActionSymbol::ActionSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
+    priv->isDeclOnly = isDeclOnly;
     priv->receiverUrl = receiverUrl;
     priv->access = access;
     priv->actionTemplate = nullptr;
@@ -36,6 +38,7 @@ lyric_assembler::ActionSymbol::ActionSymbol(
     lyric_object::AccessType access,
     ActionAddress address,
     TemplateHandle *actionTemplate,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : ActionSymbol(
@@ -43,6 +46,7 @@ lyric_assembler::ActionSymbol::ActionSymbol(
         receiverUrl,
         access,
         address,
+        isDeclOnly,
         parentBlock,
         state)
 {
@@ -70,6 +74,8 @@ lyric_assembler::ActionSymbol::load()
     auto *typeCache = m_state->typeCache();
 
     auto priv = std::make_unique<ActionSymbolPriv>();
+
+    priv->isDeclOnly = m_actionImport->isDeclOnly();
 
     for (auto it = m_actionImport->listParametersBegin(); it != m_actionImport->listParametersEnd(); it++) {
         Parameter p;
@@ -168,6 +174,13 @@ lyric_assembler::ActionSymbol::touch()
     if (getAddress().isValid())
         return;
     m_state->touchAction(this);
+}
+
+bool
+lyric_assembler::ActionSymbol::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
 }
 
 tempo_utils::Status

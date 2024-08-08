@@ -8,6 +8,7 @@ namespace lyric_importer {
     struct ClassImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
         bool isAbstract;
+        bool isDeclOnly;
         lyric_object::DeriveType derive;
         TypeImport *classType;
         TemplateImport *classTemplate;
@@ -42,6 +43,13 @@ lyric_importer::ClassImport::isAbstract()
 {
     load();
     return m_priv->isAbstract;
+}
+
+bool
+lyric_importer::ClassImport::isDeclOnly()
+{
+    load();
+    return m_priv->isDeclOnly;
 }
 
 lyric_object::DeriveType
@@ -202,6 +210,7 @@ lyric_importer::ClassImport::load()
     priv->symbolUrl = lyric_common::SymbolUrl(location, classWalker.getSymbolPath());
 
     priv->isAbstract = classWalker.isAbstract();
+    priv->isDeclOnly = classWalker.isDeclOnly();
 
     if (classWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
         throw tempo_utils::StatusException(

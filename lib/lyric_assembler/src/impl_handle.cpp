@@ -189,10 +189,10 @@ lyric_assembler::ImplHandle::defineExtension(
     TemplateHandle *conceptTemplate = priv->implConcept->conceptTemplate();
     if (conceptTemplate != nullptr) {
         callSymbol = new CallSymbol(methodUrl, priv->receiverUrl, access, address,
-            lyric_object::CallMode::Normal, conceptTemplate, priv->implBlock.get(), m_state);
+            lyric_object::CallMode::Normal, conceptTemplate, priv->isDeclOnly, priv->implBlock.get(), m_state);
     } else {
         callSymbol = new CallSymbol(methodUrl, priv->receiverUrl, access, address,
-            lyric_object::CallMode::Normal, priv->implBlock.get(), m_state);
+            lyric_object::CallMode::Normal, priv->isDeclOnly, priv->implBlock.get(), m_state);
     }
 
     auto status = m_state->appendCall(callSymbol);
@@ -278,6 +278,8 @@ lyric_assembler::ImplHandle::load()
     auto *typeCache = m_state->typeCache();
 
     auto priv = std::make_unique<ImplHandlePriv>();
+
+    priv->isDeclOnly = false;
 
     auto *implType = m_implImport->getImplType();
     TU_ASSIGN_OR_RAISE (priv->implType, typeCache->importType(implType));

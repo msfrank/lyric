@@ -616,12 +616,11 @@ lyric_assembler::BlockHandle::declareStatic(
     staticType->touch();
 
     auto staticUrl = makeSymbolUrl(name);
-
     bool isVariable = bindingType == lyric_parser::BindingType::VARIABLE;
     StaticAddress address;
-    if (!declOnly)
-        address = StaticAddress::near(m_state->numStatics());
-    auto *staticSymbol = new StaticSymbol(staticUrl, isVariable, address, staticType, this, m_state);
+    address = StaticAddress::near(m_state->numStatics());
+
+    auto *staticSymbol = new StaticSymbol(staticUrl, isVariable, address, staticType, declOnly, this, m_state);
     auto status = m_state->appendStatic(staticSymbol);
     if (status.notOk()) {
         delete staticSymbol;
@@ -881,18 +880,16 @@ lyric_assembler::BlockHandle::declareFunction(
         TU_ASSIGN_OR_RETURN (functionTemplate, typeCache->makeTemplate(functionUrl, templateParameters, this));
     }
 
-    CallAddress address;
-    if (!declOnly)
-        address = CallAddress::near(m_state->numCalls());
+    CallAddress address = CallAddress::near(m_state->numCalls());
 
     // create the call
     CallSymbol *callSymbol;
     if (functionTemplate) {
         callSymbol = new CallSymbol(functionUrl, access, address, lyric_object::CallMode::Normal,
-            functionTemplate, this, m_state);
+            functionTemplate, declOnly, this, m_state);
     } else {
         callSymbol = new CallSymbol(functionUrl, access, address, lyric_object::CallMode::Normal,
-            this, m_state);
+            declOnly, this, m_state);
     }
 
     auto status = m_state->appendCall(callSymbol);
@@ -1004,18 +1001,16 @@ lyric_assembler::BlockHandle::declareClass(
             classUrl, {}, superClass->getAssignableType()));
     }
 
-    ClassAddress address;
-    if (!declOnly)
-        address = ClassAddress::near(m_state->numClasses());
+    ClassAddress address = ClassAddress::near(m_state->numClasses());
 
     // create the class
     ClassSymbol *classSymbol;
     if (classTemplate) {
         classSymbol = new ClassSymbol(classUrl, access, derive, isAbstract, address, typeHandle,
-            classTemplate, superClass, this, m_state);
+            classTemplate, superClass, declOnly, this, m_state);
     } else {
         classSymbol = new ClassSymbol(classUrl, access, derive, isAbstract, address,
-            typeHandle, superClass, this, m_state);
+            typeHandle, superClass, declOnly, this, m_state);
     }
 
     auto status = m_state->appendClass(classSymbol);
@@ -1091,18 +1086,16 @@ lyric_assembler::BlockHandle::declareConcept(
             conceptUrl, {}, superConcept->getAssignableType()));
     }
 
-    ConceptAddress address;
-    if (!declOnly)
-        address = ConceptAddress::near(m_state->numConcepts());
+    ConceptAddress address = ConceptAddress::near(m_state->numConcepts());
 
     // create the concept
     ConceptSymbol *conceptSymbol;
     if (conceptTemplate) {
         conceptSymbol = new ConceptSymbol(conceptUrl, access, derive, address, typeHandle,
-            conceptTemplate, superConcept, this, m_state);
+            conceptTemplate, superConcept, declOnly, this, m_state);
     } else {
         conceptSymbol = new ConceptSymbol(conceptUrl, access, derive, address, typeHandle,
-            superConcept, this, m_state);
+            superConcept, declOnly, this, m_state);
     }
 
     auto status = m_state->appendConcept(conceptSymbol);
@@ -1177,13 +1170,11 @@ lyric_assembler::BlockHandle::declareEnum(
     TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
         enumUrl, {}, superEnum->getAssignableType()));
 
-    EnumAddress address;
-    if (!declOnly)
-        address = EnumAddress::near(m_state->numEnums());
+    EnumAddress address = EnumAddress::near(m_state->numEnums());
 
     // create the instance
     auto *enumSymbol = new EnumSymbol(enumUrl, access, derive, isAbstract, address, typeHandle,
-        superEnum, this, m_state);
+        superEnum, declOnly, this, m_state);
 
     auto status = m_state->appendEnum(enumSymbol);
     if (status.notOk()) {
@@ -1258,13 +1249,11 @@ lyric_assembler::BlockHandle::declareInstance(
     TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
         instanceUrl, {}, superInstance->getAssignableType()));
 
-    InstanceAddress address;
-    if (!declOnly)
-        address = InstanceAddress::near(m_state->numInstances());
+    InstanceAddress address = InstanceAddress::near(m_state->numInstances());
 
     // create the instance
     auto *instanceSymbol = new InstanceSymbol(instanceUrl, access, derive, isAbstract, address, typeHandle,
-        superInstance, this, m_state);
+        superInstance, declOnly, this, m_state);
 
     auto status = m_state->appendInstance(instanceSymbol);
     if (status.notOk()) {
@@ -1339,13 +1328,11 @@ lyric_assembler::BlockHandle::declareStruct(
     TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
         structUrl, {}, superStruct->getAssignableType()));
 
-    StructAddress address;
-    if (!declOnly)
-        address = StructAddress::near(m_state->numStructs());
+    StructAddress address = StructAddress::near(m_state->numStructs());
 
     // create the struct
     auto *structSymbol = new StructSymbol(structUrl, access, derive, isAbstract, address,
-        typeHandle, superStruct, this, m_state);
+        typeHandle, superStruct, declOnly, this, m_state);
 
     auto status = m_state->appendStruct(structSymbol);
     if (status.notOk()) {

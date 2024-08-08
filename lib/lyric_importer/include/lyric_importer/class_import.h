@@ -12,8 +12,11 @@ namespace lyric_importer {
         ClassImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 classOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
+
         bool isAbstract();
+        bool isDeclOnly();
         lyric_object::DeriveType getDerive();
+
         TypeImport *getClassType();
         TemplateImport *getClassTemplate();
         lyric_common::SymbolUrl getSuperClass();

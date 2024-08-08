@@ -19,7 +19,6 @@ namespace lyric_object {
         StaticWalker(const StaticWalker &other);
 
         bool isValid() const;
-
         bool isVariable() const;
         bool isDeclOnly() const;
 

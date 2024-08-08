@@ -13,7 +13,7 @@
 #include <tempo_test/status_matchers.h>
 #include <tempo_test/result_matchers.h>
 
-TEST(AnalyzeBlock, NoDefinitionsOrImports)
+TEST(AnalyzeBlock, NoDefinitions)
 {
     lyric_parser::LyricParser parser({});
     auto recorder = tempo_tracing::TraceRecorder::create();
@@ -37,6 +37,5 @@ TEST(AnalyzeBlock, NoDefinitionsOrImports)
     TU_ASSIGN_OR_RAISE (object, analyzer.analyzeModule(location, archetype, assemblyStateOptions, recorder));
 
     auto root = object.getObject();
-    ASSERT_EQ (0, root.numSymbols());
-    ASSERT_EQ (0, root.numImports());
+    ASSERT_EQ (2, root.numSymbols());
 }

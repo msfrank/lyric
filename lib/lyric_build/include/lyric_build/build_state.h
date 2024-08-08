@@ -9,7 +9,6 @@
 #include <lyric_build/abstract_filesystem.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/rocksdb_cache.h>
-#include <lyric_build/script_environment.h>
 #include <lyric_importer/module_cache.h>
 #include <lyric_packaging/package_loader.h>
 #include <lyric_runtime/abstract_loader.h>

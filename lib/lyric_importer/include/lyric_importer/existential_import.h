@@ -10,7 +10,10 @@ namespace lyric_importer {
         ExistentialImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 existentialOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
+
+        bool isDeclOnly();
         lyric_object::DeriveType getDerive();
+
         TypeImport *getExistentialType();
         TemplateImport *getExistentialTemplate();
         lyric_common::SymbolUrl getSuperExistential();

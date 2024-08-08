@@ -20,6 +20,7 @@ namespace lyric_assembler {
         lyric_object::AccessType access;
         lyric_object::DeriveType derive;
         bool isAbstract;
+        bool isDeclOnly;
         TypeHandle *enumType;
         EnumSymbol *superEnum;
         tu_uint32 allocatorTrap;
@@ -42,6 +43,7 @@ namespace lyric_assembler {
             EnumAddress address,
             TypeHandle *enumType,
             EnumSymbol *superEnum,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
         EnumSymbol(
@@ -60,6 +62,7 @@ namespace lyric_assembler {
         lyric_object::AccessType getAccessType() const;
         lyric_object::DeriveType getDeriveType() const;
         bool isAbstract() const;
+        bool isDeclOnly() const;
 
         TypeHandle *enumType() const;
         EnumSymbol *superEnum() const;

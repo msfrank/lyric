@@ -14,8 +14,8 @@ lyric_rewriter::LyricAstIfVisitor::LyricAstIfVisitor(
 tempo_utils::Status
 lyric_rewriter::LyricAstIfVisitor::enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx)
 {
-    if (node->numChildren() != 2)
-        return RewriterStatus::forCondition(RewriterCondition::kSyntaxError, "invalid binary node");
+    if (node->numChildren() < 1)
+        return RewriterStatus::forCondition(RewriterCondition::kSyntaxError, "invalid If node");
 
     TU_RETURN_IF_NOT_OK (invokeEnter(m_astId, node, ctx));
 
@@ -30,15 +30,14 @@ lyric_rewriter::LyricAstIfVisitor::enter(lyric_parser::ArchetypeNode *node, Visi
         ctx.push(-1, defaultNode, visitor);
     }
 
-    auto *child1 = node->getChild(1);
-    std::shared_ptr<AbstractNodeVisitor> visitor1;
-    TU_ASSIGN_OR_RETURN (visitor1, makeVisitor(child1));
-    ctx.push(1, child1, visitor1);
-
-    auto *child0 = node->getChild(0);
-    std::shared_ptr<AbstractNodeVisitor> visitor0;
-    TU_ASSIGN_OR_RETURN (visitor0, makeVisitor(child0));
-    ctx.push(0, child0, visitor0);
+    auto index = node->numChildren();
+    while (0 < index) {
+        index--;
+        auto *child = node->getChild(index);
+        std::shared_ptr<AbstractNodeVisitor> visitor;
+        TU_ASSIGN_OR_RETURN (visitor, makeVisitor(child));
+        ctx.push(index, child, visitor);
+    }
 
     return {};
 }

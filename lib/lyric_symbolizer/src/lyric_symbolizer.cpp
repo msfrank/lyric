@@ -1,9 +1,8 @@
 
 #include <lyric_assembler/assembly_state.h>
 #include <lyric_rewriter/lyric_rewriter.h>
-#include <lyric_symbolizer/internal/symbolize_module.h>
-#include <lyric_symbolizer/internal/entry_point.h>
 #include <lyric_symbolizer/lyric_symbolizer.h>
+#include <lyric_symbolizer/symbolizer_result.h>
 #include <lyric_symbolizer/symbolizer_scan_driver.h>
 #include <tempo_utils/log_stream.h>
 
@@ -55,7 +54,7 @@ lyric_symbolizer::LyricSymbolizer::symbolizeModule(
 
         lyric_rewriter::RewriterOptions rewriterOptions;
         lyric_rewriter::LyricRewriter rewriter(rewriterOptions);
-        rewriter.scanArchetype(archetype, location.toUrl(), symbolizerDriver, recorder);
+        TU_RETURN_IF_NOT_OK (rewriter.scanArchetype(archetype, location.toUrl(), symbolizerDriver, recorder));
 
         // construct object from assembly state and return it
         return assemblyState.toAssembly();

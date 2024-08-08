@@ -20,6 +20,7 @@ namespace lyric_assembler {
         lyric_object::AccessType access = lyric_object::AccessType::Invalid;
         lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
         bool isAbstract = false;
+        bool isDeclOnly = false;
         TypeHandle *classType = nullptr;
         TemplateHandle *classTemplate = nullptr;
         ClassSymbol *superClass = nullptr;
@@ -42,6 +43,7 @@ namespace lyric_assembler {
             ClassAddress address,
             TypeHandle *classType,
             ClassSymbol *superClass,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
 
@@ -54,6 +56,7 @@ namespace lyric_assembler {
             TypeHandle *classType,
             TemplateHandle *classTemplate,
             ClassSymbol *superClass,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
 
@@ -73,6 +76,7 @@ namespace lyric_assembler {
         lyric_object::AccessType getAccessType() const;
         lyric_object::DeriveType getDeriveType() const;
         bool isAbstract() const;
+        bool isDeclOnly() const;
 
         ClassSymbol *superClass() const;
         TypeHandle *classType() const;

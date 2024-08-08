@@ -20,6 +20,7 @@ namespace lyric_assembler {
         lyric_object::AccessType access;
         lyric_object::DeriveType derive;
         bool isAbstract;
+        bool isDeclOnly;
         TypeHandle *instanceType;
         InstanceSymbol *superInstance;
         tu_uint32 allocatorTrap;
@@ -42,6 +43,7 @@ namespace lyric_assembler {
             InstanceAddress address,
             TypeHandle *instanceType,
             InstanceSymbol *superInstance,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
         InstanceSymbol(
@@ -60,6 +62,7 @@ namespace lyric_assembler {
         lyric_object::AccessType getAccessType() const;
         lyric_object::DeriveType getDeriveType() const;
         bool isAbstract() const;
+        bool isDeclOnly() const;
 
         TypeHandle *instanceType() const;
         InstanceSymbol *superInstance() const;

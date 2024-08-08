@@ -21,6 +21,7 @@ namespace lyric_assembler {
         lyric_object::AccessType access;
         lyric_object::CallMode mode;
         bool isNoReturn;
+        bool isDeclOnly;
         TypeHandle *callType;
         TemplateHandle *callTemplate;
         BlockHandle *parentBlock;
@@ -54,6 +55,7 @@ namespace lyric_assembler {
             CallAddress address,
             lyric_object::CallMode mode,
             TemplateHandle *callTemplate,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
 
@@ -63,6 +65,7 @@ namespace lyric_assembler {
             lyric_object::AccessType access,
             CallAddress address,
             lyric_object::CallMode mode,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
 
@@ -72,6 +75,7 @@ namespace lyric_assembler {
             CallAddress address,
             lyric_object::CallMode mode,
             TemplateHandle *callTemplate,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
 
@@ -80,6 +84,7 @@ namespace lyric_assembler {
             lyric_object::AccessType access,
             CallAddress address,
             lyric_object::CallMode mode,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state);
 
@@ -108,6 +113,7 @@ namespace lyric_assembler {
         bool isBound() const;
         bool isInline() const;
         bool isCtor() const;
+        bool isDeclOnly() const;
 
         AbstractResolver *callResolver();
         TypeHandle *callType();

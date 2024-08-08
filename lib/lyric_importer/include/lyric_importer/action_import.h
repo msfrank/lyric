@@ -11,6 +11,9 @@ namespace lyric_importer {
         ActionImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 actionOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
+
+        bool isDeclOnly();
+
         lyric_common::SymbolUrl getReceiverUrl();
         TemplateImport *getActionTemplate();
         TypeImport *getReturnType();

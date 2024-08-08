@@ -25,6 +25,7 @@ lyric_assembler::EnumSymbol::EnumSymbol(
     EnumAddress address,
     TypeHandle *enumType,
     EnumSymbol *superEnum,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new EnumSymbolPriv()),
@@ -38,6 +39,7 @@ lyric_assembler::EnumSymbol::EnumSymbol(
     priv->access = access;
     priv->derive = derive;
     priv->isAbstract = isAbstract;
+    priv->isDeclOnly = isDeclOnly;
     priv->enumType = enumType;
     priv->superEnum = superEnum;
     priv->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
@@ -70,6 +72,7 @@ lyric_assembler::EnumSymbol::load()
     priv->access = lyric_object::AccessType::Public;
     priv->derive = m_enumImport->getDerive();
     priv->isAbstract = m_enumImport->isAbstract();
+    priv->isDeclOnly = m_enumImport->isDeclOnly();
 
     auto *enumType = m_enumImport->getEnumType();
     TU_ASSIGN_OR_RAISE (priv->enumType, typeCache->importType(enumType));
@@ -179,6 +182,13 @@ lyric_assembler::EnumSymbol::isAbstract() const
     return priv->isAbstract;
 }
 
+bool
+lyric_assembler::EnumSymbol::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
+}
+
 lyric_assembler::TypeHandle *
 lyric_assembler::EnumSymbol::enumType() const
 {
@@ -268,9 +278,11 @@ lyric_assembler::EnumSymbol::declareMember(
     // construct the field symbol
     FieldSymbol *fieldSymbol;
     if (init.isValid()) {
-        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, init, address, fieldType, m_state);
+        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, init, address,
+            fieldType, priv->isDeclOnly, m_state);
     } else {
-        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, address, fieldType, m_state);
+        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, address,
+            fieldType, priv->isDeclOnly, m_state);
     }
 
     auto status = m_state->appendField(fieldSymbol);
@@ -409,7 +421,7 @@ lyric_assembler::EnumSymbol::declareCtor(
 
     // construct call symbol
     auto *ctorSymbol = new CallSymbol(ctorUrl, m_enumUrl, access, address,
-        lyric_object::CallMode::Constructor, priv->enumBlock.get(), m_state);
+        lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
     auto status = m_state->appendCall(ctorSymbol);
     if (status.notOk()) {
@@ -509,7 +521,7 @@ lyric_assembler::EnumSymbol::declareMethod(
 
     // construct call symbol
     auto *callSymbol = new CallSymbol(methodUrl, m_enumUrl, access, address,
-        lyric_object::CallMode::Normal, priv->enumBlock.get(), m_state);
+        lyric_object::CallMode::Normal, priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
     auto status = m_state->appendCall(callSymbol);
     if (status.notOk()) {

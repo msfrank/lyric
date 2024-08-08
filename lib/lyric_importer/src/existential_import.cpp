@@ -8,6 +8,7 @@
 namespace lyric_importer {
     struct ExistentialImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
+        bool isDeclOnly;
         lyric_object::DeriveType derive;
         TypeImport *existentialType;
         TemplateImport *existentialTemplate;
@@ -33,6 +34,13 @@ lyric_importer::ExistentialImport::getSymbolUrl()
 {
     load();
     return m_priv->symbolUrl;
+}
+
+bool
+lyric_importer::ExistentialImport::isDeclOnly()
+{
+    load();
+    return m_priv->isDeclOnly;
 }
 
 lyric_object::DeriveType
@@ -148,6 +156,8 @@ lyric_importer::ExistentialImport::load()
     auto location = m_moduleImport->getLocation();
     auto existentialWalker = m_moduleImport->getObject().getObject().getExistential(m_existentialOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, existentialWalker.getSymbolPath());
+
+    priv->isDeclOnly = existentialWalker.isDeclOnly();
 
     if (existentialWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
         throw tempo_utils::StatusException(

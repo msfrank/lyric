@@ -24,19 +24,26 @@ write_static(
 
     lyo1::StaticFlags staticFlags = lyo1::StaticFlags::NONE;
 
-    if (!staticSymbol->getAddress().isValid())
-        staticFlags |= lyo1::StaticFlags::DeclOnly;
-    if (staticSymbol->isVariable())
+    if (staticSymbol->isVariable()) {
         staticFlags |= lyo1::StaticFlags::Var;
+    }
 
-    // get static initializer
-    auto initializerUrl = staticSymbol->getInitializer();
-    lyric_assembler::AbstractSymbol *initializer;
-    TU_ASSIGN_OR_RETURN (initializer, symbolCache->getOrImportSymbol(initializerUrl));
-    if (initializer->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing static init");
-    auto initCall = cast_symbol_to_call(initializer)->getAddress().getAddress();
+    tu_uint32 initCall = lyric_object::INVALID_ADDRESS_U32;
+
+    if (!staticSymbol->isDeclOnly()) {
+
+        // get static initializer
+        auto initializerUrl = staticSymbol->getInitializer();
+        lyric_assembler::AbstractSymbol *initializer;
+        TU_ASSIGN_OR_RETURN (initializer, symbolCache->getOrImportSymbol(initializerUrl));
+        if (initializer->getSymbolType() != lyric_assembler::SymbolType::CALL)
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing static init");
+        initCall = cast_symbol_to_call(initializer)->getAddress().getAddress();
+
+    } else {
+        staticFlags |= lyo1::StaticFlags::DeclOnly;
+    }
 
     // add static descriptor
     statics_vector.push_back(lyo1::CreateStaticDescriptor(buffer,

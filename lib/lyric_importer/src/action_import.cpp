@@ -7,6 +7,7 @@ namespace lyric_importer {
     struct ActionImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
         lyric_common::SymbolUrl receiverUrl;
+        bool isDeclOnly;
         TemplateImport *actionTemplate;
         TypeImport *returnType;
         std::vector<Parameter> listParameters;
@@ -31,6 +32,13 @@ lyric_importer::ActionImport::getSymbolUrl()
 {
     load();
     return m_priv->symbolUrl;
+}
+
+bool
+lyric_importer::ActionImport::isDeclOnly()
+{
+    load();
+    return m_priv->isDeclOnly;
 }
 
 lyric_common::SymbolUrl
@@ -171,6 +179,8 @@ lyric_importer::ActionImport::load()
     auto location = m_moduleImport->getLocation();
     auto actionWalker = m_moduleImport->getObject().getObject().getAction(m_actionOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, actionWalker.getSymbolPath());
+
+    priv->isDeclOnly = actionWalker.isDeclOnly();
 
     auto receiver = actionWalker.getReceiver();
     switch (receiver.getLinkageSection()) {
