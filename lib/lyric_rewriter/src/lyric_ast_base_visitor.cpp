@@ -2,6 +2,7 @@
 #include <lyric_rewriter/lyric_ast_base_visitor.h>
 #include <lyric_rewriter/lyric_ast_binary_visitor.h>
 #include <lyric_rewriter/lyric_ast_cond_visitor.h>
+#include <lyric_rewriter/lyric_ast_defclass_visitor.h>
 #include <lyric_rewriter/lyric_ast_dynamic_visitor.h>
 #include <lyric_rewriter/lyric_ast_for_visitor.h>
 #include <lyric_rewriter/lyric_ast_if_visitor.h>
@@ -138,9 +139,13 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
             visitor = std::make_shared<LyricAstForVisitor>(astId, m_options);
             break;
 
+        // definition forms
+        case lyric_schema::LyricAstId::DefClass:
+            visitor = std::make_shared<LyricAstDefclassVisitor>(astId, m_options);
+            break;
+
         // dynamic forms
         case lyric_schema::LyricAstId::Call:
-        case lyric_schema::LyricAstId::DefClass:
         case lyric_schema::LyricAstId::DefConcept:
         case lyric_schema::LyricAstId::DefEnum:
         case lyric_schema::LyricAstId::DefInstance:

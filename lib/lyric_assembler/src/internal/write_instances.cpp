@@ -28,7 +28,7 @@ write_instance(
     }
 
     lyo1::InstanceFlags instanceFlags = lyo1::InstanceFlags::NONE;
-    if (!instanceSymbol->getAddress().isValid())
+    if (instanceSymbol->isDeclOnly())
         instanceFlags |= lyo1::InstanceFlags::DeclOnly;
     switch (instanceSymbol->getDeriveType()) {
         case lyric_object::DeriveType::Final:

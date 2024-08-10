@@ -598,20 +598,12 @@ lyric_compiler::internal::compile_defclass(
     lyric_assembler::ClassSymbol *superClass;
     TU_ASSIGN_OR_RETURN (superClass, block->resolveClass(superClassType));
 
-    auto declClassResult = block->declareClass(
+    lyric_assembler::ClassSymbol *classSymbol;
+    TU_ASSIGN_OR_RETURN (classSymbol, block->declareClass(
         identifier, superClass, lyric_object::AccessType::Public,
-        templateSpec.templateParameters);
-    if (declClassResult.isStatus())
-        return declClassResult.getStatus();
-    auto classUrl = declClassResult.getResult();
+        templateSpec.templateParameters));
 
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(classUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CLASS)
-        block->throwAssemblerInvariant("invalid class symbol {}", classUrl.toString());
-    auto *classSymbol = cast_symbol_to_class(symbol);
-
-    TU_LOG_INFO << "declared class " << classUrl << " from " << superClass->getSymbolUrl();
+    TU_LOG_INFO << "declared class " << classSymbol->getSymbolUrl() << " from " << superClass->getSymbolUrl();
 
     absl::flat_hash_set<std::string> classMemberNames;
 

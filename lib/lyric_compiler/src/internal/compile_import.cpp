@@ -25,15 +25,8 @@ lyric_compiler::internal::compile_import_module(
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, namespaceIdentifier);
 
     // declare the namespace
-    auto declareNamespaceResult = block->declareNamespace(namespaceIdentifier, lyric_object::AccessType::Public);
-    if (declareNamespaceResult.isStatus())
-        return declareNamespaceResult.getStatus();
-    auto nsUrl = declareNamespaceResult.getResult();
-    lyric_assembler::AbstractSymbol *nsSym;
-    TU_ASSIGN_OR_RETURN (nsSym, state->symbolCache()->getOrImportSymbol(nsUrl));
-    if (nsSym->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
-        block->throwAssemblerInvariant("invalid namespace symbol {}", nsUrl.toString());
-    auto *ns = cast_symbol_to_namespace(nsSym);
+    lyric_assembler::NamespaceSymbol *ns;
+    TU_ASSIGN_OR_RETURN (ns, block->declareNamespace(namespaceIdentifier, lyric_object::AccessType::Public));
     auto *nsBlock = ns->namespaceBlock();
 
     // resolve assembly to absolute location

@@ -28,7 +28,7 @@ write_struct(
     }
 
     lyo1::StructFlags structFlags = lyo1::StructFlags::NONE;
-    if (!structSymbol->getAddress().isValid())
+    if (structSymbol->isDeclOnly())
         structFlags |= lyo1::StructFlags::DeclOnly;
     if (structSymbol->isAbstract())
         structFlags |= lyo1::StructFlags::Abstract;

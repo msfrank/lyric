@@ -11,6 +11,7 @@ namespace lyric_assembler {
 
     struct NamespaceSymbolPriv {
         lyric_object::AccessType access;
+        bool isDeclOnly;
         TypeHandle *namespaceType;
         NamespaceSymbol *superNamespace;
         std::unique_ptr<BlockHandle> namespaceBlock;
@@ -25,6 +26,7 @@ namespace lyric_assembler {
             NamespaceAddress address,
             TypeHandle *nsType,
             NamespaceSymbol *superNs,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             AssemblyState *state,
             bool isRoot);
@@ -48,6 +50,7 @@ namespace lyric_assembler {
         void touch() override;
 
         lyric_object::AccessType getAccessType() const;
+        bool isDeclOnly() const;
 
         NamespaceSymbol *superNamespace() const;
         TypeHandle *namespaceType() const;

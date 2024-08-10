@@ -362,7 +362,6 @@ compile_defenum_case(
     lyric_compiler::ModuleEntry &moduleEntry)
 {
     TU_ASSERT(walker.isValid());
-    auto *state = moduleEntry.getState();
 
     moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstCaseClass, 1);
 
@@ -374,19 +373,11 @@ compile_defenum_case(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(caseCall, lyric_parser::kLyricAstIdentifier, identifier);
 
-    auto declCaseResult = block->declareEnum(identifier, baseEnum,
-        lyric_object::AccessType::Public, lyric_object::DeriveType::Final);
-    if (declCaseResult.isStatus())
-        return declCaseResult.getStatus();
-    auto enumCaseUrl = declCaseResult.getResult();
+    lyric_assembler::EnumSymbol *caseEnum;
+    TU_ASSIGN_OR_RETURN (caseEnum, block->declareEnum(
+        identifier, baseEnum, lyric_object::AccessType::Public, lyric_object::DeriveType::Final));
 
-    lyric_assembler::AbstractSymbol *enumCaseSym;
-    TU_ASSIGN_OR_RETURN (enumCaseSym, state->symbolCache()->getOrImportSymbol(enumCaseUrl));
-    if (enumCaseSym->getSymbolType() != lyric_assembler::SymbolType::ENUM)
-        block->throwAssemblerInvariant("invalid enum symbol {}", enumCaseUrl.toString());
-    auto *caseEnum = cast_symbol_to_enum(enumCaseSym);
-
-    TU_LOG_INFO << "declared enum case " << identifier << " with url " << enumCaseUrl;
+    TU_LOG_INFO << "declared enum case " << caseEnum->getSymbolUrl() << " from " << baseEnum->getSymbolUrl();
 
     // add case to set of sealed subtypes
     auto status = baseEnum->putSealedType(caseEnum->getAssignableType());
@@ -584,19 +575,11 @@ lyric_compiler::internal::compile_defenum(
     auto *categoryEnum = cast_symbol_to_enum(categorySym);
 
     // declare the base enum
-    auto declareBaseEnum = block->declareEnum(identifier, categoryEnum,
-        lyric_object::AccessType::Public, lyric_object::DeriveType::Sealed);
-    if (declareBaseEnum.isStatus())
-        return declareBaseEnum.getStatus();
-    auto baseEnumUrl = declareBaseEnum.getResult();
+    lyric_assembler::EnumSymbol *baseEnum;
+    TU_ASSIGN_OR_RETURN (baseEnum, block->declareEnum(
+        identifier, categoryEnum, lyric_object::AccessType::Public, lyric_object::DeriveType::Sealed));
 
-    lyric_assembler::AbstractSymbol *baseEnumSym;
-    TU_ASSIGN_OR_RETURN (baseEnumSym, state->symbolCache()->getOrImportSymbol(baseEnumUrl));
-    if (baseEnumSym->getSymbolType() != lyric_assembler::SymbolType::ENUM)
-        block->throwAssemblerInvariant("invalid enum symbol {}", baseEnumUrl.toString());
-    auto *baseEnum = cast_symbol_to_enum(baseEnumSym);
-
-    TU_LOG_INFO << "declared base enum " << identifier << " with url " << baseEnumUrl;
+    TU_LOG_INFO << "declared base enum " << baseEnum->getSymbolUrl();
 
     std::vector<std::string> members;
     tempo_utils::Status status;

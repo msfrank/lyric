@@ -9,9 +9,7 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
 #include <lyric_test/lyric_tester.h>
-#include <lyric_test/matchers.h>
 #include <tempo_test/status_matchers.h>
-#include <tempo_test/result_matchers.h>
 
 TEST(AnalyzeBlock, NoDefinitions)
 {

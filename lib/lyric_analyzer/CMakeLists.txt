@@ -7,16 +7,25 @@ add_library(lyric_analyzer SHARED)
 add_library(lyric::lyric_analyzer ALIAS lyric_analyzer)
 
 set(LYRIC_ANALYZER_INCLUDES
+    include/lyric_analyzer/abstract_analyzer_context.h
     include/lyric_analyzer/analyzer_result.h
     include/lyric_analyzer/analyzer_scan_driver.h
+    include/lyric_analyzer/class_analyzer_context.h
+    include/lyric_analyzer/entry_analyzer_context.h
+    include/lyric_analyzer/function_analyzer_context.h
     include/lyric_analyzer/lyric_analyzer.h
+    include/lyric_analyzer/namespace_analyzer_context.h
     )
 set_target_properties(lyric_analyzer PROPERTIES PUBLIC_HEADER "${LYRIC_ANALYZER_INCLUDES}")
 
 target_sources(lyric_analyzer PRIVATE
     src/analyzer_result.cpp
     src/analyzer_scan_driver.cpp
+    src/class_analyzer_context.cpp
+    src/entry_analyzer_context.cpp
+    src/function_analyzer_context.cpp
     src/lyric_analyzer.cpp
+    src/namespace_analyzer_context.cpp
 
     include/lyric_analyzer/internal/analyze_def.h
     src/internal/analyze_def.cpp

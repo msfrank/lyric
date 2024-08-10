@@ -4,12 +4,22 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 #include <lyric_symbolizer/symbolizer_scan_driver.h>
+#include <lyric_symbolizer/symbolizer_result.h>
 
 lyric_symbolizer::SymbolizerScanDriver::SymbolizerScanDriver(lyric_assembler::AssemblyState *state)
     : m_state(state),
       m_entry(nullptr)
 {
     TU_ASSERT (m_state != nullptr);
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::arrange(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children)
+{
+    return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant);
 }
 
 tempo_utils::Status

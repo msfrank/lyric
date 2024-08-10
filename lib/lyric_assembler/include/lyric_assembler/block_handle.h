@@ -122,7 +122,7 @@ namespace lyric_assembler {
             const std::string &name,
             CallableInvoker &invoker);
 
-        tempo_utils::Result<lyric_common::SymbolUrl> declareClass(
+        tempo_utils::Result<ClassSymbol *> declareClass(
             const std::string &name,
             ClassSymbol *superClass,
             lyric_object::AccessType access,
@@ -133,7 +133,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<ClassSymbol *> resolveClass(const lyric_common::TypeDef &classType);
 
-        tempo_utils::Result<lyric_common::SymbolUrl> declareConcept(
+        tempo_utils::Result<ConceptSymbol *> declareConcept(
             const std::string &name,
             ConceptSymbol *superConcept,
             lyric_object::AccessType access,
@@ -143,7 +143,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<ConceptSymbol *> resolveConcept(const lyric_common::TypeDef &conceptType);
 
-        tempo_utils::Result<lyric_common::SymbolUrl> declareEnum(
+        tempo_utils::Result<EnumSymbol *> declareEnum(
             const std::string &name,
             EnumSymbol *superEnum,
             lyric_object::AccessType access,
@@ -153,7 +153,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<SymbolBinding> resolveEnum(const lyric_common::TypeDef &enumType);
 
-        tempo_utils::Result<lyric_common::SymbolUrl> declareInstance(
+        tempo_utils::Result<InstanceSymbol *> declareInstance(
             const std::string &name,
             InstanceSymbol *superInstance,
             lyric_object::AccessType access,
@@ -163,7 +163,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<SymbolBinding> resolveInstance(const lyric_common::TypeDef &instanceType);
 
-        tempo_utils::Result<lyric_common::SymbolUrl> declareStruct(
+        tempo_utils::Result<StructSymbol *> declareStruct(
             const std::string &name,
             StructSymbol *superStruct,
             lyric_object::AccessType access,
@@ -183,9 +183,10 @@ namespace lyric_assembler {
             const lyric_common::TypeDef &implType,
             ResolveMode mode = ResolveMode::kDefault);
 
-        tempo_utils::Result<lyric_common::SymbolUrl> declareNamespace(
+        tempo_utils::Result<NamespaceSymbol *> declareNamespace(
             const std::string &name,
-            lyric_object::AccessType access);
+            lyric_object::AccessType access,
+            bool declOnly = false);
 
         tempo_utils::Result<SymbolBinding> declareAlias(
             const std::string &alias,

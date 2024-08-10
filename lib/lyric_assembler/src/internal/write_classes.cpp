@@ -32,7 +32,7 @@ write_class(
     }
 
     lyo1::ClassFlags classFlags = lyo1::ClassFlags::NONE;
-    if (!classSymbol->getAddress().isValid())
+    if (classSymbol->isDeclOnly())
         classFlags |= lyo1::ClassFlags::DeclOnly;
     if (classSymbol->isAbstract())
         classFlags |= lyo1::ClassFlags::Abstract;

@@ -10,7 +10,7 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-TEST(AnalyzeStatic, DeclareStaticVal)
+TEST(AnalyzeFunction, DeclareFunction)
 {
     lyric_test::TesterOptions testerOptions;
     testerOptions.buildConfig = tempo_config::ConfigMap{
@@ -24,7 +24,7 @@ TEST(AnalyzeStatic, DeclareStaticVal)
     ASSERT_TRUE (tester.configure().isOk());
 
     auto analyzeModuleResult = tester.analyzeModule(R"(
-        val Static: Int = 0
+        def Identity(x: Int): Int { return x }
     )");
     ASSERT_THAT (analyzeModuleResult,
         tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
@@ -33,15 +33,21 @@ TEST(AnalyzeStatic, DeclareStaticVal)
     auto object = analyzeModule.getAssembly();
     auto root = object.getObject();
     ASSERT_EQ (3, root.numSymbols());
-    ASSERT_EQ (1, root.numStatics());
+    ASSERT_EQ (2, root.numCalls());
 
-    auto static0 = root.getStatic(0);
-    ASSERT_EQ (lyric_common::SymbolPath({"Static"}), static0.getSymbolPath());
-    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), static0.getStaticType().getTypeDef());
-    ASSERT_FALSE (static0.isVariable());
+    auto call1 = root.getCall(1);
+    ASSERT_TRUE (call1.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Identity"}), call1.getSymbolPath());
+    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), call1.getResultType().getTypeDef());
+
+    ASSERT_EQ (1, call1.numListParameters());
+    ASSERT_EQ (0, call1.numNamedParameters());
+    auto param0 = call1.getListParameter(0);
+    ASSERT_EQ ("x", param0.getParameterName());
+    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), param0.getParameterType().getTypeDef());
 }
 
-TEST(AnalyzeStatic, DeclareStaticVar)
+TEST(AnalyzeFunction, DeclareGenericFunction)
 {
     lyric_test::TesterOptions testerOptions;
     testerOptions.buildConfig = tempo_config::ConfigMap{
@@ -55,20 +61,25 @@ TEST(AnalyzeStatic, DeclareStaticVar)
     ASSERT_TRUE (tester.configure().isOk());
 
     auto analyzeModuleResult = tester.analyzeModule(R"(
-        var Static: Int = 0
+        def Identity[T](x: T): T { return x }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getAssembly();
     auto root = object.getObject();
     ASSERT_EQ (3, root.numSymbols());
-    ASSERT_EQ (1, root.numStatics());
+    ASSERT_EQ (2, root.numCalls());
 
-    auto static0 = root.getStatic(0);
-    ASSERT_TRUE (static0.isDeclOnly());
-    ASSERT_EQ (lyric_common::SymbolPath({"Static"}), static0.getSymbolPath());
-    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), static0.getStaticType().getTypeDef());
-    ASSERT_TRUE (static0.isVariable());
+    auto call1 = root.getCall(1);
+    ASSERT_TRUE (call1.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Identity"}), call1.getSymbolPath());
+    ASSERT_EQ (lyric_common::TypeDef::forPlaceholder(0, lyric_common::SymbolUrl::fromString("#Identity")), call1.getResultType().getTypeDef());
+
+    ASSERT_EQ (1, call1.numListParameters());
+    ASSERT_EQ (0, call1.numNamedParameters());
+    auto param0 = call1.getListParameter(0);
+    ASSERT_EQ ("x", param0.getParameterName());
+    ASSERT_EQ (lyric_common::TypeDef::forPlaceholder(0, lyric_common::SymbolUrl::fromString("#Identity")), param0.getParameterType().getTypeDef());
 }

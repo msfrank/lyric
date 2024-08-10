@@ -30,8 +30,8 @@ rewrite_arrange(
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children,
     void *data)
 {
-    TU_LOG_INFO << "arrange " << lyric_schema::kLyricAstVocabulary.getResource(astId)->getName() << " children";
-    return {};
+    auto *driverState = static_cast<RewriteDriverState *>(data);
+    return driverState->driver->arrange(driverState->state, node, children);
 }
 
 static tempo_utils::Status
@@ -128,8 +128,8 @@ scan_arrange(
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children,
     void *data)
 {
-    TU_LOG_INFO << "arrange " << lyric_schema::kLyricAstVocabulary.getResource(astId)->getName() << " children";
-    return {};
+    auto *driverState = static_cast<ScanDriverState *>(data);
+    return driverState->driver->arrange(driverState->state, node, children);
 }
 
 static tempo_utils::Status

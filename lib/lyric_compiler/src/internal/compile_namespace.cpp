@@ -32,18 +32,9 @@ lyric_compiler::internal::compile_namespace(
     auto child = walker.getChild(0);
     moduleEntry.checkClassOrThrow(child, lyric_schema::kLyricAstBlockClass);
 
-    auto *state = block->blockState();
-
     // declare the namespace
-    lyric_common::SymbolUrl nsUrl;
-    TU_ASSIGN_OR_RETURN (nsUrl, block->declareNamespace(identifier, lyric_object::AccessType::Public));
-
-    // get the namespace symbol
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(nsUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
-        block->throwAssemblerInvariant("invalid namespace symbol");
-    auto *namespaceSymbol = cast_symbol_to_namespace(symbol);
+    lyric_assembler::NamespaceSymbol *namespaceSymbol;
+    TU_ASSIGN_OR_RETURN (namespaceSymbol, block->declareNamespace(identifier, lyric_object::AccessType::Public));
 
     // compile the namespace block
     TU_RETURN_IF_STATUS (compile_block(namespaceSymbol->namespaceBlock(), child, moduleEntry));

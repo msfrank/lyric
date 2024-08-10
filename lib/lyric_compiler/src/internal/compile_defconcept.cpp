@@ -136,20 +136,12 @@ lyric_compiler::internal::compile_defconcept(
         block->throwAssemblerInvariant("invalid concept symbol");
     auto *superConcept = cast_symbol_to_concept(superconceptSym);
 
-    auto declConceptResult = block->declareConcept(
+    lyric_assembler::ConceptSymbol *conceptSymbol;
+    TU_ASSIGN_OR_RETURN (conceptSymbol, block->declareConcept(
         identifier, superConcept, lyric_object::AccessType::Public,
-        templateSpec.templateParameters);
-    if (declConceptResult.isStatus())
-        return declConceptResult.getStatus();
-    auto conceptUrl = declConceptResult.getResult();
+        templateSpec.templateParameters));
 
-    lyric_assembler::AbstractSymbol *conceptSym;
-    TU_ASSIGN_OR_RETURN (conceptSym, state->symbolCache()->getOrImportSymbol(conceptUrl));
-    if (conceptSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
-        block->throwAssemblerInvariant("invalid concept symbol");
-    auto *conceptSymbol = cast_symbol_to_concept(conceptSym);
-
-    TU_LOG_INFO << "declared concept " << identifier << " with url " << conceptUrl;
+    TU_LOG_INFO << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConcept->getSymbolUrl();
 
     // compile actions
     for (const auto &def : defs) {

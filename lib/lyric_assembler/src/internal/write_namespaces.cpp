@@ -33,7 +33,7 @@ write_namespace(
     }
 
     lyo1::NamespaceFlags namespaceFlags = lyo1::NamespaceFlags::NONE;
-    if (!namespaceSymbol->getAddress().isValid())
+    if (namespaceSymbol->isDeclOnly())
         namespaceFlags |= lyo1::NamespaceFlags::DeclOnly;
 
     auto *namespaceBlock = namespaceSymbol->namespaceBlock();

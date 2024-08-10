@@ -482,19 +482,11 @@ lyric_compiler::internal::compile_definstance(
         block->throwAssemblerInvariant("invalid instance symbol {}", fundamentalSingleton.toString());
     auto *superInstance = cast_symbol_to_instance(superinstanceSym);
 
-    auto declInstanceResult = block->declareInstance(
-        identifier, superInstance, lyric_object::AccessType::Public);
-    if (declInstanceResult.isStatus())
-        return declInstanceResult.getStatus();
-    auto instanceUrl = declInstanceResult.getResult();
+    lyric_assembler::InstanceSymbol *instanceSymbol;
+    TU_ASSIGN_OR_RETURN (instanceSymbol, block->declareInstance(
+        identifier, superInstance, lyric_object::AccessType::Public));
 
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(instanceUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
-        block->throwAssemblerInvariant("invalid instance symbol {}", instanceUrl.toString());
-    auto *instanceSymbol = cast_symbol_to_instance(symbol);
-
-    TU_LOG_INFO << "declared instance " << identifier << " with url " << instanceUrl;
+    TU_LOG_INFO << "declared instance " << instanceSymbol->getSymbolUrl() << " from " << superInstance->getSymbolUrl();
 
     tempo_utils::Status status;
     absl::flat_hash_set<std::string> instanceMemberNames;

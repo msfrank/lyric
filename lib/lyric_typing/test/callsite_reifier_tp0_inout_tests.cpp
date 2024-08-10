@@ -87,12 +87,14 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returns
             fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Object)));
     auto *ObjectClass = lyric_assembler::cast_symbol_to_class(symbol);
 
-    lyric_common::SymbolUrl collectionUrl;
-    TU_ASSIGN_OR_RAISE (collectionUrl,
+    lyric_assembler::ClassSymbol *collectionClass;
+    TU_ASSIGN_OR_RAISE (collectionClass,
         block->declareClass("Collection", ObjectClass, lyric_object::AccessType::Public, {
             {"T", 0, AnyType, lyric_object::VarianceType::Invariant, lyric_object::BoundType::None},
         }));
-    auto CollectionOfTType = lyric_common::TypeDef::forConcrete(collectionUrl, {templateHandle->getPlaceholder(0)});
+    auto collectionUrl = collectionClass->getSymbolUrl();
+    auto CollectionOfTType = lyric_common::TypeDef::forConcrete(
+        collectionUrl, {templateHandle->getPlaceholder(0)});
 
     lyric_assembler::Parameter p0;
     p0.index = 0;

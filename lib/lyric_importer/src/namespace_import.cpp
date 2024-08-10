@@ -5,6 +5,7 @@
 namespace lyric_importer {
     struct NamespaceImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
+        bool isDeclOnly;
         lyric_common::SymbolUrl superNamespace;
         absl::flat_hash_set<lyric_common::SymbolUrl> bindings;
     };
@@ -25,6 +26,13 @@ lyric_importer::NamespaceImport::getSymbolUrl()
 {
     load();
     return m_priv->symbolUrl;
+}
+
+bool
+lyric_importer::NamespaceImport::isDeclOnly()
+{
+    load();
+    return m_priv->isDeclOnly;
 }
 
 lyric_common::SymbolUrl
@@ -68,6 +76,8 @@ lyric_importer::NamespaceImport::load()
     auto location = m_moduleImport->getLocation();
     auto namespaceWalker = m_moduleImport->getObject().getObject().getNamespace(m_namespaceOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, namespaceWalker.getSymbolPath());
+
+    priv->isDeclOnly = namespaceWalker.isDeclOnly();
 
     if (namespaceWalker.hasSuperNamespace()) {
         switch (namespaceWalker.superNamespaceAddressType()) {

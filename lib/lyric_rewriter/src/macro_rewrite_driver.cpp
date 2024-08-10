@@ -12,6 +12,15 @@ lyric_rewriter::MacroRewriteDriver::MacroRewriteDriver(MacroRegistry *registry)
 }
 
 tempo_utils::Status
+lyric_rewriter::MacroRewriteDriver::arrange(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children)
+{
+    return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant);
+}
+
+tempo_utils::Status
 lyric_rewriter::MacroRewriteDriver::enter(
     lyric_parser::ArchetypeState *state,
     lyric_parser::ArchetypeNode *node,

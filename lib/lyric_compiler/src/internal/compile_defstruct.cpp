@@ -609,19 +609,11 @@ lyric_compiler::internal::compile_defstruct(
     lyric_assembler::StructSymbol *superStruct;
     TU_ASSIGN_OR_RETURN (superStruct, block->resolveStruct(superStructType));
 
-    auto declStructResult = block->declareStruct(
-        identifier, superStruct, lyric_object::AccessType::Public);
-    if (declStructResult.isStatus())
-        return declStructResult.getStatus();
-    auto structUrl = declStructResult.getResult();
+    lyric_assembler::StructSymbol *structSymbol;
+    TU_ASSIGN_OR_RETURN (structSymbol, block->declareStruct(
+        identifier, superStruct, lyric_object::AccessType::Public));
 
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(structUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::STRUCT)
-        block->throwAssemblerInvariant("invalid struct symbol {}", structUrl.toString());
-    auto *structSymbol = cast_symbol_to_struct(symbol);
-
-    TU_LOG_INFO << "declared struct " << structUrl << " from " << superStruct->getSymbolUrl();
+    TU_LOG_INFO << "declared struct " << structSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
 
     tempo_utils::Status status;
     absl::flat_hash_set<std::string> structMemberNames;

@@ -5,6 +5,8 @@
 #include <lyric_rewriter/abstract_scan_driver.h>
 #include <lyric_typing/type_system.h>
 
+#include "abstract_analyzer_context.h"
+
 namespace lyric_analyzer {
 
     class AnalyzerScanDriver : public lyric_rewriter::AbstractScanDriver {
@@ -13,6 +15,11 @@ namespace lyric_analyzer {
         ~AnalyzerScanDriver() override;
 
         tempo_utils::Status initialize();
+
+        tempo_utils::Status arrange(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children) override;
 
         tempo_utils::Status enter(
             const lyric_parser::ArchetypeState *state,
@@ -24,18 +31,24 @@ namespace lyric_analyzer {
             const lyric_parser::ArchetypeNode *node,
             const lyric_rewriter::VisitorContext &ctx) override;
 
+        lyric_typing::TypeSystem *getTypeSystem() const;
+
+        AbstractAnalyzerContext *peekContext();
+        tempo_utils::Status pushContext(std::unique_ptr<AbstractAnalyzerContext> ctx);
+        tempo_utils::Status popContext();
+
+        tempo_utils::Status declareStatic(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
+        tempo_utils::Status pushFunction(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
+        tempo_utils::Status pushNamespace(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
+        tempo_utils::Status pushClass(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
+        tempo_utils::Status pushConcept(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
+
     private:
         lyric_assembler::AssemblyState *m_state;
         lyric_assembler::NamespaceSymbol *m_root;
         lyric_assembler::CallSymbol *m_entry;
         lyric_typing::TypeSystem *m_typeSystem;
-        std::vector<lyric_assembler::BlockHandle *> m_blocks;
-
-        tempo_utils::Status declareStatic(const lyric_parser::ArchetypeNode *node, lyric_parser::BindingType binding);
-        tempo_utils::Status pushDefinition(
-            const lyric_parser::ArchetypeNode *node,
-            lyric_object::LinkageSection section);
-        tempo_utils::Status popDefinition();
+        std::vector<std::unique_ptr<AbstractAnalyzerContext>> m_stack;
     };
 }
 

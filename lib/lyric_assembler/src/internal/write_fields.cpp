@@ -24,7 +24,7 @@ write_field(
     lyo1::FieldFlags fieldFlags = lyo1::FieldFlags::NONE;
     if (fieldSymbol->isVariable())
         fieldFlags |= lyo1::FieldFlags::Var;
-    if (!fieldSymbol->getAddress().isValid())
+    if (fieldSymbol->isDeclOnly())
         fieldFlags |= lyo1::FieldFlags::DeclOnly;
     switch (fieldSymbol->getAccessType()) {
         case lyric_object::AccessType::Public:

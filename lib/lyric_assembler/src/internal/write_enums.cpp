@@ -28,7 +28,7 @@ write_enum(
     }
 
     lyo1::EnumFlags enumFlags = lyo1::EnumFlags::NONE;
-    if (!enumSymbol->getAddress().isValid())
+    if (enumSymbol->isDeclOnly())
         enumFlags |= lyo1::EnumFlags::DeclOnly;
     switch (enumSymbol->getDeriveType()) {
         case lyric_object::DeriveType::Final:

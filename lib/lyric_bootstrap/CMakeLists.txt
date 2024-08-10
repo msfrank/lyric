@@ -186,12 +186,14 @@ add_library(lyric::lyric_bootstrap ALIAS lyric_bootstrap)
 add_dependencies(lyric_bootstrap prelude-assembly prelude-plugin)
 
 set(LYRIC_BOOTSTRAP_INCLUDES
+    include/lyric_bootstrap/bootstrap_helpers.h
     include/lyric_bootstrap/bootstrap_loader.h
     include/lyric_bootstrap/bootstrap_result.h
 )
 set_target_properties(lyric_bootstrap PROPERTIES PUBLIC_HEADER "${LYRIC_BOOTSTRAP_INCLUDES}")
 
 target_sources(lyric_bootstrap PRIVATE
+    src/bootstrap_helpers.cpp
     src/bootstrap_loader.cpp
     src/bootstrap_result.cpp
     )
@@ -217,6 +219,7 @@ target_include_directories(lyric_bootstrap PUBLIC
 )
 
 target_compile_definitions(lyric_bootstrap PRIVATE
+    "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_RUNTIME_BOOTSTRAP_DIR=\"${LYRIC_RUNTIME_BOOTSTRAP_DIR}\""
     "ASSEMBLY_PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""
     "ASSEMBLY_PLUGIN_ARCHITECTURE=\"${CMAKE_SYSTEM_PROCESSOR}\""

@@ -32,7 +32,7 @@ write_concept(
     }
 
     lyo1::ConceptFlags conceptFlags = lyo1::ConceptFlags::NONE;
-    if (!conceptSymbol->getAddress().isValid())
+    if (conceptSymbol->isDeclOnly())
         conceptFlags |= lyo1::ConceptFlags::DeclOnly;
 
     // serialize array of actions

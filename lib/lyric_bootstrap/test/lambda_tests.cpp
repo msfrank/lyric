@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
@@ -16,7 +17,7 @@ TEST(CoreLambda, TestEvaluatePureLambda)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellRef(preludeSymbol("Function1")))));
+                     RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Function1")))));
 }
 
 TEST(CoreLambda, TestEvaluateInvokePureLambda)
@@ -43,7 +44,7 @@ TEST(CoreLambda, TestEvaluateLambdaClosure)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellRef(preludeSymbol("Function1")))));
+                     RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Function1")))));
 }
 
 TEST(CoreLambda, TestEvaluateInvokeLambdaClosure)

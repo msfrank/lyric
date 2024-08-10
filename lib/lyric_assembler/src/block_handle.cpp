@@ -952,7 +952,7 @@ lyric_assembler::BlockHandle::prepareExtension(
     throwAssemblerInvariant("resolveExtension is unimplemented");
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
+tempo_utils::Result<lyric_assembler::ClassSymbol *>
 lyric_assembler::BlockHandle::declareClass(
     const std::string &name,
     ClassSymbol *superClass,
@@ -1025,7 +1025,7 @@ lyric_assembler::BlockHandle::declareClass(
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 
-    return classUrl;
+    return classSymbol;
 }
 
 tempo_utils::Result<lyric_assembler::ClassSymbol *>
@@ -1050,7 +1050,7 @@ lyric_assembler::BlockHandle::resolveClass(const lyric_common::TypeDef &classTyp
     return cast_symbol_to_class(symbol);
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
+tempo_utils::Result<lyric_assembler::ConceptSymbol *>
 lyric_assembler::BlockHandle::declareConcept(
     const std::string &name,
     ConceptSymbol *superConcept,
@@ -1110,7 +1110,7 @@ lyric_assembler::BlockHandle::declareConcept(
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 
-    return conceptUrl;
+    return conceptSymbol;
 }
 
 tempo_utils::Result<lyric_assembler::ConceptSymbol *>
@@ -1135,7 +1135,7 @@ lyric_assembler::BlockHandle::resolveConcept(const lyric_common::TypeDef &concep
     return cast_symbol_to_concept(symbol);
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
+tempo_utils::Result<lyric_assembler::EnumSymbol *>
 lyric_assembler::BlockHandle::declareEnum(
     const std::string &name,
     EnumSymbol *superEnum,
@@ -1188,7 +1188,7 @@ lyric_assembler::BlockHandle::declareEnum(
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 
-    return enumUrl;
+    return enumSymbol;
 }
 
 tempo_utils::Result<lyric_assembler::SymbolBinding>
@@ -1214,7 +1214,7 @@ lyric_assembler::BlockHandle::resolveEnum(const lyric_common::TypeDef &enumType)
     return SymbolBinding(enumUrl, enumSymbol->getAssignableType(), BindingType::Value);
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
+tempo_utils::Result<lyric_assembler::InstanceSymbol *>
 lyric_assembler::BlockHandle::declareInstance(
     const std::string &name,
     InstanceSymbol *superInstance,
@@ -1267,7 +1267,7 @@ lyric_assembler::BlockHandle::declareInstance(
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 
-    return instanceUrl;
+    return instanceSymbol;
 }
 
 tempo_utils::Result<lyric_assembler::SymbolBinding>
@@ -1293,7 +1293,7 @@ lyric_assembler::BlockHandle::resolveInstance(const lyric_common::TypeDef &insta
     return SymbolBinding(instanceUrl, instanceSymbol->getAssignableType(), BindingType::Value);
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
+tempo_utils::Result<lyric_assembler::StructSymbol *>
 lyric_assembler::BlockHandle::declareStruct(
     const std::string &name,
     StructSymbol *superStruct,
@@ -1346,7 +1346,7 @@ lyric_assembler::BlockHandle::declareStruct(
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 
-    return structUrl;
+    return structSymbol;
 }
 
 tempo_utils::Result<lyric_assembler::StructSymbol *>
@@ -1688,10 +1688,11 @@ lyric_assembler::BlockHandle::declareAlias(
     return binding;
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
+tempo_utils::Result<lyric_assembler::NamespaceSymbol *>
 lyric_assembler::BlockHandle::declareNamespace(
     const std::string &name,
-    lyric_object::AccessType access)
+    lyric_object::AccessType access,
+    bool declOnly)
 {
     if (m_bindings.contains(name))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
@@ -1714,7 +1715,7 @@ lyric_assembler::BlockHandle::declareNamespace(
 
     // create the namespace
     auto *namespaceSymbol = new NamespaceSymbol(nsUrl, access, address, typeHandle,
-        superNs, this, m_state, m_isRoot);
+        superNs, declOnly, this, m_state, m_isRoot);
 
     auto status = m_state->appendNamespace(namespaceSymbol);
     if (status.notOk()) {
@@ -1728,7 +1729,7 @@ lyric_assembler::BlockHandle::declareNamespace(
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 
-    return nsUrl;
+    return namespaceSymbol;
 }
 
 lyric_common::SymbolUrl

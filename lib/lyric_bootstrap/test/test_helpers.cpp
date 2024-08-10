@@ -3,18 +3,6 @@
 
 #include "test_helpers.h"
 
-lyric_common::AssemblyLocation
-preludeLocation()
-{
-    return lyric_common::AssemblyLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
-}
-
-lyric_common::SymbolUrl
-preludeSymbol(std::string_view symbolName)
-{
-    return lyric_common::SymbolUrl(preludeLocation(), lyric_common::SymbolPath({std::string(symbolName)}));
-}
-
 tempo_utils::Result<lyric_test::CompileModule>
 compileModule(const std::string &code)
 {

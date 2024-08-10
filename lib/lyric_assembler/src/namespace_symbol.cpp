@@ -12,6 +12,7 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     NamespaceAddress address,
     TypeHandle *namespaceType,
     NamespaceSymbol *superNamespace,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     AssemblyState *state,
     bool isRoot)
@@ -24,6 +25,7 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
 
     auto *priv = getPriv();
     priv->access = access;
+    priv->isDeclOnly = isDeclOnly;
     priv->namespaceType = namespaceType;
     priv->superNamespace = superNamespace;
     priv->namespaceBlock = std::make_unique<BlockHandle>(namespaceUrl, parentBlock, isRoot);
@@ -47,6 +49,7 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
 
     auto *priv = getPriv();
     priv->access = lyric_object::AccessType::Public;
+    priv->isDeclOnly = false;
     priv->namespaceType = namespaceType;
     priv->superNamespace = nullptr;
     priv->namespaceBlock = std::make_unique<BlockHandle>(
@@ -78,6 +81,7 @@ lyric_assembler::NamespaceSymbol::load()
     auto priv = std::make_unique<NamespaceSymbolPriv>();
 
     priv->access = lyric_object::AccessType::Public;
+    priv->isDeclOnly = m_namespaceImport->isDeclOnly();
 
     TU_ASSIGN_OR_RAISE (priv->namespaceType, typeCache->getOrMakeType(
         fundamentalCache->getFundamentalType(FundamentalSymbol::Namespace)));
@@ -147,6 +151,13 @@ lyric_assembler::NamespaceSymbol::getAccessType() const
 {
     auto *priv = getPriv();
     return priv->access;
+}
+
+bool
+lyric_assembler::NamespaceSymbol::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
 }
 
 lyric_assembler::NamespaceSymbol *

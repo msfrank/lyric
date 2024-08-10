@@ -10,6 +10,9 @@ namespace lyric_importer {
         NamespaceImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 namespaceOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
+
+        bool isDeclOnly();
+
         lyric_common::SymbolUrl getSuperNamespace();
 
         absl::flat_hash_set<lyric_common::SymbolUrl>::const_iterator bindingsBegin();

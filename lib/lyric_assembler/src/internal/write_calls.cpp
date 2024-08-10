@@ -52,7 +52,7 @@ write_call(
     auto fullyQualifiedName = buffer.CreateSharedString(callPathString);
 
     lyo1::CallFlags callFlags = lyo1::CallFlags::NONE;
-    if (!callSymbol->getAddress().isValid())
+    if (callSymbol->isDeclOnly())
         callFlags |= lyo1::CallFlags::DeclOnly;
     switch (callSymbol->getAccessType()) {
         case lyric_object::AccessType::Public:

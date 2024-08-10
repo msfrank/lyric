@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
@@ -14,7 +15,7 @@ TEST(CoreSeq, TestEvaluateNewSeq)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellRef(preludeSymbol("Seq")))));
+                     RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Seq")))));
 }
 
 TEST(CoreSeq, TestEvaluateSeqSize)
