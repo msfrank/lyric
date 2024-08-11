@@ -137,10 +137,10 @@ namespace lyric_parser::internal {
         void exitIfStatement(ModuleParser::IfStatementContext *ctx) override;
         void exitIfThenElseExpression(ModuleParser::IfThenElseExpressionContext *ctx) override;
         void enterCondExpression(ModuleParser::CondExpressionContext *ctx) override;
-        void exitCondCase(ModuleParser::CondCaseContext *ctx) override;
+        void exitCondWhen(ModuleParser::CondWhenContext *ctx) override;
         void exitCondElse(ModuleParser::CondElseContext *ctx) override;
         void enterCondIfStatement(ModuleParser::CondIfStatementContext *ctx) override;
-        void exitCondIfCase(ModuleParser::CondIfCaseContext *ctx) override;
+        void exitCondIfWhen(ModuleParser::CondIfWhenContext *ctx) override;
         void exitCondIfElse(ModuleParser::CondIfElseContext *ctx) override;
         void enterWhileStatement(ModuleParser::WhileStatementContext *ctx) override;
         void exitWhileStatement(ModuleParser::WhileStatementContext *ctx) override;

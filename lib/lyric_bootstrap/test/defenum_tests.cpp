@@ -68,10 +68,10 @@ TEST(CoreDefenum, EvaluateEnumCaseDef)
             }
             def indexOf(): Int {
                 cond {
-                    case this.abbreviation == "N"  1
-                    case this.abbreviation == "S"  2
-                    case this.abbreviation == "E"  3
-                    case this.abbreviation == "W"  4
+                    when this.abbreviation == "N"  1
+                    when this.abbreviation == "S"  2
+                    when this.abbreviation == "E"  3
+                    when this.abbreviation == "W"  4
                     else     -1
                 }
             }

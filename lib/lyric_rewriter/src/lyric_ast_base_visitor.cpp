@@ -74,6 +74,7 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::Not:
         case lyric_schema::LyricAstId::Keyword:
         case lyric_schema::LyricAstId::Rest:
+        case lyric_schema::LyricAstId::Case:
             visitor = std::make_shared<LyricAstUnaryVisitor>(astId, m_options);
             break;
 
@@ -90,6 +91,7 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::IsGt:
         case lyric_schema::LyricAstId::IsGe:
         case lyric_schema::LyricAstId::IsA:
+        case lyric_schema::LyricAstId::When:
             visitor = std::make_shared<LyricAstBinaryVisitor>(astId, m_options);
             break;
 
@@ -106,7 +108,6 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::Pack:
         case lyric_schema::LyricAstId::Unpack:
         case lyric_schema::LyricAstId::Generic:
-        case lyric_schema::LyricAstId::Case:
         case lyric_schema::LyricAstId::Init:
         case lyric_schema::LyricAstId::Set:
         case lyric_schema::LyricAstId::Target:

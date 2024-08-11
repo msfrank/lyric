@@ -16,10 +16,10 @@ namespace lyric_parser::internal {
         void exitIfStatement(ModuleParser::IfStatementContext *ctx);
         void exitIfThenElseExpression(ModuleParser::IfThenElseExpressionContext *ctx);
         void enterCondExpression(ModuleParser::CondExpressionContext *ctx);
-        void exitCondCase(ModuleParser::CondCaseContext *ctx);
+        void exitCondWhen(ModuleParser::CondWhenContext *ctx);
         void exitCondElse(ModuleParser::CondElseContext *ctx);
         void enterCondIfStatement(ModuleParser::CondIfStatementContext *ctx);
-        void exitCondIfCase(ModuleParser::CondIfCaseContext *ctx);
+        void exitCondIfWhen(ModuleParser::CondIfWhenContext *ctx);
         void exitCondIfElse(ModuleParser::CondIfElseContext *ctx);
         void enterWhileStatement(ModuleParser::WhileStatementContext *ctx);
         void exitWhileStatement(ModuleParser::WhileStatementContext *ctx);

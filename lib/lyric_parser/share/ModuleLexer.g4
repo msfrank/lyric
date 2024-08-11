@@ -156,6 +156,7 @@ SetKeyword              : 'set' ;
 LetKeyword              : 'let' ;
 CondKeyword             : 'cond' ;
 MatchKeyword            : 'match' ;
+WhenKeyword             : 'when' ;
 CaseKeyword             : 'case' ;
 IfKeyword               : 'if' ;
 ThenKeyword             : 'then' ;

@@ -30,12 +30,12 @@ lyric_parser::internal::ModuleControlOps::exitIfStatement(ModuleParser::IfStatem
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
-    caseNode->appendChild(conditionNode);
-    caseNode->appendChild(consequentNode);
+    auto *whenNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstWhenClass, location);
+    whenNode->appendChild(conditionNode);
+    whenNode->appendChild(consequentNode);
 
     auto *ifNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIfClass, location);
-    ifNode->appendChild(caseNode);
+    ifNode->appendChild(whenNode);
     m_state->pushNode(ifNode);
 }
 
@@ -60,13 +60,13 @@ lyric_parser::internal::ModuleControlOps::exitIfThenElseExpression(ModuleParser:
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
-    caseNode->appendChild(conditionNode);
-    caseNode->appendChild(consequentNode);
+    auto *whenNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstWhenClass, location);
+    whenNode->appendChild(conditionNode);
+    whenNode->appendChild(consequentNode);
 
     auto *condNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCondClass, location);
     condNode->putAttr(kLyricAstDefaultOffset, alternativeNode);
-    condNode->appendChild(caseNode);
+    condNode->appendChild(whenNode);
     m_state->pushNode(condNode);
 }
 
@@ -80,7 +80,7 @@ lyric_parser::internal::ModuleControlOps::enterCondExpression(ModuleParser::Cond
 }
 
 void
-lyric_parser::internal::ModuleControlOps::exitCondCase(ModuleParser::CondCaseContext *ctx)
+lyric_parser::internal::ModuleControlOps::exitCondWhen(ModuleParser::CondWhenContext *ctx)
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
@@ -95,9 +95,9 @@ lyric_parser::internal::ModuleControlOps::exitCondCase(ModuleParser::CondCaseCon
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
-    caseNode->appendChild(conditionNode);
-    caseNode->appendChild(consequentNode);
+    auto *whenNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstWhenClass, location);
+    whenNode->appendChild(conditionNode);
+    whenNode->appendChild(consequentNode);
 
     // if ancestor node is not a kCond, then report internal violation
     if (m_state->isEmpty())
@@ -105,8 +105,8 @@ lyric_parser::internal::ModuleControlOps::exitCondCase(ModuleParser::CondCaseCon
     auto *condNode = m_state->peekNode();
     m_state->checkNodeOrThrow(condNode, lyric_schema::kLyricAstCondClass);
 
-    // otherwise append case to the cond
-    condNode->appendChild(caseNode);
+    // otherwise append when to the cond
+    condNode->appendChild(whenNode);
 }
 
 void
@@ -137,7 +137,7 @@ lyric_parser::internal::ModuleControlOps::enterCondIfStatement(ModuleParser::Con
 }
 
 void
-lyric_parser::internal::ModuleControlOps::exitCondIfCase(ModuleParser::CondIfCaseContext *ctx)
+lyric_parser::internal::ModuleControlOps::exitCondIfWhen(ModuleParser::CondIfWhenContext *ctx)
 {
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
@@ -152,9 +152,9 @@ lyric_parser::internal::ModuleControlOps::exitCondIfCase(ModuleParser::CondIfCas
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
-    caseNode->appendChild(conditionNode);
-    caseNode->appendChild(consequentNode);
+    auto *whenNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstWhenClass, location);
+    whenNode->appendChild(conditionNode);
+    whenNode->appendChild(consequentNode);
 
     // if ancestor node is not a kIf, then report internal violation
     if (m_state->isEmpty())
@@ -162,8 +162,8 @@ lyric_parser::internal::ModuleControlOps::exitCondIfCase(ModuleParser::CondIfCas
     auto *ifNode = m_state->peekNode();
     m_state->checkNodeOrThrow(ifNode, lyric_schema::kLyricAstIfClass);
 
-    // otherwise append case to the cond
-    ifNode->appendChild(caseNode);
+    // otherwise append when to the cond
+    ifNode->appendChild(whenNode);
 }
 
 void

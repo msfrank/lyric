@@ -266,16 +266,16 @@ ifThenElseExpression: IfKeyword basicExpression ThenKeyword basicExpression Else
 
 // cond expression
 
-condCase            : CaseKeyword expression block ;
+condWhen            : WhenKeyword expression block ;
 condElse            : ElseKeyword block ;
-condExpression      : CondKeyword CurlyOpen condCase+ condElse CurlyClose ;
+condExpression      : CondKeyword CurlyOpen condWhen+ condElse CurlyClose ;
 
 
 // cond-if statement
 
-condIfCase          : CaseKeyword expression block ;
+condIfWhen          : WhenKeyword expression block ;
 condIfElse          : ElseKeyword block ;
-condIfStatement     : CondKeyword IfKeyword CurlyOpen condIfCase+ condIfElse? CurlyClose ;
+condIfStatement     : CondKeyword IfKeyword CurlyOpen condIfWhen+ condIfElse? CurlyClose ;
 
 
 // match expression
@@ -285,12 +285,12 @@ unwrapParam         : VarKeyword? Identifier paramType ;
 unwrapList          : unwrapParam ( CommaOperator unwrapParam )* ;
 unwrapSpec          : assignableType ParenOpen unwrapList? ParenClose ;
 
-matchCase           : CaseKeyword ( Identifier ColonOperator )? unwrapSpec block        # matchOnUnwrap
-                    | CaseKeyword Identifier ColonOperator assignableType block         # matchOnType
-                    | CaseKeyword symbolPath block                                      # matchOnEnum
+matchWhen           : WhenKeyword ( Identifier ColonOperator )? unwrapSpec block        # matchOnUnwrap
+                    | WhenKeyword Identifier ColonOperator assignableType block         # matchOnType
+                    | WhenKeyword symbolPath block                                      # matchOnEnum
                     ;
 matchElse           : ElseKeyword block ;
-matchExpression     : MatchKeyword matchTarget CurlyOpen matchCase+ matchElse? CurlyClose ;
+matchExpression     : MatchKeyword matchTarget CurlyOpen matchWhen+ matchElse? CurlyClose ;
 
 
 // while statement
@@ -307,12 +307,12 @@ forStatement        : ForKeyword Identifier ( ColonOperator assignableType )?
 // try statement
 
 tryTarget           : block ;
-catchCase           : CaseKeyword ( Identifier ColonOperator )? unwrapSpec block        # catchOnUnwrap
-                    | CaseKeyword Identifier ColonOperator assignableType block         # catchOnType
+catchWhen           : WhenKeyword ( Identifier ColonOperator )? unwrapSpec block        # catchOnUnwrap
+                    | WhenKeyword Identifier ColonOperator assignableType block         # catchOnType
                     ;
 catchElse           : ElseKeyword block ;
 catchFinally        : FinallyKeyword block ;
-tryStatement        : TryKeyword CurlyOpen tryTarget catchCase* catchElse? catchFinally? CurlyClose ;
+tryStatement        : TryKeyword CurlyOpen tryTarget catchWhen* catchElse? catchFinally? CurlyClose ;
 
 // basic expressions
 

@@ -63,9 +63,9 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnEnum(ModuleParser::MatchOnEnu
     auto *symbolRefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolRefClass, location);
     symbolRefNode->putAttr(kLyricAstSymbolPath, symbolPath);
 
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
-    caseNode->appendChild(symbolRefNode);
-    caseNode->appendChild(consequentNode);
+    auto *whenNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstWhenClass, location);
+    whenNode->appendChild(symbolRefNode);
+    whenNode->appendChild(consequentNode);
 
     // if ancestor node is not a kMatch, then report internal violation
     if (m_state->isEmpty())
@@ -73,8 +73,8 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnEnum(ModuleParser::MatchOnEnu
     auto *matchNode = m_state->peekNode();
     m_state->checkNodeOrThrow(matchNode, lyric_schema::kLyricAstMatchClass);
 
-    // otherwise append case to the match
-    matchNode->appendChild(caseNode);
+    // otherwise append when to the match
+    matchNode->appendChild(whenNode);
 }
 
 void
@@ -97,9 +97,9 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnType(ModuleParser::MatchOnTyp
     unpackNode->putAttr(kLyricAstIdentifier, id);
     unpackNode->putAttr(kLyricAstTypeOffset, typeNode);
 
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
-    caseNode->appendChild(unpackNode);
-    caseNode->appendChild(consequentNode);
+    auto *whenNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstWhenClass, location);
+    whenNode->appendChild(unpackNode);
+    whenNode->appendChild(consequentNode);
 
     // if ancestor node is not a kMatch, then report internal violation
     if (m_state->isEmpty())
@@ -107,8 +107,8 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnType(ModuleParser::MatchOnTyp
     auto *matchNode = m_state->peekNode();
     m_state->checkNodeOrThrow(matchNode, lyric_schema::kLyricAstMatchClass);
 
-    // otherwise append case to the match
-    matchNode->appendChild(caseNode);
+    // otherwise append when to the match
+    matchNode->appendChild(whenNode);
 }
 
 void
@@ -157,9 +157,9 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnUnwrap(ModuleParser::MatchOnU
         unwrapNode->appendChild(paramNode);
     }
 
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
-    caseNode->appendChild(unwrapNode);
-    caseNode->appendChild(consequentNode);
+    auto *whenNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstWhenClass, location);
+    whenNode->appendChild(unwrapNode);
+    whenNode->appendChild(consequentNode);
 
     // if ancestor node is not a kMatch, then report internal violation
     if (m_state->isEmpty())
@@ -167,8 +167,8 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnUnwrap(ModuleParser::MatchOnU
     auto *matchNode = m_state->peekNode();
     m_state->checkNodeOrThrow(matchNode, lyric_schema::kLyricAstMatchClass);
 
-    // otherwise append case to the match
-    matchNode->appendChild(caseNode);
+    // otherwise append when to the match
+    matchNode->appendChild(whenNode);
 }
 
 void

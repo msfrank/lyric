@@ -22,11 +22,11 @@ TEST(CoreConditional, EvaluateCondIf)
         var x: String = "two"
         var y: Int = 0
         cond if {
-          case x == "one"
+          when x == "one"
             set y = 1
-          case x == "two"
+          when x == "two"
             set y = 2
-          case x == "three"
+          when x == "three"
             set y = 3
         }
         y
@@ -49,9 +49,9 @@ TEST(CoreConditional, EvaluateCond)
     auto result = runModule(R"(
         var x: String = "three"
         cond {
-          case x == "one"       1
-          case x == "two"       2
-          case x == "three"     3
+          when x == "one"       1
+          when x == "two"       2
+          when x == "three"     3
           else                  0
         }
     )");
@@ -64,9 +64,9 @@ TEST(CoreConditional, EvaluateCondElse)
     auto result = runModule(R"(
         var x: String = "four"
         cond {
-          case x == "one"       1
-          case x == "two"       2
-          case x == "three"     3
+          when x == "one"       1
+          when x == "two"       2
+          when x == "three"     3
           else                  0
         }
     )");

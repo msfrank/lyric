@@ -427,9 +427,9 @@ void lyric_parser::internal::ModuleArchetype::enterCondExpression(ModuleParser::
     return ModuleControlOps::enterCondExpression(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitCondCase(ModuleParser::CondCaseContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitCondWhen(ModuleParser::CondWhenContext *ctx)
 {
-    return ModuleControlOps::exitCondCase(ctx);
+    return ModuleControlOps::exitCondWhen(ctx);
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCondElse(ModuleParser::CondElseContext *ctx)
@@ -442,9 +442,9 @@ void lyric_parser::internal::ModuleArchetype::enterCondIfStatement(ModuleParser:
     return ModuleControlOps::enterCondIfStatement(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitCondIfCase(ModuleParser::CondIfCaseContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitCondIfWhen(ModuleParser::CondIfWhenContext *ctx)
 {
-    return ModuleControlOps::exitCondIfCase(ctx);
+    return ModuleControlOps::exitCondIfWhen(ctx);
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCondIfElse(ModuleParser::CondIfElseContext *ctx)

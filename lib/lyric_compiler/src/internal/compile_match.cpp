@@ -80,8 +80,8 @@ compile_predicate(
     return matchType;
 }
 
-static tempo_utils::Result<lyric_assembler::MatchCasePatch>
-compile_match_case_symbol_ref(
+static tempo_utils::Result<lyric_assembler::MatchWhenPatch>
+compile_match_when_symbol_ref(
     lyric_assembler::BlockHandle *block,
     const lyric_assembler::DataReference &targetRef,
     const lyric_parser::NodeWalker &symbolRef,
@@ -95,13 +95,13 @@ compile_match_case_symbol_ref(
     auto *code = block->blockCode();
     auto *state = block->blockState();
 
-    // get the match case symbol from the symbol ref
+    // get the match when symbol from the symbol ref
     lyric_common::SymbolPath symbolPath;
     moduleEntry.parseAttrOrThrow(symbolRef, lyric_parser::kLyricAstSymbolPath, symbolPath);
     if (!symbolPath.isValid())
         block->throwSyntaxError(symbolRef, "invalid symbol path");
 
-    // resolve the match case symbol
+    // resolve the match when symbol
     auto resolveMatchCaseSymbol = block->resolveDefinition(symbolPath);
     if (resolveMatchCaseSymbol.isStatus())
         return resolveMatchCaseSymbol.getStatus();
@@ -121,7 +121,7 @@ compile_match_case_symbol_ref(
         default:
             return block->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
-                "invalid match case {}; predicate must be an instance or an enum", symbol->getSymbolUrl().toString());
+                "invalid match {}; predicate must be an instance or an enum", symbol->getSymbolUrl().toString());
     }
 
     // body is the consequent block
@@ -130,7 +130,7 @@ compile_match_case_symbol_ref(
     lyric_assembler::JumpLabel predicateLabel;
     TU_ASSIGN_OR_RETURN (predicateLabel, code->makeLabel());
 
-    // check whether the predicate case matches the target
+    // check whether the predicate matches the target
     lyric_common::TypeDef matchType;
     TU_ASSIGN_OR_RETURN (matchType, compile_predicate(block, targetRef, predicateType, symbolRef, moduleEntry));
 
@@ -146,12 +146,12 @@ compile_match_case_symbol_ref(
     lyric_assembler::PatchOffset consequentJump;
     TU_ASSIGN_OR_RETURN (consequentJump, code->jump());
 
-    return lyric_assembler::MatchCasePatch(matchType, predicateLabel,
-        predicateJump, consequentJump, consequentType);
+    return lyric_assembler::MatchWhenPatch(matchType, predicateLabel, predicateJump,
+        consequentJump, consequentType);
 }
 
-static tempo_utils::Result<lyric_assembler::MatchCasePatch>
-compile_match_case_unpack(
+static tempo_utils::Result<lyric_assembler::MatchWhenPatch>
+compile_match_when_unpack(
     lyric_assembler::BlockHandle *block,
     const lyric_assembler::DataReference &targetRef,
     const lyric_parser::NodeWalker &unpack,
@@ -179,7 +179,7 @@ compile_match_case_unpack(
     lyric_assembler::JumpLabel predicateLabel;
     TU_ASSIGN_OR_RETURN (predicateLabel, code->makeLabel());
 
-    // check whether the predicate case matches the target
+    // check whether the predicate matches the target
     lyric_common::TypeDef matchType;
     TU_ASSIGN_OR_RETURN (matchType, compile_predicate(block, targetRef, predicateType, unpack, moduleEntry));
 
@@ -199,11 +199,12 @@ compile_match_case_unpack(
     lyric_assembler::PatchOffset consequentJump;
     TU_ASSIGN_OR_RETURN (consequentJump, code->jump());
 
-    return lyric_assembler::MatchCasePatch(matchType, predicateLabel, predicateJump, consequentJump, consequentType);
+    return lyric_assembler::MatchWhenPatch(matchType, predicateLabel, predicateJump,
+        consequentJump, consequentType);
 }
 
-static tempo_utils::Result<lyric_assembler::MatchCasePatch>
-compile_match_case(
+static tempo_utils::Result<lyric_assembler::MatchWhenPatch>
+compile_match_when(
     lyric_assembler::BlockHandle *block,
     const lyric_assembler::DataReference &targetRef,
     const lyric_parser::NodeWalker &walker,
@@ -212,21 +213,21 @@ compile_match_case(
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
 
-    moduleEntry.checkClassAndChildCountOrThrow(walker, lyric_schema::kLyricAstCaseClass, 2);
-    auto casePredicate = walker.getChild(0);
-    auto caseBody = walker.getChild(1);
+    moduleEntry.checkClassAndChildCountOrThrow(walker, lyric_schema::kLyricAstWhenClass, 2);
+    auto whenPredicate = walker.getChild(0);
+    auto whenBody = walker.getChild(1);
 
     lyric_schema::LyricAstId predicateId{};
-    moduleEntry.parseIdOrThrow(casePredicate, lyric_schema::kLyricAstVocabulary, predicateId);
+    moduleEntry.parseIdOrThrow(whenPredicate, lyric_schema::kLyricAstVocabulary, predicateId);
 
-    // first child of case is the unwrap matcher
+    // first child of when is the unwrap matcher
     switch (predicateId) {
         case lyric_schema::LyricAstId::Unpack:
-            return compile_match_case_unpack(block, targetRef, casePredicate, caseBody, moduleEntry);
+            return compile_match_when_unpack(block, targetRef, whenPredicate, whenBody, moduleEntry);
         case lyric_schema::LyricAstId::SymbolRef:
-            return compile_match_case_symbol_ref(block, targetRef, casePredicate, caseBody, moduleEntry);
+            return compile_match_when_symbol_ref(block, targetRef, whenPredicate, whenBody, moduleEntry);
         default:
-            block->throwSyntaxError(casePredicate, "invalid match case predicate");
+            block->throwSyntaxError(whenPredicate, "invalid match predicate");
     }
 }
 
@@ -239,7 +240,7 @@ compile_match_case(
 static tempo_utils::Result<bool>
 check_concrete_target_is_exhaustive(
     const lyric_common::TypeDef &targetType,
-    const std::vector<lyric_assembler::MatchCasePatch> &patchList,
+    const std::vector<lyric_assembler::MatchWhenPatch> &patchList,
     lyric_assembler::BlockHandle *block,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
@@ -310,9 +311,9 @@ check_concrete_target_is_exhaustive(
         targetSet.insert(targetType);
     }
 
-    // verify each member in the target set matches a case
-    for (const auto &matchCase : patchList) {
-        auto predicateType = matchCase.getPredicateType();
+    // verify each member in the target set matches a predicate
+    for (const auto &matchWhenPatch : patchList) {
+        auto predicateType = matchWhenPatch.getPredicateType();
         auto iterator = targetSet.find(predicateType);
         if (iterator != targetSet.cend()) {
             targetSet.erase(iterator);
@@ -337,7 +338,7 @@ check_concrete_target_is_exhaustive(
 static tempo_utils::Result<bool>
 check_placeholder_target_is_exhaustive(
     const lyric_common::TypeDef &targetType,
-    const std::vector<lyric_assembler::MatchCasePatch> &patchList,
+    const std::vector<lyric_assembler::MatchWhenPatch> &patchList,
     lyric_assembler::BlockHandle *block,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
@@ -363,7 +364,7 @@ check_placeholder_target_is_exhaustive(
 static tempo_utils::Result<bool>
 check_union_target_is_exhaustive(
     const lyric_common::TypeDef &targetType,
-    const std::vector<lyric_assembler::MatchCasePatch> &patchList,
+    const std::vector<lyric_assembler::MatchWhenPatch> &patchList,
     lyric_assembler::BlockHandle *block,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
@@ -430,27 +431,27 @@ lyric_compiler::internal::compile_match(
     if (!status.isOk())
         return status;
 
-    std::vector<lyric_assembler::MatchCasePatch> patchList;
+    std::vector<lyric_assembler::MatchWhenPatch> patchList;
     lyric_assembler::DisjointTypeSet predicateSet(block->blockState());
     lyric_assembler::UnifiedTypeSet resultSet(block->blockState());
     bool isExhaustive = false;
 
-    // evaluate each case
+    // evaluate each when branch
     for (int i = 1; i < walker.numChildren(); i++) {
-        auto matchCase = walker.getChild(i);
+        auto matchWhen = walker.getChild(i);
 
-        auto matchCaseResult = compile_match_case(block, targetRef, matchCase, moduleEntry);
-        if (matchCaseResult.isStatus())
-            return matchCaseResult.getStatus();
-        auto casePatch = matchCaseResult.getResult();
+        auto matchWhenResult = compile_match_when(block, targetRef, matchWhen, moduleEntry);
+        if (matchWhenResult.isStatus())
+            return matchWhenResult.getStatus();
+        auto matchWhenPatch = matchWhenResult.getResult();
 
-        // verify all case predicate types are disjoint
-        TU_RETURN_IF_NOT_OK (predicateSet.putType(casePatch.getPredicateType()));
+        // verify all predicate types are disjoint
+        TU_RETURN_IF_NOT_OK (predicateSet.putType(matchWhenPatch.getPredicateType()));
 
-        // build the conjunction of all case consequents
-        TU_RETURN_IF_NOT_OK (resultSet.putType(casePatch.getConsequentType()));
+        // build the conjunction of all consequents
+        TU_RETURN_IF_NOT_OK (resultSet.putType(matchWhenPatch.getConsequentType()));
 
-        patchList.push_back(casePatch);
+        patchList.push_back(matchWhenPatch);
     }
 
     // construct the alternative block
@@ -484,27 +485,27 @@ lyric_compiler::internal::compile_match(
     if (alternativeBlockExit.isStatus())
         return alternativeBlockExit.getStatus();
 
-    // patch jumps for each case expression except the last
+    // patch jumps for each expression except the last
     tu_uint32 j = 0;
     for (; j < patchList.size() - 1; j++) {
-        const auto &casePatch = patchList.at(j);
-        const auto &nextCasePatch = patchList.at(j + 1);
-        status = code->patch(casePatch.getPredicateJump(), nextCasePatch.getPredicateLabel());
+        const auto &matchWhenPatch = patchList.at(j);
+        const auto &nextPatch = patchList.at(j + 1);
+        status = code->patch(matchWhenPatch.getPredicateJump(), nextPatch.getPredicateLabel());
         if (!status.isOk())
             return status;
 
-        status = code->patch(casePatch.getConsequentJump(), alternativeBlockExit.getResult());
+        status = code->patch(matchWhenPatch.getConsequentJump(), alternativeBlockExit.getResult());
         if (!status.isOk())
             return status;
     }
 
-    // patch jumps for the last case expression
-    const auto &lastCasePatch = patchList.at(j);
-    status = code->patch(lastCasePatch.getPredicateJump(), alternativeBlockEnter.getResult());
+    // patch jumps for the last expression
+    const auto &lastPatch = patchList.at(j);
+    status = code->patch(lastPatch.getPredicateJump(), alternativeBlockEnter.getResult());
     if (!status.isOk())
         return status;
 
-    status = code->patch(lastCasePatch.getConsequentJump(), alternativeBlockExit.getResult());
+    status = code->patch(lastPatch.getConsequentJump(), alternativeBlockExit.getResult());
     if (!status.isOk())
         return status;
 
@@ -515,7 +516,7 @@ lyric_compiler::internal::compile_match(
         return unifiedType;
 
     // if there is no alternative clause, then determine whether the match is exhaustive by verifying
-    // that all subtypes of the target are enumerable and there is a case for all subtypes.
+    // that all subtypes of the target are enumerable and there is a branch for all subtypes.
     switch (targetType.getType()) {
         case lyric_common::TypeDefType::Concrete: {
             TU_ASSIGN_OR_RETURN (isExhaustive, check_concrete_target_is_exhaustive(

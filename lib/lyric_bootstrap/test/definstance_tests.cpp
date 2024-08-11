@@ -50,8 +50,8 @@ TEST(CoreDefinstance, EvaluateInstanceApplication)
             impl Ordered[Int] {
                 def compare(lhs: Int, rhs: Int): Int {
                     cond {
-                        case lhs > rhs     -1
-                        case lhs < rhs      1
+                        when lhs > rhs     -1
+                        when lhs < rhs      1
                         else                0
                     }
                 }
@@ -75,8 +75,8 @@ TEST(CoreDefinstance, EvaluateUsingInstanceApplication)
             impl Ordered[Int] {
                 def compare(lhs: Int, rhs: Int): Int {
                     cond {
-                        case lhs > rhs     -1
-                        case lhs < rhs      1
+                        when lhs > rhs     -1
+                        when lhs < rhs      1
                         else                0
                     }
                 }

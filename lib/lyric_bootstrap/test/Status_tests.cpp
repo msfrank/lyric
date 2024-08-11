@@ -23,7 +23,7 @@ TEST(CoreStatus, TestEvaluateStatusCode)
     auto result = runModule(R"(
         val status: Status = Cancelled{message = "operation was cancelled"}
         match status {
-            case s: Status
+            when s: Status
                 s.code
             else nil
         }
@@ -39,7 +39,7 @@ TEST(CoreStatus, TestEvaluateStatusMessage)
     auto result = runModule(R"(
         val status: Status = Cancelled{message = "operation was cancelled"}
         match status {
-            case s: Status
+            when s: Status
                 s.message
             else nil
         }

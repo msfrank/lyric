@@ -104,10 +104,10 @@ TEST(CoreMatch, TestMatchIntrinsic)
     auto result = runModule(R"(
         val x: Any = 42
         match x {
-            case t0: Bool       0
-            case t1: Char       1
-            case t2: Int        2
-            case t3: Float      3
+            when t0: Bool       0
+            when t1: Char       1
+            when t2: Int        2
+            when t3: Float      3
         }
     )");
 
@@ -119,7 +119,7 @@ TEST(CoreMatch, TestMatchPlaceholderType)
     auto result = runModule(R"(
         def generic[T](t: T): Any {
             match t {
-                case i: Int     true
+                when i: Int     true
                 else            false
             }
         }
@@ -134,7 +134,7 @@ TEST(CoreMatch, TestMatchPlaceholderTypeNoMatch)
     auto result = runModule(R"(
         def generic[T](t: T): Any {
             match t {
-                case f: Float   true
+                when f: Float   true
                 else            false
             }
         }
@@ -149,7 +149,7 @@ TEST(CoreMatch, TestMatchBoundedPlaceholderType)
     auto result = runModule(R"(
         def generic[T](t: T): Any where T extends Intrinsic {
             match t {
-                case i: Int     true
+                when i: Int     true
                 else            false
             }
         }
@@ -164,7 +164,7 @@ TEST(CoreMatch, TestMatchBoundedPlaceholderTypeNoMatch)
     auto result = runModule(R"(
         def generic[T](t: T): Any where T extends Intrinsic {
             match t {
-                case f: Float   true
+                when f: Float   true
                 else            false
             }
         }
@@ -179,7 +179,7 @@ TEST(CoreMatch, TestMatchBoundedPlaceholderTypeDisjoint)
     auto result = compileModule(R"(
         def generic[T](t: T): Any where T extends Int {
             match t {
-                case f: Float   true
+                when f: Float   true
                 else            false
             }
         }
@@ -206,9 +206,9 @@ TEST(CoreMatch, TestMatchClass)
 
         val x: Any = Test3{}
         match x {
-            case t1: Test1      1
-            case t2: Test2      2
-            case t3: Test3      3
+            when t1: Test1      1
+            when t2: Test2      2
+            when t3: Test3      3
         }
     )");
 
@@ -227,13 +227,13 @@ TEST(CoreMatch, TestMatchEnum)
 
         val x: Any = West
         match x {
-            case North
+            when North
                 1
-            case South
+            when South
                 2
-            case East
+            when East
                 3
-            case West
+            when West
                 4
         }
     )");
@@ -256,7 +256,7 @@ TEST(CoreMatch, TestMatchDerefAlias)
 
         val x: Any = Test1{42}
         match x {
-            case t1: Test1
+            when t1: Test1
                 t1.getX()
         }
     )");
@@ -269,7 +269,7 @@ TEST(CoreMatch, TestMatchUnwrapGenericClass)
     auto result = runModule(R"(
         val x: Tuple3[Int,Int,Int] = Tuple3[Int,Int,Int]{1, 2, 3}
         match x {
-            case Tuple3[Int, Int, Int](t1: Int, t2: Int, t3: Int)
+            when Tuple3[Int, Int, Int](t1: Int, t2: Int, t3: Int)
                 t1 + t2 + t3
         }
     )");

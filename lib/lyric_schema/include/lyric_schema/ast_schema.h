@@ -70,7 +70,7 @@ namespace lyric_schema {
         If,                        // if statement
         Cond,                      // conditional expression
         Match,                     // match expression
-        Case,                      // case clause
+        When,                      // when clause
         While,                     // while statement
         For,                       // for statement
         Try,                       // try statement
@@ -78,6 +78,7 @@ namespace lyric_schema {
 
         Val,                       // define val
         Var,                       // define var
+        Case,                      // define case
         Unpack,                    // variable unpack
         Pack,                      // parameter pack
         Param,                     // function parameter
@@ -243,8 +244,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::Cond, "Cond");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMatchClass(
         &kLyricAstNs, LyricAstId::Match, "Match");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCaseClass(
-        &kLyricAstNs, LyricAstId::Case, "Case");
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstWhenClass(
+        &kLyricAstNs, LyricAstId::When, "When");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstWhileClass(
         &kLyricAstNs, LyricAstId::While, "While");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstForClass(
@@ -258,6 +259,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::Val, "Val");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstVarClass(
         &kLyricAstNs, LyricAstId::Var, "Var");
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCaseClass(
+        &kLyricAstNs, LyricAstId::Case, "Case");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUnpackClass(
         &kLyricAstNs, LyricAstId::Unpack, "Unpack");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPackClass(
@@ -466,7 +469,7 @@ namespace lyric_schema {
         &kLyricAstIfClass,
         &kLyricAstCondClass,
         &kLyricAstMatchClass,
-        &kLyricAstCaseClass,
+        &kLyricAstWhenClass,
         &kLyricAstWhileClass,
         &kLyricAstForClass,
         &kLyricAstTryClass,
@@ -474,6 +477,7 @@ namespace lyric_schema {
 
         &kLyricAstValClass,
         &kLyricAstVarClass,
+        &kLyricAstCaseClass,
         &kLyricAstUnpackClass,
         &kLyricAstPackClass,
         &kLyricAstParamClass,

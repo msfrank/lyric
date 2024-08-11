@@ -20,27 +20,28 @@ lyric_compiler::internal::compile_cond(
     auto *state = moduleEntry.getState();
     auto *fundamentalCache = state->fundamentalCache();
 
-    // cond expression must have at least one case
+    // cond expression must have at least one branch
     moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstCondClass, 1);
 
     lyric_assembler::CodeBuilder *code = block->blockCode();
 
-    std::vector<lyric_assembler::CondCasePatch> patchList;
+    std::vector<lyric_assembler::CondWhenPatch> patchList;
     lyric_common::TypeDef returnType;  // initially invalid, will be set by first case
 
-    // evaluate each case
+    // evaluate each branch
     for (int i = 0; i < walker.numChildren(); i++) {
-        auto condCase = walker.getChild(i);
-        if (condCase.numChildren() != 2)
-            block->throwSyntaxError(condCase, "invalid cond case");
+        auto condWhen = walker.getChild(i);
+        moduleEntry.checkClassOrThrow(condWhen, lyric_schema::kLyricAstWhenClass);
+        if (condWhen.numChildren() != 2)
+            block->throwSyntaxError(condWhen, "invalid cond clause");
 
         auto makeLabelResult = code->makeLabel();
         if (makeLabelResult.isStatus())
             return makeLabelResult.getStatus();
         auto predicateLabel = makeLabelResult.getResult();
 
-        // evaluate the case predicate
-        auto predicateResult = compile_expression(block, condCase.getChild(0), moduleEntry);
+        // evaluate the predicate
+        auto predicateResult = compile_expression(block, condWhen.getChild(0), moduleEntry);
         if (predicateResult.isStatus())
             return predicateResult;
         auto predicateType = predicateResult.getResult();
@@ -52,7 +53,7 @@ lyric_compiler::internal::compile_cond(
         if (!isAssignable)
             return state->logAndContinue(CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
-                "case predicate must return Boolean");
+                "cond predicate must return Bool");
 
         auto predicateJumpResult = code->jumpIfFalse();
         if (predicateJumpResult.isStatus())
@@ -61,8 +62,8 @@ lyric_compiler::internal::compile_cond(
 
         lyric_assembler::BlockHandle consequent(block->blockProc(), block->blockCode(), block, block->blockState());
 
-        // evaluate the case consequent
-        auto consequentResult = compile_expression(&consequent, condCase.getChild(1), moduleEntry);
+        // evaluate the consequent
+        auto consequentResult = compile_expression(&consequent, condWhen.getChild(1), moduleEntry);
         if (consequentResult.isStatus())
             return consequentResult;
         auto consequentType = consequentResult.getResult();
@@ -82,7 +83,7 @@ lyric_compiler::internal::compile_cond(
             returnType = consequentType;
         }
 
-        patchList.push_back(lyric_assembler::CondCasePatch(predicateLabel, predicateJump, consequentJump));
+        patchList.push_back(lyric_assembler::CondWhenPatch(predicateLabel, predicateJump, consequentJump));
     }
 
     tempo_utils::Status status;
@@ -127,27 +128,27 @@ lyric_compiler::internal::compile_cond(
     if (alternativeBlockExit.isStatus())
         return alternativeBlockExit.getStatus();
 
-    // patch jumps for each case expression except the last
+    // patch jumps for each expression except the last
     tu_uint32 i = 0;
     for (; i < patchList.size() - 1; i++) {
-        auto &casePatch = patchList[i];
-        auto &nextCasePatch = patchList[i + 1];
-        status = code->patch(casePatch.getPredicateJump(), nextCasePatch.getPredicateLabel());
+        auto &condWhenPatch = patchList[i];
+        auto &nextPatch = patchList[i + 1];
+        status = code->patch(condWhenPatch.getPredicateJump(), nextPatch.getPredicateLabel());
         if (!status.isOk())
             return status;
 
-        status = code->patch(casePatch.getConsequentJump(), alternativeBlockExit.getResult());
+        status = code->patch(condWhenPatch.getConsequentJump(), alternativeBlockExit.getResult());
         if (!status.isOk())
             return status;
     }
 
-    // patch jumps for the last case expression
-    auto &lastCasePatch = patchList[i];
-    status = code->patch(lastCasePatch.getPredicateJump(), alternativeBlockEnter.getResult());
+    // patch jumps for the last expression
+    auto &lastPatch = patchList[i];
+    status = code->patch(lastPatch.getPredicateJump(), alternativeBlockEnter.getResult());
     if (!status.isOk())
         return status;
 
-    status = code->patch(lastCasePatch.getConsequentJump(), alternativeBlockExit.getResult());
+    status = code->patch(lastPatch.getConsequentJump(), alternativeBlockExit.getResult());
     if (!status.isOk())
         return status;
 
@@ -171,13 +172,14 @@ lyric_compiler::internal::compile_if(
 
     lyric_assembler::CodeBuilder *code = block->blockCode();
 
-    std::vector<lyric_assembler::CondCasePatch> patchList;
+    std::vector<lyric_assembler::CondWhenPatch> patchList;
 
     // evaluate each case
     for (int i = 0; i < walker.numChildren(); i++) {
-        auto condCase = walker.getChild(i);
-        if (condCase.numChildren() != 2)
-            block->throwSyntaxError(condCase, "invalid if case");
+        auto condWhen = walker.getChild(i);
+        moduleEntry.checkClassOrThrow(condWhen, lyric_schema::kLyricAstWhenClass);
+        if (condWhen.numChildren() != 2)
+            block->throwSyntaxError(condWhen, "invalid if clause");
 
         auto makeLabelResult = code->makeLabel();
         if (makeLabelResult.isStatus())
@@ -185,7 +187,7 @@ lyric_compiler::internal::compile_if(
         auto predicateLabel = makeLabelResult.getResult();
 
         // evaluate the case predicate
-        auto predicateResult = compile_expression(block, condCase.getChild(0), moduleEntry);
+        auto predicateResult = compile_expression(block, condWhen.getChild(0), moduleEntry);
         if (predicateResult.isStatus())
             return predicateResult.getStatus();
         auto predicateType = predicateResult.getResult();
@@ -208,7 +210,7 @@ lyric_compiler::internal::compile_if(
         lyric_assembler::BlockHandle consequent(block->blockProc(), block->blockCode(), block, block->blockState());
 
         // evaluate the case consequent
-        auto consequentResult = compile_block(&consequent, condCase.getChild(1), moduleEntry);
+        auto consequentResult = compile_block(&consequent, condWhen.getChild(1), moduleEntry);
         if (consequentResult.isStatus())
             return consequentResult.getStatus();
         auto consequentType = consequentResult.getResult();
@@ -222,7 +224,7 @@ lyric_compiler::internal::compile_if(
             return consequentJumpResult.getStatus();
         auto consequentJump = consequentJumpResult.getResult();
 
-        patchList.push_back(lyric_assembler::CondCasePatch(predicateLabel, predicateJump, consequentJump));
+        patchList.push_back(lyric_assembler::CondWhenPatch(predicateLabel, predicateJump, consequentJump));
     }
 
     tempo_utils::Status status;
@@ -252,7 +254,7 @@ lyric_compiler::internal::compile_if(
     if (alternativeBlockExit.isStatus())
         return alternativeBlockExit.getStatus();
 
-    // patch jumps for each case expression except the last
+    // patch jumps for each expression except the last
     tu_uint32 i = 0;
     for (; i < patchList.size() - 1; i++) {
         auto &casePatch = patchList[i];
@@ -266,13 +268,13 @@ lyric_compiler::internal::compile_if(
             return status;
     }
 
-    // patch jumps for the last case expression
-    auto &lastCasePatch = patchList[i];
-    status = code->patch(lastCasePatch.getPredicateJump(), alternativeBlockEnter.getResult());
+    // patch jumps for the last expression
+    auto &lastPatch = patchList[i];
+    status = code->patch(lastPatch.getPredicateJump(), alternativeBlockEnter.getResult());
     if (!status.isOk())
         return status;
 
-    status = code->patch(lastCasePatch.getConsequentJump(), alternativeBlockExit.getResult());
+    status = code->patch(lastPatch.getConsequentJump(), alternativeBlockExit.getResult());
     if (!status.isOk())
         return status;
 

@@ -548,14 +548,14 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &methodAction);
     };
 
-    class CondCasePatch {
+    class CondWhenPatch {
     public:
-        CondCasePatch();
-        CondCasePatch(
+        CondWhenPatch();
+        CondWhenPatch(
             const JumpLabel &predicateLabel,
             const PatchOffset &predicateJump,
             const PatchOffset &consequentJump);
-        CondCasePatch(const CondCasePatch &other);
+        CondWhenPatch(const CondWhenPatch &other);
 
         JumpLabel getPredicateLabel() const;
         PatchOffset getPredicateJump() const;
@@ -567,16 +567,16 @@ namespace lyric_assembler {
         PatchOffset m_consequentJump;
     };
 
-    class MatchCasePatch {
+    class MatchWhenPatch {
     public:
-        MatchCasePatch();
-        MatchCasePatch(
+        MatchWhenPatch();
+        MatchWhenPatch(
             const lyric_common::TypeDef &predicateType,
             const JumpLabel &predicateLabel,
             const PatchOffset &predicateJump,
             const PatchOffset &consequentJump,
             const lyric_common::TypeDef &consequentType);
-        MatchCasePatch(const MatchCasePatch &other);
+        MatchWhenPatch(const MatchWhenPatch &other);
 
         lyric_common::TypeDef getPredicateType() const;
         JumpLabel getPredicateLabel() const;
