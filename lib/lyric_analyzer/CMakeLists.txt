@@ -11,6 +11,7 @@ set(LYRIC_ANALYZER_INCLUDES
     include/lyric_analyzer/analyzer_result.h
     include/lyric_analyzer/analyzer_scan_driver.h
     include/lyric_analyzer/class_analyzer_context.h
+    include/lyric_analyzer/concept_analyzer_context.h
     include/lyric_analyzer/entry_analyzer_context.h
     include/lyric_analyzer/function_analyzer_context.h
     include/lyric_analyzer/lyric_analyzer.h
@@ -22,6 +23,7 @@ target_sources(lyric_analyzer PRIVATE
     src/analyzer_result.cpp
     src/analyzer_scan_driver.cpp
     src/class_analyzer_context.cpp
+    src/concept_analyzer_context.cpp
     src/entry_analyzer_context.cpp
     src/function_analyzer_context.cpp
     src/lyric_analyzer.cpp

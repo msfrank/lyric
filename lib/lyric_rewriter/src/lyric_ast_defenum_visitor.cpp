@@ -1,9 +1,9 @@
 
 #include <lyric_parser/ast_attrs.h>
-#include <lyric_rewriter/lyric_ast_defclass_visitor.h>
+#include <lyric_rewriter/lyric_ast_defenum_visitor.h>
 #include <lyric_rewriter/rewriter_result.h>
 
-lyric_rewriter::LyricAstDefclassVisitor::LyricAstDefclassVisitor(
+lyric_rewriter::LyricAstDefenumVisitor::LyricAstDefenumVisitor(
     lyric_schema::LyricAstId astId,
     LyricAstOptions *options)
     : LyricAstBaseVisitor(options),
@@ -12,7 +12,7 @@ lyric_rewriter::LyricAstDefclassVisitor::LyricAstDefclassVisitor(
 }
 
 tempo_utils::Status
-lyric_rewriter::LyricAstDefclassVisitor::enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx)
+lyric_rewriter::LyricAstDefenumVisitor::enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx)
 {
     TU_RETURN_IF_NOT_OK (invokeEnter(m_astId, node, ctx));
 
@@ -20,6 +20,7 @@ lyric_rewriter::LyricAstDefclassVisitor::enter(lyric_parser::ArchetypeNode *node
         return {};
 
     Option<std::pair<lyric_parser::ArchetypeNode *,int>> initNodeOption;
+    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> caseNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> memberNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> methodNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> implNodes;
@@ -35,8 +36,10 @@ lyric_rewriter::LyricAstDefclassVisitor::enter(lyric_parser::ArchetypeNode *node
                 initNodeOption = Option(std::pair{child, i});
                 break;
             case lyric_schema::LyricAstId::Val:
-            case lyric_schema::LyricAstId::Var:
                 memberNodes.push_back(std::pair{child, i});
+                break;
+            case lyric_schema::LyricAstId::Case:
+                caseNodes.push_back(std::pair{child, i});
                 break;
             case lyric_schema::LyricAstId::Def:
                 methodNodes.push_back(std::pair{child, i});
@@ -47,6 +50,12 @@ lyric_rewriter::LyricAstDefclassVisitor::enter(lyric_parser::ArchetypeNode *node
             default:
                 return RewriterStatus::forCondition(RewriterCondition::kSyntaxError);
         }
+    }
+
+    for (auto it = caseNodes.rbegin(); it != caseNodes.rend(); it++) {
+        std::shared_ptr<AbstractNodeVisitor> visitor;
+        TU_ASSIGN_OR_RETURN (visitor, makeVisitor(it->first));
+        ctx.push(it->second, it->first, visitor);
     }
 
     if (initNodeOption.hasValue()) {
@@ -78,7 +87,7 @@ lyric_rewriter::LyricAstDefclassVisitor::enter(lyric_parser::ArchetypeNode *node
 }
 
 tempo_utils::Status
-lyric_rewriter::LyricAstDefclassVisitor::exit(lyric_parser::ArchetypeNode *node, const VisitorContext &ctx)
+lyric_rewriter::LyricAstDefenumVisitor::exit(lyric_parser::ArchetypeNode *node, const VisitorContext &ctx)
 {
     return invokeExit(m_astId, node, ctx);
 }

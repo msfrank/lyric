@@ -44,6 +44,17 @@ lyric_object::CallWalker::getSymbolPath() const
 }
 
 bool
+lyric_object::CallWalker::isConstructor() const
+{
+    if (!isValid())
+        return false;
+    auto *callDescriptor = m_reader->getCall(m_callOffset);
+    if (callDescriptor == nullptr)
+        return false;
+    return bool(callDescriptor->flags() & lyo1::CallFlags::Ctor);
+}
+
+bool
 lyric_object::CallWalker::isBound() const
 {
     if (!isValid())

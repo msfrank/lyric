@@ -21,6 +21,7 @@ namespace lyric_object {
         CallWalker(const CallWalker &other);
 
         bool isValid() const;
+        bool isConstructor() const;
         bool isBound() const;
         bool isNoReturn() const;
         bool isDeclOnly() const;

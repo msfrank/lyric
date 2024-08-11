@@ -20,6 +20,8 @@ write_action(
     auto fullyQualifiedName = buffer.CreateSharedString(actionPathString);
 
     lyo1::ActionFlags actionFlags = lyo1::ActionFlags::NONE;
+    if (actionSymbol->isDeclOnly())
+        actionFlags |= lyo1::ActionFlags::DeclOnly;
 
     tu_uint32 actionTemplate = lyric_runtime::INVALID_ADDRESS_U32;
     if (actionSymbol->actionTemplate() != nullptr)

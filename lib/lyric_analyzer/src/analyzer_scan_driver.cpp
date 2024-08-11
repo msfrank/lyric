@@ -2,10 +2,12 @@
 #include <lyric_analyzer/analyzer_result.h>
 #include <lyric_analyzer/analyzer_scan_driver.h>
 #include <lyric_analyzer/class_analyzer_context.h>
+#include <lyric_analyzer/concept_analyzer_context.h>
 #include <lyric_analyzer/entry_analyzer_context.h>
 #include <lyric_analyzer/function_analyzer_context.h>
 #include <lyric_analyzer/namespace_analyzer_context.h>
 #include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -304,6 +306,44 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
 
     // push the class context
     auto ctx = std::make_unique<ClassAnalyzerContext>(this, classSymbol, initNode);
+    return pushContext(std::move(ctx));
+}
+
+tempo_utils::Status
+lyric_analyzer::AnalyzerScanDriver::pushConcept(
+    const lyric_parser::ArchetypeNode *node,
+    lyric_assembler::BlockHandle *block)
+{
+    std::string identifier;
+    lyric_typing::TemplateSpec templateSpec;
+    lyric_assembler::ConceptSymbol *superConcept = nullptr;
+    lyric_object::DeriveType derive = lyric_object::DeriveType::Any;
+
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
+        lyric_parser::ArchetypeNode *genericNode = nullptr;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
+        TU_ASSIGN_OR_RETURN (templateSpec, m_typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
+    }
+
+    // determine the superconcept type
+    lyric_common::TypeDef superConceptType;
+    auto *fundamentalCache = m_state->fundamentalCache();
+    superConceptType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
+
+    // resolve the superconcept
+    TU_ASSIGN_OR_RETURN (superConcept, block->resolveConcept(superConceptType));
+
+    lyric_assembler::ConceptSymbol *conceptSymbol;
+    TU_ASSIGN_OR_RETURN (conceptSymbol, block->declareConcept(
+        identifier, superConcept, lyric_object::AccessType::Public, templateSpec.templateParameters,
+        derive, /* declOnly= */ true));
+
+    TU_LOG_INFO << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConcept->getSymbolUrl();
+
+    // push the concept context
+    auto ctx = std::make_unique<ConceptAnalyzerContext>(this, conceptSymbol);
     return pushContext(std::move(ctx));
 }
 

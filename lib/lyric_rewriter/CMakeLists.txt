@@ -11,6 +11,10 @@ set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/lyric_ast_binary_visitor.h
     include/lyric_rewriter/lyric_ast_cond_visitor.h
     include/lyric_rewriter/lyric_ast_defclass_visitor.h
+    include/lyric_rewriter/lyric_ast_defconcept_visitor.h
+    include/lyric_rewriter/lyric_ast_defenum_visitor.h
+    include/lyric_rewriter/lyric_ast_definstance_visitor.h
+    include/lyric_rewriter/lyric_ast_defstruct_visitor.h
     include/lyric_rewriter/lyric_ast_dynamic_visitor.h
     include/lyric_rewriter/lyric_ast_for_visitor.h
     include/lyric_rewriter/lyric_ast_if_visitor.h
@@ -37,6 +41,10 @@ target_sources(lyric_rewriter PRIVATE
     src/lyric_ast_binary_visitor.cpp
     src/lyric_ast_cond_visitor.cpp
     src/lyric_ast_defclass_visitor.cpp
+    src/lyric_ast_defconcept_visitor.cpp
+    src/lyric_ast_defenum_visitor.cpp
+    src/lyric_ast_definstance_visitor.cpp
+    src/lyric_ast_defstruct_visitor.cpp
     src/lyric_ast_dynamic_visitor.cpp
     src/lyric_ast_for_visitor.cpp
     src/lyric_ast_if_visitor.cpp

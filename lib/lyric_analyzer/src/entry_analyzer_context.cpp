@@ -40,7 +40,8 @@ lyric_analyzer::EntryAnalyzerContext::enter(
             return m_driver->pushFunction(node, getBlock());
         case lyric_schema::LyricAstId::DefClass:
             return m_driver->pushClass(node, getBlock());
-//        case lyric_schema::LyricAstId::DefConcept:
+        case lyric_schema::LyricAstId::DefConcept:
+            return m_driver->pushConcept(node, getBlock());
 //        case lyric_schema::LyricAstId::DefEnum:
 //        case lyric_schema::LyricAstId::DefInstance:
 //        case lyric_schema::LyricAstId::DefStruct:
