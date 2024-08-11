@@ -75,10 +75,9 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string, DataReference>::const_iterator membersEnd() const;
         tu_uint32 numMembers() const;
 
-        tempo_utils::Result<DataReference> declareMember(
+        tempo_utils::Result<FieldSymbol *> declareMember(
             const std::string &name,
-            const lyric_common::TypeDef &memberType,
-            const lyric_common::SymbolUrl &init = {});
+            const lyric_common::TypeDef &memberType);
 
         tempo_utils::Result<DataReference> resolveMember(
             const std::string &name,

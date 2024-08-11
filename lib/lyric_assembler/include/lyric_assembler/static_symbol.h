@@ -50,6 +50,8 @@ namespace lyric_assembler {
         tempo_utils::Result<ProcHandle *> defineInitializer();
         tempo_utils::Status prepareInitializer(CallableInvoker &invoker);
 
+        DataReference getReference() const;
+
     private:
         lyric_common::SymbolUrl m_staticUrl;
         lyric_importer::StaticImport *m_staticImport = nullptr;

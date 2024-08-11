@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_importer/field_import.h>
@@ -10,6 +11,7 @@ lyric_assembler::FieldSymbol::FieldSymbol(
     FieldAddress address,
     TypeHandle *fieldType,
     bool isDeclOnly,
+    BlockHandle *parentBlock,
     AssemblyState *state)
     : BaseSymbol(address, new FieldSymbolPriv()),
       m_fieldUrl(fieldUrl),
@@ -23,25 +25,28 @@ lyric_assembler::FieldSymbol::FieldSymbol(
     priv->isVariable = isVariable;
     priv->isDeclOnly = isDeclOnly;
     priv->fieldType = fieldType;
+    priv->parentBlock = parentBlock;
 
     TU_ASSERT (priv->fieldType != nullptr);
+    TU_ASSERT (priv->parentBlock != nullptr);
 }
 
-lyric_assembler::FieldSymbol::FieldSymbol(
-    const lyric_common::SymbolUrl &fieldUrl,
-    lyric_object::AccessType access,
-    bool isVariable,
-    const lyric_common::SymbolUrl &init,
-    FieldAddress address,
-    TypeHandle *fieldType,
-    bool isDeclOnly,
-    AssemblyState *state)
-    : FieldSymbol(fieldUrl, access, isVariable, address, fieldType, isDeclOnly, state)
-{
-    auto *priv = getPriv();
-    priv->init = init;
-    TU_ASSERT (priv->init.isValid());
-}
+//lyric_assembler::FieldSymbol::FieldSymbol(
+//    const lyric_common::SymbolUrl &fieldUrl,
+//    lyric_object::AccessType access,
+//    bool isVariable,
+//    const lyric_common::SymbolUrl &init,
+//    FieldAddress address,
+//    TypeHandle *fieldType,
+//    bool isDeclOnly,
+//    BlockHandle *parentBlock,
+//    AssemblyState *state)
+//    : FieldSymbol(fieldUrl, access, isVariable, address, fieldType, isDeclOnly, parentBlock, state)
+//{
+//    auto *priv = getPriv();
+//    priv->init = init;
+//    TU_ASSERT (priv->init.isValid());
+//}
 
 lyric_assembler::FieldSymbol::FieldSymbol(
     const lyric_common::SymbolUrl &fieldUrl,
@@ -63,6 +68,7 @@ lyric_assembler::FieldSymbol::load()
 
     auto priv = std::make_unique<FieldSymbolPriv>();
 
+    priv->parentBlock = nullptr;
     priv->access = m_fieldImport->getAccess();
     priv->isVariable = m_fieldImport->isVariable();
     priv->isDeclOnly = m_fieldImport->isDeclOnly();
@@ -147,4 +153,39 @@ lyric_assembler::FieldSymbol::getInitializer() const
 {
     auto *priv = getPriv();
     return priv->init;
+}
+
+tempo_utils::Result<lyric_assembler::ProcHandle *>
+lyric_assembler::FieldSymbol::defineInitializer()
+{
+    if (isImported())
+        m_state->throwAssemblerInvariant(
+            "can't define initializer on imported field {}", m_fieldUrl.toString());
+    auto *priv = getPriv();
+
+    if (priv->init.isValid())
+        m_state->throwAssemblerInvariant("cannot redefine initializer for {}", m_fieldUrl.toString());
+
+    auto identifier = absl::StrCat("$init$", m_fieldUrl.getSymbolName());
+
+    // declare the initializer call
+    lyric_assembler::CallSymbol *callSymbol;
+    TU_ASSIGN_OR_RETURN (callSymbol, priv->parentBlock->declareFunction(
+        identifier, lyric_object::AccessType::Public, {}, priv->isDeclOnly));
+
+    priv->init = callSymbol->getSymbolUrl();
+
+    // define the initializer with no parameters and the field type as return type
+    return callSymbol->defineCall({}, priv->fieldType->getTypeDef());
+}
+
+lyric_assembler::DataReference
+lyric_assembler::FieldSymbol::getReference() const
+{
+    auto *priv = getPriv();
+    DataReference ref;
+    ref.symbolUrl = m_fieldUrl;
+    ref.typeDef = priv->fieldType->getTypeDef();
+    ref.referenceType = priv->isVariable? ReferenceType::Variable : ReferenceType::Value;
+    return ref;
 }

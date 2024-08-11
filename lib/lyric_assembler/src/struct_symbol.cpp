@@ -248,11 +248,10 @@ lyric_assembler::StructSymbol::numMembers() const
     return static_cast<tu_uint32>(priv->members.size());
 }
 
-tempo_utils::Result<lyric_assembler::DataReference>
+tempo_utils::Result<lyric_assembler::FieldSymbol *>
 lyric_assembler::StructSymbol::declareMember(
     const std::string &name,
-    const lyric_common::TypeDef &memberType,
-    const lyric_common::SymbolUrl &init)
+    const lyric_common::TypeDef &memberType)
 {
     if (isImported())
         m_state->throwAssemblerInvariant(
@@ -284,14 +283,8 @@ lyric_assembler::StructSymbol::declareMember(
     auto address = FieldAddress::near(fieldIndex);
 
     // construct the field symbol
-    FieldSymbol *fieldSymbol;
-    if (init.isValid()) {
-        fieldSymbol = new FieldSymbol(memberUrl, lyric_object::AccessType::Public,
-            false, init, address, fieldType, priv->isDeclOnly, m_state);
-    } else {
-        fieldSymbol = new FieldSymbol(memberUrl, lyric_object::AccessType::Public,
-            false, address, fieldType, priv->isDeclOnly, m_state);
-    }
+    auto *fieldSymbol = new FieldSymbol(memberUrl, lyric_object::AccessType::Public,
+        false, address, fieldType, priv->isDeclOnly, priv->structBlock.get(), m_state);
 
     auto status = m_state->appendField(fieldSymbol);
     if (status.notOk()) {
@@ -307,7 +300,7 @@ lyric_assembler::StructSymbol::declareMember(
     ref.referenceType = ReferenceType::Value;
     priv->members[name] = ref;
 
-    return ref;
+    return fieldSymbol;
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>

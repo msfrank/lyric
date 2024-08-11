@@ -241,6 +241,7 @@ add_executable(lyric_testsuite ${EMPTY_CPP})
 target_link_libraries(lyric_testsuite
     PUBLIC gtest::gtest
     PRIVATE
+    LyricAnalyzerTestSuite
     LyricBootstrapTestSuite
     LyricBuildTestSuite
     LyricCommonTestSuite

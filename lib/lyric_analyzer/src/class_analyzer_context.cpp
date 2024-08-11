@@ -93,11 +93,10 @@ lyric_analyzer::ClassAnalyzerContext::declareMember(const lyric_parser::Archetyp
     lyric_common::TypeDef memberType;
     TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(block, memberSpec));
 
-    lyric_assembler::DataReference ref;
-    TU_ASSIGN_OR_RETURN (ref, m_classSymbol->declareMember(
+    TU_RETURN_IF_STATUS(m_classSymbol->declareMember(
         identifier, memberType, isVariable, lyric_object::AccessType::Public));
 
-    TU_LOG_INFO << "declared member " << ref.symbolUrl;
+    TU_LOG_INFO << "declared member " << identifier << " on " << m_classSymbol->getSymbolUrl();
 
     return {};
 }

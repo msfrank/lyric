@@ -120,6 +120,13 @@ lyric_assembler::StaticSymbol::isVariable() const
     return priv->isVariable;
 }
 
+bool
+lyric_assembler::StaticSymbol::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
+}
+
 lyric_common::SymbolUrl
 lyric_assembler::StaticSymbol::getInitializer() const
 {
@@ -195,9 +202,13 @@ lyric_assembler::StaticSymbol::prepareInitializer(CallableInvoker &invoker)
     return invoker.initialize(std::move(callable));
 }
 
-bool
-lyric_assembler::StaticSymbol::isDeclOnly() const
+lyric_assembler::DataReference
+lyric_assembler::StaticSymbol::getReference() const
 {
     auto *priv = getPriv();
-    return priv->isDeclOnly;
+    DataReference ref;
+    ref.symbolUrl = m_staticUrl;
+    ref.typeDef = priv->staticType->getTypeDef();
+    ref.referenceType = priv->isVariable? ReferenceType::Variable : ReferenceType::Value;
+    return ref;
 }

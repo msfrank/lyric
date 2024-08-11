@@ -46,17 +46,17 @@ compile_defenum_val(
         accessType = lyric_object::AccessType::Protected;
     }
 
-    // compile the member initializer if specified
-    lyric_common::SymbolUrl init;
-    if (walker.hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
-        lyric_parser::NodeWalker defaultNode;
-        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstDefaultOffset, defaultNode);
-        TU_ASSIGN_OR_RETURN (init, lyric_compiler::internal::compile_member_initializer(
-            baseEnum->enumBlock(), defaultNode, identifier, valType, {}, moduleEntry));
-    }
+    lyric_assembler::FieldSymbol *fieldSymbol;
+    TU_ASSIGN_OR_RETURN (fieldSymbol, baseEnum->declareMember(identifier, valType, false, accessType));
 
-    TU_RETURN_IF_STATUS (baseEnum->declareMember(identifier, valType, false, accessType, init));
     TU_LOG_INFO << "declared val member " << identifier << " for " << baseEnum->getSymbolUrl();
+
+    // compile the member initializer if specified
+    if (walker.numChildren() > 0) {
+        auto defaultInit = walker.getChild(0);
+        TU_RETURN_IF_NOT_OK (lyric_compiler::internal::compile_member_initializer(
+            fieldSymbol, defaultInit, moduleEntry));
+    }
 
     return identifier;
 }

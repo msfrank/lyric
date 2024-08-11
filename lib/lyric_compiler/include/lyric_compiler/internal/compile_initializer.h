@@ -14,13 +14,10 @@ namespace lyric_compiler::internal {
         const std::vector<lyric_object::TemplateParameter> &templateParameters,
         lyric_compiler::ModuleEntry &moduleEntry);
 
-    tempo_utils::Result<lyric_common::SymbolUrl>
+    tempo_utils::Status
     compile_member_initializer(
-        lyric_assembler::BlockHandle *block,
+        lyric_assembler::FieldSymbol *fieldSymbol,
         const lyric_parser::NodeWalker &walker,
-        const std::string &memberName,
-        const lyric_common::TypeDef &memberType,
-        const std::vector<lyric_object::TemplateParameter> &templateParameters,
         lyric_compiler::ModuleEntry &moduleEntry);
 
     tempo_utils::Status

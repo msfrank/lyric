@@ -11,7 +11,6 @@
 #include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_call.h>
 #include <lyric_compiler/internal/compile_defclass.h>
-#include <lyric_compiler/internal/compile_node.h>
 #include <lyric_compiler/internal/compile_initializer.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
@@ -49,16 +48,17 @@ compile_defclass_val(
         accessType = lyric_object::AccessType::Protected;
     }
 
+    lyric_assembler::FieldSymbol *fieldSymbol;
+    TU_ASSIGN_OR_RETURN (fieldSymbol, classSymbol->declareMember(identifier, valType, false, accessType));
+
+    TU_LOG_INFO << "declared val member " << identifier << " for " << classSymbol->getSymbolUrl();
+
     // compile the member initializer if specified
-    lyric_common::SymbolUrl init;
     if (walker.numChildren() > 0) {
         auto defaultInit = walker.getChild(0);
-        TU_ASSIGN_OR_RETURN (init, lyric_compiler::internal::compile_member_initializer(
-            classSymbol->classBlock(), defaultInit, identifier, valType, templateParameters, moduleEntry));
+        TU_RETURN_IF_NOT_OK (lyric_compiler::internal::compile_member_initializer(
+            fieldSymbol, defaultInit, moduleEntry));
     }
-
-    TU_RETURN_IF_STATUS (classSymbol->declareMember(identifier, valType, false, accessType, init));
-    TU_LOG_INFO << "declared val member " << identifier << " for " << classSymbol->getSymbolUrl();
 
     return identifier;
 }
@@ -94,17 +94,17 @@ compile_defclass_var(
         accessType = lyric_object::AccessType::Protected;
     }
 
+    lyric_assembler::FieldSymbol *fieldSymbol;
+    TU_ASSIGN_OR_RETURN (fieldSymbol, classSymbol->declareMember(identifier, varType, true, accessType));
+
+    TU_LOG_INFO << "declared var member " << identifier << " for " << classSymbol->getSymbolUrl();
+
     // compile the member initializer if specified
-    lyric_common::SymbolUrl init;
     if (walker.numChildren() > 0) {
         auto defaultInit = walker.getChild(0);
-        TU_ASSIGN_OR_RETURN (init, lyric_compiler::internal::compile_member_initializer(
-            classSymbol->classBlock(), defaultInit, identifier, varType, templateParameters, moduleEntry));
+        TU_RETURN_IF_NOT_OK (lyric_compiler::internal::compile_member_initializer(
+            fieldSymbol, defaultInit, moduleEntry));
     }
-
-    TU_RETURN_IF_STATUS (classSymbol->declareMember(identifier, varType,
-        true, accessType, init));
-    TU_LOG_INFO << "declared var member " << identifier << " for " << classSymbol->getSymbolUrl();
 
     return identifier;
 }

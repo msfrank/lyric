@@ -13,6 +13,7 @@ namespace lyric_assembler {
         bool isVariable;
         bool isDeclOnly;
         lyric_common::SymbolUrl init;
+        BlockHandle *parentBlock;
         TypeHandle *fieldType;
     };
 
@@ -25,15 +26,7 @@ namespace lyric_assembler {
             FieldAddress address,
             TypeHandle *fieldType,
             bool isDeclOnly,
-            AssemblyState *state);
-        FieldSymbol(
-            const lyric_common::SymbolUrl &fieldUrl,
-            lyric_object::AccessType access,
-            bool isVariable,
-            const lyric_common::SymbolUrl &init,
-            FieldAddress address,
-            TypeHandle *fieldType,
-            bool isDeclOnly,
+            BlockHandle *parentBlock,
             AssemblyState *state);
         FieldSymbol(
             const lyric_common::SymbolUrl &fieldUrl,
@@ -54,6 +47,9 @@ namespace lyric_assembler {
         bool isDeclOnly() const;
 
         lyric_common::SymbolUrl getInitializer() const;
+        tempo_utils::Result<ProcHandle *> defineInitializer();
+
+        DataReference getReference() const;
 
     private:
         lyric_common::SymbolUrl m_fieldUrl;

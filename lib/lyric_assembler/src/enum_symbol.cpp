@@ -247,13 +247,12 @@ lyric_assembler::EnumSymbol::numMembers() const
     return priv->members.size();
 }
 
-tempo_utils::Result<lyric_assembler::DataReference>
+tempo_utils::Result<lyric_assembler::FieldSymbol *>
 lyric_assembler::EnumSymbol::declareMember(
     const std::string &name,
     const lyric_common::TypeDef &memberType,
     bool isVariable,
-    lyric_object::AccessType access,
-    const lyric_common::SymbolUrl &init)
+    lyric_object::AccessType access)
 {
     if (isImported())
         m_state->throwAssemblerInvariant(
@@ -276,14 +275,8 @@ lyric_assembler::EnumSymbol::declareMember(
     auto address = FieldAddress::near(fieldIndex);
 
     // construct the field symbol
-    FieldSymbol *fieldSymbol;
-    if (init.isValid()) {
-        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, init, address,
-            fieldType, priv->isDeclOnly, m_state);
-    } else {
-        fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, address,
-            fieldType, priv->isDeclOnly, m_state);
-    }
+    auto *fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, address,
+        fieldType, priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
     auto status = m_state->appendField(fieldSymbol);
     if (status.notOk()) {
@@ -299,7 +292,7 @@ lyric_assembler::EnumSymbol::declareMember(
     ref.referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
     priv->members[name] = ref;
 
-    return ref;
+    return fieldSymbol;
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>

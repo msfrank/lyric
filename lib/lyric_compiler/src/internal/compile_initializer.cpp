@@ -2,6 +2,7 @@
 #include <absl/container/flat_hash_set.h>
 #include <absl/strings/str_split.h>
 
+#include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -94,29 +95,30 @@ lyric_compiler::internal::compile_param_initializer(
     return callSymbol->getSymbolUrl();
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
+tempo_utils::Status
 lyric_compiler::internal::compile_member_initializer(
-    lyric_assembler::BlockHandle *block,
+    lyric_assembler::FieldSymbol *fieldSymbol,
     const lyric_parser::NodeWalker &walker,
-    const std::string &memberName,
-    const lyric_common::TypeDef &memberType,
-    const std::vector<lyric_object::TemplateParameter> &templateParameters,
     lyric_compiler::ModuleEntry &moduleEntry)
 {
-    TU_ASSERT (block != nullptr);
+    TU_ASSERT (fieldSymbol != nullptr);
     TU_ASSERT (walker.isValid());
     auto *typeSystem = moduleEntry.getTypeSystem();
 
-    auto identifier = absl::StrCat("$init$", memberName);
+//    auto identifier = absl::StrCat("$init$", memberName);
+//
+//    // declare the initializer
+//    lyric_assembler::CallSymbol *callSymbol;
+//    TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(
+//        identifier, lyric_object::AccessType::Public, templateParameters));
 
-    // declare the initializer
-    lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(
-        identifier, lyric_object::AccessType::Public, templateParameters));
+    auto memberType = fieldSymbol->getAssignableType();
 
     // define the initializer without a return type
     lyric_assembler::ProcHandle *procHandle;
-    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall({}));
+    TU_ASSIGN_OR_RETURN (procHandle, fieldSymbol->defineInitializer());
+
+    auto *block = procHandle->procBlock();
 
     // compile the initializer body
     lyric_schema::LyricAstId initializerId{};
@@ -153,9 +155,6 @@ lyric_compiler::internal::compile_member_initializer(
     // add return instruction
     TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
 
-    // finalize the initializer to set the return type
-    TU_RETURN_IF_NOT_OK (callSymbol->finalizeCall());
-
     bool isReturnable;
 
     // validate that body returns the expected type
@@ -174,7 +173,7 @@ lyric_compiler::internal::compile_member_initializer(
                 "member initializer is incompatible with type {}", memberType.toString());
     }
 
-    return callSymbol->getSymbolUrl();
+    return {};
 }
 
 tempo_utils::Status

@@ -74,16 +74,17 @@ compile_defstruct_val(
             "protected member {} not allowed for struct", identifier);
     }
 
+    lyric_assembler::FieldSymbol *fieldSymbol;
+    TU_ASSIGN_OR_RETURN (fieldSymbol, structSymbol->declareMember(identifier, valType));
+
+    TU_LOG_INFO << "declared val member " << identifier << " for " << structSymbol->getSymbolUrl();
+
     // compile the member initializer if specified
-    lyric_common::SymbolUrl init;
     if (walker.numChildren() > 0) {
         auto defaultInit = walker.getChild(0);
-        TU_ASSIGN_OR_RETURN (init, lyric_compiler::internal::compile_member_initializer(
-            structSymbol->structBlock(), defaultInit, identifier, valType, {}, moduleEntry));
+        TU_RETURN_IF_NOT_OK (lyric_compiler::internal::compile_member_initializer(
+            fieldSymbol, defaultInit, moduleEntry));
     }
-
-    TU_RETURN_IF_STATUS (structSymbol->declareMember(identifier, valType, init));
-    TU_LOG_INFO << "declared val member " << identifier << " for " << structSymbol->getSymbolUrl();
 
     return identifier;
 }
