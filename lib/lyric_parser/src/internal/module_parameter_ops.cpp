@@ -26,7 +26,7 @@ lyric_parser::internal::ModuleParameterOps::exitPositionalParam(ModuleParser::Po
 {
     auto id = ctx->Identifier()->getText();
     auto *typeNode = make_Type_node(m_state, ctx->paramType()->assignableType());
-    BindingType binding = ctx->VarKeyword()? BindingType::VARIABLE : BindingType::VALUE;
+    bool isVariable = ctx->VarKeyword()? true : false;
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -34,7 +34,7 @@ lyric_parser::internal::ModuleParameterOps::exitPositionalParam(ModuleParser::Po
     auto *paramNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstParamClass, location);
     paramNode->putAttr(kLyricAstIdentifier, id);
     paramNode->putAttr(kLyricAstTypeOffset, typeNode);
-    paramNode->putAttr(kLyricAstBindingType, binding);
+    paramNode->putAttr(kLyricAstIsVariable, isVariable);
 
     if (ctx->paramDefault()) {
         auto *defaultNode = m_state->popNode();
@@ -56,7 +56,7 @@ lyric_parser::internal::ModuleParameterOps::exitNamedParam(ModuleParser::NamedPa
 {
     auto id = ctx->Identifier()->getText();
     auto *typeNode = make_Type_node(m_state, ctx->paramType()->assignableType());
-    BindingType binding = ctx->VarKeyword()? BindingType::VARIABLE : BindingType::VALUE;
+    bool isVariable = ctx->VarKeyword()? true : false;
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -65,7 +65,7 @@ lyric_parser::internal::ModuleParameterOps::exitNamedParam(ModuleParser::NamedPa
     paramNode->putAttr(kLyricAstIdentifier, id);
     paramNode->putAttr(kLyricAstLabel, id);
     paramNode->putAttr(kLyricAstTypeOffset, typeNode);
-    paramNode->putAttr(kLyricAstBindingType, binding);
+    paramNode->putAttr(kLyricAstIsVariable, isVariable);
 
     if (ctx->paramDefault()) {
         auto *defaultNode = m_state->popNode();
@@ -88,7 +88,7 @@ lyric_parser::internal::ModuleParameterOps::exitRenamedParam(ModuleParser::Renam
     auto id = ctx->Identifier(0)->getText();
     auto label = ctx->Identifier(1)->getText();
     auto *typeNode = make_Type_node(m_state, ctx->paramType()->assignableType());
-    BindingType binding = ctx->VarKeyword()? BindingType::VARIABLE : BindingType::VALUE;
+    bool isVariable = ctx->VarKeyword()? true : false;
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -97,7 +97,7 @@ lyric_parser::internal::ModuleParameterOps::exitRenamedParam(ModuleParser::Renam
     paramNode->putAttr(kLyricAstIdentifier, id);
     paramNode->putAttr(kLyricAstLabel, label);
     paramNode->putAttr(kLyricAstTypeOffset, typeNode);
-    paramNode->putAttr(kLyricAstBindingType, binding);
+    paramNode->putAttr(kLyricAstIsVariable, isVariable);
 
     if (ctx->paramDefault()) {
         auto *defaultNode = m_state->popNode();
@@ -177,7 +177,7 @@ lyric_parser::internal::ModuleParameterOps::exitRest(ModuleParser::RestContext *
 
         auto id = restParam->Identifier()->getText();
         auto *typeNode = make_Type_node(m_state, restParam->paramType()->assignableType());
-        BindingType binding = restParam->VarKeyword()? BindingType::VARIABLE : BindingType::VALUE;
+        bool isVariable = restParam->VarKeyword()? true : false;
 
         token = restParam->getStart();
         location = get_token_location(token);
@@ -185,7 +185,7 @@ lyric_parser::internal::ModuleParameterOps::exitRest(ModuleParser::RestContext *
         auto *paramNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstParamClass, location);
         paramNode->putAttr(kLyricAstIdentifier, id);
         paramNode->putAttr(kLyricAstTypeOffset, typeNode);
-        paramNode->putAttr(kLyricAstBindingType, binding);
+        paramNode->putAttr(kLyricAstIsVariable, isVariable);
         restNode->appendChild(paramNode);
     }
 

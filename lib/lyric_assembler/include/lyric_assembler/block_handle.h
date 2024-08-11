@@ -4,7 +4,6 @@
 #include <absl/container/flat_hash_map.h>
 
 #include <lyric_common/symbol_url.h>
-#include <lyric_parser/node_walker.h>
 #include <lyric_runtime/literal_cell.h>
 #include <tempo_tracing/span_log.h>
 #include <tempo_tracing/trace_span.h>
@@ -92,16 +91,16 @@ namespace lyric_assembler {
         tempo_utils::Result<DataReference> declareVariable(
             const std::string &name,
             const lyric_common::TypeDef &assignableType,
-            lyric_parser::BindingType binding);
+            bool isVariable);
 
         tempo_utils::Result<DataReference> declareTemporary(
             const lyric_common::TypeDef &assignableType,
-            lyric_parser::BindingType binding);
+            bool isVariable);
 
         tempo_utils::Result<DataReference> declareStatic(
             const std::string &name,
             const lyric_common::TypeDef &assignableType,
-            lyric_parser::BindingType binding,
+            bool isVariable,
             bool declOnly = false);
 
         tempo_utils::Result<DataReference> resolveReference(const std::string &name);

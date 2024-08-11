@@ -172,7 +172,6 @@ target_link_libraries(lyric_assembler
     PUBLIC
     lyric::lyric_bootstrap
     lyric::lyric_importer
-    lyric::lyric_parser
     lyric::lyric_runtime
     tempo::tempo_tracing
     tempo::tempo_utils

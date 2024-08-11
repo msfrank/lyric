@@ -22,9 +22,9 @@ parse_parameter(
     lyric_typing::TypeSpec paramType;
     TU_ASSIGN_OR_RETURN (paramType, lyric_typing::parse_assignable(block, type, state));
 
-    lyric_parser::BindingType paramBinding = lyric_parser::BindingType::VALUE;
-    if (walker.hasAttr(lyric_parser::kLyricAstBindingType)) {
-        TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstBindingType, paramBinding));
+    bool isVariable = false;
+    if (walker.hasAttr(lyric_parser::kLyricAstIsVariable)) {
+        TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIsVariable, isVariable));
     }
 
     std::string paramLabel;
@@ -39,7 +39,7 @@ parse_parameter(
         maybeInit = Option(init);
     }
 
-    return lyric_typing::ParameterSpec(walker, paramName, paramLabel, paramType, paramBinding, maybeInit);
+    return lyric_typing::ParameterSpec(walker, paramName, paramLabel, paramType, isVariable, maybeInit);
 }
 
 tempo_utils::Result<lyric_typing::PackSpec>

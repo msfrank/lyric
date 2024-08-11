@@ -43,7 +43,7 @@ lyric_compiler::internal::compile_var(
                 tempo_tracing::LogSeverity::kError,
                 "missing type for static val {}", identifier);
 
-        auto declareStaticResult = block->declareStatic(identifier, varType, lyric_parser::BindingType::VARIABLE);
+        auto declareStaticResult = block->declareStatic(identifier, varType, /* isVariable= */ true);
         if (declareStaticResult.isStatus())
             return declareStaticResult.getStatus();
         auto ref = declareStaticResult.getResult();
@@ -76,7 +76,7 @@ lyric_compiler::internal::compile_var(
             tempo_tracing::LogSeverity::kError,
             "rvalue type {} is incompatible with var type {}", resultType.toString(), varType.toString());
 
-    auto declareVariableResult = block->declareVariable(identifier, varType, lyric_parser::BindingType::VARIABLE);
+    auto declareVariableResult = block->declareVariable(identifier, varType, /* isVariable= */ true);
     if (declareVariableResult.isStatus())
         return declareVariableResult.getStatus();
     auto var = declareVariableResult.getResult();

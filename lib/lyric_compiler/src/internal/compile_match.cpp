@@ -421,7 +421,7 @@ lyric_compiler::internal::compile_match(
     auto targetType = compileTargetResult.getResult();
 
     // create a temporary local variable for the target
-    auto declareTempResult = block->declareTemporary(targetType, lyric_parser::BindingType::VALUE);
+    auto declareTempResult = block->declareTemporary(targetType, /* isVariable= */ false);
     if (declareTempResult.isStatus())
         return declareTempResult.getStatus();
     auto targetRef = declareTempResult.getResult();

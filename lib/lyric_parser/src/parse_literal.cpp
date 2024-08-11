@@ -9,16 +9,16 @@ lyric_parser::parse_integer_literal(std::string_view literalValue, BaseType base
 {
     int base;
     switch (baseType) {
-        case lyric_parser::BaseType::BINARY:
+        case lyric_parser::BaseType::Binary:
             base = 2;
             break;
-        case lyric_parser::BaseType::OCTAL:
+        case lyric_parser::BaseType::Octal:
             base = 8;
             break;
-        case lyric_parser::BaseType::DECIMAL:
+        case lyric_parser::BaseType::Decimal:
             base = 10;
             break;
-        case lyric_parser::BaseType::HEX:
+        case lyric_parser::BaseType::Hex:
             base = 16;
             break;
         default:
@@ -48,11 +48,11 @@ lyric_parser::parse_float_literal(
         first++;
 
     absl::chars_format fmt;
-    if (baseType == BaseType::DECIMAL && notationType == NotationType::FIXED) {
+    if (baseType == BaseType::Decimal && notationType == NotationType::Fixed) {
         fmt = absl::chars_format::fixed;
-    } else if (baseType == BaseType::DECIMAL && notationType == NotationType::SCIENTIFIC) {
+    } else if (baseType == BaseType::Decimal && notationType == NotationType::Scientific) {
         fmt = absl::chars_format::scientific;
-    } else if (baseType == BaseType::HEX && notationType == NotationType::FIXED) {
+    } else if (baseType == BaseType::Hex && notationType == NotationType::Fixed) {
         fmt = absl::chars_format::hex;
     } else {
         return ParseStatus::forCondition(

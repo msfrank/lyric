@@ -44,36 +44,6 @@ namespace lyric_parser {
             NotationType &value) const override;
     };
 
-    class BindingTypeAttr : public tempo_utils::AttrSerde<BindingType> {
-
-        using SerdeType = BindingType;
-
-    public:
-        explicit BindingTypeAttr(const tempo_utils::ComparableResource *resource);
-        tempo_utils::Result<tu_uint32> writeAttr(
-            tempo_utils::AbstractAttrWriter *writer,
-            const BindingType &value) const override;
-        tempo_utils::Status parseAttr(
-            tu_uint32 index,
-            tempo_utils::AbstractAttrParser *parser,
-            BindingType &value) const override;
-    };
-
-    class MutationTypeAttr : public tempo_utils::AttrSerde<MutationType> {
-
-        using SerdeType = MutationType;
-
-    public:
-        explicit MutationTypeAttr(const tempo_utils::ComparableResource *resource);
-        tempo_utils::Result<tu_uint32> writeAttr(
-            tempo_utils::AbstractAttrWriter *writer,
-            const MutationType &value) const override;
-        tempo_utils::Status parseAttr(
-            tu_uint32 index,
-            tempo_utils::AbstractAttrParser *parser,
-            MutationType &value) const override;
-    };
-
     class AccessTypeAttr : public tempo_utils::AttrSerde<AccessType> {
 
         using SerdeType = AccessType;
@@ -139,8 +109,6 @@ namespace lyric_parser {
 
     extern const BaseTypeAttr kLyricAstBaseType;
     extern const NotationTypeAttr kLyricAstNotationType;
-    extern const BindingTypeAttr kLyricAstBindingType;
-    extern const MutationTypeAttr kLyricAstMutationType;
     extern const AccessTypeAttr kLyricAstAccessType;
     extern const BoundTypeAttr kLyricAstBoundType;
     extern const VarianceTypeAttr kLyricAstVarianceType;
@@ -149,6 +117,7 @@ namespace lyric_parser {
     extern const lyric_common::SymbolPathAttr kLyricAstSymbolPath;
     extern const tempo_utils::StringAttr kLyricAstIdentifier;
     extern const tempo_utils::StringAttr kLyricAstLabel;
+    extern const tempo_utils::BoolAttr kLyricAstIsVariable;
 
     extern const NodeAttr kLyricAstTypeOffset;
     extern const NodeAttr kLyricAstDefaultOffset;

@@ -18,17 +18,17 @@ static tempo_utils::Status
 value_to_base_type(tu_uint32 value, lyric_parser::BaseType &base)
 {
     switch (static_cast<lyric_parser::BaseType>(value)) {
-        case lyric_parser::BaseType::BINARY:
-            base = lyric_parser::BaseType::BINARY;
+        case lyric_parser::BaseType::Binary:
+            base = lyric_parser::BaseType::Binary;
             return tempo_utils::AttrStatus::ok();
-        case lyric_parser::BaseType::OCTAL:
-            base = lyric_parser::BaseType::OCTAL;
+        case lyric_parser::BaseType::Octal:
+            base = lyric_parser::BaseType::Octal;
             return tempo_utils::AttrStatus::ok();
-        case lyric_parser::BaseType::DECIMAL:
-            base = lyric_parser::BaseType::DECIMAL;
+        case lyric_parser::BaseType::Decimal:
+            base = lyric_parser::BaseType::Decimal;
             return tempo_utils::AttrStatus::ok();
-        case lyric_parser::BaseType::HEX:
-            base = lyric_parser::BaseType::HEX;
+        case lyric_parser::BaseType::Hex:
+            base = lyric_parser::BaseType::Hex;
             return tempo_utils::AttrStatus::ok();
         default:
             return tempo_utils::AttrStatus::forCondition(
@@ -62,11 +62,11 @@ static tempo_utils::Status
 value_to_notation_type(tu_int64 value, lyric_parser::NotationType &notation)
 {
     switch (static_cast<lyric_parser::NotationType>(value)) {
-        case lyric_parser::NotationType::FIXED:
-            notation = lyric_parser::NotationType::FIXED;
+        case lyric_parser::NotationType::Fixed:
+            notation = lyric_parser::NotationType::Fixed;
             return tempo_utils::AttrStatus::ok();
-        case lyric_parser::NotationType::SCIENTIFIC:
-            notation = lyric_parser::NotationType::SCIENTIFIC;
+        case lyric_parser::NotationType::Scientific:
+            notation = lyric_parser::NotationType::Scientific;
             return tempo_utils::AttrStatus::ok();
         default:
             return tempo_utils::AttrStatus::forCondition(
@@ -82,85 +82,6 @@ lyric_parser::NotationTypeAttr::parseAttr(tu_uint32 index, tempo_utils::Abstract
     if (status.notOk())
         return status;
     return value_to_notation_type(value, notation);
-}
-
-lyric_parser::BindingTypeAttr::BindingTypeAttr(const tempo_utils::ComparableResource *resource)
-    : tempo_utils::AttrSerde<BindingType>(resource)
-{
-}
-
-tempo_utils::Result<tu_uint32>
-lyric_parser::BindingTypeAttr::writeAttr(tempo_utils::AbstractAttrWriter *writer, const BindingType &binding) const
-{
-    TU_ASSERT (writer != nullptr);
-    return writer->putUInt32(static_cast<tu_uint32>(binding));
-}
-
-static tempo_utils::Status
-value_to_binding_type(tu_int64 value, lyric_parser::BindingType &binding)
-{
-    switch (static_cast<lyric_parser::BindingType>(value)) {
-        case lyric_parser::BindingType::DESCRIPTOR:
-            binding = lyric_parser::BindingType::DESCRIPTOR;
-            return tempo_utils::AttrStatus::ok();
-        case lyric_parser::BindingType::VALUE:
-            binding = lyric_parser::BindingType::VALUE;
-            return tempo_utils::AttrStatus::ok();
-        case lyric_parser::BindingType::VARIABLE:
-            binding = lyric_parser::BindingType::VARIABLE;
-            return tempo_utils::AttrStatus::ok();
-        default:
-            return tempo_utils::AttrStatus::forCondition(
-                tempo_utils::AttrCondition::kConversionError, "invalid binding type");
-    }
-}
-
-tempo_utils::Status
-lyric_parser::BindingTypeAttr::parseAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser, BindingType &binding) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return status;
-    return value_to_binding_type(value, binding);
-}
-
-lyric_parser::MutationTypeAttr::MutationTypeAttr(const tempo_utils::ComparableResource *resource)
-    : tempo_utils::AttrSerde<MutationType>(resource)
-{
-}
-
-tempo_utils::Result<tu_uint32>
-lyric_parser::MutationTypeAttr::writeAttr(tempo_utils::AbstractAttrWriter *writer, const MutationType &mutation) const
-{
-    TU_ASSERT (writer != nullptr);
-    return writer->putUInt32(static_cast<tu_uint32>(mutation));
-}
-
-static tempo_utils::Status
-value_to_mutation_type(tu_int64 value, lyric_parser::MutationType &mutation)
-{
-    switch (static_cast<lyric_parser::MutationType>(value)) {
-        case lyric_parser::MutationType::IMMUTABLE:
-            mutation = lyric_parser::MutationType::IMMUTABLE;
-            return tempo_utils::AttrStatus::ok();
-        case lyric_parser::MutationType::MUTABLE:
-            mutation = lyric_parser::MutationType::MUTABLE;
-            return tempo_utils::AttrStatus::ok();
-        default:
-            return tempo_utils::AttrStatus::forCondition(
-                tempo_utils::AttrCondition::kConversionError, "invalid mutation type");
-    }
-}
-
-tempo_utils::Status
-lyric_parser::MutationTypeAttr::parseAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser, MutationType &mutation) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return status;
-    return value_to_mutation_type(value, mutation);
 }
 
 lyric_parser::AccessTypeAttr::AccessTypeAttr(const tempo_utils::ComparableResource *resource)
@@ -179,14 +100,14 @@ static tempo_utils::Status
 value_to_access_type(tu_int64 value, lyric_parser::AccessType &access)
 {
     switch (static_cast<lyric_parser::AccessType>(value)) {
-        case lyric_parser::AccessType::PRIVATE:
-            access = lyric_parser::AccessType::PRIVATE;
+        case lyric_parser::AccessType::Private:
+            access = lyric_parser::AccessType::Private;
             return tempo_utils::AttrStatus::ok();
-        case lyric_parser::AccessType::PROTECTED:
-            access = lyric_parser::AccessType::PROTECTED;
+        case lyric_parser::AccessType::Protected:
+            access = lyric_parser::AccessType::Protected;
             return tempo_utils::AttrStatus::ok();
-        case lyric_parser::AccessType::PUBLIC:
-            access = lyric_parser::AccessType::PUBLIC;
+        case lyric_parser::AccessType::Public:
+            access = lyric_parser::AccessType::Public;
             return tempo_utils::AttrStatus::ok();
         default:
             return tempo_utils::AttrStatus::forCondition(
@@ -220,14 +141,14 @@ static tempo_utils::Status
 value_to_bound_type(tu_int64 value, lyric_parser::BoundType &bound)
 {
     switch (static_cast<lyric_parser::BoundType>(value)) {
-        case lyric_parser::BoundType::EXTENDS:
-            bound = lyric_parser::BoundType::EXTENDS;
+        case lyric_parser::BoundType::Extends:
+            bound = lyric_parser::BoundType::Extends;
             return tempo_utils::AttrStatus::ok();
-        case lyric_parser::BoundType::SUPER:
-            bound = lyric_parser::BoundType::SUPER;
+        case lyric_parser::BoundType::Super:
+            bound = lyric_parser::BoundType::Super;
             return tempo_utils::AttrStatus::ok();
-        case lyric_parser::BoundType::NONE:
-            bound = lyric_parser::BoundType::NONE;
+        case lyric_parser::BoundType::None:
+            bound = lyric_parser::BoundType::None;
             return tempo_utils::AttrStatus::ok();
         default:
             return tempo_utils::AttrStatus::forCondition(
@@ -261,14 +182,14 @@ static tempo_utils::Status
 value_to_variance_type(tu_int64 value, lyric_parser::VarianceType &variance)
 {
     switch (static_cast<lyric_parser::VarianceType>(value)) {
-        case lyric_parser::VarianceType::COVARIANT:
-            variance = lyric_parser::VarianceType::COVARIANT;
+        case lyric_parser::VarianceType::Covariant:
+            variance = lyric_parser::VarianceType::Covariant;
             return tempo_utils::AttrStatus::ok();
-        case lyric_parser::VarianceType::CONTRAVARIANT:
-            variance = lyric_parser::VarianceType::CONTRAVARIANT;
+        case lyric_parser::VarianceType::Contravariant:
+            variance = lyric_parser::VarianceType::Contravariant;
             return tempo_utils::AttrStatus::ok();
-        case lyric_parser::VarianceType::INVARIANT:
-            variance = lyric_parser::VarianceType::INVARIANT;
+        case lyric_parser::VarianceType::Invariant:
+            variance = lyric_parser::VarianceType::Invariant;
             return tempo_utils::AttrStatus::ok();
         default:
             return tempo_utils::AttrStatus::forCondition(
@@ -343,8 +264,6 @@ const tempo_utils::StringAttr lyric_parser::kLyricAstLiteralValue(&lyric_schema:
 
 const lyric_parser::BaseTypeAttr lyric_parser::kLyricAstBaseType(&lyric_schema::kLyricAstBaseEnumProperty);
 const lyric_parser::NotationTypeAttr lyric_parser::kLyricAstNotationType(&lyric_schema::kLyricAstNotationEnumProperty);
-const lyric_parser::BindingTypeAttr lyric_parser::kLyricAstBindingType(&lyric_schema::kLyricAstBindingEnumProperty);
-const lyric_parser::MutationTypeAttr lyric_parser::kLyricAstMutationType(&lyric_schema::kLyricAstMutationEnumProperty);
 const lyric_parser::AccessTypeAttr lyric_parser::kLyricAstAccessType(&lyric_schema::kLyricAstAccessEnumProperty);
 const lyric_parser::BoundTypeAttr lyric_parser::kLyricAstBoundType(&lyric_schema::kLyricAstBoundEnumProperty);
 const lyric_parser::VarianceTypeAttr lyric_parser::kLyricAstVarianceType(&lyric_schema::kLyricAstVarianceEnumProperty);
@@ -353,6 +272,7 @@ const lyric_common::AssemblyLocationAttr lyric_parser::kLyricAstAssemblyLocation
 const lyric_common::SymbolPathAttr lyric_parser::kLyricAstSymbolPath(&lyric_schema::kLyricAstSymbolPathProperty);
 const tempo_utils::StringAttr lyric_parser::kLyricAstIdentifier(&lyric_schema::kLyricAstIdentifierProperty);
 const tempo_utils::StringAttr lyric_parser::kLyricAstLabel(&lyric_schema::kLyricAstLabelProperty);
+const tempo_utils::BoolAttr lyric_parser::kLyricAstIsVariable(&lyric_schema::kLyricAstIsVariableProperty);
 
 const lyric_parser::NodeAttr lyric_parser::kLyricAstTypeOffset(&lyric_schema::kLyricAstTypeOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstDefaultOffset(&lyric_schema::kLyricAstDefaultOffsetProperty);

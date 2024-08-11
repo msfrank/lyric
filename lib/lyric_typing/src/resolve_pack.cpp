@@ -14,25 +14,23 @@ lyric_typing::resolve_pack(
 
     for (const auto &p : packSpec.listParameterSpec) {
         auto label = !p.label.empty() ? p.label : p.name;
-        auto isVariable = p.binding == lyric_parser::BindingType::VARIABLE;
         lyric_common::TypeDef paramType;
         TU_ASSIGN_OR_RETURN (paramType, resolve_assignable(p.type, resolver, state));
         if (p.init.isEmpty()) {
-            TU_RETURN_IF_NOT_OK (packBuilder.appendListParameter(p.name, label, paramType, isVariable));
+            TU_RETURN_IF_NOT_OK (packBuilder.appendListParameter(p.name, label, paramType, p.isVariable));
         } else {
-            TU_RETURN_IF_NOT_OK (packBuilder.appendListOptParameter(p.name, label, paramType, isVariable));
+            TU_RETURN_IF_NOT_OK (packBuilder.appendListOptParameter(p.name, label, paramType, p.isVariable));
         }
     }
 
     for (const auto &p : packSpec.namedParameterSpec) {
         auto label = !p.label.empty() ? p.label : p.name;
-        auto isVariable = p.binding == lyric_parser::BindingType::VARIABLE;
         lyric_common::TypeDef paramType;
         TU_ASSIGN_OR_RETURN (paramType, resolve_assignable(p.type, resolver, state));
         if (p.init.isEmpty()) {
-            TU_RETURN_IF_NOT_OK (packBuilder.appendNamedParameter(p.name, label, paramType, isVariable));
+            TU_RETURN_IF_NOT_OK (packBuilder.appendNamedParameter(p.name, label, paramType, p.isVariable));
         } else {
-            TU_RETURN_IF_NOT_OK (packBuilder.appendNamedOptParameter(p.name, label, paramType, isVariable));
+            TU_RETURN_IF_NOT_OK (packBuilder.appendNamedOptParameter(p.name, label, paramType, p.isVariable));
         }
     }
 

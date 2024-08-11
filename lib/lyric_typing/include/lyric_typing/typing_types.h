@@ -22,7 +22,7 @@ namespace lyric_typing {
         std::string name;                       // name of the parameter
         std::string label;                      // optional parameter label
         TypeSpec type;                          // type of the parameter
-        lyric_parser::BindingType binding;      // fixed or variable binding
+        bool isVariable;                        // fixed or variable binding
         Option<lyric_parser::NodeWalker> init;  // node containing the default initializer, can be empty
         ParameterSpec();
         ParameterSpec(
@@ -30,7 +30,7 @@ namespace lyric_typing {
             const std::string &name,
             const std::string &label,
             const TypeSpec &type,
-            lyric_parser::BindingType binding,
+            bool isVariable,
             const Option<lyric_parser::NodeWalker> &init = {});
     };
 

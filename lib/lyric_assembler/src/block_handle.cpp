@@ -492,27 +492,15 @@ tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::BlockHandle::declareVariable(
     const std::string &name,
     const lyric_common::TypeDef &assignableType,
-    lyric_parser::BindingType bindingType)
+    bool isVariable)
 {
     if (m_bindings.contains(name))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
             "cannot declare variable {}; symbol is already defined", name);
 
-    BindingType bindingType_;
-    ReferenceType referenceType;
-    switch (bindingType) {
-        case lyric_parser::BindingType::VALUE:
-            bindingType_ = BindingType::Value;
-            referenceType = ReferenceType::Value;
-            break;
-        case lyric_parser::BindingType::VARIABLE:
-            bindingType_ = BindingType::Variable;
-            referenceType = ReferenceType::Variable;
-            break;
-        default:
-            throwAssemblerInvariant("failed to declare variable {}; invalid binding type", name);
-    }
+    BindingType bindingType = isVariable? BindingType::Variable : BindingType::Value;
+    ReferenceType referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
 
     // make type handle if it doesn't exist already (for example union or intersection types)
     TU_RETURN_IF_STATUS (m_state->typeCache()->getOrMakeType(assignableType));
@@ -530,7 +518,7 @@ lyric_assembler::BlockHandle::declareVariable(
     SymbolBinding binding;
     binding.symbolUrl = localUrl;
     binding.typeDef = assignableType;
-    binding.bindingType = bindingType_;
+    binding.bindingType = bindingType;
     m_bindings[name] = binding;
 
     return DataReference(localUrl, assignableType, referenceType);
@@ -539,27 +527,15 @@ lyric_assembler::BlockHandle::declareVariable(
 tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::BlockHandle::declareTemporary(
     const lyric_common::TypeDef &assignableType,
-    lyric_parser::BindingType bindingType)
+    bool isVariable)
 {
     auto name = absl::StrCat("$tmp", m_blockProc->numLocals());
 
     if (m_bindings.contains(name))
         throwAssemblerInvariant("failed to declare temporary {}; symbol is is already defined", name);
 
-    BindingType bindingType_;
-    ReferenceType referenceType;
-    switch (bindingType) {
-        case lyric_parser::BindingType::VALUE:
-            bindingType_ = BindingType::Value;
-            referenceType = ReferenceType::Value;
-            break;
-        case lyric_parser::BindingType::VARIABLE:
-            bindingType_ = BindingType::Variable;
-            referenceType = ReferenceType::Variable;
-            break;
-        default:
-            throwAssemblerInvariant("failed to declare temporary {}; invalid binding type", name);
-    }
+    BindingType bindingType = isVariable? BindingType::Variable : BindingType::Value;
+    ReferenceType referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
 
     // make type handle if it doesn't exist already (for example union or intersection types)
     TU_RETURN_IF_STATUS (m_state->typeCache()->getOrMakeType(assignableType));
@@ -577,7 +553,7 @@ lyric_assembler::BlockHandle::declareTemporary(
     SymbolBinding binding;
     binding.symbolUrl = localUrl;
     binding.typeDef = assignableType;
-    binding.bindingType = bindingType_;
+    binding.bindingType = bindingType;
     m_bindings[name] = binding;
 
     return DataReference(localUrl, assignableType, referenceType);
@@ -587,7 +563,7 @@ tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::BlockHandle::declareStatic(
     const std::string &name,
     const lyric_common::TypeDef &assignableType,
-    lyric_parser::BindingType bindingType,
+    bool isVariable,
     bool declOnly)
 {
     if (m_bindings.contains(name))
@@ -595,20 +571,8 @@ lyric_assembler::BlockHandle::declareStatic(
             tempo_tracing::LogSeverity::kError,
             "cannot declare static {}; symbol is already defined", name);
 
-    BindingType bindingType_;
-    ReferenceType referenceType;
-    switch (bindingType) {
-        case lyric_parser::BindingType::VALUE:
-            bindingType_ = BindingType::Value;
-            referenceType = ReferenceType::Value;
-            break;
-        case lyric_parser::BindingType::VARIABLE:
-            bindingType_ = BindingType::Variable;
-            referenceType = ReferenceType::Variable;
-            break;
-        default:
-            throwAssemblerInvariant("failed to declare static {}; invalid binding type", name);
-    }
+    BindingType bindingType = isVariable? BindingType::Variable : BindingType::Value;
+    ReferenceType referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
 
     // make type handle if it doesn't exist already (for example union or intersection types)
     lyric_assembler::TypeHandle *staticType;
@@ -616,7 +580,6 @@ lyric_assembler::BlockHandle::declareStatic(
     staticType->touch();
 
     auto staticUrl = makeSymbolUrl(name);
-    bool isVariable = bindingType == lyric_parser::BindingType::VARIABLE;
     StaticAddress address;
     address = StaticAddress::near(m_state->numStatics());
 
@@ -630,7 +593,7 @@ lyric_assembler::BlockHandle::declareStatic(
     SymbolBinding binding;
     binding.symbolUrl = staticUrl;
     binding.typeDef = assignableType;
-    binding.bindingType = bindingType_;
+    binding.bindingType = bindingType;
     m_bindings[name] = binding;
 
     return DataReference(staticUrl, assignableType, referenceType);

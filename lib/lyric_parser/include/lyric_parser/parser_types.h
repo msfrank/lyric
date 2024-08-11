@@ -18,47 +18,39 @@ namespace lyric_parser {
         Version1,
     };
 
-    enum class BindingType {
-        DESCRIPTOR,
-        VALUE,
-        VARIABLE,
-    };
-
-    enum class MutationType {
-        MUTABLE,
-        IMMUTABLE,
-    };
+//    enum class BindingType {
+//        Value,
+//        Variable,
+//    };
 
     enum class AccessType {
-        PUBLIC,
-        PROTECTED,
-        PRIVATE,
+        Public,
+        Protected,
+        Private,
     };
 
     enum class BoundType {
-        NONE,
-        EXTENDS,
-        SUPER,
+        None,
+        Extends,
+        Super,
     };
 
     enum class VarianceType {
-        INVARIANT,
-        COVARIANT,
-        CONTRAVARIANT,
+        Invariant,
+        Covariant,
+        Contravariant,
     };
 
     enum class BaseType {
-        INVALID,
-        BINARY,
-        OCTAL,
-        DECIMAL,
-        HEX,
+        Binary,
+        Octal,
+        Decimal,
+        Hex,
     };
 
     enum class NotationType {
-        INVALID,
-        FIXED,
-        SCIENTIFIC,
+        Fixed,
+        Scientific,
     };
 
     enum class ArchetypeDescriptorType {

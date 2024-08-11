@@ -199,13 +199,13 @@ lyric_parser::internal::make_Generic_node(
 
         if (p->covariantPlaceholder()) {
             id = p->covariantPlaceholder()->Identifier()->getText();
-            variance = VarianceType::COVARIANT;
+            variance = VarianceType::Covariant;
         } else if (p->contravariantPlaceholder()) {
             id = p->contravariantPlaceholder()->Identifier()->getText();
-            variance = VarianceType::CONTRAVARIANT;
+            variance = VarianceType::Contravariant;
         } else if (p->invariantPlaceholder()) {
             id = p->invariantPlaceholder()->Identifier()->getText();
-            variance = VarianceType::INVARIANT;
+            variance = VarianceType::Invariant;
         } else {
             state->throwParseInvariant(get_token_location(p->getStart()), "illegal placeholder");
             TU_UNREACHABLE();
@@ -234,11 +234,11 @@ lyric_parser::internal::make_Generic_node(
 
             if (c->extendsConstraint()) {
                 id = c->extendsConstraint()->Identifier()->getText();
-                bound = BoundType::EXTENDS;
+                bound = BoundType::Extends;
                 constraintTypeNode = make_Type_node(state, c->extendsConstraint()->assignableType());
             } else if (c->superConstraint()) {
                 id = c->superConstraint()->Identifier()->getText();
-                bound = BoundType::SUPER;
+                bound = BoundType::Super;
                 constraintTypeNode = make_Type_node(state, c->extendsConstraint()->assignableType());
             } else {
                 state->throwParseInvariant(get_token_location(c->getStart()), "illegal constraint");

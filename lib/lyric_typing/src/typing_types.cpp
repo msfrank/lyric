@@ -18,7 +18,7 @@ lyric_typing::ParameterSpec::ParameterSpec()
     : name(),
       label(),
       type(),
-      binding(lyric_parser::BindingType::VALUE),
+      isVariable(false),
       init()
 {
 }
@@ -28,13 +28,13 @@ lyric_typing::ParameterSpec::ParameterSpec(
     const std::string &name,
     const std::string &label,
     const TypeSpec &type,
-    lyric_parser::BindingType binding,
+    bool isVariable,
     const Option<lyric_parser::NodeWalker> &init)
     : node(node),
       name(name),
       label(label),
       type(type),
-      binding(binding),
+      isVariable(isVariable),
       init(init)
 {
     TU_ASSERT (node.isValid());

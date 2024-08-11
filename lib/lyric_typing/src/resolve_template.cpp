@@ -52,13 +52,13 @@ lyric_typing::resolve_template(
         if (status.notOk())
             return status;
         switch (variance) {
-            case lyric_parser::VarianceType::COVARIANT:
+            case lyric_parser::VarianceType::Covariant:
                 tp.variance = lyric_object::VarianceType::Covariant;
                 break;
-            case lyric_parser::VarianceType::CONTRAVARIANT:
+            case lyric_parser::VarianceType::Contravariant:
                 tp.variance = lyric_object::VarianceType::Contravariant;
                 break;
-            case lyric_parser::VarianceType::INVARIANT:
+            case lyric_parser::VarianceType::Invariant:
                 tp.variance = lyric_object::VarianceType::Invariant;
                 break;
         }
@@ -75,13 +75,13 @@ lyric_typing::resolve_template(
             if (status.notOk())
                 return status;
             switch (bound) {
-                case lyric_parser::BoundType::NONE:
+                case lyric_parser::BoundType::None:
                     tp.bound = lyric_object::BoundType::None;
                     break;
-                case lyric_parser::BoundType::EXTENDS:
+                case lyric_parser::BoundType::Extends:
                     tp.bound = lyric_object::BoundType::Extends;
                     break;
-                case lyric_parser::BoundType::SUPER:
+                case lyric_parser::BoundType::Super:
                     tp.bound = lyric_object::BoundType::Super;
                     break;
             }

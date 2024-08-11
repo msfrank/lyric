@@ -169,13 +169,13 @@ lyric_analyzer::AnalyzerScanDriver::declareStatic(
     lyric_schema::LyricAstId astId;
     TU_RETURN_IF_NOT_OK (walker.parseId(lyric_schema::kLyricAstVocabulary, astId));
 
-    lyric_parser::BindingType binding;
+    bool isVariable;
     switch (astId) {
         case lyric_schema::LyricAstId::Val:
-            binding = lyric_parser::BindingType::VALUE;
+            isVariable = false;
             break;
         case lyric_schema::LyricAstId::Var:
-            binding = lyric_parser::BindingType::VARIABLE;
+            isVariable = true;
             break;
         default:
             return AnalyzerStatus::forCondition(AnalyzerCondition::kAnalyzerInvariant);
@@ -191,7 +191,7 @@ lyric_analyzer::AnalyzerScanDriver::declareStatic(
     TU_ASSIGN_OR_RETURN (staticType, m_typeSystem->resolveAssignable(block, staticSpec));
 
     lyric_assembler::DataReference ref;
-    TU_ASSIGN_OR_RETURN (ref, block->declareStatic(identifier, staticType, binding, true));
+    TU_ASSIGN_OR_RETURN (ref, block->declareStatic(identifier, staticType, isVariable, true));
 
     TU_LOG_INFO << "declared static " << ref.symbolUrl;
 

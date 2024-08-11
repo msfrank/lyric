@@ -94,7 +94,7 @@ lyric_parser::internal::ModuleConstantOps::exitDecimalInteger(ModuleParser::Deci
 
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIntegerClass, location);
     literalNode->putAttr(kLyricAstLiteralValue, value);
-    literalNode->putAttr(kLyricAstBaseType, BaseType::DECIMAL);
+    literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal);
     m_state->pushNode(literalNode);
 }
 
@@ -114,7 +114,7 @@ lyric_parser::internal::ModuleConstantOps::exitHexInteger(ModuleParser::HexInteg
 
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIntegerClass, location);
     literalNode->putAttr(kLyricAstLiteralValue, value);
-    literalNode->putAttr(kLyricAstBaseType, BaseType::HEX);
+    literalNode->putAttr(kLyricAstBaseType, BaseType::Hex);
     m_state->pushNode(literalNode);
 }
 
@@ -134,7 +134,7 @@ lyric_parser::internal::ModuleConstantOps::exitOctalInteger(ModuleParser::OctalI
 
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIntegerClass, location);
     literalNode->putAttr(kLyricAstLiteralValue, value);
-    literalNode->putAttr(kLyricAstBaseType, BaseType::OCTAL);
+    literalNode->putAttr(kLyricAstBaseType, BaseType::Octal);
     m_state->pushNode(literalNode);
 }
 
@@ -150,8 +150,8 @@ lyric_parser::internal::ModuleConstantOps::exitDecimalFixedFloat(ModuleParser::D
 
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstFloatClass, location);
     literalNode->putAttr(kLyricAstLiteralValue, value);
-    literalNode->putAttr(kLyricAstBaseType, BaseType::DECIMAL);
-    literalNode->putAttr(kLyricAstNotationType, NotationType::FIXED);
+    literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal);
+    literalNode->putAttr(kLyricAstNotationType, NotationType::Fixed);
     m_state->pushNode(literalNode);
 }
 
@@ -167,8 +167,8 @@ lyric_parser::internal::ModuleConstantOps::exitDecimalScientificFloat(ModulePars
 
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstFloatClass, location);
     literalNode->putAttr(kLyricAstLiteralValue, value);
-    literalNode->putAttr(kLyricAstBaseType, BaseType::DECIMAL);
-    literalNode->putAttr(kLyricAstNotationType, NotationType::SCIENTIFIC);
+    literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal);
+    literalNode->putAttr(kLyricAstNotationType, NotationType::Scientific);
     m_state->pushNode(literalNode);
 }
 
@@ -188,8 +188,8 @@ lyric_parser::internal::ModuleConstantOps::exitHexFloat(ModuleParser::HexFloatCo
 
     auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstFloatClass, location);
     literalNode->putAttr(kLyricAstLiteralValue, value);
-    literalNode->putAttr(kLyricAstBaseType, BaseType::HEX);
-    literalNode->putAttr(kLyricAstNotationType, NotationType::FIXED);
+    literalNode->putAttr(kLyricAstBaseType, BaseType::Hex);
+    literalNode->putAttr(kLyricAstNotationType, NotationType::Fixed);
     m_state->pushNode(literalNode);
 }
 
