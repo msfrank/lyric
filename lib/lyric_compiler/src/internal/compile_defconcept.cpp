@@ -124,7 +124,7 @@ lyric_compiler::internal::compile_defconcept(
                 defs.emplace_back(child);
                 break;
             default:
-                block->throwSyntaxError(child, "expected concept body");
+                block->throwAssemblerInvariant("expected concept body");
         }
     }
 

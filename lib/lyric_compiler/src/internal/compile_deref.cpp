@@ -441,7 +441,7 @@ lyric_compiler::internal::compile_deref(
         }
 
         default:
-            block->throwSyntaxError(initial, "invalid deref");
+            block->throwAssemblerInvariant("invalid deref");
     }
 
     for (; index < walker.numChildren(); index++) {
@@ -469,7 +469,7 @@ lyric_compiler::internal::compile_deref(
             }
 
             default:
-                block->throwSyntaxError(initial, "invalid deref");
+                block->throwAssemblerInvariant("invalid deref");
         }
         thisReceiver = false; // unset isReceiver after first iteration
     }

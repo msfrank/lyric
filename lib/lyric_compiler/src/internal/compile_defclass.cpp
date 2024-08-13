@@ -257,8 +257,7 @@ compile_defclass_def(
     auto *classBlock = classSymbol->classBlock();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
-    if (walker.numChildren() < 2)
-        classBlock->throwSyntaxError(walker, "invalid def");
+    moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDefClass, 2);
 
     // get method name
     std::string identifier;
@@ -342,7 +341,7 @@ compile_defclass_def(
     bool isReturnable;
     TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
-        return classBlock->logAndContinue(body,
+        return moduleEntry.logAndContinue(body.getLocation(),
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", returnType.toString());
@@ -351,7 +350,7 @@ compile_defclass_def(
     for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
-            return classBlock->logAndContinue(body,
+            return moduleEntry.logAndContinue(body.getLocation(),
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "body does not match return type {}", returnType.toString());
@@ -394,12 +393,16 @@ compile_defclass_impl_def(
     if (!packSpec.initializers.empty()) {
         for (const auto &p : packSpec.listParameterSpec) {
             if (!p.init.isEmpty())
-                implBlock->throwSyntaxError(p.init.getValue(),
+                return moduleEntry.logAndContinue(p.init.getValue().getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "list parameter '{}' has unexpected initializer", p.name);
         }
         for (const auto &p : packSpec.namedParameterSpec) {
             if (!p.init.isEmpty())
-                implBlock->throwSyntaxError(p.init.getValue(),
+                return moduleEntry.logAndContinue(p.init.getValue().getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "named parameter '{}' has unexpected initializer", p.name);
         }
     }
@@ -429,7 +432,7 @@ compile_defclass_impl_def(
     bool isReturnable;
     TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
-        return implBlock->logAndContinue(body,
+        return moduleEntry.logAndContinue(body.getLocation(),
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", returnType.toString());
@@ -438,7 +441,7 @@ compile_defclass_impl_def(
     for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
-            return implBlock->logAndContinue(body,
+            return moduleEntry.logAndContinue(body.getLocation(),
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "body does not match return type {}", returnType.toString());
@@ -484,7 +487,7 @@ compile_defclass_impl(
                 TU_RETURN_IF_NOT_OK (compile_defclass_impl_def(implHandle, templateParameters, child, moduleEntry));
                 break;
             default:
-                classBlock->throwSyntaxError(child, "expected impl def");
+                classBlock->throwAssemblerInvariant("expected impl def");
         }
     }
 
@@ -531,7 +534,7 @@ lyric_compiler::internal::compile_defclass(
         switch (childId) {
             case lyric_schema::LyricAstId::Init:
                 if (init.isValid())
-                    block->throwSyntaxError(child, "duplicate init");
+                    block->throwAssemblerInvariant("duplicate init");
                 init = child;
                 break;
             case lyric_schema::LyricAstId::Val:
@@ -547,7 +550,7 @@ lyric_compiler::internal::compile_defclass(
                 impls.emplace_back(child);
                 break;
             default:
-                block->throwSyntaxError(child, "expected class body");
+                block->throwAssemblerInvariant("expected class body");
         }
     }
 
@@ -575,7 +578,7 @@ lyric_compiler::internal::compile_defclass(
                     initBody = child;
                     break;
                 default:
-                    block->throwSyntaxError(init, "invalid init");
+                    block->throwAssemblerInvariant("invalid init");
             }
         } else if (init.numChildren() == 3) {
             initSuper = init.getChild(1);

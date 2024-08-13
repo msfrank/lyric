@@ -10,8 +10,6 @@
 
 #include <lyric_common/symbol_url.h>
 #include <lyric_importer/module_cache.h>
-#include <lyric_parser/parser_attrs.h>
-#include <lyric_parser/parser_types.h>
 #include <lyric_runtime/abstract_loader.h>
 #include <lyric_runtime/literal_cell.h>
 #include <tempo_tracing/scope_manager.h>

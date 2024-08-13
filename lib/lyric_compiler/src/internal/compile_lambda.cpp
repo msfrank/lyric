@@ -49,7 +49,9 @@ lyric_compiler::internal::compile_lambda(
     if (!packSpec.initializers.empty()) {
         for (const auto &p: packSpec.listParameterSpec) {
             if (!p.init.isEmpty())
-                block->throwSyntaxError(p.init.getValue(),
+                return moduleEntry.logAndContinue(p.init.getValue().getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "list parameter '{}' has unexpected initializer", p.name);
         }
     }
@@ -57,19 +59,28 @@ lyric_compiler::internal::compile_lambda(
     // check for named parameters
     if (!packSpec.namedParameterSpec.empty()) {
         auto &p = packSpec.namedParameterSpec.front();
-        block->throwSyntaxError(p.node, "unexpected named parameter '{}'", p.name);
+        return moduleEntry.logAndContinue(p.node.getLocation(),
+            lyric_compiler::CompilerCondition::kSyntaxError,
+            tempo_tracing::LogSeverity::kError,
+            "unexpected named parameter '{}'", p.name);
     }
 
     // check for ctx parameters
     if (!packSpec.ctxParameterSpec.empty()) {
         auto &p = packSpec.ctxParameterSpec.front();
-        block->throwSyntaxError(p.node, "unexpected ctx parameter '{}'", p.name);
+        return moduleEntry.logAndContinue(p.node.getLocation(),
+            lyric_compiler::CompilerCondition::kSyntaxError,
+            tempo_tracing::LogSeverity::kError,
+            "unexpected ctx parameter '{}'", p.name);
     }
 
     // check for rest parameter
     if (!packSpec.restParameterSpec.isEmpty()) {
         auto p = packSpec.restParameterSpec.getValue();
-        block->throwSyntaxError(p.node, "unexpected rest parameter");
+        return moduleEntry.logAndContinue(p.node.getLocation(),
+            lyric_compiler::CompilerCondition::kSyntaxError,
+            tempo_tracing::LogSeverity::kError,
+            "unexpected rest parameter");
     }
 
     // declare the function call
@@ -103,7 +114,7 @@ lyric_compiler::internal::compile_lambda(
     bool isReturnable;
     TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(lambdaReturnType, lambdaBodyType));
     if (!isReturnable)
-        return block->logAndContinue(lambdaBody,
+        return moduleEntry.logAndContinue(lambdaBody.getLocation(),
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", lambdaReturnType.toString());
@@ -112,7 +123,7 @@ lyric_compiler::internal::compile_lambda(
     for (auto it = lambdaProcHandle->exitTypesBegin(); it != lambdaProcHandle->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(lambdaReturnType, *it));
         if (!isReturnable)
-            return block->logAndContinue(lambdaBody,
+            return moduleEntry.logAndContinue(lambdaBody.getLocation(),
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "body does not match return type {}", lambdaReturnType.toString());

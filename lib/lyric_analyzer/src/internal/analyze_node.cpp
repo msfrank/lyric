@@ -152,5 +152,5 @@ lyric_analyzer::internal::analyze_node(
             break;
     }
 
-    block->throwSyntaxError(walker, "invalid node");
+    block->throwAssemblerInvariant("invalid node");
 }

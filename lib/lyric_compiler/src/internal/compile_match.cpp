@@ -55,7 +55,9 @@ compile_predicate(
             std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
             TU_ASSIGN_OR_RETURN (bound, typeSystem->resolveBound(predicateType));
             if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
-                block->throwSyntaxError(walker,
+                return moduleEntry.logAndContinue(walker.getLocation(),
+                    lyric_compiler::CompilerCondition::kIncompatibleType,
+                    tempo_tracing::LogSeverity::kError,
                     "predicate type {} cannot match; constraint must have Extends bounds",
                     predicateType.toString());
             matchType = bound.second;
@@ -99,7 +101,10 @@ compile_match_when_symbol_ref(
     lyric_common::SymbolPath symbolPath;
     moduleEntry.parseAttrOrThrow(symbolRef, lyric_parser::kLyricAstSymbolPath, symbolPath);
     if (!symbolPath.isValid())
-        block->throwSyntaxError(symbolRef, "invalid symbol path");
+        return moduleEntry.logAndContinue(symbolRef.getLocation(),
+            lyric_compiler::CompilerCondition::kInvalidSymbol,
+            tempo_tracing::LogSeverity::kError,
+            "invalid symbol path");
 
     // resolve the match when symbol
     auto resolveMatchCaseSymbol = block->resolveDefinition(symbolPath);
@@ -227,7 +232,7 @@ compile_match_when(
         case lyric_schema::LyricAstId::SymbolRef:
             return compile_match_when_symbol_ref(block, targetRef, whenPredicate, whenBody, moduleEntry);
         default:
-            block->throwSyntaxError(whenPredicate, "invalid match predicate");
+            block->throwAssemblerInvariant("invalid match predicate");
     }
 }
 
@@ -538,7 +543,9 @@ lyric_compiler::internal::compile_match(
     }
 
     if (!isExhaustive)
-        block->throwSyntaxError(walker,
+        return moduleEntry.logAndContinue(walker.getLocation(),
+            lyric_compiler::CompilerCondition::kSyntaxError,
+            tempo_tracing::LogSeverity::kError,
             "match expression has no else clause and target type {} cannot be checked exhaustively",
             targetType.toString());
 

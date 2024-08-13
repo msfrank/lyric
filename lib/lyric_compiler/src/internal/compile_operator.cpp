@@ -174,7 +174,9 @@ lyric_compiler::internal::match_types(
             TU_ASSIGN_OR_RETURN (cmp, compare_types(targetType, matchType, /* requiresExtends= */ false,
                 typeCache, fundamentalCache, typeSystem));
             if(cmp == lyric_runtime::TypeComparison::DISJOINT)
-                block->throwSyntaxError(walker,
+                return moduleEntry.logAndContinue(walker.getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "cannot compare {} to {}; types are disjoint",
                     targetType.toString(), matchType.toString());
             return {};
@@ -192,13 +194,17 @@ lyric_compiler::internal::match_types(
                 TU_RETURN_IF_NOT_OK (targetMemberSet.putType(targetMember));
             }
             if (!memberMatches)
-                block->throwSyntaxError(walker,
+                return moduleEntry.logAndContinue(walker.getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "cannot compare {} to {}; right-hand side cannot match any member of the union",
                     targetType.toString(), matchType.toString());
             return {};
         }
         default:
-            block->throwSyntaxError(walker,
+            return moduleEntry.logAndContinue(walker.getLocation(),
+                lyric_compiler::CompilerCondition::kSyntaxError,
+                tempo_tracing::LogSeverity::kError,
                 "cannot compare {} to {}; invalid type for right-hand side",
                 targetType.toString(), matchType.toString());
     }
@@ -245,7 +251,9 @@ compile_is_a(
             break;
         }
         default:
-            block->throwSyntaxError(walker.getChild(1),
+            return moduleEntry.logAndContinue(walker.getChild(1).getLocation(),
+                lyric_compiler::CompilerCondition::kSyntaxError,
+                tempo_tracing::LogSeverity::kError,
                 "cannot compare {} to {}; right-hand side must be a concrete type",
                 targetType.toString(), isAType.toString());
     }

@@ -56,19 +56,19 @@ compile_defstruct_val(
         case lyric_runtime::TypeComparison::EXTENDS:
             break;
         default:
-            return structBlock->logAndContinue(walker,
+            return moduleEntry.logAndContinue(walker.getLocation(),
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "struct member {} must derive from Data", identifier);
     }
 
     if (absl::StartsWith(identifier, "__")) {
-        return structBlock->logAndContinue(walker,
+        return moduleEntry.logAndContinue(walker.getLocation(),
             lyric_compiler::CompilerCondition::kInvalidAccess,
             tempo_tracing::LogSeverity::kError,
             "private member {} not allowed for struct", identifier);
     } else if (absl::StartsWith(identifier, "_")) {
-        return structBlock->logAndContinue(walker,
+        return moduleEntry.logAndContinue(walker.getLocation(),
             lyric_compiler::CompilerCondition::kInvalidAccess,
             tempo_tracing::LogSeverity::kError,
             "protected member {} not allowed for struct", identifier);
@@ -292,8 +292,7 @@ compile_defstruct_def(
     auto *structBlock = structSymbol->structBlock();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
-    if (walker.numChildren() < 2)
-        structBlock->throwSyntaxError(walker, "invalid def");
+    moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDefClass, 2);
 
     // get method name
     std::string identifier;
@@ -369,7 +368,7 @@ compile_defstruct_def(
     bool isReturnable;
     TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
-        return structBlock->logAndContinue(body,
+        return moduleEntry.logAndContinue(body.getLocation(),
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "def body does not match return type {}", returnType.toString());
@@ -378,7 +377,7 @@ compile_defstruct_def(
     for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
-            return structBlock->logAndContinue(body,
+            return moduleEntry.logAndContinue(body.getLocation(),
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "def body does not match return type {}", returnType.toString());
@@ -420,12 +419,16 @@ compile_defstruct_impl_def(
     if (!packSpec.initializers.empty()) {
         for (const auto &p : packSpec.listParameterSpec) {
             if (!p.init.isEmpty())
-                implBlock->throwSyntaxError(p.init.getValue(),
+                return moduleEntry.logAndContinue(p.init.getValue().getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "list parameter '{}' has unexpected initializer", p.name);
         }
         for (const auto &p : packSpec.namedParameterSpec) {
             if (!p.init.isEmpty())
-                implBlock->throwSyntaxError(p.init.getValue(),
+                return moduleEntry.logAndContinue(p.init.getValue().getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "named parameter '{}' has unexpected initializer", p.name);
         }
     }
@@ -455,7 +458,7 @@ compile_defstruct_impl_def(
     bool isReturnable;
     TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
-        return implBlock->logAndContinue(body,
+        return moduleEntry.logAndContinue(body.getLocation(),
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", returnType.toString());
@@ -464,7 +467,7 @@ compile_defstruct_impl_def(
     for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
-            return implBlock->logAndContinue(body,
+            return moduleEntry.logAndContinue(body.getLocation(),
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "body does not match return type {}", returnType.toString());
@@ -509,7 +512,7 @@ compile_defstruct_impl(
                 TU_RETURN_IF_NOT_OK (compile_defstruct_impl_def(implHandle, child, moduleEntry));
                 break;
             default:
-                structBlock->throwSyntaxError(child, "expected impl def");
+                structBlock->throwAssemblerInvariant("expected impl def");
         }
     }
 
@@ -546,7 +549,7 @@ lyric_compiler::internal::compile_defstruct(
         switch (childId) {
             case lyric_schema::LyricAstId::Init:
                 if (init.isValid())
-                    block->throwSyntaxError(child, "invalid init");
+                    block->throwAssemblerInvariant("invalid init");
                 init = child;
                 break;
             case lyric_schema::LyricAstId::Val:
@@ -559,7 +562,7 @@ lyric_compiler::internal::compile_defstruct(
                 impls.emplace_back(child);
                 break;
             default:
-                block->throwSyntaxError(child, "expected struct body");
+                block->throwAssemblerInvariant("expected struct body");
         }
     }
 
@@ -587,7 +590,7 @@ lyric_compiler::internal::compile_defstruct(
                     initBody = child;
                     break;
                 default:
-                    block->throwSyntaxError(init, "invalid init");
+                    block->throwAssemblerInvariant("invalid init");
             }
         } else if (init.numChildren() == 3) {
             initSuper = init.getChild(1);

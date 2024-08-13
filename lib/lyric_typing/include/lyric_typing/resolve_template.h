@@ -6,6 +6,7 @@
 #include <lyric_parser/node_walker.h>
 #include <tempo_utils/result.h>
 
+#include "typing_tracer.h"
 #include "typing_types.h"
 
 namespace lyric_typing {
@@ -14,13 +15,15 @@ namespace lyric_typing {
     resolve_template(
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,
-        lyric_assembler::AssemblyState *state);
+        lyric_assembler::AssemblyState *state,
+        TypingTracer *tracer);
 
 
     tempo_utils::Result<std::pair<lyric_object::BoundType,lyric_common::TypeDef>>
     resolve_bound(
         const lyric_common::TypeDef &placeholderType,
-        lyric_assembler::AssemblyState *state);
+        lyric_assembler::AssemblyState *state,
+        TypingTracer *tracer);
 }
 
 #endif // LYRIC_TYPING_RESOLVE_TEMPLATE_H

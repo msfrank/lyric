@@ -18,6 +18,7 @@ set(LYRIC_TYPING_INCLUDES
     include/lyric_typing/type_spec.h
     include/lyric_typing/type_system.h
     include/lyric_typing/typing_result.h
+    include/lyric_typing/typing_tracer.h
     include/lyric_typing/typing_types.h
     include/lyric_typing/unify_assignable.h
     )
@@ -35,6 +36,7 @@ target_sources(lyric_typing PRIVATE
     src/type_spec.cpp
     src/type_system.cpp
     src/typing_result.cpp
+    src/typing_tracer.cpp
     src/typing_types.cpp
     src/unify_assignable.cpp
     )

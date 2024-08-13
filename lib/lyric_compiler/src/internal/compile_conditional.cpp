@@ -31,9 +31,7 @@ lyric_compiler::internal::compile_cond(
     // evaluate each branch
     for (int i = 0; i < walker.numChildren(); i++) {
         auto condWhen = walker.getChild(i);
-        moduleEntry.checkClassOrThrow(condWhen, lyric_schema::kLyricAstWhenClass);
-        if (condWhen.numChildren() != 2)
-            block->throwSyntaxError(condWhen, "invalid cond clause");
+        moduleEntry.checkClassAndChildCountOrThrow(condWhen, lyric_schema::kLyricAstWhenClass, 2);
 
         auto makeLabelResult = code->makeLabel();
         if (makeLabelResult.isStatus())
@@ -167,8 +165,7 @@ lyric_compiler::internal::compile_if(
     auto *state = moduleEntry.getState();
 
     // cond expression must have at least one case
-    if (walker.numChildren() == 0)
-        block->throwSyntaxError(walker, "empty if");
+    moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstIfClass, 1);
 
     lyric_assembler::CodeBuilder *code = block->blockCode();
 
@@ -177,9 +174,7 @@ lyric_compiler::internal::compile_if(
     // evaluate each case
     for (int i = 0; i < walker.numChildren(); i++) {
         auto condWhen = walker.getChild(i);
-        moduleEntry.checkClassOrThrow(condWhen, lyric_schema::kLyricAstWhenClass);
-        if (condWhen.numChildren() != 2)
-            block->throwSyntaxError(condWhen, "invalid if clause");
+        moduleEntry.checkClassAndChildCountOrThrow(condWhen, lyric_schema::kLyricAstWhenClass, 2);
 
         auto makeLabelResult = code->makeLabel();
         if (makeLabelResult.isStatus())

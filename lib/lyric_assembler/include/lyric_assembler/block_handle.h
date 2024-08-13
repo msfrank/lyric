@@ -9,6 +9,7 @@
 #include <tempo_tracing/trace_span.h>
 
 #include "abstract_resolver.h"
+#include "assembler_attrs.h"
 #include "assembly_state.h"
 #include "callable_invoker.h"
 #include "function_callable.h"
@@ -224,38 +225,6 @@ namespace lyric_assembler {
         /**
          *
          * @tparam Args
-         * @param walker
-         * @param condition
-         * @param severity
-         * @param messageFmt
-         * @param messageArgs
-         * @return
-         */
-        template <typename ConditionType, typename... Args,
-            typename StatusType = typename tempo_utils::ConditionTraits<ConditionType>::StatusType>
-        StatusType logAndContinue(
-            lyric_parser::NodeWalker walker,
-            ConditionType condition,
-            tempo_tracing::LogSeverity severity,
-            fmt::string_view messageFmt = {},
-            Args... messageArgs) const
-        {
-            auto *scopeManager = m_state->scopeManager();
-            auto span = scopeManager->peekSpan();
-            auto status = StatusType::forCondition(condition, span->traceId(), span->spanId(),
-                messageFmt, messageArgs...);
-            auto log = span->logStatus(status, absl::Now(), severity);
-            log->putField(lyric_parser::kLyricParserIdentifier, m_definition.getSymbolPath().toString());
-            log->putField(lyric_parser::kLyricParserLineNumber, static_cast<tu_int64>(walker.getLineNumber()));
-            log->putField(lyric_parser::kLyricParserColumnNumber, static_cast<tu_int64>(walker.getColumnNumber()));
-            log->putField(lyric_parser::kLyricParserFileOffset, static_cast<tu_int64>(walker.getFileOffset()));
-            log->putField(lyric_parser::kLyricParserTextSpan, static_cast<tu_int64>(walker.getTextSpan()));
-            return status;
-        }
-
-        /**
-         *
-         * @tparam Args
          * @param condition
          * @param severity
          * @param messageFmt
@@ -275,60 +244,10 @@ namespace lyric_assembler {
             auto status = StatusType::forCondition(condition, span->traceId(), span->spanId(),
                 messageFmt, messageArgs...);
             auto log = span->logStatus(status, absl::Now(), severity);
-            log->putField(lyric_parser::kLyricParserIdentifier, m_definition.getSymbolPath().toString());
+            log->putField(kLyricAssemblerDefinitionSymbolPath, m_definition.getSymbolPath());
             return status;
         }
 
-        /**
-         *
-         * @tparam Args
-         * @param token
-         * @param messageFmt
-         * @param args
-         */
-        template <typename... Args>
-        void throwSyntaxError [[noreturn]] (
-            lyric_parser::NodeWalker walker,
-            fmt::string_view messageFmt = {},
-            Args... messageArgs) const
-        {
-            auto *scopeManager = m_state->scopeManager();
-            auto span = scopeManager->peekSpan();
-            auto status = AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
-                span->traceId(), span->spanId(), messageFmt, messageArgs...);
-            auto log = span->logStatus(status, absl::Now(), tempo_tracing::LogSeverity::kError);
-            log->putField(lyric_parser::kLyricParserIdentifier, m_definition.getSymbolPath().toString());
-            log->putField(lyric_parser::kLyricParserLineNumber, static_cast<tu_int64>(walker.getLineNumber()));
-            log->putField(lyric_parser::kLyricParserColumnNumber, static_cast<tu_int64>(walker.getColumnNumber()));
-            log->putField(lyric_parser::kLyricParserFileOffset, static_cast<tu_int64>(walker.getFileOffset()));
-            log->putField(lyric_parser::kLyricParserTextSpan, static_cast<tu_int64>(walker.getTextSpan()));
-            throw tempo_utils::StatusException(status);
-        }
-        /**
-         *
-         * @tparam Args
-         * @param token
-         * @param messageFmt
-         * @param args
-         */
-        template <typename... Args>
-        void throwAssemblerInvariant [[noreturn]] (
-            lyric_parser::NodeWalker walker,
-            fmt::string_view messageFmt = {},
-            Args... messageArgs) const
-        {
-            auto *scopeManager = m_state->scopeManager();
-            auto span = scopeManager->peekSpan();
-            auto status = AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                span->traceId(), span->spanId(), messageFmt, messageArgs...);
-            auto log = span->logStatus(status, absl::Now(), tempo_tracing::LogSeverity::kError);
-            log->putField(lyric_parser::kLyricParserIdentifier, m_definition.getSymbolPath().toString());
-            log->putField(lyric_parser::kLyricParserLineNumber, static_cast<tu_int64>(walker.getLineNumber()));
-            log->putField(lyric_parser::kLyricParserColumnNumber, static_cast<tu_int64>(walker.getColumnNumber()));
-            log->putField(lyric_parser::kLyricParserFileOffset, static_cast<tu_int64>(walker.getFileOffset()));
-            log->putField(lyric_parser::kLyricParserTextSpan, static_cast<tu_int64>(walker.getTextSpan()));
-            throw tempo_utils::StatusException(status);
-        }
         /**
          *
          * @tparam Args
@@ -344,7 +263,7 @@ namespace lyric_assembler {
             auto status = AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                 span->traceId(), span->spanId(), messageFmt, messageArgs...);
             auto log = span->logStatus(status, absl::Now(), tempo_tracing::LogSeverity::kError);
-            log->putField(lyric_parser::kLyricParserIdentifier, m_definition.getSymbolPath().toString());
+            log->putField(kLyricAssemblerDefinitionSymbolPath, m_definition.getSymbolPath());
             throw tempo_utils::StatusException(status);
         }
     };

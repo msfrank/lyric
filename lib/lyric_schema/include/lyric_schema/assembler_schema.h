@@ -22,6 +22,7 @@ namespace lyric_schema {
         // Assembler properties
 
         TrapNumber,                 // integer identifying the trap in the plugin
+        DefinitionSymbolPath,       //
 
         NUM_IDS,                    // must be last
     };
@@ -33,12 +34,17 @@ namespace lyric_schema {
         kLyricAssemblerTrapNumberProperty(
         &kLyricAssemblerNs, LyricAssemblerId::TrapNumber, "TrapNumber", tempo_utils::PropertyType::kUInt32);
 
+    constexpr tempo_utils::SchemaProperty<LyricAssemblerNs,LyricAssemblerId>
+        kLyricAssemblerDefinitionSymbolPathProperty(
+        &kLyricAssemblerNs, LyricAssemblerId::DefinitionSymbolPath, "DefinitionSymbolPath", tempo_utils::PropertyType::kString);
+
     constexpr std::array<
         const tempo_utils::SchemaResource<LyricAssemblerNs,LyricAssemblerId> *,
         static_cast<std::size_t>(LyricAssemblerId::NUM_IDS)>
     kLyricAssemblerResources = {
         &kLyricAssemblerTrapClass,
         &kLyricAssemblerTrapNumberProperty,
+        &kLyricAssemblerDefinitionSymbolPathProperty,
     };
 
     constexpr tempo_utils::SchemaVocabulary<LyricAssemblerNs, LyricAssemblerId>

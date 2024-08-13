@@ -13,7 +13,7 @@ namespace lyric_typing {
     parse_pack(
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,
-        lyric_assembler::AssemblyState *state);
+        TypingTracer *tracer);
 
 }
 

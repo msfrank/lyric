@@ -257,6 +257,7 @@ namespace lyric_parser {
             log->putField(lyric_parser::kLyricParserIdentifier, currentSymbolString());
             return status;
         }
+
         /**
          *
          * @tparam Args

@@ -22,13 +22,7 @@ lyric_compiler::internal::compile_block(
     lyric_common::TypeDef resultType;
 
     for (int i = 0, last = walker.numChildren() - 1; i <= last; i++) {
-        auto compileNodeResult = compile_node(block, walker.getChild(i), moduleEntry);
-        if (compileNodeResult.isStatus())
-            return compileNodeResult;
-        resultType = compileNodeResult.getResult();
-        if (!resultType.isValid())
-            block->throwSyntaxError(walker.getChild(0),
-                "block form returns an invalid result");
+        TU_ASSIGN_OR_RETURN (resultType, compile_node(block, walker.getChild(i), moduleEntry));
         // discard intermediate expression result
         if (i < last && resultType.getType() != lyric_common::TypeDefType::NoReturn) {
             code->popValue();
@@ -73,7 +67,7 @@ lyric_compiler::internal::compile_proc_block(
     // validate that body returns the expected type
     TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
-        return block->logAndContinue(walker,
+        return moduleEntry.logAndContinue(walker.getLocation(),
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", returnType.toString());
@@ -82,7 +76,7 @@ lyric_compiler::internal::compile_proc_block(
     for (auto it = proc->exitTypesBegin(); it != proc->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
-            return block->logAndContinue(walker,
+            return moduleEntry.logAndContinue(walker.getLocation(),
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "body does not match return type {}", returnType.toString());
@@ -123,7 +117,7 @@ lyric_compiler::internal::compile_proc_block(
     // validate that body returns the expected type
     TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
-        return block->logAndContinue(walker,
+        return moduleEntry.logAndContinue(walker.getLocation(),
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", returnType.toString());
@@ -132,7 +126,7 @@ lyric_compiler::internal::compile_proc_block(
     for (auto it = proc->exitTypesBegin(); it != proc->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
-            return block->logAndContinue(walker,
+            return moduleEntry.logAndContinue(walker.getLocation(),
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "body does not match return type {}", returnType.toString());

@@ -130,10 +130,11 @@ compile_set_name(
             return block->blockCode()->storeStatic(staticSymbol->getAddress());
         }
         default:
-            break;
+            return moduleEntry.logAndContinue(name.getLocation(),
+                lyric_compiler::CompilerCondition::kSyntaxError,
+                tempo_tracing::LogSeverity::kError,
+                "assignment to {} failed; symbol is and invalid target", identifier);
     }
-
-    block->throwSyntaxError(name, "invalid symbol type for target");
 }
 
 static tempo_utils::Status
@@ -180,7 +181,7 @@ compile_set_member(
         }
 
         default:
-            block->throwSyntaxError(curr, "invalid target");
+            moduleEntry.throwCompilerInvariant("failed to parse target; unexpected parser node");
     }
 
     auto *code = block->blockCode();
@@ -376,5 +377,5 @@ lyric_compiler::internal::compile_set(
     if (lvalueId == lyric_schema::LyricAstId::Name)
         return compile_set_name(block, assignmentId, lvalue, rvalue, moduleEntry);
 
-    block->throwSyntaxError(lvalue, "invalid lvalue");
+    block->throwAssemblerInvariant("invalid lvalue");
 }

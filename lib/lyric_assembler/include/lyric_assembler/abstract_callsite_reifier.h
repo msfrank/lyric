@@ -2,6 +2,7 @@
 #define LYRIC_ASSEMBLER_ABSTRACT_CALLSITE_REIFIER_H
 
 #include <lyric_common/symbol_url.h>
+#include <tempo_utils/result.h>
 
 #include "assembler_types.h"
 
@@ -11,11 +12,6 @@ namespace lyric_assembler {
 
     public:
         virtual ~AbstractCallsiteReifier() = default;
-
-        //virtual bool isValid() const = 0;
-        //virtual lyric_common::TypeDef getArgument(int index) const = 0;
-        //virtual std::vector<lyric_common::TypeDef> getArguments() const = 0;
-        //virtual int numArguments() const = 0;
 
         virtual size_t numReifiedArguments() const = 0;
 

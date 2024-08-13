@@ -96,7 +96,7 @@ TEST(CoreMatch, TestIsABoundedPlaceholderTypeDisjoint)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         CompileModule(
-            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kSyntaxError))));
+            tempo_test::SpansetContainsError(lyric_compiler::CompilerCondition::kSyntaxError))));
 }
 
 TEST(CoreMatch, TestMatchIntrinsic)
@@ -188,7 +188,7 @@ TEST(CoreMatch, TestMatchBoundedPlaceholderTypeDisjoint)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         CompileModule(
-            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kSyntaxError))));
+            tempo_test::SpansetContainsError(lyric_compiler::CompilerCondition::kSyntaxError))));
 }
 
 TEST(CoreMatch, TestMatchClass)

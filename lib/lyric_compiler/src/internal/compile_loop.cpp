@@ -43,7 +43,7 @@ lyric_compiler::internal::compile_while(
     bool isAssignable;
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(boolType, testReturnType));
     if (!isAssignable)
-        return block->logAndContinue(whileTest,
+        return moduleEntry.logAndContinue(whileTest.getLocation(),
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "expected test expression to return {}; found {}", boolType.toString(), testReturnType.toString());

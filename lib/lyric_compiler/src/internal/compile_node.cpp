@@ -100,7 +100,7 @@ lyric_compiler::internal::compile_expression(
             break;
     }
 
-    block->throwSyntaxError(walker, "invalid expression");
+    block->throwAssemblerInvariant("invalid expression");
 }
 
 tempo_utils::Status
@@ -161,7 +161,7 @@ lyric_compiler::internal::compile_statement(
             break;
     }
 
-    block->throwSyntaxError(walker, "invalid statement");
+    block->throwAssemblerInvariant("invalid statement");
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
@@ -257,5 +257,5 @@ lyric_compiler::internal::compile_node(
             break;
     }
 
-    block->throwSyntaxError(walker, "invalid node");
+    block->throwAssemblerInvariant("invalid node");
 }

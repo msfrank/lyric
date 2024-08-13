@@ -217,6 +217,80 @@ namespace lyric_compiler {
                     tempo_tracing::LogSeverity::kError,
                     "expected node in schema ns {}", vocabulary.getNs()->getNs()));
         }
+
+        /**
+         *
+         * @tparam Args
+         * @param condition
+         * @param severity
+         * @param messageFmt
+         * @param messageArgs
+         * @return
+         */
+        template <typename ConditionType, typename... Args,
+            typename StatusType = typename tempo_utils::ConditionTraits<ConditionType>::StatusType>
+        StatusType logAndContinue(
+            ConditionType condition,
+            tempo_tracing::LogSeverity severity,
+            fmt::string_view messageFmt = {},
+            Args... messageArgs) const
+        {
+            auto scopeManager = m_state->scopeManager();
+            auto span = scopeManager->peekSpan();
+            auto status = StatusType::forCondition(condition, span->traceId(), span->spanId(),
+                messageFmt, messageArgs...);
+            span->logStatus(status, absl::Now(), severity);
+            return status;
+        }
+
+        /**
+         *
+         * @tparam Args
+         * @param location
+         * @param condition
+         * @param severity
+         * @param messageFmt
+         * @param messageArgs
+         * @return
+         */
+        template <typename ConditionType, typename... Args,
+            typename StatusType = typename tempo_utils::ConditionTraits<ConditionType>::StatusType>
+        StatusType logAndContinue(
+            const lyric_parser::ParseLocation &location,
+            ConditionType condition,
+            tempo_tracing::LogSeverity severity,
+            fmt::string_view messageFmt = {},
+            Args... messageArgs) const
+        {
+            auto scopeManager = m_state->scopeManager();
+            auto span = scopeManager->peekSpan();
+            auto status = StatusType::forCondition(condition, span->traceId(), span->spanId(),
+                messageFmt, messageArgs...);
+            auto log = span->logStatus(status, absl::Now(), severity);
+            log->putField(lyric_parser::kLyricParserLineNumber, location.lineNumber);
+            log->putField(lyric_parser::kLyricParserColumnNumber, location.columnNumber);
+            log->putField(lyric_parser::kLyricParserFileOffset, location.fileOffset);
+            log->putField(lyric_parser::kLyricParserTextSpan, location.textSpan);
+            return status;
+        }
+
+        /**
+         *
+         * @tparam Args
+         * @param token
+         * @param messageFmt
+         * @param args
+         */
+        template <typename... Args>
+        void throwCompilerInvariant [[noreturn]] (fmt::string_view messageFmt = {}, Args... messageArgs) const
+        {
+            auto scopeManager = m_state->scopeManager();
+            auto span = scopeManager->peekSpan();
+            auto status = CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+                span->traceId(), span->spanId(), messageFmt, messageArgs...);
+            span->logStatus(status, absl::Now(), tempo_tracing::LogSeverity::kError);
+            throw tempo_utils::StatusException(status);
+        }
     };
 }
 

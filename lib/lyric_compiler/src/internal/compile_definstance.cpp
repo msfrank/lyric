@@ -284,7 +284,7 @@ compile_definstance_def(
     bool isReturnable;
     TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
-        return instanceBlock->logAndContinue(body,
+        return moduleEntry.logAndContinue(body.getLocation(),
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", returnType.toString());
@@ -293,7 +293,7 @@ compile_definstance_def(
     for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
-            return instanceBlock->logAndContinue(body,
+            return moduleEntry.logAndContinue(body.getLocation(),
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "body does not match return type {}", returnType.toString());
@@ -335,12 +335,16 @@ compile_definstance_impl_def(
     if (!packSpec.initializers.empty()) {
         for (const auto &p : packSpec.listParameterSpec) {
             if (!p.init.isEmpty())
-                implBlock->throwSyntaxError(p.init.getValue(),
+                return moduleEntry.logAndContinue(p.init.getValue().getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "list parameter '{}' has unexpected initializer", p.name);
         }
         for (const auto &p : packSpec.namedParameterSpec) {
             if (!p.init.isEmpty())
-                implBlock->throwSyntaxError(p.init.getValue(),
+                return moduleEntry.logAndContinue(p.init.getValue().getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "named parameter '{}' has unexpected initializer", p.name);
         }
     }
@@ -370,7 +374,7 @@ compile_definstance_impl_def(
     bool isReturnable;
     TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
-        return implBlock->logAndContinue(body,
+        return moduleEntry.logAndContinue(body.getLocation(),
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", returnType.toString());
@@ -379,7 +383,7 @@ compile_definstance_impl_def(
     for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
-            return implBlock->logAndContinue(body,
+            return moduleEntry.logAndContinue(body.getLocation(),
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "body does not match return type {}", returnType.toString());
@@ -424,7 +428,7 @@ compile_definstance_impl(
                 TU_RETURN_IF_NOT_OK (compile_definstance_impl_def(implHandle, child, moduleEntry));
                 break;
             default:
-                instanceBlock->throwSyntaxError(child, "expected impl def");
+                instanceBlock->throwAssemblerInvariant("expected impl def");
         }
     }
 
@@ -470,7 +474,7 @@ lyric_compiler::internal::compile_definstance(
                 impls.emplace_back(child);
                 break;
             default:
-                block->throwSyntaxError(child, "expected instance body");
+                block->throwAssemblerInvariant("expected instance body");
         }
     }
 

@@ -72,8 +72,7 @@ compile_defenum_def(
     auto *enumBlock = baseEnum->enumBlock();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
-    if (walker.numChildren() < 2)
-        enumBlock->throwSyntaxError(walker, "invalid def");
+    moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDefClass, 2);
 
     // get method name
     std::string identifier;
@@ -149,7 +148,7 @@ compile_defenum_def(
     bool isReturnable;
     TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
-        return enumBlock->logAndContinue(body,
+        return moduleEntry.logAndContinue(body.getLocation(),
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "def body does not match return type {}", returnType.toString());
@@ -158,7 +157,7 @@ compile_defenum_def(
     for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
-            return enumBlock->logAndContinue(body,
+            return moduleEntry.logAndContinue(body.getLocation(),
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "def body does not match return type {}", returnType.toString());
@@ -179,8 +178,7 @@ compile_defenum_base_init(
     auto *baseBlock = baseEnum->enumBlock();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
-    if (walker.numChildren() < 1)
-        baseBlock->throwSyntaxError(walker, "invalid init");
+    moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstInitClass, 1);
 
     // parse the parameter list
     auto pack = walker.getChild(0);
@@ -191,12 +189,16 @@ compile_defenum_base_init(
     if (!packSpec.initializers.empty()) {
         for (const auto &p: packSpec.listParameterSpec) {
             if (!p.init.isEmpty())
-                baseBlock->throwSyntaxError(p.init.getValue(),
+                return moduleEntry.logAndContinue(p.init.getValue().getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "list parameter '{}' has unexpected initializer", p.name);
         }
         for (const auto &p : packSpec.namedParameterSpec) {
             if (!p.init.isEmpty())
-                baseBlock->throwSyntaxError(p.init.getValue(),
+                return moduleEntry.logAndContinue(p.init.getValue().getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "named parameter '{}' has unexpected initializer", p.name);
         }
     }
@@ -204,13 +206,19 @@ compile_defenum_base_init(
     // check for ctx parameters
     if (!packSpec.ctxParameterSpec.empty()) {
         auto &p = packSpec.ctxParameterSpec.front();
-        baseBlock->throwSyntaxError(p.node, "unexpected ctx parameter '{}'", p.name);
+        return moduleEntry.logAndContinue(p.node.getLocation(),
+            lyric_compiler::CompilerCondition::kSyntaxError,
+            tempo_tracing::LogSeverity::kError,
+            "unexpected ctx parameter '{}'", p.name);
     }
 
     // check for rest parameter
     if (!packSpec.restParameterSpec.isEmpty()) {
         auto p = packSpec.restParameterSpec.getValue();
-        baseBlock->throwSyntaxError(p.node, "unexpected rest parameter");
+        return moduleEntry.logAndContinue(p.node.getLocation(),
+            lyric_compiler::CompilerCondition::kSyntaxError,
+            tempo_tracing::LogSeverity::kError,
+            "unexpected rest parameter");
     }
 
     // declare the base constructor
@@ -420,12 +428,16 @@ compile_defenum_impl_def(
     if (!packSpec.initializers.empty()) {
         for (const auto &p : packSpec.listParameterSpec) {
             if (!p.init.isEmpty())
-                implBlock->throwSyntaxError(p.init.getValue(),
+                return moduleEntry.logAndContinue(p.init.getValue().getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "list parameter '{}' has unexpected initializer", p.name);
         }
         for (const auto &p : packSpec.namedParameterSpec) {
             if (!p.init.isEmpty())
-                implBlock->throwSyntaxError(p.init.getValue(),
+                return moduleEntry.logAndContinue(p.init.getValue().getLocation(),
+                    lyric_compiler::CompilerCondition::kSyntaxError,
+                    tempo_tracing::LogSeverity::kError,
                     "named parameter '{}' has unexpected initializer", p.name);
         }
     }
@@ -455,7 +467,7 @@ compile_defenum_impl_def(
     bool isReturnable;
     TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, bodyType));
     if (!isReturnable)
-        return implBlock->logAndContinue(body,
+        return moduleEntry.logAndContinue(body.getLocation(),
             lyric_compiler::CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "body does not match return type {}", returnType.toString());
@@ -464,7 +476,7 @@ compile_defenum_impl_def(
     for (auto it = procHandle->exitTypesBegin(); it != procHandle->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(returnType, *it));
         if (!isReturnable)
-            return implBlock->logAndContinue(body,
+            return moduleEntry.logAndContinue(body.getLocation(),
                 lyric_compiler::CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "body does not match return type {}", returnType.toString());
@@ -509,7 +521,7 @@ compile_defenum_impl(
                 TU_RETURN_IF_NOT_OK (compile_defenum_impl_def(implHandle, child, moduleEntry));
                 break;
             default:
-                enumBlock->throwSyntaxError(child, "expected impl def");
+                enumBlock->throwAssemblerInvariant("expected impl def");
         }
     }
 
@@ -545,7 +557,7 @@ lyric_compiler::internal::compile_defenum(
         switch (childId) {
             case lyric_schema::LyricAstId::Init:
                 if (init.isValid())
-                    block->throwSyntaxError(child, "duplicate init");
+                    block->throwAssemblerInvariant("duplicate init");
                 init = child;
                 break;
             case lyric_schema::LyricAstId::Case:
@@ -561,7 +573,7 @@ lyric_compiler::internal::compile_defenum(
                 impls.emplace_back(child);
                 break;
             default:
-                block->throwSyntaxError(child, "expected enum body");
+                block->throwAssemblerInvariant("expected enum body");
         }
     }
 

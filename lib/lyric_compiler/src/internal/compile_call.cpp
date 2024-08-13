@@ -38,10 +38,9 @@ lyric_compiler::internal::compile_placement(
     for (int i = 0; i < walker.numChildren(); i++) {
         auto arg = walker.getChild(i);
         if (arg.isClass(lyric_schema::kLyricAstKeywordClass)) {
+            moduleEntry.checkClassAndChildCountOrThrow(arg, lyric_schema::kLyricAstKeywordClass, 1);
             std::string label;
             moduleEntry.parseAttrOrThrow(arg, lyric_parser::kLyricAstIdentifier, label);
-            if (arg.numChildren() != 1)
-                bindingBlock->throwSyntaxError(arg, "invalid keyword");
             keywordArgs[label] = arg.getChild(0);
         } else {
             positionalArgs.push_back(arg);
@@ -68,7 +67,7 @@ lyric_compiler::internal::compile_placement(
                         "unexpected list argument {}; missing default initializer", currpos);
                 const auto &arg = positionalArgs[currpos];
                 if (!arg.isValid())
-                    bindingBlock->throwAssemblerInvariant(arg, "invalid positional parameter {}", currpos);
+                    bindingBlock->throwAssemblerInvariant("invalid positional parameter {}", currpos);
                 lyric_common::TypeDef resultType;
                 TU_ASSIGN_OR_RETURN (resultType, compile_expression(invokeBlock, arg, moduleEntry));
                 TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(resultType));
@@ -102,7 +101,7 @@ lyric_compiler::internal::compile_placement(
                 } else {
                     const auto &arg = positionalArgs[currpos];
                     if (!arg.isValid())
-                        bindingBlock->throwAssemblerInvariant(arg, "invalid positional parameter {}", currpos);
+                        bindingBlock->throwAssemblerInvariant("invalid positional parameter {}", currpos);
                     lyric_common::TypeDef resultType;
                     TU_ASSIGN_OR_RETURN (resultType, compile_expression(invokeBlock, arg, moduleEntry));
                     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(resultType));

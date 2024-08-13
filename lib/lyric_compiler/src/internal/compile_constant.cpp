@@ -267,8 +267,6 @@ lyric_compiler::internal::compile_constant(
             return compile_symbol_constant(block, walker, moduleEntry);
 
         default:
-            break;
+            moduleEntry.throwCompilerInvariant("failed to parse constant; unexpected parser node");
     }
-
-    block->throwSyntaxError(walker, "invalid constant");
 }

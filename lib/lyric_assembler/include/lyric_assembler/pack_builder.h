@@ -1,6 +1,8 @@
 #ifndef LYRIC_ASSEMBLER_PACK_BUILDER_H
 #define LYRIC_ASSEMBLER_PACK_BUILDER_H
 
+#include <tempo_utils/result.h>
+
 #include "assembler_types.h"
 
 namespace lyric_assembler {

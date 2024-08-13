@@ -6,8 +6,6 @@
 #include <lyric_common/assembly_location.h>
 #include <lyric_common/symbol_path.h>
 #include <lyric_common/symbol_url.h>
-#include <lyric_parser/node_walker.h>
-#include <lyric_parser/parser_types.h>
 #include <lyric_runtime/literal_cell.h>
 #include <lyric_runtime/runtime_types.h>
 #include <tempo_utils/option_template.h>

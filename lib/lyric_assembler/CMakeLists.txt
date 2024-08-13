@@ -18,6 +18,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/action_callable.h
     include/lyric_assembler/action_symbol.h
     include/lyric_assembler/argument_variable.h
+    include/lyric_assembler/assembler_attrs.h
     include/lyric_assembler/assembler_result.h
     include/lyric_assembler/assembler_tracer.h
     include/lyric_assembler/assembler_types.h
@@ -67,6 +68,7 @@ target_sources(lyric_assembler PRIVATE
     src/action_callable.cpp
     src/action_symbol.cpp
     src/argument_variable.cpp
+    src/assembler_attrs.cpp
     src/assembler_result.cpp
     src/assembler_tracer.cpp
     src/assembler_types.cpp

@@ -39,11 +39,14 @@ lyric_compiler::internal::compile_new(
 //        newType = resolveNewTypeResult.getResult();
         newType = typeHint;
     } else {
-        block->throwSyntaxError(walker, "missing type offset");
+        block->throwAssemblerInvariant("missing type offset");
     }
 
     if (newType.getType() != lyric_common::TypeDefType::Concrete)
-        block->throwSyntaxError(walker, "new type {} is not constructable", newType.toString());
+        return moduleEntry.logAndContinue(walker.getLocation(),
+            lyric_compiler::CompilerCondition::kIncompatibleType,
+            tempo_tracing::LogSeverity::kError,
+            "new type {} is not constructable", newType.toString());
 
     TU_RETURN_IF_NOT_OK (typeCache->touchType(newType));
 

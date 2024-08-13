@@ -14,6 +14,7 @@ lyric_typing::TypeSystem::TypeSystem(lyric_assembler::AssemblyState *state)
     : m_state(state)
 {
     TU_ASSERT (m_state != nullptr);
+    m_tracer = std::make_unique<TypingTracer>(m_state->scopeManager());
 }
 
 lyric_assembler::AssemblyState *
@@ -27,7 +28,7 @@ lyric_typing::TypeSystem::parseAssignable(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker)
 {
-    return parse_assignable(block, walker, m_state);
+    return parse_assignable(block, walker, m_tracer.get());
 }
 
 tempo_utils::Result<std::vector<lyric_typing::TypeSpec>>
@@ -35,7 +36,7 @@ lyric_typing::TypeSystem::parseTypeArguments(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker)
 {
-    return parse_type_arguments(block, walker, m_state);
+    return parse_type_arguments(block, walker, m_tracer.get());
 }
 
 tempo_utils::Result<lyric_typing::PackSpec>
@@ -43,7 +44,7 @@ lyric_typing::TypeSystem::parsePack(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker)
 {
-    return parse_pack(block, walker, m_state);
+    return parse_pack(block, walker, m_tracer.get());
 }
 
 tempo_utils::Result<lyric_assembler::ParameterPack>
@@ -93,13 +94,13 @@ lyric_typing::TypeSystem::parseTemplate(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker)
 {
-    return resolve_template(block, walker, m_state);
+    return resolve_template(block, walker, m_state, m_tracer.get());
 }
 
 tempo_utils::Result<std::pair<lyric_object::BoundType,lyric_common::TypeDef>>
 lyric_typing::TypeSystem::resolveBound(const lyric_common::TypeDef &placeholderType)
 {
-    return resolve_bound(placeholderType, m_state);
+    return resolve_bound(placeholderType, m_state, m_tracer.get());
 }
 
 tempo_utils::Result<lyric_common::TypeDef>

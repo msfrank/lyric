@@ -6,6 +6,7 @@
 #include <tempo_utils/result.h>
 
 #include "type_spec.h"
+#include "typing_tracer.h"
 
 namespace lyric_typing {
 
@@ -13,13 +14,13 @@ namespace lyric_typing {
     parse_assignable(
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,
-        lyric_assembler::AssemblyState *state);
+        TypingTracer *tracer);
 
     tempo_utils::Result<std::vector<TypeSpec>>
     parse_type_arguments(
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,
-        lyric_assembler::AssemblyState *state);
+        TypingTracer *tracer);
 
 }
 

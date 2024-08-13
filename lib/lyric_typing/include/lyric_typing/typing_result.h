@@ -18,6 +18,7 @@ namespace lyric_typing {
         kMissingType,
         kInvalidType,
         kTypeError,
+        kTemplateError,
         kTypingInvariant,
     };
 
@@ -89,9 +90,11 @@ namespace tempo_utils {
         {
             switch (condition) {
                 case lyric_typing::TypingCondition::kIncompatibleType:
+                case lyric_typing::TypingCondition::kTypeError:
+                case lyric_typing::TypingCondition::kTemplateError:
+                    return tempo_utils::StatusCode::kInvalidArgument;
                 case lyric_typing::TypingCondition::kMissingType:
                 case lyric_typing::TypingCondition::kInvalidType:
-                case lyric_typing::TypingCondition::kTypeError:
                 case lyric_typing::TypingCondition::kTypingInvariant:
                     return tempo_utils::StatusCode::kInternal;
                 default:
@@ -109,6 +112,8 @@ namespace tempo_utils {
                     return "Invalid type";
                 case lyric_typing::TypingCondition::kTypeError:
                     return "Type error";
+                case lyric_typing::TypingCondition::kTemplateError:
+                    return "Template error";
                 case lyric_typing::TypingCondition::kTypingInvariant:
                     return "Typing invariant";
                 default:

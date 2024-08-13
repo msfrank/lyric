@@ -63,7 +63,7 @@ lyric_compiler::internal::compile_param_initializer(
             break;
         }
         default:
-            block->throwSyntaxError(walker, "invalid param initializer");
+            block->throwAssemblerInvariant("invalid param initializer");
     }
 
     procHandle->putExitType(bodyType);
@@ -147,7 +147,7 @@ lyric_compiler::internal::compile_member_initializer(
             break;
         }
         default:
-            block->throwSyntaxError(walker, "invalid member initializer");
+            block->throwAssemblerInvariant("invalid member initializer");
     }
 
     procHandle->putExitType(bodyType);

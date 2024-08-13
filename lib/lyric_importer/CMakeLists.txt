@@ -71,7 +71,6 @@ target_include_directories(lyric_importer PUBLIC
 
 target_link_libraries(lyric_importer
     PUBLIC
-    lyric::lyric_parser
     lyric::lyric_runtime
     tempo::tempo_tracing
     tempo::tempo_utils
