@@ -4,7 +4,7 @@
 #include "abstract_resolver.h"
 #include "abstract_symbol.h"
 #include "base_symbol.h"
-#include "assembly_state.h"
+#include "object_state.h"
 
 namespace lyric_assembler {
 
@@ -31,7 +31,7 @@ namespace lyric_assembler {
             TemplateHandle *actionTemplate,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
 
         ActionSymbol(
             const lyric_common::SymbolUrl &actionUrl,
@@ -40,12 +40,12 @@ namespace lyric_assembler {
             ActionAddress address,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
 
         ActionSymbol(
             const lyric_common::SymbolUrl &actionUrl,
             lyric_importer::ActionImport *actionImport,
-            AssemblyState *state);
+            ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;
 
@@ -80,7 +80,7 @@ namespace lyric_assembler {
     private:
         lyric_common::SymbolUrl m_actionUrl;
         lyric_importer::ActionImport *m_actionImport = nullptr;
-        AssemblyState *m_state;
+        ObjectState *m_state;
 
         ActionSymbolPriv *load() override;
     };

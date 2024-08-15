@@ -21,9 +21,9 @@ lyric_bootstrap::BootstrapLoader::BootstrapLoader(const std::filesystem::path &d
 }
 
 std::filesystem::path
-lyric_bootstrap::BootstrapLoader::assemblyLocationToFilePath(
+lyric_bootstrap::BootstrapLoader::moduleLocationToFilePath(
     const std::filesystem::path &directoryPath,
-    const lyric_common::AssemblyLocation &location) const
+    const lyric_common::ModuleLocation &location) const
 {
     if (!directoryPath.is_absolute() || !is_directory(directoryPath))
         return {};
@@ -63,12 +63,12 @@ lyric_bootstrap::BootstrapLoader::fileInfoIsValid(const std::filesystem::path &p
 }
 
 std::filesystem::path
-lyric_bootstrap::BootstrapLoader::findAssembly(const lyric_common::AssemblyLocation &location) const
+lyric_bootstrap::BootstrapLoader::findModule(const lyric_common::ModuleLocation &location) const
 {
     if (location.getScheme() != "dev.zuri.bootstrap")
         return {};
 
-    auto absolutePath = assemblyLocationToFilePath(m_directoryPath, location);
+    auto absolutePath = moduleLocationToFilePath(m_directoryPath, location);
     if (!absolutePath.empty()) {
         if (fileInfoIsValid(absolutePath))
             return absolutePath;
@@ -77,23 +77,23 @@ lyric_bootstrap::BootstrapLoader::findAssembly(const lyric_common::AssemblyLocat
 }
 
 tempo_utils::Result<bool>
-lyric_bootstrap::BootstrapLoader::hasAssembly(const lyric_common::AssemblyLocation &location) const
+lyric_bootstrap::BootstrapLoader::hasModule(const lyric_common::ModuleLocation &location) const
 {
-    return !findAssembly(location).empty();
+    return !findModule(location).empty();
 }
 
-tempo_utils::Result<Option<lyric_common::AssemblyLocation>>
-lyric_bootstrap::BootstrapLoader::resolveAssembly(const lyric_common::AssemblyLocation &location) const
+tempo_utils::Result<Option<lyric_common::ModuleLocation>>
+lyric_bootstrap::BootstrapLoader::resolveModule(const lyric_common::ModuleLocation &location) const
 {
     if (location.getScheme() != "dev.zuri.bootstrap")
-        return Option<lyric_common::AssemblyLocation>();
+        return Option<lyric_common::ModuleLocation>();
     return Option(location);
 }
 
 tempo_utils::Result<Option<lyric_object::LyricObject>>
-lyric_bootstrap::BootstrapLoader::loadAssembly(const lyric_common::AssemblyLocation &location)
+lyric_bootstrap::BootstrapLoader::loadModule(const lyric_common::ModuleLocation &location)
 {
-    auto absolutePath = findAssembly(location);
+    auto absolutePath = findModule(location);
     if (absolutePath.empty())
         return Option<lyric_object::LyricObject>();
 
@@ -105,23 +105,23 @@ lyric_bootstrap::BootstrapLoader::loadAssembly(const lyric_common::AssemblyLocat
     // verify that file contents is a valid assembly
     if (!lyric_object::LyricObject::verify(std::span<const tu_uint8>(bytes->getData(), bytes->getSize())))
         return BootstrapStatus::forCondition(
-            BootstrapCondition::kBootstrapInvariant, "failed to verify assembly");
+            BootstrapCondition::kBootstrapInvariant, "failed to verify object");
 
-    TU_LOG_INFO << "loaded assembly at " << absolutePath;
+    TU_LOG_INFO << "loaded module at " << absolutePath;
     return Option(lyric_object::LyricObject(bytes));
 }
 
 tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>>
 lyric_bootstrap::BootstrapLoader::loadPlugin(
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     const lyric_object::PluginSpecifier &specifier)
 {
-    auto absolutePath = findAssembly(location);
+    auto absolutePath = findModule(location);
     if (absolutePath.empty())
         return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>();
 
-    auto platformId = absl::StrCat(ASSEMBLY_PLUGIN_SYSTEM_NAME, "-", ASSEMBLY_PLUGIN_ARCHITECTURE);
-    auto pluginName = absl::StrCat(absolutePath.stem().string(), ".", platformId, ASSEMBLY_PLUGIN_SUFFIX);
+    auto platformId = absl::StrCat(PLUGIN_SYSTEM_NAME, "-", PLUGIN_ARCHITECTURE);
+    auto pluginName = absl::StrCat(absolutePath.stem().string(), ".", platformId, PLUGIN_SUFFIX);
     absolutePath.replace_filename(pluginName);
 
     // attempt to load the plugin

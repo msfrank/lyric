@@ -13,13 +13,13 @@ class CallsiteReifierTP0InOut : public BaseFixture {};
 
 TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesT_returnsT)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
 
-    auto *typeCache = m_assemblyState->typeCache();
+    auto *typeCache = m_objectState->typeCache();
 
     lyric_common::SymbolUrl entryUrl(lyric_common::SymbolPath({"$entry"}));
-    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, m_assemblyState.get());
+    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, m_objectState.get());
 
     lyric_object::TemplateParameter tp0;
     tp0.index = 0;
@@ -60,14 +60,14 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesT_returnsT)
 
 TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returnsT)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
 
-    auto *typeCache = m_assemblyState->typeCache();
+    auto *typeCache = m_objectState->typeCache();
 
     lyric_common::SymbolUrl entryUrl(lyric_common::SymbolPath({"$entry"}));
-    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, m_assemblyState.get());
+    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, m_objectState.get());
     auto *block = proc->procBlock();
 
     lyric_object::TemplateParameter tp0;
@@ -81,7 +81,7 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returns
     lyric_assembler::TemplateHandle *templateHandle;
     TU_ASSIGN_OR_RAISE (templateHandle, typeCache->makeTemplate(templateUrl, {tp0}, proc->procBlock()));
 
-    auto *symbolCache = m_assemblyState->symbolCache();
+    auto *symbolCache = m_objectState->symbolCache();
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RAISE (symbol, symbolCache->getOrImportSymbol(
             fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Object)));
@@ -125,14 +125,14 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returns
 
 TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesUnionOfTandNil_returnsT)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
     auto NilType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Nil);
 
-    auto *typeCache = m_assemblyState->typeCache();
+    auto *typeCache = m_objectState->typeCache();
 
     lyric_common::SymbolUrl entryUrl(lyric_common::SymbolPath({"$entry"}));
-    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, m_assemblyState.get());
+    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, m_objectState.get());
 
     lyric_object::TemplateParameter tp0;
     tp0.index = 0;

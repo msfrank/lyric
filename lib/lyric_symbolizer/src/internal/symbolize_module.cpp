@@ -356,8 +356,8 @@ symbolize_import(
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
-    lyric_common::AssemblyLocation importLocation;
-    entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstAssemblyLocation, importLocation);
+    lyric_common::ModuleLocation importLocation;
+    entryPoint.parseAttrOrThrow(walker, lyric_parser::kLyricAstModuleLocation, importLocation);
     return block->declareImport(importLocation);
 }
 
@@ -498,8 +498,8 @@ lyric_symbolizer::internal::symbolize_module(
     }
 
     // construct assembly from assembly state and return it
-    auto toAssemblyResult = state->toAssembly();
-    if (toAssemblyResult.isStatus())
-        return toAssemblyResult.getStatus();
-    return toAssemblyResult.getResult();
+    auto toObjectResult = state->toObject();
+    if (toObjectResult.isStatus())
+        return toObjectResult.getStatus();
+    return toObjectResult.getResult();
 }

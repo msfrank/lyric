@@ -15,14 +15,14 @@ namespace lyric_typing {
     resolve_template(
         lyric_assembler::BlockHandle *block,
         const lyric_parser::NodeWalker &walker,
-        lyric_assembler::AssemblyState *state,
+        lyric_assembler::ObjectState *state,
         TypingTracer *tracer);
 
 
     tempo_utils::Result<std::pair<lyric_object::BoundType,lyric_common::TypeDef>>
     resolve_bound(
         const lyric_common::TypeDef &placeholderType,
-        lyric_assembler::AssemblyState *state,
+        lyric_assembler::ObjectState *state,
         TypingTracer *tracer);
 }
 

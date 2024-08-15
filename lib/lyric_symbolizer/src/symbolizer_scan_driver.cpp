@@ -6,7 +6,7 @@
 #include <lyric_symbolizer/symbolizer_scan_driver.h>
 #include <lyric_symbolizer/symbolizer_result.h>
 
-lyric_symbolizer::SymbolizerScanDriver::SymbolizerScanDriver(lyric_assembler::AssemblyState *state)
+lyric_symbolizer::SymbolizerScanDriver::SymbolizerScanDriver(lyric_assembler::ObjectState *state)
     : m_state(state),
       m_entry(nullptr)
 {
@@ -159,8 +159,8 @@ lyric_symbolizer::SymbolizerScanDriver::popDefinition()
 tempo_utils::Status
 lyric_symbolizer::SymbolizerScanDriver::declareImport(const lyric_parser::ArchetypeNode *node)
 {
-    lyric_common::AssemblyLocation importLocation;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAssemblyLocation, importLocation));
+    lyric_common::ModuleLocation importLocation;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstModuleLocation, importLocation));
 
     auto *importCache = m_state->importCache();
     if (importCache->hasImport(importLocation))

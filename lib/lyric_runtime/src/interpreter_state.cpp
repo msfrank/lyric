@@ -75,23 +75,23 @@ lyric_runtime::InterpreterState::~InterpreterState()
 static tempo_utils::Status
 detect_bootstrap(
     lyric_runtime::SegmentManager *segmentManager,
-    const lyric_common::AssemblyLocation &mainLocation,
-    lyric_common::AssemblyLocation *bootstrapLocation)
+    const lyric_common::ModuleLocation &mainLocation,
+    lyric_common::ModuleLocation *bootstrapLocation)
 {
     TU_ASSERT (segmentManager != nullptr);
     TU_ASSERT (mainLocation.isValid());
     TU_ASSERT (bootstrapLocation != nullptr);
 
-    // load segment for the main assembly from the specified location
+    // load segment for the main module from the specified location
     auto *segment = segmentManager->getOrLoadSegment(mainLocation);
     if (segment == nullptr)
         return lyric_runtime::InterpreterStatus::forCondition(
-            lyric_runtime::InterpreterCondition::kMissingAssembly,
-             "missing assembly {}", mainLocation.toString());
+            lyric_runtime::InterpreterCondition::kMissingObject,
+             "missing object {}", mainLocation.toString());
 
     auto mainObject = segment->getObject().getObject();
 
-    // find the system bootstrap assembly
+    // find the system bootstrap module
     lyric_object::ImportWalker bootstrapImport;;
     for (int i = 0; i < mainObject.numImports(); i++) {
         auto currentImport = mainObject.getImport(i);
@@ -109,7 +109,7 @@ detect_bootstrap(
     *bootstrapLocation = bootstrapImport.getImportLocation();
     if (!bootstrapLocation->isValid())
         return lyric_runtime::InterpreterStatus::forCondition(
-            lyric_runtime::InterpreterCondition::kMissingAssembly, bootstrapLocation->toString());
+            lyric_runtime::InterpreterCondition::kMissingObject, bootstrapLocation->toString());
 
     TU_LOG_V << "found system bootstrap " << *bootstrapLocation;
 
@@ -119,7 +119,7 @@ detect_bootstrap(
 static tempo_utils::Status
 allocate_type_manager(
     lyric_runtime::SegmentManager *segmentManager,
-    const lyric_common::AssemblyLocation &preludeLocation,
+    const lyric_common::ModuleLocation &preludeLocation,
     lyric_runtime::TypeManager **typeManagerPtr)
 {
     TU_ASSERT (segmentManager != nullptr);
@@ -130,15 +130,15 @@ allocate_type_manager(
     if (bootstrapSegment == nullptr)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant,
-            "failed to load bootstrap assembly {}", preludeLocation.toString());
+            "failed to load bootstrap prelude {}", preludeLocation.toString());
 
     auto bootstrapObject = bootstrapSegment->getObject().getObject();
     if (!bootstrapObject.isValid())
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant,
-            "bootstrap assembly {} is invalid", preludeLocation.toString());
+            "bootstrap prelude {} is invalid", preludeLocation.toString());
 
-    TU_LOG_V << "loaded bootstrap assembly " << preludeLocation;
+    TU_LOG_V << "loaded bootstrap prelude " << preludeLocation;
 
     std::vector<lyric_runtime::DataCell> intrinsiccache;
     intrinsiccache.resize(static_cast<int>(lyric_object::IntrinsicType::NUM_INTRINSIC_TYPES));
@@ -173,9 +173,9 @@ allocate_type_manager(
 tempo_utils::Result<std::shared_ptr<lyric_runtime::InterpreterState>>
 lyric_runtime::InterpreterState::create(
     const InterpreterStateOptions &options,
-    const lyric_common::AssemblyLocation &mainLocation)
+    const lyric_common::ModuleLocation &mainLocation)
 {
-    lyric_common::AssemblyLocation preludeLocation;
+    lyric_common::ModuleLocation preludeLocation;
     uv_loop_t *loop = nullptr;
     SegmentManager *segmentManager = nullptr;
     TypeManager *typeManager = nullptr;
@@ -264,7 +264,7 @@ err:
     return status;
 }
 
-lyric_common::AssemblyLocation
+lyric_common::ModuleLocation
 lyric_runtime::InterpreterState::getMainLocation() const
 {
     return m_mainLocation;
@@ -337,18 +337,18 @@ lyric_runtime::InterpreterState::mainLoop() const
 }
 
 tempo_utils::Status
-lyric_runtime::InterpreterState::reload(const lyric_common::AssemblyLocation &mainLocation)
+lyric_runtime::InterpreterState::reload(const lyric_common::ModuleLocation &mainLocation)
 {
-    // load segment for the main assembly from the specified main location
+    // load segment for the main module from the specified main location
     auto *segment = m_segmentManager->getOrLoadSegment(mainLocation);
     if (segment == nullptr)
         return InterpreterStatus::forCondition(
-            InterpreterCondition::kMissingAssembly,
-            "missing assembly {}", mainLocation.toString());
+            InterpreterCondition::kMissingObject,
+            "missing object {}", mainLocation.toString());
 
     auto mainObject = segment->getObject().getObject();
 
-    // set *IP to the entry proc of the main assembly
+    // set *IP to the entry proc of the main module
     auto symbol = mainObject.findSymbol(lyric_common::SymbolPath::entrySymbol());
     if (!symbol.isValid())
         return InterpreterStatus::forCondition(

@@ -16,50 +16,50 @@ lyric_runtime::ChainLoader::ChainLoader(const ChainLoader &other)
 }
 
 tempo_utils::Result<bool>
-lyric_runtime::ChainLoader::hasAssembly(const lyric_common::AssemblyLocation &location) const
+lyric_runtime::ChainLoader::hasModule(const lyric_common::ModuleLocation &location) const
 {
     for (const auto &loader : m_chain) {
-        auto hasAssemblyResult = loader->hasAssembly(location);
-        if (hasAssemblyResult.isStatus())
-            return hasAssemblyResult;
-        auto canLoad = hasAssemblyResult.getResult();
+        auto hasModuleResult = loader->hasModule(location);
+        if (hasModuleResult.isStatus())
+            return hasModuleResult;
+        auto canLoad = hasModuleResult.getResult();
         if (canLoad)
-            return hasAssemblyResult;
+            return hasModuleResult;
     }
     return false;
 }
 
-tempo_utils::Result<Option<lyric_common::AssemblyLocation>>
-lyric_runtime::ChainLoader::resolveAssembly(const lyric_common::AssemblyLocation &location) const
+tempo_utils::Result<Option<lyric_common::ModuleLocation>>
+lyric_runtime::ChainLoader::resolveModule(const lyric_common::ModuleLocation &location) const
 {
     for (const auto &loader : m_chain) {
-        auto resolveAssemblyResult = loader->resolveAssembly(location);
-        if (resolveAssemblyResult.isStatus())
-            return resolveAssemblyResult;
-        auto resolvedLocationOption = resolveAssemblyResult.getResult();
+        auto resolveModuleResult = loader->resolveModule(location);
+        if (resolveModuleResult.isStatus())
+            return resolveModuleResult;
+        auto resolvedLocationOption = resolveModuleResult.getResult();
         if (!resolvedLocationOption.isEmpty())
-            return resolveAssemblyResult;
+            return resolveModuleResult;
     }
-    return Option<lyric_common::AssemblyLocation>();
+    return Option<lyric_common::ModuleLocation>();
 }
 
 tempo_utils::Result<Option<lyric_object::LyricObject>>
-lyric_runtime::ChainLoader::loadAssembly(const lyric_common::AssemblyLocation &location)
+lyric_runtime::ChainLoader::loadModule(const lyric_common::ModuleLocation &location)
 {
     for (auto &loader : m_chain) {
-        auto loadAssemblyResult = loader->loadAssembly(location);
-        if (loadAssemblyResult.isStatus())
-            return loadAssemblyResult;
-        auto assemblyOption = loadAssemblyResult.getResult();
-        if (!assemblyOption.isEmpty())
-            return loadAssemblyResult;
+        auto loadModuleResult = loader->loadModule(location);
+        if (loadModuleResult.isStatus())
+            return loadModuleResult;
+        auto objectOption = loadModuleResult.getResult();
+        if (!objectOption.isEmpty())
+            return loadModuleResult;
     }
     return Option<lyric_object::LyricObject>();
 }
 
 tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>>
 lyric_runtime::ChainLoader::loadPlugin(
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     const lyric_object::PluginSpecifier &specifier)
 {
     for (auto &loader : m_chain) {

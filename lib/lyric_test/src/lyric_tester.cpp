@@ -166,7 +166,7 @@ lyric_test::LyricTester::runModule(
     loaderChain.push_back(builder->getPackageLoader());
     options.loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
 
-    auto mainLocation = lyric_common::AssemblyLocation::fromUrl(packageUrl);
+    auto mainLocation = lyric_common::ModuleLocation::fromUrl(packageUrl);
 
     // construct the interpreter state
     auto createInterpreterStateResult = lyric_runtime::InterpreterState::create(options, mainLocation);

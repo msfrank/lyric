@@ -3,7 +3,7 @@
 
 #include <absl/container/flat_hash_map.h>
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <lyric_common/symbol_path.h>
 #include <lyric_common/symbol_url.h>
 #include <lyric_runtime/literal_cell.h>
@@ -162,7 +162,7 @@ namespace lyric_assembler {
     };
 
     struct ImportHandle {
-        lyric_common::AssemblyLocation location;
+        lyric_common::ModuleLocation location;
         tu_uint32 importIndex;
         ImportFlags flags;
         bool isShared;

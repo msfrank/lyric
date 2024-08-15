@@ -448,13 +448,13 @@ lyric_object::internal::ObjectReader::numSymbols() const
     return m_object->symbols() ? m_object->symbols()->size() : 0;
 }
 
-lyric_common::AssemblyLocation
+lyric_common::ModuleLocation
 lyric_object::internal::ObjectReader::getImportLocation(tu_uint32 index) const
 {
     auto *import = getImport(index);
     if (import == nullptr)
-        return lyric_common::AssemblyLocation();
-    return lyric_common::AssemblyLocation::fromString(import->import_location()->c_str());
+        return lyric_common::ModuleLocation();
+    return lyric_common::ModuleLocation::fromString(import->import_location()->c_str());
 }
 
 const lyo1::ImportDescriptor *

@@ -1,11 +1,11 @@
 
 #include <lyric_build/build_result.h>
 #include <lyric_build/internal/task_utils.h>
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <lyric_common/common_types.h>
 
-tempo_utils::Result<lyric_common::AssemblyLocation>
-lyric_build::internal::convert_source_url_to_assembly_location(
+tempo_utils::Result<lyric_common::ModuleLocation>
+lyric_build::internal::convert_source_url_to_module_location(
     const tempo_utils::Url &sourceUrl,
     const tempo_utils::Url &baseUrl)
 {
@@ -36,7 +36,7 @@ lyric_build::internal::convert_source_url_to_assembly_location(
             return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
                 "{} is not a valid lyric source file", p.string());
         p.replace_extension();
-        return lyric_common::AssemblyLocation(p.string());
+        return lyric_common::ModuleLocation(p.string());
     }
 
     // if location url has a file scheme then remove the source file suffix
@@ -49,7 +49,7 @@ lyric_build::internal::convert_source_url_to_assembly_location(
         locationUrl = tempo_utils::Url::fromAbsolute("file", std::string_view{}, p.string());
     }
 
-    return lyric_common::AssemblyLocation::fromUrl(locationUrl);
+    return lyric_common::ModuleLocation::fromUrl(locationUrl);
 }
 
 std::filesystem::path

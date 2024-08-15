@@ -10,38 +10,38 @@
 /**
  * Private constructor.
  *
- * @param assemblies A map containing assemblies loaded from the cache.
+ * @param objects A map containing objects loaded from the cache.
  */
 lyric_build::DependencyLoader::DependencyLoader(
-    const absl::flat_hash_map<lyric_common::AssemblyLocation, lyric_object::LyricObject> &assemblies)
-    : m_assemblies(assemblies)
+    const absl::flat_hash_map<lyric_common::ModuleLocation, lyric_object::LyricObject> &objects)
+    : m_objects(objects)
 {
 }
 
 tempo_utils::Result<bool>
-lyric_build::DependencyLoader::hasAssembly(const lyric_common::AssemblyLocation &location) const
+lyric_build::DependencyLoader::hasModule(const lyric_common::ModuleLocation &location) const
 {
-    return m_assemblies.contains(location);
+    return m_objects.contains(location);
 }
 
-tempo_utils::Result<Option<lyric_common::AssemblyLocation>>
-lyric_build::DependencyLoader::resolveAssembly(const lyric_common::AssemblyLocation &location) const
+tempo_utils::Result<Option<lyric_common::ModuleLocation>>
+lyric_build::DependencyLoader::resolveModule(const lyric_common::ModuleLocation &location) const
 {
     return Option(location);
 }
 
 tempo_utils::Result<Option<lyric_object::LyricObject>>
-lyric_build::DependencyLoader::loadAssembly(const lyric_common::AssemblyLocation &location)
+lyric_build::DependencyLoader::loadModule(const lyric_common::ModuleLocation &location)
 {
-    if (m_assemblies.contains(location))
-        return Option(m_assemblies.at(location));
+    if (m_objects.contains(location))
+        return Option(m_objects.at(location));
 
     return Option<lyric_object::LyricObject>();
 }
 
 tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>>
 lyric_build::DependencyLoader::loadPlugin(
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     const lyric_object::PluginSpecifier &specifier)
 {
     return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>();
@@ -61,7 +61,7 @@ lyric_build::DependencyLoader::create(
 {
     TU_ASSERT (cache != nullptr);
 
-    absl::flat_hash_map<lyric_common::AssemblyLocation,lyric_object::LyricObject> assemblies;
+    absl::flat_hash_map<lyric_common::ModuleLocation,lyric_object::LyricObject> objects;
 
     for (const auto &entry : depStates) {
         const auto &taskKey = entry.first;
@@ -86,15 +86,15 @@ lyric_build::DependencyLoader::create(
                 return loadMetadataResult.getStatus();
             auto metadata = loadMetadataResult.getResult().getMetadata();
 
-            lyric_common::AssemblyLocation location;
-            TU_RETURN_IF_NOT_OK (metadata.parseAttr(kLyricBuildAssemblyLocation, location));
+            lyric_common::ModuleLocation location;
+            TU_RETURN_IF_NOT_OK (metadata.parseAttr(kLyricBuildModuleLocation, location));
 
             if (!location.isValid())
                 return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                    "invalid assembly location for artifact {}", artifactId.toString());
-            if (assemblies.contains(location))
+                    "invalid module location for artifact {}", artifactId.toString());
+            if (objects.contains(location))
                 return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                    "loader found duplicate assembly {}", location.toString());
+                    "loader found duplicate object {}", location.toString());
 
             auto loadContentResult = cache->loadContentFollowingLinks(artifactId);
             if (loadContentResult.isStatus())
@@ -104,14 +104,14 @@ lyric_build::DependencyLoader::create(
             std::span<const tu_uint8> span(bytes->getData(), bytes->getSize());
             if (!lyric_object::LyricObject::verify(span))
                 return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                    "loader found duplicate assembly {}", location.toString());
+                    "loader found invalid object {}", location.toString());
 
-            lyric_object::LyricObject assembly(bytes);
-            assemblies[location] = assembly;
+            lyric_object::LyricObject object(bytes);
+            objects[location] = object;
         }
     }
 
-    return std::shared_ptr<DependencyLoader>(new DependencyLoader(assemblies));
+    return std::shared_ptr<DependencyLoader>(new DependencyLoader(objects));
 }
 
 tempo_utils::Result<std::shared_ptr<lyric_build::DependencyLoader>>

@@ -18,7 +18,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::TypeDef &returnType,
     CallAddress address,
     TypeHandle *callType,
-    AssemblyState *state)
+    ObjectState *state)
     : BaseSymbol(address, new CallSymbolPriv()),
       m_callUrl(entryUrl),
       m_state(state)
@@ -64,7 +64,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     lyric_object::CallMode mode,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : BaseSymbol(address, new CallSymbolPriv()),
       m_callUrl(callUrl),
       m_state(state)
@@ -100,7 +100,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     TemplateHandle *callTemplate,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : CallSymbol(
         callUrl,
         receiverUrl,
@@ -138,7 +138,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     lyric_object::CallMode mode,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : BaseSymbol(address, new CallSymbolPriv()),
       m_callUrl(callUrl),
       m_state(state)
@@ -171,7 +171,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     TemplateHandle *callTemplate,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : CallSymbol(
         callUrl,
         access,
@@ -193,7 +193,7 @@ lyric_assembler::CallSymbol::CallSymbol(
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
     lyric_importer::CallImport *callImport,
-    AssemblyState *state)
+    ObjectState *state)
     : m_callUrl(callUrl),
       m_callImport(callImport),
       m_state(state)

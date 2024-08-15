@@ -6,7 +6,7 @@
 #include <lyric_importer/impl_import.h>
 
 #include "abstract_callable.h"
-#include "assembly_state.h"
+#include "object_state.h"
 #include "base_handle.h"
 #include "block_handle.h"
 #include "type_handle.h"
@@ -34,7 +34,7 @@ namespace lyric_assembler {
             ConceptSymbol *implConcept,
             const lyric_common::SymbolUrl &receiverUrl,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
         ImplHandle(
             ImplOffset offset,
             const std::string &name,
@@ -43,9 +43,9 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &receiverUrl,
             TemplateHandle *receiverTemplate,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
 
-        ImplHandle(lyric_importer::ImplImport *implImport, AssemblyState *state);
+        ImplHandle(lyric_importer::ImplImport *implImport, ObjectState *state);
 
         ImplOffset getOffset() const;
         std::string getName() const;
@@ -79,7 +79,7 @@ namespace lyric_assembler {
 
     private:
         lyric_importer::ImplImport *m_implImport = nullptr;
-        AssemblyState *m_state;
+        ObjectState *m_state;
 
         ImplHandlePriv *load();
     };

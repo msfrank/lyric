@@ -1,7 +1,7 @@
 
 #include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/assembler_result.h>
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_assembler/block_handle.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
@@ -16,7 +16,7 @@
 #include <lyric_assembler/struct_symbol.h>
 
 lyric_assembler::ImportCache::ImportCache(
-    lyric_assembler::AssemblyState *state,
+    lyric_assembler::ObjectState *state,
     std::shared_ptr<lyric_runtime::AbstractLoader> loader,
     std::shared_ptr<lyric_importer::ModuleCache> sharedModuleCache,
     SymbolCache *symbolCache,
@@ -51,7 +51,7 @@ insert_symbol_into_cache(
     const lyric_common::SymbolUrl &symbolUrl,
     lyric_object::SymbolWalker &symbolWalker,
     lyric_assembler::SymbolCache *symbolCache,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     if (symbolCache->hasSymbol(symbolUrl))
         return {};
@@ -118,7 +118,7 @@ insert_symbol_into_cache(
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kImportError,
                 "error importing module {}; invalid symbol {}",
-                symbolUrl.getAssemblyLocation().toString(), symbolUrl.getSymbolPath().toString());
+                symbolUrl.getModuleLocation().toString(), symbolUrl.getSymbolPath().toString());
     }
 
     auto status = symbolCache->insertSymbol(symbolUrl, symbolPtr);
@@ -133,7 +133,7 @@ insert_symbol_into_cache(
 static tempo_utils::Status
 import_module_symbols(
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport,
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     const absl::flat_hash_set<lyric_assembler::ImportRef> &importSymbols,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_assembler::BlockHandle *block,
@@ -186,7 +186,7 @@ import_module_symbols(
 static tempo_utils::Status
 import_module(
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport,
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_assembler::BlockHandle *block,
     bool preload)
@@ -231,7 +231,7 @@ import_module(
 
 tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
 lyric_assembler::ImportCache::importModule(
-    const lyric_common::AssemblyLocation &importLocation,
+    const lyric_common::ModuleLocation &importLocation,
     ImportFlags importFlags)
 {
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
@@ -262,7 +262,7 @@ lyric_assembler::ImportCache::importModule(
  */
 tempo_utils::Status
 lyric_assembler::ImportCache::importModule(
-    const lyric_common::AssemblyLocation &importLocation,
+    const lyric_common::ModuleLocation &importLocation,
     BlockHandle *block,
     const absl::flat_hash_set<ImportRef> &importSymbols,
     bool preload)
@@ -295,7 +295,7 @@ lyric_assembler::ImportCache::importModule(
 }
 
 std::shared_ptr<lyric_importer::ModuleImport>
-lyric_assembler::ImportCache::getModule(const lyric_common::AssemblyLocation &importLocation)
+lyric_assembler::ImportCache::getModule(const lyric_common::ModuleLocation &importLocation)
 {
     auto entry = m_importcache.find(importLocation);
     if (entry == m_importcache.cend())
@@ -314,7 +314,7 @@ lyric_assembler::ImportCache::importSymbol(const lyric_common::SymbolUrl &symbol
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
 
     // get the shared module import
-    auto importLocation = symbolUrl.getAssemblyLocation();
+    auto importLocation = symbolUrl.getModuleLocation();
     if (!importLocation.hasScheme() && !importLocation.hasAuthority()) {
         TU_ASSIGN_OR_RETURN (moduleImport, m_privateModuleCache->importModule(importLocation));
     } else {
@@ -478,13 +478,13 @@ lyric_assembler::ImportCache::importStruct(const lyric_common::SymbolUrl &struct
 }
 
 bool
-lyric_assembler::ImportCache::hasImport(const lyric_common::AssemblyLocation &importLocation) const
+lyric_assembler::ImportCache::hasImport(const lyric_common::ModuleLocation &importLocation) const
 {
     return m_importcache.contains(importLocation);
 }
 
 lyric_assembler::ImportHandle *
-lyric_assembler::ImportCache::getImport(const lyric_common::AssemblyLocation &importLocation) const
+lyric_assembler::ImportCache::getImport(const lyric_common::ModuleLocation &importLocation) const
 {
     if (!m_importcache.contains(importLocation))
         return nullptr;
@@ -493,13 +493,13 @@ lyric_assembler::ImportCache::getImport(const lyric_common::AssemblyLocation &im
 
 tempo_utils::Status
 lyric_assembler::ImportCache::insertImport(
-    const lyric_common::AssemblyLocation &importLocation,
+    const lyric_common::ModuleLocation &importLocation,
     ImportFlags importFlags)
 {
     if (m_importcache.contains(importLocation))
         return m_tracer->logAndContinue(AssemblerCondition::kImportError,
             tempo_tracing::LogSeverity::kError,
-            "assembly {} is already imported", importLocation.toString());
+            "module {} is already imported", importLocation.toString());
     bool isPrivate = !importLocation.hasScheme() && !importLocation.hasAuthority();
     auto *importHandle = new ImportHandle{importLocation, lyric_runtime::INVALID_ADDRESS_U32, importFlags, !isPrivate};
     m_importcache[importLocation] = importHandle;
@@ -511,31 +511,31 @@ lyric_assembler::ImportCache::insertImport(
  * @param importLocation
  */
 tempo_utils::Status
-lyric_assembler::ImportCache::touchImport(const lyric_common::AssemblyLocation &importLocation)
+lyric_assembler::ImportCache::touchImport(const lyric_common::ModuleLocation &importLocation)
 {
     if (!m_importcache.contains(importLocation))
         return m_tracer->logAndContinue(AssemblerCondition::kAssemblerInvariant,
             tempo_tracing::LogSeverity::kError,
             "no such import {}", importLocation.toString());
 
-    auto *importedAssembly = m_importcache[importLocation];
+    auto *importHandle = m_importcache[importLocation];
 
     // add handle to imports list if necessary
-    if (importedAssembly->importIndex == lyric_runtime::INVALID_ADDRESS_U32) {
-        importedAssembly->importIndex = m_imports.size();
+    if (importHandle->importIndex == lyric_runtime::INVALID_ADDRESS_U32) {
+        importHandle->importIndex = m_imports.size();
         m_imports.push_back(importLocation);
     }
 
     return {};
 }
 
-std::vector<lyric_common::AssemblyLocation>::const_iterator
+std::vector<lyric_common::ModuleLocation>::const_iterator
 lyric_assembler::ImportCache::importsBegin() const
 {
     return m_imports.cbegin();
 }
 
-std::vector<lyric_common::AssemblyLocation>::const_iterator
+std::vector<lyric_common::ModuleLocation>::const_iterator
 lyric_assembler::ImportCache::importsEnd() const
 {
     return m_imports.cend();

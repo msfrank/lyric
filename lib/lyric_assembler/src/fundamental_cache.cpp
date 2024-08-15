@@ -2,7 +2,7 @@
 #include <lyric_assembler/fundamental_cache.h>
 
 lyric_assembler::FundamentalCache::FundamentalCache(
-    const lyric_common::AssemblyLocation &preludeLocation,
+    const lyric_common::ModuleLocation &preludeLocation,
     lyric_assembler::AssemblerTracer *tracer)
     : m_preludeLocation(preludeLocation),
       m_tracer(tracer)
@@ -184,7 +184,7 @@ lyric_assembler::FundamentalCache::FundamentalCache(
         preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple7Instance));
 }
 
-lyric_common::AssemblyLocation
+lyric_common::ModuleLocation
 lyric_assembler::FundamentalCache::getPreludeLocation() const
 {
     return m_preludeLocation;

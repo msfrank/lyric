@@ -162,7 +162,7 @@ lyric_importer::ConceptImport::load()
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
-                "cannot import concept at index {} in assembly {}; invalid derive type",
+                "cannot import concept at index {} in module {}; invalid derive type",
                 m_conceptOffset, location.toString()));
     priv->derive = conceptWalker.getDeriveType();
 
@@ -189,7 +189,7 @@ lyric_importer::ConceptImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import concept at index {} in assembly {}; invalid super concept",
+                        "cannot import concept at index {} in module {}; invalid super concept",
                         m_conceptOffset, location.toString()));
         }
     }
@@ -208,7 +208,7 @@ lyric_importer::ConceptImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import concept at index {} in assembly {}; invalid action at index {}",
+                        "cannot import concept at index {} in module {}; invalid action at index {}",
                         m_conceptOffset, location.toString(), i));
         }
         auto name = actionUrl.getSymbolName();

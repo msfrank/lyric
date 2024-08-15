@@ -7,7 +7,7 @@
 
 #include "abstract_member_reifier.h"
 #include "abstract_symbol.h"
-#include "assembly_state.h"
+#include "object_state.h"
 #include "base_symbol.h"
 #include "callable_invoker.h"
 #include "constructable_invoker.h"
@@ -45,11 +45,11 @@ namespace lyric_assembler {
             EnumSymbol *superEnum,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
         EnumSymbol(
             const lyric_common::SymbolUrl &enumUrl,
             lyric_importer::EnumImport *enumImport,
-            AssemblyState *state);
+            ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;
 
@@ -146,7 +146,7 @@ namespace lyric_assembler {
     private:
         lyric_common::SymbolUrl m_enumUrl;
         lyric_importer::EnumImport *m_enumImport;
-        AssemblyState *m_state;
+        ObjectState *m_state;
 
         EnumSymbolPriv *load() override;
     };

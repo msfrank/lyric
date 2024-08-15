@@ -1,7 +1,7 @@
 #ifndef LYRIC_OBJECT_IMPORT_WALKER_H
 #define LYRIC_OBJECT_IMPORT_WALKER_H
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 
 #include "object_types.h"
 
@@ -15,7 +15,7 @@ namespace lyric_object {
 
         bool isValid() const;
 
-        lyric_common::AssemblyLocation getImportLocation() const;
+        lyric_common::ModuleLocation getImportLocation() const;
 
         bool isSystemBootstrap() const;
 

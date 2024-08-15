@@ -37,7 +37,7 @@ lyric_object::ImportWalker::isSystemBootstrap() const
     return bool(importDescriptor->flags() & lyo1::ImportFlags::SystemBootstrap);
 }
 
-lyric_common::AssemblyLocation
+lyric_common::ModuleLocation
 lyric_object::ImportWalker::getImportLocation() const
 {
     if (!isValid())
@@ -47,7 +47,7 @@ lyric_object::ImportWalker::getImportLocation() const
         return {};
     if (importDescriptor->import_location() == nullptr)
         return {};
-    return lyric_common::AssemblyLocation::fromString(importDescriptor->import_location()->str());
+    return lyric_common::ModuleLocation::fromString(importDescriptor->import_location()->str());
 }
 
 tu_uint32

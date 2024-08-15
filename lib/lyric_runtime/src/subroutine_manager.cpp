@@ -277,7 +277,7 @@ lyric_runtime::SubroutineManager::callStatic(
                 InterpreterCondition::kRuntimeInvariant, "invalid call linkage");
             return false;
         }
-        segment = m_segmentManager->getSegment(linkage->assembly);
+        segment = m_segmentManager->getSegment(linkage->object);
         auto object = segment->getObject().getObject();
         call = object.getCall(linkage->value);
         if (!call.isValid()) {
@@ -302,7 +302,7 @@ lyric_runtime::SubroutineManager::callStatic(
     TU_ASSERT (currentCoro != nullptr);
 
     auto callIndex = descriptor.data.descriptor.value;
-    auto *segment = m_segmentManager->getSegment(descriptor.data.descriptor.assembly);
+    auto *segment = m_segmentManager->getSegment(descriptor.data.descriptor.object);
     auto object = segment->getObject().getObject();
     auto call = object.getCall(callIndex);
     if (!call.isValid()) {
@@ -718,7 +718,7 @@ lyric_runtime::SubroutineManager::initStatic(
                 InterpreterCondition::kRuntimeInvariant, "invalid static linkage");
             return false;
         }
-        segment = m_segmentManager->getSegment(linkage->assembly);
+        segment = m_segmentManager->getSegment(linkage->object);
         object = segment->getObject().getObject();
         static_ = object.getStatic(linkage->value);
     }

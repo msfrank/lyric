@@ -1,7 +1,7 @@
 #ifndef LYRIC_SYMBOLIZER_SYMBOLIZE_MODULE_H
 #define LYRIC_SYMBOLIZER_SYMBOLIZE_MODULE_H
 
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_parser/node_walker.h>
 #include <lyric_object/lyric_object.h>
 #include <lyric_symbolizer/internal/entry_point.h>

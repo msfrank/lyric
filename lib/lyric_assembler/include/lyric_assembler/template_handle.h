@@ -15,25 +15,25 @@ namespace lyric_assembler {
     class TemplateHandle : public AbstractResolver {
 
     public:
-        explicit TemplateHandle(AssemblyState *state);
+        explicit TemplateHandle(ObjectState *state);
         TemplateHandle(
             const lyric_common::SymbolUrl &templateUrl,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             TemplateAddress address,
             TemplateHandle *superTemplate,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
         TemplateHandle(
             const lyric_common::SymbolUrl &templateUrl,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             TemplateAddress address,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
         TemplateHandle(
             const lyric_common::SymbolUrl &templateUrl,
             TemplateHandle *superTemplate,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
-            AssemblyState *state);
+            ObjectState *state);
 
         tempo_utils::Result<lyric_common::TypeDef> resolveSingular(
             const lyric_common::SymbolPath &typePath,
@@ -66,7 +66,7 @@ namespace lyric_assembler {
         TemplateAddress m_address;
         TemplateHandle *m_superTemplate;
         BlockHandle *m_parentBlock;
-        AssemblyState *m_state;
+        ObjectState *m_state;
 
         lyric_common::TypeDef resolvePlaceholder(
             std::string_view name,

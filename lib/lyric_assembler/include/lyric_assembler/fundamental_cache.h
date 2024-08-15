@@ -1,7 +1,7 @@
 #ifndef LYRIC_ASSEMBLER_FUNDAMENTAL_CACHE_H
 #define LYRIC_ASSEMBLER_FUNDAMENTAL_CACHE_H
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <lyric_common/symbol_url.h>
 
 #include "assembler_tracer.h"
@@ -11,9 +11,9 @@ namespace lyric_assembler {
 
     class FundamentalCache {
     public:
-        FundamentalCache(const lyric_common::AssemblyLocation &preludeLocation, AssemblerTracer *tracer);
+        FundamentalCache(const lyric_common::ModuleLocation &preludeLocation, AssemblerTracer *tracer);
 
-        lyric_common::AssemblyLocation getPreludeLocation() const;
+        lyric_common::ModuleLocation getPreludeLocation() const;
 
         lyric_common::TypeDef getFundamentalType(FundamentalSymbol fundamental) const;
         lyric_common::SymbolUrl getFundamentalUrl(FundamentalSymbol fundamental) const;
@@ -22,7 +22,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl getTupleUrl(int arity) const;
 
     private:
-        lyric_common::AssemblyLocation m_preludeLocation;
+        lyric_common::ModuleLocation m_preludeLocation;
         AssemblerTracer *m_tracer;
 
         lyric_common::SymbolUrl m_fundamentalAny;

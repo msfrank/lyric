@@ -4,7 +4,7 @@
 #include <absl/container/flat_hash_set.h>
 
 #include <lyric_analyzer/analyzer_result.h>
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/namespace_symbol.h>
 #include <lyric_common/symbol_url.h>
@@ -15,21 +15,21 @@ namespace lyric_analyzer::internal {
     class EntryPoint {
 
     public:
-        explicit EntryPoint(lyric_assembler::AssemblyState *state);
+        explicit EntryPoint(lyric_assembler::ObjectState *state);
         ~EntryPoint();
 
-        lyric_assembler::AssemblyState *getState() const;
+        lyric_assembler::ObjectState *getState() const;
 
-        tempo_utils::Status initialize(const lyric_common::AssemblyLocation &location);
+        tempo_utils::Status initialize(const lyric_common::ModuleLocation &location);
 
-        lyric_common::AssemblyLocation getLocation() const;
+        lyric_common::ModuleLocation getLocation() const;
         lyric_assembler::NamespaceSymbol *getRoot() const;
         lyric_assembler::CallSymbol *getEntry() const;
         lyric_typing::TypeSystem *getTypeSystem() const;
 
     private:
-        lyric_assembler::AssemblyState *m_state;
-        lyric_common::AssemblyLocation m_location;
+        lyric_assembler::ObjectState *m_state;
+        lyric_common::ModuleLocation m_location;
         lyric_assembler::NamespaceSymbol *m_root;
         lyric_assembler::CallSymbol *m_entry;
         lyric_typing::TypeSystem *m_typeSystem;

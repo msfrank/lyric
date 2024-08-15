@@ -1,7 +1,7 @@
 #ifndef LYRIC_IMPORTER_MODULE_CACHE_H
 #define LYRIC_IMPORTER_MODULE_CACHE_H
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <lyric_object/lyric_object.h>
 #include <lyric_runtime/abstract_loader.h>
 #include <tempo_utils/result.h>
@@ -29,15 +29,15 @@ namespace lyric_importer {
 
         std::shared_ptr<lyric_runtime::AbstractLoader> getLoader() const;
 
-        bool hasModule(const lyric_common::AssemblyLocation &location) const;
-        std::shared_ptr<ModuleImport> getModule(const lyric_common::AssemblyLocation &location) const;
+        bool hasModule(const lyric_common::ModuleLocation &location) const;
+        std::shared_ptr<ModuleImport> getModule(const lyric_common::ModuleLocation &location) const;
 
         tempo_utils::Result<std::shared_ptr<ModuleImport>> insertModule(
-            const lyric_common::AssemblyLocation &location,
+            const lyric_common::ModuleLocation &location,
             const lyric_object::LyricObject &object);
 
         tempo_utils::Result<std::shared_ptr<ModuleImport>> importModule(
-            const lyric_common::AssemblyLocation &location);
+            const lyric_common::ModuleLocation &location);
 
         tempo_utils::Result<ActionImport *> getAction(const lyric_common::SymbolUrl &actionUrl);
         tempo_utils::Result<CallImport *> getCall(const lyric_common::SymbolUrl &callUrl);
@@ -55,7 +55,7 @@ namespace lyric_importer {
         absl::Mutex *m_lock;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_loader;
         absl::flat_hash_map<
-            lyric_common::AssemblyLocation,
+            lyric_common::ModuleLocation,
             std::shared_ptr<ModuleImport>> m_moduleImports ABSL_GUARDED_BY(m_lock);
 
         explicit ModuleCache(std::shared_ptr<lyric_runtime::AbstractLoader> importerLoader);

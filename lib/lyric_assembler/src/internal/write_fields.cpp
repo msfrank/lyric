@@ -53,18 +53,18 @@ write_field(
 
 tempo_utils::Status
 lyric_assembler::internal::write_fields(
-    const AssemblyState *assemblyState,
+    const ObjectState *objectState,
     flatbuffers::FlatBufferBuilder &buffer,
     FieldsOffset &fieldsOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (assemblyState != nullptr);
+    TU_ASSERT (objectState != nullptr);
 
-    SymbolCache *symbolCache = assemblyState->symbolCache();
-    TypeCache *typeCache = assemblyState->typeCache();
+    SymbolCache *symbolCache = objectState->symbolCache();
+    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::FieldDescriptor>> fields_vector;
 
-    for (auto iterator = assemblyState->fieldsBegin(); iterator != assemblyState->fieldsEnd(); iterator++) {
+    for (auto iterator = objectState->fieldsBegin(); iterator != objectState->fieldsEnd(); iterator++) {
         auto &fieldSymbol = *iterator;
         TU_RETURN_IF_NOT_OK (
             write_field(fieldSymbol, typeCache, symbolCache, buffer, fields_vector, symbols_vector));

@@ -6,7 +6,7 @@
 #include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/assembler_result.h>
 #include <lyric_assembler/assembler_types.h>
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_assembler/callable_invoker.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/constructable_invoker.h>

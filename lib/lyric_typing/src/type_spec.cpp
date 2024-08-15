@@ -56,7 +56,7 @@ lyric_typing::TypeSpec::forSingular(
     const std::vector<TypeSpec> &parameters)
 {
     return forSingular(lyric_common::SymbolUrl(
-        lyric_common::AssemblyLocation::fromUrl(location),
+        lyric_common::ModuleLocation::fromUrl(location),
         lyric_common::SymbolPath(path)),
         parameters);
 }
@@ -68,7 +68,7 @@ lyric_typing::TypeSpec::forSingular(
     const std::vector<TypeSpec> &parameters)
 {
     return forSingular(lyric_common::SymbolUrl(
-        lyric_common::AssemblyLocation::fromUrl(location),
+        lyric_common::ModuleLocation::fromUrl(location),
         lyric_common::SymbolPath(symbolPath)),
         parameters);
 }
@@ -100,7 +100,7 @@ lyric_typing::TypeSpec::fromTypeDef(const lyric_common::TypeDef &typeDef)
         }
         case lyric_common::TypeDefType::Placeholder: {
             auto templateUrl = typeDef.getPlaceholderTemplateUrl();
-            auto location = templateUrl.getAssemblyLocation();
+            auto location = templateUrl.getModuleLocation();
             auto path = templateUrl.getSymbolPath().getPath();
             auto placeholder = absl::StrCat(typeDef.getPlaceholderIndex());
             lyric_common::SymbolUrl placeholderUrl(location, lyric_common::SymbolPath(path, placeholder));
@@ -148,10 +148,10 @@ lyric_typing::TypeSpec::getType() const
     return m_type;
 }
 
-lyric_common::AssemblyLocation
+lyric_common::ModuleLocation
 lyric_typing::TypeSpec::getTypeLocation() const
 {
-    return m_symbolUrl.getAssemblyLocation();
+    return m_symbolUrl.getModuleLocation();
 }
 
 lyric_common::SymbolPath

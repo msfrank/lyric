@@ -27,7 +27,7 @@ lyric_assembler::EnumSymbol::EnumSymbol(
     EnumSymbol *superEnum,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : BaseSymbol(address, new EnumSymbolPriv()),
       m_enumUrl(enumUrl),
       m_state(state)
@@ -52,7 +52,7 @@ lyric_assembler::EnumSymbol::EnumSymbol(
 lyric_assembler::EnumSymbol::EnumSymbol(
     const lyric_common::SymbolUrl &enumUrl,
     lyric_importer::EnumImport *enumImport,
-    AssemblyState *state)
+    ObjectState *state)
     : m_enumUrl(enumUrl),
       m_enumImport(enumImport),
       m_state(state)
@@ -372,7 +372,7 @@ lyric_assembler::EnumSymbol::isCompletelyInitialized() const
 lyric_common::SymbolUrl
 lyric_assembler::EnumSymbol::getCtor() const
 {
-    auto location = m_enumUrl.getAssemblyLocation();
+    auto location = m_enumUrl.getModuleLocation();
     auto path = m_enumUrl.getSymbolPath();
     return lyric_common::SymbolUrl(location, lyric_common::SymbolPath(path.getPath(), "$ctor"));
 }
@@ -439,7 +439,7 @@ tempo_utils::Status
 lyric_assembler::EnumSymbol::prepareCtor(ConstructableInvoker &invoker)
 {
     lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(m_enumUrl.getSymbolPath().getPath(), "$ctor");
-    auto ctorUrl = lyric_common::SymbolUrl(m_enumUrl.getAssemblyLocation(), ctorPath);
+    auto ctorUrl = lyric_common::SymbolUrl(m_enumUrl.getModuleLocation(), ctorPath);
 
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(ctorUrl));

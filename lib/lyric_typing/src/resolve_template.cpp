@@ -13,7 +13,7 @@ tempo_utils::Result<lyric_typing::TemplateSpec>
 lyric_typing::resolve_template(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
-    lyric_assembler::AssemblyState *state,
+    lyric_assembler::ObjectState *state,
     TypingTracer *tracer)
 {
     TU_ASSERT (block != nullptr);
@@ -112,7 +112,7 @@ lyric_typing::resolve_template(
 tempo_utils::Result<std::pair<lyric_object::BoundType,lyric_common::TypeDef>>
 lyric_typing::resolve_bound(
     const lyric_common::TypeDef &placeholderType,
-    lyric_assembler::AssemblyState *state,
+    lyric_assembler::ObjectState *state,
     TypingTracer *tracer)
 {
     TU_ASSERT (placeholderType.getType() == lyric_common::TypeDefType::Placeholder);

@@ -16,7 +16,7 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 
-lyric_analyzer::AnalyzerScanDriver::AnalyzerScanDriver(lyric_assembler::AssemblyState *state)
+lyric_analyzer::AnalyzerScanDriver::AnalyzerScanDriver(lyric_assembler::ObjectState *state)
     : m_state(state),
       m_root(nullptr),
       m_entry(nullptr),

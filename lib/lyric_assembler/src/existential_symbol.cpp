@@ -24,7 +24,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     ExistentialSymbol *superExistential,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : BaseSymbol(address, new ExistentialSymbolPriv()),
       m_existentialUrl(existentialUrl),
       m_state(state)
@@ -55,7 +55,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     ExistentialSymbol *superExistential,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : ExistentialSymbol(
         existentialUrl,
         access,
@@ -79,7 +79,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
 lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     const lyric_common::SymbolUrl &existentialUrl,
     lyric_importer::ExistentialImport *existentialImport,
-    AssemblyState *state)
+    ObjectState *state)
     : m_existentialUrl(existentialUrl),
       m_existentialImport(existentialImport),
       m_state(state)

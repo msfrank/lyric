@@ -3,25 +3,25 @@
 
 #include <tempo_utils/attr.h>
 
-#include "assembly_location.h"
+#include "module_location.h"
 #include "symbol_path.h"
 #include "symbol_url.h"
 
 namespace lyric_common {
 
-    class AssemblyLocationAttr : public tempo_utils::AttrSerde<AssemblyLocation> {
+    class ModuleLocationAttr : public tempo_utils::AttrSerde<ModuleLocation> {
 
-        using SerdeType = AssemblyLocation;
+        using SerdeType = ModuleLocation;
 
     public:
-        AssemblyLocationAttr(const tempo_utils::ComparableResource *resource);
+        ModuleLocationAttr(const tempo_utils::ComparableResource *resource);
         tempo_utils::Result<tu_uint32> writeAttr(
             tempo_utils::AbstractAttrWriter *writer,
-            const AssemblyLocation &value) const override;
+            const ModuleLocation &value) const override;
         tempo_utils::Status parseAttr(
             tu_uint32 index,
             tempo_utils::AbstractAttrParser *parser,
-            AssemblyLocation &value) const override;
+            ModuleLocation &value) const override;
     };
 
     class SymbolPathAttr : public tempo_utils::AttrSerde<SymbolPath> {

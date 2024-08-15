@@ -20,9 +20,9 @@
 #include <tempo_utils/memory_bytes.h>
 
 tempo_utils::Result<lyric_object::LyricObject>
-lyric_assembler::internal::write_object(const AssemblyState *assemblyState)
+lyric_assembler::internal::write_object(const ObjectState *objectState)
 {
-    TU_ASSERT (assemblyState != nullptr);
+    TU_ASSERT (objectState != nullptr);
 
     flatbuffers::FlatBufferBuilder buffer;
 
@@ -32,39 +32,39 @@ lyric_assembler::internal::write_object(const AssemblyState *assemblyState)
 
     lyo1::ObjectVersion version = lyo1::ObjectVersion::Version1;
 
-    auto *options = assemblyState->getOptions();
-    auto *importCache = assemblyState->importCache();
-    auto *literalCache = assemblyState->literalCache();
-    auto *typeCache = assemblyState->typeCache();
-    auto *symbolCache = assemblyState->symbolCache();
+    auto *options = objectState->getOptions();
+    auto *importCache = objectState->importCache();
+    auto *literalCache = objectState->literalCache();
+    auto *typeCache = objectState->typeCache();
+    auto *symbolCache = objectState->symbolCache();
 
     // serialize array of action descriptors
     internal::ActionsOffset actionsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_actions(assemblyState, buffer, actionsOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_actions(objectState, buffer, actionsOffset, symbols_vector));
 
     // serialize array of call descriptors
     internal::CallsOffset callsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_calls(assemblyState, buffer, callsOffset, symbols_vector, bytecode));
+    TU_RETURN_IF_NOT_OK (internal::write_calls(objectState, buffer, callsOffset, symbols_vector, bytecode));
 
     // serialize array of class descriptors
     internal::ClassesOffset classesOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_classes(assemblyState, buffer, classesOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_classes(objectState, buffer, classesOffset, symbols_vector));
 
     // serialize array of concept descriptors
     internal::ConceptsOffset conceptsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_concepts(assemblyState, buffer, conceptsOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_concepts(objectState, buffer, conceptsOffset, symbols_vector));
 
     // serialize array of enum descriptors
     internal::EnumsOffset enumsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_enums(assemblyState, buffer, enumsOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_enums(objectState, buffer, enumsOffset, symbols_vector));
 
     // serialize array of field descriptors
     internal::FieldsOffset fieldsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_fields(assemblyState, buffer, fieldsOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_fields(objectState, buffer, fieldsOffset, symbols_vector));
 
     // serialize array of impl descriptors
     internal::ImplsOffset implsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_impls(assemblyState, buffer, implsOffset));
+    TU_RETURN_IF_NOT_OK (internal::write_impls(objectState, buffer, implsOffset));
 
     // serialize array of import descriptors
     internal::ImportsOffset importsOffset;
@@ -72,7 +72,7 @@ lyric_assembler::internal::write_object(const AssemblyState *assemblyState)
 
     // serialize array of instance descriptors
     internal::InstancesOffset instancesOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_instances(assemblyState, buffer, instancesOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_instances(objectState, buffer, instancesOffset, symbols_vector));
 
     // serialize arrays of link descriptors
     internal::LinksOffset linksOffset;
@@ -84,15 +84,15 @@ lyric_assembler::internal::write_object(const AssemblyState *assemblyState)
 
     // serialize array of namespace descriptors
     internal::NamespacesOffset namespacesOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_namespaces(assemblyState, buffer, namespacesOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_namespaces(objectState, buffer, namespacesOffset, symbols_vector));
 
     // serialize array of static descriptors
     internal::StaticsOffset staticsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_statics(assemblyState, buffer, staticsOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_statics(objectState, buffer, staticsOffset, symbols_vector));
 
     // serialize array of struct descriptors
     internal::StructsOffset structsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_structs(assemblyState, buffer, structsOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_structs(objectState, buffer, structsOffset, symbols_vector));
 
     // serialize array of template descriptors
     internal::TemplatesOffset templatesOffset;
@@ -103,7 +103,7 @@ lyric_assembler::internal::write_object(const AssemblyState *assemblyState)
     TU_RETURN_IF_NOT_OK (internal::write_types(typeCache, symbolCache, buffer, typesOffset));
 
     // serialize array of undecl descriptors
-    for (auto iterator = assemblyState->undeclaredBegin(); iterator != assemblyState->undeclaredEnd(); iterator++) {
+    for (auto iterator = objectState->undeclaredBegin(); iterator != objectState->undeclaredEnd(); iterator++) {
         auto &undeclSymbol = *iterator;
 
         auto undeclPathString = undeclSymbol->getSymbolUrl().getSymbolPath().toString();

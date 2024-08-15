@@ -14,9 +14,9 @@ lyric_compiler::internal::compile_using(
     moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstUsingClass, 1);
 
     // determine the using location if specified
-    lyric_common::AssemblyLocation usingLocation;
-    if (walker.hasAttr(lyric_parser::kLyricAstAssemblyLocation)) {
-        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAssemblyLocation, usingLocation);
+    lyric_common::ModuleLocation usingLocation;
+    if (walker.hasAttr(lyric_parser::kLyricAstModuleLocation)) {
+        moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstModuleLocation, usingLocation);
     }
 
     // import instances into the current block

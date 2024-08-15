@@ -1,7 +1,7 @@
 #ifndef LYRIC_PARSER_AST_ATTRS_H
 #define LYRIC_PARSER_AST_ATTRS_H
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <lyric_common/common_serde.h>
 #include <lyric_common/symbol_url.h>
 #include <lyric_schema/ast_schema.h>
@@ -113,7 +113,7 @@ namespace lyric_parser {
     extern const BoundTypeAttr kLyricAstBoundType;
     extern const VarianceTypeAttr kLyricAstVarianceType;
 
-    extern const lyric_common::AssemblyLocationAttr kLyricAstAssemblyLocation;
+    extern const lyric_common::ModuleLocationAttr kLyricAstModuleLocation;
     extern const lyric_common::SymbolPathAttr kLyricAstSymbolPath;
     extern const tempo_utils::StringAttr kLyricAstIdentifier;
     extern const tempo_utils::StringAttr kLyricAstLabel;

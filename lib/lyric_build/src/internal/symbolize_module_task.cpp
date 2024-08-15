@@ -50,14 +50,14 @@ lyric_build::internal::SymbolizeModuleTask::configure(const ConfigStore *config)
         config, taskId, "sourceBaseUrl"));
 
     // determine the module location based on the source url
-    lyric_common::AssemblyLocation moduleLocation;
-    TU_ASSIGN_OR_RETURN(moduleLocation, convert_source_url_to_assembly_location(m_sourceUrl, baseUrl));
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN(moduleLocation, convert_source_url_to_module_location(m_sourceUrl, baseUrl));
 
-    lyric_common::AssemblyLocationParser preludeLocationParser(
-        lyric_common::AssemblyLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION));
+    lyric_common::ModuleLocationParser preludeLocationParser(
+        lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION));
 
     // set the symbolizer prelude location
-    TU_RETURN_IF_NOT_OK(parse_config(m_assemblyStateOptions.preludeLocation, preludeLocationParser,
+    TU_RETURN_IF_NOT_OK(parse_config(m_objectStateOptions.preludeLocation, preludeLocationParser,
         config, taskId, "preludeLocation"));
 
     //
@@ -66,7 +66,7 @@ lyric_build::internal::SymbolizeModuleTask::configure(const ConfigStore *config)
 
     auto taskSection = config->getTaskSection(taskId);
 
-    lyric_common::AssemblyLocationParser moduleLocationParser(moduleLocation);
+    lyric_common::ModuleLocationParser moduleLocationParser(moduleLocation);
 
     // override the module location if specified
     TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_moduleLocation, moduleLocationParser,
@@ -103,7 +103,7 @@ lyric_build::internal::SymbolizeModuleTask::configureTask(
     auto resource = resourceOption.getValue();
 
     TaskHasher taskHasher(getKey());
-    taskHasher.hashValue(m_assemblyStateOptions.preludeLocation.toString());
+    taskHasher.hashValue(m_objectStateOptions.preludeLocation.toString());
     taskHasher.hashValue(m_moduleLocation.toString());
     taskHasher.hashValue(resource.entityTag);
     auto hash = taskHasher.finish();
@@ -145,29 +145,29 @@ lyric_build::internal::SymbolizeModuleTask::runTask(
     lyric_symbolizer::LyricSymbolizer symbolizer(buildState->getSharedModuleCache(), m_symbolizerOptions);
 
     // configure assembler
-    lyric_assembler::AssemblyStateOptions assemblyStateOptions = m_assemblyStateOptions;
+    lyric_assembler::ObjectStateOptions objectStateOptions = m_objectStateOptions;
     auto createDependencyLoaderResult = DependencyLoader::create(depStates, cache);
     if (createDependencyLoaderResult.isStatus())
         return Option(createDependencyLoaderResult.getStatus());
-    assemblyStateOptions.workspaceLoader = createDependencyLoaderResult.getResult();
+    objectStateOptions.workspaceLoader = createDependencyLoaderResult.getResult();
 
-    // generate the linkage assembly by symbolizing the archetype
+    // generate the linkage object by symbolizing the archetype
     TU_LOG_V << "symbolizing module from " << m_sourceUrl;
     auto symbolizeModuleResult = symbolizer.symbolizeModule(
-        m_moduleLocation, archetype, assemblyStateOptions, traceDiagnostics());
+        m_moduleLocation, archetype, objectStateOptions, traceDiagnostics());
     if (symbolizeModuleResult.isStatus()) {
         span->logStatus(symbolizeModuleResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
         return Option<tempo_utils::Status>(
             BuildStatus::forCondition(BuildCondition::kTaskFailure,
                 "failed to symbolize module {}", m_moduleLocation.toString()));
     }
-    auto assembly = symbolizeModuleResult.getResult();
+    auto object = symbolizeModuleResult.getResult();
 
     tempo_utils::Status status;
 
-    // store the linkage assembly content in the build cache
+    // store the linkage object content in the build cache
     ArtifactId linkageArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourceUrl);
-    auto linkageBytes = assembly.bytesView();
+    auto linkageBytes = object.bytesView();
     status = cache->storeContent(linkageArtifact, linkageBytes);
     if (!status.isOk())
         return Option<tempo_utils::Status>(status);
@@ -176,13 +176,13 @@ lyric_build::internal::SymbolizeModuleTask::runTask(
     std::filesystem::path linkageInstallPath = generate_install_path(
         getId().getDomain(), m_sourceUrl, lyric_common::kObjectFileDotSuffix);
 
-    // store the assembly metadata in the build cache
+    // store the object metadata in the build cache
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
     writer.putAttr(kLyricBuildContentUrl, m_sourceUrl);
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
-    writer.putAttr(kLyricBuildAssemblyLocation, m_moduleLocation);
+    writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     writer.putAttr(kLyricBuildInstallPath, linkageInstallPath.string());
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {

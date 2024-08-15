@@ -24,7 +24,7 @@ namespace lyric_build {
             EntryType &value) const override;
     };
 
-    extern const lyric_common::AssemblyLocationAttr kLyricBuildAssemblyLocation;
+    extern const lyric_common::ModuleLocationAttr kLyricBuildModuleLocation;
     extern const tempo_utils::UrlAttr kLyricBuildContentUrl;
     extern const EntryTypeAttr kLyricBuildEntryType;
     extern const tempo_utils::StringAttr kLyricBuildGeneration;

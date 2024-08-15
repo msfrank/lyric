@@ -3,13 +3,13 @@
 
 #include <filesystem>
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <tempo_utils/result.h>
 #include <tempo_utils/url.h>
 
 namespace lyric_build::internal {
 
-    tempo_utils::Result<lyric_common::AssemblyLocation> convert_source_url_to_assembly_location(
+    tempo_utils::Result<lyric_common::ModuleLocation> convert_source_url_to_module_location(
         const tempo_utils::Url &sourceUrl,
         const tempo_utils::Url &baseUrl);
 

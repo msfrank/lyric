@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "assembler_types.h"
-#include "assembly_state.h"
+#include "object_state.h"
 
 namespace lyric_assembler {
 

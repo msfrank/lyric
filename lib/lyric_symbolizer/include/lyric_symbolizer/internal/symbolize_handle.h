@@ -1,7 +1,7 @@
 #ifndef LYRIC_SYMBOLIZER_SYMBOLIZE_HANDLE_H
 #define LYRIC_SYMBOLIZER_SYMBOLIZE_HANDLE_H
 
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_common/symbol_url.h>
 #include <lyric_parser/node_walker.h>
 #include <lyric_parser/parser_attrs.h>
@@ -13,22 +13,22 @@ namespace lyric_symbolizer::internal {
     class SymbolizeHandle {
 
     public:
-        explicit SymbolizeHandle(lyric_assembler::AssemblyState *state);
+        explicit SymbolizeHandle(lyric_assembler::ObjectState *state);
         SymbolizeHandle(const lyric_common::SymbolUrl &blockUrl, SymbolizeHandle *parent);
 
         SymbolizeHandle *blockParent() const;
-        lyric_assembler::AssemblyState *blockState() const;
+        lyric_assembler::ObjectState *blockState() const;
         std::shared_ptr<tempo_tracing::TraceSpan> getSpan() const;
 
         tempo_utils::Result<lyric_common::SymbolUrl>
         declareSymbol(const std::string &identifier, lyric_object::LinkageSection section);
 
-        tempo_utils::Status declareImport(const lyric_common::AssemblyLocation &location);
+        tempo_utils::Status declareImport(const lyric_common::ModuleLocation &location);
 
     private:
         lyric_common::SymbolUrl m_blockUrl;
         SymbolizeHandle *m_parent;
-        lyric_assembler::AssemblyState *m_state;
+        lyric_assembler::ObjectState *m_state;
         std::shared_ptr<tempo_tracing::TraceSpan> m_span;
 
     public:

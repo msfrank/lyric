@@ -24,20 +24,20 @@ lyric_runtime::internal::get_concept_table(
     if (segmentManagerData->ctablecache.contains(descriptor))
         return segmentManagerData->ctablecache[descriptor];
 
-    auto assemblyIndex = descriptor.data.descriptor.assembly;
-    auto *conceptSegment = segmentManagerData->segments[assemblyIndex];
+    auto objectIndex = descriptor.data.descriptor.object;
+    auto *conceptSegment = segmentManagerData->segments[objectIndex];
     auto conceptObject = conceptSegment->getObject().getObject();
     auto conceptIndex = descriptor.data.descriptor.value;
     auto conceptDescriptor = conceptObject.getConcept(conceptIndex);
     auto conceptType = DataCell::forType(
-        assemblyIndex, conceptDescriptor.getConceptType().getDescriptorOffset());
+        objectIndex, conceptDescriptor.getConceptType().getDescriptorOffset());
 
     const ConceptTable *parentTable = nullptr;
     absl::flat_hash_map<DataCell,ImplTable> impls;
 
     // if concept has a superconcept, then resolve its virtual table
     if (conceptDescriptor.hasSuperConcept()) {
-        tu_uint32 superAssemblyIndex = INVALID_ADDRESS_U32;;
+        tu_uint32 superObjectIndex = INVALID_ADDRESS_U32;;
         tu_uint32 superConceptIndex = INVALID_ADDRESS_U32;;
 
         switch (conceptDescriptor.superConceptAddressType()) {
@@ -49,12 +49,12 @@ lyric_runtime::internal::get_concept_table(
                         InterpreterCondition::kRuntimeInvariant, "invalid super concept");
                     return nullptr;
                 }
-                superAssemblyIndex = link->assembly;
+                superObjectIndex = link->object;
                 superConceptIndex = link->value;
                 break;
             }
             case lyric_object::AddressType::Near:
-                superAssemblyIndex = assemblyIndex;
+                superObjectIndex = objectIndex;
                 superConceptIndex = conceptDescriptor.getNearSuperConcept().getDescriptorOffset();
                 break;
             default:
@@ -63,7 +63,7 @@ lyric_runtime::internal::get_concept_table(
                 break;
         }
 
-        parentTable = get_concept_table(DataCell::forConcept(superAssemblyIndex, superConceptIndex),
+        parentTable = get_concept_table(DataCell::forConcept(superObjectIndex, superConceptIndex),
             segmentManagerData, status);
         if (parentTable == nullptr)
             return nullptr;
@@ -79,7 +79,7 @@ lyric_runtime::internal::get_concept_table(
         for (tu_uint8 j = 0; j < impl.numExtensions(); j++) {
             auto extension = impl.getExtension(j);
 
-            tu_uint32 actionAssembly;
+            tu_uint32 actionObject;
             tu_uint32 actionIndex;
 
             switch (extension.actionAddressType()) {
@@ -91,12 +91,12 @@ lyric_runtime::internal::get_concept_table(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
                         return nullptr;
                     }
-                    actionAssembly = link->assembly;
+                    actionObject = link->object;
                     actionIndex = link->value;
                     break;
                 }
                 case lyric_object::AddressType::Near: {
-                    actionAssembly = assemblyIndex;
+                    actionObject = objectIndex;
                     actionIndex = extension.getNearAction().getDescriptorOffset();
                     break;
                 }
@@ -119,7 +119,7 @@ lyric_runtime::internal::get_concept_table(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
                         return nullptr;
                     }
-                    callSegment = segmentManagerData->segments[link->assembly];
+                    callSegment = segmentManagerData->segments[link->object];
                     callIndex = link->value;
                     procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
                     break;
@@ -136,7 +136,7 @@ lyric_runtime::internal::get_concept_table(
                     return nullptr;
             }
 
-            auto actionKey = DataCell::forAction(actionAssembly, actionIndex);
+            auto actionKey = DataCell::forAction(actionObject, actionIndex);
             extensions.try_emplace(actionKey, callSegment, callIndex, procOffset);
         }
 
@@ -161,7 +161,7 @@ lyric_runtime::internal::get_concept_table(
                     InterpreterCondition::kRuntimeInvariant, "invalid impl concept linkage");
                 return {};
             }
-            conceptKey = DataCell::forConcept(linkage->assembly, linkage->value);
+            conceptKey = DataCell::forConcept(linkage->object, linkage->value);
         } else {
             conceptKey = DataCell::forConcept(conceptSegment->getSegmentIndex(), address);
         }

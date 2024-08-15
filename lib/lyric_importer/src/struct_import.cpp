@@ -207,7 +207,7 @@ lyric_importer::StructImport::load()
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
-                "cannot import struct at index {} in assembly {}; invalid derive type",
+                "cannot import struct at index {} in module {}; invalid derive type",
                 m_structOffset, location.toString()));
     priv->derive = structWalker.getDeriveType();
 
@@ -227,7 +227,7 @@ lyric_importer::StructImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import struct at index {} in assembly {}; invalid super struct",
+                        "cannot import struct at index {} in module {}; invalid super struct",
                         m_structOffset, location.toString()));
         }
     }
@@ -246,7 +246,7 @@ lyric_importer::StructImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import struct at index {} in assembly {}; invalid member at index {}",
+                        "cannot import struct at index {} in module {}; invalid member at index {}",
                         m_structOffset, location.toString(), i));
         }
         auto name = fieldUrl.getSymbolName();
@@ -267,7 +267,7 @@ lyric_importer::StructImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import struct at index {} in assembly {}; invalid method at index {}",
+                        "cannot import struct at index {} in module {}; invalid method at index {}",
                         m_structOffset, location.toString(), i));
         }
         auto name = callUrl.getSymbolName();

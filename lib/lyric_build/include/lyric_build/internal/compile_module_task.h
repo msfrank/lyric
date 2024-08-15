@@ -1,7 +1,7 @@
 #ifndef LYRIC_BUILD_INTERNAL_COMPILE_MODULE_TASK_H
 #define LYRIC_BUILD_INTERNAL_COMPILE_MODULE_TASK_H
 
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
@@ -36,8 +36,8 @@ namespace lyric_build::internal {
 
     private:
         tempo_utils::Url m_sourceUrl;
-        lyric_common::AssemblyLocation m_moduleLocation;
-        lyric_assembler::AssemblyStateOptions m_assemblyStateOptions;
+        lyric_common::ModuleLocation m_moduleLocation;
+        lyric_assembler::ObjectStateOptions m_objectStateOptions;
         lyric_compiler::CompilerOptions m_compilerOptions;
         TaskKey m_parseTarget;
         TaskKey m_symbolizeTarget;

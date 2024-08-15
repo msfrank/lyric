@@ -50,17 +50,17 @@ lyric_build::internal::CompileModuleTask::configure(const ConfigStore *config)
         config, taskId, "sourceBaseUrl"));
 
     // determine the module location based on the source url
-    lyric_common::AssemblyLocation moduleLocation;
-    TU_ASSIGN_OR_RETURN(moduleLocation, convert_source_url_to_assembly_location(m_sourceUrl, baseUrl));
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN(moduleLocation, convert_source_url_to_module_location(m_sourceUrl, baseUrl));
 
-    lyric_common::AssemblyLocationParser preludeLocationParser(
-        lyric_common::AssemblyLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION));
+    lyric_common::ModuleLocationParser preludeLocationParser(
+        lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION));
     tempo_config::PathParser envSymbolsPathParser(std::filesystem::path{});
     tempo_config::OptionTParser<std::filesystem::path> optEnvSymbolsPathParser(&envSymbolsPathParser);
     tempo_config::BooleanParser touchExternalSymbolsParser(false);
 
     // set the compiler prelude location
-    TU_RETURN_IF_NOT_OK(parse_config(m_assemblyStateOptions.preludeLocation, preludeLocationParser,
+    TU_RETURN_IF_NOT_OK(parse_config(m_objectStateOptions.preludeLocation, preludeLocationParser,
         config, taskId, "preludeLocation"));
 
     // check for environment symbol map and load it into compiler options if found
@@ -68,15 +68,15 @@ lyric_build::internal::CompileModuleTask::configure(const ConfigStore *config)
     TU_RETURN_IF_NOT_OK(parse_config(optEnvSymbolsPath, optEnvSymbolsPathParser,
         config, taskId, "envSymbolsPath"));
     if (!optEnvSymbolsPath.isEmpty()) {
-        lyric_common::AssemblyLocationParser keyParser;
+        lyric_common::ModuleLocationParser keyParser;
         lyric_common::SymbolPathParser symbolPathParser;
         tempo_config::SetTParser<lyric_common::SymbolPath> valueParser(&symbolPathParser);
         tempo_config::MapKVParser<
-            lyric_common::AssemblyLocation,
+            lyric_common::ModuleLocation,
             absl::flat_hash_set<lyric_common::SymbolPath>
             >
         envSymbolsParser(&keyParser, &valueParser);
-        absl::flat_hash_map<lyric_common::AssemblyLocation,std::vector<lyric_common::SymbolPath>> envSymbols;
+        absl::flat_hash_map<lyric_common::ModuleLocation,std::vector<lyric_common::SymbolPath>> envSymbols;
         TU_RETURN_IF_NOT_OK(tempo_config::parse_config_file(m_compilerOptions.envSymbols,
             envSymbolsParser, optEnvSymbolsPath.getValue()));
     }
@@ -91,7 +91,7 @@ lyric_build::internal::CompileModuleTask::configure(const ConfigStore *config)
 
     auto taskSection = config->getTaskSection(taskId);
 
-    lyric_common::AssemblyLocationParser moduleLocationParser(moduleLocation);
+    lyric_common::ModuleLocationParser moduleLocationParser(moduleLocation);
 
     // override the module location if specified
     TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_moduleLocation, moduleLocationParser,
@@ -102,7 +102,7 @@ lyric_build::internal::CompileModuleTask::configure(const ConfigStore *config)
 
     // configure the symbolize_module dependency
     m_symbolizeTarget = TaskKey("symbolize_module", taskId.getId(), tempo_config::ConfigMap({
-        {"preludeLocation", tempo_config::ConfigValue(m_assemblyStateOptions.preludeLocation.toString())},
+        {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
         {"moduleLocation", tempo_config::ConfigValue(m_moduleLocation.toString())},
     }));
 
@@ -140,7 +140,7 @@ lyric_build::internal::CompileModuleTask::configureTask(
     auto resource = resourceOption.getValue();
 
     TaskHasher taskHasher(getKey());
-    taskHasher.hashValue(m_assemblyStateOptions.preludeLocation.toString());
+    taskHasher.hashValue(m_objectStateOptions.preludeLocation.toString());
     taskHasher.hashValue(m_moduleLocation.toString());
     taskHasher.hashValue(resource.entityTag);
     auto hash = taskHasher.finish();
@@ -189,7 +189,7 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
         importSourcePath.replace_extension(lyric_common::kSourceFileSuffix);
         analyzeTargets.insert(
             TaskKey("analyze_module", importSourcePath,tempo_config::ConfigMap({
-                {"preludeLocation", tempo_config::ConfigValue(m_assemblyStateOptions.preludeLocation.toString())},
+                {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
                 {"moduleLocation", tempo_config::ConfigValue(m_moduleLocation.toString())},
             })
         ));
@@ -237,19 +237,19 @@ lyric_build::internal::CompileModuleTask::compileModule(
 
     // compile the module
     TU_LOG_V << "compiling module from " << m_sourceUrl;
-    auto compileResult = compiler.compileModule(m_moduleLocation, archetype, m_assemblyStateOptions, traceDiagnostics());
+    auto compileResult = compiler.compileModule(m_moduleLocation, archetype, m_objectStateOptions, traceDiagnostics());
     if (compileResult.isStatus()) {
         span->logStatus(compileResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,
             "failed to compile module {}", m_moduleLocation.toString());
     }
-    auto assembly = compileResult.getResult();
+    auto object = compileResult.getResult();
 
     tempo_utils::Status status;
 
-    // store the assembly content in the build cache
+    // store the object content in the build cache
     ArtifactId moduleArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourceUrl);
-    auto moduleBytes = assembly.bytesView();
+    auto moduleBytes = object.bytesView();
     status = cache->storeContent(moduleArtifact, moduleBytes);
     if (!status.isOk())
         return status;
@@ -258,13 +258,13 @@ lyric_build::internal::CompileModuleTask::compileModule(
     std::filesystem::path moduleInstallPath = generate_install_path(
         getId().getDomain(), m_sourceUrl, lyric_common::kObjectFileDotSuffix);
 
-    // serialize the assembly metadata
+    // serialize the object metadata
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
     writer.putAttr(kLyricBuildContentUrl, m_sourceUrl);
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
-    writer.putAttr(kLyricBuildAssemblyLocation, m_moduleLocation);
+    writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     writer.putAttr(kLyricBuildInstallPath, moduleInstallPath.string());
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
@@ -273,7 +273,7 @@ lyric_build::internal::CompileModuleTask::compileModule(
             "failed to store metadata for {}", moduleArtifact.toString());
     }
 
-    // store the assembly metadata in the build cache
+    // store the object metadata in the build cache
     status = cache->storeMetadata(moduleArtifact, toMetadataResult.getResult());
     if (!status.isOk())
         return status;

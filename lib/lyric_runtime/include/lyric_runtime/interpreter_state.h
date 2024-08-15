@@ -21,7 +21,7 @@ namespace lyric_runtime {
 
     struct InterpreterStateOptions {
         std::shared_ptr<AbstractLoader> loader;
-        lyric_common::AssemblyLocation preludeLocation = {};
+        lyric_common::ModuleLocation preludeLocation = {};
         std::shared_ptr<AbstractLoader> bootstrapLoader = {};
         std::shared_ptr<AbstractHeap> heap = {};
     };
@@ -31,10 +31,10 @@ namespace lyric_runtime {
         InterpreterState();
         static tempo_utils::Result<std::shared_ptr<InterpreterState>> create(
             const InterpreterStateOptions &options,
-            const lyric_common::AssemblyLocation &mainLocation = {});
+            const lyric_common::ModuleLocation &mainLocation = {});
         virtual ~InterpreterState();
 
-        lyric_common::AssemblyLocation getMainLocation() const;
+        lyric_common::ModuleLocation getMainLocation() const;
         tu_uint64 getReloadEpochMillis() const;
         tempo_utils::StatusCode getStatusCode() const;
         bool isActive() const;
@@ -50,7 +50,7 @@ namespace lyric_runtime {
         virtual HeapManager *heapManager() const;
         virtual uv_loop_t *mainLoop() const;
 
-        tempo_utils::Status reload(const lyric_common::AssemblyLocation &mainLocation);
+        tempo_utils::Status reload(const lyric_common::ModuleLocation &mainLocation);
         tempo_utils::Status halt(tempo_utils::StatusCode statusCode);
 
         // heap management
@@ -67,7 +67,7 @@ namespace lyric_runtime {
         PortMultiplexer *m_portMultiplexer;
         HeapManager *m_heapManager;
 
-        lyric_common::AssemblyLocation m_mainLocation;
+        lyric_common::ModuleLocation m_mainLocation;
         tu_uint64 m_reloadEpochMillis;
         tempo_utils::StatusCode m_statusCode;
         bool m_active;
@@ -83,7 +83,7 @@ namespace lyric_runtime {
             HeapManager *heapManager);
 
         static tempo_utils::Result<std::shared_ptr<InterpreterState>> createInterpreterState(
-            const lyric_common::AssemblyLocation &location,
+            const lyric_common::ModuleLocation &location,
             uv_loop_t *m_loop,
             std::shared_ptr<AbstractHeap> heap,
             SegmentManager *segmentManager,

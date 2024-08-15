@@ -3,7 +3,7 @@
 #include <lyric_assembler/undeclared_symbol.h>
 #include <lyric_symbolizer/internal/symbolize_handle.h>
 
-lyric_symbolizer::internal::SymbolizeHandle::SymbolizeHandle(lyric_assembler::AssemblyState *state)
+lyric_symbolizer::internal::SymbolizeHandle::SymbolizeHandle(lyric_assembler::ObjectState *state)
     : m_parent(nullptr), m_state(state)
 {
     TU_ASSERT (m_state != nullptr);
@@ -29,7 +29,7 @@ lyric_symbolizer::internal::SymbolizeHandle::blockParent() const
     return m_parent;
 }
 
-lyric_assembler::AssemblyState *
+lyric_assembler::ObjectState *
 lyric_symbolizer::internal::SymbolizeHandle::blockState() const
 {
     return m_state;
@@ -58,7 +58,7 @@ lyric_symbolizer::internal::SymbolizeHandle::declareSymbol(
 }
 
 tempo_utils::Status
-lyric_symbolizer::internal::SymbolizeHandle::declareImport(const lyric_common::AssemblyLocation &location)
+lyric_symbolizer::internal::SymbolizeHandle::declareImport(const lyric_common::ModuleLocation &location)
 {
     auto *importCache = m_state->importCache();
 

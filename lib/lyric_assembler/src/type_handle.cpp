@@ -7,7 +7,7 @@ lyric_assembler::TypeHandle::TypeHandle(
     const std::vector<lyric_common::TypeDef> &typeArguments,
     TypeAddress address,
     TypeHandle *superType,
-    AssemblyState *state)
+    ObjectState *state)
     : m_superType(superType),
       m_address(address),
       m_signature(),
@@ -32,7 +32,7 @@ lyric_assembler::TypeHandle::TypeHandle(
     const lyric_common::SymbolUrl &templateUrl,
     const std::vector<lyric_common::TypeDef> &typeArguments,
     TypeAddress address,
-    AssemblyState *state)
+    ObjectState *state)
     : m_superType(nullptr),
       m_address(address),
       m_signature(),
@@ -56,7 +56,7 @@ lyric_assembler::TypeHandle::TypeHandle(
 lyric_assembler::TypeHandle::TypeHandle(
     const lyric_common::TypeDef &typeDef,
     TypeHandle *superType,
-    AssemblyState *state)
+    ObjectState *state)
     : m_typeDef(typeDef),
       m_superType(superType),
       m_address(),

@@ -7,7 +7,7 @@
 
 #include "abstract_symbol.h"
 #include "action_callable.h"
-#include "assembly_state.h"
+#include "object_state.h"
 #include "base_symbol.h"
 #include "impl_handle.h"
 #include "type_handle.h"
@@ -40,7 +40,7 @@ namespace lyric_assembler {
             ConceptSymbol *superConcept,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
 
         ConceptSymbol(
             const lyric_common::SymbolUrl &conceptUrl,
@@ -51,12 +51,12 @@ namespace lyric_assembler {
             ConceptSymbol *superConcept,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
 
         ConceptSymbol(
             const lyric_common::SymbolUrl &conceptUrl,
             lyric_importer::ConceptImport *conceptImport,
-            AssemblyState *state);
+            ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;
 
@@ -115,7 +115,7 @@ namespace lyric_assembler {
     private:
         lyric_common::SymbolUrl m_conceptUrl;
         lyric_importer::ConceptImport *m_conceptImport = nullptr;
-        AssemblyState *m_state;
+        ObjectState *m_state;
 
         ConceptSymbolPriv *load() override;
     };

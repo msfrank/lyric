@@ -10,14 +10,14 @@
 #include <lyric_typing/type_system.h>
 #include <lyric_typing/unify_assignable.h>
 
-lyric_typing::TypeSystem::TypeSystem(lyric_assembler::AssemblyState *state)
+lyric_typing::TypeSystem::TypeSystem(lyric_assembler::ObjectState *state)
     : m_state(state)
 {
     TU_ASSERT (m_state != nullptr);
     m_tracer = std::make_unique<TypingTracer>(m_state->scopeManager());
 }
 
-lyric_assembler::AssemblyState *
+lyric_assembler::ObjectState *
 lyric_typing::TypeSystem::getState() const
 {
     return m_state;

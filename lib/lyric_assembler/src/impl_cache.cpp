@@ -1,13 +1,13 @@
 
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_assembler/impl_cache.h>
 #include <lyric_assembler/impl_handle.h>
 
-lyric_assembler::ImplCache::ImplCache(AssemblyState *assemblyState, AssemblerTracer *tracer)
-    : m_assemblyState(assemblyState),
+lyric_assembler::ImplCache::ImplCache(ObjectState *objectState, AssemblerTracer *tracer)
+    : m_objectState(objectState),
       m_tracer(tracer)
 {
-    TU_ASSERT (m_assemblyState != nullptr);
+    TU_ASSERT (m_objectState != nullptr);
     TU_ASSERT (m_tracer != nullptr);
 }
 
@@ -31,7 +31,7 @@ lyric_assembler::ImplCache::makeImpl(
 {
     ImplOffset offset(m_declaredImpls.size());
     auto *implHandle = new ImplHandle(offset, name, implType, implConcept, receiverUrl,
-        parentBlock, m_assemblyState);
+        parentBlock, m_objectState);
     m_declaredImpls.push_back(implHandle);
     return implHandle;
 }
@@ -47,7 +47,7 @@ lyric_assembler::ImplCache::makeImpl(
 {
     ImplOffset offset(m_declaredImpls.size());
     auto *implHandle = new ImplHandle(offset, name, implType, implConcept, receiverUrl,
-        receiverTemplate, parentBlock, m_assemblyState);
+        receiverTemplate, parentBlock, m_objectState);
     m_declaredImpls.push_back(implHandle);
     return implHandle;
 }
@@ -56,7 +56,7 @@ tempo_utils::Result<lyric_assembler::ImplHandle *>
 lyric_assembler::ImplCache::importImpl(lyric_importer::ImplImport *implImport)
 {
     TU_ASSERT (implImport != nullptr);
-    auto *implHandle = new ImplHandle(implImport, m_assemblyState);
+    auto *implHandle = new ImplHandle(implImport, m_objectState);
     m_importedImpls.push_back(implHandle);
     return implHandle;
 }

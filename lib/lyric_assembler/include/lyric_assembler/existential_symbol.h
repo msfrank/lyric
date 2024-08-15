@@ -4,7 +4,7 @@
 #include <lyric_importer/existential_import.h>
 
 #include "abstract_symbol.h"
-#include "assembly_state.h"
+#include "object_state.h"
 #include "base_symbol.h"
 #include "impl_handle.h"
 #include "template_handle.h"
@@ -37,7 +37,7 @@ namespace lyric_assembler {
             ExistentialSymbol *superExistential,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
         ExistentialSymbol(
             const lyric_common::SymbolUrl &existentialUrl,
             lyric_object::AccessType access,
@@ -48,11 +48,11 @@ namespace lyric_assembler {
             ExistentialSymbol *superExistential,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
         ExistentialSymbol(
             const lyric_common::SymbolUrl &existentialUrl,
             lyric_importer::ExistentialImport *existentialImport,
-            AssemblyState *state);
+            ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;
 
@@ -112,7 +112,7 @@ namespace lyric_assembler {
     private:
         lyric_common::SymbolUrl m_existentialUrl;
         lyric_importer::ExistentialImport *m_existentialImport;
-        AssemblyState *m_state;
+        ObjectState *m_state;
 
         ExistentialSymbolPriv *load() override;
     };

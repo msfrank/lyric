@@ -111,18 +111,18 @@ write_enum(
 
 tempo_utils::Status
 lyric_assembler::internal::write_enums(
-    const AssemblyState *assemblyState,
+    const ObjectState *objectState,
     flatbuffers::FlatBufferBuilder &buffer,
     EnumsOffset &enumsOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (assemblyState != nullptr);
+    TU_ASSERT (objectState != nullptr);
 
-    SymbolCache *symbolCache = assemblyState->symbolCache();
-    TypeCache *typeCache = assemblyState->typeCache();
+    SymbolCache *symbolCache = objectState->symbolCache();
+    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::EnumDescriptor>> enums_vector;
 
-    for (auto iterator = assemblyState->enumsBegin(); iterator != assemblyState->enumsEnd(); iterator++) {
+    for (auto iterator = objectState->enumsBegin(); iterator != objectState->enumsEnd(); iterator++) {
         auto &enumSymbol = *iterator;
         TU_RETURN_IF_NOT_OK (
             write_enum(enumSymbol, typeCache, symbolCache, buffer, enums_vector, symbols_vector));

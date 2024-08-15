@@ -1,102 +1,102 @@
 
 set(PRELUDE_NAME                "prelude")
-set(PRELUDE_ASSEMBLY_NAME       "${PRELUDE_NAME}.lyo")
+set(PRELUDE_OBJECT_NAME         "${PRELUDE_NAME}.lyo")
 set(PRELUDE_PLUGIN_BASENAME     "${PRELUDE_NAME}.${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 set(PRELUDE_PLUGIN_NAME         "${PRELUDE_PLUGIN_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
-set(PRELUDE_ASSEMBLY_PATH       "${LYRIC_BUILD_BOOTSTRAP_DIR}/${PRELUDE_ASSEMBLY_NAME}")
+set(PRELUDE_OBJECT_PATH         "${LYRIC_BUILD_BOOTSTRAP_DIR}/${PRELUDE_OBJECT_NAME}")
 set(PRELUDE_PLUGIN_PATH         "${LYRIC_BUILD_BOOTSTRAP_DIR}/${PRELUDE_PLUGIN_NAME}")
 
 add_executable(prelude-builder
-    assembly/builder_state.cpp
-    assembly/builder_state.h
-    assembly/compile_any.cpp
-    assembly/compile_any.h
-    assembly/compile_arithmetic.cpp
-    assembly/compile_arithmetic.h
-    assembly/compile_bool.cpp
-    assembly/compile_bool.h
-    assembly/compile_call.cpp
-    assembly/compile_call.h
-    assembly/compile_category.cpp
-    assembly/compile_category.h
-    assembly/compile_char.cpp
-    assembly/compile_char.h
-    assembly/compile_class.cpp
-    assembly/compile_class.h
-    assembly/compile_closure.cpp
-    assembly/compile_closure.h
-    assembly/compile_code.cpp
-    assembly/compile_code.h
-    assembly/compile_comparison.cpp
-    assembly/compile_comparison.h
-    assembly/compile_concept.cpp
-    assembly/compile_concept.h
-    assembly/compile_intrinsic.cpp
-    assembly/compile_intrinsic.h
-    assembly/compile_descriptor.cpp
-    assembly/compile_descriptor.h
-    assembly/compile_nil.cpp
-    assembly/compile_nil.h
-    assembly/compile_enum.cpp
-    assembly/compile_enum.h
-    assembly/compile_equality.cpp
-    assembly/compile_equality.h
-    assembly/compile_float.cpp
-    assembly/compile_float.h
-    assembly/compile_function.cpp
-    assembly/compile_function.h
-    assembly/compile_idea.cpp
-    assembly/compile_idea.h
-    assembly/compile_instance.cpp
-    assembly/compile_instance.h
-    assembly/compile_int.cpp
-    assembly/compile_int.h
-    assembly/compile_iterable.cpp
-    assembly/compile_iterable.h
-    assembly/compile_iterator.cpp
-    assembly/compile_iterator.h
-    assembly/compile_map.cpp
-    assembly/compile_map.h
-    assembly/compile_namespace.cpp
-    assembly/compile_namespace.h
-    assembly/compile_undef.cpp
-    assembly/compile_undef.h
-    assembly/compile_object.cpp
-    assembly/compile_object.h
-    assembly/compile_ordered.cpp
-    assembly/compile_ordered.h
-    assembly/compile_pair.cpp
-    assembly/compile_pair.h
-    assembly/compile_prelude.cpp
-    assembly/compile_prelude.h
-    assembly/compile_proposition.cpp
-    assembly/compile_proposition.h
-    assembly/compile_record.cpp
-    assembly/compile_record.h
-    assembly/compile_rest.cpp
-    assembly/compile_rest.h
-    assembly/compile_seq.cpp
-    assembly/compile_seq.h
-    assembly/compile_singleton.cpp
-    assembly/compile_singleton.h
-    assembly/compile_status.cpp
-    assembly/compile_status.h
-    assembly/compile_string.cpp
-    assembly/compile_string.h
-    assembly/compile_struct.cpp
-    assembly/compile_struct.h
-    assembly/compile_tuple.cpp
-    assembly/compile_tuple.h
-    assembly/compile_unwrap.cpp
-    assembly/compile_unwrap.h
-    assembly/compile_url.cpp
-    assembly/compile_url.h
-    assembly/compile_utf8.cpp
-    assembly/compile_utf8.h
-    assembly/compile_varargs.cpp
-    assembly/compile_varargs.h
-    assembly/lib_builder.cpp
+    object/builder_state.cpp
+    object/builder_state.h
+    object/compile_any.cpp
+    object/compile_any.h
+    object/compile_arithmetic.cpp
+    object/compile_arithmetic.h
+    object/compile_bool.cpp
+    object/compile_bool.h
+    object/compile_call.cpp
+    object/compile_call.h
+    object/compile_category.cpp
+    object/compile_category.h
+    object/compile_char.cpp
+    object/compile_char.h
+    object/compile_class.cpp
+    object/compile_class.h
+    object/compile_closure.cpp
+    object/compile_closure.h
+    object/compile_code.cpp
+    object/compile_code.h
+    object/compile_comparison.cpp
+    object/compile_comparison.h
+    object/compile_concept.cpp
+    object/compile_concept.h
+    object/compile_intrinsic.cpp
+    object/compile_intrinsic.h
+    object/compile_descriptor.cpp
+    object/compile_descriptor.h
+    object/compile_nil.cpp
+    object/compile_nil.h
+    object/compile_enum.cpp
+    object/compile_enum.h
+    object/compile_equality.cpp
+    object/compile_equality.h
+    object/compile_float.cpp
+    object/compile_float.h
+    object/compile_function.cpp
+    object/compile_function.h
+    object/compile_idea.cpp
+    object/compile_idea.h
+    object/compile_instance.cpp
+    object/compile_instance.h
+    object/compile_int.cpp
+    object/compile_int.h
+    object/compile_iterable.cpp
+    object/compile_iterable.h
+    object/compile_iterator.cpp
+    object/compile_iterator.h
+    object/compile_map.cpp
+    object/compile_map.h
+    object/compile_namespace.cpp
+    object/compile_namespace.h
+    object/compile_undef.cpp
+    object/compile_undef.h
+    object/compile_object.cpp
+    object/compile_object.h
+    object/compile_ordered.cpp
+    object/compile_ordered.h
+    object/compile_pair.cpp
+    object/compile_pair.h
+    object/compile_prelude.cpp
+    object/compile_prelude.h
+    object/compile_proposition.cpp
+    object/compile_proposition.h
+    object/compile_record.cpp
+    object/compile_record.h
+    object/compile_rest.cpp
+    object/compile_rest.h
+    object/compile_seq.cpp
+    object/compile_seq.h
+    object/compile_singleton.cpp
+    object/compile_singleton.h
+    object/compile_status.cpp
+    object/compile_status.h
+    object/compile_string.cpp
+    object/compile_string.h
+    object/compile_struct.cpp
+    object/compile_struct.h
+    object/compile_tuple.cpp
+    object/compile_tuple.h
+    object/compile_unwrap.cpp
+    object/compile_unwrap.h
+    object/compile_url.cpp
+    object/compile_url.h
+    object/compile_utf8.cpp
+    object/compile_utf8.h
+    object/compile_varargs.cpp
+    object/compile_varargs.h
+    object/lib_builder.cpp
     include/lyric_bootstrap/internal/bootstrap_types.h
     )
 
@@ -108,14 +108,14 @@ target_link_libraries(prelude-builder PRIVATE
     flatbuffers::flatbuffers
     )
 
-# build prelude assembly file
+# build prelude object file
 add_custom_command (
-    OUTPUT ${PRELUDE_ASSEMBLY_PATH}
-    COMMAND prelude-builder ${PRELUDE_ASSEMBLY_PATH}
-    COMMENT "generating ${PRELUDE_ASSEMBLY_NAME}"
+    OUTPUT ${PRELUDE_OBJECT_PATH}
+    COMMAND prelude-builder ${PRELUDE_OBJECT_PATH}
+    COMMENT "generating ${PRELUDE_OBJECT_NAME}"
     DEPENDS prelude-builder
 )
-add_custom_target(prelude-assembly DEPENDS ${PRELUDE_ASSEMBLY_PATH})
+add_custom_target(prelude-object DEPENDS ${PRELUDE_OBJECT_PATH})
 
 # build prelude plugin as a shared library
 add_library(prelude-plugin SHARED
@@ -183,7 +183,7 @@ target_link_libraries(prelude-plugin PRIVATE
 # build lyric_bootstrap as a shared library
 add_library(lyric_bootstrap SHARED)
 add_library(lyric::lyric_bootstrap ALIAS lyric_bootstrap)
-add_dependencies(lyric_bootstrap prelude-assembly prelude-plugin)
+add_dependencies(lyric_bootstrap prelude-object prelude-plugin)
 
 set(LYRIC_BOOTSTRAP_INCLUDES
     include/lyric_bootstrap/bootstrap_helpers.h
@@ -221,9 +221,9 @@ target_include_directories(lyric_bootstrap PUBLIC
 target_compile_definitions(lyric_bootstrap PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_RUNTIME_BOOTSTRAP_DIR=\"${LYRIC_RUNTIME_BOOTSTRAP_DIR}\""
-    "ASSEMBLY_PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""
-    "ASSEMBLY_PLUGIN_ARCHITECTURE=\"${CMAKE_SYSTEM_PROCESSOR}\""
-    "ASSEMBLY_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
+    "PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""
+    "PLUGIN_ARCHITECTURE=\"${CMAKE_SYSTEM_PROCESSOR}\""
+    "PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
 )
 
 target_link_libraries(lyric_bootstrap
@@ -235,9 +235,9 @@ target_link_libraries(lyric_bootstrap
     flatbuffers::flatbuffers
 )
 
-# install assembly and plugin
+# install object and plugin
 install(FILES
-    ${PRELUDE_ASSEMBLY_PATH}
+    ${PRELUDE_OBJECT_PATH}
     ${PRELUDE_PLUGIN_PATH}
     DESTINATION ${BOOTSTRAP_DIR_PREFIX}
     )

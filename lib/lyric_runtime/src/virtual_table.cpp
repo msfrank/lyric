@@ -1,6 +1,5 @@
 
 #include <lyric_runtime/bytecode_segment.h>
-#include <lyric_runtime/internal/assembly_reader.h>
 #include <lyric_runtime/virtual_table.h>
 #include <tempo_utils/log_stream.h>
 

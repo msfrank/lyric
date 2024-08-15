@@ -61,7 +61,7 @@ lyric_assembler::ProcHandle::ProcHandle(
  */
 lyric_assembler::ProcHandle::ProcHandle(
     const lyric_common::SymbolUrl &activation,
-    AssemblyState *state)
+    ObjectState *state)
     : m_activation(activation),
       m_numListParameters(0),
       m_numNamedParameters(0),
@@ -84,7 +84,7 @@ lyric_assembler::ProcHandle::ProcHandle(
     tu_uint8 numListParameters,
     tu_uint8 numNamedParameters,
     bool hasRestParameter,
-    AssemblyState *state,
+    ObjectState *state,
     BlockHandle *parent)
     : m_activation(activation),
       m_numListParameters(numListParameters),

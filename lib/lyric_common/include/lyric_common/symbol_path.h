@@ -10,7 +10,7 @@
 #include <tempo_utils/prehashed_value.h>
 #include <tempo_utils/url.h>
 
-#include "assembly_location.h"
+#include "module_location.h"
 
 namespace lyric_common {
 

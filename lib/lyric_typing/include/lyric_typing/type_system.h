@@ -1,7 +1,7 @@
 #ifndef LYRIC_TYPING_TYPE_SYSTEM_H
 #define LYRIC_TYPING_TYPE_SYSTEM_H
 
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_assembler/block_handle.h>
 #include <lyric_parser/node_walker.h>
 
@@ -13,9 +13,9 @@ namespace lyric_typing {
     class TypeSystem {
 
     public:
-        explicit TypeSystem(lyric_assembler::AssemblyState *state);
+        explicit TypeSystem(lyric_assembler::ObjectState *state);
 
-        lyric_assembler::AssemblyState *getState() const;
+        lyric_assembler::ObjectState *getState() const;
 
         tempo_utils::Result<TypeSpec>
         parseAssignable(
@@ -72,7 +72,7 @@ namespace lyric_typing {
             const lyric_common::TypeDef &fromRef);
 
     private:
-        lyric_assembler::AssemblyState *m_state;
+        lyric_assembler::ObjectState *m_state;
         std::unique_ptr<TypingTracer> m_tracer;
     };
 }

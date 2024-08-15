@@ -31,7 +31,7 @@ lyric_test::matchers::RefHandleMatcher::MatchAndExplain(const lyric_runtime::Ref
     if (vtable == nullptr)
         return false;
     auto refUrl = vtable->getSymbolUrl();
-    if (m_symbolUrl.getAssemblyLocation().isValid())
+    if (m_symbolUrl.getModuleLocation().isValid())
         return refUrl == m_symbolUrl;
     return refUrl.getSymbolPath() == m_symbolUrl.getSymbolPath();
 }

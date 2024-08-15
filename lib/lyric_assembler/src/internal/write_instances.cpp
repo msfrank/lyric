@@ -112,18 +112,18 @@ write_instance(
 
 tempo_utils::Status
 lyric_assembler::internal::write_instances(
-    const AssemblyState *assemblyState,
+    const ObjectState *objectState,
     flatbuffers::FlatBufferBuilder &buffer,
     InstancesOffset &instancesOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (assemblyState != nullptr);
+    TU_ASSERT (objectState != nullptr);
 
-    SymbolCache *symbolCache = assemblyState->symbolCache();
-    TypeCache *typeCache = assemblyState->typeCache();
+    SymbolCache *symbolCache = objectState->symbolCache();
+    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::InstanceDescriptor>> instances_vector;
 
-    for (auto iterator = assemblyState->instancesBegin(); iterator != assemblyState->instancesEnd(); iterator++) {
+    for (auto iterator = objectState->instancesBegin(); iterator != objectState->instancesEnd(); iterator++) {
         auto &instanceSymbol = *iterator;
         TU_RETURN_IF_NOT_OK (
             write_instance(instanceSymbol, typeCache, symbolCache, buffer, instances_vector, symbols_vector));

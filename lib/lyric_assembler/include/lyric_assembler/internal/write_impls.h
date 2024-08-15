@@ -13,7 +13,7 @@ namespace lyric_assembler::internal {
     using ImplsOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::ImplDescriptor>>>;
 
     tempo_utils::Status write_impls(
-        const AssemblyState *assemblyState,
+        const ObjectState *objectState,
         flatbuffers::FlatBufferBuilder &buffer,
         ImplsOffset &implsOffset);
 }

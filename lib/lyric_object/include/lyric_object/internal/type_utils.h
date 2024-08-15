@@ -10,7 +10,7 @@ namespace lyric_object::internal {
 
     tempo_utils::Result<lyric_common::SymbolUrl> load_type_symbol(
         std::shared_ptr<const ObjectReader> reader,
-        const lyric_common::AssemblyLocation &location,
+        const lyric_common::ModuleLocation &location,
         lyo1::TypeSection section,
         uint32_t descriptor);
 }

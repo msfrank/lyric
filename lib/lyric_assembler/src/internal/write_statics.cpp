@@ -59,18 +59,18 @@ write_static(
 
 tempo_utils::Status
 lyric_assembler::internal::write_statics(
-    const AssemblyState *assemblyState,
+    const ObjectState *objectState,
     flatbuffers::FlatBufferBuilder &buffer,
     StaticsOffset &staticsOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (assemblyState != nullptr);
+    TU_ASSERT (objectState != nullptr);
 
-    SymbolCache *symbolCache = assemblyState->symbolCache();
-    TypeCache *typeCache = assemblyState->typeCache();
+    SymbolCache *symbolCache = objectState->symbolCache();
+    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::StaticDescriptor>> statics_vector;
 
-    for (auto iterator = assemblyState->staticsBegin(); iterator != assemblyState->staticsEnd(); iterator++) {
+    for (auto iterator = objectState->staticsBegin(); iterator != objectState->staticsEnd(); iterator++) {
         auto &staticSymbol = *iterator;
         TU_RETURN_IF_NOT_OK (
             write_static(staticSymbol, typeCache, symbolCache, buffer, statics_vector, symbols_vector));

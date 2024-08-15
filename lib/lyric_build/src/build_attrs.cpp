@@ -42,8 +42,8 @@ lyric_build::EntryTypeAttr::parseAttr(tu_uint32 index, tempo_utils::AbstractAttr
     return value_to_base_type(value, binding);
 }
 
-const lyric_common::AssemblyLocationAttr lyric_build::kLyricBuildAssemblyLocation(
-    &lyric_schema::kLyricBuildAssemblyLocationProperty);
+const lyric_common::ModuleLocationAttr lyric_build::kLyricBuildModuleLocation(
+    &lyric_schema::kLyricBuildModuleLocationProperty);
 
 const tempo_utils::UrlAttr lyric_build::kLyricBuildContentUrl(
     &lyric_schema::kLyricBuildContentUrlProperty);

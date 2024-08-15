@@ -15,9 +15,9 @@
 //
 //    // create fake state
 //    lyric_packaging::PackageLoader loader({ZURI_DIST_LIB_PKG_DIR});
-//    lyric_compiler::AssemblyState state(
-//        lyric_common::AssemblyLocation("", "", "/test"),
-//        lyric_common::AssemblyLocation::fromString(ZURI_PRELUDE_LOCATION),
+//    lyric_compiler::ObjectState state(
+//        lyric_common::ModuleLocation("", "", "/test"),
+//        lyric_common::ModuleLocation::fromString(ZURI_PRELUDE_LOCATION),
 //        {},
 //        &loader,
 //        &scopeManager);

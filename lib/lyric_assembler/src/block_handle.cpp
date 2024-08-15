@@ -29,7 +29,7 @@
 lyric_assembler::BlockHandle::BlockHandle(
     ProcHandle *blockProc,
     CodeBuilder *blockCode,
-    AssemblyState *state,
+    ObjectState *state,
     bool isRoot)
     : m_blockNs(nullptr),
       m_blockProc(blockProc),
@@ -67,7 +67,7 @@ lyric_assembler::BlockHandle::BlockHandle(
     ProcHandle *blockProc,
     CodeBuilder *blockCode,
     BlockHandle *parentBlock,
-    AssemblyState *state,
+    ObjectState *state,
     bool isRoot)
     : m_definition(),
       m_blockNs(blockNs),
@@ -88,7 +88,7 @@ lyric_assembler::BlockHandle::BlockHandle(
     ProcHandle *blockProc,
     CodeBuilder *blockCode,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : m_blockNs(nullptr),
       m_blockProc(blockProc),
       m_blockCode(blockCode),
@@ -107,7 +107,7 @@ lyric_assembler::BlockHandle::BlockHandle(
     ProcHandle *blockProc,
     CodeBuilder *blockCode,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : m_blockNs(nullptr),
       m_blockProc(blockProc),
       m_blockCode(blockCode),
@@ -125,7 +125,7 @@ lyric_assembler::BlockHandle::BlockHandle(
 lyric_assembler::BlockHandle::BlockHandle(
     const lyric_common::SymbolUrl &definition,
     const absl::flat_hash_map<std::string,SymbolBinding> &importedBindings,
-    AssemblyState *state)
+    ObjectState *state)
     : m_definition(definition),
       m_blockNs(nullptr),
       m_blockProc(nullptr),
@@ -167,7 +167,7 @@ lyric_assembler::BlockHandle::blockParent()
     return m_parentBlock;
 }
 
-lyric_assembler::AssemblyState *
+lyric_assembler::ObjectState *
 lyric_assembler::BlockHandle::blockState()
 {
     return m_state;

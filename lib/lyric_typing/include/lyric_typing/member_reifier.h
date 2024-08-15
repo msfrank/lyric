@@ -8,7 +8,7 @@
 #include <lyric_common/symbol_url.h>
 
 #include <lyric_assembler/action_symbol.h>
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/assembler_result.h>
 #include <lyric_assembler/assembler_types.h>

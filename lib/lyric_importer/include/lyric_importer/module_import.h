@@ -1,7 +1,7 @@
 #ifndef LYRIC_IMPORTER_MODULE_IMPORT_H
 #define LYRIC_IMPORTER_MODULE_IMPORT_H
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <lyric_object/lyric_object.h>
 #include <tempo_utils/result.h>
 
@@ -30,7 +30,7 @@ namespace lyric_importer {
     public:
         ModuleImport() = delete;
 
-        lyric_common::AssemblyLocation getLocation() const;
+        lyric_common::ModuleLocation getLocation() const;
         lyric_object::LyricObject getObject() const;
 
         ActionImport *getAction(tu_uint32 offset) const;
@@ -49,7 +49,7 @@ namespace lyric_importer {
         TemplateImport *getTemplate(tu_uint32 offset) const;
 
     private:
-        lyric_common::AssemblyLocation m_location;
+        lyric_common::ModuleLocation m_location;
         lyric_object::LyricObject m_object;
         std::vector<ActionImport *> m_importedActions;
         std::vector<CallImport *> m_importedCalls;
@@ -67,7 +67,7 @@ namespace lyric_importer {
         std::vector<TypeImport *> m_importedTypes;
 
         ModuleImport(
-            const lyric_common::AssemblyLocation &importLocation,
+            const lyric_common::ModuleLocation &importLocation,
             const lyric_object::LyricObject &importObject);
         tempo_utils::Status initialize();
 

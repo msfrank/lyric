@@ -1,7 +1,7 @@
 #ifndef LYRIC_RUNTIME_ABSTRACT_LOADER_H
 #define LYRIC_RUNTIME_ABSTRACT_LOADER_H
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <lyric_object/lyric_object.h>
 #include <lyric_object/plugin_specifier.h>
 #include <tempo_utils/option_template.h>
@@ -12,7 +12,7 @@
 namespace lyric_runtime {
 
     /**
-     * AbstractLoader is an interface which defines how to load an assembly from an assembly location.
+     * AbstractLoader is an interface which defines how to load an object from a module location.
      */
     class AbstractLoader {
 
@@ -20,15 +20,15 @@ namespace lyric_runtime {
         virtual ~AbstractLoader() = default;
 
         /**
-         * Returns a Result containing true if the loader can load an assembly at the specified location,
-         * a Result containing false if the loader cannot load an assembly at the specified location, or a
+         * Returns a Result containing true if the loader can load an object at the specified location,
+         * a Result containing false if the loader cannot load an object at the specified location, or a
          * Status if there was an error.
          *
          * @param location The location.
-         * @return A Result containing a boolean indicating whether the loader can load the assembly
+         * @return A Result containing a boolean indicating whether the loader can load the object
          */
-        virtual tempo_utils::Result<bool> hasAssembly(
-            const lyric_common::AssemblyLocation &location) const = 0;
+        virtual tempo_utils::Result<bool> hasModule(
+            const lyric_common::ModuleLocation &location) const = 0;
 
         /**
          * Returns a Result containing a fully qualified location for the specified location, a Result containing
@@ -38,20 +38,20 @@ namespace lyric_runtime {
          * @return A Result containing the fully qualified location if resolution was successful, or an invalid
          *     location if the loader is not capable of resolving the location.
          */
-        virtual tempo_utils::Result<Option<lyric_common::AssemblyLocation>> resolveAssembly(
-            const lyric_common::AssemblyLocation &location) const = 0;
+        virtual tempo_utils::Result<Option<lyric_common::ModuleLocation>> resolveModule(
+            const lyric_common::ModuleLocation &location) const = 0;
 
         /**
-         * Loads the assembly at the specified location. A Result containing the assembly is returned if the load
-         * was successful. If the loader is not capable of loading the assembly then a Result containing an invalid
-         * assembly is returned. If there was an error during loading then a Status is returned.
+         * Loads the module at the specified location. A Result containing and Option containing the object is
+         * returned if the load was successful. If the loader is not capable of loading the module then a Result
+         * containing an empty Option is returned. If there was an error during loading then a Status is returned.
          *
          * @param location The location.
-         * @return A Result containing a valid LyricAssembly if loading was successful, or an invalid assembly if
-         *     the loader is not capable of loading from the location.
+         * @return A Result containing an Option containing a valid LyricObject if loading was successful, or an
+         * empty Option if the loader is not capable of loading from the location, or a Status.
          */
-        virtual tempo_utils::Result<Option<lyric_object::LyricObject>> loadAssembly(
-            const lyric_common::AssemblyLocation &location) = 0;
+        virtual tempo_utils::Result<Option<lyric_object::LyricObject>> loadModule(
+            const lyric_common::ModuleLocation &location) = 0;
 
         /**
          *
@@ -60,7 +60,7 @@ namespace lyric_runtime {
          * @return
          */
         virtual tempo_utils::Result<Option<std::shared_ptr<const AbstractPlugin>>> loadPlugin(
-            const lyric_common::AssemblyLocation &location,
+            const lyric_common::ModuleLocation &location,
             const lyric_object::PluginSpecifier &specifier) = 0;
     };
 }

@@ -15,7 +15,7 @@ lyric_assembler::internal::write_links(
     for (auto iterator = importCache->linksBegin(); iterator != importCache->linksEnd(); iterator++) {
         auto &requestedLink = *iterator;
 
-        auto linkLocation = requestedLink.linkUrl.getAssemblyLocation();
+        auto linkLocation = requestedLink.linkUrl.getModuleLocation();
         if (!importCache->hasImport(linkLocation))
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                 "invalid link {}: no import for link location", requestedLink.linkUrl.toString());

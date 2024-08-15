@@ -1,7 +1,7 @@
 #ifndef LYRIC_ASSEMBLER_TYPE_SET_H
 #define LYRIC_ASSEMBLER_TYPE_SET_H
 
-#include "assembly_state.h"
+#include "object_state.h"
 
 namespace lyric_assembler {
 
@@ -15,27 +15,27 @@ namespace lyric_assembler {
     class DisjointTypeSet {
 
     public:
-        explicit DisjointTypeSet(const lyric_assembler::AssemblyState *state);
+        explicit DisjointTypeSet(const lyric_assembler::ObjectState *state);
         ~DisjointTypeSet();
 
         tempo_utils::Status putType(const lyric_common::TypeDef &type);
 
     private:
-        const AssemblyState *m_state;
+        const ObjectState *m_state;
         TypeLevel *m_root;
     };
 
     class UnifiedTypeSet {
 
     public:
-        explicit UnifiedTypeSet(const lyric_assembler::AssemblyState *state);
+        explicit UnifiedTypeSet(const lyric_assembler::ObjectState *state);
         ~UnifiedTypeSet();
 
         tempo_utils::Status putType(const lyric_common::TypeDef &type);
         lyric_common::TypeDef getUnifiedType() const;
 
     private:
-        const AssemblyState *m_state;
+        const ObjectState *m_state;
         TypeLevel *m_root;
     };
 }

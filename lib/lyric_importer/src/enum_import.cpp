@@ -207,7 +207,7 @@ lyric_importer::EnumImport::load()
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
-                "cannot import enum at index {} in assembly {}; invalid derive type",
+                "cannot import enum at index {} in module {}; invalid derive type",
                 m_enumOffset, location.toString()));
     priv->derive = enumWalker.getDeriveType();
 
@@ -227,7 +227,7 @@ lyric_importer::EnumImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import enum at index {} in assembly {}; invalid super enum",
+                        "cannot import enum at index {} in module {}; invalid super enum",
                         m_enumOffset, location.toString()));
         }
     }
@@ -246,7 +246,7 @@ lyric_importer::EnumImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import enum at index {} in assembly {}; invalid member at index {}",
+                        "cannot import enum at index {} in module {}; invalid member at index {}",
                         m_enumOffset, location.toString(), i));
         }
         auto name = fieldUrl.getSymbolName();
@@ -267,7 +267,7 @@ lyric_importer::EnumImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import enum at index {} in assembly {}; invalid method at index {}",
+                        "cannot import enum at index {} in module {}; invalid method at index {}",
                         m_enumOffset, location.toString(), i));
         }
         auto name = callUrl.getSymbolName();

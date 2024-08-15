@@ -1,5 +1,4 @@
 
-#include <lyric_runtime/internal/assembly_reader.h>
 #include <lyric_runtime/internal/resolve_link.h>
 
 /**
@@ -13,7 +12,7 @@
  */
 lyric_runtime::BytecodeSegment *
 lyric_runtime::internal::get_or_load_segment(
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     SegmentManagerData *segmentManagerData)
 {
     // return null if assembly location is invalid
@@ -25,17 +24,17 @@ lyric_runtime::internal::get_or_load_segment(
     if (entry != segmentManagerData->segmentcache.cend())
         return segmentManagerData->segments[entry->second];
 
-    auto loadAssemblyResult = segmentManagerData->loader->loadAssembly(location);
-    if (loadAssemblyResult.isStatus()) {
-        TU_LOG_V << "failed to load " << location << ": " << loadAssemblyResult.getStatus();
+    auto loadModuleResult = segmentManagerData->loader->loadModule(location);
+    if (loadModuleResult.isStatus()) {
+        TU_LOG_V << "failed to load " << location << ": " << loadModuleResult.getStatus();
         return nullptr;                                 // failed to load assembly from location
     }
-    auto assemblyOption = loadAssemblyResult.getResult();
-    if (assemblyOption.isEmpty()) {
-        TU_LOG_V << "failed to load " << location << ": assembly not found";
+    auto objectOption = loadModuleResult.getResult();
+    if (objectOption.isEmpty()) {
+        TU_LOG_V << "failed to load " << location << ": object not found";
         return nullptr;                                 // failed to load assembly from location
     }
-    auto assembly = assemblyOption.getValue();
+    auto object = objectOption.getValue();
 
     // attempt to load the plugin for the assembly
     // FIXME: its not currently considered an error if the plugin is missing.
@@ -48,7 +47,7 @@ lyric_runtime::internal::get_or_load_segment(
 
     // allocate the segment
     auto segmentIndex = segmentManagerData->segments.size();
-    auto *segment = new lyric_runtime::BytecodeSegment(segmentIndex, location, assembly, plugin);
+    auto *segment = new lyric_runtime::BytecodeSegment(segmentIndex, location, object, plugin);
 
     // if there is a plugin then load it
     if (plugin != nullptr) {
@@ -109,11 +108,11 @@ lyric_runtime::internal::resolve_link(
     TU_LOG_V << "resolving link " << index << " to symbol " << referenceUrl;
 
     // get the segment containing the linked symbol
-    auto location = referenceUrl.getAssemblyLocation();
+    auto location = referenceUrl.getModuleLocation();
     auto *segment = get_or_load_segment(location, segmentManagerData);
     if (segment == nullptr) {
         status = InterpreterStatus::forCondition(
-            InterpreterCondition::kMissingAssembly, location.toString());
+            InterpreterCondition::kMissingObject, location.toString());
         return nullptr;
     }
 
@@ -133,11 +132,11 @@ lyric_runtime::internal::resolve_link(
     LinkEntry completedLinkage;
     completedLinkage.linkage = symbol.getLinkageSection();
     completedLinkage.value = symbol.getLinkageIndex();
-    completedLinkage.assembly = segment->getSegmentIndex();
+    completedLinkage.object = segment->getSegmentIndex();
 
     TU_LOG_V << "resolved " << symbolPath
              << " to descriptor " << completedLinkage.value
-             << " in assembly " << completedLinkage.assembly;
+             << " in object " << completedLinkage.object;
 
     segment = segmentManagerData->segments[sp->getSegmentIndex()];
     if (!segment->setLink(index, completedLinkage)) {
@@ -175,7 +174,7 @@ lyric_runtime::internal::resolve_descriptor(
                 InterpreterCondition::kRuntimeInvariant, "invalid linkage for descriptor");
             return {};          // wrong descriptor type
         }
-        segmentIndex = linkage->assembly;
+        segmentIndex = linkage->object;
         valueIndex = linkage->value;
     }
 
@@ -232,7 +231,7 @@ lyric_runtime::internal::resolve_literal(
                 InterpreterCondition::kRuntimeInvariant, "invalid linkage for literal");
             return {};          // wrong descriptor type
         }
-        auto *segment = segmentManagerData->segments[linkage->assembly];
+        auto *segment = segmentManagerData->segments[linkage->object];
         literalObject = segment->getObject().getObject();
         literalIndex = linkage->value;
     }

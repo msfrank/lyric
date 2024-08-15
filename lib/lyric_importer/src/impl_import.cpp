@@ -91,7 +91,7 @@ lyric_importer::ImplImport::load()
             throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(
                     ImporterCondition::kImportError,
-                    "cannot import impl at index {} in assembly {}; invalid impl concept",
+                    "cannot import impl at index {} in module {}; invalid impl concept",
                     m_implOffset, location.toString()));
     }
 
@@ -112,7 +112,7 @@ lyric_importer::ImplImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import impl at index {} in assembly {}; invalid extension at index {}",
+                        "cannot import impl at index {} in module {}; invalid extension at index {}",
                         m_implOffset, location.toString(), i));
         }
 
@@ -128,7 +128,7 @@ lyric_importer::ImplImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import impl at index {} in assembly {}; invalid extension at index {}",
+                        "cannot import impl at index {} in module {}; invalid extension at index {}",
                         m_implOffset, location.toString(), i));
         }
 

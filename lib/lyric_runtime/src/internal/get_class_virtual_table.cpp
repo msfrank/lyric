@@ -24,13 +24,13 @@ lyric_runtime::internal::get_class_virtual_table(
     if (segmentManagerData->vtablecache.contains(descriptor))
         return segmentManagerData->vtablecache[descriptor];
 
-    auto assemblyIndex = descriptor.data.descriptor.assembly;
-    auto *classSegment = segmentManagerData->segments[assemblyIndex];
+    auto objectIndex = descriptor.data.descriptor.object;
+    auto *classSegment = segmentManagerData->segments[objectIndex];
     auto classObject = classSegment->getObject().getObject();
     auto classIndex = descriptor.data.descriptor.value;
     auto classDescriptor = classObject.getClass(classIndex);
     auto classType = DataCell::forType(
-        assemblyIndex, classDescriptor.getClassType().getDescriptorOffset());
+        objectIndex, classDescriptor.getClassType().getDescriptorOffset());
 
     const VirtualTable *parentTable = nullptr;
     tu_uint32 layoutBase = 0;
@@ -40,7 +40,7 @@ lyric_runtime::internal::get_class_virtual_table(
 
     // if class has a superclass, then resolve its virtual table
     if (classDescriptor.hasSuperClass()) {
-        tu_uint32 superAssemblyIndex = INVALID_ADDRESS_U32;;
+        tu_uint32 superObjectIndex = INVALID_ADDRESS_U32;;
         tu_uint32 superClassIndex = INVALID_ADDRESS_U32;;
 
         switch (classDescriptor.superClassAddressType()) {
@@ -52,12 +52,12 @@ lyric_runtime::internal::get_class_virtual_table(
                         InterpreterCondition::kRuntimeInvariant, "invalid super class");
                     return nullptr;
                 }
-                superAssemblyIndex = link->assembly;
+                superObjectIndex = link->object;
                 superClassIndex = link->value;
                 break;
             }
             case lyric_object::AddressType::Near:
-                superAssemblyIndex = assemblyIndex;
+                superObjectIndex = objectIndex;
                 superClassIndex = classDescriptor.getNearSuperClass().getDescriptorOffset();
                 break;
             default:
@@ -66,7 +66,7 @@ lyric_runtime::internal::get_class_virtual_table(
                 break;
         }
 
-        parentTable = get_class_virtual_table(DataCell::forClass(superAssemblyIndex, superClassIndex),
+        parentTable = get_class_virtual_table(DataCell::forClass(superObjectIndex, superClassIndex),
             segmentManagerData, status);
         if (parentTable == nullptr)
             return nullptr;
@@ -78,7 +78,7 @@ lyric_runtime::internal::get_class_virtual_table(
         auto member = classDescriptor.getMember(i);
 
         BytecodeSegment *fieldSegment;
-        tu_uint32 fieldAssembly;
+        tu_uint32 fieldObject;
         tu_uint32 fieldIndex;
 
         switch (member.memberAddressType()) {
@@ -90,14 +90,14 @@ lyric_runtime::internal::get_class_virtual_table(
                         InterpreterCondition::kRuntimeInvariant, "invalid class member linkage");
                     return nullptr;
                 }
-                fieldSegment = segmentManagerData->segments[link->assembly];
-                fieldAssembly = link->assembly;
+                fieldSegment = segmentManagerData->segments[link->object];
+                fieldObject = link->object;
                 fieldIndex = link->value;
                 break;
             }
             case lyric_object::AddressType::Near: {
                 fieldSegment = classSegment;
-                fieldAssembly = assemblyIndex;
+                fieldObject = objectIndex;
                 fieldIndex = member.getNearField().getDescriptorOffset();
                 break;
             }
@@ -107,7 +107,7 @@ lyric_runtime::internal::get_class_virtual_table(
                 return nullptr;
         }
 
-        auto key = DataCell::forField(fieldAssembly, fieldIndex);
+        auto key = DataCell::forField(fieldObject, fieldIndex);
         members.try_emplace(key, fieldSegment, fieldIndex, layoutBase + i);
     }
 
@@ -116,7 +116,7 @@ lyric_runtime::internal::get_class_virtual_table(
         auto method = classDescriptor.getMethod(i);
 
         BytecodeSegment *callSegment;
-        tu_uint32 callAssembly;
+        tu_uint32 callObject;
         tu_uint32 callIndex;
         tu_uint32 procOffset;
 
@@ -129,15 +129,15 @@ lyric_runtime::internal::get_class_virtual_table(
                         InterpreterCondition::kRuntimeInvariant, "invalid class method linkage");
                     return nullptr;
                 }
-                callSegment = segmentManagerData->segments[link->assembly];
-                callAssembly = link->assembly;
+                callSegment = segmentManagerData->segments[link->object];
+                callObject = link->object;
                 callIndex = link->value;
                 procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
                 break;
             }
             case lyric_object::AddressType::Near: {
                 callSegment = classSegment;
-                callAssembly = assemblyIndex;
+                callObject = objectIndex;
                 callIndex = method.getNearCall().getDescriptorOffset();
                 procOffset = method.getNearCall().getProcOffset();
                 break;
@@ -148,7 +148,7 @@ lyric_runtime::internal::get_class_virtual_table(
                 return nullptr;
         }
 
-        auto key = DataCell::forCall(callAssembly, callIndex);
+        auto key = DataCell::forCall(callObject, callIndex);
         methods.try_emplace(key, callSegment, callIndex, procOffset);
     }
 
@@ -162,7 +162,7 @@ lyric_runtime::internal::get_class_virtual_table(
         for (tu_uint8 j = 0; j < impl.numExtensions(); j++) {
             auto extension = impl.getExtension(j);
 
-            tu_uint32 actionAssembly;
+            tu_uint32 actionObject;
             tu_uint32 actionIndex;
 
             switch (extension.actionAddressType()) {
@@ -174,12 +174,12 @@ lyric_runtime::internal::get_class_virtual_table(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
                         return nullptr;
                     }
-                    actionAssembly = link->assembly;
+                    actionObject = link->object;
                     actionIndex = link->value;
                     break;
                 }
                 case lyric_object::AddressType::Near: {
-                    actionAssembly = assemblyIndex;
+                    actionObject = objectIndex;
                     actionIndex = extension.getNearAction().getDescriptorOffset();
                     break;
                 }
@@ -190,7 +190,7 @@ lyric_runtime::internal::get_class_virtual_table(
             }
 
             BytecodeSegment *callSegment;
-            tu_uint32 callAssembly;
+            tu_uint32 callObject;
             tu_uint32 callIndex;
             tu_uint32 procOffset;
 
@@ -203,15 +203,15 @@ lyric_runtime::internal::get_class_virtual_table(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
                         return nullptr;
                     }
-                    callSegment = segmentManagerData->segments[link->assembly];
-                    callAssembly = link->assembly;
+                    callSegment = segmentManagerData->segments[link->object];
+                    callObject = link->object;
                     callIndex = link->value;
                     procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
                     break;
                 }
                 case lyric_object::AddressType::Near: {
                     callSegment = classSegment;
-                    callAssembly = assemblyIndex;
+                    callObject = objectIndex;
                     callIndex = extension.getNearCall().getDescriptorOffset();
                     procOffset = extension.getNearCall().getProcOffset();
                     break;
@@ -222,11 +222,11 @@ lyric_runtime::internal::get_class_virtual_table(
                     return nullptr;
             }
 
-            auto actionKey = DataCell::forAction(actionAssembly, actionIndex);
+            auto actionKey = DataCell::forAction(actionObject, actionIndex);
             extensions.try_emplace(actionKey, callSegment, callIndex, procOffset);
 
             // add extension to methods as well
-            auto key = DataCell::forCall(callAssembly, callIndex);
+            auto key = DataCell::forCall(callObject, callIndex);
             methods.try_emplace(key, callSegment, callIndex, procOffset);
         }
 
@@ -251,7 +251,7 @@ lyric_runtime::internal::get_class_virtual_table(
                     InterpreterCondition::kRuntimeInvariant, "invalid impl concept linkage");
                 return {};
             }
-            conceptKey = DataCell::forConcept(linkage->assembly, linkage->value);
+            conceptKey = DataCell::forConcept(linkage->object, linkage->value);
         } else {
             conceptKey = DataCell::forConcept(classSegment->getSegmentIndex(), address);
         }

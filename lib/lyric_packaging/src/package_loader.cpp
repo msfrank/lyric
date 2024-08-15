@@ -40,7 +40,7 @@ lyric_packaging::PackageLoader::PackageLoader(const PackageLoader &other)
 tempo_utils::Result<std::filesystem::path>
 lyric_packaging::PackageLoader::packageLocationToFilePath(
     const std::filesystem::path &packagesPath,
-    const lyric_common::AssemblyLocation &location) const
+    const lyric_common::ModuleLocation &location) const
 {
     // build the package specifier
     auto authority = location.getAuthority();
@@ -66,9 +66,9 @@ lyric_packaging::PackageLoader::packageLocationToFilePath(
 }
 
 tempo_utils::Result<std::filesystem::path>
-lyric_packaging::PackageLoader::assemblyLocationToFilePath(
+lyric_packaging::PackageLoader::moduleLocationToFilePath(
     const std::filesystem::path &packagesPath,
-    const lyric_common::AssemblyLocation &location) const
+    const lyric_common::ModuleLocation &location) const
 {
     // build the package specifier
     auto authority = location.getAuthority();
@@ -103,7 +103,7 @@ lyric_packaging::PackageLoader::assemblyLocationToFilePath(
 }
 
 tempo_utils::Result<std::filesystem::path>
-lyric_packaging::PackageLoader::findAssembly(const lyric_common::AssemblyLocation &location) const
+lyric_packaging::PackageLoader::findModule(const lyric_common::ModuleLocation &location) const
 {
     if (location.getScheme() == "file") {
         // a file: location cannot have an authority
@@ -144,7 +144,7 @@ lyric_packaging::PackageLoader::findAssembly(const lyric_common::AssemblyLocatio
                     return absolutePath;
             }
 
-            toFilePathResult = assemblyLocationToFilePath(packagesPath, location);
+            toFilePathResult = moduleLocationToFilePath(packagesPath, location);
             if (toFilePathResult.isStatus())
                 return toFilePathResult.getStatus();
             absolutePath = toFilePathResult.getResult();
@@ -163,16 +163,16 @@ lyric_packaging::PackageLoader::findAssembly(const lyric_common::AssemblyLocatio
 }
 
 tempo_utils::Result<bool>
-lyric_packaging::PackageLoader::hasAssembly(const lyric_common::AssemblyLocation &location) const
+lyric_packaging::PackageLoader::hasModule(const lyric_common::ModuleLocation &location) const
 {
-    auto findAssemblyResult = findAssembly(location);
-    if (findAssemblyResult.isStatus())
-        return findAssemblyResult.getStatus();
-    return !findAssemblyResult.getResult().empty();
+    auto findModuleResult = findModule(location);
+    if (findModuleResult.isStatus())
+        return findModuleResult.getStatus();
+    return !findModuleResult.getResult().empty();
 }
 
-tempo_utils::Result<Option<lyric_common::AssemblyLocation>>
-lyric_packaging::PackageLoader::resolveAssembly(const lyric_common::AssemblyLocation &location) const
+tempo_utils::Result<Option<lyric_common::ModuleLocation>>
+lyric_packaging::PackageLoader::resolveModule(const lyric_common::ModuleLocation &location) const
 {
     auto authority = location.getAuthority();
 
@@ -184,11 +184,11 @@ lyric_packaging::PackageLoader::resolveAssembly(const lyric_common::AssemblyLoca
 
     // if location has any other scheme then we can't qualify the location
     if (location.hasScheme())
-        return Option<lyric_common::AssemblyLocation>();
+        return Option<lyric_common::ModuleLocation>();
 
     // if there is no authority then we can't qualify the location
     if (!authority.isValid())
-        return Option<lyric_common::AssemblyLocation>();
+        return Option<lyric_common::ModuleLocation>();
 
     auto authorityString = authority.toString();
     if (!m_packageMap.contains(authorityString))
@@ -196,30 +196,30 @@ lyric_packaging::PackageLoader::resolveAssembly(const lyric_common::AssemblyLoca
             "missing package specifier for '{}'", authorityString);
     auto origin = absl::StrCat("dev.zuri.pkg://", m_packageMap.at(authorityString));
     auto path = location.getPath().toString();
-    return Option(lyric_common::AssemblyLocation(origin, path));
+    return Option(lyric_common::ModuleLocation(origin, path));
 }
 
 static lyric_packaging::EntryPath
-assembly_location_path_to_entry_path(const tempo_utils::UrlPath &locationPath)
+module_location_path_to_entry_path(const tempo_utils::UrlPath &locationPath)
 {
     auto locationInit = locationPath.getInit();
-    auto assemblyPath = lyric_packaging::EntryPath::fromString("").traverse("lib");
+    auto modulePath = lyric_packaging::EntryPath::fromString("").traverse("lib");
     for (int i = 0; i < locationInit.numParts(); i++) {
-        assemblyPath = assemblyPath.traverse(locationInit.partView(i));
+        modulePath = modulePath.traverse(locationInit.partView(i));
     }
 
     std::filesystem::path filename(locationPath.lastView());
     filename.replace_extension(lyric_common::kObjectFileSuffix);
-    return assemblyPath.traverse(filename.string());
+    return modulePath.traverse(filename.string());
 }
 
 tempo_utils::Result<Option<lyric_object::LyricObject>>
-lyric_packaging::PackageLoader::loadAssembly(const lyric_common::AssemblyLocation &location)
+lyric_packaging::PackageLoader::loadModule(const lyric_common::ModuleLocation &location)
 {
-    auto findAssemblyResult = findAssembly(location);
-    if (findAssemblyResult.isStatus())
-        return findAssemblyResult.getStatus();
-    auto absolutePath = findAssemblyResult.getResult();
+    auto findModuleResult = findModule(location);
+    if (findModuleResult.isStatus())
+        return findModuleResult.getStatus();
+    auto absolutePath = findModuleResult.getResult();
 
     if (absolutePath.empty())
         return Option<lyric_object::LyricObject>();
@@ -236,20 +236,20 @@ lyric_packaging::PackageLoader::loadAssembly(const lyric_common::AssemblyLocatio
 
         auto manifest = reader->getManifest().getManifest();
         auto root = manifest.getRoot();
-        lyric_common::AssemblyLocation packageLocation;
+        lyric_common::ModuleLocation packageLocation;
         auto status = root.parseAttr(kLyricPackagingMainLocation, packageLocation);
         if (status.notOk())
             return status;
         auto locationPath = packageLocation.getPath();
 
         // convert the location path into an entry path
-        auto assemblyPath = assembly_location_path_to_entry_path(locationPath);
+        auto modulePath = module_location_path_to_entry_path(locationPath);
 
-        auto slice = reader->getFileContents(assemblyPath);
+        auto slice = reader->getFileContents(modulePath);
         if (slice.isEmpty())
             return PackageStatus::forCondition(PackageCondition::kPackageInvariant,
                 "package {} missing file contents for {}",
-                absolutePath.string(), assemblyPath.toString());
+                absolutePath.string(), modulePath.toString());
         bytes = slice.toImmutableBytes();
     }
     else if (absolutePath.extension() == lyric_common::kPackageFileDotSuffix) {
@@ -266,7 +266,7 @@ lyric_packaging::PackageLoader::loadAssembly(const lyric_common::AssemblyLocatio
         if (locationPath.isEmpty()) {
             auto manifest = reader->getManifest().getManifest();
             auto root = manifest.getRoot();
-            lyric_common::AssemblyLocation packageLocation;
+            lyric_common::ModuleLocation packageLocation;
             auto status = root.parseAttr(kLyricPackagingMainLocation, packageLocation);
             if (status.notOk())
                 return status;
@@ -276,13 +276,13 @@ lyric_packaging::PackageLoader::loadAssembly(const lyric_common::AssemblyLocatio
             return Option<lyric_object::LyricObject>();
 
         // convert the location path into an entry path
-        auto assemblyPath = assembly_location_path_to_entry_path(locationPath);
+        auto modulePath = module_location_path_to_entry_path(locationPath);
 
-        auto slice = reader->getFileContents(assemblyPath);
+        auto slice = reader->getFileContents(modulePath);
         if (slice.isEmpty())
             return PackageStatus::forCondition(PackageCondition::kPackageInvariant,
                 "package {} missing file contents for {}",
-                absolutePath.string(), assemblyPath.toString());
+                absolutePath.string(), modulePath.toString());
         bytes = slice.toImmutableBytes();
     }
     else if (absolutePath.extension() == std::string_view(lyric_common::kObjectFileDotSuffix)) {
@@ -313,13 +313,13 @@ lyric_packaging::PackageLoader::loadAssembly(const lyric_common::AssemblyLocatio
 
 tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>>
 lyric_packaging::PackageLoader::loadPlugin(
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     const lyric_object::PluginSpecifier &specifier)
 {
-    auto findAssemblyResult = findAssembly(location);
-    if (findAssemblyResult.isStatus())
-        return findAssemblyResult.getStatus();
-    auto absolutePath = findAssemblyResult.getResult();
+    auto findModuleResult = findModule(location);
+    if (findModuleResult.isStatus())
+        return findModuleResult.getStatus();
+    auto absolutePath = findModuleResult.getResult();
 
     if (absolutePath.empty())
         return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>();
@@ -338,8 +338,8 @@ lyric_packaging::PackageLoader::loadPlugin(
     }
     else if (absolutePath.extension() == std::string_view(lyric_common::kObjectFileDotSuffix)) {
 
-        auto platformId = absl::StrCat(ASSEMBLY_PLUGIN_SYSTEM_NAME, "-", ASSEMBLY_PLUGIN_ARCHITECTURE);
-        auto pluginName = absl::StrCat(absolutePath.stem().string(), ".", platformId, ASSEMBLY_PLUGIN_SUFFIX);
+        auto platformId = absl::StrCat(PLUGIN_SYSTEM_NAME, "-", PLUGIN_ARCHITECTURE);
+        auto pluginName = absl::StrCat(absolutePath.stem().string(), ".", platformId, PLUGIN_SUFFIX);
         absolutePath.replace_filename(pluginName);
 
         // attempt to load the plugin

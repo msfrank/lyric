@@ -5,14 +5,14 @@
 
 #include <lyric_object/generated/object.h>
 
-#include "../assembly_state.h"
+#include "../object_state.h"
 
 namespace lyric_assembler::internal {
 
     using NamespacesOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::NamespaceDescriptor>>>;
 
     tempo_utils::Status write_namespaces(
-        const AssemblyState *assemblyState,
+        const ObjectState *objectState,
         flatbuffers::FlatBufferBuilder &buffer,
         NamespacesOffset &namespacesOffset,
         std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector);

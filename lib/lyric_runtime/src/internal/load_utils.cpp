@@ -1,5 +1,4 @@
 
-#include <lyric_runtime/internal/assembly_reader.h>
 #include <lyric_runtime/internal/load_utils.h>
 #include <lyric_runtime/internal/resolve_link.h>
 
@@ -41,10 +40,10 @@ lyric_runtime::internal::push_symbol_descriptor_onto_stack(
     StackfulCoroutine *currentCoro,
     SegmentManagerData *segmentManagerData)
 {
-    auto *segment = get_or_load_segment(symbolUrl.getAssemblyLocation(), segmentManagerData);
+    auto *segment = get_or_load_segment(symbolUrl.getModuleLocation(), segmentManagerData);
     if (segment == nullptr)
         return InterpreterStatus::forCondition(
-            InterpreterCondition::kMissingAssembly, symbolUrl.getAssemblyLocation().toString());
+            InterpreterCondition::kMissingObject, symbolUrl.getModuleLocation().toString());
     auto object = segment->getObject().getObject();
     auto symbol = object.findSymbol(symbolUrl.getSymbolPath());
     if (!symbol.isValid())

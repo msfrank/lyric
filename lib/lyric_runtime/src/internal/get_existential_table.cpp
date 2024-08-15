@@ -25,13 +25,13 @@ lyric_runtime::internal::get_existential_table(
     if (segmentManagerData->etablecache.contains(descriptor))
         return segmentManagerData->etablecache[descriptor];
 
-    auto assemblyIndex = descriptor.data.descriptor.assembly;
-    auto *existentialSegment = segmentManagerData->segments[assemblyIndex];
+    auto objectIndex = descriptor.data.descriptor.object;
+    auto *existentialSegment = segmentManagerData->segments[objectIndex];
     auto existentialObject = existentialSegment->getObject().getObject();
     auto existentialIndex = descriptor.data.descriptor.value;
     auto existentialDescriptor = existentialObject.getExistential(existentialIndex);
     auto existentialType = DataCell::forType(
-        assemblyIndex, existentialDescriptor.getExistentialType().getDescriptorOffset());
+        objectIndex, existentialDescriptor.getExistentialType().getDescriptorOffset());
 
     const ExistentialTable *parentTable = nullptr;
     absl::flat_hash_map<DataCell,VirtualMethod> methods;
@@ -39,7 +39,7 @@ lyric_runtime::internal::get_existential_table(
 
     // if existential has a superexistential, then resolve its virtual table
     if (existentialDescriptor.hasSuperExistential()) {
-        tu_uint32 superAssemblyIndex = INVALID_ADDRESS_U32;;
+        tu_uint32 superObjectIndex = INVALID_ADDRESS_U32;;
         tu_uint32 superExistentialIndex = INVALID_ADDRESS_U32;;
 
         switch (existentialDescriptor.superExistentialAddressType()) {
@@ -51,12 +51,12 @@ lyric_runtime::internal::get_existential_table(
                         InterpreterCondition::kRuntimeInvariant, "invalid super existential");
                     return nullptr;
                 }
-                superAssemblyIndex = link->assembly;
+                superObjectIndex = link->object;
                 superExistentialIndex = link->value;
                 break;
             }
             case lyric_object::AddressType::Near:
-                superAssemblyIndex = assemblyIndex;
+                superObjectIndex = objectIndex;
                 superExistentialIndex = existentialDescriptor.getNearSuperExistential().getDescriptorOffset();
                 break;
             default:
@@ -66,7 +66,7 @@ lyric_runtime::internal::get_existential_table(
         }
 
         parentTable = get_existential_table(
-            DataCell::forExistential(superAssemblyIndex, superExistentialIndex), segmentManagerData, status);
+            DataCell::forExistential(superObjectIndex, superExistentialIndex), segmentManagerData, status);
         if (parentTable == nullptr)
             return nullptr;
     }
@@ -76,7 +76,7 @@ lyric_runtime::internal::get_existential_table(
         auto method = existentialDescriptor.getMethod(i);
 
         BytecodeSegment *callSegment;
-        tu_uint32 callAssembly;
+        tu_uint32 callObject;
         tu_uint32 callIndex;
         tu_uint32 procOffset;
 
@@ -89,15 +89,15 @@ lyric_runtime::internal::get_existential_table(
                         InterpreterCondition::kRuntimeInvariant, "invalid existential method linkage");
                     return nullptr;
                 }
-                callSegment = segmentManagerData->segments[link->assembly];
-                callAssembly = link->assembly;
+                callSegment = segmentManagerData->segments[link->object];
+                callObject = link->object;
                 callIndex = link->value;
                 procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
                 break;
             }
             case lyric_object::AddressType::Near: {
                 callSegment = existentialSegment;
-                callAssembly = assemblyIndex;
+                callObject = objectIndex;
                 callIndex = method.getNearCall().getDescriptorOffset();
                 procOffset = method.getNearCall().getProcOffset();
                 break;
@@ -108,7 +108,7 @@ lyric_runtime::internal::get_existential_table(
                 return nullptr;
         }
 
-        auto key = DataCell::forCall(callAssembly, callIndex);
+        auto key = DataCell::forCall(callObject, callIndex);
         methods.try_emplace(key, callSegment, callIndex, procOffset);
     }
 
@@ -122,7 +122,7 @@ lyric_runtime::internal::get_existential_table(
         for (tu_uint8 j = 0; j < impl.numExtensions(); j++) {
             auto extension = impl.getExtension(j);
 
-            tu_uint32 actionAssembly;
+            tu_uint32 actionObject;
             tu_uint32 actionIndex;
 
             switch (extension.actionAddressType()) {
@@ -134,12 +134,12 @@ lyric_runtime::internal::get_existential_table(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
                         return nullptr;
                     }
-                    actionAssembly = link->assembly;
+                    actionObject = link->object;
                     actionIndex = link->value;
                     break;
                 }
                 case lyric_object::AddressType::Near: {
-                    actionAssembly = assemblyIndex;
+                    actionObject = objectIndex;
                     actionIndex = extension.getNearAction().getDescriptorOffset();
                     break;
                 }
@@ -162,7 +162,7 @@ lyric_runtime::internal::get_existential_table(
                             InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
                         return nullptr;
                     }
-                    callSegment = segmentManagerData->segments[link->assembly];
+                    callSegment = segmentManagerData->segments[link->object];
                     callIndex = link->value;
                     procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
                     break;
@@ -179,7 +179,7 @@ lyric_runtime::internal::get_existential_table(
                     return nullptr;
             }
 
-            auto actionKey = DataCell::forAction(actionAssembly, actionIndex);
+            auto actionKey = DataCell::forAction(actionObject, actionIndex);
             extensions.try_emplace(actionKey, callSegment, callIndex, procOffset);
         }
 
@@ -204,7 +204,7 @@ lyric_runtime::internal::get_existential_table(
                     InterpreterCondition::kRuntimeInvariant, "invalid impl concept linkage");
                 return {};
             }
-            conceptKey = DataCell::forConcept(linkage->assembly, linkage->value);
+            conceptKey = DataCell::forConcept(linkage->object, linkage->value);
         } else {
             conceptKey = DataCell::forConcept(existentialSegment->getSegmentIndex(), address);
         }

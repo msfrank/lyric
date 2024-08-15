@@ -16,9 +16,9 @@ lyric_packaging::DirectoryLoader::DirectoryLoader(const std::filesystem::path &d
 }
 
 std::filesystem::path
-lyric_packaging::DirectoryLoader::assemblyLocationToFilePath(
+lyric_packaging::DirectoryLoader::moduleLocationToFilePath(
     const std::filesystem::path &directoryPath,
-    const lyric_common::AssemblyLocation &location) const
+    const lyric_common::ModuleLocation &location) const
 {
     if (!directoryPath.is_absolute() || !is_directory(directoryPath))
         return {};
@@ -58,9 +58,9 @@ lyric_packaging::DirectoryLoader::fileInfoIsValid(const std::filesystem::path &p
 }
 
 std::filesystem::path
-lyric_packaging::DirectoryLoader::findAssembly(const lyric_common::AssemblyLocation &location) const
+lyric_packaging::DirectoryLoader::findModule(const lyric_common::ModuleLocation &location) const
 {
-    auto absolutePath = assemblyLocationToFilePath(m_directoryPath, location);
+    auto absolutePath = moduleLocationToFilePath(m_directoryPath, location);
     if (!absolutePath.empty()) {
         if (fileInfoIsValid(absolutePath))
             return absolutePath;
@@ -69,21 +69,21 @@ lyric_packaging::DirectoryLoader::findAssembly(const lyric_common::AssemblyLocat
 }
 
 tempo_utils::Result<bool>
-lyric_packaging::DirectoryLoader::hasAssembly(const lyric_common::AssemblyLocation &location) const
+lyric_packaging::DirectoryLoader::hasModule(const lyric_common::ModuleLocation &location) const
 {
-    return !findAssembly(location).empty();
+    return !findModule(location).empty();
 }
 
-tempo_utils::Result<Option<lyric_common::AssemblyLocation>>
-lyric_packaging::DirectoryLoader::resolveAssembly(const lyric_common::AssemblyLocation &location) const
+tempo_utils::Result<Option<lyric_common::ModuleLocation>>
+lyric_packaging::DirectoryLoader::resolveModule(const lyric_common::ModuleLocation &location) const
 {
-    return Option<lyric_common::AssemblyLocation>(location);
+    return Option<lyric_common::ModuleLocation>(location);
 }
 
 tempo_utils::Result<Option<lyric_object::LyricObject>>
-lyric_packaging::DirectoryLoader::loadAssembly(const lyric_common::AssemblyLocation &location)
+lyric_packaging::DirectoryLoader::loadModule(const lyric_common::ModuleLocation &location)
 {
-    auto absolutePath = findAssembly(location);
+    auto absolutePath = findModule(location);
     if (absolutePath.empty())
         return Option<lyric_object::LyricObject>();
 
@@ -94,24 +94,24 @@ lyric_packaging::DirectoryLoader::loadAssembly(const lyric_common::AssemblyLocat
 
     // verify that file contents is a valid assembly
     if (!lyric_object::LyricObject::verify(std::span<const tu_uint8>(bytes->getData(), bytes->getSize())))
-        return PackageStatus::forCondition(PackageCondition::kPackageInvariant, "failed to verify assembly");
+        return PackageStatus::forCondition(PackageCondition::kPackageInvariant, "failed to verify object");
 
     // return platform-specific LyricAssembly
-    TU_LOG_INFO << "loaded assembly at " << absolutePath;
+    TU_LOG_INFO << "loaded module at " << absolutePath;
     return Option(lyric_object::LyricObject(bytes));
 }
 
 tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>>
 lyric_packaging::DirectoryLoader::loadPlugin(
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     const lyric_object::PluginSpecifier &specifier)
 {
-    auto absolutePath = findAssembly(location);
+    auto absolutePath = findModule(location);
     if (absolutePath.empty())
         return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>();
 
-    auto platformId = absl::StrCat(ASSEMBLY_PLUGIN_SYSTEM_NAME, "-", ASSEMBLY_PLUGIN_ARCHITECTURE);
-    auto pluginName = absl::StrCat(absolutePath.stem().string(), ".", platformId, ASSEMBLY_PLUGIN_SUFFIX);
+    auto platformId = absl::StrCat(PLUGIN_SYSTEM_NAME, "-", PLUGIN_ARCHITECTURE);
+    auto pluginName = absl::StrCat(absolutePath.stem().string(), ".", platformId, PLUGIN_SUFFIX);
     absolutePath.replace_filename(pluginName);
 
     // attempt to load the plugin

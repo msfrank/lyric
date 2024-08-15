@@ -87,7 +87,7 @@ lyric_object::LinkWalker::getLinkUrl() const
         return {};
     if (importDescriptor->import_location() == nullptr)
         return {};
-    auto linkLocation = lyric_common::AssemblyLocation::fromString(importDescriptor->import_location()->str());
+    auto linkLocation = lyric_common::ModuleLocation::fromString(importDescriptor->import_location()->str());
 
     return lyric_common::SymbolUrl(linkLocation, linkPath);
 }

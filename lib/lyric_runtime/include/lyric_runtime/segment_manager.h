@@ -14,7 +14,7 @@ namespace lyric_runtime {
     struct SegmentManagerData {
         std::shared_ptr<AbstractLoader> loader;
         std::vector<BytecodeSegment *> segments;
-        absl::flat_hash_map<lyric_common::AssemblyLocation,tu_uint32> segmentcache;
+        absl::flat_hash_map<lyric_common::ModuleLocation,tu_uint32> segmentcache;
         absl::flat_hash_map<DataCell,const VirtualTable *> vtablecache;
         absl::flat_hash_map<DataCell,const ExistentialTable *> etablecache;
         absl::flat_hash_map<DataCell,const ConceptTable *> ctablecache;
@@ -26,9 +26,9 @@ namespace lyric_runtime {
         virtual ~SegmentManager();
 
         virtual BytecodeSegment *getSegment(tu_uint32 segmentIndex);
-        virtual BytecodeSegment *getSegment(const lyric_common::AssemblyLocation &location);
+        virtual BytecodeSegment *getSegment(const lyric_common::ModuleLocation &location);
 
-        virtual BytecodeSegment *getOrLoadSegment(const lyric_common::AssemblyLocation &location);
+        virtual BytecodeSegment *getOrLoadSegment(const lyric_common::ModuleLocation &location);
 
         virtual const LinkEntry *resolveLink(
             const BytecodeSegment *sp,

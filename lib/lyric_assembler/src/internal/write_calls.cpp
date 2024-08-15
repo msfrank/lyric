@@ -245,19 +245,19 @@ write_call(
 
 tempo_utils::Status
 lyric_assembler::internal::write_calls(
-    const AssemblyState *assemblyState,
+    const ObjectState *objectState,
     flatbuffers::FlatBufferBuilder &buffer,
     CallsOffset &callsOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector,
     std::vector<tu_uint8> &bytecode)
 {
-    TU_ASSERT (assemblyState != nullptr);
+    TU_ASSERT (objectState != nullptr);
 
-    SymbolCache *symbolCache = assemblyState->symbolCache();
-    TypeCache *typeCache = assemblyState->typeCache();
+    SymbolCache *symbolCache = objectState->symbolCache();
+    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::CallDescriptor>> calls_vector;
 
-    for (auto iterator = assemblyState->callsBegin(); iterator != assemblyState->callsEnd(); iterator++) {
+    for (auto iterator = objectState->callsBegin(); iterator != objectState->callsEnd(); iterator++) {
         auto &callSymbol = *iterator;
         TU_RETURN_IF_NOT_OK (
             write_call(callSymbol, typeCache, symbolCache, buffer, calls_vector, symbols_vector, bytecode));

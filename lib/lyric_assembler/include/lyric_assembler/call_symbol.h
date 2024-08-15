@@ -7,7 +7,7 @@
 
 #include "abstract_resolver.h"
 #include "abstract_symbol.h"
-#include "assembly_state.h"
+#include "object_state.h"
 #include "base_symbol.h"
 
 namespace lyric_assembler {
@@ -46,7 +46,7 @@ namespace lyric_assembler {
             const lyric_common::TypeDef &returnType,
             CallAddress address,
             TypeHandle *callType,
-            AssemblyState *state);
+            ObjectState *state);
 
         CallSymbol(
             const lyric_common::SymbolUrl &callUrl,
@@ -57,7 +57,7 @@ namespace lyric_assembler {
             TemplateHandle *callTemplate,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
 
         CallSymbol(
             const lyric_common::SymbolUrl &callUrl,
@@ -67,7 +67,7 @@ namespace lyric_assembler {
             lyric_object::CallMode mode,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
 
         CallSymbol(
             const lyric_common::SymbolUrl &callUrl,
@@ -77,7 +77,7 @@ namespace lyric_assembler {
             TemplateHandle *callTemplate,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
 
         CallSymbol(
             const lyric_common::SymbolUrl &callUrl,
@@ -86,12 +86,12 @@ namespace lyric_assembler {
             lyric_object::CallMode mode,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
 
         CallSymbol(
             const lyric_common::SymbolUrl &callUrl,
             lyric_importer::CallImport *callImport,
-            AssemblyState *state);
+            ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;
 
@@ -135,7 +135,7 @@ namespace lyric_assembler {
     private:
         lyric_common::SymbolUrl m_callUrl;
         lyric_importer::CallImport *m_callImport = nullptr;
-        AssemblyState *m_state;
+        ObjectState *m_state;
 
         CallSymbolPriv *load() override;
     };

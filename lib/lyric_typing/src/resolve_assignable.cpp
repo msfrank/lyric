@@ -1,5 +1,5 @@
 
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
@@ -10,7 +10,7 @@ tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::resolve_singular(
     const TypeSpec &assignable,
     lyric_assembler::AbstractResolver *resolver,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (assignable.isValid());
     TU_ASSERT (assignable.getType() == TypeSpecType::Singular);
@@ -42,7 +42,7 @@ tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::resolve_assignable(
     const TypeSpec &assignable,
     lyric_assembler::AbstractResolver *resolver,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (assignable.isValid());
     TU_ASSERT (resolver != nullptr);
@@ -83,7 +83,7 @@ tempo_utils::Result<std::vector<lyric_common::TypeDef>>
 lyric_typing::resolve_type_arguments(
     const std::vector<TypeSpec> &typeArgumentsSpec,
     lyric_assembler::AbstractResolver *resolver,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (!typeArgumentsSpec.empty());
     TU_ASSERT (resolver != nullptr);

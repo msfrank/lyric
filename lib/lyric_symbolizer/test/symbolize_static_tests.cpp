@@ -28,7 +28,7 @@ TEST(SymbolizeStatic, DeclareStaticVal)
         tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
-    auto object = symbolizeModule.getAssembly();
+    auto object = symbolizeModule.getModule();
     auto root = object.getObject();
     ASSERT_EQ (0, root.numImports());
     ASSERT_EQ (2, root.numSymbols());
@@ -58,7 +58,7 @@ TEST(SymbolizeStatic, DeclareStaticVar)
                  tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
-    auto object = symbolizeModule.getAssembly();
+    auto object = symbolizeModule.getModule();
     auto root = object.getObject();
     ASSERT_EQ (0, root.numImports());
     ASSERT_EQ (2, root.numSymbols());

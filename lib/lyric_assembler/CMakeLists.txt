@@ -10,7 +10,6 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/abstract_callable.h
     include/lyric_assembler/abstract_callsite_reifier.h
     include/lyric_assembler/abstract_constructable.h
-    include/lyric_assembler/abstract_importer.h
     include/lyric_assembler/abstract_member_reifier.h
     include/lyric_assembler/abstract_placement.h
     include/lyric_assembler/abstract_resolver.h
@@ -22,7 +21,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/assembler_result.h
     include/lyric_assembler/assembler_tracer.h
     include/lyric_assembler/assembler_types.h
-    include/lyric_assembler/assembly_state.h
+    include/lyric_assembler/object_state.h
     include/lyric_assembler/base_handle.h
     include/lyric_assembler/base_symbol.h
     include/lyric_assembler/block_handle.h
@@ -72,7 +71,7 @@ target_sources(lyric_assembler PRIVATE
     src/assembler_result.cpp
     src/assembler_tracer.cpp
     src/assembler_types.cpp
-    src/assembly_state.cpp
+    src/object_state.cpp
     src/block_handle.cpp
     src/callable_invoker.cpp
     src/call_symbol.cpp

@@ -84,7 +84,7 @@ lyric_importer::FieldImport::load()
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
-                "cannot import field at index {} in assembly {}; invalid access type",
+                "cannot import field at index {} in module {}; invalid access type",
                 m_fieldOffset, location.toString()));
     priv->access = fieldWalker.getAccess();
 
@@ -108,7 +108,7 @@ lyric_importer::FieldImport::load()
             default:
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
-                        "cannot import field at index {} in assembly {}; invalid initializer",
+                        "cannot import field at index {} in module {}; invalid initializer",
                         fieldWalker.getDescriptorOffset(), location.toString()));
         }
     }

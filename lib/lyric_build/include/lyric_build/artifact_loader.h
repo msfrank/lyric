@@ -18,14 +18,14 @@ namespace lyric_build {
         ArtifactLoader(const TaskState &state, std::shared_ptr<AbstractCache> cache);
         ArtifactLoader(const ArtifactLoader &other);
 
-        tempo_utils::Result<bool> hasAssembly(
-            const lyric_common::AssemblyLocation &location) const override;
-        tempo_utils::Result<Option<lyric_common::AssemblyLocation>> resolveAssembly(
-            const lyric_common::AssemblyLocation &location) const override;
-        tempo_utils::Result<Option<lyric_object::LyricObject>> loadAssembly(
-            const lyric_common::AssemblyLocation &location) override;
+        tempo_utils::Result<bool> hasModule(
+            const lyric_common::ModuleLocation &location) const override;
+        tempo_utils::Result<Option<lyric_common::ModuleLocation>> resolveModule(
+            const lyric_common::ModuleLocation &location) const override;
+        tempo_utils::Result<Option<lyric_object::LyricObject>> loadModule(
+            const lyric_common::ModuleLocation &location) override;
         tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>> loadPlugin(
-            const lyric_common::AssemblyLocation &location,
+            const lyric_common::ModuleLocation &location,
             const lyric_object::PluginSpecifier &specifier) override;
 
     private:

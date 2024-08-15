@@ -46,7 +46,7 @@ namespace lyric_runtime {
             case DataCellType::TYPE:
             case DataCellType::EXISTENTIAL:
             case DataCellType::NAMESPACE:
-                return H::combine(std::move(h), cell.type, cell.data.descriptor.assembly, cell.data.descriptor.value);
+                return H::combine(std::move(h), cell.type, cell.data.descriptor.object, cell.data.descriptor.value);
         }
         TU_UNREACHABLE();
     }

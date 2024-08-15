@@ -76,7 +76,7 @@ lyric_test::TestComputation::getDiagnostics() const
 
 lyric_test::SymbolizeModule::SymbolizeModule()
     : TestComputation(),
-      m_hasAssembly(false)
+      m_hasModule(false)
 {
 }
 
@@ -84,10 +84,10 @@ lyric_test::SymbolizeModule::SymbolizeModule(
     std::shared_ptr<AbstractTester> tester,
     const lyric_build::TargetComputation &computation,
     std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics,
-    const lyric_object::LyricObject &assembly)
+    const lyric_object::LyricObject &object)
     : TestComputation(tester, computation, diagnostics),
-      m_hasAssembly(true),
-      m_assembly(assembly)
+      m_hasModule(true),
+      m_object(object)
 {
 }
 
@@ -96,32 +96,32 @@ lyric_test::SymbolizeModule::SymbolizeModule(
     const lyric_build::TargetComputation &computation,
     std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics)
     : TestComputation(tester, computation, diagnostics),
-      m_hasAssembly(false)
+      m_hasModule(false)
 {
 }
 
 lyric_test::SymbolizeModule::SymbolizeModule(const SymbolizeModule &other)
     : TestComputation(other),
-      m_hasAssembly(other.m_hasAssembly),
-      m_assembly(other.m_assembly)
+      m_hasModule(other.m_hasModule),
+      m_object(other.m_object)
 {
 }
 
 bool
-lyric_test::SymbolizeModule::hasAssembly() const
+lyric_test::SymbolizeModule::hasModule() const
 {
-    return m_hasAssembly;
+    return m_hasModule;
 }
 
 lyric_object::LyricObject
-lyric_test::SymbolizeModule::getAssembly() const
+lyric_test::SymbolizeModule::getModule() const
 {
-    return m_assembly;
+    return m_object;
 }
 
 lyric_test::AnalyzeModule::AnalyzeModule()
     : TestComputation(),
-      m_hasAssembly(false)
+      m_hasModule(false)
 {
 }
 
@@ -129,10 +129,10 @@ lyric_test::AnalyzeModule::AnalyzeModule(
     std::shared_ptr<AbstractTester> tester,
     const lyric_build::TargetComputation &computation,
     std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics,
-    const lyric_object::LyricObject &assembly)
+    const lyric_object::LyricObject &object)
     : TestComputation(tester, computation, diagnostics),
-      m_hasAssembly(true),
-      m_assembly(assembly)
+      m_hasModule(true),
+      m_object(object)
 {
 }
 
@@ -141,32 +141,32 @@ lyric_test::AnalyzeModule::AnalyzeModule(
     const lyric_build::TargetComputation &computation,
     std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics)
     : TestComputation(tester, computation, diagnostics),
-      m_hasAssembly(false)
+      m_hasModule(false)
 {
 }
 
 lyric_test::AnalyzeModule::AnalyzeModule(const AnalyzeModule &other)
     : TestComputation(other),
-      m_hasAssembly(other.m_hasAssembly),
-      m_assembly(other.m_assembly)
+      m_hasModule(other.m_hasModule),
+      m_object(other.m_object)
 {
 }
 
 bool
-lyric_test::AnalyzeModule::hasAssembly() const
+lyric_test::AnalyzeModule::hasModule() const
 {
-    return m_hasAssembly;
+    return m_hasModule;
 }
 
 lyric_object::LyricObject
-lyric_test::AnalyzeModule::getAssembly() const
+lyric_test::AnalyzeModule::getModule() const
 {
-    return m_assembly;
+    return m_object;
 }
 
 lyric_test::CompileModule::CompileModule()
     : TestComputation(),
-      m_hasAssembly(false)
+      m_hasModule(false)
 {
 }
 
@@ -174,10 +174,10 @@ lyric_test::CompileModule::CompileModule(
     std::shared_ptr<AbstractTester> tester,
     const lyric_build::TargetComputation &computation,
     std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics,
-    const lyric_object::LyricObject &assembly)
+    const lyric_object::LyricObject &object)
     : TestComputation(tester, computation, diagnostics),
-      m_hasAssembly(true),
-      m_assembly(assembly)
+      m_hasModule(true),
+      m_object(object)
 {
 }
 
@@ -186,27 +186,27 @@ lyric_test::CompileModule::CompileModule(
     const lyric_build::TargetComputation &computation,
     std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics)
     : TestComputation(tester, computation, diagnostics),
-      m_hasAssembly(false)
+      m_hasModule(false)
 {
 }
 
 lyric_test::CompileModule::CompileModule(const CompileModule &other)
     : TestComputation(other),
-      m_hasAssembly(other.m_hasAssembly),
-      m_assembly(other.m_assembly)
+      m_hasModule(other.m_hasModule),
+      m_object(other.m_object)
 {
 }
 
 bool
-lyric_test::CompileModule::hasAssembly() const
+lyric_test::CompileModule::hasModule() const
 {
-    return m_hasAssembly;
+    return m_hasModule;
 }
 
 lyric_object::LyricObject
-lyric_test::CompileModule::getAssembly() const
+lyric_test::CompileModule::getModule() const
 {
-    return m_assembly;
+    return m_object;
 }
 
 lyric_test::BuildModule::BuildModule()
@@ -219,7 +219,7 @@ lyric_test::BuildModule::BuildModule(
     std::shared_ptr<AbstractTester> tester,
     const lyric_build::TargetComputation &computation,
     std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics,
-    const lyric_common::AssemblyLocation &location)
+    const lyric_common::ModuleLocation &location)
     : TestComputation(tester, computation, diagnostics),
       m_hasLocation(true),
       m_location(location)
@@ -248,7 +248,7 @@ lyric_test::BuildModule::hasLocation() const
     return m_hasLocation;
 }
 
-lyric_common::AssemblyLocation
+lyric_common::ModuleLocation
 lyric_test::BuildModule::getLocation() const
 {
     return m_location;

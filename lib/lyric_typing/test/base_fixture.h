@@ -3,15 +3,15 @@
 
 #include <gtest/gtest.h>
 
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_typing/type_system.h>
 #include <tempo_tracing/scope_manager.h>
 
 class BaseFixture : public ::testing::Test {
 protected:
-    lyric_common::AssemblyLocation m_location;
+    lyric_common::ModuleLocation m_location;
     std::unique_ptr<tempo_tracing::ScopeManager> m_scopeManager;
-    std::unique_ptr<lyric_assembler::AssemblyState> m_assemblyState;
+    std::unique_ptr<lyric_assembler::ObjectState> m_objectState;
     std::unique_ptr<lyric_typing::TypeSystem> m_typeSystem;
 
     void SetUp() override;

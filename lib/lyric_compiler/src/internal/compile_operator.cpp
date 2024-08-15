@@ -14,7 +14,7 @@
 
 static lyric_common::TypeDef
 operation_type_to_concept_type(
-    const lyric_assembler::AssemblyState *state,
+    const lyric_assembler::ObjectState *state,
     lyric_schema::LyricAstId operationId,
     const std::vector<lyric_common::TypeDef> &argList)
 {

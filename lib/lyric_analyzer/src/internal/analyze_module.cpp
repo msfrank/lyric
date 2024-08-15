@@ -18,8 +18,8 @@ lyric_analyzer::internal::analyze_module(
     auto *state = entryPoint.getState();
 
     // construct assembly from assembly state and return it
-    auto toAssemblyResult = state->toAssembly();
-    if (toAssemblyResult.isStatus())
-        return toAssemblyResult.getStatus();
-    return toAssemblyResult.getResult();
+    auto toObjectResult = state->toObject();
+    if (toObjectResult.isStatus())
+        return toObjectResult.getStatus();
+    return toObjectResult.getResult();
 }

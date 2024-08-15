@@ -2,7 +2,7 @@
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/symbol_cache.h>
 
-lyric_assembler::SymbolCache::SymbolCache(AssemblyState *state, AssemblerTracer *tracer)
+lyric_assembler::SymbolCache::SymbolCache(ObjectState *state, AssemblerTracer *tracer)
     : m_state(state),
       m_tracer(tracer)
 {

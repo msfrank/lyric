@@ -12,14 +12,14 @@ class CallsiteReifierTP0In : public BaseFixture {};
 
 TEST_F(CallsiteReifierTP0In, UnaryFunctionGivenT_P0takesT_returnsBool)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
 
-    auto *typeCache = m_assemblyState->typeCache();
+    auto *typeCache = m_objectState->typeCache();
 
     lyric_common::SymbolUrl entryUrl(lyric_common::SymbolPath({"$entry"}));
-    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, m_assemblyState.get());
+    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, m_objectState.get());
 
     lyric_object::TemplateParameter tp;
     tp.index = 0;

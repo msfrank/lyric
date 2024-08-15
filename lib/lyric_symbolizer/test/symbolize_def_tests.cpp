@@ -28,7 +28,7 @@ TEST(SymbolizeDef, DeclareDef)
         tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
-    auto object = symbolizeModule.getAssembly();
+    auto object = symbolizeModule.getModule();
     auto root = object.getObject();
     ASSERT_EQ (0, root.numImports());
     ASSERT_EQ (1, root.numSymbols());

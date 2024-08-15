@@ -28,7 +28,7 @@ lyric_assembler::StructSymbol::StructSymbol(
     StructSymbol *superStruct,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : BaseSymbol(address, new StructSymbolPriv()),
       m_structUrl(structUrl),
       m_state(state)
@@ -53,7 +53,7 @@ lyric_assembler::StructSymbol::StructSymbol(
 lyric_assembler::StructSymbol::StructSymbol(
     const lyric_common::SymbolUrl &structUrl,
     lyric_importer::StructImport *structImport,
-    AssemblyState *state)
+    ObjectState *state)
     : m_structUrl(structUrl),
       m_structImport(structImport),
       m_state(state)
@@ -381,7 +381,7 @@ lyric_assembler::StructSymbol::isCompletelyInitialized() const
 lyric_common::SymbolUrl
 lyric_assembler::StructSymbol::getCtor() const
 {
-    auto location = m_structUrl.getAssemblyLocation();
+    auto location = m_structUrl.getModuleLocation();
     auto path = m_structUrl.getSymbolPath();
     return lyric_common::SymbolUrl(location, lyric_common::SymbolPath(path.getPath(), "$ctor"));
 }
@@ -448,7 +448,7 @@ tempo_utils::Status
 lyric_assembler::StructSymbol::prepareCtor(ConstructableInvoker &invoker)
 {
     lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(m_structUrl.getSymbolPath().getPath(), "$ctor");
-    auto ctorUrl = lyric_common::SymbolUrl(m_structUrl.getAssemblyLocation(), ctorPath);
+    auto ctorUrl = lyric_common::SymbolUrl(m_structUrl.getModuleLocation(), ctorPath);
 
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(ctorUrl));

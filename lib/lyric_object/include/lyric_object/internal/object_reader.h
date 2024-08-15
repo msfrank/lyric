@@ -75,7 +75,7 @@ namespace lyric_object::internal {
         tu_uint32 getSymbolIndex(const lyo1::SymbolDescriptor *symbol) const;
         tu_uint32 numSymbols() const;
 
-        lyric_common::AssemblyLocation getImportLocation(tu_uint32 index) const;
+        lyric_common::ModuleLocation getImportLocation(tu_uint32 index) const;
         const lyo1::ImportDescriptor *getImport(tu_uint32 index) const;
         tu_uint32 numImports() const;
 

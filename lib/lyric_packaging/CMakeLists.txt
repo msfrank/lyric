@@ -106,9 +106,9 @@ target_include_directories(lyric_packaging PUBLIC
 )
 
 target_compile_definitions(lyric_packaging PRIVATE
-    "ASSEMBLY_PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""
-    "ASSEMBLY_PLUGIN_ARCHITECTURE=\"${CMAKE_SYSTEM_PROCESSOR}\""
-    "ASSEMBLY_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
+    "PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""
+    "PLUGIN_ARCHITECTURE=\"${CMAKE_SYSTEM_PROCESSOR}\""
+    "PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
     )
 
 # make private headers visible internally

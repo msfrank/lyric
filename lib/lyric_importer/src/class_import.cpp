@@ -216,7 +216,7 @@ lyric_importer::ClassImport::load()
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
-                "cannot import class at index {} in assembly {}; invalid derive type",
+                "cannot import class at index {} in module {}; invalid derive type",
                 m_classOffset, location.toString()));
     priv->derive = classWalker.getDeriveType();
 
@@ -243,7 +243,7 @@ lyric_importer::ClassImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import class at index {} in assembly {}; invalid super class",
+                        "cannot import class at index {} in module {}; invalid super class",
                         m_classOffset, location.toString()));
         }
     }
@@ -262,7 +262,7 @@ lyric_importer::ClassImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import class at index {} in assembly {}; invalid member at index {}",
+                        "cannot import class at index {} in module {}; invalid member at index {}",
                         m_classOffset, location.toString(), i));
         }
         auto name = fieldUrl.getSymbolName();
@@ -283,7 +283,7 @@ lyric_importer::ClassImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import class at index {} in assembly {}; invalid method at index {}",
+                        "cannot import class at index {} in module {}; invalid method at index {}",
                         m_classOffset, location.toString(), i));
         }
         auto name = callUrl.getSymbolName();

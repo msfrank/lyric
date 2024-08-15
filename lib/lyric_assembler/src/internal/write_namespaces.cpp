@@ -14,7 +14,7 @@
 static tempo_utils::Status
 write_namespace(
     lyric_assembler::NamespaceSymbol *namespaceSymbol,
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     lyric_assembler::TypeCache *typeCache,
     lyric_assembler::SymbolCache *symbolCache,
     flatbuffers::FlatBufferBuilder &buffer,
@@ -52,7 +52,7 @@ write_namespace(
 
         // skip symbols which are not in the current module
         if (var.symbolUrl.isAbsolute()) {
-            if (location != symbol->getSymbolUrl().getAssemblyLocation()) {
+            if (location != symbol->getSymbolUrl().getModuleLocation()) {
                 TU_LOG_INFO << "ignoring namespace binding " << symbolIterator->first << " for " << symbol->getSymbolUrl();
                 continue;
             }
@@ -150,20 +150,20 @@ write_namespace(
 
 tempo_utils::Status
 lyric_assembler::internal::write_namespaces(
-    const AssemblyState *assemblyState,
+    const ObjectState *objectState,
     flatbuffers::FlatBufferBuilder &buffer,
     NamespacesOffset &namespacesOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (assemblyState != nullptr);
+    TU_ASSERT (objectState != nullptr);
 
-    SymbolCache *symbolCache = assemblyState->symbolCache();
-    TypeCache *typeCache = assemblyState->typeCache();
+    SymbolCache *symbolCache = objectState->symbolCache();
+    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::NamespaceDescriptor>> namespaces_vector;
 
-    for (auto iterator = assemblyState->namespacesBegin(); iterator != assemblyState->namespacesEnd(); iterator++) {
+    for (auto iterator = objectState->namespacesBegin(); iterator != objectState->namespacesEnd(); iterator++) {
         auto &namespaceSymbol = *iterator;
-        TU_RETURN_IF_NOT_OK (write_namespace(namespaceSymbol, assemblyState->getLocation(),
+        TU_RETURN_IF_NOT_OK (write_namespace(namespaceSymbol, objectState->getLocation(),
             typeCache, symbolCache, buffer, namespaces_vector, symbols_vector));
     }
 

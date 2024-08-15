@@ -4,7 +4,7 @@
 #include <chrono>
 #include <filesystem>
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <lyric_packaging/package_types.h>
 #include <lyric_packaging/lyric_manifest.h>
 #include <tempo_config/config_types.h>

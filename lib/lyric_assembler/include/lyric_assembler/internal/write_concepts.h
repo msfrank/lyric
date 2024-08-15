@@ -5,14 +5,14 @@
 
 #include <lyric_object/generated/object.h>
 
-#include "../assembly_state.h"
+#include "../object_state.h"
 
 namespace lyric_assembler::internal {
 
     using ConceptsOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::ConceptDescriptor>>>;
 
     tempo_utils::Status write_concepts(
-        const AssemblyState *assemblyState,
+        const ObjectState *objectState,
         flatbuffers::FlatBufferBuilder &buffer,
         ConceptsOffset &conceptsOffset,
         std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector);

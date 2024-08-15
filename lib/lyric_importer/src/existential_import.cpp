@@ -163,7 +163,7 @@ lyric_importer::ExistentialImport::load()
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
-                "cannot import existential at index {} in assembly {}; invalid derive type",
+                "cannot import existential at index {} in module {}; invalid derive type",
                 m_existentialOffset, location.toString()));
     priv->derive = existentialWalker.getDeriveType();
 
@@ -190,7 +190,7 @@ lyric_importer::ExistentialImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import existential at index {} in assembly {}; invalid super existential",
+                        "cannot import existential at index {} in module {}; invalid super existential",
                         m_existentialOffset, location.toString()));
         }
     }
@@ -209,7 +209,7 @@ lyric_importer::ExistentialImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import existential at index {} in assembly {}; invalid method at index {}",
+                        "cannot import existential at index {} in module {}; invalid method at index {}",
                         m_existentialOffset, location.toString(), i));
         }
         auto name = callUrl.getSymbolName();

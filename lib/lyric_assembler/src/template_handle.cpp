@@ -10,7 +10,7 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
-lyric_assembler::TemplateHandle::TemplateHandle(AssemblyState *state)
+lyric_assembler::TemplateHandle::TemplateHandle(ObjectState *state)
     : m_parentBlock(nullptr), m_state(state)
 {
     TU_ASSERT(m_state != nullptr);
@@ -22,7 +22,7 @@ lyric_assembler::TemplateHandle::TemplateHandle(
     TemplateAddress address,
     TemplateHandle *superTemplate,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : TemplateHandle(templateUrl, templateParameters, address, parentBlock, state)
 {
     m_superTemplate = superTemplate;
@@ -34,7 +34,7 @@ lyric_assembler::TemplateHandle::TemplateHandle(
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     TemplateAddress address,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : m_templateUrl(templateUrl),
       m_templateParameters(templateParameters),
       m_address(address),
@@ -59,7 +59,7 @@ lyric_assembler::TemplateHandle::TemplateHandle(
     const lyric_common::SymbolUrl &templateUrl,
     TemplateHandle *superTemplate,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
-    AssemblyState *state)
+    ObjectState *state)
     : m_templateUrl(templateUrl),
       m_templateParameters(templateParameters),
       m_superTemplate(superTemplate),

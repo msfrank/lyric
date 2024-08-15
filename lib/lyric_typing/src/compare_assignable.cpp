@@ -15,7 +15,7 @@ static tempo_utils::Result<lyric_runtime::TypeComparison>
 compare_concrete_to_concept(
     const lyric_common::TypeDef &toConcept,
     const lyric_common::TypeDef &fromConcrete,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     auto *symbolCache = state->symbolCache();
 
@@ -81,7 +81,7 @@ static tempo_utils::Result<lyric_runtime::TypeComparison>
 compare_concrete_to_concrete(
     const lyric_common::TypeDef &toConcrete,
     const lyric_common::TypeDef &fromConcrete,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (toConcrete.getType() == lyric_common::TypeDefType::Concrete);
     TU_ASSERT (fromConcrete.getType() == lyric_common::TypeDefType::Concrete);
@@ -105,7 +105,7 @@ static tempo_utils::Result<lyric_runtime::TypeComparison>
 compare_union_to_concrete(
     const lyric_common::TypeDef &toConcrete,
     const lyric_common::TypeDef &fromUnion,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (toConcrete.getType() == lyric_common::TypeDefType::Concrete);
     TU_ASSERT (fromUnion.getType() == lyric_common::TypeDefType::Union);
@@ -153,7 +153,7 @@ static tempo_utils::Result<lyric_runtime::TypeComparison>
 compare_concrete(
     const lyric_common::TypeDef &toConcrete,
     const lyric_common::TypeDef &fromType,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (toConcrete.getType() == lyric_common::TypeDefType::Concrete);
     switch (fromType.getType()) {
@@ -172,7 +172,7 @@ static tempo_utils::Result<lyric_runtime::TypeComparison>
 compare_placeholder_to_placeholder(
     const lyric_common::TypeDef &toPlaceholder,
     const lyric_common::TypeDef &fromPlaceholder,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (toPlaceholder.getType() == lyric_common::TypeDefType::Placeholder);
     TU_ASSERT (fromPlaceholder.getType() == lyric_common::TypeDefType::Placeholder);
@@ -188,7 +188,7 @@ static tempo_utils::Result<lyric_runtime::TypeComparison>
 compare_placeholder(
     const lyric_common::TypeDef &toPlaceholder,
     const lyric_common::TypeDef &fromType,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (toPlaceholder.getType() == lyric_common::TypeDefType::Placeholder);
     switch (fromType.getType()) {
@@ -205,7 +205,7 @@ static tempo_utils::Result<lyric_runtime::TypeComparison>
 compare_concrete_to_union(
     const lyric_common::TypeDef &toUnion,
     const lyric_common::TypeDef &fromConcrete,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (toUnion.getType() == lyric_common::TypeDefType::Union);
     TU_ASSERT (fromConcrete.getType() == lyric_common::TypeDefType::Concrete);
@@ -249,7 +249,7 @@ static tempo_utils::Result<lyric_runtime::TypeComparison>
 compare_union_to_union(
     const lyric_common::TypeDef &toUnion,
     const lyric_common::TypeDef &fromUnion,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (toUnion.getType() == lyric_common::TypeDefType::Union);
     TU_ASSERT (fromUnion.getType() == lyric_common::TypeDefType::Union);
@@ -381,7 +381,7 @@ static tempo_utils::Result<lyric_runtime::TypeComparison>
 compare_union(
     const lyric_common::TypeDef &toUnion,
     const lyric_common::TypeDef &fromType,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (toUnion.getType() == lyric_common::TypeDefType::Union);
     switch (fromType.getType()) {
@@ -400,7 +400,7 @@ static tempo_utils::Result<lyric_runtime::TypeComparison>
 compare_intersection(
     const lyric_common::TypeDef &toIntersection,
     const lyric_common::TypeDef &fromType,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (toIntersection.getType() == lyric_common::TypeDefType::Intersection);
     return state->logAndContinue(lyric_typing::TypingCondition::kIncompatibleType,
@@ -412,7 +412,7 @@ tempo_utils::Result<lyric_runtime::TypeComparison>
 lyric_typing::compare_assignable(
     const lyric_common::TypeDef &toRef,
     const lyric_common::TypeDef &fromRef,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
  /*
   *
@@ -445,7 +445,7 @@ tempo_utils::Result<bool>
 lyric_typing::is_implementable(
     const lyric_common::TypeDef &toConcept,
     const lyric_common::TypeDef &fromRef,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (toConcept.isValid());
     TU_ASSERT (fromRef.isValid());

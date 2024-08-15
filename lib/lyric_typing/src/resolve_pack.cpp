@@ -8,7 +8,7 @@ tempo_utils::Result<lyric_assembler::ParameterPack>
 lyric_typing::resolve_pack(
     const PackSpec &packSpec,
     lyric_assembler::AbstractResolver *resolver,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     lyric_assembler::PackBuilder packBuilder;
 

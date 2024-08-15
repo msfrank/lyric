@@ -3,7 +3,7 @@
 
 #include <absl/container/flat_hash_map.h>
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <lyric_common/symbol_url.h>
 #include <lyric_importer/module_cache.h>
 #include <lyric_parser/lyric_archetype.h>
@@ -21,7 +21,7 @@ namespace lyric_rewriter {
      */
     struct RewriterOptions {
 
-        lyric_common::AssemblyLocation preludeLocation;
+        lyric_common::ModuleLocation preludeLocation;
 
         std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache;
 

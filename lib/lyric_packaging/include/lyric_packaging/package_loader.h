@@ -19,14 +19,14 @@ namespace lyric_packaging {
             const absl::flat_hash_map<std::string, std::string> &packageMap);
         PackageLoader(const PackageLoader &other);
 
-        tempo_utils::Result<bool> hasAssembly(
-            const lyric_common::AssemblyLocation &location) const override;
-        tempo_utils::Result<Option<lyric_common::AssemblyLocation>> resolveAssembly(
-            const lyric_common::AssemblyLocation &location) const override;
-        tempo_utils::Result<Option<lyric_object::LyricObject>> loadAssembly(
-            const lyric_common::AssemblyLocation &location) override;
+        tempo_utils::Result<bool> hasModule(
+            const lyric_common::ModuleLocation &location) const override;
+        tempo_utils::Result<Option<lyric_common::ModuleLocation>> resolveModule(
+            const lyric_common::ModuleLocation &location) const override;
+        tempo_utils::Result<Option<lyric_object::LyricObject>> loadModule(
+            const lyric_common::ModuleLocation &location) override;
         tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>> loadPlugin(
-            const lyric_common::AssemblyLocation &location,
+            const lyric_common::ModuleLocation &location,
             const lyric_object::PluginSpecifier &specifier) override;
 
         std::vector<std::filesystem::path> getPackagesPathList() const;
@@ -36,14 +36,14 @@ namespace lyric_packaging {
         std::vector<std::filesystem::path> m_packagesPathList;
         absl::flat_hash_map<std::string, std::string> m_packageMap;
 
-        tempo_utils::Result<std::filesystem::path> findAssembly(
-            const lyric_common::AssemblyLocation &location) const;
+        tempo_utils::Result<std::filesystem::path> findModule(
+            const lyric_common::ModuleLocation &location) const;
         tempo_utils::Result<std::filesystem::path> packageLocationToFilePath(
             const std::filesystem::path &directoryPath,
-            const lyric_common::AssemblyLocation &location) const;
-        tempo_utils::Result<std::filesystem::path> assemblyLocationToFilePath(
+            const lyric_common::ModuleLocation &location) const;
+        tempo_utils::Result<std::filesystem::path> moduleLocationToFilePath(
             const std::filesystem::path &directoryPath,
-            const lyric_common::AssemblyLocation &location) const;
+            const lyric_common::ModuleLocation &location) const;
     };
 
 }

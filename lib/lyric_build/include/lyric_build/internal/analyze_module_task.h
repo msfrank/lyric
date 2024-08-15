@@ -6,7 +6,7 @@
 #include <absl/container/flat_hash_set.h>
 
 #include <lyric_analyzer/lyric_analyzer.h>
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/config_store.h>
@@ -40,8 +40,8 @@ namespace lyric_build::internal {
 
     private:
         tempo_utils::Url m_sourceUrl;
-        lyric_common::AssemblyLocation m_moduleLocation;
-        lyric_assembler::AssemblyStateOptions m_assemblyStateOptions;
+        lyric_common::ModuleLocation m_moduleLocation;
+        lyric_assembler::ObjectStateOptions m_objectStateOptions;
         lyric_analyzer::AnalyzerOptions m_analyzerOptions;
         TaskKey m_parseTarget;
         TaskKey m_symbolizeTarget;

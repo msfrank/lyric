@@ -14,7 +14,7 @@ class CallsiteReifier : public BaseFixture {};
 
 TEST_F(CallsiteReifier, NullaryFunction_takesNoArguments_returnsBool)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
 
     lyric_assembler::CallableInvoker invoker;
@@ -37,7 +37,7 @@ TEST_F(CallsiteReifier, NullaryFunction_takesNoArguments_returnsBool)
 
 TEST_F(CallsiteReifier, UnaryFunction_P0takesInt_returnsInt)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
 
     lyric_assembler::Parameter p0;
@@ -68,7 +68,7 @@ TEST_F(CallsiteReifier, UnaryFunction_P0takesInt_returnsInt)
 
 TEST_F(CallsiteReifier, BinaryFunction_P0takesInt_P1takesFloat_returnsInt)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
 

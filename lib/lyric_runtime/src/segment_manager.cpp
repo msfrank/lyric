@@ -1,5 +1,4 @@
 
-#include <lyric_runtime/internal/assembly_reader.h>
 #include <lyric_runtime/internal/get_class_virtual_table.h>
 #include <lyric_runtime/internal/get_concept_table.h>
 #include <lyric_runtime/internal/get_enum_virtual_table.h>
@@ -39,7 +38,7 @@ lyric_runtime::SegmentManager::getSegment(tu_uint32 segmentIndex)
 }
 
 lyric_runtime::BytecodeSegment *
-lyric_runtime::SegmentManager::getSegment(const lyric_common::AssemblyLocation &location)
+lyric_runtime::SegmentManager::getSegment(const lyric_common::ModuleLocation &location)
 {
     auto entry = m_data.segmentcache.find(location);
     if (entry != m_data.segmentcache.cend())
@@ -48,7 +47,7 @@ lyric_runtime::SegmentManager::getSegment(const lyric_common::AssemblyLocation &
 }
 
 lyric_runtime::BytecodeSegment *
-lyric_runtime::SegmentManager::getOrLoadSegment(const lyric_common::AssemblyLocation &location)
+lyric_runtime::SegmentManager::getOrLoadSegment(const lyric_common::ModuleLocation &location)
 {
     return internal::get_or_load_segment(location, &m_data);
 }
@@ -175,7 +174,7 @@ lyric_runtime::SegmentManager::loadStatic(
             InterpreterCondition::kRuntimeInvariant, "invalid static linkage");
         return {};
     }
-    auto *segment = getSegment(linkage->assembly);
+    auto *segment = getSegment(linkage->object);
     return segment->getStatic(linkage->value);
 }
 
@@ -199,7 +198,7 @@ lyric_runtime::SegmentManager::storeStatic(
             InterpreterCondition::kRuntimeInvariant, "invalid static linkage");
         return false;
     }
-    auto *segment = getSegment(linkage->assembly);
+    auto *segment = getSegment(linkage->object);
     return segment->setStatic(linkage->value, value);
 }
 
@@ -222,7 +221,7 @@ lyric_runtime::SegmentManager::loadInstance(
             InterpreterCondition::kRuntimeInvariant, "invalid instance linkage");
         return {};
     }
-    auto *segment = getSegment(linkage->assembly);
+    auto *segment = getSegment(linkage->object);
     return segment->getInstance(linkage->value);
 }
 
@@ -246,7 +245,7 @@ lyric_runtime::SegmentManager::storeInstance(
             InterpreterCondition::kRuntimeInvariant, "invalid instance linkage");
         return false;
     }
-    auto *segment = getSegment(linkage->assembly);
+    auto *segment = getSegment(linkage->object);
     return segment->setInstance(linkage->value, value);
 }
 
@@ -269,7 +268,7 @@ lyric_runtime::SegmentManager::loadEnum(
             InterpreterCondition::kRuntimeInvariant, "invalid enum linkage");
         return {};
     }
-    auto *segment = getSegment(linkage->assembly);
+    auto *segment = getSegment(linkage->object);
     return segment->getEnum(linkage->value);
 }
 
@@ -293,6 +292,6 @@ lyric_runtime::SegmentManager::storeEnum(
             InterpreterCondition::kRuntimeInvariant, "invalid enum linkage");
         return false;
     }
-    auto *segment = getSegment(linkage->assembly);
+    auto *segment = getSegment(linkage->object);
     return segment->setEnum(linkage->value, value);
 }

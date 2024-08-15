@@ -1,5 +1,5 @@
 
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_compiler/internal/compile_module.h>
 #include <lyric_compiler/lyric_compiler.h>
 #include <lyric_parser/node_walker.h>
@@ -22,14 +22,14 @@ lyric_compiler::LyricCompiler::LyricCompiler(const LyricCompiler &other)
 
 tempo_utils::Result<lyric_object::LyricObject>
 lyric_compiler::LyricCompiler::compileModule(
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     const lyric_parser::LyricArchetype &archetype,
-    const lyric_assembler::AssemblyStateOptions &assemblyStateOptions,
+    const lyric_assembler::ObjectStateOptions &objectStateOptions,
     std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
     if (!location.isValid())
         return CompilerStatus::forCondition(
-            CompilerCondition::kCompilerInvariant, "invalid assembly location");
+            CompilerCondition::kCompilerInvariant, "invalid module location");
 
     auto walker = archetype.getRoot();
     if (!walker.isValid())
@@ -44,11 +44,11 @@ lyric_compiler::LyricCompiler::compileModule(
         span->setOperationName("compileModule");
 
         // construct the compiler state
-        lyric_assembler::AssemblyState assemblyState(
-            location, m_systemModuleCache, &scopeManager, assemblyStateOptions);
+        lyric_assembler::ObjectState objectState(
+            location, m_systemModuleCache, &scopeManager, objectStateOptions);
 
         // initialize the assembler
-        TU_RETURN_IF_NOT_OK (assemblyState.initialize());
+        TU_RETURN_IF_NOT_OK (objectState.initialize());
 
 //        // load env symbols into the assembly state
 //        for (auto iterator = m_options.envSymbols.cbegin(); iterator != m_options.envSymbols.cend(); iterator++) {
@@ -58,7 +58,7 @@ lyric_compiler::LyricCompiler::compileModule(
 //        }
 
         // define the module entry point
-        ModuleEntry moduleEntry(&assemblyState);
+        ModuleEntry moduleEntry(&objectState);
         TU_RETURN_IF_NOT_OK (moduleEntry.initialize());
 
         // compile single module into object

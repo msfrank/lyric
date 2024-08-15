@@ -14,7 +14,7 @@ namespace lyric_schema {
     constexpr LyricBuildNs kLyricBuildNs;
 
     enum class LyricBuildId {
-        AssemblyLocation,
+        ModuleLocation,
         ContentUrl,
         EntryEnum,
         Generation,
@@ -25,8 +25,8 @@ namespace lyric_schema {
     };
 
     constexpr tempo_utils::SchemaProperty<LyricBuildNs,LyricBuildId>
-    kLyricBuildAssemblyLocationProperty(
-        &kLyricBuildNs, LyricBuildId::AssemblyLocation, "AssemblyLocation", tempo_utils::PropertyType::kString);
+    kLyricBuildModuleLocationProperty(
+        &kLyricBuildNs, LyricBuildId::ModuleLocation, "ModuleLocation", tempo_utils::PropertyType::kString);
 
     constexpr tempo_utils::SchemaProperty<LyricBuildNs,LyricBuildId>
     kLyricBuildContentUrlProperty(
@@ -56,7 +56,7 @@ namespace lyric_schema {
         const tempo_utils::SchemaResource<LyricBuildNs,LyricBuildId> *,
         static_cast<std::size_t>(LyricBuildId::NUM_IDS)>
     kLyricBuildResources = {
-        &kLyricBuildAssemblyLocationProperty,
+        &kLyricBuildModuleLocationProperty,
         &kLyricBuildContentUrlProperty,
         &kLyricBuildEntryEnumProperty,
         &kLyricBuildGenerationProperty,

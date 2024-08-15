@@ -9,7 +9,7 @@
 #include <tempo_utils/log_message.h>
 #include <tempo_utils/url.h>
 
-#include "assembly_location.h"
+#include "module_location.h"
 #include "symbol_path.h"
 
 namespace lyric_common {
@@ -18,7 +18,7 @@ namespace lyric_common {
     public:
         SymbolUrl();
         explicit SymbolUrl(const SymbolPath &path);
-        SymbolUrl(const AssemblyLocation &location, const SymbolPath &path);
+        SymbolUrl(const ModuleLocation &location, const SymbolPath &path);
         SymbolUrl(const SymbolUrl &other);
         SymbolUrl(SymbolUrl &&other) noexcept;
 
@@ -29,7 +29,7 @@ namespace lyric_common {
         bool isAbsolute() const;
         bool isRelative() const;
 
-        AssemblyLocation getAssemblyLocation() const;
+        ModuleLocation getModuleLocation() const;
         SymbolPath getSymbolPath() const;
         std::string getSymbolName() const;
 
@@ -48,7 +48,7 @@ namespace lyric_common {
         }
 
     private:
-        AssemblyLocation m_location;
+        ModuleLocation m_location;
         SymbolPath m_path;
     };
 

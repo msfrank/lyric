@@ -7,7 +7,7 @@
 
 #include "abstract_member_reifier.h"
 #include "abstract_symbol.h"
-#include "assembly_state.h"
+#include "object_state.h"
 #include "base_symbol.h"
 #include "callable_invoker.h"
 #include "constructable_invoker.h"
@@ -45,7 +45,7 @@ namespace lyric_assembler {
             ClassSymbol *superClass,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
 
         ClassSymbol(
             const lyric_common::SymbolUrl &classUrl,
@@ -58,12 +58,12 @@ namespace lyric_assembler {
             ClassSymbol *superClass,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
 
         ClassSymbol(
             const lyric_common::SymbolUrl &classUrl,
             lyric_importer::ClassImport *classImport,
-            AssemblyState *state);
+            ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;
 
@@ -162,7 +162,7 @@ namespace lyric_assembler {
     private:
         lyric_common::SymbolUrl m_classUrl;
         lyric_importer::ClassImport *m_classImport = nullptr;
-        AssemblyState *m_state;
+        ObjectState *m_state;
 
         ClassSymbolPriv *load() override;
     };

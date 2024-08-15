@@ -154,7 +154,7 @@ lyric_compiler::internal::compile_lambda(
 
     // return type is a Function with the arity specified by the count of lambda parameters
     auto builderTypePath = lambdaFunctionUrl.getSymbolPath().getPath();
-    auto builderTypeLocation = lambdaFunctionUrl.getAssemblyLocation().toUrl();
+    auto builderTypeLocation = lambdaFunctionUrl.getModuleLocation().toUrl();
     std::vector<lyric_common::TypeDef> builderTypeArguments;
     builderTypeArguments.push_back(lambdaReturnType);
     for (const auto &p : lambdaParameterPack.listParameters) {

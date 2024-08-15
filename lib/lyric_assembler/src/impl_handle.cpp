@@ -14,7 +14,7 @@ lyric_assembler::ImplHandle::ImplHandle(
     ConceptSymbol *implConcept,
     const lyric_common::SymbolUrl &receiverUrl,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : BaseHandle<ImplHandlePriv>(new ImplHandlePriv()),
       m_state(state)
 {
@@ -43,7 +43,7 @@ lyric_assembler::ImplHandle::ImplHandle(
     const lyric_common::SymbolUrl &receiverUrl,
     TemplateHandle *receiverTemplate,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : ImplHandle(
         offset,
         name,
@@ -58,7 +58,7 @@ lyric_assembler::ImplHandle::ImplHandle(
     TU_ASSERT(priv->receiverTemplate != nullptr);
 }
 
-lyric_assembler::ImplHandle::ImplHandle(lyric_importer::ImplImport *implImport, AssemblyState *state)
+lyric_assembler::ImplHandle::ImplHandle(lyric_importer::ImplImport *implImport, ObjectState *state)
     : m_implImport(implImport),
       m_state(state)
 {

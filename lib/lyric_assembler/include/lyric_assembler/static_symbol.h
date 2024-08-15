@@ -2,7 +2,7 @@
 #define LYRIC_ASSEMBLER_STATIC_SYMBOL_H
 
 #include "abstract_symbol.h"
-#include "assembly_state.h"
+#include "object_state.h"
 #include "base_symbol.h"
 #include "callable_invoker.h"
 #include "function_callable.h"
@@ -28,11 +28,11 @@ namespace lyric_assembler {
             TypeHandle *staticType,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
         StaticSymbol(
             const lyric_common::SymbolUrl &staticUrl,
             lyric_importer::StaticImport *staticImport,
-            AssemblyState *state);
+            ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;
 
@@ -55,7 +55,7 @@ namespace lyric_assembler {
     private:
         lyric_common::SymbolUrl m_staticUrl;
         lyric_importer::StaticImport *m_staticImport = nullptr;
-        AssemblyState *m_state;
+        ObjectState *m_state;
 
         StaticSymbolPriv *load() override;
     };

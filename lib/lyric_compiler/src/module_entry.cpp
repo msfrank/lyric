@@ -14,7 +14,7 @@
 #include "lyric_compiler/internal/compile_defconcept.h"
 #include "lyric_compiler/internal/compile_def.h"
 
-lyric_compiler::ModuleEntry::ModuleEntry(lyric_assembler::AssemblyState *state)
+lyric_compiler::ModuleEntry::ModuleEntry(lyric_assembler::ObjectState *state)
     : m_state(state),
       m_root(nullptr),
       m_entry(nullptr),
@@ -28,7 +28,7 @@ lyric_compiler::ModuleEntry::~ModuleEntry()
     delete m_typeSystem;
 }
 
-lyric_assembler::AssemblyState *
+lyric_assembler::ObjectState *
 lyric_compiler::ModuleEntry::getState() const
 {
     return m_state;
@@ -93,7 +93,7 @@ lyric_compiler::ModuleEntry::initialize()
     return CompilerStatus::ok();
 }
 
-lyric_common::AssemblyLocation
+lyric_common::ModuleLocation
 lyric_compiler::ModuleEntry::getLocation() const
 {
     return m_state->getLocation();

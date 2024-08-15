@@ -16,7 +16,7 @@ lyric_common::SymbolUrl::SymbolUrl(const lyric_common::SymbolPath &path)
 {
 }
 
-lyric_common::SymbolUrl::SymbolUrl(const AssemblyLocation &location, const lyric_common::SymbolPath &path)
+lyric_common::SymbolUrl::SymbolUrl(const ModuleLocation &location, const lyric_common::SymbolPath &path)
     : m_location(location),
       m_path(path)
 {
@@ -84,8 +84,8 @@ lyric_common::SymbolUrl::getSymbolName() const
     return m_path.getName();
 }
 
-lyric_common::AssemblyLocation
-lyric_common::SymbolUrl::getAssemblyLocation() const
+lyric_common::ModuleLocation
+lyric_common::SymbolUrl::getModuleLocation() const
 {
     return m_location;
 }
@@ -133,8 +133,8 @@ lyric_common::SymbolUrl::fromUrl(const tempo_utils::Url &url)
         return {};
 
     auto urlWithoutFragment = url.withFragment("");
-    AssemblyLocation location = urlWithoutFragment.isValid()?
-        AssemblyLocation::fromUrl(urlWithoutFragment) : AssemblyLocation() ;
+    ModuleLocation location = urlWithoutFragment.isValid() ?
+        ModuleLocation::fromUrl(urlWithoutFragment) : ModuleLocation() ;
 
     auto path = lyric_common::SymbolPath::fromString(fragment);
     return lyric_common::SymbolUrl(location, path);

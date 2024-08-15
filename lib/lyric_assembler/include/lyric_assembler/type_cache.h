@@ -13,7 +13,7 @@ namespace lyric_assembler {
 
     class TypeCache {
     public:
-        TypeCache(AssemblyState *assemblyState, AssemblerTracer *tracer);
+        TypeCache(ObjectState *objectState, AssemblerTracer *tracer);
         ~TypeCache();
 
         bool hasType(const lyric_common::TypeDef &assignableType) const;
@@ -72,7 +72,7 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &symbolUrl) const;
 
     private:
-        AssemblyState *m_assemblyState;
+        ObjectState *m_objectState;
         AssemblerTracer *m_tracer;
         std::vector<TypeHandle *> m_types;
         absl::flat_hash_map<lyric_common::TypeDef, TypeHandle *> m_typecache;

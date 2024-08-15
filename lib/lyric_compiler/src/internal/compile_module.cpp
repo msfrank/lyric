@@ -45,7 +45,7 @@ lyric_compiler::internal::compile_module(
         for (auto iterator = procBlock->symbolsBegin(); iterator != procBlock->symbolsEnd(); iterator++) {
             auto symbolUrl = iterator->second.symbolUrl;
             // ignore core symbols since they are guaranteed to be present at runtime
-            if (symbolUrl.getAssemblyLocation() == preludeLocation)
+            if (symbolUrl.getModuleLocation() == preludeLocation)
                 continue;
             // ignore relative symbols since these are not external
             if (symbolUrl.isRelative())
@@ -55,8 +55,8 @@ lyric_compiler::internal::compile_module(
     }
 
     // construct assembly from assembly state and return it
-    auto toAssemblyResult = state->toAssembly();
-    if (toAssemblyResult.isStatus())
-        return toAssemblyResult.getStatus();
-    return toAssemblyResult.getResult();
+    auto toObjectResult = state->toObject();
+    if (toObjectResult.isStatus())
+        return toObjectResult.getStatus();
+    return toObjectResult.getResult();
 }

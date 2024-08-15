@@ -279,7 +279,7 @@ lyric_test::TestRunner::buildModuleInternal(
     std::filesystem::path modulePath = "/";
     modulePath /= sourcePath;
     modulePath.replace_extension();
-    lyric_common::AssemblyLocation moduleLocation(modulePath.string());
+    lyric_common::ModuleLocation moduleLocation(modulePath.string());
 
     return BuildModule(shared_from_this(), targetComputation,
         targetComputationSet.getDiagnostics(), moduleLocation);
@@ -314,12 +314,12 @@ lyric_test::TestRunner::compileModuleInternal(
     std::filesystem::path modulePath = "/";
     modulePath /= sourcePath;
     modulePath.replace_extension();
-    lyric_common::AssemblyLocation moduleLocation(modulePath.string());
+    lyric_common::ModuleLocation moduleLocation(modulePath.string());
 
     std::shared_ptr<lyric_build::DependencyLoader> loader;
     TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, m_builder->getCache()));
     Option<lyric_object::LyricObject> moduleOption;
-    TU_ASSIGN_OR_RETURN (moduleOption, loader->loadAssembly(moduleLocation));
+    TU_ASSIGN_OR_RETURN (moduleOption, loader->loadModule(moduleLocation));
     if (moduleOption.isEmpty())
         return TestStatus::forCondition(TestCondition::kTestInvariant,
             "missing module {}", moduleLocation.toString());
@@ -357,12 +357,12 @@ lyric_test::TestRunner::analyzeModuleInternal(
     std::filesystem::path modulePath = "/";
     modulePath /= sourcePath;
     modulePath.replace_extension();
-    lyric_common::AssemblyLocation moduleLocation(modulePath.string());
+    lyric_common::ModuleLocation moduleLocation(modulePath.string());
 
     std::shared_ptr<lyric_build::DependencyLoader> loader;
     TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, m_builder->getCache()));
     Option<lyric_object::LyricObject> moduleOption;
-    TU_ASSIGN_OR_RETURN (moduleOption, loader->loadAssembly(moduleLocation));
+    TU_ASSIGN_OR_RETURN (moduleOption, loader->loadModule(moduleLocation));
     if (moduleOption.isEmpty())
         return TestStatus::forCondition(TestCondition::kTestInvariant,
             "missing module {}", moduleLocation.toString());
@@ -400,12 +400,12 @@ lyric_test::TestRunner::symbolizeModuleInternal(
     std::filesystem::path modulePath = "/";
     modulePath /= sourcePath;
     modulePath.replace_extension();
-    lyric_common::AssemblyLocation moduleLocation(modulePath.string());
+    lyric_common::ModuleLocation moduleLocation(modulePath.string());
 
     std::shared_ptr<lyric_build::DependencyLoader> loader;
     TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, m_builder->getCache()));
     Option<lyric_object::LyricObject> moduleOption;
-    TU_ASSIGN_OR_RETURN (moduleOption, loader->loadAssembly(moduleLocation));
+    TU_ASSIGN_OR_RETURN (moduleOption, loader->loadModule(moduleLocation));
     if (moduleOption.isEmpty())
         return TestStatus::forCondition(TestCondition::kTestInvariant,
             "missing module {}", moduleLocation.toString());
@@ -462,7 +462,7 @@ lyric_test::TestRunner::packageModuleInternal(
 tempo_utils::Result<lyric_test::PackageModule>
 lyric_test::TestRunner::packageTargetsInternal(
     const absl::flat_hash_set<lyric_build::TaskId> &targets,
-    const lyric_common::AssemblyLocation &mainLocation,
+    const lyric_common::ModuleLocation &mainLocation,
     const lyric_packaging::PackageSpecifier &specifier)
 {
     if (!m_configured)
@@ -504,7 +504,7 @@ lyric_test::TestRunner::packageTargetsInternal(
 
 tempo_utils::Result<lyric_test::PackageModule>
 lyric_test::TestRunner::packageWorkspaceInternal(
-    const lyric_common::AssemblyLocation &mainLocation,
+    const lyric_common::ModuleLocation &mainLocation,
     const lyric_packaging::PackageSpecifier &specifier)
 {
     if (!m_configured)

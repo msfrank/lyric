@@ -30,7 +30,7 @@ namespace lyric_build::internal {
 
     private:
         tempo_utils::Url m_sourceUrl;
-        //lyric_common::AssemblyLocation m_archetypeLocation;
+        //lyric_common::ModuleLocation m_archetypeLocation;
         lyric_parser::ParserOptions m_parserOptions;
         std::string m_resourceId;
 

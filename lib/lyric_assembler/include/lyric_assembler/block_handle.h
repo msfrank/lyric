@@ -10,7 +10,7 @@
 
 #include "abstract_resolver.h"
 #include "assembler_attrs.h"
-#include "assembly_state.h"
+#include "object_state.h"
 #include "callable_invoker.h"
 #include "function_callable.h"
 #include "namespace_symbol.h"
@@ -29,7 +29,7 @@ namespace lyric_assembler {
         BlockHandle(
             ProcHandle *blockProc,
             CodeBuilder *blockCode,
-            AssemblyState *state,
+            ObjectState *state,
             bool isRoot);
         BlockHandle(
             const lyric_common::SymbolUrl &definition,
@@ -40,29 +40,29 @@ namespace lyric_assembler {
             ProcHandle *blockProc,
             CodeBuilder *blockCode,
             BlockHandle *parentBlock,
-            AssemblyState *state,
+            ObjectState *state,
             bool isRoot = false);
         BlockHandle(
             ProcHandle *blockProc,
             CodeBuilder *blockCode,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
         BlockHandle(
             const absl::flat_hash_map<std::string, SymbolBinding> &initialBindings,
             ProcHandle *blockProc,
             CodeBuilder *blockCode,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
         BlockHandle(
             const lyric_common::SymbolUrl &definition,
             const absl::flat_hash_map<std::string, SymbolBinding> &importedBindings,
-            AssemblyState *state);
+            ObjectState *state);
 
         NamespaceSymbol *blockNs();
         ProcHandle *blockProc();
         CodeBuilder *blockCode();
         BlockHandle *blockParent();
-        AssemblyState *blockState();
+        ObjectState *blockState();
         bool isRoot() const;
 
         bool isImported() const;
@@ -216,7 +216,7 @@ namespace lyric_assembler {
         ProcHandle *m_blockProc;
         CodeBuilder *m_blockCode;
         BlockHandle *m_parentBlock;
-        AssemblyState *m_state;
+        ObjectState *m_state;
         bool m_isRoot;
         absl::flat_hash_map<std::string, SymbolBinding> m_bindings;
         absl::flat_hash_map<lyric_common::TypeDef, lyric_common::SymbolUrl> m_impls;

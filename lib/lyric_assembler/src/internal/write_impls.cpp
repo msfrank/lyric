@@ -94,14 +94,14 @@ write_impl(
 
 tempo_utils::Status
 lyric_assembler::internal::write_impls(
-    const AssemblyState *assemblyState,
+    const ObjectState *objectState,
     flatbuffers::FlatBufferBuilder &buffer,
     ImplsOffset &implsOffset)
 {
-    TU_ASSERT (assemblyState != nullptr);
+    TU_ASSERT (objectState != nullptr);
 
-    SymbolCache *symbolCache = assemblyState->symbolCache();
-    ImplCache *implCache = assemblyState->implCache();
+    SymbolCache *symbolCache = objectState->symbolCache();
+    ImplCache *implCache = objectState->implCache();
 
     std::vector<flatbuffers::Offset<lyo1::ImplDescriptor>> impls_vector;
 

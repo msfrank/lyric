@@ -22,7 +22,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     ConceptSymbol *superConcept,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : BaseSymbol(address, new ConceptSymbolPriv()),
       m_conceptUrl(conceptUrl),
       m_state(state)
@@ -53,7 +53,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     ConceptSymbol *superConcept,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : ConceptSymbol(
         conceptUrl,
         access,
@@ -77,7 +77,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
 lyric_assembler::ConceptSymbol::ConceptSymbol(
     const lyric_common::SymbolUrl &conceptUrl,
     lyric_importer::ConceptImport *conceptImport,
-    AssemblyState *state)
+    ObjectState *state)
     : m_conceptUrl(conceptUrl),
       m_conceptImport(conceptImport),
       m_state(state)

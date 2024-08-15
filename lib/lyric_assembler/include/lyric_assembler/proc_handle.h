@@ -3,7 +3,7 @@
 
 #include <lyric_common/symbol_url.h>
 
-#include "assembly_state.h"
+#include "object_state.h"
 #include "block_handle.h"
 #include "code_builder.h"
 
@@ -30,14 +30,14 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &activation,
             const std::vector<tu_uint8> &bytecode,
             int numLocals);
-        ProcHandle(const lyric_common::SymbolUrl &activation, AssemblyState *state);
+        ProcHandle(const lyric_common::SymbolUrl &activation, ObjectState *state);
         ProcHandle(
             const lyric_common::SymbolUrl &activation,
             const absl::flat_hash_map<std::string, SymbolBinding> &initialBindings,
             tu_uint8 numListParameters,
             tu_uint8 numNamedParameters,
             bool hasRestParameter,
-            AssemblyState *state,
+            ObjectState *state,
             BlockHandle *parent);
         ~ProcHandle();
 

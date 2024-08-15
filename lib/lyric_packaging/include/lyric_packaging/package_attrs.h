@@ -10,7 +10,7 @@ namespace lyric_packaging {
     extern const tempo_utils::Int64Attr kLyricPackagingCreateTime;
     extern const tempo_utils::Int64Attr kLyricPackagingExpiryTime;
     extern const tempo_utils::StringAttr kLyricPackagingContentType;
-    extern const lyric_common::AssemblyLocationAttr kLyricPackagingMainLocation;
+    extern const lyric_common::ModuleLocationAttr kLyricPackagingMainLocation;
 }
 
 #endif // LYRIC_PACKAGING_PACKAGE_ATTRS_H

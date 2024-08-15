@@ -117,18 +117,18 @@ write_class(
 
 tempo_utils::Status
 lyric_assembler::internal::write_classes(
-    const AssemblyState *assemblyState,
+    const ObjectState *objectState,
     flatbuffers::FlatBufferBuilder &buffer,
     ClassesOffset &classesOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (assemblyState != nullptr);
+    TU_ASSERT (objectState != nullptr);
 
-    SymbolCache *symbolCache = assemblyState->symbolCache();
-    TypeCache *typeCache = assemblyState->typeCache();
+    SymbolCache *symbolCache = objectState->symbolCache();
+    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::ClassDescriptor>> classes_vector;
 
-    for (auto iterator = assemblyState->classesBegin(); iterator != assemblyState->classesEnd(); iterator++) {
+    for (auto iterator = objectState->classesBegin(); iterator != objectState->classesEnd(); iterator++) {
         auto &classSymbol = *iterator;
         TU_RETURN_IF_NOT_OK (
             write_class(classSymbol, typeCache, symbolCache, buffer, classes_vector, symbols_vector));

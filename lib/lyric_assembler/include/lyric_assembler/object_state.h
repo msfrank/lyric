@@ -1,5 +1,5 @@
-#ifndef LYRIC_ASSEMBLER_ASSEMBLY_STATE_H
-#define LYRIC_ASSEMBLER_ASSEMBLY_STATE_H
+#ifndef LYRIC_ASSEMBLER_OBJECT_STATE_H
+#define LYRIC_ASSEMBLER_OBJECT_STATE_H
 
 #include <string>
 #include <vector>
@@ -47,28 +47,28 @@ namespace lyric_assembler {
     class TypeHandle;
     class UndeclaredSymbol;
 
-    struct AssemblyStateOptions {
+    struct ObjectStateOptions {
         tu_uint32 majorVersion = 0;
         tu_uint32 minorVersion = 0;
         tu_uint32 patchVersion = 0;
         std::shared_ptr<lyric_runtime::AbstractLoader> workspaceLoader = {};
-        lyric_common::AssemblyLocation preludeLocation = {};
+        lyric_common::ModuleLocation preludeLocation = {};
         absl::flat_hash_map<std::string, std::string> pluginsMap = {};
     };
 
-    class AssemblyState {
+    class ObjectState {
 
     public:
-        AssemblyState(
-            const lyric_common::AssemblyLocation &location,
+        ObjectState(
+            const lyric_common::ModuleLocation &location,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             tempo_tracing::ScopeManager *scopeManager,
-            const AssemblyStateOptions &options = {});
-        ~AssemblyState();
+            const ObjectStateOptions &options = {});
+        ~ObjectState();
 
-        lyric_common::AssemblyLocation getLocation() const;
+        lyric_common::ModuleLocation getLocation() const;
         tempo_tracing::ScopeManager *scopeManager() const;
-        const AssemblyStateOptions *getOptions() const;
+        const ObjectStateOptions *getOptions() const;
 
         tempo_utils::Status initialize();
 
@@ -150,13 +150,13 @@ namespace lyric_assembler {
         std::vector<UndeclaredSymbol *>::const_iterator undeclaredEnd() const;
         int numUndeclared() const;
 
-        tempo_utils::Result<lyric_object::LyricObject> toAssembly() const;
+        tempo_utils::Result<lyric_object::LyricObject> toObject() const;
 
     private:
-        lyric_common::AssemblyLocation m_location;
+        lyric_common::ModuleLocation m_location;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         tempo_tracing::ScopeManager *m_scopeManager;
-        AssemblyStateOptions m_options;
+        ObjectStateOptions m_options;
 
         AssemblerTracer *m_tracer = nullptr;
         FundamentalCache *m_fundamentalcache = nullptr;
@@ -223,4 +223,4 @@ namespace lyric_assembler {
     };
 }
 
-#endif // LYRIC_ASSEMBLER_ASSEMBLY_STATE_H
+#endif // LYRIC_ASSEMBLER_OBJECT_STATE_H

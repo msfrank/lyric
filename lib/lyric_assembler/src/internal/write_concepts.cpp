@@ -81,18 +81,18 @@ write_concept(
 
 tempo_utils::Status
 lyric_assembler::internal::write_concepts(
-    const AssemblyState *assemblyState,
+    const ObjectState *objectState,
     flatbuffers::FlatBufferBuilder &buffer,
     ConceptsOffset &conceptsOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (assemblyState != nullptr);
+    TU_ASSERT (objectState != nullptr);
 
-    SymbolCache *symbolCache = assemblyState->symbolCache();
-    TypeCache *typeCache = assemblyState->typeCache();
+    SymbolCache *symbolCache = objectState->symbolCache();
+    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::ConceptDescriptor>> concepts_vector;
 
-    for (auto iterator = assemblyState->conceptsBegin(); iterator != assemblyState->conceptsEnd(); iterator++) {
+    for (auto iterator = objectState->conceptsBegin(); iterator != objectState->conceptsEnd(); iterator++) {
         auto &conceptSymbol = *iterator;
         TU_RETURN_IF_NOT_OK (
             write_concept(conceptSymbol, typeCache, symbolCache, buffer, concepts_vector, symbols_vector));

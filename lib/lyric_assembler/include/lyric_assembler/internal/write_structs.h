@@ -5,14 +5,14 @@
 
 #include <lyric_object/generated/object.h>
 
-#include "../assembly_state.h"
+#include "../object_state.h"
 
 namespace lyric_assembler::internal {
 
     using StructsOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::StructDescriptor>>>;
 
     tempo_utils::Status write_structs(
-        const AssemblyState *assemblyState,
+        const ObjectState *objectState,
         flatbuffers::FlatBufferBuilder &buffer,
         StructsOffset &structsOffset,
         std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector);

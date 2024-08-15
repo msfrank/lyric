@@ -29,7 +29,6 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/literal_cell.h
     include/lyric_runtime/lyric_runtime.h
     include/lyric_runtime/native_interface.h
-    include/lyric_runtime/plugin_specifier.h
     include/lyric_runtime/port_multiplexer.h
     include/lyric_runtime/promise.h
     include/lyric_runtime/ref_handle.h
@@ -63,7 +62,6 @@ target_sources(lyric_runtime PRIVATE
     src/library_plugin.cpp
     src/literal_cell.cpp
     src/native_interface.cpp
-    src/plugin_specifier.cpp
     src/port_multiplexer.cpp
     src/promise.cpp
     src/ref_handle.cpp
@@ -113,10 +111,10 @@ set_target_properties(lyric_runtime PROPERTIES
     )
 
 target_compile_definitions(lyric_runtime PRIVATE
-    "ASSEMBLY_PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""
-    "ASSEMBLY_PLUGIN_SYSTEM_VERSION=\"${CMAKE_SYSTEM_VERSION}\""
-    "ASSEMBLY_PLUGIN_ARCHITECTURE=\"${CMAKE_SYSTEM_PROCESSOR}\""
-    "ASSEMBLY_PLUGIN_COMPILER_ID=\"${CMAKE_CXX_COMPILER_ID}\""
+    "PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""
+    "PLUGIN_SYSTEM_VERSION=\"${CMAKE_SYSTEM_VERSION}\""
+    "PLUGIN_ARCHITECTURE=\"${CMAKE_SYSTEM_PROCESSOR}\""
+    "PLUGIN_COMPILER_ID=\"${CMAKE_CXX_COMPILER_ID}\""
     )
 
 # set the public header include path differently on the target depending on the interface

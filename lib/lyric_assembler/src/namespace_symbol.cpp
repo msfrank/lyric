@@ -14,7 +14,7 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     NamespaceSymbol *superNamespace,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state,
+    ObjectState *state,
     bool isRoot)
     : BaseSymbol(address, new NamespaceSymbolPriv()),
       m_namespaceUrl(namespaceUrl),
@@ -39,7 +39,7 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     NamespaceAddress address,
     TypeHandle *namespaceType,
     ProcHandle *entryProc,
-    AssemblyState *state)
+    ObjectState *state)
     : BaseSymbol(address, new NamespaceSymbolPriv()),
       m_namespaceUrl(namespaceUrl),
       m_state(state)
@@ -61,7 +61,7 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
 lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     const lyric_common::SymbolUrl &namespaceUrl,
     lyric_importer::NamespaceImport *namespaceImport,
-    AssemblyState *state)
+    ObjectState *state)
     : m_namespaceUrl(namespaceUrl),
       m_namespaceImport(namespaceImport),
       m_state(state)

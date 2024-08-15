@@ -2,7 +2,7 @@
 #define LYRIC_ASSEMBLER_NAMESPACE_SYMBOL_H
 
 #include "abstract_symbol.h"
-#include "assembly_state.h"
+#include "object_state.h"
 #include "base_symbol.h"
 #include "block_handle.h"
 #include "proc_handle.h"
@@ -28,18 +28,18 @@ namespace lyric_assembler {
             NamespaceSymbol *superNs,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state,
+            ObjectState *state,
             bool isRoot);
         NamespaceSymbol(
             const lyric_common::SymbolUrl &nsUrl,
             NamespaceAddress address,
             TypeHandle *nsType,
             ProcHandle *entryProc,
-            AssemblyState *state);
+            ObjectState *state);
         NamespaceSymbol(
             const lyric_common::SymbolUrl &nsUrl,
             lyric_importer::NamespaceImport *namespaceImport,
-            AssemblyState *state);
+            ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;
 
@@ -59,7 +59,7 @@ namespace lyric_assembler {
     private:
         lyric_common::SymbolUrl m_namespaceUrl;
         lyric_importer::NamespaceImport *m_namespaceImport = nullptr;
-        AssemblyState *m_state;
+        ObjectState *m_state;
 
         NamespaceSymbolPriv *load() override;
     };

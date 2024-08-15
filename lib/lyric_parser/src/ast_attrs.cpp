@@ -268,7 +268,7 @@ const lyric_parser::AccessTypeAttr lyric_parser::kLyricAstAccessType(&lyric_sche
 const lyric_parser::BoundTypeAttr lyric_parser::kLyricAstBoundType(&lyric_schema::kLyricAstBoundEnumProperty);
 const lyric_parser::VarianceTypeAttr lyric_parser::kLyricAstVarianceType(&lyric_schema::kLyricAstVarianceEnumProperty);
 
-const lyric_common::AssemblyLocationAttr lyric_parser::kLyricAstAssemblyLocation(&lyric_schema::kLyricAstAssemblyLocationProperty);
+const lyric_common::ModuleLocationAttr lyric_parser::kLyricAstModuleLocation(&lyric_schema::kLyricAstModuleLocationProperty);
 const lyric_common::SymbolPathAttr lyric_parser::kLyricAstSymbolPath(&lyric_schema::kLyricAstSymbolPathProperty);
 const tempo_utils::StringAttr lyric_parser::kLyricAstIdentifier(&lyric_schema::kLyricAstIdentifierProperty);
 const tempo_utils::StringAttr lyric_parser::kLyricAstLabel(&lyric_schema::kLyricAstLabelProperty);

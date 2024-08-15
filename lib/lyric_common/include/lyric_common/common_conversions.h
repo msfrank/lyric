@@ -1,24 +1,24 @@
 #ifndef LYRIC_COMMON_RUNTIME_CONVERSIONS_H
 #define LYRIC_COMMON_RUNTIME_CONVERSIONS_H
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <lyric_common/symbol_path.h>
 #include <lyric_common/symbol_url.h>
 #include <tempo_config/abstract_config_parser.h>
 
 namespace lyric_common {
 
-    class AssemblyLocationParser : public tempo_config::AbstractConfigParser<AssemblyLocation> {
+    class ModuleLocationParser : public tempo_config::AbstractConfigParser<ModuleLocation> {
     public:
-        AssemblyLocationParser();
-        AssemblyLocationParser(const lyric_common::AssemblyLocation &assemblyLocationDefault);
+        ModuleLocationParser();
+        ModuleLocationParser(const lyric_common::ModuleLocation &moduleLocationDefault);
 
         tempo_utils::Status parseValue(
             const tempo_config::ConfigNode &node,
-            AssemblyLocation &assemblyLocation) const override;
+            ModuleLocation &moduleLocation) const override;
 
     private:
-        Option<lyric_common::AssemblyLocation> m_default;
+        Option<lyric_common::ModuleLocation> m_default;
     };
 
     class SymbolPathParser : public tempo_config::AbstractConfigParser<SymbolPath> {

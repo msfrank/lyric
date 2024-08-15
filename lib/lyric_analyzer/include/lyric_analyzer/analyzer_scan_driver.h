@@ -1,7 +1,7 @@
 #ifndef LYRIC_ANALYZER_ANALYZER_SCAN_DRIVER_H
 #define LYRIC_ANALYZER_ANALYZER_SCAN_DRIVER_H
 
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_rewriter/abstract_scan_driver.h>
 #include <lyric_typing/type_system.h>
 
@@ -11,7 +11,7 @@ namespace lyric_analyzer {
 
     class AnalyzerScanDriver : public lyric_rewriter::AbstractScanDriver {
     public:
-        explicit AnalyzerScanDriver(lyric_assembler::AssemblyState *state);
+        explicit AnalyzerScanDriver(lyric_assembler::ObjectState *state);
         ~AnalyzerScanDriver() override;
 
         tempo_utils::Status initialize();
@@ -44,7 +44,7 @@ namespace lyric_analyzer {
         tempo_utils::Status pushConcept(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
 
     private:
-        lyric_assembler::AssemblyState *m_state;
+        lyric_assembler::ObjectState *m_state;
         lyric_assembler::NamespaceSymbol *m_root;
         lyric_assembler::CallSymbol *m_entry;
         lyric_typing::TypeSystem *m_typeSystem;

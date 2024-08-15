@@ -5,7 +5,7 @@
 #include <lyric_common/type_def.h>
 #include <lyric_object/object_types.h>
 
-#include "assembly_state.h"
+#include "object_state.h"
 
 namespace lyric_assembler {
 
@@ -17,17 +17,17 @@ namespace lyric_assembler {
             const std::vector<lyric_common::TypeDef> &typeArguments,
             TypeAddress address,
             TypeHandle *superType,
-            AssemblyState *state);
+            ObjectState *state);
         TypeHandle(
             int placeholderIndex,
             const lyric_common::SymbolUrl &templateUrl,
             const std::vector<lyric_common::TypeDef> &typeArguments,
             TypeAddress address,
-            AssemblyState *state);
+            ObjectState *state);
         TypeHandle(
             const lyric_common::TypeDef &typeDef,
             TypeHandle *superType,
-            AssemblyState *state);
+            ObjectState *state);
 
         lyric_common::TypeDef getTypeDef() const;
         lyric_common::SymbolUrl getTypeSymbol() const;
@@ -46,7 +46,7 @@ namespace lyric_assembler {
         TypeHandle *m_superType;
         TypeAddress m_address;
         TypeSignature m_signature;
-        AssemblyState *m_state;
+        ObjectState *m_state;
     };
 }
 

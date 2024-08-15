@@ -33,7 +33,7 @@ namespace lyric_runtime {
         kInvalidDataStackValue,
         kInvalidReceiver,
         kRuntimeInvariant,
-        kMissingAssembly,
+        kMissingObject,
         kMissingSymbol,
         kExceededMaximumRecursion,
         kInterrupted,
@@ -129,7 +129,7 @@ namespace tempo_utils {
                     return tempo_utils::StatusCode::kAborted;
                 case lyric_runtime::InterpreterCondition::kRuntimeInvariant:
                     return tempo_utils::StatusCode::kInternal;
-                case lyric_runtime::InterpreterCondition::kMissingAssembly:
+                case lyric_runtime::InterpreterCondition::kMissingObject:
                 case lyric_runtime::InterpreterCondition::kMissingSymbol:
                     return tempo_utils::StatusCode::kFailedPrecondition;
                 case lyric_runtime::InterpreterCondition::kInterrupted:
@@ -181,8 +181,8 @@ namespace tempo_utils {
                     return "Invalid receiver";
                 case lyric_runtime::InterpreterCondition::kRuntimeInvariant:
                     return "Runtime invariant";
-                case lyric_runtime::InterpreterCondition::kMissingAssembly:
-                    return "Missing assembly";
+                case lyric_runtime::InterpreterCondition::kMissingObject:
+                    return "Missing object";
                 case lyric_runtime::InterpreterCondition::kMissingSymbol:
                     return "Missing symbol";
                 case lyric_runtime::InterpreterCondition::kInterrupted:

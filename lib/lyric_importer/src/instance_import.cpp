@@ -207,7 +207,7 @@ lyric_importer::InstanceImport::load()
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
-                "cannot import instance at index {} in assembly {}; invalid derive type",
+                "cannot import instance at index {} in module {}; invalid derive type",
                 m_instanceOffset, location.toString()));
     priv->derive = instanceWalker.getDeriveType();
 
@@ -227,7 +227,7 @@ lyric_importer::InstanceImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import instance at index {} in assembly {}; invalid super instance",
+                        "cannot import instance at index {} in module {}; invalid super instance",
                         m_instanceOffset, location.toString()));
         }
     }
@@ -246,7 +246,7 @@ lyric_importer::InstanceImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import instance at index {} in assembly {}; invalid member at index {}",
+                        "cannot import instance at index {} in module {}; invalid member at index {}",
                         m_instanceOffset, location.toString(), i));
         }
         auto name = fieldUrl.getSymbolName();
@@ -267,7 +267,7 @@ lyric_importer::InstanceImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import instance at index {} in assembly {}; invalid method at index {}",
+                        "cannot import instance at index {} in module {}; invalid method at index {}",
                         m_instanceOffset, location.toString(), i));
         }
         auto name = callUrl.getSymbolName();

@@ -9,7 +9,7 @@ static tempo_utils::Result<lyric_common::TypeDef>
 unify_concrete_and_concrete(
     const lyric_common::TypeDef &ref1,
     const lyric_common::TypeDef &ref2,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (ref1.getType() == lyric_common::TypeDefType::Concrete);
     TU_ASSERT (ref2.getType() == lyric_common::TypeDefType::Concrete);
@@ -56,7 +56,7 @@ unify_concrete_and_concrete(
 
     auto commonType = state->importCache()->getLinkUrl(address.getAddress() & 0x7FFFFFFF);
     auto unifiedType = lyric_common::TypeDef::forConcrete(
-        lyric_common::SymbolUrl(commonType.getAssemblyLocation(),
+        lyric_common::SymbolUrl(commonType.getModuleLocation(),
         lyric_common::SymbolPath(commonType.getSymbolPath().getPath())));
 
     return unifiedType;
@@ -66,7 +66,7 @@ static tempo_utils::Result<lyric_common::TypeDef>
 unify_concrete(
     const lyric_common::TypeDef &ref1,
     const lyric_common::TypeDef &ref2,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (ref1.getType() == lyric_common::TypeDefType::Concrete);
     switch (ref2.getType()) {
@@ -83,7 +83,7 @@ static tempo_utils::Result<lyric_common::TypeDef>
 unify_placeholder(
     const lyric_common::TypeDef &ref1,
     const lyric_common::TypeDef &ref2,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (ref1.getType() == lyric_common::TypeDefType::Placeholder);
     switch (ref2.getType()) {
@@ -105,7 +105,7 @@ tempo_utils::Result<lyric_common::TypeDef>
 lyric_typing::unify_assignable(
     const lyric_common::TypeDef &ref1,
     const lyric_common::TypeDef &ref2,
-    lyric_assembler::AssemblyState *state)
+    lyric_assembler::ObjectState *state)
 {
     /*
      *

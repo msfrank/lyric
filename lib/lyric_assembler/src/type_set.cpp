@@ -3,7 +3,7 @@
 #include <lyric_assembler/type_cache.h>
 #include <lyric_assembler/type_handle.h>
 
-lyric_assembler::DisjointTypeSet::DisjointTypeSet(const lyric_assembler::AssemblyState *state)
+lyric_assembler::DisjointTypeSet::DisjointTypeSet(const lyric_assembler::ObjectState *state)
     : m_state(state),
       m_root(new TypeLevel())
 {
@@ -65,7 +65,7 @@ lyric_assembler::DisjointTypeSet::putType(const lyric_common::TypeDef &type)
     return AssemblerStatus::ok();
 }
 
-lyric_assembler::UnifiedTypeSet::UnifiedTypeSet(const lyric_assembler::AssemblyState *state)
+lyric_assembler::UnifiedTypeSet::UnifiedTypeSet(const lyric_assembler::ObjectState *state)
     : m_state(state),
       m_root(new TypeLevel())
 {

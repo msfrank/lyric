@@ -1,31 +1,31 @@
 
 #include <lyric_common/common_serde.h>
 
-lyric_common::AssemblyLocationAttr::AssemblyLocationAttr(const tempo_utils::ComparableResource *resource)
-    : AttrSerde<AssemblyLocation>(resource)
+lyric_common::ModuleLocationAttr::ModuleLocationAttr(const tempo_utils::ComparableResource *resource)
+    : AttrSerde<ModuleLocation>(resource)
 {
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_common::AssemblyLocationAttr::writeAttr(
+lyric_common::ModuleLocationAttr::writeAttr(
     tempo_utils::AbstractAttrWriter *writer,
-    const AssemblyLocation &location) const
+    const ModuleLocation &location) const
 {
     TU_ASSERT (writer != nullptr);
     return writer->putString(location.toString());
 }
 
 tempo_utils::Status
-lyric_common::AssemblyLocationAttr::parseAttr(
+lyric_common::ModuleLocationAttr::parseAttr(
     tu_uint32 index,
     tempo_utils::AbstractAttrParser *parser,
-    AssemblyLocation &location) const
+    ModuleLocation &location) const
 {
     std::string value;
     auto status = parser->getString(index, value);
     if (status.notOk())
         return status;
-    location = AssemblyLocation::fromString(value);
+    location = ModuleLocation::fromString(value);
     return tempo_utils::AttrStatus::ok();
 }
 

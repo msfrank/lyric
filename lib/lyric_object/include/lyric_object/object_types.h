@@ -3,7 +3,7 @@
 
 #include <absl/container/flat_hash_map.h>
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <lyric_common/symbol_url.h>
 #include <lyric_common/type_def.h>
 #include <tempo_utils/option_template.h>

@@ -41,7 +41,7 @@ lyric_build::ArtifactLoader::ArtifactLoader(const ArtifactLoader &other)
 }
 
 tempo_utils::Result<bool>
-lyric_build::ArtifactLoader::hasAssembly(const lyric_common::AssemblyLocation &location) const
+lyric_build::ArtifactLoader::hasModule(const lyric_common::ModuleLocation &location) const
 {
     auto locationUrl = location.toUrl();
     if (!locationUrl.isValid())
@@ -64,14 +64,14 @@ lyric_build::ArtifactLoader::hasAssembly(const lyric_common::AssemblyLocation &l
     return entryType == EntryType::File;
 }
 
-tempo_utils::Result<Option<lyric_common::AssemblyLocation>>
-lyric_build::ArtifactLoader::resolveAssembly(const lyric_common::AssemblyLocation &location) const
+tempo_utils::Result<Option<lyric_common::ModuleLocation>>
+lyric_build::ArtifactLoader::resolveModule(const lyric_common::ModuleLocation &location) const
 {
     return Option(location);
 }
 
 tempo_utils::Result<Option<lyric_object::LyricObject>>
-lyric_build::ArtifactLoader::loadAssembly(const lyric_common::AssemblyLocation &location)
+lyric_build::ArtifactLoader::loadModule(const lyric_common::ModuleLocation &location)
 {
     auto locationUrl = location.toUrl();
     if (!locationUrl.isValid())
@@ -91,7 +91,7 @@ lyric_build::ArtifactLoader::loadAssembly(const lyric_common::AssemblyLocation &
 
 tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>>
 lyric_build::ArtifactLoader::loadPlugin(
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     const lyric_object::PluginSpecifier &specifier)
 {
     return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>();

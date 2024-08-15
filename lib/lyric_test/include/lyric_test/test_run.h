@@ -39,19 +39,19 @@ namespace lyric_test {
             std::shared_ptr<AbstractTester> tester,
             const lyric_build::TargetComputation &computation,
             std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics,
-            const lyric_object::LyricObject &assembly);
+            const lyric_object::LyricObject &object);
         SymbolizeModule(
             std::shared_ptr<AbstractTester> tester,
             const lyric_build::TargetComputation &computation,
             std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics);
         SymbolizeModule(const SymbolizeModule &other);
 
-        bool hasAssembly() const;
-        lyric_object::LyricObject getAssembly() const;
+        bool hasModule() const;
+        lyric_object::LyricObject getModule() const;
 
     private:
-        bool m_hasAssembly;
-        lyric_object::LyricObject m_assembly;
+        bool m_hasModule;
+        lyric_object::LyricObject m_object;
     };
 
     class AnalyzeModule : public TestComputation {
@@ -62,19 +62,19 @@ namespace lyric_test {
             std::shared_ptr<AbstractTester> tester,
             const lyric_build::TargetComputation &computation,
             std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics,
-            const lyric_object::LyricObject &assembly);
+            const lyric_object::LyricObject &object);
         AnalyzeModule(
             std::shared_ptr<AbstractTester> tester,
             const lyric_build::TargetComputation &computation,
             std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics);
         AnalyzeModule(const AnalyzeModule &other);
 
-        bool hasAssembly() const;
-        lyric_object::LyricObject getAssembly() const;
+        bool hasModule() const;
+        lyric_object::LyricObject getModule() const;
 
     private:
-        bool m_hasAssembly;
-        lyric_object::LyricObject m_assembly;
+        bool m_hasModule;
+        lyric_object::LyricObject m_object;
     };
 
     class CompileModule : public TestComputation {
@@ -85,19 +85,19 @@ namespace lyric_test {
             std::shared_ptr<AbstractTester> tester,
             const lyric_build::TargetComputation &computation,
             std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics,
-            const lyric_object::LyricObject &assembly);
+            const lyric_object::LyricObject &object);
         CompileModule(
             std::shared_ptr<AbstractTester> tester,
             const lyric_build::TargetComputation &computation,
             std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics);
         CompileModule(const CompileModule &other);
 
-        bool hasAssembly() const;
-        lyric_object::LyricObject getAssembly() const;
+        bool hasModule() const;
+        lyric_object::LyricObject getModule() const;
 
     private:
-        bool m_hasAssembly;
-        lyric_object::LyricObject m_assembly;
+        bool m_hasModule;
+        lyric_object::LyricObject m_object;
     };
 
     class BuildModule : public TestComputation {
@@ -108,7 +108,7 @@ namespace lyric_test {
             std::shared_ptr<AbstractTester> tester,
             const lyric_build::TargetComputation &computation,
             std::shared_ptr<lyric_build::BuildDiagnostics> diagnostics,
-            const lyric_common::AssemblyLocation &location);
+            const lyric_common::ModuleLocation &location);
         BuildModule(
             std::shared_ptr<AbstractTester> tester,
             const lyric_build::TargetComputation &computation,
@@ -116,11 +116,11 @@ namespace lyric_test {
         BuildModule(const BuildModule &other);
 
         bool hasLocation() const;
-        lyric_common::AssemblyLocation getLocation() const;
+        lyric_common::ModuleLocation getLocation() const;
 
     private:
         bool m_hasLocation;
-        lyric_common::AssemblyLocation m_location;
+        lyric_common::ModuleLocation m_location;
     };
 
     class PackageModule : public TestComputation {

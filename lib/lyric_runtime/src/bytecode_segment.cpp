@@ -1,12 +1,10 @@
 
 #include <lyric_runtime/bytecode_segment.h>
-#include <lyric_runtime/internal/assembly_reader.h>
 #include <tempo_utils/log_stream.h>
-
 
 lyric_runtime::BytecodeSegment::BytecodeSegment(
     uint32_t segmentIndex,
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     const lyric_object::LyricObject &object,
     std::shared_ptr<const AbstractPlugin> plugin)
     : m_segmentIndex(segmentIndex),
@@ -45,7 +43,7 @@ lyric_runtime::BytecodeSegment::~BytecodeSegment()
     delete[] m_enums;
 }
 
-lyric_common::AssemblyLocation
+lyric_common::ModuleLocation
 lyric_runtime::BytecodeSegment::getLocation() const
 {
     return m_location;

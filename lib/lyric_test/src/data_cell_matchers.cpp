@@ -126,7 +126,7 @@ lyric_test::matchers::DataCellMatcher::MatchAndExplain(
             if (vtable == nullptr)
                 return false;
             auto sym = vtable->getSymbolUrl();
-            if (!m_sym.getAssemblyLocation().isValid())
+            if (!m_sym.getModuleLocation().isValid())
                 return sym.getSymbolPath() == m_sym.getSymbolPath();
             return m_sym == sym;
         }

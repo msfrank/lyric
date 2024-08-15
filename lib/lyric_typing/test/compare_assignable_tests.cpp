@@ -9,7 +9,7 @@ class CompareAssignable : public BaseFixture {};
 
 TEST_F(CompareAssignable, CompareSingularToItself)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
     auto cmp = m_typeSystem->compareAssignable(IntType, IntType).orElseThrow();
     ASSERT_EQ (lyric_runtime::TypeComparison::EQUAL, cmp);
@@ -17,7 +17,7 @@ TEST_F(CompareAssignable, CompareSingularToItself)
 
 TEST_F(CompareAssignable, CompareSingularToDirectSupertype)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto IntrinsicType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Intrinsic);
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
     auto cmp = m_typeSystem->compareAssignable(IntrinsicType, IntType).orElseThrow();
@@ -26,7 +26,7 @@ TEST_F(CompareAssignable, CompareSingularToDirectSupertype)
 
 TEST_F(CompareAssignable, CompareSingularToSupertype)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
     auto cmp = m_typeSystem->compareAssignable(AnyType, IntType).orElseThrow();
@@ -35,7 +35,7 @@ TEST_F(CompareAssignable, CompareSingularToSupertype)
 
 TEST_F(CompareAssignable, CompareSingularToSubtype)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
     auto cmp = m_typeSystem->compareAssignable(IntType, AnyType).orElseThrow();
@@ -44,7 +44,7 @@ TEST_F(CompareAssignable, CompareSingularToSubtype)
 
 TEST_F(CompareAssignable, CompareSingularToDisjointType)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
     auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
     auto cmp = m_typeSystem->compareAssignable(IntType, FloatType).orElseThrow();
@@ -53,11 +53,11 @@ TEST_F(CompareAssignable, CompareSingularToDisjointType)
 
 TEST_F(CompareAssignable, ComparePlaceholderToItself)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
-    auto *typeCache = m_assemblyState->typeCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
+    auto *typeCache = m_objectState->typeCache();
 
     lyric_common::SymbolUrl entryUrl(lyric_common::SymbolPath({"$entry"}));
-    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, m_assemblyState.get());
+    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, m_objectState.get());
 
     lyric_object::TemplateParameter tp;
     tp.index = 0;
@@ -78,7 +78,7 @@ TEST_F(CompareAssignable, ComparePlaceholderToItself)
 
 TEST_F(CompareAssignable, CompareSingularMemberToTypeUnion)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
     auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
     auto IntOrFloatType = lyric_common::TypeDef::forUnion({IntType, FloatType});
@@ -90,7 +90,7 @@ TEST_F(CompareAssignable, CompareSingularMemberToTypeUnion)
 
 TEST_F(CompareAssignable, CompareSingularMemberSubtypeToTypeUnion)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     auto IntrinsicType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Intrinsic);
     auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
@@ -103,7 +103,7 @@ TEST_F(CompareAssignable, CompareSingularMemberSubtypeToTypeUnion)
 
 TEST_F(CompareAssignable, CompareTypeUnionToTypeUnion)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     auto IntrinsicType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Intrinsic);
     auto ObjectOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, IntrinsicType});
@@ -113,7 +113,7 @@ TEST_F(CompareAssignable, CompareTypeUnionToTypeUnion)
 
 TEST_F(CompareAssignable, CompareTypeUnionToWidenedTypeUnion)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     auto RecordType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
     auto IntrinsicType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Intrinsic);
@@ -125,7 +125,7 @@ TEST_F(CompareAssignable, CompareTypeUnionToWidenedTypeUnion)
 
 TEST_F(CompareAssignable, CompareTypeUnionToNarrowedTypeUnion)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     auto RecordType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
     auto IntrinsicType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Intrinsic);
@@ -137,7 +137,7 @@ TEST_F(CompareAssignable, CompareTypeUnionToNarrowedTypeUnion)
 
 TEST_F(CompareAssignable, CompareTypeUnionToSingularMember)
 {
-    auto *fundamentalCache = m_assemblyState->fundamentalCache();
+    auto *fundamentalCache = m_objectState->fundamentalCache();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     auto IntrinsicType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Intrinsic);
     auto ObjectOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, IntrinsicType});

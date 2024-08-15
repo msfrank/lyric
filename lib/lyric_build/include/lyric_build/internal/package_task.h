@@ -36,7 +36,7 @@ namespace lyric_build::internal {
         int m_versionMajor;
         int m_versionMinor;
         int m_versionPatch;
-        lyric_common::AssemblyLocation m_mainLocation;
+        lyric_common::ModuleLocation m_mainLocation;
 
         tempo_utils::Status configure(const ConfigStore *config);
     };

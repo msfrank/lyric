@@ -92,7 +92,7 @@ lyric_importer::NamespaceImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
-                        "cannot import namespace at index {} in assembly {}; invalid super namespace",
+                        "cannot import namespace at index {} in module {}; invalid super namespace",
                         m_namespaceOffset, location.toString()));
         }
     }

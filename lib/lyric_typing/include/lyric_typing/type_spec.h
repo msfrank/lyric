@@ -26,7 +26,7 @@ namespace lyric_typing {
         bool isValid() const;
 
         TypeSpecType getType() const;
-        lyric_common::AssemblyLocation getTypeLocation() const;
+        lyric_common::ModuleLocation getTypeLocation() const;
         lyric_common::SymbolPath getTypePath() const;
         std::vector<TypeSpec> getTypeParameters() const;
         std::vector<TypeSpec> getIntersection() const;

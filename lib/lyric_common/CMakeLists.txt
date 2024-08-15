@@ -7,7 +7,7 @@ add_library(lyric_common SHARED)
 add_library(lyric::lyric_common ALIAS lyric_common)
 
 set(LYRIC_COMMON_INCLUDES
-    include/lyric_common/assembly_location.h
+    include/lyric_common/module_location.h
     include/lyric_common/common_conversions.h
     include/lyric_common/common_serde.h
     include/lyric_common/common_types.h
@@ -20,7 +20,7 @@ set_target_properties(lyric_common PROPERTIES PUBLIC_HEADER "${LYRIC_COMMON_INCL
 
 target_sources(lyric_common
     PRIVATE
-    src/assembly_location.cpp
+    src/module_location.cpp
     src/common_conversions.cpp
     src/common_serde.cpp
     src/common_types.cpp

@@ -1,7 +1,7 @@
 #ifndef LYRIC_RUNTIME_RUNTIME_TYPES_H
 #define LYRIC_RUNTIME_RUNTIME_TYPES_H
 
-#include <lyric_common/assembly_location.h>
+#include <lyric_common/module_location.h>
 #include <lyric_common/symbol_url.h>
 #include <lyric_object/object_types.h>
 #include <tempo_utils/option_template.h>
@@ -36,8 +36,8 @@ namespace lyric_runtime {
         /** Invalid if the link has not been resolved yet, otherwise contains the linkage type. */
         lyric_object::LinkageSection linkage = lyric_object::LinkageSection::Invalid;
 
-        /** context-dependent reference to the target assembly. */
-        tu_uint32 assembly = INVALID_ADDRESS_U32;
+        /** context-dependent reference to the target object. */
+        tu_uint32 object = INVALID_ADDRESS_U32;
 
         /** context-dependent link value */
         tu_uint32 value = INVALID_ADDRESS_U32;

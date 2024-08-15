@@ -1,7 +1,6 @@
 
 #include <lyric_object/concrete_type_walker.h>
 #include <lyric_runtime/base_ref.h>
-#include <lyric_runtime/internal/assembly_reader.h>
 #include <lyric_runtime/interpreter_result.h>
 #include <lyric_runtime/segment_manager.h>
 #include <lyric_runtime/type_manager.h>
@@ -73,11 +72,11 @@ resolve_type_to_descriptor(
     lyric_runtime::SegmentManager *segmentManager)
 {
     TU_ASSERT (type.type == lyric_runtime::DataCellType::TYPE);
-    TU_ASSERT (type.data.descriptor.assembly != lyric_runtime::INVALID_ADDRESS_U32);
+    TU_ASSERT (type.data.descriptor.object != lyric_runtime::INVALID_ADDRESS_U32);
     TU_ASSERT (type.data.descriptor.value != lyric_runtime::INVALID_ADDRESS_U32);
 
     // load the type descriptor from the specified assembly
-    auto *segment = segmentManager->getSegment(type.data.descriptor.assembly);
+    auto *segment = segmentManager->getSegment(type.data.descriptor.object);
     if (segment == nullptr)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid segment");
@@ -107,7 +106,7 @@ resolve_type_to_descriptor(
                 return resolve_type_to_descriptor(typeCell, descriptor, segmentManager);
             }
 
-            auto typeCell = lyric_runtime::DataCell::forType(type.data.descriptor.assembly, concreteIndex);
+            auto typeCell = lyric_runtime::DataCell::forType(type.data.descriptor.object, concreteIndex);
             return resolve_type_to_descriptor(typeCell, descriptor, segmentManager);
         }
 
@@ -131,7 +130,7 @@ resolve_super_type(
 {
     TU_ASSERT (type.type == lyric_runtime::DataCellType::TYPE);
 
-    auto *segment = segmentManager->getSegment(type.data.descriptor.assembly);
+    auto *segment = segmentManager->getSegment(type.data.descriptor.object);
     if (segment == nullptr)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid segment");

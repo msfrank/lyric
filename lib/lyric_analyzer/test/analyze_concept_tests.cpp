@@ -31,7 +31,7 @@ TEST(AnalyzeConcept, DeclareConcept)
         tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
-    auto object = analyzeModule.getAssembly();
+    auto object = analyzeModule.getModule();
     auto root = object.getObject();
     ASSERT_EQ (3, root.numSymbols());
     ASSERT_EQ (1, root.numConcepts());
@@ -63,7 +63,7 @@ TEST(AnalyzeConcept, DeclareConceptAction)
                  tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
-    auto object = analyzeModule.getAssembly();
+    auto object = analyzeModule.getModule();
     auto root = object.getObject();
     ASSERT_EQ (4, root.numSymbols());
     ASSERT_EQ (1, root.numConcepts());

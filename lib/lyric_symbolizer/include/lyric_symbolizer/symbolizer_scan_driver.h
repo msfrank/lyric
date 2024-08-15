@@ -1,14 +1,14 @@
 #ifndef LYRIC_SYMBOLIZER_SYMBOLIZER_SCAN_DRIVER_H
 #define LYRIC_SYMBOLIZER_SYMBOLIZER_SCAN_DRIVER_H
 
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_rewriter/abstract_scan_driver.h>
 
 namespace lyric_symbolizer {
 
     class SymbolizerScanDriver : public lyric_rewriter::AbstractScanDriver {
     public:
-        explicit SymbolizerScanDriver(lyric_assembler::AssemblyState *state);
+        explicit SymbolizerScanDriver(lyric_assembler::ObjectState *state);
 
         tempo_utils::Status arrange(
             const lyric_parser::ArchetypeState *state,
@@ -26,7 +26,7 @@ namespace lyric_symbolizer {
             const lyric_rewriter::VisitorContext &ctx) override;
 
     private:
-        lyric_assembler::AssemblyState *m_state;
+        lyric_assembler::ObjectState *m_state;
         lyric_assembler::UndeclaredSymbol *m_entry;
         std::vector<std::string> m_symbolPath;
 

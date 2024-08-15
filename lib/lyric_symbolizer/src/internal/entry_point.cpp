@@ -4,7 +4,7 @@
 #include <lyric_assembler/type_cache.h>
 #include <lyric_symbolizer/internal/entry_point.h>
 
-lyric_symbolizer::internal::EntryPoint::EntryPoint(lyric_assembler::AssemblyState *state)
+lyric_symbolizer::internal::EntryPoint::EntryPoint(lyric_assembler::ObjectState *state)
     : m_state(state),
       m_location(),
       m_root(nullptr),
@@ -20,14 +20,14 @@ lyric_symbolizer::internal::EntryPoint::~EntryPoint()
     delete m_typeSystem;
 }
 
-lyric_assembler::AssemblyState *
+lyric_assembler::ObjectState *
 lyric_symbolizer::internal::EntryPoint::getState() const
 {
     return m_state;
 }
 
 tempo_utils::Status
-lyric_symbolizer::internal::EntryPoint::initialize(const lyric_common::AssemblyLocation &location)
+lyric_symbolizer::internal::EntryPoint::initialize(const lyric_common::ModuleLocation &location)
 {
     if (!location.isValid())
         m_state->throwAssemblerInvariant("missing entry module location");
@@ -82,7 +82,7 @@ lyric_symbolizer::internal::EntryPoint::initialize(const lyric_common::AssemblyL
     return SymbolizerStatus::ok();
 }
 
-lyric_common::AssemblyLocation
+lyric_common::ModuleLocation
 lyric_symbolizer::internal::EntryPoint::getLocation() const
 {
     return m_location;

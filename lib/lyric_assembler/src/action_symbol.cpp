@@ -12,7 +12,7 @@ lyric_assembler::ActionSymbol::ActionSymbol(
     ActionAddress address,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : BaseSymbol(address, new ActionSymbolPriv()),
       m_actionUrl(actionUrl),
       m_state(state)
@@ -40,7 +40,7 @@ lyric_assembler::ActionSymbol::ActionSymbol(
     TemplateHandle *actionTemplate,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : ActionSymbol(
         actionUrl,
         receiverUrl,
@@ -58,7 +58,7 @@ lyric_assembler::ActionSymbol::ActionSymbol(
 lyric_assembler::ActionSymbol::ActionSymbol(
     const lyric_common::SymbolUrl &actionUrl,
     lyric_importer::ActionImport *actionImport,
-    AssemblyState *state)
+    ObjectState *state)
     : m_actionUrl(actionUrl),
       m_actionImport(actionImport),
       m_state(state)

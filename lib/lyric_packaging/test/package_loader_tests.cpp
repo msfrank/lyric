@@ -13,13 +13,13 @@ TEST(PackageLoader, TestLoadAssembly)
     lyric_test::LyricTester tester(options);
     auto compileModuleResult = tester.compileSingleModule("42");
     ASSERT_TRUE (compileModuleResult.isResult());
-    auto assembly = compileModuleResult.getResult();
+    auto object = compileModuleResult.getResult();
 
     tempo_utils::TempdirMaker tempdirMaker(std::filesystem::current_path(), "test_PackageWriter.XXXXXXXX");
     ASSERT_TRUE (tempdirMaker.isValid());
     lyric_packaging::PackageWriter writer;
     ASSERT_TRUE (writer.configure().isOk());
-    writer.putFile(lyric_packaging::EntryPath::fromString("/test.lyo"), *assembly.getAssembly().getBytes());
+    writer.putFile(lyric_packaging::EntryPath::fromString("/test.lyo"), object.bytesView());
     writer.putPackageAttr(lyric_packaging::kLyricPackagingMainLocation, lyric_common::AssemblyLocation::fromString("/test"));
     auto packagePath = tempdirMaker.getTempdir() / "dev.zuri_package-0.0.0.zpk";
     auto status = writer.writePackage(packagePath);
@@ -30,8 +30,8 @@ TEST(PackageLoader, TestLoadAssembly)
     ASSERT_TRUE (location.isValid());
 
     lyric_packaging::PackageLoader loader({tempdirMaker.getTempdir()});
-    ASSERT_TRUE (loader.hasAssembly(location));
-    auto loadedAssembly = loader.loadAssembly(location);
+    ASSERT_TRUE (loader.hasModule(location));
+    auto loadedAssembly = loader.loadModule(location);
     ASSERT_TRUE (loadedAssembly.isValid());
 
     ASSERT_TRUE (remove(packagePath));

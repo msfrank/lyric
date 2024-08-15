@@ -49,13 +49,13 @@ lyric_build::internal::AnalyzeModuleTask::configure(const ConfigStore *config)
         config, taskId, "sourceBaseUrl"));
 
     // determine the module location based on the source url
-    lyric_common::AssemblyLocation moduleLocation;
-    TU_ASSIGN_OR_RETURN(moduleLocation, convert_source_url_to_assembly_location(m_sourceUrl, baseUrl));
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN(moduleLocation, convert_source_url_to_module_location(m_sourceUrl, baseUrl));
 
-    lyric_common::AssemblyLocationParser preludeLocationParser;
+    lyric_common::ModuleLocationParser preludeLocationParser;
 
     // determine the analyzer prelude location
-    TU_RETURN_IF_NOT_OK(parse_config(m_assemblyStateOptions.preludeLocation, preludeLocationParser,
+    TU_RETURN_IF_NOT_OK(parse_config(m_objectStateOptions.preludeLocation, preludeLocationParser,
         config, taskId, "preludeLocation"));
 
     //
@@ -64,7 +64,7 @@ lyric_build::internal::AnalyzeModuleTask::configure(const ConfigStore *config)
 
     auto taskSection = config->getTaskSection(taskId);
 
-    lyric_common::AssemblyLocationParser moduleLocationParser(moduleLocation);
+    lyric_common::ModuleLocationParser moduleLocationParser(moduleLocation);
 
     // override the module location if specified
     TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_moduleLocation, moduleLocationParser,
@@ -75,7 +75,7 @@ lyric_build::internal::AnalyzeModuleTask::configure(const ConfigStore *config)
 
     // configure the symbolize_module dependency
     m_symbolizeTarget = TaskKey("symbolize_module", taskId.getId(), tempo_config::ConfigMap({
-        {"preludeLocation", tempo_config::ConfigValue(m_assemblyStateOptions.preludeLocation.toString())},
+        {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
         {"moduleLocation", tempo_config::ConfigValue(m_moduleLocation.toString())},
     }));
 
@@ -112,7 +112,7 @@ lyric_build::internal::AnalyzeModuleTask::configureTask(
     auto resource = resourceOption.getValue();
 
     TaskHasher taskHasher(getKey());
-    taskHasher.hashValue(m_assemblyStateOptions.preludeLocation.toString());
+    taskHasher.hashValue(m_objectStateOptions.preludeLocation.toString());
     taskHasher.hashValue(m_moduleLocation.toString());
     taskHasher.hashValue(resource.entityTag);
     auto hash = taskHasher.finish();
@@ -160,7 +160,7 @@ lyric_build::internal::AnalyzeModuleTask::symbolizeImports(
         std::filesystem::path importSourcePath = location.getPath().toString();
         importSourcePath.replace_extension(lyric_common::kSourceFileSuffix);
         symbolizeTargets.insert(TaskKey("symbolize_module", importSourcePath, tempo_config::ConfigMap({
-                {"preludeLocation", tempo_config::ConfigValue(m_assemblyStateOptions.preludeLocation.toString())},
+                {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
                 {"moduleLocation", tempo_config::ConfigValue(m_moduleLocation.toString())},
             })));
     }
@@ -205,21 +205,21 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
 
     auto span = getSpan();
 
-    // generate the outline assembly by analyzing the archetype
+    // generate the outline object by analyzing the archetype
     TU_LOG_INFO << "analyzing module from " << m_sourceUrl;
-    auto scanResult = analyzer.analyzeModule(m_moduleLocation, archetype, m_assemblyStateOptions, traceDiagnostics());
+    auto scanResult = analyzer.analyzeModule(m_moduleLocation, archetype, m_objectStateOptions, traceDiagnostics());
     if (scanResult.isStatus()) {
         span->logStatus(scanResult.getStatus(), tempo_tracing::LogSeverity::kError);
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,
             "failed to analyze module {}", m_moduleLocation.toString());
     }
-    auto assembly = scanResult.getResult();
+    auto object = scanResult.getResult();
 
     tempo_utils::Status status;
 
-    // store the outline assembly content in the cache
+    // store the outline object content in the cache
     ArtifactId outlineArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourceUrl);
-    auto outlineBytes = assembly.bytesView();
+    auto outlineBytes = object.bytesView();
     status = cache->storeContent(outlineArtifact, outlineBytes);
     if (!status.isOk())
         return status;
@@ -228,13 +228,13 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     std::filesystem::path outlineInstallPath = generate_install_path(
         getId().getDomain(), m_sourceUrl, lyric_common::kObjectFileDotSuffix);
 
-    // store the outline assembly metadata in the cache
+    // store the outline object metadata in the cache
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
     writer.putAttr(kLyricBuildContentUrl, m_sourceUrl);
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
-    writer.putAttr(kLyricBuildAssemblyLocation, m_moduleLocation);
+    writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     writer.putAttr(kLyricBuildInstallPath, outlineInstallPath.string());
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {

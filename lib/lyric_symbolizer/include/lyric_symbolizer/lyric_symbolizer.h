@@ -3,8 +3,8 @@
 
 #include <absl/container/flat_hash_map.h>
 
-#include <lyric_assembler/assembly_state.h>
-#include <lyric_common/assembly_location.h>
+#include <lyric_assembler/object_state.h>
+#include <lyric_common/module_location.h>
 #include <lyric_common/symbol_url.h>
 #include <lyric_parser/lyric_archetype.h>
 #include <lyric_object/lyric_object.h>
@@ -19,7 +19,7 @@ namespace lyric_symbolizer {
     struct SymbolizerOptions {
         /** */
         absl::flat_hash_map<
-            lyric_common::AssemblyLocation,
+            lyric_common::ModuleLocation,
             absl::flat_hash_set<lyric_common::SymbolPath>> envSymbols;
     };
 
@@ -32,9 +32,9 @@ namespace lyric_symbolizer {
         LyricSymbolizer(const LyricSymbolizer &other);
 
         tempo_utils::Result<lyric_object::LyricObject> symbolizeModule(
-            const lyric_common::AssemblyLocation &location,
+            const lyric_common::ModuleLocation &location,
             const lyric_parser::LyricArchetype &archetype,
-            const lyric_assembler::AssemblyStateOptions &assemblyStateOptions,
+            const lyric_assembler::ObjectStateOptions &objectStateOptions,
             std::shared_ptr<tempo_tracing::TraceRecorder> recorder);
 
     private:

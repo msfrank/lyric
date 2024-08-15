@@ -80,10 +80,10 @@ namespace lyric_test {
 
         tempo_utils::Result<PackageModule> packageTargetsInternal(
             const absl::flat_hash_set<lyric_build::TaskId> &targets,
-            const lyric_common::AssemblyLocation &mainLocation,
+            const lyric_common::ModuleLocation &mainLocation,
             const lyric_packaging::PackageSpecifier &specifier);
         tempo_utils::Result<PackageModule> packageWorkspaceInternal(
-            const lyric_common::AssemblyLocation &mainLocation,
+            const lyric_common::ModuleLocation &mainLocation,
             const lyric_packaging::PackageSpecifier &specifier);
 
         bool containsUnexpectedResult() const;

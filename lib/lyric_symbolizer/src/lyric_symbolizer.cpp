@@ -1,5 +1,5 @@
 
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_symbolizer/lyric_symbolizer.h>
 #include <lyric_symbolizer/symbolizer_result.h>
@@ -22,14 +22,14 @@ lyric_symbolizer::LyricSymbolizer::LyricSymbolizer(const LyricSymbolizer &other)
 
 tempo_utils::Result<lyric_object::LyricObject>
 lyric_symbolizer::LyricSymbolizer::symbolizeModule(
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     const lyric_parser::LyricArchetype &archetype,
-    const lyric_assembler::AssemblyStateOptions &assemblyStateOptions,
+    const lyric_assembler::ObjectStateOptions &objectStateOptions,
     std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
     if (!location.isValid())
         return SymbolizerStatus::forCondition(
-            SymbolizerCondition::kSymbolizerInvariant, "invalid assembly location");
+            SymbolizerCondition::kSymbolizerInvariant, "invalid module location");
 
     auto walker = archetype.getRoot();
     if (!walker.isValid())
@@ -44,20 +44,20 @@ lyric_symbolizer::LyricSymbolizer::symbolizeModule(
         span->setOperationName("symbolizeModule");
 
         // construct the assembler state
-        lyric_assembler::AssemblyState assemblyState(
-            location, m_systemModuleCache, &scopeManager, assemblyStateOptions);
+        lyric_assembler::ObjectState objectState(
+            location, m_systemModuleCache, &scopeManager, objectStateOptions);
 
         // initialize the assembler
-        TU_RETURN_IF_NOT_OK (assemblyState.initialize());
+        TU_RETURN_IF_NOT_OK (objectState.initialize());
 
-        auto symbolizerDriver = std::make_shared<SymbolizerScanDriver>(&assemblyState);
+        auto symbolizerDriver = std::make_shared<SymbolizerScanDriver>(&objectState);
 
         lyric_rewriter::RewriterOptions rewriterOptions;
         lyric_rewriter::LyricRewriter rewriter(rewriterOptions);
         TU_RETURN_IF_NOT_OK (rewriter.scanArchetype(archetype, location.toUrl(), symbolizerDriver, recorder));
 
         // construct object from assembly state and return it
-        return assemblyState.toAssembly();
+        return objectState.toObject();
 
     } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();

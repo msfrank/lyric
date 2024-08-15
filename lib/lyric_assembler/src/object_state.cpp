@@ -1,7 +1,7 @@
 
 #include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/assembler_types.h>
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_assembler/base_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
@@ -25,11 +25,11 @@
 #include <tempo_utils/bytes_appender.h>
 #include <tempo_utils/log_stream.h>
 
-lyric_assembler::AssemblyState::AssemblyState(
-    const lyric_common::AssemblyLocation &location,
+lyric_assembler::ObjectState::ObjectState(
+    const lyric_common::ModuleLocation &location,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     tempo_tracing::ScopeManager *scopeManager,
-    const AssemblyStateOptions &options)
+    const ObjectStateOptions &options)
     : m_location(location),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_scopeManager(scopeManager),
@@ -40,11 +40,11 @@ lyric_assembler::AssemblyState::AssemblyState(
     TU_ASSERT (m_scopeManager != nullptr);
 
     if (!m_options.preludeLocation.isValid()) {
-        m_options.preludeLocation = lyric_common::AssemblyLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
+        m_options.preludeLocation = lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
     }
 }
 
-lyric_assembler::AssemblyState::~AssemblyState()
+lyric_assembler::ObjectState::~ObjectState()
 {
     delete m_implcache;
     delete m_typecache;
@@ -54,20 +54,20 @@ lyric_assembler::AssemblyState::~AssemblyState()
     delete m_fundamentalcache;
 }
 
-lyric_common::AssemblyLocation
-lyric_assembler::AssemblyState::getLocation() const
+lyric_common::ModuleLocation
+lyric_assembler::ObjectState::getLocation() const
 {
     return m_location;
 }
 
 tempo_tracing::ScopeManager *
-lyric_assembler::AssemblyState::scopeManager() const
+lyric_assembler::ObjectState::scopeManager() const
 {
     return m_scopeManager;
 }
 
-const lyric_assembler::AssemblyStateOptions *
-lyric_assembler::AssemblyState::getOptions() const
+const lyric_assembler::ObjectStateOptions *
+lyric_assembler::ObjectState::getOptions() const
 {
     return &m_options;
 }
@@ -170,7 +170,7 @@ make_struct_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer
  * @return Status
  */
 tempo_utils::Status
-lyric_assembler::AssemblyState::initialize()
+lyric_assembler::ObjectState::initialize()
 {
     if (m_tracer != nullptr)
         return logAndContinue(AssemblerCondition::kAssemblerInvariant,
@@ -290,43 +290,43 @@ lyric_assembler::AssemblyState::initialize()
 }
 
 lyric_assembler::FundamentalCache *
-lyric_assembler::AssemblyState::fundamentalCache() const
+lyric_assembler::ObjectState::fundamentalCache() const
 {
     return m_fundamentalcache;
 }
 
 lyric_assembler::ImportCache *
-lyric_assembler::AssemblyState::importCache() const
+lyric_assembler::ObjectState::importCache() const
 {
     return m_importcache;
 }
 
 lyric_assembler::SymbolCache *
-lyric_assembler::AssemblyState::symbolCache() const
+lyric_assembler::ObjectState::symbolCache() const
 {
     return m_symbolcache;
 }
 
 lyric_assembler::LiteralCache *
-lyric_assembler::AssemblyState::literalCache() const
+lyric_assembler::ObjectState::literalCache() const
 {
     return m_literalcache;
 }
 
 lyric_assembler::TypeCache *
-lyric_assembler::AssemblyState::typeCache() const
+lyric_assembler::ObjectState::typeCache() const
 {
     return m_typecache;
 }
 
 lyric_assembler::ImplCache *
-lyric_assembler::AssemblyState::implCache() const
+lyric_assembler::ObjectState::implCache() const
 {
     return m_implcache;
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::appendNamespace(NamespaceSymbol *namespaceSymbol)
+lyric_assembler::ObjectState::appendNamespace(NamespaceSymbol *namespaceSymbol)
 {
     TU_ASSERT (namespaceSymbol != nullptr);
     auto symbolUrl = namespaceSymbol->getSymbolUrl();
@@ -338,7 +338,7 @@ lyric_assembler::AssemblyState::appendNamespace(NamespaceSymbol *namespaceSymbol
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::touchNamespace(NamespaceSymbol *namespaceSymbol)
+lyric_assembler::ObjectState::touchNamespace(NamespaceSymbol *namespaceSymbol)
 {
     TU_ASSERT (namespaceSymbol != nullptr);
 
@@ -352,7 +352,7 @@ lyric_assembler::AssemblyState::touchNamespace(NamespaceSymbol *namespaceSymbol)
         throwAssemblerInvariant("missing namespace symbol {}", namespaceUrl.toString());
 
     //
-    auto location = namespaceUrl.getAssemblyLocation();
+    auto location = namespaceUrl.getModuleLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
     auto status = m_importcache->touchImport(location);
@@ -371,25 +371,25 @@ lyric_assembler::AssemblyState::touchNamespace(NamespaceSymbol *namespaceSymbol)
 }
 
 std::vector<lyric_assembler::NamespaceSymbol *>::const_iterator
-lyric_assembler::AssemblyState::namespacesBegin() const
+lyric_assembler::ObjectState::namespacesBegin() const
 {
     return m_namespaces.cbegin();
 }
 
 std::vector<lyric_assembler::NamespaceSymbol *>::const_iterator
-lyric_assembler::AssemblyState::namespacesEnd() const
+lyric_assembler::ObjectState::namespacesEnd() const
 {
     return m_namespaces.cend();
 }
 
 int
-lyric_assembler::AssemblyState::numNamespaces() const
+lyric_assembler::ObjectState::numNamespaces() const
 {
     return m_namespaces.size();
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::appendExistential(ExistentialSymbol *existentialSymbol)
+lyric_assembler::ObjectState::appendExistential(ExistentialSymbol *existentialSymbol)
 {
     TU_ASSERT (existentialSymbol != nullptr);
     auto symbolUrl = existentialSymbol->getSymbolUrl();
@@ -401,7 +401,7 @@ lyric_assembler::AssemblyState::appendExistential(ExistentialSymbol *existential
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::touchExistential(ExistentialSymbol *existentialSymbol)
+lyric_assembler::ObjectState::touchExistential(ExistentialSymbol *existentialSymbol)
 {
     TU_ASSERT (existentialSymbol != nullptr);
 
@@ -415,7 +415,7 @@ lyric_assembler::AssemblyState::touchExistential(ExistentialSymbol *existentialS
         throwAssemblerInvariant("missing existential symbol {}", existentialUrl.toString());
 
     //
-    auto location = existentialUrl.getAssemblyLocation();
+    auto location = existentialUrl.getModuleLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
     auto status = m_importcache->touchImport(location);
@@ -434,25 +434,25 @@ lyric_assembler::AssemblyState::touchExistential(ExistentialSymbol *existentialS
 }
 
 std::vector<lyric_assembler::ExistentialSymbol *>::const_iterator
-lyric_assembler::AssemblyState::existentialsBegin() const
+lyric_assembler::ObjectState::existentialsBegin() const
 {
     return m_existentials.cbegin();
 }
 
 std::vector<lyric_assembler::ExistentialSymbol *>::const_iterator
-lyric_assembler::AssemblyState::existentialsEnd() const
+lyric_assembler::ObjectState::existentialsEnd() const
 {
     return m_existentials.cend();
 }
 
 int
-lyric_assembler::AssemblyState::numExistentials() const
+lyric_assembler::ObjectState::numExistentials() const
 {
     return m_existentials.size();
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::appendStatic(StaticSymbol *staticSymbol)
+lyric_assembler::ObjectState::appendStatic(StaticSymbol *staticSymbol)
 {
     TU_ASSERT (staticSymbol != nullptr);
     auto symbolUrl = staticSymbol->getSymbolUrl();
@@ -464,7 +464,7 @@ lyric_assembler::AssemblyState::appendStatic(StaticSymbol *staticSymbol)
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::touchStatic(StaticSymbol *staticSymbol)
+lyric_assembler::ObjectState::touchStatic(StaticSymbol *staticSymbol)
 {
     TU_ASSERT (staticSymbol != nullptr);
 
@@ -478,7 +478,7 @@ lyric_assembler::AssemblyState::touchStatic(StaticSymbol *staticSymbol)
         throwAssemblerInvariant("missing static symbol {}", staticUrl.toString());
 
     //
-    auto location = staticUrl.getAssemblyLocation();
+    auto location = staticUrl.getModuleLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
     auto status = m_importcache->touchImport(location);
@@ -497,25 +497,25 @@ lyric_assembler::AssemblyState::touchStatic(StaticSymbol *staticSymbol)
 }
 
 std::vector<lyric_assembler::StaticSymbol *>::const_iterator
-lyric_assembler::AssemblyState::staticsBegin() const
+lyric_assembler::ObjectState::staticsBegin() const
 {
     return m_statics.cbegin();
 }
 
 std::vector<lyric_assembler::StaticSymbol *>::const_iterator
-lyric_assembler::AssemblyState::staticsEnd() const
+lyric_assembler::ObjectState::staticsEnd() const
 {
     return m_statics.cend();
 }
 
 int
-lyric_assembler::AssemblyState::numStatics() const
+lyric_assembler::ObjectState::numStatics() const
 {
     return m_statics.size();
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::appendField(FieldSymbol *fieldSymbol)
+lyric_assembler::ObjectState::appendField(FieldSymbol *fieldSymbol)
 {
     TU_ASSERT (fieldSymbol != nullptr);
     auto symbolUrl = fieldSymbol->getSymbolUrl();
@@ -527,7 +527,7 @@ lyric_assembler::AssemblyState::appendField(FieldSymbol *fieldSymbol)
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::touchField(FieldSymbol *fieldSymbol)
+lyric_assembler::ObjectState::touchField(FieldSymbol *fieldSymbol)
 {
     TU_ASSERT (fieldSymbol != nullptr);
 
@@ -541,7 +541,7 @@ lyric_assembler::AssemblyState::touchField(FieldSymbol *fieldSymbol)
         throwAssemblerInvariant("missing field symbol {}", fieldUrl.toString());
 
     //
-    auto location = fieldUrl.getAssemblyLocation();
+    auto location = fieldUrl.getModuleLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
     auto status = m_importcache->touchImport(location);
@@ -570,25 +570,25 @@ lyric_assembler::AssemblyState::touchField(FieldSymbol *fieldSymbol)
 }
 
 std::vector<lyric_assembler::FieldSymbol *>::const_iterator
-lyric_assembler::AssemblyState::fieldsBegin() const
+lyric_assembler::ObjectState::fieldsBegin() const
 {
     return m_fields.cbegin();
 }
 
 std::vector<lyric_assembler::FieldSymbol *>::const_iterator
-lyric_assembler::AssemblyState::fieldsEnd() const
+lyric_assembler::ObjectState::fieldsEnd() const
 {
     return m_fields.cend();
 }
 
 int
-lyric_assembler::AssemblyState::numFields() const
+lyric_assembler::ObjectState::numFields() const
 {
     return m_fields.size();
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::appendAction(ActionSymbol *actionSymbol)
+lyric_assembler::ObjectState::appendAction(ActionSymbol *actionSymbol)
 {
     TU_ASSERT (actionSymbol != nullptr);
     auto symbolUrl = actionSymbol->getSymbolUrl();
@@ -600,7 +600,7 @@ lyric_assembler::AssemblyState::appendAction(ActionSymbol *actionSymbol)
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::touchAction(ActionSymbol *actionSymbol)
+lyric_assembler::ObjectState::touchAction(ActionSymbol *actionSymbol)
 {
     TU_ASSERT (actionSymbol != nullptr);
 
@@ -621,7 +621,7 @@ lyric_assembler::AssemblyState::touchAction(ActionSymbol *actionSymbol)
         throwAssemblerInvariant("missing receiver {}", receiverUrl.toString());
 
     //
-    auto location = actionUrl.getAssemblyLocation();
+    auto location = actionUrl.getModuleLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
 
@@ -653,25 +653,25 @@ lyric_assembler::AssemblyState::touchAction(ActionSymbol *actionSymbol)
 }
 
 std::vector<lyric_assembler::ActionSymbol *>::const_iterator
-lyric_assembler::AssemblyState::actionsBegin() const
+lyric_assembler::ObjectState::actionsBegin() const
 {
     return m_actions.cbegin();
 }
 
 std::vector<lyric_assembler::ActionSymbol *>::const_iterator
-lyric_assembler::AssemblyState::actionsEnd() const
+lyric_assembler::ObjectState::actionsEnd() const
 {
     return m_actions.cend();
 }
 
 int
-lyric_assembler::AssemblyState::numActions() const
+lyric_assembler::ObjectState::numActions() const
 {
     return m_actions.size();
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::appendCall(CallSymbol *callSymbol)
+lyric_assembler::ObjectState::appendCall(CallSymbol *callSymbol)
 {
     TU_ASSERT (callSymbol != nullptr);
     auto symbolUrl = callSymbol->getSymbolUrl();
@@ -683,7 +683,7 @@ lyric_assembler::AssemblyState::appendCall(CallSymbol *callSymbol)
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::touchCall(CallSymbol *callSymbol)
+lyric_assembler::ObjectState::touchCall(CallSymbol *callSymbol)
 {
     TU_ASSERT (callSymbol != nullptr);
 
@@ -704,7 +704,7 @@ lyric_assembler::AssemblyState::touchCall(CallSymbol *callSymbol)
     }
 
     //
-    auto location = callUrl.getAssemblyLocation();
+    auto location = callUrl.getModuleLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
 
@@ -741,25 +741,25 @@ lyric_assembler::AssemblyState::touchCall(CallSymbol *callSymbol)
 }
 
 std::vector<lyric_assembler::CallSymbol *>::const_iterator
-lyric_assembler::AssemblyState::callsBegin() const
+lyric_assembler::ObjectState::callsBegin() const
 {
     return m_calls.cbegin();
 }
 
 std::vector<lyric_assembler::CallSymbol *>::const_iterator
-lyric_assembler::AssemblyState::callsEnd() const
+lyric_assembler::ObjectState::callsEnd() const
 {
     return m_calls.cend();
 }
 
 int
-lyric_assembler::AssemblyState::numCalls() const
+lyric_assembler::ObjectState::numCalls() const
 {
     return m_calls.size();
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::appendConcept(ConceptSymbol *conceptSymbol)
+lyric_assembler::ObjectState::appendConcept(ConceptSymbol *conceptSymbol)
 {
     TU_ASSERT (conceptSymbol != nullptr);
     auto symbolUrl = conceptSymbol->getSymbolUrl();
@@ -771,7 +771,7 @@ lyric_assembler::AssemblyState::appendConcept(ConceptSymbol *conceptSymbol)
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::touchConcept(ConceptSymbol *conceptSymbol)
+lyric_assembler::ObjectState::touchConcept(ConceptSymbol *conceptSymbol)
 {
     TU_ASSERT (conceptSymbol != nullptr);
 
@@ -785,7 +785,7 @@ lyric_assembler::AssemblyState::touchConcept(ConceptSymbol *conceptSymbol)
         throwAssemblerInvariant("missing concept symbol {}", conceptUrl.toString());
 
     //
-    auto location = conceptUrl.getAssemblyLocation();
+    auto location = conceptUrl.getModuleLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
     auto status = m_importcache->touchImport(location);
@@ -809,25 +809,25 @@ lyric_assembler::AssemblyState::touchConcept(ConceptSymbol *conceptSymbol)
 }
 
 std::vector<lyric_assembler::ConceptSymbol *>::const_iterator
-lyric_assembler::AssemblyState::conceptsBegin() const
+lyric_assembler::ObjectState::conceptsBegin() const
 {
     return m_concepts.cbegin();
 }
 
 std::vector<lyric_assembler::ConceptSymbol *>::const_iterator
-lyric_assembler::AssemblyState::conceptsEnd() const
+lyric_assembler::ObjectState::conceptsEnd() const
 {
     return m_concepts.cend();
 }
 
 int
-lyric_assembler::AssemblyState::numConcepts() const
+lyric_assembler::ObjectState::numConcepts() const
 {
     return m_concepts.size();
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::appendClass(ClassSymbol *classSymbol)
+lyric_assembler::ObjectState::appendClass(ClassSymbol *classSymbol)
 {
     TU_ASSERT (classSymbol != nullptr);
     auto symbolUrl = classSymbol->getSymbolUrl();
@@ -839,7 +839,7 @@ lyric_assembler::AssemblyState::appendClass(ClassSymbol *classSymbol)
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::touchClass(ClassSymbol *classSymbol)
+lyric_assembler::ObjectState::touchClass(ClassSymbol *classSymbol)
 {
     TU_ASSERT (classSymbol != nullptr);
 
@@ -853,7 +853,7 @@ lyric_assembler::AssemblyState::touchClass(ClassSymbol *classSymbol)
         throwAssemblerInvariant("missing class symbol {}", classUrl.toString());
 
     //
-    auto location = classUrl.getAssemblyLocation();
+    auto location = classUrl.getModuleLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
     auto status = m_importcache->touchImport(location);
@@ -877,25 +877,25 @@ lyric_assembler::AssemblyState::touchClass(ClassSymbol *classSymbol)
 }
 
 std::vector<lyric_assembler::ClassSymbol *>::const_iterator
-lyric_assembler::AssemblyState::classesBegin() const
+lyric_assembler::ObjectState::classesBegin() const
 {
     return m_classes.cbegin();
 }
 
 std::vector<lyric_assembler::ClassSymbol *>::const_iterator
-lyric_assembler::AssemblyState::classesEnd() const
+lyric_assembler::ObjectState::classesEnd() const
 {
     return m_classes.cend();
 }
 
 int
-lyric_assembler::AssemblyState::numClasses() const
+lyric_assembler::ObjectState::numClasses() const
 {
     return m_classes.size();
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::appendStruct(StructSymbol *structSymbol)
+lyric_assembler::ObjectState::appendStruct(StructSymbol *structSymbol)
 {
     TU_ASSERT (structSymbol != nullptr);
     auto symbolUrl = structSymbol->getSymbolUrl();
@@ -907,7 +907,7 @@ lyric_assembler::AssemblyState::appendStruct(StructSymbol *structSymbol)
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::touchStruct(StructSymbol *structSymbol)
+lyric_assembler::ObjectState::touchStruct(StructSymbol *structSymbol)
 {
     TU_ASSERT (structSymbol != nullptr);
 
@@ -921,7 +921,7 @@ lyric_assembler::AssemblyState::touchStruct(StructSymbol *structSymbol)
         throwAssemblerInvariant("missing struct symbol {}", structUrl.toString());
 
     //
-    auto location = structUrl.getAssemblyLocation();
+    auto location = structUrl.getModuleLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
     auto status = m_importcache->touchImport(location);
@@ -940,25 +940,25 @@ lyric_assembler::AssemblyState::touchStruct(StructSymbol *structSymbol)
 }
 
 std::vector<lyric_assembler::StructSymbol *>::const_iterator
-lyric_assembler::AssemblyState::structsBegin() const
+lyric_assembler::ObjectState::structsBegin() const
 {
     return m_structs.cbegin();
 }
 
 std::vector<lyric_assembler::StructSymbol *>::const_iterator
-lyric_assembler::AssemblyState::structsEnd() const
+lyric_assembler::ObjectState::structsEnd() const
 {
     return m_structs.cend();
 }
 
 int
-lyric_assembler::AssemblyState::numStructs() const
+lyric_assembler::ObjectState::numStructs() const
 {
     return m_structs.size();
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::appendInstance(InstanceSymbol *instanceSymbol)
+lyric_assembler::ObjectState::appendInstance(InstanceSymbol *instanceSymbol)
 {
     TU_ASSERT (instanceSymbol != nullptr);
     auto symbolUrl = instanceSymbol->getSymbolUrl();
@@ -970,7 +970,7 @@ lyric_assembler::AssemblyState::appendInstance(InstanceSymbol *instanceSymbol)
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::touchInstance(InstanceSymbol *instanceSymbol)
+lyric_assembler::ObjectState::touchInstance(InstanceSymbol *instanceSymbol)
 {
     TU_ASSERT (instanceSymbol != nullptr);
 
@@ -984,7 +984,7 @@ lyric_assembler::AssemblyState::touchInstance(InstanceSymbol *instanceSymbol)
         throwAssemblerInvariant("missing instance symbol {}", instanceUrl.toString());
 
     //
-    auto location = instanceUrl.getAssemblyLocation();
+    auto location = instanceUrl.getModuleLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
     auto status = m_importcache->touchImport(location);
@@ -1003,25 +1003,25 @@ lyric_assembler::AssemblyState::touchInstance(InstanceSymbol *instanceSymbol)
 }
 
 std::vector<lyric_assembler::InstanceSymbol *>::const_iterator
-lyric_assembler::AssemblyState::instancesBegin() const
+lyric_assembler::ObjectState::instancesBegin() const
 {
     return m_instances.cbegin();
 }
 
 std::vector<lyric_assembler::InstanceSymbol *>::const_iterator
-lyric_assembler::AssemblyState::instancesEnd() const
+lyric_assembler::ObjectState::instancesEnd() const
 {
     return m_instances.cend();
 }
 
 int
-lyric_assembler::AssemblyState::numInstances() const
+lyric_assembler::ObjectState::numInstances() const
 {
     return m_instances.size();
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::appendEnum(EnumSymbol *enumSymbol)
+lyric_assembler::ObjectState::appendEnum(EnumSymbol *enumSymbol)
 {
     TU_ASSERT (enumSymbol != nullptr);
     auto symbolUrl = enumSymbol->getSymbolUrl();
@@ -1033,7 +1033,7 @@ lyric_assembler::AssemblyState::appendEnum(EnumSymbol *enumSymbol)
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::touchEnum(EnumSymbol *enumSymbol)
+lyric_assembler::ObjectState::touchEnum(EnumSymbol *enumSymbol)
 {
     TU_ASSERT (enumSymbol != nullptr);
 
@@ -1047,7 +1047,7 @@ lyric_assembler::AssemblyState::touchEnum(EnumSymbol *enumSymbol)
         throwAssemblerInvariant("missing enum symbol {}", enumUrl.toString());
 
     //
-    auto location = enumUrl.getAssemblyLocation();
+    auto location = enumUrl.getModuleLocation();
     if (!m_importcache->hasImport(location))
         throwAssemblerInvariant("missing import {}", location.toString());
     auto status = m_importcache->touchImport(location);
@@ -1066,25 +1066,25 @@ lyric_assembler::AssemblyState::touchEnum(EnumSymbol *enumSymbol)
 }
 
 std::vector<lyric_assembler::EnumSymbol *>::const_iterator
-lyric_assembler::AssemblyState::enumsBegin() const
+lyric_assembler::ObjectState::enumsBegin() const
 {
     return m_enums.cbegin();
 }
 
 std::vector<lyric_assembler::EnumSymbol *>::const_iterator
-lyric_assembler::AssemblyState::enumsEnd() const
+lyric_assembler::ObjectState::enumsEnd() const
 {
     return m_enums.cend();
 }
 
 int
-lyric_assembler::AssemblyState::numEnums() const
+lyric_assembler::ObjectState::numEnums() const
 {
     return m_enums.size();
 }
 
 tempo_utils::Status
-lyric_assembler::AssemblyState::appendUndeclared(UndeclaredSymbol *undeclaredSymbol)
+lyric_assembler::ObjectState::appendUndeclared(UndeclaredSymbol *undeclaredSymbol)
 {
     TU_ASSERT (undeclaredSymbol != nullptr);
     auto symbolUrl = undeclaredSymbol->getSymbolUrl();
@@ -1096,25 +1096,25 @@ lyric_assembler::AssemblyState::appendUndeclared(UndeclaredSymbol *undeclaredSym
 }
 
 std::vector<lyric_assembler::UndeclaredSymbol *>::const_iterator
-lyric_assembler::AssemblyState::undeclaredBegin() const
+lyric_assembler::ObjectState::undeclaredBegin() const
 {
     return m_undecls.cbegin();
 }
 
 std::vector<lyric_assembler::UndeclaredSymbol *>::const_iterator
-lyric_assembler::AssemblyState::undeclaredEnd() const
+lyric_assembler::ObjectState::undeclaredEnd() const
 {
     return m_undecls.cend();
 }
 
 int
-lyric_assembler::AssemblyState::numUndeclared() const
+lyric_assembler::ObjectState::numUndeclared() const
 {
     return m_undecls.size();
 }
 
 tempo_utils::Result<lyric_object::LyricObject>
-lyric_assembler::AssemblyState::toAssembly() const
+lyric_assembler::ObjectState::toObject() const
 {
     return internal::write_object(this);
 }

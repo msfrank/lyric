@@ -41,7 +41,7 @@ lyric_build::internal::PackageTask::configure(const ConfigStore *config)
     tempo_config::IntegerParser majorVersionParser(0);
     tempo_config::IntegerParser minorVersionParser(0);
     tempo_config::IntegerParser patchVersionParser(0);
-    lyric_common::AssemblyLocationParser mainLocationParser(lyric_common::AssemblyLocation{});
+    lyric_common::ModuleLocationParser mainLocationParser(lyric_common::ModuleLocation{});
 
     // determine the base url containing source files
     TU_RETURN_IF_NOT_OK(parse_config(m_baseUrl, sourceBaseUrlParser,
@@ -132,27 +132,27 @@ lyric_build::internal::PackageTask::checkDependencies()
 }
 
 static tempo_utils::Status
-write_assembly_artifacts(
+write_module_artifacts(
     std::shared_ptr<lyric_build::AbstractCache> cache,
     const tempo_utils::Url baseUrl,
     const absl::btree_map<lyric_build::ArtifactId,lyric_build::LyricMetadata> &packageArtifacts,
     lyric_packaging::PackageWriter &packageWriter)
 {
-    // construct the assembly filter
-    lyric_build::MetadataWriter assemblyFilterWriter;
-    assemblyFilterWriter.putAttr(lyric_packaging::kLyricPackagingContentType,
+    // construct the object filter
+    lyric_build::MetadataWriter objectFilterWriter;
+    objectFilterWriter.putAttr(lyric_packaging::kLyricPackagingContentType,
         std::string(lyric_common::kObjectContentType));
-    auto toMetadataResult = assemblyFilterWriter.toMetadata();
+    auto toMetadataResult = objectFilterWriter.toMetadata();
     if (toMetadataResult.isStatus())
         return toMetadataResult.getStatus();
-    auto assemblyFilter = toMetadataResult.getResult();
+    auto objectFilter = toMetadataResult.getResult();
 
     auto baseOrigin = baseUrl.toOrigin();
     auto basePath = baseUrl.toPath();
 
     for (const auto &entry : packageArtifacts) {
-        // ignore artifacts which do not have the assembly content type
-        if (!lyric_build::metadata_matches_all_filters(entry.second, assemblyFilter))
+        // ignore artifacts which do not have the object content type
+        if (!lyric_build::metadata_matches_all_filters(entry.second, objectFilter))
             continue;
 
         const auto &artifactId = entry.first;
@@ -167,22 +167,22 @@ write_assembly_artifacts(
                 "package artifact cannot be packaged; content url {} is not within the source base",
                 sourceUrl.toString());
 
-        // get the assembly location
-        lyric_common::AssemblyLocation assemblyLocation;
-        TU_RETURN_IF_NOT_OK (metadata.parseAttr(lyric_build::kLyricBuildAssemblyLocation, assemblyLocation));
-        auto locationUrl = assemblyLocation.toUrl();
+        // get the module location
+        lyric_common::ModuleLocation moduleLocation;
+        TU_RETURN_IF_NOT_OK (metadata.parseAttr(lyric_build::kLyricBuildModuleLocation, moduleLocation));
+        auto locationUrl = moduleLocation.toUrl();
 
         //
-        if (assemblyLocation.hasScheme() || assemblyLocation.hasAuthority())
+        if (moduleLocation.hasScheme() || moduleLocation.hasAuthority())
             return lyric_build::BuildStatus::forCondition(lyric_build::BuildCondition::kTaskFailure,
-                "package artifact cannot be packaged; expected relative assembly location but found {}",
-                assemblyLocation.toString());
+                "package artifact cannot be packaged; expected relative module location but found {}",
+                moduleLocation.toString());
 
-        // construct the package entry path based on the assembly location path
-        auto assemblyPath = assemblyLocation.getPath();
+        // construct the package entry path based on the module location path
+        auto modulePath = moduleLocation.getPath();
         auto entryPath = lyric_packaging::EntryPath::fromString("lib");
-        for (int i = 0; i < assemblyPath.numParts(); i++) {
-            entryPath = entryPath.traverse(assemblyPath.partView(i));
+        for (int i = 0; i < modulePath.numParts(); i++) {
+            entryPath = entryPath.traverse(modulePath.partView(i));
         }
 
         // make intermediate directories if necessary
@@ -192,7 +192,7 @@ write_assembly_artifacts(
             return makeDirectoryResult.getStatus();
         auto directoryAddress = makeDirectoryResult.getResult();
 
-        // write the assembly content to the package
+        // write the object content to the package
         auto loadContentResult = cache->loadContentFollowingLinks(artifactId);
         if (loadContentResult.isStatus())
             return loadContentResult.getStatus();
@@ -268,7 +268,7 @@ lyric_build::internal::PackageTask::runTask(
         return Option<tempo_utils::Status>(status);
 
     // construct the package
-    status = write_assembly_artifacts(cache, m_baseUrl, packageArtifacts, packageWriter);
+    status = write_module_artifacts(cache, m_baseUrl, packageArtifacts, packageWriter);
     if (status.notOk())
         return Option<tempo_utils::Status>(status);
 
@@ -291,13 +291,13 @@ lyric_build::internal::PackageTask::runTask(
     auto packagePath = specifier.toFilesystemPath();
     auto packageUrl = tempo_utils::Url::fromRelative(packagePath.string());
 
-    // store the assembly content in the build cache
+    // store the object content in the build cache
     ArtifactId packageArtifact(buildState->getGeneration().getUuid(), taskHash, packageUrl);
     status = cache->storeContent(packageArtifact, packageBytes);
     if (status.notOk())
         return Option(status);
 
-    // serialize the assembly metadata
+    // serialize the object metadata
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kPackageContentType));
@@ -306,7 +306,7 @@ lyric_build::internal::PackageTask::runTask(
     if (toMetadataResult.isStatus())
         return Option(toMetadataResult.getStatus());
 
-    // store the assembly metadata in the build cache
+    // store the object metadata in the build cache
     status = cache->storeMetadata(packageArtifact, toMetadataResult.getResult());
     if (status.notOk())
         return Option(status);

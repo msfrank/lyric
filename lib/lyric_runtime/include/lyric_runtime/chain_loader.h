@@ -14,14 +14,14 @@ namespace lyric_runtime {
         ChainLoader(const std::vector<std::shared_ptr<AbstractLoader>> &loaderChain);
         ChainLoader(const ChainLoader &other);
 
-        tempo_utils::Result<bool> hasAssembly(
-            const lyric_common::AssemblyLocation &location) const override;
-        tempo_utils::Result<Option<lyric_common::AssemblyLocation>> resolveAssembly(
-            const lyric_common::AssemblyLocation &location) const override;
-        tempo_utils::Result<Option<lyric_object::LyricObject>> loadAssembly(
-            const lyric_common::AssemblyLocation &location) override;
+        tempo_utils::Result<bool> hasModule(
+            const lyric_common::ModuleLocation &location) const override;
+        tempo_utils::Result<Option<lyric_common::ModuleLocation>> resolveModule(
+            const lyric_common::ModuleLocation &location) const override;
+        tempo_utils::Result<Option<lyric_object::LyricObject>> loadModule(
+            const lyric_common::ModuleLocation &location) override;
         tempo_utils::Result<Option<std::shared_ptr<const AbstractPlugin>>> loadPlugin(
-            const lyric_common::AssemblyLocation &location,
+            const lyric_common::ModuleLocation &location,
             const lyric_object::PluginSpecifier &specifier) override;
 
         std::shared_ptr<AbstractLoader> getLoader(int index) const;

@@ -18,7 +18,7 @@
 
 
 lyric_importer::ModuleImport::ModuleImport(
-    const lyric_common::AssemblyLocation &importLocation,
+    const lyric_common::ModuleLocation &importLocation,
     const lyric_object::LyricObject &importObject)
     : m_location(importLocation),
       m_object(importObject)
@@ -105,7 +105,7 @@ lyric_importer::ModuleImport::initialize()
     return ImporterStatus::ok();
 }
 
-lyric_common::AssemblyLocation
+lyric_common::ModuleLocation
 lyric_importer::ModuleImport::getLocation() const
 {
     return m_location;

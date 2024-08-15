@@ -40,7 +40,7 @@ lyric_importer::ModuleCache::getLoader() const
  * @return true if the module cache contains the module, otherwise false.
  */
 bool
-lyric_importer::ModuleCache::hasModule(const lyric_common::AssemblyLocation &location) const
+lyric_importer::ModuleCache::hasModule(const lyric_common::ModuleLocation &location) const
 {
     absl::MutexLock locker(m_lock);
     return m_moduleImports.contains(location);
@@ -53,7 +53,7 @@ lyric_importer::ModuleCache::hasModule(const lyric_common::AssemblyLocation &loc
  * @return The shared module import is it exists in the cache, otherwise an empty shared ptr.
  */
 std::shared_ptr<lyric_importer::ModuleImport>
-lyric_importer::ModuleCache::getModule(const lyric_common::AssemblyLocation &location) const
+lyric_importer::ModuleCache::getModule(const lyric_common::ModuleLocation &location) const
 {
     absl::MutexLock locker(m_lock);
 
@@ -71,7 +71,7 @@ lyric_importer::ModuleCache::getModule(const lyric_common::AssemblyLocation &loc
  */
 tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
 lyric_importer::ModuleCache::insertModule(
-    const lyric_common::AssemblyLocation &location,
+    const lyric_common::ModuleLocation &location,
     const lyric_object::LyricObject &object)
 {
     absl::MutexLock locker(m_lock);
@@ -87,12 +87,12 @@ lyric_importer::ModuleCache::insertModule(
 }
 
 tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
-lyric_importer::ModuleCache::importModule(const lyric_common::AssemblyLocation &location)
+lyric_importer::ModuleCache::importModule(const lyric_common::ModuleLocation &location)
 {
     absl::MutexLock locker(m_lock);
 
-    Option<lyric_common::AssemblyLocation> resolvedOption;
-    TU_ASSIGN_OR_RETURN (resolvedOption, m_loader->resolveAssembly(location));
+    Option<lyric_common::ModuleLocation> resolvedOption;
+    TU_ASSIGN_OR_RETURN (resolvedOption, m_loader->resolveModule(location));
 
     if (resolvedOption.isEmpty())
         return ImporterStatus::forCondition(
@@ -103,7 +103,7 @@ lyric_importer::ModuleCache::importModule(const lyric_common::AssemblyLocation &
     if (m_moduleImports.contains(resolvedLocation))
         return m_moduleImports.at(resolvedLocation);
 
-    auto loadModuleResult = m_loader->loadAssembly(resolvedLocation);
+    auto loadModuleResult = m_loader->loadModule(resolvedLocation);
     TU_RETURN_IF_STATUS(loadModuleResult);
     auto objectOption = loadModuleResult.getResult();
     if (objectOption.isEmpty())
@@ -122,7 +122,7 @@ tempo_utils::Result<lyric_importer::ActionImport *>
 lyric_importer::ModuleCache::getAction(const lyric_common::SymbolUrl &actionUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN(moduleImport, importModule(actionUrl.getAssemblyLocation()));
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(actionUrl.getModuleLocation()));
 
     auto object = moduleImport->getObject().getObject();
     auto symbolWalker = object.findSymbol(actionUrl.getSymbolPath());
@@ -139,7 +139,7 @@ tempo_utils::Result<lyric_importer::CallImport *>
 lyric_importer::ModuleCache::getCall(const lyric_common::SymbolUrl &callUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN(moduleImport, importModule(callUrl.getAssemblyLocation()));
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(callUrl.getModuleLocation()));
 
     auto object = moduleImport->getObject().getObject();
     auto symbolWalker = object.findSymbol(callUrl.getSymbolPath());
@@ -156,7 +156,7 @@ tempo_utils::Result<lyric_importer::ClassImport *>
 lyric_importer::ModuleCache::getClass(const lyric_common::SymbolUrl &classUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN(moduleImport, importModule(classUrl.getAssemblyLocation()));
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(classUrl.getModuleLocation()));
 
     auto object = moduleImport->getObject().getObject();
     auto symbolWalker = object.findSymbol(classUrl.getSymbolPath());
@@ -173,7 +173,7 @@ tempo_utils::Result<lyric_importer::ConceptImport *>
 lyric_importer::ModuleCache::getConcept(const lyric_common::SymbolUrl &conceptUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN(moduleImport, importModule(conceptUrl.getAssemblyLocation()));
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(conceptUrl.getModuleLocation()));
 
     auto object = moduleImport->getObject().getObject();
     auto symbolWalker = object.findSymbol(conceptUrl.getSymbolPath());
@@ -190,7 +190,7 @@ tempo_utils::Result<lyric_importer::EnumImport *>
 lyric_importer::ModuleCache::getEnum(const lyric_common::SymbolUrl &enumUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN(moduleImport, importModule(enumUrl.getAssemblyLocation()));
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(enumUrl.getModuleLocation()));
 
     auto object = moduleImport->getObject().getObject();
     auto symbolWalker = object.findSymbol(enumUrl.getSymbolPath());
@@ -207,7 +207,7 @@ tempo_utils::Result<lyric_importer::ExistentialImport *>
 lyric_importer::ModuleCache::getExistential(const lyric_common::SymbolUrl &existentialUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN(moduleImport, importModule(existentialUrl.getAssemblyLocation()));
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(existentialUrl.getModuleLocation()));
 
     auto object = moduleImport->getObject().getObject();
     auto symbolWalker = object.findSymbol(existentialUrl.getSymbolPath());
@@ -224,7 +224,7 @@ tempo_utils::Result<lyric_importer::FieldImport *>
 lyric_importer::ModuleCache::getField(const lyric_common::SymbolUrl &fieldUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN(moduleImport, importModule(fieldUrl.getAssemblyLocation()));
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(fieldUrl.getModuleLocation()));
 
     auto object = moduleImport->getObject().getObject();
     auto symbolWalker = object.findSymbol(fieldUrl.getSymbolPath());
@@ -241,7 +241,7 @@ tempo_utils::Result<lyric_importer::InstanceImport *>
 lyric_importer::ModuleCache::getInstance(const lyric_common::SymbolUrl &instanceUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN(moduleImport, importModule(instanceUrl.getAssemblyLocation()));
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(instanceUrl.getModuleLocation()));
 
     auto object = moduleImport->getObject().getObject();
     auto symbolWalker = object.findSymbol(instanceUrl.getSymbolPath());
@@ -258,7 +258,7 @@ tempo_utils::Result<lyric_importer::NamespaceImport *>
 lyric_importer::ModuleCache::getNamespace(const lyric_common::SymbolUrl &namespaceUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN(moduleImport, importModule(namespaceUrl.getAssemblyLocation()));
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(namespaceUrl.getModuleLocation()));
 
     auto object = moduleImport->getObject().getObject();
     auto symbolWalker = object.findSymbol(namespaceUrl.getSymbolPath());
@@ -275,7 +275,7 @@ tempo_utils::Result<lyric_importer::StaticImport *>
 lyric_importer::ModuleCache::getStatic(const lyric_common::SymbolUrl &staticUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN(moduleImport, importModule(staticUrl.getAssemblyLocation()));
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(staticUrl.getModuleLocation()));
 
     auto object = moduleImport->getObject().getObject();
     auto symbolWalker = object.findSymbol(staticUrl.getSymbolPath());
@@ -292,7 +292,7 @@ tempo_utils::Result<lyric_importer::StructImport *>
 lyric_importer::ModuleCache::getStruct(const lyric_common::SymbolUrl &structUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN(moduleImport, importModule(structUrl.getAssemblyLocation()));
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(structUrl.getModuleLocation()));
 
     auto object = moduleImport->getObject().getObject();
     auto symbolWalker = object.findSymbol(structUrl.getSymbolPath());

@@ -45,7 +45,7 @@ lyric_build::LyricBuilder::configure()
 {
     if (m_configured)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "assembly was already configured");
+            "builder was already configured");
 
     // set the workspace root unconditionally
     m_workspaceRoot = m_options.workspaceRoot;

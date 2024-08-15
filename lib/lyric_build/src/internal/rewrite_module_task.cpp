@@ -50,11 +50,11 @@ lyric_build::internal::RewriteModuleTask::configure(const ConfigStore *config)
     TU_RETURN_IF_NOT_OK(parse_config(baseUrl, sourceBaseUrlParser, config, taskId, "sourceBaseUrl"));
 
     // determine the module location based on the source url
-    lyric_common::AssemblyLocation moduleLocation;
-    TU_ASSIGN_OR_RETURN(moduleLocation, convert_source_url_to_assembly_location(m_sourceUrl, baseUrl));
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN(moduleLocation, convert_source_url_to_module_location(m_sourceUrl, baseUrl));
 
-    lyric_common::AssemblyLocationParser preludeLocationParser(
-        lyric_common::AssemblyLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION));
+    lyric_common::ModuleLocationParser preludeLocationParser(
+        lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION));
 
     // set the symbolizer prelude location
     TU_RETURN_IF_NOT_OK(parse_config(m_rewriterOptions.preludeLocation, preludeLocationParser,
@@ -66,7 +66,7 @@ lyric_build::internal::RewriteModuleTask::configure(const ConfigStore *config)
 
     auto taskSection = config->getTaskSection(taskId);
 
-    lyric_common::AssemblyLocationParser moduleLocationParser(moduleLocation);
+    lyric_common::ModuleLocationParser moduleLocationParser(moduleLocation);
 
     // override the module location if specified
     TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_moduleLocation, moduleLocationParser,
@@ -181,7 +181,7 @@ lyric_build::internal::RewriteModuleTask::runTask(
     std::filesystem::path rewrittenInstallPath = generate_install_path(
         getId().getDomain(), m_sourceUrl, lyric_common::kObjectFileDotSuffix);
 
-    // store the assembly metadata in the build cache
+    // store the archetype metadata in the build cache
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
     writer.putAttr(kLyricBuildContentUrl, m_sourceUrl);

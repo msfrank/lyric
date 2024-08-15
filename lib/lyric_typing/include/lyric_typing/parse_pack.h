@@ -1,7 +1,7 @@
 #ifndef LYRIC_TYPING_PARSE_PACK_H
 #define LYRIC_TYPING_PARSE_PACK_H
 
-#include <lyric_assembler/assembly_state.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_assembler/block_handle.h>
 #include <lyric_parser/node_walker.h>
 

@@ -13,7 +13,7 @@ lyric_assembler::StaticSymbol::StaticSymbol(
     TypeHandle *staticType,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : BaseSymbol(address, new StaticSymbolPriv()),
       m_staticUrl(staticUrl),
       m_state(state)
@@ -34,7 +34,7 @@ lyric_assembler::StaticSymbol::StaticSymbol(
 lyric_assembler::StaticSymbol::StaticSymbol(
     const lyric_common::SymbolUrl &staticUrl,
     lyric_importer::StaticImport *staticImport,
-    AssemblyState *state)
+    ObjectState *state)
     : m_staticUrl(staticUrl),
       m_staticImport(staticImport),
       m_state(state)

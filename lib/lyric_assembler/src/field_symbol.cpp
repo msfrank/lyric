@@ -12,7 +12,7 @@ lyric_assembler::FieldSymbol::FieldSymbol(
     TypeHandle *fieldType,
     bool isDeclOnly,
     BlockHandle *parentBlock,
-    AssemblyState *state)
+    ObjectState *state)
     : BaseSymbol(address, new FieldSymbolPriv()),
       m_fieldUrl(fieldUrl),
       m_state(state)
@@ -40,7 +40,7 @@ lyric_assembler::FieldSymbol::FieldSymbol(
 //    TypeHandle *fieldType,
 //    bool isDeclOnly,
 //    BlockHandle *parentBlock,
-//    AssemblyState *state)
+//    ObjectState *state)
 //    : FieldSymbol(fieldUrl, access, isVariable, address, fieldType, isDeclOnly, parentBlock, state)
 //{
 //    auto *priv = getPriv();
@@ -51,7 +51,7 @@ lyric_assembler::FieldSymbol::FieldSymbol(
 lyric_assembler::FieldSymbol::FieldSymbol(
     const lyric_common::SymbolUrl &fieldUrl,
     lyric_importer::FieldImport *fieldImport,
-    AssemblyState *state)
+    ObjectState *state)
     : m_fieldUrl(fieldUrl),
       m_fieldImport(fieldImport),
       m_state(state)

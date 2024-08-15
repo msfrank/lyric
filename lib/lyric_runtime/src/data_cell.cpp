@@ -220,122 +220,122 @@ lyric_runtime::DataCell::forUrl(UrlRef *url)
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forClass(tu_uint32 assemblyIndex, tu_uint32 classIndex)
+lyric_runtime::DataCell::forClass(tu_uint32 objectIndex, tu_uint32 classIndex)
 {
-    TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
+    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
     DataCell cell;
     cell.type = DataCellType::CLASS;
-    cell.data.descriptor.assembly = assemblyIndex;
+    cell.data.descriptor.object = objectIndex;
     cell.data.descriptor.value = classIndex;
     return cell;
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forStruct(tu_uint32 assemblyIndex, tu_uint32 structIndex)
+lyric_runtime::DataCell::forStruct(tu_uint32 objectIndex, tu_uint32 structIndex)
 {
-    TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
+    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
     DataCell cell;
     cell.type = DataCellType::STRUCT;
-    cell.data.descriptor.assembly = assemblyIndex;
+    cell.data.descriptor.object = objectIndex;
     cell.data.descriptor.value = structIndex;
     return cell;
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forEnum(tu_uint32 assemblyIndex, tu_uint32 enumIndex)
+lyric_runtime::DataCell::forEnum(tu_uint32 objectIndex, tu_uint32 enumIndex)
 {
-    TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
+    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
     DataCell cell;
     cell.type = DataCellType::ENUM;
-    cell.data.descriptor.assembly = assemblyIndex;
+    cell.data.descriptor.object = objectIndex;
     cell.data.descriptor.value = enumIndex;
     return cell;
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forInstance(tu_uint32 assemblyIndex, tu_uint32 instanceIndex)
+lyric_runtime::DataCell::forInstance(tu_uint32 objectIndex, tu_uint32 instanceIndex)
 {
-    TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
+    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
     DataCell cell;
     cell.type = DataCellType::INSTANCE;
-    cell.data.descriptor.assembly = assemblyIndex;
+    cell.data.descriptor.object = objectIndex;
     cell.data.descriptor.value = instanceIndex;
     return cell;
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forConcept(tu_uint32 assemblyIndex, tu_uint32 conceptIndex)
+lyric_runtime::DataCell::forConcept(tu_uint32 objectIndex, tu_uint32 conceptIndex)
 {
-    TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
+    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
     DataCell cell;
     cell.type = DataCellType::CONCEPT;
-    cell.data.descriptor.assembly = assemblyIndex;
+    cell.data.descriptor.object = objectIndex;
     cell.data.descriptor.value = conceptIndex;
     return cell;
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forField(tu_uint32 assemblyIndex, tu_uint32 fieldIndex)
+lyric_runtime::DataCell::forField(tu_uint32 objectIndex, tu_uint32 fieldIndex)
 {
-    TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
+    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
     DataCell cell;
     cell.type = DataCellType::FIELD;
-    cell.data.descriptor.assembly = assemblyIndex;
+    cell.data.descriptor.object = objectIndex;
     cell.data.descriptor.value = fieldIndex;
     return cell;
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forCall(tu_uint32 assemblyIndex, tu_uint32 callIndex)
+lyric_runtime::DataCell::forCall(tu_uint32 objectIndex, tu_uint32 callIndex)
 {
-    TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
+    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
     DataCell cell;
     cell.type = DataCellType::CALL;
-    cell.data.descriptor.assembly = assemblyIndex;
+    cell.data.descriptor.object = objectIndex;
     cell.data.descriptor.value = callIndex;
     return cell;
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forAction(tu_uint32 assemblyIndex, tu_uint32 actionIndex)
+lyric_runtime::DataCell::forAction(tu_uint32 objectIndex, tu_uint32 actionIndex)
 {
-    TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
+    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
     DataCell cell;
     cell.type = DataCellType::ACTION;
-    cell.data.descriptor.assembly = assemblyIndex;
+    cell.data.descriptor.object = objectIndex;
     cell.data.descriptor.value = actionIndex;
     return cell;
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forType(tu_uint32 assemblyIndex, tu_uint32 typeIndex)
+lyric_runtime::DataCell::forType(tu_uint32 objectIndex, tu_uint32 typeIndex)
 {
-    TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
+    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
     DataCell cell;
     cell.type = DataCellType::TYPE;
-    cell.data.descriptor.assembly = assemblyIndex;
+    cell.data.descriptor.object = objectIndex;
     cell.data.descriptor.value = typeIndex;
     return cell;
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forExistential(tu_uint32 assemblyIndex, tu_uint32 existentialIndex)
+lyric_runtime::DataCell::forExistential(tu_uint32 objectIndex, tu_uint32 existentialIndex)
 {
-    TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
+    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
     DataCell cell;
     cell.type = DataCellType::EXISTENTIAL;
-    cell.data.descriptor.assembly = assemblyIndex;
+    cell.data.descriptor.object = objectIndex;
     cell.data.descriptor.value = existentialIndex;
     return cell;
 }
 
 lyric_runtime::DataCell
-lyric_runtime::DataCell::forNamespace(tu_uint32 assemblyIndex, tu_uint32 namespaceIndex)
+lyric_runtime::DataCell::forNamespace(tu_uint32 objectIndex, tu_uint32 namespaceIndex)
 {
-    TU_ASSERT (assemblyIndex != INVALID_ADDRESS_U32);
+    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
     DataCell cell;
     cell.type = DataCellType::NAMESPACE;
-    cell.data.descriptor.assembly = assemblyIndex;
+    cell.data.descriptor.object = objectIndex;
     cell.data.descriptor.value = namespaceIndex;
     return cell;
 }
@@ -501,38 +501,38 @@ lyric_runtime::DataCell::toString() const
         case DataCellType::REF:
             return data.ref->toString();
         case DataCellType::CLASS:
-            return absl::Substitute("<assembly=$0, class=$1>",
-                data.descriptor.assembly, data.descriptor.value);
+            return absl::Substitute("<object=$0, class=$1>",
+                data.descriptor.object, data.descriptor.value);
         case DataCellType::STRUCT:
-            return absl::Substitute("<assembly=$0, struct=$1>",
-                data.descriptor.assembly, data.descriptor.value);
+            return absl::Substitute("<object=$0, struct=$1>",
+                data.descriptor.object, data.descriptor.value);
         case DataCellType::INSTANCE:
-            return absl::Substitute("<assembly=$0, instance=$1>",
-                data.descriptor.assembly, data.descriptor.value);
+            return absl::Substitute("<object=$0, instance=$1>",
+                data.descriptor.object, data.descriptor.value);
         case DataCellType::CONCEPT:
-            return absl::Substitute("<assembly=$0, concept=$1>",
-                data.descriptor.assembly, data.descriptor.value);
+            return absl::Substitute("<object=$0, concept=$1>",
+                data.descriptor.object, data.descriptor.value);
         case DataCellType::ENUM:
-            return absl::Substitute("<assembly=$0, enum=$1>",
-                data.descriptor.assembly, data.descriptor.value);
+            return absl::Substitute("<object=$0, enum=$1>",
+                data.descriptor.object, data.descriptor.value);
         case DataCellType::FIELD:
-            return absl::Substitute("<assembly=$0, field=$1>",
-                data.descriptor.assembly, data.descriptor.value);
+            return absl::Substitute("<object=$0, field=$1>",
+                data.descriptor.object, data.descriptor.value);
         case DataCellType::CALL:
-            return absl::Substitute("<assembly=$0, call=$1>",
-                data.descriptor.assembly, data.descriptor.value);
+            return absl::Substitute("<object=$0, call=$1>",
+                data.descriptor.object, data.descriptor.value);
         case DataCellType::ACTION:
-            return absl::Substitute("<assembly=$0, action=$1>",
-                data.descriptor.assembly, data.descriptor.value);
+            return absl::Substitute("<object=$0, action=$1>",
+                data.descriptor.object, data.descriptor.value);
         case DataCellType::TYPE:
-            return absl::Substitute("<assembly=$0, type=$1>",
-                data.descriptor.assembly, data.descriptor.value);
+            return absl::Substitute("<object=$0, type=$1>",
+                data.descriptor.object, data.descriptor.value);
         case DataCellType::EXISTENTIAL:
-            return absl::Substitute("<assembly=$0, existential=$1>",
-                data.descriptor.assembly, data.descriptor.value);
+            return absl::Substitute("<object=$0, existential=$1>",
+                data.descriptor.object, data.descriptor.value);
         case DataCellType::NAMESPACE:
-            return absl::Substitute("<assembly=$0, namespace=$1>",
-                data.descriptor.assembly, data.descriptor.value);
+            return absl::Substitute("<object=$0, namespace=$1>",
+                data.descriptor.object, data.descriptor.value);
         case DataCellType::INVALID:
         default:
             break;
@@ -576,7 +576,7 @@ lyric_runtime::operator==(const DataCell &lhs, const DataCell &rhs)
         case DataCellType::TYPE:
         case DataCellType::EXISTENTIAL:
         case DataCellType::NAMESPACE:
-            return lhs.data.descriptor.assembly == rhs.data.descriptor.assembly
+            return lhs.data.descriptor.object == rhs.data.descriptor.object
                 && lhs.data.descriptor.value == rhs.data.descriptor.value;
     }
 
@@ -624,58 +624,58 @@ lyric_runtime::operator<<(tempo_utils::LogMessage &&message, const lyric_runtime
             break;
         case DataCellType::CLASS:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(assembly=$0, class=$1)",
-                    cell.data.descriptor.assembly, cell.data.descriptor.value);
+                << absl::Substitute("DataCell(object=$0, class=$1)",
+                    cell.data.descriptor.object, cell.data.descriptor.value);
             break;
         case DataCellType::STRUCT:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(assembly=$0, struct=$1)",
-                    cell.data.descriptor.assembly, cell.data.descriptor.value);
+                << absl::Substitute("DataCell(object=$0, struct=$1)",
+                    cell.data.descriptor.object, cell.data.descriptor.value);
             break;
         case DataCellType::INSTANCE:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(assembly=$0, instance=$1)",
-                    cell.data.descriptor.assembly, cell.data.descriptor.value);
+                << absl::Substitute("DataCell(object=$0, instance=$1)",
+                    cell.data.descriptor.object, cell.data.descriptor.value);
             break;
         case DataCellType::CONCEPT:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(assembly=$0, concept=$1)",
-                    cell.data.descriptor.assembly, cell.data.descriptor.value);
+                << absl::Substitute("DataCell(object=$0, concept=$1)",
+                    cell.data.descriptor.object, cell.data.descriptor.value);
             break;
         case DataCellType::ENUM:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(assembly=$0, enum=$1)",
-                    cell.data.descriptor.assembly, cell.data.descriptor.value);
+                << absl::Substitute("DataCell(object=$0, enum=$1)",
+                    cell.data.descriptor.object, cell.data.descriptor.value);
             break;
         case DataCellType::FIELD:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(assembly=$0, field=$1)",
-                    cell.data.descriptor.assembly, cell.data.descriptor.value);
+                << absl::Substitute("DataCell(object=$0, field=$1)",
+                    cell.data.descriptor.object, cell.data.descriptor.value);
             break;
         case DataCellType::CALL:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(assembly=$0, call=$1)",
-                    cell.data.descriptor.assembly, cell.data.descriptor.value);
+                << absl::Substitute("DataCell(object=$0, call=$1)",
+                    cell.data.descriptor.object, cell.data.descriptor.value);
             break;
         case DataCellType::ACTION:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(assembly=$0, action=$1)",
-                    cell.data.descriptor.assembly, cell.data.descriptor.value);
+                << absl::Substitute("DataCell(object=$0, action=$1)",
+                    cell.data.descriptor.object, cell.data.descriptor.value);
             break;
         case DataCellType::TYPE:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(assembly=$0, type=$1)",
-                    cell.data.descriptor.assembly, cell.data.descriptor.value);
+                << absl::Substitute("DataCell(object=$0, type=$1)",
+                    cell.data.descriptor.object, cell.data.descriptor.value);
             break;
         case DataCellType::EXISTENTIAL:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(assembly=$0, existential=$1)",
-                    cell.data.descriptor.assembly, cell.data.descriptor.value);
+                << absl::Substitute("DataCell(object=$0, existential=$1)",
+                    cell.data.descriptor.object, cell.data.descriptor.value);
             break;
         case DataCellType::NAMESPACE:
             std::forward<tempo_utils::LogMessage>(message)
-                << absl::Substitute("DataCell(assembly=$0, namespace=$1)",
-                    cell.data.descriptor.assembly, cell.data.descriptor.value);
+                << absl::Substitute("DataCell(object=$0, namespace=$1)",
+                    cell.data.descriptor.object, cell.data.descriptor.value);
             break;
         case DataCellType::INVALID:
         default:

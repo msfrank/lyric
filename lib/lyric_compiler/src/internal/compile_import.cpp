@@ -30,8 +30,8 @@ lyric_compiler::internal::compile_import_module(
     auto *nsBlock = ns->namespaceBlock();
 
     // resolve assembly to absolute location
-    lyric_common::AssemblyLocation importLocation;
-    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAssemblyLocation, importLocation);
+    lyric_common::ModuleLocation importLocation;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstModuleLocation, importLocation);
 
     return importCache->importModule(importLocation, nsBlock);
 }
@@ -48,8 +48,8 @@ lyric_compiler::internal::compile_import_symbols(
     auto *importCache = state->importCache();
 
     // resolve assembly to absolute location
-    lyric_common::AssemblyLocation importLocation;
-    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAssemblyLocation, importLocation);
+    lyric_common::ModuleLocation importLocation;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstModuleLocation, importLocation);
 
     absl::flat_hash_set<lyric_assembler::ImportRef> importRefs;
 
@@ -79,8 +79,8 @@ lyric_compiler::internal::compile_import_all(
     auto *importCache = state->importCache();
 
     // resolve assembly to absolute location
-    lyric_common::AssemblyLocation importLocation;
-    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAssemblyLocation, importLocation);
+    lyric_common::ModuleLocation importLocation;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstModuleLocation, importLocation);
 
     return importCache->importModule(importLocation, block);
 }

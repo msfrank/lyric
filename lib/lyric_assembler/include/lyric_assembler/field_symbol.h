@@ -2,7 +2,7 @@
 #define LYRIC_ASSEMBLER_FIELD_SYMBOL_H
 
 #include "abstract_symbol.h"
-#include "assembly_state.h"
+#include "object_state.h"
 #include "base_symbol.h"
 #include "type_handle.h"
 
@@ -27,11 +27,11 @@ namespace lyric_assembler {
             TypeHandle *fieldType,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            AssemblyState *state);
+            ObjectState *state);
         FieldSymbol(
             const lyric_common::SymbolUrl &fieldUrl,
             lyric_importer::FieldImport *fieldImport,
-            AssemblyState *state);
+            ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;
 
@@ -54,7 +54,7 @@ namespace lyric_assembler {
     private:
         lyric_common::SymbolUrl m_fieldUrl;
         lyric_importer::FieldImport * m_fieldImport = nullptr;
-        AssemblyState *m_state;
+        ObjectState *m_state;
 
         FieldSymbolPriv *load() override;
     };

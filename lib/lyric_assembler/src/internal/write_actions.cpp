@@ -172,18 +172,18 @@ write_action(
 
 tempo_utils::Status
 lyric_assembler::internal::write_actions(
-    const AssemblyState *assemblyState,
+    const ObjectState *objectState,
     flatbuffers::FlatBufferBuilder &buffer,
     ActionsOffset &actionsOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (assemblyState != nullptr);
+    TU_ASSERT (objectState != nullptr);
 
-    SymbolCache *symbolCache = assemblyState->symbolCache();
-    TypeCache *typeCache = assemblyState->typeCache();
+    SymbolCache *symbolCache = objectState->symbolCache();
+    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::ActionDescriptor>> actions_vector;
 
-    for (auto iterator = assemblyState->actionsBegin(); iterator != assemblyState->actionsEnd(); iterator++) {
+    for (auto iterator = objectState->actionsBegin(); iterator != objectState->actionsEnd(); iterator++) {
         auto &actionSymbol = *iterator;
         TU_RETURN_IF_NOT_OK (
             write_action(actionSymbol, typeCache, symbolCache, buffer, actions_vector, symbols_vector));
