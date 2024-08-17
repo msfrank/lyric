@@ -40,6 +40,7 @@ TEST(AnalyzeInstance, DeclareInstance)
     auto instance0 = root.getInstance(0);
     ASSERT_TRUE (instance0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), instance0.getSymbolPath());
+    ASSERT_EQ (lyric_object::AccessType::Public, instance0.getAccess());
 
     auto ctor = instance0.getConstructor();
     ASSERT_TRUE (ctor.isDeclOnly());

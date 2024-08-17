@@ -55,6 +55,22 @@ lyric_object::NamespaceWalker::isDeclOnly() const
     return bool(namespaceDescriptor->flags() & lyo1::NamespaceFlags::DeclOnly);
 }
 
+lyric_object::AccessType
+lyric_object::NamespaceWalker::getAccess() const
+{
+    if (!isValid())
+        return AccessType::Invalid;
+    auto *namespaceDescriptor = m_reader->getNamespace(m_namespaceOffset);
+    if (namespaceDescriptor == nullptr)
+        return AccessType::Invalid;
+
+    if (bool(namespaceDescriptor->flags() & lyo1::NamespaceFlags::GlobalVisibility))
+        return AccessType::Public;
+    if (bool(namespaceDescriptor->flags() & lyo1::NamespaceFlags::InheritVisibility))
+        return AccessType::Protected;
+    return AccessType::Private;
+}
+
 bool
 lyric_object::NamespaceWalker::hasSuperNamespace() const
 {

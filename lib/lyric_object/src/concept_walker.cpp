@@ -139,6 +139,22 @@ lyric_object::ConceptWalker::getDeriveType() const
     return DeriveType::Any;
 }
 
+lyric_object::AccessType
+lyric_object::ConceptWalker::getAccess() const
+{
+    if (!isValid())
+        return AccessType::Invalid;
+    auto *conceptDescriptor = m_reader->getConcept(m_conceptOffset);
+    if (conceptDescriptor == nullptr)
+        return AccessType::Invalid;
+
+    if (bool(conceptDescriptor->flags() & lyo1::ConceptFlags::GlobalVisibility))
+        return AccessType::Public;
+    if (bool(conceptDescriptor->flags() & lyo1::ConceptFlags::InheritVisibility))
+        return AccessType::Protected;
+    return AccessType::Private;
+}
+
 bool
 lyric_object::ConceptWalker::hasSuperConcept() const
 {

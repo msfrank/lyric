@@ -219,6 +219,22 @@ lyric_object::EnumWalker::getDeriveType() const
     return DeriveType::Any;
 }
 
+lyric_object::AccessType
+lyric_object::EnumWalker::getAccess() const
+{
+    if (!isValid())
+        return AccessType::Invalid;
+    auto *enumDescriptor = m_reader->getEnum(m_enumOffset);
+    if (enumDescriptor == nullptr)
+        return AccessType::Invalid;
+
+    if (bool(enumDescriptor->flags() & lyo1::EnumFlags::GlobalVisibility))
+        return AccessType::Public;
+    if (bool(enumDescriptor->flags() & lyo1::EnumFlags::InheritVisibility))
+        return AccessType::Protected;
+    return AccessType::Private;
+}
+
 bool
 lyric_object::EnumWalker::hasAllocator() const
 {

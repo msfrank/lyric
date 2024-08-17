@@ -51,6 +51,7 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptDef(ModuleParser::Concep
 
     // the action name
     auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
 
     // the action return type
     auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
@@ -60,6 +61,7 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptDef(ModuleParser::Concep
 
     auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
     defNode->putAttr(kLyricAstIdentifier, id);
+    defNode->putAttrOrThrow(kLyricAstAccessType, access);
     defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
     defNode->appendChild(packNode);
 
@@ -136,7 +138,12 @@ lyric_parser::internal::ModuleDefconceptOps::exitDefconceptStatement(ModuleParse
 
     // the concept name
     auto id = ctx->symbolIdentifier()->getText();
+
+    // the concept access level
+    auto access = parse_access_type(id);
+
     defconceptNode->putAttr(kLyricAstIdentifier, id);
+    defconceptNode->putAttrOrThrow(kLyricAstAccessType, access);
 
     // generic information
     if (ctx->genericConcept()) {

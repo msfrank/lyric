@@ -1,6 +1,7 @@
 
 #include <lyric_analyzer/concept_analyzer_context.h>
 #include <lyric_analyzer/impl_analyzer_context.h>
+#include <lyric_analyzer/internal/analyzer_utils.h>
 #include <lyric_assembler/action_symbol.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
@@ -65,6 +66,9 @@ lyric_analyzer::ConceptAnalyzerContext::declareAction(const lyric_parser::Archet
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
+    lyric_parser::AccessType access;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+
     lyric_parser::ArchetypeNode *genericNode = nullptr;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
@@ -79,7 +83,8 @@ lyric_analyzer::ConceptAnalyzerContext::declareAction(const lyric_parser::Archet
     }
 
     lyric_assembler::ActionSymbol *actionSymbol;
-    TU_ASSIGN_OR_RETURN (actionSymbol, m_conceptSymbol->declareAction(identifier, lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RETURN (actionSymbol, m_conceptSymbol->declareAction(
+        identifier, internal::convert_access_type(access)));
 
     auto *resolver = actionSymbol->actionResolver();
 

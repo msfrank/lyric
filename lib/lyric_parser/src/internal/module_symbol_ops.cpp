@@ -42,6 +42,7 @@ lyric_parser::internal::ModuleSymbolOps::exitNamespaceStatement(ModuleParser::Na
 
     // get the namespace identifier
     auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
 
     // if ancestor node is not a kNamespace, then report internal violation
     if (m_state->isEmpty())
@@ -50,6 +51,7 @@ lyric_parser::internal::ModuleSymbolOps::exitNamespaceStatement(ModuleParser::Na
     m_state->checkNodeOrThrow(namespaceNode, lyric_schema::kLyricAstNamespaceClass);
 
     namespaceNode->putAttr(kLyricAstIdentifier, id);
+    namespaceNode->putAttrOrThrow(kLyricAstAccessType, access);
     namespaceNode->appendChild(blockNode);
 
     scopeManager->popSpan();

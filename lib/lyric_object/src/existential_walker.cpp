@@ -141,6 +141,22 @@ lyric_object::ExistentialWalker::getDeriveType() const
     return DeriveType::Any;
 }
 
+lyric_object::AccessType
+lyric_object::ExistentialWalker::getAccess() const
+{
+    if (!isValid())
+        return AccessType::Invalid;
+    auto *existentialDescriptor = m_reader->getExistential(m_existentialOffset);
+    if (existentialDescriptor == nullptr)
+        return AccessType::Invalid;
+
+    if (bool(existentialDescriptor->flags() & lyo1::ExistentialFlags::GlobalVisibility))
+        return AccessType::Public;
+    if (bool(existentialDescriptor->flags() & lyo1::ExistentialFlags::InheritVisibility))
+        return AccessType::Protected;
+    return AccessType::Private;
+}
+
 bool
 lyric_object::ExistentialWalker::hasSuperExistential() const
 {

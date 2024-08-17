@@ -41,6 +41,7 @@ lyric_parser::internal::ModuleDefineOps::exitDefStatement(ModuleParser::DefState
 
     // the function name
     auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
 
     // the function return type
     auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
@@ -55,6 +56,7 @@ lyric_parser::internal::ModuleDefineOps::exitDefStatement(ModuleParser::DefState
     span->putTag(kLyricParserFileOffset, location.fileOffset);
 
     defNode->putAttr(kLyricAstIdentifier, id);
+    defNode->putAttrOrThrow(kLyricAstAccessType, access);
     defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
     defNode->appendChild(packNode);
     defNode->appendChild(blockNode);
@@ -99,6 +101,7 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
 
     // the function name
     auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
 
     // the function return type
     auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
@@ -108,6 +111,7 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
 
     auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
     defNode->putAttr(kLyricAstIdentifier, id);
+    defNode->putAttrOrThrow(kLyricAstAccessType, access);
     defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
     defNode->appendChild(packNode);
     defNode->appendChild(blockNode);

@@ -101,6 +101,10 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumVal(ModuleParser::EnumValConte
 
     // the member name
     auto id = ctx->symbolIdentifier()->getText();
+
+    // the member access level
+    auto access = parse_access_type(id);
+
     // the member type
     auto *memberTypeNode = make_Type_node(m_state, ctx->assignableType());
 
@@ -109,6 +113,7 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumVal(ModuleParser::EnumValConte
 
     auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, location);
     valNode->putAttr(kLyricAstIdentifier, id);
+    valNode->putAttrOrThrow(kLyricAstAccessType, access);
     valNode->putAttr(kLyricAstTypeOffset, memberTypeNode);
 
     // if member initializer is specified then set dfl
@@ -160,6 +165,10 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumDef(ModuleParser::EnumDefConte
 
     // the method name
     auto id = ctx->symbolIdentifier()->getText();
+
+    // the method access level
+    auto access = parse_access_type(id);
+
     // the method return type
     auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
 
@@ -168,6 +177,7 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumDef(ModuleParser::EnumDefConte
 
     auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
     defNode->putAttr(kLyricAstIdentifier, id);
+    defNode->putAttrOrThrow(kLyricAstAccessType, access);
     defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
     defNode->appendChild(packNode);
     defNode->appendChild(blockNode);
@@ -239,7 +249,10 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
 
     // the enum case name
     auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
+
     caseNode->putAttr(kLyricAstIdentifier, id);
+    caseNode->putAttrOrThrow(kLyricAstAccessType, access);
 
     // if ancestor node is not a kDefEnum, then report internal violation
     if (m_state->isEmpty())
@@ -309,6 +322,9 @@ lyric_parser::internal::ModuleDefenumOps::exitDefenumStatement(ModuleParser::Def
     // the enum name
     auto id = ctx->symbolIdentifier()->getText();
 
+    // the enum access level
+    auto access = parse_access_type(id);
+
     // if ancestor node is not a kDefEnum, then report internal violation
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
@@ -316,6 +332,7 @@ lyric_parser::internal::ModuleDefenumOps::exitDefenumStatement(ModuleParser::Def
     m_state->checkNodeOrThrow(defenumNode, lyric_schema::kLyricAstDefEnumClass);
 
     defenumNode->putAttr(kLyricAstIdentifier, id);
+    defenumNode->putAttrOrThrow(kLyricAstAccessType, access);
 
     scopeManager->popSpan();
 

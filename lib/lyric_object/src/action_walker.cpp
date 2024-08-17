@@ -44,6 +44,22 @@ lyric_object::ActionWalker::isDeclOnly() const
     return bool(actionDescriptor->flags() & lyo1::ActionFlags::DeclOnly);
 }
 
+lyric_object::AccessType
+lyric_object::ActionWalker::getAccess() const
+{
+    if (!isValid())
+        return AccessType::Invalid;
+    auto *actionDescriptor = m_reader->getAction(m_actionOffset);
+    if (actionDescriptor == nullptr)
+        return AccessType::Invalid;
+
+    if (bool(actionDescriptor->flags() & lyo1::ActionFlags::GlobalVisibility))
+        return AccessType::Public;
+    if (bool(actionDescriptor->flags() & lyo1::ActionFlags::InheritVisibility))
+        return AccessType::Protected;
+    return AccessType::Private;
+}
+
 lyric_common::SymbolPath
 lyric_object::ActionWalker::getSymbolPath() const
 {

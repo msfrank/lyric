@@ -39,6 +39,7 @@ TEST(AnalyzeConcept, DeclareConcept)
     auto concept0 = root.getConcept(0);
     ASSERT_TRUE (concept0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), concept0.getSymbolPath());
+    ASSERT_EQ (lyric_object::AccessType::Public, concept0.getAccess());
 }
 
 TEST(AnalyzeConcept, DeclareConceptAction)

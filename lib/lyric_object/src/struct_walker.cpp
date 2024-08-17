@@ -219,6 +219,22 @@ lyric_object::StructWalker::getDeriveType() const
     return DeriveType::Any;
 }
 
+lyric_object::AccessType
+lyric_object::StructWalker::getAccess() const
+{
+    if (!isValid())
+        return AccessType::Invalid;
+    auto *structDescriptor = m_reader->getStruct(m_structOffset);
+    if (structDescriptor == nullptr)
+        return AccessType::Invalid;
+
+    if (bool(structDescriptor->flags() & lyo1::StructFlags::GlobalVisibility))
+        return AccessType::Public;
+    if (bool(structDescriptor->flags() & lyo1::StructFlags::InheritVisibility))
+        return AccessType::Protected;
+    return AccessType::Private;
+}
+
 bool
 lyric_object::StructWalker::hasAllocator() const
 {

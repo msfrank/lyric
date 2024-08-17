@@ -2,7 +2,6 @@
 #include <gmock/gmock.h>
 
 #include <lyric_bootstrap/bootstrap_helpers.h>
-#include <lyric_bootstrap/bootstrap_loader.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
@@ -40,5 +39,6 @@ TEST(AnalyzeNamespace, DeclareNamespace)
     auto ns1 = root.getNamespace(1);
     ASSERT_TRUE (ns1.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), ns1.getSymbolPath());
+    ASSERT_EQ (lyric_object::AccessType::Public, ns1.getAccess());
     ASSERT_EQ (0, ns1.numBindings());
 }

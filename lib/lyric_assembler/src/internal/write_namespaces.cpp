@@ -35,6 +35,20 @@ write_namespace(
     lyo1::NamespaceFlags namespaceFlags = lyo1::NamespaceFlags::NONE;
     if (namespaceSymbol->isDeclOnly())
         namespaceFlags |= lyo1::NamespaceFlags::DeclOnly;
+    switch (namespaceSymbol->getAccessType()) {
+        case lyric_object::AccessType::Public:
+            namespaceFlags |= lyo1::NamespaceFlags::GlobalVisibility;
+            break;
+        case lyric_object::AccessType::Protected:
+            namespaceFlags |= lyo1::NamespaceFlags::InheritVisibility;
+            break;
+        case lyric_object::AccessType::Private:
+            break;
+        default:
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                "invalid namespace access");
+    }
 
     auto *namespaceBlock = namespaceSymbol->namespaceBlock();
 

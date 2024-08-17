@@ -53,6 +53,7 @@ namespace lyric_object {
 
         bool isDeclOnly() const;
         DeriveType getDeriveType() const;
+        AccessType getAccess() const;
 
         bool hasSuperConcept() const;
         AddressType superConceptAddressType() const;

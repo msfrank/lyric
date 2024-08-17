@@ -30,7 +30,7 @@ TEST(LoadArchetype, LoadTypedVal)
 
     auto *val = root->getChild(0);
     ASSERT_TRUE (val->isClass(lyric_schema::kLyricAstValClass));
-    ASSERT_EQ (2, val->numAttrs());
+    ASSERT_EQ (3, val->numAttrs());
     ASSERT_EQ (1, val->numChildren());
 
     auto identifierValue = val->getAttrValue(lyric_schema::kLyricAstIdentifierProperty);

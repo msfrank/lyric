@@ -40,6 +40,20 @@ write_instance(
         default:
             break;
     }
+    switch (instanceSymbol->getAccessType()) {
+        case lyric_object::AccessType::Public:
+            instanceFlags |= lyo1::InstanceFlags::GlobalVisibility;
+            break;
+        case lyric_object::AccessType::Protected:
+            instanceFlags |= lyo1::InstanceFlags::InheritVisibility;
+            break;
+        case lyric_object::AccessType::Private:
+            break;
+        default:
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                "invalid instance access");
+    }
 
     // serialize array of members
     std::vector<tu_uint32> members;

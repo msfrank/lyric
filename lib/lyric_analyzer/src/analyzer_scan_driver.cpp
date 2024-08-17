@@ -6,6 +6,7 @@
 #include <lyric_analyzer/entry_analyzer_context.h>
 #include <lyric_analyzer/enum_analyzer_context.h>
 #include <lyric_analyzer/instance_analyzer_context.h>
+#include <lyric_analyzer/internal/analyzer_utils.h>
 #include <lyric_analyzer/namespace_analyzer_context.h>
 #include <lyric_analyzer/proc_analyzer_context.h>
 #include <lyric_analyzer/struct_analyzer_context.h>
@@ -175,6 +176,10 @@ lyric_analyzer::AnalyzerScanDriver::declareStatic(
     lyric_schema::LyricAstId astId;
     TU_RETURN_IF_NOT_OK (walker.parseId(lyric_schema::kLyricAstVocabulary, astId));
 
+    // FIXME: set access level on static
+    lyric_parser::AccessType access;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstAccessType, access));
+
     bool isVariable;
     switch (astId) {
         case lyric_schema::LyricAstId::Val:
@@ -212,6 +217,9 @@ lyric_analyzer::AnalyzerScanDriver::pushFunction(
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
+    lyric_parser::AccessType access;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+
     lyric_parser::ArchetypeNode *genericNode = nullptr;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
@@ -224,7 +232,7 @@ lyric_analyzer::AnalyzerScanDriver::pushFunction(
 
     lyric_assembler::CallSymbol *callSymbol;
     TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(
-        identifier, lyric_object::AccessType::Public, spec.templateParameters, /* declOnly= */ true));
+        identifier, internal::convert_access_type(access), spec.templateParameters, /* declOnly= */ true));
 
     auto *resolver = callSymbol->callResolver();
 
@@ -266,6 +274,9 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
     bool isAbstract = false;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_parser::AccessType access;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         lyric_parser::ArchetypeNode *genericNode = nullptr;
@@ -310,7 +321,7 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
 
     lyric_assembler::ClassSymbol *classSymbol;
     TU_ASSIGN_OR_RETURN (classSymbol, block->declareClass(
-        identifier, superClass, lyric_object::AccessType::Public, templateSpec.templateParameters,
+        identifier, superClass, internal::convert_access_type(access), templateSpec.templateParameters,
         derive, isAbstract, /* declOnly= */ true));
 
     TU_LOG_INFO << "declared class " << classSymbol->getSymbolUrl() << " from " << superClass->getSymbolUrl();
@@ -332,6 +343,9 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
+    lyric_parser::AccessType access;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         lyric_parser::ArchetypeNode *genericNode = nullptr;
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
@@ -348,7 +362,7 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
 
     lyric_assembler::ConceptSymbol *conceptSymbol;
     TU_ASSIGN_OR_RETURN (conceptSymbol, block->declareConcept(
-        identifier, superConcept, lyric_object::AccessType::Public, templateSpec.templateParameters,
+        identifier, superConcept, internal::convert_access_type(access), templateSpec.templateParameters,
         derive, /* declOnly= */ true));
 
     TU_LOG_INFO << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConcept->getSymbolUrl();
@@ -369,6 +383,9 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
     bool isAbstract = false;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_parser::AccessType access;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
     lyric_parser::ArchetypeNode *initNode = nullptr;
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
@@ -391,7 +408,7 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
 
     lyric_assembler::EnumSymbol *enumSymbol;
     TU_ASSIGN_OR_RETURN (enumSymbol, block->declareEnum(
-        identifier, superEnum, lyric_object::AccessType::Public,
+        identifier, superEnum, internal::convert_access_type(access),
         derive, isAbstract, /* declOnly= */ true));
 
     TU_LOG_INFO << "declared enum " << enumSymbol->getSymbolUrl() << " from " << superEnum->getSymbolUrl();
@@ -412,6 +429,9 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
     bool isAbstract = false;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_parser::AccessType access;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
     lyric_parser::ArchetypeNode *initNode = nullptr;
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
@@ -434,7 +454,7 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
 
     lyric_assembler::InstanceSymbol *instanceSymbol;
     TU_ASSIGN_OR_RETURN (instanceSymbol, block->declareInstance(
-        identifier, superInstance, lyric_object::AccessType::Public,
+        identifier, superInstance, internal::convert_access_type(access),
         derive, isAbstract, /* declOnly= */ true));
 
     TU_LOG_INFO << "declared instance " << instanceSymbol->getSymbolUrl() << " from " << superInstance->getSymbolUrl();
@@ -455,6 +475,9 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
     bool isAbstract = false;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_parser::AccessType access;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
     lyric_parser::ArchetypeNode *initNode = nullptr;
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
@@ -493,7 +516,7 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
 
     lyric_assembler::StructSymbol *classSymbol;
     TU_ASSIGN_OR_RETURN (classSymbol, block->declareStruct(
-        identifier, superStruct, lyric_object::AccessType::Public,
+        identifier, superStruct, internal::convert_access_type(access),
         derive, isAbstract, /* declOnly= */ true));
 
     TU_LOG_INFO << "declared struct " << classSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
@@ -511,9 +534,12 @@ lyric_analyzer::AnalyzerScanDriver::pushNamespace(
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
+    lyric_parser::AccessType access;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+
     lyric_assembler::NamespaceSymbol *namespaceSymbol;
     TU_ASSIGN_OR_RETURN (namespaceSymbol, block->declareNamespace(
-        identifier, lyric_object::AccessType::Public, /* declOnly= */ true));
+        identifier, internal::convert_access_type(access), /* declOnly= */ true));
 
     // push the namespace context
     auto ctx = std::make_unique<NamespaceAnalyzerContext>(this, namespaceSymbol);

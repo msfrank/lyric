@@ -158,6 +158,9 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVal(ModuleParser::ClassValCo
     // member name
     auto id = ctx->symbolIdentifier()->getText();
 
+    // member access level
+    auto access = parse_access_type(id);
+
     // member type
     auto *memberTypeNode = make_Type_node(m_state, ctx->assignableType());
 
@@ -166,6 +169,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVal(ModuleParser::ClassValCo
 
     auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, location);
     valNode->putAttr(kLyricAstIdentifier, id);
+    valNode->putAttrOrThrow(kLyricAstAccessType, access);
     valNode->putAttr(kLyricAstTypeOffset, memberTypeNode);
 
     // if member initializer is specified then set dfl
@@ -208,6 +212,9 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVar(ModuleParser::ClassVarCo
     // member name
     auto id = ctx->symbolIdentifier()->getText();
 
+    // member access level
+    auto access = parse_access_type(id);
+
     // member type
     auto *memberTypeNode = make_Type_node(m_state, ctx->assignableType());
 
@@ -216,6 +223,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVar(ModuleParser::ClassVarCo
 
     auto *varNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstVarClass, location);
     varNode->putAttr(kLyricAstIdentifier, id);
+    varNode->putAttrOrThrow(kLyricAstAccessType, access);
     varNode->putAttr(kLyricAstTypeOffset, memberTypeNode);
 
     // if member initializer is specified then set dfl
@@ -267,6 +275,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDef(ModuleParser::ClassDefCo
 
     // the method name
     auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
 
     // the method return type
     auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
@@ -276,6 +285,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDef(ModuleParser::ClassDefCo
 
     auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
     defNode->putAttr(kLyricAstIdentifier, id);
+    defNode->putAttrOrThrow(kLyricAstAccessType, access);
     defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
     defNode->appendChild(packNode);
     defNode->appendChild(blockNode);
@@ -359,7 +369,12 @@ lyric_parser::internal::ModuleDefclassOps::exitDefclassStatement(ModuleParser::D
 
     // the class name
     auto id = ctx->symbolIdentifier()->getText();
+
+    // the class access level
+    auto access = parse_access_type(id);
+
     defclassNode->putAttr(kLyricAstIdentifier, id);
+    defclassNode->putAttrOrThrow(kLyricAstAccessType, access);
 
     // generic information
     if (ctx->genericClass()) {

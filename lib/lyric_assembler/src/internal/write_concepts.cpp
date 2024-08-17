@@ -34,6 +34,20 @@ write_concept(
     lyo1::ConceptFlags conceptFlags = lyo1::ConceptFlags::NONE;
     if (conceptSymbol->isDeclOnly())
         conceptFlags |= lyo1::ConceptFlags::DeclOnly;
+    switch (conceptSymbol->getAccessType()) {
+        case lyric_object::AccessType::Public:
+            conceptFlags |= lyo1::ConceptFlags::GlobalVisibility;
+            break;
+        case lyric_object::AccessType::Protected:
+            conceptFlags |= lyo1::ConceptFlags::InheritVisibility;
+            break;
+        case lyric_object::AccessType::Private:
+            break;
+        default:
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                "invalid concept access");
+    }
 
     // serialize array of actions
     std::vector<tu_uint32> actions;

@@ -1,4 +1,7 @@
 
+#include <unicode/uchar.h>
+#include <unicode/utf8.h>
+
 #include <lyric_common/symbol_path.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/internal/parser_utils.h>
@@ -260,4 +263,22 @@ lyric_parser::internal::make_Generic_node(
     }
 
     return genericNode;
+}
+
+lyric_parser::AccessType
+lyric_parser::internal::parse_access_type(std::string_view identifier)
+{
+    TU_ASSERT (!identifier.empty());
+    UChar32 init;
+    U8_GET((const tu_uint8 *) identifier.data(), 0, 0, identifier.size(), init);
+    TU_ASSERT (0 <= init);
+
+    if (init == '_')
+        return AccessType::Private;
+    if (u_islower(init))
+        return AccessType::Protected;
+    if (u_isupper(init))
+        return AccessType::Public;
+
+    return AccessType::Private;
 }

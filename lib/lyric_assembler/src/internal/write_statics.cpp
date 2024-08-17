@@ -28,6 +28,21 @@ write_static(
         staticFlags |= lyo1::StaticFlags::Var;
     }
 
+//    switch (staticSymbol->getAccessType()) {
+//        case lyric_object::AccessType::Public:
+//            staticFlags |= lyo1::CallFlags::GlobalVisibility;
+//            break;
+//        case lyric_object::AccessType::Protected:
+//            staticFlags |= lyo1::CallFlags::InheritVisibility;
+//            break;
+//        case lyric_object::AccessType::Private:
+//            break;
+//        default:
+//            return lyric_assembler::AssemblerStatus::forCondition(
+//                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+//                "invalid static access");
+//    }
+
     tu_uint32 initCall = lyric_object::INVALID_ADDRESS_U32;
 
     if (!staticSymbol->isDeclOnly()) {

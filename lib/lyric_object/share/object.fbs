@@ -162,6 +162,8 @@ table TemplateDescriptor {
 enum ExistentialFlags : uint16 (bit_flags) {
     Sealed,                                     // existential can only be inherited from in the current object
     Final,                                      // existential cannot be inherited from
+    InheritVisibility,                          // visible to the enclosing namespace and its child namespaces only
+    GlobalVisibility,                           // visible to all namespaces
     DeclOnly,                                   // existential descriptor is only a declaration
 }
 
@@ -201,8 +203,9 @@ enum CallFlags : uint16 (bit_flags) {
     Bound,                                      // call is a bound method
     Inline,                                     // call can be inlined
     Ctor,                                       // call is a constructor
-    InheritVisibility,                          // visible to enclosing symbol and inheriting symbols
-    GlobalVisibility,                           // visible to all symbols
+    InheritVisibility,                          // if bound, then visible to the receiver symbol and its derived symbols only,
+                                                // otherwise if free then visible to the enclosing namespace and its child namespace only
+    GlobalVisibility,                           // if bound, then visible to all symbols, otherwise if free then visible to all namespaces
     DeclOnly,                                   // call descriptor is only a declaration
 }
 
@@ -226,6 +229,8 @@ table CallDescriptor {
 
 enum StaticFlags : uint16 (bit_flags) {
     Var,                                        // the static binding is variable
+    InheritVisibility,                          // visible to the enclosing namespace and its child namespaces only
+    GlobalVisibility,                           // visible to all namespaces
     DeclOnly,                                   // static descriptor is only a declaration
 }
 
@@ -245,6 +250,8 @@ table StaticDescriptor {
 
 enum ActionFlags : uint16 (bit_flags) {
     NoReturn,                                   // action does not return a value
+    InheritVisibility,                          // visible to the receiver symbol and its derived symbols only
+    GlobalVisibility,                           // visible to all symbols
     DeclOnly,                                   // action descriptor is only a declaration
 }
 
@@ -269,6 +276,8 @@ table ActionDescriptor {
 enum ConceptFlags : uint16 (bit_flags) {
     Sealed,                                     // concept can only be inherited from in the current object
     Final,                                      // concept cannot be inherited from
+    InheritVisibility,                          // visible to the enclosing namespace and its child namespaces only
+    GlobalVisibility,                           // visible to all namespaces
     DeclOnly,                                   // concept descriptor is only a declaration
 }
 
@@ -291,7 +300,7 @@ table ConceptDescriptor {
 
 enum FieldFlags : uint16 (bit_flags) {
     Var,                                        // the field binding is variable
-    InheritVisibility,                          // visible to enclosing symbol and inheriting symbols
+    InheritVisibility,                          // visible to the receiver symbol and its derived symbols only
     GlobalVisibility,                           // visible to all symbols
     DeclOnly,
 }
@@ -338,6 +347,8 @@ enum ClassFlags : uint16 (bit_flags) {
     Abstract,                                   // class is abstract (cannot be instantiated)
     Sealed,                                     // class can only be inherited from in the current object
     Final,                                      // class cannot be inherited from
+    InheritVisibility,                          // visible to the enclosing namespace and its child namespaces
+    GlobalVisibility,                           // visible to all namespaces
     DeclOnly,                                   // class descriptor is only a declaration
 }
 
@@ -365,6 +376,8 @@ enum StructFlags : uint16 (bit_flags) {
     Abstract,                                   // struct is abstract (cannot be instantiated)
     Sealed,                                     // struct can only be inherited from in the current object
     Final,                                      // struct cannot be inherited from
+    InheritVisibility,                          // visible to the enclosing namespace and its child namespaces
+    GlobalVisibility,                           // visible to all namespaces
     DeclOnly,                                   // struct descriptor is only a declaration
 }
 
@@ -391,6 +404,8 @@ enum InstanceFlags : uint16 (bit_flags) {
     Abstract,                                   // instance is abstract (cannot be instantiated)
     Sealed,                                     // instance can only be inherited from in the current object
     Final,                                      // instance cannot be inherited from
+    InheritVisibility,                          // visible to the enclosing namespace and its child namespaces
+    GlobalVisibility,                           // visible to all namespaces
     DeclOnly,                                   // instance descriptor is only a declaration
 }
 
@@ -417,6 +432,8 @@ enum EnumFlags : uint16 (bit_flags) {
     Abstract,                                   // enum is abstract (cannot be instantiated directly)
     Sealed,                                     // enum can only be inherited from in the current object
     Final,                                      // enum cannot be inherited from
+    InheritVisibility,                          // visible to the enclosing namespace and its child namespaces
+    GlobalVisibility,                           // visible to all namespaces
     DeclOnly,                                   // enum descriptor is only a declaration
 }
 
@@ -440,6 +457,8 @@ table EnumDescriptor {
 // flags which apply to the NamespaceDecriptor
 
 enum NamespaceFlags : uint16 (bit_flags) {
+    InheritVisibility,                          // visible to the enclosing namespace and its child namespaces
+    GlobalVisibility,                           // visible to all namespaces
     DeclOnly,                                   // enum descriptor is only a declaration
 }
 

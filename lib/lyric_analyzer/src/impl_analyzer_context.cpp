@@ -1,5 +1,6 @@
 
 #include <lyric_analyzer/impl_analyzer_context.h>
+#include <lyric_analyzer/internal/analyzer_utils.h>
 #include <lyric_analyzer/proc_analyzer_context.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
@@ -67,6 +68,9 @@ lyric_analyzer::ImplAnalyzerContext::declareExtension(const lyric_parser::Archet
 {
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_parser::AccessType access;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
     lyric_parser::ArchetypeNode *genericNode = nullptr;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {

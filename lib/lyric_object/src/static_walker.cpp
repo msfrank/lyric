@@ -64,6 +64,22 @@ lyric_object::StaticWalker::isDeclOnly() const
     return bool(staticDescriptor->flags() & lyo1::StaticFlags::DeclOnly);
 }
 
+lyric_object::AccessType
+lyric_object::StaticWalker::getAccess() const
+{
+    if (!isValid())
+        return AccessType::Invalid;
+    auto *staticDescriptor = m_reader->getStatic(m_staticOffset);
+    if (staticDescriptor == nullptr)
+        return AccessType::Invalid;
+
+    if (bool(staticDescriptor->flags() & lyo1::StaticFlags::GlobalVisibility))
+        return AccessType::Public;
+    if (bool(staticDescriptor->flags() & lyo1::StaticFlags::InheritVisibility))
+        return AccessType::Protected;
+    return AccessType::Private;
+}
+
 lyric_object::TypeWalker
 lyric_object::StaticWalker::getStaticType() const
 {

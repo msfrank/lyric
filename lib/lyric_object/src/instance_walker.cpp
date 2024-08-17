@@ -222,6 +222,22 @@ lyric_object::InstanceWalker::getDeriveType() const
     return DeriveType::Any;
 }
 
+lyric_object::AccessType
+lyric_object::InstanceWalker::getAccess() const
+{
+    if (!isValid())
+        return AccessType::Invalid;
+    auto *instanceDescriptor = m_reader->getInstance(m_instanceOffset);
+    if (instanceDescriptor == nullptr)
+        return AccessType::Invalid;
+
+    if (bool(instanceDescriptor->flags() & lyo1::InstanceFlags::GlobalVisibility))
+        return AccessType::Public;
+    if (bool(instanceDescriptor->flags() & lyo1::InstanceFlags::InheritVisibility))
+        return AccessType::Protected;
+    return AccessType::Private;
+}
+
 bool
 lyric_object::InstanceWalker::hasAllocator() const
 {

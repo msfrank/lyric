@@ -82,6 +82,7 @@ namespace lyric_object {
         bool isAbstract() const;
         bool isDeclOnly() const;
         DeriveType getDeriveType() const;
+        AccessType getAccess() const;
 
         bool hasAllocator() const;
         tu_uint32 getAllocator() const;

@@ -220,6 +220,22 @@ lyric_object::ClassWalker::getDeriveType() const
     return DeriveType::Any;
 }
 
+lyric_object::AccessType
+lyric_object::ClassWalker::getAccess() const
+{
+    if (!isValid())
+        return AccessType::Invalid;
+    auto *classDescriptor = m_reader->getClass(m_classOffset);
+    if (classDescriptor == nullptr)
+        return AccessType::Invalid;
+
+    if (bool(classDescriptor->flags() & lyo1::ClassFlags::GlobalVisibility))
+        return AccessType::Public;
+    if (bool(classDescriptor->flags() & lyo1::ClassFlags::InheritVisibility))
+        return AccessType::Protected;
+    return AccessType::Private;
+}
+
 bool
 lyric_object::ClassWalker::hasAllocator() const
 {

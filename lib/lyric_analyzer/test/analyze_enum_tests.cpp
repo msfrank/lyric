@@ -40,6 +40,7 @@ TEST(AnalyzeEnum, DeclareEnum)
     auto enum0 = root.getEnum(0);
     ASSERT_TRUE (enum0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
+    ASSERT_EQ (lyric_object::AccessType::Public, enum0.getAccess());
 
     auto ctor = enum0.getConstructor();
     ASSERT_TRUE (ctor.isDeclOnly());

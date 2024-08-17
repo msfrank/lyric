@@ -24,12 +24,16 @@ TEST(ParseValStatement, ParseTypedVal)
 
     auto valNode = blockNode.getChild(0);
     ASSERT_TRUE (valNode.isClass(lyric_schema::kLyricAstValClass));
-    ASSERT_EQ (2, valNode.numAttrs());
+    ASSERT_EQ (3, valNode.numAttrs());
     ASSERT_EQ (1, valNode.numChildren());
 
     std::string identifier;
     ASSERT_THAT (valNode.parseAttr(lyric_parser::kLyricAstIdentifier, identifier), tempo_test::IsOk());
     ASSERT_EQ ("x", identifier);
+
+    lyric_parser::AccessType access;
+    ASSERT_THAT (valNode.parseAttr(lyric_parser::kLyricAstAccessType, access), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::AccessType::Protected, access);
 
     lyric_parser::NodeWalker typeNode;
     ASSERT_THAT (valNode.parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode), tempo_test::IsOk());

@@ -42,6 +42,20 @@ write_struct(
         default:
             break;
     }
+    switch (structSymbol->getAccessType()) {
+        case lyric_object::AccessType::Public:
+            structFlags |= lyo1::StructFlags::GlobalVisibility;
+            break;
+        case lyric_object::AccessType::Protected:
+            structFlags |= lyo1::StructFlags::InheritVisibility;
+            break;
+        case lyric_object::AccessType::Private:
+            break;
+        default:
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                "invalid struct access");
+    }
 
     // serialize array of members
     std::vector<tu_uint32> members;

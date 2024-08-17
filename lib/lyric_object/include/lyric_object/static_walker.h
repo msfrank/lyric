@@ -21,6 +21,7 @@ namespace lyric_object {
         bool isValid() const;
         bool isVariable() const;
         bool isDeclOnly() const;
+        AccessType getAccess() const;
 
         lyric_common::SymbolPath getSymbolPath() const;
 

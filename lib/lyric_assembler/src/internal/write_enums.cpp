@@ -40,6 +40,20 @@ write_enum(
         default:
             break;
     }
+    switch (enumSymbol->getAccessType()) {
+        case lyric_object::AccessType::Public:
+            enumFlags |= lyo1::EnumFlags::GlobalVisibility;
+            break;
+        case lyric_object::AccessType::Protected:
+            enumFlags |= lyo1::EnumFlags::InheritVisibility;
+            break;
+        case lyric_object::AccessType::Private:
+            break;
+        default:
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                "invalid enum access");
+    }
 
     // serialize array of members
     std::vector<tu_uint32> members;

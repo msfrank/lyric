@@ -37,16 +37,8 @@ target_sources(lyric_analyzer PRIVATE
     src/proc_analyzer_context.cpp
     src/struct_analyzer_context.cpp
 
-    include/lyric_analyzer/internal/analyze_def.h
-    src/internal/analyze_def.cpp
-    include/lyric_analyzer/internal/analyze_defclass.h
-    src/internal/analyze_defclass.cpp
-    include/lyric_analyzer/internal/analyze_module.h
-    src/internal/analyze_module.cpp
-    include/lyric_analyzer/internal/analyze_node.h
-    src/internal/analyze_node.cpp
-    include/lyric_analyzer/internal/entry_point.h
-    src/internal/entry_point.cpp
+    include/lyric_analyzer/internal/analyzer_utils.h
+    src/internal/analyzer_utils.cpp
     )
 
 # set the library version

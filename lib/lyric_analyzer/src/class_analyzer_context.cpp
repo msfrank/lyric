@@ -2,6 +2,7 @@
 #include <lyric_analyzer/analyzer_result.h>
 #include <lyric_analyzer/class_analyzer_context.h>
 #include <lyric_analyzer/impl_analyzer_context.h>
+#include <lyric_analyzer/internal/analyzer_utils.h>
 #include <lyric_analyzer/proc_analyzer_context.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_parser/ast_attrs.h>
@@ -91,6 +92,9 @@ lyric_analyzer::ClassAnalyzerContext::declareMember(const lyric_parser::Archetyp
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
+    lyric_parser::AccessType access;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+
     auto walker = node->getArchetypeNode();
     auto *block = getBlock();
     auto *typeSystem = m_driver->getTypeSystem();
@@ -103,7 +107,7 @@ lyric_analyzer::ClassAnalyzerContext::declareMember(const lyric_parser::Archetyp
     TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(block, memberSpec));
 
     TU_RETURN_IF_STATUS(m_classSymbol->declareMember(
-        identifier, memberType, isVariable, lyric_object::AccessType::Public));
+        identifier, memberType, isVariable, internal::convert_access_type(access)));
 
     TU_LOG_INFO << "declared member " << identifier << " on " << m_classSymbol->getSymbolUrl();
 
@@ -115,6 +119,9 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
 {
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_parser::AccessType access;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
     lyric_parser::ArchetypeNode *genericNode = nullptr;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
@@ -130,7 +137,8 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
     }
 
     lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, m_classSymbol->declareMethod(identifier, lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RETURN (callSymbol, m_classSymbol->declareMethod(
+        identifier, internal::convert_access_type(access)));
 
     auto *resolver = callSymbol->callResolver();
 

@@ -38,6 +38,7 @@ TEST(AnalyzeFunction, DeclareFunction)
     auto call1 = root.getCall(1);
     ASSERT_TRUE (call1.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Identity"}), call1.getSymbolPath());
+    ASSERT_EQ (lyric_object::AccessType::Public, call1.getAccess());
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), call1.getResultType().getTypeDef());
 
     ASSERT_EQ (1, call1.numListParameters());
@@ -75,6 +76,7 @@ TEST(AnalyzeFunction, DeclareGenericFunction)
     auto call1 = root.getCall(1);
     ASSERT_TRUE (call1.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Identity"}), call1.getSymbolPath());
+    ASSERT_EQ (lyric_object::AccessType::Public, call1.getAccess());
     ASSERT_EQ (lyric_common::TypeDef::forPlaceholder(0, lyric_common::SymbolUrl::fromString("#Identity")), call1.getResultType().getTypeDef());
 
     ASSERT_EQ (1, call1.numListParameters());

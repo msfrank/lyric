@@ -46,6 +46,20 @@ write_class(
         default:
             break;
     }
+    switch (classSymbol->getAccessType()) {
+        case lyric_object::AccessType::Public:
+            classFlags |= lyo1::ClassFlags::GlobalVisibility;
+            break;
+        case lyric_object::AccessType::Protected:
+            classFlags |= lyo1::ClassFlags::InheritVisibility;
+            break;
+        case lyric_object::AccessType::Private:
+            break;
+        default:
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                "invalid class access");
+    }
 
     // serialize array of members
     std::vector<tu_uint32> members;

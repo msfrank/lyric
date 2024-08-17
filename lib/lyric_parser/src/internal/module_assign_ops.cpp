@@ -34,6 +34,7 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVal(ModuleParser::UntypedVal
     auto *p1 = m_state->popNode();
 
     auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -41,6 +42,7 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVal(ModuleParser::UntypedVal
     auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, location);
     valNode->appendChild(p1);
     valNode->putAttrOrThrow(kLyricAstIdentifier, id);
+    valNode->putAttrOrThrow(kLyricAstAccessType, access);
     m_state->pushNode(valNode);
 
     scopeManager->popSpan();
@@ -69,6 +71,7 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVal(ModuleParser::TypedValCont
     auto *p1 = m_state->popNode();
 
     auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
     auto *typeNode = make_Type_node(m_state, ctx->assignableType());
 
     auto *token = ctx->getStart();
@@ -77,6 +80,7 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVal(ModuleParser::TypedValCont
     auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, location);
     valNode->appendChild(p1);
     valNode->putAttr(kLyricAstIdentifier, id);
+    valNode->putAttrOrThrow(kLyricAstAccessType, access);
     valNode->putAttr(kLyricAstTypeOffset, typeNode);
     m_state->pushNode(valNode);
 
@@ -106,6 +110,7 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVar(ModuleParser::UntypedVar
     auto *p1 = m_state->popNode();
 
     auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -113,6 +118,7 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVar(ModuleParser::UntypedVar
     auto *varNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstVarClass, location);
     varNode->appendChild(p1);
     varNode->putAttr(kLyricAstIdentifier, id);
+    varNode->putAttrOrThrow(kLyricAstAccessType, access);
     m_state->pushNode(varNode);
 
     scopeManager->popSpan();
@@ -141,6 +147,7 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVar(ModuleParser::TypedVarCont
     auto *p1 = m_state->popNode();
 
     auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
     auto *typeNode = make_Type_node(m_state, ctx->assignableType());
 
     auto *token = ctx->getStart();
@@ -149,6 +156,7 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVar(ModuleParser::TypedVarCont
     auto *varNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstVarClass, location);
     varNode->appendChild(p1);
     varNode->putAttr(kLyricAstIdentifier, id);
+    varNode->putAttrOrThrow(kLyricAstAccessType, access);
     varNode->putAttr(kLyricAstTypeOffset, typeNode);
     m_state->pushNode(varNode);
 

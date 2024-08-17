@@ -158,6 +158,9 @@ lyric_parser::internal::ModuleDefstructOps::exitStructVal(ModuleParser::StructVa
     // member name
     auto id = ctx->symbolIdentifier()->getText();
 
+    // member access level
+    auto access = parse_access_type(id);
+
     // member type
     auto *memberTypeNode = make_Type_node(m_state, ctx->assignableType());
 
@@ -166,6 +169,7 @@ lyric_parser::internal::ModuleDefstructOps::exitStructVal(ModuleParser::StructVa
 
     auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, location);
     valNode->putAttr(kLyricAstIdentifier, id);
+    valNode->putAttrOrThrow(kLyricAstAccessType, access);
     valNode->putAttr(kLyricAstTypeOffset, memberTypeNode);
 
     // if member initializer is specified then set dfl
@@ -218,6 +222,9 @@ lyric_parser::internal::ModuleDefstructOps::exitStructDef(ModuleParser::StructDe
     // the member name
     auto id = ctx->symbolIdentifier()->getText();
 
+    // the member access level
+    auto access = parse_access_type(id);
+
     // the member return type
     auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
 
@@ -226,6 +233,7 @@ lyric_parser::internal::ModuleDefstructOps::exitStructDef(ModuleParser::StructDe
 
     auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
     defNode->putAttr(kLyricAstIdentifier, id);
+    defNode->putAttrOrThrow(kLyricAstAccessType, access);
     defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
     defNode->appendChild(packNode);
     defNode->appendChild(blockNode);
@@ -297,6 +305,9 @@ lyric_parser::internal::ModuleDefstructOps::exitDefstructStatement(ModuleParser:
     // the instance name
     auto id = ctx->symbolIdentifier()->getText();
 
+    // the instance access level
+    auto access = parse_access_type(id);
+
     // if ancestor node is not a kDefStruct, then report internal violation
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
@@ -304,6 +315,7 @@ lyric_parser::internal::ModuleDefstructOps::exitDefstructStatement(ModuleParser:
     m_state->checkNodeOrThrow(defstructNode, lyric_schema::kLyricAstDefStructClass);
 
     defstructNode->putAttr(kLyricAstIdentifier, id);
+    defstructNode->putAttrOrThrow(kLyricAstAccessType, access);
 
     scopeManager->popSpan();
 
