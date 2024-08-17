@@ -4,12 +4,18 @@
 #include <lyric_analyzer/class_analyzer_context.h>
 #include <lyric_analyzer/concept_analyzer_context.h>
 #include <lyric_analyzer/entry_analyzer_context.h>
-#include <lyric_analyzer/function_analyzer_context.h>
+#include <lyric_analyzer/enum_analyzer_context.h>
+#include <lyric_analyzer/instance_analyzer_context.h>
 #include <lyric_analyzer/namespace_analyzer_context.h>
+#include <lyric_analyzer/proc_analyzer_context.h>
+#include <lyric_analyzer/struct_analyzer_context.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
+#include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
+#include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_assembler/undeclared_symbol.h>
@@ -238,12 +244,13 @@ lyric_analyzer::AnalyzerScanDriver::pushFunction(
     TU_ASSIGN_OR_RETURN (parameterPack, m_typeSystem->resolvePack(resolver, packSpec));
 
     // define the call
-    TU_RETURN_IF_STATUS (callSymbol->defineCall(parameterPack, returnType));
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnType));
 
     TU_LOG_INFO << "declared function " << callSymbol->getSymbolUrl();
 
     // push the function context
-    auto ctx = std::make_unique<FunctionAnalyzerContext>(this, callSymbol);
+    auto ctx = std::make_unique<ProcAnalyzerContext>(this, procHandle);
     return pushContext(std::move(ctx));
 }
 
@@ -348,6 +355,151 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
 
     // push the concept context
     auto ctx = std::make_unique<ConceptAnalyzerContext>(this, conceptSymbol);
+    return pushContext(std::move(ctx));
+}
+
+tempo_utils::Status
+lyric_analyzer::AnalyzerScanDriver::pushEnum(
+    const lyric_parser::ArchetypeNode *node,
+    lyric_assembler::BlockHandle *block)
+{
+    std::string identifier;
+    lyric_assembler::EnumSymbol *superEnum = nullptr;
+    lyric_object::DeriveType derive = lyric_object::DeriveType::Sealed;
+    bool isAbstract = false;
+
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_parser::ArchetypeNode *initNode = nullptr;
+    for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
+        auto *child = *it;
+        lyric_schema::LyricAstId childId;
+        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
+        if (childId == lyric_schema::LyricAstId::Init) {
+            if (initNode != nullptr)
+                return AnalyzerStatus::forCondition(AnalyzerCondition::kSyntaxError);
+            initNode = child;
+        }
+    }
+
+    // determine the superenum type
+    auto *fundamentalCache = m_state->fundamentalCache();
+    auto superEnumType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Category);
+
+    // resolve the superenum
+    TU_ASSIGN_OR_RETURN (superEnum, block->resolveEnum(superEnumType));
+
+    lyric_assembler::EnumSymbol *enumSymbol;
+    TU_ASSIGN_OR_RETURN (enumSymbol, block->declareEnum(
+        identifier, superEnum, lyric_object::AccessType::Public,
+        derive, isAbstract, /* declOnly= */ true));
+
+    TU_LOG_INFO << "declared enum " << enumSymbol->getSymbolUrl() << " from " << superEnum->getSymbolUrl();
+
+    // push the enum context
+    auto ctx = std::make_unique<EnumAnalyzerContext>(this, enumSymbol, initNode);
+    return pushContext(std::move(ctx));
+}
+
+tempo_utils::Status
+lyric_analyzer::AnalyzerScanDriver::pushInstance(
+    const lyric_parser::ArchetypeNode *node,
+    lyric_assembler::BlockHandle *block)
+{
+    std::string identifier;
+    lyric_assembler::InstanceSymbol *superInstance = nullptr;
+    lyric_object::DeriveType derive = lyric_object::DeriveType::Any;
+    bool isAbstract = false;
+
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_parser::ArchetypeNode *initNode = nullptr;
+    for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
+        auto *child = *it;
+        lyric_schema::LyricAstId childId;
+        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
+        if (childId == lyric_schema::LyricAstId::Init) {
+            if (initNode != nullptr)
+                return AnalyzerStatus::forCondition(AnalyzerCondition::kSyntaxError);
+            initNode = child;
+        }
+    }
+
+    // determine the superinstance type
+    auto *fundamentalCache = m_state->fundamentalCache();
+    auto superInstanceType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Singleton);
+
+    // resolve the superinstance
+    TU_ASSIGN_OR_RETURN (superInstance, block->resolveInstance(superInstanceType));
+
+    lyric_assembler::InstanceSymbol *instanceSymbol;
+    TU_ASSIGN_OR_RETURN (instanceSymbol, block->declareInstance(
+        identifier, superInstance, lyric_object::AccessType::Public,
+        derive, isAbstract, /* declOnly= */ true));
+
+    TU_LOG_INFO << "declared instance " << instanceSymbol->getSymbolUrl() << " from " << superInstance->getSymbolUrl();
+
+    // push the instance context
+    auto ctx = std::make_unique<InstanceAnalyzerContext>(this, instanceSymbol, initNode);
+    return pushContext(std::move(ctx));
+}
+
+tempo_utils::Status
+lyric_analyzer::AnalyzerScanDriver::pushStruct(
+    const lyric_parser::ArchetypeNode *node,
+    lyric_assembler::BlockHandle *block)
+{
+    std::string identifier;
+    lyric_assembler::StructSymbol *superStruct = nullptr;
+    lyric_object::DeriveType derive = lyric_object::DeriveType::Any;
+    bool isAbstract = false;
+
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_parser::ArchetypeNode *initNode = nullptr;
+    for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
+        auto *child = *it;
+        lyric_schema::LyricAstId childId;
+        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
+        if (childId == lyric_schema::LyricAstId::Init) {
+            if (initNode != nullptr)
+                return AnalyzerStatus::forCondition(AnalyzerCondition::kSyntaxError);
+            initNode = child;
+        }
+    }
+
+    // determine the superstruct type
+    lyric_common::TypeDef superStructType;
+    if (initNode != nullptr) {
+        if (initNode->numChildren() < 1)
+            return AnalyzerStatus::forCondition(AnalyzerCondition::kSyntaxError);
+        if (initNode->numChildren() > 1) {
+            auto *superNode = initNode->getChild(1);
+            if (!superNode->isClass(lyric_schema::kLyricAstSuperClass))
+                return AnalyzerStatus::forCondition(AnalyzerCondition::kSyntaxError);
+            lyric_parser::ArchetypeNode *superTypeNode;
+            TU_RETURN_IF_NOT_OK (superNode->parseAttr(lyric_parser::kLyricAstTypeOffset, superTypeNode));
+            lyric_typing::TypeSpec superTypeSpec;
+            TU_ASSIGN_OR_RETURN (superTypeSpec, m_typeSystem->parseAssignable(block, superTypeNode->getArchetypeNode()));
+            TU_ASSIGN_OR_RETURN (superStructType, m_typeSystem->resolveAssignable(block, superTypeSpec));
+        }
+    } else {
+        auto *fundamentalCache = m_state->fundamentalCache();
+        superStructType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
+    }
+
+    // resolve the superstruct
+    TU_ASSIGN_OR_RETURN (superStruct, block->resolveStruct(superStructType));
+
+    lyric_assembler::StructSymbol *classSymbol;
+    TU_ASSIGN_OR_RETURN (classSymbol, block->declareStruct(
+        identifier, superStruct, lyric_object::AccessType::Public,
+        derive, isAbstract, /* declOnly= */ true));
+
+    TU_LOG_INFO << "declared struct " << classSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
+
+    // push the struct context
+    auto ctx = std::make_unique<StructAnalyzerContext>(this, classSymbol, initNode);
     return pushContext(std::move(ctx));
 }
 

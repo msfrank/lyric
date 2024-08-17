@@ -21,6 +21,7 @@ namespace lyric_object {
         ImplWalker(const ImplWalker &other);
 
         bool isValid() const;
+        bool isDeclOnly() const;
 
         TypeWalker getImplType() const;
 

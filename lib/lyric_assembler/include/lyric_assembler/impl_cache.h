@@ -22,6 +22,7 @@ namespace lyric_assembler {
             TypeHandle *implType,
             ConceptSymbol *implConcept,
             const lyric_common::SymbolUrl &receiverUrl,
+            bool isDeclOnly,
             BlockHandle *parentBlock);
         tempo_utils::Result<ImplHandle *> makeImpl(
             const std::string &name,
@@ -29,6 +30,7 @@ namespace lyric_assembler {
             ConceptSymbol *implConcept,
             const lyric_common::SymbolUrl &receiverUrl,
             TemplateHandle *receiverTemplate,
+            bool isDeclOnly,
             BlockHandle *parentBlock);
 
         tempo_utils::Result<ImplHandle *> importImpl(lyric_importer::ImplImport *implImport);

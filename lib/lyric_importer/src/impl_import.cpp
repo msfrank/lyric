@@ -4,6 +4,7 @@
 
 namespace lyric_importer {
     struct ImplImport::Priv {
+        bool isDeclOnly;
         TypeImport *implType;
         lyric_common::SymbolUrl implConcept;
         lyric_common::SymbolUrl receiverUrl;
@@ -17,6 +18,13 @@ lyric_importer::ImplImport::ImplImport(std::shared_ptr<ModuleImport> moduleImpor
 {
     TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_implOffset != lyric_object::INVALID_ADDRESS_U32);
+}
+
+bool
+lyric_importer::ImplImport::isDeclOnly()
+{
+    load();
+    return m_priv->isDeclOnly;
 }
 
 lyric_importer::TypeImport *
@@ -74,6 +82,7 @@ lyric_importer::ImplImport::load()
     auto location = m_moduleImport->getLocation();
     auto implWalker = m_moduleImport->getObject().getObject().getImpl(m_implOffset);
 
+    priv->isDeclOnly = implWalker.isDeclOnly();
     priv->receiverUrl = lyric_common::SymbolUrl(location, implWalker.getReceiver().getSymbolPath());
 
     priv->implType = m_moduleImport->getType(

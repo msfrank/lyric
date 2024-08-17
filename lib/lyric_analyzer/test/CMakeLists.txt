@@ -8,9 +8,12 @@ set(TEST_CASES
     analyze_block_tests.cpp
     analyze_class_tests.cpp
     analyze_concept_tests.cpp
+    analyze_enum_tests.cpp
     analyze_function_tests.cpp
+    analyze_instance_tests.cpp
     analyze_namespace_tests.cpp
     analyze_static_tests.cpp
+    analyze_struct_tests.cpp
     )
 
 # define test suite driver

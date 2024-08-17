@@ -151,7 +151,7 @@ namespace lyric_assembler {
             bool isAbstract = false,
             bool declOnly = false);
 
-        tempo_utils::Result<SymbolBinding> resolveEnum(const lyric_common::TypeDef &enumType);
+        tempo_utils::Result<EnumSymbol *> resolveEnum(const lyric_common::TypeDef &enumType);
 
         tempo_utils::Result<InstanceSymbol *> declareInstance(
             const std::string &name,
@@ -161,7 +161,7 @@ namespace lyric_assembler {
             bool isAbstract = false,
             bool declOnly = false);
 
-        tempo_utils::Result<SymbolBinding> resolveInstance(const lyric_common::TypeDef &instanceType);
+        tempo_utils::Result<InstanceSymbol *> resolveInstance(const lyric_common::TypeDef &instanceType);
 
         tempo_utils::Result<StructSymbol *> declareStruct(
             const std::string &name,

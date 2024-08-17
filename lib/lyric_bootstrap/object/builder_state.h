@@ -105,6 +105,7 @@ struct CoreImpl {
     lyric_common::SymbolPath receiverPath;
     lyo1::TypeSection receiverSection;
     tu_uint32 receiverDescriptor;
+    lyo1::ImplFlags flags;
     std::vector<lyo1::ImplExtension> extensions;
 };
 

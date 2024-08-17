@@ -426,11 +426,11 @@ lyric_assembler::ExistentialSymbol::declareImpl(const lyric_common::TypeDef &imp
     ImplHandle *implHandle;
     if (priv->existentialTemplate != nullptr) {
         TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-            name, implTypeHandle, conceptSymbol, m_existentialUrl, priv->existentialTemplate,
+            name, implTypeHandle, conceptSymbol, m_existentialUrl, priv->existentialTemplate, priv->isDeclOnly,
             priv->existentialBlock.get()));
     } else {
         TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-            name, implTypeHandle, conceptSymbol, m_existentialUrl, priv->existentialBlock.get()));
+            name, implTypeHandle, conceptSymbol, m_existentialUrl, priv->isDeclOnly, priv->existentialBlock.get()));
     }
 
     priv->impls[implUrl] = implHandle;

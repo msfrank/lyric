@@ -6,11 +6,12 @@
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
+#include <lyric_test/common_printers.h>
 #include <lyric_test/lyric_tester.h>
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-TEST(AnalyzeConcept, DeclareConcept)
+TEST(AnalyzeStruct, DeclareStruct)
 {
     lyric_test::TesterOptions testerOptions;
     testerOptions.buildConfig = tempo_config::ConfigMap{
@@ -24,39 +25,7 @@ TEST(AnalyzeConcept, DeclareConcept)
     ASSERT_TRUE (tester.configure().isOk());
 
     auto analyzeModuleResult = tester.analyzeModule(R"(
-        defconcept Foo {
-        }
-    )");
-    ASSERT_THAT (analyzeModuleResult,
-        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
-
-    auto analyzeModule = analyzeModuleResult.getResult();
-    auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (3, root.numSymbols());
-    ASSERT_EQ (1, root.numConcepts());
-
-    auto concept0 = root.getConcept(0);
-    ASSERT_TRUE (concept0.isDeclOnly());
-    ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), concept0.getSymbolPath());
-}
-
-TEST(AnalyzeConcept, DeclareConceptAction)
-{
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
-
-    auto analyzeModuleResult = tester.analyzeModule(R"(
-        defconcept Foo {
-            def Identity(x: Int): Int
+        defstruct Foo {
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
@@ -66,27 +35,18 @@ TEST(AnalyzeConcept, DeclareConceptAction)
     auto object = analyzeModule.getModule();
     auto root = object.getObject();
     ASSERT_EQ (4, root.numSymbols());
-    ASSERT_EQ (1, root.numConcepts());
-    ASSERT_EQ (1, root.numActions());
+    ASSERT_EQ (1, root.numStructs());
 
-    auto concept0 = root.getConcept(0);
-    ASSERT_TRUE (concept0.isDeclOnly());
-    ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), concept0.getSymbolPath());
+    auto struct0 = root.getStruct(0);
+    ASSERT_TRUE (struct0.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), struct0.getSymbolPath());
 
-    ASSERT_EQ (1, concept0.numActions());
-    auto action0 = concept0.getAction(0).getNearAction();
-    ASSERT_TRUE (action0.isDeclOnly());
-    ASSERT_EQ (lyric_common::SymbolPath({"Foo", "Identity"}), action0.getSymbolPath());
-    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), action0.getResultType().getTypeDef());
-
-    ASSERT_EQ (1, action0.numListParameters());
-    ASSERT_EQ (0, action0.numNamedParameters());
-    auto param0 = action0.getListParameter(0);
-    ASSERT_EQ ("x", param0.getParameterName());
-    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), param0.getParameterType().getTypeDef());
+    auto ctor = struct0.getConstructor();
+    ASSERT_TRUE (ctor.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Foo", "$ctor"}), ctor.getSymbolPath());
 }
 
-TEST(AnalyzeConcept, DeclareConceptImplMethod)
+TEST(AnalyzeStruct, DeclareStructMemberVal)
 {
     lyric_test::TesterOptions testerOptions;
     testerOptions.buildConfig = tempo_config::ConfigMap{
@@ -100,7 +60,106 @@ TEST(AnalyzeConcept, DeclareConceptImplMethod)
     ASSERT_TRUE (tester.configure().isOk());
 
     auto analyzeModuleResult = tester.analyzeModule(R"(
-        defconcept Foo {
+        defstruct Foo {
+            val answer: Int
+        }
+    )");
+    ASSERT_THAT (analyzeModuleResult,
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+
+    auto analyzeModule = analyzeModuleResult.getResult();
+    auto object = analyzeModule.getModule();
+    auto root = object.getObject();
+    ASSERT_EQ (5, root.numSymbols());
+    ASSERT_EQ (1, root.numStructs());
+    ASSERT_EQ (1, root.numFields());
+
+    auto struct0 = root.getStruct(0);
+    ASSERT_TRUE (struct0.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), struct0.getSymbolPath());
+
+    ASSERT_EQ (1, struct0.numMembers());
+    auto field0 = struct0.getMember(0).getNearField();
+    ASSERT_TRUE (field0.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
+    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
+    ASSERT_FALSE (field0.isVariable());
+}
+
+TEST(AnalyzeStruct, DeclareStructMethod)
+{
+    lyric_test::TesterOptions testerOptions;
+    testerOptions.buildConfig = tempo_config::ConfigMap{
+        {"global", tempo_config::ConfigMap{
+            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
+            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
+            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
+        }},
+    };
+    lyric_test::LyricTester tester(testerOptions);
+    ASSERT_TRUE (tester.configure().isOk());
+
+    auto analyzeModuleResult = tester.analyzeModule(R"(
+        defstruct Foo {
+            def Identity(x: Int): Int { return x }
+        }
+    )");
+    ASSERT_THAT (analyzeModuleResult,
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+
+    auto analyzeModule = analyzeModuleResult.getResult();
+    auto object = analyzeModule.getModule();
+    auto root = object.getObject();
+    ASSERT_EQ (5, root.numSymbols());
+    ASSERT_EQ (1, root.numStructs());
+    ASSERT_EQ (3, root.numCalls());
+
+    auto struct0 = root.getStruct(0);
+    ASSERT_TRUE (struct0.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), struct0.getSymbolPath());
+    ASSERT_EQ (2, struct0.numMethods());
+
+    absl::flat_hash_map<std::string,lyric_object::CallWalker> structMethods;
+    for (int i = 0; i < struct0.numMethods(); i++) {
+        auto method = struct0.getMethod(i);
+        auto call = method.getNearCall();
+        structMethods[call.getSymbolPath().getName()] = call;
+    }
+
+    ASSERT_TRUE (structMethods.contains("Identity"));
+    auto identity = structMethods.at("Identity");
+    ASSERT_TRUE (identity.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Foo", "Identity"}), identity.getSymbolPath());
+    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), identity.getResultType().getTypeDef());
+
+    ASSERT_EQ (1, identity.numListParameters());
+    ASSERT_EQ (0, identity.numNamedParameters());
+    auto param0 = identity.getListParameter(0);
+    ASSERT_EQ ("x", param0.getParameterName());
+    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), param0.getParameterType().getTypeDef());
+
+    ASSERT_TRUE (structMethods.contains("$ctor"));
+    auto ctor = structMethods.at("$ctor");
+    ASSERT_TRUE (ctor.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Foo", "$ctor"}), ctor.getSymbolPath());
+    ASSERT_TRUE (ctor.isConstructor());
+}
+
+TEST(AnalyzeStruct, DeclareStructImplMethod)
+{
+    lyric_test::TesterOptions testerOptions;
+    testerOptions.buildConfig = tempo_config::ConfigMap{
+        {"global", tempo_config::ConfigMap{
+            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
+            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
+            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
+        }},
+    };
+    lyric_test::LyricTester tester(testerOptions);
+    ASSERT_TRUE (tester.configure().isOk());
+
+    auto analyzeModuleResult = tester.analyzeModule(R"(
+        defstruct Foo {
             impl Equality[Foo,Foo] {
                 def equals(lhs: Foo, rhs: Foo): Bool { false }
             }
@@ -112,16 +171,16 @@ TEST(AnalyzeConcept, DeclareConceptImplMethod)
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
     auto root = object.getObject();
-    ASSERT_EQ (4, root.numSymbols());
-    ASSERT_EQ (1, root.numConcepts());
-    ASSERT_EQ (2, root.numCalls());
+    ASSERT_EQ (5, root.numSymbols());
+    ASSERT_EQ (1, root.numStructs());
+    ASSERT_EQ (3, root.numCalls());
 
-    auto concept0 = root.getConcept(0);
-    ASSERT_TRUE (concept0.isDeclOnly());
-    ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), concept0.getSymbolPath());
-    ASSERT_EQ (1, concept0.numImpls());
+    auto struct0 = root.getStruct(0);
+    ASSERT_TRUE (struct0.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), struct0.getSymbolPath());
+    ASSERT_EQ (1, struct0.numImpls());
 
-    auto impl0 = concept0.getImpl(0);
+    auto impl0 = struct0.getImpl(0);
     ASSERT_TRUE (impl0.isValid());
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(
         lyric_bootstrap::preludeSymbol("Equality"), {

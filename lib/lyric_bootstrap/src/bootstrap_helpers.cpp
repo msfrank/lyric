@@ -8,7 +8,13 @@ lyric_bootstrap::preludeLocation()
 }
 
 lyric_common::SymbolUrl
-lyric_bootstrap::preludeSymbol(std::string_view symbolName)
+lyric_bootstrap::preludeSymbol(const lyric_common::SymbolPath &symbolPath)
 {
-    return lyric_common::SymbolUrl(preludeLocation(), lyric_common::SymbolPath({std::string(symbolName)}));
+    return lyric_common::SymbolUrl(preludeLocation(), symbolPath);
+}
+
+lyric_common::SymbolUrl
+lyric_bootstrap::preludeSymbol(std::string_view symbolPathString)
+{
+    return lyric_common::SymbolUrl(preludeLocation(), lyric_common::SymbolPath::fromString(symbolPathString));
 }

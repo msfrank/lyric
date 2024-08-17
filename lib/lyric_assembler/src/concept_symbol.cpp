@@ -431,10 +431,11 @@ lyric_assembler::ConceptSymbol::declareImpl(const lyric_common::TypeDef &implTyp
     ImplHandle *implHandle;
     if (priv->conceptTemplate != nullptr) {
         TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-            name, implTypeHandle, conceptSymbol, m_conceptUrl, priv->conceptTemplate, priv->conceptBlock.get()));
+            name, implTypeHandle, conceptSymbol, m_conceptUrl, priv->conceptTemplate, priv->isDeclOnly,
+            priv->conceptBlock.get()));
     } else {
         TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-            name, implTypeHandle, conceptSymbol, m_conceptUrl, priv->conceptBlock.get()));
+            name, implTypeHandle, conceptSymbol, m_conceptUrl, priv->isDeclOnly, priv->conceptBlock.get()));
     }
 
     priv->impls[implUrl] = implHandle;

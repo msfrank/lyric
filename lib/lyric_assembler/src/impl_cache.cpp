@@ -27,11 +27,12 @@ lyric_assembler::ImplCache::makeImpl(
     TypeHandle *implType,
     ConceptSymbol *implConcept,
     const lyric_common::SymbolUrl &receiverUrl,
+    bool isDeclOnly,
     BlockHandle *parentBlock)
 {
     ImplOffset offset(m_declaredImpls.size());
     auto *implHandle = new ImplHandle(offset, name, implType, implConcept, receiverUrl,
-        parentBlock, m_objectState);
+        isDeclOnly, parentBlock, m_objectState);
     m_declaredImpls.push_back(implHandle);
     return implHandle;
 }
@@ -43,11 +44,12 @@ lyric_assembler::ImplCache::makeImpl(
     ConceptSymbol *implConcept,
     const lyric_common::SymbolUrl &receiverUrl,
     TemplateHandle *receiverTemplate,
+    bool isDeclOnly,
     BlockHandle *parentBlock)
 {
     ImplOffset offset(m_declaredImpls.size());
     auto *implHandle = new ImplHandle(offset, name, implType, implConcept, receiverUrl,
-        receiverTemplate, parentBlock, m_objectState);
+        receiverTemplate, isDeclOnly, parentBlock, m_objectState);
     m_declaredImpls.push_back(implHandle);
     return implHandle;
 }

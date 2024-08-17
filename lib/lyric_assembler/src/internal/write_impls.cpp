@@ -37,6 +37,10 @@ write_impl(
             receiverSection = lyo1::TypeSection::Class;
             receiverDescriptor = cast_symbol_to_class(receiver)->getAddress().getAddress();
             break;
+        case lyric_assembler::SymbolType::CONCEPT:
+            receiverSection = lyo1::TypeSection::Concept;
+            receiverDescriptor = cast_symbol_to_concept(receiver)->getAddress().getAddress();
+            break;
         case lyric_assembler::SymbolType::ENUM:
             receiverSection = lyo1::TypeSection::Enum;
             receiverDescriptor = cast_symbol_to_enum(receiver)->getAddress().getAddress();
@@ -58,6 +62,10 @@ write_impl(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant,
                 "invalid call receiver");
     }
+
+    lyo1::ImplFlags implFlags = lyo1::ImplFlags::NONE;
+    if (implHandle->isDeclOnly())
+        implFlags |= lyo1::ImplFlags::DeclOnly;
 
     std::vector<lyo1::ImplExtension> implExtensions;
 
@@ -87,7 +95,7 @@ write_impl(
     auto fb_extensions = buffer.CreateVectorOfStructs(implExtensions);
 
     impls_vector.push_back(lyo1::CreateImplDescriptor(buffer, typeIndex, conceptIndex,
-        receiverSection, receiverDescriptor, fb_extensions));
+        receiverSection, receiverDescriptor, implFlags, fb_extensions));
 
     return {};
 }

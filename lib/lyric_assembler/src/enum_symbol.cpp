@@ -678,7 +678,7 @@ lyric_assembler::EnumSymbol::declareImpl(const lyric_common::TypeDef &implType)
 
     ImplHandle *implHandle;
     TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-        name, implTypeHandle, conceptSymbol, m_enumUrl, priv->enumBlock.get()));
+        name, implTypeHandle, conceptSymbol, m_enumUrl, priv->isDeclOnly, priv->enumBlock.get()));
 
     priv->impls[implUrl] = implHandle;
 

@@ -1,32 +1,32 @@
 
 #include <lyric_analyzer/analyzer_result.h>
-#include <lyric_analyzer/class_analyzer_context.h>
+#include <lyric_analyzer/instance_analyzer_context.h>
 #include <lyric_analyzer/impl_analyzer_context.h>
 #include <lyric_analyzer/proc_analyzer_context.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 
-lyric_analyzer::ClassAnalyzerContext::ClassAnalyzerContext(
+lyric_analyzer::InstanceAnalyzerContext::InstanceAnalyzerContext(
     AnalyzerScanDriver *driver,
-    lyric_assembler::ClassSymbol *classSymbol,
+    lyric_assembler::InstanceSymbol *instanceSymbol,
     const lyric_parser::ArchetypeNode *initNode)
     : m_driver(driver),
-      m_classSymbol(classSymbol),
+      m_instanceSymbol(instanceSymbol),
       m_initNode(initNode)
 {
     TU_ASSERT (m_driver != nullptr);
-    TU_ASSERT (m_classSymbol != nullptr);
+    TU_ASSERT (m_instanceSymbol != nullptr);
 }
 
 lyric_assembler::BlockHandle *
-lyric_analyzer::ClassAnalyzerContext::getBlock() const
+lyric_analyzer::InstanceAnalyzerContext::getBlock() const
 {
-    return m_classSymbol->classBlock();
+    return m_instanceSymbol->instanceBlock();
 }
 
 tempo_utils::Status
-lyric_analyzer::ClassAnalyzerContext::enter(
+lyric_analyzer::InstanceAnalyzerContext::enter(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     lyric_rewriter::VisitorContext &ctx)
@@ -52,7 +52,7 @@ lyric_analyzer::ClassAnalyzerContext::enter(
 }
 
 tempo_utils::Status
-lyric_analyzer::ClassAnalyzerContext::exit(
+lyric_analyzer::InstanceAnalyzerContext::exit(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     const lyric_rewriter::VisitorContext &ctx)
@@ -61,7 +61,7 @@ lyric_analyzer::ClassAnalyzerContext::exit(
         return {};
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
-    if (resource->getId() == lyric_schema::LyricAstId::DefClass) {
+    if (resource->getId() == lyric_schema::LyricAstId::DefInstance) {
         // define the constructor
         if (m_initNode != nullptr) {
             auto *block = getBlock();
@@ -72,11 +72,11 @@ lyric_analyzer::ClassAnalyzerContext::exit(
             lyric_assembler::ParameterPack parameterPack;
             TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(block, packSpec));
             lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_classSymbol->declareCtor(lyric_object::AccessType::Public));
+            TU_ASSIGN_OR_RETURN (ctorSymbol, m_instanceSymbol->declareCtor(lyric_object::AccessType::Public));
             TU_RETURN_IF_STATUS (ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
         } else {
             lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_classSymbol->declareCtor(lyric_object::AccessType::Public));
+            TU_ASSIGN_OR_RETURN (ctorSymbol, m_instanceSymbol->declareCtor(lyric_object::AccessType::Public));
             TU_RETURN_IF_STATUS (ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
         }
         return m_driver->popContext();
@@ -86,7 +86,7 @@ lyric_analyzer::ClassAnalyzerContext::exit(
 }
 
 tempo_utils::Status
-lyric_analyzer::ClassAnalyzerContext::declareMember(const lyric_parser::ArchetypeNode *node, bool isVariable)
+lyric_analyzer::InstanceAnalyzerContext::declareMember(const lyric_parser::ArchetypeNode *node, bool isVariable)
 {
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
@@ -102,16 +102,16 @@ lyric_analyzer::ClassAnalyzerContext::declareMember(const lyric_parser::Archetyp
     lyric_common::TypeDef memberType;
     TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(block, memberSpec));
 
-    TU_RETURN_IF_STATUS(m_classSymbol->declareMember(
+    TU_RETURN_IF_STATUS(m_instanceSymbol->declareMember(
         identifier, memberType, isVariable, lyric_object::AccessType::Public));
 
-    TU_LOG_INFO << "declared member " << identifier << " on " << m_classSymbol->getSymbolUrl();
+    TU_LOG_INFO << "declared member " << identifier << " on " << m_instanceSymbol->getSymbolUrl();
 
     return {};
 }
 
 tempo_utils::Status
-lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::ArchetypeNode *node)
+lyric_analyzer::InstanceAnalyzerContext::declareMethod(const lyric_parser::ArchetypeNode *node)
 {
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
@@ -130,7 +130,7 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
     }
 
     lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, m_classSymbol->declareMethod(identifier, lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RETURN (callSymbol, m_instanceSymbol->declareMethod(identifier, lyric_object::AccessType::Public));
 
     auto *resolver = callSymbol->callResolver();
 
@@ -153,7 +153,7 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnType));
 
-    TU_LOG_INFO << "declared method " << callSymbol->getSymbolUrl() << " for " << m_classSymbol->getSymbolUrl();
+    TU_LOG_INFO << "declared method " << callSymbol->getSymbolUrl() << " for " << m_instanceSymbol->getSymbolUrl();
 
     // push the proc context
     auto ctx = std::make_unique<ProcAnalyzerContext>(m_driver, procHandle);
@@ -161,7 +161,7 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
 }
 
 tempo_utils::Status
-lyric_analyzer::ClassAnalyzerContext::declareImpl(const lyric_parser::ArchetypeNode *node)
+lyric_analyzer::InstanceAnalyzerContext::declareImpl(const lyric_parser::ArchetypeNode *node)
 {
     auto walker = node->getArchetypeNode();
     auto *block = getBlock();
@@ -175,9 +175,9 @@ lyric_analyzer::ClassAnalyzerContext::declareImpl(const lyric_parser::ArchetypeN
     TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(block, implSpec));
 
     lyric_assembler::ImplHandle *implHandle;
-    TU_ASSIGN_OR_RETURN (implHandle, m_classSymbol->declareImpl(implType));
+    TU_ASSIGN_OR_RETURN (implHandle, m_instanceSymbol->declareImpl(implType));
 
-    TU_LOG_INFO << "declared impl " << implType << " on " << m_classSymbol->getSymbolUrl();
+    TU_LOG_INFO << "declared impl " << implType << " on " << m_instanceSymbol->getSymbolUrl();
 
     // push the impl context
     auto ctx = std::make_unique<ImplAnalyzerContext>(m_driver, implHandle);

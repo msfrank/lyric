@@ -8,7 +8,9 @@ namespace lyric_bootstrap {
 
     lyric_common::ModuleLocation preludeLocation();
 
-    lyric_common::SymbolUrl preludeSymbol(std::string_view symbolName);
+    lyric_common::SymbolUrl preludeSymbol(const lyric_common::SymbolPath &symbolPath);
+
+    lyric_common::SymbolUrl preludeSymbol(std::string_view symbolPathString);
 
 }
 

@@ -1,5 +1,6 @@
 
 #include <lyric_analyzer/concept_analyzer_context.h>
+#include <lyric_analyzer/impl_analyzer_context.h>
 #include <lyric_assembler/action_symbol.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
@@ -34,6 +35,7 @@ lyric_analyzer::ConceptAnalyzerContext::enter(
         case lyric_schema::LyricAstId::Def:
             return declareAction(node);
         case lyric_schema::LyricAstId::Impl:
+            return declareImpl(node);
         default:
             break;
     }
@@ -102,4 +104,28 @@ lyric_analyzer::ConceptAnalyzerContext::declareAction(const lyric_parser::Archet
     TU_LOG_INFO << "declared action " << actionSymbol->getSymbolUrl() << " for " << m_conceptSymbol->getSymbolUrl();
 
     return {};
+}
+
+tempo_utils::Status
+lyric_analyzer::ConceptAnalyzerContext::declareImpl(const lyric_parser::ArchetypeNode *node)
+{
+    auto walker = node->getArchetypeNode();
+    auto *block = getBlock();
+    auto *typeSystem = m_driver->getTypeSystem();
+
+    lyric_parser::NodeWalker typeNode;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+    lyric_typing::TypeSpec implSpec;
+    TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(block, typeNode));
+    lyric_common::TypeDef implType;
+    TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(block, implSpec));
+
+    lyric_assembler::ImplHandle *implHandle;
+    TU_ASSIGN_OR_RETURN (implHandle, m_conceptSymbol->declareImpl(implType));
+
+    TU_LOG_INFO << "declared impl " << implType << " on " << m_conceptSymbol->getSymbolUrl();
+
+    // push the impl context
+    auto ctx = std::make_unique<ImplAnalyzerContext>(m_driver, implHandle);
+    return m_driver->pushContext(std::move(ctx));
 }

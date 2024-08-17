@@ -33,6 +33,7 @@ namespace lyric_assembler {
             TypeHandle *implType,
             ConceptSymbol *implConcept,
             const lyric_common::SymbolUrl &receiverUrl,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
         ImplHandle(
@@ -42,6 +43,7 @@ namespace lyric_assembler {
             ConceptSymbol *implConcept,
             const lyric_common::SymbolUrl &receiverUrl,
             TemplateHandle *receiverTemplate,
+            bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
 
@@ -49,6 +51,8 @@ namespace lyric_assembler {
 
         ImplOffset getOffset() const;
         std::string getName() const;
+
+        bool isDeclOnly() const;
 
         TypeHandle *implType() const;
         ConceptSymbol *implConcept() const;

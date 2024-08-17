@@ -13,6 +13,7 @@ lyric_assembler::ImplHandle::ImplHandle(
     TypeHandle *implType,
     ConceptSymbol *implConcept,
     const lyric_common::SymbolUrl &receiverUrl,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
     : BaseHandle<ImplHandlePriv>(new ImplHandlePriv()),
@@ -23,6 +24,7 @@ lyric_assembler::ImplHandle::ImplHandle(
     auto *priv = getPriv();
     priv->offset = offset;
     priv->name = name;
+    priv->isDeclOnly = isDeclOnly;
     priv->implType = implType;
     priv->implConcept = implConcept;
     priv->receiverUrl = receiverUrl;
@@ -42,6 +44,7 @@ lyric_assembler::ImplHandle::ImplHandle(
     ConceptSymbol *implConcept,
     const lyric_common::SymbolUrl &receiverUrl,
     TemplateHandle *receiverTemplate,
+    bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
     : ImplHandle(
@@ -50,6 +53,7 @@ lyric_assembler::ImplHandle::ImplHandle(
         implType,
         implConcept,
         receiverUrl,
+        isDeclOnly,
         parentBlock,
         state)
 {
@@ -78,6 +82,13 @@ lyric_assembler::ImplHandle::getName() const
 {
     auto *priv = getPriv();
     return priv->name;
+}
+
+bool
+lyric_assembler::ImplHandle::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
 }
 
 lyric_assembler::TypeHandle *
@@ -279,7 +290,7 @@ lyric_assembler::ImplHandle::load()
 
     auto priv = std::make_unique<ImplHandlePriv>();
 
-    priv->isDeclOnly = false;
+    priv->isDeclOnly = m_implImport->isDeclOnly();
 
     auto *implType = m_implImport->getImplType();
     TU_ASSIGN_OR_RAISE (priv->implType, typeCache->importType(implType));

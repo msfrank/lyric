@@ -29,6 +29,7 @@ namespace lyric_analyzer {
 
         tempo_utils::Status declareMember(const lyric_parser::ArchetypeNode *node, bool isVariable);
         tempo_utils::Status declareMethod(const lyric_parser::ArchetypeNode *node);
+        tempo_utils::Status declareImpl(const lyric_parser::ArchetypeNode *node);
 
     private:
         AnalyzerScanDriver *m_driver;

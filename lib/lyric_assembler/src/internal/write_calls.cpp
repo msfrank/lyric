@@ -1,6 +1,7 @@
 
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
+#include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/proc_handle.h>
@@ -85,6 +86,10 @@ write_call(
             case lyric_assembler::SymbolType::CLASS:
                 receiverSection = lyo1::TypeSection::Class;
                 receiverDescriptor = cast_symbol_to_class(receiver)->getAddress().getAddress();
+                break;
+            case lyric_assembler::SymbolType::CONCEPT:
+                receiverSection = lyo1::TypeSection::Concept;
+                receiverDescriptor = cast_symbol_to_concept(receiver)->getAddress().getAddress();
                 break;
             case lyric_assembler::SymbolType::ENUM:
                 receiverSection = lyo1::TypeSection::Enum;

@@ -1176,6 +1176,7 @@ BuilderState::addImpl(
     Impl->receiverPath = receiverPath;
     Impl->implType = implType;
     Impl->implConcept = implConcept;
+    Impl->flags = lyo1::ImplFlags::NONE;
 
     auto *symbol = symbols.at(receiverPath);
     switch (symbol->section) {
@@ -1690,7 +1691,8 @@ BuilderState::toBytes() const
     for (const auto *Impl : impls) {
         auto fb_extensions = buffer.CreateVectorOfStructs(Impl->extensions);
         impls_vector.push_back(lyo1::CreateImplDescriptor(buffer, Impl->implType->type_index,
-            Impl->implConcept->concept_index, Impl->receiverSection, Impl->receiverDescriptor, fb_extensions));
+            Impl->implConcept->concept_index, Impl->receiverSection, Impl->receiverDescriptor, Impl->flags,
+            fb_extensions));
     }
 
     // write the class descriptors

@@ -313,6 +313,12 @@ struct ImplExtension {
     extension_call: uint32;                     // offset of the call in the calls section
 }
 
+// flags which apply to an ImplDescriptor
+
+enum ImplFlags : uint16 (bit_flags) {
+    DeclOnly,                                   // impl descriptor is only a declaration
+}
+
 //
 //
 //
@@ -322,6 +328,7 @@ table ImplDescriptor {
     impl_concept: uint32 = 0xFFFFFFFF;          // offset of the impl concept in the concepts section
     receiver_section: TypeSection = Invalid;    // object section containing the descriptor for the receiver, or Invalid if the call is not bound
     receiver_descriptor: uint32 = 0xFFFFFFFF;   // index of the descriptor for the receiver in the specified section, or 0xFFFFFFFF if the call is not bound
+    flags: ImplFlags;                           // bitfield containing impl flags
     extensions: [ImplExtension];                // array of extensions bound to the impl
 }
 

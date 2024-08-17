@@ -681,7 +681,7 @@ lyric_assembler::InstanceSymbol::declareImpl(const lyric_common::TypeDef &implTy
 
     ImplHandle *implHandle;
     TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-        name, implTypeHandle, conceptSymbol, m_instanceUrl, priv->instanceBlock.get()));
+        name, implTypeHandle, conceptSymbol, m_instanceUrl, priv->isDeclOnly, priv->instanceBlock.get()));
 
     priv->impls[implUrl] = implHandle;
 

@@ -42,7 +42,7 @@ write_instance(
     }
 
     // serialize array of members
-    std::vector<tu_uint32> members(instanceSymbol->numMembers());
+    std::vector<tu_uint32> members;
     for (auto iterator = instanceSymbol->membersBegin(); iterator != instanceSymbol->membersEnd(); iterator++) {
         const auto &var = iterator->second;
         lyric_assembler::AbstractSymbol *symbol;
@@ -56,7 +56,7 @@ write_instance(
     }
 
     // serialize array of methods
-    std::vector<tu_uint32> methods(instanceSymbol->numMethods());
+    std::vector<tu_uint32> methods;
     for (auto iterator = instanceSymbol->methodsBegin(); iterator != instanceSymbol->methodsEnd(); iterator++) {
         const auto &boundMethod = iterator->second;
         lyric_assembler::AbstractSymbol *symbol;

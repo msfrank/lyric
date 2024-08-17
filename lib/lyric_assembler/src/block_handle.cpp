@@ -1154,7 +1154,7 @@ lyric_assembler::BlockHandle::declareEnum(
     return enumSymbol;
 }
 
-tempo_utils::Result<lyric_assembler::SymbolBinding>
+tempo_utils::Result<lyric_assembler::EnumSymbol *>
 lyric_assembler::BlockHandle::resolveEnum(const lyric_common::TypeDef &enumType)
 {
     if (enumType.getType() != lyric_common::TypeDefType::Concrete)
@@ -1172,9 +1172,8 @@ lyric_assembler::BlockHandle::resolveEnum(const lyric_common::TypeDef &enumType)
         return logAndContinue(AssemblerCondition::kInvalidSymbol,
             tempo_tracing::LogSeverity::kError,
             "type {} is not an enum", enumType.toString());
-    auto *enumSymbol = cast_symbol_to_enum(symbol);
 
-    return SymbolBinding(enumUrl, enumSymbol->getAssignableType(), BindingType::Value);
+    return cast_symbol_to_enum(symbol);
 }
 
 tempo_utils::Result<lyric_assembler::InstanceSymbol *>
@@ -1233,7 +1232,7 @@ lyric_assembler::BlockHandle::declareInstance(
     return instanceSymbol;
 }
 
-tempo_utils::Result<lyric_assembler::SymbolBinding>
+tempo_utils::Result<lyric_assembler::InstanceSymbol *>
 lyric_assembler::BlockHandle::resolveInstance(const lyric_common::TypeDef &instanceType)
 {
     if (instanceType.getType() != lyric_common::TypeDefType::Concrete)
@@ -1251,9 +1250,8 @@ lyric_assembler::BlockHandle::resolveInstance(const lyric_common::TypeDef &insta
         return logAndContinue(AssemblerCondition::kInvalidSymbol,
             tempo_tracing::LogSeverity::kError,
             "type {} is not an instance", instanceType.toString());
-    auto *instanceSymbol = cast_symbol_to_instance(symbol);
 
-    return SymbolBinding(instanceUrl, instanceSymbol->getAssignableType(), BindingType::Value);
+    return cast_symbol_to_instance(symbol);
 }
 
 tempo_utils::Result<lyric_assembler::StructSymbol *>

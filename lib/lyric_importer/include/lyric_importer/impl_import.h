@@ -10,6 +10,7 @@ namespace lyric_importer {
     public:
         ImplImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 implOffset);
 
+        bool isDeclOnly();
         TypeImport *getImplType();
         lyric_common::SymbolUrl getImplConcept();
         lyric_common::SymbolUrl getReceiverUrl();

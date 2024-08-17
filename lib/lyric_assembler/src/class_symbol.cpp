@@ -767,10 +767,11 @@ lyric_assembler::ClassSymbol::declareImpl(const lyric_common::TypeDef &implType)
     ImplHandle *implHandle;
     if (priv->classTemplate != nullptr) {
         TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-            name, implTypeHandle, conceptSymbol, m_classUrl, priv->classTemplate, priv->classBlock.get()));
+            name, implTypeHandle, conceptSymbol, m_classUrl, priv->classTemplate, priv->isDeclOnly,
+            priv->classBlock.get()));
     } else {
         TU_ASSIGN_OR_RETURN (implHandle, implCache->makeImpl(
-            name, implTypeHandle, conceptSymbol, m_classUrl, priv->classBlock.get()));
+            name, implTypeHandle, conceptSymbol, m_classUrl, priv->isDeclOnly, priv->classBlock.get()));
     }
 
     priv->impls[implUrl] = implHandle;

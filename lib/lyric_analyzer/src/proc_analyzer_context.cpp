@@ -1,30 +1,26 @@
 
-#include <lyric_analyzer/entry_analyzer_context.h>
-#include <lyric_analyzer/namespace_analyzer_context.h>
+#include <lyric_analyzer/proc_analyzer_context.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 
-lyric_analyzer::EntryAnalyzerContext::EntryAnalyzerContext(
+lyric_analyzer::ProcAnalyzerContext::ProcAnalyzerContext(
     AnalyzerScanDriver *driver,
-    lyric_assembler::CallSymbol *entry,
-    lyric_assembler::NamespaceSymbol *root)
+    lyric_assembler::ProcHandle *procHandle)
     : m_driver(driver),
-      m_entry(entry),
-      m_root(root)
+      m_procHandle(procHandle)
 {
     TU_ASSERT (m_driver != nullptr);
-    TU_ASSERT (m_entry != nullptr);
-    TU_ASSERT (m_root != nullptr);
+    TU_ASSERT (m_procHandle != nullptr);
 }
 
 lyric_assembler::BlockHandle *
-lyric_analyzer::EntryAnalyzerContext::getBlock() const
+lyric_analyzer::ProcAnalyzerContext::getBlock() const
 {
-    return m_root->namespaceBlock();
+    return m_procHandle->procBlock();
 }
 
 tempo_utils::Status
-lyric_analyzer::EntryAnalyzerContext::enter(
+lyric_analyzer::ProcAnalyzerContext::enter(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     lyric_rewriter::VisitorContext &ctx)
@@ -57,7 +53,7 @@ lyric_analyzer::EntryAnalyzerContext::enter(
 }
 
 tempo_utils::Status
-lyric_analyzer::EntryAnalyzerContext::exit(
+lyric_analyzer::ProcAnalyzerContext::exit(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     const lyric_rewriter::VisitorContext &ctx)

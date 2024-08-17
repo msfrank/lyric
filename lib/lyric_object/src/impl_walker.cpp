@@ -34,6 +34,17 @@ lyric_object::ImplWalker::isValid() const
     return m_reader && m_reader->isValid() && m_implOffset < m_reader->numImpls();
 }
 
+bool
+lyric_object::ImplWalker::isDeclOnly() const
+{
+    if (!isValid())
+        return false;
+    auto *implDescriptor = m_reader->getImpl(m_implOffset);
+    if (implDescriptor == nullptr)
+        return false;
+    return bool(implDescriptor->flags() & lyo1::ImplFlags::DeclOnly);
+}
+
 lyric_object::TypeWalker
 lyric_object::ImplWalker::getImplType() const
 {
