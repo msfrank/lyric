@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-//#include <lyric_parser/dump_lyric_archetype.h>
 #include <lyric_parser/lyric_archetype.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/parse_diagnostics.h>

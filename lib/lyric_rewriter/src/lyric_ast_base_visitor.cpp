@@ -74,7 +74,6 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::Not:
         case lyric_schema::LyricAstId::Keyword:
         case lyric_schema::LyricAstId::Rest:
-        case lyric_schema::LyricAstId::Case:
             visitor = std::make_shared<LyricAstUnaryVisitor>(astId, m_options);
             break;
 
@@ -165,6 +164,7 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
 
         // dynamic forms
         case lyric_schema::LyricAstId::Call:
+        case lyric_schema::LyricAstId::Case:
         case lyric_schema::LyricAstId::Super:
             visitor = std::make_shared<LyricAstDynamicVisitor>(astId, m_options);
             break;

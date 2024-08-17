@@ -371,15 +371,11 @@ compile_defenum_case(
 {
     TU_ASSERT(walker.isValid());
 
-    moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstCaseClass, 1);
-
-    // get case call
-    auto caseCall = walker.getChild(0);
-    moduleEntry.checkClassOrThrow(caseCall, lyric_schema::kLyricAstCallClass);
+    moduleEntry.checkClassOrThrow(walker, lyric_schema::kLyricAstCaseClass);
 
     // get case name
     std::string identifier;
-    moduleEntry.parseAttrOrThrow(caseCall, lyric_parser::kLyricAstIdentifier, identifier);
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
     lyric_assembler::EnumSymbol *caseEnum;
     TU_ASSIGN_OR_RETURN (caseEnum, block->declareEnum(
@@ -393,7 +389,7 @@ compile_defenum_case(
         return status;
 
     // compile constructor
-    return compile_defenum_case_init(caseEnum, caseCall, moduleEntry);
+    return compile_defenum_case_init(caseEnum, walker, moduleEntry);
 }
 
 static tempo_utils::Status

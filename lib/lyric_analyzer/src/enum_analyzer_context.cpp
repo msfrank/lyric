@@ -88,10 +88,8 @@ lyric_analyzer::EnumAnalyzerContext::exit(
 tempo_utils::Status
 lyric_analyzer::EnumAnalyzerContext::declareCase(const lyric_parser::ArchetypeNode *node)
 {
-    auto *callNode = node->getChild(0);
-
     std::string identifier;
-    TU_RETURN_IF_NOT_OK (callNode->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     auto *parentBlock = m_enumSymbol->enumBlock()->blockParent();
 

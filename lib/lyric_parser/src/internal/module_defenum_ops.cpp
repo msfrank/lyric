@@ -203,8 +203,8 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    // the case init call
-    auto *callNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCallClass, location);
+    // create the case node
+    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
@@ -230,7 +230,7 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
                 argNode = keywordNode;
             }
 
-            callNode->prependChild(argNode);
+            caseNode->prependChild(argNode);
         }
     }
 
@@ -239,11 +239,7 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
 
     // the enum case name
     auto id = ctx->symbolIdentifier()->getText();
-    callNode->putAttr(kLyricAstIdentifier, id);
-
-    // create the case
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
-    caseNode->appendChild(callNode);
+    caseNode->putAttr(kLyricAstIdentifier, id);
 
     // if ancestor node is not a kDefEnum, then report internal violation
     if (m_state->isEmpty())
