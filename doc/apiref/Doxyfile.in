@@ -1,0 +1,19 @@
+PROJECT_NAME                    = "Lyric API Reference"
+QUIET                           = YES
+WARNINGS                        = YES
+WARN_IF_UNDOCUMENTED            = NO
+SEARCHENGINE                    = NO
+GENERATE_LATEX                  = NO
+
+# file input configuration
+
+INPUT                           = @APIREF_INPUT_DIRECTORIES@
+FILE_PATTERNS                   = *.cpp *.h *.ixx *.md
+RECURSIVE                       = YES
+
+# HTML output configuration
+
+#LAYOUT_FILE                     = @APIREF_LAYOUT_FILE@
+GENERATE_HTML                   = YES
+HTML_OUTPUT                     = @APIREF_HTML_DIR@
+GENERATE_TREEVIEW               = YES

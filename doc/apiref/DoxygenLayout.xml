@@ -1,0 +1,34 @@
+<doxygenlayout version="1.0">
+
+    <!--
+    <navindex>
+    </navindex>
+    -->
+
+    <class>
+        <briefdescription/>
+        <detaileddescription/>
+        <memberdecl/>
+        <memberdef/>
+    </class>
+
+    <namespace>
+        <briefdescription/>
+        <detaileddescription/>
+        <memberdecl/>
+        <memberdef/>
+    </namespace>
+
+    <concept>
+    </concept>
+
+    <file>
+    </file>
+
+    <group>
+    </group>
+
+    <directory>
+    </directory>
+
+</doxygenlayout>

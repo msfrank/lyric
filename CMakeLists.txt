@@ -223,6 +223,7 @@ set(LYRIC_RUNTIME_BOOTSTRAP_DIR     "${RUNTIME_DISTRIBUTION_ROOT}/${BOOTSTRAP_DI
 #######################################################################
 
 add_subdirectory(bin)
+add_subdirectory(doc)
 add_subdirectory(lib)
 
 #######################################################################
