@@ -89,6 +89,21 @@ namespace lyric_parser {
             VarianceType &value) const override;
     };
 
+    class DeriveTypeAttr : public tempo_utils::AttrSerde<DeriveType> {
+
+        using SerdeType = DeriveType;
+
+    public:
+        explicit DeriveTypeAttr(const tempo_utils::ComparableResource *resource);
+        tempo_utils::Result<tu_uint32> writeAttr(
+            tempo_utils::AbstractAttrWriter *writer,
+            const DeriveType &value) const override;
+        tempo_utils::Status parseAttr(
+            tu_uint32 index,
+            tempo_utils::AbstractAttrParser *parser,
+            DeriveType &value) const override;
+    };
+
     class NodeAttr : public StatefulAttr {
     public:
         explicit NodeAttr(const tempo_utils::ComparableResource *resource);
@@ -112,6 +127,7 @@ namespace lyric_parser {
     extern const AccessTypeAttr kLyricAstAccessType;
     extern const BoundTypeAttr kLyricAstBoundType;
     extern const VarianceTypeAttr kLyricAstVarianceType;
+    extern const DeriveTypeAttr kLyricAstDeriveType;
 
     extern const lyric_common::ModuleLocationAttr kLyricAstModuleLocation;
     extern const lyric_common::SymbolPathAttr kLyricAstSymbolPath;
@@ -124,7 +140,6 @@ namespace lyric_parser {
     extern const NodeAttr kLyricAstFinallyOffset;
     extern const NodeAttr kLyricAstRestOffset;
     extern const NodeAttr kLyricAstGenericOffset;
-    extern const NodeAttr kLyricAstImplementsOffset;
     extern const NodeAttr kLyricAstTypeArgumentsOffset;
 }
 

@@ -302,11 +302,21 @@ lyric_parser::internal::ModuleDefstructOps::exitDefstructStatement(ModuleParser:
     auto *scopeManager = m_state->scopeManager();
     auto span = scopeManager->peekSpan();
 
-    // the instance name
+    // the struct name
     auto id = ctx->symbolIdentifier()->getText();
 
-    // the instance access level
+    // the struct access level
     auto access = parse_access_type(id);
+
+    // the struct derive type
+    DeriveType derive = DeriveType::Any;
+    if (ctx->structDerives()) {
+        if (ctx->structDerives()->SealedKeyword() != nullptr) {
+            derive = DeriveType::Sealed;
+        } else if (ctx->structDerives()->FinalKeyword() != nullptr) {
+            derive = DeriveType::Final;
+        }
+    }
 
     // if ancestor node is not a kDefStruct, then report internal violation
     if (m_state->isEmpty())
@@ -316,6 +326,7 @@ lyric_parser::internal::ModuleDefstructOps::exitDefstructStatement(ModuleParser:
 
     defstructNode->putAttr(kLyricAstIdentifier, id);
     defstructNode->putAttrOrThrow(kLyricAstAccessType, access);
+    defstructNode->putAttrOrThrow(kLyricAstDeriveType, derive);
 
     scopeManager->popSpan();
 

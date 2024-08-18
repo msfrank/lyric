@@ -271,13 +271,15 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
     std::string identifier;
     lyric_typing::TemplateSpec templateSpec;
     lyric_assembler::ClassSymbol *superClass = nullptr;
-    lyric_object::DeriveType derive = lyric_object::DeriveType::Any;
     bool isAbstract = false;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     lyric_parser::AccessType access;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+
+    lyric_parser::DeriveType derive;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
 
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         lyric_parser::ArchetypeNode *genericNode = nullptr;
@@ -323,7 +325,7 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
     lyric_assembler::ClassSymbol *classSymbol;
     TU_ASSIGN_OR_RETURN (classSymbol, block->declareClass(
         identifier, superClass, internal::convert_access_type(access), templateSpec.templateParameters,
-        derive, isAbstract, /* declOnly= */ true));
+        internal::convert_derive_type(derive), isAbstract, /* declOnly= */ true));
 
     TU_LOG_INFO << "declared class " << classSymbol->getSymbolUrl() << " from " << superClass->getSymbolUrl();
 
@@ -340,12 +342,14 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
     std::string identifier;
     lyric_typing::TemplateSpec templateSpec;
     lyric_assembler::ConceptSymbol *superConcept = nullptr;
-    lyric_object::DeriveType derive = lyric_object::DeriveType::Any;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     lyric_parser::AccessType access;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+
+    lyric_parser::DeriveType derive;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
 
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         lyric_parser::ArchetypeNode *genericNode = nullptr;
@@ -364,7 +368,7 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
     lyric_assembler::ConceptSymbol *conceptSymbol;
     TU_ASSIGN_OR_RETURN (conceptSymbol, block->declareConcept(
         identifier, superConcept, internal::convert_access_type(access), templateSpec.templateParameters,
-        derive, /* declOnly= */ true));
+        internal::convert_derive_type(derive), /* declOnly= */ true));
 
     TU_LOG_INFO << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConcept->getSymbolUrl();
 
@@ -472,13 +476,15 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
 {
     std::string identifier;
     lyric_assembler::StructSymbol *superStruct = nullptr;
-    lyric_object::DeriveType derive = lyric_object::DeriveType::Any;
     bool isAbstract = false;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     lyric_parser::AccessType access;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+
+    lyric_parser::DeriveType derive;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
 
     lyric_parser::ArchetypeNode *initNode = nullptr;
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
@@ -518,7 +524,7 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
     lyric_assembler::StructSymbol *classSymbol;
     TU_ASSIGN_OR_RETURN (classSymbol, block->declareStruct(
         identifier, superStruct, internal::convert_access_type(access),
-        derive, isAbstract, /* declOnly= */ true));
+        internal::convert_derive_type(derive), isAbstract, /* declOnly= */ true));
 
     TU_LOG_INFO << "declared struct " << classSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
 

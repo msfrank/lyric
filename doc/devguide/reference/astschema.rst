@@ -12,9 +12,10 @@ AST Classes
 
 :Min Children:              0
 :Max Children:              N/A
-:Recognized Attributes:     - `Identifier`_
-                            - `AccessEnum`_
+:Recognized Attributes:     - `AccessEnum`_
+                            - `DeriveEnum`_
                             - `GenericOffset`_
+                            - `Identifier`_
 
 DefClass defines a new class.
 
@@ -23,9 +24,10 @@ DefClass defines a new class.
 
 :Min Children:              0
 :Max Children:              N/A
-:Recognized Attributes:     - `Identifier`_
-                            - `AccessEnum`_
+:Recognized Attributes:     - `AccessEnum`_
+                            - `DeriveEnum`_
                             - `GenericOffset`_
+                            - `Identifier`_
 
 DefConcept defines a new concept.
 
@@ -34,8 +36,8 @@ DefConcept defines a new concept.
 
 :Min Children:              0
 :Max Children:              N/A
-:Recognized Attributes:     - `Identifier`_
-                            - `AccessEnum`_
+:Recognized Attributes:     - `AccessEnum`_
+                            - `Identifier`_
 
 DefEnum defines a new enumeration.
 
@@ -44,8 +46,8 @@ DefEnum defines a new enumeration.
 
 :Min Children:              0
 :Max Children:              N/A
-:Recognized Attributes:     - `Identifier`_
-                            - `AccessEnum`_
+:Recognized Attributes:     - `AccessEnum`_
+                            - `Identifier`_
 
 DefInstance defines a new instance.
 
@@ -54,8 +56,9 @@ DefInstance defines a new instance.
 
 :Min Children:              0
 :Max Children:              N/A
-:Recognized Attributes:     - `Identifier`_
-                            - `AccessEnum`_
+:Recognized Attributes:     - `AccessEnum`_
+                            - `DeriveEnum`_
+                            - `Identifier`_
 
 DefStruct defines a new struct.
 
@@ -123,6 +126,23 @@ Type bound enumeration encoded as a uint32.
 :Property Type:             UInt32
 
 
+``DeriveEnum``
+..............
+
+:Property Type:             UInt32
+:Allowed Values:
+   .. table::
+      :align: left
+
+      =====  =====
+      Index  Value
+      =====  =====
+      0      Any
+      1      Sealed
+      2      Final
+      =====  =====
+
+Derive enumeration encoded as a uint32.
 
 ``FinallyOffset``
 .................
@@ -149,11 +169,6 @@ A symbol identifier.
 
 :Property Type:             String
 
-
-``ImplementsOffset``
-....................
-
-:Property Type:             UInt32
 
 ``IsVariable``
 ..............

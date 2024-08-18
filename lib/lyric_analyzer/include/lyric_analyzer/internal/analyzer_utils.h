@@ -7,6 +7,8 @@
 namespace lyric_analyzer::internal {
 
     lyric_object::AccessType convert_access_type(lyric_parser::AccessType access);
+
+    lyric_object::DeriveType convert_derive_type(lyric_parser::DeriveType derive);
 }
 
 #endif // LYRIC_ANALYZER_INTERNAL_ANALYZER_UTILS_H

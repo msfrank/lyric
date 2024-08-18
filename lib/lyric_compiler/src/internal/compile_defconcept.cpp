@@ -110,6 +110,10 @@ lyric_compiler::internal::compile_defconcept(
     lyric_parser::AccessType access;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
 
+    // get concept derive type
+    lyric_parser::DeriveType derive;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstDeriveType, derive);
+
     // if concept is generic, then compile the template parameter list
     lyric_typing::TemplateSpec templateSpec;
     if (walker.hasAttr(lyric_parser::kLyricAstGenericOffset)) {
@@ -146,7 +150,8 @@ lyric_compiler::internal::compile_defconcept(
     lyric_assembler::ConceptSymbol *conceptSymbol;
     TU_ASSIGN_OR_RETURN (conceptSymbol, block->declareConcept(
         identifier, superConcept, lyric_compiler::internal::convert_access_type(access),
-        templateSpec.templateParameters));
+        templateSpec.templateParameters,
+        lyric_compiler::internal::convert_derive_type(derive)));
 
     TU_LOG_INFO << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConcept->getSymbolUrl();
 

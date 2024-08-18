@@ -64,7 +64,7 @@ TEST(CoreMatch, TestIsAPlaceholderTypeNoMatch)
 TEST(CoreMatch, TestIsABoundedPlaceholderType)
 {
     auto result = runModule(R"(
-        def generic[T](t: T): Bool where T extends Intrinsic {
+        def generic[T](t: T): Bool where T < Intrinsic {
             t ^? Int
         }
         generic(42)
@@ -76,7 +76,7 @@ TEST(CoreMatch, TestIsABoundedPlaceholderType)
 TEST(CoreMatch, TestIsABoundedPlaceholderTypeNoMatch)
 {
     auto result = runModule(R"(
-        def generic[T](t: T): Bool where T extends Intrinsic {
+        def generic[T](t: T): Bool where T < Intrinsic {
             t ^? Float
         }
         generic(42)
@@ -88,7 +88,7 @@ TEST(CoreMatch, TestIsABoundedPlaceholderTypeNoMatch)
 TEST(CoreMatch, TestIsABoundedPlaceholderTypeDisjoint)
 {
     auto result = compileModule(R"(
-        def generic[T](t: T): Bool where T extends Int {
+        def generic[T](t: T): Bool where T < Int {
             t ^? Float
         }
         generic(42)
@@ -147,7 +147,7 @@ TEST(CoreMatch, TestMatchPlaceholderTypeNoMatch)
 TEST(CoreMatch, TestMatchBoundedPlaceholderType)
 {
     auto result = runModule(R"(
-        def generic[T](t: T): Any where T extends Intrinsic {
+        def generic[T](t: T): Any where T < Intrinsic {
             match t {
                 when i: Int     true
                 else            false
@@ -162,7 +162,7 @@ TEST(CoreMatch, TestMatchBoundedPlaceholderType)
 TEST(CoreMatch, TestMatchBoundedPlaceholderTypeNoMatch)
 {
     auto result = runModule(R"(
-        def generic[T](t: T): Any where T extends Intrinsic {
+        def generic[T](t: T): Any where T < Intrinsic {
             match t {
                 when f: Float   true
                 else            false
@@ -177,7 +177,7 @@ TEST(CoreMatch, TestMatchBoundedPlaceholderTypeNoMatch)
 TEST(CoreMatch, TestMatchBoundedPlaceholderTypeDisjoint)
 {
     auto result = compileModule(R"(
-        def generic[T](t: T): Any where T extends Int {
+        def generic[T](t: T): Any where T < Int {
             match t {
                 when f: Float   true
                 else            false

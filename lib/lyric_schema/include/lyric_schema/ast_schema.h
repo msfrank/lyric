@@ -121,10 +121,10 @@ namespace lyric_schema {
 
         BaseEnum,
         NotationEnum,
-        MutationEnum,
         AccessEnum,
         BoundEnum,
         VarianceEnum,
+        DeriveEnum,
 
         ModuleLocation,
         SymbolPath,
@@ -138,7 +138,6 @@ namespace lyric_schema {
         FinallyOffset,
         RestOffset,
         GenericOffset,
-        ImplementsOffset,
         TypeArgumentsOffset,
         MacroListOffset,
 
@@ -340,10 +339,6 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::NotationEnum, "NotationEnum", tempo_utils::PropertyType::kUInt32);
 
     constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
-    kLyricAstMutationEnumProperty(
-        &kLyricAstNs, LyricAstId::MutationEnum, "MutationEnum", tempo_utils::PropertyType::kUInt32);
-
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstAccessEnumProperty(
         &kLyricAstNs, LyricAstId::AccessEnum, "AccessEnum", tempo_utils::PropertyType::kUInt32);
 
@@ -354,6 +349,10 @@ namespace lyric_schema {
     constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstVarianceEnumProperty(
         &kLyricAstNs, LyricAstId::VarianceEnum, "VarianceEnum", tempo_utils::PropertyType::kUInt32);
+
+    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+        kLyricAstDeriveEnumProperty(
+        &kLyricAstNs, LyricAstId::DeriveEnum, "DeriveEnum", tempo_utils::PropertyType::kUInt32);
 
     constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstModuleLocationProperty(
@@ -398,10 +397,6 @@ namespace lyric_schema {
     constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstGenericOffsetProperty(
         &kLyricAstNs, LyricAstId::GenericOffset, "GenericOffset", tempo_utils::PropertyType::kUInt32);
-
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
-    kLyricAstImplementsOffsetProperty(
-        &kLyricAstNs, LyricAstId::ImplementsOffset, "ImplementsOffset", tempo_utils::PropertyType::kUInt32);
 
     constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstTypeArgumentsOffsetProperty(
@@ -518,10 +513,10 @@ namespace lyric_schema {
 
         &kLyricAstBaseEnumProperty,
         &kLyricAstNotationEnumProperty,
-        &kLyricAstMutationEnumProperty,
         &kLyricAstAccessEnumProperty,
         &kLyricAstBoundEnumProperty,
         &kLyricAstVarianceEnumProperty,
+        &kLyricAstDeriveEnumProperty,
 
         &kLyricAstModuleLocationProperty,
         &kLyricAstSymbolPathProperty,
@@ -535,7 +530,6 @@ namespace lyric_schema {
         &kLyricAstFinallyOffsetProperty,
         &kLyricAstRestOffsetProperty,
         &kLyricAstGenericOffsetProperty,
-        &kLyricAstImplementsOffsetProperty,
         &kLyricAstTypeArgumentsOffsetProperty,
         &kLyricAstMacroListOffsetProperty,
     };

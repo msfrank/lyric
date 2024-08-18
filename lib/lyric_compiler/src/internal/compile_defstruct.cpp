@@ -530,6 +530,10 @@ lyric_compiler::internal::compile_defstruct(
     lyric_parser::AccessType access;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
 
+    // get struct derive type
+    lyric_parser::DeriveType derive;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstDeriveType, derive);
+
     lyric_parser::NodeWalker init;
     std::vector<lyric_parser::NodeWalker> vals;
     std::vector<lyric_parser::NodeWalker> defs;
@@ -610,7 +614,8 @@ lyric_compiler::internal::compile_defstruct(
 
     lyric_assembler::StructSymbol *structSymbol;
     TU_ASSIGN_OR_RETURN (structSymbol, block->declareStruct(
-        identifier, superStruct, lyric_compiler::internal::convert_access_type(access)));
+        identifier, superStruct, lyric_compiler::internal::convert_access_type(access),
+        lyric_compiler::internal::convert_derive_type(derive)));
 
     TU_LOG_INFO << "declared struct " << structSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
 

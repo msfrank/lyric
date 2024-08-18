@@ -278,3 +278,46 @@ TEST(CoreDefclass, EvaluateInvokeGenericMethodForGenericClass)
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(RunModule(DataCellInt(142))));
 }
+
+TEST(CoreDefclass, EvaluateNewInstanceOfSealedClass)
+{
+    auto result = runModule(R"(
+        defclass Foo sealed {
+            val value: Int = 42
+        }
+        Foo{}
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+}
+
+TEST(CoreDefclass, EvaluateDefineSubclassOfFinalClassFails)
+{
+    auto result = compileModule(R"(
+        defclass Foo final {
+        }
+        defclass Bar {
+            init() from Foo() {}
+        }
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        CompileModule(
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidAccess))));
+}
+
+TEST(CoreDefclass, EvaluateNewInstanceOfFinalClass)
+{
+    auto result = runModule(R"(
+        defclass Foo final {
+            val value: Int = 42
+        }
+        Foo{}
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+}

@@ -373,8 +373,19 @@ lyric_parser::internal::ModuleDefclassOps::exitDefclassStatement(ModuleParser::D
     // the class access level
     auto access = parse_access_type(id);
 
+    // the class derive type
+    DeriveType derive = DeriveType::Any;
+    if (ctx->classDerives()) {
+        if (ctx->classDerives()->SealedKeyword() != nullptr) {
+            derive = DeriveType::Sealed;
+        } else if (ctx->classDerives()->FinalKeyword() != nullptr) {
+            derive = DeriveType::Final;
+        }
+    }
+
     defclassNode->putAttr(kLyricAstIdentifier, id);
     defclassNode->putAttrOrThrow(kLyricAstAccessType, access);
+    defclassNode->putAttrOrThrow(kLyricAstDeriveType, derive);
 
     // generic information
     if (ctx->genericClass()) {

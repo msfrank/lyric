@@ -235,14 +235,14 @@ lyric_parser::internal::make_Generic_node(
             BoundType bound;
             ArchetypeNode *constraintTypeNode;
 
-            if (c->extendsConstraint()) {
-                id = c->extendsConstraint()->Identifier()->getText();
+            if (c->upperTypeBound()) {
+                id = c->upperTypeBound()->Identifier()->getText();
                 bound = BoundType::Extends;
-                constraintTypeNode = make_Type_node(state, c->extendsConstraint()->assignableType());
-            } else if (c->superConstraint()) {
-                id = c->superConstraint()->Identifier()->getText();
+                constraintTypeNode = make_Type_node(state, c->upperTypeBound()->assignableType());
+            } else if (c->lowerTypeBound()) {
+                id = c->lowerTypeBound()->Identifier()->getText();
                 bound = BoundType::Super;
-                constraintTypeNode = make_Type_node(state, c->extendsConstraint()->assignableType());
+                constraintTypeNode = make_Type_node(state, c->lowerTypeBound()->assignableType());
             } else {
                 state->throwParseInvariant(get_token_location(c->getStart()), "illegal constraint");
                 TU_UNREACHABLE();

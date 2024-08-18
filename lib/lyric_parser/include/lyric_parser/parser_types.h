@@ -36,6 +36,12 @@ namespace lyric_parser {
         Contravariant,
     };
 
+    enum class DeriveType {
+        Any,
+        Sealed,
+        Final,
+    };
+
     enum class BaseType {
         Binary,
         Octal,

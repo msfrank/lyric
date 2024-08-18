@@ -207,6 +207,47 @@ lyric_parser::VarianceTypeAttr::parseAttr(tu_uint32 index, tempo_utils::Abstract
     return value_to_variance_type(value, variance);
 }
 
+lyric_parser::DeriveTypeAttr::DeriveTypeAttr(const tempo_utils::ComparableResource *resource)
+    : tempo_utils::AttrSerde<DeriveType>(resource)
+{
+}
+
+tempo_utils::Result<tu_uint32>
+lyric_parser::DeriveTypeAttr::writeAttr(tempo_utils::AbstractAttrWriter *writer, const DeriveType &derive) const
+{
+    TU_ASSERT (writer != nullptr);
+    return writer->putUInt32(static_cast<tu_uint32>(derive));
+}
+
+static tempo_utils::Status
+value_to_derive_type(tu_int64 value, lyric_parser::DeriveType &derive)
+{
+    switch (static_cast<lyric_parser::DeriveType>(value)) {
+        case lyric_parser::DeriveType::Any:
+            derive = lyric_parser::DeriveType::Any;
+            return tempo_utils::AttrStatus::ok();
+        case lyric_parser::DeriveType::Sealed:
+            derive = lyric_parser::DeriveType::Sealed;
+            return tempo_utils::AttrStatus::ok();
+        case lyric_parser::DeriveType::Final:
+            derive = lyric_parser::DeriveType::Final;
+            return tempo_utils::AttrStatus::ok();
+        default:
+            return tempo_utils::AttrStatus::forCondition(
+                tempo_utils::AttrCondition::kConversionError, "invalid derive type");
+    }
+}
+
+tempo_utils::Status
+lyric_parser::DeriveTypeAttr::parseAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser, DeriveType &derive) const
+{
+    tu_uint32 value;
+    auto status = parser->getUInt32(index, value);
+    if (status.notOk())
+        return status;
+    return value_to_derive_type(value, derive);
+}
+
 lyric_parser::NodeAttr::NodeAttr(const tempo_utils::ComparableResource *resource)
     : StatefulAttr(resource)
 {
@@ -267,6 +308,7 @@ const lyric_parser::NotationTypeAttr lyric_parser::kLyricAstNotationType(&lyric_
 const lyric_parser::AccessTypeAttr lyric_parser::kLyricAstAccessType(&lyric_schema::kLyricAstAccessEnumProperty);
 const lyric_parser::BoundTypeAttr lyric_parser::kLyricAstBoundType(&lyric_schema::kLyricAstBoundEnumProperty);
 const lyric_parser::VarianceTypeAttr lyric_parser::kLyricAstVarianceType(&lyric_schema::kLyricAstVarianceEnumProperty);
+const lyric_parser::DeriveTypeAttr lyric_parser::kLyricAstDeriveType(&lyric_schema::kLyricAstDeriveEnumProperty);
 
 const lyric_common::ModuleLocationAttr lyric_parser::kLyricAstModuleLocation(&lyric_schema::kLyricAstModuleLocationProperty);
 const lyric_common::SymbolPathAttr lyric_parser::kLyricAstSymbolPath(&lyric_schema::kLyricAstSymbolPathProperty);
@@ -279,5 +321,4 @@ const lyric_parser::NodeAttr lyric_parser::kLyricAstDefaultOffset(&lyric_schema:
 const lyric_parser::NodeAttr lyric_parser::kLyricAstFinallyOffset(&lyric_schema::kLyricAstFinallyOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstRestOffset(&lyric_schema::kLyricAstRestOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstGenericOffset(&lyric_schema::kLyricAstGenericOffsetProperty);
-const lyric_parser::NodeAttr lyric_parser::kLyricAstImplementsOffset(&lyric_schema::kLyricAstImplementsOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstTypeArgumentsOffset(&lyric_schema::kLyricAstTypeArgumentsOffsetProperty);

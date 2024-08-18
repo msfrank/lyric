@@ -142,8 +142,19 @@ lyric_parser::internal::ModuleDefconceptOps::exitDefconceptStatement(ModuleParse
     // the concept access level
     auto access = parse_access_type(id);
 
+    // the concept derive type
+    DeriveType derive = DeriveType::Any;
+    if (ctx->conceptDerives()) {
+        if (ctx->conceptDerives()->SealedKeyword() != nullptr) {
+            derive = DeriveType::Sealed;
+        } else if (ctx->conceptDerives()->FinalKeyword() != nullptr) {
+            derive = DeriveType::Final;
+        }
+    }
+
     defconceptNode->putAttr(kLyricAstIdentifier, id);
     defconceptNode->putAttrOrThrow(kLyricAstAccessType, access);
+    defconceptNode->putAttrOrThrow(kLyricAstDeriveType, derive);
 
     // generic information
     if (ctx->genericConcept()) {

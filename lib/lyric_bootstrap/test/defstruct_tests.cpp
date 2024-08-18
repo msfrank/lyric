@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <lyric_assembler/assembler_result.h>
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
@@ -62,4 +63,47 @@ TEST(CoreDefstruct, EvaluateInvokeMethod)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(110))));
+}
+
+TEST(CoreDefstruct, EvaluateNewInstanceOfSealedStruct)
+{
+    auto result = runModule(R"(
+        defstruct Foo sealed {
+            val value: Int = 42
+        }
+        Foo{}
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+}
+
+TEST(CoreDefstruct, EvaluateDefineSubstructOfFinalStructFails)
+{
+    auto result = compileModule(R"(
+        defstruct Foo final {
+        }
+        defstruct Bar {
+            init() from Foo() {}
+        }
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        CompileModule(
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidAccess))));
+}
+
+TEST(CoreDefstruct, EvaluateNewInstanceOfFinalStruct)
+{
+    auto result = runModule(R"(
+        defstruct Foo final {
+            val value: Int = 42
+        }
+        Foo{}
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }

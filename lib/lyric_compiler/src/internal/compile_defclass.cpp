@@ -508,6 +508,10 @@ lyric_compiler::internal::compile_defclass(
     lyric_parser::AccessType access;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
 
+    // get class derive type
+    lyric_parser::DeriveType derive;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstDeriveType, derive);
+
     // if class is generic, then compile the template parameter list
     lyric_typing::TemplateSpec templateSpec;
     if (walker.hasAttr(lyric_parser::kLyricAstGenericOffset)) {
@@ -600,7 +604,8 @@ lyric_compiler::internal::compile_defclass(
     lyric_assembler::ClassSymbol *classSymbol;
     TU_ASSIGN_OR_RETURN (classSymbol, block->declareClass(
         identifier, superClass, lyric_compiler::internal::convert_access_type(access),
-        templateSpec.templateParameters));
+        templateSpec.templateParameters,
+        lyric_compiler::internal::convert_derive_type(derive)));
 
     TU_LOG_INFO << "declared class " << classSymbol->getSymbolUrl() << " from " << superClass->getSymbolUrl();
 

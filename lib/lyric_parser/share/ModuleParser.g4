@@ -69,9 +69,9 @@ placeholderSpec             : BracketOpen placeholder ( CommaOperator placeholde
 
 // constraint
 
-extendsConstraint   : Identifier ExtendsKeyword assignableType ;
-superConstraint     : Identifier SuperKeyword assignableType ;
-constraint          : extendsConstraint | superConstraint ;
+upperTypeBound      : Identifier IsLtOperator assignableType ;
+lowerTypeBound      : Identifier IsGtOperator assignableType ;
+constraint          : upperTypeBound | lowerTypeBound ;
 constraintSpec      : WhereKeyword constraint ( CommaOperator constraint )* ;
 
 
@@ -161,8 +161,9 @@ classDef            : DefKeyword symbolIdentifier
                         CurlyOpen block CurlyClose ;
 classInit           : InitKeyword paramSpec classSuper? CurlyOpen block? CurlyClose ;
 genericClass        : placeholderSpec constraintSpec? ;
+classDerives        : ( SealedKeyword | FinalKeyword ) ;
 classSpec           : classInit | classVal | classVar | classDef | classImpl ;
-defclassStatement   : DefClassKeyword symbolIdentifier genericClass? CurlyOpen classSpec*  CurlyClose ;
+defclassStatement   : DefClassKeyword symbolIdentifier genericClass? classDerives? CurlyOpen classSpec*  CurlyClose ;
 
 
 // defconcept statement
@@ -170,8 +171,9 @@ defclassStatement   : DefClassKeyword symbolIdentifier genericClass? CurlyOpen c
 conceptDef          : DefKeyword symbolIdentifier paramSpec returnSpec ;
 conceptImpl         : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 genericConcept      : placeholderSpec constraintSpec? ;
+conceptDerives      : ( SealedKeyword | FinalKeyword ) ;
 conceptSpec         : conceptDef | conceptImpl ;
-defconceptStatement : DefConceptKeyword symbolIdentifier genericConcept? CurlyOpen conceptSpec* CurlyClose ;
+defconceptStatement : DefConceptKeyword symbolIdentifier genericConcept? conceptDerives? CurlyOpen conceptSpec* CurlyClose ;
 
 
 // definstance statement
@@ -202,8 +204,9 @@ structInit          : InitKeyword paramSpec structSuper? CurlyOpen block? CurlyC
 structVal           : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 structDef           : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen block CurlyClose ;
 structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
+structDerives       : ( SealedKeyword | FinalKeyword ) ;
 structSpec          : structInit | structVal | structDef | structImpl ;
-defstructStatement  : DefStructKeyword symbolIdentifier CurlyOpen structSpec* CurlyClose ;
+defstructStatement  : DefStructKeyword symbolIdentifier structDerives? CurlyOpen structSpec* CurlyClose ;
 
 
 // defalias statement

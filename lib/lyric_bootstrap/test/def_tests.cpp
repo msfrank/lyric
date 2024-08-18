@@ -107,7 +107,7 @@ TEST(CoreDef, EvaluateDefGenericFunction)
 TEST(CoreDef, EvaluateDefGenericFunctionWithUpperBound)
 {
     auto result = runModule(R"(
-        def identity[A](x: A): A where A extends Int {
+        def identity[A](x: A): A where A < Int {
             x
         }
         identity(5)

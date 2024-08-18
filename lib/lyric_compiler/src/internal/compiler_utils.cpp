@@ -15,3 +15,18 @@ lyric_compiler::internal::convert_access_type(lyric_parser::AccessType access)
             return lyric_object::AccessType::Invalid;
     }
 }
+
+lyric_object::DeriveType
+lyric_compiler::internal::convert_derive_type(lyric_parser::DeriveType derive)
+{
+    switch (derive) {
+        case lyric_parser::DeriveType::Any:
+            return lyric_object::DeriveType::Any;
+        case lyric_parser::DeriveType::Sealed:
+            return lyric_object::DeriveType::Sealed;
+        case lyric_parser::DeriveType::Final:
+            return lyric_object::DeriveType::Final;
+        default:
+            return lyric_object::DeriveType::Invalid;
+    }
+}
