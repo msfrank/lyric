@@ -18,11 +18,6 @@ namespace lyric_parser {
         Version1,
     };
 
-//    enum class BindingType {
-//        Value,
-//        Variable,
-//    };
-
     enum class AccessType {
         Public,
         Protected,

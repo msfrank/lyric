@@ -5,9 +5,10 @@ Lyric Developer Guide
 
 .. toctree::
     :maxdepth: 2
-    :caption: Contents:
 
-    introduction
+    overview
+    reference/astschema
+    reference/bytecode
 
 Indices and tables
 ==================
