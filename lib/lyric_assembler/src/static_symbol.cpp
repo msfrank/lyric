@@ -8,6 +8,7 @@
 
 lyric_assembler::StaticSymbol::StaticSymbol(
     const lyric_common::SymbolUrl &staticUrl,
+    lyric_object::AccessType access,
     bool isVariable,
     StaticAddress address,
     TypeHandle *staticType,
@@ -22,6 +23,7 @@ lyric_assembler::StaticSymbol::StaticSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
+    priv->access = access;
     priv->isVariable = isVariable;
     priv->staticType = staticType;
     priv->initCall = nullptr;
@@ -51,6 +53,7 @@ lyric_assembler::StaticSymbol::load()
     auto *typeCache = m_state->typeCache();
 
     auto priv = std::make_unique<StaticSymbolPriv>();
+    priv->access = m_staticImport->getAccess();
     priv->isVariable = m_staticImport->isVariable();
 
     auto *staticType = m_staticImport->getStaticType();
@@ -111,6 +114,13 @@ std::string
 lyric_assembler::StaticSymbol::getName() const
 {
     return m_staticUrl.getSymbolPath().getName();
+}
+
+lyric_object::AccessType
+lyric_assembler::StaticSymbol::getAccessType() const
+{
+    auto *priv = getPriv();
+    return priv->access;
 }
 
 bool

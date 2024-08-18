@@ -4,6 +4,7 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/template_handle.h>
 #include <lyric_compiler/compiler_result.h>
+#include <lyric_compiler/internal/compiler_utils.h>
 #include <lyric_compiler/internal/compile_initializer.h>
 #include <lyric_compiler/internal/compile_node.h>
 #include <lyric_compiler/internal/compile_val.h>
@@ -27,6 +28,9 @@ lyric_compiler::internal::compile_val(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
+
     lyric_common::TypeDef valType;
     if (walker.hasAttr(lyric_parser::kLyricAstTypeOffset)) {
         lyric_parser::NodeWalker typeNode;
@@ -43,7 +47,8 @@ lyric_compiler::internal::compile_val(
                 tempo_tracing::LogSeverity::kError,
                 "missing type for static val {}", identifier);
 
-        auto declareStaticResult = block->declareStatic(identifier, valType, /* isVariable= */ false);
+        auto declareStaticResult = block->declareStatic(
+            identifier, lyric_compiler::internal::convert_access_type(access), valType, /* isVariable= */ false);
         if (declareStaticResult.isStatus())
             return declareStaticResult.getStatus();
         auto ref = declareStaticResult.getResult();

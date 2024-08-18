@@ -10,6 +10,7 @@ namespace lyric_importer {
         bool isAbstract;
         bool isDeclOnly;
         lyric_object::DeriveType derive;
+        lyric_object::AccessType access;
         TypeImport *enumType;
         lyric_common::SymbolUrl superEnum;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
@@ -56,6 +57,13 @@ lyric_importer::EnumImport::getDerive()
 {
     load();
     return m_priv->derive;
+}
+
+lyric_object::AccessType
+lyric_importer::EnumImport::getAccess()
+{
+    load();
+    return m_priv->access;
 }
 
 lyric_importer::TypeImport *
@@ -203,13 +211,21 @@ lyric_importer::EnumImport::load()
     priv->isAbstract = enumWalker.isAbstract();
     priv->isDeclOnly = enumWalker.isDeclOnly();
 
-    if (enumWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
+    priv->derive = enumWalker.getDeriveType();
+    if (priv->derive == lyric_object::DeriveType::Invalid)
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import enum at index {} in module {}; invalid derive type",
                 m_enumOffset, location.toString()));
-    priv->derive = enumWalker.getDeriveType();
+
+    priv->access = enumWalker.getAccess();
+    if (priv->access == lyric_object::AccessType::Invalid)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(
+                ImporterCondition::kImportError,
+                "cannot import enum at index {} in module {}; invalid access type",
+                m_enumOffset, location.toString()));
 
     priv->enumType = m_moduleImport->getType(
         enumWalker.getEnumType().getDescriptorOffset());

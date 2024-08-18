@@ -10,6 +10,7 @@ namespace lyric_importer {
         bool isAbstract;
         bool isDeclOnly;
         lyric_object::DeriveType derive;
+        lyric_object::AccessType access;
         TypeImport *structType;
         lyric_common::SymbolUrl superStruct;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
@@ -56,6 +57,13 @@ lyric_importer::StructImport::getDerive()
 {
     load();
     return m_priv->derive;
+}
+
+lyric_object::AccessType
+lyric_importer::StructImport::getAccess()
+{
+    load();
+    return m_priv->access;
 }
 
 lyric_importer::TypeImport *
@@ -203,13 +211,21 @@ lyric_importer::StructImport::load()
     priv->isAbstract = structWalker.isAbstract();
     priv->isDeclOnly = structWalker.isDeclOnly();
 
-    if (structWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
+    priv->derive = structWalker.getDeriveType();
+    if (priv->derive == lyric_object::DeriveType::Invalid)
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import struct at index {} in module {}; invalid derive type",
                 m_structOffset, location.toString()));
-    priv->derive = structWalker.getDeriveType();
+
+    priv->access = structWalker.getAccess();
+    if (priv->access == lyric_object::AccessType::Invalid)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(
+                ImporterCondition::kImportError,
+                "cannot import struct at index {} in module {}; invalid access type",
+                m_structOffset, location.toString()));
 
     priv->structType = m_moduleImport->getType(
         structWalker.getStructType().getDescriptorOffset());

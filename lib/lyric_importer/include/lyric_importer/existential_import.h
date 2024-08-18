@@ -13,6 +13,7 @@ namespace lyric_importer {
 
         bool isDeclOnly();
         lyric_object::DeriveType getDerive();
+        lyric_object::AccessType getAccess();
 
         TypeImport *getExistentialType();
         TemplateImport *getExistentialTemplate();

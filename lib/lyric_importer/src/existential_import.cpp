@@ -10,6 +10,7 @@ namespace lyric_importer {
         lyric_common::SymbolUrl symbolUrl;
         bool isDeclOnly;
         lyric_object::DeriveType derive;
+        lyric_object::AccessType access;
         TypeImport *existentialType;
         TemplateImport *existentialTemplate;
         lyric_common::SymbolUrl superExistential;
@@ -48,6 +49,13 @@ lyric_importer::ExistentialImport::getDerive()
 {
     load();
     return m_priv->derive;
+}
+
+lyric_object::AccessType
+lyric_importer::ExistentialImport::getAccess()
+{
+    load();
+    return m_priv->access;
 }
 
 lyric_importer::TypeImport *
@@ -159,13 +167,21 @@ lyric_importer::ExistentialImport::load()
 
     priv->isDeclOnly = existentialWalker.isDeclOnly();
 
-    if (existentialWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
+    priv->derive = existentialWalker.getDeriveType();
+    if (priv->derive == lyric_object::DeriveType::Invalid)
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import existential at index {} in module {}; invalid derive type",
                 m_existentialOffset, location.toString()));
-    priv->derive = existentialWalker.getDeriveType();
+
+    priv->access = existentialWalker.getAccess();
+    if (priv->access == lyric_object::AccessType::Invalid)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(
+                ImporterCondition::kImportError,
+                "cannot import existential at index {} in module {}; invalid access type",
+                m_existentialOffset, location.toString()));
 
     priv->existentialType = m_moduleImport->getType(
         existentialWalker.getExistentialType().getDescriptorOffset());

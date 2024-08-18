@@ -8,6 +8,7 @@
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/synthetic_symbol.h>
+#include <lyric_compiler/internal/compiler_utils.h>
 #include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_definstance.h>
 #include <lyric_compiler/internal/compile_initializer.h>
@@ -32,6 +33,10 @@ compile_definstance_val(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    // get val access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
+
     // get val type
     lyric_parser::NodeWalker typeNode;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
@@ -40,15 +45,9 @@ compile_definstance_val(
     lyric_common::TypeDef valType;
     TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(instanceBlock, valSpec));
 
-    lyric_object::AccessType accessType = lyric_object::AccessType::Public;
-    if (absl::StartsWith(identifier, "__")) {
-        accessType = lyric_object::AccessType::Private;
-    } else if (absl::StartsWith(identifier, "_")) {
-        accessType = lyric_object::AccessType::Protected;
-    }
-
     lyric_assembler::FieldSymbol *fieldSymbol;
-    TU_ASSIGN_OR_RETURN (fieldSymbol, instanceSymbol->declareMember(identifier, valType, false, accessType));
+    TU_ASSIGN_OR_RETURN (fieldSymbol, instanceSymbol->declareMember(
+        identifier, valType, false, lyric_compiler::internal::convert_access_type(access)));
 
     TU_LOG_INFO << "declared val member" << identifier << "for" << instanceSymbol->getSymbolUrl();
 
@@ -77,6 +76,10 @@ compile_definstance_var(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    // get var access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
+
     // get var type
     lyric_parser::NodeWalker typeNode;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
@@ -85,15 +88,9 @@ compile_definstance_var(
     lyric_common::TypeDef varType;
     TU_ASSIGN_OR_RETURN (varType, typeSystem->resolveAssignable(instanceBlock, varSpec));
 
-    lyric_object::AccessType accessType = lyric_object::AccessType::Public;
-    if (absl::StartsWith(identifier, "__")) {
-        accessType = lyric_object::AccessType::Private;
-    } else if (absl::StartsWith(identifier, "_")) {
-        accessType = lyric_object::AccessType::Protected;
-    }
-
     lyric_assembler::FieldSymbol *fieldSymbol;
-    TU_ASSIGN_OR_RETURN (fieldSymbol, instanceSymbol->declareMember(identifier, varType, true, accessType));
+    TU_ASSIGN_OR_RETURN (fieldSymbol, instanceSymbol->declareMember(
+        identifier, varType, true, lyric_compiler::internal::convert_access_type(access)));
 
     TU_LOG_INFO << "declared var member" << identifier << "for" << instanceSymbol->getSymbolUrl();
 
@@ -214,13 +211,9 @@ compile_definstance_def(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
-    // determine the access level
-    lyric_object::AccessType access = lyric_object::AccessType::Public;
-    if (absl::StartsWith(identifier, "__")) {
-        access = lyric_object::AccessType::Private;
-    } else if (absl::StartsWith(identifier, "_")) {
-        access = lyric_object::AccessType::Protected;
-    }
+    // get method access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
 
     // parse the return type
     lyric_parser::NodeWalker typeNode;
@@ -235,7 +228,8 @@ compile_definstance_def(
 
     // declare the method
     lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, instanceSymbol->declareMethod(identifier, access));
+    TU_ASSIGN_OR_RETURN (callSymbol, instanceSymbol->declareMethod(
+        identifier, lyric_compiler::internal::convert_access_type(access)));
 
     auto *resolver = callSymbol->callResolver();
 
@@ -450,6 +444,10 @@ lyric_compiler::internal::compile_definstance(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    // get instance access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
+
     std::vector<lyric_parser::NodeWalker> vals;
     std::vector<lyric_parser::NodeWalker> vars;
     std::vector<lyric_parser::NodeWalker> defs;
@@ -489,7 +487,7 @@ lyric_compiler::internal::compile_definstance(
 
     lyric_assembler::InstanceSymbol *instanceSymbol;
     TU_ASSIGN_OR_RETURN (instanceSymbol, block->declareInstance(
-        identifier, superInstance, lyric_object::AccessType::Public));
+        identifier, superInstance, lyric_compiler::internal::convert_access_type(access)));
 
     TU_LOG_INFO << "declared instance " << instanceSymbol->getSymbolUrl() << " from " << superInstance->getSymbolUrl();
 

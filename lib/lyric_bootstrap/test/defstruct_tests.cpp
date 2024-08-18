@@ -23,13 +23,13 @@ TEST(CoreDefstruct, EvaluateNewInstanceWithConstructor)
 {
     auto result = runModule(R"(
         defstruct Foo {
-            val value: Int
+            val Value: Int
             init(i: Int, j: Int) {
-                set this.value = i + j
+                set this.Value = i + j
             }
         }
         val foo: Foo = Foo{40, 60}
-        foo.value
+        foo.Value
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
@@ -39,10 +39,10 @@ TEST(CoreDefstruct, EvaluateDerefPublicVarMember)
 {
     auto result = runModule(R"(
         defstruct Foo {
-            val value: Int
+            val Value: Int
         }
-        var foo: Foo = Foo{value = 100}
-        foo.value
+        var foo: Foo = Foo{Value = 100}
+        foo.Value
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));

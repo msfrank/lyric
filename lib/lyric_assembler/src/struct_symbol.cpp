@@ -251,22 +251,14 @@ lyric_assembler::StructSymbol::numMembers() const
 tempo_utils::Result<lyric_assembler::FieldSymbol *>
 lyric_assembler::StructSymbol::declareMember(
     const std::string &name,
-    const lyric_common::TypeDef &memberType)
+    const lyric_common::TypeDef &memberType,
+    lyric_object::AccessType access)
 {
     if (isImported())
         m_state->throwAssemblerInvariant(
             "can't declare member on imported struct {}", m_structUrl.toString());
 
     auto *priv = getPriv();
-
-    if (absl::StartsWith(name, "__"))
-        return m_state->logAndContinue(AssemblerCondition::kInvalidAccess,
-            tempo_tracing::LogSeverity::kError,
-            "declaration of private member {} is not allowed", name);
-    if (absl::StartsWith(name, "_"))
-        return m_state->logAndContinue(AssemblerCondition::kInvalidAccess,
-            tempo_tracing::LogSeverity::kError,
-            "declaration of protected member {} is not allowed", name);
 
     if (priv->members.contains(name))
         return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
@@ -283,8 +275,8 @@ lyric_assembler::StructSymbol::declareMember(
     auto address = FieldAddress::near(fieldIndex);
 
     // construct the field symbol
-    auto *fieldSymbol = new FieldSymbol(memberUrl, lyric_object::AccessType::Public,
-        false, address, fieldType, priv->isDeclOnly, priv->structBlock.get(), m_state);
+    auto *fieldSymbol = new FieldSymbol(memberUrl, access, /* isVariable= */ false, address,
+        fieldType, priv->isDeclOnly, priv->structBlock.get(), m_state);
 
     auto status = m_state->appendField(fieldSymbol);
     if (status.notOk()) {

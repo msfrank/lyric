@@ -43,16 +43,16 @@ TEST(CoreDefenum, EvaluateEnumCaseVal)
 {
     auto result = runModule(R"(
         defenum Direction {
-            val index: Int
+            val Index: Int
             init(index: Int) {
-                set this.index = index
+                set this.Index = index
             }
             case North(1)
             case South(2)
             case East(3)
             case West(4)
         }
-        North.index
+        North.Index
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
@@ -66,7 +66,7 @@ TEST(CoreDefenum, EvaluateEnumCaseDef)
             init(abbreviation: String) {
                 set this.abbreviation = abbreviation
             }
-            def indexOf(): Int {
+            def IndexOf(): Int {
                 cond {
                     when this.abbreviation == "N"  1
                     when this.abbreviation == "S"  2
@@ -80,7 +80,7 @@ TEST(CoreDefenum, EvaluateEnumCaseDef)
             case East("E")
             case West("W")
         }
-        East.indexOf()
+        East.IndexOf()
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));

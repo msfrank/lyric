@@ -90,7 +90,6 @@ lyric_analyzer::StructAnalyzerContext::declareMember(const lyric_parser::Archety
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    // FIXME: support struct member access level
     lyric_parser::AccessType access;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
@@ -105,7 +104,8 @@ lyric_analyzer::StructAnalyzerContext::declareMember(const lyric_parser::Archety
     lyric_common::TypeDef memberType;
     TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(block, memberSpec));
 
-    TU_RETURN_IF_STATUS(m_structSymbol->declareMember(identifier, memberType));
+    TU_RETURN_IF_STATUS(m_structSymbol->declareMember(
+        identifier, memberType, internal::convert_access_type(access)));
 
     TU_LOG_INFO << "declared member " << identifier << " on " << m_structSymbol->getSymbolUrl();
 

@@ -9,6 +9,7 @@ namespace lyric_importer {
         lyric_common::SymbolUrl symbolUrl;
         bool isDeclOnly;
         lyric_object::DeriveType derive;
+        lyric_object::AccessType access;
         TypeImport *conceptType;
         TemplateImport *conceptTemplate;
         lyric_common::SymbolUrl superConcept;
@@ -47,6 +48,13 @@ lyric_importer::ConceptImport::getDerive()
 {
     load();
     return m_priv->derive;
+}
+
+lyric_object::AccessType
+lyric_importer::ConceptImport::getAccess()
+{
+    load();
+    return m_priv->access;
 }
 
 lyric_importer::TypeImport *
@@ -158,13 +166,21 @@ lyric_importer::ConceptImport::load()
 
     priv->isDeclOnly = conceptWalker.isDeclOnly();
 
-    if (conceptWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
+    priv->derive = conceptWalker.getDeriveType();
+    if (priv->derive == lyric_object::DeriveType::Invalid)
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import concept at index {} in module {}; invalid derive type",
                 m_conceptOffset, location.toString()));
-    priv->derive = conceptWalker.getDeriveType();
+
+    priv->access = conceptWalker.getAccess();
+    if (priv->access == lyric_object::AccessType::Invalid)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(
+                ImporterCondition::kImportError,
+                "cannot import concept at index {} in module {}; invalid access type",
+                m_conceptOffset, location.toString()));
 
     priv->conceptType = m_moduleImport->getType(
         conceptWalker.getConceptType().getDescriptorOffset());

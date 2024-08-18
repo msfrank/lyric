@@ -100,6 +100,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<DataReference> declareStatic(
             const std::string &name,
+            lyric_object::AccessType access,
             const lyric_common::TypeDef &assignableType,
             bool isVariable,
             bool declOnly = false);

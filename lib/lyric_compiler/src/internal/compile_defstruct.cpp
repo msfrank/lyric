@@ -8,6 +8,7 @@
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/synthetic_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
+#include <lyric_compiler/internal/compiler_utils.h>
 #include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_call.h>
 #include <lyric_compiler/internal/compile_defstruct.h>
@@ -33,6 +34,10 @@ compile_defstruct_val(
     // get val name
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
+
+    // get val access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
 
     // get val type
     lyric_parser::NodeWalker typeNode;
@@ -62,20 +67,9 @@ compile_defstruct_val(
                 "struct member {} must derive from Data", identifier);
     }
 
-    if (absl::StartsWith(identifier, "__")) {
-        return moduleEntry.logAndContinue(walker.getLocation(),
-            lyric_compiler::CompilerCondition::kInvalidAccess,
-            tempo_tracing::LogSeverity::kError,
-            "private member {} not allowed for struct", identifier);
-    } else if (absl::StartsWith(identifier, "_")) {
-        return moduleEntry.logAndContinue(walker.getLocation(),
-            lyric_compiler::CompilerCondition::kInvalidAccess,
-            tempo_tracing::LogSeverity::kError,
-            "protected member {} not allowed for struct", identifier);
-    }
-
     lyric_assembler::FieldSymbol *fieldSymbol;
-    TU_ASSIGN_OR_RETURN (fieldSymbol, structSymbol->declareMember(identifier, valType));
+    TU_ASSIGN_OR_RETURN (fieldSymbol, structSymbol->declareMember(
+        identifier, valType, lyric_compiler::internal::convert_access_type(access)));
 
     TU_LOG_INFO << "declared val member " << identifier << " for " << structSymbol->getSymbolUrl();
 
@@ -298,13 +292,9 @@ compile_defstruct_def(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
-    // determine the access level
-    lyric_object::AccessType access = lyric_object::AccessType::Public;
-    if (absl::StartsWith(identifier, "__")) {
-        access = lyric_object::AccessType::Private;
-    } else if (absl::StartsWith(identifier, "_")) {
-        access = lyric_object::AccessType::Protected;
-    }
+    // get method access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
 
     // parse the return type
     lyric_parser::NodeWalker typeNode;
@@ -319,7 +309,8 @@ compile_defstruct_def(
 
     // declare the method
     lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, structSymbol->declareMethod(identifier, access));
+    TU_ASSIGN_OR_RETURN (callSymbol, structSymbol->declareMethod(
+        identifier, lyric_compiler::internal::convert_access_type(access)));
 
     auto *resolver = callSymbol->callResolver();
 
@@ -535,6 +526,10 @@ lyric_compiler::internal::compile_defstruct(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    // get struct access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
+
     lyric_parser::NodeWalker init;
     std::vector<lyric_parser::NodeWalker> vals;
     std::vector<lyric_parser::NodeWalker> defs;
@@ -615,7 +610,7 @@ lyric_compiler::internal::compile_defstruct(
 
     lyric_assembler::StructSymbol *structSymbol;
     TU_ASSIGN_OR_RETURN (structSymbol, block->declareStruct(
-        identifier, superStruct, lyric_object::AccessType::Public));
+        identifier, superStruct, lyric_compiler::internal::convert_access_type(access)));
 
     TU_LOG_INFO << "declared struct " << structSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
 

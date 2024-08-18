@@ -18,6 +18,8 @@ target_sources(lyric_compiler PRIVATE
     src/lyric_compiler.cpp
     src/module_entry.cpp
 
+    include/lyric_compiler/internal/compiler_utils.h
+    src/internal/compiler_utils.cpp
     include/lyric_compiler/internal/compile_assignment.h
     src/internal/compile_assignment.cpp
     include/lyric_compiler/internal/compile_block.h

@@ -562,6 +562,7 @@ lyric_assembler::BlockHandle::declareTemporary(
 tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::BlockHandle::declareStatic(
     const std::string &name,
+    lyric_object::AccessType access,
     const lyric_common::TypeDef &assignableType,
     bool isVariable,
     bool declOnly)
@@ -583,7 +584,7 @@ lyric_assembler::BlockHandle::declareStatic(
     StaticAddress address;
     address = StaticAddress::near(m_state->numStatics());
 
-    auto *staticSymbol = new StaticSymbol(staticUrl, isVariable, address, staticType, declOnly, this, m_state);
+    auto *staticSymbol = new StaticSymbol(staticUrl, access, isVariable, address, staticType, declOnly, this, m_state);
     auto status = m_state->appendStatic(staticSymbol);
     if (status.notOk()) {
         delete staticSymbol;

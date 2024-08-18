@@ -9,9 +9,9 @@ TEST(CoreDefinstance, EvaluateInstanceValMember)
 {
     auto result = runModule(R"(
         definstance Foo {
-            val i: Int = 100
+            val Index: Int = 100
         }
-        Foo.i
+        Foo.Index
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
@@ -21,9 +21,9 @@ TEST(CoreDefinstance, EvaluateInstanceVarMember)
 {
     auto result = runModule(R"(
         definstance Foo {
-            var i: Int = 100
+            var Index: Int = 100
         }
-        Foo.i
+        Foo.Index
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
@@ -33,11 +33,11 @@ TEST(CoreDefinstance, EvaluateInstanceMethod)
 {
     auto result = runModule(R"(
         definstance Foo {
-            def identity(x: Int): Int {
+            def Identity(x: Int): Int {
                 x
             }
         }
-        Foo.identity(42)
+        Foo.Identity(42)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));

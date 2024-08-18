@@ -13,6 +13,7 @@ namespace lyric_importer {
         lyric_common::SymbolUrl getSymbolUrl();
 
         bool isDeclOnly();
+        lyric_object::AccessType getAccess();
 
         lyric_common::SymbolUrl getReceiverUrl();
         TemplateImport *getActionTemplate();

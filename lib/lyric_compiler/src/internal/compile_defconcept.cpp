@@ -7,6 +7,7 @@
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/synthetic_symbol.h>
+#include <lyric_compiler/internal/compiler_utils.h>
 #include <lyric_compiler/internal/compile_call.h>
 #include <lyric_compiler/internal/compile_defconcept.h>
 #include <lyric_compiler/internal/compile_initializer.h>
@@ -33,6 +34,10 @@ compile_defconcept_def(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    // get action access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
+
     // get action return type
     lyric_parser::NodeWalker typeNode;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
@@ -44,12 +49,10 @@ compile_defconcept_def(
     lyric_typing::PackSpec packSpec;
     TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(conceptBlock, pack));
 
-    lyric_object::AccessType accessType = absl::StartsWith(identifier, "_") ?
-        lyric_object::AccessType::Private : lyric_object::AccessType::Public;
-
     // declare the concept action
     lyric_assembler::ActionSymbol *actionSymbol;
-    TU_ASSIGN_OR_RETURN (actionSymbol, conceptSymbol->declareAction(identifier, accessType));
+    TU_ASSIGN_OR_RETURN (actionSymbol, conceptSymbol->declareAction(
+        identifier, lyric_compiler::internal::convert_access_type(access)));
 
     auto *resolver = actionSymbol->actionResolver();
 
@@ -103,6 +106,10 @@ lyric_compiler::internal::compile_defconcept(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    // get concept access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
+
     // if concept is generic, then compile the template parameter list
     lyric_typing::TemplateSpec templateSpec;
     if (walker.hasAttr(lyric_parser::kLyricAstGenericOffset)) {
@@ -138,7 +145,7 @@ lyric_compiler::internal::compile_defconcept(
 
     lyric_assembler::ConceptSymbol *conceptSymbol;
     TU_ASSIGN_OR_RETURN (conceptSymbol, block->declareConcept(
-        identifier, superConcept, lyric_object::AccessType::Public,
+        identifier, superConcept, lyric_compiler::internal::convert_access_type(access),
         templateSpec.templateParameters));
 
     TU_LOG_INFO << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConcept->getSymbolUrl();

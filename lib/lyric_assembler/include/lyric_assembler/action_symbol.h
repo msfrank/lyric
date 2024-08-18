@@ -63,6 +63,7 @@ namespace lyric_assembler {
 
         lyric_common::TypeDef getReturnType() const;
         lyric_common::SymbolUrl getReceiverUrl() const;
+        lyric_object::AccessType getAccessType() const;
 
         AbstractResolver *actionResolver();
         TemplateHandle *actionTemplate();

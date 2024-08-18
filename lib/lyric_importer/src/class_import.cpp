@@ -10,6 +10,7 @@ namespace lyric_importer {
         bool isAbstract;
         bool isDeclOnly;
         lyric_object::DeriveType derive;
+        lyric_object::AccessType access;
         TypeImport *classType;
         TemplateImport *classTemplate;
         lyric_common::SymbolUrl superClass;
@@ -57,6 +58,13 @@ lyric_importer::ClassImport::getDerive()
 {
     load();
     return m_priv->derive;
+}
+
+lyric_object::AccessType
+lyric_importer::ClassImport::getAccess()
+{
+    load();
+    return m_priv->access;
 }
 
 lyric_importer::TypeImport *
@@ -212,13 +220,21 @@ lyric_importer::ClassImport::load()
     priv->isAbstract = classWalker.isAbstract();
     priv->isDeclOnly = classWalker.isDeclOnly();
 
-    if (classWalker.getDeriveType() == lyric_object::DeriveType::Invalid)
+    priv->derive = classWalker.getDeriveType();
+    if (priv->derive == lyric_object::DeriveType::Invalid)
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import class at index {} in module {}; invalid derive type",
                 m_classOffset, location.toString()));
-    priv->derive = classWalker.getDeriveType();
+
+    priv->access = classWalker.getAccess();
+    if (priv->access == lyric_object::AccessType::Invalid)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(
+                ImporterCondition::kImportError,
+                "cannot import class at index {} in module {}; invalid access type",
+                m_classOffset, location.toString()));
 
     priv->classType = m_moduleImport->getType(
         classWalker.getClassType().getDescriptorOffset());

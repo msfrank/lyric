@@ -3,9 +3,9 @@
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
+#include <lyric_compiler/internal/compiler_utils.h>
 #include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_def.h>
-#include <lyric_compiler/internal/compile_node.h>
 #include <lyric_compiler/internal/compile_initializer.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
@@ -29,6 +29,10 @@ lyric_compiler::internal::compile_def(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    // get function access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
+
     // parse the return type
     lyric_parser::NodeWalker typeNode;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
@@ -51,7 +55,7 @@ lyric_compiler::internal::compile_def(
     // declare the function call
     lyric_assembler::CallSymbol *callSymbol;
     TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(identifier,
-        lyric_object::AccessType::Public, templateSpec.templateParameters));
+        lyric_compiler::internal::convert_access_type(access), templateSpec.templateParameters));
 
     auto *resolver = callSymbol->callResolver();
 

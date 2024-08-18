@@ -249,7 +249,7 @@ TEST(CoreMatch, TestMatchDerefAlias)
             init(x: Int) from Object() {
                 set this.x = x
             }
-            def getX(): Int {
+            def GetX(): Int {
                 this.x
             }
         }
@@ -257,7 +257,7 @@ TEST(CoreMatch, TestMatchDerefAlias)
         val x: Any = Test1{42}
         match x {
             when t1: Test1
-                t1.getX()
+                t1.GetX()
         }
     )");
 

@@ -240,6 +240,13 @@ lyric_assembler::ActionSymbol::getReceiverUrl() const
     return priv->receiverUrl;
 }
 
+lyric_object::AccessType
+lyric_assembler::ActionSymbol::getAccessType() const
+{
+    auto *priv = getPriv();
+    return priv->access;
+}
+
 lyric_assembler::AbstractResolver *
 lyric_assembler::ActionSymbol::actionResolver()
 {

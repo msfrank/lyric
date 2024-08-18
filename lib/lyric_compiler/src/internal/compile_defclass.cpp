@@ -8,6 +8,7 @@
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/synthetic_symbol.h>
+#include <lyric_compiler/internal/compiler_utils.h>
 #include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_call.h>
 #include <lyric_compiler/internal/compile_defclass.h>
@@ -41,15 +42,12 @@ compile_defclass_val(
     lyric_common::TypeDef valType;
     TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(classBlock, valSpec));
 
-    lyric_object::AccessType accessType = lyric_object::AccessType::Public;
-    if (absl::StartsWith(identifier, "__")) {
-        accessType = lyric_object::AccessType::Private;
-    } else if (absl::StartsWith(identifier, "_")) {
-        accessType = lyric_object::AccessType::Protected;
-    }
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
 
     lyric_assembler::FieldSymbol *fieldSymbol;
-    TU_ASSIGN_OR_RETURN (fieldSymbol, classSymbol->declareMember(identifier, valType, false, accessType));
+    TU_ASSIGN_OR_RETURN (fieldSymbol, classSymbol->declareMember(
+        identifier, valType, false, lyric_compiler::internal::convert_access_type(access)));
 
     TU_LOG_INFO << "declared val member " << identifier << " for " << classSymbol->getSymbolUrl();
 
@@ -87,15 +85,12 @@ compile_defclass_var(
     lyric_common::TypeDef varType;
     TU_ASSIGN_OR_RETURN (varType, typeSystem->resolveAssignable(classBlock, varSpec));
 
-    lyric_object::AccessType accessType = lyric_object::AccessType::Public;
-    if (absl::StartsWith(identifier, "__")) {
-        accessType = lyric_object::AccessType::Private;
-    } else if (absl::StartsWith(identifier, "_")) {
-        accessType = lyric_object::AccessType::Protected;
-    }
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
 
     lyric_assembler::FieldSymbol *fieldSymbol;
-    TU_ASSIGN_OR_RETURN (fieldSymbol, classSymbol->declareMember(identifier, varType, true, accessType));
+    TU_ASSIGN_OR_RETURN (fieldSymbol, classSymbol->declareMember(
+        identifier, varType, true, lyric_compiler::internal::convert_access_type(access)));
 
     TU_LOG_INFO << "declared var member " << identifier << " for " << classSymbol->getSymbolUrl();
 
@@ -264,12 +259,8 @@ compile_defclass_def(
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
     // determine the access level
-    lyric_object::AccessType access = lyric_object::AccessType::Public;
-    if (absl::StartsWith(identifier, "__")) {
-        access = lyric_object::AccessType::Private;
-    } else if (absl::StartsWith(identifier, "_")) {
-        access = lyric_object::AccessType::Protected;
-    }
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
 
     // parse the return type
     lyric_parser::NodeWalker typeNode;
@@ -292,7 +283,8 @@ compile_defclass_def(
 
     // declare the method
     lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, classSymbol->declareMethod(identifier, access, templateSpec.templateParameters));
+    TU_ASSIGN_OR_RETURN (callSymbol, classSymbol->declareMethod(
+        identifier, lyric_compiler::internal::convert_access_type(access), templateSpec.templateParameters));
 
     auto *resolver = callSymbol->callResolver();
 
@@ -512,6 +504,10 @@ lyric_compiler::internal::compile_defclass(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    // get class access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
+
     // if class is generic, then compile the template parameter list
     lyric_typing::TemplateSpec templateSpec;
     if (walker.hasAttr(lyric_parser::kLyricAstGenericOffset)) {
@@ -603,7 +599,7 @@ lyric_compiler::internal::compile_defclass(
 
     lyric_assembler::ClassSymbol *classSymbol;
     TU_ASSIGN_OR_RETURN (classSymbol, block->declareClass(
-        identifier, superClass, lyric_object::AccessType::Public,
+        identifier, superClass, lyric_compiler::internal::convert_access_type(access),
         templateSpec.templateParameters));
 
     TU_LOG_INFO << "declared class " << classSymbol->getSymbolUrl() << " from " << superClass->getSymbolUrl();

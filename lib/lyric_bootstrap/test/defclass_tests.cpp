@@ -81,13 +81,13 @@ TEST(CoreDefclass, EvaluateDerefPublicVarMember)
 {
     auto result = runModule(R"(
         defclass Foo {
-            var i: Int
+            var Index: Int
             init(i: Int) from Object() {
-                set this.i = i
+                set this.Index = i
             }
         }
         var foo: Foo = Foo{100}
-        foo.i
+        foo.Index
     )");
 
     ASSERT_THAT (result,
@@ -99,10 +99,10 @@ TEST(CoreDefclass, EvaluateDerefPublicVarDefaultInitializedMember)
 {
     auto result = runModule(R"(
         defclass Foo {
-            var i: Int = 100
+            var Index: Int = 100
         }
         var foo: Foo = Foo{}
-        foo.i
+        foo.Index
     )");
 
     ASSERT_THAT (result,
@@ -114,19 +114,19 @@ TEST(CoreDefclass, EvaluateDerefThisProtectedVarMember)
 {
     auto result = runModule(R"(
         defclass Foo {
-            var _i: Int
+            var index: Int
             init(i: Int) from Object() {
-                set this._i = i
+                set this.index = i
             }
         }
         defclass Bar {
             init(i: Int) from Foo(i) {}
-            def add(i: Int): Int {
-                i + this._i
+            def Add(i: Int): Int {
+                i + this.index
             }
         }
         var bar: Bar = Bar{100}
-        bar.add(100)
+        bar.Add(100)
     )");
 
     ASSERT_THAT (result,
@@ -138,13 +138,13 @@ TEST(CoreDefclass, EvaluateDerefProtectedVarMemberFails)
 {
     auto result = compileModule(R"(
         defclass Foo {
-            var _i: Int
+            var index: Int
             init(i: Int) from Object() {
-                set this._i = i
+                set this.index = i
             }
         }
         var foo: Foo = Foo{100}
-        foo._i
+        foo.index
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
@@ -156,22 +156,22 @@ TEST(CoreDefclass, EvaluateDerefThisPrivateVarMember)
 {
     auto result = runModule(R"(
         defclass Foo {
-            var __i: Int
+            var _index: Int
             init(i: Int) from Object() {
-                set this.__i = i
+                set this._index = i
             }
-            def _i(): Int {
-                this.__i
+            def index(): Int {
+                this._index
             }
         }
         defclass Bar {
             init(i: Int) from Foo(i) {}
-            def add(i: Int): Int {
-                i + this._i()
+            def Add(i: Int): Int {
+                i + this.index()
             }
         }
         var bar: Bar = Bar{100}
-        bar.add(100)
+        bar.Add(100)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(200))));
@@ -181,13 +181,13 @@ TEST(CoreDefclass, EvaluateDerefPrivateVarMemberFails)
 {
     auto result = compileModule(R"(
         defclass Foo {
-            var __i: Int
+            var _index: Int
             init(i: Int) from Object() {
-                set this.__i = i
+                set this._index = i
             }
         }
         var foo: Foo = Foo{100}
-        foo.__i
+        foo._index
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
@@ -199,16 +199,16 @@ TEST(CoreDefclass, EvaluateInvokeMethod)
 {
     auto result = runModule(R"(
         defclass Foo {
-            var _i: Int
+            var _index: Int
             init(i: Int) from Object() {
-                set this._i = i
+                set this._index = i
             }
-            def i(): Int {
-                this._i
+            def Index(): Int {
+                this._index
             }
         }
         var foo: Foo = Foo{100}
-        foo.i()
+        foo.Index()
     )");
 
     ASSERT_THAT (result,
@@ -219,16 +219,16 @@ TEST(CoreDefclass, EvaluateDefGenericClass)
 {
     auto result = runModule(R"(
         defclass Foo[A] {
-            var _i: A
+            var _index: A
             init(i: A) from Object() {
-                set this._i = i
+                set this._index = i
             }
-            def i(): A {
-                this._i
+            def Index(): A {
+                this._index
             }
         }
         val foo: Foo[Int] = Foo[Int]{100}
-        val i: Int = foo.i()
+        val i: Int = foo.Index()
         i
     )");
 
@@ -241,16 +241,16 @@ TEST(CoreDefclass, EvaluateInvokeGenericMethod)
 {
     auto result = runModule(R"(
         defclass Foo {
-            var _i: Int
+            var _index: Int
             init(i: Int) from Object() {
-                set this._i = i
+                set this._index = i
             }
-            def i[T](t: T): Tuple2[T,Int] {
-                Tuple2[T,Int]{t, this._i}
+            def Tuple[T](t: T): Tuple2[T,Int] {
+                Tuple2[T,Int]{t, this._index}
             }
         }
         var foo: Foo = Foo{100}
-        val tuple: Tuple2[Int,Int] = foo.i[Int](42)
+        val tuple: Tuple2[Int,Int] = foo.Tuple[Int](42)
         tuple.t0 + tuple.t1
     )");
 
@@ -266,12 +266,12 @@ TEST(CoreDefclass, EvaluateInvokeGenericMethodForGenericClass)
             init(s: S) from Object() {
                 set this._s = s
             }
-            def i[T](t: T): Tuple2[T,S] {
+            def Tuple[T](t: T): Tuple2[T,S] {
                 Tuple2[T,S]{t, this._s}
             }
         }
         var foo: Foo[Int] = Foo[Int]{100}
-        val tuple: Tuple2[Int,Int] = foo.i(42)
+        val tuple: Tuple2[Int,Int] = foo.Tuple(42)
         tuple.t0 + tuple.t1
     )");
 

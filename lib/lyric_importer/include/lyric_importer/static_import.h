@@ -13,6 +13,7 @@ namespace lyric_importer {
 
         bool isVariable();
         bool isDeclOnly();
+        lyric_object::AccessType getAccess();
 
         TypeImport *getStaticType();
         lyric_common::SymbolUrl getInitializer();

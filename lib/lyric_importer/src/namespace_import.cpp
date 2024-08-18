@@ -6,6 +6,7 @@ namespace lyric_importer {
     struct NamespaceImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
         bool isDeclOnly;
+        lyric_object::AccessType access;
         lyric_common::SymbolUrl superNamespace;
         absl::flat_hash_set<lyric_common::SymbolUrl> bindings;
     };
@@ -33,6 +34,13 @@ lyric_importer::NamespaceImport::isDeclOnly()
 {
     load();
     return m_priv->isDeclOnly;
+}
+
+lyric_object::AccessType
+lyric_importer::NamespaceImport::getAccess()
+{
+    load();
+    return m_priv->access;
 }
 
 lyric_common::SymbolUrl
@@ -78,6 +86,14 @@ lyric_importer::NamespaceImport::load()
     priv->symbolUrl = lyric_common::SymbolUrl(location, namespaceWalker.getSymbolPath());
 
     priv->isDeclOnly = namespaceWalker.isDeclOnly();
+
+    priv->access = namespaceWalker.getAccess();
+    if (priv->access == lyric_object::AccessType::Invalid)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(
+                ImporterCondition::kImportError,
+                "cannot import namespace at index {} in module {}; invalid access type",
+                m_namespaceOffset, location.toString()));
 
     if (namespaceWalker.hasSuperNamespace()) {
         switch (namespaceWalker.superNamespaceAddressType()) {

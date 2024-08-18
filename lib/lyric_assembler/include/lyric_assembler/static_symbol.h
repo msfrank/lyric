@@ -11,6 +11,7 @@
 namespace lyric_assembler {
 
     struct StaticSymbolPriv {
+        lyric_object::AccessType access;
         bool isVariable;
         TypeHandle *staticType;
         CallSymbol *initCall;
@@ -23,6 +24,7 @@ namespace lyric_assembler {
     public:
         StaticSymbol(
             const lyric_common::SymbolUrl &staticUrl,
+            lyric_object::AccessType access,
             bool isVariable,
             StaticAddress address,
             TypeHandle *staticType,
@@ -43,6 +45,7 @@ namespace lyric_assembler {
         void touch() override;
 
         std::string getName() const;
+        lyric_object::AccessType getAccessType() const;
         bool isVariable() const;
         bool isDeclOnly() const;
 

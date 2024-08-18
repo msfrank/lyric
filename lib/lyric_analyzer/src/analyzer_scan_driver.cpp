@@ -202,7 +202,8 @@ lyric_analyzer::AnalyzerScanDriver::declareStatic(
     TU_ASSIGN_OR_RETURN (staticType, m_typeSystem->resolveAssignable(block, staticSpec));
 
     lyric_assembler::DataReference ref;
-    TU_ASSIGN_OR_RETURN (ref, block->declareStatic(identifier, staticType, isVariable, true));
+    TU_ASSIGN_OR_RETURN (ref, block->declareStatic(
+        identifier, internal::convert_access_type(access), staticType, isVariable, true));
 
     TU_LOG_INFO << "declared static " << ref.symbolUrl;
 

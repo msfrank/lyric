@@ -7,10 +7,10 @@
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
+#include <lyric_compiler/internal/compiler_utils.h>
 #include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_call.h>
 #include <lyric_compiler/internal/compile_defenum.h>
-#include <lyric_compiler/internal/compile_node.h>
 #include <lyric_compiler/internal/compile_initializer.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
@@ -30,6 +30,10 @@ compile_defenum_val(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    // get val access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
+
     // get val type
     lyric_parser::NodeWalker typeNode;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstTypeOffset, typeNode);
@@ -38,16 +42,9 @@ compile_defenum_val(
     lyric_common::TypeDef valType;
     TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(enumBlock, valSpec));
 
-    // determine the access type
-    lyric_object::AccessType accessType = lyric_object::AccessType::Public;
-    if (absl::StartsWith(identifier, "__")) {
-        accessType = lyric_object::AccessType::Private;
-    } else if (absl::StartsWith(identifier, "_")) {
-        accessType = lyric_object::AccessType::Protected;
-    }
-
     lyric_assembler::FieldSymbol *fieldSymbol;
-    TU_ASSIGN_OR_RETURN (fieldSymbol, baseEnum->declareMember(identifier, valType, false, accessType));
+    TU_ASSIGN_OR_RETURN (fieldSymbol, baseEnum->declareMember(
+        identifier, valType, false, lyric_compiler::internal::convert_access_type(access)));
 
     TU_LOG_INFO << "declared val member " << identifier << " for " << baseEnum->getSymbolUrl();
 
@@ -79,12 +76,8 @@ compile_defenum_def(
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
     // determine the access level
-    lyric_object::AccessType access = lyric_object::AccessType::Public;
-    if (absl::StartsWith(identifier, "__")) {
-        access = lyric_object::AccessType::Private;
-    } else if (absl::StartsWith(identifier, "_")) {
-        access = lyric_object::AccessType::Protected;
-    }
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
 
     // parse the return type
     lyric_parser::NodeWalker typeNode;
@@ -99,7 +92,8 @@ compile_defenum_def(
 
     // declare the method
     lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, baseEnum->declareMethod(identifier, access));
+    TU_ASSIGN_OR_RETURN (callSymbol, baseEnum->declareMethod(
+        identifier, lyric_compiler::internal::convert_access_type(access)));
 
     auto *resolver = callSymbol->callResolver();
 
@@ -377,9 +371,14 @@ compile_defenum_case(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    // get case access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
+
     lyric_assembler::EnumSymbol *caseEnum;
     TU_ASSIGN_OR_RETURN (caseEnum, block->declareEnum(
-        identifier, baseEnum, lyric_object::AccessType::Public, lyric_object::DeriveType::Final));
+        identifier, baseEnum, lyric_compiler::internal::convert_access_type(access),
+        lyric_object::DeriveType::Final));
 
     TU_LOG_INFO << "declared enum case " << caseEnum->getSymbolUrl() << " from " << baseEnum->getSymbolUrl();
 
@@ -539,6 +538,10 @@ lyric_compiler::internal::compile_defenum(
     std::string identifier;
     moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstIdentifier, identifier);
 
+    // get enum access level
+    lyric_parser::AccessType access;
+    moduleEntry.parseAttrOrThrow(walker, lyric_parser::kLyricAstAccessType, access);
+
     lyric_parser::NodeWalker init;
     std::vector<lyric_parser::NodeWalker> cases;
     std::vector<lyric_parser::NodeWalker> vals;
@@ -585,7 +588,8 @@ lyric_compiler::internal::compile_defenum(
     // declare the base enum
     lyric_assembler::EnumSymbol *baseEnum;
     TU_ASSIGN_OR_RETURN (baseEnum, block->declareEnum(
-        identifier, categoryEnum, lyric_object::AccessType::Public, lyric_object::DeriveType::Sealed));
+        identifier, categoryEnum, lyric_compiler::internal::convert_access_type(access),
+        lyric_object::DeriveType::Sealed));
 
     TU_LOG_INFO << "declared base enum " << baseEnum->getSymbolUrl();
 

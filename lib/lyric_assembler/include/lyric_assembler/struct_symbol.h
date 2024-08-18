@@ -77,7 +77,8 @@ namespace lyric_assembler {
 
         tempo_utils::Result<FieldSymbol *> declareMember(
             const std::string &name,
-            const lyric_common::TypeDef &memberType);
+            const lyric_common::TypeDef &memberType,
+            lyric_object::AccessType access);
 
         tempo_utils::Result<DataReference> resolveMember(
             const std::string &name,
