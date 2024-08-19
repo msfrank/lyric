@@ -24,7 +24,7 @@ TEST(AnalyzeStatic, DeclareStaticVal)
     ASSERT_TRUE (tester.configure().isOk());
 
     auto analyzeModuleResult = tester.analyzeModule(R"(
-        val Static: Int = 0
+        global val Static: Int = 0
     )");
     ASSERT_THAT (analyzeModuleResult,
         tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
@@ -55,7 +55,7 @@ TEST(AnalyzeStatic, DeclareStaticVar)
     ASSERT_TRUE (tester.configure().isOk());
 
     auto analyzeModuleResult = tester.analyzeModule(R"(
-        var Static: Int = 0
+        global var Static: Int = 0
     )");
     ASSERT_THAT (analyzeModuleResult,
                  tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));

@@ -61,34 +61,6 @@ TEST(CoreDef, EvaluateDefFunctionWithDefaultInitializer)
             DataCellInt(4))));
 }
 
-//TEST(CoreDef, EvaluateDefFunctionWithVariadicParam)
-//{
-//    QByteArray code = R"(
-//
-//    def countArgs(x: Int, ... ): Int
-//        1 + rest_size()
-//    end
-//    countArgs(5, 4, 3, 2, 1)
-//    )";
-//
-//    CompilerOptions options;
-//    options.bootDirectoryPath = LYRIC_OUTPUT_LIB_BOOT_DIR;
-//    options.distributionLibDirectoryPath = LYRIC_OUTPUT_LIB_DIST_DIR;
-//    LyricCompiler compiler(options);
-//    auto compileResult = compiler.compile(code);
-//    LOG_DEBUG << "compilation result:" << compileResult;
-//    ASSERT_TRUE (compileResult.isResult());
-//
-//    BytecodeInterpreter interp(compileResult.getResult());
-//
-//    auto result = interp.invokeMain();
-//    LOG_DEBUG << "result:" << result;
-//    ASSERT_TRUE (result.isResult());
-//    auto value = result.getResult();
-//    ASSERT_TRUE (value.type == DataCellType::I64);
-//    ASSERT_EQ (value.data.i64, 5);
-//}
-
 TEST(CoreDef, EvaluateDefGenericFunction)
 {
     auto result = runModule(R"(

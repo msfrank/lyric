@@ -91,6 +91,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<DataReference> declareVariable(
             const std::string &name,
+            lyric_object::AccessType access,
             const lyric_common::TypeDef &assignableType,
             bool isVariable);
 

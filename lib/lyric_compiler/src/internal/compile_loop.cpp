@@ -187,7 +187,8 @@ lyric_compiler::internal::compile_for(
 
     // declare the target variable which stores the value yielded from the iterator on each loop iteration
     lyric_assembler::DataReference target;
-    TU_ASSIGN_OR_RETURN (target, forBlock.declareVariable(identifier, targetType, /* isVariable= */ true));
+    TU_ASSIGN_OR_RETURN (target, forBlock.declareVariable(
+        identifier, lyric_object::AccessType::Private, targetType, /* isVariable= */ true));
 
     // push the iterator onto the stack, and invoke valid() method
     TU_RETURN_IF_NOT_OK (forBlock.load(iterator));

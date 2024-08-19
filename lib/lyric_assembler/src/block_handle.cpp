@@ -41,6 +41,9 @@ lyric_assembler::BlockHandle::BlockHandle(
     TU_ASSERT (m_blockProc != nullptr);
     TU_ASSERT (m_blockCode != nullptr);
     TU_ASSERT (m_state != nullptr);
+    if (!m_isRoot) {
+        m_definition = m_blockProc->getActivation();
+    }
 }
 
 lyric_assembler::BlockHandle::BlockHandle(
@@ -69,8 +72,7 @@ lyric_assembler::BlockHandle::BlockHandle(
     BlockHandle *parentBlock,
     ObjectState *state,
     bool isRoot)
-    : m_definition(),
-      m_blockNs(blockNs),
+    : m_blockNs(blockNs),
       m_blockProc(blockProc),
       m_blockCode(blockCode),
       m_parentBlock(parentBlock),
@@ -82,6 +84,9 @@ lyric_assembler::BlockHandle::BlockHandle(
     TU_ASSERT (m_blockCode != nullptr);
     TU_ASSERT (m_parentBlock != nullptr);
     TU_ASSERT (m_state != nullptr);
+    if (!m_isRoot) {
+        m_definition = m_blockProc->getActivation();
+    }
 }
 
 lyric_assembler::BlockHandle::BlockHandle(
@@ -100,6 +105,7 @@ lyric_assembler::BlockHandle::BlockHandle(
     TU_ASSERT (m_blockCode != nullptr);
     TU_ASSERT (m_parentBlock != nullptr);
     TU_ASSERT (m_state != nullptr);
+    m_definition = m_blockProc->getActivation();
 }
 
 lyric_assembler::BlockHandle::BlockHandle(
@@ -120,6 +126,7 @@ lyric_assembler::BlockHandle::BlockHandle(
     TU_ASSERT (m_blockCode != nullptr);
     TU_ASSERT (m_parentBlock != nullptr);
     TU_ASSERT (m_state != nullptr);
+    m_definition = m_blockProc->getActivation();
 }
 
 lyric_assembler::BlockHandle::BlockHandle(
@@ -491,6 +498,7 @@ lyric_assembler::BlockHandle::resolveDefinition(const lyric_common::SymbolPath &
 tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::BlockHandle::declareVariable(
     const std::string &name,
+    lyric_object::AccessType access,
     const lyric_common::TypeDef &assignableType,
     bool isVariable)
 {
@@ -508,7 +516,7 @@ lyric_assembler::BlockHandle::declareVariable(
     // if this is a root block then create a static variable, otherwise create a local
     auto localUrl = makeSymbolUrl(name);
     auto address = m_blockProc->allocateLocal();
-    auto *localVariable = new LocalVariable(localUrl, assignableType, address);
+    auto *localVariable = new LocalVariable(localUrl, access, assignableType, address);
     auto status = m_state->symbolCache()->insertSymbol(localUrl, localVariable);
     if (status.notOk()) {
         delete localVariable;
@@ -543,7 +551,7 @@ lyric_assembler::BlockHandle::declareTemporary(
     // temporary variables are always local
     auto localUrl = makeSymbolUrl(name);
     auto address = m_blockProc->allocateLocal();
-    auto *localVariable = new LocalVariable(localUrl, assignableType, address);
+    auto *localVariable = new LocalVariable(localUrl, lyric_object::AccessType::Private, assignableType, address);
     auto status = m_state->symbolCache()->insertSymbol(localUrl, localVariable);
     if (status.notOk()) {
         delete localVariable;
@@ -671,6 +679,10 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
                 // found a local in a parent proc
                 case SymbolType::LOCAL: {
                     auto *local = static_cast<LocalVariable *>(symbol);
+                    if (local->getAccessType() == lyric_object::AccessType::Private)
+                        return logAndContinue(lyric_assembler::AssemblerCondition::kInvalidBinding,
+                            tempo_tracing::LogSeverity::kError,
+                            "variable {} is not visible from the current scope", name);
                     lexicalTarget = lyric_assembler::LexicalTarget::Local;
                     targetOffset = local->getOffset().getOffset();
                     typeDef = binding.typeDef;
@@ -729,13 +741,9 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
 
         switch (symbol->getSymbolType()) {
             case SymbolType::EXISTENTIAL:
-            case SymbolType::ARGUMENT:
-            case SymbolType::LOCAL:
-            case SymbolType::LEXICAL:
             case SymbolType::CONSTANT:
             case SymbolType::STATIC:
             case SymbolType::INSTANCE:
-            case SymbolType::SYNTHETIC:
             case SymbolType::CALL:
             case SymbolType::CLASS:
             case SymbolType::CONCEPT:
@@ -744,9 +752,9 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
             case SymbolType::NAMESPACE:
                 return symbol_binding_to_data_reference(binding);
             default:
-                return logAndContinue(lyric_assembler::AssemblerCondition::kMissingVariable,
+                return logAndContinue(lyric_assembler::AssemblerCondition::kAssemblerInvariant,
                     tempo_tracing::LogSeverity::kError,
-                    "missing variable {}", name);
+                    "environment binding {} has invalid symbol type", name);
         }
     }
 

@@ -71,8 +71,7 @@ lyric_analyzer::EntryAnalyzerContext::exit(
         case lyric_schema::LyricAstId::Block:
             m_driver->popContext();
             break;
-        case lyric_schema::LyricAstId::Val:
-        case lyric_schema::LyricAstId::Var:
+        case lyric_schema::LyricAstId::DefStatic:
             return m_driver->declareStatic(node, getBlock());
         default:
             break;

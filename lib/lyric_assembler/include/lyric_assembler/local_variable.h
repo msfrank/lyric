@@ -11,6 +11,7 @@ namespace lyric_assembler {
     public:
         LocalVariable(
             const lyric_common::SymbolUrl &localUrl,
+            lyric_object::AccessType access,
             const lyric_common::TypeDef &assignableType,
             LocalOffset offset);
 
@@ -21,10 +22,12 @@ namespace lyric_assembler {
         void touch() override;
 
         std::string getName() const;
+        lyric_object::AccessType getAccessType() const;
         LocalOffset getOffset() const;
 
     private:
         lyric_common::SymbolUrl m_localUrl;
+        lyric_object::AccessType m_access;
         lyric_common::TypeDef m_assignableType;
         LocalOffset m_offset;
     };

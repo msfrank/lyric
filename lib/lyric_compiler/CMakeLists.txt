@@ -38,6 +38,8 @@ target_sources(lyric_compiler PRIVATE
     src/internal/compile_defenum.cpp
     include/lyric_compiler/internal/compile_definstance.h
     src/internal/compile_definstance.cpp
+    include/lyric_compiler/internal/compile_defstatic.h
+    src/internal/compile_defstatic.cpp
     include/lyric_compiler/internal/compile_defstruct.h
     src/internal/compile_defstruct.cpp
     include/lyric_compiler/internal/compile_def.h

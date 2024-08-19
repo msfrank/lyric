@@ -176,21 +176,11 @@ lyric_analyzer::AnalyzerScanDriver::declareStatic(
     lyric_schema::LyricAstId astId;
     TU_RETURN_IF_NOT_OK (walker.parseId(lyric_schema::kLyricAstVocabulary, astId));
 
-    // FIXME: set access level on static
     lyric_parser::AccessType access;
     TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstAccessType, access));
 
     bool isVariable;
-    switch (astId) {
-        case lyric_schema::LyricAstId::Val:
-            isVariable = false;
-            break;
-        case lyric_schema::LyricAstId::Var:
-            isVariable = true;
-            break;
-        default:
-            return AnalyzerStatus::forCondition(AnalyzerCondition::kAnalyzerInvariant);
-    }
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIsVariable, isVariable));
 
     std::string identifier;
     TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
@@ -203,7 +193,7 @@ lyric_analyzer::AnalyzerScanDriver::declareStatic(
 
     lyric_assembler::DataReference ref;
     TU_ASSIGN_OR_RETURN (ref, block->declareStatic(
-        identifier, internal::convert_access_type(access), staticType, isVariable, true));
+        identifier, internal::convert_access_type(access), staticType, isVariable, /* declOnly= */ true));
 
     TU_LOG_INFO << "declared static " << ref.symbolUrl;
 

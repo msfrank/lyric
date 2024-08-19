@@ -354,6 +354,16 @@ void lyric_parser::internal::ModuleArchetype::exitIsAExpression(ModuleParser::Is
 /*
  * assign ops
  */
+void lyric_parser::internal::ModuleArchetype::enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx)
+{
+    return ModuleAssignOps::enterGlobalStatement(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitGlobalStatement(ModuleParser::GlobalStatementContext *ctx)
+{
+    return ModuleAssignOps::exitGlobalStatement(ctx);
+}
+
 void lyric_parser::internal::ModuleArchetype::enterUntypedVal(ModuleParser::UntypedValContext *ctx)
 {
     return ModuleAssignOps::enterUntypedVal(ctx);

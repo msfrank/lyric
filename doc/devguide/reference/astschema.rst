@@ -6,6 +6,39 @@ AST Schema
 
 AST Classes
 -----------
+.. contents::
+   :local:
+
+``Add``
+.......
+
+``And``
+.......
+
+``Block``
+.........
+
+``Call``
+........
+
+``Case``
+........
+
+``Char``
+........
+
+``Cond``
+........
+
+``Constraint``
+..............
+
+``Ctx``
+.......
+
+``Def``
+.......
+
 
 ``DefClass``
 ............
@@ -62,8 +95,212 @@ DefInstance defines a new instance.
 
 DefStruct defines a new struct.
 
+``Deref``
+.........
+
+``Div``
+.......
+
+``ExportAll``
+.............
+
+``ExportModule``
+................
+
+``ExportSymbols``
+.................
+
+``False``
+.........
+
+``Float``
+.........
+
+``For``
+.......
+
+``Generic``
+...........
+
+``If``
+......
+
+``Impl``
+........
+
+``ImportAll``
+.............
+
+``ImportModule``
+................
+
+``ImportSymbols``
+.................
+
+``Init``
+........
+
+``InplaceAdd``
+..............
+
+``InplaceDiv``
+..............
+
+``InplaceMul``
+..............
+
+``InplaceSub``
+..............
+
+``Integer``
+...........
+
+``IsA``
+.......
+
+``IsEq``
+........
+
+``IsLe``
+........
+
+``IsLt``
+........
+
+``IsGe``
+........
+
+``IsGt``
+........
+
+``IType``
+.........
+
+``Keyword``
+...........
+
+``Lambda``
+..........
+
+``MacroCall``
+.............
+
+``MacroList``
+.............
+
+``Match``
+.........
+
+``Mul``
+.......
+
+``Name``
+........
+
+``Namespace``
+.............
+
+``Neg``
+.......
+
+``New``
+.......
+
+``Nil``
+.......
+
+``Not``
+.......
+
+``Or``
+......
+
+``Pack``
+........
+
+``Pair``
+........
+
+``Param``
+.........
+
+``Placeholder``
+...............
+
+``PType``
+.........
+
+``Rest``
+........
+
+``Return``
+..........
+
+``Set``
+.......
+
+``String``
+..........
+
+``Sub``
+.......
+
+``Super``
+.........
+
+``SymbolRef``
+.............
+
+``SType``
+.........
+
+``Target``
+..........
+
+``This``
+........
+
+``True``
+........
+
+``Try``
+.......
+
+``TypeArguments``
+.................
+
+``Undef``
+.........
+
+``Unpack``
+..........
+
+``Using``
+.........
+
+``Url``
+.......
+
+``UType``
+.........
+
+``Val``
+.......
+
+``Var``
+.......
+
+``When``
+........
+
+``While``
+.........
+
+
 AST Properties
 --------------
+.. contents::
+   :local:
 
 ``AccessEnum``
 ..............
@@ -249,3 +486,148 @@ Floating-point notation enumeration encoded as a uint32.
       =====  =====
 
 Variance enumeration encoded as a uint32.
+
+AST Classes By Section
+----------------------
+
+Literal Classes
+...............
+
+- `Nil`_
+- `Undef`_
+- `False`_
+- `True`_
+- `Integer`_
+- `Float`_
+- `Char`_
+- `String`_
+- `Url`_
+- `Pair`_
+
+Arithmetic Classes
+..................
+
+- `Add`_
+- `Sub`_
+- `Mul`_
+- `Div`_
+- `Neg`_
+
+Comparison Classes
+..................
+
+- `IsEq`_
+- `IsLt`_
+- `IsLe`_
+- `IsGt`_
+- `IsGe`_
+- `IsA`_
+
+Logical Classes
+...............
+
+- `And`_
+- `Or`_
+- `Not`_
+
+Type Classes
+............
+
+- `SType`_
+- `PType`_
+- `IType`_
+- `UType`_
+- `TypeArguments`_
+
+Assignment Classes
+..................
+
+- `Set`_
+- `Target`_
+- `InplaceAdd`_
+- `InplaceSub`_
+- `InplaceMul`_
+- `InplaceDiv`_
+
+Dereference Classes
+...................
+
+- `Deref`_
+- `This`_
+- `Name`_
+- `Call`_
+
+Construction Classes
+....................
+
+- `New`_
+- `Lambda`_
+
+Control Classes
+...............
+
+- `Block`_
+- `If`_
+- `Cond`_
+- `Match`_
+- `When`_
+- `While`_
+- `For`_
+- `Try`_
+- `Return`_
+
+Definition Classes
+..................
+
+- `Def`_
+- `DefClass`_
+- `DefConcept`_
+- `DefEnum`_
+- `DefInstance`_
+- `DefStruct`_
+- `Namespace`_
+- `Val`_
+- `Var`_
+- `Case`_
+- `Impl`_
+
+Initialization Classes
+......................
+
+- `Super`_
+- `Init`_
+
+Import Classes
+..............
+
+- `ImportAll`_
+- `ImportSymbols`_
+- `ImportModule`_
+
+Import Classes
+..............
+
+- `ExportAll`_
+- `ExportSymbols`_
+- `ExportModule`_
+- `Using`_
+- `SymbolRef`_
+
+Macro Classes
+.............
+
+- `MacroCall`_
+- `MacroList`_
+
+Miscellaneous Classes
+.....................
+
+- `Unpack`_
+- `Pack`_
+- `Param`_
+- `Keyword`_
+- `Rest`_
+- `Ctx`_
+- `Generic`_
+- `Placeholder`_
+- `Constraint`_

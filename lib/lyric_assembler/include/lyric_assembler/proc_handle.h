@@ -10,6 +10,7 @@
 namespace lyric_assembler {
 
     enum class LexicalTarget {
+        Invalid,
         Argument,
         Local,
         Lexical,

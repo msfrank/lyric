@@ -15,6 +15,47 @@ lyric_parser::internal::ModuleAssignOps::ModuleAssignOps(ArchetypeState *state)
 }
 
 void
+lyric_parser::internal::ModuleAssignOps::enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx)
+{
+    auto *scopeManager = m_state->scopeManager();
+    auto span = scopeManager->makeSpan();
+}
+
+void
+lyric_parser::internal::ModuleAssignOps::exitGlobalStatement(ModuleParser::GlobalStatementContext *ctx)
+{
+    auto *scopeManager = m_state->scopeManager();
+    auto span = scopeManager->peekSpan();
+    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+
+    // if stack is empty, then mark source as incomplete
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
+    auto *p1 = m_state->popNode();
+
+    auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
+    bool isVariable = ctx->VarKeyword()? true : false;
+    auto *typeNode = make_Type_node(m_state, ctx->assignableType());
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefStaticClass, location);
+    valNode->appendChild(p1);
+    valNode->putAttrOrThrow(kLyricAstIdentifier, id);
+    valNode->putAttrOrThrow(kLyricAstAccessType, access);
+    valNode->putAttrOrThrow(kLyricAstIsVariable, isVariable);
+    valNode->putAttr(kLyricAstTypeOffset, typeNode);
+    m_state->pushNode(valNode);
+
+    scopeManager->popSpan();
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    m_state->popSymbolAndCheck(id);
+}
+
+void
 lyric_parser::internal::ModuleAssignOps::enterUntypedVal(ModuleParser::UntypedValContext *ctx)
 {
     auto *scopeManager = m_state->scopeManager();

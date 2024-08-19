@@ -13,6 +13,8 @@ namespace lyric_parser::internal {
         explicit ModuleAssignOps(ArchetypeState *state);
         virtual ~ModuleAssignOps() = default;
 
+        void enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx);
+        void exitGlobalStatement(ModuleParser::GlobalStatementContext *ctx);
         void enterUntypedVal(ModuleParser::UntypedValContext *ctx);
         void exitUntypedVal(ModuleParser::UntypedValContext *ctx);
         void enterTypedVal(ModuleParser::TypedValContext *ctx);

@@ -24,6 +24,7 @@ statement           : valStatement
                     | defenumStatement
                     | definstanceStatement
                     | defstructStatement
+                    | globalStatement
                     | namespaceStatement
                     | setStatement
                     | ifStatement
@@ -207,6 +208,12 @@ structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose 
 structDerives       : ( SealedKeyword | FinalKeyword ) ;
 structSpec          : structInit | structVal | structDef | structImpl ;
 defstructStatement  : DefStructKeyword symbolIdentifier structDerives? CurlyOpen structSpec* CurlyClose ;
+
+
+// global statement
+
+globalStatement     : GlobalKeyword ( ValKeyword | VarKeyword )
+                        symbolIdentifier ColonOperator assignableType AssignOperator defaultInitializer ;
 
 
 // defalias statement

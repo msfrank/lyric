@@ -1,5 +1,4 @@
 
-#include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/template_handle.h>
@@ -21,7 +20,6 @@ lyric_compiler::internal::compile_val(
     TU_ASSERT (block != nullptr);
     TU_ASSERT(walker.isValid());
     auto *typeSystem = moduleEntry.getTypeSystem();
-    auto *state = moduleEntry.getState();
 
     moduleEntry.checkClassAndChildCountOrThrow(walker, lyric_schema::kLyricAstValClass, 1);
 
@@ -38,28 +36,6 @@ lyric_compiler::internal::compile_val(
         lyric_typing::TypeSpec valSpec;
         TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(block, typeNode));
         TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(block, valSpec));
-    }
-
-    // if this is a root block, then the val is a static
-    if (block->isRoot()) {
-        if (!valType.isValid())
-            return block->logAndContinue(CompilerCondition::kSyntaxError,
-                tempo_tracing::LogSeverity::kError,
-                "missing type for static val {}", identifier);
-
-        auto declareStaticResult = block->declareStatic(
-            identifier, lyric_compiler::internal::convert_access_type(access), valType, /* isVariable= */ false);
-        if (declareStaticResult.isStatus())
-            return declareStaticResult.getStatus();
-        auto ref = declareStaticResult.getResult();
-
-        lyric_assembler::AbstractSymbol *symbol;
-        TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::STATIC)
-            state->throwAssemblerInvariant("invalid static symbol {}", ref.symbolUrl.toString());
-        auto *staticSymbol = cast_symbol_to_static(symbol);
-
-        return compile_static_initializer(staticSymbol, walker.getChild(0), moduleEntry);
     }
 
     // expression is expected to push the value onto the stack
@@ -81,7 +57,8 @@ lyric_compiler::internal::compile_val(
             tempo_tracing::LogSeverity::kError,
             "rvalue type {} is incompatible with val type {}", resultType.toString(), valType.toString());
 
-    auto declareVariableResult = block->declareVariable(identifier, valType, /* isVariable= */ false);
+    auto declareVariableResult = block->declareVariable(
+        identifier, internal::convert_access_type(access), valType, /* isVariable= */ false);
     if (declareVariableResult.isStatus())
         return declareVariableResult.getStatus();
     auto var = declareVariableResult.getResult();

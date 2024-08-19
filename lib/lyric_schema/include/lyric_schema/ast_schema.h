@@ -95,8 +95,8 @@ namespace lyric_schema {
         DefConcept,                // define concept
         DefEnum,                   // define enumeration
         DefInstance,               // define instance
-        DefMagnet,                 // define magnet
         DefStruct,                 // define struct
+        DefStatic,                 // define static
         Namespace,                 // define namespace
 
         Super,                     // super statement
@@ -290,10 +290,10 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::DefEnum, "DefEnum");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefInstanceClass(
         &kLyricAstNs, LyricAstId::DefInstance, "DefInstance");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefMagnetClass(
-        &kLyricAstNs, LyricAstId::DefMagnet, "DefMagnet");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefStructClass(
         &kLyricAstNs, LyricAstId::DefStruct, "DefStruct");
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefStaticClass(
+        &kLyricAstNs, LyricAstId::DefStatic, "DefStatic");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNamespaceClass(
         &kLyricAstNs, LyricAstId::Namespace, "Namespace");
 
@@ -489,8 +489,8 @@ namespace lyric_schema {
         &kLyricAstDefConceptClass,
         &kLyricAstDefEnumClass,
         &kLyricAstDefInstanceClass,
-        &kLyricAstDefMagnetClass,
         &kLyricAstDefStructClass,
+        &kLyricAstDefStaticClass,
         &kLyricAstNamespaceClass,
 
         &kLyricAstSuperClass,

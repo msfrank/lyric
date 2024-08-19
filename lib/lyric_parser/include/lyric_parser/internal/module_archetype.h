@@ -121,6 +121,8 @@ namespace lyric_parser::internal {
         void exitIsAExpression(ModuleParser::IsAExpressionContext *ctx) override;
 
         // implemented by ModuleAssignOps
+        void enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx) override;
+        void exitGlobalStatement(ModuleParser::GlobalStatementContext *ctx) override;
         void enterUntypedVal(ModuleParser::UntypedValContext *ctx) override;
         void exitUntypedVal(ModuleParser::UntypedValContext *ctx) override;
         void enterTypedVal(ModuleParser::TypedValContext *ctx) override;

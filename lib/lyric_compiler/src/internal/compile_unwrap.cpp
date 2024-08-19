@@ -126,7 +126,8 @@ lyric_compiler::internal::compile_unwrap(
         std::string paramName;
         moduleEntry.parseAttrOrThrow(param, lyric_parser::kLyricAstIdentifier, paramName);
         lyric_assembler::DataReference ref;
-        TU_ASSIGN_OR_RETURN (ref, block->declareVariable(paramName, paramType, /* isVariable= */ true));
+        TU_ASSIGN_OR_RETURN (ref, block->declareVariable(
+            paramName, lyric_object::AccessType::Private, paramType, /* isVariable= */ true));
         unwrapRefs.emplace_back(paramName, ref);
     }
 

@@ -11,6 +11,7 @@
 #include <lyric_compiler/internal/compile_defconcept.h>
 #include <lyric_compiler/internal/compile_defenum.h>
 #include <lyric_compiler/internal/compile_definstance.h>
+#include <lyric_compiler/internal/compile_defstatic.h>
 #include <lyric_compiler/internal/compile_defstruct.h>
 #include <lyric_compiler/internal/compile_deref.h>
 #include <lyric_compiler/internal/compile_import.h>
@@ -132,6 +133,8 @@ lyric_compiler::internal::compile_statement(
             return compile_definstance(block, walker, moduleEntry);
         case lyric_schema::LyricAstId::DefStruct:
             return compile_defstruct(block, walker, moduleEntry);
+        case lyric_schema::LyricAstId::DefStatic:
+            return compile_defstatic(block, walker, moduleEntry);
         case lyric_schema::LyricAstId::Namespace:
             return compile_namespace(block, walker, moduleEntry);
         case lyric_schema::LyricAstId::Set:
@@ -230,6 +233,7 @@ lyric_compiler::internal::compile_node(
         case lyric_schema::LyricAstId::DefEnum:
         case lyric_schema::LyricAstId::DefInstance:
         case lyric_schema::LyricAstId::DefStruct:
+        case lyric_schema::LyricAstId::DefStatic:
         case lyric_schema::LyricAstId::Namespace:
         case lyric_schema::LyricAstId::Generic:
         case lyric_schema::LyricAstId::Init:

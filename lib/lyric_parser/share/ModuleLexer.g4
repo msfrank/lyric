@@ -134,6 +134,7 @@ VarKeyword              : 'var' ;
 NamedKeyword            : 'named' ;
 DefKeyword              : 'def' ;
 ThisKeyword             : 'this' ;
+GlobalKeyword           : 'global' ;
 DefConceptKeyword       : 'defconcept' ;
 DefClassKeyword         : 'defclass' ;
 DefInstanceKeyword      : 'definstance' ;
