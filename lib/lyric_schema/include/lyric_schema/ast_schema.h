@@ -89,6 +89,7 @@ namespace lyric_schema {
         Placeholder,               // type placeholder
         Constraint,                // type constraint
 
+        Decl,                      // declare action
         Def,                       // define function
         DefAlias,                  // define alias
         DefClass,                  // define class
@@ -278,6 +279,8 @@ namespace lyric_schema {
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstConstraintClass(
         &kLyricAstNs, LyricAstId::Constraint, "Constraint");
 
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDeclClass(
+        &kLyricAstNs, LyricAstId::Decl, "Decl");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefClass(
         &kLyricAstNs, LyricAstId::Def, "Def");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefAliasClass(
@@ -483,6 +486,7 @@ namespace lyric_schema {
         &kLyricAstPlaceholderClass,
         &kLyricAstConstraintClass,
 
+        &kLyricAstDeclClass,
         &kLyricAstDefClass,
         &kLyricAstDefAliasClass,
         &kLyricAstDefClassClass,

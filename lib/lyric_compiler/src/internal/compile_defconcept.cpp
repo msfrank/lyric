@@ -16,7 +16,7 @@
 #include <tempo_utils/log_stream.h>
 
 static tempo_utils::Status
-compile_defconcept_def(
+compile_defconcept_decl(
     lyric_assembler::ConceptSymbol *conceptSymbol,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     const lyric_parser::NodeWalker &walker,
@@ -26,7 +26,7 @@ compile_defconcept_def(
     TU_ASSERT(walker.isValid());
     auto *typeSystem = moduleEntry.getTypeSystem();
 
-    moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDefClass, 1);
+    moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstDeclClass, 1);
 
     auto *conceptBlock = conceptSymbol->conceptBlock();
 
@@ -123,7 +123,7 @@ lyric_compiler::internal::compile_defconcept(
         TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(block, genericNode));
     }
 
-    std::vector<lyric_parser::NodeWalker> defs;
+    std::vector<lyric_parser::NodeWalker> decls;
 
     // make initial pass over concept body
     for (int i = 0; i < walker.numChildren(); i++) {
@@ -131,8 +131,8 @@ lyric_compiler::internal::compile_defconcept(
         lyric_schema::LyricAstId childId{};
         moduleEntry.parseIdOrThrow(child, lyric_schema::kLyricAstVocabulary, childId);
         switch (childId) {
-            case lyric_schema::LyricAstId::Def:
-                defs.emplace_back(child);
+            case lyric_schema::LyricAstId::Decl:
+                decls.emplace_back(child);
                 break;
             default:
                 block->throwAssemblerInvariant("expected concept body");
@@ -156,9 +156,9 @@ lyric_compiler::internal::compile_defconcept(
     TU_LOG_INFO << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConcept->getSymbolUrl();
 
     // compile actions
-    for (const auto &def : defs) {
-        TU_RETURN_IF_NOT_OK (compile_defconcept_def(
-            conceptSymbol, templateSpec.templateParameters, def, moduleEntry));
+    for (const auto &decl : decls) {
+        TU_RETURN_IF_NOT_OK (compile_defconcept_decl(
+            conceptSymbol, templateSpec.templateParameters, decl, moduleEntry));
     }
 
     if (conceptSymbolPtr != nullptr) {

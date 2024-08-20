@@ -7,8 +7,8 @@ Lyric Developer Guide
     :maxdepth: 2
 
     overview
-    reference/astschema
-    reference/bytecode
+    concepts
+    reference/index
 
 Indices and tables
 ==================

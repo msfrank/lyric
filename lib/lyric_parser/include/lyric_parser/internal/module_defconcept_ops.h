@@ -14,8 +14,8 @@ namespace lyric_parser::internal {
         virtual ~ModuleDefconceptOps() = default;
 
         void enterDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx);
-        void enterConceptDef(ModuleParser::ConceptDefContext *ctx);
-        void exitConceptDef(ModuleParser::ConceptDefContext *ctx);
+        void enterConceptDecl(ModuleParser::ConceptDeclContext *ctx);
+        void exitConceptDecl(ModuleParser::ConceptDeclContext *ctx);
         void enterConceptImpl(ModuleParser::ConceptImplContext *ctx);
         void exitConceptImpl(ModuleParser::ConceptImplContext *ctx);
         void exitDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx);

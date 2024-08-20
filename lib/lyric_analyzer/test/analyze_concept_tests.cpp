@@ -57,7 +57,7 @@ TEST(AnalyzeConcept, DeclareConceptAction)
 
     auto analyzeModuleResult = tester.analyzeModule(R"(
         defconcept Foo {
-            def Identity(x: Int): Int
+            decl Identity(x: Int): Int
         }
     )");
     ASSERT_THAT (analyzeModuleResult,

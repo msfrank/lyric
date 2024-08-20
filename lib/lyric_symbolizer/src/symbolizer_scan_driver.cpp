@@ -38,6 +38,8 @@ lyric_symbolizer::SymbolizerScanDriver::enter(
 
     auto astId = resource->getId();
     switch (astId) {
+        case lyric_schema::LyricAstId::Decl:
+            return pushDefinition(node, lyric_object::LinkageSection::Action);
         case lyric_schema::LyricAstId::Def:
             return pushDefinition(node, lyric_object::LinkageSection::Call);
         case lyric_schema::LyricAstId::DefClass:
@@ -74,6 +76,7 @@ lyric_symbolizer::SymbolizerScanDriver::exit(
         case lyric_schema::LyricAstId::Val:
         case lyric_schema::LyricAstId::Var:
             return declareStatic(node);
+        case lyric_schema::LyricAstId::Decl:
         case lyric_schema::LyricAstId::Def:
         case lyric_schema::LyricAstId::DefClass:
         case lyric_schema::LyricAstId::DefConcept:

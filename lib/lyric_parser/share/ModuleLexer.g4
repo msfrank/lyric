@@ -133,6 +133,7 @@ ValKeyword              : 'val' ;
 VarKeyword              : 'var' ;
 NamedKeyword            : 'named' ;
 DefKeyword              : 'def' ;
+DeclKeyword             : 'decl' ;
 ThisKeyword             : 'this' ;
 GlobalKeyword           : 'global' ;
 DefConceptKeyword       : 'defconcept' ;

@@ -10,7 +10,7 @@ TEST(CoreDefconcept, EvaluateDefconcept)
 {
     auto result = runModule(R"(
         defconcept Sum[T] {
-            def sum(x1: T, x2: T): T
+            decl sum(x1: T, x2: T): T
         }
         #Sum
     )");
@@ -24,7 +24,7 @@ TEST(CoreDefconcept, EvaluateDefconceptImplementation)
 {
     auto result = runModule(R"(
         defconcept Sum[T] {
-            def sum(x1: T, x2: T): T
+            decl sum(x1: T, x2: T): T
         }
         definstance SumInstance {
             impl Sum[Int] {
@@ -50,7 +50,7 @@ TEST(CoreDefconcept, EvaluateDefconceptAction)
 {
     auto result = runModule(R"(
         defconcept Sum[T] {
-            def sum(x1: T, x2: T): T
+            decl sum(x1: T, x2: T): T
         }
         definstance SumInstance {
             impl Sum[Int] {
@@ -74,7 +74,7 @@ TEST(CoreDefconcept, EvaluateImplementationOfSealedConcept)
 {
     auto result = runModule(R"(
         defconcept Sum[T] sealed {
-            def sum(x1: T, x2: T): T
+            decl sum(x1: T, x2: T): T
         }
         definstance SumInstance {
             impl Sum[Int] {
@@ -98,7 +98,7 @@ TEST(CoreDefconcept, EvaluateImplementationOfFinalConcept)
 {
     auto result = runModule(R"(
         defconcept Sum[T] final {
-            def sum(x1: T, x2: T): T
+            decl sum(x1: T, x2: T): T
         }
         definstance SumInstance {
             impl Sum[Int] {

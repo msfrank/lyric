@@ -768,14 +768,14 @@ void lyric_parser::internal::ModuleArchetype::enterDefconceptStatement(ModulePar
     return ModuleDefconceptOps::enterDefconceptStatement(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::enterConceptDef(ModuleParser::ConceptDefContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterConceptDecl(ModuleParser::ConceptDeclContext *ctx)
 {
-    return ModuleDefconceptOps::enterConceptDef(ctx);
+    return ModuleDefconceptOps::enterConceptDecl(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitConceptDef(ModuleParser::ConceptDefContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitConceptDecl(ModuleParser::ConceptDeclContext *ctx)
 {
-    return ModuleDefconceptOps::exitConceptDef(ctx);
+    return ModuleDefconceptOps::exitConceptDecl(ctx);
 }
 
 void lyric_parser::internal::ModuleArchetype::enterConceptImpl(ModuleParser::ConceptImplContext *ctx)

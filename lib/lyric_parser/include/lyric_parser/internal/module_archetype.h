@@ -216,8 +216,8 @@ namespace lyric_parser::internal {
 
         // implemented by ModuleDefconceptOps
         void enterDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx) override;
-        void enterConceptDef(ModuleParser::ConceptDefContext *ctx) override;
-        void exitConceptDef(ModuleParser::ConceptDefContext *ctx) override;
+        void enterConceptDecl(ModuleParser::ConceptDeclContext *ctx) override;
+        void exitConceptDecl(ModuleParser::ConceptDeclContext *ctx) override;
         void enterConceptImpl(ModuleParser::ConceptImplContext *ctx) override;
         void exitConceptImpl(ModuleParser::ConceptImplContext *ctx) override;
         void exitDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx) override;

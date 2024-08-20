@@ -31,14 +31,14 @@ lyric_parser::internal::ModuleDefconceptOps::enterDefconceptStatement(ModulePars
 }
 
 void
-lyric_parser::internal::ModuleDefconceptOps::enterConceptDef(ModuleParser::ConceptDefContext *ctx)
+lyric_parser::internal::ModuleDefconceptOps::enterConceptDecl(ModuleParser::ConceptDeclContext *ctx)
 {
     auto *scopeManager = m_state->scopeManager();
     auto span = scopeManager->makeSpan();
 }
 
 void
-lyric_parser::internal::ModuleDefconceptOps::exitConceptDef(ModuleParser::ConceptDefContext *ctx)
+lyric_parser::internal::ModuleDefconceptOps::exitConceptDecl(ModuleParser::ConceptDeclContext *ctx)
 {
     auto *scopeManager = m_state->scopeManager();
     auto span = scopeManager->peekSpan();
@@ -59,11 +59,11 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptDef(ModuleParser::Concep
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
-    defNode->putAttr(kLyricAstIdentifier, id);
-    defNode->putAttrOrThrow(kLyricAstAccessType, access);
-    defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
-    defNode->appendChild(packNode);
+    auto *declNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDeclClass, location);
+    declNode->putAttr(kLyricAstIdentifier, id);
+    declNode->putAttrOrThrow(kLyricAstAccessType, access);
+    declNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
+    declNode->appendChild(packNode);
 
     // if ancestor node is not a kDefConcept, then report internal violation
     if (m_state->isEmpty())
@@ -71,7 +71,7 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptDef(ModuleParser::Concep
     auto *defconceptNode = m_state->peekNode();
     m_state->checkNodeOrThrow(defconceptNode, lyric_schema::kLyricAstDefConceptClass);
 
-    defconceptNode->appendChild(defNode);
+    defconceptNode->appendChild(declNode);
 
     scopeManager->popSpan();
 

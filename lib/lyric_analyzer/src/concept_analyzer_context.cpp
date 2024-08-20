@@ -33,7 +33,7 @@ lyric_analyzer::ConceptAnalyzerContext::enter(
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
     switch (resource->getId()) {
-        case lyric_schema::LyricAstId::Def:
+        case lyric_schema::LyricAstId::Decl:
             return declareAction(node);
         case lyric_schema::LyricAstId::Impl:
             return declareImpl(node);

@@ -101,6 +101,7 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::Lambda:
         case lyric_schema::LyricAstId::Val:
         case lyric_schema::LyricAstId::Var:
+        case lyric_schema::LyricAstId::Decl:
         case lyric_schema::LyricAstId::Def:
         case lyric_schema::LyricAstId::DefStatic:
         case lyric_schema::LyricAstId::Impl:

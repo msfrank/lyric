@@ -169,11 +169,11 @@ defclassStatement   : DefClassKeyword symbolIdentifier genericClass? classDerive
 
 // defconcept statement
 
-conceptDef          : DefKeyword symbolIdentifier paramSpec returnSpec ;
+conceptDecl         : DeclKeyword symbolIdentifier paramSpec returnSpec ;
 conceptImpl         : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 genericConcept      : placeholderSpec constraintSpec? ;
 conceptDerives      : ( SealedKeyword | FinalKeyword ) ;
-conceptSpec         : conceptDef | conceptImpl ;
+conceptSpec         : conceptDecl | conceptImpl ;
 defconceptStatement : DefConceptKeyword symbolIdentifier genericConcept? conceptDerives? CurlyOpen conceptSpec* CurlyClose ;
 
 

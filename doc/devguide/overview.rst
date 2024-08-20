@@ -2,13 +2,29 @@
 Overview
 ========
 
-Lyric is a collection of libraries implementing the object and packaging formats,
-bytecode interpreter, runtime support, and build system used by the Zuri project.
-The intention of this package is to implement the mechanism of the Lyric language
-without providing the policy. In more concrete terms, this means that all of the
-essential parts of the programming language are present, each with a strongly
-defined application programming interface, but the user interface for the language
-is defined at a higher layer in a different package.
+Lyric is a collection of libraries implementing the object and packaging formats, bytecode
+interpreter, runtime support, and build system used by the Zuri project. The intention of this
+package is to implement the mechanism of the Lyric language without providing the policy. In
+more concrete terms, this means that all of the essential parts of the programming language
+are present, each with a strongly defined application programming interface, but the user
+interface for the language is defined at a higher layer in a different package. Nonetheless,
+there are reasons why one might call the Lyric libraries directly; some typical use cases are
+described in the next section.
+
+Use Cases
+---------
+
+Running An Interpreter
+......................
+
+Parsing Artifacts
+.................
+
+Extending The Build System
+..........................
+
+Unit Testing
+............
 
 Lyric libraries
 ---------------
@@ -88,3 +104,8 @@ Lyric Programs
 
 ``lyric-dump-object``
 .....................
+
+
+License
+-------
+

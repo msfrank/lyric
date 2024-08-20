@@ -27,7 +27,7 @@ lyric_rewriter::LyricAstDefconceptVisitor::enter(lyric_parser::ArchetypeNode *no
         lyric_schema::LyricAstId childId;
         TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
         switch (childId) {
-            case lyric_schema::LyricAstId::Def:
+            case lyric_schema::LyricAstId::Decl:
                 actionNodes.push_back(std::pair{child, i});
                 break;
             case lyric_schema::LyricAstId::Impl:

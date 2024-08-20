@@ -2,7 +2,12 @@
 AST Schema
 ==========
 
-:Schema Namespace:          ``dev.zuri.ns:ast-1``
+.. contents:: Table of Contents
+   :depth: 2
+
+The AST Schema defines the elements of a Lyric abstract syntax tree.
+
+:Schema Namespace URL:          ``dev.zuri.ns:ast-1``
 
 AST Classes
 -----------
@@ -12,8 +17,22 @@ AST Classes
 ``Add``
 .......
 
+:Num Children:              2
+:Allowed Child 1:           Any one of `Expression Classes`_
+:Allowed Child 2:           Any one of `Expression Classes`_
+
+Add applies the addition operator to child 1 (the left operand) and child 2 (the right
+operand).
+
 ``And``
 .......
+
+:Num Children:              2
+:Allowed Child 1:           Any one of `Expression Classes`_
+:Allowed Child 2:           Any one of `Expression Classes`_
+
+And applies the logical conjunction operator to child 1 (the left operand) and child 2
+(the right operand).
 
 ``Block``
 .........
@@ -26,6 +45,11 @@ AST Classes
 
 ``Char``
 ........
+
+:Num Children:              0
+:Recognized Attributes:     - `LiteralValue`_
+
+Declares a literal character value.
 
 ``Cond``
 ........
@@ -84,6 +108,11 @@ DefEnum defines a new enumeration.
 
 DefInstance defines a new instance.
 
+``DefStatic``
+.............
+
+DefStruct defines a new static.
+
 ``DefStruct``
 .............
 
@@ -101,6 +130,12 @@ DefStruct defines a new struct.
 ``Div``
 .......
 
+:Num Children:              2
+:Allowed Child 1:           Any one of `Expression Classes`_
+:Allowed Child 2:           Any one of `Expression Classes`_
+
+Div applies the division operator to child 1 (the left operand) and child 2 (the right operand).
+
 ``ExportAll``
 .............
 
@@ -113,8 +148,18 @@ DefStruct defines a new struct.
 ``False``
 .........
 
+:Num Children:              0
+:Recognized Attributes:     - `LiteralValue`_
+
+Declares a false boolean value.
+
 ``Float``
 .........
+
+:Num Children:              0
+:Recognized Attributes:     - `LiteralValue`_
+
+Declares a literal float value.
 
 ``For``
 .......
@@ -155,6 +200,11 @@ DefStruct defines a new struct.
 ``Integer``
 ...........
 
+:Num Children:              0
+:Recognized Attributes:     - `LiteralValue`_
+
+Declares a literal integer value.
+
 ``IsA``
 .......
 
@@ -194,6 +244,13 @@ DefStruct defines a new struct.
 ``Mul``
 .......
 
+:Num Children:              2
+:Allowed Child 1:           Any one of `Expression Classes`_
+:Allowed Child 2:           Any one of `Expression Classes`_
+
+Mul applies the multiplication operator to child 1 (the left operand) and child 2 (the
+right operand).
+
 ``Name``
 ........
 
@@ -203,17 +260,39 @@ DefStruct defines a new struct.
 ``Neg``
 .......
 
+:Num Children:              1
+:Allowed Child 1:           Any one of `Expression Classes`_
+
+Neg applies the additive inverse operator to child 1 (the operand).
+
 ``New``
 .......
 
 ``Nil``
 .......
 
+:Num Children:              0
+:Recognized Attributes:     - `LiteralValue`_
+
+Declares a nil value.
+
 ``Not``
 .......
 
+:Num Children:              1
+:Allowed Child 1:           Any one of `Expression Classes`_
+
+Not applies the logical complement operator to child 1 (the operand).
+
 ``Or``
 ......
+
+:Num Children:              2
+:Allowed Child 1:           Any one of `Expression Classes`_
+:Allowed Child 2:           Any one of `Expression Classes`_
+
+Or applies the logical disjunction operator to child 1 (the left operand) and child 2
+(the right operand).
 
 ``Pack``
 ........
@@ -242,8 +321,19 @@ DefStruct defines a new struct.
 ``String``
 ..........
 
+:Num Children:              0
+:Recognized Attributes:     - `LiteralValue`_
+
+Declares a literal string value.
+
 ``Sub``
 .......
+
+:Num Children:              2
+:Allowed Child 1:           Any one of `Expression Classes`_
+:Allowed Child 2:           Any one of `Expression Classes`_
+
+Sub applies the subtraction operator to child 1 (the left operand) and child 2 (the right operand).
 
 ``Super``
 .........
@@ -263,6 +353,11 @@ DefStruct defines a new struct.
 ``True``
 ........
 
+:Num Children:              0
+:Recognized Attributes:     - `LiteralValue`_
+
+Declares a true boolean value.
+
 ``Try``
 .......
 
@@ -272,6 +367,11 @@ DefStruct defines a new struct.
 ``Undef``
 .........
 
+:Num Children:              0
+:Recognized Attributes:     - `LiteralValue`_
+
+Declares an undef value.
+
 ``Unpack``
 ..........
 
@@ -280,6 +380,11 @@ DefStruct defines a new struct.
 
 ``Url``
 .......
+
+:Num Children:              0
+:Recognized Attributes:     - `LiteralValue`_
+
+Declares a literal URL value.
 
 ``UType``
 .........
@@ -493,125 +598,125 @@ AST Classes By Section
 Literal Classes
 ...............
 
-- `Nil`_
-- `Undef`_
-- `False`_
-- `True`_
-- `Integer`_
-- `Float`_
 - `Char`_
-- `String`_
-- `Url`_
+- `False`_
+- `Float`_
+- `Integer`_
+- `Nil`_
 - `Pair`_
+- `String`_
+- `SymbolRef`_
+- `True`_
+- `Undef`_
+- `Url`_
 
 Arithmetic Classes
 ..................
 
 - `Add`_
-- `Sub`_
-- `Mul`_
 - `Div`_
+- `Mul`_
 - `Neg`_
+- `Sub`_
 
 Comparison Classes
 ..................
 
-- `IsEq`_
-- `IsLt`_
-- `IsLe`_
-- `IsGt`_
-- `IsGe`_
 - `IsA`_
+- `IsEq`_
+- `IsLe`_
+- `IsLt`_
+- `IsGe`_
+- `IsGt`_
 
 Logical Classes
 ...............
 
 - `And`_
-- `Or`_
 - `Not`_
+- `Or`_
 
 Type Classes
 ............
 
-- `SType`_
-- `PType`_
 - `IType`_
-- `UType`_
+- `PType`_
+- `SType`_
 - `TypeArguments`_
+- `UType`_
 
 Assignment Classes
 ..................
 
-- `Set`_
-- `Target`_
 - `InplaceAdd`_
 - `InplaceSub`_
 - `InplaceMul`_
 - `InplaceDiv`_
+- `Set`_
+- `Target`_
 
 Dereference Classes
 ...................
 
-- `Deref`_
-- `This`_
-- `Name`_
 - `Call`_
+- `Deref`_
+- `Name`_
+- `This`_
 
 Construction Classes
 ....................
 
-- `New`_
 - `Lambda`_
+- `New`_
 
 Control Classes
 ...............
 
 - `Block`_
-- `If`_
 - `Cond`_
-- `Match`_
-- `When`_
-- `While`_
 - `For`_
+- `If`_
+- `Match`_
 - `Try`_
 - `Return`_
+- `When`_
+- `While`_
 
 Definition Classes
 ..................
 
+- `Case`_
 - `Def`_
 - `DefClass`_
 - `DefConcept`_
 - `DefEnum`_
 - `DefInstance`_
+- `DefStatic`_
 - `DefStruct`_
+- `Impl`_
 - `Namespace`_
 - `Val`_
 - `Var`_
-- `Case`_
-- `Impl`_
 
 Initialization Classes
 ......................
 
-- `Super`_
 - `Init`_
+- `Super`_
 
 Import Classes
 ..............
 
 - `ImportAll`_
-- `ImportSymbols`_
 - `ImportModule`_
+- `ImportSymbols`_
 
-Import Classes
+Export Classes
 ..............
 
 - `ExportAll`_
-- `ExportSymbols`_
 - `ExportModule`_
-- `Using`_
-- `SymbolRef`_
+- `ExportSymbols`_
 
 Macro Classes
 .............
@@ -622,12 +727,79 @@ Macro Classes
 Miscellaneous Classes
 .....................
 
-- `Unpack`_
-- `Pack`_
-- `Param`_
-- `Keyword`_
-- `Rest`_
+- `Constraint`_
 - `Ctx`_
 - `Generic`_
+- `Keyword`_
+- `Pack`_
+- `Param`_
 - `Placeholder`_
-- `Constraint`_
+- `Rest`_
+- `Unpack`_
+- `Using`_
+
+Expression Classes
+..................
+
+- `Add`_
+- `And`_
+- `Block`_
+- `Call`_
+- `Char`_
+- `Cond`_
+- `Deref`_
+- `Div`_
+- `False`_
+- `Float`_
+- `Integer`_
+- `IsA`_
+- `IsEq`_
+- `IsGe`_
+- `IsGt`_
+- `IsLe`_
+- `IsLt`_
+- `Lambda`_
+- `Match`_
+- `Mul`_
+- `Name`_
+- `Neg`_
+- `New`_
+- `Nil`_
+- `Not`_
+- `Or`_
+- `String`_
+- `Sub`_
+- `SymbolRef`_
+- `This`_
+- `True`_
+- `Undef`_
+- `Url`_
+
+Statement Classes
+.................
+
+- `Def`_
+- `DefClass`_
+- `DefConcept`_
+- `DefEnum`_
+- `DefInstance`_
+- `DefStatic`_
+- `DefStruct`_
+- `For`_
+- `Generic`_
+- `If`_
+- `ImportAll`_
+- `ImportModule`_
+- `ImportSymbols`_
+- `Init`_
+- `InplaceAdd`_
+- `InplaceDiv`_
+- `InplaceMul`_
+- `InplaceSub`_
+- `Namespace`_
+- `Return`_
+- `Set`_
+- `Using`_
+- `Val`_
+- `Var`_
+- `While`_
