@@ -22,6 +22,10 @@ namespace lyric_assembler {
         StoreData,
         StackModification,
         Jump,
+        Call,
+        Inline,
+        New,
+        Trap,
     };
 
     class AbstractInstruction {

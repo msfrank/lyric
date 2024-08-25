@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/assembler_instructions.h>
 #include <lyric_assembler/code_fragment.h>
 #include <lyric_assembler/literal_cache.h>
 #include <lyric_assembler/literal_handle.h>
@@ -9,6 +10,7 @@
 #include <lyric_assembler/argument_variable.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
+#include <lyric_assembler/code_fragment.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
@@ -517,4 +519,173 @@ tu_uint32
 lyric_assembler::JumpInstruction::getTargetId() const
 {
     return m_targetId;
+}
+
+lyric_assembler::CallInstruction::CallInstruction(
+    lyric_object::Opcode opcode,
+    AbstractSymbol *symbol,
+    tu_uint16 placement,
+    tu_uint8 flags)
+    : m_opcode(opcode),
+      m_symbol(symbol),
+      m_placement(placement),
+      m_flags(flags)
+{
+    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
+    TU_ASSERT (m_symbol != nullptr);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::CallInstruction::getType() const
+{
+    return InstructionType::Call;
+}
+
+tempo_utils::Status
+lyric_assembler::CallInstruction::apply(
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    tu_uint32 address;
+
+    switch (m_opcode) {
+        case lyric_object::Opcode::OP_CALL_STATIC:
+        case lyric_object::Opcode::OP_CALL_VIRTUAL: {
+            if (m_symbol->getSymbolType() != SymbolType::CALL)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "expected Call symbol for opcode");
+            auto *callSymbol = cast_symbol_to_call(m_symbol);
+            address = callSymbol->getAddress().getAddress();
+            break;
+        }
+        case lyric_object::Opcode::OP_CALL_CONCEPT: {
+            if (m_symbol->getSymbolType() != SymbolType::CONCEPT)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "expected Concept symbol for opcode");
+            auto *conceptSymbol = cast_symbol_to_concept(m_symbol);
+            address = conceptSymbol->getAddress().getAddress();
+            break;
+        }
+        case lyric_object::Opcode::OP_CALL_EXISTENTIAL: {
+            if (m_symbol->getSymbolType() != SymbolType::EXISTENTIAL)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "expected Existential symbol for opcode");
+            auto *existentialSymbol = cast_symbol_to_existential(m_symbol);
+            address = existentialSymbol->getAddress().getAddress();
+            break;
+        }
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
+
+    TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(m_opcode));
+    TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeU8(m_flags));
+    TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeU32(address));
+    return bytecodeBuilder.writeU16(m_placement);
+}
+
+lyric_assembler::InlineInstruction::InlineInstruction(CallSymbol *callSymbol)
+    : m_symbol(callSymbol)
+{
+    TU_ASSERT (m_symbol != nullptr);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::InlineInstruction::getType() const
+{
+    return InstructionType::Inline;
+}
+
+tempo_utils::Status
+lyric_assembler::InlineInstruction::apply(
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    TU_UNREACHABLE();
+}
+
+lyric_assembler::NewInstruction::NewInstruction(
+    AbstractSymbol *symbol,
+    tu_uint16 placement,
+    tu_uint8 flags)
+    : m_symbol(symbol),
+      m_placement(placement),
+      m_flags(flags)
+{
+    TU_ASSERT (m_symbol != nullptr);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::NewInstruction::getType() const
+{
+    return InstructionType::New;
+}
+
+tempo_utils::Status
+lyric_assembler::NewInstruction::apply(
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    tu_uint8 newType;
+    tu_uint32 address;
+
+    switch (m_symbol->getSymbolType()) {
+        case SymbolType::CLASS:
+            newType = lyric_object::NEW_CLASS;
+            address = cast_symbol_to_class(m_symbol)->getAddress().getAddress();
+            break;
+        case SymbolType::ENUM:
+            newType = lyric_object::NEW_ENUM;
+            address = cast_symbol_to_enum(m_symbol)->getAddress().getAddress();
+            break;
+        case SymbolType::INSTANCE:
+            newType = lyric_object::NEW_INSTANCE;
+            address = cast_symbol_to_instance(m_symbol)->getAddress().getAddress();
+            break;
+        case SymbolType::STRUCT:
+            newType = lyric_object::NEW_STRUCT;
+            address = cast_symbol_to_struct(m_symbol)->getAddress().getAddress();
+            break;
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid new symbol");
+    }
+
+    TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_NEW));
+    TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeU8((newType << 4u) | m_flags));
+    TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeU32(address));
+    return bytecodeBuilder.writeU16(m_placement);
+}
+
+lyric_assembler::TrapInstruction::TrapInstruction(tu_uint32 trapNumber, tu_uint8 flags)
+    : m_trapNumber(trapNumber),
+      m_flags(flags)
+{
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::TrapInstruction::getType() const
+{
+    return InstructionType::Trap;
+}
+
+tempo_utils::Status
+lyric_assembler::TrapInstruction::apply(
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    return bytecodeBuilder.trap(m_trapNumber, m_flags);
 }

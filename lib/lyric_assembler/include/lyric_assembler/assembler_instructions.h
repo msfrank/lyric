@@ -197,6 +197,75 @@ namespace lyric_assembler {
         lyric_object::Opcode m_opcode;
         tu_uint32 m_targetId;
     };
+
+    class CallInstruction: public AbstractInstruction {
+    public:
+        CallInstruction(
+            lyric_object::Opcode opcode,
+            AbstractSymbol *symbol,
+            tu_uint16 placement,
+            tu_uint8 flags);
+        InstructionType getType() const override;
+        tempo_utils::Status apply(
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+    private:
+        lyric_object::Opcode m_opcode;
+        AbstractSymbol *m_symbol;
+        tu_uint16 m_placement;
+        tu_uint8 m_flags;
+    };
+
+    class InlineInstruction: public AbstractInstruction {
+    public:
+        explicit InlineInstruction(CallSymbol *callSymbol);
+        InstructionType getType() const override;
+        tempo_utils::Status apply(
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+    private:
+        CallSymbol *m_symbol;
+    };
+
+    class NewInstruction: public AbstractInstruction {
+    public:
+        NewInstruction(
+            AbstractSymbol *symbol,
+            tu_uint16 placement,
+            tu_uint8 flags);
+        InstructionType getType() const override;
+        tempo_utils::Status apply(
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+    private:
+        AbstractSymbol *m_symbol;
+        tu_uint16 m_placement;
+        tu_uint8 m_flags;
+    };
+
+    class TrapInstruction: public AbstractInstruction {
+    public:
+        TrapInstruction(tu_uint32 trapNumber, tu_uint8 flags);
+        InstructionType getType() const override;
+        tempo_utils::Status apply(
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+    private:
+        tu_uint32 m_trapNumber;
+        tu_uint8 m_flags;
+    };
 }
 
 #endif // LYRIC_ASSEMBLER_ASSEMBLER_INSTRUCTIONS_H

@@ -1,18 +1,27 @@
 #include <gtest/gtest.h>
 
-#include <lyric_assembler/code_fragment.h>
+#include <lyric_assembler/proc_builder.h>
 #include <tempo_test/status_matchers.h>
+#include "lyric_bootstrap/bootstrap_loader.h"
 
 TEST(CodeFragment, ImmediateNil)
 {
-    auto activation = lyric_common::SymbolUrl::fromString("#sym");
-    lyric_assembler::ProcHandle proc(activation);
-    lyric_assembler::CodeFragment code(&proc);
+    auto location = lyric_common::ModuleLocation::fromString("/test");
+    auto loader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
+    auto systemModuleCache = lyric_importer::ModuleCache::create(loader);
+    auto recorder = tempo_tracing::TraceRecorder::create();
+    tempo_tracing::ScopeManager scopeManager(recorder);
+    lyric_assembler::ObjectState objectState(location, systemModuleCache, &scopeManager);
 
-    ASSERT_THAT (code.immediateNil(), tempo_test::IsOk());
+    auto activationUrl = lyric_common::SymbolUrl::fromString("#sym");
+    lyric_assembler::ProcHandle procHandle(activationUrl, &objectState);
+    lyric_assembler::ProcBuilder procBuilder(&procHandle);
+    auto *root = procBuilder.rootFragment();
+
+    ASSERT_THAT (root->immediateNil(), tempo_test::IsOk());
 
     lyric_object::BytecodeBuilder bytecodeBuilder;
-    ASSERT_THAT (code.write(bytecodeBuilder), tempo_test::IsOk());
+    ASSERT_THAT (procBuilder.build(bytecodeBuilder), tempo_test::IsOk());
 
     auto bytecode = bytecodeBuilder.getBytecode();
     lyric_object::BytecodeIterator it(bytecode.data(), bytecode.size());
@@ -26,18 +35,26 @@ TEST(CodeFragment, ImmediateNil)
 
 TEST(CodeFragment, UnconditionalJump)
 {
-    auto activation = lyric_common::SymbolUrl::fromString("#sym");
-    lyric_assembler::ProcHandle proc(activation);
-    lyric_assembler::CodeFragment code(&proc);
+    auto location = lyric_common::ModuleLocation::fromString("/test");
+    auto loader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
+    auto systemModuleCache = lyric_importer::ModuleCache::create(loader);
+    auto recorder = tempo_tracing::TraceRecorder::create();
+    tempo_tracing::ScopeManager scopeManager(recorder);
+    lyric_assembler::ObjectState objectState(location, systemModuleCache, &scopeManager);
 
-    code.appendLabel("top");
-    code.noOperation();
+    auto activationUrl = lyric_common::SymbolUrl::fromString("#sym");
+    lyric_assembler::ProcHandle procHandle(activationUrl, &objectState);
+    lyric_assembler::ProcBuilder procBuilder(&procHandle);
+    auto *root = procBuilder.rootFragment();
+
+    ASSERT_THAT (root->appendLabel("top"), tempo_test::IsOk());
+    ASSERT_THAT (root->noOperation(), tempo_test::IsOk());
     tu_uint32 targetId;
-    TU_ASSIGN_OR_RAISE (targetId, code.unconditionalJump());
-    code.patchTarget(targetId, "top");
+    TU_ASSIGN_OR_RAISE (targetId, root->unconditionalJump());
+    ASSERT_THAT (root->patchTarget(targetId, "top"), tempo_test::IsOk());
 
     lyric_object::BytecodeBuilder bytecodeBuilder;
-    ASSERT_THAT (code.write(bytecodeBuilder), tempo_test::IsOk());
+    ASSERT_THAT (procBuilder.build(bytecodeBuilder), tempo_test::IsOk());
 
     auto bytecode = bytecodeBuilder.getBytecode();
     lyric_object::BytecodeIterator it(bytecode.data(), bytecode.size());
