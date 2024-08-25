@@ -7,16 +7,33 @@ add_library(lyric_compiler SHARED)
 add_library(lyric::lyric_compiler ALIAS lyric_compiler)
 
 set(LYRIC_COMPILER_INCLUDES
+    include/lyric_compiler/abstract_compiler_context.h
+    include/lyric_compiler/block_compiler_context.h
     include/lyric_compiler/compiler_result.h
+    include/lyric_compiler/compiler_scan_driver.h
+    include/lyric_compiler/constant_utils.h
+    include/lyric_compiler/deref_compiler_context.h
+    include/lyric_compiler/deref_utils.h
+    include/lyric_compiler/entry_compiler_context.h
     include/lyric_compiler/lyric_compiler.h
     include/lyric_compiler/module_entry.h
+    include/lyric_compiler/operator_utils.h
+    include/lyric_compiler/proc_compiler_context.h
     )
 set_target_properties(lyric_compiler PROPERTIES PUBLIC_HEADER "${LYRIC_COMPILER_INCLUDES}")
 
 target_sources(lyric_compiler PRIVATE
+    src/block_compiler_context.cpp
     src/compiler_result.cpp
+    src/compiler_scan_driver.cpp
+    src/constant_utils.cpp
+    src/deref_compiler_context.cpp
+    src/deref_utils.cpp
+    src/entry_compiler_context.cpp
     src/lyric_compiler.cpp
     src/module_entry.cpp
+    src/operator_utils.cpp
+    src/proc_compiler_context.cpp
 
     include/lyric_compiler/internal/compiler_utils.h
     src/internal/compiler_utils.cpp

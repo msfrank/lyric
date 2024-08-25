@@ -10,6 +10,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/abstract_callable.h
     include/lyric_assembler/abstract_callsite_reifier.h
     include/lyric_assembler/abstract_constructable.h
+    include/lyric_assembler/abstract_instruction.h
     include/lyric_assembler/abstract_member_reifier.h
     include/lyric_assembler/abstract_placement.h
     include/lyric_assembler/abstract_resolver.h
@@ -18,6 +19,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/action_symbol.h
     include/lyric_assembler/argument_variable.h
     include/lyric_assembler/assembler_attrs.h
+    include/lyric_assembler/assembler_instructions.h
     include/lyric_assembler/assembler_result.h
     include/lyric_assembler/assembler_tracer.h
     include/lyric_assembler/assembler_types.h
@@ -29,6 +31,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/call_symbol.h
     include/lyric_assembler/class_symbol.h
     include/lyric_assembler/code_builder.h
+    include/lyric_assembler/code_fragment.h
     include/lyric_assembler/concept_symbol.h
     include/lyric_assembler/constructable_invoker.h
     include/lyric_assembler/ctor_constructable.h
@@ -68,6 +71,7 @@ target_sources(lyric_assembler PRIVATE
     src/action_symbol.cpp
     src/argument_variable.cpp
     src/assembler_attrs.cpp
+    src/assembler_instructions.cpp
     src/assembler_result.cpp
     src/assembler_tracer.cpp
     src/assembler_types.cpp
@@ -77,6 +81,7 @@ target_sources(lyric_assembler PRIVATE
     src/call_symbol.cpp
     src/class_symbol.cpp
     src/code_builder.cpp
+    src/code_fragment.cpp
     src/concept_symbol.cpp
     src/constructable_invoker.cpp
     src/ctor_constructable.cpp

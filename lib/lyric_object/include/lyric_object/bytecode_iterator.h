@@ -120,6 +120,8 @@ namespace lyric_object {
         TU_UNREACHABLE();
     }
 
+    OpInfoType opcode_to_opinfo_type(Opcode opcode);
+
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const BytecodeIterator &it);
 }
 

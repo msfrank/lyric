@@ -75,6 +75,13 @@ lyric_object::OpInfo ops[] = {
     { lyric_object::Opcode::LAST_,                  lyric_object::OpInfoType::NO_OPERANDS },
 };
 
+lyric_object::OpInfoType
+lyric_object::opcode_to_opinfo_type(Opcode opcode)
+{
+    auto opinfo = ops[static_cast<tu_uint8>(opcode)];
+    return opinfo.type;
+}
+
 lyric_object::BytecodeIterator::BytecodeIterator()
     : m_bytecode(nullptr), m_size(0), m_curr(0)
 {

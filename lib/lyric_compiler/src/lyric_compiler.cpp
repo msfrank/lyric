@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/object_state.h>
+#include <lyric_compiler/compiler_scan_driver.h>
 #include <lyric_compiler/internal/compile_module.h>
 #include <lyric_compiler/lyric_compiler.h>
 #include <lyric_parser/node_walker.h>
@@ -49,6 +50,8 @@ lyric_compiler::LyricCompiler::compileModule(
 
         // initialize the assembler
         TU_RETURN_IF_NOT_OK (objectState.initialize());
+
+        auto compilerDriver = std::make_shared<CompilerScanDriver>(&objectState);
 
 //        // load env symbols into the assembly state
 //        for (auto iterator = m_options.envSymbols.cbegin(); iterator != m_options.envSymbols.cend(); iterator++) {
