@@ -1,5 +1,4 @@
 
-#include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/namespace_symbol.h>
 #include <lyric_assembler/symbol_cache.h>

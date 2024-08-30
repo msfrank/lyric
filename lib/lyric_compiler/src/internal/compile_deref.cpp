@@ -2,7 +2,6 @@
 #include <lyric_assembler/argument_variable.h>
 #include <lyric_assembler/function_callable.h>
 #include <lyric_assembler/class_symbol.h>
-#include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
@@ -124,35 +123,39 @@ lyric_compiler::internal::compile_deref_name(
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
 
-    if (ref.referenceType == lyric_assembler::ReferenceType::Descriptor) {
-        lyric_common::SymbolUrl ctorOrInitUrl;
+//    if (ref.referenceType == lyric_assembler::ReferenceType::Descriptor) {
+//        lyric_common::SymbolUrl ctorOrInitUrl;
+//
+//        switch (symbol->getSymbolType()) {
+//            case lyric_assembler::SymbolType::ENUM:
+//                ctorOrInitUrl = cast_symbol_to_enum(symbol)->getCtor();
+//                break;
+//            case lyric_assembler::SymbolType::INSTANCE:
+//                ctorOrInitUrl = cast_symbol_to_instance(symbol)->getCtor();
+//                break;
+//            case lyric_assembler::SymbolType::STATIC:
+//                ctorOrInitUrl = cast_symbol_to_static(symbol)->getInitializer();
+//                break;
+//            default:
+//                return bindingBlock->logAndContinue(lyric_compiler::CompilerCondition::kMissingVariable,
+//                    tempo_tracing::LogSeverity::kError,
+//                    "cannot dereference symbol {}", ref.symbolUrl.toString());
+//        }
+//
+//        // ensure that links are created for the symbol and its ctor/initializer
+//        symbol->touch();
+//        if (state->symbolCache()->hasSymbol(ctorOrInitUrl)) {
+//            state->symbolCache()->touchSymbol(ctorOrInitUrl);
+//        }
+//    }
+//
+//    auto status = loadBlock->load(ref);
+//    if (!status.isOk())
+//        return status;
 
-        switch (symbol->getSymbolType()) {
-            case lyric_assembler::SymbolType::ENUM:
-                ctorOrInitUrl = cast_symbol_to_enum(symbol)->getCtor();
-                break;
-            case lyric_assembler::SymbolType::INSTANCE:
-                ctorOrInitUrl = cast_symbol_to_instance(symbol)->getCtor();
-                break;
-            case lyric_assembler::SymbolType::STATIC:
-                ctorOrInitUrl = cast_symbol_to_static(symbol)->getInitializer();
-                break;
-            default:
-                return bindingBlock->logAndContinue(lyric_compiler::CompilerCondition::kMissingVariable,
-                    tempo_tracing::LogSeverity::kError,
-                    "cannot dereference symbol {}", ref.symbolUrl.toString());
-        }
-
-        // ensure that links are created for the symbol and its ctor/initializer
-        symbol->touch();
-        if (state->symbolCache()->hasSymbol(ctorOrInitUrl)) {
-            state->symbolCache()->touchSymbol(ctorOrInitUrl);
-        }
-    }
-
-    auto status = loadBlock->load(ref);
-    if (!status.isOk())
-        return status;
+    auto *blockCode = loadBlock->blockCode();
+    auto *fragment = blockCode->rootFragment();
+    TU_RETURN_IF_NOT_OK (fragment->loadData(symbol));
 
     return ref.typeDef;
 }
@@ -334,12 +337,12 @@ lyric_compiler::internal::compile_deref_member(
     if (!status.isOk())
         return status;
 
+    auto *procCode = block->blockCode();
+    auto *fragment = procCode->rootFragment();
+
     // drop the previous result from the stack
     // FIXME: swap receiver for member within opcode
-    auto *code = block->blockCode();
-    status = code->rdropValue(1);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (fragment->rdropValue(1));
 
     return ref.typeDef;
 }

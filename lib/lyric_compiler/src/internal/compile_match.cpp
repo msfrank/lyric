@@ -32,13 +32,14 @@ compile_predicate(
     auto *typeCache = state->typeCache();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
-    auto *code = block->blockCode();
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
 
     // push target variable onto the top of the stack
     TU_RETURN_IF_NOT_OK (block->load(targetRef));
 
     // pop target and push target type descriptor onto the stack
-    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_TYPE_OF));
+    TU_RETURN_IF_NOT_OK (fragment->invokeTypeOf());
 
     if (!typeCache->hasType(predicateType))
         block->throwAssemblerInvariant("missing predicate type {}", predicateType.toString());
@@ -68,16 +69,16 @@ compile_predicate(
     }
 
     // push match type descriptor onto the stack
-    lyric_assembler::TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(matchType));
-    TU_RETURN_IF_NOT_OK (code->loadType(typeHandle->getAddress()));
+    //lyric_assembler::TypeHandle *typeHandle;
+    //TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(matchType));
+    TU_RETURN_IF_NOT_OK (fragment->loadType(matchType));
 
     // verify that the target type can be a subtype of match type
     TU_RETURN_IF_NOT_OK (
         lyric_compiler::internal::match_types(targetRef.typeDef, matchType, walker, block, moduleEntry));
 
     // perform type comparison
-    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_TYPE_CMP));
+    TU_RETURN_IF_NOT_OK (fragment->typeCompare());
 
     return matchType;
 }
@@ -94,8 +95,9 @@ compile_match_when_symbol_ref(
     TU_ASSERT (symbolRef.isValid());
     TU_ASSERT (body.isValid());
 
-    auto *code = block->blockCode();
     auto *state = block->blockState();
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
 
     // get the match when symbol from the symbol ref
     lyric_common::SymbolPath symbolPath;
@@ -133,23 +135,23 @@ compile_match_when_symbol_ref(
     moduleEntry.checkClassOrThrow(body, lyric_schema::kLyricAstBlockClass);
 
     lyric_assembler::JumpLabel predicateLabel;
-    TU_ASSIGN_OR_RETURN (predicateLabel, code->makeLabel());
+    TU_ASSIGN_OR_RETURN (predicateLabel, fragment->appendLabel());
 
     // check whether the predicate matches the target
     lyric_common::TypeDef matchType;
     TU_ASSIGN_OR_RETURN (matchType, compile_predicate(block, targetRef, predicateType, symbolRef, moduleEntry));
 
     // if the type comparison is <= 0, then invoke the consequent
-    lyric_assembler::PatchOffset predicateJump;
-    TU_ASSIGN_OR_RETURN (predicateJump, code->jumpIfGreaterThan());
+    lyric_assembler::JumpTarget predicateJump;
+    TU_ASSIGN_OR_RETURN (predicateJump, fragment->jumpIfGreaterThan());
 
     // evaluate the consequent block
     lyric_assembler::BlockHandle consequent(block->blockProc(), block->blockCode(), block, block->blockState());
     lyric_common::TypeDef consequentType;
     TU_ASSIGN_OR_RETURN (consequentType, lyric_compiler::internal::compile_block(&consequent, body, moduleEntry));
 
-    lyric_assembler::PatchOffset consequentJump;
-    TU_ASSIGN_OR_RETURN (consequentJump, code->jump());
+    lyric_assembler::JumpTarget consequentJump;
+    TU_ASSIGN_OR_RETURN (consequentJump, fragment->unconditionalJump());
 
     return lyric_assembler::MatchWhenPatch(matchType, predicateLabel, predicateJump,
         consequentJump, consequentType);
@@ -168,7 +170,8 @@ compile_match_when_unpack(
     TU_ASSERT (body.isValid());
     auto *typeSystem = moduleEntry.getTypeSystem();
 
-    auto *code = block->blockCode();
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
 
     // get the assignable type of the unpack
     lyric_parser::NodeWalker typeNode;
@@ -182,15 +185,15 @@ compile_match_when_unpack(
     moduleEntry.checkClassOrThrow(body, lyric_schema::kLyricAstBlockClass);
 
     lyric_assembler::JumpLabel predicateLabel;
-    TU_ASSIGN_OR_RETURN (predicateLabel, code->makeLabel());
+    TU_ASSIGN_OR_RETURN (predicateLabel, fragment->appendLabel());
 
     // check whether the predicate matches the target
     lyric_common::TypeDef matchType;
     TU_ASSIGN_OR_RETURN (matchType, compile_predicate(block, targetRef, predicateType, unpack, moduleEntry));
 
     // if the type comparison is <= 0, then invoke the consequent
-    lyric_assembler::PatchOffset predicateJump;
-    TU_ASSIGN_OR_RETURN (predicateJump, code->jumpIfGreaterThan());
+    lyric_assembler::JumpTarget predicateJump;
+    TU_ASSIGN_OR_RETURN (predicateJump, fragment->jumpIfGreaterThan());
 
     // create a block scope for the consequent and declare any unwrap variables
     lyric_assembler::BlockHandle consequent(block->blockProc(), block->blockCode(), block, block->blockState());
@@ -201,8 +204,8 @@ compile_match_when_unpack(
     lyric_common::TypeDef consequentType;
     TU_ASSIGN_OR_RETURN (consequentType, lyric_compiler::internal::compile_block(&consequent, body, moduleEntry));
 
-    lyric_assembler::PatchOffset consequentJump;
-    TU_ASSIGN_OR_RETURN (consequentJump, code->jump());
+    lyric_assembler::JumpTarget consequentJump;
+    TU_ASSIGN_OR_RETURN (consequentJump, fragment->unconditionalJump());
 
     return lyric_assembler::MatchWhenPatch(matchType, predicateLabel, predicateJump,
         consequentJump, consequentType);
@@ -416,8 +419,8 @@ lyric_compiler::internal::compile_match(
 
     moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstMatchClass, 2);
 
-    auto *code = block->blockCode();
-    tempo_utils::Status status;
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
 
     // evaluate the match target and push the result onto the top of the stack
     auto compileTargetResult = compile_expression(block, walker.getChild(0), moduleEntry);
@@ -432,9 +435,7 @@ lyric_compiler::internal::compile_match(
     auto targetRef = declareTempResult.getResult();
 
     // store the result of the target in the temporary
-    status = block->store(targetRef);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (block->store(targetRef, /* initialStore= */ true));
 
     std::vector<lyric_assembler::MatchWhenPatch> patchList;
     lyric_assembler::DisjointTypeSet predicateSet(block->blockState());
@@ -460,9 +461,8 @@ lyric_compiler::internal::compile_match(
     }
 
     // construct the alternative block
-    auto alternativeBlockEnter = code->makeLabel();
-    if (alternativeBlockEnter.isStatus())
-        return alternativeBlockEnter.getStatus();
+    lyric_assembler::JumpLabel alternativeBlockEnter;
+    TU_ASSIGN_OR_RETURN (alternativeBlockEnter, fragment->appendLabel());
 
     lyric_assembler::BlockHandle alternative(block->blockProc(), block->blockCode(), block, block->blockState());
 
@@ -478,41 +478,28 @@ lyric_compiler::internal::compile_match(
         TU_RETURN_IF_NOT_OK (resultSet.putType(alternativeType));
         isExhaustive = true;
     } else {
-        status = code->loadNil();
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (fragment->immediateNil());
         TU_RETURN_IF_NOT_OK (resultSet.putType(
             fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Nil)));
         // it is intentional that we don't set alternativeType here
     }
 
-    auto alternativeBlockExit = code->makeLabel();
-    if (alternativeBlockExit.isStatus())
-        return alternativeBlockExit.getStatus();
+    lyric_assembler::JumpLabel alternativeBlockExit;
+    TU_ASSIGN_OR_RETURN (alternativeBlockExit, fragment->appendLabel());
 
     // patch jumps for each expression except the last
     tu_uint32 j = 0;
     for (; j < patchList.size() - 1; j++) {
         const auto &matchWhenPatch = patchList.at(j);
         const auto &nextPatch = patchList.at(j + 1);
-        status = code->patch(matchWhenPatch.getPredicateJump(), nextPatch.getPredicateLabel());
-        if (!status.isOk())
-            return status;
-
-        status = code->patch(matchWhenPatch.getConsequentJump(), alternativeBlockExit.getResult());
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (fragment->patchTarget(matchWhenPatch.getPredicateJump(), nextPatch.getPredicateLabel()));
+        TU_RETURN_IF_NOT_OK (fragment->patchTarget(matchWhenPatch.getConsequentJump(), alternativeBlockExit));
     }
 
     // patch jumps for the last expression
     const auto &lastPatch = patchList.at(j);
-    status = code->patch(lastPatch.getPredicateJump(), alternativeBlockEnter.getResult());
-    if (!status.isOk())
-        return status;
-
-    status = code->patch(lastPatch.getConsequentJump(), alternativeBlockExit.getResult());
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (fragment->patchTarget(lastPatch.getPredicateJump(), alternativeBlockEnter));
+    TU_RETURN_IF_NOT_OK (fragment->patchTarget(lastPatch.getConsequentJump(), alternativeBlockExit));
 
     auto unifiedType = resultSet.getUnifiedType();
 

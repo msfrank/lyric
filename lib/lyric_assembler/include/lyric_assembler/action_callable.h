@@ -16,7 +16,7 @@ namespace lyric_assembler {
 
     public:
         ActionCallable();
-        ActionCallable(ActionSymbol *action, const ConceptAddress &address);
+        ActionCallable(ActionSymbol *actionSymbol, ConceptSymbol *conceptSymbol);
 
         bool isValid() const;
 
@@ -34,13 +34,8 @@ namespace lyric_assembler {
             const AbstractCallsiteReifier &reifier) override;
 
     private:
-        ActionSymbol *m_action;
-        ConceptAddress m_address;
-//
-//        std::vector<lyric_object::Parameter> m_parameters;
-//        Option<lyric_object::Parameter> m_rest;
-//        std::vector<lyric_object::TemplateParameter> m_templateParameters;
-//        lyric_common::SymbolUrl m_templateUrl;
+        ActionSymbol *m_actionSymbol;
+        ConceptSymbol *m_conceptSymbol;
 
         void checkValid() const;
     };

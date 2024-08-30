@@ -3,14 +3,15 @@
 #include <lyric_assembler/code_fragment.h>
 #include <lyric_assembler/proc_builder.h>
 #include <lyric_assembler/proc_handle.h>
+#include <tempo_utils/log_stream.h>
 
-lyric_assembler::ProcBuilder::ProcBuilder(ProcHandle *procHandle)
-    : m_procHandle(procHandle)
+lyric_assembler::ProcBuilder::ProcBuilder(ProcHandle *procHandle, ObjectState *state)
+    : m_procHandle(procHandle),
+      m_state(state)
 {
     TU_ASSERT (m_procHandle != nullptr);
+    TU_ASSERT (m_state != nullptr);
     m_rootFragment = std::unique_ptr<CodeFragment>(new CodeFragment(this));
-    auto *block = procHandle->procBlock();
-    m_state = block->blockState();
 }
 
 lyric_assembler::ProcHandle *
@@ -31,28 +32,58 @@ lyric_assembler::ProcBuilder::objectState() const
     return m_state;
 }
 
-tempo_utils::Status
-lyric_assembler::ProcBuilder::appendLabel(std::string_view labelName)
+absl::flat_hash_set<tu_uint32>
+lyric_assembler::ProcBuilder::getTargetsForLabel(std::string_view labelName) const
 {
-    TU_ASSERT (!labelName.empty());
-
-    if (m_labelTargets.contains(labelName))
-        return AssemblerStatus::forCondition(
-            AssemblerCondition::kAssemblerInvariant, "assembly label {} already exists", labelName);
-    m_labelTargets[labelName] = {};
-    auto label = std::make_shared<LabelInstruction>(labelName);
+    auto entry = m_labelTargets.find(labelName);
+    if (entry != m_labelTargets.cend())
+        return entry->second.targets;
     return {};
+}
+
+std::string
+lyric_assembler::ProcBuilder::getLabelForTarget(tu_uint32 targetId) const
+{
+    auto entry = m_jumpLabels.find(targetId);
+    if (entry != m_jumpLabels.cend())
+        return entry->second.name;
+    return {};
+}
+
+tempo_utils::Result<std::string>
+lyric_assembler::ProcBuilder::makeLabel(std::string_view userLabel)
+{
+    std::string labelName(userLabel);
+    if (labelName.empty()) {
+        if (m_nextId == std::numeric_limits<tu_uint32>::max())
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "too many ids");
+        labelName = absl::StrCat("label", m_nextId);
+        if (m_labelTargets.contains(labelName))
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "assembly label {} already exists", labelName);
+        m_nextId++;
+    } else {
+        if (m_labelTargets.contains(labelName))
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "assembly label {} already exists", labelName);
+    }
+
+    m_labelTargets[labelName] = {};
+    TU_LOG_INFO << "proc " << m_procHandle << " makes label " << labelName;
+    return labelName;
 }
 
 tempo_utils::Result<tu_uint32>
 lyric_assembler::ProcBuilder::makeJump()
 {
-    if (m_nextTargetId == std::numeric_limits<tu_uint32>::max())
+    if (m_nextId == std::numeric_limits<tu_uint32>::max())
         return AssemblerStatus::forCondition(
-            AssemblerCondition::kAssemblerInvariant, "too many jump targets");
+            AssemblerCondition::kAssemblerInvariant, "too many ids");
 
-    auto targetId = m_nextTargetId++;
+    auto targetId = m_nextId++;
     m_jumpLabels[targetId] = {};
+    TU_LOG_INFO << "proc " << m_procHandle << " makes jump " << targetId;
     return targetId;
 }
 
@@ -76,6 +107,7 @@ lyric_assembler::ProcBuilder::patchTarget(tu_uint32 targetId, std::string_view l
     labelTargetSet.targets.insert(targetId);
     jumpLabel.name = labelName;
 
+    TU_LOG_INFO << "proc " << m_procHandle << " patches target " << targetId << " to label " << std::string(labelName);
     return {};
 }
 
@@ -86,6 +118,18 @@ lyric_assembler::ProcBuilder::build(lyric_object::BytecodeBuilder &bytecodeBuild
     absl::flat_hash_map<tu_uint32,tu_uint16> patchOffsets;
 
     TU_RETURN_IF_NOT_OK (m_rootFragment->build(bytecodeBuilder, labelOffsets, patchOffsets));
+
+    TU_LOG_INFO << "label targets:";
+    for (const auto &entry : m_labelTargets) {
+        TU_LOG_INFO << "  label " << entry.first;
+        for (const auto &target : entry.second.targets) {
+            TU_LOG_INFO << "    target " << target;
+        }
+    }
+    TU_LOG_INFO << "jump labels:";
+    for (const auto &entry : m_jumpLabels) {
+        TU_LOG_INFO << "  target " << entry.first << " -> " << entry.second.name;
+    }
 
     for (const auto &entry : patchOffsets) {
         auto targetId = entry.first;

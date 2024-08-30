@@ -313,7 +313,7 @@ lyric_assembler::ConceptSymbol::prepareAction(
     const std::string &name,
     const lyric_common::TypeDef &receiverType,
     CallableInvoker &invoker,
-    bool thisReceiver) const
+    bool thisReceiver)
 {
     auto *priv = getPriv();
 
@@ -329,7 +329,7 @@ lyric_assembler::ConceptSymbol::prepareAction(
     auto *actionSymbol = cast_symbol_to_action(symbol);
     actionSymbol->touch();
 
-    auto callable = std::make_unique<ActionCallable>(actionSymbol, getAddress());
+    auto callable = std::make_unique<ActionCallable>(actionSymbol, this);
     return invoker.initialize(std::move(callable));
 }
 

@@ -257,7 +257,7 @@ lyric_assembler::ImplHandle::prepareExtension(
         m_state->throwAssemblerInvariant("extension method {} must be public", name);
 
     if (callSymbol->isInline()) {
-        auto callable = std::make_unique<ExtensionCallable>(callSymbol, callSymbol->callProc());
+        auto callable = std::make_unique<ExtensionCallable>(callSymbol);
         return invoker.initialize(std::move(callable));
     }
 

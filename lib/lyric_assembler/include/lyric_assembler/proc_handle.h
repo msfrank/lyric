@@ -5,7 +5,7 @@
 
 #include "object_state.h"
 #include "block_handle.h"
-#include "code_builder.h"
+#include "proc_builder.h"
 
 namespace lyric_assembler {
 
@@ -26,11 +26,11 @@ namespace lyric_assembler {
 
     public:
         explicit ProcHandle(const lyric_common::SymbolUrl &activation);
-        ProcHandle(const lyric_common::SymbolUrl &activation, const std::vector<tu_uint8> &bytecode);
-        ProcHandle(
-            const lyric_common::SymbolUrl &activation,
-            const std::vector<tu_uint8> &bytecode,
-            int numLocals);
+//        ProcHandle(const lyric_common::SymbolUrl &activation, const std::vector<tu_uint8> &bytecode);
+//        ProcHandle(
+//            const lyric_common::SymbolUrl &activation,
+//            const std::vector<tu_uint8> &bytecode,
+//            int numLocals);
         ProcHandle(const lyric_common::SymbolUrl &activation, ObjectState *state);
         ProcHandle(
             const lyric_common::SymbolUrl &activation,
@@ -40,10 +40,9 @@ namespace lyric_assembler {
             bool hasRestParameter,
             ObjectState *state,
             BlockHandle *parent);
-        ~ProcHandle();
 
         BlockHandle *procBlock();
-        CodeBuilder *procCode();
+        ProcBuilder *procCode();
 
         lyric_common::SymbolUrl getActivation() const;
         int getArity() const;
@@ -70,8 +69,8 @@ namespace lyric_assembler {
         tu_uint8 m_numListParameters;
         tu_uint8 m_numNamedParameters;
         bool m_hasRestParameter;
-        CodeBuilder m_code;
-        BlockHandle *m_block;
+        std::unique_ptr<ProcBuilder> m_code;
+        std::unique_ptr<BlockHandle> m_block;
         int m_numLocals;
         std::vector<ProcLexical> m_lexicals;
         absl::flat_hash_set<lyric_common::TypeDef> m_exitTypes;

@@ -8,6 +8,7 @@ add_library(lyric::lyric_importer ALIAS lyric_importer)
 
 set(LYRIC_IMPORTER_INCLUDES
     include/lyric_importer/action_import.h
+    include/lyric_importer/base_import.h
     include/lyric_importer/call_import.h
     include/lyric_importer/class_import.h
     include/lyric_importer/concept_import.h
@@ -30,6 +31,7 @@ set_target_properties(lyric_importer PROPERTIES PUBLIC_HEADER "${LYRIC_IMPORTER_
 
 target_sources(lyric_importer PRIVATE
     src/action_import.cpp
+    src/base_import.cpp
     src/call_import.cpp
     src/class_import.cpp
     src/concept_import.cpp

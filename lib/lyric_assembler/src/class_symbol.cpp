@@ -665,7 +665,7 @@ lyric_assembler::ClassSymbol::prepareMethod(
     if (!callSymbol->isBound())
         m_state->throwAssemblerInvariant("invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-    auto callable = std::make_unique<MethodCallable>(callSymbol);
+    auto callable = std::make_unique<MethodCallable>(callSymbol, /* isInlined= */ false);
     return invoker.initialize(std::move(callable));
 }
 

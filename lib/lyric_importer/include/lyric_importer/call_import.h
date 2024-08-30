@@ -1,12 +1,13 @@
 #ifndef LYRIC_IMPORTER_CALL_IMPORT_H
 #define LYRIC_IMPORTER_CALL_IMPORT_H
 
+#include "base_import.h"
 #include "importer_types.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class CallImport {
+    class CallImport : public BaseImport {
     public:
         CallImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 callOffset);
 
@@ -41,7 +42,6 @@ namespace lyric_importer {
         std::vector<tu_uint8> getInlineBytecode();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_callOffset;
         absl::Mutex m_lock;
 

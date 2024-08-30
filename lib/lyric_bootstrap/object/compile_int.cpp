@@ -110,7 +110,6 @@ build_core_IntInstance(
         state.addImplExtension("negate", IntArithmeticImpl,
             {
                 make_list_param("lhs", IntType),
-                make_list_param("rhs", IntType),
             },
             code, IntType, true);
     }

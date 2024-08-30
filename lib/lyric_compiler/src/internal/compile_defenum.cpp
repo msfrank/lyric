@@ -1,7 +1,6 @@
 
 #include <absl/strings/match.h>
 
-#include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/impl_handle.h>
@@ -135,8 +134,11 @@ compile_defenum_def(
     TU_ASSIGN_OR_RETURN (bodyType, lyric_compiler::internal::compile_block(
         procHandle->procBlock(), body, moduleEntry));
 
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
+
     // add return instruction
-    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     // validate that body returns the expected type
     bool isReturnable;
@@ -228,8 +230,9 @@ compile_defenum_base_init(
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
 
-    auto *code = procHandle->procCode();
     auto *ctorBlock = procHandle->procBlock();
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
 
     // find the superenum ctor
     lyric_assembler::ConstructableInvoker superCtor;
@@ -239,7 +242,7 @@ compile_defenum_base_init(
     TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
 
     // load the uninitialized class onto the top of the stack
-    TU_RETURN_IF_NOT_OK (code->loadSynthetic(lyric_assembler::SyntheticType::THIS));
+    TU_RETURN_IF_NOT_OK (fragment->loadThis());
 
     // call super ctor
     TU_RETURN_IF_STATUS (superCtor.invoke(ctorBlock, reifier, 0));
@@ -253,7 +256,7 @@ compile_defenum_base_init(
     TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << baseEnum->getSymbolUrl();
 
     // add return instruction
-    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     if (!baseEnum->isCompletelyInitialized())
         baseBlock->throwAssemblerInvariant("enum {} is not completely initialized",
@@ -278,8 +281,9 @@ compile_defenum_base_default_init(
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
 
-    auto *code = procHandle->procCode();
     auto *ctorBlock = procHandle->procBlock();
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
 
     // find the superenum ctor
     lyric_assembler::ConstructableInvoker superCtor;
@@ -289,7 +293,7 @@ compile_defenum_base_default_init(
     TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
 
     // load the uninitialized enum onto the top of the stack
-    TU_RETURN_IF_NOT_OK (code->loadSynthetic(lyric_assembler::SyntheticType::THIS));
+    TU_RETURN_IF_NOT_OK (fragment->loadThis());
 
     // call super ctor
     TU_RETURN_IF_STATUS (superCtor.invoke(ctorBlock, reifier, 0));
@@ -297,7 +301,7 @@ compile_defenum_base_default_init(
     TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << baseEnum->getSymbolUrl();
 
     // add return instruction
-    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     if (!baseEnum->isCompletelyInitialized())
         baseBlock->throwAssemblerInvariant("enum {} is not completely initialized",
@@ -324,8 +328,9 @@ compile_defenum_case_init(
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
 
-    auto *code = procHandle->procCode();
     auto *ctorBlock = procHandle->procBlock();
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
 
     // find the superenum ctor
     lyric_assembler::ConstructableInvoker superCtor;
@@ -335,7 +340,7 @@ compile_defenum_case_init(
     TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
 
     // load the uninitialized enum onto the top of the stack
-    TU_RETURN_IF_NOT_OK (code->loadSynthetic(lyric_assembler::SyntheticType::THIS));
+    TU_RETURN_IF_NOT_OK (fragment->loadThis());
 
     // place arguments
     TU_RETURN_IF_NOT_OK (lyric_compiler::internal::compile_placement(
@@ -347,7 +352,7 @@ compile_defenum_case_init(
     TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << caseEnum->getSymbolUrl();
 
     // add return instruction
-    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     if (!caseEnum->isCompletelyInitialized())
         caseBlock->throwAssemblerInvariant("enum {} is not completely initialized",
@@ -455,8 +460,11 @@ compile_defenum_impl_def(
     TU_ASSIGN_OR_RETURN (bodyType, lyric_compiler::internal::compile_block(
         procHandle->procBlock(), body, moduleEntry));
 
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
+
     // add return instruction
-    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     // validate that body returns the expected type
     bool isReturnable;

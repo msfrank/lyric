@@ -10,7 +10,6 @@
 #include "block_handle.h"
 #include "call_symbol.h"
 #include "class_symbol.h"
-#include "code_builder.h"
 #include "enum_symbol.h"
 #include "instance_symbol.h"
 #include "struct_symbol.h"
@@ -21,10 +20,7 @@ namespace lyric_assembler {
 
     public:
         CtorConstructable();
-        CtorConstructable(CallSymbol *ctor, ClassSymbol *symbol);
-        CtorConstructable(CallSymbol *ctor, EnumSymbol *symbol);
-        CtorConstructable(CallSymbol *ctor, InstanceSymbol *symbol);
-        CtorConstructable(CallSymbol *ctor, StructSymbol *symbol);
+        CtorConstructable(CallSymbol *ctorSymbol, AbstractSymbol *newSymbol);
 
         bool isValid() const;
 
@@ -48,13 +44,8 @@ namespace lyric_assembler {
             tu_uint8 flags) override;
 
     private:
-        CallSymbol *m_ctor;
-        uint8_t m_newType;
-        uint32_t m_newAddress;
-        CallAddress m_ctorAddress;
-        lyric_common::TypeDef m_ctorType;
-
-        CtorConstructable(CallSymbol *ctor);
+        CallSymbol *m_ctorSymbol;
+        AbstractSymbol *m_newSymbol;
 
         void checkValid() const;
     };

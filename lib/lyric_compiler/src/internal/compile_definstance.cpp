@@ -122,8 +122,9 @@ compile_definstance_init(
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
 
-    auto *code = procHandle->procCode();
     auto *ctorBlock = procHandle->procBlock();
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
 
     // find the superinstance ctor
     lyric_assembler::ConstructableInvoker superCtor;
@@ -133,7 +134,7 @@ compile_definstance_init(
     TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
 
     // load the uninitialized instance onto the top of the stack
-    TU_RETURN_IF_NOT_OK (code->loadSynthetic(lyric_assembler::SyntheticType::THIS));
+    TU_RETURN_IF_NOT_OK (fragment->loadThis());
 
     // call super ctor
     TU_RETURN_IF_STATUS (superCtor.invoke(ctorBlock, reifier, 0));
@@ -165,10 +166,11 @@ compile_definstance_init(
         auto *initializerCall = cast_symbol_to_call(symbol);
 
         // load $this onto the top of the stack
-        TU_RETURN_IF_NOT_OK (code->loadSynthetic(lyric_assembler::SyntheticType::THIS));
+        TU_RETURN_IF_NOT_OK (fragment->loadThis());
 
         // invoke initializer to place default value onto the top of the stack
-        auto callable = std::make_unique<lyric_assembler::FunctionCallable>(initializerCall);
+        auto callable = std::make_unique<lyric_assembler::FunctionCallable>(
+            initializerCall, /* isInlined= */ false);
         lyric_assembler::CallableInvoker invoker;
         TU_RETURN_IF_NOT_OK (invoker.initialize(std::move(callable)));
         lyric_typing::CallsiteReifier initializerReifier(typeSystem);
@@ -176,7 +178,7 @@ compile_definstance_init(
         TU_RETURN_IF_STATUS (invoker.invoke(ctorBlock, initializerReifier));
 
         // store default value in instance field
-        TU_RETURN_IF_NOT_OK (ctorBlock->store(fieldRef));
+        TU_RETURN_IF_NOT_OK (ctorBlock->store(fieldRef, /* initialStore= */ true));
 
         // mark member as initialized
         TU_RETURN_IF_NOT_OK (instanceSymbol->setMemberInitialized(memberName));
@@ -185,7 +187,7 @@ compile_definstance_init(
     TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << instanceSymbol->getSymbolUrl();
 
     // add return instruction
-    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     if (!instanceSymbol->isCompletelyInitialized())
         instanceBlock->throwAssemblerInvariant("instance {} is not completely initialized",
@@ -267,12 +269,16 @@ compile_definstance_def(
     auto body = walker.getChild(1);
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnType));
+
     lyric_common::TypeDef bodyType;
     TU_ASSIGN_OR_RETURN (bodyType, lyric_compiler::internal::compile_block(
         procHandle->procBlock(), body, moduleEntry));
 
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
+
     // add return instruction
-    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     // validate that body returns the expected type
     bool isReturnable;
@@ -361,8 +367,11 @@ compile_definstance_impl_def(
     TU_ASSIGN_OR_RETURN (bodyType, lyric_compiler::internal::compile_block(
         procHandle->procBlock(), body, moduleEntry));
 
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
+
     // add return instruction
-    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     // validate that body returns the expected type
     bool isReturnable;

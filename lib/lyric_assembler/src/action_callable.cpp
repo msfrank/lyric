@@ -5,22 +5,25 @@
 #include <lyric_assembler/template_handle.h>
 
 lyric_assembler::ActionCallable::ActionCallable()
-    : m_action(nullptr)
+    : m_actionSymbol(nullptr),
+      m_conceptSymbol(nullptr)
 {
 }
 
-lyric_assembler::ActionCallable::ActionCallable(ActionSymbol *action, const ConceptAddress &address)
-    : m_action(action),
-      m_address(address)
+lyric_assembler::ActionCallable::ActionCallable(
+    ActionSymbol *actionSymbol,
+    ConceptSymbol *conceptSymbol)
+    : m_actionSymbol(actionSymbol),
+      m_conceptSymbol(conceptSymbol)
 {
-    TU_ASSERT (m_action != nullptr);
-    TU_ASSERT (m_address.isValid());
+    TU_ASSERT (m_actionSymbol != nullptr);
+    TU_ASSERT (m_conceptSymbol != nullptr);
 }
 
 bool
 lyric_assembler::ActionCallable::isValid() const
 {
-    return m_action != nullptr;
+    return m_actionSymbol != nullptr && m_conceptSymbol != nullptr;
 }
 
 void
@@ -35,56 +38,56 @@ lyric_assembler::TemplateHandle *
 lyric_assembler::ActionCallable::getTemplate() const
 {
     checkValid();
-    return m_action->actionTemplate();
+    return m_actionSymbol->actionTemplate();
 }
 
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::ActionCallable::listPlacementBegin() const
 {
     checkValid();
-    return m_action->listPlacementBegin();
+    return m_actionSymbol->listPlacementBegin();
 }
 
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::ActionCallable::listPlacementEnd() const
 {
     checkValid();
-    return m_action->listPlacementEnd();
+    return m_actionSymbol->listPlacementEnd();
 }
 
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::ActionCallable::namedPlacementBegin() const
 {
     checkValid();
-    return m_action->namedPlacementBegin();
+    return m_actionSymbol->namedPlacementBegin();
 }
 
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::ActionCallable::namedPlacementEnd() const
 {
     checkValid();
-    return m_action->namedPlacementEnd();
+    return m_actionSymbol->namedPlacementEnd();
 }
 
 const lyric_assembler::Parameter *
 lyric_assembler::ActionCallable::restPlacement() const
 {
     checkValid();
-    return m_action->restPlacement();
+    return m_actionSymbol->restPlacement();
 }
 
 bool
 lyric_assembler::ActionCallable::hasInitializer(const std::string &name) const
 {
     checkValid();
-    return m_action->hasInitializer(name);
+    return m_actionSymbol->hasInitializer(name);
 }
 
 lyric_common::SymbolUrl
 lyric_assembler::ActionCallable::getInitializer(const std::string &name) const
 {
     checkValid();
-    return m_action->getInitializer(name);
+    return m_actionSymbol->getInitializer(name);
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
@@ -98,17 +101,10 @@ lyric_assembler::ActionCallable::invoke(BlockHandle *block, const AbstractCallsi
             tempo_tracing::LogSeverity::kError,
             "too many call arguments");
 
-    m_action->touch();
-
     auto *code = block->blockCode();
+    auto *fragment = code->rootFragment();
 
-    auto status = code->loadConcept(m_address);
-    if (!status.isOk())
-        return status;
-
-    status = code->callConcept(m_action->getAddress(), placementSize);
-    if (!status.isOk())
-        return status;
-
-    return reifier.reifyResult(m_action->getReturnType());
+    TU_RETURN_IF_NOT_OK (fragment->loadDescriptor(m_conceptSymbol));
+    TU_RETURN_IF_NOT_OK (fragment->callConcept(m_actionSymbol, placementSize, 0));
+    return reifier.reifyResult(m_actionSymbol->getReturnType());
 }

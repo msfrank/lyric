@@ -10,19 +10,22 @@ namespace lyric_assembler {
 
     class ProcBuilder {
     public:
-        explicit ProcBuilder(ProcHandle *procHandle);
+        ProcBuilder(ProcHandle *procHandle, ObjectState *state);
 
         ProcHandle *procHandle() const;
         CodeFragment *rootFragment() const;
         ObjectState *objectState() const;
 
+        absl::flat_hash_set<tu_uint32> getTargetsForLabel(std::string_view labelName) const;
+        std::string getLabelForTarget(tu_uint32 targetId) const;
+
         tempo_utils::Status build(lyric_object::BytecodeBuilder &bytecodeBuilder) const;
 
     private:
         ProcHandle *m_procHandle;
-        std::unique_ptr<CodeFragment> m_rootFragment;
         ObjectState *m_state;
-        tu_uint32 m_nextTargetId;
+        std::unique_ptr<CodeFragment> m_rootFragment;
+        tu_uint32 m_nextId;
 
         struct LabelTargetSet {
             absl::flat_hash_set<tu_uint32> targets;
@@ -34,7 +37,7 @@ namespace lyric_assembler {
         };
         absl::flat_hash_map<tu_uint32,JumpLabel> m_jumpLabels;
 
-        tempo_utils::Status appendLabel(std::string_view labelName);
+        tempo_utils::Result<std::string> makeLabel(std::string_view userLabel = {});
         tempo_utils::Result<tu_uint32> makeJump();
         tempo_utils::Status patchTarget(tu_uint32 targetId, std::string_view labelName);
 

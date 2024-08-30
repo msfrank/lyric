@@ -47,9 +47,9 @@ namespace lyric_assembler {
 
     private:
         InvokeType m_type;
-        CallSymbol *m_call;
-        ProcHandle *m_proc;
-        ExistentialSymbol *m_existential;
+        CallSymbol *m_callSymbol;
+        ProcHandle *m_procHandle;
+        ExistentialSymbol *m_existentialSymbol;
 
         void checkValid() const;
     };

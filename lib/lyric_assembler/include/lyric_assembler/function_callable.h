@@ -24,8 +24,7 @@ namespace lyric_assembler {
 
     public:
         FunctionCallable();
-        explicit FunctionCallable(CallSymbol *call);
-        FunctionCallable(CallSymbol *call, ProcHandle *proc);
+        explicit FunctionCallable(CallSymbol *callSymbol, bool isInlined);
 
         bool isValid() const;
 
@@ -44,8 +43,7 @@ namespace lyric_assembler {
 
     private:
         InvokeType m_type;
-        CallSymbol *m_call;
-        ProcHandle *m_proc;
+        CallSymbol *m_callSymbol;
 
         void checkValid() const;
     };

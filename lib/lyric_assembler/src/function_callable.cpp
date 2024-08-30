@@ -1,30 +1,22 @@
 
-#include <lyric_assembler/function_callable.h>
 #include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/function_callable.h>
+#include <lyric_assembler/internal/call_inline.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/template_handle.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_assembler::FunctionCallable::FunctionCallable()
-    : m_type(InvokeType::INVALID), m_call(nullptr), m_proc(nullptr)
+    : m_type(InvokeType::INVALID),
+      m_callSymbol(nullptr)
 {
 }
 
-lyric_assembler::FunctionCallable::FunctionCallable(CallSymbol *call)
-    : m_type(InvokeType::STATIC),
-      m_call(call),
-      m_proc(nullptr)
+lyric_assembler::FunctionCallable::FunctionCallable(CallSymbol *callSymbol, bool isInlined)
+    : m_type(isInlined? InvokeType::INLINE : InvokeType::STATIC),
+      m_callSymbol(callSymbol)
 {
-    TU_ASSERT (m_call != nullptr);
-}
-
-lyric_assembler::FunctionCallable::FunctionCallable(CallSymbol *call, ProcHandle *proc)
-    : m_type(InvokeType::INLINE),
-      m_call(call),
-      m_proc(proc)
-{
-    TU_ASSERT (m_call != nullptr);
-    TU_ASSERT (m_proc != nullptr);
+    TU_ASSERT (m_callSymbol != nullptr);
 }
 
 bool
@@ -45,56 +37,56 @@ lyric_assembler::TemplateHandle *
 lyric_assembler::FunctionCallable::getTemplate() const
 {
     checkValid();
-    return m_call->callTemplate();
+    return m_callSymbol->callTemplate();
 }
 
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::FunctionCallable::listPlacementBegin() const
 {
     checkValid();
-    return m_call->listPlacementBegin();
+    return m_callSymbol->listPlacementBegin();
 }
 
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::FunctionCallable::listPlacementEnd() const
 {
     checkValid();
-    return m_call->listPlacementEnd();
+    return m_callSymbol->listPlacementEnd();
 }
 
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::FunctionCallable::namedPlacementBegin() const
 {
     checkValid();
-    return m_call->namedPlacementBegin();
+    return m_callSymbol->namedPlacementBegin();
 }
 
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::FunctionCallable::namedPlacementEnd() const
 {
     checkValid();
-    return m_call->namedPlacementEnd();
+    return m_callSymbol->namedPlacementEnd();
 }
 
 const lyric_assembler::Parameter *
 lyric_assembler::FunctionCallable::restPlacement() const
 {
     checkValid();
-    return m_call->restPlacement();
+    return m_callSymbol->restPlacement();
 }
 
 bool
 lyric_assembler::FunctionCallable::hasInitializer(const std::string &name) const
 {
     checkValid();
-    return m_call->hasInitializer(name);
+    return m_callSymbol->hasInitializer(name);
 }
 
 lyric_common::SymbolUrl
 lyric_assembler::FunctionCallable::getInitializer(const std::string &name) const
 {
     checkValid();
-    return m_call->getInitializer(name);
+    return m_callSymbol->getInitializer(name);
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
@@ -110,28 +102,24 @@ lyric_assembler::FunctionCallable::invoke(BlockHandle *block, const AbstractCall
             tempo_tracing::LogSeverity::kError,
             "too many call arguments");
 
-    auto *code = block->blockCode();
-
     switch (m_type) {
 
         case InvokeType::INLINE: {
-            auto status = code->callInline(m_proc->procCode());
-            if (!status.isOk())
-                return status;
+            TU_RETURN_IF_NOT_OK (internal::call_inline(m_callSymbol, block->blockProc()));
             break;
         }
 
         case InvokeType::STATIC: {
-            m_call->touch();
-            auto status = code->callStatic(m_call->getAddress(), static_cast<uint16_t>(placementSize));
-            if (!status.isOk())
-                return status;
+            auto *blockCode = block->blockCode();
+            auto *fragment = blockCode->rootFragment();
+            TU_RETURN_IF_NOT_OK (fragment->callStatic(m_callSymbol, placementSize, 0));
             break;
         }
 
         case InvokeType::INVALID:
-            TU_UNREACHABLE();
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid callable");
     }
 
-    return reifier.reifyResult(m_call->getReturnType());
+    return reifier.reifyResult(m_callSymbol->getReturnType());
 }

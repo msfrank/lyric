@@ -26,14 +26,14 @@ operation_type_to_concept_type(
         case lyric_schema::LyricAstId::Mul:
         case lyric_schema::LyricAstId::Div:
             if (argList.size() != 2)
-                return lyric_common::TypeDef();
+                return {};
             return lyric_common::TypeDef::forConcrete(
                 state->fundamentalCache()->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Arithmetic),
                 {argList[0], argList[1]});
 
         case lyric_schema::LyricAstId::Neg:
             if (argList.size() != 1)
-                return lyric_common::TypeDef();
+                return {};
             return lyric_common::TypeDef::forConcrete(
                 state->fundamentalCache()->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Arithmetic),
                 {argList[0], argList[0]});
@@ -41,21 +41,21 @@ operation_type_to_concept_type(
         case lyric_schema::LyricAstId::And:
         case lyric_schema::LyricAstId::Or:
             if (argList.size() != 2)
-                return lyric_common::TypeDef();
+                return {};
             return lyric_common::TypeDef::forConcrete(
                 state->fundamentalCache()->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Proposition),
                 {argList[0], argList[1]});
 
         case lyric_schema::LyricAstId::Not:
             if (argList.size() != 1)
-                return lyric_common::TypeDef();
+                return {};
             return lyric_common::TypeDef::forConcrete(
                 state->fundamentalCache()->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Proposition),
                 {argList[0], argList[0]});
 
         case lyric_schema::LyricAstId::IsEq:
             if (argList.size() != 2)
-                return lyric_common::TypeDef();
+                return {};
             return lyric_common::TypeDef::forConcrete(
                 state->fundamentalCache()->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Equality),
                 {argList[0], argList[1]});
@@ -65,13 +65,13 @@ operation_type_to_concept_type(
         case lyric_schema::LyricAstId::IsGt:
         case lyric_schema::LyricAstId::IsGe:
             if (argList.size() != 2)
-                return lyric_common::TypeDef();
+                return {};
             return lyric_common::TypeDef::forConcrete(
                 state->fundamentalCache()->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Comparison),
                 {argList[0], argList[1]});
 
         default:
-            return lyric_common::TypeDef();
+            return {};
     }
 }
 
@@ -223,7 +223,8 @@ compile_is_a(
 
     moduleEntry.checkClassAndChildCountOrThrow(walker, lyric_schema::kLyricAstIsAClass, 2);
 
-    auto *code = block->blockCode();
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
 
     // push lhs expression onto the stack
     lyric_common::TypeDef targetType;
@@ -231,7 +232,7 @@ compile_is_a(
         block, walker.getChild(0), moduleEntry));
 
     // pop expression result and push expression type descriptor onto the stack
-    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_TYPE_OF));
+    TU_RETURN_IF_NOT_OK (fragment->invokeTypeOf());
 
     // resolve isA type
     lyric_typing::TypeSpec isASpec;
@@ -245,9 +246,9 @@ compile_is_a(
     // push isA type descriptor onto the stack
     switch (isAType.getType()) {
         case lyric_common::TypeDefType::Concrete: {
-            lyric_assembler::TypeHandle *typeHandle;
-            TU_ASSIGN_OR_RETURN (typeHandle, state->typeCache()->getOrMakeType(isAType));
-            TU_RETURN_IF_NOT_OK (code->loadType(typeHandle->getAddress()));
+            //lyric_assembler::TypeHandle *typeHandle;
+            //TU_ASSIGN_OR_RETURN (typeHandle, state->typeCache()->getOrMakeType(isAType));
+            TU_RETURN_IF_NOT_OK (fragment->loadType(isAType));
             break;
         }
         default:
@@ -262,31 +263,29 @@ compile_is_a(
     TU_RETURN_IF_NOT_OK (lyric_compiler::internal::match_types(targetType, isAType, walker, block, moduleEntry));
 
     // perform type comparison
-    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_TYPE_CMP));
+    TU_RETURN_IF_NOT_OK (fragment->typeCompare());
 
     // if lhs type equals or extends rhs, then push true onto the stack
-    lyric_assembler::PatchOffset predicateJump;
-    TU_ASSIGN_OR_RETURN (predicateJump, code->jumpIfGreaterThan());
-    TU_RETURN_IF_NOT_OK (code->loadBool(true));
+    lyric_assembler::JumpTarget predicateJump;
+    TU_ASSIGN_OR_RETURN (predicateJump, fragment->jumpIfGreaterThan());
+    TU_RETURN_IF_NOT_OK (fragment->immediateBool(true));
 
-    lyric_assembler::PatchOffset consequentJump;
-    TU_ASSIGN_OR_RETURN (consequentJump, code->jump());
+    lyric_assembler::JumpTarget consequentJump;
+    TU_ASSIGN_OR_RETURN (consequentJump, fragment->unconditionalJump());
 
     // otherwise if lhs does not equal or extend rhs, then push false onto the stack
     lyric_assembler::JumpLabel alternativeEnter;
-    TU_ASSIGN_OR_RETURN (alternativeEnter, code->makeLabel());
-    TU_RETURN_IF_NOT_OK (code->loadBool(false));
+    TU_ASSIGN_OR_RETURN (alternativeEnter, fragment->appendLabel());
+    TU_RETURN_IF_NOT_OK (fragment->immediateBool(false));
 
-    auto alternativeExitResult = code->makeLabel();
-    if (alternativeExitResult.isStatus())
-        return alternativeExitResult.getStatus();
-    auto alternativeExit = alternativeExitResult.getResult();
+    lyric_assembler::JumpLabel alternativeExit;
+    TU_ASSIGN_OR_RETURN (alternativeExit, fragment->appendLabel());
 
     // patch predicate jump to alternative enter label
-    TU_RETURN_IF_NOT_OK (code->patch(predicateJump, alternativeEnter));
+    TU_RETURN_IF_NOT_OK (fragment->patchTarget(predicateJump, alternativeEnter));
 
     // patch consequent jump to alternative exit label
-    TU_RETURN_IF_NOT_OK (code->patch(consequentJump, alternativeExit));
+    TU_RETURN_IF_NOT_OK (fragment->patchTarget(consequentJump, alternativeExit));
 
     // result is always a Bool
     return block->blockState()->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);

@@ -52,6 +52,8 @@ build_core_BoolInstance(
 
     {
         lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_BOOL_CMP));
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfZero(matchDst));
@@ -72,6 +74,8 @@ build_core_BoolInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_BOOL_CMP));
         state.addImplExtension("compare", BoolOrderedImpl,
             {
@@ -82,6 +86,8 @@ build_core_BoolInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_LOGICAL_AND));
         state.addImplExtension("conjunct", BoolPropositionImpl,
             {
@@ -92,6 +98,8 @@ build_core_BoolInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_LOGICAL_OR));
         state.addImplExtension("disjunct", BoolPropositionImpl,
             {
@@ -102,6 +110,7 @@ build_core_BoolInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_LOGICAL_NOT));
         state.addImplExtension("complement", BoolPropositionImpl,
             {

@@ -1,5 +1,4 @@
 
-#include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -17,7 +16,8 @@ lyric_compiler::internal::compile_block(
     TU_ASSERT(walker.isValid());
     moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstBlockClass, 1);
 
-    auto *code = block->blockCode();
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
 
     lyric_common::TypeDef resultType;
 
@@ -25,7 +25,7 @@ lyric_compiler::internal::compile_block(
         TU_ASSIGN_OR_RETURN (resultType, compile_node(block, walker.getChild(i), moduleEntry));
         // discard intermediate expression result
         if (i < last && resultType.getType() != lyric_common::TypeDefType::NoReturn) {
-            code->popValue();
+            TU_RETURN_IF_NOT_OK (fragment->popValue());
         }
     }
 
@@ -49,14 +49,15 @@ lyric_compiler::internal::compile_proc_block(
     TU_ASSIGN_OR_RETURN (proc, callSymbol->defineCall(parameterPack));
 
     auto *block = proc->procBlock();
-    auto *code = proc->procCode();
+    auto *procCode = proc->procCode();
+    auto *fragment = procCode->rootFragment();
 
     // compile the block and determine the body type
     lyric_common::TypeDef bodyType;
     TU_ASSIGN_OR_RETURN (bodyType, compile_block(block, walker, moduleEntry));
 
     // add return instruction
-    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     // finalize the call
     TU_RETURN_IF_NOT_OK (callSymbol->finalizeCall());
@@ -103,14 +104,15 @@ lyric_compiler::internal::compile_proc_block(
     TU_ASSIGN_OR_RETURN (proc, callSymbol->defineCall(parameterPack, returnType));
 
     auto *block = proc->procBlock();
-    auto *code = proc->procCode();
+    auto *procCode = proc->procCode();
+    auto *fragment = procCode->rootFragment();
 
     // compile the block and determine the body type
     lyric_common::TypeDef bodyType;
     TU_ASSIGN_OR_RETURN (bodyType, compile_block(block, walker, moduleEntry));
 
     // add return instruction
-    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     bool isReturnable;
 

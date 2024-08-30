@@ -6,7 +6,6 @@
 #include <lyric_assembler/function_callable.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
-#include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
@@ -28,7 +27,7 @@
 
 lyric_assembler::BlockHandle::BlockHandle(
     ProcHandle *blockProc,
-    CodeBuilder *blockCode,
+    ProcBuilder *blockCode,
     ObjectState *state,
     bool isRoot)
     : m_blockNs(nullptr),
@@ -68,7 +67,7 @@ lyric_assembler::BlockHandle::BlockHandle(
 lyric_assembler::BlockHandle::BlockHandle(
     NamespaceSymbol *blockNs,
     ProcHandle *blockProc,
-    CodeBuilder *blockCode,
+    ProcBuilder *blockCode,
     BlockHandle *parentBlock,
     ObjectState *state,
     bool isRoot)
@@ -91,7 +90,7 @@ lyric_assembler::BlockHandle::BlockHandle(
 
 lyric_assembler::BlockHandle::BlockHandle(
     ProcHandle *blockProc,
-    CodeBuilder *blockCode,
+    ProcBuilder *blockCode,
     BlockHandle *parentBlock,
     ObjectState *state)
     : m_blockNs(nullptr),
@@ -111,7 +110,7 @@ lyric_assembler::BlockHandle::BlockHandle(
 lyric_assembler::BlockHandle::BlockHandle(
     const absl::flat_hash_map<std::string,SymbolBinding> &initialBindings,
     ProcHandle *blockProc,
-    CodeBuilder *blockCode,
+    ProcBuilder *blockCode,
     BlockHandle *parentBlock,
     ObjectState *state)
     : m_blockNs(nullptr),
@@ -162,7 +161,7 @@ lyric_assembler::BlockHandle::blockProc()
     return m_blockProc;
 }
 
-lyric_assembler::CodeBuilder *
+lyric_assembler::ProcBuilder *
 lyric_assembler::BlockHandle::blockCode()
 {
     return m_blockCode;
@@ -767,67 +766,31 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
 tempo_utils::Status
 lyric_assembler::BlockHandle::load(const DataReference &ref)
 {
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
-    symbol->touch();
-
-    switch (symbol->getSymbolType()) {
-        case SymbolType::ARGUMENT:
-            return m_blockCode->loadArgument(cast_symbol_to_argument(symbol)->getOffset());
-        case SymbolType::LOCAL:
-            return m_blockCode->loadLocal(cast_symbol_to_local(symbol)->getOffset());
-        case SymbolType::LEXICAL:
-            return m_blockCode->loadLexical(cast_symbol_to_lexical(symbol)->getOffset());
-        case SymbolType::FIELD:
-            return m_blockCode->loadField(cast_symbol_to_field(symbol)->getAddress());
-        case SymbolType::STATIC:
-            return m_blockCode->loadStatic(cast_symbol_to_static(symbol)->getAddress());
-        case SymbolType::INSTANCE:
-            return m_blockCode->loadInstance(cast_symbol_to_instance(symbol)->getAddress());
-        case SymbolType::ENUM:
-            return m_blockCode->loadEnum(cast_symbol_to_enum(symbol)->getAddress());
-        case SymbolType::CALL:
-            return m_blockCode->loadCall(cast_symbol_to_call(symbol)->getAddress());
-        case SymbolType::CLASS:
-            return m_blockCode->loadClass(cast_symbol_to_class(symbol)->getAddress());
-        case SymbolType::CONCEPT:
-            return m_blockCode->loadConcept(cast_symbol_to_concept(symbol)->getAddress());
-        case SymbolType::STRUCT:
-            return m_blockCode->loadStruct(cast_symbol_to_struct(symbol)->getAddress());
-        case SymbolType::SYNTHETIC:
-            return m_blockCode->loadSynthetic(cast_symbol_to_synthetic(symbol)->getSyntheticType());
-        default:
-            break;
-    }
-    return logAndContinue(AssemblerCondition::kInvalidBinding,
-        tempo_tracing::LogSeverity::kError,
-        "cannot load data at reference {}", ref.symbolUrl.toString());
+    auto *fragment = m_blockCode->rootFragment();
+    return fragment->loadRef(ref);
 }
 
 tempo_utils::Status
-lyric_assembler::BlockHandle::store(const DataReference &ref)
+lyric_assembler::BlockHandle::store(const DataReference &ref, bool initialStore)
 {
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
-    symbol->touch();
+    auto *fragment = m_blockCode->rootFragment();
 
-    switch (symbol->getSymbolType()) {
-        case SymbolType::ARGUMENT:
-            return m_blockCode->storeArgument(cast_symbol_to_argument(symbol)->getOffset());
-        case SymbolType::LOCAL:
-            return m_blockCode->storeLocal(cast_symbol_to_local(symbol)->getOffset());
-        case SymbolType::LEXICAL:
-            return m_blockCode->storeLexical(cast_symbol_to_lexical(symbol)->getOffset());
-        case SymbolType::FIELD:
-            return m_blockCode->storeField(cast_symbol_to_field(symbol)->getAddress());
-        case SymbolType::STATIC:
-            return m_blockCode->storeStatic(cast_symbol_to_static(symbol)->getAddress());
+    switch (ref.referenceType) {
+        case ReferenceType::Variable:
+            return fragment->storeRef(ref);
+        case ReferenceType::Value: {
+            if (initialStore)
+                return fragment->storeRef(ref);
+            [[fallthrough]];
+        }
+        case ReferenceType::Descriptor:
+            return logAndContinue(AssemblerCondition::kInvalidBinding,
+                tempo_tracing::LogSeverity::kError,
+                "cannot store data at reference {}", ref.symbolUrl.toString());
         default:
-            break;
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid data reference");
     }
-    return logAndContinue(AssemblerCondition::kInvalidBinding,
-        tempo_tracing::LogSeverity::kError,
-        "cannot store data at reference {}", ref.symbolUrl.toString());
 }
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
@@ -893,7 +856,7 @@ lyric_assembler::BlockHandle::prepareFunction(const std::string &name, CallableI
     auto *callSymbol = cast_symbol_to_call(symbol);
     callSymbol->touch();
 
-    auto callable = std::make_unique<FunctionCallable>(callSymbol);
+    auto callable = std::make_unique<FunctionCallable>(callSymbol, /* isInlined= */ false);
     return invoker.initialize(std::move(callable));
 }
 

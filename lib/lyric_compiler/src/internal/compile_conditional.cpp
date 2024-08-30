@@ -1,6 +1,5 @@
 #include <tempo_utils/log_stream.h>
 
-#include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_compiler/internal/compile_block.h>
 #include <lyric_compiler/internal/compile_conditional.h>
@@ -23,7 +22,8 @@ lyric_compiler::internal::compile_cond(
     // cond expression must have at least one branch
     moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstCondClass, 1);
 
-    lyric_assembler::CodeBuilder *code = block->blockCode();
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
 
     std::vector<lyric_assembler::CondWhenPatch> patchList;
     lyric_common::TypeDef returnType;  // initially invalid, will be set by first case
@@ -33,10 +33,8 @@ lyric_compiler::internal::compile_cond(
         auto condWhen = walker.getChild(i);
         moduleEntry.checkClassAndChildCountOrThrow(condWhen, lyric_schema::kLyricAstWhenClass, 2);
 
-        auto makeLabelResult = code->makeLabel();
-        if (makeLabelResult.isStatus())
-            return makeLabelResult.getStatus();
-        auto predicateLabel = makeLabelResult.getResult();
+        lyric_assembler::JumpLabel predicateLabel;
+        TU_ASSIGN_OR_RETURN (predicateLabel, fragment->appendLabel());
 
         // evaluate the predicate
         auto predicateResult = compile_expression(block, condWhen.getChild(0), moduleEntry);
@@ -53,10 +51,8 @@ lyric_compiler::internal::compile_cond(
                 tempo_tracing::LogSeverity::kError,
                 "cond predicate must return Bool");
 
-        auto predicateJumpResult = code->jumpIfFalse();
-        if (predicateJumpResult.isStatus())
-            return predicateJumpResult.getStatus();
-        auto predicateJump = predicateJumpResult.getResult();
+        lyric_assembler::JumpTarget predicateJump;
+        TU_ASSIGN_OR_RETURN (predicateJump, fragment->jumpIfFalse());
 
         lyric_assembler::BlockHandle consequent(block->blockProc(), block->blockCode(), block, block->blockState());
 
@@ -66,10 +62,8 @@ lyric_compiler::internal::compile_cond(
             return consequentResult;
         auto consequentType = consequentResult.getResult();
 
-        auto consequentJumpResult = code->jump();
-        if (consequentJumpResult.isStatus())
-            return consequentJumpResult.getStatus();
-        auto consequentJump = consequentJumpResult.getResult();
+        lyric_assembler::JumpTarget consequentJump;
+        TU_ASSIGN_OR_RETURN (consequentJump, fragment->unconditionalJump());
 
         // update the return type
         if (returnType.isValid()) {
@@ -81,15 +75,14 @@ lyric_compiler::internal::compile_cond(
             returnType = consequentType;
         }
 
-        patchList.push_back(lyric_assembler::CondWhenPatch(predicateLabel, predicateJump, consequentJump));
+        patchList.emplace_back(predicateLabel, predicateJump, consequentJump);
     }
 
     tempo_utils::Status status;
 
     // construct the alternative block
-    auto alternativeBlockEnter = code->makeLabel();
-    if (alternativeBlockEnter.isStatus())
-        return alternativeBlockEnter.getStatus();
+    lyric_assembler::JumpLabel alternativeBlockEnter;
+    TU_ASSIGN_OR_RETURN (alternativeBlockEnter, fragment->appendLabel());
 
     lyric_assembler::BlockHandle alternative(block->blockProc(), block->blockCode(), block, block->blockState());
 
@@ -103,9 +96,7 @@ lyric_compiler::internal::compile_cond(
             return alternativeResult.getStatus();
         alternativeType = alternativeResult.getResult();
     } else {
-        status = code->loadNil();
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (fragment->immediateNil());
         // it is intentional that we don't set alternativeType here
     }
 
@@ -122,33 +113,22 @@ lyric_compiler::internal::compile_cond(
         returnType = lyric_common::TypeDef::forUnion({returnType, nilType});
     }
 
-    auto alternativeBlockExit = code->makeLabel();
-    if (alternativeBlockExit.isStatus())
-        return alternativeBlockExit.getStatus();
+    lyric_assembler::JumpLabel alternativeBlockExit;
+    TU_ASSIGN_OR_RETURN (alternativeBlockExit, fragment->appendLabel());
 
     // patch jumps for each expression except the last
     tu_uint32 i = 0;
     for (; i < patchList.size() - 1; i++) {
         auto &condWhenPatch = patchList[i];
         auto &nextPatch = patchList[i + 1];
-        status = code->patch(condWhenPatch.getPredicateJump(), nextPatch.getPredicateLabel());
-        if (!status.isOk())
-            return status;
-
-        status = code->patch(condWhenPatch.getConsequentJump(), alternativeBlockExit.getResult());
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (fragment->patchTarget(condWhenPatch.getPredicateJump(), nextPatch.getPredicateLabel()));
+        TU_RETURN_IF_NOT_OK (fragment->patchTarget(condWhenPatch.getConsequentJump(), alternativeBlockExit));
     }
 
     // patch jumps for the last expression
     auto &lastPatch = patchList[i];
-    status = code->patch(lastPatch.getPredicateJump(), alternativeBlockEnter.getResult());
-    if (!status.isOk())
-        return status;
-
-    status = code->patch(lastPatch.getConsequentJump(), alternativeBlockExit.getResult());
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (fragment->patchTarget(lastPatch.getPredicateJump(), alternativeBlockEnter));
+    TU_RETURN_IF_NOT_OK (fragment->patchTarget(lastPatch.getConsequentJump(), alternativeBlockExit));
 
     return returnType;
 }
@@ -167,7 +147,8 @@ lyric_compiler::internal::compile_if(
     // cond expression must have at least one case
     moduleEntry.checkClassAndChildRangeOrThrow(walker, lyric_schema::kLyricAstIfClass, 1);
 
-    lyric_assembler::CodeBuilder *code = block->blockCode();
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
 
     std::vector<lyric_assembler::CondWhenPatch> patchList;
 
@@ -176,10 +157,8 @@ lyric_compiler::internal::compile_if(
         auto condWhen = walker.getChild(i);
         moduleEntry.checkClassAndChildCountOrThrow(condWhen, lyric_schema::kLyricAstWhenClass, 2);
 
-        auto makeLabelResult = code->makeLabel();
-        if (makeLabelResult.isStatus())
-            return makeLabelResult.getStatus();
-        auto predicateLabel = makeLabelResult.getResult();
+        lyric_assembler::JumpLabel predicateLabel;
+        TU_ASSIGN_OR_RETURN (predicateLabel, fragment->appendLabel());
 
         // evaluate the case predicate
         auto predicateResult = compile_expression(block, condWhen.getChild(0), moduleEntry);
@@ -197,10 +176,8 @@ lyric_compiler::internal::compile_if(
                 tempo_tracing::LogSeverity::kError,
                 "case predicate must return Boolean");
 
-        auto predicateJumpResult = code->jumpIfFalse();
-        if (predicateJumpResult.isStatus())
-            return predicateJumpResult.getStatus();
-        auto predicateJump = predicateJumpResult.getResult();
+        lyric_assembler::JumpTarget predicateJump;
+        TU_ASSIGN_OR_RETURN (predicateJump, fragment->jumpIfFalse());
 
         lyric_assembler::BlockHandle consequent(block->blockProc(), block->blockCode(), block, block->blockState());
 
@@ -211,13 +188,12 @@ lyric_compiler::internal::compile_if(
         auto consequentType = consequentResult.getResult();
 
         // discard intermediate expression result
-        if (consequentType.isValid())
-            code->popValue();
+        if (consequentType.isValid()) {
+            TU_RETURN_IF_NOT_OK (fragment->popValue());
+        }
 
-        auto consequentJumpResult = code->jump();
-        if (consequentJumpResult.isStatus())
-            return consequentJumpResult.getStatus();
-        auto consequentJump = consequentJumpResult.getResult();
+        lyric_assembler::JumpTarget consequentJump;
+        TU_ASSIGN_OR_RETURN (consequentJump, fragment->unconditionalJump());
 
         patchList.push_back(lyric_assembler::CondWhenPatch(predicateLabel, predicateJump, consequentJump));
     }
@@ -225,9 +201,8 @@ lyric_compiler::internal::compile_if(
     tempo_utils::Status status;
 
     // construct the alternative block
-    auto alternativeBlockEnter = code->makeLabel();
-    if (alternativeBlockEnter.isStatus())
-        return alternativeBlockEnter.getStatus();
+    lyric_assembler::JumpLabel alternativeBlockEnter;
+    TU_ASSIGN_OR_RETURN (alternativeBlockEnter, fragment->appendLabel());
 
     lyric_assembler::BlockHandle alternative(block->blockProc(), block->blockCode(), block, block->blockState());
 
@@ -241,37 +216,27 @@ lyric_compiler::internal::compile_if(
         auto alternativeType = alternativeResult.getResult();
 
         // discard intermediate expression result
-        if (alternativeType.isValid())
-            code->popValue();
+        if (alternativeType.isValid()) {
+            TU_RETURN_IF_NOT_OK (fragment->popValue());
+        }
     }
 
-    auto alternativeBlockExit = code->makeLabel();
-    if (alternativeBlockExit.isStatus())
-        return alternativeBlockExit.getStatus();
+    lyric_assembler::JumpLabel alternativeBlockExit;
+    TU_ASSIGN_OR_RETURN (alternativeBlockExit, fragment->appendLabel());
 
     // patch jumps for each expression except the last
     tu_uint32 i = 0;
     for (; i < patchList.size() - 1; i++) {
         auto &casePatch = patchList[i];
         auto &nextCasePatch = patchList[i + 1];
-        status = code->patch(casePatch.getPredicateJump(), nextCasePatch.getPredicateLabel());
-        if (!status.isOk())
-            return status;
-
-        status = code->patch(casePatch.getConsequentJump(), alternativeBlockExit.getResult());
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (fragment->patchTarget(casePatch.getPredicateJump(), nextCasePatch.getPredicateLabel()));
+        TU_RETURN_IF_NOT_OK (fragment->patchTarget(casePatch.getConsequentJump(), alternativeBlockExit));
     }
 
     // patch jumps for the last expression
     auto &lastPatch = patchList[i];
-    status = code->patch(lastPatch.getPredicateJump(), alternativeBlockEnter.getResult());
-    if (!status.isOk())
-        return status;
-
-    status = code->patch(lastPatch.getConsequentJump(), alternativeBlockExit.getResult());
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (fragment->patchTarget(lastPatch.getPredicateJump(), alternativeBlockEnter));
+    TU_RETURN_IF_NOT_OK (fragment->patchTarget(lastPatch.getConsequentJump(), alternativeBlockExit));
 
     return CompilerStatus::ok();
 }

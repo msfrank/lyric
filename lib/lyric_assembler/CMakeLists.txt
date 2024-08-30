@@ -30,7 +30,6 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/callable_invoker.h
     include/lyric_assembler/call_symbol.h
     include/lyric_assembler/class_symbol.h
-    include/lyric_assembler/code_builder.h
     include/lyric_assembler/code_fragment.h
     include/lyric_assembler/concept_symbol.h
     include/lyric_assembler/constructable_invoker.h
@@ -81,7 +80,6 @@ target_sources(lyric_assembler PRIVATE
     src/callable_invoker.cpp
     src/call_symbol.cpp
     src/class_symbol.cpp
-    src/code_builder.cpp
     src/code_fragment.cpp
     src/concept_symbol.cpp
     src/constructable_invoker.cpp
@@ -116,6 +114,10 @@ target_sources(lyric_assembler PRIVATE
     src/type_set.cpp
     src/undeclared_symbol.cpp
 
+    include/lyric_assembler/internal/call_inline.h
+    src/internal/call_inline.cpp
+    include/lyric_assembler/internal/import_proc.h
+    src/internal/import_proc.cpp
     include/lyric_assembler/internal/write_actions.h
     src/internal/write_actions.cpp
     include/lyric_assembler/internal/write_calls.h

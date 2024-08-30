@@ -144,7 +144,8 @@ lyric_compiler::BlockCompilerContext::exit(
         TU_RETURN_IF_NOT_OK (m_driver->popResult());
         if (resultType.getType() != lyric_common::TypeDefType::NoReturn) {
             auto *blockCode = m_block->blockCode();
-            TU_RETURN_IF_NOT_OK (blockCode->popValue());
+            auto *fragment = blockCode->rootFragment();
+            TU_RETURN_IF_NOT_OK (fragment->popValue());
         }
     }
 

@@ -173,24 +173,25 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl linkUrl;
     };
 
-    struct PatchOffset {
-        PatchOffset() : u16(lyric_runtime::INVALID_OFFSET_U16) {};
-        explicit PatchOffset(tu_uint16 offset) : u16(offset) { TU_ASSERT(offset >> 15 == 0); };
-        PatchOffset(const PatchOffset &other) : u16(other.u16) {};
-        bool isValid() const { return u16 != lyric_runtime::INVALID_OFFSET_U16; }
-        tu_uint16 getOffset() const { return u16; };
+    struct JumpTarget {
+        JumpTarget() : m_targetId(lyric_runtime::INVALID_ADDRESS_U32) {};
+        explicit JumpTarget(tu_uint32 targetId) : m_targetId(targetId) { TU_ASSERT(m_targetId != lyric_runtime::INVALID_ADDRESS_U32); };
+        JumpTarget(const JumpTarget &other) : m_targetId(other.m_targetId) {};
+        bool isValid() const { return m_targetId != lyric_runtime::INVALID_ADDRESS_U32; }
+        tu_uint32 getId() const { return m_targetId; };
     private:
-        tu_uint16 u16;
+        tu_uint32 m_targetId;
     };
 
     struct JumpLabel {
-        JumpLabel() : u16(lyric_runtime::INVALID_OFFSET_U16) {};
-        explicit JumpLabel(tu_uint16 offset) : u16(offset) { TU_ASSERT(offset >> 15 == 0); };
-        JumpLabel(const JumpLabel &other) : u16(other.u16) {};
-        bool isValid() const { return u16 != lyric_runtime::INVALID_OFFSET_U16; }
-        tu_uint16 getOffset() const { return u16; };
+        JumpLabel() {};
+        explicit JumpLabel(std::string_view label) : m_label(label) { TU_ASSERT(!m_label.empty()); };
+        JumpLabel(const JumpLabel &other) : m_label(other.m_label) {};
+        bool isValid() const { return !m_label.empty(); };
+        std::string getLabel() const { return m_label; };
+        std::string_view labelView() const { return m_label; };
     private:
-        tu_uint16 u16;
+        std::string m_label;
     };
 
     struct ArgumentOffset {
@@ -551,18 +552,18 @@ namespace lyric_assembler {
         CondWhenPatch();
         CondWhenPatch(
             const JumpLabel &predicateLabel,
-            const PatchOffset &predicateJump,
-            const PatchOffset &consequentJump);
+            const JumpTarget &predicateJump,
+            const JumpTarget &consequentJump);
         CondWhenPatch(const CondWhenPatch &other);
 
         JumpLabel getPredicateLabel() const;
-        PatchOffset getPredicateJump() const;
-        PatchOffset getConsequentJump() const;
+        JumpTarget getPredicateJump() const;
+        JumpTarget getConsequentJump() const;
 
     private:
         JumpLabel m_predicateLabel;
-        PatchOffset m_predicateJump;
-        PatchOffset m_consequentJump;
+        JumpTarget m_predicateJump;
+        JumpTarget m_consequentJump;
     };
 
     class MatchWhenPatch {
@@ -571,22 +572,22 @@ namespace lyric_assembler {
         MatchWhenPatch(
             const lyric_common::TypeDef &predicateType,
             const JumpLabel &predicateLabel,
-            const PatchOffset &predicateJump,
-            const PatchOffset &consequentJump,
+            const JumpTarget &predicateJump,
+            const JumpTarget &consequentJump,
             const lyric_common::TypeDef &consequentType);
         MatchWhenPatch(const MatchWhenPatch &other);
 
         lyric_common::TypeDef getPredicateType() const;
         JumpLabel getPredicateLabel() const;
-        PatchOffset getPredicateJump() const;
-        PatchOffset getConsequentJump() const;
+        JumpTarget getPredicateJump() const;
+        JumpTarget getConsequentJump() const;
         lyric_common::TypeDef getConsequentType() const;
 
     private:
         lyric_common::TypeDef m_predicateType;
         JumpLabel m_predicateLabel;
-        PatchOffset m_predicateJump;
-        PatchOffset m_consequentJump;
+        JumpTarget m_predicateJump;
+        JumpTarget m_consequentJump;
         lyric_common::TypeDef m_consequentType;
 
     };

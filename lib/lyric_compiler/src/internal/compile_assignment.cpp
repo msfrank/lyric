@@ -1,7 +1,6 @@
 
 #include <lyric_assembler/argument_variable.h>
 #include <lyric_assembler/class_symbol.h>
-#include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/lexical_variable.h>
@@ -79,9 +78,9 @@ compile_set_name(
             "value {} cannot be assigned to", identifier);
     auto targetType = ref.typeDef;
 
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
-    symbol->touch();
+//    lyric_assembler::AbstractSymbol *symbol;
+//    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(ref.symbolUrl));
+//    symbol->touch();
 
     // evaluation of the rhs is expected to push the value onto the stack
     lyric_common::TypeDef rvalueType;
@@ -111,30 +110,41 @@ compile_set_name(
             tempo_tracing::LogSeverity::kError,
             "target does not match rvalue type {}", rvalueType.toString());
 
-    // store the result of evaluating the rhs
-    switch (symbol->getSymbolType()) {
-        case lyric_assembler::SymbolType::ARGUMENT: {
-            auto *argSymbol = lyric_assembler::cast_symbol_to_argument(symbol);
-            return block->blockCode()->storeArgument(argSymbol->getOffset());
-        }
-        case lyric_assembler::SymbolType::LOCAL: {
-            auto *localSymbol = lyric_assembler::cast_symbol_to_local(symbol);
-            return block->blockCode()->storeLocal(localSymbol->getOffset());
-        }
-        case lyric_assembler::SymbolType::LEXICAL: {
-            auto *lexicalSymbol = lyric_assembler::cast_symbol_to_lexical(symbol);
-            return block->blockCode()->storeLexical(lexicalSymbol->getOffset());
-        }
-        case lyric_assembler::SymbolType::STATIC: {
-            auto *staticSymbol = lyric_assembler::cast_symbol_to_static(symbol);
-            return block->blockCode()->storeStatic(staticSymbol->getAddress());
-        }
-        default:
-            return moduleEntry.logAndContinue(name.getLocation(),
-                lyric_compiler::CompilerCondition::kSyntaxError,
-                tempo_tracing::LogSeverity::kError,
-                "assignment to {} failed; symbol is and invalid target", identifier);
+//    // store the result of evaluating the rhs
+//    switch (symbol->getSymbolType()) {
+//        case lyric_assembler::SymbolType::ARGUMENT: {
+//            auto *argSymbol = lyric_assembler::cast_symbol_to_argument(symbol);
+//            return block->blockCode()->storeArgument(argSymbol->getOffset());
+//        }
+//        case lyric_assembler::SymbolType::LOCAL: {
+//            auto *localSymbol = lyric_assembler::cast_symbol_to_local(symbol);
+//            return block->blockCode()->storeLocal(localSymbol->getOffset());
+//        }
+//        case lyric_assembler::SymbolType::LEXICAL: {
+//            auto *lexicalSymbol = lyric_assembler::cast_symbol_to_lexical(symbol);
+//            return block->blockCode()->storeLexical(lexicalSymbol->getOffset());
+//        }
+//        case lyric_assembler::SymbolType::STATIC: {
+//            auto *staticSymbol = lyric_assembler::cast_symbol_to_static(symbol);
+//            return block->blockCode()->storeStatic(staticSymbol->getAddress());
+//        }
+//        default:
+//            return moduleEntry.logAndContinue(name.getLocation(),
+//                lyric_compiler::CompilerCondition::kSyntaxError,
+//                tempo_tracing::LogSeverity::kError,
+//                "assignment to {} failed; symbol is and invalid target", identifier);
+//    }
+
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+    auto status = fragment->storeRef(ref);
+    if (status.notOk()) {
+        return moduleEntry.logAndContinue(name.getLocation(),
+            lyric_compiler::CompilerCondition::kSyntaxError,
+            tempo_tracing::LogSeverity::kError,
+            "assignment to {} failed; {}", identifier, status.toString());
     }
+    return status;
 }
 
 static tempo_utils::Status
@@ -184,7 +194,8 @@ compile_set_member(
             moduleEntry.throwCompilerInvariant("failed to parse target; unexpected parser node");
     }
 
-    auto *code = block->blockCode();
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
 
     // dereference members until the receiver is on the top of the stack
     for (++i; i < target.numChildren() - 1; i++) {
@@ -198,9 +209,7 @@ compile_set_member(
         receiverType = resolveMemberResult.getResult();
 
         // drop the previous target from the stack
-        auto status = code->rdropValue(1);
-        if (!status.isOk())
-            return status;
+        TU_RETURN_IF_NOT_OK (fragment->rdropValue(1));
 
         thisReceiver = false;   // unset isReceiver after first iteration
     }
@@ -324,9 +333,7 @@ compile_set_member(
             "member does not match rvalue type {}", rvalueType.toString());
 
     // store expression result
-    auto status = block->store(ref);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (block->store(ref, /* initialStore= */ isCtor));
 
     // mark member as initialized if the member was not initialized before
     if (!isInitialized) {

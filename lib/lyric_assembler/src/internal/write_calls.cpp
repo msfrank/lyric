@@ -23,10 +23,13 @@ write_call(
     std::vector<uint8_t> &bytecode)
 {
     auto index = static_cast<tu_uint32>(calls_vector.size());
+    auto bytecodeOffset = static_cast<tu_uint32>(bytecode.size());
 
     auto *proc = callSymbol->callProc();
     auto *code = proc->procCode();
-    auto bytecodeOffset = static_cast<tu_uint32>(bytecode.size());
+
+    lyric_object::BytecodeBuilder bytecodeBuilder;
+    TU_RETURN_IF_NOT_OK (code->build(bytecodeBuilder));
 
     // build the proc prologue
     tempo_utils::BytesAppender prologue;
@@ -41,12 +44,12 @@ write_call(
 
     // build the proc header
     tempo_utils::BytesAppender header;
-    header.appendU32(prologue.getSize() + code->bytecodeSize());
+    header.appendU32(prologue.getSize() + bytecodeBuilder.bytecodeSize());
 
     // write the proc to the bytecode
     bytecode.insert(bytecode.cend(), header.bytesBegin(), header.bytesEnd());
     bytecode.insert(bytecode.cend(), prologue.bytesBegin(), prologue.bytesEnd());
-    bytecode.insert(bytecode.cend(), code->bytecodeBegin(), code->bytecodeEnd());
+    bytecode.insert(bytecode.cend(), bytecodeBuilder.bytecodeBegin(), bytecodeBuilder.bytecodeEnd());
 
     // add call descriptor
     auto callPathString = callSymbol->getSymbolUrl().getSymbolPath().toString();

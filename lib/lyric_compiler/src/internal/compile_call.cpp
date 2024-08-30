@@ -88,7 +88,8 @@ lyric_compiler::internal::compile_placement(
                         bindingBlock->throwAssemblerInvariant("invalid initializer {}", initializerUrl.toString());
                     auto *initSymbol = cast_symbol_to_call(symbol);
 
-                    auto callable = std::make_unique<lyric_assembler::FunctionCallable>(initSymbol);
+                    auto callable = std::make_unique<lyric_assembler::FunctionCallable>(
+                        initSymbol, /* isInlined= */ false);
                     lyric_assembler::CallableInvoker invoker;
                     TU_RETURN_IF_NOT_OK (invoker.initialize(std::move(callable)));
 
@@ -149,7 +150,8 @@ lyric_compiler::internal::compile_placement(
                         bindingBlock->throwAssemblerInvariant("invalid initializer {}", initializerUrl.toString());
                     auto *initSymbol = cast_symbol_to_call(symbol);
 
-                    auto callable = std::make_unique<lyric_assembler::FunctionCallable>(initSymbol);
+                    auto callable = std::make_unique<lyric_assembler::FunctionCallable>(
+                        initSymbol, /* isInlined= */ false);
                     lyric_assembler::CallableInvoker invoker;
                     TU_RETURN_IF_NOT_OK (invoker.initialize(std::move(callable)));
 
@@ -203,12 +205,10 @@ lyric_compiler::internal::compile_placement(
                     TU_ASSIGN_OR_RETURN (evSym, symbolCache->getOrImportSymbol(evUrl));
                     if (evSym->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
                         bindingBlock->throwAssemblerInvariant("invalid ctx symbol {}", evUrl.toString());
-                    auto *instance = cast_symbol_to_instance(evSym);
-                    instance->touch();
-                    auto *code = invokeBlock->blockCode();
-                    auto status = code->loadInstance(instance->getAddress());
-                    if (!status.isOk())
-                            return status;
+                    auto *instanceSymbol = cast_symbol_to_instance(evSym);
+                    auto *blockCode = invokeBlock->blockCode();
+                    auto *fragment = blockCode->rootFragment();
+                    TU_RETURN_IF_NOT_OK (fragment->loadData(instanceSymbol));
                     usedEvidence.insert(evUrl);
                 }
                 break;

@@ -3,6 +3,7 @@
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
+#include <lyric_assembler/internal/import_proc.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/synthetic_symbol.h>
@@ -280,8 +281,11 @@ lyric_assembler::CallSymbol::load()
     }
 
     if (priv->mode == lyric_object::CallMode::Inline) {
+        auto moduleImport = m_callImport->getModuleImport();
         auto bytecode = m_callImport->getInlineBytecode();
-        priv->proc = std::make_unique<ProcHandle>(m_callUrl, bytecode);
+        lyric_object::BytecodeIterator it(bytecode.data(), bytecode.size());
+        TU_RAISE_IF_NOT_OK (internal::import_proc(
+            moduleImport->getLocation(), moduleImport->getObject(), m_callUrl, it, priv->proc, m_state));
     }
 
     return priv.release();

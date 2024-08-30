@@ -105,6 +105,7 @@ namespace lyric_assembler {
             tu_uint16 &labelOffset,
             tu_uint32 &targetId,
             tu_uint16 &patchOffset) const override;
+        AbstractSymbol *getSymbol() const;
     private:
         AbstractSymbol *m_symbol;
     };
@@ -119,8 +120,23 @@ namespace lyric_assembler {
             tu_uint16 &labelOffset,
             tu_uint32 &targetId,
             tu_uint16 &patchOffset) const override;
+        AbstractSymbol *getSymbol() const;
     private:
         AbstractSymbol *m_symbol;
+    };
+
+    class LoadSyntheticInstruction: public AbstractInstruction {
+    public:
+        explicit LoadSyntheticInstruction(SyntheticType type);
+        InstructionType getType() const override;
+        tempo_utils::Status apply(
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+    private:
+        SyntheticType m_type;
     };
 
     class LoadTypeInstruction: public AbstractInstruction {
@@ -147,6 +163,7 @@ namespace lyric_assembler {
             tu_uint16 &labelOffset,
             tu_uint32 &targetId,
             tu_uint16 &patchOffset) const override;
+        AbstractSymbol *getSymbol() const;
     private:
         AbstractSymbol *m_symbol;
     };
@@ -192,6 +209,7 @@ namespace lyric_assembler {
             tu_uint16 &labelOffset,
             tu_uint32 &targetId,
             tu_uint16 &patchOffset) const override;
+        lyric_object::Opcode getOpcode() const;
         tu_uint32 getTargetId() const;
     private:
         lyric_object::Opcode m_opcode;

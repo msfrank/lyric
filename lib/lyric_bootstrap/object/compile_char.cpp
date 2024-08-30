@@ -46,6 +46,8 @@ build_core_CharInstance(
 
     {
         lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CHR_CMP));
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfLessThan(matchDst));
@@ -65,6 +67,8 @@ build_core_CharInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CHR_CMP));
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfGreaterThan(matchDst));
@@ -84,6 +88,8 @@ build_core_CharInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CHR_CMP));
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfLessOrEqual(matchDst));
@@ -103,6 +109,8 @@ build_core_CharInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CHR_CMP));
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfGreaterOrEqual(matchDst));
@@ -122,6 +130,8 @@ build_core_CharInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CHR_CMP));
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfZero(matchDst));
@@ -141,6 +151,8 @@ build_core_CharInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
+        TU_RAISE_IF_NOT_OK(code.loadArgument(0));
+        TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CHR_CMP));
         state.addImplExtension("compare", CharOrderedImpl,
             {

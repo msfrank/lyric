@@ -208,7 +208,7 @@ lyric_assembler::StaticSymbol::prepareInitializer(CallableInvoker &invoker)
         m_state->throwAssemblerInvariant("invalid call symbol {}", initializerUrl.toString());
     auto *init = cast_symbol_to_call(initSym);
 
-    auto callable = std::make_unique<FunctionCallable>(init);
+    auto callable = std::make_unique<FunctionCallable>(init, /* isInlined= */ false);
     return invoker.initialize(std::move(callable));
 }
 

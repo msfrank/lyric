@@ -3,7 +3,6 @@
 #include <absl/container/flat_hash_set.h>
 
 #include <lyric_assembler/call_symbol.h>
-#include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/ctor_constructable.h>
 #include <lyric_assembler/enum_symbol.h>
@@ -577,7 +576,7 @@ lyric_assembler::EnumSymbol::prepareMethod(
     if (!callSymbol->isBound())
         m_state->throwAssemblerInvariant("invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
-    auto callable = std::make_unique<MethodCallable>(callSymbol);
+    auto callable = std::make_unique<MethodCallable>(callSymbol, /* isInlined= */ false);
     return invoker.initialize(std::move(callable));
 }
 

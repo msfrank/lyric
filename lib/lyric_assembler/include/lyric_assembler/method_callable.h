@@ -7,7 +7,6 @@
 #include "abstract_callable.h"
 #include "assembler_result.h"
 #include "assembler_types.h"
-#include "code_builder.h"
 
 namespace lyric_assembler {
 
@@ -25,8 +24,7 @@ namespace lyric_assembler {
 
     public:
         MethodCallable();
-        MethodCallable(CallSymbol *call);
-        MethodCallable(CallSymbol *call, ProcHandle *proc);
+        MethodCallable(CallSymbol *callSymbol, bool isInlined);
 
         bool isValid() const;
 
@@ -45,9 +43,7 @@ namespace lyric_assembler {
 
     private:
         InvokeType m_type;
-        CallSymbol *m_call;
-        ProcHandle *m_proc;
-        SymbolBinding m_var;
+        CallSymbol *m_callSymbol;
 
         std::vector<lyric_object::Parameter> m_parameters;
         Option<lyric_object::Parameter> m_rest;

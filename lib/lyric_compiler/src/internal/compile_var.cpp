@@ -63,5 +63,5 @@ lyric_compiler::internal::compile_var(
         return declareVariableResult.getStatus();
     auto var = declareVariableResult.getResult();
 
-    return block->store(var);
+    return block->store(var, /* initialStore= */ true);
 }

@@ -24,12 +24,8 @@ namespace lyric_assembler {
 
     public:
         ExtensionCallable();
-        ExtensionCallable(CallSymbol *callSymbol, ProcHandle *procHandle);
+        explicit ExtensionCallable(CallSymbol *callSymbol);
         ExtensionCallable(CallSymbol *callSymbol, const DataReference &implRef);
-//        ExtensionInvoker(
-//            ConceptSymbol *conceptSymbol,
-//            ActionSymbol *actionSymbol,
-//            const DataReference &ref);
 
         bool isValid() const;
 
@@ -48,10 +44,7 @@ namespace lyric_assembler {
 
     private:
         InvokeType m_type;
-        CallSymbol *m_call;
-        ProcHandle *m_proc;
-        //ConceptSymbol *m_concept;
-        //ActionSymbol *m_action;
+        CallSymbol *m_callSymbol;
         DataReference m_implRef;
 
         std::vector<lyric_object::Parameter> m_parameters;

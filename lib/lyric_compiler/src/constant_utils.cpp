@@ -18,7 +18,9 @@ lyric_compiler::compile_nil(
     CompilerScanDriver *driver)
 {
     auto *fundamentalCache = block->blockState()->fundamentalCache();
-    TU_RETURN_IF_NOT_OK (block->blockCode()->loadNil());
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+    TU_RETURN_IF_NOT_OK (fragment->immediateNil());
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Nil));
 }
 
@@ -28,7 +30,9 @@ lyric_compiler::compile_undef(
     CompilerScanDriver *driver)
 {
     auto *fundamentalCache = block->blockState()->fundamentalCache();
-    TU_RETURN_IF_NOT_OK (block->blockCode()->loadUndef());
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+    TU_RETURN_IF_NOT_OK (fragment->immediateUndef());
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Undef));
 }
 
@@ -38,7 +42,9 @@ lyric_compiler::compile_true(
     CompilerScanDriver *driver)
 {
     auto *fundamentalCache = block->blockState()->fundamentalCache();
-    TU_RETURN_IF_NOT_OK (block->blockCode()->loadBool(true));
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+    TU_RETURN_IF_NOT_OK (fragment->immediateBool(true));
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool));
 }
 
@@ -48,7 +54,9 @@ lyric_compiler::compile_false(
     CompilerScanDriver *driver)
 {
     auto *fundamentalCache = block->blockState()->fundamentalCache();
-    TU_RETURN_IF_NOT_OK (block->blockCode()->loadBool(false));
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+    TU_RETURN_IF_NOT_OK (fragment->immediateBool(false));
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool));
 }
 
@@ -65,7 +73,9 @@ lyric_compiler::compile_char(
 
     UChar32 chr;
     TU_ASSIGN_OR_RETURN (chr, lyric_parser::parse_char_literal(literalValue));
-    TU_RETURN_IF_NOT_OK (block->blockCode()->loadChar(chr));
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+    TU_RETURN_IF_NOT_OK (fragment->immediateChar(chr));
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Char));
 }
 
@@ -84,7 +94,9 @@ lyric_compiler::compile_integer(
 
     tu_int64 i64;
     TU_ASSIGN_OR_RETURN (i64, lyric_parser::parse_integer_literal(literalValue, base));
-    TU_RETURN_IF_NOT_OK (block->blockCode()->loadInt(i64));
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+    TU_RETURN_IF_NOT_OK (fragment->immediateInt(i64));
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int));
 }
 
@@ -105,7 +117,9 @@ lyric_compiler::compile_float(
 
     double dbl;
     TU_ASSIGN_OR_RETURN (dbl, lyric_parser::parse_float_literal(literalValue, base, notation));
-    TU_RETURN_IF_NOT_OK (block->blockCode()->loadFloat(dbl));
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+    TU_RETURN_IF_NOT_OK (fragment->immediateFloat(dbl));
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float));
 }
 
@@ -117,7 +131,6 @@ lyric_compiler::compile_string(
 {
     auto *state = block->blockState();
     auto *fundamentalCache = state->fundamentalCache();
-    auto *literalCache = state->literalCache();
     auto *symbolCache = state->symbolCache();
 
     std::string literalValue;
@@ -125,11 +138,9 @@ lyric_compiler::compile_string(
 
     std::string str;
     TU_ASSIGN_OR_RETURN (str, lyric_parser::parse_string_literal(literalValue));
-    lyric_assembler::LiteralAddress address;
-    TU_ASSIGN_OR_RETURN (address, literalCache->makeLiteralUtf8(str));
-
-    auto *code = block->blockCode();
-    TU_RETURN_IF_NOT_OK (code->loadString(address));
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+    TU_RETURN_IF_NOT_OK (fragment->loadString(str));
 
     auto fundamentalString = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::String);
     lyric_assembler::AbstractSymbol *symbol;
@@ -147,19 +158,17 @@ lyric_compiler::compile_url(
 {
     auto *state = block->blockState();
     auto *fundamentalCache = state->fundamentalCache();
-    auto *literalCache = state->literalCache();
     auto *symbolCache = state->symbolCache();
 
     std::string literalValue;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue));
 
+    // TODO: implement lyric_parser::parse_url_literal
     std::string str;
     TU_ASSIGN_OR_RETURN (str, lyric_parser::parse_string_literal(literalValue));
-    lyric_assembler::LiteralAddress address;
-    TU_ASSIGN_OR_RETURN (address, literalCache->makeLiteralUtf8(str));
-
-    auto *code = block->blockCode();
-    TU_RETURN_IF_NOT_OK (code->loadUrl(address));
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+    TU_RETURN_IF_NOT_OK (fragment->loadUrl(tempo_utils::Url::fromString(str)));
 
     auto fundamentalUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Url);
     lyric_assembler::AbstractSymbol *symbol;

@@ -3,8 +3,6 @@
 
 #include <lyric_object/bytecode_builder.h>
 
-#include "proc_handle.h"
-
 namespace lyric_assembler {
 
     enum class InstructionType {
@@ -18,6 +16,7 @@ namespace lyric_assembler {
         LoadLiteral,
         LoadData,
         LoadDescriptor,
+        LoadSynthetic,
         LoadType,
         StoreData,
         StackModification,

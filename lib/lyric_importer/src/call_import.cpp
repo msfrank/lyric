@@ -21,10 +21,9 @@ namespace lyric_importer {
 }
 
 lyric_importer::CallImport::CallImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 callOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_callOffset(callOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_callOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -198,8 +197,9 @@ lyric_importer::CallImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto callWalker = m_moduleImport->getObject().getObject().getCall(m_callOffset);
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto callWalker = moduleImport->getObject().getObject().getCall(m_callOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, callWalker.getSymbolPath());
 
     priv->isDeclOnly = callWalker.isDeclOnly();
@@ -226,13 +226,13 @@ lyric_importer::CallImport::load()
     }
 
     if (callWalker.hasTemplate()) {
-        priv->callTemplate = m_moduleImport->getTemplate(
+        priv->callTemplate = moduleImport->getTemplate(
             callWalker.getTemplate().getDescriptorOffset());
     } else {
         priv->callTemplate = nullptr;
     }
 
-    priv->returnType = m_moduleImport->getType(callWalker.getResultType().getDescriptorOffset());
+    priv->returnType = moduleImport->getType(callWalker.getResultType().getDescriptorOffset());
 
     tu_uint8 currparam = 0;
 
@@ -243,7 +243,7 @@ lyric_importer::CallImport::load()
         Parameter p;
         p.index = currparam++;
         p.name = parameter.getParameterName();
-        p.type = m_moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
+        p.type = moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
         p.placement = parameter.getPlacement();
         p.isVariable = parameter.isVariable();
 
@@ -304,7 +304,7 @@ lyric_importer::CallImport::load()
         Parameter p;
         p.index = currparam++;
         p.name = parameter.getParameterName();
-        p.type = m_moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
+        p.type = moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
         p.placement = parameter.getPlacement();
         p.isVariable = parameter.isVariable();
 
@@ -364,7 +364,7 @@ lyric_importer::CallImport::load()
         Parameter p;
         p.index = -1;
         p.name = parameter.getParameterName();
-        p.type = m_moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
+        p.type = moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
         p.placement = parameter.getPlacement();
         p.isVariable = parameter.isVariable();
 

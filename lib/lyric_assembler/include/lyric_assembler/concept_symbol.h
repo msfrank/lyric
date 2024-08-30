@@ -89,7 +89,7 @@ namespace lyric_assembler {
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
             CallableInvoker &invoker,
-            bool isReceiver = false) const;
+            bool isReceiver = false);
 
         /*
          * concept impl management

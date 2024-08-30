@@ -68,8 +68,11 @@ lyric_compiler::internal::compile_param_initializer(
 
     procHandle->putExitType(bodyType);
 
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
+
     // add return instruction
-    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     // finalize the initializer to set the return type
     TU_RETURN_IF_NOT_OK (callSymbol->finalizeCall());
@@ -152,8 +155,11 @@ lyric_compiler::internal::compile_member_initializer(
 
     procHandle->putExitType(bodyType);
 
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
+
     // add return instruction
-    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     bool isReturnable;
 
@@ -189,17 +195,17 @@ lyric_compiler::internal::compile_static_initializer(
     // declare the initializer
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, staticSymbol->defineInitializer());
-    auto *code = procHandle->procCode();
     auto *block = procHandle->procBlock();
 
     // compile the initializer body
     lyric_common::TypeDef bodyType;
     TU_ASSIGN_OR_RETURN (bodyType, compile_expression(block, walker, moduleEntry));
 
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
+
     // add return instruction
-    auto status = code->writeOpcode(lyric_object::Opcode::OP_RETURN);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     auto staticType = staticSymbol->getAssignableType();
     bool isReturnable;

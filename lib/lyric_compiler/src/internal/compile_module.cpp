@@ -25,10 +25,10 @@ lyric_compiler::internal::compile_module(
 
     // add return instruction
     // FIXME: a jump offset which points to the end of the proc requires a pad
-    auto *proc = entry->callProc();
-    auto status = proc->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN);
-    if (status.notOk())
-        return status;
+    auto *procHandle = entry->callProc();
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
 //    // if entry contains code, then touch the symbol so it gets serialized
 //    auto *proc = moduleEntry.getProc();

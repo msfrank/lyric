@@ -1,6 +1,5 @@
 
 #include <lyric_assembler/class_symbol.h>
-#include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/extension_callable.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/impl_handle.h>
@@ -196,8 +195,11 @@ lyric_compiler::internal::compile_unwrap(
         TU_RETURN_IF_NOT_OK (block->store(unwrapRef.second));
     }
 
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+
     // pop the tuple off the stack
-    TU_RETURN_IF_NOT_OK (block->blockCode()->popValue());
+    TU_RETURN_IF_NOT_OK (fragment->popValue());
 
     return {};
 }

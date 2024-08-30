@@ -10,69 +10,71 @@
 #include <tempo_utils/log_stream.h>
 
 lyric_assembler::CtorConstructable::CtorConstructable()
-    : m_ctor(nullptr)
+    : m_ctorSymbol(nullptr),
+      m_newSymbol(nullptr)
 {
 }
 
-lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, ClassSymbol *symbol)
-    : CtorConstructable(ctor)
-{
-    TU_ASSERT (symbol != nullptr);
-    ctor->touch();
-    symbol->touch();
-    m_newType = lyric_object::NEW_CLASS;
-    m_newAddress = symbol->getAddress().getAddress();
-    m_ctorAddress = ctor->getAddress();
-    m_ctorType = symbol->getAssignableType();
-}
+//lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, ClassSymbol *symbol)
+//    : CtorConstructable(ctor)
+//{
+//    TU_ASSERT (symbol != nullptr);
+//    ctor->touch();
+//    symbol->touch();
+//    m_newType = lyric_object::NEW_CLASS;
+//    m_newAddress = symbol->getAddress().getAddress();
+//    m_ctorAddress = ctor->getAddress();
+//    m_ctorType = symbol->getAssignableType();
+//}
+//
+//lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, EnumSymbol *symbol)
+//    : CtorConstructable(ctor)
+//{
+//    TU_ASSERT (symbol != nullptr);
+//    ctor->touch();
+//    symbol->touch();
+//    m_newType = lyric_object::NEW_ENUM;
+//    m_newAddress = symbol->getAddress().getAddress();
+//    m_ctorAddress = ctor->getAddress();
+//    m_ctorType = symbol->getAssignableType();
+//}
+//
+//lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, InstanceSymbol *symbol)
+//    : CtorConstructable(ctor)
+//{
+//    TU_ASSERT (symbol != nullptr);
+//    ctor->touch();
+//    symbol->touch();
+//    m_newType = lyric_object::NEW_INSTANCE;
+//    m_newAddress = symbol->getAddress().getAddress();
+//    m_ctorAddress = ctor->getAddress();
+//    m_ctorType = symbol->getAssignableType();
+//}
+//
+//lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, StructSymbol *symbol)
+//    : CtorConstructable(ctor)
+//{
+//    TU_ASSERT (symbol != nullptr);
+//    ctor->touch();
+//    symbol->touch();
+//    m_newType = lyric_object::NEW_STRUCT;
+//    m_newAddress = symbol->getAddress().getAddress();
+//    m_ctorAddress = ctor->getAddress();
+//    m_ctorType = symbol->getAssignableType();
+//}
 
-lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, EnumSymbol *symbol)
-    : CtorConstructable(ctor)
+lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctorSymbol, AbstractSymbol *newSymbol)
+    : m_ctorSymbol(ctorSymbol),
+      m_newSymbol(newSymbol)
 {
-    TU_ASSERT (symbol != nullptr);
-    ctor->touch();
-    symbol->touch();
-    m_newType = lyric_object::NEW_ENUM;
-    m_newAddress = symbol->getAddress().getAddress();
-    m_ctorAddress = ctor->getAddress();
-    m_ctorType = symbol->getAssignableType();
-}
-
-lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, InstanceSymbol *symbol)
-    : CtorConstructable(ctor)
-{
-    TU_ASSERT (symbol != nullptr);
-    ctor->touch();
-    symbol->touch();
-    m_newType = lyric_object::NEW_INSTANCE;
-    m_newAddress = symbol->getAddress().getAddress();
-    m_ctorAddress = ctor->getAddress();
-    m_ctorType = symbol->getAssignableType();
-}
-
-lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, StructSymbol *symbol)
-    : CtorConstructable(ctor)
-{
-    TU_ASSERT (symbol != nullptr);
-    ctor->touch();
-    symbol->touch();
-    m_newType = lyric_object::NEW_STRUCT;
-    m_newAddress = symbol->getAddress().getAddress();
-    m_ctorAddress = ctor->getAddress();
-    m_ctorType = symbol->getAssignableType();
-}
-
-lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor)
-    : m_ctor(ctor)
-{
-    TU_ASSERT (m_ctor != nullptr);
-    m_newType = 0;
+    TU_ASSERT (m_ctorSymbol != nullptr);
+    TU_ASSERT (m_newSymbol != nullptr);
 }
 
 bool
 lyric_assembler::CtorConstructable::isValid() const
 {
-    return m_ctor != nullptr;
+    return m_ctorSymbol != nullptr && m_newSymbol != nullptr;
 }
 
 void
@@ -87,56 +89,56 @@ lyric_assembler::TemplateHandle *
 lyric_assembler::CtorConstructable::getTemplate() const
 {
     checkValid();
-    return m_ctor->callTemplate();
+    return m_ctorSymbol->callTemplate();
 }
 
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::CtorConstructable::listPlacementBegin() const
 {
     checkValid();
-    return m_ctor->listPlacementBegin();
+    return m_ctorSymbol->listPlacementBegin();
 }
 
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::CtorConstructable::listPlacementEnd() const
 {
     checkValid();
-    return m_ctor->listPlacementEnd();
+    return m_ctorSymbol->listPlacementEnd();
 }
 
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::CtorConstructable::namedPlacementBegin() const
 {
     checkValid();
-    return m_ctor->namedPlacementBegin();
+    return m_ctorSymbol->namedPlacementBegin();
 }
 
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::CtorConstructable::namedPlacementEnd() const
 {
     checkValid();
-    return m_ctor->namedPlacementEnd();
+    return m_ctorSymbol->namedPlacementEnd();
 }
 
 const lyric_assembler::Parameter *
 lyric_assembler::CtorConstructable::restPlacement() const
 {
     checkValid();
-    return m_ctor->restPlacement();
+    return m_ctorSymbol->restPlacement();
 }
 
 bool
 lyric_assembler::CtorConstructable::hasInitializer(const std::string &name) const
 {
     checkValid();
-    return m_ctor->hasInitializer(name);
+    return m_ctorSymbol->hasInitializer(name);
 }
 
 lyric_common::SymbolUrl
 lyric_assembler::CtorConstructable::getInitializer(const std::string &name) const
 {
     checkValid();
-    return m_ctor->getInitializer(name);
+    return m_ctorSymbol->getInitializer(name);
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
@@ -146,6 +148,9 @@ lyric_assembler::CtorConstructable::invoke(
     tu_uint8 flags)
 {
     checkValid();
+
+    if (!m_ctorSymbol->isCtor())
+        block->throwAssemblerInvariant("invalid ctor flags");
 
     auto callFlags = lyric_object::GET_CALL_FLAGS(flags);
     if (callFlags != flags)
@@ -158,13 +163,10 @@ lyric_assembler::CtorConstructable::invoke(
             "too many call arguments");
 
     auto *code = block->blockCode();
+    auto *fragment = code->rootFragment();
 
-    m_ctor->touch();
-    auto status = code->callVirtual(m_ctorAddress, static_cast<uint16_t>(placementSize), callFlags);
-    if (!status.isOk())
-        return status;
-
-    return reifier.reifyResult(m_ctorType);
+    TU_RETURN_IF_NOT_OK (fragment->callVirtual(m_ctorSymbol, placementSize, callFlags));
+    return reifier.reifyResult(m_newSymbol->getAssignableType());
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
@@ -186,11 +188,8 @@ lyric_assembler::CtorConstructable::invokeNew(
             "too many call arguments");
 
     auto *code = block->blockCode();
+    auto *fragment = code->rootFragment();
 
-    m_ctor->touch();
-    auto status = code->callNew(m_newAddress, static_cast<uint16_t>(placementSize), m_newType, callFlags);
-    if (!status.isOk())
-        return status;
-
-    return reifier.reifyResult(m_ctorType);
+    TU_RETURN_IF_NOT_OK (fragment->constructNew(m_newSymbol, placementSize, callFlags));
+    return reifier.reifyResult(m_newSymbol->getAssignableType());
 }

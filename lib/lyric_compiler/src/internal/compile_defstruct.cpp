@@ -170,8 +170,9 @@ compile_defstruct_init(
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
 
-    auto *code = procHandle->procCode();
     auto *ctorBlock = procHandle->procBlock();
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
 
     // find the superstruct ctor
     lyric_assembler::ConstructableInvoker superCtor;
@@ -181,7 +182,7 @@ compile_defstruct_init(
     TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
 
     // load the uninitialized struct onto the top of the stack
-    TU_RETURN_IF_NOT_OK (code->loadSynthetic(lyric_assembler::SyntheticType::THIS));
+    TU_RETURN_IF_NOT_OK (fragment->loadThis());
 
     // if super call is present, then place arguments
     if (initSuper.isValid()) {
@@ -212,7 +213,7 @@ compile_defstruct_init(
             TU_RETURN_IF_NOT_OK (ctorBlock->load(argVar));
 
             // store default value in struct field
-            TU_RETURN_IF_NOT_OK (ctorBlock->store(fieldVar));
+            TU_RETURN_IF_NOT_OK (ctorBlock->store(fieldVar, /* initialStore= */ true));
 
             // mark member as initialized
             TU_RETURN_IF_NOT_OK (structSymbol->setMemberInitialized(memberName));
@@ -246,10 +247,11 @@ compile_defstruct_init(
         auto *initializerCall = cast_symbol_to_call(symbol);
 
         // load $this onto the top of the stack
-        TU_RETURN_IF_NOT_OK (code->loadSynthetic(lyric_assembler::SyntheticType::THIS));
+        TU_RETURN_IF_NOT_OK (fragment->loadThis());
 
         // invoke initializer to place default value onto the top of the stack
-        auto callable = std::make_unique<lyric_assembler::FunctionCallable>(initializerCall);
+        auto callable = std::make_unique<lyric_assembler::FunctionCallable>(
+            initializerCall, /* isInlined= */ false);
         lyric_assembler::CallableInvoker invoker;
         TU_RETURN_IF_NOT_OK (invoker.initialize(std::move(callable)));
         lyric_typing::CallsiteReifier initializerReifier(typeSystem);
@@ -257,7 +259,7 @@ compile_defstruct_init(
         TU_RETURN_IF_STATUS (invoker.invoke(ctorBlock, initializerReifier));
 
         // store default value in struct field
-        TU_RETURN_IF_NOT_OK (ctorBlock->store(fieldRef));
+        TU_RETURN_IF_NOT_OK (ctorBlock->store(fieldRef, /* initialStore= */ true));
 
         // mark member as initialized
         TU_RETURN_IF_NOT_OK (structSymbol->setMemberInitialized(memberName));
@@ -266,7 +268,7 @@ compile_defstruct_init(
     TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << structSymbol->getSymbolUrl();
 
     // add return instruction
-    TU_RETURN_IF_NOT_OK (code->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     if (!structSymbol->isCompletelyInitialized())
         structBlock->throwAssemblerInvariant("struct {} is not completely initialized",
@@ -348,12 +350,16 @@ compile_defstruct_def(
     auto body = walker.getChild(1);
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnType));
+
     lyric_common::TypeDef bodyType;
     TU_ASSIGN_OR_RETURN (bodyType, lyric_compiler::internal::compile_block(
         procHandle->procBlock(), body, moduleEntry));
 
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
+
     // add return instruction
-    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     // validate that body returns the expected type
     bool isReturnable;
@@ -442,8 +448,11 @@ compile_defstruct_impl_def(
     TU_ASSIGN_OR_RETURN (bodyType, lyric_compiler::internal::compile_block(
         procHandle->procBlock(), body, moduleEntry));
 
+    auto *procCode = procHandle->procCode();
+    auto *fragment = procCode->rootFragment();
+
     // add return instruction
-    TU_RETURN_IF_NOT_OK (procHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     // validate that body returns the expected type
     bool isReturnable;

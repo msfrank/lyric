@@ -195,20 +195,6 @@ lyric_assembler::LoadDataInstruction::apply(
     tu_uint8 flags;
 
     switch (m_symbol->getSymbolType()) {
-
-        case SymbolType::SYNTHETIC: {
-            auto *synthetic = cast_symbol_to_synthetic(m_symbol);
-            TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_SYNTHETIC));
-            switch (synthetic->getSyntheticType()) {
-                case SyntheticType::THIS:
-                    return bytecodeBuilder.writeU8(lyric_object::SYNTHETIC_THIS);
-                default:
-                    return AssemblerStatus::forCondition(
-                        AssemblerCondition::kAssemblerInvariant,
-                        "invalid synthetic type for {}", m_symbol->getSymbolUrl().toString());
-            }
-        }
-
         case SymbolType::ARGUMENT:
             address = cast_symbol_to_argument(m_symbol)->getOffset().getOffset();
             flags = lyric_object::LOAD_ARGUMENT;
@@ -246,6 +232,12 @@ lyric_assembler::LoadDataInstruction::apply(
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_LOAD));
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeU8(flags));
     return bytecodeBuilder.writeU32(address);
+}
+
+lyric_assembler::AbstractSymbol *
+lyric_assembler::LoadDataInstruction::getSymbol() const
+{
+    return m_symbol;
 }
 
 lyric_assembler::LoadDescriptorInstruction::LoadDescriptorInstruction(AbstractSymbol *symbol)
@@ -316,9 +308,44 @@ lyric_assembler::LoadDescriptorInstruction::apply(
                 "cannot load descriptor for {}", m_symbol->getSymbolUrl().toString());
     }
 
-    TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_LOAD));
+    TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_DESCRIPTOR));
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeU8(lyric_object::linkage_to_descriptor_section(section)));
     return bytecodeBuilder.writeU32(address);
+}
+
+lyric_assembler::AbstractSymbol *
+lyric_assembler::LoadDescriptorInstruction::getSymbol() const
+{
+    return m_symbol;
+}
+
+lyric_assembler::LoadSyntheticInstruction::LoadSyntheticInstruction(SyntheticType type)
+    : m_type(type)
+{
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::LoadSyntheticInstruction::getType() const
+{
+    return InstructionType::LoadSynthetic;
+}
+
+tempo_utils::Status
+lyric_assembler::LoadSyntheticInstruction::apply(
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_SYNTHETIC));
+    switch (m_type) {
+        case SyntheticType::THIS:
+            return bytecodeBuilder.writeU8(lyric_object::SYNTHETIC_THIS);
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid synthetic type");
+   }
 }
 
 lyric_assembler::LoadTypeInstruction::LoadTypeInstruction(TypeHandle *typeHandle)
@@ -406,6 +433,12 @@ lyric_assembler::StoreDataInstruction::apply(
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_STORE));
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeU8(flags));
     return bytecodeBuilder.writeU32(address);
+}
+
+lyric_assembler::AbstractSymbol *
+lyric_assembler::StoreDataInstruction::getSymbol() const
+{
+    return m_symbol;
 }
 
 lyric_assembler::StackModificationInstruction::StackModificationInstruction(
@@ -507,12 +540,38 @@ lyric_assembler::JumpInstruction::apply(
 {
     targetId = m_targetId;
     switch (m_opcode) {
+        case lyric_object::Opcode::OP_IF_NIL:
+            return bytecodeBuilder.jumpIfNil(patchOffset);
+        case lyric_object::Opcode::OP_IF_NOTNIL:
+            return bytecodeBuilder.jumpIfNotNil(patchOffset);
+        case lyric_object::Opcode::OP_IF_TRUE:
+            return bytecodeBuilder.jumpIfTrue(patchOffset);
+        case lyric_object::Opcode::OP_IF_FALSE:
+            return bytecodeBuilder.jumpIfFalse(patchOffset);
+        case lyric_object::Opcode::OP_IF_ZERO:
+            return bytecodeBuilder.jumpIfZero(patchOffset);
+        case lyric_object::Opcode::OP_IF_NOTZERO:
+            return bytecodeBuilder.jumpIfNotZero(patchOffset);
+        case lyric_object::Opcode::OP_IF_GT:
+            return bytecodeBuilder.jumpIfGreaterThan(patchOffset);
+        case lyric_object::Opcode::OP_IF_GE:
+            return bytecodeBuilder.jumpIfGreaterOrEqual(patchOffset);
+        case lyric_object::Opcode::OP_IF_LT:
+            return bytecodeBuilder.jumpIfLessThan(patchOffset);
+        case lyric_object::Opcode::OP_IF_LE:
+            return bytecodeBuilder.jumpIfLessOrEqual(patchOffset);
         case lyric_object::Opcode::OP_JUMP:
             return bytecodeBuilder.jump(patchOffset);
         default:
             return AssemblerStatus::forCondition(
                 AssemblerCondition::kAssemblerInvariant, "invalid opcode");
     }
+}
+
+lyric_object::Opcode
+lyric_assembler::JumpInstruction::getOpcode() const
+{
+    return m_opcode;
 }
 
 tu_uint32
@@ -562,19 +621,19 @@ lyric_assembler::CallInstruction::apply(
             break;
         }
         case lyric_object::Opcode::OP_CALL_CONCEPT: {
-            if (m_symbol->getSymbolType() != SymbolType::CONCEPT)
+            if (m_symbol->getSymbolType() != SymbolType::ACTION)
                 return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "expected Concept symbol for opcode");
-            auto *conceptSymbol = cast_symbol_to_concept(m_symbol);
-            address = conceptSymbol->getAddress().getAddress();
+                    AssemblerCondition::kAssemblerInvariant, "expected Action symbol for opcode");
+            auto *actionSymbol = cast_symbol_to_action(m_symbol);
+            address = actionSymbol->getAddress().getAddress();
             break;
         }
         case lyric_object::Opcode::OP_CALL_EXISTENTIAL: {
-            if (m_symbol->getSymbolType() != SymbolType::EXISTENTIAL)
+            if (m_symbol->getSymbolType() != SymbolType::CALL)
                 return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "expected Existential symbol for opcode");
-            auto *existentialSymbol = cast_symbol_to_existential(m_symbol);
-            address = existentialSymbol->getAddress().getAddress();
+                    AssemblerCondition::kAssemblerInvariant, "expected Call symbol for opcode");
+            auto *callSymbol = cast_symbol_to_call(m_symbol);
+            address = callSymbol->getAddress().getAddress();
             break;
         }
         default:
@@ -608,6 +667,14 @@ lyric_assembler::InlineInstruction::apply(
     tu_uint32 &targetId,
     tu_uint16 &patchOffset) const
 {
+//    auto *procHandle = m_symbol->callProc();
+//
+//    // store arguments in temporaries
+//
+//    // rewrite argument loads as temporary loads
+//    auto *srcCode = procHandle->procCode();
+//    auto *dstCode = procHandle->procCode();
+//    return procCode->build(bytecodeBuilder);
     TU_UNREACHABLE();
 }
 

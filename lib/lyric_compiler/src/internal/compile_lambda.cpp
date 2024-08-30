@@ -107,8 +107,11 @@ lyric_compiler::internal::compile_lambda(
     lyric_common::TypeDef lambdaBodyType;
     TU_ASSIGN_OR_RETURN (lambdaBodyType, compile_block(lambdaProcHandle->procBlock(), lambdaBody, moduleEntry));
 
+    auto *lambdaProcCode = lambdaProcHandle->procCode();
+    auto *lambdaFragment = lambdaProcCode->rootFragment();
+
     // add return instruction
-    TU_RETURN_IF_NOT_OK (lambdaProcHandle->procCode()->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (lambdaFragment->returnToCaller());
 
     // validate that body returns the expected type
     bool isReturnable;
@@ -177,7 +180,8 @@ lyric_compiler::internal::compile_lambda(
         builderProcHandle->allocateLexical(lexical->lexicalTarget, lexical->targetOffset, lexical->activationCall);
     }
 
-    auto *builderCode = builderProcHandle->procCode();
+    auto *builderProcCode = builderProcHandle->procCode();
+    auto *builderFragment = builderProcCode->rootFragment();
 
     // invoke the closure ctor
     lyric_assembler::ConstructableInvoker closureCtor;
@@ -186,15 +190,18 @@ lyric_compiler::internal::compile_lambda(
     lyric_typing::CallsiteReifier closureReifier(typeSystem);
     TU_RETURN_IF_NOT_OK (closureReifier.initialize(closureCtor, builderTypeArguments));
 
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+
     // push the proc descriptor onto the top of the stack as first positional arg
-    TU_RETURN_IF_NOT_OK (block->blockCode()->loadCall(lambdaCallSymbol->getAddress()));
+    TU_RETURN_IF_NOT_OK (fragment->loadDescriptor(lambdaCallSymbol));
     auto callType = state->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Call);
     TU_RETURN_IF_NOT_OK (closureReifier.reifyNextArgument(callType));
 
     TU_RETURN_IF_STATUS (closureCtor.invokeNew(builderProcHandle->procBlock(), closureReifier, 0));
 
     // add return instruction
-    TU_RETURN_IF_NOT_OK (builderCode->writeOpcode(lyric_object::Opcode::OP_RETURN));
+    TU_RETURN_IF_NOT_OK (builderFragment->returnToCaller());
 
     /*
      * step 4: invoke the lambda builder

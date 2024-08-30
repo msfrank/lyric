@@ -1,5 +1,4 @@
 
-#include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/namespace_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -178,8 +177,9 @@ lyric_compiler::internal::compile_node(
     if (walker.isClass(lyric_schema::kLyricAssemblerTrapClass)) {
         tu_uint32 trapNumber;
         TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_rewriter::kLyricAssemblerTrapNumber, trapNumber));
-        auto *code = block->blockCode();
-        TU_RETURN_IF_NOT_OK (code->trap(trapNumber));
+        auto *blockCode = block->blockCode();
+        auto *fragment = blockCode->rootFragment();
+        TU_RETURN_IF_NOT_OK (fragment->trap(trapNumber, 0));
         return lyric_common::TypeDef::noReturn();
     }
 

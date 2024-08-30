@@ -339,8 +339,8 @@ lyric_assembler::CondWhenPatch::CondWhenPatch()
 
 lyric_assembler::CondWhenPatch::CondWhenPatch(
     const JumpLabel &predicateLabel,
-    const PatchOffset &predicateJump,
-    const PatchOffset &consequentJump)
+    const JumpTarget &predicateJump,
+    const JumpTarget &consequentJump)
     : m_predicateLabel(predicateLabel),
       m_predicateJump(predicateJump),
       m_consequentJump(consequentJump)
@@ -360,13 +360,13 @@ lyric_assembler::CondWhenPatch::getPredicateLabel() const
     return m_predicateLabel;
 }
 
-lyric_assembler::PatchOffset
+lyric_assembler::JumpTarget
 lyric_assembler::CondWhenPatch::getPredicateJump() const
 {
     return m_predicateJump;
 }
 
-lyric_assembler::PatchOffset
+lyric_assembler::JumpTarget
 lyric_assembler::CondWhenPatch::getConsequentJump() const
 {
     return m_consequentJump;
@@ -384,8 +384,8 @@ lyric_assembler::MatchWhenPatch::MatchWhenPatch()
 lyric_assembler::MatchWhenPatch::MatchWhenPatch(
     const lyric_common::TypeDef &predicateType,
     const JumpLabel &predicateLabel,
-    const PatchOffset &predicateJump,
-    const PatchOffset &consequentJump,
+    const JumpTarget &predicateJump,
+    const JumpTarget &consequentJump,
     const lyric_common::TypeDef &consequentType)
     : m_predicateType(predicateType),
       m_predicateLabel(predicateLabel),
@@ -416,13 +416,13 @@ lyric_assembler::MatchWhenPatch::MatchWhenPatch::getPredicateLabel() const
     return m_predicateLabel;
 }
 
-lyric_assembler::PatchOffset
+lyric_assembler::JumpTarget
 lyric_assembler::MatchWhenPatch::MatchWhenPatch::getPredicateJump() const
 {
     return m_predicateJump;
 }
 
-lyric_assembler::PatchOffset
+lyric_assembler::JumpTarget
 lyric_assembler::MatchWhenPatch::MatchWhenPatch::getConsequentJump() const
 {
     return m_consequentJump;

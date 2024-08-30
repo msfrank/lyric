@@ -1,5 +1,4 @@
 
-#include <lyric_assembler/code_builder.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -23,13 +22,12 @@ lyric_compiler::internal::compile_while(
 
     moduleEntry.checkClassAndChildCountOrThrow(walker, lyric_schema::kLyricAstWhileClass, 2);
 
-    auto *code = block->blockCode();
-    lyric_assembler::BlockHandle whileBlock(block->blockProc(), code, block, block->blockState());
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
+    lyric_assembler::BlockHandle whileBlock(block->blockProc(), blockCode, block, block->blockState());
 
-    auto topOfLoopResult = code->makeLabel();
-    if (topOfLoopResult.isStatus())
-        return topOfLoopResult.getStatus();
-    auto topOfLoop = topOfLoopResult.getResult();
+    lyric_assembler::JumpLabel topOfLoop;
+    TU_ASSIGN_OR_RETURN (topOfLoop, fragment->appendLabel());
 
     auto whileTest = walker.getChild(0);
     auto testResult = compile_expression(&whileBlock, whileTest, moduleEntry);
@@ -48,30 +46,27 @@ lyric_compiler::internal::compile_while(
             tempo_tracing::LogSeverity::kError,
             "expected test expression to return {}; found {}", boolType.toString(), testReturnType.toString());
 
-    auto predicateJumpResult = code->jumpIfFalse();
-    if (predicateJumpResult.isStatus())
-        return predicateJumpResult.getStatus();
-    auto predicateJump = predicateJumpResult.getResult();
+    lyric_assembler::JumpTarget predicateJump;
+    TU_ASSIGN_OR_RETURN (predicateJump, fragment->jumpIfFalse());
 
     auto whileBody = walker.getChild(1);
-    auto blockResult = compile_node(block, whileBody, moduleEntry);
-    if (blockResult.isStatus())
-        return blockResult.getStatus();
+    lyric_common::TypeDef resultType;
+    TU_ASSIGN_OR_RETURN (resultType, compile_node(block, whileBody, moduleEntry));
 
     // if block returns a value, then pop it off the top of the stack
-    if (blockResult.getResult().isValid())
-        code->popValue();
+    TU_ASSERT (resultType.isValid());
+    if (resultType != lyric_common::TypeDef::noReturn()) {
+        TU_RETURN_IF_NOT_OK (fragment->popValue());
+    }
 
-    auto status = code->jump(topOfLoop);
-    if (!status.isOk())
-        return status;
+    lyric_assembler::JumpTarget nextIteration;
+    TU_ASSIGN_OR_RETURN (nextIteration, fragment->unconditionalJump());
+    TU_RETURN_IF_NOT_OK (fragment->patchTarget(nextIteration, topOfLoop));
 
-    auto exitLoopResult = code->makeLabel();
-    if (exitLoopResult.isStatus())
-        return exitLoopResult.getStatus();
-    auto exitLoop = exitLoopResult.getResult();
+    lyric_assembler::JumpLabel exitLoop;
+    TU_ASSIGN_OR_RETURN (exitLoop, fragment->appendLabel());
 
-    return code->patch(predicateJump, exitLoop);
+    return fragment->patchTarget(predicateJump, exitLoop);
 }
 
 static tempo_utils::Result<lyric_common::TypeDef>
@@ -176,14 +171,15 @@ lyric_compiler::internal::compile_for(
     TU_ASSIGN_OR_RETURN (iterator, block->declareTemporary(iteratorType, /* isVariable= */ false));
 
     // store the iterator in the temp variable
-    TU_RETURN_IF_NOT_OK (block->store(iterator));
+    TU_RETURN_IF_NOT_OK (block->store(iterator, /* initialStore= */ true));
 
-    auto *code = block->blockCode();
+    auto *blockCode = block->blockCode();
+    auto *fragment = blockCode->rootFragment();
 
     // create a new block for the body of the loop
-    lyric_assembler::BlockHandle forBlock(block->blockProc(), code, block, state);
+    lyric_assembler::BlockHandle forBlock(block->blockProc(), blockCode, block, state);
     lyric_assembler::JumpLabel topOfLoop;
-    TU_ASSIGN_OR_RETURN (topOfLoop, code->makeLabel());
+    TU_ASSIGN_OR_RETURN (topOfLoop, fragment->appendLabel());
 
     // declare the target variable which stores the value yielded from the iterator on each loop iteration
     lyric_assembler::DataReference target;
@@ -212,8 +208,8 @@ lyric_compiler::internal::compile_for(
         forBlock.throwAssemblerInvariant("expected Valid method to return {}; found {}",
             boolType.toString(), validReturnType.toString());
 
-    lyric_assembler::PatchOffset predicateJump;
-    TU_ASSIGN_OR_RETURN (predicateJump, code->jumpIfFalse());
+    lyric_assembler::JumpTarget predicateJump;
+    TU_ASSIGN_OR_RETURN (predicateJump, fragment->jumpIfFalse());
 
     // push the iterator onto the stack, and invoke next() method
     TU_RETURN_IF_NOT_OK (forBlock.load(iterator));
@@ -243,13 +239,15 @@ lyric_compiler::internal::compile_for(
 
     // if block returns a value, then pop it off the top of the stack
     if (blockReturnType.getType() != lyric_common::TypeDefType::NoReturn) {
-        code->popValue();
+        TU_RETURN_IF_NOT_OK (fragment->popValue());
     }
 
-    TU_RETURN_IF_NOT_OK (code->jump(topOfLoop));
+    lyric_assembler::JumpTarget nextIteration;
+    TU_ASSIGN_OR_RETURN (nextIteration, fragment->unconditionalJump());
+    TU_RETURN_IF_NOT_OK (fragment->patchTarget(nextIteration, topOfLoop));
 
     lyric_assembler::JumpLabel exitLoop;
-    TU_ASSIGN_OR_RETURN (exitLoop, code->makeLabel());
+    TU_ASSIGN_OR_RETURN (exitLoop, fragment->appendLabel());
 
-    return code->patch(predicateJump, exitLoop);
+    return fragment->patchTarget(predicateJump, exitLoop);
 }
