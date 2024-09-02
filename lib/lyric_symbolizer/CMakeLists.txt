@@ -17,23 +17,6 @@ target_sources(lyric_symbolizer PRIVATE
     src/lyric_symbolizer.cpp
     src/symbolizer_result.cpp
     src/symbolizer_scan_driver.cpp
-
-    include/lyric_symbolizer/internal/entry_point.h
-    src/internal/entry_point.cpp
-    include/lyric_symbolizer/internal/symbolize_defclass.h
-    src/internal/symbolize_defclass.cpp
-    include/lyric_symbolizer/internal/symbolize_defconcept.h
-    src/internal/symbolize_defconcept.cpp
-    include/lyric_symbolizer/internal/symbolize_defenum.h
-    src/internal/symbolize_defenum.cpp
-    include/lyric_symbolizer/internal/symbolize_definstance.h
-    src/internal/symbolize_definstance.cpp
-    include/lyric_symbolizer/internal/symbolize_defstruct.h
-    src/internal/symbolize_defstruct.cpp
-    include/lyric_symbolizer/internal/symbolize_handle.h
-    src/internal/symbolize_handle.cpp
-    include/lyric_symbolizer/internal/symbolize_module.h
-    src/internal/symbolize_module.cpp
     )
 
 # set the library version
