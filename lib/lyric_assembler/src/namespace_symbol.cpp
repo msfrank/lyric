@@ -9,14 +9,13 @@
 lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     const lyric_common::SymbolUrl &namespaceUrl,
     lyric_object::AccessType access,
-    NamespaceAddress address,
     TypeHandle *namespaceType,
     NamespaceSymbol *superNamespace,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state,
     bool isRoot)
-    : BaseSymbol(address, new NamespaceSymbolPriv()),
+    : BaseSymbol(new NamespaceSymbolPriv()),
       m_namespaceUrl(namespaceUrl),
       m_state(state)
 {
@@ -36,11 +35,10 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
 
 lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     const lyric_common::SymbolUrl &namespaceUrl,
-    NamespaceAddress address,
     TypeHandle *namespaceType,
     ProcHandle *entryProc,
     ObjectState *state)
-    : BaseSymbol(address, new NamespaceSymbolPriv()),
+    : BaseSymbol(new NamespaceSymbolPriv()),
       m_namespaceUrl(namespaceUrl),
       m_state(state)
 {
@@ -125,7 +123,7 @@ lyric_assembler::NamespaceSymbol::getSymbolUrl() const
 }
 
 lyric_common::TypeDef
-lyric_assembler::NamespaceSymbol::getAssignableType() const
+lyric_assembler::NamespaceSymbol::getTypeDef() const
 {
     auto *priv = getPriv();
     return priv->namespaceType->getTypeDef();

@@ -10,12 +10,11 @@ lyric_assembler::StaticSymbol::StaticSymbol(
     const lyric_common::SymbolUrl &staticUrl,
     lyric_object::AccessType access,
     bool isVariable,
-    StaticAddress address,
     TypeHandle *staticType,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
-    : BaseSymbol(address, new StaticSymbolPriv()),
+    : BaseSymbol(new StaticSymbolPriv()),
       m_staticUrl(staticUrl),
       m_state(state)
 {
@@ -89,7 +88,7 @@ lyric_assembler::StaticSymbol::getSymbolUrl() const
 }
 
 lyric_common::TypeDef
-lyric_assembler::StaticSymbol::getAssignableType() const
+lyric_assembler::StaticSymbol::getTypeDef() const
 {
     auto *priv = getPriv();
     return priv->staticType->getTypeDef();
@@ -149,14 +148,12 @@ lyric_assembler::StaticSymbol::defineInitializer()
             "initializer already defined for static {}", m_staticUrl.toString());
 
     //
-    auto returnType = getAssignableType();
+    auto returnType = getTypeDef();
 
     std::vector<lyric_object::Parameter> parameters;
-    auto callIndex = m_state->numCalls();
-    auto address = CallAddress::near(callIndex);
 
     // construct call symbol
-    auto *initSymbol = new CallSymbol(initializerUrl, lyric_object::AccessType::Public, address,
+    auto *initSymbol = new CallSymbol(initializerUrl, lyric_object::AccessType::Public,
         lyric_object::CallMode::Normal, priv->isDeclOnly, priv->staticBlock.get(), m_state);
 
     auto status = m_state->appendCall(initSymbol);

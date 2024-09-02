@@ -8,12 +8,11 @@ lyric_assembler::FieldSymbol::FieldSymbol(
     const lyric_common::SymbolUrl &fieldUrl,
     lyric_object::AccessType access,
     bool isVariable,
-    FieldAddress address,
     TypeHandle *fieldType,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
-    : BaseSymbol(address, new FieldSymbolPriv()),
+    : BaseSymbol(new FieldSymbolPriv()),
       m_fieldUrl(fieldUrl),
       m_state(state)
 {
@@ -30,23 +29,6 @@ lyric_assembler::FieldSymbol::FieldSymbol(
     TU_ASSERT (priv->fieldType != nullptr);
     TU_ASSERT (priv->parentBlock != nullptr);
 }
-
-//lyric_assembler::FieldSymbol::FieldSymbol(
-//    const lyric_common::SymbolUrl &fieldUrl,
-//    lyric_object::AccessType access,
-//    bool isVariable,
-//    const lyric_common::SymbolUrl &init,
-//    FieldAddress address,
-//    TypeHandle *fieldType,
-//    bool isDeclOnly,
-//    BlockHandle *parentBlock,
-//    ObjectState *state)
-//    : FieldSymbol(fieldUrl, access, isVariable, address, fieldType, isDeclOnly, parentBlock, state)
-//{
-//    auto *priv = getPriv();
-//    priv->init = init;
-//    TU_ASSERT (priv->init.isValid());
-//}
 
 lyric_assembler::FieldSymbol::FieldSymbol(
     const lyric_common::SymbolUrl &fieldUrl,
@@ -100,7 +82,7 @@ lyric_assembler::FieldSymbol::getSymbolUrl() const
 }
 
 lyric_common::TypeDef
-lyric_assembler::FieldSymbol::getAssignableType() const
+lyric_assembler::FieldSymbol::getTypeDef() const
 {
     auto *priv = getPriv();
     return priv->fieldType->getTypeDef();

@@ -25,7 +25,7 @@ lyric_assembler::internal::touch_static(
     if (staticSymbol->isImported())
         return {};
 
-    TU_RETURN_IF_NOT_OK (writer.touchType(staticSymbol->getAssignableType()));
+    TU_RETURN_IF_NOT_OK (writer.touchType(staticSymbol->getTypeDef()));
 
     auto initializerUrl = staticSymbol->getInitializer();
     if (initializerUrl.isValid()) {
@@ -49,7 +49,7 @@ write_static(
     auto fb_fullyQualifiedName = buffer.CreateSharedString(staticPathString);
 
     tu_uint32 staticType;
-    TU_ASSIGN_OR_RETURN (staticType, writer.getTypeOffset(staticSymbol->getAssignableType()));
+    TU_ASSIGN_OR_RETURN (staticType, writer.getTypeOffset(staticSymbol->getTypeDef()));
 
     lyo1::StaticFlags staticFlags = lyo1::StaticFlags::NONE;
 

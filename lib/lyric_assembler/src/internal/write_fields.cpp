@@ -24,7 +24,7 @@ lyric_assembler::internal::touch_field(
     if (fieldSymbol->isImported())
         return {};
 
-    TU_RETURN_IF_NOT_OK (writer.touchType(fieldSymbol->getAssignableType()));
+    TU_RETURN_IF_NOT_OK (writer.touchType(fieldSymbol->getTypeDef()));
 
     auto initializerUrl = fieldSymbol->getInitializer();
     if (initializerUrl.isValid()) {
@@ -48,7 +48,7 @@ write_field(
     auto fullyQualifiedName = buffer.CreateSharedString(fieldPathString);
 
     tu_uint32 fieldType;
-    TU_ASSIGN_OR_RETURN (fieldType, writer.getTypeOffset(fieldSymbol->getAssignableType()));
+    TU_ASSIGN_OR_RETURN (fieldType, writer.getTypeOffset(fieldSymbol->getTypeDef()));
 
     lyo1::FieldFlags fieldFlags = lyo1::FieldFlags::NONE;
     if (fieldSymbol->isVariable())

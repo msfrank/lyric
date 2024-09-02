@@ -15,7 +15,6 @@
 namespace lyric_assembler {
 
     struct ImplHandlePriv {
-        ImplOffset offset;
         ImplRef ref;
         std::string name;
         bool isDeclOnly = false;
@@ -30,7 +29,6 @@ namespace lyric_assembler {
     class ImplHandle : public BaseHandle<ImplHandlePriv> {
     public:
         ImplHandle(
-            ImplOffset offset,
             const std::string &name,
             TypeHandle *implType,
             ConceptSymbol *implConcept,
@@ -39,7 +37,6 @@ namespace lyric_assembler {
             BlockHandle *parentBlock,
             ObjectState *state);
         ImplHandle(
-            ImplOffset offset,
             const std::string &name,
             TypeHandle *implType,
             ConceptSymbol *implConcept,
@@ -53,7 +50,6 @@ namespace lyric_assembler {
 
         ImplRef getRef() const;
         std::string getName() const;
-        //ImplOffset getOffset() const;
 
         bool isDeclOnly() const;
 

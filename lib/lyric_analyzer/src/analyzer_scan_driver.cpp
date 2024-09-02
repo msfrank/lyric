@@ -66,8 +66,7 @@ lyric_analyzer::AnalyzerScanDriver::initialize()
 
     // create the $entry call
     lyric_common::SymbolUrl entryUrl(location, lyric_common::SymbolPath({"$entry"}));
-    auto entryAddress = lyric_assembler::CallAddress::near(m_state->numCalls());
-    m_entry = new lyric_assembler::CallSymbol(entryUrl, returnType, entryAddress, entryTypeHandle, m_state);
+    m_entry = new lyric_assembler::CallSymbol(entryUrl, returnType, entryTypeHandle, m_state);
     status = m_state->appendCall(m_entry);
     if (status.notOk()) {
         delete m_entry;
@@ -81,9 +80,7 @@ lyric_analyzer::AnalyzerScanDriver::initialize()
 
     // create the root namespace
     lyric_common::SymbolUrl rootUrl(location, lyric_common::SymbolPath({"$root"}));
-    auto nsAddress = lyric_assembler::NamespaceAddress::near(m_state->numNamespaces());
-    m_root = new lyric_assembler::NamespaceSymbol(rootUrl, nsAddress, namespaceTypeHandle,
-        m_entry->callProc(), m_state);
+    m_root = new lyric_assembler::NamespaceSymbol(rootUrl, namespaceTypeHandle, m_entry->callProc(), m_state);
     status = m_state->appendNamespace(m_root);
     if (status.notOk()) {
         delete m_root;

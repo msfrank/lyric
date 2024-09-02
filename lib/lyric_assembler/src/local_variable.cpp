@@ -32,7 +32,7 @@ lyric_assembler::LocalVariable::getSymbolUrl() const
 }
 
 lyric_common::TypeDef
-lyric_assembler::LocalVariable::getAssignableType() const
+lyric_assembler::LocalVariable::getTypeDef() const
 {
     return m_assignableType;
 }

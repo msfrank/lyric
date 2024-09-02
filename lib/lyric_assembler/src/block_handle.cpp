@@ -587,10 +587,8 @@ lyric_assembler::BlockHandle::declareStatic(
     TU_ASSIGN_OR_RETURN (staticType, m_state->typeCache()->getOrMakeType(assignableType));
 
     auto staticUrl = makeSymbolUrl(name);
-    StaticAddress address;
-    address = StaticAddress::near(m_state->numStatics());
 
-    auto *staticSymbol = new StaticSymbol(staticUrl, access, isVariable, address, staticType, declOnly, this, m_state);
+    auto *staticSymbol = new StaticSymbol(staticUrl, access, isVariable, staticType, declOnly, this, m_state);
     auto status = m_state->appendStatic(staticSymbol);
     if (status.notOk()) {
         delete staticSymbol;
@@ -814,15 +812,13 @@ lyric_assembler::BlockHandle::declareFunction(
         TU_ASSIGN_OR_RETURN (functionTemplate, typeCache->makeTemplate(functionUrl, templateParameters, this));
     }
 
-    CallAddress address = CallAddress::near(m_state->numCalls());
-
     // create the call
     CallSymbol *callSymbol;
     if (functionTemplate) {
-        callSymbol = new CallSymbol(functionUrl, access, address, lyric_object::CallMode::Normal,
+        callSymbol = new CallSymbol(functionUrl, access, lyric_object::CallMode::Normal,
             functionTemplate, declOnly, this, m_state);
     } else {
-        callSymbol = new CallSymbol(functionUrl, access, address, lyric_object::CallMode::Normal,
+        callSymbol = new CallSymbol(functionUrl, access, lyric_object::CallMode::Normal,
             declOnly, this, m_state);
     }
 
@@ -926,21 +922,19 @@ lyric_assembler::BlockHandle::declareClass(
     TypeHandle *typeHandle;
     if (classTemplate) {
         TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
-            classUrl, classTemplate->getPlaceholders(), superClass->getAssignableType()));
+            classUrl, classTemplate->getPlaceholders(), superClass->getTypeDef()));
     } else {
         TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
-            classUrl, {}, superClass->getAssignableType()));
+            classUrl, {}, superClass->getTypeDef()));
     }
-
-    ClassAddress address = ClassAddress::near(m_state->numClasses());
 
     // create the class
     ClassSymbol *classSymbol;
     if (classTemplate) {
-        classSymbol = new ClassSymbol(classUrl, access, derive, isAbstract, address, typeHandle,
+        classSymbol = new ClassSymbol(classUrl, access, derive, isAbstract, typeHandle,
             classTemplate, superClass, declOnly, this, m_state);
     } else {
-        classSymbol = new ClassSymbol(classUrl, access, derive, isAbstract, address,
+        classSymbol = new ClassSymbol(classUrl, access, derive, isAbstract,
             typeHandle, superClass, declOnly, this, m_state);
     }
 
@@ -952,7 +946,7 @@ lyric_assembler::BlockHandle::declareClass(
 
     SymbolBinding binding;
     binding.symbolUrl = classUrl;
-    binding.typeDef = classSymbol->getAssignableType();
+    binding.typeDef = classSymbol->getTypeDef();
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 
@@ -1009,21 +1003,19 @@ lyric_assembler::BlockHandle::declareConcept(
     TypeHandle *typeHandle;
     if (conceptTemplate) {
         TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
-            conceptUrl, conceptTemplate->getPlaceholders(), superConcept->getAssignableType()));
+            conceptUrl, conceptTemplate->getPlaceholders(), superConcept->getTypeDef()));
     } else {
         TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
-            conceptUrl, {}, superConcept->getAssignableType()));
+            conceptUrl, {}, superConcept->getTypeDef()));
     }
-
-    ConceptAddress address = ConceptAddress::near(m_state->numConcepts());
 
     // create the concept
     ConceptSymbol *conceptSymbol;
     if (conceptTemplate) {
-        conceptSymbol = new ConceptSymbol(conceptUrl, access, derive, address, typeHandle,
+        conceptSymbol = new ConceptSymbol(conceptUrl, access, derive, typeHandle,
             conceptTemplate, superConcept, declOnly, this, m_state);
     } else {
-        conceptSymbol = new ConceptSymbol(conceptUrl, access, derive, address, typeHandle,
+        conceptSymbol = new ConceptSymbol(conceptUrl, access, derive, typeHandle,
             superConcept, declOnly, this, m_state);
     }
 
@@ -1035,7 +1027,7 @@ lyric_assembler::BlockHandle::declareConcept(
 
     SymbolBinding binding;
     binding.symbolUrl = conceptUrl;
-    binding.typeDef = conceptSymbol->getAssignableType();
+    binding.typeDef = conceptSymbol->getTypeDef();
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 
@@ -1095,12 +1087,10 @@ lyric_assembler::BlockHandle::declareEnum(
     // create the type
     TypeHandle *typeHandle;
     TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
-        enumUrl, {}, superEnum->getAssignableType()));
-
-    EnumAddress address = EnumAddress::near(m_state->numEnums());
+        enumUrl, {}, superEnum->getTypeDef()));
 
     // create the instance
-    auto *enumSymbol = new EnumSymbol(enumUrl, access, derive, isAbstract, address, typeHandle,
+    auto *enumSymbol = new EnumSymbol(enumUrl, access, derive, isAbstract, typeHandle,
         superEnum, declOnly, this, m_state);
 
     auto status = m_state->appendEnum(enumSymbol);
@@ -1111,7 +1101,7 @@ lyric_assembler::BlockHandle::declareEnum(
 
     SymbolBinding binding;
     binding.symbolUrl = enumUrl;
-    binding.typeDef = enumSymbol->getAssignableType();
+    binding.typeDef = enumSymbol->getTypeDef();
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 
@@ -1171,12 +1161,10 @@ lyric_assembler::BlockHandle::declareInstance(
     // create the type
     TypeHandle *typeHandle;
     TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
-        instanceUrl, {}, superInstance->getAssignableType()));
-
-    InstanceAddress address = InstanceAddress::near(m_state->numInstances());
+        instanceUrl, {}, superInstance->getTypeDef()));
 
     // create the instance
-    auto *instanceSymbol = new InstanceSymbol(instanceUrl, access, derive, isAbstract, address, typeHandle,
+    auto *instanceSymbol = new InstanceSymbol(instanceUrl, access, derive, isAbstract, typeHandle,
         superInstance, declOnly, this, m_state);
 
     auto status = m_state->appendInstance(instanceSymbol);
@@ -1187,7 +1175,7 @@ lyric_assembler::BlockHandle::declareInstance(
 
     SymbolBinding binding;
     binding.symbolUrl = instanceUrl;
-    binding.typeDef = instanceSymbol->getAssignableType();
+    binding.typeDef = instanceSymbol->getTypeDef();
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 
@@ -1247,12 +1235,10 @@ lyric_assembler::BlockHandle::declareStruct(
     // create the type
     TypeHandle *typeHandle;
     TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
-        structUrl, {}, superStruct->getAssignableType()));
-
-    StructAddress address = StructAddress::near(m_state->numStructs());
+        structUrl, {}, superStruct->getTypeDef()));
 
     // create the struct
-    auto *structSymbol = new StructSymbol(structUrl, access, derive, isAbstract, address,
+    auto *structSymbol = new StructSymbol(structUrl, access, derive, isAbstract,
         typeHandle, superStruct, declOnly, this, m_state);
 
     auto status = m_state->appendStruct(structSymbol);
@@ -1263,7 +1249,7 @@ lyric_assembler::BlockHandle::declareStruct(
 
     SymbolBinding binding;
     binding.symbolUrl = structUrl;
-    binding.typeDef = structSymbol->getAssignableType();
+    binding.typeDef = structSymbol->getTypeDef();
     binding.bindingType = BindingType::Descriptor;
     m_bindings[name] = binding;
 
@@ -1413,7 +1399,7 @@ determine_binding_type(
     lyric_assembler::BlockHandle *block)
 {
     if (!aliasType.isValid())
-        return targetSymbol->getAssignableType();
+        return targetSymbol->getTypeDef();
 
     auto *state = block->blockState();
     auto *typeCache = state->typeCache();
@@ -1631,15 +1617,14 @@ lyric_assembler::BlockHandle::declareNamespace(
     auto fundamentalNamespace = m_state->fundamentalCache()->getFundamentalUrl(FundamentalSymbol::Namespace);
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(fundamentalNamespace));
-    auto nsDescriptorType = symbol->getAssignableType();
+    auto nsDescriptorType = symbol->getTypeDef();
     lyric_assembler::TypeHandle *typeHandle;
     TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->getOrMakeType(nsDescriptorType));
 
-    auto address = NamespaceAddress::near(m_state->numNamespaces());
     auto *superNs = blockNs();
 
     // create the namespace
-    auto *namespaceSymbol = new NamespaceSymbol(nsUrl, access, address, typeHandle,
+    auto *namespaceSymbol = new NamespaceSymbol(nsUrl, access, typeHandle,
         superNs, declOnly, this, m_state, m_isRoot);
 
     auto status = m_state->appendNamespace(namespaceSymbol);

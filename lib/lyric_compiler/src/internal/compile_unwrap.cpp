@@ -48,7 +48,7 @@ resolve_unwrap_instance(
     // resolve the instance for a generic unwrap type with a concrete tuple type
     lyric_assembler::AbstractSymbol *unwrapSym;
     TU_ASSIGN_OR_RETURN (unwrapSym, state->symbolCache()->getOrImportSymbol(unwrapType.getConcreteUrl()));
-    auto genericUnwrapType = unwrapSym->getAssignableType();
+    auto genericUnwrapType = unwrapSym->getTypeDef();
     auto genericConcreteReceiverType = lyric_common::TypeDef::forConcrete(
         fundamentalUnwrap, {genericUnwrapType, tupleType});
     auto resolveGenericConcreteInstanceResult = block->resolveImpl(genericConcreteReceiverType,

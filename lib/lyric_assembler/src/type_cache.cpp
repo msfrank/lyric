@@ -308,7 +308,7 @@ lyric_assembler::TypeCache::declareParameterizedType(
 
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_objectState->symbolCache()->getOrImportSymbol(baseUrl));
-    auto superType = symbol->getAssignableType();
+    auto superType = symbol->getTypeDef();
 
     auto titerator = m_templatecache.find(baseUrl);
     if (titerator == m_templatecache.cend())
@@ -670,12 +670,12 @@ lyric_assembler::TypeCache::resolveIntersection(const std::vector<lyric_common::
         TU_ASSIGN_OR_RETURN (symbol, m_objectState->symbolCache()->getOrImportSymbol(memberBase));
 
         // intersection member symbol must be a concept which is either sealed or final
-        DeriveType derive = DeriveType::ANY;
+        DeriveType derive = DeriveType::Any;
         switch (symbol->getSymbolType()) {
             case SymbolType::CONCEPT: {
                 //auto *conceptSymbol = cast_symbol_to_concept(baseSym);
                 //FIXME: derive = conceptSymbol->getDeriveType();
-                derive = DeriveType::FINAL;
+                derive = DeriveType::Final;
                 break;
             }
             default:
@@ -685,8 +685,8 @@ lyric_assembler::TypeCache::resolveIntersection(const std::vector<lyric_common::
         }
 
         switch (derive) {
-            case DeriveType::FINAL:
-            case DeriveType::SEALED:
+            case DeriveType::Final:
+            case DeriveType::Sealed:
                 break;
             default:
                 return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
@@ -739,11 +739,11 @@ lyric_assembler::TypeCache::resolveSignature(const lyric_common::SymbolUrl &symb
     TypeHandle *typeHandle;
     switch (symbol->getSymbolType()) {
         case SymbolType::ARGUMENT:
-            return resolveSignature(cast_symbol_to_argument(symbol)->getAssignableType());
+            return resolveSignature(cast_symbol_to_argument(symbol)->getTypeDef());
         case SymbolType::LEXICAL:
-            return resolveSignature(cast_symbol_to_lexical(symbol)->getAssignableType());
+            return resolveSignature(cast_symbol_to_lexical(symbol)->getTypeDef());
         case SymbolType::LOCAL:
-            return resolveSignature(cast_symbol_to_local(symbol)->getAssignableType());
+            return resolveSignature(cast_symbol_to_local(symbol)->getTypeDef());
         case SymbolType::CLASS:
             typeHandle = cast_symbol_to_class(symbol)->classType();
             break;

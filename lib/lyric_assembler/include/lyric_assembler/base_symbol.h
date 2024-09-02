@@ -8,11 +8,13 @@
 namespace lyric_assembler {
 
     /**
-     * Base implementation of an abstract symbol with methods to manage the type-specific symbol address.
+     * Base implementation of an abstract symbol with methods to manage the type-specific private data. In
+     * particular the getPriv protected methods allow the symbol to load the private data from const qualified
+     * methods.
      *
-     * @tparam AddressType The type-specific address type for the symbol.
+     * @tparam PrivType The type-specific private data struct for the symbol.
      */
-    template <class AddressType, class PrivType>
+    template <class PrivType>
     class BaseSymbol : public AbstractSymbol {
 
     public:
@@ -45,12 +47,10 @@ namespace lyric_assembler {
          *
          * @param address
          */
-        explicit BaseSymbol(AddressType address, PrivType *priv)
-            : m_address(address),
-              m_isImported(false),
+        explicit BaseSymbol(PrivType *priv)
+            : m_isImported(false),
               m_priv(priv)
         {
-            TU_ASSERT (m_address.isValid());
             TU_ASSERT (m_priv != nullptr);
         };
 
@@ -85,7 +85,6 @@ namespace lyric_assembler {
         virtual PrivType *load() = 0;
 
     private:
-        AddressType m_address;
         const bool m_isImported = true;
         PrivType *m_priv = nullptr;
     };

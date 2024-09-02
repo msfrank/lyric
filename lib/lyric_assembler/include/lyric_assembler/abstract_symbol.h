@@ -8,7 +8,6 @@
 namespace lyric_assembler {
 
     enum class SymbolType {
-        INTRINSIC,
         EXISTENTIAL,
         ACTION,
         CALL,
@@ -34,7 +33,7 @@ namespace lyric_assembler {
         virtual bool isImported() const = 0;
         virtual SymbolType getSymbolType() const = 0;
         virtual lyric_common::SymbolUrl getSymbolUrl() const = 0;
-        virtual lyric_common::TypeDef getAssignableType() const = 0;
+        virtual lyric_common::TypeDef getTypeDef() const = 0;
     };
 }
 

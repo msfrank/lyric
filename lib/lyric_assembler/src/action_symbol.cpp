@@ -9,11 +9,10 @@ lyric_assembler::ActionSymbol::ActionSymbol(
     const lyric_common::SymbolUrl &actionUrl,
     const lyric_common::SymbolUrl &receiverUrl,
     lyric_object::AccessType access,
-    ActionAddress address,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
-    : BaseSymbol(address, new ActionSymbolPriv()),
+    : BaseSymbol(new ActionSymbolPriv()),
       m_actionUrl(actionUrl),
       m_state(state)
 {
@@ -36,7 +35,6 @@ lyric_assembler::ActionSymbol::ActionSymbol(
     const lyric_common::SymbolUrl &actionUrl,
     const lyric_common::SymbolUrl &receiverUrl,
     lyric_object::AccessType access,
-    ActionAddress address,
     TemplateHandle *actionTemplate,
     bool isDeclOnly,
     BlockHandle *parentBlock,
@@ -45,7 +43,6 @@ lyric_assembler::ActionSymbol::ActionSymbol(
         actionUrl,
         receiverUrl,
         access,
-        address,
         isDeclOnly,
         parentBlock,
         state)
@@ -157,7 +154,7 @@ lyric_assembler::ActionSymbol::getSymbolUrl() const
 }
 
 lyric_common::TypeDef
-lyric_assembler::ActionSymbol::getAssignableType() const
+lyric_assembler::ActionSymbol::getTypeDef() const
 {
     return {};
 }

@@ -38,13 +38,12 @@ namespace lyric_assembler {
      *
      * Free functions and bound methods can be declared generic by supplying a TemplateHandle.
      */
-    class CallSymbol : public BaseSymbol<CallAddress,CallSymbolPriv> {
+    class CallSymbol : public BaseSymbol<CallSymbolPriv> {
     public:
 
         CallSymbol(
             const lyric_common::SymbolUrl &entryUrl,
             const lyric_common::TypeDef &returnType,
-            CallAddress address,
             TypeHandle *callType,
             ObjectState *state);
 
@@ -52,7 +51,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &callUrl,
             const lyric_common::SymbolUrl &receiverUrl,
             lyric_object::AccessType access,
-            CallAddress address,
             lyric_object::CallMode mode,
             TemplateHandle *callTemplate,
             bool isDeclOnly,
@@ -63,7 +61,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &callUrl,
             const lyric_common::SymbolUrl &receiverUrl,
             lyric_object::AccessType access,
-            CallAddress address,
             lyric_object::CallMode mode,
             bool isDeclOnly,
             BlockHandle *parentBlock,
@@ -72,7 +69,6 @@ namespace lyric_assembler {
         CallSymbol(
             const lyric_common::SymbolUrl &callUrl,
             lyric_object::AccessType access,
-            CallAddress address,
             lyric_object::CallMode mode,
             TemplateHandle *callTemplate,
             bool isDeclOnly,
@@ -82,7 +78,6 @@ namespace lyric_assembler {
         CallSymbol(
             const lyric_common::SymbolUrl &callUrl,
             lyric_object::AccessType access,
-            CallAddress address,
             lyric_object::CallMode mode,
             bool isDeclOnly,
             BlockHandle *parentBlock,
@@ -97,7 +92,7 @@ namespace lyric_assembler {
 
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        lyric_common::TypeDef getAssignableType() const override;
+        lyric_common::TypeDef getTypeDef() const override;
 
         tempo_utils::Result<ProcHandle *> defineCall(
             const ParameterPack &parameterPack,

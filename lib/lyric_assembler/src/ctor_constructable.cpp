@@ -24,7 +24,7 @@ lyric_assembler::CtorConstructable::CtorConstructable()
 //    m_newType = lyric_object::NEW_CLASS;
 //    m_newAddress = symbol->getAddress().getAddress();
 //    m_ctorAddress = ctor->getAddress();
-//    m_ctorType = symbol->getAssignableType();
+//    m_ctorType = symbol->getTypeDef();
 //}
 //
 //lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, EnumSymbol *symbol)
@@ -36,7 +36,7 @@ lyric_assembler::CtorConstructable::CtorConstructable()
 //    m_newType = lyric_object::NEW_ENUM;
 //    m_newAddress = symbol->getAddress().getAddress();
 //    m_ctorAddress = ctor->getAddress();
-//    m_ctorType = symbol->getAssignableType();
+//    m_ctorType = symbol->getTypeDef();
 //}
 //
 //lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, InstanceSymbol *symbol)
@@ -48,7 +48,7 @@ lyric_assembler::CtorConstructable::CtorConstructable()
 //    m_newType = lyric_object::NEW_INSTANCE;
 //    m_newAddress = symbol->getAddress().getAddress();
 //    m_ctorAddress = ctor->getAddress();
-//    m_ctorType = symbol->getAssignableType();
+//    m_ctorType = symbol->getTypeDef();
 //}
 //
 //lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, StructSymbol *symbol)
@@ -60,7 +60,7 @@ lyric_assembler::CtorConstructable::CtorConstructable()
 //    m_newType = lyric_object::NEW_STRUCT;
 //    m_newAddress = symbol->getAddress().getAddress();
 //    m_ctorAddress = ctor->getAddress();
-//    m_ctorType = symbol->getAssignableType();
+//    m_ctorType = symbol->getTypeDef();
 //}
 
 lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctorSymbol, AbstractSymbol *newSymbol)
@@ -166,7 +166,7 @@ lyric_assembler::CtorConstructable::invoke(
     auto *fragment = code->rootFragment();
 
     TU_RETURN_IF_NOT_OK (fragment->callVirtual(m_ctorSymbol, placementSize, callFlags));
-    return reifier.reifyResult(m_newSymbol->getAssignableType());
+    return reifier.reifyResult(m_newSymbol->getTypeDef());
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
@@ -191,5 +191,5 @@ lyric_assembler::CtorConstructable::invokeNew(
     auto *fragment = code->rootFragment();
 
     TU_RETURN_IF_NOT_OK (fragment->constructNew(m_newSymbol, placementSize, callFlags));
-    return reifier.reifyResult(m_newSymbol->getAssignableType());
+    return reifier.reifyResult(m_newSymbol->getTypeDef());
 }

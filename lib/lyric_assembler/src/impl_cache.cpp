@@ -30,8 +30,7 @@ lyric_assembler::ImplCache::makeImpl(
     bool isDeclOnly,
     BlockHandle *parentBlock)
 {
-    ImplOffset offset(m_declaredImpls.size());
-    auto *implHandle = new ImplHandle(offset, name, implType, implConcept, receiverUrl,
+    auto *implHandle = new ImplHandle(name, implType, implConcept, receiverUrl,
         isDeclOnly, parentBlock, m_objectState);
     m_declaredImpls.push_back(implHandle);
     return implHandle;
@@ -47,8 +46,7 @@ lyric_assembler::ImplCache::makeImpl(
     bool isDeclOnly,
     BlockHandle *parentBlock)
 {
-    ImplOffset offset(m_declaredImpls.size());
-    auto *implHandle = new ImplHandle(offset, name, implType, implConcept, receiverUrl,
+    auto *implHandle = new ImplHandle(name, implType, implConcept, receiverUrl,
         receiverTemplate, isDeclOnly, parentBlock, m_objectState);
     m_declaredImpls.push_back(implHandle);
     return implHandle;

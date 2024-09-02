@@ -13,7 +13,7 @@ namespace lyric_assembler {
         bool isImported() const override;
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        lyric_common::TypeDef getAssignableType() const override;
+        lyric_common::TypeDef getTypeDef() const override;
 
         lyric_object::LinkageSection getLinkage() const;
 

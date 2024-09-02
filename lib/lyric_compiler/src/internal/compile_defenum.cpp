@@ -388,7 +388,7 @@ compile_defenum_case(
     TU_LOG_INFO << "declared enum case " << caseEnum->getSymbolUrl() << " from " << baseEnum->getSymbolUrl();
 
     // add case to set of sealed subtypes
-    auto status = baseEnum->putSealedType(caseEnum->getAssignableType());
+    auto status = baseEnum->putSealedType(caseEnum->getTypeDef());
     if (status.notOk())
         return status;
 

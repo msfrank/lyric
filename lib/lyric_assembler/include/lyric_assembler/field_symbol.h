@@ -17,13 +17,12 @@ namespace lyric_assembler {
         TypeHandle *fieldType;
     };
 
-    class FieldSymbol : public BaseSymbol<FieldAddress,FieldSymbolPriv> {
+    class FieldSymbol : public BaseSymbol<FieldSymbolPriv> {
     public:
         FieldSymbol(
             const lyric_common::SymbolUrl &fieldUrl,
             lyric_object::AccessType access,
             bool isVariable,
-            FieldAddress address,
             TypeHandle *fieldType,
             bool isDeclOnly,
             BlockHandle *parentBlock,
@@ -37,7 +36,7 @@ namespace lyric_assembler {
 
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        lyric_common::TypeDef getAssignableType() const override;
+        lyric_common::TypeDef getTypeDef() const override;
 
         std::string getName() const;
         lyric_object::AccessType getAccessType() const;

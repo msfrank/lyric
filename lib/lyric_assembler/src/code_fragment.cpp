@@ -309,7 +309,7 @@ lyric_assembler::CodeFragment::loadThis()
 {
     Statement statement;
     statement.type = StatementType::Instruction;
-    statement.instruction = std::make_shared<LoadSyntheticInstruction>(SyntheticType::THIS);
+    statement.instruction = std::make_shared<LoadSyntheticInstruction>(SyntheticType::This);
     m_statements.push_back(std::move(statement));
     return {};
 }

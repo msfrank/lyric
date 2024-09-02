@@ -150,7 +150,7 @@ compile_defstruct_init(
             p.label = memberName;
             p.isVariable = false;
             p.placement = lyric_object::PlacementType::Invalid;
-            p.typeDef = fieldSymbol->getAssignableType();
+            p.typeDef = fieldSymbol->getTypeDef();
 
             if (fieldInitializerUrl.isValid()) {
                 if (!state->symbolCache()->hasSymbol(fieldInitializerUrl))

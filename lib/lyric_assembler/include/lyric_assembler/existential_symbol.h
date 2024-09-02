@@ -25,14 +25,13 @@ namespace lyric_assembler {
         std::unique_ptr<BlockHandle> existentialBlock;
     };
 
-    class ExistentialSymbol : public BaseSymbol<ExistentialAddress,ExistentialSymbolPriv> {
+    class ExistentialSymbol : public BaseSymbol<ExistentialSymbolPriv> {
 
     public:
         ExistentialSymbol(
             const lyric_common::SymbolUrl &existentialUrl,
             lyric_object::AccessType access,
             lyric_object::DeriveType derive,
-            ExistentialAddress address,
             TypeHandle *existentialType,
             ExistentialSymbol *superExistential,
             bool isDeclOnly,
@@ -42,7 +41,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &existentialUrl,
             lyric_object::AccessType access,
             lyric_object::DeriveType derive,
-            ExistentialAddress address,
             TypeHandle *existentialType,
             TemplateHandle *existentialTemplate,
             ExistentialSymbol *superExistential,
@@ -58,7 +56,7 @@ namespace lyric_assembler {
 
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        lyric_common::TypeDef getAssignableType() const override;
+        lyric_common::TypeDef getTypeDef() const override;
 
         bool isDeclOnly() const;
         lyric_object::DeriveType getDeriveType() const;

@@ -115,7 +115,7 @@ lyric_compiler::internal::compile_member_initializer(
 //    TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(
 //        identifier, lyric_object::AccessType::Public, templateParameters));
 
-    auto memberType = fieldSymbol->getAssignableType();
+    auto memberType = fieldSymbol->getTypeDef();
 
     // define the initializer without a return type
     lyric_assembler::ProcHandle *procHandle;
@@ -207,7 +207,7 @@ lyric_compiler::internal::compile_static_initializer(
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
-    auto staticType = staticSymbol->getAssignableType();
+    auto staticType = staticSymbol->getTypeDef();
     bool isReturnable;
 
     // validate that body returns the expected type

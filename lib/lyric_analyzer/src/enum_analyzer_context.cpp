@@ -106,7 +106,7 @@ lyric_analyzer::EnumAnalyzerContext::declareCase(const lyric_parser::ArchetypeNo
     TU_ASSIGN_OR_RETURN (ctorSymbol, enumCaseSymbol->declareCtor(lyric_object::AccessType::Public));
     TU_RETURN_IF_STATUS(ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
 
-    TU_RETURN_IF_NOT_OK (m_enumSymbol->putSealedType(enumCaseSymbol->getAssignableType()));
+    TU_RETURN_IF_NOT_OK (m_enumSymbol->putSealedType(enumCaseSymbol->getTypeDef()));
 
     TU_LOG_INFO << "declared case " << enumCaseSymbol->getSymbolUrl() << " on " << m_enumSymbol->getSymbolUrl();
 

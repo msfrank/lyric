@@ -21,13 +21,12 @@ lyric_assembler::EnumSymbol::EnumSymbol(
     lyric_object::AccessType access,
     lyric_object::DeriveType derive,
     bool isAbstract,
-    EnumAddress address,
     TypeHandle *enumType,
     EnumSymbol *superEnum,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
-    : BaseSymbol(address, new EnumSymbolPriv()),
+    : BaseSymbol(new EnumSymbolPriv()),
       m_enumUrl(enumUrl),
       m_state(state)
 {
@@ -87,7 +86,7 @@ lyric_assembler::EnumSymbol::load()
 
         DataReference memberRef;
         memberRef.symbolUrl = iterator->second;
-        memberRef.typeDef = fieldSymbol->getAssignableType();
+        memberRef.typeDef = fieldSymbol->getTypeDef();
         memberRef.referenceType = fieldSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
         priv->members[iterator->first] = memberRef;
     }
@@ -139,7 +138,7 @@ lyric_assembler::EnumSymbol::getSymbolUrl() const
 }
 
 lyric_common::TypeDef
-lyric_assembler::EnumSymbol::getAssignableType() const
+lyric_assembler::EnumSymbol::getTypeDef() const
 {
     auto *priv = getPriv();
     return priv->enumType->getTypeDef();
@@ -255,11 +254,9 @@ lyric_assembler::EnumSymbol::declareMember(
     auto memberPath = m_enumUrl.getSymbolPath().getPath();
     memberPath.push_back(name);
     auto memberUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(memberPath));
-    auto fieldIndex = m_state->numFields();
-    auto address = FieldAddress::near(fieldIndex);
 
     // construct the field symbol
-    auto *fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, address,
+    auto *fieldSymbol = new FieldSymbol(memberUrl, access, isVariable,
         fieldType, priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
     auto status = m_state->appendField(fieldSymbol);
@@ -386,12 +383,9 @@ lyric_assembler::EnumSymbol::declareCtor(
             tempo_tracing::LogSeverity::kError,
             "ctor already defined for enum {}", m_enumUrl.toString());
 
-    auto callIndex = m_state->numCalls();
-    auto address = CallAddress::near(callIndex);
-
     // construct call symbol
-    auto *ctorSymbol = new CallSymbol(ctorUrl, m_enumUrl, access, address,
-        lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->enumBlock.get(), m_state);
+    auto *ctorSymbol = new CallSymbol(ctorUrl, m_enumUrl, access, lyric_object::CallMode::Constructor,
+        priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
     auto status = m_state->appendCall(ctorSymbol);
     if (status.notOk()) {
@@ -485,12 +479,10 @@ lyric_assembler::EnumSymbol::declareMethod(
     auto methodPath = m_enumUrl.getSymbolPath().getPath();
     methodPath.push_back(name);
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
-    auto callIndex = m_state->numCalls();
-    auto address = CallAddress::near(callIndex);
 
     // construct call symbol
-    auto *callSymbol = new CallSymbol(methodUrl, m_enumUrl, access, address,
-        lyric_object::CallMode::Normal, priv->isDeclOnly, priv->enumBlock.get(), m_state);
+    auto *callSymbol = new CallSymbol(methodUrl, m_enumUrl, access, lyric_object::CallMode::Normal,
+        priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
     auto status = m_state->appendCall(callSymbol);
     if (status.notOk()) {

@@ -30,7 +30,7 @@ namespace lyric_assembler {
         std::unique_ptr<BlockHandle> structBlock;
     };
 
-    class StructSymbol : public BaseSymbol<StructAddress,StructSymbolPriv> {
+    class StructSymbol : public BaseSymbol<StructSymbolPriv> {
 
     public:
         StructSymbol(
@@ -38,7 +38,6 @@ namespace lyric_assembler {
             lyric_object::AccessType access,
             lyric_object::DeriveType derive,
             bool isAbstract,
-            StructAddress address,
             TypeHandle *structType,
             StructSymbol *superStruct,
             bool isDeclOnly,
@@ -53,7 +52,7 @@ namespace lyric_assembler {
 
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        lyric_common::TypeDef getAssignableType() const override;
+        lyric_common::TypeDef getTypeDef() const override;
 
         lyric_object::AccessType getAccessType() const;
         lyric_object::DeriveType getDeriveType() const;

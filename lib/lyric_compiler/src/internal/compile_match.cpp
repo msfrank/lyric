@@ -120,10 +120,10 @@ compile_match_when_symbol_ref(
     lyric_common::TypeDef predicateType;
     switch (symbol->getSymbolType()) {
         case lyric_assembler::SymbolType::INSTANCE:
-            predicateType = cast_symbol_to_instance(symbol)->getAssignableType();
+            predicateType = cast_symbol_to_instance(symbol)->getTypeDef();
             break;
         case lyric_assembler::SymbolType::ENUM:
-            predicateType = cast_symbol_to_enum(symbol)->getAssignableType();
+            predicateType = cast_symbol_to_enum(symbol)->getTypeDef();
             break;
         default:
             return block->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,

@@ -32,7 +32,7 @@ namespace lyric_assembler {
         std::unique_ptr<BlockHandle> enumBlock;
     };
 
-    class EnumSymbol : public BaseSymbol<EnumAddress,EnumSymbolPriv> {
+    class EnumSymbol : public BaseSymbol<EnumSymbolPriv> {
 
     public:
         EnumSymbol(
@@ -40,7 +40,6 @@ namespace lyric_assembler {
             lyric_object::AccessType access,
             lyric_object::DeriveType derive,
             bool isAbstract,
-            EnumAddress address,
             TypeHandle *enumType,
             EnumSymbol *superEnum,
             bool isDeclOnly,
@@ -55,7 +54,7 @@ namespace lyric_assembler {
 
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        lyric_common::TypeDef getAssignableType() const override;
+        lyric_common::TypeDef getTypeDef() const override;
 
         lyric_object::AccessType getAccessType() const;
         lyric_object::DeriveType getDeriveType() const;

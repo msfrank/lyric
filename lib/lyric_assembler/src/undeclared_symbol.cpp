@@ -31,7 +31,7 @@ lyric_assembler::UndeclaredSymbol::getSymbolUrl() const
 }
 
 lyric_common::TypeDef
-lyric_assembler::UndeclaredSymbol::getAssignableType() const
+lyric_assembler::UndeclaredSymbol::getTypeDef() const
 {
     return lyric_common::TypeDef();
 }

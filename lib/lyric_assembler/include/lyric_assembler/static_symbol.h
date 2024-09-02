@@ -19,14 +19,13 @@ namespace lyric_assembler {
         std::unique_ptr<BlockHandle> staticBlock;
     };
 
-    class StaticSymbol : public BaseSymbol<StaticAddress,StaticSymbolPriv> {
+    class StaticSymbol : public BaseSymbol<StaticSymbolPriv> {
 
     public:
         StaticSymbol(
             const lyric_common::SymbolUrl &staticUrl,
             lyric_object::AccessType access,
             bool isVariable,
-            StaticAddress address,
             TypeHandle *staticType,
             bool isDeclOnly,
             BlockHandle *parentBlock,
@@ -40,7 +39,7 @@ namespace lyric_assembler {
 
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        lyric_common::TypeDef getAssignableType() const override;
+        lyric_common::TypeDef getTypeDef() const override;
 
         std::string getName() const;
         lyric_object::AccessType getAccessType() const;

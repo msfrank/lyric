@@ -19,13 +19,12 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     const lyric_common::SymbolUrl &existentialUrl,
     lyric_object::AccessType access,
     lyric_object::DeriveType derive,
-    ExistentialAddress address,
     TypeHandle *existentialType,
     ExistentialSymbol *superExistential,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
-    : BaseSymbol(address, new ExistentialSymbolPriv()),
+    : BaseSymbol(new ExistentialSymbolPriv()),
       m_existentialUrl(existentialUrl),
       m_state(state)
 {
@@ -49,7 +48,6 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     const lyric_common::SymbolUrl &existentialUrl,
     lyric_object::AccessType access,
     lyric_object::DeriveType derive,
-    ExistentialAddress address,
     TypeHandle *existentialType,
     TemplateHandle *existentialTemplate,
     ExistentialSymbol *superExistential,
@@ -60,7 +58,6 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
         existentialUrl,
         access,
         derive,
-        address,
         existentialType,
         superExistential,
         isDeclOnly,
@@ -158,7 +155,7 @@ lyric_assembler::ExistentialSymbol::getSymbolUrl() const
 }
 
 lyric_common::TypeDef
-lyric_assembler::ExistentialSymbol::getAssignableType() const
+lyric_assembler::ExistentialSymbol::getTypeDef() const
 {
     auto *priv = getPriv();
     return priv->existentialType->getTypeDef();
@@ -256,11 +253,9 @@ lyric_assembler::ExistentialSymbol::declareMethod(
     auto methodPath = m_existentialUrl.getSymbolPath().getPath();
     methodPath.push_back(name);
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
-    auto callIndex = m_state->numCalls();
-    auto address = CallAddress::near(callIndex);
 
     // construct call symbol
-    auto *callSymbol = new CallSymbol(methodUrl, m_existentialUrl, access, address,
+    auto *callSymbol = new CallSymbol(methodUrl, m_existentialUrl, access,
         lyric_object::CallMode::Normal, priv->isDeclOnly, priv->existentialBlock.get(), m_state);
 
     auto status = m_state->appendCall(callSymbol);

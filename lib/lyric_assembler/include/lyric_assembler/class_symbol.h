@@ -33,14 +33,13 @@ namespace lyric_assembler {
         std::unique_ptr<BlockHandle> classBlock;
     };
 
-    class ClassSymbol : public BaseSymbol<ClassAddress,ClassSymbolPriv> {
+    class ClassSymbol : public BaseSymbol<ClassSymbolPriv> {
     public:
         ClassSymbol(
             const lyric_common::SymbolUrl &classUrl,
             lyric_object::AccessType access,
             lyric_object::DeriveType derive,
             bool isAbstract,
-            ClassAddress address,
             TypeHandle *classType,
             ClassSymbol *superClass,
             bool isDeclOnly,
@@ -52,7 +51,6 @@ namespace lyric_assembler {
             lyric_object::AccessType access,
             lyric_object::DeriveType derive,
             bool isAbstract,
-            ClassAddress address,
             TypeHandle *classType,
             TemplateHandle *classTemplate,
             ClassSymbol *superClass,
@@ -69,7 +67,7 @@ namespace lyric_assembler {
 
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        lyric_common::TypeDef getAssignableType() const override;
+        lyric_common::TypeDef getTypeDef() const override;
 
         lyric_object::AccessType getAccessType() const;
         lyric_object::DeriveType getDeriveType() const;

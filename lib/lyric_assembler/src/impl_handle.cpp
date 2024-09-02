@@ -8,7 +8,6 @@
 #include <lyric_assembler/type_cache.h>
 
 lyric_assembler::ImplHandle::ImplHandle(
-    ImplOffset offset,
     const std::string &name,
     TypeHandle *implType,
     ConceptSymbol *implConcept,
@@ -22,7 +21,6 @@ lyric_assembler::ImplHandle::ImplHandle(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->offset = offset;
     priv->name = name;
     priv->isDeclOnly = isDeclOnly;
     priv->implType = implType;
@@ -30,7 +28,6 @@ lyric_assembler::ImplHandle::ImplHandle(
     priv->receiverUrl = receiverUrl;
     priv->implBlock =std::make_unique<BlockHandle>(receiverUrl, parentBlock, false);
 
-    TU_ASSERT (priv->offset.isValid());
     TU_ASSERT (!priv->name.empty());
     TU_ASSERT (priv->implType != nullptr);
     TU_ASSERT (priv->implConcept != nullptr);
@@ -40,7 +37,6 @@ lyric_assembler::ImplHandle::ImplHandle(
 }
 
 lyric_assembler::ImplHandle::ImplHandle(
-    ImplOffset offset,
     const std::string &name,
     TypeHandle *implType,
     ConceptSymbol *implConcept,
@@ -50,7 +46,6 @@ lyric_assembler::ImplHandle::ImplHandle(
     BlockHandle *parentBlock,
     ObjectState *state)
     : ImplHandle(
-        offset,
         name,
         implType,
         implConcept,
@@ -197,18 +192,16 @@ lyric_assembler::ImplHandle::defineExtension(
     auto methodPath = priv->receiverUrl.getSymbolPath().getPath();
     methodPath.push_back(absl::StrCat(priv->name, "$", name));
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
-    auto callIndex = m_state->numCalls();
     auto access = lyric_object::AccessType::Public;
-    auto address = CallAddress::near(callIndex);
 
     // construct call symbol
     CallSymbol *callSymbol;
     TemplateHandle *conceptTemplate = priv->implConcept->conceptTemplate();
     if (conceptTemplate != nullptr) {
-        callSymbol = new CallSymbol(methodUrl, priv->receiverUrl, access, address,
+        callSymbol = new CallSymbol(methodUrl, priv->receiverUrl, access,
             lyric_object::CallMode::Normal, conceptTemplate, priv->isDeclOnly, priv->implBlock.get(), m_state);
     } else {
-        callSymbol = new CallSymbol(methodUrl, priv->receiverUrl, access, address,
+        callSymbol = new CallSymbol(methodUrl, priv->receiverUrl, access,
             lyric_object::CallMode::Normal, priv->isDeclOnly, priv->implBlock.get(), m_state);
     }
 

@@ -448,7 +448,7 @@ lyric_assembler::LoadSyntheticInstruction::apply(
 {
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_SYNTHETIC));
     switch (m_type) {
-        case SyntheticType::THIS:
+        case SyntheticType::This:
             return bytecodeBuilder.writeU8(lyric_object::SYNTHETIC_THIS);
         default:
             return AssemblerStatus::forCondition(

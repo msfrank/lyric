@@ -130,29 +130,14 @@ namespace lyric_assembler {
         Variable,                       /**< binding refers to a data variable */
     };
 
-    enum class PlacementType {
-        INVALID,
-        CTX,
-        NAMED,
-        OPT,
-        LIST,
-        REST,
-    };
-
     enum class DeriveType {
-        ANY,
-        SEALED,
-        FINAL,
-    };
-
-    enum class CallMode {
-        NORMAL,
-        CTOR,
-        INLINE,
+        Any,
+        Sealed,
+        Final,
     };
 
     enum class SyntheticType {
-        THIS,
+        This,
     };
 
     enum class ImportFlags {
@@ -163,7 +148,6 @@ namespace lyric_assembler {
 
     struct ImportHandle {
         lyric_common::ModuleLocation location;
-        tu_uint32 importIndex;
         ImportFlags flags;
         bool isShared;
     };
@@ -240,219 +224,6 @@ namespace lyric_assembler {
         bool operator==(const RestOffset &other) const { return u32 == other.u32; };
     private:
         tu_uint32 u32 = lyric_runtime::INVALID_ADDRESS_U32;
-    };
-
-    struct ImplOffset {
-    public:
-        ImplOffset() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit ImplOffset(tu_uint32 u32) : u32(u32) {};
-        ImplOffset(const ImplOffset &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getOffset() const { return u32; };
-        bool operator==(const ImplOffset &other) const { return u32 == other.u32; };
-    private:
-        tu_uint32 u32 = lyric_runtime::INVALID_ADDRESS_U32;
-    };
-
-    struct LiteralAddress {
-        tu_uint32 addr;
-        LiteralAddress() = default;
-        explicit LiteralAddress(tu_uint32 addr_) : addr(addr_) { TU_ASSERT(addr >> 31 == 0); };
-    };
-
-    class NamespaceAddress {
-    public:
-        NamespaceAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit NamespaceAddress(tu_uint32 u32) : u32(u32) {};
-        NamespaceAddress(const NamespaceAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const NamespaceAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const NamespaceAddress &other) const { return u32 != other.u32; };
-        static NamespaceAddress near(int index) { return NamespaceAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static NamespaceAddress far(int index) { return NamespaceAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
-    };
-
-    class ExistentialAddress {
-    public:
-        ExistentialAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit ExistentialAddress(tu_uint32 u32) : u32(u32) {};
-        ExistentialAddress(const ExistentialAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const ExistentialAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const ExistentialAddress &other) const { return u32 != other.u32; };
-        static ExistentialAddress near(int index) { return ExistentialAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static ExistentialAddress far(int index) { return ExistentialAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
-    };
-
-    class CallAddress {
-    public:
-        CallAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit CallAddress(tu_uint32 u32) : u32(u32) {};
-        CallAddress(const CallAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const CallAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const CallAddress &other) const { return u32 != other.u32; };
-        static CallAddress near(int index) { return CallAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static CallAddress far(int index) { return CallAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
-    };
-
-    class FieldAddress {
-    public:
-        FieldAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit FieldAddress(tu_uint32 u32) : u32(u32) {};
-        FieldAddress(const FieldAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const FieldAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const FieldAddress &other) const { return u32 != other.u32; };
-        static FieldAddress near(int index) { return FieldAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static FieldAddress far(int index) { return FieldAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
-    };
-
-    class ActionAddress {
-    public:
-        ActionAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit ActionAddress(tu_uint32 u32) : u32(u32) {};
-        ActionAddress(const ActionAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const ActionAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const ActionAddress &other) const { return u32 != other.u32; };
-        static ActionAddress near(int index) { return ActionAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static ActionAddress far(int index) { return ActionAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
-    };
-
-    class ConceptAddress {
-    public:
-        ConceptAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit ConceptAddress(tu_uint32 u32) : u32(u32) {};
-        ConceptAddress(const ConceptAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const ConceptAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const ConceptAddress &other) const { return u32 != other.u32; };
-        static ConceptAddress near(int index) { return ConceptAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static ConceptAddress far(int index) { return ConceptAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
-    };
-
-    class ClassAddress {
-    public:
-        ClassAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit ClassAddress(tu_uint32 u32) : u32(u32) {};
-        ClassAddress(const ClassAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const ClassAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const ClassAddress &other) const { return u32 != other.u32; };
-        static ClassAddress near(int index) { return ClassAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static ClassAddress far(int index) { return ClassAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
-    };
-
-    class InstanceAddress {
-    public:
-        InstanceAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit InstanceAddress(tu_uint32 u32) : u32(u32) {};
-        InstanceAddress(const InstanceAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const InstanceAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const InstanceAddress &other) const { return u32 != other.u32; };
-        static InstanceAddress near(int index) { return InstanceAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static InstanceAddress far(int index) { return InstanceAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
-    };
-
-    class EnumAddress {
-    public:
-        EnumAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit EnumAddress(tu_uint32 u32) : u32(u32) {};
-        EnumAddress(const EnumAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const EnumAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const EnumAddress &other) const { return u32 != other.u32; };
-        static EnumAddress near(int index) { return EnumAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static EnumAddress far(int index) { return EnumAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
-    };
-
-    class StructAddress {
-    public:
-        StructAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit StructAddress(tu_uint32 u32) : u32(u32) {};
-        StructAddress(const StructAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const StructAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const StructAddress &other) const { return u32 != other.u32; };
-        static StructAddress near(int index) { return StructAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static StructAddress far(int index) { return StructAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
-    };
-
-    class StaticAddress {
-    public:
-        StaticAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit StaticAddress(tu_uint32 u32) : u32(u32) {};
-        StaticAddress(const StaticAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const StaticAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const StaticAddress &other) const { return u32 != other.u32; };
-        static StaticAddress near(int index) { return StaticAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static StaticAddress far(int index) { return StaticAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
-    };
-
-    struct TemplateAddress {
-    public:
-        TemplateAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit TemplateAddress(tu_uint32 u32) : u32(u32) {};
-        TemplateAddress(const TemplateAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const TemplateAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const TemplateAddress &other) const { return u32 != other.u32; };
-        static TemplateAddress near(int index) { return TemplateAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static TemplateAddress far(int index) { return TemplateAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
-    };
-
-    class TypeAddress {
-    public:
-        TypeAddress() : u32(lyric_runtime::INVALID_ADDRESS_U32) {};
-        explicit TypeAddress(tu_uint32 u32) : u32(u32) {};
-        TypeAddress(const TypeAddress &other) : u32(other.u32) {};
-        bool isValid() const { return u32 != lyric_runtime::INVALID_ADDRESS_U32; }
-        tu_uint32 getAddress() const { return u32; };
-        bool operator==(const TypeAddress &other) const { return u32 == other.u32; };
-        bool operator!=(const TypeAddress &other) const { return u32 != other.u32; };
-        static TypeAddress near(int index) { return TypeAddress(static_cast<tu_uint32>(std::abs(index))); };
-        static TypeAddress far(int index) { return TypeAddress(static_cast<tu_uint32>(std::abs(index)) | 0x80000000); };
-    private:
-        tu_uint32 u32;
     };
 
     // forward declarations

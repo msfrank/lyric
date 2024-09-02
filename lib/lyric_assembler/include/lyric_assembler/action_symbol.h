@@ -21,13 +21,12 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
     };
 
-    class ActionSymbol : public BaseSymbol<ActionAddress,ActionSymbolPriv> {
+    class ActionSymbol : public BaseSymbol<ActionSymbolPriv> {
     public:
         ActionSymbol(
             const lyric_common::SymbolUrl &actionUrl,
             const lyric_common::SymbolUrl &receiverUrl,
             lyric_object::AccessType access,
-            ActionAddress address,
             TemplateHandle *actionTemplate,
             bool isDeclOnly,
             BlockHandle *parentBlock,
@@ -37,7 +36,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &actionUrl,
             const lyric_common::SymbolUrl &receiverUrl,
             lyric_object::AccessType access,
-            ActionAddress address,
             bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
@@ -51,7 +49,7 @@ namespace lyric_assembler {
 
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        lyric_common::TypeDef getAssignableType() const override;
+        lyric_common::TypeDef getTypeDef() const override;
 
         bool isDeclOnly() const;
 

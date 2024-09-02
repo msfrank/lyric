@@ -17,10 +17,9 @@
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &entryUrl,
     const lyric_common::TypeDef &returnType,
-    CallAddress address,
     TypeHandle *callType,
     ObjectState *state)
-    : BaseSymbol(address, new CallSymbolPriv()),
+    : BaseSymbol(new CallSymbolPriv()),
       m_callUrl(entryUrl),
       m_state(state)
 {
@@ -51,7 +50,6 @@ lyric_assembler::CallSymbol::CallSymbol(
  * @param receiverUrl The class or instance receiver bound to the method, or empty
  *   SymbolUrl if there is no receiver.
  * @param access
- * @param address
  * @param callType
  * @param callTemplate
  * @param parentBlock
@@ -61,12 +59,11 @@ lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
     const lyric_common::SymbolUrl &receiverUrl,
     lyric_object::AccessType access,
-    CallAddress address,
     lyric_object::CallMode mode,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
-    : BaseSymbol(address, new CallSymbolPriv()),
+    : BaseSymbol(new CallSymbolPriv()),
       m_callUrl(callUrl),
       m_state(state)
 {
@@ -96,7 +93,6 @@ lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
     const lyric_common::SymbolUrl &receiverUrl,
     lyric_object::AccessType access,
-    CallAddress address,
     lyric_object::CallMode mode,
     TemplateHandle *callTemplate,
     bool isDeclOnly,
@@ -106,7 +102,6 @@ lyric_assembler::CallSymbol::CallSymbol(
         callUrl,
         receiverUrl,
         access,
-        address,
         mode,
         isDeclOnly,
         parentBlock,
@@ -126,7 +121,6 @@ lyric_assembler::CallSymbol::CallSymbol(
  *   rest parameter.
  * @param returnType The return type of the call.
  * @param access
- * @param address
  * @param callType
  * @param callTemplate
  * @param parentBlock
@@ -135,12 +129,11 @@ lyric_assembler::CallSymbol::CallSymbol(
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
     lyric_object::AccessType access,
-    CallAddress address,
     lyric_object::CallMode mode,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
-    : BaseSymbol(address, new CallSymbolPriv()),
+    : BaseSymbol(new CallSymbolPriv()),
       m_callUrl(callUrl),
       m_state(state)
 {
@@ -167,7 +160,6 @@ lyric_assembler::CallSymbol::CallSymbol(
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
     lyric_object::AccessType access,
-    CallAddress address,
     lyric_object::CallMode mode,
     TemplateHandle *callTemplate,
     bool isDeclOnly,
@@ -176,7 +168,6 @@ lyric_assembler::CallSymbol::CallSymbol(
     : CallSymbol(
         callUrl,
         access,
-        address,
         mode,
         isDeclOnly,
         parentBlock,
@@ -310,7 +301,7 @@ lyric_assembler::CallSymbol::getSymbolUrl() const
 }
 
 lyric_common::TypeDef
-lyric_assembler::CallSymbol::getAssignableType() const
+lyric_assembler::CallSymbol::getTypeDef() const
 {
     return {};
 }
@@ -345,8 +336,8 @@ lyric_assembler::CallSymbol::defineCall(
         auto thisPath = m_callUrl.getSymbolPath().getPath();
         thisPath.emplace_back("$this");
         auto thisUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(thisPath));
-        auto thisType = receiverSymbol->getAssignableType();
-        auto *thisSymbol = new SyntheticSymbol(thisUrl, SyntheticType::THIS, thisType);
+        auto thisType = receiverSymbol->getTypeDef();
+        auto *thisSymbol = new SyntheticSymbol(thisUrl, SyntheticType::This, thisType);
         symbolCache->insertSymbol(thisUrl, thisSymbol);
         SymbolBinding thisBinding;
         thisBinding.symbolUrl = thisUrl;

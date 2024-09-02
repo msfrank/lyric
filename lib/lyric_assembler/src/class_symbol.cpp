@@ -20,13 +20,12 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     lyric_object::AccessType access,
     lyric_object::DeriveType derive,
     bool isAbstract,
-    ClassAddress address,
     TypeHandle *classType,
     ClassSymbol *superClass,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
-    : BaseSymbol(address, new ClassSymbolPriv()),
+    : BaseSymbol(new ClassSymbolPriv()),
       m_classUrl(classUrl),
       m_state(state)
 {
@@ -53,7 +52,6 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     lyric_object::AccessType access,
     lyric_object::DeriveType derive,
     bool isAbstract,
-    ClassAddress address,
     TypeHandle *classType,
     TemplateHandle *classTemplate,
     ClassSymbol *superClass,
@@ -65,7 +63,6 @@ lyric_assembler::ClassSymbol::ClassSymbol(
         access,
         derive,
         isAbstract,
-        address,
         classType,
         superClass,
         isDeclOnly,
@@ -125,7 +122,7 @@ lyric_assembler::ClassSymbol::load()
 
         DataReference memberRef;
         memberRef.symbolUrl = iterator->second;
-        memberRef.typeDef = fieldSymbol->getAssignableType();
+        memberRef.typeDef = fieldSymbol->getTypeDef();
         memberRef.referenceType = fieldSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
         priv->members[iterator->first] = memberRef;
     }
@@ -177,7 +174,7 @@ lyric_assembler::ClassSymbol::getSymbolUrl() const
 }
 
 lyric_common::TypeDef
-lyric_assembler::ClassSymbol::getAssignableType() const
+lyric_assembler::ClassSymbol::getTypeDef() const
 {
     auto *priv = getPriv();
     return priv->classType->getTypeDef();
@@ -300,11 +297,9 @@ lyric_assembler::ClassSymbol::declareMember(
     auto memberPath = m_classUrl.getSymbolPath().getPath();
     memberPath.push_back(name);
     auto memberUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(memberPath));
-    auto fieldIndex = m_state->numFields();
-    auto address = FieldAddress::near(fieldIndex);
 
     // construct the field symbol
-    auto *fieldSymbol = new FieldSymbol(memberUrl, access, isVariable, address,
+    auto *fieldSymbol = new FieldSymbol(memberUrl, access, isVariable,
         fieldType, priv->isDeclOnly, priv->classBlock.get(), m_state);
 
     auto status = m_state->appendField(fieldSymbol);
@@ -442,16 +437,13 @@ lyric_assembler::ClassSymbol::declareCtor(
             tempo_tracing::LogSeverity::kError,
             "ctor already defined for class {}", m_classUrl.toString());
 
-    auto callIndex = m_state->numCalls();
-    auto address = CallAddress::near(callIndex);
-
     // construct call symbol
     CallSymbol *ctorSymbol;
     if (priv->classTemplate != nullptr) {
-        ctorSymbol = new CallSymbol(ctorUrl, m_classUrl, access, address, lyric_object::CallMode::Constructor,
+        ctorSymbol = new CallSymbol(ctorUrl, m_classUrl, access, lyric_object::CallMode::Constructor,
             priv->classTemplate, priv->isDeclOnly, priv->classBlock.get(), m_state);
     } else {
-        ctorSymbol = new CallSymbol(ctorUrl, m_classUrl, access, address, lyric_object::CallMode::Constructor,
+        ctorSymbol = new CallSymbol(ctorUrl, m_classUrl, access, lyric_object::CallMode::Constructor,
             priv->isDeclOnly, priv->classBlock.get(), m_state);
     }
 
@@ -548,8 +540,6 @@ lyric_assembler::ClassSymbol::declareMethod(
     auto methodPath = m_classUrl.getSymbolPath().getPath();
     methodPath.push_back(name);
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
-    auto callIndex = m_state->numCalls();
-    auto address = CallAddress::near(callIndex);
 
     TemplateHandle *methodTemplate;
 
@@ -570,11 +560,11 @@ lyric_assembler::ClassSymbol::declareMethod(
     // construct call symbol
     CallSymbol *callSymbol;
     if (methodTemplate != nullptr) {
-        callSymbol = new CallSymbol(methodUrl, m_classUrl, access, address,
-            lyric_object::CallMode::Normal, methodTemplate, priv->isDeclOnly, priv->classBlock.get(), m_state);
+        callSymbol = new CallSymbol(methodUrl, m_classUrl, access, lyric_object::CallMode::Normal,
+            methodTemplate, priv->isDeclOnly, priv->classBlock.get(), m_state);
     } else {
-        callSymbol = new CallSymbol(methodUrl, m_classUrl, access, address,
-            lyric_object::CallMode::Normal, priv->isDeclOnly, priv->classBlock.get(), m_state);
+        callSymbol = new CallSymbol(methodUrl, m_classUrl, access, lyric_object::CallMode::Normal,
+            priv->isDeclOnly, priv->classBlock.get(), m_state);
     }
 
     auto status = m_state->appendCall(callSymbol);

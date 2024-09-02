@@ -79,7 +79,7 @@ lyric_typing::MemberReifier::reifyMember(
         return m_memberCache[name];
 
     lyric_common::TypeDef reifiedType;
-    auto fieldType = fieldSymbol->getAssignableType();
+    auto fieldType = fieldSymbol->getTypeDef();
     switch (fieldType.getType()) {
         case lyric_common::TypeDefType::Concrete:
         case lyric_common::TypeDefType::Placeholder: {

@@ -501,7 +501,7 @@ lyric_assembler::ImportCache::insertImport(
             tempo_tracing::LogSeverity::kError,
             "module {} is already imported", importLocation.toString());
     bool isPrivate = !importLocation.hasScheme() && !importLocation.hasAuthority();
-    auto *importHandle = new ImportHandle{importLocation, lyric_runtime::INVALID_ADDRESS_U32, importFlags, !isPrivate};
+    auto *importHandle = new ImportHandle{importLocation, importFlags, !isPrivate};
     m_importcache[importLocation] = importHandle;
     return AssemblerStatus::ok();
 }

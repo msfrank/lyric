@@ -23,13 +23,12 @@ lyric_assembler::StructSymbol::StructSymbol(
     lyric_object::AccessType access,
     lyric_object::DeriveType derive,
     bool isAbstract,
-    StructAddress address,
     TypeHandle *structType,
     StructSymbol *superStruct,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
-    : BaseSymbol(address, new StructSymbolPriv()),
+    : BaseSymbol(new StructSymbolPriv()),
       m_structUrl(structUrl),
       m_state(state)
 {
@@ -89,7 +88,7 @@ lyric_assembler::StructSymbol::load()
 
         DataReference memberRef;
         memberRef.symbolUrl = iterator->second;
-        memberRef.typeDef = fieldSymbol->getAssignableType();
+        memberRef.typeDef = fieldSymbol->getTypeDef();
         memberRef.referenceType = fieldSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
         priv->members[iterator->first] = memberRef;
     }
@@ -141,7 +140,7 @@ lyric_assembler::StructSymbol::getSymbolUrl() const
 }
 
 lyric_common::TypeDef
-lyric_assembler::StructSymbol::getAssignableType() const
+lyric_assembler::StructSymbol::getTypeDef() const
 {
     auto *priv = getPriv();
     return priv->structType->getTypeDef();
@@ -256,11 +255,9 @@ lyric_assembler::StructSymbol::declareMember(
     auto memberPath = m_structUrl.getSymbolPath().getPath();
     memberPath.push_back(name);
     auto memberUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(memberPath));
-    auto fieldIndex = m_state->numFields();
-    auto address = FieldAddress::near(fieldIndex);
 
     // construct the field symbol
-    auto *fieldSymbol = new FieldSymbol(memberUrl, access, /* isVariable= */ false, address,
+    auto *fieldSymbol = new FieldSymbol(memberUrl, access, /* isVariable= */ false,
         fieldType, priv->isDeclOnly, priv->structBlock.get(), m_state);
 
     auto status = m_state->appendField(fieldSymbol);
@@ -388,12 +385,9 @@ lyric_assembler::StructSymbol::declareCtor(
             tempo_tracing::LogSeverity::kError,
             "ctor already defined for struct {}", m_structUrl.toString());
 
-    auto callIndex = m_state->numCalls();
-    auto address = CallAddress::near(callIndex);
-
     // construct call symbol
-    auto *ctorSymbol = new CallSymbol(ctorUrl, m_structUrl, access, address,
-        lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->structBlock.get(), m_state);
+    auto *ctorSymbol = new CallSymbol(ctorUrl, m_structUrl, access, lyric_object::CallMode::Constructor,
+        priv->isDeclOnly, priv->structBlock.get(), m_state);
 
     auto status = m_state->appendCall(ctorSymbol);
     if (status.notOk()) {
@@ -487,12 +481,10 @@ lyric_assembler::StructSymbol::declareMethod(
     auto methodPath = m_structUrl.getSymbolPath().getPath();
     methodPath.push_back(name);
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
-    auto callIndex = m_state->numCalls();
-    auto address = CallAddress::near(callIndex);
 
     // construct call symbol
-    auto *callSymbol = new CallSymbol(methodUrl, m_structUrl, acccess, address,
-        lyric_object::CallMode::Normal, priv->isDeclOnly, priv->structBlock.get(), m_state);
+    auto *callSymbol = new CallSymbol(methodUrl, m_structUrl, acccess, lyric_object::CallMode::Normal,
+        priv->isDeclOnly, priv->structBlock.get(), m_state);
 
     auto status = m_state->appendCall(callSymbol);
     if (status.notOk()) {

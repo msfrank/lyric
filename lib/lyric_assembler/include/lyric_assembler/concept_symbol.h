@@ -27,14 +27,13 @@ namespace lyric_assembler {
         std::unique_ptr<BlockHandle> conceptBlock;
     };
 
-    class ConceptSymbol : public BaseSymbol<ConceptAddress,ConceptSymbolPriv> {
+    class ConceptSymbol : public BaseSymbol<ConceptSymbolPriv> {
 
     public:
         ConceptSymbol(
             const lyric_common::SymbolUrl &conceptUrl,
             lyric_object::AccessType access,
             lyric_object::DeriveType derive,
-            ConceptAddress address,
             TypeHandle *conceptType,
             TemplateHandle *conceptTemplate,
             ConceptSymbol *superConcept,
@@ -46,7 +45,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &conceptUrl,
             lyric_object::AccessType access,
             lyric_object::DeriveType derive,
-            ConceptAddress address,
             TypeHandle *conceptType,
             ConceptSymbol *superConcept,
             bool isDeclOnly,
@@ -62,7 +60,7 @@ namespace lyric_assembler {
 
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        lyric_common::TypeDef getAssignableType() const override;
+        lyric_common::TypeDef getTypeDef() const override;
 
         bool isDeclOnly() const;
         lyric_object::AccessType getAccessType() const;

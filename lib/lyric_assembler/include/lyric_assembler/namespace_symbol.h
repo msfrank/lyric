@@ -17,13 +17,12 @@ namespace lyric_assembler {
         std::unique_ptr<BlockHandle> namespaceBlock;
     };
 
-    class NamespaceSymbol : public BaseSymbol<NamespaceAddress,NamespaceSymbolPriv> {
+    class NamespaceSymbol : public BaseSymbol<NamespaceSymbolPriv> {
 
     public:
         NamespaceSymbol(
             const lyric_common::SymbolUrl &nsUrl,
             lyric_object::AccessType access,
-            NamespaceAddress address,
             TypeHandle *nsType,
             NamespaceSymbol *superNs,
             bool isDeclOnly,
@@ -32,7 +31,6 @@ namespace lyric_assembler {
             bool isRoot);
         NamespaceSymbol(
             const lyric_common::SymbolUrl &nsUrl,
-            NamespaceAddress address,
             TypeHandle *nsType,
             ProcHandle *entryProc,
             ObjectState *state);
@@ -45,7 +43,7 @@ namespace lyric_assembler {
 
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        lyric_common::TypeDef getAssignableType() const override;
+        lyric_common::TypeDef getTypeDef() const override;
 
         lyric_object::AccessType getAccessType() const;
         bool isDeclOnly() const;
