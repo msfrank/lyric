@@ -33,7 +33,7 @@ unify_concrete_and_concrete(
             "type {} has invalid type signature", ref2.toString());
 
     int minsize = std::min(sig1.size(), sig2.size());
-    if (sig1[0].getAddress() != sig2[0].getAddress())
+    if (sig1[0] != sig2[0])
         return state->logAndContinue(lyric_typing::TypingCondition::kTypeError,
             tempo_tracing::LogSeverity::kError,
             "type {} cannot be unified with type {}", ref1.toString(), ref2.toString());
@@ -41,25 +41,29 @@ unify_concrete_and_concrete(
     // find the address of the most specific common ancestor type
     int i = 1;
     while (i < minsize) {
-        if (sig1[i].getAddress() != sig2[i].getAddress())
+        if (sig1[i] != sig2[i])
             break;
         i++;
     }
-    auto address = sig1[i - 1];
 
-    // resolve type address to definition symbol url
-    if (lyric_object::IS_NEAR(address.getAddress())) {
-        auto *typeHandle = state->typeCache()->getType(address);
-        TU_ASSERT (typeHandle != nullptr);
-        return typeHandle->getTypeDef();
-    }
+    auto *typeHandle = sig1[i - 1];
+    return typeHandle->getTypeDef();
 
-    auto commonType = state->importCache()->getLinkUrl(address.getAddress() & 0x7FFFFFFF);
-    auto unifiedType = lyric_common::TypeDef::forConcrete(
-        lyric_common::SymbolUrl(commonType.getModuleLocation(),
-        lyric_common::SymbolPath(commonType.getSymbolPath().getPath())));
-
-    return unifiedType;
+//    auto address = sig1[i - 1];
+//
+//    // resolve type address to definition symbol url
+//    if (lyric_object::IS_NEAR(address.getAddress())) {
+//        auto *typeHandle = state->typeCache()->getType(address);
+//        TU_ASSERT (typeHandle != nullptr);
+//        return typeHandle->getTypeDef();
+//    }
+//
+//    auto commonType = state->importCache()->getLinkUrl(address.getAddress() & 0x7FFFFFFF);
+//    auto unifiedType = lyric_common::TypeDef::forConcrete(
+//        lyric_common::SymbolUrl(commonType.getModuleLocation(),
+//        lyric_common::SymbolPath(commonType.getSymbolPath().getPath())));
+//
+//    return unifiedType;
 }
 
 static tempo_utils::Result<lyric_common::TypeDef>

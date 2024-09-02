@@ -126,8 +126,6 @@ lyric_assembler::ExistentialCallable::invoke(
         }
 
         case InvokeType::VIRTUAL: {
-            m_existentialSymbol->touch();
-            m_callSymbol->touch();
             auto *blockCode = block->blockCode();
             auto *fragment = blockCode->rootFragment();
             TU_RETURN_IF_NOT_OK (fragment->loadDescriptor(m_existentialSymbol));

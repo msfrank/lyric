@@ -1,15 +1,44 @@
 
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/internal/write_statics.h>
+#include <lyric_assembler/object_writer.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
+tempo_utils::Status
+lyric_assembler::internal::touch_static(
+    const StaticSymbol *staticSymbol,
+    const ObjectState *objectState,
+    ObjectWriter &writer)
+{
+    TU_ASSERT (staticSymbol != nullptr);
+
+    auto staticUrl = staticSymbol->getSymbolUrl();
+
+    bool alreadyInserted;
+    TU_RETURN_IF_NOT_OK (writer.insertSymbol(staticUrl, staticSymbol, alreadyInserted));
+    if (alreadyInserted)
+        return {};
+
+    // if static is an imported symbol then we are done
+    if (staticSymbol->isImported())
+        return {};
+
+    TU_RETURN_IF_NOT_OK (writer.touchType(staticSymbol->getAssignableType()));
+
+    auto initializerUrl = staticSymbol->getInitializer();
+    if (initializerUrl.isValid()) {
+        TU_RETURN_IF_NOT_OK (writer.touchInitializer(initializerUrl));
+    }
+
+    return {};
+}
+
 static tempo_utils::Status
 write_static(
-    lyric_assembler::StaticSymbol *staticSymbol,
-    lyric_assembler::TypeCache *typeCache,
-    lyric_assembler::SymbolCache *symbolCache,
+    const lyric_assembler::StaticSymbol *staticSymbol,
+    const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     std::vector<flatbuffers::Offset<lyo1::StaticDescriptor>> &statics_vector,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
@@ -18,9 +47,9 @@ write_static(
 
     auto staticPathString = staticSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fb_fullyQualifiedName = buffer.CreateSharedString(staticPathString);
-    lyric_assembler::TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(staticSymbol->getAssignableType()));
-    tu_uint32 staticType = typeHandle->getAddress().getAddress();
+
+    tu_uint32 staticType;
+    TU_ASSIGN_OR_RETURN (staticType, writer.getTypeOffset(staticSymbol->getAssignableType()));
 
     lyo1::StaticFlags staticFlags = lyo1::StaticFlags::NONE;
 
@@ -28,20 +57,20 @@ write_static(
         staticFlags |= lyo1::StaticFlags::Var;
     }
 
-//    switch (staticSymbol->getAccessType()) {
-//        case lyric_object::AccessType::Public:
-//            staticFlags |= lyo1::CallFlags::GlobalVisibility;
-//            break;
-//        case lyric_object::AccessType::Protected:
-//            staticFlags |= lyo1::CallFlags::InheritVisibility;
-//            break;
-//        case lyric_object::AccessType::Private:
-//            break;
-//        default:
-//            return lyric_assembler::AssemblerStatus::forCondition(
-//                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-//                "invalid static access");
-//    }
+    switch (staticSymbol->getAccessType()) {
+        case lyric_object::AccessType::Public:
+            staticFlags |= lyo1::StaticFlags::GlobalVisibility;
+            break;
+        case lyric_object::AccessType::Protected:
+            staticFlags |= lyo1::StaticFlags::InheritVisibility;
+            break;
+        case lyric_object::AccessType::Private:
+            break;
+        default:
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                "invalid static access");
+    }
 
     tu_uint32 initCall = lyric_object::INVALID_ADDRESS_U32;
 
@@ -49,12 +78,8 @@ write_static(
 
         // get static initializer
         auto initializerUrl = staticSymbol->getInitializer();
-        lyric_assembler::AbstractSymbol *initializer;
-        TU_ASSIGN_OR_RETURN (initializer, symbolCache->getOrImportSymbol(initializerUrl));
-        if (initializer->getSymbolType() != lyric_assembler::SymbolType::CALL)
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing static init");
-        initCall = cast_symbol_to_call(initializer)->getAddress().getAddress();
+        TU_ASSIGN_OR_RETURN (initCall,
+            writer.getSymbolAddress(initializerUrl, lyric_object::LinkageSection::Call));
 
     } else {
         staticFlags |= lyo1::StaticFlags::DeclOnly;
@@ -74,21 +99,16 @@ write_static(
 
 tempo_utils::Status
 lyric_assembler::internal::write_statics(
-    const ObjectState *objectState,
+    const std::vector<const StaticSymbol *> &statics,
+    const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     StaticsOffset &staticsOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (objectState != nullptr);
-
-    SymbolCache *symbolCache = objectState->symbolCache();
-    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::StaticDescriptor>> statics_vector;
 
-    for (auto iterator = objectState->staticsBegin(); iterator != objectState->staticsEnd(); iterator++) {
-        auto &staticSymbol = *iterator;
-        TU_RETURN_IF_NOT_OK (
-            write_static(staticSymbol, typeCache, symbolCache, buffer, statics_vector, symbols_vector));
+    for (const auto *staticSymbol : statics) {
+        TU_RETURN_IF_NOT_OK (write_static(staticSymbol, writer, buffer, statics_vector, symbols_vector));
     }
 
     // create the statics vector

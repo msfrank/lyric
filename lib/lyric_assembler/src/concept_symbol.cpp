@@ -163,21 +163,6 @@ lyric_assembler::ConceptSymbol::getAssignableType() const
     return priv->conceptType->getTypeDef();
 }
 
-lyric_assembler::TypeSignature
-lyric_assembler::ConceptSymbol::getTypeSignature() const
-{
-    auto *priv = getPriv();
-    return priv->conceptType->getTypeSignature();
-}
-
-void
-lyric_assembler::ConceptSymbol::touch()
-{
-    if (getAddress().isValid())
-        return;
-    m_state->touchConcept(this);
-}
-
 bool
 lyric_assembler::ConceptSymbol::isDeclOnly() const
 {
@@ -327,7 +312,6 @@ lyric_assembler::ConceptSymbol::prepareAction(
     if (symbol->getSymbolType() != SymbolType::ACTION)
         m_state->throwAssemblerInvariant("invalid action symbol {}", actionMethod.methodAction.toString());
     auto *actionSymbol = cast_symbol_to_action(symbol);
-    actionSymbol->touch();
 
     auto callable = std::make_unique<ActionCallable>(actionSymbol, this);
     return invoker.initialize(std::move(callable));
@@ -408,7 +392,6 @@ lyric_assembler::ConceptSymbol::declareImpl(const lyric_common::TypeDef &implTyp
     // touch the impl type
     lyric_assembler::TypeHandle *implTypeHandle;
     TU_ASSIGN_OR_RETURN (implTypeHandle, m_state->typeCache()->getOrMakeType(implType));
-    implTypeHandle->touch();
 
     // confirm that the impl concept exists
     auto implConcept = implType.getConcreteUrl();
@@ -421,8 +404,6 @@ lyric_assembler::ConceptSymbol::declareImpl(const lyric_common::TypeDef &implTyp
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
         m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
     auto *conceptSymbol = cast_symbol_to_concept(symbol);
-
-    conceptSymbol->touch();
 
     auto *implCache = m_state->implCache();
 

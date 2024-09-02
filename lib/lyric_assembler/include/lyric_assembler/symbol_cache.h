@@ -17,7 +17,8 @@ namespace lyric_assembler {
         AbstractSymbol *getSymbolOrNull(const lyric_common::SymbolUrl &symbolUrl) const;
         tempo_utils::Result<AbstractSymbol *> getOrImportSymbol(const lyric_common::SymbolUrl &symbolUrl) const;
         tempo_utils::Status insertSymbol(const lyric_common::SymbolUrl &symbolUrl, AbstractSymbol *abstractSymbol);
-        tempo_utils::Status touchSymbol(const lyric_common::SymbolUrl &sym);
+        absl::flat_hash_map<lyric_common::SymbolUrl, AbstractSymbol *>::const_iterator symbolsBegin() const;
+        absl::flat_hash_map<lyric_common::SymbolUrl, AbstractSymbol *>::const_iterator symbolsEnd() const;
         int numSymbols() const;
 
         bool hasEnvBinding(const std::string &name) const;

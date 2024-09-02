@@ -33,6 +33,7 @@ namespace lyric_assembler {
     class FieldSymbol;
     class FundamentalCache;
     class ImplCache;
+    class ImplHandle;
     class ImportCache;
     class InstanceSymbol;
     class LiteralCache;
@@ -80,67 +81,56 @@ namespace lyric_assembler {
         ImplCache *implCache() const;
 
         tempo_utils::Status appendNamespace(NamespaceSymbol *namespaceSymbol);
-        tempo_utils::Status touchNamespace(NamespaceSymbol *namespaceSymbol);
         std::vector<NamespaceSymbol *>::const_iterator namespacesBegin() const;
         std::vector<NamespaceSymbol *>::const_iterator namespacesEnd() const;
         int numNamespaces() const;
 
         tempo_utils::Status appendExistential(ExistentialSymbol *existentialSymbol);
-        tempo_utils::Status touchExistential(ExistentialSymbol *existentialSymbol);
         std::vector<ExistentialSymbol *>::const_iterator existentialsBegin() const;
         std::vector<ExistentialSymbol *>::const_iterator existentialsEnd() const;
         int numExistentials() const;
 
         tempo_utils::Status appendStatic(StaticSymbol *staticSymbol);
-        tempo_utils::Status touchStatic(StaticSymbol *staticSymbol);
         std::vector<StaticSymbol *>::const_iterator staticsBegin() const;
         std::vector<StaticSymbol *>::const_iterator staticsEnd() const;
         int numStatics() const;
 
         tempo_utils::Status appendField(FieldSymbol *fieldSymbol);
-        tempo_utils::Status touchField(FieldSymbol *fieldSymbol);
         std::vector<FieldSymbol *>::const_iterator fieldsBegin() const;
         std::vector<FieldSymbol *>::const_iterator fieldsEnd() const;
         int numFields() const;
 
         tempo_utils::Status appendAction(ActionSymbol *actionSymbol);
-        tempo_utils::Status touchAction(ActionSymbol *actionSymbol);
         std::vector<ActionSymbol *>::const_iterator actionsBegin() const;
         std::vector<ActionSymbol *>::const_iterator actionsEnd() const;
         int numActions() const;
 
         tempo_utils::Status appendCall(CallSymbol *callSymbol);
-        tempo_utils::Status touchCall(CallSymbol *callSymbol);
         std::vector<CallSymbol *>::const_iterator callsBegin() const;
         std::vector<CallSymbol *>::const_iterator callsEnd() const;
         int numCalls() const;
 
         tempo_utils::Status appendConcept(ConceptSymbol *conceptSymbol);
-        tempo_utils::Status touchConcept(ConceptSymbol *conceptSymbol);
         std::vector<ConceptSymbol *>::const_iterator conceptsBegin() const;
         std::vector<ConceptSymbol *>::const_iterator conceptsEnd() const;
         int numConcepts() const;
 
         tempo_utils::Status appendClass(ClassSymbol *classSymbol);
-        tempo_utils::Status touchClass(ClassSymbol *classSymbol);
         std::vector<ClassSymbol *>::const_iterator classesBegin() const;
         std::vector<ClassSymbol *>::const_iterator classesEnd() const;
         int numClasses() const;
 
         tempo_utils::Status appendStruct(StructSymbol *structSymbol);
-        tempo_utils::Status touchStruct(StructSymbol *structSymbol);
         std::vector<StructSymbol *>::const_iterator structsBegin() const;
         std::vector<StructSymbol *>::const_iterator structsEnd() const;
         int numStructs() const;
 
         tempo_utils::Status appendInstance(InstanceSymbol *instanceSymbol);
-        tempo_utils::Status touchInstance(InstanceSymbol *instanceSymbol);
         std::vector<InstanceSymbol *>::const_iterator instancesBegin() const;
         std::vector<InstanceSymbol *>::const_iterator instancesEnd() const;
         int numInstances() const;
 
         tempo_utils::Status appendEnum(EnumSymbol *enumSymbol);
-        tempo_utils::Status touchEnum(EnumSymbol *enumSymbol);
         std::vector<EnumSymbol *>::const_iterator enumsBegin() const;
         std::vector<EnumSymbol *>::const_iterator enumsEnd() const;
         int numEnums() const;

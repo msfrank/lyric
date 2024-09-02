@@ -12,6 +12,12 @@ lyric_assembler::UndeclaredSymbol::UndeclaredSymbol(
     TU_ASSERT (m_section != lyric_object::LinkageSection::Invalid);
 }
 
+bool
+lyric_assembler::UndeclaredSymbol::isImported() const
+{
+    return false;
+}
+
 lyric_assembler::SymbolType
 lyric_assembler::UndeclaredSymbol::getSymbolType() const
 {
@@ -28,17 +34,6 @@ lyric_common::TypeDef
 lyric_assembler::UndeclaredSymbol::getAssignableType() const
 {
     return lyric_common::TypeDef();
-}
-
-lyric_assembler::TypeSignature
-lyric_assembler::UndeclaredSymbol::getTypeSignature() const
-{
-    return TypeSignature();
-}
-
-void
-lyric_assembler::UndeclaredSymbol::touch()
-{
 }
 
 lyric_object::LinkageSection

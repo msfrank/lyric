@@ -12,7 +12,8 @@ namespace lyric_assembler::internal {
     using ImportsOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::ImportDescriptor>>>;
 
     tempo_utils::Status write_imports(
-        ImportCache *importCache,
+        const std::vector<const ImportHandle *> &imports,
+        const ObjectWriter &writer,
         flatbuffers::FlatBufferBuilder &buffer,
         ImportsOffset &importsOffset);
 }

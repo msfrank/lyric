@@ -14,24 +14,22 @@ namespace lyric_assembler {
 
     public:
         LiteralHandle();
-        LiteralHandle(const LiteralAddress &address);
-        LiteralHandle(const LiteralAddress &address, bool b);
-        LiteralHandle(const LiteralAddress &address, tu_int64 i64);
-        LiteralHandle(const LiteralAddress &address, double dbl);
-        LiteralHandle(const LiteralAddress &address, UChar32 chr);
-        LiteralHandle(const LiteralAddress &address, const std::string &str);
+        LiteralHandle(bool b);
+        LiteralHandle(tu_int64 i64);
+        LiteralHandle(double dbl);
+        LiteralHandle(UChar32 chr);
+        LiteralHandle(std::shared_ptr<const std::string> str);
 
-        LiteralAddress getAddress() const;
+        //LiteralAddress getAddress() const;
 
         lyric_runtime::LiteralCellType getType() const;
         bool getBool() const;
         int64_t getInt64() const;
         double getDouble() const;
         UChar32 getUChar32() const;
-        std::shared_ptr<const std::string> getString() const;
+        std::shared_ptr<const std::string> getUtf8() const;
 
     private:
-        LiteralAddress m_address;
         lyric_runtime::LiteralCellType m_type;
         union {
             bool b;

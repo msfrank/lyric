@@ -19,7 +19,10 @@ namespace lyric_assembler {
         absl::flat_hash_set<tu_uint32> getTargetsForLabel(std::string_view labelName) const;
         std::string getLabelForTarget(tu_uint32 targetId) const;
 
-        tempo_utils::Status build(lyric_object::BytecodeBuilder &bytecodeBuilder) const;
+        tempo_utils::Status touch(ObjectWriter &writer) const;
+        tempo_utils::Status build(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder) const;
 
     private:
         ProcHandle *m_procHandle;

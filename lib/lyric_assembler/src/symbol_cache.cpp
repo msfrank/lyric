@@ -75,15 +75,16 @@ lyric_assembler::SymbolCache::insertSymbol(const lyric_common::SymbolUrl &symbol
     return {};
 }
 
-tempo_utils::Status
-lyric_assembler::SymbolCache::touchSymbol(const lyric_common::SymbolUrl &symbolUrl)
+absl::flat_hash_map<lyric_common::SymbolUrl, lyric_assembler::AbstractSymbol *>::const_iterator
+lyric_assembler::SymbolCache::symbolsBegin() const
 {
-    if (!symbolUrl.isValid())
-        m_tracer->throwAssemblerInvariant("invalid symbol {}", symbolUrl.toString());
-    AbstractSymbol *sym;
-    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(symbolUrl));
-    sym->touch();
-    return {};
+    return m_symcache.cbegin();
+}
+
+absl::flat_hash_map<lyric_common::SymbolUrl, lyric_assembler::AbstractSymbol *>::const_iterator
+lyric_assembler::SymbolCache::symbolsEnd() const
+{
+    return m_symcache.cend();
 }
 
 int

@@ -6,6 +6,7 @@
 #include <lyric_object/bytecode_builder.h>
 
 #include "abstract_instruction.h"
+#include "object_writer.h"
 #include "proc_handle.h"
 
 namespace lyric_assembler {
@@ -14,7 +15,9 @@ namespace lyric_assembler {
     public:
         explicit NoOperandsInstruction(lyric_object::Opcode opcode);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -28,7 +31,9 @@ namespace lyric_assembler {
     public:
         explicit BoolImmediateInstruction(bool b);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -42,7 +47,9 @@ namespace lyric_assembler {
     public:
         explicit IntImmediateInstruction(tu_int64 i64);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -56,7 +63,9 @@ namespace lyric_assembler {
     public:
         explicit FloatImmediateInstruction(double dbl);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -70,7 +79,9 @@ namespace lyric_assembler {
     public:
         explicit CharImmediateInstruction(UChar32 chr);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -82,9 +93,11 @@ namespace lyric_assembler {
 
     class LoadLiteralInstruction: public AbstractInstruction {
     public:
-        LoadLiteralInstruction(lyric_object::Opcode opcode, LiteralAddress address);
+        LoadLiteralInstruction(lyric_object::Opcode opcode, LiteralHandle *literalHandle);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -92,14 +105,16 @@ namespace lyric_assembler {
             tu_uint16 &patchOffset) const override;
     private:
         lyric_object::Opcode m_opcode;
-        LiteralAddress m_address;
+        LiteralHandle *m_literal;
     };
 
     class LoadDataInstruction: public AbstractInstruction {
     public:
         explicit LoadDataInstruction(AbstractSymbol *symbol);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -114,7 +129,9 @@ namespace lyric_assembler {
     public:
         explicit LoadDescriptorInstruction(AbstractSymbol *symbol);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -129,7 +146,9 @@ namespace lyric_assembler {
     public:
         explicit LoadSyntheticInstruction(SyntheticType type);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -143,7 +162,9 @@ namespace lyric_assembler {
     public:
         explicit LoadTypeInstruction(TypeHandle *typeHandle);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -157,7 +178,9 @@ namespace lyric_assembler {
     public:
         explicit StoreDataInstruction(AbstractSymbol *symbol);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -172,7 +195,9 @@ namespace lyric_assembler {
     public:
         StackModificationInstruction(lyric_object::Opcode opcode, tu_uint16 offset);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -187,7 +212,9 @@ namespace lyric_assembler {
     public:
         explicit LabelInstruction(std::string_view name);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -203,7 +230,9 @@ namespace lyric_assembler {
         explicit JumpInstruction(lyric_object::Opcode opcode);
         JumpInstruction(lyric_object::Opcode opcode, tu_uint32 targetId);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -224,7 +253,9 @@ namespace lyric_assembler {
             tu_uint16 placement,
             tu_uint8 flags);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -241,7 +272,9 @@ namespace lyric_assembler {
     public:
         explicit InlineInstruction(CallSymbol *callSymbol);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -258,7 +291,9 @@ namespace lyric_assembler {
             tu_uint16 placement,
             tu_uint8 flags);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,
@@ -274,7 +309,9 @@ namespace lyric_assembler {
     public:
         TrapInstruction(tu_uint32 trapNumber, tu_uint8 flags);
         InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,

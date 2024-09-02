@@ -455,25 +455,28 @@ namespace lyric_assembler {
         tu_uint32 u32;
     };
 
+    // forward declarations
+    class TypeHandle;
+
     class TypeSignature {
 
     public:
         TypeSignature();
-        explicit TypeSignature(const std::vector<TypeAddress> &signature);
+        explicit TypeSignature(const std::vector<const TypeHandle *> &signature);
         TypeSignature(const TypeSignature &other);
 
         bool isValid() const;
 
         lyric_runtime::TypeComparison compare(const TypeSignature &other) const;
-        std::vector<TypeAddress> getSignature() const;
-        std::vector<TypeAddress>::const_iterator signatureBegin() const;
-        std::vector<TypeAddress>::const_iterator signatureEnd() const;
+        std::vector<const TypeHandle *> getSignature() const;
+        std::vector<const TypeHandle *>::const_iterator signatureBegin() const;
+        std::vector<const TypeHandle *>::const_iterator signatureEnd() const;
 
         bool operator==(const TypeSignature &other) const;
         bool operator!=(const TypeSignature &other) const;
 
     private:
-        std::vector<TypeAddress> m_signature;
+        std::vector<const TypeHandle *> m_signature;
     };
 
     /**
@@ -621,6 +624,23 @@ namespace lyric_assembler {
     private:
         lyric_common::SymbolPath m_path;
         std::string m_name;
+    };
+
+    /**
+     *
+     */
+    struct ImplRef {
+        lyric_common::SymbolUrl receiverUrl;
+        lyric_common::TypeDef implType;
+
+        bool operator==(const ImplRef &other) const {
+            return receiverUrl == other.receiverUrl && implType == other.implType;
+        }
+
+        template <typename H>
+        friend H AbslHashValue(H h, const ImplRef &implRef) {
+            return H::combine(std::move(h), implRef.receiverUrl, implRef.implType);
+        }
     };
 }
 

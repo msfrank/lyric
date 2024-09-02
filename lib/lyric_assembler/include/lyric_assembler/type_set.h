@@ -6,7 +6,7 @@
 namespace lyric_assembler {
 
     struct TypeLevel {
-        TypeAddress address;
+        const TypeHandle *typeHandle;
         lyric_common::TypeDef typeDef;
         std::vector<TypeLevel *> children;
         ~TypeLevel();

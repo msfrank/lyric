@@ -15,14 +15,12 @@ namespace lyric_assembler {
         TypeHandle(
             const lyric_common::SymbolUrl &concreteUrl,
             const std::vector<lyric_common::TypeDef> &typeArguments,
-            TypeAddress address,
             TypeHandle *superType,
             ObjectState *state);
         TypeHandle(
             int placeholderIndex,
             const lyric_common::SymbolUrl &templateUrl,
             const std::vector<lyric_common::TypeDef> &typeArguments,
-            TypeAddress address,
             ObjectState *state);
         TypeHandle(
             const lyric_common::TypeDef &typeDef,
@@ -34,19 +32,13 @@ namespace lyric_assembler {
         std::vector<lyric_common::TypeDef>::const_iterator typeArgumentsBegin() const;
         std::vector<lyric_common::TypeDef>::const_iterator typeArgumentsEnd() const;
         TypeHandle *getSuperType() const;
-        TypeAddress getAddress() const;
-        TypeSignature getTypeSignature() const;
-
-        void touch();
-
-        tempo_utils::Status updateAddress(TypeAddress address);
+        //TypeSignature getTypeSignature() const;
 
     private:
         lyric_common::TypeDef m_typeDef;
         TypeHandle *m_superType;
-        TypeAddress m_address;
         TypeSignature m_signature;
-        ObjectState *m_state;
+        //ObjectState *m_state;
     };
 }
 

@@ -18,19 +18,19 @@ lyric_assembler::DisjointTypeSet::~DisjointTypeSet()
 static bool
 address_cmp(const lyric_assembler::TypeLevel *lhs, const lyric_assembler::TypeLevel *rhs)
 {
-    return lhs->address.getAddress() < rhs->address.getAddress();
+    return lhs->typeHandle < rhs->typeHandle;
 }
 
 tempo_utils::Status
 lyric_assembler::DisjointTypeSet::putType(const lyric_common::TypeDef &type)
 {
-    TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->getOrMakeType(type));
-    typeHandle->touch();
+    auto *typeCache = m_state->typeCache();
 
-    auto signature = typeHandle->getTypeSignature();
-    if (!signature.isValid())
-        m_state->throwAssemblerInvariant("type {} has invalid signature", type.toString());
+    TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(type));
+
+    TypeSignature signature;
+    TU_ASSIGN_OR_RETURN (signature, typeCache->resolveSignature(typeHandle));
 
     TypeLevel *curr = m_root;
 
@@ -39,13 +39,13 @@ lyric_assembler::DisjointTypeSet::putType(const lyric_common::TypeDef &type)
 
         // search for the next type address in the current level
         TypeLevel cmp;
-        cmp.address = *iterator;
+        cmp.typeHandle = *iterator;
         auto lower = std::lower_bound(curr->children.cbegin(), curr->children.cend(), &cmp, address_cmp);
 
-        if (lower == curr->children.cend() || (*lower)->address != *iterator) {
+        if (lower == curr->children.cend() || (*lower)->typeHandle != *iterator) {
             // if curr does not contain the type address then add a new level
             auto *child = new TypeLevel{};
-            child->address = *iterator;
+            child->typeHandle = *iterator;
             curr->children.push_back(child);
             std::sort(curr->children.begin(), curr->children.end(), address_cmp);
             curr = child;
@@ -62,7 +62,7 @@ lyric_assembler::DisjointTypeSet::putType(const lyric_common::TypeDef &type)
     TU_ASSERT (!curr->typeDef.isValid());
     curr->typeDef = type;
 
-    return AssemblerStatus::ok();
+    return {};
 }
 
 lyric_assembler::UnifiedTypeSet::UnifiedTypeSet(const lyric_assembler::ObjectState *state)
@@ -80,13 +80,13 @@ lyric_assembler::UnifiedTypeSet::~UnifiedTypeSet()
 tempo_utils::Status
 lyric_assembler::UnifiedTypeSet::putType(const lyric_common::TypeDef &type)
 {
-    TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->getOrMakeType(type));
-    typeHandle->touch();
+    auto *typeCache = m_state->typeCache();
 
-    auto signature = typeHandle->getTypeSignature();
-    if (!signature.isValid())
-        m_state->throwAssemblerInvariant("type {} has invalid signature", type.toString());
+    TypeHandle *typeHandle;
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(type));
+
+    TypeSignature signature;
+    TU_ASSIGN_OR_RETURN (signature, typeCache->resolveSignature(typeHandle));
 
     TypeLevel *curr = m_root;
 
@@ -95,13 +95,13 @@ lyric_assembler::UnifiedTypeSet::putType(const lyric_common::TypeDef &type)
 
         // search for the next type address in the current level
         TypeLevel cmp;
-        cmp.address = *iterator;
+        cmp.typeHandle = *iterator;
         auto lower = std::lower_bound(curr->children.cbegin(), curr->children.cend(), &cmp, address_cmp);
 
-        if (lower == curr->children.cend() || (*lower)->address != *iterator) {
+        if (lower == curr->children.cend() || (*lower)->typeHandle != *iterator) {
             // if curr does not contain the type address then add a new level
             auto *child = new TypeLevel{};
-            child->address = *iterator;
+            child->typeHandle = *iterator;
             curr->children.push_back(child);
             std::sort(curr->children.begin(), curr->children.end(), address_cmp);
             curr = child;
@@ -115,7 +115,7 @@ lyric_assembler::UnifiedTypeSet::putType(const lyric_common::TypeDef &type)
         curr->typeDef = type;
     }
 
-    return AssemblerStatus::ok();
+    return {};
 }
 
 static void

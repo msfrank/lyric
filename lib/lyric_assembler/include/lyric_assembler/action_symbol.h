@@ -52,8 +52,6 @@ namespace lyric_assembler {
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getAssignableType() const override;
-        TypeSignature getTypeSignature() const override;
-        void touch() override;
 
         bool isDeclOnly() const;
 
@@ -65,8 +63,8 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl getReceiverUrl() const;
         lyric_object::AccessType getAccessType() const;
 
-        AbstractResolver *actionResolver();
-        TemplateHandle *actionTemplate();
+        AbstractResolver *actionResolver() const;
+        TemplateHandle *actionTemplate() const;
 
         std::vector<Parameter>::const_iterator listPlacementBegin() const;
         std::vector<Parameter>::const_iterator listPlacementEnd() const;

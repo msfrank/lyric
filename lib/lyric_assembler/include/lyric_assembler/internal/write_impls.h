@@ -5,15 +5,22 @@
 
 #include <lyric_object/generated/object.h>
 
+#include "../object_writer.h"
 #include "../symbol_cache.h"
 #include "../type_cache.h"
 
 namespace lyric_assembler::internal {
 
+    tempo_utils::Status touch_impl(
+        const ImplHandle *implHandle,
+        const ObjectState *objectState,
+        ObjectWriter &writer);
+
     using ImplsOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::ImplDescriptor>>>;
 
     tempo_utils::Status write_impls(
-        const ObjectState *objectState,
+        const std::vector<const ImplHandle *> &impls,
+        const ObjectWriter &writer,
         flatbuffers::FlatBufferBuilder &buffer,
         ImplsOffset &implsOffset);
 }

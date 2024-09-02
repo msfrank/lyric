@@ -506,69 +506,20 @@ lyric_assembler::ImportCache::insertImport(
     return AssemblerStatus::ok();
 }
 
-/**
- *
- * @param importLocation
- */
-tempo_utils::Status
-lyric_assembler::ImportCache::touchImport(const lyric_common::ModuleLocation &importLocation)
-{
-    if (!m_importcache.contains(importLocation))
-        return m_tracer->logAndContinue(AssemblerCondition::kAssemblerInvariant,
-            tempo_tracing::LogSeverity::kError,
-            "no such import {}", importLocation.toString());
-
-    auto *importHandle = m_importcache[importLocation];
-
-    // add handle to imports list if necessary
-    if (importHandle->importIndex == lyric_runtime::INVALID_ADDRESS_U32) {
-        importHandle->importIndex = m_imports.size();
-        m_imports.push_back(importLocation);
-    }
-
-    return {};
-}
-
-std::vector<lyric_common::ModuleLocation>::const_iterator
+absl::flat_hash_map<lyric_common::ModuleLocation,lyric_assembler::ImportHandle *>::const_iterator
 lyric_assembler::ImportCache::importsBegin() const
 {
-    return m_imports.cbegin();
+    return m_importcache.cbegin();
 }
 
-std::vector<lyric_common::ModuleLocation>::const_iterator
+absl::flat_hash_map<lyric_common::ModuleLocation,lyric_assembler::ImportHandle *>::const_iterator
 lyric_assembler::ImportCache::importsEnd() const
 {
-    return m_imports.cend();
+    return m_importcache.cend();
 }
 
 int
 lyric_assembler::ImportCache::numImports() const
 {
-    return m_imports.size();
-}
-
-lyric_common::SymbolUrl
-lyric_assembler::ImportCache::getLinkUrl(uint32_t address) const
-{
-    if (address < m_links.size())
-        return m_links.at(address).linkUrl;
-    return {};
-}
-
-std::vector<lyric_assembler::RequestedLink>::const_iterator
-lyric_assembler::ImportCache::linksBegin() const
-{
-    return m_links.cbegin();
-}
-
-std::vector<lyric_assembler::RequestedLink>::const_iterator
-lyric_assembler::ImportCache::linksEnd() const
-{
-    return m_links.cend();
-}
-
-int
-lyric_assembler::ImportCache::numLinks() const
-{
-    return m_links.size();
+    return m_importcache.size();
 }

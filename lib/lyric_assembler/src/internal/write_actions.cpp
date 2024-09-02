@@ -5,11 +5,52 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
+tempo_utils::Status
+lyric_assembler::internal::touch_action(
+    const ActionSymbol *actionSymbol,
+    const ObjectState *objectState,
+    ObjectWriter &writer)
+{
+    TU_ASSERT (actionSymbol != nullptr);
+
+    auto actionUrl = actionSymbol->getSymbolUrl();
+
+    bool alreadyInserted;
+    TU_RETURN_IF_NOT_OK (writer.insertSymbol(actionUrl, actionSymbol, alreadyInserted));
+    if (alreadyInserted)
+        return {};
+
+    // if action is an imported symbol then we are done
+    if (actionSymbol->isImported())
+        return {};
+
+    for (auto it = actionSymbol->listPlacementBegin(); it != actionSymbol->listPlacementEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (writer.touchType(it->typeDef));
+    }
+
+    for (auto it = actionSymbol->namedPlacementBegin(); it != actionSymbol->namedPlacementEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (writer.touchType(it->typeDef));
+    }
+
+    auto *rest = actionSymbol->restPlacement();
+    if (rest != nullptr) {
+        TU_RETURN_IF_NOT_OK (writer.touchType(rest->typeDef));
+    }
+
+    TU_RETURN_IF_NOT_OK (writer.touchType(actionSymbol->getReturnType()));
+
+    auto *templateHandle = actionSymbol->actionTemplate();
+    if (templateHandle) {
+        TU_RETURN_IF_NOT_OK (writer.touchTemplate(templateHandle));
+    }
+
+    return {};
+}
+
 static tempo_utils::Status
 write_action(
-    lyric_assembler::ActionSymbol *actionSymbol,
-    lyric_assembler::TypeCache *typeCache,
-    lyric_assembler::SymbolCache *symbolCache,
+    const lyric_assembler::ActionSymbol *actionSymbol,
+    const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     std::vector<flatbuffers::Offset<lyo1::ActionDescriptor>> &actions_vector,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
@@ -24,19 +65,21 @@ write_action(
         actionFlags |= lyo1::ActionFlags::DeclOnly;
 
     tu_uint32 actionTemplate = lyric_runtime::INVALID_ADDRESS_U32;
-    if (actionSymbol->actionTemplate() != nullptr)
-        actionTemplate = actionSymbol->actionTemplate()->getAddress().getAddress();
+    if (actionSymbol->actionTemplate() != nullptr) {
+        TU_ASSIGN_OR_RETURN (actionTemplate,
+            writer.getTemplateOffset(actionSymbol->actionTemplate()->getTemplateUrl()));
+    }
 
     auto receiverUrl = actionSymbol->getReceiverUrl();
-    lyric_assembler::AbstractSymbol *receiver;
-    TU_ASSIGN_OR_RETURN (receiver, symbolCache->getOrImportSymbol(receiverUrl));
+    lyric_assembler::SymbolEntry receiver;
+    TU_ASSIGN_OR_RETURN (receiver, writer.getSymbolEntry(receiverUrl));
 
     lyo1::TypeSection receiverSection = lyo1::TypeSection::Invalid;
     tu_uint32 receiverDescriptor = lyric_runtime::INVALID_ADDRESS_U32;
-    switch (receiver->getSymbolType()) {
-        case lyric_assembler::SymbolType::CONCEPT:
+    switch (receiver.section) {
+        case lyric_object::LinkageSection::Concept:
             receiverSection = lyo1::TypeSection::Concept;
-            receiverDescriptor = cast_symbol_to_concept(receiver)->getAddress().getAddress();
+            receiverDescriptor = receiver.address;
             break;
         default:
             return lyric_assembler::AssemblerStatus::forCondition(
@@ -65,23 +108,16 @@ write_action(
             p.flags |= lyo1::ParameterFlags::Var;
         }
 
-        lyric_assembler::TypeHandle *paramTypeHandle;
-        TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(param.typeDef));
-        p.parameter_type = paramTypeHandle->getAddress().getAddress();
+        TU_ASSIGN_OR_RETURN (p.parameter_type, writer.getTypeOffset(param.typeDef));
+
         p.initializer_call = lyric_runtime::INVALID_ADDRESS_U32;
         if (actionSymbol->hasInitializer(param.name)) {
             if (param.placement != lyric_object::PlacementType::ListOpt)
                 return lyric_assembler::AssemblerStatus::forCondition(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid placement");
             auto initializerUrl = actionSymbol->getInitializer(param.name);
-            lyric_assembler::AbstractSymbol *initializer;
-            TU_ASSIGN_OR_RETURN (initializer, symbolCache->getOrImportSymbol(initializerUrl));
-            if (initializer->getSymbolType() != lyric_assembler::SymbolType::CALL)
-                return lyric_assembler::AssemblerStatus::forCondition(
-                    lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                    "invalid initializer {}", initializerUrl.toString());
-            auto *initSymbol = cast_symbol_to_action(initializer);
-            p.initializer_call = initSymbol->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (p.initializer_call,
+                writer.getSymbolAddress(initializerUrl, lyric_object::LinkageSection::Call));
         }
 
         listParameters.push_back(lyo1::CreateParameter(buffer, &p));
@@ -112,23 +148,16 @@ write_action(
             p.flags |= lyo1::ParameterFlags::Var;
         }
 
-        lyric_assembler::TypeHandle *paramTypeHandle;
-        TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(param.typeDef));
-        p.parameter_type = paramTypeHandle->getAddress().getAddress();
+        TU_ASSIGN_OR_RETURN (p.parameter_type, writer.getTypeOffset(param.typeDef));
+
         p.initializer_call = lyric_runtime::INVALID_ADDRESS_U32;
         if (actionSymbol->hasInitializer(param.name)) {
             if (param.placement != lyric_object::PlacementType::NamedOpt)
                 return lyric_assembler::AssemblerStatus::forCondition(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid placement");
             auto initializerUrl = actionSymbol->getInitializer(param.name);
-            lyric_assembler::AbstractSymbol *initializer;
-            TU_ASSIGN_OR_RETURN (initializer, symbolCache->getOrImportSymbol(initializerUrl));
-            if (initializer->getSymbolType() != lyric_assembler::SymbolType::CALL)
-                return lyric_assembler::AssemblerStatus::forCondition(
-                    lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                    "invalid initializer {}", initializerUrl.toString());
-            auto *initSymbol = cast_symbol_to_action(initializer);
-            p.initializer_call = initSymbol->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (p.initializer_call,
+                writer.getSymbolAddress(initializerUrl, lyric_object::LinkageSection::Call));
         }
 
         namedParameters.push_back(lyo1::CreateParameter(buffer, &p));
@@ -146,22 +175,19 @@ write_action(
             p.flags |= lyo1::ParameterFlags::Var;
         }
 
-        lyric_assembler::TypeHandle *paramTypeHandle;
-        TU_ASSIGN_OR_RETURN (paramTypeHandle, typeCache->getOrMakeType(rest->typeDef));
-        p.parameter_type = paramTypeHandle->getAddress().getAddress();
-        p.initializer_call = 0;
+        TU_ASSIGN_OR_RETURN (p.parameter_type, writer.getTypeOffset(rest->typeDef));
+        p.initializer_call = lyric_object::INVALID_ADDRESS_U32;
 
         fb_restParameter = lyo1::CreateParameter(buffer, &p);
     }
 
-    lyric_assembler::TypeHandle *returnTypeHandle;
-    TU_ASSIGN_OR_RETURN (returnTypeHandle, typeCache->getOrMakeType(actionSymbol->getReturnType()));
-    tu_uint32 resultType = returnTypeHandle->getAddress().getAddress();
+    tu_uint32 returnType;
+    TU_ASSIGN_OR_RETURN (returnType, writer.getTypeOffset(actionSymbol->getReturnType()));
 
     // add action descriptor
     actions_vector.push_back(lyo1::CreateActionDescriptor(buffer, fullyQualifiedName,
         actionTemplate, receiverSection, receiverDescriptor, actionFlags,
-        fb_listParameters, fb_namedParameters, fb_restParameter, resultType));
+        fb_listParameters, fb_namedParameters, fb_restParameter, returnType));
 
     // add symbol descriptor
     symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,
@@ -172,21 +198,16 @@ write_action(
 
 tempo_utils::Status
 lyric_assembler::internal::write_actions(
-    const ObjectState *objectState,
+    const std::vector<const ActionSymbol *> &actions,
+    const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     ActionsOffset &actionsOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (objectState != nullptr);
-
-    SymbolCache *symbolCache = objectState->symbolCache();
-    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::ActionDescriptor>> actions_vector;
 
-    for (auto iterator = objectState->actionsBegin(); iterator != objectState->actionsEnd(); iterator++) {
-        auto &actionSymbol = *iterator;
-        TU_RETURN_IF_NOT_OK (
-            write_action(actionSymbol, typeCache, symbolCache, buffer, actions_vector, symbols_vector));
+    for (const auto *actionSymbol : actions) {
+        TU_RETURN_IF_NOT_OK (write_action(actionSymbol, writer, buffer, actions_vector, symbols_vector));
     }
 
     // create the actions vector

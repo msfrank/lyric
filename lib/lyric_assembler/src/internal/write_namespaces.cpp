@@ -11,12 +11,128 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
+inline bool
+is_in_scope(lyric_object::AccessType access, bool includeUnusedPrivateSymbols)
+{
+    if (includeUnusedPrivateSymbols)
+        return true;
+    switch (access) {
+        case lyric_object::AccessType::Public:
+        case lyric_object::AccessType::Protected:
+            return true;
+        default:
+            return false;
+    }
+}
+
+tempo_utils::Status
+lyric_assembler::internal::touch_namespace(
+    const NamespaceSymbol *namespaceSymbol,
+    const ObjectState *objectState,
+    ObjectWriter &writer,
+    bool includeUnusedPrivateSymbols)
+{
+    auto namespaceUrl = namespaceSymbol->getSymbolUrl();
+
+    bool alreadyInserted;
+    TU_RETURN_IF_NOT_OK (writer.insertSymbol(namespaceUrl, namespaceSymbol, alreadyInserted));
+    if (alreadyInserted)
+        return {};
+
+    // if namespace is an imported symbol then we are done
+    if (namespaceSymbol->isImported())
+        return {};
+
+    auto *symbolCache = objectState->symbolCache();
+    auto *namespaceBlock = namespaceSymbol->namespaceBlock();
+
+    for (auto symbolIterator = namespaceBlock->symbolsBegin();
+        symbolIterator != namespaceBlock->symbolsEnd();
+        symbolIterator++) {
+        const auto &var = symbolIterator->second;
+        const auto &symbolUrl = var.symbolUrl;
+
+        AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(symbolUrl));
+        switch (symbol->getSymbolType()) {
+
+            // ignore variables
+            case SymbolType::ARGUMENT:
+            case SymbolType::LEXICAL:
+            case SymbolType::LOCAL:
+                break;
+
+            case SymbolType::CALL: {
+                auto *callSymbol = cast_symbol_to_call(symbol);
+                if (is_in_scope(callSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                    TU_RETURN_IF_NOT_OK (writer.touchCall(callSymbol));
+                }
+                break;
+            }
+            case SymbolType::CLASS: {
+                auto *classSymbol = cast_symbol_to_class(symbol);
+                if (is_in_scope(classSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                    TU_RETURN_IF_NOT_OK (writer.touchClass(classSymbol));
+                }
+                break;
+            }
+            case SymbolType::CONCEPT: {
+                auto *conceptSymbol = cast_symbol_to_concept(symbol);
+                if (is_in_scope(conceptSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                    TU_RETURN_IF_NOT_OK (writer.touchConcept(conceptSymbol));
+                }
+                break;
+            }
+            case SymbolType::ENUM: {
+                auto *enumSymbol = cast_symbol_to_enum(symbol);
+                if (is_in_scope(enumSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                    TU_RETURN_IF_NOT_OK (writer.touchEnum(enumSymbol));
+                }
+                break;
+            }
+            case SymbolType::INSTANCE: {
+                auto *instanceSymbol = cast_symbol_to_instance(symbol);
+                if (is_in_scope(instanceSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                    TU_RETURN_IF_NOT_OK (writer.touchInstance(instanceSymbol));
+                }
+                break;
+            }
+            case SymbolType::NAMESPACE: {
+                auto *nsSymbol = cast_symbol_to_namespace(symbol);
+                if (is_in_scope(nsSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                    TU_RETURN_IF_NOT_OK (writer.touchNamespace(nsSymbol));
+                }
+                break;
+            }
+            case SymbolType::STATIC: {
+                auto *staticSymbol = cast_symbol_to_static(symbol);
+                if (is_in_scope(staticSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                    TU_RETURN_IF_NOT_OK (writer.touchStatic(staticSymbol));
+                }
+                break;
+            }
+            case SymbolType::STRUCT: {
+                auto *structSymbol = cast_symbol_to_struct(symbol);
+                if (is_in_scope(structSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                    TU_RETURN_IF_NOT_OK (writer.touchStruct(structSymbol));
+                }
+                break;
+            }
+            default:
+                return AssemblerStatus::forCondition(AssemblerCondition::kInvalidBinding,
+                    "invalid binding {} for namespace {}",
+                    symbolIterator->first, namespaceSymbol->getSymbolUrl().toString());
+        }
+    }
+
+    return {};
+}
+
 static tempo_utils::Status
 write_namespace(
-    lyric_assembler::NamespaceSymbol *namespaceSymbol,
+    const lyric_assembler::NamespaceSymbol *namespaceSymbol,
+    const lyric_assembler::ObjectWriter &writer,
     const lyric_common::ModuleLocation &location,
-    lyric_assembler::TypeCache *typeCache,
-    lyric_assembler::SymbolCache *symbolCache,
     flatbuffers::FlatBufferBuilder &buffer,
     std::vector<flatbuffers::Offset<lyo1::NamespaceDescriptor>> &namespaces_vector,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
@@ -29,7 +145,8 @@ write_namespace(
     auto supernamespaceIndex = lyric_runtime::INVALID_ADDRESS_U32;
     auto *supernamespaceSymbol = namespaceSymbol->superNamespace();
     if (supernamespaceSymbol != nullptr) {
-        supernamespaceIndex = supernamespaceSymbol->getAddress().getAddress();
+        TU_ASSIGN_OR_RETURN (supernamespaceIndex,
+            writer.getSymbolAddress(supernamespaceSymbol->getSymbolUrl(), lyric_object::LinkageSection::Namespace));
     }
 
     lyo1::NamespaceFlags namespaceFlags = lyo1::NamespaceFlags::NONE;
@@ -58,83 +175,64 @@ write_namespace(
          symbolIterator != namespaceBlock->symbolsEnd();
          symbolIterator++) {
         const auto &var = symbolIterator->second;
-        lyric_assembler::AbstractSymbol *symbol;
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(var.symbolUrl));
-
-        lyo1::DescriptorSection binding_type = lyo1::DescriptorSection::Invalid;
-        tu_uint32 binding_descriptor;
+        const auto &symbolUrl = var.symbolUrl;
 
         // skip symbols which are not in the current module
-        if (var.symbolUrl.isAbsolute()) {
-            if (location != symbol->getSymbolUrl().getModuleLocation()) {
-                TU_LOG_INFO << "ignoring namespace binding " << symbolIterator->first << " for " << symbol->getSymbolUrl();
+        if (symbolUrl.isAbsolute()) {
+            if (location != symbolUrl.getModuleLocation()) {
+                TU_LOG_INFO << "ignoring namespace binding " << symbolIterator->first << " for " << symbolUrl;
                 continue;
             }
         }
 
-        switch (symbol->getSymbolType()) {
-            case lyric_assembler::SymbolType::CALL: {
-                auto *callSymbol = cast_symbol_to_call(symbol);
+        // skip symbols which have not been touched
+        auto symbolEntryOption = writer.getSymbolEntryOption(symbolUrl);
+        if (symbolEntryOption.isEmpty())
+            continue;
+        const auto &symbolEntry = symbolEntryOption.peekValue();
+
+        lyo1::DescriptorSection binding_type = lyo1::DescriptorSection::Invalid;
+        tu_uint32 binding_descriptor;
+
+        switch (symbolEntry.section) {
+            case lyric_object::LinkageSection::Call: {
                 binding_type = lyo1::DescriptorSection::Call;
-                auto address = callSymbol->getAddress();
-                TU_ASSERT (address.isValid());
-                binding_descriptor = address.getAddress();
+                binding_descriptor = symbolEntry.address;
                 break;
             }
-            case lyric_assembler::SymbolType::CLASS: {
-                auto *classSymbol = cast_symbol_to_class(symbol);
+            case lyric_object::LinkageSection::Class: {
                 binding_type = lyo1::DescriptorSection::Class;
-                auto address = classSymbol->getAddress();
-                TU_ASSERT (address.isValid());
-                binding_descriptor = address.getAddress();
+                binding_descriptor = symbolEntry.address;
                 break;
             }
-            case lyric_assembler::SymbolType::CONCEPT: {
-                auto *conceptSymbol = cast_symbol_to_concept(symbol);
+            case lyric_object::LinkageSection::Concept: {
                 binding_type = lyo1::DescriptorSection::Concept;
-                auto address = conceptSymbol->getAddress();
-                TU_ASSERT (address.isValid());
-                binding_descriptor = address.getAddress();
+                binding_descriptor = symbolEntry.address;
                 break;
             }
-            case lyric_assembler::SymbolType::ENUM: {
-                auto *enumSymbol = cast_symbol_to_enum(symbol);
+            case lyric_object::LinkageSection::Enum: {
                 binding_type = lyo1::DescriptorSection::Enum;
-                auto address = enumSymbol->getAddress();
-                TU_ASSERT (address.isValid());
-                binding_descriptor = address.getAddress();
+                binding_descriptor = symbolEntry.address;
                 break;
             }
-            case lyric_assembler::SymbolType::INSTANCE: {
-                auto *instanceSymbol = cast_symbol_to_instance(symbol);
+            case lyric_object::LinkageSection::Instance: {
                 binding_type = lyo1::DescriptorSection::Instance;
-                auto address = instanceSymbol->getAddress();
-                TU_ASSERT (address.isValid());
-                binding_descriptor = address.getAddress();
+                binding_descriptor = symbolEntry.address;
                 break;
             }
-            case lyric_assembler::SymbolType::NAMESPACE: {
-                auto *namespaceSymbol_ = cast_symbol_to_namespace(symbol);
+            case lyric_object::LinkageSection::Namespace: {
                 binding_type = lyo1::DescriptorSection::Namespace;
-                auto address = namespaceSymbol_->getAddress();
-                TU_ASSERT (address.isValid());
-                binding_descriptor = address.getAddress();
+                binding_descriptor = symbolEntry.address;
                 break;
             }
-            case lyric_assembler::SymbolType::STATIC: {
-                auto *staticSymbol = cast_symbol_to_static(symbol);
+            case lyric_object::LinkageSection::Static: {
                 binding_type = lyo1::DescriptorSection::Static;
-                auto address = staticSymbol->getAddress();
-                TU_ASSERT (address.isValid());
-                binding_descriptor = address.getAddress();
+                binding_descriptor = symbolEntry.address;
                 break;
             }
-            case lyric_assembler::SymbolType::STRUCT: {
-                auto *structSymbol = cast_symbol_to_struct(symbol);
+            case lyric_object::LinkageSection::Struct: {
                 binding_type = lyo1::DescriptorSection::Struct;
-                auto address = structSymbol->getAddress();
-                TU_ASSERT (address.isValid());
-                binding_descriptor = address.getAddress();
+                binding_descriptor = symbolEntry.address;
                 break;
             }
             default: {
@@ -164,21 +262,18 @@ write_namespace(
 
 tempo_utils::Status
 lyric_assembler::internal::write_namespaces(
-    const ObjectState *objectState,
+    const std::vector<const NamespaceSymbol *> &namespaces,
+    const ObjectWriter &writer,
+    const lyric_common::ModuleLocation &location,
     flatbuffers::FlatBufferBuilder &buffer,
     NamespacesOffset &namespacesOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (objectState != nullptr);
-
-    SymbolCache *symbolCache = objectState->symbolCache();
-    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::NamespaceDescriptor>> namespaces_vector;
 
-    for (auto iterator = objectState->namespacesBegin(); iterator != objectState->namespacesEnd(); iterator++) {
-        auto &namespaceSymbol = *iterator;
-        TU_RETURN_IF_NOT_OK (write_namespace(namespaceSymbol, objectState->getLocation(),
-            typeCache, symbolCache, buffer, namespaces_vector, symbols_vector));
+    for (const auto *namespaceSymbol : namespaces) {
+        TU_RETURN_IF_NOT_OK (write_namespace(
+            namespaceSymbol, writer, location, buffer, namespaces_vector, symbols_vector));
     }
 
     // create the namespaces vector

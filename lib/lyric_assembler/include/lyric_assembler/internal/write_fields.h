@@ -6,13 +6,20 @@
 #include <lyric_object/generated/object.h>
 
 #include "../object_state.h"
+#include "../object_writer.h"
 
 namespace lyric_assembler::internal {
+
+    tempo_utils::Status touch_field(
+        const FieldSymbol *fieldSymbol,
+        const ObjectState *objectState,
+        ObjectWriter &writer);
 
     using FieldsOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::FieldDescriptor>>>;
 
     tempo_utils::Status write_fields(
-        const ObjectState *objectState,
+        const std::vector<const FieldSymbol *> &fields,
+        const ObjectWriter &writer,
         flatbuffers::FlatBufferBuilder &buffer,
         FieldsOffset &fieldsOffset,
         std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector);

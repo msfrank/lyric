@@ -131,7 +131,6 @@ lyric_compiler::compile_string(
 {
     auto *state = block->blockState();
     auto *fundamentalCache = state->fundamentalCache();
-    auto *symbolCache = state->symbolCache();
 
     std::string literalValue;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue));
@@ -141,11 +140,6 @@ lyric_compiler::compile_string(
     auto *blockCode = block->blockCode();
     auto *fragment = blockCode->rootFragment();
     TU_RETURN_IF_NOT_OK (fragment->loadString(str));
-
-    auto fundamentalString = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::String);
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fundamentalString));
-    symbol->touch();
 
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::String));
 }
@@ -158,7 +152,6 @@ lyric_compiler::compile_url(
 {
     auto *state = block->blockState();
     auto *fundamentalCache = state->fundamentalCache();
-    auto *symbolCache = state->symbolCache();
 
     std::string literalValue;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue));
@@ -169,11 +162,6 @@ lyric_compiler::compile_url(
     auto *blockCode = block->blockCode();
     auto *fragment = blockCode->rootFragment();
     TU_RETURN_IF_NOT_OK (fragment->loadUrl(tempo_utils::Url::fromString(str)));
-
-    auto fundamentalUrl = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Url);
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fundamentalUrl));
-    symbol->touch();
 
     return driver->pushResult(fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Url));
 }

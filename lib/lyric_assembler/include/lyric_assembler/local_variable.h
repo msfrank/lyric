@@ -15,11 +15,10 @@ namespace lyric_assembler {
             const lyric_common::TypeDef &assignableType,
             LocalOffset offset);
 
+        bool isImported() const override;
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getAssignableType() const override;
-        TypeSignature getTypeSignature() const override;
-        void touch() override;
 
         std::string getName() const;
         lyric_object::AccessType getAccessType() const;

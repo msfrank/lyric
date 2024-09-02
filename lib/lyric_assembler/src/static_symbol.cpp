@@ -95,21 +95,6 @@ lyric_assembler::StaticSymbol::getAssignableType() const
     return priv->staticType->getTypeDef();
 }
 
-lyric_assembler::TypeSignature
-lyric_assembler::StaticSymbol::getTypeSignature() const
-{
-    auto *priv = getPriv();
-    return priv->staticType->getTypeSignature();
-}
-
-void
-lyric_assembler::StaticSymbol::touch()
-{
-    if (getAddress().isValid())
-        return;
-    m_state->touchStatic(this);
-}
-
 std::string
 lyric_assembler::StaticSymbol::getName() const
 {
@@ -165,7 +150,6 @@ lyric_assembler::StaticSymbol::defineInitializer()
 
     //
     auto returnType = getAssignableType();
-    m_state->typeCache()->touchType(returnType);
 
     std::vector<lyric_object::Parameter> parameters;
     auto callIndex = m_state->numCalls();

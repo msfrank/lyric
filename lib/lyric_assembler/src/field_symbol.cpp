@@ -106,21 +106,6 @@ lyric_assembler::FieldSymbol::getAssignableType() const
     return priv->fieldType->getTypeDef();
 }
 
-lyric_assembler::TypeSignature
-lyric_assembler::FieldSymbol::getTypeSignature() const
-{
-    auto *priv = getPriv();
-    return priv->fieldType->getTypeSignature();
-}
-
-void
-lyric_assembler::FieldSymbol::touch()
-{
-    if (getAddress().isValid())
-        return;
-    m_state->touchField(this);
-}
-
 std::string
 lyric_assembler::FieldSymbol::getName() const
 {

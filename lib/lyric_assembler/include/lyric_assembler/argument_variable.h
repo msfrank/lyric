@@ -14,11 +14,10 @@ namespace lyric_assembler {
             BindingType bindingType,
             ArgumentOffset offset);
 
+        bool isImported() const override;
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getAssignableType() const override;
-        TypeSignature getTypeSignature() const override;
-        void touch() override;
 
         std::string getName() const;
         BindingType getBindingType() const;

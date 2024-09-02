@@ -43,7 +43,7 @@ compile_predicate(
 
     if (!typeCache->hasType(predicateType))
         block->throwAssemblerInvariant("missing predicate type {}", predicateType.toString());
-    typeCache->touchType(predicateType);
+    //typeCache->touchType(predicateType);
 
     // determine the match type
     lyric_common::TypeDef matchType;

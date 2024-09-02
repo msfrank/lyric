@@ -183,21 +183,6 @@ lyric_assembler::ClassSymbol::getAssignableType() const
     return priv->classType->getTypeDef();
 }
 
-lyric_assembler::TypeSignature
-lyric_assembler::ClassSymbol::getTypeSignature() const
-{
-    auto *priv = getPriv();
-    return priv->classType->getTypeSignature();
-}
-
-void
-lyric_assembler::ClassSymbol::touch()
-{
-    if (getAddress().isValid())
-        return;
-    m_state->touchClass(this);
-}
-
 lyric_object::AccessType
 lyric_assembler::ClassSymbol::getAccessType() const
 {
@@ -328,8 +313,6 @@ lyric_assembler::ClassSymbol::declareMember(
         return status;
     }
 
-    m_state->typeCache()->touchType(memberType);
-
     DataReference ref;
     ref.symbolUrl = memberUrl;
     ref.typeDef = memberType;
@@ -459,11 +442,6 @@ lyric_assembler::ClassSymbol::declareCtor(
             tempo_tracing::LogSeverity::kError,
             "ctor already defined for class {}", m_classUrl.toString());
 
-    auto fundamentalClass = m_state->fundamentalCache()->getFundamentalUrl(FundamentalSymbol::Class);
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(fundamentalClass));
-    symbol->touch();
-
     auto callIndex = m_state->numCalls();
     auto address = CallAddress::near(callIndex);
 
@@ -507,7 +485,6 @@ lyric_assembler::ClassSymbol::prepareCtor(ConstructableInvoker &invoker)
     if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
-    callSymbol->touch();
 
     auto constructable = std::make_unique<CtorConstructable>(callSymbol, this);
     return invoker.initialize(std::move(constructable));
@@ -639,7 +616,6 @@ lyric_assembler::ClassSymbol::prepareMethod(
     if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", method.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
-    callSymbol->touch();
 
     auto access = callSymbol->getAccessType();
 
@@ -744,7 +720,6 @@ lyric_assembler::ClassSymbol::declareImpl(const lyric_common::TypeDef &implType)
     // touch the impl type
     lyric_assembler::TypeHandle *implTypeHandle;
     TU_ASSIGN_OR_RETURN (implTypeHandle, m_state->typeCache()->getOrMakeType(implType));
-    implTypeHandle->touch();
 
     // confirm that the impl concept exists
     auto implConcept = implType.getConcreteUrl();
@@ -757,8 +732,6 @@ lyric_assembler::ClassSymbol::declareImpl(const lyric_common::TypeDef &implType)
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
         m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
     auto *conceptSymbol = cast_symbol_to_concept(symbol);
-
-    conceptSymbol->touch();
 
     auto *implCache = m_state->implCache();
 

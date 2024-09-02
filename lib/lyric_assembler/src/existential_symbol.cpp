@@ -164,22 +164,6 @@ lyric_assembler::ExistentialSymbol::getAssignableType() const
     return priv->existentialType->getTypeDef();
 }
 
-lyric_assembler::TypeSignature
-lyric_assembler::ExistentialSymbol::getTypeSignature() const
-{
-    auto *priv = getPriv();
-    priv->existentialType->touch();
-    return priv->existentialType->getTypeSignature();
-}
-
-void
-lyric_assembler::ExistentialSymbol::touch()
-{
-    if (getAddress().isValid())
-        return;
-    m_state->touchExistential(this);
-}
-
 bool
 lyric_assembler::ExistentialSymbol::isDeclOnly() const
 {
@@ -314,7 +298,6 @@ lyric_assembler::ExistentialSymbol::prepareMethod(
     if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", method.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
-    callSymbol->touch();
 
     if (callSymbol->isInline()) {
         auto callable = std::make_unique<ExistentialCallable>(callSymbol, callSymbol->callProc());
@@ -403,7 +386,6 @@ lyric_assembler::ExistentialSymbol::declareImpl(const lyric_common::TypeDef &imp
     // touch the impl type
     lyric_assembler::TypeHandle *implTypeHandle;
     TU_ASSIGN_OR_RETURN (implTypeHandle, m_state->typeCache()->getOrMakeType(implType));
-    implTypeHandle->touch();
 
     // confirm that the impl concept exists
     auto implConcept = implType.getConcreteUrl();
@@ -416,8 +398,6 @@ lyric_assembler::ExistentialSymbol::declareImpl(const lyric_common::TypeDef &imp
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
         m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
     auto *conceptSymbol = cast_symbol_to_concept(symbol);
-
-    conceptSymbol->touch();
 
     auto *implCache = m_state->implCache();
 

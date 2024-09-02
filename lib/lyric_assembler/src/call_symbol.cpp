@@ -315,20 +315,6 @@ lyric_assembler::CallSymbol::getAssignableType() const
     return {};
 }
 
-lyric_assembler::TypeSignature
-lyric_assembler::CallSymbol::getTypeSignature() const
-{
-    return {};
-}
-
-void
-lyric_assembler::CallSymbol::touch()
-{
-    if (getAddress().isValid())
-        return;
-    m_state->touchCall(this);
-}
-
 tempo_utils::Result<lyric_assembler::ProcHandle *>
 lyric_assembler::CallSymbol::defineCall(
     const ParameterPack &parameterPack,
@@ -379,9 +365,7 @@ lyric_assembler::CallSymbol::defineCall(
         auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
         symbolCache->insertSymbol(paramUrl, paramSymbol);
 
-        TypeHandle *typeHandle;
-        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(param.typeDef));
-        typeHandle->touch();
+        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
 
         SymbolBinding argBinding;
         argBinding.symbolUrl = paramUrl;
@@ -405,9 +389,7 @@ lyric_assembler::CallSymbol::defineCall(
         auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
         symbolCache->insertSymbol(paramUrl, paramSymbol);
 
-        TypeHandle *typeHandle;
-        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(param.typeDef));
-        typeHandle->touch();
+        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
 
         SymbolBinding argBinding;
         argBinding.symbolUrl = paramUrl;
@@ -423,18 +405,14 @@ lyric_assembler::CallSymbol::defineCall(
 
     if (!priv->restParameter.isEmpty()) {
         auto &param = priv->restParameter.peekValue();
-        TypeHandle *typeHandle;
-        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(param.typeDef));
-        typeHandle->touch();
+        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
     }
 
     // TODO: create binding for rest collector parameter if specified
 
     // if return type was explicitly declared then touch it
     if (priv->returnType.isValid()) {
-        TypeHandle *typeHandle;
-        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(priv->returnType));
-        typeHandle->touch();
+        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(priv->returnType));
     }
 
     priv->proc = std::make_unique<ProcHandle>(m_callUrl, bindings, priv->listParameters.size(),
@@ -509,7 +487,7 @@ lyric_assembler::CallSymbol::isDeclOnly() const
 }
 
 lyric_assembler::AbstractResolver *
-lyric_assembler::CallSymbol::callResolver()
+lyric_assembler::CallSymbol::callResolver() const
 {
     auto *priv = getPriv();
     if (priv->callTemplate != nullptr)
@@ -545,10 +523,17 @@ lyric_assembler::CallSymbol::callType()
 }
 
 lyric_assembler::TemplateHandle *
-lyric_assembler::CallSymbol::callTemplate()
+lyric_assembler::CallSymbol::callTemplate() const
 {
     auto *priv = getPriv();
     return priv->callTemplate;
+}
+
+const lyric_assembler::ProcHandle *
+lyric_assembler::CallSymbol::callProc() const
+{
+    auto *priv = getPriv();
+    return priv->proc.get();
 }
 
 lyric_assembler::ProcHandle *
@@ -641,9 +626,7 @@ lyric_assembler::CallSymbol::finalizeCall()
     auto *typeCache = m_state->typeCache();
 
     // ensure return type exists in cache and is addressable
-    TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(priv->returnType));
-    typeHandle->touch();
+    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(priv->returnType));
 
     return {};
 }

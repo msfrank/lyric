@@ -35,7 +35,7 @@ namespace lyric_assembler {
          *
          * @return true if the symbol is imported, otherwise false.
          */
-        bool isImported() const
+        bool isImported() const override
         {
             return m_isImported;
         }
@@ -88,34 +88,6 @@ namespace lyric_assembler {
         AddressType m_address;
         const bool m_isImported = true;
         PrivType *m_priv = nullptr;
-
-    public:
-        /**
-         * Return the type-specific address for the symbol.
-         *
-         * @return The symbol address.
-         */
-        AddressType getAddress() const
-        {
-            return m_address;
-        };
-
-        /**
-         * Update the type-specific address for the symbol. If the symbol already has an address then an error
-         * status is returned.
-         *
-         * @param address The new symbol address.
-         * @return Ok status if the update was successful, otherwise error status.
-         */
-        tempo_utils::Status updateAddress(AddressType address)
-        {
-            TU_ASSERT (address.isValid());
-            if (m_address.isValid())
-                return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                    "address is already set for {}", getSymbolUrl().toString());
-            m_address = address;
-            return AssemblerStatus::ok();
-        };
     };
 }
 

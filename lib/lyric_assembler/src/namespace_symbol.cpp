@@ -131,21 +131,6 @@ lyric_assembler::NamespaceSymbol::getAssignableType() const
     return priv->namespaceType->getTypeDef();
 }
 
-lyric_assembler::TypeSignature
-lyric_assembler::NamespaceSymbol::getTypeSignature() const
-{
-    auto *priv = getPriv();
-    return priv->namespaceType->getTypeSignature();
-}
-
-void
-lyric_assembler::NamespaceSymbol::touch()
-{
-    if (getAddress().isValid())
-        return;
-    m_state->touchNamespace(this);
-}
-
 lyric_object::AccessType
 lyric_assembler::NamespaceSymbol::getAccessType() const
 {

@@ -36,7 +36,14 @@ lyric_assembler::NoOperandsInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::NoOperandsInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::NoOperandsInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
@@ -58,7 +65,14 @@ lyric_assembler::BoolImmediateInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::BoolImmediateInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::BoolImmediateInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
@@ -80,7 +94,14 @@ lyric_assembler::IntImmediateInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::IntImmediateInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::IntImmediateInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
@@ -102,7 +123,14 @@ lyric_assembler::FloatImmediateInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::FloatImmediateInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::FloatImmediateInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
@@ -124,7 +152,14 @@ lyric_assembler::CharImmediateInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::CharImmediateInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::CharImmediateInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
@@ -136,11 +171,12 @@ lyric_assembler::CharImmediateInstruction::apply(
 
 lyric_assembler::LoadLiteralInstruction::LoadLiteralInstruction(
     lyric_object::Opcode opcode,
-    LiteralAddress address)
+    LiteralHandle *literalHandle)
     : m_opcode(opcode),
-      m_address(address)
+      m_literal(literalHandle)
 {
     TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
+    TU_ASSERT (m_literal != nullptr);
 }
 
 lyric_assembler::InstructionType
@@ -150,7 +186,14 @@ lyric_assembler::LoadLiteralInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::LoadLiteralInstruction::touch(ObjectWriter &writer) const
+{
+    return writer.touchLiteral(m_literal);
+}
+
+tempo_utils::Status
 lyric_assembler::LoadLiteralInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
@@ -158,10 +201,13 @@ lyric_assembler::LoadLiteralInstruction::apply(
     tu_uint16 &patchOffset) const
 {
     switch (m_opcode) {
+        case lyric_object::Opcode::OP_LITERAL:
         case lyric_object::Opcode::OP_STRING:
         case lyric_object::Opcode::OP_URL: {
+            tu_uint32 address;
+            TU_ASSIGN_OR_RETURN (address, writer.getLiteralAddress(m_literal));
             TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(m_opcode));
-            return bytecodeBuilder.writeU32(m_address.addr);
+            return bytecodeBuilder.writeU32(address);
         }
         default:
             return AssemblerStatus::forCondition(
@@ -182,15 +228,31 @@ lyric_assembler::LoadDataInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::LoadDataInstruction::touch(ObjectWriter &writer) const
+{
+    switch (m_symbol->getSymbolType()) {
+        case SymbolType::ENUM:
+            return writer.touchEnum(cast_symbol_to_enum(m_symbol));
+        case SymbolType::FIELD:
+            return writer.touchField(cast_symbol_to_field(m_symbol));
+        case SymbolType::INSTANCE:
+            return writer.touchInstance(cast_symbol_to_instance(m_symbol));
+        case SymbolType::STATIC:
+            return writer.touchStatic(cast_symbol_to_static(m_symbol));
+        default:
+            return {};
+    }
+}
+
+tempo_utils::Status
 lyric_assembler::LoadDataInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
     tu_uint32 &targetId,
     tu_uint16 &patchOffset) const
 {
-    m_symbol->touch();
-
     tu_uint32 address;
     tu_uint8 flags;
 
@@ -207,21 +269,25 @@ lyric_assembler::LoadDataInstruction::apply(
             address = cast_symbol_to_lexical(m_symbol)->getOffset().getOffset();
             flags = lyric_object::LOAD_LEXICAL;
             break;
+        case SymbolType::ENUM:
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
+            flags = lyric_object::LOAD_ENUM;
+            break;
         case SymbolType::FIELD:
-            address = cast_symbol_to_field(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
             flags = lyric_object::LOAD_FIELD;
             break;
-        case SymbolType::STATIC:
-            address = cast_symbol_to_static(m_symbol)->getAddress().getAddress();
-            flags = lyric_object::LOAD_STATIC;
-            break;
         case SymbolType::INSTANCE:
-            address = cast_symbol_to_instance(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
             flags = lyric_object::LOAD_INSTANCE;
             break;
-        case SymbolType::ENUM:
-            address = cast_symbol_to_enum(m_symbol)->getAddress().getAddress();
-            flags = lyric_object::LOAD_ENUM;
+        case SymbolType::STATIC:
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Static));
+            flags = lyric_object::LOAD_STATIC;
             break;
         default:
             return AssemblerStatus::forCondition(
@@ -253,53 +319,88 @@ lyric_assembler::LoadDescriptorInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::LoadDescriptorInstruction::touch(ObjectWriter &writer) const
+{
+    switch (m_symbol->getSymbolType()) {
+        case SymbolType::ACTION:
+            return writer.touchAction(cast_symbol_to_action(m_symbol));
+        case SymbolType::CALL:
+            return writer.touchCall(cast_symbol_to_call(m_symbol));
+        case SymbolType::CLASS:
+            return writer.touchClass(cast_symbol_to_class(m_symbol));
+        case SymbolType::CONCEPT:
+            return writer.touchConcept(cast_symbol_to_concept(m_symbol));
+        case SymbolType::ENUM:
+            return writer.touchEnum(cast_symbol_to_enum(m_symbol));
+        case SymbolType::EXISTENTIAL:
+            return writer.touchExistential(cast_symbol_to_existential(m_symbol));
+        case SymbolType::FIELD:
+            return writer.touchField(cast_symbol_to_field(m_symbol));
+        case SymbolType::INSTANCE:
+            return writer.touchInstance(cast_symbol_to_instance(m_symbol));
+        case SymbolType::STRUCT:
+            return writer.touchStruct(cast_symbol_to_struct(m_symbol));
+        default:
+            return {};
+    }
+}
+
+tempo_utils::Status
 lyric_assembler::LoadDescriptorInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
     tu_uint32 &targetId,
     tu_uint16 &patchOffset) const
 {
-    m_symbol->touch();
-
     tu_uint32 address;
     lyric_object::LinkageSection section;
 
     switch (m_symbol->getSymbolType()) {
         case SymbolType::ACTION:
-            address = cast_symbol_to_action(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Action));
             section = lyric_object::LinkageSection::Action;
             break;
         case SymbolType::CALL:
-            address = cast_symbol_to_call(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
             section = lyric_object::LinkageSection::Call;
             break;
         case SymbolType::CLASS:
-            address = cast_symbol_to_class(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Class));
             section = lyric_object::LinkageSection::Class;
             break;
         case SymbolType::CONCEPT:
-            address = cast_symbol_to_concept(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Concept));
             section = lyric_object::LinkageSection::Concept;
             break;
         case SymbolType::ENUM:
-            address = cast_symbol_to_enum(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
             section = lyric_object::LinkageSection::Enum;
             break;
         case SymbolType::EXISTENTIAL:
-            address = cast_symbol_to_existential(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Existential));
             section = lyric_object::LinkageSection::Existential;
             break;
         case SymbolType::FIELD:
-            address = cast_symbol_to_field(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
             section = lyric_object::LinkageSection::Field;
             break;
         case SymbolType::INSTANCE:
-            address = cast_symbol_to_instance(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
             section = lyric_object::LinkageSection::Instance;
             break;
         case SymbolType::STRUCT:
-            address = cast_symbol_to_struct(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Struct));
             section = lyric_object::LinkageSection::Struct;
             break;
         default:
@@ -331,7 +432,14 @@ lyric_assembler::LoadSyntheticInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::LoadSyntheticInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::LoadSyntheticInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
@@ -361,21 +469,27 @@ lyric_assembler::LoadTypeInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::LoadTypeInstruction::touch(ObjectWriter &writer) const
+{
+    return writer.touchType(m_typeHandle);
+}
+
+tempo_utils::Status
 lyric_assembler::LoadTypeInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
     tu_uint32 &targetId,
     tu_uint16 &patchOffset) const
 {
-    m_typeHandle->touch();
-
-    auto address = m_typeHandle->getAddress().getAddress();
+    tu_uint32 offset;
+    TU_ASSIGN_OR_RETURN (offset, writer.getTypeOffset(m_typeHandle->getTypeDef()));
 
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_DESCRIPTOR));
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeU8(
         lyric_object::linkage_to_descriptor_section(lyric_object::LinkageSection::Type)));
-    return bytecodeBuilder.writeU32(address);
+    return bytecodeBuilder.writeU32(offset);
 }
 
 lyric_assembler::StoreDataInstruction::StoreDataInstruction(AbstractSymbol *symbol)
@@ -391,14 +505,27 @@ lyric_assembler::StoreDataInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::StoreDataInstruction::touch(ObjectWriter &writer) const
+{
+    switch (m_symbol->getSymbolType()) {
+        case SymbolType::FIELD:
+            return writer.touchField(cast_symbol_to_field(m_symbol));
+        case SymbolType::STATIC:
+            return writer.touchStatic(cast_symbol_to_static(m_symbol));
+        default:
+            return {};
+    }
+}
+
+tempo_utils::Status
 lyric_assembler::StoreDataInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
     tu_uint32 &targetId,
-    tu_uint16 &patchOffset) const {
-    m_symbol->touch();
-
+    tu_uint16 &patchOffset) const
+{
     tu_uint32 address;
     tu_uint8 flags;
 
@@ -417,11 +544,13 @@ lyric_assembler::StoreDataInstruction::apply(
             flags = lyric_object::STORE_LEXICAL;
             break;
         case SymbolType::FIELD:
-            address = cast_symbol_to_field(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
             flags = lyric_object::STORE_FIELD;
             break;
         case SymbolType::STATIC:
-            address = cast_symbol_to_static(m_symbol)->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Static));
             flags = lyric_object::STORE_STATIC;
             break;
         default:
@@ -457,7 +586,14 @@ lyric_assembler::StackModificationInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::StackModificationInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::StackModificationInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
@@ -494,7 +630,14 @@ lyric_assembler::LabelInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::LabelInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::LabelInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
@@ -531,7 +674,14 @@ lyric_assembler::JumpInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::JumpInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::JumpInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
@@ -601,7 +751,21 @@ lyric_assembler::CallInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::CallInstruction::touch(ObjectWriter &writer) const
+{
+    switch (m_symbol->getSymbolType()) {
+        case SymbolType::ACTION:
+            return writer.touchAction(cast_symbol_to_action(m_symbol));
+        case SymbolType::CALL:
+            return writer.touchCall(cast_symbol_to_call(m_symbol));
+        default:
+            return {};
+    }
+}
+
+tempo_utils::Status
 lyric_assembler::CallInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
@@ -611,29 +775,16 @@ lyric_assembler::CallInstruction::apply(
     tu_uint32 address;
 
     switch (m_opcode) {
+        case lyric_object::Opcode::OP_CALL_EXISTENTIAL:
         case lyric_object::Opcode::OP_CALL_STATIC:
         case lyric_object::Opcode::OP_CALL_VIRTUAL: {
-            if (m_symbol->getSymbolType() != SymbolType::CALL)
-                return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "expected Call symbol for opcode");
-            auto *callSymbol = cast_symbol_to_call(m_symbol);
-            address = callSymbol->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
             break;
         }
         case lyric_object::Opcode::OP_CALL_CONCEPT: {
-            if (m_symbol->getSymbolType() != SymbolType::ACTION)
-                return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "expected Action symbol for opcode");
-            auto *actionSymbol = cast_symbol_to_action(m_symbol);
-            address = actionSymbol->getAddress().getAddress();
-            break;
-        }
-        case lyric_object::Opcode::OP_CALL_EXISTENTIAL: {
-            if (m_symbol->getSymbolType() != SymbolType::CALL)
-                return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "expected Call symbol for opcode");
-            auto *callSymbol = cast_symbol_to_call(m_symbol);
-            address = callSymbol->getAddress().getAddress();
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Action));
             break;
         }
         default:
@@ -660,21 +811,20 @@ lyric_assembler::InlineInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::InlineInstruction::touch(ObjectWriter &writer) const
+{
+    return writer.touchCall(m_symbol);
+}
+
+tempo_utils::Status
 lyric_assembler::InlineInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
     tu_uint32 &targetId,
     tu_uint16 &patchOffset) const
 {
-//    auto *procHandle = m_symbol->callProc();
-//
-//    // store arguments in temporaries
-//
-//    // rewrite argument loads as temporary loads
-//    auto *srcCode = procHandle->procCode();
-//    auto *dstCode = procHandle->procCode();
-//    return procCode->build(bytecodeBuilder);
     TU_UNREACHABLE();
 }
 
@@ -696,32 +846,54 @@ lyric_assembler::NewInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::NewInstruction::touch(ObjectWriter &writer) const
+{
+    switch (m_symbol->getSymbolType()) {
+        case SymbolType::CLASS:
+            return writer.touchClass(cast_symbol_to_class(m_symbol));
+        case SymbolType::ENUM:
+            return writer.touchEnum(cast_symbol_to_enum(m_symbol));
+        case SymbolType::INSTANCE:
+            return writer.touchInstance(cast_symbol_to_instance(m_symbol));
+        case SymbolType::STRUCT:
+            return writer.touchStruct(cast_symbol_to_struct(m_symbol));
+        default:
+            return {};
+    }
+}
+
+tempo_utils::Status
 lyric_assembler::NewInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,
     tu_uint32 &targetId,
     tu_uint16 &patchOffset) const
 {
-    tu_uint8 newType;
     tu_uint32 address;
+    tu_uint8 newType;
 
     switch (m_symbol->getSymbolType()) {
         case SymbolType::CLASS:
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Class));
             newType = lyric_object::NEW_CLASS;
-            address = cast_symbol_to_class(m_symbol)->getAddress().getAddress();
             break;
         case SymbolType::ENUM:
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
             newType = lyric_object::NEW_ENUM;
-            address = cast_symbol_to_enum(m_symbol)->getAddress().getAddress();
             break;
         case SymbolType::INSTANCE:
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
             newType = lyric_object::NEW_INSTANCE;
-            address = cast_symbol_to_instance(m_symbol)->getAddress().getAddress();
             break;
         case SymbolType::STRUCT:
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Struct));
             newType = lyric_object::NEW_STRUCT;
-            address = cast_symbol_to_struct(m_symbol)->getAddress().getAddress();
             break;
         default:
             return AssemblerStatus::forCondition(
@@ -747,7 +919,14 @@ lyric_assembler::TrapInstruction::getType() const
 }
 
 tempo_utils::Status
+lyric_assembler::TrapInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::TrapInstruction::apply(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
     tu_uint16 &labelOffset,

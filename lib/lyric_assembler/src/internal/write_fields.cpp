@@ -1,14 +1,43 @@
 
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/internal/write_fields.h>
+#include <lyric_assembler/object_writer.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
+tempo_utils::Status
+lyric_assembler::internal::touch_field(
+    const FieldSymbol *fieldSymbol,
+    const ObjectState *objectState,
+    ObjectWriter &writer)
+{
+    TU_ASSERT (fieldSymbol != nullptr);
+
+    auto fieldUrl = fieldSymbol->getSymbolUrl();
+
+    bool alreadyInserted;
+    TU_RETURN_IF_NOT_OK (writer.insertSymbol(fieldUrl, fieldSymbol, alreadyInserted));
+    if (alreadyInserted)
+        return {};
+
+    // if field is an imported symbol then we are done
+    if (fieldSymbol->isImported())
+        return {};
+
+    TU_RETURN_IF_NOT_OK (writer.touchType(fieldSymbol->getAssignableType()));
+
+    auto initializerUrl = fieldSymbol->getInitializer();
+    if (initializerUrl.isValid()) {
+        TU_RETURN_IF_NOT_OK (writer.touchInitializer(initializerUrl));
+    }
+
+    return {};
+}
+
 static tempo_utils::Status
 write_field(
-    lyric_assembler::FieldSymbol *fieldSymbol,
-    lyric_assembler::TypeCache *typeCache,
-    lyric_assembler::SymbolCache *symbolCache,
+    const lyric_assembler::FieldSymbol *fieldSymbol,
+    const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     std::vector<flatbuffers::Offset<lyo1::FieldDescriptor>> &fields_vector,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
@@ -17,9 +46,9 @@ write_field(
 
     auto fieldPathString = fieldSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(fieldPathString);
-    lyric_assembler::TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(fieldSymbol->getAssignableType()));
-    tu_uint32 fieldType = typeHandle->getAddress().getAddress();
+
+    tu_uint32 fieldType;
+    TU_ASSIGN_OR_RETURN (fieldType, writer.getTypeOffset(fieldSymbol->getAssignableType()));
 
     lyo1::FieldFlags fieldFlags = lyo1::FieldFlags::NONE;
     if (fieldSymbol->isVariable())
@@ -53,21 +82,16 @@ write_field(
 
 tempo_utils::Status
 lyric_assembler::internal::write_fields(
-    const ObjectState *objectState,
+    const std::vector<const FieldSymbol *> &fields,
+    const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     FieldsOffset &fieldsOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (objectState != nullptr);
-
-    SymbolCache *symbolCache = objectState->symbolCache();
-    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::FieldDescriptor>> fields_vector;
 
-    for (auto iterator = objectState->fieldsBegin(); iterator != objectState->fieldsEnd(); iterator++) {
-        auto &fieldSymbol = *iterator;
-        TU_RETURN_IF_NOT_OK (
-            write_field(fieldSymbol, typeCache, symbolCache, buffer, fields_vector, symbols_vector));
+    for (const auto *fieldSymbol : fields) {
+        TU_RETURN_IF_NOT_OK (write_field(fieldSymbol, writer, buffer, fields_vector, symbols_vector));
     }
 
     // create the fields vector

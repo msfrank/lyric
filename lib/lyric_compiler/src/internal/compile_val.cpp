@@ -57,11 +57,14 @@ lyric_compiler::internal::compile_val(
             tempo_tracing::LogSeverity::kError,
             "rvalue type {} is incompatible with val type {}", resultType.toString(), valType.toString());
 
-    auto declareVariableResult = block->declareVariable(
-        identifier, internal::convert_access_type(access), valType, /* isVariable= */ false);
-    if (declareVariableResult.isStatus())
-        return declareVariableResult.getStatus();
-    auto var = declareVariableResult.getResult();
+//    // as a special case, if we are in the root block then declare the val in the entry call
+//    if (block->isRoot()) {
+//        block = moduleEntry.getEntry()->callProc()->procBlock();
+//    }
+
+    lyric_assembler::DataReference var;
+    TU_ASSIGN_OR_RETURN (var, block->declareVariable(
+        identifier, internal::convert_access_type(access), valType, /* isVariable= */ false));
 
     return block->store(var, /* initialStore= */ true);
 }

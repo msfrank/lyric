@@ -1,5 +1,5 @@
 
-#include <lyric_assembler/object_state.h>
+#include <lyric_assembler/argument_variable.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
@@ -8,7 +8,10 @@
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/lexical_variable.h>
+#include <lyric_assembler/local_variable.h>
 #include <lyric_assembler/namespace_symbol.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -35,48 +38,24 @@ lyric_assembler::TypeCache::~TypeCache()
 }
 
 bool
-lyric_assembler::TypeCache::hasType(const lyric_common::TypeDef &assignableType) const
+lyric_assembler::TypeCache::hasType(const lyric_common::TypeDef &typeDef) const
 {
-    return m_typecache.contains(assignableType);
+    return m_typecache.contains(typeDef);
 }
-
-//lyric_assembler::TypeHandle *
-//lyric_assembler::TypeCache::getType(const lyric_common::TypeDef &assignableType) const
-//{
-//    if (m_typecache.contains(assignableType))
-//        return m_typecache.at(assignableType);
-//    return nullptr;
-//}
 
 lyric_assembler::TypeHandle *
-lyric_assembler::TypeCache::getType(TypeAddress typeAddress) const
+lyric_assembler::TypeCache::getType(const lyric_common::TypeDef &typeDef) const
 {
-    uint32_t address = typeAddress.getAddress();
-
-    if (lyric_object::IS_NEAR(address)) {
-        if (m_types.size() <= address)
-            return nullptr;
-        return m_types.at(address);
-    }
+    auto entry = m_typecache.find(typeDef);
+    if (entry != m_typecache.cend())
+        return entry->second;
     return nullptr;
-}
-
-std::vector<lyric_assembler::TypeHandle *>::const_iterator
-lyric_assembler::TypeCache::typesBegin() const
-{
-    return m_types.cbegin();
-}
-
-std::vector<lyric_assembler::TypeHandle *>::const_iterator
-lyric_assembler::TypeCache::typesEnd() const
-{
-    return m_types.cend();
 }
 
 int
 lyric_assembler::TypeCache::numTypes() const
 {
-    return m_types.size();
+    return m_typecache.size();
 }
 
 inline lyric_assembler::TypeHandle *
@@ -263,77 +242,6 @@ lyric_assembler::TypeCache::importType(lyric_importer::TypeImport *typeImport)
     return typeHandle;
 }
 
-tempo_utils::Status
-lyric_assembler::TypeCache::touchType(TypeHandle *typeHandle)
-{
-    TU_ASSERT (typeHandle != nullptr);
-
-    // type has been touched already, nothing to do
-    if (typeHandle->getAddress().isValid())
-        return AssemblerStatus::ok();
-
-    // verify that the type handle is in the type cache
-    auto type = typeHandle->getTypeDef();
-    if (!m_typecache.contains(type))
-        m_tracer->throwAssemblerInvariant("handle for type {} exists but is not in cache", type.toString());
-
-    // touch all super types first
-    for (auto *superType = typeHandle->getSuperType(); superType != nullptr; superType = superType->getSuperType()) {
-        touchType(superType);
-    }
-
-    // next touch type arguments, if there are any
-    switch (type.getType()) {
-        case lyric_common::TypeDefType::Concrete:
-        case lyric_common::TypeDefType::Placeholder:
-        case lyric_common::TypeDefType::Union:
-        case lyric_common::TypeDefType::Intersection:
-            for (auto it = typeHandle->typeArgumentsBegin(); it != typeHandle->typeArgumentsEnd(); it++) {
-                auto status = touchType(*it);
-                if (!status.isOk())
-                    return status;
-            }
-            break;
-        // the below types never have type arguments
-        case lyric_common::TypeDefType::NoReturn:
-            break;
-        default:
-            m_tracer->throwAssemblerInvariant("invalid type {}", type.toString());
-    }
-
-    // check again if type has been touched already via a placeholder type parameter
-    if (typeHandle->getAddress().isValid())
-        return AssemblerStatus::ok();
-
-    // add type handle to types array and update the type handle address
-    auto address = TypeAddress(m_types.size());
-    auto status = typeHandle->updateAddress(address);
-    if (status.notOk())
-        return status;
-    m_types.push_back(typeHandle);
-
-    // if the type has an associated type symbol, then touch the type symbol as well
-    auto typeSymbol = typeHandle->getTypeSymbol();
-    if (typeSymbol.isValid()) {
-        status = m_objectState->symbolCache()->touchSymbol(typeSymbol);
-        if (status.notOk())
-            return status;
-    }
-
-    return AssemblerStatus::ok();
-}
-
-tempo_utils::Status
-lyric_assembler::TypeCache::touchType(const lyric_common::TypeDef &typeDef)
-{
-    TU_ASSERT (typeDef.isValid());
-    auto entry = m_typecache.find(typeDef);
-    if (entry == m_typecache.cend())
-        return AssemblerStatus::forCondition(
-            AssemblerCondition::kMissingType, "missing type {}", typeDef.toString());
-    return touchType(entry->second);
-}
-
 /**
  * Create a type handle for the incompletely defined symbol specified by `subTypeUrl`. If `subTypePlaceholders`
  * is specified then each element must be a placeholder type. The resulting type handle is touched.
@@ -370,16 +278,10 @@ lyric_assembler::TypeCache::declareSubType(
             tempo_tracing::LogSeverity::kError, "type {} is already defined", subTypeDef.toString());
 
     for (const auto &placeholderType : subTypePlaceholders) {
-        TypeHandle *typeHandle;
-        TU_ASSIGN_OR_RETURN (typeHandle, getOrMakeType(placeholderType));
-        typeHandle->touch();
+        TU_RETURN_IF_STATUS (getOrMakeType(placeholderType));
     }
 
-    auto type_index = m_types.size();
-    auto typeAddress = TypeAddress::near(type_index);
-    auto *typeHandle = new TypeHandle(subTypeUrl, subTypePlaceholders, typeAddress, superTypeHandle, m_objectState);
-
-    m_types.push_back(typeHandle);
+    auto *typeHandle = new TypeHandle(subTypeUrl, subTypePlaceholders, superTypeHandle, m_objectState);
     m_typecache[typeHandle->getTypeDef()] = typeHandle;
 
     return typeHandle;
@@ -401,7 +303,6 @@ lyric_assembler::TypeCache::declareParameterizedType(
     auto parameterizedType = lyric_common::TypeDef::forConcrete(baseUrl, typeArguments);
     auto piterator = m_typecache.find(parameterizedType);
     if (piterator != m_typecache.cend()) {
-        TU_RETURN_IF_NOT_OK (touchType(parameterizedType));
         return piterator->second;
     }
 
@@ -432,18 +333,12 @@ lyric_assembler::TypeCache::declareParameterizedType(
         return m_tracer->logAndContinue(AssemblerCondition::kMissingType,
             tempo_tracing::LogSeverity::kError, "missing type {}", superType.toString());
     auto *superTypeHandle = siterator->second;
-    superTypeHandle->touch();
 
     for (const auto &argType : typeArguments) {
-        TypeHandle *typeHandle;
-        TU_ASSIGN_OR_RETURN (typeHandle, getOrMakeType(argType));
-        typeHandle->touch();
+        TU_RETURN_IF_STATUS (getOrMakeType(argType));
     }
 
-    auto type_index = m_types.size();
-    auto typeAddress = TypeAddress::near(type_index);
-    auto *typeHandle = new TypeHandle(baseUrl, typeArguments, typeAddress, superTypeHandle, m_objectState);
-    m_types.push_back(typeHandle);
+    auto *typeHandle = new TypeHandle(baseUrl, typeArguments, superTypeHandle, m_objectState);
     m_typecache[parameterizedType] = typeHandle;
 
     return typeHandle;
@@ -483,6 +378,21 @@ lyric_assembler::TypeCache::hasTemplate(const lyric_common::SymbolUrl &templateU
     return m_templatecache.contains(templateUrl);
 }
 
+lyric_assembler::TemplateHandle *
+lyric_assembler::TypeCache::getTemplate(const lyric_common::SymbolUrl &templateUrl) const
+{
+    auto entry = m_templatecache.find(templateUrl);
+    if (entry != m_templatecache.cend())
+        return entry->second;
+    return nullptr;
+}
+
+int
+lyric_assembler::TypeCache::numTemplates() const
+{
+    return m_templatecache.size();
+}
+
 tempo_utils::Result<lyric_assembler::TemplateHandle *>
 lyric_assembler::TypeCache::getOrImportTemplate(const lyric_common::SymbolUrl &templateUrl)
 {
@@ -513,24 +423,6 @@ lyric_assembler::TypeCache::getOrImportTemplate(const lyric_common::SymbolUrl &t
     return templateHandle;
 }
 
-std::vector<lyric_assembler::TemplateHandle *>::const_iterator
-lyric_assembler::TypeCache::templatesBegin() const
-{
-    return m_templates.cbegin();
-}
-
-std::vector<lyric_assembler::TemplateHandle *>::const_iterator
-lyric_assembler::TypeCache::templatesEnd() const
-{
-    return m_templates.cend();
-}
-
-int
-lyric_assembler::TypeCache::numTemplates() const
-{
-    return m_templates.size();
-}
-
 tempo_utils::Result<lyric_assembler::TemplateHandle *>
 lyric_assembler::TypeCache::makeTemplate(
     const lyric_common::SymbolUrl &templateUrl,
@@ -545,19 +437,12 @@ lyric_assembler::TypeCache::makeTemplate(
         m_tracer->throwAssemblerInvariant("template {} is already defined", templateUrl.toString());
 
     // create the template handle
-    auto template_index = m_templates.size();
-    auto templateAddress = TemplateAddress::near(template_index);
-    auto *templateHandle = new TemplateHandle(templateUrl, templateParameters, templateAddress,
-        parentBlock, m_objectState);
-    m_templates.push_back(templateHandle);
+    auto *templateHandle = new TemplateHandle(templateUrl, templateParameters, parentBlock, m_objectState);
     m_templatecache[templateUrl] = templateHandle;
 
     // create placeholder type for each template parameter
     for (const auto &tp : templateParameters) {
-        auto type_index = m_types.size();
-        auto typeAddress = TypeAddress::near(type_index);
-        auto *typeHandle = new TypeHandle(tp.index, templateUrl, {}, typeAddress, m_objectState);
-        m_types.push_back(typeHandle);
+        auto *typeHandle = new TypeHandle(tp.index, templateUrl, {}, m_objectState);
         m_typecache[typeHandle->getTypeDef()] = typeHandle;
     }
 
@@ -583,19 +468,12 @@ lyric_assembler::TypeCache::makeTemplate(
         m_tracer->throwAssemblerInvariant("template {} is already defined", templateUrl.toString());
 
     // create the template handle
-    auto template_index = m_templates.size();
-    auto templateAddress = TemplateAddress::near(template_index);
-    auto *templateHandle = new TemplateHandle(templateUrl, templateParameters, templateAddress,
-        superTemplate, parentBlock, m_objectState);
-    m_templates.push_back(templateHandle);
+    auto *templateHandle = new TemplateHandle(templateUrl, templateParameters, superTemplate, parentBlock, m_objectState);
     m_templatecache[templateUrl] = templateHandle;
 
     // create placeholder type for each template parameter
     for (const auto &tp : templateParameters) {
-        auto type_index = m_types.size();
-        auto typeAddress = TypeAddress::near(type_index);
-        auto *typeHandle = new TypeHandle(tp.index, templateUrl, {}, typeAddress, m_objectState);
-        m_types.push_back(typeHandle);
+        auto *typeHandle = new TypeHandle(tp.index, templateUrl, {}, m_objectState);
         m_typecache[typeHandle->getTypeDef()] = typeHandle;
     }
 
@@ -659,9 +537,7 @@ lyric_assembler::TypeCache::touchTemplateParameters(const std::vector<lyric_obje
 {
     for (const auto &tp : parameters) {
         if (tp.typeDef.isValid()) {    // tp.typeDef is not valid if there is no constraint specified
-            TypeHandle *constraintType;
-            TU_ASSIGN_OR_RETURN (constraintType, getOrMakeType(tp.typeDef));
-            constraintType->touch();
+            TU_RETURN_IF_STATUS (getOrMakeType(tp.typeDef));
         }
     }
     return AssemblerStatus::ok();
@@ -826,25 +702,98 @@ lyric_assembler::TypeCache::resolveIntersection(const std::vector<lyric_common::
 }
 
 tempo_utils::Result<lyric_assembler::TypeSignature>
-lyric_assembler::TypeCache::resolveSignature(const lyric_common::SymbolUrl &symbolUrl) const
+lyric_assembler::TypeCache::resolveSignature(const lyric_common::TypeDef &typeDef)
+{
+    auto siterator = m_signaturecache.find(typeDef);
+    if (siterator != m_signaturecache.cend())
+        return siterator->second;
+    auto hiterator = m_typecache.find(typeDef);
+    if (hiterator == m_typecache.cend())
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "missing type {}", typeDef.toString());
+    const TypeHandle *typeHandle = hiterator->second;
+
+    std::vector<const TypeHandle *> typepath;
+    for (; typeHandle != nullptr; typeHandle = typeHandle->getSuperType()) {
+        typepath.insert(typepath.cbegin(), typeHandle);
+    }
+
+    TypeSignature signature(typepath);
+    m_signaturecache[typeDef] = signature;
+    return signature;
+}
+
+tempo_utils::Result<lyric_assembler::TypeSignature>
+lyric_assembler::TypeCache::resolveSignature(const lyric_common::SymbolUrl &symbolUrl)
 {
     TU_ASSERT (symbolUrl.isValid());
 
+    auto typeDef = lyric_common::TypeDef::forConcrete(symbolUrl);
+    auto iterator = m_signaturecache.find(typeDef);
+    if (iterator != m_signaturecache.cend())
+        return iterator->second;
+
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_objectState->symbolCache()->getOrImportSymbol(symbolUrl));
-    symbol->touch();
 
+    TypeHandle *typeHandle;
     switch (symbol->getSymbolType()) {
+        case SymbolType::ARGUMENT:
+            return resolveSignature(cast_symbol_to_argument(symbol)->getAssignableType());
+        case SymbolType::LEXICAL:
+            return resolveSignature(cast_symbol_to_lexical(symbol)->getAssignableType());
+        case SymbolType::LOCAL:
+            return resolveSignature(cast_symbol_to_local(symbol)->getAssignableType());
         case SymbolType::CLASS:
+            typeHandle = cast_symbol_to_class(symbol)->classType();
+            break;
         case SymbolType::CONCEPT:
+            typeHandle = cast_symbol_to_concept(symbol)->conceptType();
+            break;
         case SymbolType::ENUM:
+            typeHandle = cast_symbol_to_enum(symbol)->enumType();
+            break;
         case SymbolType::EXISTENTIAL:
+            typeHandle = cast_symbol_to_existential(symbol)->existentialType();
+            break;
         case SymbolType::INSTANCE:
+            typeHandle = cast_symbol_to_instance(symbol)->instanceType();
+            break;
         case SymbolType::STRUCT:
-            return symbol->getTypeSignature();
+            typeHandle = cast_symbol_to_struct(symbol)->structType();
+            break;
         default:
             return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
                 tempo_tracing::LogSeverity::kError,
                 "cannot resolve type signature for symbol {}", symbolUrl.toString());
     }
+
+    std::vector<const TypeHandle *> typepath;
+    for (; typeHandle != nullptr; typeHandle = typeHandle->getSuperType()) {
+        typepath.insert(typepath.cbegin(), typeHandle);
+    }
+
+    TypeSignature signature(typepath);
+    m_signaturecache[typeDef] = signature;
+    return signature;
+}
+
+tempo_utils::Result<lyric_assembler::TypeSignature>
+lyric_assembler::TypeCache::resolveSignature(const TypeHandle *typeHandle)
+{
+    TU_ASSERT (typeHandle != nullptr);
+
+    auto typeDef = typeHandle->getTypeDef();
+    auto iterator = m_signaturecache.find(typeDef);
+    if (iterator != m_signaturecache.cend())
+        return iterator->second;
+
+    std::vector<const TypeHandle *> typepath;
+    for (; typeHandle != nullptr; typeHandle = typeHandle->getSuperType()) {
+        typepath.insert(typepath.cbegin(), typeHandle);
+    }
+
+    TypeSignature signature(typepath);
+    m_signaturecache[typeDef] = signature;
+    return signature;
 }

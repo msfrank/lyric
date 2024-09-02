@@ -31,11 +31,10 @@ namespace lyric_assembler {
     class AbstractSymbol {
     public:
         virtual ~AbstractSymbol() = default;
+        virtual bool isImported() const = 0;
         virtual SymbolType getSymbolType() const = 0;
         virtual lyric_common::SymbolUrl getSymbolUrl() const = 0;
         virtual lyric_common::TypeDef getAssignableType() const = 0;
-        virtual TypeSignature getTypeSignature() const = 0;
-        virtual void touch() = 0;
     };
 }
 

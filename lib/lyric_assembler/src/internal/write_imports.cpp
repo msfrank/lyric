@@ -3,18 +3,16 @@
 
 tempo_utils::Status
 lyric_assembler::internal::write_imports(
-    ImportCache *importCache,
+    const std::vector<const ImportHandle *> &imports,
+    const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::ImportDescriptor>>> &importsOffset)
 {
-    TU_ASSERT (importCache != nullptr);
-
     std::vector<flatbuffers::Offset<lyo1::ImportDescriptor>> imports_vector;
 
     // serialize array of import descriptors
-    for (auto iterator = importCache->importsBegin(); iterator != importCache->importsEnd(); iterator++) {
-        auto &importLocation = *iterator;
-        auto *importHandle = importCache->getImport(importLocation);
+    for (const auto *importHandle : imports) {
+        const auto &importLocation = importHandle->location;
 
         lyo1::ImportFlags flags;
         switch (importHandle->flags) {

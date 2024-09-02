@@ -225,12 +225,12 @@ lyric_assembler::CodeFragment::loadString(const std::string &str)
 {
     auto *state = m_procBuilder->objectState();
     auto *literalCache = state->literalCache();
-    LiteralAddress address;
-    TU_ASSIGN_OR_RETURN (address, literalCache->makeLiteralUtf8(str));
+    LiteralHandle *literal;
+    TU_ASSIGN_OR_RETURN (literal, literalCache->makeUtf8(str));
 
     Statement statement;
     statement.type = StatementType::Instruction;
-    statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_STRING, address);
+    statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_STRING, literal);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -240,12 +240,12 @@ lyric_assembler::CodeFragment::loadUrl(const tempo_utils::Url &url)
 {
     auto *state = m_procBuilder->objectState();
     auto *literalCache = state->literalCache();
-    LiteralAddress address;
-    TU_ASSIGN_OR_RETURN (address, literalCache->makeLiteralUtf8(url.toString()));
+    LiteralHandle *literal;
+    TU_ASSIGN_OR_RETURN (literal, literalCache->makeUtf8(url.toString()));
 
     Statement statement;
     statement.type = StatementType::Instruction;
-    statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_URL, address);
+    statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_URL, literal);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -860,7 +860,30 @@ lyric_assembler::CodeFragment::invokeAbort()
 }
 
 tempo_utils::Status
+lyric_assembler::CodeFragment::touch(ObjectWriter &writer) const
+{
+    for (auto &statement : m_statements) {
+
+        switch (statement.type) {
+            case StatementType::Fragment: {
+                TU_RETURN_IF_NOT_OK (statement.fragment->touch(writer));
+                break;
+            }
+            case StatementType::Instruction: {
+                TU_RETURN_IF_NOT_OK (statement.instruction->touch(writer));
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::CodeFragment::build(
+    const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     absl::flat_hash_map<std::string,tu_uint16> &labelOffsets,
     absl::flat_hash_map<tu_uint32,tu_uint16> &patchOffsets) const
@@ -869,7 +892,8 @@ lyric_assembler::CodeFragment::build(
 
         switch (statement.type) {
             case StatementType::Fragment: {
-                TU_RETURN_IF_NOT_OK (statement.fragment->build(bytecodeBuilder, labelOffsets, patchOffsets));
+                TU_RETURN_IF_NOT_OK (
+                    statement.fragment->build(writer, bytecodeBuilder, labelOffsets, patchOffsets));
                 break;
             }
 
@@ -880,7 +904,8 @@ lyric_assembler::CodeFragment::build(
                 tu_uint16 labelOffset;
                 tu_uint32 targetId;
                 tu_uint16 patchOffset;
-                TU_RETURN_IF_NOT_OK (instruction->apply(bytecodeBuilder, labelName, labelOffset, targetId, patchOffset));
+                TU_RETURN_IF_NOT_OK (
+                    instruction->apply(writer, bytecodeBuilder, labelName, labelOffset, targetId, patchOffset));
 
                 auto instructionType = instruction->getType();
                 switch (instructionType) {

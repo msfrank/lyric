@@ -19,14 +19,12 @@ namespace lyric_assembler {
         TemplateHandle(
             const lyric_common::SymbolUrl &templateUrl,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
-            TemplateAddress address,
             TemplateHandle *superTemplate,
             BlockHandle *parentBlock,
             ObjectState *state);
         TemplateHandle(
             const lyric_common::SymbolUrl &templateUrl,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
-            TemplateAddress address,
             BlockHandle *parentBlock,
             ObjectState *state);
         TemplateHandle(
@@ -40,8 +38,8 @@ namespace lyric_assembler {
             const std::vector<lyric_common::TypeDef> &typeArguments) override;
 
         lyric_common::SymbolUrl getTemplateUrl() const;
-        TemplateAddress getAddress() const;
         TemplateHandle *superTemplate() const;
+        //TemplateAddress getAddress() const;
 
         bool hasTemplateParameter(const std::string &name) const;
         lyric_object::TemplateParameter getTemplateParameter(const std::string &name) const;
@@ -63,7 +61,6 @@ namespace lyric_assembler {
         std::vector<lyric_object::TemplateParameter> m_templateParameters;
         absl::flat_hash_map<std::string, int> m_parameterIndex;
         std::vector<lyric_common::TypeDef> m_placeholders;
-        TemplateAddress m_address;
         TemplateHandle *m_superTemplate;
         BlockHandle *m_parentBlock;
         ObjectState *m_state;

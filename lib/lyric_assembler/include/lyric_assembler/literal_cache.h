@@ -12,12 +12,12 @@ namespace lyric_assembler {
         explicit LiteralCache(AssemblerTracer *tracer);
         ~LiteralCache();
 
-        tempo_utils::Result<LiteralAddress> makeLiteralNil();
-        tempo_utils::Result<LiteralAddress> makeLiteralBool(bool b);
-        tempo_utils::Result<LiteralAddress> makeLiteralInteger(int64_t i64);
-        tempo_utils::Result<LiteralAddress> makeLiteralFloat(double dbl);
-        tempo_utils::Result<LiteralAddress> makeLiteralChar(UChar32 chr);
-        tempo_utils::Result<LiteralAddress> makeLiteralUtf8(const std::string &utf8);
+        tempo_utils::Result<LiteralHandle *> makeNil();
+        tempo_utils::Result<LiteralHandle *> makeBool(bool b);
+        tempo_utils::Result<LiteralHandle *> makeInteger(tu_int64 i64);
+        tempo_utils::Result<LiteralHandle *> makeFloat(double dbl);
+        tempo_utils::Result<LiteralHandle *> makeChar(UChar32 chr);
+        tempo_utils::Result<LiteralHandle *> makeUtf8(const std::string &utf8);
 
         std::vector<LiteralHandle *>::const_iterator literalsBegin() const;
         std::vector<LiteralHandle *>::const_iterator literalsEnd() const;
@@ -25,8 +25,8 @@ namespace lyric_assembler {
     private:
         AssemblerTracer *m_tracer;
         std::vector<LiteralHandle *> m_literals;
-        absl::flat_hash_map<lyric_runtime::LiteralCell, LiteralAddress> m_literalcache;
-        absl::flat_hash_map<std::string, LiteralAddress> m_stringcache;
+        absl::flat_hash_map<lyric_runtime::LiteralCell, tu_uint32> m_literalcache;
+        absl::flat_hash_map<std::string, tu_uint32> m_stringcache;
     };
 }
 

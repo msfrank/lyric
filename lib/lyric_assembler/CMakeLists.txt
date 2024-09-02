@@ -23,7 +23,6 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/assembler_result.h
     include/lyric_assembler/assembler_tracer.h
     include/lyric_assembler/assembler_types.h
-    include/lyric_assembler/object_state.h
     include/lyric_assembler/base_handle.h
     include/lyric_assembler/base_symbol.h
     include/lyric_assembler/block_handle.h
@@ -51,6 +50,8 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/local_variable.h
     include/lyric_assembler/method_callable.h
     include/lyric_assembler/namespace_symbol.h
+    include/lyric_assembler/object_state.h
+    include/lyric_assembler/object_writer.h
     include/lyric_assembler/pack_builder.h
     include/lyric_assembler/proc_builder.h
     include/lyric_assembler/proc_handle.h
@@ -75,7 +76,6 @@ target_sources(lyric_assembler PRIVATE
     src/assembler_result.cpp
     src/assembler_tracer.cpp
     src/assembler_types.cpp
-    src/object_state.cpp
     src/block_handle.cpp
     src/callable_invoker.cpp
     src/call_symbol.cpp
@@ -101,6 +101,8 @@ target_sources(lyric_assembler PRIVATE
     src/local_variable.cpp
     src/method_callable.cpp
     src/namespace_symbol.cpp
+    src/object_state.cpp
+    src/object_writer.cpp
     src/pack_builder.cpp
     src/proc_builder.cpp
     src/proc_handle.cpp
@@ -118,6 +120,8 @@ target_sources(lyric_assembler PRIVATE
     src/internal/call_inline.cpp
     include/lyric_assembler/internal/import_proc.h
     src/internal/import_proc.cpp
+    include/lyric_assembler/internal/writer_utils.h
+    src/internal/writer_utils.cpp
     include/lyric_assembler/internal/write_actions.h
     src/internal/write_actions.cpp
     include/lyric_assembler/internal/write_calls.h
@@ -128,6 +132,8 @@ target_sources(lyric_assembler PRIVATE
     src/internal/write_concepts.cpp
     include/lyric_assembler/internal/write_enums.h
     src/internal/write_enums.cpp
+    include/lyric_assembler/internal/write_existentials.h
+    src/internal/write_existentials.cpp
     include/lyric_assembler/internal/write_fields.h
     src/internal/write_fields.cpp
     include/lyric_assembler/internal/write_impls.h

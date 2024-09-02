@@ -3,16 +3,14 @@
 
 tempo_utils::Status
 lyric_assembler::internal::write_literals(
-    LiteralCache *literalCache,
+    const std::vector<const LiteralHandle *> &literals,
+    const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     LiteralsOffset &literalsOffset)
 {
-    TU_ASSERT (literalCache != nullptr);
-
     std::vector<flatbuffers::Offset<lyo1::LiteralDescriptor>> literals_vector;
 
-    for (auto iterator = literalCache->literalsBegin(); iterator != literalCache->literalsEnd(); iterator++) {
-        auto &literalHandle = *iterator;
+    for (const auto *literalHandle : literals) {
 
         switch (literalHandle->getType()) {
             case lyric_runtime::LiteralCellType::NIL: {
@@ -59,7 +57,7 @@ lyric_assembler::internal::write_literals(
                 break;
             }
             case lyric_runtime::LiteralCellType::UTF8: {
-                auto utf8 = literalHandle->getString();
+                auto utf8 = literalHandle->getUtf8();
                 auto str = buffer.CreateString(utf8->data(), utf8->size());
                 auto value = lyo1::CreateStringValue(buffer, str);
                 literals_vector.push_back(

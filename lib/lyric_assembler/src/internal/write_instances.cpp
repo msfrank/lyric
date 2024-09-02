@@ -3,14 +3,56 @@
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/internal/write_instances.h>
+#include <lyric_assembler/object_writer.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
+tempo_utils::Status
+lyric_assembler::internal::touch_instance(
+    const InstanceSymbol *instanceSymbol,
+    const ObjectState *objectState,
+    ObjectWriter &writer)
+{
+    TU_ASSERT (instanceSymbol != nullptr);
+
+    auto instanceUrl = instanceSymbol->getSymbolUrl();
+
+    bool alreadyInserted;
+    TU_RETURN_IF_NOT_OK (writer.insertSymbol(instanceUrl, instanceSymbol, alreadyInserted));
+    if (alreadyInserted)
+        return {};
+
+    // if instance is an imported symbol then we are done
+    if (instanceSymbol->isImported())
+        return {};
+
+    TU_RETURN_IF_NOT_OK (writer.touchType(instanceSymbol->instanceType()));
+
+    TU_RETURN_IF_NOT_OK (writer.touchConstructor(instanceSymbol->getCtor()));
+
+    for (auto it = instanceSymbol->membersBegin(); it != instanceSymbol->membersEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (writer.touchMember(it->second));
+    }
+
+    for (auto it = instanceSymbol->methodsBegin(); it != instanceSymbol->methodsEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (writer.touchMethod(it->second));
+    }
+
+    for (auto it = instanceSymbol->implsBegin(); it != instanceSymbol->implsEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (writer.touchImpl(it->second));
+    }
+
+    for (auto it = instanceSymbol->sealedTypesBegin(); it != instanceSymbol->sealedTypesEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (writer.touchType(*it));
+    }
+
+    return {};
+}
+
 static tempo_utils::Status
 write_instance(
-    lyric_assembler::InstanceSymbol *instanceSymbol,
-    lyric_assembler::TypeCache *typeCache,
-    lyric_assembler::SymbolCache *symbolCache,
+    const lyric_assembler::InstanceSymbol *instanceSymbol,
+    const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     std::vector<flatbuffers::Offset<lyo1::InstanceDescriptor>> &instances_vector,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
@@ -19,12 +61,15 @@ write_instance(
 
     auto instancePathString = instanceSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(instancePathString);
-    auto typeIndex = instanceSymbol->instanceType()->getAddress().getAddress();
+
+    tu_uint32 instanceType;
+    TU_ASSIGN_OR_RETURN (instanceType, writer.getTypeOffset(instanceSymbol->instanceType()->getTypeDef()));
 
     auto superinstanceIndex = lyric_runtime::INVALID_ADDRESS_U32;
     auto *superinstanceSymbol = instanceSymbol->superInstance();
     if (superinstanceSymbol != nullptr) {
-        superinstanceIndex = superinstanceSymbol->getAddress().getAddress();
+        TU_ASSIGN_OR_RETURN (superinstanceIndex,
+            writer.getSymbolAddress(superinstanceSymbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
     }
 
     lyo1::InstanceFlags instanceFlags = lyo1::InstanceFlags::NONE;
@@ -58,61 +103,48 @@ write_instance(
     // serialize array of members
     std::vector<tu_uint32> members;
     for (auto iterator = instanceSymbol->membersBegin(); iterator != instanceSymbol->membersEnd(); iterator++) {
-        const auto &var = iterator->second;
-        lyric_assembler::AbstractSymbol *symbol;
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(var.symbolUrl));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid field symbol");
-        auto *fieldSymbol = cast_symbol_to_field(symbol);
-
-        members.push_back(fieldSymbol->getAddress().getAddress());
+        const auto &memberRef = iterator->second;
+        tu_uint32 fieldIndex;
+        TU_ASSIGN_OR_RETURN (fieldIndex,
+            writer.getSymbolAddress(memberRef.symbolUrl, lyric_object::LinkageSection::Field));
+        members.push_back(fieldIndex);
     }
 
     // serialize array of methods
     std::vector<tu_uint32> methods;
     for (auto iterator = instanceSymbol->methodsBegin(); iterator != instanceSymbol->methodsEnd(); iterator++) {
         const auto &boundMethod = iterator->second;
-        lyric_assembler::AbstractSymbol *symbol;
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(boundMethod.methodCall));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid call symbol");
-        const auto *callSymbol = cast_symbol_to_call(symbol);
-
-        methods.push_back(callSymbol->getAddress().getAddress());
+        tu_uint32 callIndex;
+        TU_ASSIGN_OR_RETURN (callIndex,
+            writer.getSymbolAddress(boundMethod.methodCall, lyric_object::LinkageSection::Call));
+        methods.push_back(callIndex);
     }
 
     // serialize array of impls
     std::vector<tu_uint32> impls;
     for (auto iterator = instanceSymbol->implsBegin(); iterator != instanceSymbol->implsEnd(); iterator++) {
         auto *implHandle = iterator->second;
-        impls.push_back(implHandle->getOffset().getOffset());
+        tu_uint32 implIndex;
+        TU_ASSIGN_OR_RETURN (implIndex, writer.getImplOffset(implHandle->getRef()));
+        impls.push_back(implIndex);
     }
 
     // get instance ctor
-    auto ctorUrl = instanceSymbol->getCtor();
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ctorUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing instance ctor");
-    auto ctorCall = cast_symbol_to_call(symbol)->getAddress().getAddress();
+    tu_uint32 ctorCall;
+    TU_ASSIGN_OR_RETURN (ctorCall,
+        writer.getSymbolAddress(instanceSymbol->getCtor(), lyric_object::LinkageSection::Call));
 
     // serialize the sealed subtypes
     std::vector<tu_uint32> sealedSubtypes;
     for (auto iterator = instanceSymbol->sealedTypesBegin(); iterator != instanceSymbol->sealedTypesEnd(); iterator++) {
-        if (!typeCache->hasType(*iterator))
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "missing sealed subtype");
-        lyric_assembler::TypeHandle *typeHandle;
-        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(*iterator));
-        sealedSubtypes.push_back(typeHandle->getAddress().getAddress());
+        tu_uint32 sealedSubtype;
+        TU_ASSIGN_OR_RETURN (sealedSubtype, writer.getTypeOffset(*iterator));
+        sealedSubtypes.push_back(sealedSubtype);
     }
 
     // add instance descriptor
     instances_vector.push_back(lyo1::CreateInstanceDescriptor(buffer, fullyQualifiedName,
-        superinstanceIndex, typeIndex, instanceFlags,
+        superinstanceIndex, instanceType, instanceFlags,
         buffer.CreateVector(members), buffer.CreateVector(methods), buffer.CreateVector(impls),
         instanceSymbol->getAllocatorTrap(), ctorCall,
         buffer.CreateVector(sealedSubtypes)));
@@ -126,21 +158,16 @@ write_instance(
 
 tempo_utils::Status
 lyric_assembler::internal::write_instances(
-    const ObjectState *objectState,
+    const std::vector<const InstanceSymbol *> &instances,
+    const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     InstancesOffset &instancesOffset,
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
 {
-    TU_ASSERT (objectState != nullptr);
-
-    SymbolCache *symbolCache = objectState->symbolCache();
-    TypeCache *typeCache = objectState->typeCache();
     std::vector<flatbuffers::Offset<lyo1::InstanceDescriptor>> instances_vector;
 
-    for (auto iterator = objectState->instancesBegin(); iterator != objectState->instancesEnd(); iterator++) {
-        auto &instanceSymbol = *iterator;
-        TU_RETURN_IF_NOT_OK (
-            write_instance(instanceSymbol, typeCache, symbolCache, buffer, instances_vector, symbols_vector));
+    for (const auto *instanceSymbol : instances) {
+        TU_RETURN_IF_NOT_OK (write_instance(instanceSymbol, writer, buffer, instances_vector, symbols_vector));
     }
 
     // create the instances vector

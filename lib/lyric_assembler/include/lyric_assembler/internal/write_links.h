@@ -12,7 +12,9 @@ namespace lyric_assembler::internal {
     using LinksOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::LinkDescriptor>>>;
 
     tempo_utils::Status write_links(
-        ImportCache *importCache,
+        const std::vector<const RequestedLink> &links,
+        const ObjectWriter &writer,
+        const absl::flat_hash_map<lyric_common::ModuleLocation,tu_uint32> &importOffsets,
         flatbuffers::FlatBufferBuilder &buffer,
         LinksOffset &linksOffset);
 }

@@ -69,7 +69,7 @@ namespace lyric_object {
 
     /**
      * If the given address is a near address then extract and return the descriptor offset, otherwise
-     * return the invalid address 0xFFFFFFFF.
+     * return the invalid value 0xFFFFFFFF.
      *
      * @param address The address.
      * @return The descriptor offset, or 0xFFFFFFFF.
@@ -79,14 +79,30 @@ namespace lyric_object {
     }
 
     /**
+     * If the given descriptor offset is within the valid range 0 <= 2^31 then return the descriptor address,
+     * otherwise return the invalid value 0xFFFFFFFF.
+     */
+    constexpr tu_uint32 GET_DESCRIPTOR_ADDRESS(tu_uint32 offset) {
+        return offset <= std::numeric_limits<tu_int32>::max()? offset : INVALID_ADDRESS_U32;
+    }
+
+    /**
      * If the given address is a far address then extract and return the link offset, otherwise return
-     * the invalid address 0xFFFFFFFF.
+     * the invalid value 0xFFFFFFFF.
      *
      * @param address The address.
      * @return The link offset, or 0xFFFFFFFF.
      */
     constexpr tu_uint32 GET_LINK_OFFSET(tu_uint32 address) {
         return IS_FAR(address)? address & 0x7FFFFFFF : INVALID_ADDRESS_U32;
+    }
+
+    /**
+     * If the given link offset is within the valid range 0 <= 2^31 then return the link address,
+     * otherwise return the invalid value 0xFFFFFFFF.
+     */
+    constexpr tu_uint32 GET_LINK_ADDRESS(tu_uint32 offset) {
+        return offset <= std::numeric_limits<tu_int32>::max()? offset | 0x80000000 : INVALID_ADDRESS_U32;
     }
 
     /**

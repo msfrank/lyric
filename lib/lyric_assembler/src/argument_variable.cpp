@@ -13,6 +13,12 @@ lyric_assembler::ArgumentVariable::ArgumentVariable(
 {
 }
 
+bool
+lyric_assembler::ArgumentVariable::isImported() const
+{
+    return false;
+}
+
 lyric_assembler::SymbolType
 lyric_assembler::ArgumentVariable::getSymbolType() const
 {
@@ -29,17 +35,6 @@ lyric_common::TypeDef
 lyric_assembler::ArgumentVariable::getAssignableType() const
 {
     return m_assignableType;
-}
-
-lyric_assembler::TypeSignature
-lyric_assembler::ArgumentVariable::getTypeSignature() const
-{
-    return {};
-}
-
-void
-lyric_assembler::ArgumentVariable::touch()
-{
 }
 
 std::string

@@ -35,6 +35,8 @@ lyric_assembler::ImplHandle::ImplHandle(
     TU_ASSERT (priv->implType != nullptr);
     TU_ASSERT (priv->implConcept != nullptr);
     TU_ASSERT (priv->receiverUrl.isValid());
+
+    priv->ref = { priv->receiverUrl, priv->implType->getTypeDef() };
 }
 
 lyric_assembler::ImplHandle::ImplHandle(
@@ -70,11 +72,18 @@ lyric_assembler::ImplHandle::ImplHandle(lyric_importer::ImplImport *implImport, 
     TU_ASSERT (m_state != nullptr);
 }
 
-lyric_assembler::ImplOffset
-lyric_assembler::ImplHandle::getOffset() const
+//lyric_assembler::ImplOffset
+//lyric_assembler::ImplHandle::getOffset() const
+//{
+//    auto *priv = getPriv();
+//    return priv->offset;
+//}
+
+lyric_assembler::ImplRef
+lyric_assembler::ImplHandle::getRef() const
 {
     auto *priv = getPriv();
-    return priv->offset;
+    return priv->ref;
 }
 
 std::string
@@ -184,9 +193,6 @@ lyric_assembler::ImplHandle::defineExtension(
             name, priv->implConcept->getSymbolUrl().toString());
     auto actionUrl = actionOption.getValue().methodAction;
 
-    // touch the action symbol
-    m_state->symbolCache()->touchSymbol(actionUrl);
-
     // build reference path to function
     auto methodPath = priv->receiverUrl.getSymbolPath().getPath();
     methodPath.push_back(absl::StrCat(priv->name, "$", name));
@@ -249,7 +255,6 @@ lyric_assembler::ImplHandle::prepareExtension(
     if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
-    callSymbol->touch();
 
     auto access = callSymbol->getAccessType();
 
@@ -296,6 +301,8 @@ lyric_assembler::ImplHandle::load()
     TU_ASSIGN_OR_RAISE (priv->implType, typeCache->importType(implType));
     TU_ASSIGN_OR_RAISE (priv->implConcept, importCache->importConcept(m_implImport->getImplConcept()));
     priv->receiverUrl = m_implImport->getReceiverUrl();
+
+    priv->ref = { priv->receiverUrl, priv->implType->getTypeDef() };
 
     for (auto iterator = m_implImport->extensionsBegin(); iterator != m_implImport->extensionsEnd(); iterator++) {
         auto &extension = iterator->second;

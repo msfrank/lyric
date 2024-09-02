@@ -11,6 +11,12 @@ lyric_assembler::LexicalVariable::LexicalVariable(
 {
 }
 
+bool
+lyric_assembler::LexicalVariable::isImported() const
+{
+    return false;
+}
+
 lyric_assembler::SymbolType
 lyric_assembler::LexicalVariable::getSymbolType() const
 {
@@ -27,17 +33,6 @@ lyric_common::TypeDef
 lyric_assembler::LexicalVariable::getAssignableType() const
 {
     return m_assignableType;
-}
-
-lyric_assembler::TypeSignature
-lyric_assembler::LexicalVariable::getTypeSignature() const
-{
-    return TypeSignature();
-}
-
-void
-lyric_assembler::LexicalVariable::touch()
-{
 }
 
 std::string

@@ -337,39 +337,6 @@ lyric_assembler::ObjectState::appendNamespace(NamespaceSymbol *namespaceSymbol)
     return AssemblerStatus::ok();
 }
 
-tempo_utils::Status
-lyric_assembler::ObjectState::touchNamespace(NamespaceSymbol *namespaceSymbol)
-{
-    TU_ASSERT (namespaceSymbol != nullptr);
-
-    // namespace has been touched already, nothing to do
-    if (namespaceSymbol->getAddress().isValid())
-        return AssemblerStatus::ok();
-
-    // verify that the namespace is in the symbol cache
-    auto namespaceUrl = namespaceSymbol->getSymbolUrl();
-    if (!m_symbolcache->hasSymbol(namespaceUrl))
-        throwAssemblerInvariant("missing namespace symbol {}", namespaceUrl.toString());
-
-    //
-    auto location = namespaceUrl.getModuleLocation();
-    if (!m_importcache->hasImport(location))
-        throwAssemblerInvariant("missing import {}", location.toString());
-    auto status = m_importcache->touchImport(location);
-    if (status.notOk())
-        return status;
-
-    status = m_importcache->linkFarSymbol(namespaceSymbol);
-    if (status.notOk())
-        return status;
-
-    status = m_typecache->touchType(namespaceSymbol->getAssignableType());
-    if (status.notOk())
-        return status;
-
-    return AssemblerStatus::ok();
-}
-
 std::vector<lyric_assembler::NamespaceSymbol *>::const_iterator
 lyric_assembler::ObjectState::namespacesBegin() const
 {
@@ -397,39 +364,6 @@ lyric_assembler::ObjectState::appendExistential(ExistentialSymbol *existentialSy
         throwAssemblerInvariant("failed to append existential; symbol {} already exists", symbolUrl.toString());
     m_existentials.push_back(existentialSymbol);
     m_symbolcache->insertSymbol(symbolUrl, existentialSymbol);
-    return AssemblerStatus::ok();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::touchExistential(ExistentialSymbol *existentialSymbol)
-{
-    TU_ASSERT (existentialSymbol != nullptr);
-
-    // existential has been touched already, nothing to do
-    if (existentialSymbol->getAddress().isValid())
-        return AssemblerStatus::ok();
-
-    // verify that the existential is in the symbol cache
-    auto existentialUrl = existentialSymbol->getSymbolUrl();
-    if (!m_symbolcache->hasSymbol(existentialUrl))
-        throwAssemblerInvariant("missing existential symbol {}", existentialUrl.toString());
-
-    //
-    auto location = existentialUrl.getModuleLocation();
-    if (!m_importcache->hasImport(location))
-        throwAssemblerInvariant("missing import {}", location.toString());
-    auto status = m_importcache->touchImport(location);
-    if (status.notOk())
-        return status;
-
-    status = m_importcache->linkFarSymbol(existentialSymbol);
-    if (status.notOk())
-        return status;
-
-    status = m_typecache->touchType(existentialSymbol->getAssignableType());
-    if (status.notOk())
-        return status;
-
     return AssemblerStatus::ok();
 }
 
@@ -463,39 +397,6 @@ lyric_assembler::ObjectState::appendStatic(StaticSymbol *staticSymbol)
     return AssemblerStatus::ok();
 }
 
-tempo_utils::Status
-lyric_assembler::ObjectState::touchStatic(StaticSymbol *staticSymbol)
-{
-    TU_ASSERT (staticSymbol != nullptr);
-
-    // static has been touched already, nothing to do
-    if (staticSymbol->getAddress().isValid())
-        return AssemblerStatus::ok();
-
-    // verify that the static is in the symbol cache
-    auto staticUrl = staticSymbol->getSymbolUrl();
-    if (!m_symbolcache->hasSymbol(staticUrl))
-        throwAssemblerInvariant("missing static symbol {}", staticUrl.toString());
-
-    //
-    auto location = staticUrl.getModuleLocation();
-    if (!m_importcache->hasImport(location))
-        throwAssemblerInvariant("missing import {}", location.toString());
-    auto status = m_importcache->touchImport(location);
-    if (status.notOk())
-        return status;
-
-    status = m_importcache->linkFarSymbol(staticSymbol);
-    if (status.notOk())
-        return status;
-
-    status = m_typecache->touchType(staticSymbol->getAssignableType());
-    if (status.notOk())
-        return status;
-
-    return AssemblerStatus::ok();
-}
-
 std::vector<lyric_assembler::StaticSymbol *>::const_iterator
 lyric_assembler::ObjectState::staticsBegin() const
 {
@@ -523,49 +424,6 @@ lyric_assembler::ObjectState::appendField(FieldSymbol *fieldSymbol)
         throwAssemblerInvariant("failed to append field; symbol {} already exists", symbolUrl.toString());
     m_fields.push_back(fieldSymbol);
     m_symbolcache->insertSymbol(symbolUrl, fieldSymbol);
-    return AssemblerStatus::ok();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::touchField(FieldSymbol *fieldSymbol)
-{
-    TU_ASSERT (fieldSymbol != nullptr);
-
-    // field has been touched already, nothing to do
-    if (fieldSymbol->getAddress().isValid())
-        return AssemblerStatus::ok();
-
-    // verify that the field is in the symbol cache
-    auto fieldUrl = fieldSymbol->getSymbolUrl();
-    if (!m_symbolcache->hasSymbol(fieldUrl))
-        throwAssemblerInvariant("missing field symbol {}", fieldUrl.toString());
-
-    //
-    auto location = fieldUrl.getModuleLocation();
-    if (!m_importcache->hasImport(location))
-        throwAssemblerInvariant("missing import {}", location.toString());
-    auto status = m_importcache->touchImport(location);
-    if (status.notOk())
-        return status;
-
-    status = m_importcache->linkFarSymbol(fieldSymbol);
-    if (status.notOk())
-        return status;
-
-    status = m_typecache->touchType(fieldSymbol->getAssignableType());
-    if (status.notOk())
-        return status;
-
-    //
-    auto initializerUrl = fieldSymbol->getInitializer();
-    if (initializerUrl.isValid()) {
-        if (!m_symbolcache->hasSymbol(initializerUrl))
-            throwAssemblerInvariant("no initializer found for field symbol {}", fieldUrl.toString());
-        status = m_symbolcache->touchSymbol(initializerUrl);
-        if (status.notOk())
-            return status;
-    }
-
     return AssemblerStatus::ok();
 }
 
@@ -599,59 +457,6 @@ lyric_assembler::ObjectState::appendAction(ActionSymbol *actionSymbol)
     return AssemblerStatus::ok();
 }
 
-tempo_utils::Status
-lyric_assembler::ObjectState::touchAction(ActionSymbol *actionSymbol)
-{
-    TU_ASSERT (actionSymbol != nullptr);
-
-    // action has been touched already, nothing to do
-    if (actionSymbol->getAddress().isValid())
-        return {};
-
-    // verify that the action is in the symbol cache
-    auto actionUrl = actionSymbol->getSymbolUrl();
-    if (!m_symbolcache->hasSymbol(actionUrl))
-        throwAssemblerInvariant("missing action symbol {}", actionUrl.toString());
-
-    //
-    auto receiverUrl = actionSymbol->getReceiverUrl();
-    if (!receiverUrl.isValid())
-        throwAssemblerInvariant("no receiver found for action symbol {}", actionUrl.toString());
-    if (!m_symbolcache->hasSymbol(receiverUrl))
-        throwAssemblerInvariant("missing receiver {}", receiverUrl.toString());
-
-    //
-    auto location = actionUrl.getModuleLocation();
-    if (!m_importcache->hasImport(location))
-        throwAssemblerInvariant("missing import {}", location.toString());
-
-    TU_RETURN_IF_NOT_OK (m_importcache->touchImport(location));
-    TU_RETURN_IF_NOT_OK (m_importcache->linkFarSymbol(actionSymbol));
-    TU_RETURN_IF_NOT_OK (m_symbolcache->touchSymbol(receiverUrl));
-
-    for (auto it = actionSymbol->listPlacementBegin(); it != actionSymbol->listPlacementEnd(); it++) {
-        TU_RETURN_IF_NOT_OK (m_typecache->touchType(it->typeDef));
-    }
-
-    for (auto it = actionSymbol->namedPlacementBegin(); it != actionSymbol->namedPlacementEnd(); it++) {
-        TU_RETURN_IF_NOT_OK (m_typecache->touchType(it->typeDef));
-    }
-
-    auto *rest = actionSymbol->restPlacement();
-    if (rest != nullptr) {
-        TU_RETURN_IF_NOT_OK (m_typecache->touchType(rest->typeDef));
-    }
-
-    TU_RETURN_IF_NOT_OK (m_typecache->touchType(actionSymbol->getReturnType()));
-
-    auto *actionTemplate = actionSymbol->actionTemplate();
-    if (actionTemplate) {
-        actionTemplate->touch();
-    }
-
-    return {};
-}
-
 std::vector<lyric_assembler::ActionSymbol *>::const_iterator
 lyric_assembler::ObjectState::actionsBegin() const
 {
@@ -682,64 +487,6 @@ lyric_assembler::ObjectState::appendCall(CallSymbol *callSymbol)
     return AssemblerStatus::ok();
 }
 
-tempo_utils::Status
-lyric_assembler::ObjectState::touchCall(CallSymbol *callSymbol)
-{
-    TU_ASSERT (callSymbol != nullptr);
-
-    // call has been touched already, nothing to do
-    if (callSymbol->getAddress().isValid())
-        return {};
-
-    // verify that the call is in the symbol cache
-    auto callUrl = callSymbol->getSymbolUrl();
-    if (!m_symbolcache->hasSymbol(callUrl))
-        throwAssemblerInvariant("missing call symbol {}", callUrl.toString());
-
-    //
-    auto receiverUrl = callSymbol->getReceiverUrl();
-    if (receiverUrl.isValid()) {
-        if (!m_symbolcache->hasSymbol(receiverUrl))
-            throwAssemblerInvariant("missing receiver {}", receiverUrl.toString());
-    }
-
-    //
-    auto location = callUrl.getModuleLocation();
-    if (!m_importcache->hasImport(location))
-        throwAssemblerInvariant("missing import {}", location.toString());
-
-    TU_RETURN_IF_NOT_OK (m_importcache->touchImport(location));
-    TU_RETURN_IF_NOT_OK (m_importcache->linkFarSymbol(callSymbol));
-
-    if (receiverUrl.isValid()) {
-        TU_RETURN_IF_NOT_OK (m_symbolcache->touchSymbol(receiverUrl));
-    }
-
-//    TU_RETURN_IF_NOT_OK (m_typecache->touchType(callSymbol->callType()));
-
-    for (auto it = callSymbol->listPlacementBegin(); it != callSymbol->listPlacementEnd(); it++) {
-        TU_RETURN_IF_NOT_OK (m_typecache->touchType(it->typeDef));
-    }
-
-    for (auto it = callSymbol->namedPlacementBegin(); it != callSymbol->namedPlacementEnd(); it++) {
-        TU_RETURN_IF_NOT_OK (m_typecache->touchType(it->typeDef));
-    }
-
-    auto *rest = callSymbol->restPlacement();
-    if (rest != nullptr) {
-        TU_RETURN_IF_NOT_OK (m_typecache->touchType(rest->typeDef));
-    }
-
-    TU_RETURN_IF_NOT_OK (m_typecache->touchType(callSymbol->getReturnType()));
-
-    auto *callTemplate = callSymbol->callTemplate();
-    if (callTemplate) {
-        callTemplate->touch();
-    }
-
-    return {};
-}
-
 std::vector<lyric_assembler::CallSymbol *>::const_iterator
 lyric_assembler::ObjectState::callsBegin() const
 {
@@ -767,44 +514,6 @@ lyric_assembler::ObjectState::appendConcept(ConceptSymbol *conceptSymbol)
         throwAssemblerInvariant("failed to append concept; symbol {} already exists", symbolUrl.toString());
     m_concepts.push_back(conceptSymbol);
     m_symbolcache->insertSymbol(symbolUrl, conceptSymbol);
-    return AssemblerStatus::ok();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::touchConcept(ConceptSymbol *conceptSymbol)
-{
-    TU_ASSERT (conceptSymbol != nullptr);
-
-    // concept has been touched already, nothing to do
-    if (conceptSymbol->getAddress().isValid())
-        return AssemblerStatus::ok();
-
-    // verify that the concept is in the symbol cache
-    auto conceptUrl = conceptSymbol->getSymbolUrl();
-    if (!m_symbolcache->hasSymbol(conceptUrl))
-        throwAssemblerInvariant("missing concept symbol {}", conceptUrl.toString());
-
-    //
-    auto location = conceptUrl.getModuleLocation();
-    if (!m_importcache->hasImport(location))
-        throwAssemblerInvariant("missing import {}", location.toString());
-    auto status = m_importcache->touchImport(location);
-    if (status.notOk())
-        return status;
-
-    status = m_importcache->linkFarSymbol(conceptSymbol);
-    if (status.notOk())
-        return status;
-
-    status = m_typecache->touchType(conceptSymbol->conceptType());
-    if (status.notOk())
-        return status;
-
-    auto *conceptTemplate = conceptSymbol->conceptTemplate();
-    if (conceptTemplate) {
-        conceptTemplate->touch();
-    }
-
     return AssemblerStatus::ok();
 }
 
@@ -838,44 +547,6 @@ lyric_assembler::ObjectState::appendClass(ClassSymbol *classSymbol)
     return AssemblerStatus::ok();
 }
 
-tempo_utils::Status
-lyric_assembler::ObjectState::touchClass(ClassSymbol *classSymbol)
-{
-    TU_ASSERT (classSymbol != nullptr);
-
-    // class has been touched already, nothing to do
-    if (classSymbol->getAddress().isValid())
-        return AssemblerStatus::ok();
-
-    // verify that the class is in the symbol cache
-    auto classUrl = classSymbol->getSymbolUrl();
-    if (!m_symbolcache->hasSymbol(classUrl))
-        throwAssemblerInvariant("missing class symbol {}", classUrl.toString());
-
-    //
-    auto location = classUrl.getModuleLocation();
-    if (!m_importcache->hasImport(location))
-        throwAssemblerInvariant("missing import {}", location.toString());
-    auto status = m_importcache->touchImport(location);
-    if (status.notOk())
-        return status;
-
-    status = m_importcache->linkFarSymbol(classSymbol);
-    if (status.notOk())
-        return status;
-
-    status = m_typecache->touchType(classSymbol->classType());
-    if (status.notOk())
-        return status;
-
-    auto *classTemplate = classSymbol->classTemplate();
-    if (classTemplate) {
-        classTemplate->touch();
-    }
-
-    return AssemblerStatus::ok();
-}
-
 std::vector<lyric_assembler::ClassSymbol *>::const_iterator
 lyric_assembler::ObjectState::classesBegin() const
 {
@@ -903,39 +574,6 @@ lyric_assembler::ObjectState::appendStruct(StructSymbol *structSymbol)
         throwAssemblerInvariant("failed to append struct; symbol {} already exists", symbolUrl.toString());
     m_structs.push_back(structSymbol);
     m_symbolcache->insertSymbol(symbolUrl, structSymbol);
-    return AssemblerStatus::ok();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::touchStruct(StructSymbol *structSymbol)
-{
-    TU_ASSERT (structSymbol != nullptr);
-
-    // struct has been touched already, nothing to do
-    if (structSymbol->getAddress().isValid())
-        return AssemblerStatus::ok();
-
-    // verify that the class is in the symbol cache
-    auto structUrl = structSymbol->getSymbolUrl();
-    if (!m_symbolcache->hasSymbol(structUrl))
-        throwAssemblerInvariant("missing struct symbol {}", structUrl.toString());
-
-    //
-    auto location = structUrl.getModuleLocation();
-    if (!m_importcache->hasImport(location))
-        throwAssemblerInvariant("missing import {}", location.toString());
-    auto status = m_importcache->touchImport(location);
-    if (status.notOk())
-        return status;
-
-    status = m_importcache->linkFarSymbol(structSymbol);
-    if (status.notOk())
-        return status;
-
-    status = m_typecache->touchType(structSymbol->structType());
-    if (status.notOk())
-        return status;
-
     return AssemblerStatus::ok();
 }
 
@@ -969,39 +607,6 @@ lyric_assembler::ObjectState::appendInstance(InstanceSymbol *instanceSymbol)
     return AssemblerStatus::ok();
 }
 
-tempo_utils::Status
-lyric_assembler::ObjectState::touchInstance(InstanceSymbol *instanceSymbol)
-{
-    TU_ASSERT (instanceSymbol != nullptr);
-
-    // instance has been touched already, nothing to do
-    if (instanceSymbol->getAddress().isValid())
-        return AssemblerStatus::ok();
-
-    // verify that the instance is in the symbol cache
-    auto instanceUrl = instanceSymbol->getSymbolUrl();
-    if (!m_symbolcache->hasSymbol(instanceUrl))
-        throwAssemblerInvariant("missing instance symbol {}", instanceUrl.toString());
-
-    //
-    auto location = instanceUrl.getModuleLocation();
-    if (!m_importcache->hasImport(location))
-        throwAssemblerInvariant("missing import {}", location.toString());
-    auto status = m_importcache->touchImport(location);
-    if (status.notOk())
-        return status;
-
-    status = m_importcache->linkFarSymbol(instanceSymbol);
-    if (status.notOk())
-        return status;
-
-    status = m_typecache->touchType(instanceSymbol->instanceType());
-    if (status.notOk())
-        return status;
-
-    return AssemblerStatus::ok();
-}
-
 std::vector<lyric_assembler::InstanceSymbol *>::const_iterator
 lyric_assembler::ObjectState::instancesBegin() const
 {
@@ -1029,39 +634,6 @@ lyric_assembler::ObjectState::appendEnum(EnumSymbol *enumSymbol)
         throwAssemblerInvariant("failed to append enum; symbol {} already exists", symbolUrl.toString());
     m_enums.push_back(enumSymbol);
     m_symbolcache->insertSymbol(symbolUrl, enumSymbol);
-    return AssemblerStatus::ok();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::touchEnum(EnumSymbol *enumSymbol)
-{
-    TU_ASSERT (enumSymbol != nullptr);
-
-    // enum has been touched already, nothing to do
-    if (enumSymbol->getAddress().isValid())
-        return AssemblerStatus::ok();
-
-    // verify that the enum is in the symbol cache
-    auto enumUrl = enumSymbol->getSymbolUrl();
-    if (!m_symbolcache->hasSymbol(enumUrl))
-        throwAssemblerInvariant("missing enum symbol {}", enumUrl.toString());
-
-    //
-    auto location = enumUrl.getModuleLocation();
-    if (!m_importcache->hasImport(location))
-        throwAssemblerInvariant("missing import {}", location.toString());
-    auto status = m_importcache->touchImport(location);
-    if (status.notOk())
-        return status;
-
-    status = m_importcache->linkFarSymbol(enumSymbol);
-    if (status.notOk())
-        return status;
-
-    status = m_typecache->touchType(enumSymbol->enumType());
-    if (status.notOk())
-        return status;
-
     return AssemblerStatus::ok();
 }
 
@@ -1116,5 +688,7 @@ lyric_assembler::ObjectState::numUndeclared() const
 tempo_utils::Result<lyric_object::LyricObject>
 lyric_assembler::ObjectState::toObject() const
 {
-    return internal::write_object(this);
+    ObjectWriter writer(this);
+    TU_RETURN_IF_NOT_OK (writer.initialize());
+    return writer.toObject();
 }

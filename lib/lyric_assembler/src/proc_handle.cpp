@@ -104,8 +104,20 @@ lyric_assembler::ProcHandle::procBlock()
     return m_block.get();
 }
 
+const lyric_assembler::BlockHandle *
+lyric_assembler::ProcHandle::procBlock() const
+{
+    return m_block.get();
+}
+
 lyric_assembler::ProcBuilder *
 lyric_assembler::ProcHandle::procCode()
+{
+    return m_code.get();
+}
+
+const lyric_assembler::ProcBuilder *
+lyric_assembler::ProcHandle::procCode() const
 {
     return m_code.get();
 }
@@ -157,7 +169,7 @@ lyric_assembler::LexicalOffset
 lyric_assembler::ProcHandle::allocateLexical(
     LexicalTarget lexicalTarget,
     uint32_t targetOffset,
-    CallAddress activationCall)
+    CallSymbol *activationCall)
 {
     auto index = m_lexicals.size();
     ProcLexical lexical;

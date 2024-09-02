@@ -50,7 +50,6 @@ lyric_compiler::internal::compile_module(
             // ignore relative symbols since these are not external
             if (symbolUrl.isRelative())
                 continue;
-            state->symbolCache()->touchSymbol(symbolUrl);
         }
     }
 

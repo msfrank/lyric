@@ -118,7 +118,6 @@ lyric_assembler::ExtensionCallable::invoke(
         }
 
         case InvokeType::VIRTUAL: {
-            m_callSymbol->touch();
             auto *blockCode = block->blockCode();
             auto *fragment = blockCode->rootFragment();
             TU_RETURN_IF_NOT_OK (block->load(m_implRef));

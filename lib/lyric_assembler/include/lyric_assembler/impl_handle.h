@@ -6,6 +6,7 @@
 #include <lyric_importer/impl_import.h>
 
 #include "abstract_callable.h"
+#include "assembler_types.h"
 #include "object_state.h"
 #include "base_handle.h"
 #include "block_handle.h"
@@ -15,6 +16,7 @@ namespace lyric_assembler {
 
     struct ImplHandlePriv {
         ImplOffset offset;
+        ImplRef ref;
         std::string name;
         bool isDeclOnly = false;
         TypeHandle *implType = nullptr;
@@ -49,8 +51,9 @@ namespace lyric_assembler {
 
         ImplHandle(lyric_importer::ImplImport *implImport, ObjectState *state);
 
-        ImplOffset getOffset() const;
+        ImplRef getRef() const;
         std::string getName() const;
+        //ImplOffset getOffset() const;
 
         bool isDeclOnly() const;
 

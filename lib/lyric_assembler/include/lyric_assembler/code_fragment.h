@@ -118,7 +118,6 @@ namespace lyric_assembler {
         tempo_utils::Status callVirtual(CallSymbol *callSymbol, tu_uint16 placement, tu_uint8 flags);
         tempo_utils::Status callConcept(ActionSymbol *actionSymbol, tu_uint16 placement, tu_uint8 flags);
         tempo_utils::Status callExistential(CallSymbol *callSymbol, tu_uint16 placement, tu_uint8 flags);
-        //tempo_utils::Status callInline(CallSymbol *callSymbol);
 
         // new instruction
         tempo_utils::Status constructNew(AbstractSymbol *newSymbol, tu_uint16 placement, tu_uint8 flags);
@@ -140,7 +139,9 @@ namespace lyric_assembler {
         std::vector<Statement> m_statements;
 
         tempo_utils::Result<JumpTarget> makeJump(lyric_object::Opcode opcode);
+        tempo_utils::Status touch(ObjectWriter &writer) const;
         tempo_utils::Status build(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             absl::flat_hash_map<std::string,tu_uint16> &labelOffsets,
             absl::flat_hash_map<tu_uint32,tu_uint16> &patchOffsets) const;

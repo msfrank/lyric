@@ -147,8 +147,6 @@ lyric_compiler::internal::compile_lambda(
     if (closureSym->getSymbolType() != lyric_assembler::SymbolType::CLASS)
         block->throwAssemblerInvariant("invalid class symbol {}", lambdaFunctionUrl.toString());
 
-    closureSym->touch();
-
     auto *closureClass = cast_symbol_to_class(closureSym);
 
     /*

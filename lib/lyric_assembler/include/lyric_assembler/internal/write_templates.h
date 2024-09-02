@@ -5,14 +5,21 @@
 
 #include <lyric_object/generated/object.h>
 
+#include "../object_writer.h"
 #include "../type_cache.h"
 
 namespace lyric_assembler::internal {
 
+    tempo_utils::Status touch_template(
+        const TemplateHandle *templateHandle,
+        const ObjectState *objectState,
+        ObjectWriter &writer);
+
     using TemplatesOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::TemplateDescriptor>>>;
 
     tempo_utils::Status write_templates(
-        TypeCache *typeCache,
+        const std::vector<const TemplateHandle *> &templates,
+        const ObjectWriter &writer,
         flatbuffers::FlatBufferBuilder &buffer,
         TemplatesOffset &templatesOffset);
 }

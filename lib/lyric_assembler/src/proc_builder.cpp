@@ -112,12 +112,20 @@ lyric_assembler::ProcBuilder::patchTarget(tu_uint32 targetId, std::string_view l
 }
 
 tempo_utils::Status
-lyric_assembler::ProcBuilder::build(lyric_object::BytecodeBuilder &bytecodeBuilder) const
+lyric_assembler::ProcBuilder::touch(ObjectWriter &writer) const
+{
+    return m_rootFragment->touch(writer);
+}
+
+tempo_utils::Status
+lyric_assembler::ProcBuilder::build(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder) const
 {
     absl::flat_hash_map<std::string,tu_uint16> labelOffsets;
     absl::flat_hash_map<tu_uint32,tu_uint16> patchOffsets;
 
-    TU_RETURN_IF_NOT_OK (m_rootFragment->build(bytecodeBuilder, labelOffsets, patchOffsets));
+    TU_RETURN_IF_NOT_OK (m_rootFragment->build(writer, bytecodeBuilder, labelOffsets, patchOffsets));
 
     TU_LOG_INFO << "label targets:";
     for (const auto &entry : m_labelTargets) {

@@ -74,24 +74,24 @@ TEST(AnalyzeEnum, DeclareEnumCase)
     ASSERT_EQ (6, root.numSymbols());
     ASSERT_EQ (2, root.numEnums());
 
-    auto enum0 = root.getEnum(0);
-    ASSERT_TRUE (enum0.isDeclOnly());
-    ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
+    auto FooEnum = root.getEnum(root.findSymbol(lyric_common::SymbolPath({"Foo"})).getLinkageIndex());
+    ASSERT_TRUE (FooEnum.isValid());
+    ASSERT_TRUE (FooEnum.isDeclOnly());
 
-    auto ctor0 = enum0.getConstructor();
+    auto ctor0 = FooEnum.getConstructor();
     ASSERT_TRUE (ctor0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "$ctor"}), ctor0.getSymbolPath());
 
-    auto enum1 = root.getEnum(1);
-    ASSERT_TRUE (enum1.isDeclOnly());
-    ASSERT_EQ (lyric_common::SymbolPath({"Bar"}), enum1.getSymbolPath());
+    auto BarEnum = root.getEnum(root.findSymbol(lyric_common::SymbolPath({"Bar"})).getLinkageIndex());
+    ASSERT_TRUE (BarEnum.isValid());
+    ASSERT_TRUE (BarEnum.isDeclOnly());
 
-    auto ctor1 = enum1.getConstructor();
+    auto ctor1 = BarEnum.getConstructor();
     ASSERT_TRUE (ctor1.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Bar", "$ctor"}), ctor1.getSymbolPath());
 
-    ASSERT_EQ (1, enum0.numSealedSubEnums());
-    ASSERT_EQ (enum1.getEnumType().getTypeDef(), enum0.getSealedSubEnum(0).getTypeDef());
+    ASSERT_EQ (1, FooEnum.numSealedSubEnums());
+    ASSERT_EQ (BarEnum.getEnumType().getTypeDef(), FooEnum.getSealedSubEnum(0).getTypeDef());
 }
 
 TEST(AnalyzeEnum, DeclareEnumMemberVal)

@@ -6,13 +6,20 @@
 #include <lyric_object/generated/object.h>
 
 #include "../object_state.h"
+#include "../object_writer.h"
 
 namespace lyric_assembler::internal {
+
+    tempo_utils::Status touch_static(
+        const StaticSymbol *staticSymbol,
+        const ObjectState *objectState,
+        ObjectWriter &writer);
 
     using StaticsOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::StaticDescriptor>>>;
 
     tempo_utils::Status write_statics(
-        const ObjectState *objectState,
+        const std::vector<const StaticSymbol *> &statics,
+        const ObjectWriter &writer,
         flatbuffers::FlatBufferBuilder &buffer,
         StaticsOffset &staticsOffset,
         std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector);

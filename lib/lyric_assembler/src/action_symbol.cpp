@@ -162,20 +162,6 @@ lyric_assembler::ActionSymbol::getAssignableType() const
     return {};
 }
 
-lyric_assembler::TypeSignature
-lyric_assembler::ActionSymbol::getTypeSignature() const
-{
-    return {};
-}
-
-void
-lyric_assembler::ActionSymbol::touch()
-{
-    if (getAddress().isValid())
-        return;
-    m_state->touchAction(this);
-}
-
 bool
 lyric_assembler::ActionSymbol::isDeclOnly() const
 {
@@ -201,27 +187,19 @@ lyric_assembler::ActionSymbol::defineAction(
     priv->returnType = returnType;
 
     for (const auto &param : priv->listParameters) {
-        TypeHandle *typeHandle;
-        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(param.typeDef));
-        typeHandle->touch();
+        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
     }
 
     for (const auto &param : priv->namedParameters) {
-        TypeHandle *typeHandle;
-        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(param.typeDef));
-        typeHandle->touch();
+        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
     }
 
     if (!priv->restParameter.isEmpty()) {
         auto &param = priv->restParameter.peekValue();
-        TypeHandle *typeHandle;
-        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(param.typeDef));
-        typeHandle->touch();
+        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
     }
 
-    TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(priv->returnType));
-    typeHandle->touch();
+    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(priv->returnType));
 
     return {};
 }
@@ -248,7 +226,7 @@ lyric_assembler::ActionSymbol::getAccessType() const
 }
 
 lyric_assembler::AbstractResolver *
-lyric_assembler::ActionSymbol::actionResolver()
+lyric_assembler::ActionSymbol::actionResolver() const
 {
     auto *priv = getPriv();
     if (priv->actionTemplate != nullptr)
@@ -257,7 +235,7 @@ lyric_assembler::ActionSymbol::actionResolver()
 }
 
 lyric_assembler::TemplateHandle *
-lyric_assembler::ActionSymbol::actionTemplate()
+lyric_assembler::ActionSymbol::actionTemplate() const
 {
     auto *priv = getPriv();
     return priv->actionTemplate;

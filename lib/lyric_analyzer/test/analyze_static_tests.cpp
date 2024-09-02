@@ -63,6 +63,10 @@ TEST(AnalyzeStatic, DeclareStaticVar)
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
     auto root = object.getObject();
+    for (int i = 0; i < root.numSymbols(); i++) {
+        auto symbol = root.getSymbol(i);
+        TU_LOG_INFO << "symbol " << symbol.getSymbolPath().toString();
+    }
     ASSERT_EQ (3, root.numSymbols());
     ASSERT_EQ (1, root.numStatics());
 

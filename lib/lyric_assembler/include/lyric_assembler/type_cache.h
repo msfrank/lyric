@@ -16,16 +16,12 @@ namespace lyric_assembler {
         TypeCache(ObjectState *objectState, AssemblerTracer *tracer);
         ~TypeCache();
 
-        bool hasType(const lyric_common::TypeDef &assignableType) const;
-        TypeHandle *getType(TypeAddress typeAddress) const;
-        std::vector<TypeHandle *>::const_iterator typesBegin() const;
-        std::vector<TypeHandle *>::const_iterator typesEnd() const;
+        bool hasType(const lyric_common::TypeDef &typeDef) const;
+        TypeHandle *getType(const lyric_common::TypeDef &typeDef) const;
         int numTypes() const;
 
         tempo_utils::Result<TypeHandle *> getOrMakeType(const lyric_common::TypeDef &assignableType);
         tempo_utils::Result<TypeHandle *> importType(lyric_importer::TypeImport *typeImport);
-        tempo_utils::Status touchType(TypeHandle *typeHandle);
-        tempo_utils::Status touchType(const lyric_common::TypeDef &type);
 
         tempo_utils::Result<TypeHandle *> declareSubType(
             const lyric_common::SymbolUrl &subTypeUrl,
@@ -42,10 +38,10 @@ namespace lyric_assembler {
             const Option<lyric_common::TypeDef> &functionRest);
 
         bool hasTemplate(const lyric_common::SymbolUrl &templateUrl) const;
-        tempo_utils::Result<TemplateHandle *> getOrImportTemplate(const lyric_common::SymbolUrl &templateUrl);
-        std::vector<TemplateHandle *>::const_iterator templatesBegin() const;
-        std::vector<TemplateHandle *>::const_iterator templatesEnd() const;
+        TemplateHandle *getTemplate(const lyric_common::SymbolUrl &templateUrl) const;
         int numTemplates() const;
+
+        tempo_utils::Result<TemplateHandle *> getOrImportTemplate(const lyric_common::SymbolUrl &templateUrl);
 
         tempo_utils::Result<TemplateHandle *> makeTemplate(
             const lyric_common::SymbolUrl &templateUrl,
@@ -68,16 +64,16 @@ namespace lyric_assembler {
         tempo_utils::Result<lyric_common::TypeDef> resolveIntersection(
             const std::vector<lyric_common::TypeDef> &intersectionMembers);
 
-        tempo_utils::Result<TypeSignature> resolveSignature(
-            const lyric_common::SymbolUrl &symbolUrl) const;
+        tempo_utils::Result<TypeSignature> resolveSignature(const lyric_common::TypeDef &typeDef);
+        tempo_utils::Result<TypeSignature> resolveSignature(const lyric_common::SymbolUrl &symbolUrl);
+        tempo_utils::Result<TypeSignature> resolveSignature(const TypeHandle *typeHandle);
 
     private:
         ObjectState *m_objectState;
         AssemblerTracer *m_tracer;
-        std::vector<TypeHandle *> m_types;
         absl::flat_hash_map<lyric_common::TypeDef, TypeHandle *> m_typecache;
-        std::vector<TemplateHandle *> m_templates;
         absl::flat_hash_map<lyric_common::SymbolUrl, TemplateHandle *> m_templatecache;
+        absl::flat_hash_map<lyric_common::TypeDef, TypeSignature> m_signaturecache;
     };
 }
 

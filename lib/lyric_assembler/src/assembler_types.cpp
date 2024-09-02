@@ -187,7 +187,7 @@ lyric_assembler::TypeSignature::TypeSignature()
 {
 }
 
-lyric_assembler::TypeSignature::TypeSignature(const std::vector<TypeAddress> &signature)
+lyric_assembler::TypeSignature::TypeSignature(const std::vector<const TypeHandle *> &signature)
     : m_signature(signature)
 {
 }
@@ -203,19 +203,19 @@ lyric_assembler::TypeSignature::isValid() const
     return !m_signature.empty();
 }
 
-std::vector<lyric_assembler::TypeAddress>
+std::vector<const lyric_assembler::TypeHandle *>
 lyric_assembler::TypeSignature::getSignature() const
 {
     return m_signature;
 }
 
-std::vector<lyric_assembler::TypeAddress>::const_iterator
+std::vector<const lyric_assembler::TypeHandle *>::const_iterator
 lyric_assembler::TypeSignature::signatureBegin() const
 {
     return m_signature.cbegin();
 }
 
-std::vector<lyric_assembler::TypeAddress>::const_iterator
+std::vector<const lyric_assembler::TypeHandle *>::const_iterator
 lyric_assembler::TypeSignature::signatureEnd() const
 {
     return m_signature.cend();
@@ -231,7 +231,7 @@ lyric_assembler::TypeSignature::compare(const TypeSignature &other) const
     for (tu_uint32 i = 0; i < m_signature.size(); i++) {
         if (i == othersize)
             return lyric_runtime::TypeComparison::EXTENDS;     // other is subtype
-        if (m_signature[i].getAddress() != other.m_signature[i].getAddress())
+        if (m_signature[i] != other.m_signature[i])
             return lyric_runtime::TypeComparison::DISJOINT;    // no direct type relationship
     }
     // if signature sizes are equal, then types are equal, otherwise other is supertype

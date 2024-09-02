@@ -585,7 +585,6 @@ lyric_assembler::BlockHandle::declareStatic(
     // make type handle if it doesn't exist already (for example union or intersection types)
     lyric_assembler::TypeHandle *staticType;
     TU_ASSIGN_OR_RETURN (staticType, m_state->typeCache()->getOrMakeType(assignableType));
-    staticType->touch();
 
     auto staticUrl = makeSymbolUrl(name);
     StaticAddress address;
@@ -712,13 +711,13 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
 
             auto activation = block->blockProc()->getActivation();
             TU_ASSERT (m_state->symbolCache()->hasSymbol(activation));
-            lyric_assembler::AbstractSymbol *activationSym;
-            TU_ASSIGN_OR_RETURN (activationSym, m_state->symbolCache()->getOrImportSymbol(activation));
-            auto activationAddress = cast_symbol_to_call(activationSym)->getAddress();
+            lyric_assembler::AbstractSymbol *activationSymbol;
+            TU_ASSIGN_OR_RETURN (activationSymbol, m_state->symbolCache()->getOrImportSymbol(activation));
+            auto *activationCall = cast_symbol_to_call(activationSymbol);
 
             // import lexical variable into this env, and return it
             auto lexicalUrl = makeSymbolUrl(name);
-            auto address = m_blockProc->allocateLexical(lexicalTarget, targetOffset, activationAddress);
+            auto address = m_blockProc->allocateLexical(lexicalTarget, targetOffset, activationCall);
             auto *lexicalVariable = new LexicalVariable(lexicalUrl, typeDef, address);
             m_state->symbolCache()->insertSymbol(lexicalUrl, lexicalVariable);
 
@@ -854,7 +853,6 @@ lyric_assembler::BlockHandle::prepareFunction(const std::string &name, CallableI
     if (symbol->getSymbolType() != SymbolType::CALL)
         throwAssemblerInvariant("invalid call symbol {}", functionUrl.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
-    callSymbol->touch();
 
     auto callable = std::make_unique<FunctionCallable>(callSymbol, /* isInlined= */ false);
     return invoker.initialize(std::move(callable));
@@ -904,15 +902,13 @@ lyric_assembler::BlockHandle::declareClass(
             tempo_tracing::LogSeverity::kError,
             "cannot declare class {}; symbol is already defined", name);
 
-    superClass->touch();
-
     auto superDerive = superClass->getDeriveType();
     if (superDerive == lyric_object::DeriveType::Final)
         return logAndContinue(AssemblerCondition::kInvalidAccess,
             tempo_tracing::LogSeverity::kError,
             "cannot derive class {} from {}; base class is marked final",
             name, superClass->getSymbolUrl().toString());
-    if (superDerive == lyric_object::DeriveType::Sealed && lyric_object::IS_FAR(superClass->getAddress().getAddress()))
+    if (superDerive == lyric_object::DeriveType::Sealed && superClass->isImported())
         return logAndContinue(AssemblerCondition::kInvalidAccess,
             tempo_tracing::LogSeverity::kError,
             "cannot derive class {} from {}; sealed base class must be located in the same module",
@@ -1001,8 +997,6 @@ lyric_assembler::BlockHandle::declareConcept(
             tempo_tracing::LogSeverity::kError,
             "cannot declare concept {}; symbol is already defined", name);
 
-    superConcept->touch();
-
     auto conceptUrl = makeSymbolUrl(name);
 
     // create the template if there are any template parameters
@@ -1084,15 +1078,13 @@ lyric_assembler::BlockHandle::declareEnum(
             tempo_tracing::LogSeverity::kError,
             "cannot declare enum {}; symbol is already defined", name);
 
-    superEnum->touch();
-
     auto superDerive = superEnum->getDeriveType();
     if (superDerive == lyric_object::DeriveType::Final)
         return logAndContinue(AssemblerCondition::kInvalidAccess,
             tempo_tracing::LogSeverity::kError,
             "cannot derive enum {} from {}; base enum is marked final",
             name, superEnum->getSymbolUrl().toString());
-    if (superDerive == lyric_object::DeriveType::Sealed && lyric_object::IS_FAR(superEnum->getAddress().getAddress()))
+    if (superDerive == lyric_object::DeriveType::Sealed && superEnum->isImported())
         return logAndContinue(AssemblerCondition::kInvalidAccess,
             tempo_tracing::LogSeverity::kError,
             "cannot derive enum {} from {}; sealed base enum must be located in the same module",
@@ -1162,15 +1154,13 @@ lyric_assembler::BlockHandle::declareInstance(
             tempo_tracing::LogSeverity::kError,
             "cannot declare instance {}; symbol is already defined", name);
 
-    superInstance->touch();
-
     auto superDerive = superInstance->getDeriveType();
     if (superDerive == lyric_object::DeriveType::Final)
         return logAndContinue(AssemblerCondition::kInvalidAccess,
             tempo_tracing::LogSeverity::kError,
             "cannot derive instance {} from {}; base instance is marked final",
             name, superInstance->getSymbolUrl().toString());
-    if (superDerive == lyric_object::DeriveType::Sealed && lyric_object::IS_FAR(superInstance->getAddress().getAddress()))
+    if (superDerive == lyric_object::DeriveType::Sealed && superInstance->isImported())
         return logAndContinue(AssemblerCondition::kInvalidAccess,
             tempo_tracing::LogSeverity::kError,
             "cannot derive instance {} from {}; sealed base instance must be located in the same module",
@@ -1240,15 +1230,13 @@ lyric_assembler::BlockHandle::declareStruct(
             tempo_tracing::LogSeverity::kError,
             "cannot declare struct {}; symbol is already defined", name);
 
-    superStruct->touch();
-
     auto superDerive = superStruct->getDeriveType();
     if (superDerive == lyric_object::DeriveType::Final)
         return logAndContinue(AssemblerCondition::kInvalidAccess,
             tempo_tracing::LogSeverity::kError,
             "cannot derive struct {} from {}; base struct is marked final",
             name, superStruct->getSymbolUrl().toString());
-    if (superDerive == lyric_object::DeriveType::Sealed && lyric_object::IS_FAR(superStruct->getAddress().getAddress()))
+    if (superDerive == lyric_object::DeriveType::Sealed && superStruct->isImported())
         return logAndContinue(AssemblerCondition::kInvalidAccess,
             tempo_tracing::LogSeverity::kError,
             "cannot derive struct {} from {}; sealed base struct must be located in the same module",
@@ -1433,8 +1421,12 @@ determine_binding_type(
     lyric_assembler::TypeHandle *aliasTypeHandle;
     TU_ASSIGN_OR_RETURN (aliasTypeHandle, typeCache->getOrMakeType(aliasType));
 
-    auto targetSig = targetSymbol->getTypeSignature();
-    auto aliasSig = aliasTypeHandle->getTypeSignature();
+    lyric_assembler::TypeSignature targetSig;
+    TU_ASSIGN_OR_RETURN (targetSig, typeCache->resolveSignature(targetSymbol->getSymbolUrl()));
+
+    lyric_assembler::TypeSignature aliasSig;
+    TU_ASSIGN_OR_RETURN (aliasSig, typeCache->resolveSignature(aliasTypeHandle));
+
     auto cmp = targetSig.compare(aliasSig);
     if (cmp != lyric_runtime::TypeComparison::EXTENDS)
         block->logAndContinue(lyric_assembler::AssemblerCondition::kIncompatibleType,

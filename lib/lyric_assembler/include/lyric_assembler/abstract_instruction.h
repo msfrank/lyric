@@ -3,6 +3,8 @@
 
 #include <lyric_object/bytecode_builder.h>
 
+#include "object_writer.h"
+
 namespace lyric_assembler {
 
     enum class InstructionType {
@@ -33,7 +35,10 @@ namespace lyric_assembler {
 
         virtual InstructionType getType() const = 0;
 
+        virtual tempo_utils::Status touch(ObjectWriter &writer) const = 0;
+
         virtual tempo_utils::Status apply(
+            const ObjectWriter &writer,
             lyric_object::BytecodeBuilder &bytecodeBuilder,
             std::string &labelName,
             tu_uint16 &labelOffset,

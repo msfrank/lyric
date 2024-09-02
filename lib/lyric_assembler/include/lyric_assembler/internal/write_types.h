@@ -5,16 +5,22 @@
 
 #include <lyric_object/generated/object.h>
 
+#include "../object_writer.h"
 #include "../symbol_cache.h"
 #include "../type_cache.h"
 
 namespace lyric_assembler::internal {
 
+    tempo_utils::Status touch_type(
+        const TypeHandle *typeHandle,
+        const ObjectState *objectState,
+        ObjectWriter &writer);
+
     using TypesOffset = flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<lyo1::TypeDescriptor>>>;
 
     tempo_utils::Status write_types(
-        TypeCache *typeCache,
-        SymbolCache *symbolCache,
+        const std::vector<const TypeHandle *> &types,
+        const ObjectWriter &writer,
         flatbuffers::FlatBufferBuilder &buffer,
         TypesOffset &typesOffset);
 }

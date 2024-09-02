@@ -10,11 +10,10 @@ namespace lyric_assembler {
     public:
         UndeclaredSymbol(const lyric_common::SymbolUrl &undeclaredUrl, lyric_object::LinkageSection section);
 
+        bool isImported() const override;
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getAssignableType() const override;
-        TypeSignature getTypeSignature() const override;
-        void touch() override;
 
         lyric_object::LinkageSection getLinkage() const;
 

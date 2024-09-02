@@ -19,8 +19,6 @@ lyric_compiler::internal::compile_new(
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
-    auto *state = moduleEntry.getState();
-    auto *typeCache = state->typeCache();
     auto *typeSystem = moduleEntry.getTypeSystem();
 
     lyric_common::TypeDef newType;
@@ -48,13 +46,12 @@ lyric_compiler::internal::compile_new(
             tempo_tracing::LogSeverity::kError,
             "new type {} is not constructable", newType.toString());
 
-    TU_RETURN_IF_NOT_OK (typeCache->touchType(newType));
+    //TU_RETURN_IF_NOT_OK (typeCache->touchType(newType));
 
     // resolve the symbol ctor
     auto newUrl = newType.getConcreteUrl();
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, block->blockState()->symbolCache()->getOrImportSymbol(newUrl));
-    symbol->touch();
 
     // allocate the ctor invoker
     lyric_assembler::ConstructableInvoker ctorInvoker;

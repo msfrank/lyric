@@ -11,56 +11,113 @@
 #include <lyric_assembler/impl_handle.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/internal/write_impls.h>
+#include <lyric_assembler/object_writer.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
+tempo_utils::Status
+lyric_assembler::internal::touch_impl(
+    const ImplHandle *implHandle,
+    const ObjectState *objectState,
+    ObjectWriter &writer)
+{
+    TU_ASSERT (implHandle != nullptr);
+
+    auto implRef = implHandle->getRef();
+
+    bool alreadyInserted;
+    TU_RETURN_IF_NOT_OK (writer.insertImpl(implRef, implHandle, alreadyInserted));
+    if (alreadyInserted)
+        return {};
+
+    TU_RETURN_IF_NOT_OK (writer.touchType(implHandle->implType()));
+    TU_RETURN_IF_NOT_OK (writer.touchConcept(implHandle->implConcept()));
+
+    auto receiverUrl = implHandle->getReceiverUrl();
+    if (receiverUrl.isValid()) {
+        auto *symbolCache = objectState->symbolCache();
+        AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(receiverUrl));
+        switch (symbol->getSymbolType()) {
+            case SymbolType::CLASS:
+                TU_RETURN_IF_NOT_OK (writer.touchClass(cast_symbol_to_class(symbol)));
+                break;
+            case SymbolType::CONCEPT:
+                TU_RETURN_IF_NOT_OK (writer.touchConcept(cast_symbol_to_concept(symbol)));
+                break;
+            case SymbolType::ENUM:
+                TU_RETURN_IF_NOT_OK (writer.touchEnum(cast_symbol_to_enum(symbol)));
+                break;
+            case SymbolType::INSTANCE:
+                TU_RETURN_IF_NOT_OK (writer.touchInstance(cast_symbol_to_instance(symbol)));
+                break;
+            case SymbolType::STRUCT:
+                TU_RETURN_IF_NOT_OK (writer.touchStruct(cast_symbol_to_struct(symbol)));
+                break;
+            default:
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "invalid receiver for impl");
+        }
+    }
+
+    for (auto it = implHandle->methodsBegin(); it != implHandle->methodsEnd(); it++) {
+        TU_RETURN_IF_NOT_OK (writer.touchExtension(it->second));
+    }
+
+    return {};
+}
+
 static tempo_utils::Status
 write_impl(
-    lyric_assembler::ImplHandle *implHandle,
-    lyric_assembler::SymbolCache *symbolCache,
+    const lyric_assembler::ImplHandle *implHandle,
+    const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     std::vector<flatbuffers::Offset<lyo1::ImplDescriptor>> &impls_vector)
 {
-    auto typeIndex = implHandle->implType()->getAddress().getAddress();
-    auto conceptIndex = implHandle->implConcept()->getAddress().getAddress();
+    tu_uint32 implType;
+    TU_ASSIGN_OR_RETURN (implType, writer.getTypeOffset(implHandle->implType()->getTypeDef()));
+
+    tu_uint32 implConcept;
+    TU_ASSIGN_OR_RETURN (implConcept,
+        writer.getSymbolAddress(implHandle->implConcept()->getSymbolUrl(), lyric_object::LinkageSection::Concept));
 
     lyo1::TypeSection receiverSection = lyo1::TypeSection::Invalid;
     tu_uint32 receiverDescriptor = lyric_runtime::INVALID_ADDRESS_U32;
 
     auto receiverUrl = implHandle->getReceiverUrl();
-    lyric_assembler::AbstractSymbol *receiver;
-    TU_ASSIGN_OR_RETURN (receiver, symbolCache->getOrImportSymbol(receiverUrl));
+    lyric_assembler::SymbolEntry receiver;
+    TU_ASSIGN_OR_RETURN (receiver, writer.getSymbolEntry(receiverUrl));
 
-    switch (receiver->getSymbolType()) {
-        case lyric_assembler::SymbolType::CLASS:
+    switch (receiver.section) {
+        case lyric_object::LinkageSection::Class:
             receiverSection = lyo1::TypeSection::Class;
-            receiverDescriptor = cast_symbol_to_class(receiver)->getAddress().getAddress();
+            receiverDescriptor = receiver.address;
             break;
-        case lyric_assembler::SymbolType::CONCEPT:
+        case lyric_object::LinkageSection::Concept:
             receiverSection = lyo1::TypeSection::Concept;
-            receiverDescriptor = cast_symbol_to_concept(receiver)->getAddress().getAddress();
+            receiverDescriptor = receiver.address;
             break;
-        case lyric_assembler::SymbolType::ENUM:
+        case lyric_object::LinkageSection::Enum:
             receiverSection = lyo1::TypeSection::Enum;
-            receiverDescriptor = cast_symbol_to_enum(receiver)->getAddress().getAddress();
+            receiverDescriptor = receiver.address;
             break;
-        case lyric_assembler::SymbolType::EXISTENTIAL:
+        case lyric_object::LinkageSection::Existential:
             receiverSection = lyo1::TypeSection::Existential;
-            receiverDescriptor = cast_symbol_to_existential(receiver)->getAddress().getAddress();
+            receiverDescriptor = receiver.address;
             break;
-        case lyric_assembler::SymbolType::INSTANCE:
+        case lyric_object::LinkageSection::Instance:
             receiverSection = lyo1::TypeSection::Instance;
-            receiverDescriptor = cast_symbol_to_instance(receiver)->getAddress().getAddress();
+            receiverDescriptor = receiver.address;
             break;
-        case lyric_assembler::SymbolType::STRUCT:
+        case lyric_object::LinkageSection::Struct:
             receiverSection = lyo1::TypeSection::Struct;
-            receiverDescriptor = cast_symbol_to_struct(receiver)->getAddress().getAddress();
+            receiverDescriptor = receiver.address;
             break;
         default:
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                "invalid call receiver");
+                "invalid impl receiver");
     }
 
     lyo1::ImplFlags implFlags = lyo1::ImplFlags::NONE;
@@ -73,28 +130,20 @@ write_impl(
     for (auto iterator = implHandle->methodsBegin(); iterator != implHandle->methodsEnd(); iterator++) {
         const auto &extension = iterator->second;
 
-        lyric_assembler::AbstractSymbol *symbol;
+        tu_uint32 actionIndex;
+        TU_ASSIGN_OR_RETURN (actionIndex,
+            writer.getSymbolAddress(extension.methodAction, lyric_object::LinkageSection::Action));
 
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(extension.methodCall));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid call symbol");
-        const auto *callSymbol = cast_symbol_to_call(symbol);
-        tu_uint32 call_index = callSymbol->getAddress().getAddress();
+        tu_uint32 callIndex;
+        TU_ASSIGN_OR_RETURN (callIndex,
+            writer.getSymbolAddress(extension.methodCall, lyric_object::LinkageSection::Call));
 
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(extension.methodAction));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::ACTION)
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid action symbol");
-        const auto *actionSymbol = cast_symbol_to_action(symbol);
-        tu_uint32 action_index = actionSymbol->getAddress().getAddress();
-
-        implExtensions.emplace_back(action_index, call_index);
+        implExtensions.emplace_back(actionIndex, callIndex);
     }
 
     auto fb_extensions = buffer.CreateVectorOfStructs(implExtensions);
 
-    impls_vector.push_back(lyo1::CreateImplDescriptor(buffer, typeIndex, conceptIndex,
+    impls_vector.push_back(lyo1::CreateImplDescriptor(buffer, implType, implConcept,
         receiverSection, receiverDescriptor, implFlags, fb_extensions));
 
     return {};
@@ -102,20 +151,15 @@ write_impl(
 
 tempo_utils::Status
 lyric_assembler::internal::write_impls(
-    const ObjectState *objectState,
+    const std::vector<const ImplHandle *> &impls,
+    const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     ImplsOffset &implsOffset)
 {
-    TU_ASSERT (objectState != nullptr);
-
-    SymbolCache *symbolCache = objectState->symbolCache();
-    ImplCache *implCache = objectState->implCache();
-
     std::vector<flatbuffers::Offset<lyo1::ImplDescriptor>> impls_vector;
 
-    for (auto iterator = implCache->implsBegin(); iterator != implCache->implsEnd(); iterator++) {
-        auto &implSymbol = *iterator;
-        TU_RETURN_IF_NOT_OK (write_impl(implSymbol, symbolCache, buffer, impls_vector));
+    for (const auto *implHandle : impls) {
+        TU_RETURN_IF_NOT_OK (write_impl(implHandle, writer, buffer, impls_vector));
     }
 
     // create the impls vector

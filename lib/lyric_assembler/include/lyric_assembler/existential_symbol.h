@@ -59,8 +59,6 @@ namespace lyric_assembler {
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getAssignableType() const override;
-        TypeSignature getTypeSignature() const override;
-        void touch() override;
 
         bool isDeclOnly() const;
         lyric_object::DeriveType getDeriveType() const;

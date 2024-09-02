@@ -241,7 +241,7 @@ compile_is_a(
     TU_ASSIGN_OR_RETURN (isAType, typeSystem->resolveAssignable(block, isASpec));
     if (!state->typeCache()->hasType(isAType))
         block->throwAssemblerInvariant("missing type {}", isAType.toString());
-    state->typeCache()->touchType(isAType);
+    //state->typeCache()->touchType(isAType);
 
     // push isA type descriptor onto the stack
     switch (isAType.getType()) {

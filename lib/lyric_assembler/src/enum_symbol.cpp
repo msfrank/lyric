@@ -145,21 +145,6 @@ lyric_assembler::EnumSymbol::getAssignableType() const
     return priv->enumType->getTypeDef();
 }
 
-lyric_assembler::TypeSignature
-lyric_assembler::EnumSymbol::getTypeSignature() const
-{
-    auto *priv = getPriv();
-    return priv->enumType->getTypeSignature();
-}
-
-void
-lyric_assembler::EnumSymbol::touch()
-{
-    if (getAddress().isValid())
-        return;
-    m_state->touchEnum(this);
-}
-
 lyric_object::AccessType
 lyric_assembler::EnumSymbol::getAccessType() const
 {
@@ -283,8 +268,6 @@ lyric_assembler::EnumSymbol::declareMember(
         return status;
     }
 
-    m_state->typeCache()->touchType(memberType);
-
     DataReference ref;
     ref.symbolUrl = memberUrl;
     ref.typeDef = memberType;
@@ -403,11 +386,6 @@ lyric_assembler::EnumSymbol::declareCtor(
             tempo_tracing::LogSeverity::kError,
             "ctor already defined for enum {}", m_enumUrl.toString());
 
-    auto fundamentalEnum = m_state->fundamentalCache()->getFundamentalUrl(FundamentalSymbol::Enum);
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(fundamentalEnum));
-    symbol->touch();
-
     auto callIndex = m_state->numCalls();
     auto address = CallAddress::near(callIndex);
 
@@ -445,7 +423,6 @@ lyric_assembler::EnumSymbol::prepareCtor(ConstructableInvoker &invoker)
     if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
-    callSymbol->touch();
 
     auto constructable = std::make_unique<CtorConstructable>(callSymbol, this);
     return invoker.initialize(std::move(constructable));
@@ -550,7 +527,6 @@ lyric_assembler::EnumSymbol::prepareMethod(
     if (symbol->getSymbolType() != SymbolType::CALL)
         m_state->throwAssemblerInvariant("invalid call symbol {}", method.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
-    callSymbol->touch();
 
     auto access = callSymbol->getAccessType();
 
@@ -655,7 +631,6 @@ lyric_assembler::EnumSymbol::declareImpl(const lyric_common::TypeDef &implType)
     // touch the impl type
     lyric_assembler::TypeHandle *implTypeHandle;
     TU_ASSIGN_OR_RETURN (implTypeHandle, m_state->typeCache()->getOrMakeType(implType));
-    implTypeHandle->touch();
 
     // confirm that the impl concept exists
     auto implConcept = implType.getConcreteUrl();
@@ -668,8 +643,6 @@ lyric_assembler::EnumSymbol::declareImpl(const lyric_common::TypeDef &implType)
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
         m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
     auto *conceptSymbol = cast_symbol_to_concept(symbol);
-
-    conceptSymbol->touch();
 
     auto *implCache = m_state->implCache();
 

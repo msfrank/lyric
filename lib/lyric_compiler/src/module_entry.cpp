@@ -49,7 +49,6 @@ lyric_compiler::ModuleEntry::initialize()
     auto functionClassUrl = m_state->fundamentalCache()->getFunctionUrl(0);
     if (!functionClassUrl.isValid())
         m_state->throwAssemblerInvariant("missing Function0 symbol");
-    m_state->symbolCache()->touchSymbol(functionClassUrl);
 
     lyric_assembler::TypeCache *typeCache = m_state->typeCache();
     tempo_utils::Status status;
@@ -57,11 +56,9 @@ lyric_compiler::ModuleEntry::initialize()
     // ensure that NoReturn is in the type cache
     auto returnType = lyric_common::TypeDef::noReturn();
     TU_RETURN_IF_STATUS (typeCache->getOrMakeType(returnType));
-    typeCache->touchType(returnType);
 
     lyric_assembler::TypeHandle *entryTypeHandle;
     TU_ASSIGN_OR_RETURN (entryTypeHandle, typeCache->declareFunctionType(returnType, {}, {}));
-    entryTypeHandle->touch();
 
     // create the $entry call
     lyric_common::SymbolUrl entryUrl(location, lyric_common::SymbolPath({"$entry"}));
@@ -72,7 +69,6 @@ lyric_compiler::ModuleEntry::initialize()
         delete m_entry;
         return status;
     }
-    m_entry->touch();
 
     // resolve the Namespace type
     auto namespaceType = m_state->fundamentalCache()->getFundamentalType(lyric_assembler::FundamentalSymbol::Namespace);

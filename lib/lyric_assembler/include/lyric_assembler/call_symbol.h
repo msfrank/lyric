@@ -7,8 +7,8 @@
 
 #include "abstract_resolver.h"
 #include "abstract_symbol.h"
-#include "object_state.h"
 #include "base_symbol.h"
+#include "object_state.h"
 
 namespace lyric_assembler {
 
@@ -98,8 +98,6 @@ namespace lyric_assembler {
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getAssignableType() const override;
-        TypeSignature getTypeSignature() const override;
-        void touch() override;
 
         tempo_utils::Result<ProcHandle *> defineCall(
             const ParameterPack &parameterPack,
@@ -115,9 +113,11 @@ namespace lyric_assembler {
         bool isCtor() const;
         bool isDeclOnly() const;
 
-        AbstractResolver *callResolver();
+        AbstractResolver *callResolver() const;
+        TemplateHandle *callTemplate() const;
+        const ProcHandle *callProc() const;
+
         TypeHandle *callType();
-        TemplateHandle *callTemplate();
         ProcHandle *callProc();
 
         std::vector<Parameter>::const_iterator listPlacementBegin() const;

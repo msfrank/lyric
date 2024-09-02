@@ -30,7 +30,7 @@ TEST(SymbolizeStatic, DeclareStaticVal)
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
     auto root = object.getObject();
-    ASSERT_EQ (0, root.numImports());
+    ASSERT_EQ (1, root.numImports());
     ASSERT_EQ (2, root.numSymbols());
 
     auto symbol1 = root.getSymbol(1);
@@ -60,7 +60,7 @@ TEST(SymbolizeStatic, DeclareStaticVar)
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
     auto root = object.getObject();
-    ASSERT_EQ (0, root.numImports());
+    ASSERT_EQ (1, root.numImports());
     ASSERT_EQ (2, root.numSymbols());
 
     auto symbol1 = root.getSymbol(1);

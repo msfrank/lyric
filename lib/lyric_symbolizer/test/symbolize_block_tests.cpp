@@ -2,6 +2,7 @@
 #include <gmock/gmock.h>
 
 #include <lyric_assembler/object_state.h>
+#include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_bootstrap/bootstrap_loader.h>
 #include <lyric_importer/module_cache.h>
 #include <lyric_parser/lyric_parser.h>
@@ -38,7 +39,7 @@ TEST(SymbolizeBlock, NoDefinitionsOrImports)
 
     auto root = object.getObject();
     ASSERT_EQ (0, root.numSymbols());
-    ASSERT_EQ (0, root.numImports());
+    ASSERT_EQ (1, root.numImports());
 }
 
 TEST(SymbolizeBlock, DeclareImport)
@@ -55,6 +56,7 @@ TEST(SymbolizeBlock, DeclareImport)
 
     auto symbolizeModuleResult = tester.symbolizeModule(R"(
         import "/mod1" named mod1
+        mod1.Foo()
     )");
     ASSERT_THAT (symbolizeModuleResult,
         tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
@@ -63,8 +65,17 @@ TEST(SymbolizeBlock, DeclareImport)
     auto object = symbolizeModule.getModule();
     auto root = object.getObject();
     ASSERT_EQ (0, root.numSymbols());
-    ASSERT_EQ (1, root.numImports());
+    ASSERT_EQ (2, root.numImports());
 
-    auto import1 = root.getImport(0);
-    ASSERT_EQ (lyric_common::ModuleLocation::fromString("/mod1"), import1.getImportLocation());
+    auto import0 = root.getImport(0);
+    auto import1 = root.getImport(1);
+    absl::flat_hash_set<lyric_common::ModuleLocation> actual{
+        import0.getImportLocation(),
+        import1.getImportLocation()};
+
+    absl::flat_hash_set<lyric_common::ModuleLocation> expected{
+        lyric_common::ModuleLocation::fromString("/mod1"),
+        lyric_bootstrap::preludeLocation()};
+
+    ASSERT_EQ (expected, actual);
 }

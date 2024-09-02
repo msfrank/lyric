@@ -31,7 +31,7 @@ TEST(SymbolizeDefclass, DeclareDefclass)
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
     auto root = object.getObject();
-    ASSERT_EQ (0, root.numImports());
+    ASSERT_EQ (1, root.numImports());
     ASSERT_EQ (1, root.numSymbols());
 
     auto symbol1 = root.getSymbol(0);

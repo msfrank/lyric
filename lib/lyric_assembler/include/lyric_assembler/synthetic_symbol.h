@@ -13,11 +13,10 @@ namespace lyric_assembler {
             SyntheticType syntheticType,
             const lyric_common::TypeDef &assignableType);
 
+        bool isImported() const override;
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getAssignableType() const override;
-        TypeSignature getTypeSignature() const override;
-        void touch() override;
 
         SyntheticType getSyntheticType() const;
 

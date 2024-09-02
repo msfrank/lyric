@@ -11,6 +11,12 @@ lyric_assembler::SyntheticSymbol::SyntheticSymbol(
 {
 }
 
+bool
+lyric_assembler::SyntheticSymbol::isImported() const
+{
+    return false;
+}
+
 lyric_assembler::SymbolType
 lyric_assembler::SyntheticSymbol::getSymbolType() const
 {
@@ -27,17 +33,6 @@ lyric_common::TypeDef
 lyric_assembler::SyntheticSymbol::getAssignableType() const
 {
     return m_assignableType;
-}
-
-lyric_assembler::TypeSignature
-lyric_assembler::SyntheticSymbol::getTypeSignature() const
-{
-    return TypeSignature();
-}
-
-void
-lyric_assembler::SyntheticSymbol::touch()
-{
 }
 
 lyric_assembler::SyntheticType

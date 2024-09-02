@@ -53,19 +53,13 @@ namespace lyric_assembler {
 
         bool hasImport(const lyric_common::ModuleLocation &importLocation) const;
         ImportHandle *getImport(const lyric_common::ModuleLocation &importLocation) const;
-        std::vector<lyric_common::ModuleLocation>::const_iterator importsBegin() const;
-        std::vector<lyric_common::ModuleLocation>::const_iterator importsEnd() const;
+        absl::flat_hash_map<lyric_common::ModuleLocation,ImportHandle *>::const_iterator importsBegin() const;
+        absl::flat_hash_map<lyric_common::ModuleLocation,ImportHandle *>::const_iterator importsEnd() const;
         int numImports() const;
 
         tempo_utils::Status insertImport(
             const lyric_common::ModuleLocation &importLocation,
             ImportFlags importFlags);
-        tempo_utils::Status touchImport(const lyric_common::ModuleLocation &importLocation);
-
-        lyric_common::SymbolUrl getLinkUrl(tu_uint32 address) const;
-        std::vector<RequestedLink>::const_iterator linksBegin() const;
-        std::vector<RequestedLink>::const_iterator linksEnd() const;
-        int numLinks() const;
 
     private:
         lyric_assembler::ObjectState *m_state;
@@ -74,33 +68,7 @@ namespace lyric_assembler {
         std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;
         SymbolCache *m_symbolCache;
         AssemblerTracer *m_tracer;
-        std::vector<lyric_common::ModuleLocation> m_imports;
-        std::vector<RequestedLink> m_links;
         absl::flat_hash_map<lyric_common::ModuleLocation, ImportHandle *> m_importcache;
-
-    public:
-        /**
-         * Add a requested link for the given far symbol, and update the address for the base symbol if successful.
-         *
-         * @tparam AddressType The address type of the symbol.
-         * @param baseSymbol The symbol to link to.
-         * @return Ok status if successful, otherwise failure status.
-         */
-        template<class AddressType, class PrivType>
-        tempo_utils::Status linkFarSymbol(BaseSymbol<AddressType,PrivType> *baseSymbol)
-        {
-            auto address = AddressType::far(m_links.size());
-            auto status = baseSymbol->updateAddress(address);
-            if (status.notOk())
-                return status;
-
-            RequestedLink link;
-            link.linkUrl = baseSymbol->getSymbolUrl();
-            link.linkType = baseSymbol->getLinkage();
-            m_links.push_back(link);
-
-            return AssemblerStatus::ok();
-        }
     };
 }
 

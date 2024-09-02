@@ -19,11 +19,10 @@ lyric_assembler::TemplateHandle::TemplateHandle(ObjectState *state)
 lyric_assembler::TemplateHandle::TemplateHandle(
     const lyric_common::SymbolUrl &templateUrl,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
-    TemplateAddress address,
     TemplateHandle *superTemplate,
     BlockHandle *parentBlock,
     ObjectState *state)
-    : TemplateHandle(templateUrl, templateParameters, address, parentBlock, state)
+    : TemplateHandle(templateUrl, templateParameters, parentBlock, state)
 {
     m_superTemplate = superTemplate;
     TU_ASSERT (m_superTemplate != nullptr);
@@ -32,19 +31,16 @@ lyric_assembler::TemplateHandle::TemplateHandle(
 lyric_assembler::TemplateHandle::TemplateHandle(
     const lyric_common::SymbolUrl &templateUrl,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
-    TemplateAddress address,
     BlockHandle *parentBlock,
     ObjectState *state)
     : m_templateUrl(templateUrl),
       m_templateParameters(templateParameters),
-      m_address(address),
       m_superTemplate(nullptr),
       m_parentBlock(parentBlock),
       m_state(state)
 {
     TU_ASSERT (m_templateUrl.isValid());
     TU_ASSERT (!m_templateParameters.empty());
-    TU_ASSERT (m_address.isValid());
     TU_ASSERT (m_parentBlock != nullptr);
     TU_ASSERT (m_state != nullptr);
 
@@ -126,12 +122,6 @@ lyric_assembler::TemplateHandle::resolveSingular(
     TU_RETURN_IF_STATUS (m_state->typeCache()->getOrMakeType(assignableType));
 
     return assignableType;
-}
-
-lyric_assembler::TemplateAddress
-lyric_assembler::TemplateHandle::getAddress() const
-{
-    return m_address;
 }
 
 lyric_assembler::TemplateHandle *
@@ -217,36 +207,36 @@ lyric_assembler::TemplateHandle::numPlaceholders() const
 void
 lyric_assembler::TemplateHandle::touch()
 {
-    for (const auto &placeholder : m_placeholders) {
-        TU_RAISE_IF_STATUS (m_state->typeCache()->getOrMakeType(placeholder));
-    }
-    m_state->typeCache()->touchTemplateParameters(m_templateParameters);
-
-    if (m_address.isValid())
-        return;
-
-    //TU_ASSERT (m_state->symbolCache()->hasSymbol(m_templateUrl));
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RAISE (symbol, m_state->symbolCache()->getOrImportSymbol(m_templateUrl));
-    symbol->touch();
-
-    switch (symbol->getSymbolType()) {
-        case SymbolType::EXISTENTIAL:
-            m_address = TemplateAddress(cast_symbol_to_existential(symbol)->getAddress().getAddress());
-            break;
-        case SymbolType::ACTION:
-            m_address = TemplateAddress(cast_symbol_to_action(symbol)->getAddress().getAddress());
-            break;
-        case SymbolType::CALL:
-            m_address = TemplateAddress(cast_symbol_to_call(symbol)->getAddress().getAddress());
-            break;
-        case SymbolType::CLASS:
-            m_address = TemplateAddress(cast_symbol_to_class(symbol)->getAddress().getAddress());
-            break;
-        case SymbolType::CONCEPT:
-            m_address = TemplateAddress(cast_symbol_to_concept(symbol)->getAddress().getAddress());
-            break;
-        default:
-            TU_UNREACHABLE();
-    }
+//    for (const auto &placeholder : m_placeholders) {
+//        TU_RAISE_IF_STATUS (m_state->typeCache()->getOrMakeType(placeholder));
+//    }
+//    m_state->typeCache()->touchTemplateParameters(m_templateParameters);
+//
+//    if (m_address.isValid())
+//        return;
+//
+//    //TU_ASSERT (m_state->symbolCache()->hasSymbol(m_templateUrl));
+//    lyric_assembler::AbstractSymbol *symbol;
+//    TU_ASSIGN_OR_RAISE (symbol, m_state->symbolCache()->getOrImportSymbol(m_templateUrl));
+//    symbol->touch();
+//
+//    switch (symbol->getSymbolType()) {
+//        case SymbolType::EXISTENTIAL:
+//            m_address = TemplateAddress(cast_symbol_to_existential(symbol)->getAddress().getAddress());
+//            break;
+//        case SymbolType::ACTION:
+//            m_address = TemplateAddress(cast_symbol_to_action(symbol)->getAddress().getAddress());
+//            break;
+//        case SymbolType::CALL:
+//            m_address = TemplateAddress(cast_symbol_to_call(symbol)->getAddress().getAddress());
+//            break;
+//        case SymbolType::CLASS:
+//            m_address = TemplateAddress(cast_symbol_to_class(symbol)->getAddress().getAddress());
+//            break;
+//        case SymbolType::CONCEPT:
+//            m_address = TemplateAddress(cast_symbol_to_concept(symbol)->getAddress().getAddress());
+//            break;
+//        default:
+//            TU_UNREACHABLE();
+//    }
 }

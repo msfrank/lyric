@@ -19,18 +19,13 @@ namespace lyric_assembler {
     struct ProcLexical {
         LexicalTarget lexicalTarget;
         uint32_t targetOffset;
-        CallAddress activationCall;
+        CallSymbol *activationCall;
     };
 
     class ProcHandle {
 
     public:
         explicit ProcHandle(const lyric_common::SymbolUrl &activation);
-//        ProcHandle(const lyric_common::SymbolUrl &activation, const std::vector<tu_uint8> &bytecode);
-//        ProcHandle(
-//            const lyric_common::SymbolUrl &activation,
-//            const std::vector<tu_uint8> &bytecode,
-//            int numLocals);
         ProcHandle(const lyric_common::SymbolUrl &activation, ObjectState *state);
         ProcHandle(
             const lyric_common::SymbolUrl &activation,
@@ -41,7 +36,9 @@ namespace lyric_assembler {
             ObjectState *state,
             BlockHandle *parent);
 
+        const BlockHandle *procBlock() const;
         BlockHandle *procBlock();
+        const ProcBuilder *procCode() const;
         ProcBuilder *procCode();
 
         lyric_common::SymbolUrl getActivation() const;
@@ -55,7 +52,7 @@ namespace lyric_assembler {
         LexicalOffset allocateLexical(
             LexicalTarget lexicalTarget,
             uint32_t targetOffset,
-            CallAddress activationCall);
+            CallSymbol *activationCall);
         std::vector<ProcLexical>::const_iterator lexicalsBegin() const;
         std::vector<ProcLexical>::const_iterator lexicalsEnd() const;
         int numLexicals() const;

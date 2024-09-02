@@ -5,52 +5,46 @@
 lyric_assembler::TypeHandle::TypeHandle(
     const lyric_common::SymbolUrl &concreteUrl,
     const std::vector<lyric_common::TypeDef> &typeArguments,
-    TypeAddress address,
     TypeHandle *superType,
     ObjectState *state)
     : m_superType(superType),
-      m_address(address),
-      m_signature(),
-      m_state(state)
+      m_signature()
 {
     m_typeDef = lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments);
 
-    if (m_address.isValid()) {
-        std::vector<TypeAddress> signature;
-        signature.insert(signature.cbegin(), address);
-        for (auto *super = m_superType; super != nullptr; super = super->m_superType) {
-            auto superAddress = super->getAddress();
-            TU_ASSERT (superAddress.isValid());
-            signature.insert(signature.cbegin(), superAddress);
-        }
-        m_signature = TypeSignature(signature);
-    }
+//    if (m_address.isValid()) {
+//        std::vector<TypeAddress> signature;
+//        signature.insert(signature.cbegin(), address);
+//        for (auto *super = m_superType; super != nullptr; super = super->m_superType) {
+//            auto superAddress = super->getAddress();
+//            TU_ASSERT (superAddress.isValid());
+//            signature.insert(signature.cbegin(), superAddress);
+//        }
+//        m_signature = TypeSignature(signature);
+//    }
 }
 
 lyric_assembler::TypeHandle::TypeHandle(
     int placeholderIndex,
     const lyric_common::SymbolUrl &templateUrl,
     const std::vector<lyric_common::TypeDef> &typeArguments,
-    TypeAddress address,
     ObjectState *state)
     : m_superType(nullptr),
-      m_address(address),
-      m_signature(),
-      m_state(state)
+      m_signature()
 {
     m_typeDef = lyric_common::TypeDef::forPlaceholder(placeholderIndex, templateUrl, typeArguments);
 
-    if (m_address.isValid()) {
-        std::vector<TypeAddress> signature;
-        signature.insert(signature.cbegin(), address);
-        // FIXME
-        for (auto *superType = m_superType; superType != nullptr; superType = superType->m_superType) {
-            auto superAddress = superType->getAddress();
-            TU_ASSERT (superAddress.isValid());
-            signature.insert(signature.cbegin(), superAddress);
-        }
-        m_signature = TypeSignature(signature);
-    }
+//    if (m_address.isValid()) {
+//        std::vector<TypeAddress> signature;
+//        signature.insert(signature.cbegin(), address);
+//        // FIXME
+//        for (auto *superType = m_superType; superType != nullptr; superType = superType->m_superType) {
+//            auto superAddress = superType->getAddress();
+//            TU_ASSERT (superAddress.isValid());
+//            signature.insert(signature.cbegin(), superAddress);
+//        }
+//        m_signature = TypeSignature(signature);
+//    }
 }
 
 lyric_assembler::TypeHandle::TypeHandle(
@@ -59,9 +53,7 @@ lyric_assembler::TypeHandle::TypeHandle(
     ObjectState *state)
     : m_typeDef(typeDef),
       m_superType(superType),
-      m_address(),
-      m_signature(),
-      m_state(state)
+      m_signature()
 {
     TU_ASSERT (state != nullptr);
 }
@@ -118,43 +110,29 @@ lyric_assembler::TypeHandle::getSuperType() const
     return m_superType;
 }
 
-lyric_assembler::TypeAddress
-lyric_assembler::TypeHandle::getAddress() const
-{
-    return m_address;
-}
+//lyric_assembler::TypeSignature
+//lyric_assembler::TypeHandle::getTypeSignature() const
+//{
+//    return m_signature;
+//}
 
-lyric_assembler::TypeSignature
-lyric_assembler::TypeHandle::getTypeSignature() const
-{
-    return m_signature;
-}
-
-void
-lyric_assembler::TypeHandle::touch()     // NOLINT(misc-no-recursion)
-{
-    if (m_address.isValid())
-        return;
-    m_state->typeCache()->touchType(this);
-}
-
-tempo_utils::Status
-lyric_assembler::TypeHandle::updateAddress(TypeAddress address)
-{
-    TU_ASSERT (address.isValid());
-    if (m_address.isValid())
-        m_state->throwAssemblerInvariant(
-            "address is already set for type {}", m_typeDef.toString());
-    m_address = address;
-
-    std::vector<TypeAddress> signature{};
-    signature.insert(signature.cbegin(), m_address);
-    for (auto *superType = m_superType; superType != nullptr; superType = superType->m_superType) {
-        address = superType->getAddress();
-        TU_ASSERT (address.isValid());
-        signature.insert(signature.cbegin(), address);
-    }
-
-    m_signature = TypeSignature(signature);
-    return AssemblerStatus::ok();
-}
+//tempo_utils::Status
+//lyric_assembler::TypeHandle::updateAddress(TypeAddress address)
+//{
+//    TU_ASSERT (address.isValid());
+//    if (m_address.isValid())
+//        m_state->throwAssemblerInvariant(
+//            "address is already set for type {}", m_typeDef.toString());
+//    m_address = address;
+//
+//    std::vector<TypeAddress> signature{};
+//    signature.insert(signature.cbegin(), m_address);
+//    for (auto *superType = m_superType; superType != nullptr; superType = superType->m_superType) {
+//        address = superType->getAddress();
+//        TU_ASSERT (address.isValid());
+//        signature.insert(signature.cbegin(), address);
+//    }
+//
+//    m_signature = TypeSignature(signature);
+//    return AssemblerStatus::ok();
+//}

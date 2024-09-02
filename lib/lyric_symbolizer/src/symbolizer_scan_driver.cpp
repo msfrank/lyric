@@ -170,7 +170,6 @@ lyric_symbolizer::SymbolizerScanDriver::declareImport(const lyric_parser::Archet
         return {};
 
     TU_RETURN_IF_NOT_OK (importCache->insertImport(importLocation, lyric_assembler::ImportFlags::ApiLinkage));
-    TU_RETURN_IF_NOT_OK (importCache->touchImport(importLocation));
 
     TU_LOG_INFO << "imported module " << importLocation;
     return {};
