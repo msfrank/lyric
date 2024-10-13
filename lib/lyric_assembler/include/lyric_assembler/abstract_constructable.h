@@ -11,6 +11,7 @@
 namespace lyric_assembler {
 
     class BlockHandle;
+    class CodeFragment;
     class TemplateHandle;
 
     class AbstractConstructable : public AbstractPlacement {
@@ -19,11 +20,13 @@ namespace lyric_assembler {
         virtual tempo_utils::Result<lyric_common::TypeDef> invoke(
             BlockHandle *block,
             const AbstractCallsiteReifier &reifier,
+            CodeFragment *fragment,
             tu_uint8 flags) = 0;
 
         virtual tempo_utils::Result<lyric_common::TypeDef> invokeNew(
             BlockHandle *block,
             const AbstractCallsiteReifier &reifier,
+            CodeFragment *fragment,
             tu_uint8 flags) = 0;
     };
 }

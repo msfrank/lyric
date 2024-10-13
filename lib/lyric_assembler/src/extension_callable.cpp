@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/code_fragment.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/extension_callable.h>
 #include <lyric_assembler/internal/call_inline.h>
@@ -100,7 +101,8 @@ lyric_assembler::ExtensionCallable::getInitializer(const std::string &name) cons
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::ExtensionCallable::invoke(
     BlockHandle *block,
-    const AbstractCallsiteReifier &reifier)
+    const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment)
 {
     checkValid();
 
@@ -113,14 +115,12 @@ lyric_assembler::ExtensionCallable::invoke(
     switch (m_type) {
 
         case InvokeType::INLINE: {
-            TU_RETURN_IF_NOT_OK (internal::call_inline(m_callSymbol, block->blockProc()));
+            TU_RETURN_IF_NOT_OK (internal::call_inline(m_callSymbol, block, fragment));
             return reifier.reifyResult(m_callSymbol->getReturnType());
         }
 
         case InvokeType::VIRTUAL: {
-            auto *blockCode = block->blockCode();
-            auto *fragment = blockCode->rootFragment();
-            TU_RETURN_IF_NOT_OK (block->load(m_implRef));
+            TU_RETURN_IF_NOT_OK (fragment->loadRef(m_implRef));
             TU_RETURN_IF_NOT_OK (fragment->callVirtual(
                 m_callSymbol, placementSize, lyric_object::CALL_RECEIVER_FOLLOWS));
             return reifier.reifyResult(m_callSymbol->getReturnType());

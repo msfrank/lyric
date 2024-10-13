@@ -50,8 +50,7 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     priv->isDeclOnly = false;
     priv->namespaceType = namespaceType;
     priv->superNamespace = nullptr;
-    priv->namespaceBlock = std::make_unique<BlockHandle>(
-        this, entryProc, entryProc->procCode(), entryProc->procBlock(), state, true);
+    priv->namespaceBlock = std::make_unique<BlockHandle>(this, entryProc, entryProc->procBlock(), state, true);
 
     TU_ASSERT (priv->namespaceType != nullptr);
 }

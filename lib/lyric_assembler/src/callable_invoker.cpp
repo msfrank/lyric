@@ -25,10 +25,11 @@ lyric_assembler::CallableInvoker::getCallable() const
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::CallableInvoker::invoke(
     BlockHandle *block,
-    const AbstractCallsiteReifier &reifier)
+    const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment)
 {
     if (m_callable == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "callable is not initialized");
-    return m_callable->invoke(block, reifier);
+    return m_callable->invoke(block, reifier, fragment);
 }

@@ -31,6 +31,8 @@ namespace lyric_analyzer {
             const lyric_parser::ArchetypeNode *node,
             const lyric_rewriter::VisitorContext &ctx) override;
 
+        tempo_utils::Status finish() override;
+
         lyric_typing::TypeSystem *getTypeSystem() const;
 
         AbstractAnalyzerContext *peekContext();

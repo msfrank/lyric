@@ -5,16 +5,20 @@
 #include <lyric_rewriter/abstract_scan_driver.h>
 #include <lyric_typing/type_system.h>
 
-#include "abstract_compiler_context.h"
+#include "visitor_context.h"
 
 namespace lyric_compiler {
+
+//    // forward declarations
+//    class BaseGrouping;
+//    class EnterContext;
 
     class CompilerScanDriver : public lyric_rewriter::AbstractScanDriver {
     public:
         explicit CompilerScanDriver(lyric_assembler::ObjectState *state);
         ~CompilerScanDriver() override;
 
-        tempo_utils::Status initialize();
+        tempo_utils::Status initialize(std::unique_ptr<BaseGrouping> &&rootGrouping);
 
         tempo_utils::Status arrange(
             const lyric_parser::ArchetypeState *state,
@@ -31,32 +35,44 @@ namespace lyric_compiler {
             const lyric_parser::ArchetypeNode *node,
             const lyric_rewriter::VisitorContext &ctx) override;
 
+        tempo_utils::Status finish() override;
+
+        lyric_assembler::ObjectState *getState() const;
+        lyric_assembler::FundamentalCache *getFundamentalCache() const;
+        lyric_assembler::ImplCache *getImplCache() const;
+        lyric_assembler::ImportCache *getImportCache() const;
+        lyric_assembler::LiteralCache *getLiteralCache() const;
+        lyric_assembler::SymbolCache *getSymbolCache() const;
+        lyric_assembler::TypeCache *getTypeCache() const;
+        lyric_assembler::NamespaceSymbol *getGlobalNamespace() const;
+        lyric_assembler::CallSymbol *getEntryCall() const;
         lyric_typing::TypeSystem *getTypeSystem() const;
 
-        AbstractCompilerContext *peekContext();
-        tempo_utils::Status pushContext(std::unique_ptr<AbstractCompilerContext> ctx);
-        tempo_utils::Status popContext();
+        BaseGrouping *peekGrouping();
+        tempo_utils::Status popGrouping();
+        tu_uint32 numGroupings() const;
 
         lyric_common::TypeDef peekResult();
         tempo_utils::Status pushResult(const lyric_common::TypeDef &result);
         tempo_utils::Status popResult();
-
-//        tempo_utils::Status declareStatic(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
-//        tempo_utils::Status pushFunction(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
-//        tempo_utils::Status pushNamespace(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
-//        tempo_utils::Status pushClass(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
-//        tempo_utils::Status pushConcept(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
-//        tempo_utils::Status pushEnum(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
-//        tempo_utils::Status pushInstance(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
-//        tempo_utils::Status pushStruct(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
+        tu_uint32 numResults() const;
 
     private:
         lyric_assembler::ObjectState *m_state;
-        lyric_assembler::NamespaceSymbol *m_root;
-        lyric_assembler::CallSymbol *m_entry;
+        lyric_assembler::CallSymbol *m_entryCall;
+        lyric_assembler::NamespaceSymbol *m_globalNamespace;
         lyric_typing::TypeSystem *m_typeSystem;
-        std::vector<std::unique_ptr<AbstractCompilerContext>> m_contexts;
         std::stack<lyric_common::TypeDef> m_results;
+
+        struct GroupingData {
+            std::unique_ptr<BaseGrouping> grouping;
+            const lyric_parser::ArchetypeNode *node = nullptr;
+            bool pending = true;
+        };
+        std::vector<std::unique_ptr<GroupingData>> m_groupings;
+
+        friend class EnterContext;
+        friend class ExitContext;
     };
 }
 

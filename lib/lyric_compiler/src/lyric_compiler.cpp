@@ -1,9 +1,11 @@
 
 #include <lyric_assembler/object_state.h>
 #include <lyric_compiler/compiler_scan_driver.h>
+#include <lyric_compiler/entry_handler.h>
 #include <lyric_compiler/internal/compile_module.h>
 #include <lyric_compiler/lyric_compiler.h>
 #include <lyric_parser/node_walker.h>
+#include <lyric_rewriter/lyric_rewriter.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_compiler::LyricCompiler::LyricCompiler(
@@ -47,11 +49,19 @@ lyric_compiler::LyricCompiler::compileModule(
         // construct the compiler state
         lyric_assembler::ObjectState objectState(
             location, m_systemModuleCache, &scopeManager, objectStateOptions);
-
-        // initialize the assembler
         TU_RETURN_IF_NOT_OK (objectState.initialize());
 
+        // construct the driver
         auto compilerDriver = std::make_shared<CompilerScanDriver>(&objectState);
+        auto rootHandler = std::make_unique<EntryHandler>(compilerDriver.get());
+        TU_RETURN_IF_NOT_OK (compilerDriver->initialize(std::move(rootHandler)));
+
+        lyric_rewriter::RewriterOptions rewriterOptions;
+        lyric_rewriter::LyricRewriter rewriter(rewriterOptions);
+        TU_RETURN_IF_NOT_OK (rewriter.scanArchetype(archetype, location.toUrl(), compilerDriver, recorder));
+
+        // construct object from object state and return it
+        return objectState.toObject();
 
 //        // load env symbols into the assembly state
 //        for (auto iterator = m_options.envSymbols.cbegin(); iterator != m_options.envSymbols.cend(); iterator++) {
@@ -59,17 +69,17 @@ lyric_compiler::LyricCompiler::compileModule(
 //            if (!status.isOk())
 //                return status;
 //        }
-
-        // define the module entry point
-        ModuleEntry moduleEntry(&objectState);
-        TU_RETURN_IF_NOT_OK (moduleEntry.initialize());
-
-        // compile single module into object
-        lyric_object::LyricObject object;
-        TU_ASSIGN_OR_RETURN (object, internal::compile_module(walker, moduleEntry, m_options.touchExternalSymbols));
-
-        TU_ASSERT (object.isValid());
-        return object;
+//
+//        // define the module entry point
+//        ModuleEntry moduleEntry(&objectState);
+//        TU_RETURN_IF_NOT_OK (moduleEntry.initialize());
+//
+//        // compile single module into object
+//        lyric_object::LyricObject object;
+//        TU_ASSIGN_OR_RETURN (object, internal::compile_module(walker, moduleEntry, m_options.touchExternalSymbols));
+//
+//        TU_ASSERT (object.isValid());
+//        return object;
 
     } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();

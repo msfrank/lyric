@@ -26,22 +26,24 @@ tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::ConstructableInvoker::invoke(
     BlockHandle *block,
     const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment,
     tu_uint8 flags)
 {
     if (m_constructable == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "constructable is not initialized");
-    return m_constructable->invoke(block, reifier, flags);
+    return m_constructable->invoke(block, reifier, fragment, flags);
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::ConstructableInvoker::invokeNew(
     BlockHandle *block,
     const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment,
     tu_uint8 flags)
 {
     if (m_constructable == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "constructable is not initialized");
-    return m_constructable->invokeNew(block, reifier, flags);
+    return m_constructable->invokeNew(block, reifier, fragment, flags);
 }

@@ -76,7 +76,8 @@ TestCallable::getInitializer(const std::string &name) const
 tempo_utils::Result<lyric_common::TypeDef>
 TestCallable::invoke(
     lyric_assembler::BlockHandle *block,
-    const lyric_assembler::AbstractCallsiteReifier &reifier)
+    const lyric_assembler::AbstractCallsiteReifier &reifier,
+    lyric_assembler::CodeFragment *fragment)
 {
     return tempo_utils::GenericStatus::forCondition(tempo_utils::GenericCondition::kUnimplemented);
 }

@@ -2,11 +2,15 @@
 #include <lyric_assembler/argument_variable.h>
 #include <lyric_assembler/assembler_instructions.h>
 #include <lyric_assembler/assembler_result.h>
+#include <lyric_assembler/code_fragment.h>
 #include <lyric_assembler/internal/call_inline.h>
 #include <lyric_assembler/proc_builder.h>
 
 tempo_utils::Status
-lyric_assembler::internal::call_inline(CallSymbol *callSymbol, ProcHandle *procHandle)
+lyric_assembler::internal::call_inline(
+    CallSymbol *callSymbol,
+    BlockHandle *block,
+    CodeFragment *fragment)
 {
     TU_ASSERT (callSymbol != nullptr);
     if (!callSymbol->isInline())
@@ -16,9 +20,7 @@ lyric_assembler::internal::call_inline(CallSymbol *callSymbol, ProcHandle *procH
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid symbol for inline call");
 
-    auto *dstBlock = procHandle->procBlock();
-    auto *dstCode = dstBlock->blockCode();
-    auto *dstFragment = dstCode->rootFragment();
+    auto *dstFragment = fragment;
 
     absl::flat_hash_map<tu_uint32,DataReference> argToTmp;
     std::stack<tu_uint32> args;
@@ -29,7 +31,7 @@ lyric_assembler::internal::call_inline(CallSymbol *callSymbol, ProcHandle *procH
         TU_ASSERT (!argToTmp.contains(p.index));
         tu_uint32 address = p.index;
         DataReference ref;
-        TU_ASSIGN_OR_RETURN (ref, dstBlock->declareTemporary(p.typeDef, /* isVariable= */ true));
+        TU_ASSIGN_OR_RETURN (ref, block->declareTemporary(p.typeDef, /* isVariable= */ true));
         argToTmp[address] = ref;
         args.push(address);
     }
@@ -40,7 +42,7 @@ lyric_assembler::internal::call_inline(CallSymbol *callSymbol, ProcHandle *procH
         TU_ASSERT (!argToTmp.contains(p.index));
         tu_uint32 address = p.index;
         DataReference ref;
-        TU_ASSIGN_OR_RETURN (ref, dstBlock->declareTemporary(p.typeDef, /* isVariable= */ true));
+        TU_ASSIGN_OR_RETURN (ref, block->declareTemporary(p.typeDef, /* isVariable= */ true));
         argToTmp[address] = ref;
         args.push(address);
     }

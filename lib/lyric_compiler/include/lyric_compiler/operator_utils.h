@@ -12,11 +12,13 @@ namespace lyric_compiler {
     tempo_utils::Status compile_unary_operator(
         lyric_schema::LyricAstId operationId,
         lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
     tempo_utils::Status compile_binary_operator(
         lyric_schema::LyricAstId operationId,
         lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 }
 #endif // LYRIC_COMPILER_OPERATOR_UTILS_H

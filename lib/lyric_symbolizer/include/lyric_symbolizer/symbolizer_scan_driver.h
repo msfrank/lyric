@@ -25,6 +25,8 @@ namespace lyric_symbolizer {
             const lyric_parser::ArchetypeNode *node,
             const lyric_rewriter::VisitorContext &ctx) override;
 
+        tempo_utils::Status finish() override;
+
     private:
         lyric_assembler::ObjectState *m_state;
         lyric_assembler::UndeclaredSymbol *m_entry;

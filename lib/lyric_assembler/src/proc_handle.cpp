@@ -69,7 +69,7 @@ lyric_assembler::ProcHandle::ProcHandle(
 {
     TU_ASSERT (state != nullptr);
     m_code = std::make_unique<ProcBuilder>(this, state);
-    m_block = std::make_unique<BlockHandle>(this, m_code.get(), state, true);
+    m_block = std::make_unique<BlockHandle>(this, state, true);
 }
 
 /**
@@ -95,7 +95,7 @@ lyric_assembler::ProcHandle::ProcHandle(
     TU_ASSERT (state != nullptr);
     TU_ASSERT (parent != nullptr);
     m_code = std::make_unique<ProcBuilder>(this, state);
-    m_block = std::make_unique<BlockHandle>(initialBindings, this, m_code.get(), parent, state);
+    m_block = std::make_unique<BlockHandle>(initialBindings, this, parent, state);
 }
 
 lyric_assembler::BlockHandle *

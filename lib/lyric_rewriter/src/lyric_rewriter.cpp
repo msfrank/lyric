@@ -103,6 +103,7 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
         // rewrite archetype
         RewriteProcessor processor;
         TU_RETURN_IF_NOT_OK (processor.process(&archetypeState, visitor));
+        TU_RETURN_IF_NOT_OK (rewriteDriver->finish());
 
         // serialize state
         lyric_parser::LyricArchetype rewritten;
@@ -200,7 +201,8 @@ lyric_rewriter::LyricRewriter::scanArchetype(
 
         // scan archetype
         RewriteProcessor processor;
-        return processor.process(&archetypeState, visitor);
+        TU_RETURN_IF_NOT_OK (processor.process(&archetypeState, visitor));
+        return scanDriver->finish();
 
     } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();

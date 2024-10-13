@@ -24,8 +24,9 @@ TEST(CodeFragment, ImmediateNil)
 
     ASSERT_THAT (root->immediateNil(), tempo_test::IsOk());
 
+    lyric_assembler::ObjectWriter objectWriter(&objectState);
     lyric_object::BytecodeBuilder bytecodeBuilder;
-    ASSERT_THAT (procCode->build(bytecodeBuilder), tempo_test::IsOk());
+    ASSERT_THAT (procCode->build(objectWriter, bytecodeBuilder), tempo_test::IsOk());
 
     auto bytecode = bytecodeBuilder.getBytecode();
     lyric_object::BytecodeIterator it(bytecode.data(), bytecode.size());
@@ -59,8 +60,9 @@ TEST(CodeFragment, UnconditionalJump)
     TU_ASSIGN_OR_RAISE (target, root->unconditionalJump());
     ASSERT_THAT (root->patchTarget(target, label), tempo_test::IsOk());
 
+    lyric_assembler::ObjectWriter objectWriter(&objectState);
     lyric_object::BytecodeBuilder bytecodeBuilder;
-    ASSERT_THAT (procCode->build(bytecodeBuilder), tempo_test::IsOk());
+    ASSERT_THAT (procCode->build(objectWriter, bytecodeBuilder), tempo_test::IsOk());
 
     auto bytecode = bytecodeBuilder.getBytecode();
     lyric_object::BytecodeIterator it(bytecode.data(), bytecode.size());

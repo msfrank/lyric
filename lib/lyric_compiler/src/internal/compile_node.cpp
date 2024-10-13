@@ -85,8 +85,6 @@ lyric_compiler::internal::compile_expression(
             return compile_deref_call(block, block, walker, moduleEntry);
         case lyric_schema::LyricAstId::New:
             return compile_new(block, walker, moduleEntry);
-        //case lyric_schema::LyricAstId::Data:
-        //    return compile_data(block, walker, moduleEntry);
         case lyric_schema::LyricAstId::Cond:
             return compile_cond(block, walker, moduleEntry);
         case lyric_schema::LyricAstId::Match:

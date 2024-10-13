@@ -47,6 +47,12 @@ lyric_rewriter::MacroRewriteDriver::enter(
 }
 
 tempo_utils::Status
+lyric_rewriter::MacroRewriteDriver::finish()
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_rewriter::MacroRewriteDriver::rewriteMacroList(
     lyric_parser::ArchetypeNode *macroListNode,
     MacroBlock &macroBlock)

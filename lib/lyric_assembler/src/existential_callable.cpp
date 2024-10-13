@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/code_fragment.h>
 #include <lyric_assembler/existential_callable.h>
 #include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/internal/call_inline.h>
@@ -108,7 +109,8 @@ lyric_assembler::ExistentialCallable::getInitializer(const std::string &name) co
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::ExistentialCallable::invoke(
     BlockHandle *block,
-    const AbstractCallsiteReifier &reifier)
+    const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment)
 {
     checkValid();
 
@@ -121,13 +123,11 @@ lyric_assembler::ExistentialCallable::invoke(
     switch (m_type) {
 
         case InvokeType::INLINE: {
-            TU_RETURN_IF_NOT_OK (internal::call_inline(m_callSymbol, block->blockProc()));
+            TU_RETURN_IF_NOT_OK (internal::call_inline(m_callSymbol, block, fragment));
             return reifier.reifyResult(m_callSymbol->getReturnType());
         }
 
         case InvokeType::VIRTUAL: {
-            auto *blockCode = block->blockCode();
-            auto *fragment = blockCode->rootFragment();
             TU_RETURN_IF_NOT_OK (fragment->loadDescriptor(m_existentialSymbol));
             TU_RETURN_IF_NOT_OK (fragment->callExistential(m_callSymbol, placementSize, 0));
             return reifier.reifyResult(m_callSymbol->getReturnType());

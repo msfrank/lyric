@@ -1,6 +1,7 @@
 
 #include <lyric_assembler/action_callable.h>
 #include <lyric_assembler/action_symbol.h>
+#include <lyric_assembler/code_fragment.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/template_handle.h>
 
@@ -91,7 +92,10 @@ lyric_assembler::ActionCallable::getInitializer(const std::string &name) const
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
-lyric_assembler::ActionCallable::invoke(BlockHandle *block, const AbstractCallsiteReifier &reifier)
+lyric_assembler::ActionCallable::invoke(
+    BlockHandle *block,
+    const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment)
 {
     checkValid();
 
@@ -100,9 +104,6 @@ lyric_assembler::ActionCallable::invoke(BlockHandle *block, const AbstractCallsi
         return block->logAndContinue(AssemblerCondition::kSyntaxError,
             tempo_tracing::LogSeverity::kError,
             "too many call arguments");
-
-    auto *code = block->blockCode();
-    auto *fragment = code->rootFragment();
 
     TU_RETURN_IF_NOT_OK (fragment->loadDescriptor(m_conceptSymbol));
     TU_RETURN_IF_NOT_OK (fragment->callConcept(m_actionSymbol, placementSize, 0));

@@ -31,7 +31,8 @@ namespace lyric_assembler {
 
         tempo_utils::Result<lyric_common::TypeDef> invoke(
             BlockHandle *block,
-            const AbstractCallsiteReifier &reifier) override;
+            const AbstractCallsiteReifier &reifier,
+            CodeFragment *fragment) override;
 
     private:
         ActionSymbol *m_actionSymbol;

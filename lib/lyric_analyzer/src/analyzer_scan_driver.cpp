@@ -125,6 +125,12 @@ lyric_analyzer::AnalyzerScanDriver::exit(
     return analyzerContext->exit(state, node, ctx);
 }
 
+tempo_utils::Status
+lyric_analyzer::AnalyzerScanDriver::finish()
+{
+    return {};
+}
+
 lyric_typing::TypeSystem *
 lyric_analyzer::AnalyzerScanDriver::getTypeSystem() const
 {

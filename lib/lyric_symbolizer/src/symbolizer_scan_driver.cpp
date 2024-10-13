@@ -96,6 +96,12 @@ lyric_symbolizer::SymbolizerScanDriver::exit(
 }
 
 tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::finish()
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::ArchetypeNode *node)
 {
     if (!m_symbolPath.empty())

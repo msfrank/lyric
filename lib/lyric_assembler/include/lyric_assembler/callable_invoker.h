@@ -20,7 +20,8 @@ namespace lyric_assembler {
 
         tempo_utils::Result<lyric_common::TypeDef> invoke(
             BlockHandle *block,
-            const AbstractCallsiteReifier &reifier);
+            const AbstractCallsiteReifier &reifier,
+            CodeFragment *fragment);
 
     private:
         std::unique_ptr<AbstractCallable> m_callable;

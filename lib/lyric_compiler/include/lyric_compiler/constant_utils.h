@@ -9,50 +9,60 @@
 
 namespace lyric_compiler {
 
-    tempo_utils::Status compile_nil(
+    tempo_utils::Status constant_nil(
         lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
-    tempo_utils::Status compile_undef(
+    tempo_utils::Status constant_undef(
         lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
-    tempo_utils::Status compile_true(
+    tempo_utils::Status constant_true(
         lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
-    tempo_utils::Status compile_false(
+    tempo_utils::Status constant_false(
         lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
-    tempo_utils::Status compile_char(
+    tempo_utils::Status constant_char(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
-    tempo_utils::Status compile_integer(
+    tempo_utils::Status constant_integer(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
-    tempo_utils::Status compile_float(
+    tempo_utils::Status constant_float(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
-    tempo_utils::Status compile_string(
+    tempo_utils::Status constant_string(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
-    tempo_utils::Status compile_url(
+    tempo_utils::Status constant_url(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
-    tempo_utils::Status compile_symbol(
+    tempo_utils::Status constant_symbol(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 }
 

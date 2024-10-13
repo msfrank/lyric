@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/code_fragment.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/ctor_constructable.h>
 #include <lyric_assembler/enum_symbol.h>
@@ -14,54 +15,6 @@ lyric_assembler::CtorConstructable::CtorConstructable()
       m_newSymbol(nullptr)
 {
 }
-
-//lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, ClassSymbol *symbol)
-//    : CtorConstructable(ctor)
-//{
-//    TU_ASSERT (symbol != nullptr);
-//    ctor->touch();
-//    symbol->touch();
-//    m_newType = lyric_object::NEW_CLASS;
-//    m_newAddress = symbol->getAddress().getAddress();
-//    m_ctorAddress = ctor->getAddress();
-//    m_ctorType = symbol->getTypeDef();
-//}
-//
-//lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, EnumSymbol *symbol)
-//    : CtorConstructable(ctor)
-//{
-//    TU_ASSERT (symbol != nullptr);
-//    ctor->touch();
-//    symbol->touch();
-//    m_newType = lyric_object::NEW_ENUM;
-//    m_newAddress = symbol->getAddress().getAddress();
-//    m_ctorAddress = ctor->getAddress();
-//    m_ctorType = symbol->getTypeDef();
-//}
-//
-//lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, InstanceSymbol *symbol)
-//    : CtorConstructable(ctor)
-//{
-//    TU_ASSERT (symbol != nullptr);
-//    ctor->touch();
-//    symbol->touch();
-//    m_newType = lyric_object::NEW_INSTANCE;
-//    m_newAddress = symbol->getAddress().getAddress();
-//    m_ctorAddress = ctor->getAddress();
-//    m_ctorType = symbol->getTypeDef();
-//}
-//
-//lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctor, StructSymbol *symbol)
-//    : CtorConstructable(ctor)
-//{
-//    TU_ASSERT (symbol != nullptr);
-//    ctor->touch();
-//    symbol->touch();
-//    m_newType = lyric_object::NEW_STRUCT;
-//    m_newAddress = symbol->getAddress().getAddress();
-//    m_ctorAddress = ctor->getAddress();
-//    m_ctorType = symbol->getTypeDef();
-//}
 
 lyric_assembler::CtorConstructable::CtorConstructable(CallSymbol *ctorSymbol, AbstractSymbol *newSymbol)
     : m_ctorSymbol(ctorSymbol),
@@ -145,6 +98,7 @@ tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::CtorConstructable::invoke(
     BlockHandle *block,
     const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment,
     tu_uint8 flags)
 {
     checkValid();
@@ -162,9 +116,6 @@ lyric_assembler::CtorConstructable::invoke(
             tempo_tracing::LogSeverity::kError,
             "too many call arguments");
 
-    auto *code = block->blockCode();
-    auto *fragment = code->rootFragment();
-
     TU_RETURN_IF_NOT_OK (fragment->callVirtual(m_ctorSymbol, placementSize, callFlags));
     return reifier.reifyResult(m_newSymbol->getTypeDef());
 }
@@ -173,6 +124,7 @@ tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::CtorConstructable::invokeNew(
     BlockHandle *block,
     const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment,
     tu_uint8 flags)
 {
     checkValid();
@@ -186,9 +138,6 @@ lyric_assembler::CtorConstructable::invokeNew(
         return block->logAndContinue(AssemblerCondition::kSyntaxError,
             tempo_tracing::LogSeverity::kError,
             "too many call arguments");
-
-    auto *code = block->blockCode();
-    auto *fragment = code->rootFragment();
 
     TU_RETURN_IF_NOT_OK (fragment->constructNew(m_newSymbol, placementSize, callFlags));
     return reifier.reifyResult(m_newSymbol->getTypeDef());

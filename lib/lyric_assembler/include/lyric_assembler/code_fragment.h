@@ -61,7 +61,7 @@ namespace lyric_assembler {
         tempo_utils::Status loadThis();
         tempo_utils::Status loadType(const lyric_common::TypeDef &loadType);
         tempo_utils::Status storeData(AbstractSymbol *symbol);
-        tempo_utils::Status storeRef(const DataReference &ref);
+        tempo_utils::Status storeRef(const DataReference &ref, bool initialStore = false);
 
         // stack manipulation instructions
         tempo_utils::Status popValue();

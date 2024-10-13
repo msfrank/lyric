@@ -25,6 +25,8 @@ namespace lyric_rewriter {
             lyric_parser::ArchetypeState *state,
             lyric_parser::ArchetypeNode *node,
             const VisitorContext &ctx) = 0;
+
+        virtual tempo_utils::Status finish() = 0;
     };
 }
 

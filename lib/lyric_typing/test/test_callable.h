@@ -28,7 +28,8 @@ public:
 
     tempo_utils::Result<lyric_common::TypeDef> invoke(
         lyric_assembler::BlockHandle *block,
-        const lyric_assembler::AbstractCallsiteReifier &reifier) override;
+        const lyric_assembler::AbstractCallsiteReifier &reifier,
+        lyric_assembler::CodeFragment *fragment) override;
 
 private:
     lyric_assembler::TemplateHandle *m_templateHandle;

@@ -25,6 +25,8 @@ namespace lyric_rewriter {
             lyric_parser::ArchetypeNode *node,
             const VisitorContext &ctx) override;
 
+        tempo_utils::Status finish() override;
+
         tempo_utils::Status rewriteMacroList(
             lyric_parser::ArchetypeNode *macroListNode,
             MacroBlock &macroBlock);

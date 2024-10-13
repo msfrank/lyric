@@ -29,7 +29,6 @@ namespace lyric_assembler {
     public:
         BlockHandle(
             ProcHandle *blockProc,
-            ProcBuilder *blockCode,
             ObjectState *state,
             bool isRoot);
         BlockHandle(
@@ -39,19 +38,16 @@ namespace lyric_assembler {
         BlockHandle(
             NamespaceSymbol *blockNs,
             ProcHandle *blockProc,
-            ProcBuilder *blockCode,
             BlockHandle *parentBlock,
             ObjectState *state,
             bool isRoot = false);
         BlockHandle(
             ProcHandle *blockProc,
-            ProcBuilder *blockCode,
             BlockHandle *parentBlock,
             ObjectState *state);
         BlockHandle(
             const absl::flat_hash_map<std::string, SymbolBinding> &initialBindings,
             ProcHandle *blockProc,
-            ProcBuilder *blockCode,
             BlockHandle *parentBlock,
             ObjectState *state);
         BlockHandle(
@@ -61,7 +57,6 @@ namespace lyric_assembler {
 
         NamespaceSymbol *blockNs();
         ProcHandle *blockProc();
-        ProcBuilder *blockCode();
         BlockHandle *blockParent();
         ObjectState *blockState();
         bool isRoot() const;
@@ -108,9 +103,6 @@ namespace lyric_assembler {
             bool declOnly = false);
 
         tempo_utils::Result<DataReference> resolveReference(const std::string &name);
-
-        tempo_utils::Status load(const DataReference &ref);
-        tempo_utils::Status store(const DataReference &ref, bool initialStore = false);
 
         tempo_utils::Result<CallSymbol *> declareFunction(
             const std::string &name,
@@ -217,7 +209,6 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_definition;
         NamespaceSymbol *m_blockNs;
         ProcHandle *m_blockProc;
-        ProcBuilder *m_blockCode;
         BlockHandle *m_parentBlock;
         ObjectState *m_state;
         bool m_isRoot;

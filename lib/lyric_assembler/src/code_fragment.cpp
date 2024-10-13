@@ -95,6 +95,8 @@ lyric_assembler::CodeFragment::makeFragment()
 tempo_utils::Status
 lyric_assembler::CodeFragment::insertFragment(int index, std::unique_ptr<CodeFragment> &&fragment)
 {
+    TU_ASSERT (fragment != nullptr);
+
     if (index >= m_statements.size())
         return appendFragment(std::move(fragment));
 
@@ -111,6 +113,8 @@ lyric_assembler::CodeFragment::insertFragment(int index, std::unique_ptr<CodeFra
 tempo_utils::Status
 lyric_assembler::CodeFragment::appendFragment(std::unique_ptr<CodeFragment> &&fragment)
 {
+    TU_ASSERT (fragment != nullptr);
+
     Statement statement;
     statement.type = StatementType::Fragment;
     statement.fragment = std::move(fragment);
@@ -341,7 +345,7 @@ lyric_assembler::CodeFragment::storeData(AbstractSymbol *symbol)
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::storeRef(const DataReference &ref)
+lyric_assembler::CodeFragment::storeRef(const DataReference &ref, bool initialStore)
 {
     auto *state = m_procBuilder->objectState();
     auto *symbolCache = state->symbolCache();
@@ -352,8 +356,13 @@ lyric_assembler::CodeFragment::storeRef(const DataReference &ref)
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.symbolUrl));
     switch (ref.referenceType) {
-        case ReferenceType::Variable:
         case ReferenceType::Value:
+            if (!initialStore)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kInvalidBinding, "cannot store to descriptor {}", ref.symbolUrl.toString());
+            statement.instruction = std::make_shared<StoreDataInstruction>(symbol);
+            break;
+        case ReferenceType::Variable:
             statement.instruction = std::make_shared<StoreDataInstruction>(symbol);
             break;
         case ReferenceType::Descriptor:

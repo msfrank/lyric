@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/code_fragment.h>
 #include <lyric_assembler/function_callable.h>
 #include <lyric_assembler/internal/call_inline.h>
 #include <lyric_assembler/proc_handle.h>
@@ -90,7 +91,10 @@ lyric_assembler::FunctionCallable::getInitializer(const std::string &name) const
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
-lyric_assembler::FunctionCallable::invoke(BlockHandle *block, const AbstractCallsiteReifier &reifier)
+lyric_assembler::FunctionCallable::invoke(
+    BlockHandle *block,
+    const AbstractCallsiteReifier &reifier,
+    CodeFragment *fragment)
 {
     checkValid();
 
@@ -105,13 +109,11 @@ lyric_assembler::FunctionCallable::invoke(BlockHandle *block, const AbstractCall
     switch (m_type) {
 
         case InvokeType::INLINE: {
-            TU_RETURN_IF_NOT_OK (internal::call_inline(m_callSymbol, block->blockProc()));
+            TU_RETURN_IF_NOT_OK (internal::call_inline(m_callSymbol, block, fragment));
             break;
         }
 
         case InvokeType::STATIC: {
-            auto *blockCode = block->blockCode();
-            auto *fragment = blockCode->rootFragment();
             TU_RETURN_IF_NOT_OK (fragment->callStatic(m_callSymbol, placementSize, 0));
             break;
         }

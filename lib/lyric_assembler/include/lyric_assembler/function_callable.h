@@ -12,6 +12,7 @@ namespace lyric_assembler {
     // forward declarations
     class BlockHandle;
     class CallSymbol;
+    class CodeFragment;
     class ProcHandle;
 
     class FunctionCallable : public AbstractCallable {
@@ -39,7 +40,8 @@ namespace lyric_assembler {
 
         tempo_utils::Result<lyric_common::TypeDef> invoke(
             BlockHandle *block,
-            const AbstractCallsiteReifier &reifier) override;
+            const AbstractCallsiteReifier &reifier,
+            CodeFragment *fragment) override;
 
     private:
         InvokeType m_type;

@@ -27,18 +27,15 @@
 
 lyric_assembler::BlockHandle::BlockHandle(
     ProcHandle *blockProc,
-    ProcBuilder *blockCode,
     ObjectState *state,
     bool isRoot)
     : m_blockNs(nullptr),
       m_blockProc(blockProc),
-      m_blockCode(blockCode),
       m_parentBlock(nullptr),
       m_state(state),
       m_isRoot(isRoot)
 {
     TU_ASSERT (m_blockProc != nullptr);
-    TU_ASSERT (m_blockCode != nullptr);
     TU_ASSERT (m_state != nullptr);
     if (!m_isRoot) {
         m_definition = m_blockProc->getActivation();
@@ -57,30 +54,25 @@ lyric_assembler::BlockHandle::BlockHandle(
     TU_ASSERT (m_definition.isValid());
     TU_ASSERT (m_parentBlock != nullptr);
     m_blockProc = parentBlock->m_blockProc;
-    m_blockCode = parentBlock->m_blockCode;
     m_state = parentBlock->m_state;
     TU_ASSERT (m_blockProc != nullptr);
-    TU_ASSERT (m_blockCode != nullptr);
     TU_ASSERT (m_state != nullptr);
 }
 
 lyric_assembler::BlockHandle::BlockHandle(
     NamespaceSymbol *blockNs,
     ProcHandle *blockProc,
-    ProcBuilder *blockCode,
     BlockHandle *parentBlock,
     ObjectState *state,
     bool isRoot)
     : m_blockNs(blockNs),
       m_blockProc(blockProc),
-      m_blockCode(blockCode),
       m_parentBlock(parentBlock),
       m_state(state),
       m_isRoot(isRoot)
 {
     TU_ASSERT (m_blockNs != nullptr);
     TU_ASSERT (m_blockProc != nullptr);
-    TU_ASSERT (m_blockCode != nullptr);
     TU_ASSERT (m_parentBlock != nullptr);
     TU_ASSERT (m_state != nullptr);
     if (!m_isRoot) {
@@ -90,18 +82,15 @@ lyric_assembler::BlockHandle::BlockHandle(
 
 lyric_assembler::BlockHandle::BlockHandle(
     ProcHandle *blockProc,
-    ProcBuilder *blockCode,
     BlockHandle *parentBlock,
     ObjectState *state)
     : m_blockNs(nullptr),
       m_blockProc(blockProc),
-      m_blockCode(blockCode),
       m_parentBlock(parentBlock),
       m_state(state),
       m_isRoot(false)
 {
     TU_ASSERT (m_blockProc != nullptr);
-    TU_ASSERT (m_blockCode != nullptr);
     TU_ASSERT (m_parentBlock != nullptr);
     TU_ASSERT (m_state != nullptr);
     m_definition = m_blockProc->getActivation();
@@ -110,19 +99,16 @@ lyric_assembler::BlockHandle::BlockHandle(
 lyric_assembler::BlockHandle::BlockHandle(
     const absl::flat_hash_map<std::string,SymbolBinding> &initialBindings,
     ProcHandle *blockProc,
-    ProcBuilder *blockCode,
     BlockHandle *parentBlock,
     ObjectState *state)
     : m_blockNs(nullptr),
       m_blockProc(blockProc),
-      m_blockCode(blockCode),
       m_parentBlock(parentBlock),
       m_state(state),
       m_isRoot(false),
       m_bindings(initialBindings)
 {
     TU_ASSERT (m_blockProc != nullptr);
-    TU_ASSERT (m_blockCode != nullptr);
     TU_ASSERT (m_parentBlock != nullptr);
     TU_ASSERT (m_state != nullptr);
     m_definition = m_blockProc->getActivation();
@@ -135,7 +121,6 @@ lyric_assembler::BlockHandle::BlockHandle(
     : m_definition(definition),
       m_blockNs(nullptr),
       m_blockProc(nullptr),
-      m_blockCode(nullptr),
       m_parentBlock(nullptr),
       m_state(state),
       m_isRoot(false),
@@ -161,11 +146,11 @@ lyric_assembler::BlockHandle::blockProc()
     return m_blockProc;
 }
 
-lyric_assembler::ProcBuilder *
-lyric_assembler::BlockHandle::blockCode()
-{
-    return m_blockCode;
-}
+//lyric_assembler::ProcBuilder *
+//lyric_assembler::BlockHandle::blockCode()
+//{
+//    return m_blockCode;
+//}
 
 lyric_assembler::BlockHandle *
 lyric_assembler::BlockHandle::blockParent()
@@ -760,35 +745,35 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
         "missing variable {}", name);
 }
 
-tempo_utils::Status
-lyric_assembler::BlockHandle::load(const DataReference &ref)
-{
-    auto *fragment = m_blockCode->rootFragment();
-    return fragment->loadRef(ref);
-}
-
-tempo_utils::Status
-lyric_assembler::BlockHandle::store(const DataReference &ref, bool initialStore)
-{
-    auto *fragment = m_blockCode->rootFragment();
-
-    switch (ref.referenceType) {
-        case ReferenceType::Variable:
-            return fragment->storeRef(ref);
-        case ReferenceType::Value: {
-            if (initialStore)
-                return fragment->storeRef(ref);
-            [[fallthrough]];
-        }
-        case ReferenceType::Descriptor:
-            return logAndContinue(AssemblerCondition::kInvalidBinding,
-                tempo_tracing::LogSeverity::kError,
-                "cannot store data at reference {}", ref.symbolUrl.toString());
-        default:
-            return AssemblerStatus::forCondition(
-                AssemblerCondition::kAssemblerInvariant, "invalid data reference");
-    }
-}
+//tempo_utils::Status
+//lyric_assembler::BlockHandle::load(const DataReference &ref)
+//{
+//    auto *fragment = m_blockCode->rootFragment();
+//    return fragment->loadRef(ref);
+//}
+//
+//tempo_utils::Status
+//lyric_assembler::BlockHandle::store(const DataReference &ref, bool initialStore)
+//{
+//    auto *fragment = m_blockCode->rootFragment();
+//
+//    switch (ref.referenceType) {
+//        case ReferenceType::Variable:
+//            return fragment->storeRef(ref);
+//        case ReferenceType::Value: {
+//            if (initialStore)
+//                return fragment->storeRef(ref);
+//            [[fallthrough]];
+//        }
+//        case ReferenceType::Descriptor:
+//            return logAndContinue(AssemblerCondition::kInvalidBinding,
+//                tempo_tracing::LogSeverity::kError,
+//                "cannot store data at reference {}", ref.symbolUrl.toString());
+//        default:
+//            return AssemblerStatus::forCondition(
+//                AssemblerCondition::kAssemblerInvariant, "invalid data reference");
+//    }
+//}
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::BlockHandle::declareFunction(

@@ -10,6 +10,7 @@ tempo_utils::Status
 lyric_compiler::compile_unary_operator(
     lyric_schema::LyricAstId operationId,
     lyric_assembler::BlockHandle *block,
+    lyric_assembler::CodeFragment *fragment,
     CompilerScanDriver *driver)
 {
     TU_ASSERT (block != nullptr);
@@ -56,7 +57,7 @@ lyric_compiler::compile_unary_operator(
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(operandType));
 
     lyric_common::TypeDef resultType;
-    TU_ASSIGN_OR_RETURN (resultType, extensionInvoker.invoke(block, reifier));
+    TU_ASSIGN_OR_RETURN (resultType, extensionInvoker.invoke(block, reifier, fragment));
 
     return driver->pushResult(resultType);
 }
@@ -65,6 +66,7 @@ tempo_utils::Status
 lyric_compiler::compile_binary_operator(
     lyric_schema::LyricAstId operationId,
     lyric_assembler::BlockHandle *block,
+    lyric_assembler::CodeFragment *fragment,
     CompilerScanDriver *driver)
 {
     TU_ASSERT (block != nullptr);
@@ -115,7 +117,7 @@ lyric_compiler::compile_binary_operator(
     TU_RETURN_IF_NOT_OK (reifier.reifyNextArgument(rhsType));
 
     lyric_common::TypeDef resultType;
-    TU_ASSIGN_OR_RETURN (resultType, extensionInvoker.invoke(block, reifier));
+    TU_ASSIGN_OR_RETURN (resultType, extensionInvoker.invoke(block, reifier, fragment));
 
     return driver->pushResult(resultType);
 }

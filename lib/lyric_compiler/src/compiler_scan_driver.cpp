@@ -10,18 +10,18 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_assembler/undeclared_symbol.h>
+#include <lyric_compiler/base_choice.h>
+#include <lyric_compiler/base_grouping.h>
 #include <lyric_compiler/compiler_scan_driver.h>
 #include <lyric_compiler/compiler_result.h>
-#include <lyric_compiler/block_compiler_context.h>
-#include <lyric_compiler/entry_compiler_context.h>
-#include <lyric_compiler/internal/compiler_utils.h>
+#include <lyric_compiler/visitor_context.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 
 lyric_compiler::CompilerScanDriver::CompilerScanDriver(lyric_assembler::ObjectState *state)
     : m_state(state),
-      m_root(nullptr),
-      m_entry(nullptr),
+      m_entryCall(nullptr),
+      m_globalNamespace(nullptr),
       m_typeSystem(nullptr)
 {
     TU_ASSERT (m_state != nullptr);
@@ -33,12 +33,13 @@ lyric_compiler::CompilerScanDriver::~CompilerScanDriver()
 }
 
 tempo_utils::Status
-lyric_compiler::CompilerScanDriver::initialize()
+lyric_compiler::CompilerScanDriver::initialize(std::unique_ptr<BaseGrouping> &&rootGrouping)
 {
-    if (m_typeSystem != nullptr)
+    if (!m_groupings.empty())
         return CompilerStatus::forCondition(
             CompilerCondition::kCompilerInvariant,"module entry is already initialized");
-    m_typeSystem = new lyric_typing::TypeSystem(m_state);
+
+    auto typeSystem = std::make_unique<lyric_typing::TypeSystem>(m_state);
 
     auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
@@ -61,36 +62,33 @@ lyric_compiler::CompilerScanDriver::initialize()
 
     // create the $entry call
     lyric_common::SymbolUrl entryUrl(location, lyric_common::SymbolPath({"$entry"}));
-    m_entry = new lyric_assembler::CallSymbol(entryUrl, returnType, entryTypeHandle, m_state);
-    status = m_state->appendCall(m_entry);
-    if (status.notOk()) {
-        delete m_entry;
-        return status;
-    }
+    auto entryCall = std::make_unique<lyric_assembler::CallSymbol>(
+        entryUrl, returnType, entryTypeHandle, m_state);
+    TU_RETURN_IF_NOT_OK (m_state->appendCall(entryCall.get()));
+    m_entryCall = entryCall.release();
 
     // resolve the Namespace type
     auto namespaceType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Namespace);
     lyric_assembler::TypeHandle *namespaceTypeHandle;
     TU_ASSIGN_OR_RETURN (namespaceTypeHandle, typeCache->getOrMakeType(namespaceType));
 
-    // create the root namespace
-    auto *entryProc = m_entry->callProc();
-    lyric_common::SymbolUrl rootUrl(location, lyric_common::SymbolPath({"$root"}));
-    m_root = new lyric_assembler::NamespaceSymbol(rootUrl, namespaceTypeHandle, m_entry->callProc(), m_state);
-    status = m_state->appendNamespace(m_root);
-    if (status.notOk()) {
-        delete m_root;
-        return status;
-    }
+    // create the $global namespace
+    lyric_common::SymbolUrl globalUrl(location, lyric_common::SymbolPath({"$global"}));
+    auto globalNamespace = std::make_unique<lyric_assembler::NamespaceSymbol>(
+        globalUrl, namespaceTypeHandle, m_entryCall->callProc(), m_state);
+    TU_RETURN_IF_NOT_OK (m_state->appendNamespace(globalNamespace.get()));
+    m_globalNamespace = globalNamespace.release();
 
-    // push the entry context
-    auto entry = std::make_unique<EntryCompilerContext>(this, m_entry, m_root);
-    TU_RETURN_IF_NOT_OK (pushContext(std::move(entry)));
+    // take ownership of the typesystem
+    m_typeSystem = typeSystem.release();
 
-    // push the block context
-    auto *entryBlock = entryProc->procBlock();
-    auto block = std::make_unique<BlockCompilerContext>(this, entryBlock);
-    return pushContext(std::move(block));
+    // push the root grouping
+    auto groupingData = std::make_unique<GroupingData>();
+    groupingData->grouping = std::move(rootGrouping);
+    groupingData->pending = true;
+    m_groupings.push_back(std::move(groupingData));
+
+    return {};
 }
 
 tempo_utils::Status
@@ -112,8 +110,83 @@ lyric_compiler::CompilerScanDriver::enter(
     const lyric_parser::ArchetypeNode *node,
     lyric_rewriter::VisitorContext &ctx)
 {
-    auto *analyzerContext = peekContext();
-    return analyzerContext->enter(state, node, ctx);
+    if (m_groupings.empty())
+        return CompilerStatus::forCondition(
+            CompilerCondition::kCompilerInvariant, "no handler available for node");
+    auto &groupingData = m_groupings.back();
+    auto &grouping = groupingData->grouping;
+
+    TU_LOG_INFO << "PUSH ArchetypeNode@" << node;
+
+    // if grouping is pending, then run before handler and return
+    if (groupingData->pending) {
+        BeforeContext beforeContext(ctx, this);
+        TU_RETURN_IF_NOT_OK (grouping->before(state, node, beforeContext));
+        auto handlers = beforeContext.takeHandlers();
+        grouping->appendHandlers(std::move(handlers));
+        groupingData->node = node;
+        groupingData->pending = false;
+        return {};
+    }
+
+    auto *handler = grouping->currentHandler();
+    TU_ASSERT (handler != nullptr);
+
+    switch (handler->type) {
+
+        case HandlerType::Behavior: {
+            auto &behavior = handler->behavior;
+            EnterContext enterContext(ctx, this);
+            TU_RETURN_IF_NOT_OK (behavior->enter(this, state, node, grouping->getBlock(), enterContext));
+            auto handlers = enterContext.takeHandlers();
+            grouping->appendHandlers(std::move(handlers));
+            return {};
+        }
+
+        case HandlerType::Choice: {
+            std::unique_ptr<BaseChoice> choice = std::move(handler->choice);
+            handler->type = HandlerType::Invalid;
+            DecideContext decideContext(ctx, this);
+            TU_RETURN_IF_NOT_OK (choice->decide(state, node, decideContext));
+            auto decision = decideContext.takeHandler();
+
+            if (decision == nullptr)
+                return {};
+
+            switch (decision->type) {
+                case HandlerType::Behavior:
+                    handler->type = HandlerType::Behavior;
+                    handler->behavior = std::move(decision->behavior);
+                    return enter(state, node, ctx);
+                case HandlerType::Choice:
+                    handler->type = HandlerType::Choice;
+                    handler->choice = std::move(decision->choice);
+                    return enter(state, node, ctx);
+                case HandlerType::Grouping:
+                    handler->type = HandlerType::Grouping;
+                    handler->grouping = std::move(decision->grouping);
+                    return enter(state, node, ctx);
+                case HandlerType::Invalid:
+                    return {};
+                default:
+                    return CompilerStatus::forCondition(
+                        CompilerCondition::kCompilerInvariant, "invalid decision for choice");
+            }
+        }
+
+        case HandlerType::Grouping: {
+            auto childGrouping = std::make_unique<GroupingData>();
+            childGrouping->grouping = std::move(handler->grouping);
+            childGrouping->pending = true;
+            handler->type = HandlerType::Invalid;
+            m_groupings.push_back(std::move(childGrouping));
+            return enter(state, node, ctx);
+        }
+
+        default:
+            return CompilerStatus::forCondition(
+                CompilerCondition::kCompilerInvariant, "invalid handler for grouping");
+    }
 }
 
 tempo_utils::Status
@@ -122,8 +195,117 @@ lyric_compiler::CompilerScanDriver::exit(
     const lyric_parser::ArchetypeNode *node,
     const lyric_rewriter::VisitorContext &ctx)
 {
-    auto *analyzerContext = peekContext();
-    return analyzerContext->exit(state, node, ctx);
+    if (m_groupings.empty())
+        return CompilerStatus::forCondition(
+            CompilerCondition::kCompilerInvariant, "no grouping available for node");
+    auto &groupingData = m_groupings.back();
+    TU_ASSERT (!groupingData->pending);
+    auto &grouping = groupingData->grouping;
+
+    TU_LOG_INFO << "POP ArchetypeNode@" << node;
+
+    // we have reached the end of the node group
+    if (groupingData->node == node) {
+        if (!grouping->isFinished())
+            return CompilerStatus::forCondition(
+                CompilerCondition::kCompilerInvariant, "unexpected handler at the end of the grouping");
+
+        AfterContext afterContext(ctx, this);
+        TU_RETURN_IF_NOT_OK (grouping->after(state, node, afterContext));
+        m_groupings.pop_back();
+
+        if (!m_groupings.empty()) {
+            auto &parentData = m_groupings.back();
+            auto &parentGrouping = parentData->grouping;
+            parentGrouping->advanceHandler();
+        }
+
+        return {};
+    }
+
+    auto *handler = grouping->currentHandler();
+    TU_ASSERT (handler != nullptr);
+
+    switch (handler->type) {
+        case HandlerType::Behavior: {
+            auto &behavior = handler->behavior;
+            ExitContext exitContext(ctx, this);
+            TU_RETURN_IF_NOT_OK (behavior->exit(this, state, node, grouping->getBlock(), exitContext));
+            break;
+        }
+        case HandlerType::Invalid:
+            break;
+        default:
+            return CompilerStatus::forCondition(
+                CompilerCondition::kCompilerInvariant, "no grouping available for node");
+    }
+
+    grouping->advanceHandler();
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_compiler::CompilerScanDriver::finish()
+{
+    if (!m_groupings.empty())
+        return CompilerStatus::forCondition(
+            CompilerCondition::kCompilerInvariant, "unexpected grouping on the stack");
+    return {};
+}
+
+lyric_assembler::ObjectState *
+lyric_compiler::CompilerScanDriver::getState() const
+{
+    return m_state;
+}
+
+lyric_assembler::FundamentalCache *
+lyric_compiler::CompilerScanDriver::getFundamentalCache() const
+{
+    return m_state->fundamentalCache();
+}
+
+lyric_assembler::ImplCache *
+lyric_compiler::CompilerScanDriver::getImplCache() const
+{
+    return m_state->implCache();
+}
+
+lyric_assembler::ImportCache *
+lyric_compiler::CompilerScanDriver::getImportCache() const
+{
+    return m_state->importCache();
+}
+
+lyric_assembler::LiteralCache *
+lyric_compiler::CompilerScanDriver::getLiteralCache() const
+{
+    return m_state->literalCache();
+}
+
+lyric_assembler::SymbolCache *
+lyric_compiler::CompilerScanDriver::getSymbolCache() const
+{
+    return m_state->symbolCache();
+}
+
+lyric_assembler::TypeCache *
+lyric_compiler::CompilerScanDriver::getTypeCache() const
+{
+    return m_state->typeCache();
+}
+
+lyric_assembler::NamespaceSymbol *
+lyric_compiler::CompilerScanDriver::getGlobalNamespace() const
+{
+    return m_globalNamespace;
+}
+
+lyric_assembler::CallSymbol *
+lyric_compiler::CompilerScanDriver::getEntryCall() const
+{
+    return m_entryCall;
 }
 
 lyric_typing::TypeSystem *
@@ -132,30 +314,31 @@ lyric_compiler::CompilerScanDriver::getTypeSystem() const
     return m_typeSystem;
 }
 
-lyric_compiler::AbstractCompilerContext *
-lyric_compiler::CompilerScanDriver::peekContext()
+lyric_compiler::BaseGrouping *
+lyric_compiler::CompilerScanDriver::peekGrouping()
 {
-    if (m_contexts.empty())
+    if (m_groupings.empty())
         return nullptr;
-    auto &top = m_contexts.back();
-    return top.get();
+    auto &groupingData = m_groupings.back();
+    auto &grouping = groupingData->grouping;
+    return grouping.get();
 }
 
 tempo_utils::Status
-lyric_compiler::CompilerScanDriver::pushContext(std::unique_ptr<AbstractCompilerContext> ctx)
+lyric_compiler::CompilerScanDriver::popGrouping()
 {
-    m_contexts.push_back(std::move(ctx));
-    return {};
-}
-
-tempo_utils::Status
-lyric_compiler::CompilerScanDriver::popContext()
-{
-    if (m_contexts.empty())
+    if (m_groupings.empty())
         return CompilerStatus::forCondition(
-            CompilerCondition::kCompilerInvariant, "context stack is empty");
-    m_contexts.pop_back();
+            CompilerCondition::kCompilerInvariant, "grouping stack is empty");
+    m_groupings.pop_back();
+    TU_LOG_INFO << "pop handler (" << (int) m_groupings.size() << " total)";
     return {};
+}
+
+tu_uint32
+lyric_compiler::CompilerScanDriver::numGroupings() const
+{
+    return m_groupings.size();
 }
 
 lyric_common::TypeDef
@@ -170,6 +353,7 @@ tempo_utils::Status
 lyric_compiler::CompilerScanDriver::pushResult(const lyric_common::TypeDef &result)
 {
     m_results.push(result);
+    TU_LOG_INFO << "push result " << result.toString() << " (" << (int) m_results.size() << " total)";
     return {};
 }
 
@@ -180,382 +364,12 @@ lyric_compiler::CompilerScanDriver::popResult()
         return CompilerStatus::forCondition(
             CompilerCondition::kCompilerInvariant, "results stack is empty");
     m_results.pop();
+    TU_LOG_INFO << "pop result (" << (int) m_results.size() << " total)";
     return {};
 }
 
-//tempo_utils::Status
-//lyric_compiler::CompilerScanDriver::declareStatic(
-//    const lyric_parser::ArchetypeNode *node,
-//    lyric_assembler::BlockHandle *block)
-//{
-//    auto walker = node->getArchetypeNode();
-//
-//    lyric_schema::LyricAstId astId;
-//    TU_RETURN_IF_NOT_OK (walker.parseId(lyric_schema::kLyricAstVocabulary, astId));
-//
-//    lyric_parser::AccessType access;
-//    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstAccessType, access));
-//
-//    bool isVariable;
-//    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIsVariable, isVariable));
-//
-//    std::string identifier;
-//    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-//    lyric_parser::NodeWalker typeNode;
-//    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
-//    lyric_typing::TypeSpec staticSpec;
-//    TU_ASSIGN_OR_RETURN (staticSpec, m_typeSystem->parseAssignable(block, typeNode));
-//    lyric_common::TypeDef staticType;
-//    TU_ASSIGN_OR_RETURN (staticType, m_typeSystem->resolveAssignable(block, staticSpec));
-//
-//    lyric_assembler::DataReference ref;
-//    TU_ASSIGN_OR_RETURN (ref, block->declareStatic(
-//        identifier, internal::convert_access_type(access), staticType, isVariable, /* declOnly= */ true));
-//
-//    TU_LOG_INFO << "declared static " << ref.symbolUrl;
-//
-//    return {};
-//}
-//
-//tempo_utils::Status
-//lyric_compiler::CompilerScanDriver::pushFunction(
-//    const lyric_parser::ArchetypeNode *node,
-//    lyric_assembler::BlockHandle *block)
-//{
-//    std::string identifier;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-//
-//    lyric_parser::AccessType access;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
-//
-//    lyric_parser::ArchetypeNode *genericNode = nullptr;
-//    if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
-//        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
-//    }
-//
-//    lyric_typing::TemplateSpec spec;
-//    if (genericNode != nullptr) {
-//        TU_ASSIGN_OR_RETURN (spec, m_typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
-//    }
-//
-//    lyric_assembler::CallSymbol *callSymbol;
-//    TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(
-//        identifier, internal::convert_access_type(access), spec.templateParameters, /* declOnly= */ true));
-//
-//    auto *resolver = callSymbol->callResolver();
-//
-//    // determine the return type
-//    lyric_parser::ArchetypeNode *returnTypeNode;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, returnTypeNode));
-//    lyric_typing::TypeSpec returnTypeSpec;
-//    TU_ASSIGN_OR_RETURN (returnTypeSpec, m_typeSystem->parseAssignable(block, returnTypeNode->getArchetypeNode()));
-//    lyric_common::TypeDef returnType;
-//    TU_ASSIGN_OR_RETURN (returnType, m_typeSystem->resolveAssignable(resolver, returnTypeSpec));
-//
-//    // determine the parameter list
-//    auto *packNode = node->getChild(0);
-//    lyric_typing::PackSpec packSpec;
-//    TU_ASSIGN_OR_RETURN (packSpec, m_typeSystem->parsePack(block, packNode->getArchetypeNode()));
-//    lyric_assembler::ParameterPack parameterPack;
-//    TU_ASSIGN_OR_RETURN (parameterPack, m_typeSystem->resolvePack(resolver, packSpec));
-//
-//    // define the call
-//    lyric_assembler::ProcHandle *procHandle;
-//    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnType));
-//
-//    TU_LOG_INFO << "declared function " << callSymbol->getSymbolUrl();
-//
-//    // push the function context
-//    auto ctx = std::make_unique<ProcCompilerContext>(this, procHandle);
-//    return pushContext(std::move(ctx));
-//}
-//
-//tempo_utils::Status
-//lyric_compiler::CompilerScanDriver::pushClass(
-//    const lyric_parser::ArchetypeNode *node,
-//    lyric_assembler::BlockHandle *block)
-//{
-//    std::string identifier;
-//    lyric_typing::TemplateSpec templateSpec;
-//    lyric_assembler::ClassSymbol *superClass = nullptr;
-//    bool isAbstract = false;
-//
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-//
-//    lyric_parser::AccessType access;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
-//
-//    lyric_parser::DeriveType derive;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
-//
-//    if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
-//        lyric_parser::ArchetypeNode *genericNode = nullptr;
-//        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
-//        TU_ASSIGN_OR_RETURN (templateSpec, m_typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
-//    }
-//
-//    lyric_parser::ArchetypeNode *initNode = nullptr;
-//    for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
-//        auto *child = *it;
-//        lyric_schema::LyricAstId childId;
-//        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
-//        if (childId == lyric_schema::LyricAstId::Init) {
-//            if (initNode != nullptr)
-//                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError);
-//            initNode = child;
-//        }
-//    }
-//
-//    // determine the superclass type
-//    lyric_common::TypeDef superClassType;
-//    if (initNode != nullptr) {
-//        if (initNode->numChildren() < 1)
-//            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError);
-//        if (initNode->numChildren() > 1) {
-//            auto *superNode = initNode->getChild(1);
-//            if (!superNode->isClass(lyric_schema::kLyricAstSuperClass))
-//                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError);
-//            lyric_parser::ArchetypeNode *superTypeNode;
-//            TU_RETURN_IF_NOT_OK (superNode->parseAttr(lyric_parser::kLyricAstTypeOffset, superTypeNode));
-//            lyric_typing::TypeSpec superTypeSpec;
-//            TU_ASSIGN_OR_RETURN (superTypeSpec, m_typeSystem->parseAssignable(block, superTypeNode->getArchetypeNode()));
-//            TU_ASSIGN_OR_RETURN (superClassType, m_typeSystem->resolveAssignable(block, superTypeSpec));
-//        }
-//    } else {
-//        auto *fundamentalCache = m_state->fundamentalCache();
-//        superClassType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-//    }
-//
-//    // resolve the superclass
-//    TU_ASSIGN_OR_RETURN (superClass, block->resolveClass(superClassType));
-//
-//    lyric_assembler::ClassSymbol *classSymbol;
-//    TU_ASSIGN_OR_RETURN (classSymbol, block->declareClass(
-//        identifier, superClass, internal::convert_access_type(access), templateSpec.templateParameters,
-//        internal::convert_derive_type(derive), isAbstract, /* declOnly= */ true));
-//
-//    TU_LOG_INFO << "declared class " << classSymbol->getSymbolUrl() << " from " << superClass->getSymbolUrl();
-//
-//    // push the class context
-//    auto ctx = std::make_unique<ClassCompilerContext>(this, classSymbol, initNode);
-//    return pushContext(std::move(ctx));
-//}
-//
-//tempo_utils::Status
-//lyric_compiler::CompilerScanDriver::pushConcept(
-//    const lyric_parser::ArchetypeNode *node,
-//    lyric_assembler::BlockHandle *block)
-//{
-//    std::string identifier;
-//    lyric_typing::TemplateSpec templateSpec;
-//    lyric_assembler::ConceptSymbol *superConcept = nullptr;
-//
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-//
-//    lyric_parser::AccessType access;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
-//
-//    lyric_parser::DeriveType derive;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
-//
-//    if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
-//        lyric_parser::ArchetypeNode *genericNode = nullptr;
-//        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
-//        TU_ASSIGN_OR_RETURN (templateSpec, m_typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
-//    }
-//
-//    // determine the superconcept type
-//    lyric_common::TypeDef superConceptType;
-//    auto *fundamentalCache = m_state->fundamentalCache();
-//    superConceptType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
-//
-//    // resolve the superconcept
-//    TU_ASSIGN_OR_RETURN (superConcept, block->resolveConcept(superConceptType));
-//
-//    lyric_assembler::ConceptSymbol *conceptSymbol;
-//    TU_ASSIGN_OR_RETURN (conceptSymbol, block->declareConcept(
-//        identifier, superConcept, internal::convert_access_type(access), templateSpec.templateParameters,
-//        internal::convert_derive_type(derive), /* declOnly= */ true));
-//
-//    TU_LOG_INFO << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConcept->getSymbolUrl();
-//
-//    // push the concept context
-//    auto ctx = std::make_unique<ConceptCompilerContext>(this, conceptSymbol);
-//    return pushContext(std::move(ctx));
-//}
-//
-//tempo_utils::Status
-//lyric_compiler::CompilerScanDriver::pushEnum(
-//    const lyric_parser::ArchetypeNode *node,
-//    lyric_assembler::BlockHandle *block)
-//{
-//    std::string identifier;
-//    lyric_assembler::EnumSymbol *superEnum = nullptr;
-//    lyric_object::DeriveType derive = lyric_object::DeriveType::Sealed;
-//    bool isAbstract = false;
-//
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-//
-//    lyric_parser::AccessType access;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
-//
-//    lyric_parser::ArchetypeNode *initNode = nullptr;
-//    for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
-//        auto *child = *it;
-//        lyric_schema::LyricAstId childId;
-//        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
-//        if (childId == lyric_schema::LyricAstId::Init) {
-//            if (initNode != nullptr)
-//                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError);
-//            initNode = child;
-//        }
-//    }
-//
-//    // determine the superenum type
-//    auto *fundamentalCache = m_state->fundamentalCache();
-//    auto superEnumType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Category);
-//
-//    // resolve the superenum
-//    TU_ASSIGN_OR_RETURN (superEnum, block->resolveEnum(superEnumType));
-//
-//    lyric_assembler::EnumSymbol *enumSymbol;
-//    TU_ASSIGN_OR_RETURN (enumSymbol, block->declareEnum(
-//        identifier, superEnum, internal::convert_access_type(access),
-//        derive, isAbstract, /* declOnly= */ true));
-//
-//    TU_LOG_INFO << "declared enum " << enumSymbol->getSymbolUrl() << " from " << superEnum->getSymbolUrl();
-//
-//    // push the enum context
-//    auto ctx = std::make_unique<EnumCompilerContext>(this, enumSymbol, initNode);
-//    return pushContext(std::move(ctx));
-//}
-//
-//tempo_utils::Status
-//lyric_compiler::CompilerScanDriver::pushInstance(
-//    const lyric_parser::ArchetypeNode *node,
-//    lyric_assembler::BlockHandle *block)
-//{
-//    std::string identifier;
-//    lyric_assembler::InstanceSymbol *superInstance = nullptr;
-//    lyric_object::DeriveType derive = lyric_object::DeriveType::Any;
-//    bool isAbstract = false;
-//
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-//
-//    lyric_parser::AccessType access;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
-//
-//    lyric_parser::ArchetypeNode *initNode = nullptr;
-//    for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
-//        auto *child = *it;
-//        lyric_schema::LyricAstId childId;
-//        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
-//        if (childId == lyric_schema::LyricAstId::Init) {
-//            if (initNode != nullptr)
-//                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError);
-//            initNode = child;
-//        }
-//    }
-//
-//    // determine the superinstance type
-//    auto *fundamentalCache = m_state->fundamentalCache();
-//    auto superInstanceType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Singleton);
-//
-//    // resolve the superinstance
-//    TU_ASSIGN_OR_RETURN (superInstance, block->resolveInstance(superInstanceType));
-//
-//    lyric_assembler::InstanceSymbol *instanceSymbol;
-//    TU_ASSIGN_OR_RETURN (instanceSymbol, block->declareInstance(
-//        identifier, superInstance, internal::convert_access_type(access),
-//        derive, isAbstract, /* declOnly= */ true));
-//
-//    TU_LOG_INFO << "declared instance " << instanceSymbol->getSymbolUrl() << " from " << superInstance->getSymbolUrl();
-//
-//    // push the instance context
-//    auto ctx = std::make_unique<InstanceCompilerContext>(this, instanceSymbol, initNode);
-//    return pushContext(std::move(ctx));
-//}
-//
-//tempo_utils::Status
-//lyric_compiler::CompilerScanDriver::pushStruct(
-//    const lyric_parser::ArchetypeNode *node,
-//    lyric_assembler::BlockHandle *block)
-//{
-//    std::string identifier;
-//    lyric_assembler::StructSymbol *superStruct = nullptr;
-//    bool isAbstract = false;
-//
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-//
-//    lyric_parser::AccessType access;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
-//
-//    lyric_parser::DeriveType derive;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
-//
-//    lyric_parser::ArchetypeNode *initNode = nullptr;
-//    for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
-//        auto *child = *it;
-//        lyric_schema::LyricAstId childId;
-//        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
-//        if (childId == lyric_schema::LyricAstId::Init) {
-//            if (initNode != nullptr)
-//                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError);
-//            initNode = child;
-//        }
-//    }
-//
-//    // determine the superstruct type
-//    lyric_common::TypeDef superStructType;
-//    if (initNode != nullptr) {
-//        if (initNode->numChildren() < 1)
-//            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError);
-//        if (initNode->numChildren() > 1) {
-//            auto *superNode = initNode->getChild(1);
-//            if (!superNode->isClass(lyric_schema::kLyricAstSuperClass))
-//                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError);
-//            lyric_parser::ArchetypeNode *superTypeNode;
-//            TU_RETURN_IF_NOT_OK (superNode->parseAttr(lyric_parser::kLyricAstTypeOffset, superTypeNode));
-//            lyric_typing::TypeSpec superTypeSpec;
-//            TU_ASSIGN_OR_RETURN (superTypeSpec, m_typeSystem->parseAssignable(block, superTypeNode->getArchetypeNode()));
-//            TU_ASSIGN_OR_RETURN (superStructType, m_typeSystem->resolveAssignable(block, superTypeSpec));
-//        }
-//    } else {
-//        auto *fundamentalCache = m_state->fundamentalCache();
-//        superStructType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
-//    }
-//
-//    // resolve the superstruct
-//    TU_ASSIGN_OR_RETURN (superStruct, block->resolveStruct(superStructType));
-//
-//    lyric_assembler::StructSymbol *classSymbol;
-//    TU_ASSIGN_OR_RETURN (classSymbol, block->declareStruct(
-//        identifier, superStruct, internal::convert_access_type(access),
-//        internal::convert_derive_type(derive), isAbstract, /* declOnly= */ true));
-//
-//    TU_LOG_INFO << "declared struct " << classSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
-//
-//    // push the struct context
-//    auto ctx = std::make_unique<StructCompilerContext>(this, classSymbol, initNode);
-//    return pushContext(std::move(ctx));
-//}
-//
-//tempo_utils::Status
-//lyric_compiler::CompilerScanDriver::pushNamespace(
-//    const lyric_parser::ArchetypeNode *node,
-//    lyric_assembler::BlockHandle *block)
-//{
-//    std::string identifier;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-//
-//    lyric_parser::AccessType access;
-//    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
-//
-//    lyric_assembler::NamespaceSymbol *namespaceSymbol;
-//    TU_ASSIGN_OR_RETURN (namespaceSymbol, block->declareNamespace(
-//        identifier, internal::convert_access_type(access), /* declOnly= */ true));
-//
-//    // push the namespace context
-//    auto ctx = std::make_unique<NamespaceCompilerContext>(this, namespaceSymbol);
-//    return pushContext(std::move(ctx));
-//}
+tu_uint32
+lyric_compiler::CompilerScanDriver::numResults() const
+{
+    return m_results.size();
+}

@@ -7,92 +7,64 @@ add_library(lyric_compiler SHARED)
 add_library(lyric::lyric_compiler ALIAS lyric_compiler)
 
 set(LYRIC_COMPILER_INCLUDES
-    include/lyric_compiler/abstract_compiler_context.h
-    include/lyric_compiler/block_compiler_context.h
+    include/lyric_compiler/abstract_handler.h
+    include/lyric_compiler/assignment_handler.h
+    include/lyric_compiler/base_choice.h
+    include/lyric_compiler/base_grouping.h
+    include/lyric_compiler/base_invokable_handler.h
+    include/lyric_compiler/binary_operation_handler.h
+    include/lyric_compiler/block_node_handler.h
+    include/lyric_compiler/function_handler.h
     include/lyric_compiler/compiler_result.h
     include/lyric_compiler/compiler_scan_driver.h
+    include/lyric_compiler/conditional_handler.h
     include/lyric_compiler/constant_utils.h
-    include/lyric_compiler/deref_compiler_context.h
+    include/lyric_compiler/def_handler.h
+    include/lyric_compiler/deref_node_handler.h
     include/lyric_compiler/deref_utils.h
-    include/lyric_compiler/entry_compiler_context.h
+    include/lyric_compiler/entry_handler.h
+    include/lyric_compiler/iteration_handler.h
     include/lyric_compiler/lyric_compiler.h
-    include/lyric_compiler/module_entry.h
+    include/lyric_compiler/method_handler.h
     include/lyric_compiler/operator_utils.h
-    include/lyric_compiler/proc_compiler_context.h
-    )
+    include/lyric_compiler/form_handler.h
+    include/lyric_compiler/proc_handler.h
+    include/lyric_compiler/resolve_utils.h
+    include/lyric_compiler/unary_operation_handler.h
+    include/lyric_compiler/variable_handler.h
+    include/lyric_compiler/visitor_context.h
+)
 set_target_properties(lyric_compiler PROPERTIES PUBLIC_HEADER "${LYRIC_COMPILER_INCLUDES}")
 
 target_sources(lyric_compiler PRIVATE
-    src/block_compiler_context.cpp
+    src/assignment_handler.cpp
+    src/base_choice.cpp
+    src/base_grouping.cpp
+    src/base_invokable_handler.cpp
+    src/binary_operation_handler.cpp
+    src/block_node_handler.cpp
+    src/function_handler.cpp
     src/compiler_result.cpp
     src/compiler_scan_driver.cpp
+    src/conditional_handler.cpp
     src/constant_utils.cpp
-    src/deref_compiler_context.cpp
+    src/def_handler.cpp
+    src/deref_node_handler.cpp
     src/deref_utils.cpp
-    src/entry_compiler_context.cpp
+    src/entry_handler.cpp
+    src/iteration_handler.cpp
     src/lyric_compiler.cpp
-    src/module_entry.cpp
+    src/method_handler.cpp
     src/operator_utils.cpp
-    src/proc_compiler_context.cpp
+    src/form_handler.cpp
+    src/proc_handler.cpp
+    src/resolve_utils.cpp
+    src/unary_operation_handler.cpp
+    src/variable_handler.cpp
+    src/visitor_context.cpp
 
     include/lyric_compiler/internal/compiler_utils.h
     src/internal/compiler_utils.cpp
-    include/lyric_compiler/internal/compile_assignment.h
-    src/internal/compile_assignment.cpp
-    include/lyric_compiler/internal/compile_block.h
-    src/internal/compile_block.cpp
-    include/lyric_compiler/internal/compile_call.h
-    src/internal/compile_call.cpp
-    include/lyric_compiler/internal/compile_conditional.h
-    src/internal/compile_conditional.cpp
-    include/lyric_compiler/internal/compile_constant.h
-    src/internal/compile_constant.cpp
-    include/lyric_compiler/internal/compile_defclass.h
-    src/internal/compile_defclass.cpp
-    include/lyric_compiler/internal/compile_defconcept.h
-    src/internal/compile_defconcept.cpp
-    include/lyric_compiler/internal/compile_defenum.h
-    src/internal/compile_defenum.cpp
-    include/lyric_compiler/internal/compile_definstance.h
-    src/internal/compile_definstance.cpp
-    include/lyric_compiler/internal/compile_defstatic.h
-    src/internal/compile_defstatic.cpp
-    include/lyric_compiler/internal/compile_defstruct.h
-    src/internal/compile_defstruct.cpp
-    include/lyric_compiler/internal/compile_def.h
-    src/internal/compile_def.cpp
-    include/lyric_compiler/internal/compile_deref.h
-    src/internal/compile_deref.cpp
-    include/lyric_compiler/internal/compile_import.h
-    src/internal/compile_import.cpp
-    include/lyric_compiler/internal/compile_lambda.h
-    src/internal/compile_lambda.cpp
-    include/lyric_compiler/internal/compile_loop.h
-    src/internal/compile_loop.cpp
-    include/lyric_compiler/internal/compile_match.h
-    src/internal/compile_match.cpp
-    include/lyric_compiler/internal/compile_module.h
-    src/internal/compile_module.cpp
-    include/lyric_compiler/internal/compile_namespace.h
-    src/internal/compile_namespace.cpp
-    include/lyric_compiler/internal/compile_node.h
-    src/internal/compile_node.cpp
-    include/lyric_compiler/internal/compile_new.h
-    src/internal/compile_new.cpp
-    include/lyric_compiler/internal/compile_operator.h
-    src/internal/compile_operator.cpp
-    include/lyric_compiler/internal/compile_initializer.h
-    src/internal/compile_initializer.cpp
-    include/lyric_compiler/internal/compile_return.h
-    src/internal/compile_return.cpp
-    include/lyric_compiler/internal/compile_unwrap.h
-    src/internal/compile_unwrap.cpp
-    include/lyric_compiler/internal/compile_using.h
-    src/internal/compile_using.cpp
-    include/lyric_compiler/internal/compile_val.h
-    src/internal/compile_val.cpp
-    include/lyric_compiler/internal/compile_var.h
-    src/internal/compile_var.cpp
     )
 
 # set the library version
@@ -139,4 +111,4 @@ install(TARGETS lyric_compiler EXPORT lyric-targets
     )
 
 # add testing subdirectory
-#add_subdirectory(test)
+add_subdirectory(test)
