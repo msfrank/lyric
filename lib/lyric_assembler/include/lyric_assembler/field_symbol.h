@@ -43,6 +43,7 @@ namespace lyric_assembler {
         bool isVariable() const;
         bool isDeclOnly() const;
 
+        bool hasInitializer() const;
         lyric_common::SymbolUrl getInitializer() const;
         tempo_utils::Result<ProcHandle *> defineInitializer();
 

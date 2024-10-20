@@ -1,5 +1,5 @@
 
-#include <lyric_compiler/block_node_handler.h>
+#include <lyric_compiler/block_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
@@ -30,7 +30,14 @@ lyric_compiler::ProcHandler::before(
     auto *fragment = codeBuilder->rootFragment();
 
     auto numChildren = node->numChildren();
-    TU_ASSERT (numChildren > 0);
+
+    if (numChildren == 0) {
+        if (!m_requiresResult)
+            return {};
+        return block->logAndContinue(CompilerCondition::kSyntaxError,
+            tempo_tracing::LogSeverity::kError,
+            "block requires a result");
+    }
 
     if (numChildren > 1) {
         for (int i = 0; i < numChildren - 1; i++) {
@@ -39,6 +46,7 @@ lyric_compiler::ProcHandler::before(
             ctx.appendChoice(std::move(sideeffect));
         }
     }
+
     if (m_requiresResult) {
         auto expression = std::make_unique<FormChoice>(
             FormType::Expression, fragment, block, driver);

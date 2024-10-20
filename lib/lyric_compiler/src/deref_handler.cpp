@@ -6,18 +6,16 @@
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
-#include <lyric_compiler/block_node_handler.h>
-#include <lyric_compiler/function_handler.h>
+#include <lyric_compiler/block_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/constant_utils.h>
-#include <lyric_compiler/deref_node_handler.h>
+#include <lyric_compiler/deref_handler.h>
 #include <lyric_compiler/deref_utils.h>
-#include <lyric_compiler/method_handler.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 #include <lyric_typing/callsite_reifier.h>
 
-lyric_compiler::DerefNodeHandler::DerefNodeHandler(
+lyric_compiler::DerefHandler::DerefHandler(
     bool isSideEffect,
     lyric_assembler::CodeFragment *fragment,
     lyric_assembler::BlockHandle *block,
@@ -34,11 +32,13 @@ lyric_compiler::DerefNodeHandler::DerefNodeHandler(
 }
 
 tempo_utils::Status
-lyric_compiler::DerefNodeHandler::before(
+lyric_compiler::DerefHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
+    TU_LOG_INFO << "before DerefHandler@" << this;
+
     auto *block = getBlock();
     auto *driver = getDriver();
 
@@ -54,11 +54,13 @@ lyric_compiler::DerefNodeHandler::before(
 }
 
 tempo_utils::Status
-lyric_compiler::DerefNodeHandler::after(
+lyric_compiler::DerefHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
+    TU_LOG_INFO << "after DerefHandler@" << this;
+
     if (m_isSideEffect) {
         auto *driver = getDriver();
         auto resultType = driver->peekResult();
@@ -69,6 +71,37 @@ lyric_compiler::DerefNodeHandler::after(
     }
 
     return {};
+}
+
+lyric_compiler::DerefCall::DerefCall(
+    lyric_assembler::BlockHandle *bindingBlock,
+    lyric_assembler::BlockHandle *invokeBlock,
+    std::unique_ptr<lyric_assembler::CallableInvoker> &&invoker,
+    std::unique_ptr<lyric_typing::CallsiteReifier> &&reifier,
+    lyric_assembler::CodeFragment *fragment,
+    CompilerScanDriver *driver)
+    : BaseInvokableHandler(bindingBlock, invokeBlock, fragment, driver),
+      m_invoker(std::move(invoker)),
+      m_reifier(std::move(reifier))
+{
+    TU_ASSERT (m_invoker != nullptr);
+    TU_ASSERT (m_reifier != nullptr);
+}
+
+tempo_utils::Status
+lyric_compiler::DerefCall::after(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    lyric_compiler::AfterContext &ctx)
+{
+    auto *driver = getDriver();
+    auto *fragment = getFragment();
+
+    TU_RETURN_IF_NOT_OK (placeArguments(m_invoker->getCallable(), *m_reifier, fragment));
+
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, m_invoker->invoke(getInvokeBlock(), *m_reifier, fragment));
+    return driver->pushResult(returnType);
 }
 
 static tempo_utils::Status
@@ -104,9 +137,9 @@ invoke_call(
     auto reifier = std::make_unique<lyric_typing::CallsiteReifier>(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier->initialize(*invoker, callsiteArguments));
 
-    auto function = std::make_unique<lyric_compiler::FunctionHandler>(
+    auto call = std::make_unique<lyric_compiler::DerefCall>(
         bindingBlock, invokeBlock, std::move(invoker), std::move(reifier), fragment, driver);
-    ctx.setGrouping(std::move(function));
+    ctx.setGrouping(std::move(call));
 
     return {};
 }
@@ -177,7 +210,7 @@ lyric_compiler::DerefInitial::decide(
         case lyric_schema::LyricAstId::Block: {
             auto groupBlock = std::make_unique<lyric_assembler::BlockHandle>(
                 block->blockProc(), block, block->blockState());
-            auto group = std::make_unique<BlockNodeHandler>(
+            auto group = std::make_unique<BlockHandler>(
                 std::move(groupBlock), /* requiresResult= */ true, /* isSideEffect= */ false, fragment, driver);
             ctx.setGrouping(std::move(group));
             return {};
@@ -297,7 +330,7 @@ invoke_method(
     auto reifier = std::make_unique<lyric_typing::CallsiteReifier>(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier->initialize(*invoker, callsiteArguments));
 
-    auto method = std::make_unique<lyric_compiler::MethodHandler>(
+    auto method = std::make_unique<lyric_compiler::DerefMethod>(
         receiverType, bindingBlock, invokeBlock, std::move(invoker), std::move(reifier), fragment, driver);
     ctx.setGrouping(std::move(method));
 
@@ -318,7 +351,6 @@ lyric_compiler::DerefNext::decide(
     auto *fragment = m_deref->fragment;
 
     auto receiverType = driver->peekResult();
-    TU_RETURN_IF_NOT_OK (driver->popResult());
 
     auto thisReceiver = m_deref->thisReceiver;
     if (thisReceiver) {
@@ -340,4 +372,42 @@ lyric_compiler::DerefNext::decide(
             return CompilerStatus::forCondition(
                 CompilerCondition::kCompilerInvariant, "invlid deref target node");
     }
+}
+
+lyric_compiler::DerefMethod::DerefMethod(
+    const lyric_common::TypeDef &receiverType,
+    lyric_assembler::BlockHandle *bindingBlock,
+    lyric_assembler::BlockHandle *invokeBlock,
+    std::unique_ptr<lyric_assembler::CallableInvoker> &&invoker,
+    std::unique_ptr<lyric_typing::CallsiteReifier> &&reifier,
+    lyric_assembler::CodeFragment *fragment,
+    CompilerScanDriver *driver)
+    : BaseInvokableHandler(bindingBlock, invokeBlock, fragment, driver),
+      m_receiverType(receiverType),
+      m_invoker(std::move(invoker)),
+      m_reifier(std::move(reifier))
+{
+    TU_ASSERT (m_invoker != nullptr);
+    TU_ASSERT (m_reifier != nullptr);
+}
+
+tempo_utils::Status
+lyric_compiler::DerefMethod::after(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    lyric_compiler::AfterContext &ctx)
+{
+    auto *driver = getDriver();
+    auto *fragment = getFragment();
+
+    TU_RETURN_IF_NOT_OK (placeArguments(m_invoker->getCallable(), *m_reifier, fragment));
+
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, m_invoker->invoke(getInvokeBlock(), *m_reifier, fragment));
+
+    // pop the receiver
+    TU_RETURN_IF_NOT_OK (driver->popResult());
+
+    // push the method return
+    return driver->pushResult(returnType);
 }

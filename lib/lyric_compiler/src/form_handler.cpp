@@ -1,15 +1,17 @@
 
 #include <lyric_compiler/assignment_handler.h>
 #include <lyric_compiler/binary_operation_handler.h>
-#include <lyric_compiler/block_node_handler.h>
+#include <lyric_compiler/block_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/conditional_handler.h>
 #include <lyric_compiler/constant_utils.h>
 #include <lyric_compiler/def_handler.h>
-#include <lyric_compiler/deref_node_handler.h>
+#include <lyric_compiler/defclass_handler.h>
+#include <lyric_compiler/deref_handler.h>
 #include <lyric_compiler/deref_utils.h>
 #include <lyric_compiler/form_handler.h>
 #include <lyric_compiler/iteration_handler.h>
+#include <lyric_compiler/new_handler.h>
 #include <lyric_compiler/unary_operation_handler.h>
 #include <lyric_compiler/variable_handler.h>
 #include <lyric_parser/ast_attrs.h>
@@ -249,14 +251,24 @@ lyric_compiler::FormChoice::decide(
         case lyric_schema::LyricAstId::SymbolRef:
         case lyric_schema::LyricAstId::This:
         case lyric_schema::LyricAstId::Name: {
-            auto terminal = std::make_unique<TerminalFormBehavior>(isSideEffect, m_fragment, block, driver);
+            auto terminal = std::make_unique<TerminalFormBehavior>(
+                isSideEffect, m_fragment, block, driver);
             ctx.setBehavior(std::move(terminal));
+            break;
+        }
+
+        // new form
+        case lyric_schema::LyricAstId::New: {
+            auto new_ = std::make_unique<NewHandler>(
+                isSideEffect, m_fragment, block, driver);
+            ctx.setGrouping(std::move(new_));
             break;
         }
 
         // deref form
         case lyric_schema::LyricAstId::Deref: {
-            auto deref = std::make_unique<DerefNodeHandler>(isSideEffect, m_fragment, block, driver);
+            auto deref = std::make_unique<DerefHandler>(
+                isSideEffect, m_fragment, block, driver);
             ctx.setGrouping(std::move(deref));
             break;
         }
@@ -278,7 +290,7 @@ lyric_compiler::FormChoice::decide(
             bool requiresResult = m_type == FormType::Expression;
             auto groupBlock = std::make_unique<lyric_assembler::BlockHandle>(
                 block->blockProc(), block, block->blockState());
-            auto group = std::make_unique<BlockNodeHandler>(
+            auto group = std::make_unique<BlockHandler>(
                 std::move(groupBlock), requiresResult, isSideEffect, m_fragment, driver);
             ctx.setGrouping(std::move(group));
             break;
@@ -348,6 +360,13 @@ lyric_compiler::FormChoice::decide(
         // function definition form
         case lyric_schema::LyricAstId::Def: {
             auto def = std::make_unique<DefHandler>(isSideEffect, block, driver);
+            ctx.setGrouping(std::move(def));
+            break;
+        }
+
+        // class definition form
+        case lyric_schema::LyricAstId::DefClass: {
+            auto def = std::make_unique<DefClassHandler>(isSideEffect, block, driver);
             ctx.setGrouping(std::move(def));
             break;
         }

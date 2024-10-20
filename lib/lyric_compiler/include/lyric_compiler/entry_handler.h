@@ -4,7 +4,7 @@
 #include <lyric_assembler/call_symbol.h>
 
 #include "base_grouping.h"
-#include "block_node_handler.h"
+#include "block_handler.h"
 #include "compiler_scan_driver.h"
 
 namespace lyric_compiler {

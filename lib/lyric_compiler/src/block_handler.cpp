@@ -1,11 +1,11 @@
 
-#include <lyric_compiler/block_node_handler.h>
+#include <lyric_compiler/block_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/constant_utils.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 
-lyric_compiler::BlockNodeHandler::BlockNodeHandler(
+lyric_compiler::BlockHandler::BlockHandler(
     std::unique_ptr<lyric_assembler::BlockHandle> &&block,
     bool requiresResult,
     bool isSideEffect,
@@ -22,7 +22,7 @@ lyric_compiler::BlockNodeHandler::BlockNodeHandler(
 }
 
 tempo_utils::Status
-lyric_compiler::BlockNodeHandler::before(
+lyric_compiler::BlockHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::BeforeContext &ctx)
@@ -56,7 +56,7 @@ lyric_compiler::BlockNodeHandler::before(
 }
 
 tempo_utils::Status
-lyric_compiler::BlockNodeHandler::after(
+lyric_compiler::BlockHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::AfterContext &ctx)

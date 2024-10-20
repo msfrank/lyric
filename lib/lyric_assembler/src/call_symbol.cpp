@@ -216,6 +216,7 @@ lyric_assembler::CallSymbol::load()
         p.typeDef = paramType->getTypeDef();
 
         priv->listParameters.push_back(p);
+        priv->parametersMap[p.name] = p;
     }
 
     for (auto it = m_callImport->namedParametersBegin(); it != m_callImport->namedParametersEnd(); it++) {
@@ -230,6 +231,7 @@ lyric_assembler::CallSymbol::load()
         p.typeDef = paramType->getTypeDef();
 
         priv->namedParameters.push_back(p);
+        priv->parametersMap[p.name] = p;
     }
 
     if (m_callImport->hasRestParameter()) {
@@ -246,6 +248,7 @@ lyric_assembler::CallSymbol::load()
         p.typeDef = paramType->getTypeDef();
 
         priv->restParameter = Option(p);
+        priv->parametersMap[p.name] = p;
     }
 
     priv->access = m_callImport->getAccess();
@@ -368,6 +371,7 @@ lyric_assembler::CallSymbol::defineCall(
         } else {
             bindings[param.name] = argBinding;
         }
+        priv->parametersMap[param.name] = param;
     }
 
     // create bindings for named parameters
@@ -392,11 +396,13 @@ lyric_assembler::CallSymbol::defineCall(
         } else {
             bindings[param.name] = argBinding;
         }
+        priv->parametersMap[param.name] = param;
     }
 
     if (!priv->restParameter.isEmpty()) {
         auto &param = priv->restParameter.peekValue();
         TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
+        priv->parametersMap[param.name] = param;
     }
 
     // TODO: create binding for rest collector parameter if specified
@@ -419,6 +425,12 @@ lyric_assembler::CallSymbol::defineCall(
     }
 
     return priv->proc.get();
+}
+
+std::string
+lyric_assembler::CallSymbol::getName() const
+{
+    return m_callUrl.getSymbolPath().getName();
 }
 
 lyric_common::TypeDef
@@ -534,6 +546,23 @@ lyric_assembler::CallSymbol::callProc()
     return priv->proc.get();
 }
 
+bool
+lyric_assembler::CallSymbol::hasParameter(const std::string name) const
+{
+    auto *priv = getPriv();
+    return priv->parametersMap.contains(name);
+}
+
+lyric_assembler::Parameter
+lyric_assembler::CallSymbol::getParameter(const std::string &name) const
+{
+    auto *priv = getPriv();
+    auto entry = priv->parametersMap.find(name);
+    if (entry == priv->parametersMap.cend())
+        return {};
+    return entry->second;
+}
+
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::CallSymbol::listPlacementBegin() const
 {
@@ -587,14 +616,35 @@ lyric_assembler::CallSymbol::getInitializer(const std::string &name) const
     return {};
 }
 
-void
-lyric_assembler::CallSymbol::putInitializer(const std::string &name, const lyric_common::SymbolUrl &initializer)
+tempo_utils::Result<lyric_assembler::ProcHandle *>
+lyric_assembler::CallSymbol::defineInitializer(const std::string &name)
 {
     if (isImported())
         m_state->throwAssemblerInvariant(
-            "can't put initializer on imported call {}", m_callUrl.toString());
+            "can't define initializer on imported call {}", m_callUrl.toString());
     auto *priv = getPriv();
-    priv->initializers[name] = initializer;
+    if (priv->initializers.contains(name))
+        m_state->throwAssemblerInvariant(
+            "initializer already defined for param {}", name);
+
+    auto entry = priv->parametersMap.find(name);
+    if (entry == priv->parametersMap.cend())
+        return m_state->logAndContinue(AssemblerCondition::kInvalidBinding,
+            tempo_tracing::LogSeverity::kError,
+            "cannot define initializer for unknown param {}", name);
+    auto &param = entry->second;
+
+    auto identifier = absl::StrCat("$init$", name);
+
+    // declare the initializer call
+    lyric_assembler::CallSymbol *callSymbol;
+    TU_ASSIGN_OR_RETURN (callSymbol, priv->parentBlock->declareFunction(
+        identifier, lyric_object::AccessType::Public, {}, priv->isDeclOnly));
+
+    priv->initializers[name] = callSymbol->getSymbolUrl();
+
+    // define the initializer with no parameters and the param type as return type
+    return callSymbol->defineCall({}, param.typeDef);
 }
 
 tempo_utils::Status

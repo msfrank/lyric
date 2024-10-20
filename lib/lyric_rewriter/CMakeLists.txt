@@ -19,6 +19,7 @@ set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/lyric_ast_for_visitor.h
     include/lyric_rewriter/lyric_ast_if_visitor.h
     include/lyric_rewriter/lyric_ast_match_visitor.h
+    include/lyric_rewriter/lyric_ast_param_visitor.h
     include/lyric_rewriter/lyric_ast_sequence_visitor.h
     include/lyric_rewriter/lyric_ast_terminal_visitor.h
     include/lyric_rewriter/lyric_ast_unary_visitor.h
@@ -49,6 +50,7 @@ target_sources(lyric_rewriter PRIVATE
     src/lyric_ast_for_visitor.cpp
     src/lyric_ast_if_visitor.cpp
     src/lyric_ast_match_visitor.cpp
+    src/lyric_ast_param_visitor.cpp
     src/lyric_ast_sequence_visitor.cpp
     src/lyric_ast_terminal_visitor.cpp
     src/lyric_ast_unary_visitor.cpp

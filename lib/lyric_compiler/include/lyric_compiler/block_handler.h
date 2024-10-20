@@ -1,5 +1,5 @@
-#ifndef LYRIC_COMPILER_BLOCK_NODE_HANDLER_H
-#define LYRIC_COMPILER_BLOCK_NODE_HANDLER_H
+#ifndef LYRIC_COMPILER_BLOCK_HANDLER_H
+#define LYRIC_COMPILER_BLOCK_HANDLER_H
 
 #include <lyric_assembler/call_symbol.h>
 
@@ -9,9 +9,9 @@
 
 namespace lyric_compiler {
 
-    class BlockNodeHandler : public BaseGrouping {
+    class BlockHandler : public BaseGrouping {
     public:
-        BlockNodeHandler(
+        BlockHandler(
             std::unique_ptr<lyric_assembler::BlockHandle> &&block,
             bool requiresResult,
             bool isSideEffect,
@@ -36,4 +36,4 @@ namespace lyric_compiler {
     };
 }
 
-#endif // LYRIC_COMPILER_BLOCK_NODE_HANDLER_H
+#endif // LYRIC_COMPILER_BLOCK_HANDLER_H

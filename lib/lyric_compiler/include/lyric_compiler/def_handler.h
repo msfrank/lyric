@@ -14,7 +14,7 @@ namespace lyric_compiler {
         lyric_typing::TemplateSpec templateSpec;
         lyric_assembler::ParameterPack parameterPack;
         lyric_typing::TypeSpec returnSpec;
-        lyric_assembler::ProcHandle *procHandle;
+        lyric_assembler::ProcHandle *procHandle = nullptr;
     };
 
     class DefHandler : public BaseGrouping {
@@ -34,43 +34,6 @@ namespace lyric_compiler {
     private:
         Function m_function;
         bool m_isSideEffect;
-    };
-
-    class DefPackHandler : public BaseGrouping {
-    public:
-        DefPackHandler(
-            CompilerScanDriver *driver,
-            Function *m_function,
-            lyric_assembler::BlockHandle *block);
-
-        tempo_utils::Status before(
-            const lyric_parser::ArchetypeState *state,
-            const lyric_parser::ArchetypeNode *node,
-            BeforeContext &ctx) override;
-
-    private:
-        Function *m_function;
-    };
-
-    class PackParam : public AbstractBehavior {
-    public:
-        explicit PackParam(Function *function);
-
-        tempo_utils::Status enter(
-            CompilerScanDriver *driver,
-            const lyric_parser::ArchetypeState *state,
-            const lyric_parser::ArchetypeNode *node,
-            lyric_assembler::BlockHandle *block,
-            EnterContext &ctx) override;
-        tempo_utils::Status exit(
-            CompilerScanDriver *driver,
-            const lyric_parser::ArchetypeState *state,
-            const lyric_parser::ArchetypeNode *node,
-            lyric_assembler::BlockHandle *block,
-            ExitContext &ctx) override;
-
-    private:
-        Function *m_function;
     };
 
     class DefProc : public BaseChoice {

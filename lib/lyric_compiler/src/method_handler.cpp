@@ -2,24 +2,43 @@
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/deref_utils.h>
 #include <lyric_compiler/method_handler.h>
+#include <lyric_compiler/pack_handler.h>
+#include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
-#include <lyric_schema/ast_schema.h>
 
 lyric_compiler::MethodHandler::MethodHandler(
-    const lyric_common::TypeDef &receiverType,
-    lyric_assembler::BlockHandle *bindingBlock,
-    lyric_assembler::BlockHandle *invokeBlock,
-    std::unique_ptr<lyric_assembler::CallableInvoker> &&invoker,
-    std::unique_ptr<lyric_typing::CallsiteReifier> &&reifier,
-    lyric_assembler::CodeFragment *fragment,
+    Method method,
+    lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
-    : BaseInvokableHandler(bindingBlock, invokeBlock, fragment, driver),
-      m_receiverType(receiverType),
-      m_invoker(std::move(invoker)),
-      m_reifier(std::move(reifier))
+    : BaseGrouping(block, driver),
+      m_method(std::move(method))
 {
-    TU_ASSERT (m_invoker != nullptr);
-    TU_ASSERT (m_reifier != nullptr);
+    TU_ASSERT (m_method.callSymbol != nullptr);
+}
+
+tempo_utils::Status
+lyric_compiler::MethodHandler::before(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    BeforeContext &ctx)
+{
+    TU_LOG_INFO << "before MethodHandler@" << this;
+
+    auto *block = getBlock();
+    auto *driver = getDriver();
+
+    auto pack = std::make_unique<PackHandler>(m_method.callSymbol, block, driver);
+    ctx.appendGrouping(std::move(pack));
+
+    auto returnType = m_method.callSymbol->getReturnType();
+    TU_ASSERT (returnType.isValid());
+    bool requiresResult = returnType != lyric_common::TypeDef::noReturn();
+
+    auto proc = std::make_unique<ProcHandler>(
+        m_method.procHandle, requiresResult, getBlock(), getDriver());
+    ctx.appendGrouping(std::move(proc));
+
+    return {};
 }
 
 tempo_utils::Status
@@ -28,12 +47,16 @@ lyric_compiler::MethodHandler::after(
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::AfterContext &ctx)
 {
-    auto *driver = getDriver();
-    auto *fragment = getFragment();
+    TU_LOG_INFO << "after MethodHandler@" << this;
 
-    TU_RETURN_IF_NOT_OK (placeArguments(m_invoker->getCallable(), *m_reifier, fragment));
+    auto *procBuilder = m_method.procHandle->procCode();
+    auto *fragment = procBuilder->rootFragment();
 
-    lyric_common::TypeDef returnType;
-    TU_ASSIGN_OR_RETURN (returnType, m_invoker->invoke(getInvokeBlock(), *m_reifier, fragment));
-    return driver->pushResult(returnType);
+    // add return instruction
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
+
+    // finalize the call
+    TU_RETURN_IF_NOT_OK (m_method.callSymbol->finalizeCall());
+
+    return {};
 }

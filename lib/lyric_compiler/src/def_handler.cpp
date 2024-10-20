@@ -1,6 +1,7 @@
 
 #include <lyric_compiler/def_handler.h>
 #include <lyric_compiler/internal/compiler_utils.h>
+#include <lyric_compiler/pack_handler.h>
 #include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
@@ -19,6 +20,8 @@ lyric_compiler::DefHandler::before(
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::BeforeContext &ctx)
 {
+    TU_LOG_INFO << "before DefHandler@" << this;
+
     auto *block = getBlock();
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
@@ -31,11 +34,6 @@ lyric_compiler::DefHandler::before(
     lyric_parser::AccessType access;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
-    // parse the return type
-    lyric_parser::ArchetypeNode *typeNode;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
-    TU_ASSIGN_OR_RETURN (m_function.returnSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-
     // if function is generic, then parse the template parameter list
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         lyric_parser::ArchetypeNode *genericNode;
@@ -47,7 +45,30 @@ lyric_compiler::DefHandler::before(
     TU_ASSIGN_OR_RETURN (m_function.callSymbol, block->declareFunction(identifier,
         lyric_compiler::internal::convert_access_type(access), m_function.templateSpec.templateParameters));
 
-    auto pack = std::make_unique<DefPackHandler>(driver, &m_function, block);
+    auto *resolver = m_function.callSymbol->callResolver();
+    auto *packNode = node->getChild(0);
+
+    // parse the parameter pack
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(block, packNode->getArchetypeNode()));
+
+    // resolve the parameter pack
+    TU_ASSIGN_OR_RETURN (m_function.parameterPack, typeSystem->resolvePack(resolver, packSpec));
+
+    // parse the return type
+    lyric_parser::ArchetypeNode *typeNode;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+    TU_ASSIGN_OR_RETURN (m_function.returnSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+
+    // resolve the return type
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, m_function.returnSpec));
+
+    //
+    TU_ASSIGN_OR_RETURN (m_function.procHandle,
+        m_function.callSymbol->defineCall(m_function.parameterPack, returnType));
+
+    auto pack = std::make_unique<PackHandler>(m_function.callSymbol, block, driver);
     ctx.appendGrouping(std::move(pack));
 
     auto proc = std::make_unique<DefProc>(&m_function, block, driver);
@@ -62,6 +83,8 @@ lyric_compiler::DefHandler::after(
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::AfterContext &ctx)
 {
+    TU_LOG_INFO << "after DefHandler@" << this;
+
     auto *driver = getDriver();
 
     auto *procBuilder = m_function.procHandle->procCode();
@@ -77,80 +100,6 @@ lyric_compiler::DefHandler::after(
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));
     }
 
-    return {};
-}
-
-lyric_compiler::DefPackHandler::DefPackHandler(
-    CompilerScanDriver *driver,
-    Function *function,
-    lyric_assembler::BlockHandle *block)
-    : BaseGrouping(block, driver),
-      m_function(function)
-{
-    TU_ASSERT (m_function != nullptr);
-}
-
-tempo_utils::Status
-lyric_compiler::DefPackHandler::before(
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    BeforeContext &ctx)
-{
-    auto *block = BaseGrouping::getBlock();
-    auto *driver = getDriver();
-    auto *typeSystem = driver->getTypeSystem();
-    auto *resolver = m_function->callSymbol->callResolver();
-
-    // parse the parameter pack
-    lyric_typing::PackSpec packSpec;
-    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(block, node->getArchetypeNode()));
-
-    // resolve the parameter pack
-    TU_ASSIGN_OR_RETURN (m_function->parameterPack, typeSystem->resolvePack(resolver, packSpec));
-
-    // resolve the return type
-    lyric_common::TypeDef returnType;
-    TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, m_function->returnSpec));
-
-    //
-    TU_ASSIGN_OR_RETURN (m_function->procHandle,
-        m_function->callSymbol->defineCall(m_function->parameterPack, returnType));
-
-    //
-    for (int i = 0; i < node->numChildren(); i++) {
-        auto param = std::make_unique<PackParam>(m_function);
-        ctx.appendBehavior(std::move(param));
-    }
-
-    return {};
-}
-
-lyric_compiler::PackParam::PackParam(Function *function)
-    : m_function(function)
-{
-    TU_ASSERT (m_function != nullptr);
-}
-
-tempo_utils::Status
-lyric_compiler::PackParam::enter(
-    CompilerScanDriver *driver,
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::BlockHandle *block,
-    EnterContext &ctx)
-{
-    //
-    return {};
-}
-
-tempo_utils::Status
-lyric_compiler::PackParam::exit(
-    CompilerScanDriver *driver,
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::BlockHandle *block,
-    ExitContext &ctx)
-{
     return {};
 }
 

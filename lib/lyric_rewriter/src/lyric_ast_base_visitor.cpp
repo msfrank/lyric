@@ -11,6 +11,7 @@
 #include <lyric_rewriter/lyric_ast_for_visitor.h>
 #include <lyric_rewriter/lyric_ast_if_visitor.h>
 #include <lyric_rewriter/lyric_ast_match_visitor.h>
+#include <lyric_rewriter/lyric_ast_param_visitor.h>
 #include <lyric_rewriter/lyric_ast_sequence_visitor.h>
 #include <lyric_rewriter/lyric_ast_terminal_visitor.h>
 #include <lyric_rewriter/lyric_ast_unary_visitor.h>
@@ -64,7 +65,6 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
         case lyric_schema::LyricAstId::SymbolRef:
         case lyric_schema::LyricAstId::This:
         case lyric_schema::LyricAstId::Name:
-        case lyric_schema::LyricAstId::Param:
         case lyric_schema::LyricAstId::Ctx:
             visitor = std::make_shared<LyricAstTerminalVisitor>(astId, m_options);
             break;
@@ -162,6 +162,11 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
             break;
         case lyric_schema::LyricAstId::DefStruct:
             visitor = std::make_shared<LyricAstDefstructVisitor>(astId, m_options);
+            break;
+
+        // param form
+        case lyric_schema::LyricAstId::Param:
+            visitor = std::make_shared<LyricAstParamVisitor>(astId, m_options);
             break;
 
         // dynamic forms

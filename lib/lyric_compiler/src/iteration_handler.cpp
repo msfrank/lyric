@@ -1,6 +1,6 @@
 
 #include <lyric_assembler/fundamental_cache.h>
-#include <lyric_compiler/block_node_handler.h>
+#include <lyric_compiler/block_handler.h>
 #include <lyric_compiler/iteration_handler.h>
 #include "lyric_compiler/compiler_result.h"
 
@@ -102,7 +102,7 @@ lyric_compiler::WhileBody::decide(
 
     auto whileBlock = std::make_unique<lyric_assembler::BlockHandle>(
         block->blockProc(), block, block->blockState());
-    auto whileBody = std::make_unique<BlockNodeHandler>(
+    auto whileBody = std::make_unique<BlockHandler>(
         std::move(whileBlock), /* requiresResult= */ false, /* isSideEffect= */ true, m_fragment, driver);
     ctx.setGrouping(std::move(whileBody));
 

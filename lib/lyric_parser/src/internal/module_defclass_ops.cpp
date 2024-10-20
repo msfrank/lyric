@@ -115,17 +115,21 @@ lyric_parser::internal::ModuleDefclassOps::exitClassInit(ModuleParser::ClassInit
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *packNode = m_state->popNode();
 
-    //
+    // create the init node
     auto *initNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstInitClass, location);
     initNode->appendChild(packNode);
 
-    if (superNode != nullptr) {
-        initNode->appendChild(superNode);
+    // if super node is not specified then synthesize an empty node
+    if (superNode == nullptr) {
+        superNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSuperClass, {});
     }
+    initNode->appendChild(superNode);
 
-    if (blockNode != nullptr) {
-        initNode->appendChild(blockNode);
+    // if block node is not specified then synthesize an empty node
+    if (blockNode == nullptr) {
+        blockNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstBlockClass, {});
     }
+    initNode->appendChild(blockNode);
 
     // if ancestor node is not a kDefClass, then report internal violation
     if (m_state->isEmpty())

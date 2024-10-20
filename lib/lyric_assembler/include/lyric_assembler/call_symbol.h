@@ -16,6 +16,7 @@ namespace lyric_assembler {
         std::vector<Parameter> listParameters;
         std::vector<Parameter> namedParameters;
         Option<Parameter> restParameter;
+        absl::flat_hash_map<std::string,Parameter> parametersMap;
         lyric_common::TypeDef returnType;
         lyric_common::SymbolUrl receiverUrl;
         lyric_object::AccessType access;
@@ -98,6 +99,7 @@ namespace lyric_assembler {
             const ParameterPack &parameterPack,
             const lyric_common::TypeDef &returnType = {});
 
+        std::string getName() const;
         lyric_common::TypeDef getReturnType() const;
         lyric_common::SymbolUrl getReceiverUrl() const;
         lyric_object::AccessType getAccessType() const;
@@ -115,6 +117,9 @@ namespace lyric_assembler {
         TypeHandle *callType();
         ProcHandle *callProc();
 
+        bool hasParameter(const std::string name) const;
+        Parameter getParameter(const std::string &name) const;
+
         std::vector<Parameter>::const_iterator listPlacementBegin() const;
         std::vector<Parameter>::const_iterator listPlacementEnd() const;
         std::vector<Parameter>::const_iterator namedPlacementBegin() const;
@@ -123,7 +128,7 @@ namespace lyric_assembler {
 
         bool hasInitializer(const std::string &name) const;
         lyric_common::SymbolUrl getInitializer(const std::string &name) const;
-        void putInitializer(const std::string &name, const lyric_common::SymbolUrl &initializer);
+        tempo_utils::Result<ProcHandle *> defineInitializer(const std::string &name);
 
         tempo_utils::Status finalizeCall();
 

@@ -115,6 +115,13 @@ lyric_assembler::FieldSymbol::isDeclOnly() const
     return priv->isDeclOnly;
 }
 
+bool
+lyric_assembler::FieldSymbol::hasInitializer() const
+{
+    auto *priv = getPriv();
+    return priv->init.isValid();
+}
+
 lyric_common::SymbolUrl
 lyric_assembler::FieldSymbol::getInitializer() const
 {

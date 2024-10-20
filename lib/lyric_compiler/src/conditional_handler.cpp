@@ -1,6 +1,6 @@
 
 #include <lyric_assembler/fundamental_cache.h>
-#include <lyric_compiler/block_node_handler.h>
+#include <lyric_compiler/block_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/conditional_handler.h>
 #include <lyric_parser/ast_attrs.h>
@@ -38,7 +38,7 @@ lyric_compiler::IfHandler::before(
         m_conditional.alternative = std::make_unique<WhenAlternative>();
         auto defaultBlock = std::make_unique<lyric_assembler::BlockHandle>(
             block->blockProc(), block, block->blockState());
-        auto body = std::make_unique<BlockNodeHandler>(
+        auto body = std::make_unique<BlockHandler>(
             std::move(defaultBlock), /* requiresResult= */ false, /* isSideEffect= */ false, m_fragment, driver);
         ctx.appendGrouping(std::move(body));
     }

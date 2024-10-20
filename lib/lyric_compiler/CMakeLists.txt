@@ -13,21 +13,25 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/base_grouping.h
     include/lyric_compiler/base_invokable_handler.h
     include/lyric_compiler/binary_operation_handler.h
-    include/lyric_compiler/block_node_handler.h
-    include/lyric_compiler/function_handler.h
+    include/lyric_compiler/block_handler.h
     include/lyric_compiler/compiler_result.h
     include/lyric_compiler/compiler_scan_driver.h
     include/lyric_compiler/conditional_handler.h
     include/lyric_compiler/constant_utils.h
+    include/lyric_compiler/constructor_handler.h
     include/lyric_compiler/def_handler.h
-    include/lyric_compiler/deref_node_handler.h
+    include/lyric_compiler/defclass_handler.h
+    include/lyric_compiler/deref_handler.h
     include/lyric_compiler/deref_utils.h
     include/lyric_compiler/entry_handler.h
     include/lyric_compiler/iteration_handler.h
     include/lyric_compiler/lyric_compiler.h
+    include/lyric_compiler/member_handler.h
     include/lyric_compiler/method_handler.h
+    include/lyric_compiler/new_handler.h
     include/lyric_compiler/operator_utils.h
     include/lyric_compiler/form_handler.h
+    include/lyric_compiler/pack_handler.h
     include/lyric_compiler/proc_handler.h
     include/lyric_compiler/resolve_utils.h
     include/lyric_compiler/unary_operation_handler.h
@@ -42,21 +46,25 @@ target_sources(lyric_compiler PRIVATE
     src/base_grouping.cpp
     src/base_invokable_handler.cpp
     src/binary_operation_handler.cpp
-    src/block_node_handler.cpp
-    src/function_handler.cpp
+    src/block_handler.cpp
     src/compiler_result.cpp
     src/compiler_scan_driver.cpp
     src/conditional_handler.cpp
     src/constant_utils.cpp
+    src/constructor_handler.cpp
     src/def_handler.cpp
-    src/deref_node_handler.cpp
+    src/defclass_handler.cpp
+    src/deref_handler.cpp
     src/deref_utils.cpp
     src/entry_handler.cpp
     src/iteration_handler.cpp
     src/lyric_compiler.cpp
+    src/member_handler.cpp
     src/method_handler.cpp
+    src/new_handler.cpp
     src/operator_utils.cpp
     src/form_handler.cpp
+    src/pack_handler.cpp
     src/proc_handler.cpp
     src/resolve_utils.cpp
     src/unary_operation_handler.cpp
@@ -65,6 +73,8 @@ target_sources(lyric_compiler PRIVATE
 
     include/lyric_compiler/internal/compiler_utils.h
     src/internal/compiler_utils.cpp
+    include/lyric_compiler/internal/defclass_utils.h
+    src/internal/defclass_utils.cpp
     )
 
 # set the library version
