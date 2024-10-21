@@ -47,6 +47,7 @@ build_core_TupleN(BuilderState &state, int arity, const CoreClass *ObjectClass)
         code.callVirtual(TupleClass->superClass->classCtor->call_index, 0);
         // load the remaining TupleN.$ctor arguments and store them as members
         for (tu_uint32 i = 0; i < ctorParams.size(); i++) {
+            code.loadReceiver();
             code.loadArgument(i);
             code.storeField(tupleFields[ctorParams[i].paramName]);
         }

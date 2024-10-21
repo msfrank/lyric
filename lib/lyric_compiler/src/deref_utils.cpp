@@ -155,8 +155,6 @@ lyric_compiler::deref_member(
     TU_RETURN_IF_NOT_OK (fragment->loadRef(ref));
 
     // drop the previous result from the stack
-    // FIXME: swap receiver for member within opcode
-    TU_RETURN_IF_NOT_OK (fragment->rdropValue(1));
     TU_RETURN_IF_NOT_OK (driver->popResult());
 
     // push member result

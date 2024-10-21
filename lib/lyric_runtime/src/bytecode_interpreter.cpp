@@ -277,7 +277,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             lyric_object::LinkageSection::Field, index, status);
                         if (!field.isValid())
                             return onError(op, status);
-                        auto &receiver = currentCoro->peekData();
+                        auto receiver = currentCoro->popData();
                         if (receiver.type != DataCellType::REF)
                             return onError(op, InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
                                 "invalid receiver for LOAD"));
@@ -411,7 +411,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             lyric_object::LinkageSection::Field, index, status);
                         if (!field.isValid())
                             return onError(op, status);
-                        auto &receiver = currentCoro->peekData();
+                        auto receiver = currentCoro->popData();
                         if (receiver.type != DataCellType::REF)
                             return onError(op, InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
                                 "invalid receiver for STORE"));

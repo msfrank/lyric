@@ -34,9 +34,11 @@ build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *
     {
         lyric_object::BytecodeBuilder code;
         code.loadReceiver();
-        // load the message argument and store it in member
+        // load the code argument and store it in member
         code.loadArgument(0);
         code.storeField(CodeField->field_index);
+        code.loadReceiver();
+        // load the message argument and store it in member
         code.loadArgument(1);
         code.storeField(MessageField->field_index);
         code.trap(static_cast<tu_uint32>(lyric_bootstrap::internal::BootstrapTrap::STATUS_CTOR));
