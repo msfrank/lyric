@@ -1,16 +1,17 @@
-#ifndef LYRIC_COMPILER_INTERNAL_DEFCLASS_UTILS_H
-#define LYRIC_COMPILER_INTERNAL_DEFCLASS_UTILS_H
+#ifndef LYRIC_COMPILER_DEFCLASS_UTILS_H
+#define LYRIC_COMPILER_DEFCLASS_UTILS_H
 
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_parser/archetype_node.h>
 #include <lyric_typing/type_system.h>
 
-#include "../defclass_handler.h"
-#include "../member_handler.h"
-#include "../method_handler.h"
+#include "defclass_handler.h"
+#include "impl_handler.h"
+#include "member_handler.h"
+#include "method_handler.h"
 
-namespace lyric_compiler::internal {
+namespace lyric_compiler {
 
     tempo_utils::Result<lyric_assembler::CallSymbol *>
     declare_class_default_init(
@@ -37,6 +38,12 @@ namespace lyric_compiler::internal {
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::ClassSymbol *classSymbol,
         lyric_typing::TypeSystem *typeSystem);
+
+    tempo_utils::Result<Impl>
+    declare_class_impl(
+        const lyric_parser::ArchetypeNode *node,
+        lyric_assembler::ClassSymbol *classSymbol,
+        lyric_typing::TypeSystem *typeSystem);
 }
 
-#endif // LYRIC_COMPILER_INTERNAL_DEFCLASS_UTILS_H
+#endif // LYRIC_COMPILER_DEFCLASS_UTILS_H

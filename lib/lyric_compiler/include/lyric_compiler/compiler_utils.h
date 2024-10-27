@@ -1,12 +1,12 @@
-#ifndef LYRIC_COMPILER_INTERNAL_COMPILER_UTILS_H
-#define LYRIC_COMPILER_INTERNAL_COMPILER_UTILS_H
+#ifndef LYRIC_COMPILER_COMPILER_UTILS_H
+#define LYRIC_COMPILER_COMPILER_UTILS_H
 
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_object/object_types.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
 
-namespace lyric_compiler::internal {
+namespace lyric_compiler {
 
     lyric_object::AccessType convert_access_type(lyric_parser::AccessType access);
 
@@ -26,4 +26,4 @@ namespace lyric_compiler::internal {
         const lyric_common::TypeDef &operand2);
 }
 
-#endif // LYRIC_COMPILER_INTERNAL_COMPILER_UTILS_H
+#endif // LYRIC_COMPILER_COMPILER_UTILS_H

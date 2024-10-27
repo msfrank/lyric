@@ -1,8 +1,8 @@
 
 #include <lyric_compiler/compiler_result.h>
+#include <lyric_compiler/compiler_utils.h>
 #include <lyric_compiler/variable_handler.h>
 #include <lyric_parser/ast_attrs.h>
-#include "lyric_compiler/internal/compiler_utils.h"
 
 lyric_compiler::VariableHandler::VariableHandler(
     bool isVariable,
@@ -78,7 +78,7 @@ lyric_compiler::VariableHandler::after(
 
     lyric_assembler::DataReference var;
     TU_ASSIGN_OR_RETURN (var, block->declareVariable(
-        identifier, internal::convert_access_type(access), declarationType, m_isVariable));
+        identifier, convert_access_type(access), declarationType, m_isVariable));
 
     TU_RETURN_IF_NOT_OK (m_fragment->storeRef(var, /* initialStore= */ true));
 

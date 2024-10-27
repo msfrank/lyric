@@ -9,6 +9,7 @@
 #include "base_choice.h"
 #include "base_grouping.h"
 #include "compiler_scan_driver.h"
+#include "impl_handler.h"
 #include "member_handler.h"
 #include "method_handler.h"
 
@@ -21,7 +22,7 @@ namespace lyric_compiler {
         lyric_assembler::CallSymbol *initCall = nullptr;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Member> members;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Method> methods;
-        absl::flat_hash_map<const lyric_parser::ArchetypeNode *,lyric_assembler::ImplHandle *> impls;
+        absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Impl> impls;
     };
 
     class DefClassHandler : public BaseGrouping {

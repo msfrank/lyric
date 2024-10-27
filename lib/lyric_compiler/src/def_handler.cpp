@@ -1,6 +1,6 @@
 
+#include <lyric_compiler/compiler_utils.h>
 #include <lyric_compiler/def_handler.h>
-#include <lyric_compiler/internal/compiler_utils.h>
 #include <lyric_compiler/pack_handler.h>
 #include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
@@ -43,7 +43,7 @@ lyric_compiler::DefHandler::before(
 
     // declare the function call
     TU_ASSIGN_OR_RETURN (m_function.callSymbol, block->declareFunction(identifier,
-        lyric_compiler::internal::convert_access_type(access), m_function.templateSpec.templateParameters));
+        lyric_compiler::convert_access_type(access), m_function.templateSpec.templateParameters));
 
     auto *resolver = m_function.callSymbol->callResolver();
     auto *packNode = node->getChild(0);

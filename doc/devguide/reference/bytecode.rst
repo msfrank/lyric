@@ -15,7 +15,7 @@ Opcodes
 ``NOOP``
 ........
 
-:OpInfo Type:               NO_OPERANDS
+:OpInfo Type:               `NO_OPERANDS`_
 :Side Effects:              None.
 
 Does nothing.
@@ -23,7 +23,7 @@ Does nothing.
 ``NIL``
 .......
 
-:OpInfo Type:               NO_OPERANDS
+:OpInfo Type:               `NO_OPERANDS`_
 :Side Effects:              1. Value pushed onto data stack
 
 Pushes a `nil` value onto the top of the data stack.
@@ -31,7 +31,7 @@ Pushes a `nil` value onto the top of the data stack.
 ``UNDEF``
 .........
 
-:OpInfo Type:               NO_OPERANDS
+:OpInfo Type:               `NO_OPERANDS`_
 :Side Effects:              1. Value pushed onto data stack
 
 Pushes an `undef` value onto the top of the data stack.
@@ -39,7 +39,7 @@ Pushes an `undef` value onto the top of the data stack.
 ``TRUE``
 ........
 
-:OpInfo Type:               NO_OPERANDS
+:OpInfo Type:               `NO_OPERANDS`_
 :Side Effects:              1. Value pushed onto data stack
 
 Pushes a `true` value onto the top of the data stack.
@@ -47,7 +47,7 @@ Pushes a `true` value onto the top of the data stack.
 ``FALSE``
 .........
 
-:OpInfo Type:               NO_OPERANDS
+:OpInfo Type:               `NO_OPERANDS`_
 :Side Effects:              1. Value pushed onto data stack
 
 Pushes a `false` value onto the top of the data stack.
@@ -55,7 +55,7 @@ Pushes a `false` value onto the top of the data stack.
 ``I64``
 .......
 
-:OpInfo Type:               IMMEDIATE_I64
+:OpInfo Type:               `IMMEDIATE_I64`_
 :Side Effects:              1. Value pushed onto data stack
 
 Pushes a 64-bit integer value onto the top of the data stack. The value is encoded in the 8 subsequent
@@ -64,7 +64,7 @@ bytes after the opcode in little-endian byte order.
 ``DBL``
 .......
 
-:OpInfo Type:               IMMEDIATE_DBL
+:OpInfo Type:               `IMMEDIATE_DBL`_
 :Side Effects:              1. Value pushed onto data stack
 
 Pushes a double-precision floating point value onto the top of the data stack. The value is encoded in
@@ -73,7 +73,7 @@ the 8 subsequent bytes after the opcode in IEEE 754 binary64 format.
 ``CHR``
 .......
 
-:OpInfo Type:               IMMEDIATE_CHR
+:OpInfo Type:               `IMMEDIATE_CHR`_
 :Side Effects:              1. Value pushed onto data stack
 
 Pushes a 32-bit Unicode code point value onto the top of the data stack. The value is encoded in the 4
@@ -82,7 +82,7 @@ subsequent bytes after the opcode in little-endian byte order.
 ``LITERAL``
 ...........
 
-:OpInfo Type:               ADDRESS_U32
+:OpInfo Type:               `ADDRESS_U32`_
 :Address Type:              Literal Address
 :Side Effects:              1. Value pushed onto data stack
 
@@ -90,21 +90,21 @@ subsequent bytes after the opcode in little-endian byte order.
 ``STRING``
 ..........
 
-:OpInfo Type:               ADDRESS_U32
+:OpInfo Type:               `ADDRESS_U32`_
 :Address Type:              Literal Address
 :Side Effects:              1. Value pushed onto data stack
 
 ``URL``
 .......
 
-:OpInfo Type:               ADDRESS_U32
+:OpInfo Type:               `ADDRESS_U32`_
 :Address Type:              Literal Address
 :Side Effects:              1. Value pushed onto data stack
 
 ``SYNTHETIC``
 .............
 
-:OpInfo Type:               TYPE_U8
+:OpInfo Type:               `TYPE_U8`_
 :Type Allowed Values:
    .. table::
       :align: left
@@ -119,14 +119,14 @@ subsequent bytes after the opcode in little-endian byte order.
 ``DESCRIPTOR``
 ..............
 
-:OpInfo Type:               ADDRESS_U32
+:OpInfo Type:               `ADDRESS_U32`_
 :Address Type:              Literal Address
 :Side Effects:              1. Value pushed onto data stack
 
 ``LOAD``
 ........
 
-:OpInfo Type:               FLAGS_U8_ADDRESS_U32
+:OpInfo Type:               `FLAGS_U8_ADDRESS_U32`_
 :Flags Allowed Values:
    .. table::
       :align: left
@@ -148,7 +148,7 @@ subsequent bytes after the opcode in little-endian byte order.
 ``STORE``
 .........
 
-:OpInfo Type:               FLAGS_U8_ADDRESS_U32
+:OpInfo Type:               `FLAGS_U8_ADDRESS_U32`_
 :Flags Allowed Values:
    .. table::
       :align: left
@@ -174,43 +174,43 @@ subsequent bytes after the opcode in little-endian byte order.
 ``POP``
 .......
 
-:OpInfo Type:               NO_OPERANDS
+:OpInfo Type:               `NO_OPERANDS`_
 :Side Effects:              1. Value popped off of data stack
 
 ``DUP``
 .......
 
-:OpInfo Type:               NO_OPERANDS
+:OpInfo Type:               `NO_OPERANDS`_
 :Side Effects:              1. Value pushed onto data stack
 
 ``PICK``
 ........
 
-:OpInfo Type:               OFFSET_U16
+:OpInfo Type:               `OFFSET_U16`_
 :Side Effects:              1. Value pushed onto data stack
 
 ``DROP``
 ........
 
-:OpInfo Type:               OFFSET_U16
+:OpInfo Type:               `OFFSET_U16`_
 :Side Effects:              1. Value removed from data stack
 
 ``RPICK``
 .........
 
-:OpInfo Type:               OFFSET_U16
+:OpInfo Type:               `OFFSET_U16`_
 :Side Effects:              1. Value pushed onto data stack
 
 ``RDROP``
 .........
 
-:OpInfo Type:               OFFSET_U16
+:OpInfo Type:               `OFFSET_U16`_
 :Side Effects:              1. Value removed from data stack
 
 ``I64_ADD``
 ...........
 
-:OpInfo Type:               NO_OPERANDS
+:OpInfo Type:               `NO_OPERANDS`_
 :Preconditions:             1. Int64 value (the `rhs`) is on the top of the stack
                             2. Int64 value (the `lhs`) is directly below the top of the stack
 :Side Effects:              1. `rhs` value popped off data stack
@@ -223,7 +223,7 @@ result onto the data stack.
 ``I64_SUB``
 ...........
 
-:OpInfo Type:               NO_OPERANDS
+:OpInfo Type:               `NO_OPERANDS`_
 :Preconditions:             1. Int64 value (the `rhs`) is on the top of the stack
                             2. Int64 value (the `lhs`) is directly below the top of the stack
 :Side Effects:              1. `rhs` value popped off data stack
@@ -236,7 +236,7 @@ result onto the data stack.
 ``I64_MUL``
 ...........
 
-:OpInfo Type:               NO_OPERANDS
+:OpInfo Type:               `NO_OPERANDS`_
 :Preconditions:             1. Int64 value (the `rhs`) is on the top of the stack
                             2. Int64 value (the `lhs`) is directly below the top of the stack
 :Side Effects:              1. `rhs` value popped off data stack
@@ -249,7 +249,7 @@ result onto the data stack.
 ``I64_DIV``
 ...........
 
-:OpInfo Type:               NO_OPERANDS
+:OpInfo Type:               `NO_OPERANDS`_
 :Preconditions:             1. Int64 value (the `rhs`) is on the top of the stack
                             2. Int64 value (the `lhs`) is directly below the top of the stack
 :Side Effects:              1. `rhs` value popped off data stack
@@ -262,7 +262,7 @@ result onto the data stack.
 ``I64_NEG``
 ...........
 
-:OpInfo Type:               NO_OPERANDS
+:OpInfo Type:               `NO_OPERANDS`_
 :Preconditions:             1. Int64 value (the `operand`) is on the top of the stack
 :Side Effects:              1. `operand` value popped off data stack
                             3. `result` value pushed onto data stack
@@ -377,3 +377,113 @@ result onto the data stack.
 
 ``ABORT``
 .........
+
+Opcodes By OpInfo Type
+----------------------
+
+NO_OPERANDS
+...........
+
+- `NOOP`_
+- `NIL`_
+- `UNDEF`_
+- `TRUE`_
+- `FALSE`_
+- `VA_LOAD`_
+- `VA_SIZE`_
+- `POP`_
+- `DUP`_
+- `I64_ADD`_
+- `I64_SUB`_
+- `I64_MUL`_
+- `I64_DIV`_
+- `I64_NEG`_
+- `DBL_ADD`_
+- `DBL_SUB`_
+- `DBL_MUL`_
+- `DBL_DIV`_
+- `DBL_NEG`_
+- `BOOL_CMP`_
+- `I64_CMP`_
+- `DBL_CMP`_
+- `CHR_CMP`_
+- `TYPE_CMP`_
+- `LOGICAL_AND`_
+- `LOGICAL_OR`_
+- `LOGICAL_NOT`_
+- `RETURN`_
+- `TYPE_OF`_
+- `INTERRUPT`_
+- `HALT`_
+- `ABORT`_
+
+ADDRESS_U32
+...........
+
+- `LITERAL`_
+- `STRING`_
+- `URL`_
+- `IMPORT`_
+
+FLAGS_U8_ADDRESS_U32
+....................
+
+- `DESCRIPTOR`_
+- `LOAD`_
+- `STORE`_
+- `TRAP`_
+
+JUMP_I16
+........
+
+- `IF_NIL`_
+- `IF_NOTNIL`_
+- `IF_TRUE`_
+- `IF_FALSE`_
+- `IF_ZERO`_
+- `IF_NOTZERO`_
+- `IF_GT`_
+- `IF_GE`_
+- `IF_LT`_
+- `IF_LE`_
+- `JUMP`_
+
+OFFSET_U16
+..........
+
+- `PICK`_
+- `DROP`_
+- `RPICK`_
+- `RDROP`_
+
+FLAGS_U8_ADDRESS_U32_PLACEMENT_U16
+..................................
+
+- `CALL_STATIC`_
+- `CALL_VIRTUAL`_
+- `CALL_CONCEPT`_
+- `CALL_EXISTENTIAL`_
+- `NEW`_
+
+FLAGS_U8_OFFSET_U16_PLACEMENT_U16
+.................................
+
+TYPE_U8
+.......
+
+- `SYNTHETIC`_
+
+IMMEDIATE_I64
+.............
+
+- `I64`_
+
+IMMEDIATE_DBL
+.............
+
+- `DBL`_
+
+IMMEDIATE_CHR
+.............
+
+- `CHR`_

@@ -1,10 +1,10 @@
 
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/compiler_result.h>
+#include <lyric_compiler/compiler_utils.h>
 #include <lyric_compiler/constructor_handler.h>
 #include <lyric_compiler/defclass_handler.h>
-#include <lyric_compiler/internal/compiler_utils.h>
-#include <lyric_compiler/internal/defclass_utils.h>
+#include <lyric_compiler/defclass_utils.h>
 #include <lyric_compiler/member_handler.h>
 #include <lyric_compiler/method_handler.h>
 #include <lyric_compiler/proc_handler.h>
@@ -124,14 +124,14 @@ lyric_compiler::DefClassHandler::before(
 
     // declare the class
     TU_ASSIGN_OR_RETURN (m_defclass.classSymbol, block->declareClass(
-        identifier, m_defclass.superclassSymbol, lyric_compiler::internal::convert_access_type(access),
-        m_defclass.templateSpec.templateParameters, lyric_compiler::internal::convert_derive_type(derive),
+        identifier, m_defclass.superclassSymbol, lyric_compiler::convert_access_type(access),
+        m_defclass.templateSpec.templateParameters, lyric_compiler::convert_derive_type(derive),
         isAbstract));
 
     // declare val members
     for (auto &valNode : valNodes) {
         Member member;
-        TU_ASSIGN_OR_RETURN (member, internal::declare_class_member(
+        TU_ASSIGN_OR_RETURN (member, declare_class_member(
             valNode, /* isVariable= */ false, m_defclass.classSymbol, typeSystem));
         m_defclass.members[valNode] = member;
     }
@@ -139,29 +139,35 @@ lyric_compiler::DefClassHandler::before(
     // declare var members
     for (auto &varNode : varNodes) {
         Member member;
-        TU_ASSIGN_OR_RETURN (member, internal::declare_class_member(
+        TU_ASSIGN_OR_RETURN (member, declare_class_member(
             varNode, /* isVariable= */ true, m_defclass.classSymbol, typeSystem));
         m_defclass.members[varNode] = member;
     }
 
     // declare class init
     if (initNode != nullptr) {
-        TU_ASSIGN_OR_RETURN (m_defclass.initCall, internal::declare_class_init(
+        TU_ASSIGN_OR_RETURN (m_defclass.initCall, declare_class_init(
             initNode, m_defclass.classSymbol, typeSystem));
     } else {
-        TU_ASSIGN_OR_RETURN (m_defclass.initCall, internal::declare_class_default_init(
+        TU_ASSIGN_OR_RETURN (m_defclass.initCall, declare_class_default_init(
             &m_defclass, m_defclass.classSymbol, symbolCache, typeSystem));
     }
 
     // declare methods
     for (auto &defNode : defNodes) {
         Method method;
-        TU_ASSIGN_OR_RETURN (method, internal::declare_class_method(
+        TU_ASSIGN_OR_RETURN (method, declare_class_method(
             defNode, m_defclass.classSymbol, typeSystem));
         m_defclass.methods[defNode] = method;
     }
 
-    // FIXME: declare impls
+    // declare impls
+    for (auto &implNode : implNodes) {
+        Impl impl;
+        TU_ASSIGN_OR_RETURN (impl, declare_class_impl(
+            implNode, m_defclass.classSymbol, typeSystem));
+        m_defclass.impls[implNode] = impl;
+    }
 
     return {};
 }
@@ -226,6 +232,10 @@ lyric_compiler::ClassDefinition::decide(
             return {};
         }
         case lyric_schema::LyricAstId::Impl: {
+            auto impl = m_defclass->impls.at(node);
+            auto handler = std::make_unique<ImplHandler>(impl, block, driver);
+            ctx.setGrouping(std::move(handler));
+            return {};
         }
         default:
             return block->logAndContinue(CompilerCondition::kSyntaxError,

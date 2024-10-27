@@ -1,9 +1,9 @@
 
 #include <lyric_compiler/compiler_result.h>
-#include <lyric_compiler/internal/compiler_utils.h>
+#include <lyric_compiler/compiler_utils.h>
 
 lyric_object::AccessType
-lyric_compiler::internal::convert_access_type(lyric_parser::AccessType access)
+lyric_compiler::convert_access_type(lyric_parser::AccessType access)
 {
     switch (access) {
         case lyric_parser::AccessType::Public:
@@ -18,7 +18,7 @@ lyric_compiler::internal::convert_access_type(lyric_parser::AccessType access)
 }
 
 lyric_object::DeriveType
-lyric_compiler::internal::convert_derive_type(lyric_parser::DeriveType derive)
+lyric_compiler::convert_derive_type(lyric_parser::DeriveType derive)
 {
     switch (derive) {
         case lyric_parser::DeriveType::Any:
@@ -33,7 +33,7 @@ lyric_compiler::internal::convert_derive_type(lyric_parser::DeriveType derive)
 }
 
 tempo_utils::Result<std::string>
-lyric_compiler::internal::resolve_operator_action_name(lyric_schema::LyricAstId operatorClass)
+lyric_compiler::resolve_operator_action_name(lyric_schema::LyricAstId operatorClass)
 {
     switch (operatorClass) {
         case lyric_schema::LyricAstId::Add:
@@ -69,7 +69,7 @@ lyric_compiler::internal::resolve_operator_action_name(lyric_schema::LyricAstId 
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
-lyric_compiler::internal::resolve_unary_operator_concept_type(
+lyric_compiler::resolve_unary_operator_concept_type(
     const lyric_assembler::FundamentalCache *fundamentalCache,
     lyric_schema::LyricAstId operatorClass,
     const lyric_common::TypeDef &operand1)
@@ -94,7 +94,7 @@ lyric_compiler::internal::resolve_unary_operator_concept_type(
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
-lyric_compiler::internal::resolve_binary_operator_concept_type(
+lyric_compiler::resolve_binary_operator_concept_type(
     const lyric_assembler::FundamentalCache *fundamentalCache,
     lyric_schema::LyricAstId operatorClass,
     const lyric_common::TypeDef &operand1,

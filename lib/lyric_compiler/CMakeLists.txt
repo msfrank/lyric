@@ -16,14 +16,17 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/block_handler.h
     include/lyric_compiler/compiler_result.h
     include/lyric_compiler/compiler_scan_driver.h
+    include/lyric_compiler/compiler_utils.h
     include/lyric_compiler/conditional_handler.h
     include/lyric_compiler/constant_utils.h
     include/lyric_compiler/constructor_handler.h
     include/lyric_compiler/def_handler.h
     include/lyric_compiler/defclass_handler.h
+    include/lyric_compiler/defclass_utils.h
     include/lyric_compiler/deref_handler.h
     include/lyric_compiler/deref_utils.h
     include/lyric_compiler/entry_handler.h
+    include/lyric_compiler/impl_handler.h
     include/lyric_compiler/iteration_handler.h
     include/lyric_compiler/lyric_compiler.h
     include/lyric_compiler/member_handler.h
@@ -49,14 +52,17 @@ target_sources(lyric_compiler PRIVATE
     src/block_handler.cpp
     src/compiler_result.cpp
     src/compiler_scan_driver.cpp
+    src/compiler_utils.cpp
     src/conditional_handler.cpp
     src/constant_utils.cpp
     src/constructor_handler.cpp
     src/def_handler.cpp
     src/defclass_handler.cpp
+    src/defclass_utils.cpp
     src/deref_handler.cpp
     src/deref_utils.cpp
     src/entry_handler.cpp
+    src/impl_handler.cpp
     src/iteration_handler.cpp
     src/lyric_compiler.cpp
     src/member_handler.cpp
@@ -70,11 +76,6 @@ target_sources(lyric_compiler PRIVATE
     src/unary_operation_handler.cpp
     src/variable_handler.cpp
     src/visitor_context.cpp
-
-    include/lyric_compiler/internal/compiler_utils.h
-    src/internal/compiler_utils.cpp
-    include/lyric_compiler/internal/defclass_utils.h
-    src/internal/defclass_utils.cpp
     )
 
 # set the library version

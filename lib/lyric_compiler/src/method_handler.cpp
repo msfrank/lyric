@@ -11,7 +11,7 @@ lyric_compiler::MethodHandler::MethodHandler(
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_method(std::move(method))
+      m_method(method)
 {
     TU_ASSERT (m_method.callSymbol != nullptr);
 }

@@ -83,3 +83,84 @@ TEST(CoreAssignment, EvaluateVarInplaceDivide)
                  tempo_test::ContainsResult(
                      RunModule(DataCellInt(2))));
 }
+
+TEST(CoreAssignment, EvaluateMemberInplaceAdd)
+{
+    auto result = runModule(R"(
+        defclass Test {
+            var Count: Int
+            init(count: Int) {
+                set this.Count = count
+                set this.Count += 1
+            }
+        }
+
+        val test: Test = Test{10}
+        test.Count
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(11))));
+}
+
+TEST(CoreAssignment, EvaluateMemberInplaceSubtract)
+{
+    auto result = runModule(R"(
+        defclass Test {
+            var Count: Int
+            init(count: Int) {
+                set this.Count = count
+                set this.Count -= 1
+            }
+        }
+
+        val test: Test = Test{10}
+        test.Count
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(9))));
+}
+
+TEST(CoreAssignment, EvaluateMemberInplaceMultiply)
+{
+    auto result = runModule(R"(
+        defclass Test {
+            var Count: Int
+            init(count: Int) {
+                set this.Count = count
+                set this.Count *= 2
+            }
+        }
+
+        val test: Test = Test{10}
+        test.Count
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(20))));
+}
+
+TEST(CoreAssignment, EvaluateMemberInplaceDivide)
+{
+    auto result = runModule(R"(
+
+        defclass Test {
+            var Count: Int
+            init(count: Int) {
+                set this.Count = count
+                set this.Count /= 2
+            }
+        }
+
+        val test: Test = Test{10}
+        test.Count
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(5))));
+}

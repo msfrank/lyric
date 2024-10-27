@@ -1,8 +1,8 @@
 
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/compiler_result.h>
+#include <lyric_compiler/compiler_utils.h>
 #include <lyric_compiler/form_handler.h>
-#include <lyric_compiler/internal/compiler_utils.h>
 #include <lyric_compiler/member_handler.h>
 #include <lyric_compiler/new_handler.h>
 #include <lyric_compiler/proc_handler.h>

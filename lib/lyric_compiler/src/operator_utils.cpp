@@ -2,7 +2,7 @@
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/compiler_result.h>
-#include <lyric_compiler/internal/compiler_utils.h>
+#include <lyric_compiler/compiler_utils.h>
 #include <lyric_compiler/operator_utils.h>
 #include <lyric_typing/callsite_reifier.h>
 
@@ -25,7 +25,7 @@ lyric_compiler::compile_unary_operator(
     TU_RETURN_IF_NOT_OK (driver->popResult());
 
     lyric_common::TypeDef operatorType;
-    TU_ASSIGN_OR_RETURN (operatorType, internal::resolve_unary_operator_concept_type(
+    TU_ASSIGN_OR_RETURN (operatorType, resolve_unary_operator_concept_type(
         fundamentalCache, operationId, operandType));
 
     // resolve operator impl
@@ -45,7 +45,7 @@ lyric_compiler::compile_unary_operator(
             "missing impl for {}", operatorType.toString());
 
     std::string actionName;
-    TU_ASSIGN_OR_RETURN (actionName, internal::resolve_operator_action_name(operationId));
+    TU_ASSIGN_OR_RETURN (actionName, resolve_operator_action_name(operationId));
 
     lyric_assembler::DataReference instanceRef{instanceUrl, operatorType, lyric_assembler::ReferenceType::Value};
     lyric_assembler::CallableInvoker extensionInvoker;
@@ -84,7 +84,7 @@ lyric_compiler::compile_binary_operator(
     TU_RETURN_IF_NOT_OK (driver->popResult());
 
     lyric_common::TypeDef operatorType;
-    TU_ASSIGN_OR_RETURN (operatorType, internal::resolve_binary_operator_concept_type(
+    TU_ASSIGN_OR_RETURN (operatorType, resolve_binary_operator_concept_type(
         fundamentalCache, operationId, lhsType, rhsType));
 
     // resolve operator impl
@@ -104,7 +104,7 @@ lyric_compiler::compile_binary_operator(
             "missing impl for {}", operatorType.toString());
 
     std::string actionName;
-    TU_ASSIGN_OR_RETURN (actionName, internal::resolve_operator_action_name(operationId));
+    TU_ASSIGN_OR_RETURN (actionName, resolve_operator_action_name(operationId));
 
     lyric_assembler::DataReference instanceRef{instanceUrl, operatorType, lyric_assembler::ReferenceType::Value};
     lyric_assembler::CallableInvoker extensionInvoker;

@@ -102,6 +102,8 @@ lyric_compiler::AssignmentHandler::after(
         TU_RETURN_IF_NOT_OK (m_fragment->appendFragment(std::move(m_assignment.evaluateExpression)));
         rvalueType = m_assignment.expressionType;
     } else {
+        // duplicate the receiver
+        TU_RETURN_IF_NOT_OK (m_fragment->dupValue());
         // load the target (lhs) onto the stack
         TU_RETURN_IF_NOT_OK (m_fragment->loadRef(m_assignment.targetRef));
         TU_RETURN_IF_NOT_OK (driver->pushResult(m_assignment.targetRef.typeDef));

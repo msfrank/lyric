@@ -320,6 +320,14 @@ lyric_compiler::FormChoice::decide(
             break;
         }
 
+        // while form
+        case lyric_schema::LyricAstId::For: {
+            auto handler = std::make_unique<ForHandler>(
+                isSideEffect, m_fragment, block, driver);
+            ctx.setGrouping(std::move(handler));
+            break;
+        }
+
         // unary operation forms
         case lyric_schema::LyricAstId::Neg:
         case lyric_schema::LyricAstId::Not: {

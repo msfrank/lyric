@@ -3,12 +3,12 @@
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_compiler/compiler_result.h>
-#include <lyric_compiler/internal/compiler_utils.h>
-#include <lyric_compiler/internal/defclass_utils.h>
+#include <lyric_compiler/compiler_utils.h>
+#include <lyric_compiler/defclass_utils.h>
 #include <lyric_parser/ast_attrs.h>
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
-lyric_compiler::internal::declare_class_init(
+lyric_compiler::declare_class_init(
     const lyric_parser::ArchetypeNode *initNode,
     lyric_assembler::ClassSymbol *classSymbol,
     lyric_typing::TypeSystem *typeSystem)
@@ -38,7 +38,7 @@ lyric_compiler::internal::declare_class_init(
 }
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
-lyric_compiler::internal::declare_class_default_init(
+lyric_compiler::declare_class_default_init(
     const DefClass *defclass,
     lyric_assembler::ClassSymbol *classSymbol,
     lyric_assembler::SymbolCache *symbolCache,
@@ -135,7 +135,7 @@ lyric_compiler::internal::declare_class_default_init(
 }
 
 tempo_utils::Result<lyric_compiler::Member>
-lyric_compiler::internal::declare_class_member(
+lyric_compiler::declare_class_member(
     const lyric_parser::ArchetypeNode *node,
     bool isVariable,
     lyric_assembler::ClassSymbol *classSymbol,
@@ -176,7 +176,7 @@ lyric_compiler::internal::declare_class_member(
 }
 
 tempo_utils::Result<lyric_compiler::Method>
-lyric_compiler::internal::declare_class_method(
+lyric_compiler::declare_class_method(
     const lyric_parser::ArchetypeNode *node,
     lyric_assembler::ClassSymbol *classSymbol,
     lyric_typing::TypeSystem *typeSystem)
@@ -234,4 +234,32 @@ lyric_compiler::internal::declare_class_method(
     TU_ASSIGN_OR_RETURN (method.procHandle, method.callSymbol->defineCall(parameterPack, returnType));
 
     return method;
+}
+
+tempo_utils::Result<lyric_compiler::Impl>
+lyric_compiler::declare_class_impl(
+    const lyric_parser::ArchetypeNode *node,
+    lyric_assembler::ClassSymbol *classSymbol,
+    lyric_typing::TypeSystem *typeSystem)
+{
+    TU_ASSERT (node != nullptr);
+    TU_ASSERT (classSymbol != nullptr);
+    auto *classBlock = classSymbol->classBlock();
+
+    // parse the impl type
+    lyric_parser::ArchetypeNode *typeNode;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+    lyric_typing::TypeSpec implSpec;
+    TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(classBlock, typeNode->getArchetypeNode()));
+
+    // resolve the impl type
+    lyric_common::TypeDef implType;
+    TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(classBlock, implSpec));
+
+    Impl impl;
+
+    // declare the impl
+    TU_ASSIGN_OR_RETURN (impl.implHandle, classSymbol->declareImpl(implType));
+
+    return impl;
 }
