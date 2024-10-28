@@ -266,6 +266,15 @@ namespace lyric_assembler {
     };
 
     /**
+     *
+     */
+    struct NamespaceBinding {
+        std::string name;
+        lyric_common::SymbolUrl symbolUrl;
+        lyric_object::AccessType access;
+    };
+
+    /**
      * A reference to a datum. The datum may exist on the current stack frame (an argument, local, or
      * rest cell), a parent frame (a lexical cell), or in a segment (a static cell).
      */

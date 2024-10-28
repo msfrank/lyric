@@ -36,7 +36,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     priv->conceptType = conceptType;
     priv->superConcept = superConcept;
     priv->conceptTemplate = nullptr;
-    priv->conceptBlock = std::make_unique<BlockHandle>(conceptUrl, parentBlock, false);
+    priv->conceptBlock = std::make_unique<BlockHandle>(conceptUrl, parentBlock);
 
     TU_ASSERT (priv->conceptType != nullptr);
     TU_ASSERT (priv->superConcept != nullptr);

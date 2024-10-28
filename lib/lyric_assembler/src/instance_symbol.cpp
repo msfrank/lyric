@@ -43,7 +43,7 @@ lyric_assembler::InstanceSymbol::InstanceSymbol(
     priv->instanceType = instanceType;
     priv->superInstance = superInstance;
     priv->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
-    priv->instanceBlock = std::make_unique<BlockHandle>(instanceUrl, parentBlock, false);
+    priv->instanceBlock = std::make_unique<BlockHandle>(instanceUrl, parentBlock);
 
     TU_ASSERT (priv->instanceType != nullptr);
     TU_ASSERT (priv->superInstance != nullptr);

@@ -8,35 +8,8 @@
 
 lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     const lyric_common::SymbolUrl &namespaceUrl,
-    lyric_object::AccessType access,
     TypeHandle *namespaceType,
-    NamespaceSymbol *superNamespace,
-    bool isDeclOnly,
-    BlockHandle *parentBlock,
-    ObjectState *state,
-    bool isRoot)
-    : BaseSymbol(new NamespaceSymbolPriv()),
-      m_namespaceUrl(namespaceUrl),
-      m_state(state)
-{
-    TU_ASSERT (m_namespaceUrl.isValid());
-    TU_ASSERT (m_state != nullptr);
-
-    auto *priv = getPriv();
-    priv->access = access;
-    priv->isDeclOnly = isDeclOnly;
-    priv->namespaceType = namespaceType;
-    priv->superNamespace = superNamespace;
-    priv->namespaceBlock = std::make_unique<BlockHandle>(namespaceUrl, parentBlock, isRoot);
-
-    TU_ASSERT (priv->namespaceType != nullptr);
-    TU_ASSERT (priv->superNamespace != nullptr);
-}
-
-lyric_assembler::NamespaceSymbol::NamespaceSymbol(
-    const lyric_common::SymbolUrl &namespaceUrl,
-    TypeHandle *namespaceType,
-    ProcHandle *entryProc,
+    BlockHandle *rootBlock,
     ObjectState *state)
     : BaseSymbol(new NamespaceSymbolPriv()),
       m_namespaceUrl(namespaceUrl),
@@ -50,9 +23,35 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     priv->isDeclOnly = false;
     priv->namespaceType = namespaceType;
     priv->superNamespace = nullptr;
-    priv->namespaceBlock = std::make_unique<BlockHandle>(this, entryProc, entryProc->procBlock(), state, true);
+    priv->namespaceBlock = std::make_unique<BlockHandle>(rootBlock, state);
 
     TU_ASSERT (priv->namespaceType != nullptr);
+}
+
+lyric_assembler::NamespaceSymbol::NamespaceSymbol(
+    const lyric_common::SymbolUrl &namespaceUrl,
+    lyric_object::AccessType access,
+    TypeHandle *namespaceType,
+    NamespaceSymbol *superNamespace,
+    bool isDeclOnly,
+    BlockHandle *parentBlock,
+    ObjectState *state)
+    : BaseSymbol(new NamespaceSymbolPriv()),
+      m_namespaceUrl(namespaceUrl),
+      m_state(state)
+{
+    TU_ASSERT (m_namespaceUrl.isValid());
+    TU_ASSERT (m_state != nullptr);
+
+    auto *priv = getPriv();
+    priv->access = access;
+    priv->isDeclOnly = isDeclOnly;
+    priv->namespaceType = namespaceType;
+    priv->superNamespace = superNamespace;
+    priv->namespaceBlock = std::make_unique<BlockHandle>(namespaceUrl, parentBlock);
+
+    TU_ASSERT (priv->namespaceType != nullptr);
+    TU_ASSERT (priv->superNamespace != nullptr);
 }
 
 lyric_assembler::NamespaceSymbol::NamespaceSymbol(
@@ -88,16 +87,19 @@ lyric_assembler::NamespaceSymbol::load()
         TU_ASSIGN_OR_RAISE (priv->superNamespace, importCache->importNamespace(superNamespaceUrl));
     }
 
-    priv->namespaceBlock = std::make_unique<BlockHandle>(
-        m_namespaceUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
-
-    for (auto iterator = m_namespaceImport->bindingsBegin(); iterator != m_namespaceImport->bindingsEnd(); iterator++) {
-        auto &bindingUrl = *iterator;
-
-        TU_RAISE_IF_STATUS(importCache->importSymbol(bindingUrl));
+    for (auto it = m_namespaceImport->bindingsBegin(); it != m_namespaceImport->bindingsEnd(); it++) {
+        auto &bindingUrl = *it;
         auto bindingPath = bindingUrl.getSymbolPath();
         auto identifier = bindingPath.getName();
-        priv->namespaceBlock->declareAlias(identifier, bindingUrl);
+
+        TU_RAISE_IF_STATUS (importCache->importSymbol(bindingUrl));
+
+        NamespaceBinding binding;
+        binding.name = bindingPath.getName();
+        binding.symbolUrl = bindingUrl;
+        binding.access = lyric_object::AccessType::Public;
+
+        priv->bindings[identifier] = std::move(binding);
     }
 
     return priv.release();
@@ -161,4 +163,93 @@ lyric_assembler::NamespaceSymbol::namespaceBlock() const
 {
     auto *priv = getPriv();
     return priv->namespaceBlock.get();
+}
+
+bool
+lyric_assembler::NamespaceSymbol::hasBinding(const std::string &name) const
+{
+    auto *priv = getPriv();
+    return priv->bindings.contains(name);
+}
+
+lyric_assembler::NamespaceBinding
+lyric_assembler::NamespaceSymbol::getBinding(const std::string &name) const
+{
+    auto *priv = getPriv();
+    auto entry = priv->bindings.find(name);
+    if (entry != priv->bindings.cend())
+        return entry->second;
+    return {};
+}
+
+absl::flat_hash_map<std::string,lyric_assembler::NamespaceBinding>::const_iterator
+lyric_assembler::NamespaceSymbol::bindingsBegin() const
+{
+    auto *priv = getPriv();
+    return priv->bindings.cbegin();
+}
+
+absl::flat_hash_map<std::string,lyric_assembler::NamespaceBinding>::const_iterator
+lyric_assembler::NamespaceSymbol::bindingsEnd() const
+{
+    auto *priv = getPriv();
+    return priv->bindings.cend();
+}
+
+tu_uint32
+lyric_assembler::NamespaceSymbol::numBindings() const
+{
+    auto *priv = getPriv();
+    return priv->bindings.size();
+}
+
+tempo_utils::Status
+lyric_assembler::NamespaceSymbol::putBinding(
+    const std::string &name,
+    const lyric_common::SymbolUrl &symbolUrl,
+    lyric_object::AccessType access)
+{
+    auto *priv = getPriv();
+    if (priv->bindings.contains(name))
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "cannot put namespace binding {}; binding is already defined", name);
+
+    TU_RETURN_IF_STATUS (priv->namespaceBlock->declareAlias(name, symbolUrl));
+
+    NamespaceBinding binding;
+    binding.name = name;
+    binding.symbolUrl = symbolUrl;
+    binding.access = access;
+    priv->bindings[name] = std::move(binding);
+
+    return {};
+}
+
+tempo_utils::Result<lyric_assembler::NamespaceSymbol *>
+lyric_assembler::NamespaceSymbol::declareSubspace(
+    const std::string &name,
+    lyric_object::AccessType access)
+{
+    auto *priv = getPriv();
+    if (priv->bindings.contains(name))
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "cannot declare namespace {}; binding is already defined", name);
+
+    auto definition = priv->namespaceBlock->getDefinition();
+    auto parentPath = definition.getSymbolPath();
+    lyric_common::SymbolPath namespacePath(parentPath.getPath(), name);
+    lyric_common::SymbolUrl namespaceUrl(m_namespaceUrl.getModuleLocation(), namespacePath);
+    auto namespaceSymbol = std::make_unique<NamespaceSymbol>(
+        namespaceUrl, access, priv->namespaceType, this, priv->isDeclOnly, priv->namespaceBlock.get(), m_state);
+    TU_RETURN_IF_NOT_OK (m_state->appendNamespace(namespaceSymbol.get()));
+
+    TU_RETURN_IF_STATUS (priv->namespaceBlock->declareAlias(name, namespaceUrl));
+
+    NamespaceBinding binding;
+    binding.name = name;
+    binding.symbolUrl = namespaceUrl;
+    binding.access = access;
+    priv->bindings[name] = std::move(binding);
+
+    return namespaceSymbol.release();
 }

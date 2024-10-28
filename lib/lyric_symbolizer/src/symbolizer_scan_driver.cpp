@@ -6,11 +6,15 @@
 #include <lyric_symbolizer/symbolizer_scan_driver.h>
 #include <lyric_symbolizer/symbolizer_result.h>
 
-lyric_symbolizer::SymbolizerScanDriver::SymbolizerScanDriver(lyric_assembler::ObjectState *state)
-    : m_state(state),
-      m_entry(nullptr)
+lyric_symbolizer::SymbolizerScanDriver::SymbolizerScanDriver(
+    lyric_assembler::ObjectRoot *root,
+    lyric_assembler::ObjectState *state)
+    : m_root(root),
+      m_state(state)
 {
+    TU_ASSERT (m_root != nullptr);
     TU_ASSERT (m_state != nullptr);
+    m_namespaces.push(m_root->globalNamespace());
 }
 
 tempo_utils::Status
@@ -53,7 +57,7 @@ lyric_symbolizer::SymbolizerScanDriver::enter(
         case lyric_schema::LyricAstId::DefStruct:
             return pushDefinition(node, lyric_object::LinkageSection::Struct);
         case lyric_schema::LyricAstId::Namespace:
-            return pushDefinition(node, lyric_object::LinkageSection::Namespace);
+            return pushNamespace(node);
         default:
             break;
     }
@@ -73,8 +77,7 @@ lyric_symbolizer::SymbolizerScanDriver::exit(
 
     auto astId = resource->getId();
     switch (astId) {
-        case lyric_schema::LyricAstId::Val:
-        case lyric_schema::LyricAstId::Var:
+        case lyric_schema::LyricAstId::DefStatic:
             return declareStatic(node);
         case lyric_schema::LyricAstId::Decl:
         case lyric_schema::LyricAstId::Def:
@@ -83,8 +86,9 @@ lyric_symbolizer::SymbolizerScanDriver::exit(
         case lyric_schema::LyricAstId::DefEnum:
         case lyric_schema::LyricAstId::DefInstance:
         case lyric_schema::LyricAstId::DefStruct:
-        case lyric_schema::LyricAstId::Namespace:
             return popDefinition();
+        case lyric_schema::LyricAstId::Namespace:
+            return popNamespace();
         case lyric_schema::LyricAstId::ImportModule:
         case lyric_schema::LyricAstId::ImportSymbols:
         case lyric_schema::LyricAstId::ImportAll:
@@ -112,28 +116,14 @@ lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::Archet
 
     lyric_common::SymbolPath symbolPath({identifier});
     lyric_common::SymbolUrl symbolUrl(symbolPath);
-    auto *undecl = new lyric_assembler::UndeclaredSymbol(symbolUrl, lyric_object::LinkageSection::Static);
+    auto undecl = std::make_unique<lyric_assembler::UndeclaredSymbol>(
+        symbolUrl, lyric_object::LinkageSection::Static);
 
-    auto status = m_state->appendUndeclared(undecl);
-    if (status.notOk()) {
-        delete undecl;
-        return status;
-    }
+    TU_RETURN_IF_NOT_OK (m_state->appendUndeclared(undecl.get()));
+    undecl.release();
     TU_LOG_INFO << "declared static " << symbolUrl;
 
-    if (m_entry == nullptr) {
-        lyric_common::SymbolPath entryPath({"$entry"});
-        lyric_common::SymbolUrl entryUrl(entryPath);
-        m_entry = new lyric_assembler::UndeclaredSymbol(entryUrl, lyric_object::LinkageSection::Call);
-        status = m_state->appendUndeclared(m_entry);
-        if (status.notOk()) {
-            delete m_entry;
-            return status;
-        }
-        TU_LOG_INFO << "declared entry " << entryUrl;
-    }
-
-    return {};
+    return putNamespaceBinding(identifier, symbolUrl, lyric_object::AccessType::Public);
 }
 
 tempo_utils::Status
@@ -147,15 +137,13 @@ lyric_symbolizer::SymbolizerScanDriver::pushDefinition(
 
     lyric_common::SymbolPath symbolPath(m_symbolPath);
     lyric_common::SymbolUrl symbolUrl(symbolPath);
-    auto *undecl = new lyric_assembler::UndeclaredSymbol(symbolUrl, section);
+    auto undecl = std::make_unique<lyric_assembler::UndeclaredSymbol>(symbolUrl, section);
 
-    auto status = m_state->appendUndeclared(undecl);
-    if (status.notOk()) {
-        delete undecl;
-    }
-
+    TU_RETURN_IF_NOT_OK (m_state->appendUndeclared(undecl.get()));
+    undecl.release();
     TU_LOG_INFO << "declared definition " << symbolUrl;
-    return status;
+
+    return putNamespaceBinding(identifier, symbolUrl, lyric_object::AccessType::Public);
 }
 
 tempo_utils::Status
@@ -178,5 +166,49 @@ lyric_symbolizer::SymbolizerScanDriver::declareImport(const lyric_parser::Archet
     TU_RETURN_IF_NOT_OK (importCache->insertImport(importLocation, lyric_assembler::ImportFlags::ApiLinkage));
 
     TU_LOG_INFO << "imported module " << importLocation;
+    return {};
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::pushNamespace(const lyric_parser::ArchetypeNode *node)
+{
+    if (m_namespaces.empty())
+        return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+            "namespace stack is empty");
+    auto *currentNamespace = m_namespaces.top();
+
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+    m_symbolPath.push_back(identifier);
+
+    lyric_assembler::NamespaceSymbol *subspace;
+    TU_ASSIGN_OR_RETURN (subspace, currentNamespace->declareSubspace(identifier, lyric_object::AccessType::Public));
+    m_namespaces.push(subspace);
+
+    TU_LOG_INFO << "declared namespace " << subspace->getSymbolUrl().toString();
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::putNamespaceBinding(
+    const std::string &name,
+    const lyric_common::SymbolUrl &symbolUrl,
+    lyric_object::AccessType access)
+{
+    if (m_namespaces.empty())
+        return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+            "namespace stack is empty");
+    auto *currentNamespace = m_namespaces.top();
+    return currentNamespace->putBinding(name, symbolUrl, access);
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::popNamespace()
+{
+    m_namespaces.pop();
+    if (m_namespaces.empty())
+        return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+            "namespace stack is empty");
     return {};
 }

@@ -223,7 +223,15 @@ defaliasStatement   : DefAliasKeyword Identifier placeholderSpec? assignableType
 
 // namespace statement
 
-namespaceStatement  : NamespaceKeyword symbolIdentifier CurlyOpen block CurlyClose ;
+namespaceSpec       : globalStatement
+                    | defStatement
+                    | defclassStatement
+                    | defconceptStatement
+                    | defenumStatement
+                    | definstanceStatement
+                    | defstructStatement
+                    ;
+namespaceStatement  : NamespaceKeyword symbolIdentifier CurlyOpen namespaceSpec* CurlyClose ;
 
 
 // symbol management statements

@@ -6,21 +6,18 @@
 
 lyric_analyzer::EntryAnalyzerContext::EntryAnalyzerContext(
     AnalyzerScanDriver *driver,
-    lyric_assembler::CallSymbol *entry,
-    lyric_assembler::NamespaceSymbol *root)
+    lyric_assembler::ObjectRoot *root)
     : m_driver(driver),
-      m_entry(entry),
       m_root(root)
 {
     TU_ASSERT (m_driver != nullptr);
-    TU_ASSERT (m_entry != nullptr);
     TU_ASSERT (m_root != nullptr);
 }
 
 lyric_assembler::BlockHandle *
 lyric_analyzer::EntryAnalyzerContext::getBlock() const
 {
-    return m_root->namespaceBlock();
+    return m_root->rootBlock();
 }
 
 tempo_utils::Status

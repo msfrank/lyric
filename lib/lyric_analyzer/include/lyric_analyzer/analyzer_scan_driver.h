@@ -11,7 +11,7 @@ namespace lyric_analyzer {
 
     class AnalyzerScanDriver : public lyric_rewriter::AbstractScanDriver {
     public:
-        explicit AnalyzerScanDriver(lyric_assembler::ObjectState *state);
+        AnalyzerScanDriver(lyric_assembler::ObjectRoot *root, lyric_assembler::ObjectState *state);
         ~AnalyzerScanDriver() override;
 
         tempo_utils::Status initialize();
@@ -49,11 +49,11 @@ namespace lyric_analyzer {
         tempo_utils::Status pushStruct(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
 
     private:
+        lyric_assembler::ObjectRoot *m_root;
         lyric_assembler::ObjectState *m_state;
-        lyric_assembler::NamespaceSymbol *m_root;
-        lyric_assembler::CallSymbol *m_entry;
         lyric_typing::TypeSystem *m_typeSystem;
-        std::vector<std::unique_ptr<AbstractAnalyzerContext>> m_stack;
+        std::vector<std::unique_ptr<AbstractAnalyzerContext>> m_handlers;
+        std::stack<lyric_assembler::NamespaceSymbol *> m_namespaces;
     };
 }
 

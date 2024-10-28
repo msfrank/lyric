@@ -2,61 +2,18 @@
 #include <lyric_assembler/proc_handle.h>
 #include <tempo_utils/log_stream.h>
 
-/**
- * Allocate a new empty ProcHandle.  this is used during compilation to create
- * a placeholder proc when importing a call from another assembly.
- */
-lyric_assembler::ProcHandle::ProcHandle(const lyric_common::SymbolUrl &activation)
-    : m_activation(activation),
-      m_numListParameters(0),
-      m_numNamedParameters(0),
-      m_hasRestParameter(false),
-      m_numLocals(0)
-{
-}
-
-///**
-// * Allocate a ProcHandle with the specified bytecode.  this is used during compilation
-// * to create a proc with inline code when importing a call from another assembly.
-// *
-// * @param bytecode
-// */
-//lyric_assembler::ProcHandle::ProcHandle(
-//    const lyric_common::SymbolUrl &activation,
-//    const std::vector<tu_uint8> &bytecode)
+//lyric_assembler::ProcHandle::ProcHandle(const lyric_common::SymbolUrl &activation)
 //    : m_activation(activation),
 //      m_numListParameters(0),
 //      m_numNamedParameters(0),
 //      m_hasRestParameter(false),
-//      m_code(bytecode),
-//      m_block(nullptr),
 //      m_numLocals(0)
 //{
-//    TU_ASSERT (m_code.bytecodeSize() > 0);
-//}
-//
-///**
-// * Allocate a ProcHandle with the specified bytecode and locals arity. this is used during
-// * compilation to create a proc for the $entry symbol.
-// */
-//lyric_assembler::ProcHandle::ProcHandle(
-//    const lyric_common::SymbolUrl &activation,
-//    const std::vector<tu_uint8> &bytecode,
-//    int numLocals)
-//    : m_activation(activation),
-//      m_numListParameters(0),
-//      m_numNamedParameters(0),
-//      m_hasRestParameter(false),
-//      m_code(bytecode),
-//      m_block(nullptr),
-//      m_numLocals(numLocals)
-//{
-//    TU_ASSERT (m_code.bytecodeSize() > 0);
 //}
 
 /**
- *
- * @param state
+ * Allocate a new empty ProcHandle.  This is used during compilation to create
+ * a placeholder proc when importing a call from another assembly.
  */
 lyric_assembler::ProcHandle::ProcHandle(
     const lyric_common::SymbolUrl &activation,
@@ -69,7 +26,30 @@ lyric_assembler::ProcHandle::ProcHandle(
 {
     TU_ASSERT (state != nullptr);
     m_code = std::make_unique<ProcBuilder>(this, state);
-    m_block = std::make_unique<BlockHandle>(this, state, true);
+}
+
+/**
+ * Allocate a new ProcHandle for the entry call.
+ *
+ * @param activation
+ * @param parent
+ * @param state
+ */
+lyric_assembler::ProcHandle::ProcHandle(
+    const lyric_common::SymbolUrl &activation,
+    BlockHandle *parent,
+    ObjectState *state)
+    : m_activation(activation),
+      m_numListParameters(0),
+      m_numNamedParameters(0),
+      m_hasRestParameter(false),
+      m_numLocals(0)
+{
+    TU_ASSERT (state != nullptr);
+    TU_ASSERT (parent != nullptr);
+    m_code = std::make_unique<ProcBuilder>(this, state);
+    absl::flat_hash_map<std::string,SymbolBinding> initialBindings;
+    m_block = std::make_unique<BlockHandle>(initialBindings, this, parent, state);
 }
 
 /**

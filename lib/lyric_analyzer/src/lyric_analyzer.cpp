@@ -50,9 +50,10 @@ lyric_analyzer::LyricAnalyzer::analyzeModule(
         lyric_typing::TypeSystem typeSystem(&objectState);
 
         // initialize the assembler
-        TU_RETURN_IF_NOT_OK (objectState.initialize());
+        lyric_assembler::ObjectRoot *root;
+        TU_ASSIGN_OR_RETURN (root, objectState.defineRoot());
 
-        auto analyzerDriver = std::make_shared<AnalyzerScanDriver>(&objectState);
+        auto analyzerDriver = std::make_shared<AnalyzerScanDriver>(root, &objectState);
         TU_RETURN_IF_NOT_OK (analyzerDriver->initialize());
 
         lyric_rewriter::RewriterOptions rewriterOptions;

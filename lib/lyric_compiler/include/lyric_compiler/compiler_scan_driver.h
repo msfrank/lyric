@@ -15,7 +15,7 @@ namespace lyric_compiler {
 
     class CompilerScanDriver : public lyric_rewriter::AbstractScanDriver {
     public:
-        explicit CompilerScanDriver(lyric_assembler::ObjectState *state);
+        CompilerScanDriver(lyric_assembler::ObjectRoot *root, lyric_assembler::ObjectState *state);
         ~CompilerScanDriver() override;
 
         tempo_utils::Status initialize(std::unique_ptr<BaseGrouping> &&rootGrouping);
@@ -37,6 +37,7 @@ namespace lyric_compiler {
 
         tempo_utils::Status finish() override;
 
+        lyric_assembler::ObjectRoot *getObjectRoot() const;
         lyric_assembler::ObjectState *getState() const;
         lyric_assembler::FundamentalCache *getFundamentalCache() const;
         lyric_assembler::ImplCache *getImplCache() const;
@@ -44,8 +45,6 @@ namespace lyric_compiler {
         lyric_assembler::LiteralCache *getLiteralCache() const;
         lyric_assembler::SymbolCache *getSymbolCache() const;
         lyric_assembler::TypeCache *getTypeCache() const;
-        lyric_assembler::NamespaceSymbol *getGlobalNamespace() const;
-        lyric_assembler::CallSymbol *getEntryCall() const;
         lyric_typing::TypeSystem *getTypeSystem() const;
 
         BaseGrouping *peekGrouping();
@@ -58,11 +57,11 @@ namespace lyric_compiler {
         tu_uint32 numResults() const;
 
     private:
+        lyric_assembler::ObjectRoot *m_root;
         lyric_assembler::ObjectState *m_state;
-        lyric_assembler::CallSymbol *m_entryCall;
-        lyric_assembler::NamespaceSymbol *m_globalNamespace;
         lyric_typing::TypeSystem *m_typeSystem;
         std::stack<lyric_common::TypeDef> m_results;
+        std::stack<lyric_assembler::NamespaceSymbol *> m_namespaces;
 
         struct GroupingData {
             std::unique_ptr<BaseGrouping> grouping;

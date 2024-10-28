@@ -43,7 +43,7 @@ lyric_assembler::StructSymbol::StructSymbol(
     priv->structType = structType;
     priv->superStruct = superStruct;
     priv->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
-    priv->structBlock = std::make_unique<BlockHandle>(structUrl, parentBlock, false);
+    priv->structBlock = std::make_unique<BlockHandle>(structUrl, parentBlock);
 
     TU_ASSERT (priv->structType != nullptr);
     TU_ASSERT (priv->superStruct != nullptr);

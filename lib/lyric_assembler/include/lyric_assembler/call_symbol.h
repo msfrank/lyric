@@ -44,8 +44,7 @@ namespace lyric_assembler {
 
         CallSymbol(
             const lyric_common::SymbolUrl &entryUrl,
-            const lyric_common::TypeDef &returnType,
-            TypeHandle *callType,
+            BlockHandle *rootBlock,
             ObjectState *state);
 
         CallSymbol(

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <lyric_assembler/proc_handle.h>
+#include <lyric_assembler/object_root.h>
 #include <lyric_assembler/object_state.h>
 #include <lyric_bootstrap/bootstrap_loader.h>
 #include <lyric_importer/module_cache.h>
@@ -17,12 +18,15 @@ TEST(CodeFragment, ImmediateNil)
     tempo_tracing::ScopeManager scopeManager(recorder);
     lyric_assembler::ObjectState objectState(location, systemModuleCache, &scopeManager);
 
-    auto activationUrl = lyric_common::SymbolUrl::fromString("#sym");
-    lyric_assembler::ProcHandle procHandle(activationUrl, &objectState);
-    auto *procCode = procHandle.procCode();
-    auto *root = procCode->rootFragment();
+    lyric_assembler::ObjectRoot *root;
+    TU_ASSIGN_OR_RAISE (root, objectState.defineRoot());
 
-    ASSERT_THAT (root->immediateNil(), tempo_test::IsOk());
+    auto activationUrl = lyric_common::SymbolUrl::fromString("#sym");
+    lyric_assembler::ProcHandle procHandle(activationUrl, root->rootBlock(), &objectState);
+    auto *procCode = procHandle.procCode();
+    auto *fragment = procCode->rootFragment();
+
+    ASSERT_THAT (fragment->immediateNil(), tempo_test::IsOk());
 
     lyric_assembler::ObjectWriter objectWriter(&objectState);
     lyric_object::BytecodeBuilder bytecodeBuilder;
@@ -47,18 +51,21 @@ TEST(CodeFragment, UnconditionalJump)
     tempo_tracing::ScopeManager scopeManager(recorder);
     lyric_assembler::ObjectState objectState(location, systemModuleCache, &scopeManager);
 
+    lyric_assembler::ObjectRoot *root;
+    TU_ASSIGN_OR_RAISE (root, objectState.defineRoot());
+
     auto activationUrl = lyric_common::SymbolUrl::fromString("#sym");
-    lyric_assembler::ProcHandle procHandle(activationUrl, &objectState);
+    lyric_assembler::ProcHandle procHandle(activationUrl, root->rootBlock(), &objectState);
     auto *procCode = procHandle.procCode();
-    auto *root = procCode->rootFragment();
+    auto *fragment = procCode->rootFragment();
 
     lyric_assembler::JumpLabel label;
-    TU_ASSIGN_OR_RAISE (label, root->appendLabel("top"));
+    TU_ASSIGN_OR_RAISE (label, fragment->appendLabel("top"));
 
-    ASSERT_THAT (root->noOperation(), tempo_test::IsOk());
+    ASSERT_THAT (fragment->noOperation(), tempo_test::IsOk());
     lyric_assembler::JumpTarget target;
-    TU_ASSIGN_OR_RAISE (target, root->unconditionalJump());
-    ASSERT_THAT (root->patchTarget(target, label), tempo_test::IsOk());
+    TU_ASSIGN_OR_RAISE (target, fragment->unconditionalJump());
+    ASSERT_THAT (fragment->patchTarget(target, label), tempo_test::IsOk());
 
     lyric_assembler::ObjectWriter objectWriter(&objectState);
     lyric_object::BytecodeBuilder bytecodeBuilder;

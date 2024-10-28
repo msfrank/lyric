@@ -16,8 +16,7 @@
  */
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &entryUrl,
-    const lyric_common::TypeDef &returnType,
-    TypeHandle *callType,
+    BlockHandle *rootBlock,
     ObjectState *state)
     : BaseSymbol(new CallSymbolPriv()),
       m_callUrl(entryUrl),
@@ -27,17 +26,14 @@ lyric_assembler::CallSymbol::CallSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->returnType = returnType;
+    priv->returnType = lyric_common::TypeDef::noReturn();
     priv->access = lyric_object::AccessType::Public;
     priv->mode = lyric_object::CallMode::Normal;
     priv->isNoReturn =  true;
-    priv->callType = callType;
+    priv->callType = nullptr;
     priv->callTemplate = nullptr;
     priv->parentBlock = nullptr;
-    priv->proc = std::make_unique<ProcHandle>(entryUrl, m_state);
-
-    TU_ASSERT (priv->returnType.getType() == lyric_common::TypeDefType::NoReturn);
-    TU_ASSERT (priv->callType != nullptr);
+    priv->proc = std::make_unique<ProcHandle>(entryUrl, rootBlock, m_state);
 }
 
 /**
@@ -111,7 +107,6 @@ lyric_assembler::CallSymbol::CallSymbol(
     priv->callTemplate = callTemplate;
     TU_ASSERT (priv->callTemplate != nullptr);
 }
-
 
 /**
  * @brief Construct a CallSymbol for a generic free function.

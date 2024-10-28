@@ -48,9 +48,10 @@ lyric_symbolizer::LyricSymbolizer::symbolizeModule(
             location, m_systemModuleCache, &scopeManager, objectStateOptions);
 
         // initialize the assembler
-        TU_RETURN_IF_NOT_OK (objectState.initialize());
+        lyric_assembler::ObjectRoot *root;
+        TU_ASSIGN_OR_RETURN (root, objectState.defineRoot());
 
-        auto symbolizerDriver = std::make_shared<SymbolizerScanDriver>(&objectState);
+        auto symbolizerDriver = std::make_shared<SymbolizerScanDriver>(root, &objectState);
 
         lyric_rewriter::RewriterOptions rewriterOptions;
         lyric_rewriter::LyricRewriter rewriter(rewriterOptions);

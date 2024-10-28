@@ -11,6 +11,7 @@
 #include <lyric_compiler/deref_utils.h>
 #include <lyric_compiler/form_handler.h>
 #include <lyric_compiler/iteration_handler.h>
+#include <lyric_compiler/namespace_handler.h>
 #include <lyric_compiler/new_handler.h>
 #include <lyric_compiler/unary_operation_handler.h>
 #include <lyric_compiler/variable_handler.h>

@@ -41,7 +41,7 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     priv->classTemplate = nullptr;
     priv->superClass = superClass;
     priv->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
-    priv->classBlock = std::make_unique<BlockHandle>(classUrl, parentBlock, false);
+    priv->classBlock = std::make_unique<BlockHandle>(classUrl, parentBlock);
 
     TU_ASSERT (priv->classType != nullptr);
     TU_ASSERT (priv->superClass != nullptr);

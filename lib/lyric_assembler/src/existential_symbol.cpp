@@ -38,7 +38,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     priv->existentialType = existentialType;
     priv->existentialTemplate = nullptr;
     priv->superExistential = superExistential;
-    priv->existentialBlock = std::make_unique<BlockHandle>(existentialUrl, parentBlock, false);
+    priv->existentialBlock = std::make_unique<BlockHandle>(existentialUrl, parentBlock);
 
     TU_ASSERT (priv->existentialType != nullptr);
     TU_ASSERT (priv->superExistential != nullptr);

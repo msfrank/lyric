@@ -26,7 +26,7 @@ lyric_assembler::ImplHandle::ImplHandle(
     priv->implType = implType;
     priv->implConcept = implConcept;
     priv->receiverUrl = receiverUrl;
-    priv->implBlock =std::make_unique<BlockHandle>(receiverUrl, parentBlock, false);
+    priv->implBlock =std::make_unique<BlockHandle>(receiverUrl, parentBlock);
 
     TU_ASSERT (!priv->name.empty());
     TU_ASSERT (priv->implType != nullptr);

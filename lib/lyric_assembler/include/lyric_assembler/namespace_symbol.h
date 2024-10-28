@@ -14,6 +14,7 @@ namespace lyric_assembler {
         bool isDeclOnly;
         TypeHandle *namespaceType;
         NamespaceSymbol *superNamespace;
+        absl::flat_hash_map<std::string,NamespaceBinding> bindings;
         std::unique_ptr<BlockHandle> namespaceBlock;
     };
 
@@ -22,17 +23,16 @@ namespace lyric_assembler {
     public:
         NamespaceSymbol(
             const lyric_common::SymbolUrl &nsUrl,
+            TypeHandle *nsType,
+            BlockHandle *rootBlock,
+            ObjectState *state);
+        NamespaceSymbol(
+            const lyric_common::SymbolUrl &nsUrl,
             lyric_object::AccessType access,
             TypeHandle *nsType,
             NamespaceSymbol *superNs,
             bool isDeclOnly,
             BlockHandle *parentBlock,
-            ObjectState *state,
-            bool isRoot);
-        NamespaceSymbol(
-            const lyric_common::SymbolUrl &nsUrl,
-            TypeHandle *nsType,
-            ProcHandle *entryProc,
             ObjectState *state);
         NamespaceSymbol(
             const lyric_common::SymbolUrl &nsUrl,
@@ -51,6 +51,21 @@ namespace lyric_assembler {
         NamespaceSymbol *superNamespace() const;
         TypeHandle *namespaceType() const;
         BlockHandle *namespaceBlock() const;
+
+        bool hasBinding(const std::string &name) const;
+        NamespaceBinding getBinding(const std::string &name) const;
+        absl::flat_hash_map<std::string,NamespaceBinding>::const_iterator bindingsBegin() const;
+        absl::flat_hash_map<std::string,NamespaceBinding>::const_iterator bindingsEnd() const;
+        tu_uint32 numBindings() const;
+
+        tempo_utils::Status putBinding(
+            const std::string &name,
+            const lyric_common::SymbolUrl &symbolUrl,
+            lyric_object::AccessType access);
+
+        tempo_utils::Result<NamespaceSymbol *> declareSubspace(
+            const std::string &name,
+            lyric_object::AccessType access);
 
     private:
         lyric_common::SymbolUrl m_namespaceUrl;

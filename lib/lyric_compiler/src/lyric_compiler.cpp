@@ -49,10 +49,13 @@ lyric_compiler::LyricCompiler::compileModule(
         // construct the compiler state
         lyric_assembler::ObjectState objectState(
             location, m_systemModuleCache, &scopeManager, objectStateOptions);
-        TU_RETURN_IF_NOT_OK (objectState.initialize());
+
+        // initialize the assembler
+        lyric_assembler::ObjectRoot *root;
+        TU_ASSIGN_OR_RETURN (root, objectState.defineRoot());
 
         // construct the driver
-        auto compilerDriver = std::make_shared<CompilerScanDriver>(&objectState);
+        auto compilerDriver = std::make_shared<CompilerScanDriver>(root, &objectState);
         auto rootHandler = std::make_unique<EntryHandler>(compilerDriver.get());
         TU_RETURN_IF_NOT_OK (compilerDriver->initialize(std::move(rootHandler)));
 
@@ -62,24 +65,6 @@ lyric_compiler::LyricCompiler::compileModule(
 
         // construct object from object state and return it
         return objectState.toObject();
-
-//        // load env symbols into the assembly state
-//        for (auto iterator = m_options.envSymbols.cbegin(); iterator != m_options.envSymbols.cend(); iterator++) {
-//            status = bootstrap_single_assembly(iterator->first, state, iterator->second);
-//            if (!status.isOk())
-//                return status;
-//        }
-//
-//        // define the module entry point
-//        ModuleEntry moduleEntry(&objectState);
-//        TU_RETURN_IF_NOT_OK (moduleEntry.initialize());
-//
-//        // compile single module into object
-//        lyric_object::LyricObject object;
-//        TU_ASSIGN_OR_RETURN (object, internal::compile_module(walker, moduleEntry, m_options.touchExternalSymbols));
-//
-//        TU_ASSERT (object.isValid());
-//        return object;
 
     } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();

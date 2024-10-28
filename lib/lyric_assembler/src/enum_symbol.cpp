@@ -41,7 +41,7 @@ lyric_assembler::EnumSymbol::EnumSymbol(
     priv->enumType = enumType;
     priv->superEnum = superEnum;
     priv->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
-    priv->enumBlock = std::make_unique<BlockHandle>(enumUrl, parentBlock, false);
+    priv->enumBlock = std::make_unique<BlockHandle>(enumUrl, parentBlock);
 
     TU_ASSERT (priv->enumType != nullptr);
     TU_ASSERT (priv->superEnum != nullptr);

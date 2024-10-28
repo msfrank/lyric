@@ -50,6 +50,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/local_variable.h
     include/lyric_assembler/method_callable.h
     include/lyric_assembler/namespace_symbol.h
+    include/lyric_assembler/object_root.h
     include/lyric_assembler/object_state.h
     include/lyric_assembler/object_writer.h
     include/lyric_assembler/pack_builder.h
@@ -101,6 +102,7 @@ target_sources(lyric_assembler PRIVATE
     src/local_variable.cpp
     src/method_callable.cpp
     src/namespace_symbol.cpp
+    src/object_root.cpp
     src/object_state.cpp
     src/object_writer.cpp
     src/pack_builder.cpp

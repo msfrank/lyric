@@ -1,6 +1,10 @@
 
+#include <lyric_assembler/object_root.h>
 #include <lyric_compiler/compiler_result.h>
+#include <lyric_compiler/def_handler.h>
+#include <lyric_compiler/defclass_handler.h>
 #include <lyric_compiler/entry_handler.h>
+#include <lyric_compiler/namespace_handler.h>
 #include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
@@ -22,7 +26,12 @@ lyric_compiler::EntryHandler::before(
     TU_LOG_INFO << "before EntryHandler@" << this;
 
     auto *driver = getDriver();
-    auto *entryCall = driver->getEntryCall();
+
+    auto *root = driver->getObjectRoot();
+    auto *entryCall = root->entryCall();
+    auto *globalNamespace = root->globalNamespace();
+    auto *rootBlock = root->rootBlock();
+
     auto *entryProc = entryCall->callProc();
     auto *entryBlock = entryProc->procBlock();
     auto *entryCode = entryProc->procCode();
@@ -32,9 +41,39 @@ lyric_compiler::EntryHandler::before(
     TU_ASSERT (numChildren > 0);
 
     for (int i = 0; i < numChildren; i++) {
-        auto any = std::make_unique<FormChoice>(
-            FormType::Any, fragment, entryBlock, driver);
-        ctx.appendChoice(std::move(any));
+        auto *child = node->getChild(i);
+
+        if (!child->isNamespace(lyric_schema::kLyricAstNs))
+            return {};
+        auto *resource = lyric_schema::kLyricAstVocabulary.getResource(child->getIdValue());
+
+        auto astId = resource->getId();
+        switch (astId) {
+            case lyric_schema::LyricAstId::Namespace: {
+                auto ns = std::make_unique<NamespaceHandler>(
+                    globalNamespace, true, rootBlock, driver);
+                ctx.appendGrouping(std::move(ns));
+                break;
+            }
+            case lyric_schema::LyricAstId::Def: {
+                auto handler = std::make_unique<DefHandler>(
+                    /* isSideEffect= */ true, globalNamespace->namespaceBlock(), driver);
+                ctx.appendGrouping(std::move(handler));
+                return {};
+            }
+            case lyric_schema::LyricAstId::DefClass: {
+                auto handler = std::make_unique<DefClassHandler>(
+                    /* isSideEffect= */ true, globalNamespace->namespaceBlock(), driver);
+                ctx.appendGrouping(std::move(handler));
+                return {};
+            }
+            default: {
+                auto any = std::make_unique<FormChoice>(
+                    FormType::Any, fragment, entryBlock, driver);
+                ctx.appendChoice(std::move(any));
+                break;
+            }
+        }
     }
 
     return {};

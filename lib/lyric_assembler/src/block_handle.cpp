@@ -1,7 +1,6 @@
 
 #include <absl/container/flat_hash_set.h>
 
-#include <lyric_assembler/argument_variable.h>
 #include <lyric_assembler/block_handle.h>
 #include <lyric_assembler/function_callable.h>
 #include <lyric_assembler/call_symbol.h>
@@ -20,65 +19,71 @@
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
-#include <lyric_assembler/synthetic_symbol.h>
 #include <lyric_assembler/template_handle.h>
 #include <lyric_assembler/type_cache.h>
+#include <lyric_assembler/undeclared_symbol.h>
 #include <tempo_utils/log_stream.h>
 
-lyric_assembler::BlockHandle::BlockHandle(
-    ProcHandle *blockProc,
-    ObjectState *state,
-    bool isRoot)
+/**
+ * Allocate a new BlockHandle for the prelude block.
+ */
+lyric_assembler::BlockHandle::BlockHandle(ObjectState *state)
     : m_blockNs(nullptr),
-      m_blockProc(blockProc),
+      m_blockProc(nullptr),
       m_parentBlock(nullptr),
-      m_state(state),
-      m_isRoot(isRoot)
+      m_state(state)
 {
-    TU_ASSERT (m_blockProc != nullptr);
     TU_ASSERT (m_state != nullptr);
-    if (!m_isRoot) {
-        m_definition = m_blockProc->getActivation();
-    }
+}
+
+/**
+ * Allocate a new BlockHandle. This is used when constructing the root block and the
+ * $global namespace block.
+ */
+lyric_assembler::BlockHandle::BlockHandle(
+    BlockHandle *parentBlock,
+    ObjectState *state)
+    : m_blockNs(nullptr),
+      m_blockProc(nullptr),
+      m_parentBlock(parentBlock),
+      m_state(state)
+{
+    TU_ASSERT (m_state != nullptr);
+    TU_ASSERT (m_parentBlock != nullptr);
 }
 
 lyric_assembler::BlockHandle::BlockHandle(
     const lyric_common::SymbolUrl &definition,
-    BlockHandle *parentBlock,
-    bool isRoot)
+    BlockHandle *parentBlock)
     : m_definition(definition),
       m_blockNs(nullptr),
-      m_parentBlock(parentBlock),
-      m_isRoot(isRoot)
+      m_blockProc(nullptr),
+      m_parentBlock(parentBlock)
 {
     TU_ASSERT (m_definition.isValid());
     TU_ASSERT (m_parentBlock != nullptr);
-    m_blockProc = parentBlock->m_blockProc;
+    //m_blockProc = parentBlock->m_blockProc;
+    //TU_ASSERT (m_blockProc != nullptr);
     m_state = parentBlock->m_state;
-    TU_ASSERT (m_blockProc != nullptr);
     TU_ASSERT (m_state != nullptr);
 }
 
-lyric_assembler::BlockHandle::BlockHandle(
-    NamespaceSymbol *blockNs,
-    ProcHandle *blockProc,
-    BlockHandle *parentBlock,
-    ObjectState *state,
-    bool isRoot)
-    : m_blockNs(blockNs),
-      m_blockProc(blockProc),
-      m_parentBlock(parentBlock),
-      m_state(state),
-      m_isRoot(isRoot)
-{
-    TU_ASSERT (m_blockNs != nullptr);
-    TU_ASSERT (m_blockProc != nullptr);
-    TU_ASSERT (m_parentBlock != nullptr);
-    TU_ASSERT (m_state != nullptr);
-    if (!m_isRoot) {
-        m_definition = m_blockProc->getActivation();
-    }
-}
+//lyric_assembler::BlockHandle::BlockHandle(
+//    NamespaceSymbol *blockNs,
+//    BlockHandle *parentBlock,
+//    ObjectState *state,
+//    bool isRoot)
+//    : m_blockNs(blockNs),
+//      m_blockProc(nullptr),
+//      m_parentBlock(parentBlock),
+//      m_state(state),
+//      m_isRoot(isRoot)
+//{
+//    TU_ASSERT (m_blockNs != nullptr);
+//    TU_ASSERT (m_parentBlock != nullptr);
+//    TU_ASSERT (m_state != nullptr);
+//    m_definition = m_blockNs->getSymbolUrl();
+//}
 
 lyric_assembler::BlockHandle::BlockHandle(
     ProcHandle *blockProc,
@@ -87,8 +92,7 @@ lyric_assembler::BlockHandle::BlockHandle(
     : m_blockNs(nullptr),
       m_blockProc(blockProc),
       m_parentBlock(parentBlock),
-      m_state(state),
-      m_isRoot(false)
+      m_state(state)
 {
     TU_ASSERT (m_blockProc != nullptr);
     TU_ASSERT (m_parentBlock != nullptr);
@@ -105,7 +109,6 @@ lyric_assembler::BlockHandle::BlockHandle(
       m_blockProc(blockProc),
       m_parentBlock(parentBlock),
       m_state(state),
-      m_isRoot(false),
       m_bindings(initialBindings)
 {
     TU_ASSERT (m_blockProc != nullptr);
@@ -123,7 +126,6 @@ lyric_assembler::BlockHandle::BlockHandle(
       m_blockProc(nullptr),
       m_parentBlock(nullptr),
       m_state(state),
-      m_isRoot(false),
       m_bindings(importedBindings)
 {
     TU_ASSERT (m_definition.isValid());
@@ -169,12 +171,6 @@ lyric_assembler::BlockHandle::isImported() const
 {
     // no parent block and a valid definition url indicates an imported block
     return m_parentBlock == nullptr && m_definition.isValid();
-}
-
-bool
-lyric_assembler::BlockHandle::isRoot() const
-{
-    return m_isRoot;
 }
 
 lyric_common::SymbolUrl
@@ -238,20 +234,30 @@ lyric_assembler::BlockHandle::getBinding(const std::string &name) const
     return {};
 }
 
+// forward declaration
 static tempo_utils::Result<lyric_assembler::SymbolBinding>
 resolve_binding_tail_recursive(
-    lyric_assembler::BlockHandle *block,
+    lyric_assembler::BlockHandle *resolveBlock,
+    lyric_assembler::NamespaceSymbol *targetNs,
+    const std::vector<std::string> &path,
+    std::vector<std::string>::const_iterator curr,
+    std::vector<std::string>::const_iterator end);
+
+static tempo_utils::Result<lyric_assembler::SymbolBinding>
+resolve_binding_tail_recursive(
+    lyric_assembler::BlockHandle *resolveBlock,
+    lyric_assembler::BlockHandle *targetBlock,
     const std::vector<std::string> &path,
     std::vector<std::string>::const_iterator curr,
     std::vector<std::string>::const_iterator end)   // NOLINT(misc-no-recursion)
 {
-    if (curr == end || !block->hasBinding(*curr))
-        return block->logAndContinue(
+    if (curr == end || !targetBlock->hasBinding(*curr))
+        return resolveBlock->logAndContinue(
             lyric_assembler::AssemblerCondition::kMissingSymbol,
             tempo_tracing::LogSeverity::kError,
             "missing symbol {}", lyric_common::SymbolPath(path).toString());
 
-    auto binding = block->getBinding(*curr);
+    auto binding = targetBlock->getBinding(*curr);
 
     // if we have reached the last segment then return the binding
     if (++curr == end)
@@ -259,25 +265,80 @@ resolve_binding_tail_recursive(
 
     // if there are subsequent segments then the binding must be a descriptor
     if (binding.bindingType != lyric_assembler::BindingType::Descriptor)
-        return block->logAndContinue(
+        return resolveBlock->logAndContinue(
             lyric_assembler::AssemblerCondition::kMissingSymbol,
             tempo_tracing::LogSeverity::kError,
             "missing symbol {}", lyric_common::SymbolPath(path).toString());
 
-    auto *state = block->blockState();
+    auto *state = resolveBlock->blockState();
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(binding.symbolUrl));
 
     // if there are subsequent segments then the symbol must be a namespace
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
-        return block->logAndContinue(
+        return resolveBlock->logAndContinue(
             lyric_assembler::AssemblerCondition::kMissingSymbol,
             tempo_tracing::LogSeverity::kError,
             "missing symbol {}", lyric_common::SymbolPath(path).toString());
 
-    auto *childBlock = cast_symbol_to_namespace(symbol)->namespaceBlock();
+    auto *childNs = cast_symbol_to_namespace(symbol);
 
-    return resolve_binding_tail_recursive(childBlock, path, curr, end);
+    return resolve_binding_tail_recursive(resolveBlock, childNs, path, curr, end);
+}
+
+static tempo_utils::Result<lyric_assembler::SymbolBinding>
+resolve_binding_tail_recursive(
+    lyric_assembler::BlockHandle *resolveBlock,
+    lyric_assembler::NamespaceSymbol *targetNs,
+    const std::vector<std::string> &path,
+    std::vector<std::string>::const_iterator curr,
+    std::vector<std::string>::const_iterator end)   // NOLINT(misc-no-recursion)
+{
+    if (curr == end || !targetNs->hasBinding(*curr))
+        return resolveBlock->logAndContinue(
+            lyric_assembler::AssemblerCondition::kMissingSymbol,
+            tempo_tracing::LogSeverity::kError,
+            "missing symbol {}", lyric_common::SymbolPath(path).toString());
+
+    auto namespaceBinding = targetNs->getBinding(*curr);
+
+    auto *state = resolveBlock->blockState();
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(namespaceBinding.symbolUrl));
+
+    // if we have reached the last segment then return the binding
+    if (++curr == end) {
+        lyric_assembler::SymbolBinding symbolBinding;
+        symbolBinding.symbolUrl = namespaceBinding.symbolUrl;
+        symbolBinding.bindingType = lyric_assembler::BindingType::Descriptor;
+        switch (symbol->getSymbolType()) {
+            case lyric_assembler::SymbolType::CALL:
+            case lyric_assembler::SymbolType::CLASS:
+            case lyric_assembler::SymbolType::CONCEPT:
+            case lyric_assembler::SymbolType::ENUM:
+            case lyric_assembler::SymbolType::EXISTENTIAL:
+            case lyric_assembler::SymbolType::INSTANCE:
+            case lyric_assembler::SymbolType::STRUCT:
+                symbolBinding.typeDef = symbol->getTypeDef();
+                return symbolBinding;
+            default:
+                return resolveBlock->logAndContinue(
+                    lyric_assembler::AssemblerCondition::kMissingSymbol,
+                    tempo_tracing::LogSeverity::kError,
+                    "missing symbol {}", lyric_common::SymbolPath(path).toString());
+        }
+    }
+
+    // if there are subsequent segments then the symbol must be a namespace
+    if (symbol->getSymbolType() != lyric_assembler::SymbolType::NAMESPACE)
+        return resolveBlock->logAndContinue(
+            lyric_assembler::AssemblerCondition::kMissingSymbol,
+            tempo_tracing::LogSeverity::kError,
+            "missing symbol {}", lyric_common::SymbolPath(path).toString());
+
+    auto *childNs = cast_symbol_to_namespace(symbol);
+
+    return resolve_binding_tail_recursive(resolveBlock, childNs, path, curr, end);
 }
 
 /**
@@ -294,117 +355,41 @@ lyric_assembler::BlockHandle::resolveBinding(const std::vector<std::string> &pat
     auto curr = path.cbegin();
 
     // walk the chain of blocks to the root, checking for type
-    for (auto *block = this; block != nullptr; block = block->blockParent()) {
-        if (!block->hasBinding(*curr))
+    for (auto *targetBlock = this; targetBlock != nullptr; targetBlock = targetBlock->blockParent()) {
+        if (!targetBlock->hasBinding(*curr))
             continue;
-        return resolve_binding_tail_recursive(block, path, curr, path.cend());
+        return resolve_binding_tail_recursive(this, targetBlock, path, curr, path.cend());
     }
+
+    auto *symbolCache = m_state->symbolCache();
 
     // if definition is not found in any reachable block, then check env
-    if (m_state->symbolCache()->hasEnvBinding(*curr)) {
-        auto binding = m_state->symbolCache()->getEnvBinding(*curr);
-        lyric_assembler::AbstractSymbol *symbol;
-        TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(binding.symbolUrl));
+    if (symbolCache->hasEnvBinding(*curr))
+        return logAndContinue(
+            lyric_assembler::AssemblerCondition::kMissingSymbol,
+            tempo_tracing::LogSeverity::kError,
+            "missing symbol {}", lyric_common::SymbolPath(path).toString());
 
-        // if there are no more path segments then return the binding
-        if (++curr == path.cend())
-            return binding;
+    auto binding = symbolCache->getEnvBinding(*curr);
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(binding.symbolUrl));
 
-        // otherwise we expect the current segment is a namespace
-        BlockHandle *block;
-        switch (symbol->getSymbolType()) {
-            case lyric_assembler::SymbolType::NAMESPACE:
-                block = cast_symbol_to_namespace(symbol)->namespaceBlock();
-                break;
-            default:
-                return logAndContinue(
-                    lyric_assembler::AssemblerCondition::kMissingSymbol,
-                    tempo_tracing::LogSeverity::kError,
-                    "missing symbol {}", lyric_common::SymbolPath(path).toString());
-        }
+    // if there are no more path segments then return the binding
+    if (++curr == path.cend())
+        return binding;
 
-        // continue the resolution
-        return resolve_binding_tail_recursive(block, path, curr, path.cend());
-    }
+    // otherwise we expect the current segment is a namespace
+    if (symbol->getSymbolType() != SymbolType::NAMESPACE)
+        return logAndContinue(
+            lyric_assembler::AssemblerCondition::kMissingSymbol,
+            tempo_tracing::LogSeverity::kError,
+            "missing symbol {}", lyric_common::SymbolPath(path).toString());
 
-    return logAndContinue(
-        lyric_assembler::AssemblerCondition::kMissingSymbol,
-        tempo_tracing::LogSeverity::kError,
-        "missing symbol {}", lyric_common::SymbolPath(path).toString());
+    auto *childNs = cast_symbol_to_namespace(symbol);
+
+    // continue the resolution
+    return resolve_binding_tail_recursive(this, childNs, path, curr, path.cend());
 }
-
-//tempo_utils::Result<lyric_common::TypeDef>
-//lyric_assembler::BlockHandle::resolveAssignable(const lyric_typing::TypeSpec &assignableSpec) // NOLINT(misc-no-recursion)
-//{
-//    if (assignableSpec.getType() == lyric_parser::AssignableType::SINGULAR)
-//        return resolveSingular(assignableSpec);
-//
-//    if (assignableSpec.getType() == lyric_parser::AssignableType::UNION) {
-//        std::vector<lyric_common::TypeDef> unionMembers;
-//        for (const auto &memberSpec : assignableSpec.getUnion()) {
-//            auto resolveMemberResult = resolveSingular(memberSpec);
-//            if (resolveMemberResult.isStatus())
-//                return resolveMemberResult;
-//            unionMembers.push_back(resolveMemberResult.getResult());
-//        }
-//        return m_state->typeCache()->resolveUnion(unionMembers);
-//    }
-//    if (assignableSpec.getType() == lyric_parser::AssignableType::INTERSECTION) {
-//        std::vector<lyric_common::TypeDef> intersectionMembers;
-//        for (const auto &memberSpec : assignableSpec.getIntersection()) {
-//            auto resolveMemberResult = resolveSingular(memberSpec);
-//            if (resolveMemberResult.isStatus())
-//                return resolveMemberResult;
-//            intersectionMembers.push_back(resolveMemberResult.getResult());
-//        }
-//        return m_state->typeCache()->resolveIntersection(intersectionMembers);
-//    }
-//
-//    m_state->throwAssemblerInvariant("failed to resolve non singular base type {}", assignableSpec.toString());
-//}
-//
-//tempo_utils::Result<lyric_common::TypeDef>
-//lyric_assembler::BlockHandle::resolveSingular(const lyric_typing::TypeSpec &assignableSpec) // NOLINT(misc-no-recursion)
-//{
-//    if (assignableSpec.getType() != lyric_parser::AssignableType::SINGULAR)
-//        throwAssemblerInvariant("{} is a non-singular type", assignableSpec.toString());
-//
-//    // if spec has parameters, then resolve them to types first
-//    std::vector<lyric_common::TypeDef> typeParameters;
-//    for (const auto &parameter : assignableSpec.getTypeParameters()) {
-//        auto resolveParameterResult = resolveAssignable(parameter);
-//        if (resolveParameterResult.isStatus())
-//            return resolveParameterResult;
-//        typeParameters.push_back(resolveParameterResult.getResult());
-//    }
-//
-//    // resolve the base to a binding
-//    SymbolBinding binding;
-//    TU_ASSIGN_OR_RETURN (binding, resolveBinding(assignableSpec.getTypePath().getPath()));
-//
-//    // we expect the binding is either a descriptor or placeholder
-//    lyric_common::TypeDef typeDef;
-//    switch (binding.bindingType) {
-//        case BindingType::Descriptor:
-//            typeDef = lyric_common::TypeDef::forConcrete(binding.symbolUrl, typeParameters);
-//            break;
-//        case BindingType::Placeholder:
-//            typeDef = binding.typeDef;
-//            break;
-//        default:
-//            return logAndContinue(
-//                lyric_assembler::AssemblerCondition::kMissingSymbol,
-//                tempo_tracing::LogSeverity::kError,
-//                "{} is not a valid type", assignableSpec.getTypePath().toString());
-//    }
-//
-//    auto *typeCache = m_state->typeCache();
-//
-//    // add the type to the typecache if it doesn't already exist
-//    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(typeDef));
-//
-//    return typeDef;
-//}
 
 tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::BlockHandle::resolveSingular(
@@ -740,40 +725,11 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
     }
 
     // we have exhausted our search, variable is missing
+    debugBindings();
     return logAndContinue(lyric_assembler::AssemblerCondition::kMissingVariable,
         tempo_tracing::LogSeverity::kError,
         "missing variable {}", name);
 }
-
-//tempo_utils::Status
-//lyric_assembler::BlockHandle::load(const DataReference &ref)
-//{
-//    auto *fragment = m_blockCode->rootFragment();
-//    return fragment->loadRef(ref);
-//}
-//
-//tempo_utils::Status
-//lyric_assembler::BlockHandle::store(const DataReference &ref, bool initialStore)
-//{
-//    auto *fragment = m_blockCode->rootFragment();
-//
-//    switch (ref.referenceType) {
-//        case ReferenceType::Variable:
-//            return fragment->storeRef(ref);
-//        case ReferenceType::Value: {
-//            if (initialStore)
-//                return fragment->storeRef(ref);
-//            [[fallthrough]];
-//        }
-//        case ReferenceType::Descriptor:
-//            return logAndContinue(AssemblerCondition::kInvalidBinding,
-//                tempo_tracing::LogSeverity::kError,
-//                "cannot store data at reference {}", ref.symbolUrl.toString());
-//        default:
-//            return AssemblerStatus::forCondition(
-//                AssemblerCondition::kAssemblerInvariant, "invalid data reference");
-//    }
-//}
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::BlockHandle::declareFunction(
@@ -837,33 +793,6 @@ lyric_assembler::BlockHandle::prepareFunction(const std::string &name, CallableI
 
     auto callable = std::make_unique<FunctionCallable>(callSymbol, /* isInlined= */ false);
     return invoker.initialize(std::move(callable));
-}
-
-tempo_utils::Status
-lyric_assembler::BlockHandle::prepareExtension(
-    const lyric_common::TypeDef &receiverType,
-    const std::string &name,
-    CallableInvoker &invoker)
-{
-//    auto resolveDefinitionResult = resolveReference(QStringList(name));
-//    if (resolveDefinitionResult.isStatus())
-//        return tempo_utils::Result<CallInvoker>(lyric_assembler::AssemblerStatus::missingFunction(name));
-//
-//    auto functionUrl = resolveDefinitionResult.getResult();
-//    auto *sym = m_state->symcache[functionUrl];
-//    if (sym == nullptr)
-//        return tempo_utils::Result<CallInvoker>(
-//            lyric_assembler::AssemblerStatus::internalViolation("invalid extension call"));
-//    if (sym->getSymbolType() != SymbolType::CALL)
-//        return tempo_utils::Result<CallInvoker>(lyric_assembler::AssemblerStatus::missingFunction(name));
-//    auto *call = cast_symbol_to_call(sym);
-//
-//    if (!bool(call->getFlags() | lya1::CallFlags::Magnet))
-//        return tempo_utils::Result<CallInvoker>(
-//            lyric_assembler::AssemblerStatus::internalViolation("invalid extension call"));
-//
-//    return tempo_utils::Result<CallInvoker>(CallInvoker(call));
-    throwAssemblerInvariant("resolveExtension is unimplemented");
 }
 
 tempo_utils::Result<lyric_assembler::ClassSymbol *>
@@ -1435,8 +1364,46 @@ lyric_assembler::BlockHandle::declareAlias(
 
     SymbolBinding binding;
 
+    // if the symbol is undeclared, then determine the type from the linkage
+    auto symbolType = symbol->getSymbolType();
+    if (symbolType == SymbolType::UNDECLARED) {
+        switch (cast_symbol_to_undeclared(symbol)->getLinkage()) {
+            case lyric_object::LinkageSection::Call:
+                symbolType = SymbolType::CALL;
+                break;
+            case lyric_object::LinkageSection::Class:
+                symbolType = SymbolType::CLASS;
+                break;
+            case lyric_object::LinkageSection::Concept:
+                symbolType = SymbolType::CONCEPT;
+                break;
+            case lyric_object::LinkageSection::Enum:
+                symbolType = SymbolType::ENUM;
+                break;
+            case lyric_object::LinkageSection::Existential:
+                symbolType = SymbolType::EXISTENTIAL;
+                break;
+            case lyric_object::LinkageSection::Instance:
+                symbolType = SymbolType::INSTANCE;
+                break;
+            case lyric_object::LinkageSection::Namespace:
+                symbolType = SymbolType::NAMESPACE;
+                break;
+            case lyric_object::LinkageSection::Static:
+                symbolType = SymbolType::STATIC;
+                break;
+            case lyric_object::LinkageSection::Struct:
+                symbolType = SymbolType::STRUCT;
+                break;
+            default:
+                return logAndContinue(AssemblerCondition::kMissingSymbol,
+                    tempo_tracing::LogSeverity::kError,
+                    "cannot declare alias {}; {} is not a valid target", alias, targetUrl.toString());
+        }
+    }
+
     // set binding type
-    switch (symbol->getSymbolType()) {
+    switch (symbolType) {
         case SymbolType::CALL:
         case SymbolType::CLASS:
         case SymbolType::CONCEPT:
@@ -1584,48 +1551,48 @@ lyric_assembler::BlockHandle::declareAlias(
     return binding;
 }
 
-tempo_utils::Result<lyric_assembler::NamespaceSymbol *>
-lyric_assembler::BlockHandle::declareNamespace(
-    const std::string &name,
-    lyric_object::AccessType access,
-    bool declOnly)
-{
-    if (m_bindings.contains(name))
-        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
-            "cannot declare namespace {}; symbol is already defined", name);
-
-    //superNs->touch();
-    auto nsUrl = makeSymbolUrl(name);
-
-    // resolve the type
-    auto fundamentalNamespace = m_state->fundamentalCache()->getFundamentalUrl(FundamentalSymbol::Namespace);
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(fundamentalNamespace));
-    auto nsDescriptorType = symbol->getTypeDef();
-    lyric_assembler::TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->getOrMakeType(nsDescriptorType));
-
-    auto *superNs = blockNs();
-
-    // create the namespace
-    auto *namespaceSymbol = new NamespaceSymbol(nsUrl, access, typeHandle,
-        superNs, declOnly, this, m_state, m_isRoot);
-
-    auto status = m_state->appendNamespace(namespaceSymbol);
-    if (status.notOk()) {
-        delete namespaceSymbol;
-        return status;
-    }
-
-    SymbolBinding binding;
-    binding.symbolUrl = nsUrl;
-    binding.typeDef = nsDescriptorType;
-    binding.bindingType = BindingType::Descriptor;
-    m_bindings[name] = binding;
-
-    return namespaceSymbol;
-}
+//tempo_utils::Result<lyric_assembler::NamespaceSymbol *>
+//lyric_assembler::BlockHandle::declareNamespace(
+//    const std::string &name,
+//    lyric_object::AccessType access,
+//    bool declOnly)
+//{
+//    if (m_bindings.contains(name))
+//        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+//            tempo_tracing::LogSeverity::kError,
+//            "cannot declare namespace {}; symbol is already defined", name);
+//
+//    //superNs->touch();
+//    auto nsUrl = makeSymbolUrl(name);
+//
+//    // resolve the type
+//    auto fundamentalNamespace = m_state->fundamentalCache()->getFundamentalUrl(FundamentalSymbol::Namespace);
+//    lyric_assembler::AbstractSymbol *symbol;
+//    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(fundamentalNamespace));
+//    auto nsDescriptorType = symbol->getTypeDef();
+//    lyric_assembler::TypeHandle *typeHandle;
+//    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->getOrMakeType(nsDescriptorType));
+//
+//    auto *superNs = blockNs();
+//
+//    // create the namespace
+//    auto *namespaceSymbol = new NamespaceSymbol(nsUrl, access, typeHandle,
+//        superNs, declOnly, this, m_state, m_isRoot);
+//
+//    auto status = m_state->appendNamespace(namespaceSymbol);
+//    if (status.notOk()) {
+//        delete namespaceSymbol;
+//        return status;
+//    }
+//
+//    SymbolBinding binding;
+//    binding.symbolUrl = nsUrl;
+//    binding.typeDef = nsDescriptorType;
+//    binding.bindingType = BindingType::Descriptor;
+//    m_bindings[name] = binding;
+//
+//    return namespaceSymbol;
+//}
 
 lyric_common::SymbolUrl
 lyric_assembler::BlockHandle::makeSymbolUrl(const std::string &name) const
@@ -1636,4 +1603,22 @@ lyric_assembler::BlockHandle::makeSymbolUrl(const std::string &name) const
     auto symbolUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(path));
     TU_LOG_INFO << "symbol url for " << name << " is " << symbolUrl.toString();
     return symbolUrl;
+}
+
+void
+lyric_assembler::BlockHandle::debugBindings() const
+{
+    for (auto *block = this; block != nullptr; block = block->m_parentBlock) {
+        auto definition = block->getDefinition();
+        if (definition.isValid()) {
+            TU_LOG_INFO << "DEBUG BlockHandle@" << block << " [" << definition << "] bindings:";
+        } else {
+            TU_LOG_INFO << "DEBUG BlockHandle@" << block << " bindings:";
+        }
+        for (auto &entry : block->m_bindings) {
+            auto &name = entry.first;
+            auto &binding = entry.second;
+            TU_LOG_INFO << "  " << name << " -> " << binding.symbolUrl;
+        }
+    }
 }

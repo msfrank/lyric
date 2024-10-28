@@ -16,6 +16,7 @@
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/object_root.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
@@ -23,13 +24,16 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 
-lyric_analyzer::AnalyzerScanDriver::AnalyzerScanDriver(lyric_assembler::ObjectState *state)
-    : m_state(state),
-      m_root(nullptr),
-      m_entry(nullptr),
+lyric_analyzer::AnalyzerScanDriver::AnalyzerScanDriver(
+    lyric_assembler::ObjectRoot *root,
+    lyric_assembler::ObjectState *state)
+    : m_root(root),
+      m_state(state),
       m_typeSystem(nullptr)
 {
+    TU_ASSERT (m_root != nullptr);
     TU_ASSERT (m_state != nullptr);
+    m_namespaces.push(m_root->globalNamespace());
 }
 
 lyric_analyzer::AnalyzerScanDriver::~AnalyzerScanDriver()
@@ -41,54 +45,12 @@ tempo_utils::Status
 lyric_analyzer::AnalyzerScanDriver::initialize()
 {
     if (m_typeSystem != nullptr)
-        return AnalyzerStatus::forCondition(
-            AnalyzerCondition::kAnalyzerInvariant,"module entry is already initialized");
+        return AnalyzerStatus::forCondition(AnalyzerCondition::kAnalyzerInvariant,
+            "analyzer scan driver is already initialized");
     m_typeSystem = new lyric_typing::TypeSystem(m_state);
 
-    auto *fundamentalCache = m_state->fundamentalCache();
-    auto *typeCache = m_state->typeCache();
-
-    auto location = m_state->getLocation();
-
-    // lookup the Function0 class and get its type handle
-    auto functionClassUrl = fundamentalCache->getFunctionUrl(0);
-    if (!functionClassUrl.isValid())
-        m_state->throwAssemblerInvariant("missing Function0 symbol");
-
-    tempo_utils::Status status;
-
-    // ensure that NoReturn is in the type cache
-    auto returnType = lyric_common::TypeDef::noReturn();
-    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(returnType));
-
-    lyric_assembler::TypeHandle *entryTypeHandle;
-    TU_ASSIGN_OR_RETURN (entryTypeHandle, typeCache->declareFunctionType(returnType, {}, {}));
-
-    // create the $entry call
-    lyric_common::SymbolUrl entryUrl(location, lyric_common::SymbolPath({"$entry"}));
-    m_entry = new lyric_assembler::CallSymbol(entryUrl, returnType, entryTypeHandle, m_state);
-    status = m_state->appendCall(m_entry);
-    if (status.notOk()) {
-        delete m_entry;
-        return status;
-    }
-
-    // resolve the Namespace type
-    auto namespaceType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Namespace);
-    lyric_assembler::TypeHandle *namespaceTypeHandle;
-    TU_ASSIGN_OR_RETURN (namespaceTypeHandle, typeCache->getOrMakeType(namespaceType));
-
-    // create the root namespace
-    lyric_common::SymbolUrl rootUrl(location, lyric_common::SymbolPath({"$root"}));
-    m_root = new lyric_assembler::NamespaceSymbol(rootUrl, namespaceTypeHandle, m_entry->callProc(), m_state);
-    status = m_state->appendNamespace(m_root);
-    if (status.notOk()) {
-        delete m_root;
-        return status;
-    }
-
     // push the entry context
-    auto ctx = std::make_unique<EntryAnalyzerContext>(this, m_entry, m_root);
+    auto ctx = std::make_unique<EntryAnalyzerContext>(this, m_root);
     return pushContext(std::move(ctx));
 }
 
@@ -140,26 +102,26 @@ lyric_analyzer::AnalyzerScanDriver::getTypeSystem() const
 lyric_analyzer::AbstractAnalyzerContext *
 lyric_analyzer::AnalyzerScanDriver::peekContext()
 {
-    if (m_stack.empty())
+    if (m_handlers.empty())
         return nullptr;
-    auto &top = m_stack.back();
+    auto &top = m_handlers.back();
     return top.get();
 }
 
 tempo_utils::Status
 lyric_analyzer::AnalyzerScanDriver::pushContext(std::unique_ptr<AbstractAnalyzerContext> ctx)
 {
-    m_stack.push_back(std::move(ctx));
+    m_handlers.push_back(std::move(ctx));
     return {};
 }
 
 tempo_utils::Status
 lyric_analyzer::AnalyzerScanDriver::popContext()
 {
-    if (m_stack.empty())
+    if (m_handlers.empty())
         return AnalyzerStatus::forCondition(
-            AnalyzerCondition::kAnalyzerInvariant, "context stack is empty");
-    m_stack.pop_back();
+            AnalyzerCondition::kAnalyzerInvariant, "handler stack is empty");
+    m_handlers.pop_back();
     return {};
 }
 
@@ -531,9 +493,14 @@ lyric_analyzer::AnalyzerScanDriver::pushNamespace(
     lyric_parser::AccessType access;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
+    if (m_namespaces.empty())
+        return AnalyzerStatus::forCondition(AnalyzerCondition::kAnalyzerInvariant,
+            "namespace stack is empty");
+    auto *currentNamespace = m_namespaces.top();
+
     lyric_assembler::NamespaceSymbol *namespaceSymbol;
-    TU_ASSIGN_OR_RETURN (namespaceSymbol, block->declareNamespace(
-        identifier, internal::convert_access_type(access), /* declOnly= */ true));
+    TU_ASSIGN_OR_RETURN (namespaceSymbol, currentNamespace->declareSubspace(
+        identifier, internal::convert_access_type(access)));
 
     // push the namespace context
     auto ctx = std::make_unique<NamespaceAnalyzerContext>(this, namespaceSymbol);

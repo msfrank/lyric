@@ -1,7 +1,7 @@
 #ifndef LYRIC_ANALYZER_ENTRY_ANALYZER_CONTEXT_H
 #define LYRIC_ANALYZER_ENTRY_ANALYZER_CONTEXT_H
 
-#include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/object_root.h>
 
 #include "abstract_analyzer_context.h"
 #include "analyzer_scan_driver.h"
@@ -10,10 +10,7 @@ namespace lyric_analyzer {
 
     class EntryAnalyzerContext : public AbstractAnalyzerContext {
     public:
-        EntryAnalyzerContext(
-            AnalyzerScanDriver *driver,
-            lyric_assembler::CallSymbol *entry,
-            lyric_assembler::NamespaceSymbol *root);
+        EntryAnalyzerContext(AnalyzerScanDriver *driver, lyric_assembler::ObjectRoot *root);
 
         lyric_assembler::BlockHandle *getBlock() const override;
 
@@ -29,8 +26,7 @@ namespace lyric_analyzer {
 
     private:
         AnalyzerScanDriver *m_driver;
-        lyric_assembler::CallSymbol *m_entry;
-        lyric_assembler::NamespaceSymbol *m_root;
+        lyric_assembler::ObjectRoot *m_root;
     };
 }
 

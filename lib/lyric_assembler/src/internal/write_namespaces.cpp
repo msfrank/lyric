@@ -44,10 +44,9 @@ lyric_assembler::internal::touch_namespace(
         return {};
 
     auto *symbolCache = objectState->symbolCache();
-    auto *namespaceBlock = namespaceSymbol->namespaceBlock();
 
-    for (auto symbolIterator = namespaceBlock->symbolsBegin();
-        symbolIterator != namespaceBlock->symbolsEnd();
+    for (auto symbolIterator = namespaceSymbol->bindingsBegin();
+        symbolIterator != namespaceSymbol->bindingsEnd();
         symbolIterator++) {
         const auto &var = symbolIterator->second;
         const auto &symbolUrl = var.symbolUrl;
@@ -167,12 +166,10 @@ write_namespace(
                 "invalid namespace access");
     }
 
-    auto *namespaceBlock = namespaceSymbol->namespaceBlock();
-
     // serialize array of symbols
     std::vector<lyo1::NamespaceBinding> bindings;
-    for (auto symbolIterator = namespaceBlock->symbolsBegin();
-         symbolIterator != namespaceBlock->symbolsEnd();
+    for (auto symbolIterator = namespaceSymbol->bindingsBegin();
+         symbolIterator != namespaceSymbol->bindingsEnd();
          symbolIterator++) {
         const auto &var = symbolIterator->second;
         const auto &symbolUrl = var.symbolUrl;

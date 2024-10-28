@@ -25,8 +25,12 @@ namespace lyric_assembler {
     class ProcHandle {
 
     public:
-        explicit ProcHandle(const lyric_common::SymbolUrl &activation);
+        //explicit ProcHandle(const lyric_common::SymbolUrl &activation);
         ProcHandle(const lyric_common::SymbolUrl &activation, ObjectState *state);
+        ProcHandle(
+            const lyric_common::SymbolUrl &activation,
+            BlockHandle *parent,
+            ObjectState *state);
         ProcHandle(
             const lyric_common::SymbolUrl &activation,
             const absl::flat_hash_map<std::string, SymbolBinding> &initialBindings,

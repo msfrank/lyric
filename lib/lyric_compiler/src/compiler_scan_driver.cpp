@@ -6,6 +6,7 @@
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/object_root.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
@@ -18,13 +19,16 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 
-lyric_compiler::CompilerScanDriver::CompilerScanDriver(lyric_assembler::ObjectState *state)
-    : m_state(state),
-      m_entryCall(nullptr),
-      m_globalNamespace(nullptr),
+lyric_compiler::CompilerScanDriver::CompilerScanDriver(
+    lyric_assembler::ObjectRoot *root,
+    lyric_assembler::ObjectState *state)
+    : m_root(root),
+      m_state(state),
       m_typeSystem(nullptr)
 {
+    TU_ASSERT (m_root != nullptr);
     TU_ASSERT (m_state != nullptr);
+    m_namespaces.push(m_root->globalNamespace());
 }
 
 lyric_compiler::CompilerScanDriver::~CompilerScanDriver()
@@ -35,52 +39,11 @@ lyric_compiler::CompilerScanDriver::~CompilerScanDriver()
 tempo_utils::Status
 lyric_compiler::CompilerScanDriver::initialize(std::unique_ptr<BaseGrouping> &&rootGrouping)
 {
-    if (!m_groupings.empty())
-        return CompilerStatus::forCondition(
-            CompilerCondition::kCompilerInvariant,"module entry is already initialized");
+    if (m_typeSystem != nullptr)
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+            "module entry is already initialized");
 
-    auto typeSystem = std::make_unique<lyric_typing::TypeSystem>(m_state);
-
-    auto *fundamentalCache = m_state->fundamentalCache();
-    auto *typeCache = m_state->typeCache();
-
-    auto location = m_state->getLocation();
-
-    // lookup the Function0 class and get its type handle
-    auto functionClassUrl = fundamentalCache->getFunctionUrl(0);
-    if (!functionClassUrl.isValid())
-        m_state->throwAssemblerInvariant("missing Function0 symbol");
-
-    tempo_utils::Status status;
-
-    // ensure that NoReturn is in the type cache
-    auto returnType = lyric_common::TypeDef::noReturn();
-    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(returnType));
-
-    lyric_assembler::TypeHandle *entryTypeHandle;
-    TU_ASSIGN_OR_RETURN (entryTypeHandle, typeCache->declareFunctionType(returnType, {}, {}));
-
-    // create the $entry call
-    lyric_common::SymbolUrl entryUrl(location, lyric_common::SymbolPath({"$entry"}));
-    auto entryCall = std::make_unique<lyric_assembler::CallSymbol>(
-        entryUrl, returnType, entryTypeHandle, m_state);
-    TU_RETURN_IF_NOT_OK (m_state->appendCall(entryCall.get()));
-    m_entryCall = entryCall.release();
-
-    // resolve the Namespace type
-    auto namespaceType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Namespace);
-    lyric_assembler::TypeHandle *namespaceTypeHandle;
-    TU_ASSIGN_OR_RETURN (namespaceTypeHandle, typeCache->getOrMakeType(namespaceType));
-
-    // create the $global namespace
-    lyric_common::SymbolUrl globalUrl(location, lyric_common::SymbolPath({"$global"}));
-    auto globalNamespace = std::make_unique<lyric_assembler::NamespaceSymbol>(
-        globalUrl, namespaceTypeHandle, m_entryCall->callProc(), m_state);
-    TU_RETURN_IF_NOT_OK (m_state->appendNamespace(globalNamespace.get()));
-    m_globalNamespace = globalNamespace.release();
-
-    // take ownership of the typesystem
-    m_typeSystem = typeSystem.release();
+    m_typeSystem = new lyric_typing::TypeSystem(m_state);
 
     // push the root grouping
     auto groupingData = std::make_unique<GroupingData>();
@@ -254,6 +217,12 @@ lyric_compiler::CompilerScanDriver::finish()
     return {};
 }
 
+lyric_assembler::ObjectRoot *
+lyric_compiler::CompilerScanDriver::getObjectRoot() const
+{
+    return m_root;
+}
+
 lyric_assembler::ObjectState *
 lyric_compiler::CompilerScanDriver::getState() const
 {
@@ -294,18 +263,6 @@ lyric_assembler::TypeCache *
 lyric_compiler::CompilerScanDriver::getTypeCache() const
 {
     return m_state->typeCache();
-}
-
-lyric_assembler::NamespaceSymbol *
-lyric_compiler::CompilerScanDriver::getGlobalNamespace() const
-{
-    return m_globalNamespace;
-}
-
-lyric_assembler::CallSymbol *
-lyric_compiler::CompilerScanDriver::getEntryCall() const
-{
-    return m_entryCall;
 }
 
 lyric_typing::TypeSystem *

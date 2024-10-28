@@ -27,7 +27,7 @@ lyric_assembler::StaticSymbol::StaticSymbol(
     priv->staticType = staticType;
     priv->initCall = nullptr;
     priv->isDeclOnly = isDeclOnly;
-    priv->staticBlock = std::make_unique<BlockHandle>(staticUrl, parentBlock, false);
+    priv->staticBlock = std::make_unique<BlockHandle>(staticUrl, parentBlock);
 
     TU_ASSERT (priv->staticType != nullptr);
 }

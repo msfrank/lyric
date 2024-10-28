@@ -31,6 +31,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/lyric_compiler.h
     include/lyric_compiler/member_handler.h
     include/lyric_compiler/method_handler.h
+    include/lyric_compiler/namespace_handler.h
     include/lyric_compiler/new_handler.h
     include/lyric_compiler/operator_utils.h
     include/lyric_compiler/form_handler.h
@@ -67,6 +68,7 @@ target_sources(lyric_compiler PRIVATE
     src/lyric_compiler.cpp
     src/member_handler.cpp
     src/method_handler.cpp
+    src/namespace_handler.cpp
     src/new_handler.cpp
     src/operator_utils.cpp
     src/form_handler.cpp

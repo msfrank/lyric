@@ -39,6 +39,7 @@ namespace lyric_assembler {
     class LiteralCache;
     class LiteralHandle;
     class NamespaceSymbol;
+    class ObjectRoot;
     class ProcHandle;
     class StaticSymbol;
     class StructSymbol;
@@ -71,7 +72,7 @@ namespace lyric_assembler {
         tempo_tracing::ScopeManager *scopeManager() const;
         const ObjectStateOptions *getOptions() const;
 
-        tempo_utils::Status initialize();
+        tempo_utils::Result<ObjectRoot *> defineRoot();
 
         FundamentalCache *fundamentalCache() const;
         ImportCache *importCache() const;
@@ -155,6 +156,7 @@ namespace lyric_assembler {
         LiteralCache *m_literalcache = nullptr;
         TypeCache *m_typecache = nullptr;
         ImplCache *m_implcache = nullptr;
+        ObjectRoot *m_root = nullptr;
 
         std::vector<NamespaceSymbol *> m_namespaces;
         std::vector<ExistentialSymbol *> m_existentials;

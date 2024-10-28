@@ -27,20 +27,11 @@ namespace lyric_assembler {
     class BlockHandle : public AbstractResolver {
 
     public:
-        BlockHandle(
-            ProcHandle *blockProc,
-            ObjectState *state,
-            bool isRoot);
+        explicit BlockHandle(ObjectState *state);
+        BlockHandle(BlockHandle *parentBlock, ObjectState *state);
         BlockHandle(
             const lyric_common::SymbolUrl &definition,
-            BlockHandle *parentBlock,
-            bool isRoot);
-        BlockHandle(
-            NamespaceSymbol *blockNs,
-            ProcHandle *blockProc,
-            BlockHandle *parentBlock,
-            ObjectState *state,
-            bool isRoot = false);
+            BlockHandle *parentBlock);
         BlockHandle(
             ProcHandle *blockProc,
             BlockHandle *parentBlock,
@@ -59,7 +50,6 @@ namespace lyric_assembler {
         ProcHandle *blockProc();
         BlockHandle *blockParent();
         ObjectState *blockState();
-        bool isRoot() const;
 
         bool isImported() const;
 
@@ -111,11 +101,6 @@ namespace lyric_assembler {
             bool declOnly = false);
 
         tempo_utils::Status prepareFunction(const std::string &name, CallableInvoker &invoker);
-
-        tempo_utils::Status prepareExtension(
-            const lyric_common::TypeDef &receiverType,
-            const std::string &name,
-            CallableInvoker &invoker);
 
         tempo_utils::Result<ClassSymbol *> declareClass(
             const std::string &name,
@@ -178,10 +163,10 @@ namespace lyric_assembler {
             const lyric_common::TypeDef &implType,
             ResolveMode mode = ResolveMode::kDefault);
 
-        tempo_utils::Result<NamespaceSymbol *> declareNamespace(
-            const std::string &name,
-            lyric_object::AccessType access,
-            bool declOnly = false);
+//        tempo_utils::Result<NamespaceSymbol *> declareNamespace(
+//            const std::string &name,
+//            lyric_object::AccessType access,
+//            bool declOnly = false);
 
         tempo_utils::Result<SymbolBinding> declareAlias(
             const std::string &alias,
@@ -205,13 +190,14 @@ namespace lyric_assembler {
 
         lyric_common::SymbolUrl makeSymbolUrl(const std::string &name) const;
 
+        void debugBindings() const;
+
     private:
         lyric_common::SymbolUrl m_definition;
         NamespaceSymbol *m_blockNs;
         ProcHandle *m_blockProc;
         BlockHandle *m_parentBlock;
         ObjectState *m_state;
-        bool m_isRoot;
         absl::flat_hash_map<std::string, SymbolBinding> m_bindings;
         absl::flat_hash_map<lyric_common::TypeDef, lyric_common::SymbolUrl> m_impls;
 
