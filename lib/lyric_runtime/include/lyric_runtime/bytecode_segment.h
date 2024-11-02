@@ -3,15 +3,16 @@
 
 #include <lyric_object/lyric_object.h>
 
-#include "data_cell.h"
-#include "runtime_types.h"
 #include "abstract_plugin.h"
+#include "data_cell.h"
+#include "descriptor_entry.h"
+#include "runtime_types.h"
 
 namespace lyric_runtime {
 
     /**
      * The bytecode segment is a runtime structure containing the readonly bytecode, virtual tables, and
-     * static storage areas for the object at a specified assembly location.
+     * static storage areas for the object at a specified module location.
      */
     class BytecodeSegment {
 
@@ -28,6 +29,8 @@ namespace lyric_runtime {
         lyric_object::LyricObject getObject() const;
         const tu_uint8 *getBytecodeData() const;
         tu_uint32 getBytecodeSize() const;
+
+        DescriptorEntry *lookupDescriptor(lyric_object::LinkageSection section, tu_uint32 index);
 
         const LinkEntry *getLink(tu_uint32 index) const;
         bool setLink(tu_uint32 index, const LinkEntry &entry);
@@ -51,19 +54,35 @@ namespace lyric_runtime {
         lyric_common::ModuleLocation m_location;
         lyric_object::LyricObject m_object;
         std::shared_ptr<const AbstractPlugin> m_plugin;
-
-        tu_uint32 m_bytecodeSize;
-        tu_uint32 m_numLinks;
-        tu_uint32 m_numStatics;
-        tu_uint32 m_numInstances;
-        tu_uint32 m_numEnums;
+        void *m_data;
 
         const tu_uint8 *m_bytecode;
+        tu_uint32 m_bytecodeSize;
+
         LinkEntry *m_links;
+        tu_uint32 m_numLinks;
+
         DataCell *m_statics;
+        tu_uint32 m_numStatics;
+
         DataCell *m_instances;
+        tu_uint32 m_numInstances;
+
         DataCell *m_enums;
-        void *m_data;
+        tu_uint32 m_numEnums;
+
+        DescriptorTable m_actionDescriptors;
+        DescriptorTable m_callDescriptors;
+        DescriptorTable m_classDescriptors;
+        DescriptorTable m_conceptDescriptors;
+        DescriptorTable m_enumDescriptors;
+        DescriptorTable m_existentialDescriptors;
+        DescriptorTable m_fieldDescriptors;
+        DescriptorTable m_instanceDescriptors;
+        DescriptorTable m_namespaceDescriptors;
+        DescriptorTable m_staticDescriptors;
+        DescriptorTable m_structDescriptors;
+        DescriptorTable m_typeDescriptors;
     };
 }
 

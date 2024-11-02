@@ -13,6 +13,7 @@ namespace lyric_runtime {
     // forward declarations
     class BaseRef;
     class BytesRef;
+    class DescriptorEntry;
     class StatusRef;
     class StringRef;
     class UrlRef;
@@ -62,21 +63,10 @@ namespace lyric_runtime {
         static DataCell undef();
 
         static DataCell forLiteral(const lyric_runtime::LiteralCell &literal);
+        static DataCell forDescriptor(DescriptorEntry *descriptor);
         static DataCell forRef(BaseRef *ref);
         static DataCell forString(StringRef *str);
         static DataCell forUrl(UrlRef *url);
-
-        static DataCell forClass(tu_uint32 objectIndex, tu_uint32 classIndex);
-        static DataCell forStruct(tu_uint32 objectIndex, tu_uint32 structIndex);
-        static DataCell forInstance(tu_uint32 objectIndex, tu_uint32 instanceIndex);
-        static DataCell forConcept(tu_uint32 objectIndex, tu_uint32 conceptIndex);
-        static DataCell forEnum(tu_uint32 objectIndex, tu_uint32 enumIndex);
-        static DataCell forCall(tu_uint32 objectIndex, tu_uint32 callIndex);
-        static DataCell forField(tu_uint32 objectIndex, tu_uint32 fieldIndex);
-        static DataCell forAction(tu_uint32 objectIndex, tu_uint32 actionIndex);
-        static DataCell forType(tu_uint32 objectIndex, tu_uint32 typeIndex);
-        static DataCell forExistential(tu_uint32 objectIndex, tu_uint32 existentialIndex);
-        static DataCell forNamespace(tu_uint32 objectIndex, tu_uint32 namespaceIndex);
 
         DataCellType type;
         union {
@@ -84,10 +74,7 @@ namespace lyric_runtime {
             tu_int64 i64;
             double dbl;
             UChar32 chr;
-            struct {
-                tu_uint32 object;
-                tu_uint32 value;
-            } descriptor;
+            DescriptorEntry *descriptor;
             BaseRef *ref;
             BytesRef *bytes;
             StatusRef *status;

@@ -38,7 +38,9 @@ H AbslHashValue(H state, const MapKey &key) {
         case lyric_runtime::DataCellType::ACTION:
         case lyric_runtime::DataCellType::EXISTENTIAL:
         case lyric_runtime::DataCellType::NAMESPACE:
-            return H::combine(std::move(state), cell.data.descriptor.object, cell.data.descriptor.value);
+            return H::combine(std::move(state),
+                cell.data.descriptor->getSegmentIndex(),
+                cell.data.descriptor->getDescriptorIndex());
         case lyric_runtime::DataCellType::REF:
             cell.data.ref->hashValue(absl::HashState::Create(&state));
             return std::move(state);

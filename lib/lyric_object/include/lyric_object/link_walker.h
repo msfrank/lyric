@@ -23,6 +23,7 @@ namespace lyric_object {
 
         ImportWalker getLinkImport() const;
         lyric_common::SymbolUrl getLinkUrl() const;
+        tu_uint32 getLinkAddress() const;
 
         tu_uint32 getDescriptorOffset() const;
 

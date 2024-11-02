@@ -178,34 +178,15 @@ lyric_runtime::internal::resolve_descriptor(
         valueIndex = linkage->value;
     }
 
-    switch (section) {
-        case lyric_object::LinkageSection::Action:
-            return DataCell::forAction(segmentIndex, valueIndex);
-        case lyric_object::LinkageSection::Call:
-            return DataCell::forCall(segmentIndex, valueIndex);
-        case lyric_object::LinkageSection::Class:
-            return DataCell::forClass(segmentIndex, valueIndex);
-        case lyric_object::LinkageSection::Concept:
-            return DataCell::forConcept(segmentIndex, valueIndex);
-        case lyric_object::LinkageSection::Enum:
-            return DataCell::forEnum(segmentIndex, valueIndex);
-        case lyric_object::LinkageSection::Existential:
-            return DataCell::forExistential(segmentIndex, valueIndex);
-        case lyric_object::LinkageSection::Field:
-            return DataCell::forField(segmentIndex, valueIndex);
-        case lyric_object::LinkageSection::Instance:
-            return DataCell::forInstance(segmentIndex, valueIndex);
-        case lyric_object::LinkageSection::Namespace:
-            return DataCell::forNamespace(segmentIndex, valueIndex);
-        case lyric_object::LinkageSection::Struct:
-            return DataCell::forStruct(segmentIndex, valueIndex);
-        case lyric_object::LinkageSection::Type:
-            return DataCell::forType(segmentIndex, valueIndex);
-        default:
-            status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "unknown descriptor type");
-            return {};
+    auto *segment = segmentManagerData->segments[segmentIndex];
+    auto *descriptor = segment->lookupDescriptor(section, valueIndex);
+    if (descriptor == nullptr) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "unknown descriptor type");
+        return {};
     }
+
+    return DataCell::forDescriptor(descriptor);
 }
 
 lyric_runtime::LiteralCell

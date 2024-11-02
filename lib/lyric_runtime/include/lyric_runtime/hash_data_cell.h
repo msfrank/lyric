@@ -4,6 +4,7 @@
 #include <absl/hash/hash.h>
 
 #include "data_cell.h"
+#include "descriptor_entry.h"
 
 namespace lyric_runtime {
 
@@ -24,29 +25,30 @@ namespace lyric_runtime {
                 return H::combine(std::move(h), cell.type, cell.data.chr);
 
             case DataCellType::STRING:
-                // NOTE: we hash the pointer value in this case, not the ref contents
+                // NOTE: we hash the pointer value in this case, not the string content
                 return H::combine(std::move(h), cell.type, cell.data.str);
 
             case DataCellType::URL:
-                // NOTE: we hash the pointer value in this case, not the ref contents
+                // NOTE: we hash the pointer value in this case, not the url content
                 return H::combine(std::move(h), cell.type, cell.data.url);
 
             case DataCellType::REF:
-                // NOTE: we hash the pointer value in this case, not the ref contents
+                // NOTE: we hash the pointer value in this case, not the ref content
                 return H::combine(std::move(h), cell.type, cell.data.ref);
 
+            case DataCellType::ACTION:
+            case DataCellType::CALL:
             case DataCellType::CLASS:
-            case DataCellType::STRUCT:
-            case DataCellType::INSTANCE:
             case DataCellType::CONCEPT:
             case DataCellType::ENUM:
-            case DataCellType::FIELD:
-            case DataCellType::CALL:
-            case DataCellType::ACTION:
-            case DataCellType::TYPE:
             case DataCellType::EXISTENTIAL:
+            case DataCellType::FIELD:
+            case DataCellType::INSTANCE:
             case DataCellType::NAMESPACE:
-                return H::combine(std::move(h), cell.type, cell.data.descriptor.object, cell.data.descriptor.value);
+            case DataCellType::STRUCT:
+            case DataCellType::TYPE:
+                // NOTE: we hash the pointer value in this case, not the descriptor content
+                return H::combine(std::move(h), cell.type, cell.data.descriptor);
         }
         TU_UNREACHABLE();
     }

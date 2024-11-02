@@ -93,6 +93,14 @@ lyric_object::LinkWalker::getLinkUrl() const
 }
 
 tu_uint32
+lyric_object::LinkWalker::getLinkAddress() const
+{
+    if (!isValid())
+        return INVALID_ADDRESS_U32;
+    return GET_LINK_ADDRESS(m_linkOffset);
+}
+
+tu_uint32
 lyric_object::LinkWalker::getDescriptorOffset() const
 {
     if (!isValid())

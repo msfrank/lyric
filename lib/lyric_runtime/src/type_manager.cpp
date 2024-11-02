@@ -72,17 +72,16 @@ resolve_type_to_descriptor(
     lyric_runtime::SegmentManager *segmentManager)
 {
     TU_ASSERT (type.type == lyric_runtime::DataCellType::TYPE);
-    TU_ASSERT (type.data.descriptor.object != lyric_runtime::INVALID_ADDRESS_U32);
-    TU_ASSERT (type.data.descriptor.value != lyric_runtime::INVALID_ADDRESS_U32);
+    auto *entry = type.data.descriptor;
 
     // load the type descriptor from the specified assembly
-    auto *segment = segmentManager->getSegment(type.data.descriptor.object);
+    auto *segment = entry->getSegment();
     if (segment == nullptr)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid segment");
 
     auto object = segment->getObject().getObject();
-    auto descriptorType = object.getType(type.data.descriptor.value);
+    auto descriptorType = object.getType(entry->getDescriptorIndex());
     if (!descriptorType.isValid())
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "missing type descriptor");
@@ -106,7 +105,8 @@ resolve_type_to_descriptor(
                 return resolve_type_to_descriptor(typeCell, descriptor, segmentManager);
             }
 
-            auto typeCell = lyric_runtime::DataCell::forType(type.data.descriptor.object, concreteIndex);
+            auto typeCell = lyric_runtime::DataCell::forDescriptor(
+                segment->lookupDescriptor(lyric_object::LinkageSection::Type, concreteIndex));
             return resolve_type_to_descriptor(typeCell, descriptor, segmentManager);
         }
 
@@ -129,14 +129,15 @@ resolve_super_type(
     lyric_runtime::SegmentManager *segmentManager)
 {
     TU_ASSERT (type.type == lyric_runtime::DataCellType::TYPE);
+    auto *entry = type.data.descriptor;
 
-    auto *segment = segmentManager->getSegment(type.data.descriptor.object);
+    auto *segment = entry->getSegment();
     if (segment == nullptr)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid segment");
     auto object = segment->getObject().getObject();
 
-    auto descriptorType = object.getType(type.data.descriptor.value);
+    auto descriptorType = object.getType(entry->getDescriptorIndex());
     if (!descriptorType.isValid())
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "missing type descriptor");

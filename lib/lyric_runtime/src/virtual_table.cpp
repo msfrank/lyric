@@ -161,7 +161,7 @@ lyric_runtime::ImplTable::getLinkageSection() const
 uint32_t
 lyric_runtime::ImplTable::getDescriptorIndex() const
 {
-    return m_descriptor.data.descriptor.value;
+    return m_descriptor.data.descriptor->getDescriptorIndex();
 }
 
 const lyric_runtime::VirtualMethod *
@@ -250,7 +250,7 @@ lyric_runtime::ExistentialTable::getLinkageSection() const
 uint32_t
 lyric_runtime::ExistentialTable::getDescriptorIndex() const
 {
-    return m_descriptor.data.descriptor.value;
+    return m_descriptor.data.descriptor->getDescriptorIndex();
 }
 
 const lyric_runtime::VirtualMethod *
@@ -349,7 +349,7 @@ lyric_runtime::ConceptTable::getLinkageSection() const
 uint32_t
 lyric_runtime::ConceptTable::getDescriptorIndex() const
 {
-    return m_descriptor.data.descriptor.value;
+    return m_descriptor.data.descriptor->getDescriptorIndex();
 }
 
 const lyric_runtime::VirtualMethod *
@@ -447,7 +447,7 @@ lyric_runtime::VirtualTable::getLinkageSection() const
 uint32_t
 lyric_runtime::VirtualTable::getDescriptorIndex() const
 {
-    return m_descriptor.data.descriptor.value;
+    return m_descriptor.data.descriptor->getDescriptorIndex();
 }
 
 lyric_runtime::DataCell

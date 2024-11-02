@@ -17,57 +17,60 @@ lyric_runtime::internal::get_concept_table(
     TU_ASSERT (segmentManagerData != nullptr);
 
     if (descriptor.type != DataCellType::CONCEPT) {
-        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant, "invalid concept descriptor");
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "invalid concept descriptor");
         return nullptr;
     }
 
     if (segmentManagerData->ctablecache.contains(descriptor))
         return segmentManagerData->ctablecache[descriptor];
 
-    auto objectIndex = descriptor.data.descriptor.object;
-    auto *conceptSegment = segmentManagerData->segments[objectIndex];
+    auto *entry = descriptor.data.descriptor;
+    auto *conceptSegment = entry->getSegment();
     auto conceptObject = conceptSegment->getObject().getObject();
-    auto conceptIndex = descriptor.data.descriptor.value;
+    auto conceptIndex = entry->getDescriptorIndex();
     auto conceptDescriptor = conceptObject.getConcept(conceptIndex);
-    auto conceptType = DataCell::forType(
-        objectIndex, conceptDescriptor.getConceptType().getDescriptorOffset());
+    auto conceptType = DataCell::forDescriptor(
+        conceptSegment->lookupDescriptor(
+            lyric_object::LinkageSection::Type,
+            conceptDescriptor.getConceptType().getDescriptorOffset()));
 
     const ConceptTable *parentTable = nullptr;
     absl::flat_hash_map<DataCell,ImplTable> impls;
 
     // if concept has a superconcept, then resolve its virtual table
+
     if (conceptDescriptor.hasSuperConcept()) {
-        tu_uint32 superObjectIndex = INVALID_ADDRESS_U32;;
-        tu_uint32 superConceptIndex = INVALID_ADDRESS_U32;;
+        tu_uint32 superConceptAddress;
 
         switch (conceptDescriptor.superConceptAddressType()) {
-            case lyric_object::AddressType::Far: {
-                auto *link = resolve_link(conceptSegment,
-                    conceptDescriptor.getFarSuperConcept().getDescriptorOffset(), segmentManagerData, status);
-                if (!link || link->linkage != lyric_object::LinkageSection::Concept) {
-                    status = InterpreterStatus::forCondition(
-                        InterpreterCondition::kRuntimeInvariant, "invalid super concept");
-                    return nullptr;
-                }
-                superObjectIndex = link->object;
-                superConceptIndex = link->value;
+            case lyric_object::AddressType::Far:
+                superConceptAddress = conceptDescriptor.getFarSuperConcept().getLinkAddress();
                 break;
-            }
             case lyric_object::AddressType::Near:
-                superObjectIndex = objectIndex;
-                superConceptIndex = conceptDescriptor.getNearSuperConcept().getDescriptorOffset();
+                superConceptAddress = conceptDescriptor.getNearSuperConcept().getDescriptorOffset();
                 break;
             default:
                 status = InterpreterStatus::forCondition(
-                    InterpreterCondition::kRuntimeInvariant, "invalid super concept");
-                break;
+                    InterpreterCondition::kRuntimeInvariant, "invalid super concept linkage");
+                return nullptr;
         }
 
-        parentTable = get_concept_table(DataCell::forConcept(superObjectIndex, superConceptIndex),
-            segmentManagerData, status);
-        if (parentTable == nullptr)
+        auto superConcept = resolve_descriptor(conceptSegment,
+            lyric_object::LinkageSection::Concept,
+            superConceptAddress, segmentManagerData, status);
+        if (status.notOk())
             return nullptr;
+
+        parentTable = get_concept_table(superConcept, segmentManagerData, status);
+        if (parentTable == nullptr) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid concept parent table");
+            return nullptr;
+        }
     }
+
+    // TODO: resolve each action for the concept
 
     // resolve extensions for each impl
 
@@ -79,65 +82,53 @@ lyric_runtime::internal::get_concept_table(
         for (tu_uint8 j = 0; j < impl.numExtensions(); j++) {
             auto extension = impl.getExtension(j);
 
-            tu_uint32 actionObject;
-            tu_uint32 actionIndex;
+            tu_uint32 actionAddress;
 
             switch (extension.actionAddressType()) {
-                case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(conceptSegment,
-                        extension.getFarAction().getDescriptorOffset(), segmentManagerData, status);
-                    if (!link || link->linkage != lyric_object::LinkageSection::Action) {
-                        status = InterpreterStatus::forCondition(
-                            InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
-                        return nullptr;
-                    }
-                    actionObject = link->object;
-                    actionIndex = link->value;
+                case lyric_object::AddressType::Far:
+                    actionAddress = extension.getFarAction().getLinkAddress();
                     break;
-                }
-                case lyric_object::AddressType::Near: {
-                    actionObject = objectIndex;
-                    actionIndex = extension.getNearAction().getDescriptorOffset();
+                case lyric_object::AddressType::Near:
+                    actionAddress = extension.getNearAction().getDescriptorOffset();
                     break;
-                }
                 default:
                     status = InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid extension action linkage");
                     return nullptr;
             }
 
-            BytecodeSegment *callSegment;
-            tu_uint32 callIndex;
-            tu_uint32 procOffset;
+            auto implAction = resolve_descriptor(conceptSegment,
+                lyric_object::LinkageSection::Action,
+                actionAddress, segmentManagerData, status);
+            if (status.notOk())
+                return nullptr;
+
+            tu_uint32 callAddress;
 
             switch (extension.callAddressType()) {
-                case lyric_object::AddressType::Far: {
-                    auto *link = resolve_link(conceptSegment,
-                        extension.getFarCall().getDescriptorOffset(), segmentManagerData, status);
-                    if (!link || link->linkage != lyric_object::LinkageSection::Call) {
-                        status = InterpreterStatus::forCondition(
-                            InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
-                        return nullptr;
-                    }
-                    callSegment = segmentManagerData->segments[link->object];
-                    callIndex = link->value;
-                    procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
+                case lyric_object::AddressType::Far:
+                    callAddress = extension.getFarCall().getLinkAddress();
                     break;
-                }
-                case lyric_object::AddressType::Near: {
-                    callSegment = conceptSegment;
-                    callIndex = extension.getNearCall().getDescriptorOffset();
-                    procOffset = extension.getNearCall().getProcOffset();
+                case lyric_object::AddressType::Near:
+                    callAddress = extension.getNearCall().getDescriptorOffset();
                     break;
-                }
                 default:
                     status = InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid extension call linkage");
                     return nullptr;
             }
 
-            auto actionKey = DataCell::forAction(actionObject, actionIndex);
-            extensions.try_emplace(actionKey, callSegment, callIndex, procOffset);
+            auto implCall = resolve_descriptor(conceptSegment,
+                lyric_object::LinkageSection::Call,
+                callAddress, segmentManagerData, status);
+            if (status.notOk())
+                return nullptr;
+
+            auto *callSegment = implCall.data.descriptor->getSegment();
+            auto callIndex = implCall.data.descriptor->getDescriptorIndex();
+            auto procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
+
+            extensions.try_emplace(implAction, callSegment, callIndex, procOffset);
         }
 
         // resolve the concept for the impl
@@ -148,25 +139,15 @@ lyric_runtime::internal::get_concept_table(
             return nullptr;
         }
 
-        // create the concept descriptor
-        DataCell conceptKey;
-        auto address = implConceptType.getLinkageIndex();
-        if (lyric_object::IS_FAR(address)) {
-            auto *linkage = resolve_link(conceptSegment,
-                lyric_object::GET_LINK_OFFSET(address), segmentManagerData, status);
-            if (linkage == nullptr)
-                return {};
-            if (linkage->linkage != lyric_object::LinkageSection::Concept) {
-                status = InterpreterStatus::forCondition(
-                    InterpreterCondition::kRuntimeInvariant, "invalid impl concept linkage");
-                return {};
-            }
-            conceptKey = DataCell::forConcept(linkage->object, linkage->value);
-        } else {
-            conceptKey = DataCell::forConcept(conceptSegment->getSegmentIndex(), address);
-        }
+        auto conceptAddress = implConceptType.getLinkageIndex();
 
-        impls.try_emplace(conceptKey, conceptSegment, conceptKey, conceptType, extensions);
+        auto implConcept = resolve_descriptor(conceptSegment,
+            lyric_object::LinkageSection::Concept,
+            conceptAddress, segmentManagerData, status);
+        if (status.notOk())
+            return nullptr;
+
+        impls.try_emplace(implConcept, conceptSegment, implConcept, conceptType, extensions);
     }
 
     auto *ctable = new ConceptTable(conceptSegment, descriptor, conceptType, parentTable, impls);

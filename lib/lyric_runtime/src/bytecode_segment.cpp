@@ -11,7 +11,19 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
       m_location(location),
       m_object(object),
       m_plugin(plugin),
-      m_data(nullptr)
+      m_data(nullptr),
+      m_actionDescriptors(this, lyric_object::LinkageSection::Action),
+      m_callDescriptors(this, lyric_object::LinkageSection::Call),
+      m_classDescriptors(this, lyric_object::LinkageSection::Class),
+      m_conceptDescriptors(this, lyric_object::LinkageSection::Concept),
+      m_enumDescriptors(this, lyric_object::LinkageSection::Enum),
+      m_existentialDescriptors(this, lyric_object::LinkageSection::Existential),
+      m_fieldDescriptors(this, lyric_object::LinkageSection::Field),
+      m_instanceDescriptors(this, lyric_object::LinkageSection::Instance),
+      m_namespaceDescriptors(this, lyric_object::LinkageSection::Namespace),
+      m_staticDescriptors(this, lyric_object::LinkageSection::Static),
+      m_structDescriptors(this, lyric_object::LinkageSection::Struct),
+      m_typeDescriptors(this, lyric_object::LinkageSection::Type)
 {
     TU_ASSERT (m_object.isValid());
     m_bytecodeSize = m_object.getBytecodeSize();
@@ -71,6 +83,39 @@ uint32_t
 lyric_runtime::BytecodeSegment::getBytecodeSize() const
 {
     return m_bytecodeSize;
+}
+
+lyric_runtime::DescriptorEntry *
+lyric_runtime::BytecodeSegment::lookupDescriptor(lyric_object::LinkageSection section, tu_uint32 index)
+{
+    switch (section) {
+        case lyric_object::LinkageSection::Action:
+            return m_actionDescriptors.lookupDescriptor(index);
+        case lyric_object::LinkageSection::Call:
+            return m_callDescriptors.lookupDescriptor(index);
+        case lyric_object::LinkageSection::Class:
+            return m_classDescriptors.lookupDescriptor(index);
+        case lyric_object::LinkageSection::Concept:
+            return m_conceptDescriptors.lookupDescriptor(index);
+        case lyric_object::LinkageSection::Enum:
+            return m_enumDescriptors.lookupDescriptor(index);
+        case lyric_object::LinkageSection::Existential:
+            return m_existentialDescriptors.lookupDescriptor(index);
+        case lyric_object::LinkageSection::Field:
+            return m_fieldDescriptors.lookupDescriptor(index);
+        case lyric_object::LinkageSection::Instance:
+            return m_instanceDescriptors.lookupDescriptor(index);
+        case lyric_object::LinkageSection::Namespace:
+            return m_namespaceDescriptors.lookupDescriptor(index);
+        case lyric_object::LinkageSection::Static:
+            return m_staticDescriptors.lookupDescriptor(index);
+        case lyric_object::LinkageSection::Struct:
+            return m_structDescriptors.lookupDescriptor(index);
+        case lyric_object::LinkageSection::Type:
+            return m_typeDescriptors.lookupDescriptor(index);
+        default:
+            return nullptr;
+    }
 }
 
 const lyric_runtime::LinkEntry *

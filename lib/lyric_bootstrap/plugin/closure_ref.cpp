@@ -226,14 +226,14 @@ closure_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
     auto receiver = frame.getReceiver();
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
     auto *instance = static_cast<ClosureRef *>(receiver.data.ref);
-    instance->setSegmentIndex(arg0.data.descriptor.object);
-    instance->setCallIndex(arg0.data.descriptor.value);
+    instance->setSegmentIndex(arg0.data.descriptor->getSegmentIndex());
+    instance->setCallIndex(arg0.data.descriptor->getDescriptorIndex());
 
     // fetch the proc offset for the call descriptor
-    auto *segment = state->segmentManager()->getSegment(arg0.data.descriptor.object);
+    auto *segment = state->segmentManager()->getSegment(arg0.data.descriptor->getSegmentIndex());
     TU_ASSERT (segment != nullptr);
     auto object = segment->getObject().getObject();
-    auto descriptor = object.getCall(arg0.data.descriptor.value);
+    auto descriptor = object.getCall(arg0.data.descriptor->getDescriptorIndex());
     auto procOffset = descriptor.getProcOffset();
 
     // verify that proc offset is within the segment bytecode

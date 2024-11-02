@@ -301,8 +301,8 @@ lyric_runtime::SubroutineManager::callStatic(
     TU_ASSERT (descriptor.type == DataCellType::CALL);
     TU_ASSERT (currentCoro != nullptr);
 
-    auto callIndex = descriptor.data.descriptor.value;
-    auto *segment = m_segmentManager->getSegment(descriptor.data.descriptor.object);
+    auto *segment = descriptor.data.descriptor->getSegment();
+    auto callIndex = descriptor.data.descriptor->getDescriptorIndex();
     auto object = segment->getObject().getObject();
     auto call = object.getCall(callIndex);
     if (!call.isValid()) {

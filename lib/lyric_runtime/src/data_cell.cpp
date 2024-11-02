@@ -2,6 +2,7 @@
 
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/data_cell.h>
+#include <lyric_runtime/descriptor_entry.h>
 #include <lyric_runtime/literal_cell.h>
 #include <lyric_runtime/string_ref.h>
 #include <lyric_runtime/url_ref.h>
@@ -190,6 +191,52 @@ lyric_runtime::DataCell::forLiteral(const lyric_runtime::LiteralCell &literal)
 }
 
 lyric_runtime::DataCell
+lyric_runtime::DataCell::forDescriptor(lyric_runtime::DescriptorEntry *descriptor)
+{
+    TU_ASSERT (descriptor != nullptr);
+    DataCell cell;
+    switch (descriptor->getLinkageSection()) {
+        case lyric_object::LinkageSection::Action:
+            cell.type = DataCellType::ACTION;
+            break;
+        case lyric_object::LinkageSection::Call:
+            cell.type = DataCellType::CALL;
+            break;
+        case lyric_object::LinkageSection::Class:
+            cell.type = DataCellType::CLASS;
+            break;
+        case lyric_object::LinkageSection::Concept:
+            cell.type = DataCellType::CONCEPT;
+            break;
+        case lyric_object::LinkageSection::Enum:
+            cell.type = DataCellType::ENUM;
+            break;
+        case lyric_object::LinkageSection::Existential:
+            cell.type = DataCellType::EXISTENTIAL;
+            break;
+        case lyric_object::LinkageSection::Field:
+            cell.type = DataCellType::FIELD;
+            break;
+        case lyric_object::LinkageSection::Instance:
+            cell.type = DataCellType::INSTANCE;
+            break;
+        case lyric_object::LinkageSection::Namespace:
+            cell.type = DataCellType::NAMESPACE;
+            break;
+        case lyric_object::LinkageSection::Struct:
+            cell.type = DataCellType::STRUCT;
+            break;
+        case lyric_object::LinkageSection::Type:
+            cell.type = DataCellType::TYPE;
+            break;
+        default:
+            return {};
+    }
+    cell.data.descriptor = descriptor;
+    return cell;
+}
+
+lyric_runtime::DataCell
 lyric_runtime::DataCell::forRef(BaseRef *ref)
 {
     TU_ASSERT (ref != nullptr);
@@ -216,127 +263,6 @@ lyric_runtime::DataCell::forUrl(UrlRef *url)
     DataCell cell;
     cell.type = DataCellType::URL;
     cell.data.url = url;
-    return cell;
-}
-
-lyric_runtime::DataCell
-lyric_runtime::DataCell::forClass(tu_uint32 objectIndex, tu_uint32 classIndex)
-{
-    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
-    DataCell cell;
-    cell.type = DataCellType::CLASS;
-    cell.data.descriptor.object = objectIndex;
-    cell.data.descriptor.value = classIndex;
-    return cell;
-}
-
-lyric_runtime::DataCell
-lyric_runtime::DataCell::forStruct(tu_uint32 objectIndex, tu_uint32 structIndex)
-{
-    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
-    DataCell cell;
-    cell.type = DataCellType::STRUCT;
-    cell.data.descriptor.object = objectIndex;
-    cell.data.descriptor.value = structIndex;
-    return cell;
-}
-
-lyric_runtime::DataCell
-lyric_runtime::DataCell::forEnum(tu_uint32 objectIndex, tu_uint32 enumIndex)
-{
-    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
-    DataCell cell;
-    cell.type = DataCellType::ENUM;
-    cell.data.descriptor.object = objectIndex;
-    cell.data.descriptor.value = enumIndex;
-    return cell;
-}
-
-lyric_runtime::DataCell
-lyric_runtime::DataCell::forInstance(tu_uint32 objectIndex, tu_uint32 instanceIndex)
-{
-    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
-    DataCell cell;
-    cell.type = DataCellType::INSTANCE;
-    cell.data.descriptor.object = objectIndex;
-    cell.data.descriptor.value = instanceIndex;
-    return cell;
-}
-
-lyric_runtime::DataCell
-lyric_runtime::DataCell::forConcept(tu_uint32 objectIndex, tu_uint32 conceptIndex)
-{
-    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
-    DataCell cell;
-    cell.type = DataCellType::CONCEPT;
-    cell.data.descriptor.object = objectIndex;
-    cell.data.descriptor.value = conceptIndex;
-    return cell;
-}
-
-lyric_runtime::DataCell
-lyric_runtime::DataCell::forField(tu_uint32 objectIndex, tu_uint32 fieldIndex)
-{
-    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
-    DataCell cell;
-    cell.type = DataCellType::FIELD;
-    cell.data.descriptor.object = objectIndex;
-    cell.data.descriptor.value = fieldIndex;
-    return cell;
-}
-
-lyric_runtime::DataCell
-lyric_runtime::DataCell::forCall(tu_uint32 objectIndex, tu_uint32 callIndex)
-{
-    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
-    DataCell cell;
-    cell.type = DataCellType::CALL;
-    cell.data.descriptor.object = objectIndex;
-    cell.data.descriptor.value = callIndex;
-    return cell;
-}
-
-lyric_runtime::DataCell
-lyric_runtime::DataCell::forAction(tu_uint32 objectIndex, tu_uint32 actionIndex)
-{
-    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
-    DataCell cell;
-    cell.type = DataCellType::ACTION;
-    cell.data.descriptor.object = objectIndex;
-    cell.data.descriptor.value = actionIndex;
-    return cell;
-}
-
-lyric_runtime::DataCell
-lyric_runtime::DataCell::forType(tu_uint32 objectIndex, tu_uint32 typeIndex)
-{
-    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
-    DataCell cell;
-    cell.type = DataCellType::TYPE;
-    cell.data.descriptor.object = objectIndex;
-    cell.data.descriptor.value = typeIndex;
-    return cell;
-}
-
-lyric_runtime::DataCell
-lyric_runtime::DataCell::forExistential(tu_uint32 objectIndex, tu_uint32 existentialIndex)
-{
-    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
-    DataCell cell;
-    cell.type = DataCellType::EXISTENTIAL;
-    cell.data.descriptor.object = objectIndex;
-    cell.data.descriptor.value = existentialIndex;
-    return cell;
-}
-
-lyric_runtime::DataCell
-lyric_runtime::DataCell::forNamespace(tu_uint32 objectIndex, tu_uint32 namespaceIndex)
-{
-    TU_ASSERT (objectIndex != INVALID_ADDRESS_U32);
-    DataCell cell;
-    cell.type = DataCellType::NAMESPACE;
-    cell.data.descriptor.object = objectIndex;
-    cell.data.descriptor.value = namespaceIndex;
     return cell;
 }
 
@@ -502,37 +428,37 @@ lyric_runtime::DataCell::toString() const
             return data.ref->toString();
         case DataCellType::CLASS:
             return absl::Substitute("<object=$0, class=$1>",
-                data.descriptor.object, data.descriptor.value);
+                data.descriptor->getSegmentIndex(), data.descriptor->getDescriptorIndex());
         case DataCellType::STRUCT:
             return absl::Substitute("<object=$0, struct=$1>",
-                data.descriptor.object, data.descriptor.value);
+                data.descriptor->getSegmentIndex(), data.descriptor->getDescriptorIndex());
         case DataCellType::INSTANCE:
             return absl::Substitute("<object=$0, instance=$1>",
-                data.descriptor.object, data.descriptor.value);
+                data.descriptor->getSegmentIndex(), data.descriptor->getDescriptorIndex());
         case DataCellType::CONCEPT:
             return absl::Substitute("<object=$0, concept=$1>",
-                data.descriptor.object, data.descriptor.value);
+                data.descriptor->getSegmentIndex(), data.descriptor->getDescriptorIndex());
         case DataCellType::ENUM:
             return absl::Substitute("<object=$0, enum=$1>",
-                data.descriptor.object, data.descriptor.value);
+                data.descriptor->getSegmentIndex(), data.descriptor->getDescriptorIndex());
         case DataCellType::FIELD:
             return absl::Substitute("<object=$0, field=$1>",
-                data.descriptor.object, data.descriptor.value);
+                data.descriptor->getSegmentIndex(), data.descriptor->getDescriptorIndex());
         case DataCellType::CALL:
             return absl::Substitute("<object=$0, call=$1>",
-                data.descriptor.object, data.descriptor.value);
+                data.descriptor->getSegmentIndex(), data.descriptor->getDescriptorIndex());
         case DataCellType::ACTION:
             return absl::Substitute("<object=$0, action=$1>",
-                data.descriptor.object, data.descriptor.value);
+                data.descriptor->getSegmentIndex(), data.descriptor->getDescriptorIndex());
         case DataCellType::TYPE:
             return absl::Substitute("<object=$0, type=$1>",
-                data.descriptor.object, data.descriptor.value);
+                data.descriptor->getSegmentIndex(), data.descriptor->getDescriptorIndex());
         case DataCellType::EXISTENTIAL:
             return absl::Substitute("<object=$0, existential=$1>",
-                data.descriptor.object, data.descriptor.value);
+                data.descriptor->getSegmentIndex(), data.descriptor->getDescriptorIndex());
         case DataCellType::NAMESPACE:
             return absl::Substitute("<object=$0, namespace=$1>",
-                data.descriptor.object, data.descriptor.value);
+                data.descriptor->getSegmentIndex(), data.descriptor->getDescriptorIndex());
         case DataCellType::INVALID:
         default:
             break;
@@ -576,8 +502,8 @@ lyric_runtime::operator==(const DataCell &lhs, const DataCell &rhs)
         case DataCellType::TYPE:
         case DataCellType::EXISTENTIAL:
         case DataCellType::NAMESPACE:
-            return lhs.data.descriptor.object == rhs.data.descriptor.object
-                && lhs.data.descriptor.value == rhs.data.descriptor.value;
+            return lhs.data.descriptor->getSegmentIndex() == rhs.data.descriptor->getSegmentIndex()
+                && lhs.data.descriptor->getDescriptorIndex() == rhs.data.descriptor->getDescriptorIndex();
     }
 
     TU_UNREACHABLE();
@@ -625,57 +551,57 @@ lyric_runtime::operator<<(tempo_utils::LogMessage &&message, const lyric_runtime
         case DataCellType::CLASS:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(object=$0, class=$1)",
-                    cell.data.descriptor.object, cell.data.descriptor.value);
+                    cell.data.descriptor->getSegmentIndex(), cell.data.descriptor->getDescriptorIndex());
             break;
         case DataCellType::STRUCT:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(object=$0, struct=$1)",
-                    cell.data.descriptor.object, cell.data.descriptor.value);
+                    cell.data.descriptor->getSegmentIndex(), cell.data.descriptor->getDescriptorIndex());
             break;
         case DataCellType::INSTANCE:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(object=$0, instance=$1)",
-                    cell.data.descriptor.object, cell.data.descriptor.value);
+                    cell.data.descriptor->getSegmentIndex(), cell.data.descriptor->getDescriptorIndex());
             break;
         case DataCellType::CONCEPT:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(object=$0, concept=$1)",
-                    cell.data.descriptor.object, cell.data.descriptor.value);
+                    cell.data.descriptor->getSegmentIndex(), cell.data.descriptor->getDescriptorIndex());
             break;
         case DataCellType::ENUM:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(object=$0, enum=$1)",
-                    cell.data.descriptor.object, cell.data.descriptor.value);
+                    cell.data.descriptor->getSegmentIndex(), cell.data.descriptor->getDescriptorIndex());
             break;
         case DataCellType::FIELD:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(object=$0, field=$1)",
-                    cell.data.descriptor.object, cell.data.descriptor.value);
+                    cell.data.descriptor->getSegmentIndex(), cell.data.descriptor->getDescriptorIndex());
             break;
         case DataCellType::CALL:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(object=$0, call=$1)",
-                    cell.data.descriptor.object, cell.data.descriptor.value);
+                    cell.data.descriptor->getSegmentIndex(), cell.data.descriptor->getDescriptorIndex());
             break;
         case DataCellType::ACTION:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(object=$0, action=$1)",
-                    cell.data.descriptor.object, cell.data.descriptor.value);
+                    cell.data.descriptor->getSegmentIndex(), cell.data.descriptor->getDescriptorIndex());
             break;
         case DataCellType::TYPE:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(object=$0, type=$1)",
-                    cell.data.descriptor.object, cell.data.descriptor.value);
+                    cell.data.descriptor->getSegmentIndex(), cell.data.descriptor->getDescriptorIndex());
             break;
         case DataCellType::EXISTENTIAL:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(object=$0, existential=$1)",
-                    cell.data.descriptor.object, cell.data.descriptor.value);
+                    cell.data.descriptor->getSegmentIndex(), cell.data.descriptor->getDescriptorIndex());
             break;
         case DataCellType::NAMESPACE:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(object=$0, namespace=$1)",
-                    cell.data.descriptor.object, cell.data.descriptor.value);
+                    cell.data.descriptor->getSegmentIndex(), cell.data.descriptor->getDescriptorIndex());
             break;
         case DataCellType::INVALID:
         default:

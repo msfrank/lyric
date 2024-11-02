@@ -19,6 +19,7 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/call_cell.h
     include/lyric_runtime/chain_loader.h
     include/lyric_runtime/data_cell.h
+    include/lyric_runtime/descriptor_entry.h
     include/lyric_runtime/duplex_port.h
     include/lyric_runtime/gc_heap.h
     include/lyric_runtime/hash_data_cell.h
@@ -54,6 +55,7 @@ target_sources(lyric_runtime PRIVATE
     src/call_cell.cpp
     src/chain_loader.cpp
     src/data_cell.cpp
+    src/descriptor_entry.cpp
     src/duplex_port.cpp
     src/gc_heap.cpp
     src/heap_manager.cpp
