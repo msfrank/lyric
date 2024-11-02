@@ -29,20 +29,12 @@ lyric_parser::internal::ModuleSymbolOps::enterNamespaceStatement(ModuleParser::N
 }
 
 void
-lyric_parser::internal::ModuleSymbolOps::exitNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx)
+lyric_parser::internal::ModuleSymbolOps::exitNamespaceSpec(ModuleParser::NamespaceSpecContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
-    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
-
     // if stack is empty, then mark source as incomplete
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *blockNode = m_state->popNode();
-
-    // get the namespace identifier
-    auto id = ctx->symbolIdentifier()->getText();
-    auto access = parse_access_type(id);
+    auto *specNode = m_state->popNode();
 
     // if ancestor node is not a kNamespace, then report internal violation
     if (m_state->isEmpty())
@@ -50,9 +42,28 @@ lyric_parser::internal::ModuleSymbolOps::exitNamespaceStatement(ModuleParser::Na
     auto *namespaceNode = m_state->peekNode();
     m_state->checkNodeOrThrow(namespaceNode, lyric_schema::kLyricAstNamespaceClass);
 
+    namespaceNode->appendChild(specNode);
+}
+
+void
+lyric_parser::internal::ModuleSymbolOps::exitNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx)
+{
+    auto *scopeManager = m_state->scopeManager();
+    auto span = scopeManager->peekSpan();
+    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+
+    // if ancestor node is not a kNamespace, then report internal violation
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
+    auto *namespaceNode = m_state->peekNode();
+    m_state->checkNodeOrThrow(namespaceNode, lyric_schema::kLyricAstNamespaceClass);
+
+    // get the namespace identifier
+    auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
+
     namespaceNode->putAttr(kLyricAstIdentifier, id);
     namespaceNode->putAttrOrThrow(kLyricAstAccessType, access);
-    namespaceNode->appendChild(blockNode);
 
     scopeManager->popSpan();
 

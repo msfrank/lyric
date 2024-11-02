@@ -23,6 +23,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/def_handler.h
     include/lyric_compiler/defclass_handler.h
     include/lyric_compiler/defclass_utils.h
+    include/lyric_compiler/defstatic_handler.h
     include/lyric_compiler/deref_handler.h
     include/lyric_compiler/deref_utils.h
     include/lyric_compiler/entry_handler.h
@@ -60,6 +61,7 @@ target_sources(lyric_compiler PRIVATE
     src/def_handler.cpp
     src/defclass_handler.cpp
     src/defclass_utils.cpp
+    src/defstatic_handler.cpp
     src/deref_handler.cpp
     src/deref_utils.cpp
     src/entry_handler.cpp

@@ -10,6 +10,7 @@
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
+#include <lyric_assembler/undeclared_symbol.h>
 
 inline bool
 is_in_scope(lyric_object::AccessType access, bool includeUnusedPrivateSymbols)
@@ -115,6 +116,9 @@ lyric_assembler::internal::touch_namespace(
                 if (is_in_scope(structSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
                     TU_RETURN_IF_NOT_OK (writer.touchStruct(structSymbol));
                 }
+                break;
+            }
+            case SymbolType::UNDECLARED: {
                 break;
             }
             default:

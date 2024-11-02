@@ -93,53 +93,53 @@ lyric_assembler::SymbolCache::numSymbols() const
     return m_symcache.size();
 }
 
-bool
-lyric_assembler::SymbolCache::hasEnvBinding(const std::string &name) const
-{
-    return m_envBindings.contains(name);
-}
-
-lyric_assembler::SymbolBinding
-lyric_assembler::SymbolCache::getEnvBinding(const std::string &name) const
-{
-    auto iterator = m_envBindings.find(name);
-    if (iterator == m_envBindings.cend())
-        return {};
-    return iterator->second;
-}
-
-tempo_utils::Status
-lyric_assembler::SymbolCache::insertEnvBinding(const std::string &name, const SymbolBinding &binding)
-{
-    if (m_envBindings.contains(name))
-        return m_tracer->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
-            "env binding {} is already set", name);
-    m_envBindings[name] = binding;
-    return {};
-}
-
-bool
-lyric_assembler::SymbolCache::hasEnvInstance(const lyric_common::TypeDef &type) const
-{
-    return m_envInstances.contains(type);
-}
-
-lyric_common::SymbolUrl
-lyric_assembler::SymbolCache::getEnvInstance(const lyric_common::TypeDef &type) const
-{
-    if (m_envInstances.contains(type))
-        return m_envInstances.at(type);
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::SymbolCache::insertEnvInstance(const lyric_common::TypeDef &type, const lyric_common::SymbolUrl &url)
-{
-    if (m_envInstances.contains(type))
-        return m_tracer->logAndContinue(AssemblerCondition::kImplConflict,
-            tempo_tracing::LogSeverity::kError,
-            "env instance {} is already set", type.toString());
-    m_envInstances[type] = url;
-    return {};
-}
+//bool
+//lyric_assembler::SymbolCache::hasEnvBinding(const std::string &name) const
+//{
+//    return m_envBindings.contains(name);
+//}
+//
+//lyric_assembler::SymbolBinding
+//lyric_assembler::SymbolCache::getEnvBinding(const std::string &name) const
+//{
+//    auto iterator = m_envBindings.find(name);
+//    if (iterator == m_envBindings.cend())
+//        return {};
+//    return iterator->second;
+//}
+//
+//tempo_utils::Status
+//lyric_assembler::SymbolCache::insertEnvBinding(const std::string &name, const SymbolBinding &binding)
+//{
+//    if (m_envBindings.contains(name))
+//        return m_tracer->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+//            tempo_tracing::LogSeverity::kError,
+//            "env binding {} is already set", name);
+//    m_envBindings[name] = binding;
+//    return {};
+//}
+//
+//bool
+//lyric_assembler::SymbolCache::hasEnvInstance(const lyric_common::TypeDef &type) const
+//{
+//    return m_envInstances.contains(type);
+//}
+//
+//lyric_common::SymbolUrl
+//lyric_assembler::SymbolCache::getEnvInstance(const lyric_common::TypeDef &type) const
+//{
+//    if (m_envInstances.contains(type))
+//        return m_envInstances.at(type);
+//    return {};
+//}
+//
+//tempo_utils::Status
+//lyric_assembler::SymbolCache::insertEnvInstance(const lyric_common::TypeDef &type, const lyric_common::SymbolUrl &url)
+//{
+//    if (m_envInstances.contains(type))
+//        return m_tracer->logAndContinue(AssemblerCondition::kImplConflict,
+//            tempo_tracing::LogSeverity::kError,
+//            "env instance {} is already set", type.toString());
+//    m_envInstances[type] = url;
+//    return {};
+//}

@@ -56,7 +56,6 @@ namespace lyric_compiler {
     private:
         DefClass *m_defclass;
     };
-
 }
 
 #endif // LYRIC_COMPILER_DEFCLASS_HANDLER_H

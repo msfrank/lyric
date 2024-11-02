@@ -46,7 +46,7 @@ lyric_assembler::ObjectWriter::initialize()
 {
     auto *symbolCache = m_state->symbolCache();
 
-    // walk the entry proc
+    // walk the entry call
     lyric_common::SymbolUrl entryUrl(m_state->getLocation(), lyric_common::SymbolPath({"$entry"}));
     auto *entrySymbol = symbolCache->getSymbolOrNull(entryUrl);
     if (entrySymbol != nullptr) {
@@ -56,14 +56,14 @@ lyric_assembler::ObjectWriter::initialize()
         TU_RETURN_IF_NOT_OK (touchCall(cast_symbol_to_call(entrySymbol)));
     }
 
-    // walk the root namespace
-    lyric_common::SymbolUrl rootUrl(m_state->getLocation(), lyric_common::SymbolPath({"$root"}));
-    auto *rootSymbol = symbolCache->getSymbolOrNull(rootUrl);
-    if (rootSymbol != nullptr) {
-        if (rootSymbol->getSymbolType() != SymbolType::NAMESPACE)
+    // walk the global namespace
+    lyric_common::SymbolUrl globalUrl(m_state->getLocation(), lyric_common::SymbolPath({"$global"}));
+    auto *globalSymbol = symbolCache->getSymbolOrNull(globalUrl);
+    if (globalSymbol != nullptr) {
+        if (globalSymbol->getSymbolType() != SymbolType::NAMESPACE)
             return AssemblerStatus::forCondition(
-                AssemblerCondition::kAssemblerInvariant, "invalid symbol $root");
-        TU_RETURN_IF_NOT_OK (touchNamespace(cast_symbol_to_namespace(rootSymbol)));
+                AssemblerCondition::kAssemblerInvariant, "invalid symbol $global");
+        TU_RETURN_IF_NOT_OK (touchNamespace(cast_symbol_to_namespace(globalSymbol)));
     }
 
     // if we are including all symbols then insert all imports

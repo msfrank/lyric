@@ -10,28 +10,46 @@
 namespace lyric_compiler {
 
     tempo_utils::Status deref_this(
+        lyric_assembler::DataReference &ref,
         lyric_assembler::BlockHandle *block,
         lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
     tempo_utils::Status deref_name(
         const lyric_parser::ArchetypeNode *node,
+        lyric_assembler::DataReference &ref,
         lyric_assembler::BlockHandle *block,
         lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
     tempo_utils::Status deref_name(
         const lyric_parser::ArchetypeNode *node,
+        lyric_assembler::DataReference &ref,
+        lyric_assembler::BlockHandle **blockptr,
+        lyric_assembler::CodeFragment *fragment,
+        CompilerScanDriver *driver);
+
+    tempo_utils::Status deref_namespace(
+        const lyric_parser::ArchetypeNode *node,
+        lyric_assembler::DataReference &ref,
+        lyric_assembler::BlockHandle **blockptr,
+        lyric_assembler::CodeFragment *fragment,
+        CompilerScanDriver *driver);
+
+    tempo_utils::Status deref_descriptor(
+        const lyric_parser::ArchetypeNode *node,
+        lyric_assembler::DataReference &ref,
         lyric_assembler::BlockHandle **blockptr,
         lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 
     tempo_utils::Status deref_member(
         const lyric_parser::ArchetypeNode *node,
-        lyric_assembler::BlockHandle *block,
-        lyric_assembler::CodeFragment *fragment,
+        lyric_assembler::DataReference &ref,
         const lyric_common::TypeDef &receiverType,
         bool thisReceiver,
+        lyric_assembler::BlockHandle *block,
+        lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
 }
 

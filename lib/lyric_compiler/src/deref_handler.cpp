@@ -42,6 +42,12 @@ lyric_compiler::DerefHandler::before(
     auto *block = getBlock();
     auto *driver = getDriver();
 
+    auto numChildren = node->numChildren();
+    if (numChildren == 0)
+        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
+            tempo_tracing::LogSeverity::kError,
+            "empty deref statement");
+
     auto initial = std::make_unique<DerefInitial>(&m_deref, block, driver);
     ctx.appendChoice(std::move(initial));
 
@@ -196,11 +202,11 @@ lyric_compiler::DerefInitial::decide(
         // deref receiver
         case lyric_schema::LyricAstId::This:
             m_deref->thisReceiver = true;
-            return deref_this(m_deref->invokeBlock, fragment, driver);
+            return deref_this(m_deref->currentRef, m_deref->invokeBlock, fragment, driver);
 
         // deref name
         case lyric_schema::LyricAstId::Name:
-            return deref_name(node, &m_deref->bindingBlock, fragment, driver);
+            return deref_name(node, m_deref->currentRef, &m_deref->bindingBlock, fragment, driver);
 
         // invoke function
         case lyric_schema::LyricAstId::Call:
@@ -346,10 +352,10 @@ lyric_compiler::DerefNext::decide(
     if (!node->isNamespace(lyric_schema::kLyricAstNs))
         return {};
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
+    auto astId = resource->getId();
 
     auto *driver = getDriver();
     auto *fragment = m_deref->fragment;
-
     auto receiverType = driver->peekResult();
 
     auto thisReceiver = m_deref->thisReceiver;
@@ -357,20 +363,47 @@ lyric_compiler::DerefNext::decide(
         m_deref->thisReceiver = false;
     }
 
-    auto astId = resource->getId();
-    switch (astId) {
+    switch (m_deref->currentRef.referenceType) {
 
-        case lyric_schema::LyricAstId::Name:
-            return deref_member(node, m_deref->bindingBlock, fragment, receiverType, thisReceiver, driver);
+        case lyric_assembler::ReferenceType::Descriptor:
+            TU_RETURN_IF_NOT_OK (fragment->popValue());
+            switch (astId) {
+                case lyric_schema::LyricAstId::Name:
+                    return deref_descriptor(node, m_deref->currentRef, &m_deref->bindingBlock, fragment, driver);
+                default:
+                    return CompilerStatus::forCondition(
+                        CompilerCondition::kCompilerInvariant, "invalid deref target node");
+            }
 
-            // apply function
-        case lyric_schema::LyricAstId::Call:
-            return invoke_method(node, m_deref->invokeBlock, m_deref->bindingBlock,
-                receiverType, thisReceiver, fragment, driver, ctx);
+        case lyric_assembler::ReferenceType::Namespace:
+            TU_RETURN_IF_NOT_OK (fragment->popValue());
+            switch (astId) {
+                case lyric_schema::LyricAstId::Name:
+                    return deref_namespace(node, m_deref->currentRef, &m_deref->bindingBlock, fragment, driver);
+                case lyric_schema::LyricAstId::Call:
+                    return invoke_call(node, m_deref->invokeBlock, m_deref->bindingBlock, fragment, driver, ctx);
+                default:
+                    return CompilerStatus::forCondition(
+                        CompilerCondition::kCompilerInvariant, "invalid deref target node");
+            }
+
+        case lyric_assembler::ReferenceType::Value:
+        case lyric_assembler::ReferenceType::Variable:
+            switch (astId) {
+                case lyric_schema::LyricAstId::Name:
+                    return deref_member(node, m_deref->currentRef, receiverType, thisReceiver,
+                        m_deref->bindingBlock, fragment, driver);
+                case lyric_schema::LyricAstId::Call:
+                    return invoke_method(node, m_deref->invokeBlock, m_deref->bindingBlock,
+                        receiverType, thisReceiver, fragment, driver, ctx);
+                default:
+                    return CompilerStatus::forCondition(
+                        CompilerCondition::kCompilerInvariant, "invalid deref target node");
+            }
 
         default:
             return CompilerStatus::forCondition(
-                CompilerCondition::kCompilerInvariant, "invlid deref target node");
+                CompilerCondition::kCompilerInvariant, "current reference is invalid");
     }
 }
 

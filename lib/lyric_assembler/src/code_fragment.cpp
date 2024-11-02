@@ -42,7 +42,8 @@ lyric_assembler::CodeFragment::insertInstruction(int index, std::shared_ptr<Abst
     statement.type = StatementType::Fragment;
     statement.instruction = instruction;
     m_statements.insert(it, std::move(statement));
-    return {};}
+    return {};
+}
 
 tempo_utils::Status
 lyric_assembler::CodeFragment::appendInstruction(std::shared_ptr<AbstractInstruction> instruction)
@@ -292,6 +293,7 @@ lyric_assembler::CodeFragment::loadRef(const DataReference &ref)
     } else {
         switch (ref.referenceType) {
             case ReferenceType::Descriptor:
+            case ReferenceType::Namespace:
                 statement.instruction = std::make_shared<LoadDescriptorInstruction>(symbol);
                 break;
             case ReferenceType::Value:

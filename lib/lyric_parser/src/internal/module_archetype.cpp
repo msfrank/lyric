@@ -120,6 +120,11 @@ void lyric_parser::internal::ModuleArchetype::enterNamespaceStatement(ModulePars
     return ModuleSymbolOps::enterNamespaceStatement(ctx);
 }
 
+void lyric_parser::internal::ModuleArchetype::exitNamespaceSpec(ModuleParser::NamespaceSpecContext *ctx)
+{
+    return ModuleSymbolOps::exitNamespaceSpec(ctx);
+}
+
 void lyric_parser::internal::ModuleArchetype::exitNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx)
 {
     return ModuleSymbolOps::exitNamespaceStatement(ctx);

@@ -14,6 +14,7 @@ namespace lyric_parser::internal {
         virtual ~ModuleSymbolOps() = default;
 
         void enterNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx);
+        void exitNamespaceSpec(ModuleParser::NamespaceSpecContext *ctx);
         void exitNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx);
 
         void exitUsingPath(ModuleParser::UsingPathContext *ctx);

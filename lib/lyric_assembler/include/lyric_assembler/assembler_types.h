@@ -28,6 +28,7 @@ namespace lyric_assembler {
         Class,
         Comparison,
         Concept,
+        Descriptor,
         Enum,
         Equality,
         Float,
@@ -121,6 +122,7 @@ namespace lyric_assembler {
         Placeholder,                    /**< binding refers to a template placeholder */
         Value,                          /**< binding refers to a data value */
         Variable,                       /**< binding refers to a data variable */
+        Namespace,                      /**< binding refers to a namespace */
     };
 
     enum class ReferenceType {
@@ -128,6 +130,7 @@ namespace lyric_assembler {
         Descriptor,                     /**< binding refers to a symbol descriptor */
         Value,                          /**< binding refers to a data value */
         Variable,                       /**< binding refers to a data variable */
+        Namespace,                      /**< binding refers to a namespace */
     };
 
     enum class DeriveType {
@@ -255,14 +258,14 @@ namespace lyric_assembler {
      * bound to the same block multiple times as long as each binding has a different name.
      */
     struct SymbolBinding {
+        BindingType bindingType;
         lyric_common::SymbolUrl symbolUrl;
         lyric_common::TypeDef typeDef;
-        BindingType bindingType;
         SymbolBinding();
         SymbolBinding(
+            BindingType bindingType,
             const lyric_common::SymbolUrl &symbol,
-            const lyric_common::TypeDef &type,
-            BindingType bindingType);
+            const lyric_common::TypeDef &type);
     };
 
     /**
@@ -279,14 +282,14 @@ namespace lyric_assembler {
      * rest cell), a parent frame (a lexical cell), or in a segment (a static cell).
      */
     struct DataReference {
+        ReferenceType referenceType;                /**< the reference type */
         lyric_common::SymbolUrl symbolUrl;          /**< The symbol which defines the datum */
         lyric_common::TypeDef typeDef;              /**< The type of the datum */
-        ReferenceType referenceType;                /**< the reference type */
         DataReference();
         DataReference(
+            ReferenceType referenceType,
             const lyric_common::SymbolUrl &symbolUrl,
-            const lyric_common::TypeDef &typeDef,
-            ReferenceType referenceType);
+            const lyric_common::TypeDef &typeDef);
     };
 
     struct Parameter {

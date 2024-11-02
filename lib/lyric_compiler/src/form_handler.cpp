@@ -7,6 +7,7 @@
 #include <lyric_compiler/constant_utils.h>
 #include <lyric_compiler/def_handler.h>
 #include <lyric_compiler/defclass_handler.h>
+#include <lyric_compiler/defstatic_handler.h>
 #include <lyric_compiler/deref_handler.h>
 #include <lyric_compiler/deref_utils.h>
 #include <lyric_compiler/form_handler.h>
@@ -75,10 +76,14 @@ lyric_compiler::TerminalFormBehavior::enter(
             return constant_url(node, m_block, m_fragment, m_driver);
         case lyric_schema::LyricAstId::SymbolRef:
             return constant_symbol(node, m_block, m_fragment, m_driver);
-        case lyric_schema::LyricAstId::This:
-            return deref_this(m_block, m_fragment, m_driver);
-        case lyric_schema::LyricAstId::Name:
-            return deref_name(node, m_block, m_fragment, m_driver);
+        case lyric_schema::LyricAstId::This: {
+            lyric_assembler::DataReference unusedRef;
+            return deref_this(unusedRef, m_block, m_fragment, m_driver);
+        }
+        case lyric_schema::LyricAstId::Name: {
+            lyric_assembler::DataReference unusedRef;
+            return deref_name(node, unusedRef, m_block, m_fragment, m_driver);
+        }
         default:
             return CompilerStatus::forCondition(
                 CompilerCondition::kCompilerInvariant, "expected terminal node");
@@ -376,6 +381,12 @@ lyric_compiler::FormChoice::decide(
         // class definition form
         case lyric_schema::LyricAstId::DefClass: {
             auto def = std::make_unique<DefClassHandler>(isSideEffect, block, driver);
+            ctx.setGrouping(std::move(def));
+            break;
+        }
+
+        case lyric_schema::LyricAstId::DefStatic: {
+            auto def = std::make_unique<DefStaticHandler>(isSideEffect, block, driver);
             ctx.setGrouping(std::move(def));
             break;
         }

@@ -64,6 +64,7 @@ namespace lyric_parser::internal {
 
         // implemented by ModuleSymbolOps
         void enterNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx) override;
+        void exitNamespaceSpec(ModuleParser::NamespaceSpecContext *ctx) override;
         void exitNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx) override;
 
         void exitUsingPath(ModuleParser::UsingPathContext *ctx) override;

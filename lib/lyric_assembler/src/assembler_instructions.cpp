@@ -338,10 +338,14 @@ lyric_assembler::LoadDescriptorInstruction::touch(ObjectWriter &writer) const
             return writer.touchField(cast_symbol_to_field(m_symbol));
         case SymbolType::INSTANCE:
             return writer.touchInstance(cast_symbol_to_instance(m_symbol));
+        case SymbolType::NAMESPACE:
+            return writer.touchNamespace(cast_symbol_to_namespace(m_symbol));
         case SymbolType::STRUCT:
             return writer.touchStruct(cast_symbol_to_struct(m_symbol));
         default:
-            return {};
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant,
+                "cannot touch descriptor for {}", m_symbol->getSymbolUrl().toString());
     }
 }
 
@@ -397,6 +401,11 @@ lyric_assembler::LoadDescriptorInstruction::apply(
             TU_ASSIGN_OR_RETURN (address,
                 writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
             section = lyric_object::LinkageSection::Instance;
+            break;
+        case SymbolType::NAMESPACE:
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Namespace));
+            section = lyric_object::LinkageSection::Namespace;
             break;
         case SymbolType::STRUCT:
             TU_ASSIGN_OR_RETURN (address,

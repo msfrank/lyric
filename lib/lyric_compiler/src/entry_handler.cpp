@@ -59,13 +59,13 @@ lyric_compiler::EntryHandler::before(
                 auto handler = std::make_unique<DefHandler>(
                     /* isSideEffect= */ true, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
-                return {};
+                break;
             }
             case lyric_schema::LyricAstId::DefClass: {
                 auto handler = std::make_unique<DefClassHandler>(
                     /* isSideEffect= */ true, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
-                return {};
+                break;
             }
             default: {
                 auto any = std::make_unique<FormChoice>(

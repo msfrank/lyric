@@ -170,18 +170,15 @@ namespace lyric_assembler {
 
         tempo_utils::Result<SymbolBinding> declareAlias(
             const std::string &alias,
-            const lyric_common::SymbolUrl &targetUrl,
-            const lyric_common::TypeDef &aliasType = {});
+            const lyric_common::SymbolUrl &targetUrl);
 
         tempo_utils::Result<SymbolBinding> declareAlias(
             const std::string &alias,
-            const SymbolBinding &targetBinding,
-            const lyric_common::TypeDef &aliasType = {});
+            const SymbolBinding &targetBinding);
 
         tempo_utils::Result<SymbolBinding> declareAlias(
             const std::string &alias,
-            const DataReference &targetRef,
-            const lyric_common::TypeDef &aliasType = {});
+            const DataReference &targetRef);
 
         tempo_utils::Result<SymbolBinding> declareAlias(
             const std::string &alias,

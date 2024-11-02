@@ -33,7 +33,8 @@ lyric_assembler::ObjectState::ObjectState(
     : m_location(location),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_scopeManager(scopeManager),
-      m_options(options)
+      m_options(options),
+      m_root(nullptr)
 {
     TU_ASSERT (m_location.isValid());
     TU_ASSERT (m_systemModuleCache != nullptr);
@@ -73,97 +74,6 @@ lyric_assembler::ObjectState::getOptions() const
     return &m_options;
 }
 
-inline lyric_assembler::SymbolBinding
-make_action_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::ActionImport *symbolImport)
-{
-    lyric_assembler::SymbolBinding binding;
-    binding.symbolUrl = symbolUrl;
-    binding.typeDef = {};
-    binding.bindingType = lyric_assembler::BindingType::Descriptor;
-    return binding;
-}
-
-inline lyric_assembler::SymbolBinding
-make_call_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::CallImport *symbolImport)
-{
-    lyric_assembler::SymbolBinding binding;
-    binding.symbolUrl = symbolUrl;
-    binding.typeDef = {};
-    binding.bindingType = lyric_assembler::BindingType::Descriptor;
-    return binding;
-}
-
-inline lyric_assembler::SymbolBinding
-make_class_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::ClassImport *symbolImport)
-{
-    lyric_assembler::SymbolBinding binding;
-    binding.symbolUrl = symbolUrl;
-    binding.typeDef = symbolImport->getClassType()->getTypeDef();
-    binding.bindingType = lyric_assembler::BindingType::Descriptor;
-    return binding;
-}
-
-inline lyric_assembler::SymbolBinding
-make_concept_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::ConceptImport *symbolImport)
-{
-    lyric_assembler::SymbolBinding binding;
-    binding.symbolUrl = symbolUrl;
-    binding.typeDef = symbolImport->getConceptType()->getTypeDef();
-    binding.bindingType = lyric_assembler::BindingType::Descriptor;
-    return binding;
-}
-
-inline lyric_assembler::SymbolBinding
-make_enum_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::EnumImport *symbolImport)
-{
-    lyric_assembler::SymbolBinding binding;
-    binding.symbolUrl = symbolUrl;
-    binding.typeDef = symbolImport->getEnumType()->getTypeDef();
-    binding.bindingType = lyric_assembler::BindingType::Descriptor;
-    return binding;
-}
-
-inline lyric_assembler::SymbolBinding
-make_existential_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::ExistentialImport *symbolImport)
-{
-    lyric_assembler::SymbolBinding binding;
-    binding.symbolUrl = symbolUrl;
-    binding.typeDef = symbolImport->getExistentialType()->getTypeDef();
-    binding.bindingType = lyric_assembler::BindingType::Descriptor;
-    return binding;
-}
-
-inline lyric_assembler::SymbolBinding
-make_instance_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::InstanceImport *symbolImport)
-{
-    lyric_assembler::SymbolBinding binding;
-    binding.symbolUrl = symbolUrl;
-    binding.typeDef = symbolImport->getInstanceType()->getTypeDef();
-    binding.bindingType = lyric_assembler::BindingType::Descriptor;
-    return binding;
-}
-
-inline lyric_assembler::SymbolBinding
-make_static_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::StaticImport *symbolImport)
-{
-    lyric_assembler::SymbolBinding binding;
-    binding.symbolUrl = symbolUrl;
-    binding.typeDef = symbolImport->getStaticType()->getTypeDef();
-    binding.bindingType = symbolImport->isVariable() ?
-        lyric_assembler::BindingType::Variable : lyric_assembler::BindingType::Value;
-    return binding;
-}
-
-inline lyric_assembler::SymbolBinding
-make_struct_env_binding(const lyric_common::SymbolUrl &symbolUrl, lyric_importer::StructImport *symbolImport)
-{
-    lyric_assembler::SymbolBinding binding;
-    binding.symbolUrl = symbolUrl;
-    binding.typeDef = symbolImport->getStructType()->getTypeDef();
-    binding.bindingType = lyric_assembler::BindingType::Descriptor;
-    return binding;
-}
-
 /**
  * Initialize the assembler state. Notably, this process ensures that all fundamental symbols exist,
  * are imported into the symbol cache, and are bound to the environment.
@@ -196,6 +106,12 @@ lyric_assembler::ObjectState::defineRoot()
 
     // initialize the root
     TU_RETURN_IF_NOT_OK (m_root->initialize(preludeImport));
+    return m_root;
+}
+
+lyric_assembler::ObjectRoot *
+lyric_assembler::ObjectState::objectRoot() const
+{
     return m_root;
 }
 
@@ -244,7 +160,7 @@ lyric_assembler::ObjectState::appendNamespace(NamespaceSymbol *namespaceSymbol)
         throwAssemblerInvariant("failed to append namespace; symbol {} already exists", symbolUrl.toString());
     m_namespaces.push_back(namespaceSymbol);
     m_symbolcache->insertSymbol(symbolUrl, namespaceSymbol);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::NamespaceSymbol *>::const_iterator
@@ -274,7 +190,7 @@ lyric_assembler::ObjectState::appendExistential(ExistentialSymbol *existentialSy
         throwAssemblerInvariant("failed to append existential; symbol {} already exists", symbolUrl.toString());
     m_existentials.push_back(existentialSymbol);
     m_symbolcache->insertSymbol(symbolUrl, existentialSymbol);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::ExistentialSymbol *>::const_iterator
@@ -304,7 +220,7 @@ lyric_assembler::ObjectState::appendStatic(StaticSymbol *staticSymbol)
         throwAssemblerInvariant("failed to append static; symbol {} already exists", symbolUrl.toString());
     m_statics.push_back(staticSymbol);
     m_symbolcache->insertSymbol(symbolUrl, staticSymbol);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::StaticSymbol *>::const_iterator
@@ -334,7 +250,7 @@ lyric_assembler::ObjectState::appendField(FieldSymbol *fieldSymbol)
         throwAssemblerInvariant("failed to append field; symbol {} already exists", symbolUrl.toString());
     m_fields.push_back(fieldSymbol);
     m_symbolcache->insertSymbol(symbolUrl, fieldSymbol);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::FieldSymbol *>::const_iterator
@@ -364,7 +280,7 @@ lyric_assembler::ObjectState::appendAction(ActionSymbol *actionSymbol)
         throwAssemblerInvariant("failed to append action; symbol {} already exists", symbolUrl.toString());
     m_actions.push_back(actionSymbol);
     m_symbolcache->insertSymbol(symbolUrl, actionSymbol);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::ActionSymbol *>::const_iterator
@@ -394,7 +310,7 @@ lyric_assembler::ObjectState::appendCall(CallSymbol *callSymbol)
         throwAssemblerInvariant("failed to append call; symbol {} already exists", symbolUrl.toString());
     m_calls.push_back(callSymbol);
     m_symbolcache->insertSymbol(symbolUrl, callSymbol);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::CallSymbol *>::const_iterator
@@ -424,7 +340,7 @@ lyric_assembler::ObjectState::appendConcept(ConceptSymbol *conceptSymbol)
         throwAssemblerInvariant("failed to append concept; symbol {} already exists", symbolUrl.toString());
     m_concepts.push_back(conceptSymbol);
     m_symbolcache->insertSymbol(symbolUrl, conceptSymbol);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::ConceptSymbol *>::const_iterator
@@ -454,7 +370,7 @@ lyric_assembler::ObjectState::appendClass(ClassSymbol *classSymbol)
         throwAssemblerInvariant("failed to append class; symbol {} already exists", symbolUrl.toString());
     m_classes.push_back(classSymbol);
     m_symbolcache->insertSymbol(symbolUrl, classSymbol);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::ClassSymbol *>::const_iterator
@@ -484,7 +400,7 @@ lyric_assembler::ObjectState::appendStruct(StructSymbol *structSymbol)
         throwAssemblerInvariant("failed to append struct; symbol {} already exists", symbolUrl.toString());
     m_structs.push_back(structSymbol);
     m_symbolcache->insertSymbol(symbolUrl, structSymbol);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::StructSymbol *>::const_iterator
@@ -514,7 +430,7 @@ lyric_assembler::ObjectState::appendInstance(InstanceSymbol *instanceSymbol)
         throwAssemblerInvariant("failed to append instance; symbol {} already exists", symbolUrl.toString());
     m_instances.push_back(instanceSymbol);
     m_symbolcache->insertSymbol(symbolUrl, instanceSymbol);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::InstanceSymbol *>::const_iterator
@@ -544,7 +460,7 @@ lyric_assembler::ObjectState::appendEnum(EnumSymbol *enumSymbol)
         throwAssemblerInvariant("failed to append enum; symbol {} already exists", symbolUrl.toString());
     m_enums.push_back(enumSymbol);
     m_symbolcache->insertSymbol(symbolUrl, enumSymbol);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::EnumSymbol *>::const_iterator
@@ -574,7 +490,7 @@ lyric_assembler::ObjectState::appendUndeclared(UndeclaredSymbol *undeclaredSymbo
         throwAssemblerInvariant("failed to append undeclared; symbol {} already exists", symbolUrl.toString());
     m_undecls.push_back(undeclaredSymbol);
     m_symbolcache->insertSymbol(symbolUrl, undeclaredSymbol);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::vector<lyric_assembler::UndeclaredSymbol *>::const_iterator

@@ -15,6 +15,7 @@
 #include <lyric_assembler/lexical_variable.h>
 #include <lyric_assembler/local_variable.h>
 #include <lyric_assembler/namespace_symbol.h>
+#include <lyric_assembler/object_root.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
@@ -147,12 +148,6 @@ lyric_assembler::BlockHandle::blockProc()
 {
     return m_blockProc;
 }
-
-//lyric_assembler::ProcBuilder *
-//lyric_assembler::BlockHandle::blockCode()
-//{
-//    return m_blockCode;
-//}
 
 lyric_assembler::BlockHandle *
 lyric_assembler::BlockHandle::blockParent()
@@ -361,34 +356,18 @@ lyric_assembler::BlockHandle::resolveBinding(const std::vector<std::string> &pat
         return resolve_binding_tail_recursive(this, targetBlock, path, curr, path.cend());
     }
 
-    auto *symbolCache = m_state->symbolCache();
+    // if variable is not found in any reachable block, then check the global namespace
+    auto *root = m_state->objectRoot();
+    auto *globalNamespace = root->globalNamespace();
+    auto *globalBlock = globalNamespace->namespaceBlock();
+    if (globalBlock->hasBinding(*curr)) {
+        return resolve_binding_tail_recursive(this, globalBlock, path, curr, path.cend());
+    }
 
-    // if definition is not found in any reachable block, then check env
-    if (symbolCache->hasEnvBinding(*curr))
-        return logAndContinue(
-            lyric_assembler::AssemblerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "missing symbol {}", lyric_common::SymbolPath(path).toString());
-
-    auto binding = symbolCache->getEnvBinding(*curr);
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(binding.symbolUrl));
-
-    // if there are no more path segments then return the binding
-    if (++curr == path.cend())
-        return binding;
-
-    // otherwise we expect the current segment is a namespace
-    if (symbol->getSymbolType() != SymbolType::NAMESPACE)
-        return logAndContinue(
-            lyric_assembler::AssemblerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
-            "missing symbol {}", lyric_common::SymbolPath(path).toString());
-
-    auto *childNs = cast_symbol_to_namespace(symbol);
-
-    // continue the resolution
-    return resolve_binding_tail_recursive(this, childNs, path, curr, path.cend());
+    // we have exhausted our search, binding is missing
+    return logAndContinue(lyric_assembler::AssemblerCondition::kMissingSymbol,
+        tempo_tracing::LogSeverity::kError,
+        "missing symbol {}", lyric_common::SymbolPath(path).toString());
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
@@ -471,6 +450,9 @@ lyric_assembler::BlockHandle::declareVariable(
     const lyric_common::TypeDef &assignableType,
     bool isVariable)
 {
+    auto *symbolCache = m_state->symbolCache();
+    auto *typeCache = m_state->typeCache();
+
     if (m_bindings.contains(name))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
@@ -480,25 +462,23 @@ lyric_assembler::BlockHandle::declareVariable(
     ReferenceType referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
 
     // make type handle if it doesn't exist already (for example union or intersection types)
-    TU_RETURN_IF_STATUS (m_state->typeCache()->getOrMakeType(assignableType));
+    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(assignableType));
 
     // if this is a root block then create a static variable, otherwise create a local
     auto localUrl = makeSymbolUrl(name);
     auto address = m_blockProc->allocateLocal();
-    auto *localVariable = new LocalVariable(localUrl, access, assignableType, address);
-    auto status = m_state->symbolCache()->insertSymbol(localUrl, localVariable);
-    if (status.notOk()) {
-        delete localVariable;
-        return status;
-    }
+    auto localVariable = std::make_unique<LocalVariable>(
+        localUrl, access, assignableType, address);
+    TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(localUrl, localVariable.get()));
+    localVariable.release();
 
     SymbolBinding binding;
+    binding.bindingType = bindingType;
     binding.symbolUrl = localUrl;
     binding.typeDef = assignableType;
-    binding.bindingType = bindingType;
     m_bindings[name] = binding;
 
-    return DataReference(localUrl, assignableType, referenceType);
+    return DataReference(referenceType, localUrl, assignableType);
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>
@@ -506,6 +486,9 @@ lyric_assembler::BlockHandle::declareTemporary(
     const lyric_common::TypeDef &assignableType,
     bool isVariable)
 {
+    auto *symbolCache = m_state->symbolCache();
+    auto *typeCache = m_state->typeCache();
+
     auto name = absl::StrCat("$tmp", m_blockProc->numLocals());
 
     if (m_bindings.contains(name))
@@ -515,25 +498,23 @@ lyric_assembler::BlockHandle::declareTemporary(
     ReferenceType referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
 
     // make type handle if it doesn't exist already (for example union or intersection types)
-    TU_RETURN_IF_STATUS (m_state->typeCache()->getOrMakeType(assignableType));
+    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(assignableType));
 
     // temporary variables are always local
     auto localUrl = makeSymbolUrl(name);
     auto address = m_blockProc->allocateLocal();
-    auto *localVariable = new LocalVariable(localUrl, lyric_object::AccessType::Private, assignableType, address);
-    auto status = m_state->symbolCache()->insertSymbol(localUrl, localVariable);
-    if (status.notOk()) {
-        delete localVariable;
-        return status;
-    }
+    auto localVariable = std::make_unique<LocalVariable>(
+        localUrl, lyric_object::AccessType::Private, assignableType, address);
+    TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(localUrl, localVariable.get()));
+    localVariable.release();
 
     SymbolBinding binding;
+    binding.bindingType = bindingType;
     binding.symbolUrl = localUrl;
     binding.typeDef = assignableType;
-    binding.bindingType = bindingType;
     m_bindings[name] = binding;
 
-    return DataReference(localUrl, assignableType, referenceType);
+    return DataReference(referenceType, localUrl, assignableType);
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>
@@ -544,6 +525,8 @@ lyric_assembler::BlockHandle::declareStatic(
     bool isVariable,
     bool declOnly)
 {
+     auto *typeCache = m_state->typeCache();
+
     if (m_bindings.contains(name))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
@@ -554,47 +537,56 @@ lyric_assembler::BlockHandle::declareStatic(
 
     // make type handle if it doesn't exist already (for example union or intersection types)
     lyric_assembler::TypeHandle *staticType;
-    TU_ASSIGN_OR_RETURN (staticType, m_state->typeCache()->getOrMakeType(assignableType));
+    TU_ASSIGN_OR_RETURN (staticType, typeCache->getOrMakeType(assignableType));
 
     auto staticUrl = makeSymbolUrl(name);
 
-    auto *staticSymbol = new StaticSymbol(staticUrl, access, isVariable, staticType, declOnly, this, m_state);
-    auto status = m_state->appendStatic(staticSymbol);
-    if (status.notOk()) {
-        delete staticSymbol;
-        return status;
-    }
+    auto staticSymbol = std::make_unique<StaticSymbol>(
+        staticUrl, access, isVariable, staticType, declOnly, this, m_state);
+    TU_RETURN_IF_NOT_OK (m_state->appendStatic(staticSymbol.get()));
+    staticSymbol.release();
 
     SymbolBinding binding;
+    binding.bindingType = bindingType;
     binding.symbolUrl = staticUrl;
     binding.typeDef = assignableType;
-    binding.bindingType = bindingType;
     m_bindings[name] = binding;
 
-    return DataReference(staticUrl, assignableType, referenceType);
+    return DataReference(referenceType, staticUrl, assignableType);
 }
 
 inline lyric_assembler::DataReference
 symbol_binding_to_data_reference(const lyric_assembler::SymbolBinding &binding)
 {
     switch (binding.bindingType) {
+
         case lyric_assembler::BindingType::Value:
-            return lyric_assembler::DataReference{binding.symbolUrl,
-                binding.typeDef, lyric_assembler::ReferenceType::Value};
+            return lyric_assembler::DataReference(
+                lyric_assembler::ReferenceType::Value, binding.symbolUrl, binding.typeDef);
+
         case lyric_assembler::BindingType::Variable:
-            return lyric_assembler::DataReference{binding.symbolUrl,
-                binding.typeDef, lyric_assembler::ReferenceType::Variable};
-        case lyric_assembler::BindingType::Descriptor:
-            return lyric_assembler::DataReference{binding.symbolUrl,
-                binding.typeDef, lyric_assembler::ReferenceType::Descriptor};
+            return lyric_assembler::DataReference(
+                lyric_assembler::ReferenceType::Variable, binding.symbolUrl, binding.typeDef);
+
+        case lyric_assembler::BindingType::Descriptor: {
+            return lyric_assembler::DataReference(
+                lyric_assembler::ReferenceType::Descriptor, binding.symbolUrl, binding.typeDef);
+        }
+
+        case lyric_assembler::BindingType::Namespace: {
+            return lyric_assembler::DataReference(
+                lyric_assembler::ReferenceType::Namespace, binding.symbolUrl, binding.typeDef);
+        }
+
         default:
-            return lyric_assembler::DataReference{{}, {}, lyric_assembler::ReferenceType::Invalid};
+            return {};
     }
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::BlockHandle::resolveReference(const std::string &name)
 {
+    auto *symbolCache = m_state->symbolCache();
     BlockHandle *block = this;
 
     // if variable exists in a parent block in the current proc, then return it
@@ -602,7 +594,7 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
         if (block->m_bindings.contains(name)) {
             const auto &binding = block->m_bindings[name];
             lyric_assembler::AbstractSymbol *symbol;
-            TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(binding.symbolUrl));
+            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(binding.symbolUrl));
 
             switch (symbol->getSymbolType()) {
                 case SymbolType::ARGUMENT:
@@ -635,7 +627,7 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
         if (block->m_bindings.contains(name)) {
             const auto &binding = block->m_bindings[name];
             lyric_assembler::AbstractSymbol *symbol;
-            TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(binding.symbolUrl));
+            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(binding.symbolUrl));
 
             lyric_assembler::LexicalTarget lexicalTarget;
             uint32_t targetOffset = lyric_runtime::INVALID_ADDRESS_U32;
@@ -656,15 +648,16 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
                 }
 
                 // found a static variable or a symbol
-                case SymbolType::EXISTENTIAL:
-                case SymbolType::INSTANCE:
                 case SymbolType::CALL:
                 case SymbolType::CLASS:
                 case SymbolType::CONCEPT:
-                case SymbolType::STRUCT:
                 case SymbolType::ENUM:
+                case SymbolType::EXISTENTIAL:
+                case SymbolType::INSTANCE:
                 case SymbolType::NAMESPACE:
-                case SymbolType::STATIC: {
+                case SymbolType::STATIC:
+                case SymbolType::STRUCT:
+                {
                     return symbol_binding_to_data_reference(binding);
                 }
 
@@ -680,14 +673,14 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
             auto activation = block->blockProc()->getActivation();
             TU_ASSERT (m_state->symbolCache()->hasSymbol(activation));
             lyric_assembler::AbstractSymbol *activationSymbol;
-            TU_ASSIGN_OR_RETURN (activationSymbol, m_state->symbolCache()->getOrImportSymbol(activation));
+            TU_ASSIGN_OR_RETURN (activationSymbol, symbolCache->getOrImportSymbol(activation));
             auto *activationCall = cast_symbol_to_call(activationSymbol);
 
             // import lexical variable into this env, and return it
             auto lexicalUrl = makeSymbolUrl(name);
             auto address = m_blockProc->allocateLexical(lexicalTarget, targetOffset, activationCall);
             auto *lexicalVariable = new LexicalVariable(lexicalUrl, typeDef, address);
-            m_state->symbolCache()->insertSymbol(lexicalUrl, lexicalVariable);
+            symbolCache->insertSymbol(lexicalUrl, lexicalVariable);
 
             SymbolBinding lexical;
             lexical.symbolUrl = lexicalUrl;
@@ -699,28 +692,32 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
         }
     }
 
-    // if variable is not found in any reachable block, then check env
-    if (m_state->symbolCache()->hasEnvBinding(name)) {
-        const auto binding = m_state->symbolCache()->getEnvBinding(name);
+    // if variable is not found in any reachable block, then check the global namespace
+    auto *root = m_state->objectRoot();
+    auto *globalNamespace = root->globalNamespace();
+    auto *globalBlock = globalNamespace->namespaceBlock();
+    if (globalBlock->hasBinding(name)) {
+        const auto &binding = globalBlock->m_bindings[name];
         lyric_assembler::AbstractSymbol *symbol;
-        TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(binding.symbolUrl));
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(binding.symbolUrl));
 
         switch (symbol->getSymbolType()) {
-            case SymbolType::EXISTENTIAL:
-            case SymbolType::CONSTANT:
-            case SymbolType::STATIC:
-            case SymbolType::INSTANCE:
             case SymbolType::CALL:
             case SymbolType::CLASS:
             case SymbolType::CONCEPT:
-            case SymbolType::STRUCT:
             case SymbolType::ENUM:
+            case SymbolType::EXISTENTIAL:
+            case SymbolType::INSTANCE:
             case SymbolType::NAMESPACE:
+            case SymbolType::STATIC:
+            case SymbolType::STRUCT:
+            {
                 return symbol_binding_to_data_reference(binding);
+            }
             default:
-                return logAndContinue(lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                return logAndContinue(lyric_assembler::AssemblerCondition::kMissingVariable,
                     tempo_tracing::LogSeverity::kError,
-                    "environment binding {} has invalid symbol type", name);
+                    "missing variable {}", name);
         }
     }
 
@@ -738,6 +735,7 @@ lyric_assembler::BlockHandle::declareFunction(
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     bool declOnly)
 {
+    auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
 
     if (m_bindings.contains(name))
@@ -754,27 +752,25 @@ lyric_assembler::BlockHandle::declareFunction(
     }
 
     // create the call
-    CallSymbol *callSymbol;
+    std::unique_ptr<CallSymbol> callSymbol;
     if (functionTemplate) {
-        callSymbol = new CallSymbol(functionUrl, access, lyric_object::CallMode::Normal,
+        callSymbol = std::make_unique<CallSymbol>(functionUrl, access, lyric_object::CallMode::Normal,
             functionTemplate, declOnly, this, m_state);
     } else {
-        callSymbol = new CallSymbol(functionUrl, access, lyric_object::CallMode::Normal,
+        callSymbol = std::make_unique<CallSymbol>(functionUrl, access, lyric_object::CallMode::Normal,
             declOnly, this, m_state);
     }
 
-    auto status = m_state->appendCall(callSymbol);
-    if (status.notOk()) {
-        delete callSymbol;
-        return status;
-    }
+    TU_RETURN_IF_NOT_OK (m_state->appendCall(callSymbol.get()));
+    auto *callPtr = callSymbol.release();
 
     SymbolBinding binding;
     binding.symbolUrl = functionUrl;
     binding.bindingType = BindingType::Descriptor;
+    binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
     m_bindings[name] = binding;
 
-    return callSymbol;
+    return callPtr;
 }
 
 tempo_utils::Status
@@ -805,6 +801,7 @@ lyric_assembler::BlockHandle::declareClass(
     bool isAbstract,
     bool declOnly)
 {
+    auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
 
     if (m_bindings.contains(name))
@@ -843,28 +840,25 @@ lyric_assembler::BlockHandle::declareClass(
     }
 
     // create the class
-    ClassSymbol *classSymbol;
+    std::unique_ptr<ClassSymbol> classSymbol;
     if (classTemplate) {
-        classSymbol = new ClassSymbol(classUrl, access, derive, isAbstract, typeHandle,
+        classSymbol = std::make_unique<ClassSymbol>(classUrl, access, derive, isAbstract, typeHandle,
             classTemplate, superClass, declOnly, this, m_state);
     } else {
-        classSymbol = new ClassSymbol(classUrl, access, derive, isAbstract,
+        classSymbol = std::make_unique<ClassSymbol>(classUrl, access, derive, isAbstract,
             typeHandle, superClass, declOnly, this, m_state);
     }
 
-    auto status = m_state->appendClass(classSymbol);
-    if (status.notOk()) {
-        delete classSymbol;
-        return status;
-    }
+    TU_RETURN_IF_NOT_OK (m_state->appendClass(classSymbol.get()));
+    auto *classPtr = classSymbol.release();
 
     SymbolBinding binding;
     binding.symbolUrl = classUrl;
-    binding.typeDef = classSymbol->getTypeDef();
     binding.bindingType = BindingType::Descriptor;
+    binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
     m_bindings[name] = binding;
 
-    return classSymbol;
+    return classPtr;
 }
 
 tempo_utils::Result<lyric_assembler::ClassSymbol *>
@@ -898,6 +892,7 @@ lyric_assembler::BlockHandle::declareConcept(
     lyric_object::DeriveType derive,
     bool declOnly)
 {
+    auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
 
     if (m_bindings.contains(name))
@@ -924,28 +919,25 @@ lyric_assembler::BlockHandle::declareConcept(
     }
 
     // create the concept
-    ConceptSymbol *conceptSymbol;
+    std::unique_ptr<ConceptSymbol> conceptSymbol;
     if (conceptTemplate) {
-        conceptSymbol = new ConceptSymbol(conceptUrl, access, derive, typeHandle,
+        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, access, derive, typeHandle,
             conceptTemplate, superConcept, declOnly, this, m_state);
     } else {
-        conceptSymbol = new ConceptSymbol(conceptUrl, access, derive, typeHandle,
+        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, access, derive, typeHandle,
             superConcept, declOnly, this, m_state);
     }
 
-    auto status = m_state->appendConcept(conceptSymbol);
-    if (status.notOk()) {
-        delete conceptSymbol;
-        return status;
-    }
+    TU_RETURN_IF_NOT_OK (m_state->appendConcept(conceptSymbol.get()));
+    auto *conceptPtr = conceptSymbol.release();
 
     SymbolBinding binding;
-    binding.symbolUrl = conceptUrl;
-    binding.typeDef = conceptSymbol->getTypeDef();
     binding.bindingType = BindingType::Descriptor;
+    binding.symbolUrl = conceptUrl;
+    binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
     m_bindings[name] = binding;
 
-    return conceptSymbol;
+    return conceptPtr;
 }
 
 tempo_utils::Result<lyric_assembler::ConceptSymbol *>
@@ -979,6 +971,9 @@ lyric_assembler::BlockHandle::declareEnum(
     bool isAbstract,
     bool declOnly)
 {
+    auto *fundamentalCache = m_state->fundamentalCache();
+    auto *typeCache = m_state->typeCache();
+
     if (m_bindings.contains(name))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
@@ -1000,26 +995,23 @@ lyric_assembler::BlockHandle::declareEnum(
 
     // create the type
     TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
         enumUrl, {}, superEnum->getTypeDef()));
 
     // create the instance
-    auto *enumSymbol = new EnumSymbol(enumUrl, access, derive, isAbstract, typeHandle,
-        superEnum, declOnly, this, m_state);
+    auto enumSymbol = std::make_unique<EnumSymbol>(enumUrl, access, derive,
+        isAbstract, typeHandle, superEnum, declOnly, this, m_state);
 
-    auto status = m_state->appendEnum(enumSymbol);
-    if (status.notOk()) {
-        delete enumSymbol;
-        return status;
-    }
+    TU_RETURN_IF_NOT_OK (m_state->appendEnum(enumSymbol.get()));
+    auto *enumPtr = enumSymbol.release();
 
     SymbolBinding binding;
-    binding.symbolUrl = enumUrl;
-    binding.typeDef = enumSymbol->getTypeDef();
     binding.bindingType = BindingType::Descriptor;
+    binding.symbolUrl = enumUrl;
+    binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
     m_bindings[name] = binding;
 
-    return enumSymbol;
+    return enumPtr;
 }
 
 tempo_utils::Result<lyric_assembler::EnumSymbol *>
@@ -1053,6 +1045,9 @@ lyric_assembler::BlockHandle::declareInstance(
     bool isAbstract,
     bool declOnly)
 {
+    auto *fundamentalCache = m_state->fundamentalCache();
+    auto *typeCache = m_state->typeCache();
+
     if (m_bindings.contains(name))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
@@ -1074,26 +1069,23 @@ lyric_assembler::BlockHandle::declareInstance(
 
     // create the type
     TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
         instanceUrl, {}, superInstance->getTypeDef()));
 
     // create the instance
-    auto *instanceSymbol = new InstanceSymbol(instanceUrl, access, derive, isAbstract, typeHandle,
-        superInstance, declOnly, this, m_state);
+    auto instanceSymbol = std::make_unique<InstanceSymbol>(instanceUrl, access, derive,
+        isAbstract, typeHandle, superInstance, declOnly, this, m_state);
 
-    auto status = m_state->appendInstance(instanceSymbol);
-    if (status.notOk()) {
-        delete instanceSymbol;
-        return status;
-    }
+    TU_RETURN_IF_NOT_OK (m_state->appendInstance(instanceSymbol.get()));
+    auto *instancePtr = instanceSymbol.release();
 
     SymbolBinding binding;
-    binding.symbolUrl = instanceUrl;
-    binding.typeDef = instanceSymbol->getTypeDef();
     binding.bindingType = BindingType::Descriptor;
+    binding.symbolUrl = instanceUrl;
+    binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
     m_bindings[name] = binding;
 
-    return instanceSymbol;
+    return instancePtr;
 }
 
 tempo_utils::Result<lyric_assembler::InstanceSymbol *>
@@ -1127,6 +1119,9 @@ lyric_assembler::BlockHandle::declareStruct(
     bool isAbstract,
     bool declOnly)
 {
+    auto *fundamentalCache = m_state->fundamentalCache();
+    auto *typeCache = m_state->typeCache();
+
     if (m_bindings.contains(name))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
@@ -1148,26 +1143,23 @@ lyric_assembler::BlockHandle::declareStruct(
 
     // create the type
     TypeHandle *typeHandle;
-    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->declareSubType(
+    TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
         structUrl, {}, superStruct->getTypeDef()));
 
     // create the struct
-    auto *structSymbol = new StructSymbol(structUrl, access, derive, isAbstract,
-        typeHandle, superStruct, declOnly, this, m_state);
+    auto structSymbol = std::make_unique<StructSymbol>(structUrl, access, derive,
+        isAbstract, typeHandle, superStruct, declOnly, this, m_state);
 
-    auto status = m_state->appendStruct(structSymbol);
-    if (status.notOk()) {
-        delete structSymbol;
-        return status;
-    }
+    TU_RETURN_IF_NOT_OK (m_state->appendStruct(structSymbol.get()));
+    auto *structPtr = structSymbol.release();
 
     SymbolBinding binding;
-    binding.symbolUrl = structUrl;
-    binding.typeDef = structSymbol->getTypeDef();
     binding.bindingType = BindingType::Descriptor;
+    binding.symbolUrl = structUrl;
+    binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
     m_bindings[name] = binding;
 
-    return structSymbol;
+    return structPtr;
 }
 
 tempo_utils::Result<lyric_assembler::StructSymbol *>
@@ -1288,12 +1280,6 @@ lyric_assembler::BlockHandle::resolveImpl(const lyric_common::TypeDef &implType,
         }
     }
 
-    // if instance is not found in any reachable block, then check env
-    if (m_state->symbolCache()->hasEnvInstance(implType)) {
-        const auto instanceUrl = m_state->symbolCache()->getEnvInstance(implType);
-        return instanceUrl;
-    }
-
     switch (mode) {
         case ResolveMode::kDefault:
             return logAndContinue(AssemblerCondition::kMissingImpl,
@@ -1306,61 +1292,21 @@ lyric_assembler::BlockHandle::resolveImpl(const lyric_common::TypeDef &implType,
     }
 }
 
-inline tempo_utils::Result<lyric_common::TypeDef>
-determine_binding_type(
-    lyric_assembler::AbstractSymbol *targetSymbol,
-    const lyric_common::TypeDef &aliasType,
-    lyric_assembler::BlockHandle *block)
-{
-    if (!aliasType.isValid())
-        return targetSymbol->getTypeDef();
-
-    auto *state = block->blockState();
-    auto *typeCache = state->typeCache();
-
-    lyric_assembler::TypeHandle *aliasTypeHandle;
-    TU_ASSIGN_OR_RETURN (aliasTypeHandle, typeCache->getOrMakeType(aliasType));
-
-    lyric_assembler::TypeSignature targetSig;
-    TU_ASSIGN_OR_RETURN (targetSig, typeCache->resolveSignature(targetSymbol->getSymbolUrl()));
-
-    lyric_assembler::TypeSignature aliasSig;
-    TU_ASSIGN_OR_RETURN (aliasSig, typeCache->resolveSignature(aliasTypeHandle));
-
-    auto cmp = targetSig.compare(aliasSig);
-    if (cmp != lyric_runtime::TypeComparison::EXTENDS)
-        block->logAndContinue(lyric_assembler::AssemblerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
-            "alias target must extend or equal alias type {}", aliasType.toString());
-
-    return aliasType;
-}
-
-inline tempo_utils::Result<lyric_common::TypeDef>
-determine_binding_type(
-    const lyric_common::SymbolUrl &targetUrl,
-    const lyric_common::TypeDef &aliasType,
-    lyric_assembler::BlockHandle *block)
-{
-    auto *state = block->blockState();
-    auto *symbolCache = state->symbolCache();
-    lyric_assembler::AbstractSymbol *targetSymbol;
-    TU_ASSIGN_OR_RETURN (targetSymbol, symbolCache->getOrImportSymbol(targetUrl));
-    return determine_binding_type(targetSymbol, aliasType, block);
-}
-
 tempo_utils::Result<lyric_assembler::SymbolBinding>
 lyric_assembler::BlockHandle::declareAlias(
     const std::string &alias,
-    const lyric_common::SymbolUrl &targetUrl,
-    const lyric_common::TypeDef &aliasType)
+    const lyric_common::SymbolUrl &targetUrl)
 {
+    auto *fundamentalCache = m_state->fundamentalCache();
+    auto *symbolCache = m_state->symbolCache();
+
     if (m_bindings.contains(alias))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
             "cannot declare alias {}; symbol is already defined", alias);
+
     lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(targetUrl));
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(targetUrl));
 
     SymbolBinding binding;
 
@@ -1411,22 +1357,23 @@ lyric_assembler::BlockHandle::declareAlias(
         case SymbolType::ENUM:
         case SymbolType::EXISTENTIAL:
         case SymbolType::INSTANCE:
-        case SymbolType::NAMESPACE:
         case SymbolType::STRUCT:
-            binding.symbolUrl = targetUrl;
             binding.bindingType = BindingType::Descriptor;
-            if (aliasType.isValid())
-                return logAndContinue(AssemblerCondition::kIncompatibleType,
-                    tempo_tracing::LogSeverity::kError,
-                    "cannot declare alias {}; alias type {} is valid for target", alias, aliasType.toString());
+            binding.symbolUrl = targetUrl;
+            binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
             break;
 
-        case SymbolType::STATIC: {
-            binding.symbolUrl = targetUrl;
+        case SymbolType::STATIC:
             binding.bindingType = BindingType::Value;
-            TU_ASSIGN_OR_RETURN (binding.typeDef, determine_binding_type(symbol, aliasType, this));
+            binding.symbolUrl = targetUrl;
+            binding.typeDef = symbol->getTypeDef();
             break;
-        }
+
+        case SymbolType::NAMESPACE:
+            binding.bindingType = BindingType::Namespace;
+            binding.symbolUrl = targetUrl;
+            binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Namespace);
+            break;
 
         default:
             return logAndContinue(AssemblerCondition::kMissingSymbol,
@@ -1441,41 +1388,17 @@ lyric_assembler::BlockHandle::declareAlias(
 tempo_utils::Result<lyric_assembler::SymbolBinding>
 lyric_assembler::BlockHandle::declareAlias(
     const std::string &alias,
-    const SymbolBinding &targetBinding,
-    const lyric_common::TypeDef &aliasType)
+    const SymbolBinding &binding)
 {
+    auto *symbolCache = m_state->symbolCache();
+
     if (m_bindings.contains(alias))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
             "cannot declare alias {}; symbol is already defined", alias);
-    TU_RETURN_IF_STATUS (m_state->symbolCache()->getOrImportSymbol(targetBinding.symbolUrl));
 
-    SymbolBinding binding;
-
-    switch (targetBinding.bindingType) {
-        case BindingType::Descriptor:
-        case BindingType::Placeholder:
-            binding.symbolUrl = targetBinding.symbolUrl;
-            binding.bindingType = targetBinding.bindingType;
-            if (aliasType.isValid())
-                return logAndContinue(AssemblerCondition::kIncompatibleType,
-                    tempo_tracing::LogSeverity::kError,
-                    "cannot declare alias {}; alias type {} is valid for target", alias, aliasType.toString());
-            break;
-
-        case BindingType::Variable:
-        case BindingType::Value: {
-            binding.symbolUrl = targetBinding.symbolUrl;
-            binding.bindingType = targetBinding.bindingType;
-            TU_ASSIGN_OR_RETURN (binding.typeDef, determine_binding_type(targetBinding.symbolUrl, aliasType, this));
-            break;
-        }
-
-        default:
-            throwAssemblerInvariant("failed to declare alias to {}; invalid binding type",
-                targetBinding.symbolUrl.toString());
-    }
-    binding.typeDef = aliasType.isValid()? aliasType : targetBinding.typeDef;
+    // verify binding symbol exists in the symbol cache
+    TU_RETURN_IF_STATUS (symbolCache->getOrImportSymbol(binding.symbolUrl));
 
     m_bindings[alias] = binding;
     return binding;
@@ -1484,41 +1407,46 @@ lyric_assembler::BlockHandle::declareAlias(
 tempo_utils::Result<lyric_assembler::SymbolBinding>
 lyric_assembler::BlockHandle::declareAlias(
     const std::string &alias,
-    const DataReference &targetRef,
-    const lyric_common::TypeDef &aliasType)
+    const DataReference &targetRef)
 {
+    auto *fundamentalCache = m_state->fundamentalCache();
+
     if (m_bindings.contains(alias))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
             "cannot declare alias {}; symbol is already defined", alias);
+
+    // verify binding symbol exists in the symbol cache
     TU_RETURN_IF_STATUS (m_state->symbolCache()->getOrImportSymbol(targetRef.symbolUrl));
 
     SymbolBinding binding;
 
-    // TODO: perform validation here? at least check if target type and alias type are disjoint
-    binding.typeDef = aliasType.isValid()? aliasType : targetRef.typeDef;
     switch (targetRef.referenceType) {
-        case ReferenceType::Descriptor: {
-            binding.symbolUrl = targetRef.symbolUrl;
+
+        case ReferenceType::Descriptor:
             binding.bindingType = BindingType::Descriptor;
-            if (aliasType.isValid())
-                return logAndContinue(AssemblerCondition::kIncompatibleType,
-                    tempo_tracing::LogSeverity::kError,
-                    "cannot declare alias {}; alias type {} is valid for target", alias, aliasType.toString());
-            break;
-        }
-        case ReferenceType::Value: {
             binding.symbolUrl = targetRef.symbolUrl;
+            binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
+            break;
+
+        case ReferenceType::Namespace:
+            binding.bindingType = BindingType::Namespace;
+            binding.symbolUrl = targetRef.symbolUrl;
+            binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Namespace);
+            break;
+
+        case ReferenceType::Value:
             binding.bindingType = BindingType::Value;
-            TU_ASSIGN_OR_RETURN (binding.typeDef, determine_binding_type(targetRef.symbolUrl, aliasType, this));
-            break;
-        }
-        case ReferenceType::Variable: {
             binding.symbolUrl = targetRef.symbolUrl;
-            binding.bindingType = BindingType::Variable;
-            TU_ASSIGN_OR_RETURN (binding.typeDef, determine_binding_type(targetRef.symbolUrl, aliasType, this));
+            binding.typeDef = targetRef.typeDef;
             break;
-        }
+
+        case ReferenceType::Variable:
+            binding.bindingType = BindingType::Variable;
+            binding.symbolUrl = targetRef.symbolUrl;
+            binding.typeDef = targetRef.typeDef;
+            break;
+
         default:
             throwAssemblerInvariant("failed to declare alias to {}; invalid reference type",
                 targetRef.symbolUrl.toString());
@@ -1550,49 +1478,6 @@ lyric_assembler::BlockHandle::declareAlias(
     m_bindings[alias] = binding;
     return binding;
 }
-
-//tempo_utils::Result<lyric_assembler::NamespaceSymbol *>
-//lyric_assembler::BlockHandle::declareNamespace(
-//    const std::string &name,
-//    lyric_object::AccessType access,
-//    bool declOnly)
-//{
-//    if (m_bindings.contains(name))
-//        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-//            tempo_tracing::LogSeverity::kError,
-//            "cannot declare namespace {}; symbol is already defined", name);
-//
-//    //superNs->touch();
-//    auto nsUrl = makeSymbolUrl(name);
-//
-//    // resolve the type
-//    auto fundamentalNamespace = m_state->fundamentalCache()->getFundamentalUrl(FundamentalSymbol::Namespace);
-//    lyric_assembler::AbstractSymbol *symbol;
-//    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(fundamentalNamespace));
-//    auto nsDescriptorType = symbol->getTypeDef();
-//    lyric_assembler::TypeHandle *typeHandle;
-//    TU_ASSIGN_OR_RETURN (typeHandle, m_state->typeCache()->getOrMakeType(nsDescriptorType));
-//
-//    auto *superNs = blockNs();
-//
-//    // create the namespace
-//    auto *namespaceSymbol = new NamespaceSymbol(nsUrl, access, typeHandle,
-//        superNs, declOnly, this, m_state, m_isRoot);
-//
-//    auto status = m_state->appendNamespace(namespaceSymbol);
-//    if (status.notOk()) {
-//        delete namespaceSymbol;
-//        return status;
-//    }
-//
-//    SymbolBinding binding;
-//    binding.symbolUrl = nsUrl;
-//    binding.typeDef = nsDescriptorType;
-//    binding.bindingType = BindingType::Descriptor;
-//    m_bindings[name] = binding;
-//
-//    return namespaceSymbol;
-//}
 
 lyric_common::SymbolUrl
 lyric_assembler::BlockHandle::makeSymbolUrl(const std::string &name) const

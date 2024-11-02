@@ -239,9 +239,11 @@ lyric_assembler::NamespaceSymbol::declareSubspace(
     auto parentPath = definition.getSymbolPath();
     lyric_common::SymbolPath namespacePath(parentPath.getPath(), name);
     lyric_common::SymbolUrl namespaceUrl(m_namespaceUrl.getModuleLocation(), namespacePath);
+
     auto namespaceSymbol = std::make_unique<NamespaceSymbol>(
         namespaceUrl, access, priv->namespaceType, this, priv->isDeclOnly, priv->namespaceBlock.get(), m_state);
     TU_RETURN_IF_NOT_OK (m_state->appendNamespace(namespaceSymbol.get()));
+    auto *namespacePtr = namespaceSymbol.release();
 
     TU_RETURN_IF_STATUS (priv->namespaceBlock->declareAlias(name, namespaceUrl));
 
@@ -251,5 +253,5 @@ lyric_assembler::NamespaceSymbol::declareSubspace(
     binding.access = access;
     priv->bindings[name] = std::move(binding);
 
-    return namespaceSymbol.release();
+    return namespacePtr;
 }

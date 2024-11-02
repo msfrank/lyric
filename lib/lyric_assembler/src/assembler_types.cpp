@@ -24,6 +24,8 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Comparison";
         case FundamentalSymbol::Concept:
             return "Concept";
+        case FundamentalSymbol::Descriptor:
+            return "Descriptor";
         case FundamentalSymbol::Enum:
             return "Enum";
         case FundamentalSymbol::Equality:
@@ -251,43 +253,43 @@ lyric_assembler::TypeSignature::operator!=(const TypeSignature &other) const
 }
 
 lyric_assembler::SymbolBinding::SymbolBinding()
-    : symbolUrl(),
-      typeDef(),
-      bindingType(BindingType::Invalid)
+    : bindingType(BindingType::Invalid),
+      symbolUrl(),
+      typeDef()
 {
 }
 
 lyric_assembler::SymbolBinding::SymbolBinding(
+    BindingType bindingType,
     const lyric_common::SymbolUrl &symbolUrl,
-    const lyric_common::TypeDef &typeDef,
-    BindingType bindingType)
-    : symbolUrl(symbolUrl),
-      typeDef(typeDef),
-      bindingType(bindingType)
+    const lyric_common::TypeDef &typeDef)
+    : bindingType(bindingType),
+      symbolUrl(symbolUrl),
+      typeDef(typeDef)
 {
+    TU_ASSERT (bindingType != BindingType::Invalid);
     TU_ASSERT (symbolUrl.isValid());
     TU_ASSERT (typeDef.isValid());
-    TU_ASSERT (bindingType != BindingType::Invalid);
 }
 
 lyric_assembler::DataReference::DataReference()
-    : symbolUrl(),
-      typeDef(),
-      referenceType(ReferenceType::Invalid)
+    : referenceType(ReferenceType::Invalid),
+      symbolUrl(),
+      typeDef()
 {
 }
 
 lyric_assembler::DataReference::DataReference(
+    ReferenceType referenceType,
     const lyric_common::SymbolUrl &symbolUrl,
-    const lyric_common::TypeDef &typeDef,
-    ReferenceType referenceType)
-    : symbolUrl(symbolUrl),
-      typeDef(typeDef),
-      referenceType(referenceType)
+    const lyric_common::TypeDef &typeDef)
+    : referenceType(referenceType),
+      symbolUrl(symbolUrl),
+      typeDef(typeDef)
 {
+    TU_ASSERT (referenceType != ReferenceType::Invalid);
     TU_ASSERT (symbolUrl.isValid());
     TU_ASSERT (typeDef.isValid());
-    TU_ASSERT (referenceType != ReferenceType::Invalid);
 }
 
 lyric_assembler::ActionMethod::ActionMethod()

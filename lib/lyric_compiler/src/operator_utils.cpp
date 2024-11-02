@@ -47,7 +47,7 @@ lyric_compiler::compile_unary_operator(
     std::string actionName;
     TU_ASSIGN_OR_RETURN (actionName, resolve_operator_action_name(operationId));
 
-    lyric_assembler::DataReference instanceRef{instanceUrl, operatorType, lyric_assembler::ReferenceType::Value};
+    lyric_assembler::DataReference instanceRef{lyric_assembler::ReferenceType::Value, instanceUrl, operatorType};
     lyric_assembler::CallableInvoker extensionInvoker;
     TU_RETURN_IF_NOT_OK (impl->prepareExtension(actionName, instanceRef, extensionInvoker));
 
@@ -106,7 +106,7 @@ lyric_compiler::compile_binary_operator(
     std::string actionName;
     TU_ASSIGN_OR_RETURN (actionName, resolve_operator_action_name(operationId));
 
-    lyric_assembler::DataReference instanceRef{instanceUrl, operatorType, lyric_assembler::ReferenceType::Value};
+    lyric_assembler::DataReference instanceRef{lyric_assembler::ReferenceType::Value, instanceUrl, operatorType};
     lyric_assembler::CallableInvoker extensionInvoker;
     TU_RETURN_IF_NOT_OK (impl->prepareExtension(actionName, instanceRef, extensionInvoker));
 

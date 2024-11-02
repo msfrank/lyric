@@ -14,6 +14,7 @@ namespace lyric_compiler {
         lyric_assembler::CodeFragment *fragment = nullptr;
         lyric_assembler::BlockHandle *bindingBlock = nullptr;
         lyric_assembler::BlockHandle *invokeBlock = nullptr;
+        lyric_assembler::DataReference currentRef;
         bool thisReceiver = false;
     };
 

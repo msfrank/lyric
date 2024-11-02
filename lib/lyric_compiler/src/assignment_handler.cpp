@@ -236,13 +236,13 @@ tempo_utils::Status lyric_compiler::InitialTarget::enter(
     if (!node->isNamespace(lyric_schema::kLyricAstNs))
         return {};
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
-
     auto astId = resource->getId();
+
     switch (astId) {
 
         case lyric_schema::LyricAstId::This: {
             m_assignment->thisReceiver = true;
-            TU_RETURN_IF_NOT_OK (deref_this(block, m_assignment->resolveTarget.get(), driver));
+            TU_RETURN_IF_NOT_OK (deref_this(m_assignment->targetRef, block, m_assignment->resolveTarget.get(), driver));
             m_assignment->receiverType = driver->peekResult();
             return driver->popResult();
         }
@@ -250,7 +250,7 @@ tempo_utils::Status lyric_compiler::InitialTarget::enter(
         case lyric_schema::LyricAstId::Name: {
             m_assignment->bindingBlock = block;
             TU_RETURN_IF_NOT_OK (deref_name(
-                node, &m_assignment->bindingBlock, m_assignment->resolveTarget.get(), driver));
+                node, m_assignment->targetRef, &m_assignment->bindingBlock, m_assignment->resolveTarget.get(), driver));
             m_assignment->receiverType = driver->peekResult();
             return driver->popResult();
         }
@@ -296,8 +296,8 @@ tempo_utils::Status lyric_compiler::ResolveMember::enter(
                 return CompilerStatus::forCondition(
                     CompilerCondition::kCompilerInvariant, "missing receiver type");
             TU_RETURN_IF_NOT_OK (deref_member(
-                node, m_assignment->bindingBlock, m_assignment->resolveTarget.get(),
-                m_assignment->receiverType, m_assignment->thisReceiver, driver));
+                node, m_assignment->targetRef, m_assignment->receiverType, m_assignment->thisReceiver,
+                m_assignment->bindingBlock, m_assignment->resolveTarget.get(), driver));
             m_assignment->receiverType = driver->peekResult();
             return driver->popResult();
         }

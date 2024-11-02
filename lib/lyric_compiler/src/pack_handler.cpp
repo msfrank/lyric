@@ -95,19 +95,19 @@ lyric_compiler::PackParam::after(
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     auto paramType = m_param.typeDef;
-    bool isReturnable;
+    bool isAssignable;
 
     // validate that body returns the expected type
-    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(paramType, initializerType));
-    if (!isReturnable)
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(paramType, initializerType));
+    if (!isAssignable)
         return block->logAndContinue(CompilerCondition::kIncompatibleType,
             tempo_tracing::LogSeverity::kError,
             "parameter initializer is incompatible with type {}", paramType.toString());
 
     // validate that each exit returns the expected type
     for (auto it = m_procHandle->exitTypesBegin(); it != m_procHandle->exitTypesEnd(); it++) {
-        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(paramType, *it));
-        if (!isReturnable)
+        TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(paramType, *it));
+        if (!isAssignable)
             return block->logAndContinue(CompilerCondition::kIncompatibleType,
                 tempo_tracing::LogSeverity::kError,
                 "parameter initializer is incompatible with type {}", paramType.toString());
