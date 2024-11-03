@@ -558,6 +558,13 @@ lyric_assembler::CallSymbol::getParameter(const std::string &name) const
     return entry->second;
 }
 
+int
+lyric_assembler::CallSymbol::numParameters() const
+{
+    auto *priv = getPriv();
+    return priv->parametersMap.size();
+}
+
 std::vector<lyric_assembler::Parameter>::const_iterator
 lyric_assembler::CallSymbol::listPlacementBegin() const
 {
@@ -608,6 +615,30 @@ lyric_assembler::CallSymbol::getInitializer(const std::string &name) const
     auto *priv = getPriv();
     if (priv->initializers.contains(name))
         return priv->initializers.at(name);
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CallSymbol::putInitializer(
+    const std::string &name,
+    const lyric_common::SymbolUrl &initializerUrl)
+{
+    if (isImported())
+        m_state->throwAssemblerInvariant(
+            "can't put initializer on imported call {}", m_callUrl.toString());
+    auto *priv = getPriv();
+    if (priv->initializers.contains(name))
+        m_state->throwAssemblerInvariant(
+            "initializer already defined for param {}", name);
+
+    auto entry = priv->parametersMap.find(name);
+    if (entry == priv->parametersMap.cend())
+        return m_state->logAndContinue(AssemblerCondition::kInvalidBinding,
+            tempo_tracing::LogSeverity::kError,
+            "cannot put initializer for unknown param {}", name);
+
+    priv->initializers[name] = initializerUrl;
+
     return {};
 }
 

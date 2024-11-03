@@ -1,4 +1,6 @@
 
+#include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/assignment_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/deref_utils.h>
@@ -84,6 +86,7 @@ lyric_compiler::AssignmentHandler::after(
 
     auto *block = BaseGrouping::getBlock();
     auto *driver = getDriver();
+    auto *symbolCache = driver->getSymbolCache();
     auto *typeSystem = driver->getTypeSystem();
 
     // pop expression type off the top of the results stack
@@ -125,7 +128,15 @@ lyric_compiler::AssignmentHandler::after(
             tempo_tracing::LogSeverity::kError,
             "target does not match rvalue type {}", rvalueType.toString());
 
-    TU_RETURN_IF_NOT_OK (m_fragment->storeRef(m_assignment.targetRef));
+    // check if we are in a constructor
+    auto definition = block->getDefinition();
+    lyric_assembler::AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(definition));
+    auto *definitionCall = cast_symbol_to_call(symbol);
+    bool initialStore = definitionCall->isCtor();
+
+    // store expression result in target
+    TU_RETURN_IF_NOT_OK (m_fragment->storeRef(m_assignment.targetRef, initialStore));
 
     if (!m_isSideEffect) {
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));

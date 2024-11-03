@@ -26,6 +26,12 @@ namespace lyric_compiler {
         lyric_assembler::StructSymbol *structSymbol,
         lyric_typing::TypeSystem *typeSystem);
 
+    tempo_utils::Status default_initialize_struct_members(
+        lyric_assembler::StructSymbol *structSymbol,
+        lyric_assembler::CallSymbol *ctorSymbol,
+        lyric_assembler::SymbolCache *symbolCache,
+        lyric_typing::TypeSystem *typeSystem);
+
     tempo_utils::Result<Member>
     declare_struct_member(
         const lyric_parser::ArchetypeNode *node,

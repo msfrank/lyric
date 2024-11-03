@@ -357,6 +357,7 @@ lyric_compiler::DerefNext::decide(
     auto *driver = getDriver();
     auto *fragment = m_deref->fragment;
     auto receiverType = driver->peekResult();
+    TU_ASSERT (receiverType.isValid());
 
     auto thisReceiver = m_deref->thisReceiver;
     if (thisReceiver) {
@@ -402,8 +403,8 @@ lyric_compiler::DerefNext::decide(
             }
 
         default:
-            return CompilerStatus::forCondition(
-                CompilerCondition::kCompilerInvariant, "current reference is invalid");
+            return invoke_method(node, m_deref->invokeBlock, m_deref->bindingBlock,
+                receiverType, thisReceiver, fragment, driver, ctx);
     }
 }
 

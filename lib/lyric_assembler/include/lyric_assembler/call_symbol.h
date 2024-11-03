@@ -118,6 +118,7 @@ namespace lyric_assembler {
 
         bool hasParameter(const std::string name) const;
         Parameter getParameter(const std::string &name) const;
+        int numParameters() const;
 
         std::vector<Parameter>::const_iterator listPlacementBegin() const;
         std::vector<Parameter>::const_iterator listPlacementEnd() const;
@@ -127,6 +128,7 @@ namespace lyric_assembler {
 
         bool hasInitializer(const std::string &name) const;
         lyric_common::SymbolUrl getInitializer(const std::string &name) const;
+        tempo_utils::Status putInitializer(const std::string &name, const lyric_common::SymbolUrl &initializerUrl);
         tempo_utils::Result<ProcHandle *> defineInitializer(const std::string &name);
 
         tempo_utils::Status finalizeCall();

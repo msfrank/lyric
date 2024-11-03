@@ -46,82 +46,114 @@ lyric_compiler::declare_struct_default_init(
 {
     TU_ASSERT (defstruct != nullptr);
     TU_ASSERT (structSymbol != nullptr);
+    auto *structBlock = structSymbol->structBlock();
+
+    // verify that super ctor takes no arguments
+    auto superCtorUrl = structSymbol->superStruct()->getCtor();
+    lyric_assembler::AbstractSymbol *superCtorSymbol;
+    TU_ASSIGN_OR_RETURN (superCtorSymbol, symbolCache->getOrImportSymbol(superCtorUrl));
+    auto *superCtorCall = cast_symbol_to_call(superCtorSymbol);
+    if (superCtorCall->numParameters() > 0)
+        return structBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
+            tempo_tracing::LogSeverity::kError,
+            "super struct {} is not default-constructable", superCtorUrl.toString());
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
     TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbol->declareCtor(lyric_object::AccessType::Public));
 
+    lyric_assembler::ParameterPack parameterPack;
+    absl::flat_hash_map<std::string,lyric_common::SymbolUrl> paramInitializers;
+    tu_uint8 currparam = 0;
+
+    for (auto it = structSymbol->membersBegin();
+        it != structSymbol->membersEnd();
+        it++)
+    {
+        const auto &memberName = it->first;
+        const auto &fieldRef = it->second;
+
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldRef.symbolUrl));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
+            return structBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
+                tempo_tracing::LogSeverity::kError,
+                "invalid struct field {}", fieldRef.symbolUrl.toString());
+        auto *fieldSymbol = cast_symbol_to_field(symbol);
+        auto fieldInitializerUrl = fieldSymbol->getInitializer();
+
+        lyric_assembler::Parameter p;
+        p.index = currparam++;
+        p.name = memberName;
+        p.label = memberName;
+        p.isVariable = false;
+        p.placement = lyric_object::PlacementType::Invalid;
+        p.typeDef = fieldSymbol->getTypeDef();
+
+        if (fieldInitializerUrl.isValid()) {
+            if (!symbolCache->hasSymbol(fieldInitializerUrl))
+                return structBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
+                    tempo_tracing::LogSeverity::kError,
+                    "missing field initializer {}", fieldInitializerUrl.toString());
+            p.placement = lyric_object::PlacementType::NamedOpt;
+            paramInitializers[memberName] = fieldInitializerUrl;
+            parameterPack.namedParameters.push_back(p);
+        } else {
+            p.placement = lyric_object::PlacementType::Named;
+            parameterPack.namedParameters.push_back(p);
+        }
+
+    }
+
+    // define the ctor call
     lyric_assembler::ProcHandle *procHandle;
-    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
+    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
+
+    // set the initializer for each NamedOpt param
+    for (const auto &entry : paramInitializers) {
+        TU_RETURN_IF_NOT_OK (ctorSymbol->putInitializer(entry.first, entry.second));
+    }
 
     auto *ctorBlock = procHandle->procBlock();
     auto *procBuilder = procHandle->procCode();
     auto *fragment = procBuilder->rootFragment();
 
-    // find the superclass ctor
+    // find the superstruct ctor
     lyric_assembler::ConstructableInvoker superCtor;
     TU_RETURN_IF_NOT_OK (structSymbol->superStruct()->prepareCtor(superCtor));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
 
-    // load the uninitialized class onto the top of the stack
+    // load the uninitialized struct onto the top of the stack
     TU_RETURN_IF_NOT_OK (fragment->loadThis());
 
     // call super ctor
     TU_RETURN_IF_STATUS (superCtor.invoke(ctorBlock, reifier, fragment, /* flags= */ 0));
 
-    // default-initialize all members
-    for (auto it = structSymbol->membersBegin(); it != structSymbol->membersEnd(); it++) {
-        auto &memberName = it->first;
-        auto &fieldRef = it->second;
+    for (auto it = structSymbol->membersBegin();
+         it != structSymbol->membersEnd();
+         it++)
+    {
+        const auto &memberName = it->first;
+        const auto &fieldRef = it->second;
 
-        lyric_assembler::AbstractSymbol *symbol;
-
-        // resolve the member binding
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldRef.symbolUrl));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
-            return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-                tempo_tracing::LogSeverity::kError,
-                "invalid class field {}", fieldRef.symbolUrl.toString());
-
-        auto *fieldSymbol = cast_symbol_to_field(symbol);
-
-        if (!fieldSymbol->hasInitializer())
-            return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-                tempo_tracing::LogSeverity::kError,
-                "missing initializer for field {}", memberName);
-
-        auto fieldInitializerUrl = fieldSymbol->getInitializer();
-
-        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldInitializerUrl));
-        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-            return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-                tempo_tracing::LogSeverity::kError,
-                "invalid field initializer {}", fieldInitializerUrl.toString());
-
-        auto *initializerCall = cast_symbol_to_call(symbol);
+        // resolve argument binding
+        lyric_assembler::DataReference argRef;
+        TU_ASSIGN_OR_RETURN (argRef, ctorBlock->resolveReference(memberName));
 
         // load $this onto the top of the stack
         TU_RETURN_IF_NOT_OK (fragment->loadThis());
 
-        // invoke initializer to place default value onto the top of the stack
-        auto callable = std::make_unique<lyric_assembler::FunctionCallable>(
-            initializerCall, /* isInlined= */ false);
-        lyric_assembler::CallableInvoker invoker;
-        TU_RETURN_IF_NOT_OK (invoker.initialize(std::move(callable)));
-        lyric_typing::CallsiteReifier initializerReifier(typeSystem);
-        TU_RETURN_IF_NOT_OK (initializerReifier.initialize(invoker));
-        TU_RETURN_IF_STATUS (invoker.invoke(ctorBlock, initializerReifier, fragment));
+        // load argument value
+        TU_RETURN_IF_NOT_OK (fragment->loadRef(argRef));
 
-        // store default value in class field
+        // store default value in struct field
         TU_RETURN_IF_NOT_OK (fragment->storeRef(fieldRef, /* initialStore= */ true));
 
         // mark member as initialized
         TU_RETURN_IF_NOT_OK (structSymbol->setMemberInitialized(memberName));
     }
-
-    TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << structSymbol->getSymbolUrl();
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
@@ -129,7 +161,9 @@ lyric_compiler::declare_struct_default_init(
     if (!structSymbol->isCompletelyInitialized())
         return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
             tempo_tracing::LogSeverity::kError,
-            "class {} is not completely initialized", structSymbol->getSymbolUrl().toString());
+            "struct {} is not completely initialized", structSymbol->getSymbolUrl().toString());
+
+    TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << structSymbol->getSymbolUrl();
 
     return ctorSymbol;
 }
@@ -172,6 +206,82 @@ lyric_compiler::declare_struct_member(
     }
 
     return member;
+}
+
+tempo_utils::Status
+lyric_compiler::default_initialize_struct_members(
+    lyric_assembler::StructSymbol *structSymbol,
+    lyric_assembler::CallSymbol *ctorSymbol,
+    lyric_assembler::SymbolCache *symbolCache,
+    lyric_typing::TypeSystem *typeSystem)
+{
+    TU_ASSERT (structSymbol != nullptr);
+    TU_ASSERT (ctorSymbol != nullptr);
+    TU_ASSERT (symbolCache != nullptr);
+    TU_ASSERT (typeSystem != nullptr);
+    auto *procHandle = ctorSymbol->callProc();
+    auto *ctorBlock = procHandle->procBlock();
+    auto *procBuilder = procHandle->procCode();
+    auto *fragment = procBuilder->rootFragment();
+
+    // default-initialize all members
+    for (auto it = structSymbol->membersBegin();
+        it != structSymbol->membersEnd();
+        it++)
+    {
+        auto &memberName = it->first;
+        auto &fieldRef = it->second;
+
+        // skip members which have been initialized already
+        if (structSymbol->isMemberInitialized(memberName))
+            continue;
+
+        lyric_assembler::AbstractSymbol *symbol;
+
+        // resolve the member binding
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldRef.symbolUrl));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
+            return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
+                tempo_tracing::LogSeverity::kError,
+                "invalid struct field {}", fieldRef.symbolUrl.toString());
+
+        auto *fieldSymbol = cast_symbol_to_field(symbol);
+
+        if (!fieldSymbol->hasInitializer())
+            return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
+                tempo_tracing::LogSeverity::kError,
+                "missing initializer for field {}", memberName);
+
+        auto fieldInitializerUrl = fieldSymbol->getInitializer();
+
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldInitializerUrl));
+        if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
+            return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
+                tempo_tracing::LogSeverity::kError,
+                "invalid field initializer {}", fieldInitializerUrl.toString());
+
+        auto *initializerCall = cast_symbol_to_call(symbol);
+
+        // load $this onto the top of the stack
+        TU_RETURN_IF_NOT_OK (fragment->loadThis());
+
+        // invoke initializer to place default value onto the top of the stack
+        auto callable = std::make_unique<lyric_assembler::FunctionCallable>(
+            initializerCall, /* isInlined= */ false);
+        lyric_assembler::CallableInvoker invoker;
+        TU_RETURN_IF_NOT_OK (invoker.initialize(std::move(callable)));
+        lyric_typing::CallsiteReifier initializerReifier(typeSystem);
+        TU_RETURN_IF_NOT_OK (initializerReifier.initialize(invoker));
+        TU_RETURN_IF_STATUS (invoker.invoke(ctorBlock, initializerReifier, fragment));
+
+        // store default value in struct field
+        TU_RETURN_IF_NOT_OK (fragment->storeRef(fieldRef, /* initialStore= */ true));
+
+        // mark member as initialized
+        TU_RETURN_IF_NOT_OK (structSymbol->setMemberInitialized(memberName));
+    }
+
+    return {};
 }
 
 tempo_utils::Result<lyric_compiler::Method>

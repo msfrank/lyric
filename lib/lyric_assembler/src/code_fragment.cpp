@@ -361,7 +361,7 @@ lyric_assembler::CodeFragment::storeRef(const DataReference &ref, bool initialSt
         case ReferenceType::Value:
             if (!initialStore)
                 return AssemblerStatus::forCondition(
-                    AssemblerCondition::kInvalidBinding, "cannot store to descriptor {}", ref.symbolUrl.toString());
+                    AssemblerCondition::kInvalidBinding, "cannot store to value {}", ref.symbolUrl.toString());
             statement.instruction = std::make_shared<StoreDataInstruction>(symbol);
             break;
         case ReferenceType::Variable:
