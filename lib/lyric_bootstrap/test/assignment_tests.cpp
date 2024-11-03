@@ -164,3 +164,16 @@ TEST(CoreAssignment, EvaluateMemberInplaceDivide)
         RunModule(
             DataCellInt(5))));
 }
+
+TEST(CoreAssignment, EvaluateGlobalVarAssignment)
+{
+    auto result = runModule(R"(
+        global var mutablefoo: Int = 100
+        set mutablefoo = 1
+        mutablefoo
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellInt(1))));
+}

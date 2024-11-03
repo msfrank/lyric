@@ -41,13 +41,13 @@ lyric_parser::internal::ModuleAssignOps::exitGlobalStatement(ModuleParser::Globa
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefStaticClass, location);
-    valNode->appendChild(p1);
-    valNode->putAttrOrThrow(kLyricAstIdentifier, id);
-    valNode->putAttrOrThrow(kLyricAstAccessType, access);
-    valNode->putAttrOrThrow(kLyricAstIsVariable, isVariable);
-    valNode->putAttr(kLyricAstTypeOffset, typeNode);
-    m_state->pushNode(valNode);
+    auto *defstaticNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefStaticClass, location);
+    defstaticNode->appendChild(p1);
+    defstaticNode->putAttrOrThrow(kLyricAstIdentifier, id);
+    defstaticNode->putAttrOrThrow(kLyricAstAccessType, access);
+    defstaticNode->putAttrOrThrow(kLyricAstIsVariable, isVariable);
+    defstaticNode->putAttr(kLyricAstTypeOffset, typeNode);
+    m_state->pushNode(defstaticNode);
 
     scopeManager->popSpan();
 

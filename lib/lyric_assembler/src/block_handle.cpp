@@ -1314,38 +1314,33 @@ lyric_assembler::BlockHandle::declareAlias(
     auto symbolType = symbol->getSymbolType();
     if (symbolType == SymbolType::UNDECLARED) {
         switch (cast_symbol_to_undeclared(symbol)->getLinkage()) {
+            case lyric_object::LinkageSection::Action:
             case lyric_object::LinkageSection::Call:
-                symbolType = SymbolType::CALL;
-                break;
             case lyric_object::LinkageSection::Class:
-                symbolType = SymbolType::CLASS;
-                break;
             case lyric_object::LinkageSection::Concept:
-                symbolType = SymbolType::CONCEPT;
-                break;
             case lyric_object::LinkageSection::Enum:
-                symbolType = SymbolType::ENUM;
-                break;
             case lyric_object::LinkageSection::Existential:
-                symbolType = SymbolType::EXISTENTIAL;
-                break;
+            case lyric_object::LinkageSection::Field:
             case lyric_object::LinkageSection::Instance:
-                symbolType = SymbolType::INSTANCE;
+            case lyric_object::LinkageSection::Static:
+            case lyric_object::LinkageSection::Struct:
+                binding.bindingType = BindingType::Descriptor;
+                binding.symbolUrl = targetUrl;
+                binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
                 break;
             case lyric_object::LinkageSection::Namespace:
-                symbolType = SymbolType::NAMESPACE;
-                break;
-            case lyric_object::LinkageSection::Static:
-                symbolType = SymbolType::STATIC;
-                break;
-            case lyric_object::LinkageSection::Struct:
-                symbolType = SymbolType::STRUCT;
+                binding.bindingType = BindingType::Namespace;
+                binding.symbolUrl = targetUrl;
+                binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Namespace);
                 break;
             default:
                 return logAndContinue(AssemblerCondition::kMissingSymbol,
                     tempo_tracing::LogSeverity::kError,
-                    "cannot declare alias {}; {} is not a valid target", alias, targetUrl.toString());
+                    "cannot declare alias {}; {} undeclared symbol is not a valid target",
+                    alias, targetUrl.toString());
         }
+        m_bindings[alias] = binding;
+        return binding;
     }
 
     // set binding type

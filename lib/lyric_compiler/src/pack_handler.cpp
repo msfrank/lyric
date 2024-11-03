@@ -16,6 +16,14 @@ lyric_compiler::PackHandler::PackHandler(
     TU_ASSERT (m_callSymbol != nullptr);
 }
 
+lyric_compiler::PackHandler::PackHandler(
+    lyric_assembler::BlockHandle *block,
+    CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_callSymbol(nullptr)
+{
+}
+
 tempo_utils::Status
 lyric_compiler::PackHandler::before(
     const lyric_parser::ArchetypeState *state,
@@ -25,9 +33,13 @@ lyric_compiler::PackHandler::before(
     auto *block = getBlock();
     auto *driver = getDriver();
 
-    //
     for (int i = 0; i < node->numChildren(); i++) {
-        auto param = std::make_unique<PackParam>(m_callSymbol, block, driver);
+        std::unique_ptr<PackParam> param;
+        if (m_callSymbol) {
+            param = std::make_unique<PackParam>(m_callSymbol, block, driver);
+        } else {
+            param = std::make_unique<PackParam>(block, driver);
+        }
         ctx.appendGrouping(std::move(param));
     }
 
@@ -44,18 +56,34 @@ lyric_compiler::PackParam::PackParam(
     TU_ASSERT (m_callSymbol != nullptr);
 }
 
+lyric_compiler::PackParam::PackParam(
+    lyric_assembler::BlockHandle *block,
+    lyric_compiler::CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_callSymbol(nullptr)
+{
+}
+
 tempo_utils::Status
 lyric_compiler::PackParam::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::BeforeContext &ctx)
 {
-    // if initializer was not specified then we are done
-    if (!node->hasAttr(lyric_parser::kLyricAstDefaultOffset))
-        return {};
-
     auto *block = getBlock();
     auto *driver = getDriver();
+
+    bool hasDefault = node->hasAttr(lyric_parser::kLyricAstDefaultOffset);
+
+    // check if decl param has initializer
+    if (m_callSymbol == nullptr && hasDefault)
+        return block->logAndContinue(CompilerCondition::kSyntaxError,
+            tempo_tracing::LogSeverity::kError,
+            "unexpected param initializer");
+
+    // otherwise if initializer was not specified then we are done
+    if (!hasDefault)
+        return {};
 
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));

@@ -29,6 +29,8 @@ lyric_assembler::FundamentalCache::FundamentalCache(
         fundamentalTypeToSymbolPath(FundamentalSymbol::Comparison));
     m_fundamentalConcept = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Concept));
+    m_fundamentalDescriptor = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::Descriptor));
     m_fundamentalEnum = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Enum));
     m_fundamentalEquality = lyric_common::SymbolUrl(preludeLocation,
@@ -221,6 +223,8 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalComparison;
         case FundamentalSymbol::Concept:
             return m_fundamentalConcept;
+        case FundamentalSymbol::Descriptor:
+            return m_fundamentalDescriptor;
         case FundamentalSymbol::Enum:
             return m_fundamentalEnum;
         case FundamentalSymbol::Equality:

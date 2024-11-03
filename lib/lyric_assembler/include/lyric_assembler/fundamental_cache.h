@@ -34,6 +34,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalClass;
         lyric_common::SymbolUrl m_fundamentalComparison;
         lyric_common::SymbolUrl m_fundamentalConcept;
+        lyric_common::SymbolUrl m_fundamentalDescriptor;
         lyric_common::SymbolUrl m_fundamentalEnum;
         lyric_common::SymbolUrl m_fundamentalEquality;
         lyric_common::SymbolUrl m_fundamentalFloat;

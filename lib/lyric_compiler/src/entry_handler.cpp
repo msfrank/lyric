@@ -3,9 +3,11 @@
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/def_handler.h>
 #include <lyric_compiler/defclass_handler.h>
+#include <lyric_compiler/defconcept_handler.h>
+#include <lyric_compiler/defstatic_handler.h>
+#include <lyric_compiler/defstruct_handler.h>
 #include <lyric_compiler/entry_handler.h>
 #include <lyric_compiler/namespace_handler.h>
-#include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
 lyric_compiler::EntryHandler::EntryHandler(CompilerScanDriver *driver)
@@ -63,6 +65,24 @@ lyric_compiler::EntryHandler::before(
             }
             case lyric_schema::LyricAstId::DefClass: {
                 auto handler = std::make_unique<DefClassHandler>(
+                    /* isSideEffect= */ true, globalNamespace->namespaceBlock(), driver);
+                ctx.appendGrouping(std::move(handler));
+                break;
+            }
+            case lyric_schema::LyricAstId::DefConcept: {
+                auto handler = std::make_unique<DefConceptHandler>(
+                    /* isSideEffect= */ true, globalNamespace->namespaceBlock(), driver);
+                ctx.appendGrouping(std::move(handler));
+                break;
+            }
+            case lyric_schema::LyricAstId::DefStatic: {
+                auto handler = std::make_unique<DefStaticHandler>(
+                    /* isSideEffect= */ true, globalNamespace->namespaceBlock(), driver);
+                ctx.appendGrouping(std::move(handler));
+                break;
+            }
+            case lyric_schema::LyricAstId::DefStruct: {
+                auto handler = std::make_unique<DefStructHandler>(
                     /* isSideEffect= */ true, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
                 break;

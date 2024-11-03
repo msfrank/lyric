@@ -15,6 +15,9 @@ namespace lyric_compiler {
             lyric_assembler::CallSymbol *callSymbol,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
+        PackHandler(
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
 
         tempo_utils::Status before(
             const lyric_parser::ArchetypeState *state,
@@ -29,6 +32,9 @@ namespace lyric_compiler {
     public:
         PackParam(
             lyric_assembler::CallSymbol *callSymbol,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
+        PackParam(
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
 

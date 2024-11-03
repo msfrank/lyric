@@ -7,11 +7,14 @@
 #include <lyric_compiler/constant_utils.h>
 #include <lyric_compiler/def_handler.h>
 #include <lyric_compiler/defclass_handler.h>
+#include <lyric_compiler/defconcept_handler.h>
 #include <lyric_compiler/defstatic_handler.h>
+#include <lyric_compiler/defstruct_handler.h>
 #include <lyric_compiler/deref_handler.h>
 #include <lyric_compiler/deref_utils.h>
 #include <lyric_compiler/form_handler.h>
 #include <lyric_compiler/iteration_handler.h>
+#include <lyric_compiler/lambda_handler.h>
 #include <lyric_compiler/namespace_handler.h>
 #include <lyric_compiler/new_handler.h>
 #include <lyric_compiler/unary_operation_handler.h>
@@ -302,6 +305,13 @@ lyric_compiler::FormChoice::decide(
             break;
         }
 
+        case lyric_schema::LyricAstId::Lambda: {
+            auto handler = std::make_unique<LambdaHandler>(
+                isSideEffect, m_fragment, block, driver);
+            ctx.setGrouping(std::move(handler));
+            break;
+        }
+
         // if form
         case lyric_schema::LyricAstId::If: {
             auto handler = std::make_unique<IfHandler>(
@@ -385,8 +395,23 @@ lyric_compiler::FormChoice::decide(
             break;
         }
 
+        // concept definition form
+        case lyric_schema::LyricAstId::DefConcept: {
+            auto def = std::make_unique<DefConceptHandler>(isSideEffect, block, driver);
+            ctx.setGrouping(std::move(def));
+            break;
+        }
+
+        // global definition form
         case lyric_schema::LyricAstId::DefStatic: {
             auto def = std::make_unique<DefStaticHandler>(isSideEffect, block, driver);
+            ctx.setGrouping(std::move(def));
+            break;
+        }
+
+        // struct definition form
+        case lyric_schema::LyricAstId::DefStruct: {
+            auto def = std::make_unique<DefStructHandler>(isSideEffect, block, driver);
             ctx.setGrouping(std::move(def));
             break;
         }

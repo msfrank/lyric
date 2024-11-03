@@ -143,7 +143,13 @@ lyric_symbolizer::SymbolizerScanDriver::pushDefinition(
     undecl.release();
     TU_LOG_INFO << "declared definition " << symbolUrl;
 
-    return putNamespaceBinding(identifier, symbolUrl, lyric_object::AccessType::Public);
+    auto *currentNamespace = m_namespaces.top();
+    auto namespacePath = currentNamespace->getSymbolUrl().getSymbolPath();
+    if (symbolPath.getEnclosure() == namespacePath.getPath()) {
+        TU_RETURN_IF_NOT_OK (putNamespaceBinding(identifier, symbolUrl, lyric_object::AccessType::Public));
+    }
+
+    return {};
 }
 
 tempo_utils::Status

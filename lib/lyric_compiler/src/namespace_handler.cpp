@@ -2,7 +2,9 @@
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/compiler_utils.h>
 #include <lyric_compiler/defclass_handler.h>
+#include <lyric_compiler/defconcept_handler.h>
 #include <lyric_compiler/defstatic_handler.h>
+#include <lyric_compiler/defstruct_handler.h>
 #include <lyric_compiler/def_handler.h>
 #include <lyric_compiler/namespace_handler.h>
 #include <lyric_parser/ast_attrs.h>
@@ -107,8 +109,20 @@ lyric_compiler::NamespaceDefinition::decide(
             ctx.setGrouping(std::move(handler));
             return {};
         }
+        case lyric_schema::LyricAstId::DefConcept: {
+            auto handler = std::make_unique<DefConceptHandler>(
+                /* isSideEffect= */ true, namespaceBlock, driver);
+            ctx.setGrouping(std::move(handler));
+            return {};
+        }
         case lyric_schema::LyricAstId::DefStatic: {
             auto handler = std::make_unique<DefStaticHandler>(
+                /* isSideEffect= */ true, namespaceBlock, driver);
+            ctx.setGrouping(std::move(handler));
+            return {};
+        }
+        case lyric_schema::LyricAstId::DefStruct: {
+            auto handler = std::make_unique<DefStructHandler>(
                 /* isSideEffect= */ true, namespaceBlock, driver);
             ctx.setGrouping(std::move(handler));
             return {};
