@@ -4,6 +4,7 @@
 #include <lyric_compiler/def_handler.h>
 #include <lyric_compiler/defclass_handler.h>
 #include <lyric_compiler/defconcept_handler.h>
+#include <lyric_compiler/definstance_handler.h>
 #include <lyric_compiler/defstatic_handler.h>
 #include <lyric_compiler/defstruct_handler.h>
 #include <lyric_compiler/entry_handler.h>
@@ -71,6 +72,12 @@ lyric_compiler::EntryHandler::before(
             }
             case lyric_schema::LyricAstId::DefConcept: {
                 auto handler = std::make_unique<DefConceptHandler>(
+                    /* isSideEffect= */ true, globalNamespace->namespaceBlock(), driver);
+                ctx.appendGrouping(std::move(handler));
+                break;
+            }
+            case lyric_schema::LyricAstId::DefInstance: {
+                auto handler = std::make_unique<DefInstanceHandler>(
                     /* isSideEffect= */ true, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
                 break;

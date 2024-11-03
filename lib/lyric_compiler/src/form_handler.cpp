@@ -8,6 +8,7 @@
 #include <lyric_compiler/def_handler.h>
 #include <lyric_compiler/defclass_handler.h>
 #include <lyric_compiler/defconcept_handler.h>
+#include <lyric_compiler/definstance_handler.h>
 #include <lyric_compiler/defstatic_handler.h>
 #include <lyric_compiler/defstruct_handler.h>
 #include <lyric_compiler/deref_handler.h>
@@ -398,6 +399,13 @@ lyric_compiler::FormChoice::decide(
         // concept definition form
         case lyric_schema::LyricAstId::DefConcept: {
             auto def = std::make_unique<DefConceptHandler>(isSideEffect, block, driver);
+            ctx.setGrouping(std::move(def));
+            break;
+        }
+
+        // concept definition form
+        case lyric_schema::LyricAstId::DefInstance: {
+            auto def = std::make_unique<DefInstanceHandler>(isSideEffect, block, driver);
             ctx.setGrouping(std::move(def));
             break;
         }

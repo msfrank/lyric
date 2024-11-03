@@ -26,6 +26,8 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/defclass_utils.h
     include/lyric_compiler/defconcept_handler.h
     include/lyric_compiler/defconcept_utils.h
+    include/lyric_compiler/definstance_handler.h
+    include/lyric_compiler/definstance_utils.h
     include/lyric_compiler/defstatic_handler.h
     include/lyric_compiler/defstruct_handler.h
     include/lyric_compiler/defstruct_utils.h
@@ -70,6 +72,8 @@ target_sources(lyric_compiler PRIVATE
     src/defclass_utils.cpp
     src/defconcept_handler.cpp
     src/defconcept_utils.cpp
+    src/definstance_handler.cpp
+    src/definstance_utils.cpp
     src/defstatic_handler.cpp
     src/defstruct_handler.cpp
     src/defstruct_utils.cpp

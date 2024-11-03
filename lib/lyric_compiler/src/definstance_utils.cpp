@@ -1,55 +1,25 @@
 
 #include <lyric_assembler/call_symbol.h>
-#include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/field_symbol.h>
+#include <lyric_assembler/instance_symbol.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/compiler_utils.h>
-#include <lyric_compiler/defclass_utils.h>
+#include <lyric_compiler/definstance_utils.h>
 #include <lyric_parser/ast_attrs.h>
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
-lyric_compiler::declare_class_init(
-    const lyric_parser::ArchetypeNode *initNode,
-    lyric_assembler::ClassSymbol *classSymbol,
-    lyric_typing::TypeSystem *typeSystem)
-{
-    TU_ASSERT (initNode != nullptr);
-    TU_ASSERT (classSymbol != nullptr);
-    auto *classBlock = classSymbol->classBlock();
-
-    // declare the constructor
-    lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, classSymbol->declareCtor(lyric_object::AccessType::Public));
-
-    lyric_typing::PackSpec packSpec;
-    lyric_assembler::ParameterPack parameterPack;
-
-    // compile the parameter list if specified, otherwise default to an empty list
-    if (initNode != nullptr) {
-        auto *packNode = initNode->getChild(0);
-        TU_ASSERT (packNode != nullptr);
-        TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(classBlock, packNode->getArchetypeNode()));
-        TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(classBlock, packSpec));
-    }
-
-    TU_RETURN_IF_STATUS(ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
-
-    return ctorSymbol;
-}
-
-tempo_utils::Result<lyric_assembler::CallSymbol *>
-lyric_compiler::declare_class_default_init(
-    const DefClass *defclass,
-    lyric_assembler::ClassSymbol *classSymbol,
+lyric_compiler::declare_instance_default_init(
+    const DefInstance *definstance,
+    lyric_assembler::InstanceSymbol *instanceSymbol,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_typing::TypeSystem *typeSystem)
 {
-    TU_ASSERT (defclass != nullptr);
-    TU_ASSERT (classSymbol != nullptr);
+    TU_ASSERT (definstance != nullptr);
+    TU_ASSERT (instanceSymbol != nullptr);
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, classSymbol->declareCtor(lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(lyric_object::AccessType::Public));
 
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
@@ -58,21 +28,21 @@ lyric_compiler::declare_class_default_init(
     auto *procBuilder = procHandle->procCode();
     auto *fragment = procBuilder->rootFragment();
 
-    // find the superclass ctor
+    // find the superinstance ctor
     lyric_assembler::ConstructableInvoker superCtor;
-    TU_RETURN_IF_NOT_OK (classSymbol->superClass()->prepareCtor(superCtor));
+    TU_RETURN_IF_NOT_OK (instanceSymbol->superInstance()->prepareCtor(superCtor));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
 
-    // load the uninitialized class onto the top of the stack
+    // load the uninitialized instance onto the top of the stack
     TU_RETURN_IF_NOT_OK (fragment->loadThis());
 
     // call super ctor
     TU_RETURN_IF_STATUS (superCtor.invoke(ctorBlock, reifier, fragment, /* flags= */ 0));
 
     // default-initialize all members
-    for (auto it = classSymbol->membersBegin(); it != classSymbol->membersEnd(); it++) {
+    for (auto it = instanceSymbol->membersBegin(); it != instanceSymbol->membersEnd(); it++) {
         auto &memberName = it->first;
         auto &fieldRef = it->second;
 
@@ -83,7 +53,7 @@ lyric_compiler::declare_class_default_init(
         if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
             return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
                 tempo_tracing::LogSeverity::kError,
-                "invalid class field {}", fieldRef.symbolUrl.toString());
+                "invalid instance field {}", fieldRef.symbolUrl.toString());
 
         auto *fieldSymbol = cast_symbol_to_field(symbol);
 
@@ -114,36 +84,36 @@ lyric_compiler::declare_class_default_init(
         TU_RETURN_IF_NOT_OK (initializerReifier.initialize(invoker));
         TU_RETURN_IF_STATUS (invoker.invoke(ctorBlock, initializerReifier, fragment));
 
-        // store default value in class field
+        // store default value in instance field
         TU_RETURN_IF_NOT_OK (fragment->storeRef(fieldRef, /* initialStore= */ true));
 
         // mark member as initialized
-        TU_RETURN_IF_NOT_OK (classSymbol->setMemberInitialized(memberName));
+        TU_RETURN_IF_NOT_OK (instanceSymbol->setMemberInitialized(memberName));
     }
 
-    TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << classSymbol->getSymbolUrl();
+    TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << instanceSymbol->getSymbolUrl();
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
-    if (!classSymbol->isCompletelyInitialized())
+    if (!instanceSymbol->isCompletelyInitialized())
         return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
             tempo_tracing::LogSeverity::kError,
-            "class {} is not completely initialized", classSymbol->getSymbolUrl().toString());
+            "instance {} is not completely initialized", instanceSymbol->getSymbolUrl().toString());
 
     return ctorSymbol;
 }
 
 tempo_utils::Result<lyric_compiler::Member>
-lyric_compiler::declare_class_member(
+lyric_compiler::declare_instance_member(
     const lyric_parser::ArchetypeNode *node,
     bool isVariable,
-    lyric_assembler::ClassSymbol *classSymbol,
+    lyric_assembler::InstanceSymbol *instanceSymbol,
     lyric_typing::TypeSystem *typeSystem)
 {
     TU_ASSERT (node != nullptr);
-    TU_ASSERT (classSymbol != nullptr);
-    auto *classBlock = classSymbol->classBlock();
+    TU_ASSERT (instanceSymbol != nullptr);
+    auto *instanceBlock = instanceSymbol->instanceBlock();
 
     // get member name
     std::string identifier;
@@ -153,37 +123,35 @@ lyric_compiler::declare_class_member(
     lyric_parser::ArchetypeNode *typeNode;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
     lyric_typing::TypeSpec memberSpec;
-    TU_ASSIGN_OR_RETURN (memberSpec, typeSystem->parseAssignable(classBlock, typeNode->getArchetypeNode()));
+    TU_ASSIGN_OR_RETURN (memberSpec, typeSystem->parseAssignable(instanceBlock, typeNode->getArchetypeNode()));
     lyric_common::TypeDef memberType;
-    TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(classBlock, memberSpec));
+    TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(instanceBlock, memberSpec));
 
     lyric_parser::AccessType access;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
     Member member;
 
-    TU_ASSIGN_OR_RETURN (member.fieldSymbol, classSymbol->declareMember(
+    TU_ASSIGN_OR_RETURN (member.fieldSymbol, instanceSymbol->declareMember(
         identifier, memberType, isVariable, convert_access_type(access)));
 
-    TU_LOG_INFO << "declared member " << identifier << " for " << classSymbol->getSymbolUrl();
+    TU_LOG_INFO << "declared member " << identifier << " for " << instanceSymbol->getSymbolUrl();
 
-    // define the initializer if specified
-    if (node->numChildren() > 0) {
-        TU_ASSIGN_OR_RETURN (member.procHandle, member.fieldSymbol->defineInitializer());
-    }
+    // define the required initializer
+    TU_ASSIGN_OR_RETURN (member.procHandle, member.fieldSymbol->defineInitializer());
 
     return member;
 }
 
 tempo_utils::Result<lyric_compiler::Method>
-lyric_compiler::declare_class_method(
+lyric_compiler::declare_instance_method(
     const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::ClassSymbol *classSymbol,
+    lyric_assembler::InstanceSymbol *instanceSymbol,
     lyric_typing::TypeSystem *typeSystem)
 {
     TU_ASSERT (node != nullptr);
-    TU_ASSERT (classSymbol != nullptr);
-    auto *classBlock = classSymbol->classBlock();
+    TU_ASSERT (instanceSymbol != nullptr);
+    auto *instanceBlock = instanceSymbol->instanceBlock();
 
     // get method name
     std::string identifier;
@@ -197,28 +165,28 @@ lyric_compiler::declare_class_method(
     lyric_parser::ArchetypeNode *typeNode;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
     lyric_typing::TypeSpec returnSpec;
-    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(classBlock, typeNode->getArchetypeNode()));
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(instanceBlock, typeNode->getArchetypeNode()));
 
     // parse the parameter list
     auto *packNode = node->getChild(0);
     lyric_typing::PackSpec packSpec;
-    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(classBlock, packNode->getArchetypeNode()));
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(instanceBlock, packNode->getArchetypeNode()));
 
     // if method is generic, then parse the template parameter list
     lyric_typing::TemplateSpec templateSpec;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         lyric_parser::ArchetypeNode *genericNode;
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
-        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(classBlock, genericNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(instanceBlock, genericNode->getArchetypeNode()));
     }
 
     Method method;
 
     // declare the method
-    TU_ASSIGN_OR_RETURN (method.callSymbol, classSymbol->declareMethod(
-        identifier, convert_access_type(access), templateSpec.templateParameters));
+    TU_ASSIGN_OR_RETURN (method.callSymbol, instanceSymbol->declareMethod(
+        identifier, convert_access_type(access)));
 
-    TU_LOG_INFO << "declared method " << identifier << " for " << classSymbol->getSymbolUrl();
+    TU_LOG_INFO << "declared method " << identifier << " for " << instanceSymbol->getSymbolUrl();
 
     auto *resolver = method.callSymbol->callResolver();
 
@@ -237,31 +205,31 @@ lyric_compiler::declare_class_method(
 }
 
 tempo_utils::Result<lyric_compiler::Impl>
-lyric_compiler::declare_class_impl(
+lyric_compiler::declare_instance_impl(
     const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::ClassSymbol *classSymbol,
+    lyric_assembler::InstanceSymbol *instanceSymbol,
     lyric_typing::TypeSystem *typeSystem)
 {
     TU_ASSERT (node != nullptr);
-    TU_ASSERT (classSymbol != nullptr);
-    auto *classBlock = classSymbol->classBlock();
+    TU_ASSERT (instanceSymbol != nullptr);
+    auto *instanceBlock = instanceSymbol->instanceBlock();
 
     // parse the impl type
     lyric_parser::ArchetypeNode *typeNode;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
     lyric_typing::TypeSpec implSpec;
-    TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(classBlock, typeNode->getArchetypeNode()));
+    TU_ASSIGN_OR_RETURN (implSpec, typeSystem->parseAssignable(instanceBlock, typeNode->getArchetypeNode()));
 
     // resolve the impl type
     lyric_common::TypeDef implType;
-    TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(classBlock, implSpec));
+    TU_ASSIGN_OR_RETURN (implType, typeSystem->resolveAssignable(instanceBlock, implSpec));
 
     Impl impl;
 
     // declare the impl
-    TU_ASSIGN_OR_RETURN (impl.implHandle, classSymbol->declareImpl(implType));
+    TU_ASSIGN_OR_RETURN (impl.implHandle, instanceSymbol->declareImpl(implType));
 
-    TU_LOG_INFO << "declared impl " << implType << " for " << classSymbol->getSymbolUrl();
+    TU_LOG_INFO << "declared impl " << implType << " for " << instanceSymbol->getSymbolUrl();
 
     return impl;
 }

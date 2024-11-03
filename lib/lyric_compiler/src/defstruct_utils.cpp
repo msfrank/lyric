@@ -178,17 +178,17 @@ lyric_compiler::declare_struct_member(
     TU_ASSERT (structSymbol != nullptr);
     auto *structBlock = structSymbol->structBlock();
 
-    // get val name
+    // get member name
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    // get val type
+    // get member type
     lyric_parser::ArchetypeNode *typeNode;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
-    lyric_typing::TypeSpec valSpec;
-    TU_ASSIGN_OR_RETURN (valSpec, typeSystem->parseAssignable(structBlock, typeNode->getArchetypeNode()));
-    lyric_common::TypeDef valType;
-    TU_ASSIGN_OR_RETURN (valType, typeSystem->resolveAssignable(structBlock, valSpec));
+    lyric_typing::TypeSpec memberSpec;
+    TU_ASSIGN_OR_RETURN (memberSpec, typeSystem->parseAssignable(structBlock, typeNode->getArchetypeNode()));
+    lyric_common::TypeDef memberType;
+    TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(structBlock, memberSpec));
 
     lyric_parser::AccessType access;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
@@ -196,7 +196,7 @@ lyric_compiler::declare_struct_member(
     Member member;
 
     TU_ASSIGN_OR_RETURN (member.fieldSymbol, structSymbol->declareMember(
-        identifier, valType, convert_access_type(access)));
+        identifier, memberType, convert_access_type(access)));
 
     TU_LOG_INFO << "declared member " << identifier << " for " << structSymbol->getSymbolUrl();
 

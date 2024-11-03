@@ -179,12 +179,13 @@ defconceptStatement : DefConceptKeyword symbolIdentifier genericConcept? concept
 
 // definstance statement
 
-instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
-instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
+instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType AssignOperator defaultInitializer ;
+instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType AssignOperator defaultInitializer ;
 instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen block CurlyClose ;
 instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
+instanceDerives     : ( SealedKeyword | FinalKeyword ) ;
 instanceSpec        : instanceVal | instanceVar | instanceDef | instanceImpl ;
-definstanceStatement: DefInstanceKeyword symbolIdentifier CurlyOpen instanceSpec* CurlyClose ;
+definstanceStatement: DefInstanceKeyword symbolIdentifier instanceDerives? CurlyOpen instanceSpec* CurlyClose ;
 
 
 // defenum statement

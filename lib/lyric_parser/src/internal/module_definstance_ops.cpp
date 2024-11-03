@@ -252,6 +252,16 @@ lyric_parser::internal::ModuleDefinstanceOps::exitDefinstanceStatement(ModulePar
     // the instance access level
     auto access = parse_access_type(id);
 
+    // the class derive type
+    DeriveType derive = DeriveType::Any;
+    if (ctx->instanceDerives()) {
+        if (ctx->instanceDerives()->SealedKeyword() != nullptr) {
+            derive = DeriveType::Sealed;
+        } else if (ctx->instanceDerives()->FinalKeyword() != nullptr) {
+            derive = DeriveType::Final;
+        }
+    }
+
     // if ancestor node is not a kDefInstance, then report internal violation
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
@@ -260,6 +270,7 @@ lyric_parser::internal::ModuleDefinstanceOps::exitDefinstanceStatement(ModulePar
 
     definstanceNode->putAttr(kLyricAstIdentifier, id);
     definstanceNode->putAttrOrThrow(kLyricAstAccessType, access);
+    definstanceNode->putAttrOrThrow(kLyricAstDeriveType, derive);
 
     scopeManager->popSpan();
 
