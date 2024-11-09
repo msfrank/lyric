@@ -371,6 +371,7 @@ newOrDeref          : derefLiteral derefSpec*                                   
                     | thisSpec derefSpec*                                                   # thisExpression
                     | callSpec derefSpec*                                                   # callExpression
                     | nameSpec derefSpec*                                                   # nameExpression
+                    | HashOperator Identifier ( DotOperator Identifier)*                    # symbolExpression
                     ;
 
 derefLiteral        : literal ;
@@ -388,7 +389,7 @@ derefSpec           : DotOperator
 
 // literal structures
 
-literal             : numberLiteral | textLiteral | symbolLiteral | keywordLiteral ;
+literal             : numberLiteral | textLiteral | keywordLiteral ;
 
 decimalInteger      : DecimalInteger ;
 hexInteger          : HexInteger ;
@@ -409,7 +410,6 @@ stringLiteral       : StringLiteral ;
 urlLiteral          : UrlLiteral ;
 textLiteral         : charLiteral | stringLiteral | urlLiteral ;
 
-symbolLiteral       : HashOperator Identifier ( DotOperator Identifier)* ;
 
 trueLiteral         : TrueKeyword ;
 falseLiteral        : FalseKeyword ;

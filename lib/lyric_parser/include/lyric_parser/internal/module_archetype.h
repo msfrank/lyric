@@ -99,7 +99,6 @@ namespace lyric_parser::internal {
         void exitCharLiteral(ModuleParser::CharLiteralContext *ctx) override;
         void exitStringLiteral(ModuleParser::StringLiteralContext *ctx) override;
         void exitUrlLiteral(ModuleParser::UrlLiteralContext *ctx) override;
-        void exitSymbolLiteral(ModuleParser::SymbolLiteralContext *ctx) override;
 
         // implemented by ModuleLogicalOps
         void exitBooleanAndExpression(ModuleParser::BooleanAndExpressionContext *ctx) override;
@@ -185,6 +184,7 @@ namespace lyric_parser::internal {
         void exitThisExpression(ModuleParser::ThisExpressionContext *ctx) override;
         void exitNameExpression(ModuleParser::NameExpressionContext *ctx) override;
         void exitCallExpression(ModuleParser::CallExpressionContext *ctx) override;
+        void exitSymbolExpression(ModuleParser::SymbolExpressionContext *ctx) override;
 
         // implemented by ModuleConstructOps
         void exitDerefNew(ModuleParser::DerefNewContext *ctx) override;

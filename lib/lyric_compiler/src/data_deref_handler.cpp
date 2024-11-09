@@ -9,13 +9,14 @@
 #include <lyric_compiler/block_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/constant_utils.h>
-#include <lyric_compiler/deref_handler.h>
+#include <lyric_compiler/data_deref_handler.h>
 #include <lyric_compiler/deref_utils.h>
+#include <lyric_compiler/new_handler.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 #include <lyric_typing/callsite_reifier.h>
 
-lyric_compiler::DerefHandler::DerefHandler(
+lyric_compiler::DataDerefHandler::DataDerefHandler(
     bool isSideEffect,
     lyric_assembler::CodeFragment *fragment,
     lyric_assembler::BlockHandle *block,
@@ -32,12 +33,12 @@ lyric_compiler::DerefHandler::DerefHandler(
 }
 
 tempo_utils::Status
-lyric_compiler::DerefHandler::before(
+lyric_compiler::DataDerefHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before DerefHandler@" << this;
+    TU_LOG_INFO << "before DataDerefHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -48,24 +49,33 @@ lyric_compiler::DerefHandler::before(
             tempo_tracing::LogSeverity::kError,
             "empty deref statement");
 
-    auto initial = std::make_unique<DerefInitial>(&m_deref, block, driver);
-    ctx.appendChoice(std::move(initial));
+    if (numChildren == 1) {
+        auto initial = std::make_unique<DataDerefSingle>(&m_deref, block, driver);
+        ctx.appendChoice(std::move(initial));
+        return {};
+    }
 
-    for (int i = 0; i < node->numChildren() - 1; i++) {
-        auto next = std::make_unique<DerefNext>(&m_deref, block, driver);
+    auto first = std::make_unique<DataDerefFirst>(&m_deref, block, driver);
+    ctx.appendChoice(std::move(first));
+
+    for (int i = 1; i < node->numChildren() - 1; i++) {
+        auto next = std::make_unique<DataDerefNext>(&m_deref, block, driver);
         ctx.appendChoice(std::move(next));
     }
+
+    auto last = std::make_unique<DataDerefLast>(&m_deref, block, driver);
+    ctx.appendChoice(std::move(last));
 
     return {};
 }
 
 tempo_utils::Status
-lyric_compiler::DerefHandler::after(
+lyric_compiler::DataDerefHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_INFO << "after DerefHandler@" << this;
+    TU_LOG_INFO << "after DataDerefHandler@" << this;
 
     if (m_isSideEffect) {
         auto *driver = getDriver();
@@ -79,7 +89,7 @@ lyric_compiler::DerefHandler::after(
     return {};
 }
 
-lyric_compiler::DerefCall::DerefCall(
+lyric_compiler::DataDerefCall::DataDerefCall(
     lyric_assembler::BlockHandle *bindingBlock,
     lyric_assembler::BlockHandle *invokeBlock,
     std::unique_ptr<lyric_assembler::CallableInvoker> &&invoker,
@@ -95,7 +105,7 @@ lyric_compiler::DerefCall::DerefCall(
 }
 
 tempo_utils::Status
-lyric_compiler::DerefCall::after(
+lyric_compiler::DataDerefCall::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::AfterContext &ctx)
@@ -143,15 +153,15 @@ invoke_call(
     auto reifier = std::make_unique<lyric_typing::CallsiteReifier>(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier->initialize(*invoker, callsiteArguments));
 
-    auto call = std::make_unique<lyric_compiler::DerefCall>(
+    auto call = std::make_unique<lyric_compiler::DataDerefCall>(
         bindingBlock, invokeBlock, std::move(invoker), std::move(reifier), fragment, driver);
     ctx.setGrouping(std::move(call));
 
     return {};
 }
 
-lyric_compiler::DerefInitial::DerefInitial(
-    lyric_compiler::Deref *deref,
+lyric_compiler::DataDerefSingle::DataDerefSingle(
+    lyric_compiler::DataDeref *deref,
     lyric_assembler::BlockHandle *block,
     lyric_compiler::CompilerScanDriver *driver)
     : BaseChoice(block, driver),
@@ -161,7 +171,7 @@ lyric_compiler::DerefInitial::DerefInitial(
 }
 
 tempo_utils::Status
-lyric_compiler::DerefInitial::decide(
+lyric_compiler::DataDerefSingle::decide(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::DecideContext &ctx)
@@ -196,8 +206,89 @@ lyric_compiler::DerefInitial::decide(
             return constant_string(node, m_deref->invokeBlock, fragment, driver);
         case lyric_schema::LyricAstId::Url:
             return constant_url(node, m_deref->invokeBlock, fragment, driver);
-        case lyric_schema::LyricAstId::SymbolRef:
-            return constant_symbol(node, m_deref->invokeBlock, fragment, driver);
+
+        // deref receiver
+        case lyric_schema::LyricAstId::This:
+            return deref_this(m_deref->invokeBlock, fragment, driver);
+
+        // deref name
+        case lyric_schema::LyricAstId::Name:
+            return deref_name(node, m_deref->bindingBlock, fragment, driver);
+
+        // invoke function
+        case lyric_schema::LyricAstId::Call:
+            return invoke_call(node, m_deref->invokeBlock, m_deref->bindingBlock, fragment, driver, ctx);
+
+        // evaluate grouping
+        case lyric_schema::LyricAstId::Block: {
+            auto groupBlock = std::make_unique<lyric_assembler::BlockHandle>(
+                block->blockProc(), block, block->blockState());
+            auto group = std::make_unique<BlockHandler>(
+                std::move(groupBlock), /* requiresResult= */ true, /* isSideEffect= */ false, fragment, driver);
+            ctx.setGrouping(std::move(group));
+            return {};
+        }
+
+        // construct instance
+        case lyric_schema::LyricAstId::New: {
+            auto new_ = std::make_unique<NewHandler>(
+                /* isSideEffect= */ false, fragment, block, driver);
+            ctx.setGrouping(std::move(new_));
+            return {};
+        }
+
+        default:
+            return CompilerStatus::forCondition(
+                CompilerCondition::kCompilerInvariant, "invalid deref target node");
+    }
+}
+
+lyric_compiler::DataDerefFirst::DataDerefFirst(
+    lyric_compiler::DataDeref *deref,
+    lyric_assembler::BlockHandle *block,
+    lyric_compiler::CompilerScanDriver *driver)
+    : BaseChoice(block, driver),
+      m_deref(deref)
+{
+    TU_ASSERT (m_deref != nullptr);
+}
+
+tempo_utils::Status
+lyric_compiler::DataDerefFirst::decide(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    lyric_compiler::DecideContext &ctx)
+{
+    if (!node->isNamespace(lyric_schema::kLyricAstNs))
+        return {};
+    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
+
+    auto *block = getBlock();
+    auto *driver = getDriver();
+    auto *fragment = m_deref->fragment;
+
+    auto astId = resource->getId();
+    switch (astId) {
+
+        // deref constant
+        case lyric_schema::LyricAstId::Nil:
+            return constant_nil(m_deref->invokeBlock, fragment, driver);
+        case lyric_schema::LyricAstId::Undef:
+            return constant_undef(m_deref->invokeBlock, fragment, driver);
+        case lyric_schema::LyricAstId::True:
+            return constant_true(m_deref->invokeBlock, fragment, driver);
+        case lyric_schema::LyricAstId::False:
+            return constant_false(m_deref->invokeBlock, fragment, driver);
+        case lyric_schema::LyricAstId::Integer:
+            return constant_integer(node, m_deref->invokeBlock, fragment, driver);
+        case lyric_schema::LyricAstId::Float:
+            return constant_float(node, m_deref->invokeBlock, fragment, driver);
+        case lyric_schema::LyricAstId::Char:
+            return constant_char(node, m_deref->invokeBlock, fragment, driver);
+        case lyric_schema::LyricAstId::String:
+            return constant_string(node, m_deref->invokeBlock, fragment, driver);
+        case lyric_schema::LyricAstId::Url:
+            return constant_url(node, m_deref->invokeBlock, fragment, driver);
 
         // deref receiver
         case lyric_schema::LyricAstId::This:
@@ -222,18 +313,22 @@ lyric_compiler::DerefInitial::decide(
             return {};
         }
 
-        // invoke construction
-        case lyric_schema::LyricAstId::New:
-            //return invokeNew(node);
+        // construct instance
+        case lyric_schema::LyricAstId::New: {
+            auto new_ = std::make_unique<NewHandler>(
+                /* isSideEffect= */ false, fragment, block, driver);
+            ctx.setGrouping(std::move(new_));
+            return {};
+        }
 
         default:
             return CompilerStatus::forCondition(
-                CompilerCondition::kCompilerInvariant, "invalid deref target node");
+                CompilerCondition::kCompilerInvariant, "invalid first deref target");
     }
 }
 
-lyric_compiler::DerefNext::DerefNext(
-    lyric_compiler::Deref *deref,
+lyric_compiler::DataDerefNext::DataDerefNext(
+    lyric_compiler::DataDeref *deref,
     lyric_assembler::BlockHandle *block,
     lyric_compiler::CompilerScanDriver *driver)
     : BaseChoice(block, driver),
@@ -336,7 +431,7 @@ invoke_method(
     auto reifier = std::make_unique<lyric_typing::CallsiteReifier>(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier->initialize(*invoker, callsiteArguments));
 
-    auto method = std::make_unique<lyric_compiler::DerefMethod>(
+    auto method = std::make_unique<lyric_compiler::DataDerefMethod>(
         receiverType, bindingBlock, invokeBlock, std::move(invoker), std::move(reifier), fragment, driver);
     ctx.setGrouping(std::move(method));
 
@@ -344,7 +439,7 @@ invoke_method(
 }
 
 tempo_utils::Status
-lyric_compiler::DerefNext::decide(
+lyric_compiler::DataDerefNext::decide(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::DecideContext &ctx)
@@ -356,8 +451,6 @@ lyric_compiler::DerefNext::decide(
 
     auto *driver = getDriver();
     auto *fragment = m_deref->fragment;
-    auto receiverType = driver->peekResult();
-    TU_ASSERT (receiverType.isValid());
 
     auto thisReceiver = m_deref->thisReceiver;
     if (thisReceiver) {
@@ -366,21 +459,10 @@ lyric_compiler::DerefNext::decide(
 
     switch (m_deref->currentRef.referenceType) {
 
-        case lyric_assembler::ReferenceType::Descriptor:
-            TU_RETURN_IF_NOT_OK (fragment->popValue());
-            switch (astId) {
-                case lyric_schema::LyricAstId::Name:
-                    return deref_descriptor(node, m_deref->currentRef, &m_deref->bindingBlock, fragment, driver);
-                default:
-                    return CompilerStatus::forCondition(
-                        CompilerCondition::kCompilerInvariant, "invalid deref target node");
-            }
-
         case lyric_assembler::ReferenceType::Namespace:
-            TU_RETURN_IF_NOT_OK (fragment->popValue());
             switch (astId) {
                 case lyric_schema::LyricAstId::Name:
-                    return deref_namespace(node, m_deref->currentRef, &m_deref->bindingBlock, fragment, driver);
+                    return deref_name(node, m_deref->currentRef, &m_deref->bindingBlock, fragment, driver);
                 case lyric_schema::LyricAstId::Call:
                     return invoke_call(node, m_deref->invokeBlock, m_deref->bindingBlock, fragment, driver, ctx);
                 default:
@@ -388,8 +470,11 @@ lyric_compiler::DerefNext::decide(
                         CompilerCondition::kCompilerInvariant, "invalid deref target node");
             }
 
+        case lyric_assembler::ReferenceType::Descriptor:
         case lyric_assembler::ReferenceType::Value:
-        case lyric_assembler::ReferenceType::Variable:
+        case lyric_assembler::ReferenceType::Variable: {
+            auto receiverType = driver->peekResult();
+            TU_ASSERT (receiverType.isValid());
             switch (astId) {
                 case lyric_schema::LyricAstId::Name:
                     return deref_member(node, m_deref->currentRef, receiverType, thisReceiver,
@@ -401,14 +486,22 @@ lyric_compiler::DerefNext::decide(
                     return CompilerStatus::forCondition(
                         CompilerCondition::kCompilerInvariant, "invalid deref target node");
             }
+        }
 
-        default:
+        case lyric_assembler::ReferenceType::Invalid: {
+            auto receiverType = driver->peekResult();
+            TU_ASSERT (receiverType.isValid());
             return invoke_method(node, m_deref->invokeBlock, m_deref->bindingBlock,
                 receiverType, thisReceiver, fragment, driver, ctx);
+        }
+
+        default:
+            return CompilerStatus::forCondition(
+                CompilerCondition::kCompilerInvariant, "invalid next deref target");
     }
 }
 
-lyric_compiler::DerefMethod::DerefMethod(
+lyric_compiler::DataDerefMethod::DataDerefMethod(
     const lyric_common::TypeDef &receiverType,
     lyric_assembler::BlockHandle *bindingBlock,
     lyric_assembler::BlockHandle *invokeBlock,
@@ -426,7 +519,7 @@ lyric_compiler::DerefMethod::DerefMethod(
 }
 
 tempo_utils::Status
-lyric_compiler::DerefMethod::after(
+lyric_compiler::DataDerefMethod::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::AfterContext &ctx)
@@ -444,4 +537,77 @@ lyric_compiler::DerefMethod::after(
 
     // push the method return
     return driver->pushResult(returnType);
+}
+
+lyric_compiler::DataDerefLast::DataDerefLast(
+    lyric_compiler::DataDeref *deref,
+    lyric_assembler::BlockHandle *block,
+    lyric_compiler::CompilerScanDriver *driver)
+    : BaseChoice(block, driver),
+      m_deref(deref)
+{
+    TU_ASSERT (m_deref != nullptr);
+}
+
+tempo_utils::Status
+lyric_compiler::DataDerefLast::decide(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    lyric_compiler::DecideContext &ctx)
+{
+    if (!node->isNamespace(lyric_schema::kLyricAstNs))
+        return {};
+    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
+    auto astId = resource->getId();
+
+    auto *driver = getDriver();
+    auto *fragment = m_deref->fragment;
+
+    auto thisReceiver = m_deref->thisReceiver;
+    if (thisReceiver) {
+        m_deref->thisReceiver = false;
+    }
+
+    switch (m_deref->currentRef.referenceType) {
+
+        case lyric_assembler::ReferenceType::Namespace:
+            switch (astId) {
+                case lyric_schema::LyricAstId::Name:
+                    return deref_namespace(node, m_deref->currentRef, &m_deref->bindingBlock, fragment, driver);
+                case lyric_schema::LyricAstId::Call:
+                    return invoke_call(node, m_deref->invokeBlock, m_deref->bindingBlock, fragment, driver, ctx);
+                default:
+                    return CompilerStatus::forCondition(
+                        CompilerCondition::kCompilerInvariant, "invalid deref target node");
+            }
+
+        case lyric_assembler::ReferenceType::Descriptor:
+        case lyric_assembler::ReferenceType::Value:
+        case lyric_assembler::ReferenceType::Variable: {
+            auto receiverType = driver->peekResult();
+            TU_ASSERT (receiverType.isValid());
+            switch (astId) {
+                case lyric_schema::LyricAstId::Name:
+                    return deref_member(node, m_deref->currentRef, receiverType, thisReceiver,
+                                        m_deref->bindingBlock, fragment, driver);
+                case lyric_schema::LyricAstId::Call:
+                    return invoke_method(node, m_deref->invokeBlock, m_deref->bindingBlock,
+                                         receiverType, thisReceiver, fragment, driver, ctx);
+                default:
+                    return CompilerStatus::forCondition(
+                        CompilerCondition::kCompilerInvariant, "invalid deref target node");
+            }
+        }
+
+        case lyric_assembler::ReferenceType::Invalid: {
+            auto receiverType = driver->peekResult();
+            TU_ASSERT (receiverType.isValid());
+            return invoke_method(node, m_deref->invokeBlock, m_deref->bindingBlock,
+                receiverType, thisReceiver, fragment, driver, ctx);
+        }
+
+        default:
+            return CompilerStatus::forCondition(
+                CompilerCondition::kCompilerInvariant, "invalid last deref target");
+    }
 }

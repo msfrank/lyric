@@ -95,7 +95,8 @@ lyric_rewriter::LyricAstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNo
             break;
 
         // sequence forms
-        case lyric_schema::LyricAstId::Deref:
+        case lyric_schema::LyricAstId::DataDeref:
+        case lyric_schema::LyricAstId::SymbolDeref:
         case lyric_schema::LyricAstId::New:
         case lyric_schema::LyricAstId::Block:
         case lyric_schema::LyricAstId::Lambda:

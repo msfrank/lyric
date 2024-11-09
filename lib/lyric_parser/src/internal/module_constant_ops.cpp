@@ -56,33 +56,6 @@ lyric_parser::internal::ModuleConstantOps::exitNilLiteral(ModuleParser::NilLiter
 }
 
 void
-lyric_parser::internal::ModuleConstantOps::exitSymbolLiteral(ModuleParser::SymbolLiteralContext *ctx)
-{
-    std::vector<std::string> parts;
-    for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
-        if (ctx->Identifier(i) == nullptr)
-            continue;
-        auto *id = ctx->Identifier(i);
-        auto location = get_token_location(id->getSymbol());
-        auto part = id->getText();
-        if (part.empty())
-            m_state->throwSyntaxError(location, "symbol literal part is empty");
-        parts.push_back(part);
-    }
-    lyric_common::SymbolPath symbolPath(parts);
-
-    auto *token = ctx->getStart();
-    auto location = get_token_location(token);
-
-    if (parts.empty())
-        m_state->throwSyntaxError(location, "symbol literal has no parts");
-
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolRefClass, location);
-    literalNode->putAttr(kLyricAstSymbolPath, symbolPath);
-    m_state->pushNode(literalNode);
-}
-
-void
 lyric_parser::internal::ModuleConstantOps::exitDecimalInteger(ModuleParser::DecimalIntegerContext *ctx)
 {
     auto *token = ctx->DecimalInteger()->getSymbol();

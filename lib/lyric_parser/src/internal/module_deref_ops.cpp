@@ -19,7 +19,7 @@ lyric_parser::internal::ModuleDerefOps::enterLiteralExpression(ModuleParser::Lit
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDerefClass, location);
+    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDataDerefClass, location);
     m_state->pushNode(derefNode);
 }
 
@@ -28,7 +28,7 @@ lyric_parser::internal::ModuleDerefOps::enterGroupingExpression(ModuleParser::Gr
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDerefClass, location);
+    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDataDerefClass, location);
     m_state->pushNode(derefNode);
 }
 
@@ -37,7 +37,7 @@ lyric_parser::internal::ModuleDerefOps::enterThisExpression(ModuleParser::ThisEx
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDerefClass, location);
+    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDataDerefClass, location);
     m_state->pushNode(derefNode);
 }
 
@@ -46,7 +46,7 @@ lyric_parser::internal::ModuleDerefOps::enterNameExpression(ModuleParser::NameEx
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDerefClass, location);
+    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDataDerefClass, location);
     m_state->pushNode(derefNode);
 }
 
@@ -55,7 +55,7 @@ lyric_parser::internal::ModuleDerefOps::enterCallExpression(ModuleParser::CallEx
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDerefClass, location);
+    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDataDerefClass, location);
     m_state->pushNode(derefNode);
 }
 
@@ -70,7 +70,7 @@ lyric_parser::internal::ModuleDerefOps::exitDerefLiteral(ModuleParser::DerefLite
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDerefClass);
+    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
 
     // otherwise append literal to the deref
     derefNode->appendChild(literalNode);
@@ -88,7 +88,7 @@ lyric_parser::internal::ModuleDerefOps::exitDerefGrouping(ModuleParser::DerefGro
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDerefClass);
+    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -111,7 +111,7 @@ lyric_parser::internal::ModuleDerefOps::exitThisSpec(ModuleParser::ThisSpecConte
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDerefClass);
+    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
 
     // otherwise append this to the deref
     derefNode->appendChild(thisNode);
@@ -132,7 +132,7 @@ lyric_parser::internal::ModuleDerefOps::exitNameSpec(ModuleParser::NameSpecConte
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDerefClass);
+    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
 
     // otherwise append name to the deref
     derefNode->appendChild(nameNode);
@@ -186,7 +186,7 @@ lyric_parser::internal::ModuleDerefOps::exitCallSpec(ModuleParser::CallSpecConte
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDerefClass);
+    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
 
     // otherwise append call to the deref
     derefNode->appendChild(callNode);
@@ -207,7 +207,7 @@ lyric_parser::internal::ModuleDerefOps::exitDerefMember(ModuleParser::DerefMembe
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDerefClass);
+    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
 
     // otherwise append name to the deref
     derefNode->appendChild(nameNode);
@@ -260,7 +260,7 @@ lyric_parser::internal::ModuleDerefOps::exitDerefMethod(ModuleParser::DerefMetho
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDerefClass);
+    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
 
     // otherwise append call to the deref
     derefNode->appendChild(callNode);
@@ -273,7 +273,7 @@ lyric_parser::internal::ModuleDerefOps::exitLiteralExpression(ModuleParser::Lite
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDerefClass);
+    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
 
     // if deref only contains one element, then simplify the expression
     if (derefNode->numChildren() == 1) {
@@ -290,7 +290,7 @@ lyric_parser::internal::ModuleDerefOps::exitGroupingExpression(ModuleParser::Gro
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDerefClass);
+    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
 
     // if deref only contains one element, then simplify the expression
     if (derefNode->numChildren() == 1) {
@@ -313,4 +313,31 @@ lyric_parser::internal::ModuleDerefOps::exitNameExpression(ModuleParser::NameExp
 void
 lyric_parser::internal::ModuleDerefOps::exitCallExpression(ModuleParser::CallExpressionContext *ctx)
 {
+}
+
+void
+lyric_parser::internal::ModuleDerefOps::exitSymbolExpression(ModuleParser::SymbolExpressionContext *ctx)
+{
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolDerefClass, location);
+
+    for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
+        if (ctx->Identifier(i) == nullptr)
+            continue;
+        auto *id = ctx->Identifier(i);
+        location = get_token_location(id->getSymbol());
+        auto identifier = id->getText();
+        if (identifier.empty())
+            m_state->throwSyntaxError(location, "symbol expression identifier is empty");
+        auto *nameNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNameClass, location);
+        nameNode->putAttr(kLyricAstIdentifier, identifier);
+        derefNode->appendChild(nameNode);
+    }
+
+    if (derefNode->numChildren() == 0)
+        m_state->throwSyntaxError(location, "symbol expression is empty");
+
+    m_state->pushNode(derefNode);
 }

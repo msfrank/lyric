@@ -11,7 +11,7 @@ TEST(CoreNamespace, EvaluateDeclareNamespace)
     auto result = runModule(R"(
         namespace foo {
         }
-        foo
+        #foo
     )");
 
     auto state = result.getResult().getInterpreterState().lock();

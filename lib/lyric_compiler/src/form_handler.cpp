@@ -8,17 +8,19 @@
 #include <lyric_compiler/def_handler.h>
 #include <lyric_compiler/defclass_handler.h>
 #include <lyric_compiler/defconcept_handler.h>
+#include <lyric_compiler/defenum_handler.h>
 #include <lyric_compiler/definstance_handler.h>
 #include <lyric_compiler/defstatic_handler.h>
 #include <lyric_compiler/defstruct_handler.h>
-#include <lyric_compiler/deref_handler.h>
+#include <lyric_compiler/data_deref_handler.h>
 #include <lyric_compiler/deref_utils.h>
 #include <lyric_compiler/form_handler.h>
 #include <lyric_compiler/iteration_handler.h>
 #include <lyric_compiler/lambda_handler.h>
-#include <lyric_compiler/namespace_handler.h>
 #include <lyric_compiler/new_handler.h>
+#include <lyric_compiler/symbol_deref_handler.h>
 #include <lyric_compiler/unary_operation_handler.h>
+#include <lyric_compiler/using_handler.h>
 #include <lyric_compiler/variable_handler.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
@@ -78,15 +80,14 @@ lyric_compiler::TerminalFormBehavior::enter(
             return constant_string(node, m_block, m_fragment, m_driver);
         case lyric_schema::LyricAstId::Url:
             return constant_url(node, m_block, m_fragment, m_driver);
-        case lyric_schema::LyricAstId::SymbolRef:
-            return constant_symbol(node, m_block, m_fragment, m_driver);
         case lyric_schema::LyricAstId::This: {
             lyric_assembler::DataReference unusedRef;
             return deref_this(unusedRef, m_block, m_fragment, m_driver);
         }
         case lyric_schema::LyricAstId::Name: {
+            lyric_assembler::BlockHandle *currentBlock = m_block;
             lyric_assembler::DataReference unusedRef;
-            return deref_name(node, unusedRef, m_block, m_fragment, m_driver);
+            return deref_name(node, unusedRef, &currentBlock, m_fragment, m_driver);
         }
         default:
             return CompilerStatus::forCondition(
@@ -132,7 +133,6 @@ node_is_valid_for_phrase(
         case lyric_schema::LyricAstId::Char:
         case lyric_schema::LyricAstId::String:
         case lyric_schema::LyricAstId::Url:
-        case lyric_schema::LyricAstId::SymbolRef:
         case lyric_schema::LyricAstId::Name:
         case lyric_schema::LyricAstId::This:
         case lyric_schema::LyricAstId::Call:
@@ -150,7 +150,8 @@ node_is_valid_for_phrase(
         case lyric_schema::LyricAstId::And:
         case lyric_schema::LyricAstId::Or:
         case lyric_schema::LyricAstId::Not:
-        case lyric_schema::LyricAstId::Deref:
+        case lyric_schema::LyricAstId::DataDeref:
+        case lyric_schema::LyricAstId::SymbolDeref:
         case lyric_schema::LyricAstId::New:
         case lyric_schema::LyricAstId::Block:
         case lyric_schema::LyricAstId::Cond:
@@ -258,7 +259,6 @@ lyric_compiler::FormChoice::decide(
         case lyric_schema::LyricAstId::Char:
         case lyric_schema::LyricAstId::String:
         case lyric_schema::LyricAstId::Url:
-        case lyric_schema::LyricAstId::SymbolRef:
         case lyric_schema::LyricAstId::This:
         case lyric_schema::LyricAstId::Name: {
             auto terminal = std::make_unique<TerminalFormBehavior>(
@@ -275,9 +275,15 @@ lyric_compiler::FormChoice::decide(
             break;
         }
 
-        // deref form
-        case lyric_schema::LyricAstId::Deref: {
-            auto deref = std::make_unique<DerefHandler>(
+        // deref forms
+        case lyric_schema::LyricAstId::DataDeref: {
+            auto deref = std::make_unique<DataDerefHandler>(
+                isSideEffect, m_fragment, block, driver);
+            ctx.setGrouping(std::move(deref));
+            break;
+        }
+        case lyric_schema::LyricAstId::SymbolDeref: {
+            auto deref = std::make_unique<SymbolDerefHandler>(
                 isSideEffect, m_fragment, block, driver);
             ctx.setGrouping(std::move(deref));
             break;
@@ -404,6 +410,13 @@ lyric_compiler::FormChoice::decide(
         }
 
         // concept definition form
+        case lyric_schema::LyricAstId::DefEnum: {
+            auto def = std::make_unique<DefEnumHandler>(isSideEffect, block, driver);
+            ctx.setGrouping(std::move(def));
+            break;
+        }
+
+        // concept definition form
         case lyric_schema::LyricAstId::DefInstance: {
             auto def = std::make_unique<DefInstanceHandler>(isSideEffect, block, driver);
             ctx.setGrouping(std::move(def));
@@ -420,6 +433,13 @@ lyric_compiler::FormChoice::decide(
         // struct definition form
         case lyric_schema::LyricAstId::DefStruct: {
             auto def = std::make_unique<DefStructHandler>(isSideEffect, block, driver);
+            ctx.setGrouping(std::move(def));
+            break;
+        }
+
+        // using statement form
+        case lyric_schema::LyricAstId::Using: {
+            auto def = std::make_unique<UsingHandler>(isSideEffect, block, driver);
             ctx.setGrouping(std::move(def));
             break;
         }

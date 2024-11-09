@@ -26,17 +26,20 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/defclass_utils.h
     include/lyric_compiler/defconcept_handler.h
     include/lyric_compiler/defconcept_utils.h
+    include/lyric_compiler/defenum_handler.h
+    include/lyric_compiler/defenum_utils.h
     include/lyric_compiler/definstance_handler.h
     include/lyric_compiler/definstance_utils.h
     include/lyric_compiler/defstatic_handler.h
     include/lyric_compiler/defstruct_handler.h
     include/lyric_compiler/defstruct_utils.h
-    include/lyric_compiler/deref_handler.h
+    include/lyric_compiler/data_deref_handler.h
     include/lyric_compiler/deref_utils.h
     include/lyric_compiler/entry_handler.h
     include/lyric_compiler/impl_handler.h
     include/lyric_compiler/iteration_handler.h
     include/lyric_compiler/lambda_handler.h
+    include/lyric_compiler/lambda_utils.h
     include/lyric_compiler/lyric_compiler.h
     include/lyric_compiler/member_handler.h
     include/lyric_compiler/method_handler.h
@@ -47,7 +50,9 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/pack_handler.h
     include/lyric_compiler/proc_handler.h
     include/lyric_compiler/resolve_utils.h
+    include/lyric_compiler/symbol_deref_handler.h
     include/lyric_compiler/unary_operation_handler.h
+    include/lyric_compiler/using_handler.h
     include/lyric_compiler/variable_handler.h
     include/lyric_compiler/visitor_context.h
 )
@@ -72,17 +77,20 @@ target_sources(lyric_compiler PRIVATE
     src/defclass_utils.cpp
     src/defconcept_handler.cpp
     src/defconcept_utils.cpp
+    src/defenum_handler.cpp
+    src/defenum_utils.cpp
     src/definstance_handler.cpp
     src/definstance_utils.cpp
     src/defstatic_handler.cpp
     src/defstruct_handler.cpp
     src/defstruct_utils.cpp
-    src/deref_handler.cpp
+    src/data_deref_handler.cpp
     src/deref_utils.cpp
     src/entry_handler.cpp
     src/impl_handler.cpp
     src/iteration_handler.cpp
     src/lambda_handler.cpp
+    src/lambda_utils.cpp
     src/lyric_compiler.cpp
     src/member_handler.cpp
     src/method_handler.cpp
@@ -93,7 +101,9 @@ target_sources(lyric_compiler PRIVATE
     src/pack_handler.cpp
     src/proc_handler.cpp
     src/resolve_utils.cpp
+    src/symbol_deref_handler.cpp
     src/unary_operation_handler.cpp
+    src/using_handler.cpp
     src/variable_handler.cpp
     src/visitor_context.cpp
     )

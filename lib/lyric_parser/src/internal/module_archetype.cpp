@@ -272,11 +272,6 @@ void lyric_parser::internal::ModuleArchetype::exitUrlLiteral(ModuleParser::UrlLi
     return ModuleConstantOps::exitUrlLiteral(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitSymbolLiteral(ModuleParser::SymbolLiteralContext *ctx)
-{
-    return ModuleConstantOps::exitSymbolLiteral(ctx);
-}
-
 /*
  * logical ops
  */
@@ -644,6 +639,11 @@ void lyric_parser::internal::ModuleArchetype::exitNameExpression(ModuleParser::N
 void lyric_parser::internal::ModuleArchetype::exitCallExpression(ModuleParser::CallExpressionContext *ctx)
 {
     return ModuleDerefOps::exitCallExpression(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitSymbolExpression(ModuleParser::SymbolExpressionContext *ctx)
+{
+    return ModuleDerefOps::exitSymbolExpression(ctx);
 }
 
 /*

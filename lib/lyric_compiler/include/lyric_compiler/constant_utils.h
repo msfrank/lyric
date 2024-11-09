@@ -58,12 +58,6 @@ namespace lyric_compiler {
         lyric_assembler::BlockHandle *block,
         lyric_assembler::CodeFragment *fragment,
         CompilerScanDriver *driver);
-
-    tempo_utils::Status constant_symbol(
-        const lyric_parser::ArchetypeNode *node,
-        lyric_assembler::BlockHandle *block,
-        lyric_assembler::CodeFragment *fragment,
-        CompilerScanDriver *driver);
 }
 
 #endif // LYRIC_COMPILER_CONSTANT_UTILS_H

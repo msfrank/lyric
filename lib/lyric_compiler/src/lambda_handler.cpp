@@ -1,6 +1,7 @@
 
 #include <lyric_compiler/compiler_utils.h>
 #include <lyric_compiler/lambda_handler.h>
+#include <lyric_compiler/lambda_utils.h>
 #include <lyric_compiler/pack_handler.h>
 #include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
@@ -83,22 +84,42 @@ lyric_compiler::LambdaHandler::after(
 {
     TU_LOG_INFO << "after LambdaHandler@" << this;
 
+    auto *block = getBlock();
     auto *driver = getDriver();
+    auto *fundamentalCache = driver->getFundamentalCache();
+    auto *symbolCache = driver->getSymbolCache();
+    auto *typeSystem = driver->getTypeSystem();
     auto *procBuilder = m_lambda.procHandle->procCode();
-    auto *fragment = procBuilder->rootFragment();
+    auto *lambdaFragment = procBuilder->rootFragment();
 
     // add return instruction
-    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
+    TU_RETURN_IF_NOT_OK (lambdaFragment->returnToCaller());
 
     // finalize the lambda call
     TU_RETURN_IF_NOT_OK (m_lambda.callSymbol->finalizeCall());
 
+    // define the lambda builder
+    lyric_assembler::CallSymbol *builderCall;
+    TU_ASSIGN_OR_RETURN (builderCall, define_lambda_builder(
+        m_lambda.callSymbol, block, fundamentalCache, symbolCache, typeSystem));
+
+    // invoke the lambda builder
+    lyric_assembler::CallableInvoker invoker;
+    TU_RETURN_IF_NOT_OK (block->prepareFunction(builderCall->getName(), invoker));
+
+    lyric_typing::CallsiteReifier reifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(invoker));
+
+    // the return value of the lambda builder is the lambda closure
+    lyric_common::TypeDef resultType;
+    TU_ASSIGN_OR_RETURN (resultType, invoker.invoke(block, reifier, m_fragment));
+
     if (m_isSideEffect) {
-        auto resultType = driver->peekResult();
-        TU_RETURN_IF_NOT_OK (driver->popResult());
         if (resultType.getType() != lyric_common::TypeDefType::NoReturn) {
             TU_RETURN_IF_NOT_OK (m_fragment->popValue());
         }
+    } else {
+        TU_RETURN_IF_NOT_OK (driver->pushResult(resultType));
     }
 
     return {};

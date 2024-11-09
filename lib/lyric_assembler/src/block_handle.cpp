@@ -776,11 +776,9 @@ lyric_assembler::BlockHandle::declareFunction(
 tempo_utils::Status
 lyric_assembler::BlockHandle::prepareFunction(const std::string &name, CallableInvoker &invoker)
 {
-    auto resolveDefinitionResult = resolveDefinition({name});
-    if (resolveDefinitionResult.isStatus())
-        return resolveDefinitionResult.getStatus();
+    lyric_common::SymbolUrl functionUrl;
+    TU_ASSIGN_OR_RETURN (functionUrl, resolveDefinition({name}));
 
-    auto functionUrl = resolveDefinitionResult.getResult();
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(functionUrl));
     if (symbol->getSymbolType() != SymbolType::CALL)

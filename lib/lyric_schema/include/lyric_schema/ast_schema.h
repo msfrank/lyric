@@ -57,7 +57,8 @@ namespace lyric_schema {
         InplaceMul,                // inplace multiply assignment
         InplaceDiv,                // inplace divide assignment
 
-        Deref,                     // dereference expression
+        DataDeref,                 // data dereference expression
+        SymbolDeref,               // symbol dereference expression
         This,                      // resolve this reference
         Name,                      // resolve symbol
         Call,                      // call named function or method
@@ -220,8 +221,10 @@ namespace lyric_schema {
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInplaceDivClass(
         &kLyricAstNs, LyricAstId::InplaceDiv, "InplaceDiv");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDerefClass(
-        &kLyricAstNs, LyricAstId::Deref, "Deref");
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDataDerefClass(
+        &kLyricAstNs, LyricAstId::DataDeref, "DataDeref");
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSymbolDerefClass(
+        &kLyricAstNs, LyricAstId::SymbolDeref, "SymbolDeref");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstThisClass(
         &kLyricAstNs, LyricAstId::This, "This");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNameClass(
@@ -454,7 +457,8 @@ namespace lyric_schema {
         &kLyricAstInplaceMulClass,
         &kLyricAstInplaceDivClass,
 
-        &kLyricAstDerefClass,
+        &kLyricAstDataDerefClass,
+        &kLyricAstSymbolDerefClass,
         &kLyricAstThisClass,
         &kLyricAstNameClass,
         &kLyricAstCallClass,

@@ -30,6 +30,7 @@ namespace lyric_parser::internal {
         void exitThisExpression(ModuleParser::ThisExpressionContext *ctx);
         void exitNameExpression(ModuleParser::NameExpressionContext *ctx);
         void exitCallExpression(ModuleParser::CallExpressionContext *ctx);
+        void exitSymbolExpression(ModuleParser::SymbolExpressionContext *ctx);
 
     private:
         ArchetypeState *m_state;

@@ -1,5 +1,5 @@
-#ifndef LYRIC_COMPILER_DEREF_HANDLER_H
-#define LYRIC_COMPILER_DEREF_HANDLER_H
+#ifndef LYRIC_COMPILER_DATA_DEREF_HANDLER_H
+#define LYRIC_COMPILER_DATA_DEREF_HANDLER_H
 
 #include <lyric_assembler/call_symbol.h>
 
@@ -10,7 +10,7 @@
 
 namespace lyric_compiler {
 
-    struct Deref {
+    struct DataDeref {
         lyric_assembler::CodeFragment *fragment = nullptr;
         lyric_assembler::BlockHandle *bindingBlock = nullptr;
         lyric_assembler::BlockHandle *invokeBlock = nullptr;
@@ -18,9 +18,9 @@ namespace lyric_compiler {
         bool thisReceiver = false;
     };
 
-    class DerefHandler : public BaseGrouping {
+    class DataDerefHandler : public BaseGrouping {
     public:
-        DerefHandler(
+        DataDerefHandler(
             bool isSideEffect,
             lyric_assembler::CodeFragment *fragment,
             lyric_assembler::BlockHandle *block,
@@ -38,12 +38,12 @@ namespace lyric_compiler {
 
     private:
         bool m_isSideEffect;
-        Deref m_deref;
+        DataDeref m_deref;
     };
 
-    class DerefInitial : public BaseChoice {
+    class DataDerefSingle : public BaseChoice {
     public:
-        DerefInitial(Deref *deref, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
+        DataDerefSingle(DataDeref *deref, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
 
         tempo_utils::Status decide(
             const lyric_parser::ArchetypeState *state,
@@ -51,12 +51,25 @@ namespace lyric_compiler {
             DecideContext &ctx) override;
 
     private:
-        Deref *m_deref;
+        DataDeref *m_deref;
     };
 
-    class DerefCall : public BaseInvokableHandler {
+    class DataDerefFirst : public BaseChoice {
     public:
-        DerefCall(
+        DataDerefFirst(DataDeref *deref, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
+
+        tempo_utils::Status decide(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            DecideContext &ctx) override;
+
+    private:
+        DataDeref *m_deref;
+    };
+
+    class DataDerefCall : public BaseInvokableHandler {
+    public:
+        DataDerefCall(
             lyric_assembler::BlockHandle *bindingBlock,
             lyric_assembler::BlockHandle *invokeBlock,
             std::unique_ptr<lyric_assembler::CallableInvoker> &&invoker,
@@ -74,9 +87,9 @@ namespace lyric_compiler {
         std::unique_ptr<lyric_typing::CallsiteReifier> m_reifier;
     };
 
-    class DerefNext : public BaseChoice {
+    class DataDerefNext : public BaseChoice {
     public:
-        DerefNext(Deref *deref, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
+        DataDerefNext(DataDeref *deref, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
 
         tempo_utils::Status decide(
             const lyric_parser::ArchetypeState *state,
@@ -84,12 +97,12 @@ namespace lyric_compiler {
             DecideContext &ctx) override;
 
     private:
-        Deref *m_deref;
+        DataDeref *m_deref;
     };
 
-    class DerefMethod : public BaseInvokableHandler {
+    class DataDerefMethod : public BaseInvokableHandler {
     public:
-        DerefMethod(
+        DataDerefMethod(
             const lyric_common::TypeDef &receiverType,
             lyric_assembler::BlockHandle *bindingBlock,
             lyric_assembler::BlockHandle *invokeBlock,
@@ -108,6 +121,19 @@ namespace lyric_compiler {
         std::unique_ptr<lyric_assembler::CallableInvoker> m_invoker;
         std::unique_ptr<lyric_typing::CallsiteReifier> m_reifier;
     };
+
+    class DataDerefLast : public BaseChoice {
+    public:
+        DataDerefLast(DataDeref *deref, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
+
+        tempo_utils::Status decide(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            DecideContext &ctx) override;
+
+    private:
+        DataDeref *m_deref;
+    };
 }
 
-#endif // LYRIC_COMPILER_DEREF_HANDLER_H
+#endif // LYRIC_COMPILER_DATA_DEREF_HANDLER_H
