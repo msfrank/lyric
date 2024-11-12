@@ -41,6 +41,8 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/lambda_handler.h
     include/lyric_compiler/lambda_utils.h
     include/lyric_compiler/lyric_compiler.h
+    include/lyric_compiler/match_handler.h
+    include/lyric_compiler/match_utils.h
     include/lyric_compiler/member_handler.h
     include/lyric_compiler/method_handler.h
     include/lyric_compiler/namespace_handler.h
@@ -51,7 +53,9 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/proc_handler.h
     include/lyric_compiler/resolve_utils.h
     include/lyric_compiler/symbol_deref_handler.h
+    include/lyric_compiler/type_utils.h
     include/lyric_compiler/unary_operation_handler.h
+    include/lyric_compiler/unpack_handler.h
     include/lyric_compiler/using_handler.h
     include/lyric_compiler/variable_handler.h
     include/lyric_compiler/visitor_context.h
@@ -92,6 +96,8 @@ target_sources(lyric_compiler PRIVATE
     src/lambda_handler.cpp
     src/lambda_utils.cpp
     src/lyric_compiler.cpp
+    src/match_handler.cpp
+    src/match_utils.cpp
     src/member_handler.cpp
     src/method_handler.cpp
     src/namespace_handler.cpp
@@ -102,7 +108,9 @@ target_sources(lyric_compiler PRIVATE
     src/proc_handler.cpp
     src/resolve_utils.cpp
     src/symbol_deref_handler.cpp
+    src/type_utils.cpp
     src/unary_operation_handler.cpp
+    src/unpack_handler.cpp
     src/using_handler.cpp
     src/variable_handler.cpp
     src/visitor_context.cpp

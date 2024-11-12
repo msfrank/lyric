@@ -108,6 +108,7 @@ TEST(CoreMatch, TestMatchIntrinsic)
             when t1: Char       1
             when t2: Int        2
             when t3: Float      3
+            else                nil
         }
     )");
 
@@ -209,6 +210,7 @@ TEST(CoreMatch, TestMatchClass)
             when t1: Test1      1
             when t2: Test2      2
             when t3: Test3      3
+            else                nil
         }
     )");
 
@@ -227,14 +229,11 @@ TEST(CoreMatch, TestMatchEnum)
 
         val x: Any = West
         match x {
-            when North
-                1
-            when South
-                2
-            when East
-                3
-            when West
-                4
+            when North          1
+            when South          2
+            when East           3
+            when West           4
+            else                nil
         }
     )");
 
@@ -256,8 +255,8 @@ TEST(CoreMatch, TestMatchDerefAlias)
 
         val x: Any = Test1{42}
         match x {
-            when t1: Test1
-                t1.GetX()
+            when t1: Test1      t1.GetX()
+            else                nil
         }
     )");
 

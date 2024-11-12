@@ -1403,6 +1403,7 @@ lyric_assembler::BlockHandle::declareAlias(
     const DataReference &targetRef)
 {
     auto *fundamentalCache = m_state->fundamentalCache();
+    auto *symbolCache = m_state->symbolCache();
 
     if (m_bindings.contains(alias))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
@@ -1410,7 +1411,7 @@ lyric_assembler::BlockHandle::declareAlias(
             "cannot declare alias {}; symbol is already defined", alias);
 
     // verify binding symbol exists in the symbol cache
-    TU_RETURN_IF_STATUS (m_state->symbolCache()->getOrImportSymbol(targetRef.symbolUrl));
+    TU_RETURN_IF_STATUS (symbolCache->getOrImportSymbol(targetRef.symbolUrl));
 
     SymbolBinding binding;
 
@@ -1442,6 +1443,52 @@ lyric_assembler::BlockHandle::declareAlias(
 
         default:
             throwAssemblerInvariant("failed to declare alias to {}; invalid reference type",
+                targetRef.symbolUrl.toString());
+    }
+
+    m_bindings[alias] = binding;
+    return binding;
+}
+
+/**
+ *
+ */
+tempo_utils::Result<lyric_assembler::SymbolBinding>
+lyric_assembler::BlockHandle::declareAlias(
+    const std::string &alias,
+    const DataReference &targetRef,
+    const lyric_common::TypeDef &aliasType)
+{
+    auto *symbolCache = m_state->symbolCache();
+
+    if (m_bindings.contains(alias))
+        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+            tempo_tracing::LogSeverity::kError,
+            "cannot declare alias {}; symbol is already defined", alias);
+
+    // verify binding symbol exists in the symbol cache
+    TU_RETURN_IF_STATUS (symbolCache->getOrImportSymbol(targetRef.symbolUrl));
+
+    SymbolBinding binding;
+
+    switch (targetRef.referenceType) {
+
+        case ReferenceType::Value:
+            binding.bindingType = BindingType::Value;
+            binding.symbolUrl = targetRef.symbolUrl;
+            binding.typeDef = aliasType;
+            break;
+
+        case ReferenceType::Variable:
+            binding.bindingType = BindingType::Variable;
+            binding.symbolUrl = targetRef.symbolUrl;
+            binding.typeDef = aliasType;
+            break;
+
+        default:
+            return logAndContinue(AssemblerCondition::kAssemblerInvariant,
+                tempo_tracing::LogSeverity::kError,
+                "failed to declare alias to {}; invalid reference type",
                 targetRef.symbolUrl.toString());
     }
 

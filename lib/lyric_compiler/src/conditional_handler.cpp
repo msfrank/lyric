@@ -27,15 +27,15 @@ lyric_compiler::IfHandler::before(
     auto *driver = getDriver();
 
     for (int i = 0; i < node->numChildren(); i++) {
-        auto consequent = std::make_unique<WhenConsequent>();
-        auto when = std::make_unique<WhenHandler>(
+        auto consequent = std::make_unique<ConditionalConsequent>();
+        auto when = std::make_unique<ConditionalWhen>(
             consequent.get(), m_fragment, /* requiresResult= */ false, block, driver);
         m_conditional.consequents.push_back(std::move(consequent));
         ctx.appendGrouping(std::move(when));
     }
 
     if (node->hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
-        m_conditional.alternative = std::make_unique<WhenAlternative>();
+        m_conditional.alternative = std::make_unique<ConditionalAlternative>();
         auto defaultBlock = std::make_unique<lyric_assembler::BlockHandle>(
             block->blockProc(), block, block->blockState());
         auto body = std::make_unique<BlockHandler>(
@@ -56,9 +56,9 @@ lyric_compiler::IfHandler::after(
 
     // if there was a default then pop the expression type
     if (m_conditional.alternative) {
-        m_conditional.alternative->expressionType = driver->peekResult();
+        m_conditional.alternative->alternativeType = driver->peekResult();
         TU_RETURN_IF_NOT_OK (driver->popResult());
-        if (m_conditional.alternative->expressionType.getType() != lyric_common::TypeDefType::NoReturn) {
+        if (m_conditional.alternative->alternativeType.getType() != lyric_common::TypeDefType::NoReturn) {
             TU_RETURN_IF_NOT_OK (m_fragment->popValue());
         }
     }
@@ -116,16 +116,16 @@ lyric_compiler::CondHandler::before(
     auto *driver = getDriver();
 
     for (int i = 0; i < node->numChildren(); i++) {
-        auto consequent = std::make_unique<WhenConsequent>();
-        auto when = std::make_unique<WhenHandler>(
+        auto consequent = std::make_unique<ConditionalConsequent>();
+        auto when = std::make_unique<ConditionalWhen>(
             consequent.get(), m_fragment, /* requiresResult= */ true, block, driver);
         m_conditional.consequents.push_back(std::move(consequent));
         ctx.appendGrouping(std::move(when));
     }
 
     if (node->hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
-        m_conditional.alternative = std::make_unique<WhenAlternative>();
-        auto dfl = std::make_unique<WhenDefault>(
+        m_conditional.alternative = std::make_unique<ConditionalAlternative>();
+        auto dfl = std::make_unique<ConditionalDefault>(
             m_conditional.alternative.get(), m_fragment, /* requiresResult= */ true, block, driver);
         ctx.appendChoice(std::move(dfl));
     }
@@ -145,11 +145,11 @@ lyric_compiler::CondHandler::after(
 
     // if there was a default then pop the expression type
     if (m_conditional.alternative) {
-        m_conditional.alternative->expressionType = driver->peekResult();
+        m_conditional.alternative->alternativeType = driver->peekResult();
         TU_RETURN_IF_NOT_OK (driver->popResult());
     } else {
         TU_RETURN_IF_NOT_OK (m_fragment->immediateNil());
-        m_conditional.alternative->expressionType = fundamentalCache->getFundamentalType(
+        m_conditional.alternative->alternativeType = fundamentalCache->getFundamentalType(
             lyric_assembler::FundamentalSymbol::Nil);
     }
 
@@ -177,15 +177,15 @@ lyric_compiler::CondHandler::after(
     TU_RETURN_IF_NOT_OK (m_fragment->patchTarget(lastPatch.getConsequentJump(), exitLabel));
 
     // unify the set of consequent types
-    lyric_common::TypeDef resultType = consequents[0]->expressionType;
+    lyric_common::TypeDef resultType = consequents[0]->consequentType;
     for (int i = 1; i < consequents.size(); i++) {
-        auto &consequentType = consequents[i]->expressionType;
+        auto &consequentType = consequents[i]->consequentType;
         TU_ASSIGN_OR_RETURN (resultType, typeSystem->unifyAssignable(consequentType, resultType));
     }
 
     // if alternative exists then the result is a singular unified type, otherwise its
     if (alternative != nullptr) {
-        auto &alternativeType = alternative->expressionType;
+        auto &alternativeType = alternative->alternativeType;
         TU_ASSIGN_OR_RETURN (resultType, typeSystem->unifyAssignable(alternativeType, resultType));
     } else {
         auto NilType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Nil);
@@ -202,8 +202,8 @@ lyric_compiler::CondHandler::after(
     return {};
 }
 
-lyric_compiler::WhenHandler::WhenHandler(
-    WhenConsequent *consequent,
+lyric_compiler::ConditionalWhen::ConditionalWhen(
+    ConditionalConsequent *consequent,
     lyric_assembler::CodeFragment *fragment,
     bool isExpression,
     lyric_assembler::BlockHandle *block,
@@ -218,7 +218,7 @@ lyric_compiler::WhenHandler::WhenHandler(
 }
 
 tempo_utils::Status
-lyric_compiler::WhenHandler::before(
+lyric_compiler::ConditionalWhen::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
@@ -232,7 +232,7 @@ lyric_compiler::WhenHandler::before(
         FormType::Expression, m_fragment, block, driver);
     ctx.appendChoice(std::move(predicate));
 
-    auto body = std::make_unique<WhenBody>(
+    auto body = std::make_unique<ConditionalBody>(
         m_consequent, m_fragment, m_isExpression, block, driver);
     ctx.appendChoice(std::move(body));
 
@@ -240,7 +240,7 @@ lyric_compiler::WhenHandler::before(
 }
 
 tempo_utils::Status
-lyric_compiler::WhenHandler::after(
+lyric_compiler::ConditionalWhen::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
@@ -250,8 +250,8 @@ lyric_compiler::WhenHandler::after(
     auto *fundamentalCache = driver->getFundamentalCache();
     auto *typeSystem = driver->getTypeSystem();
 
-    // pop the expression type
-    m_consequent->expressionType = driver->peekResult();
+    // pop the consequent type
+    m_consequent->consequentType = driver->peekResult();
     TU_RETURN_IF_NOT_OK (driver->popResult());
 
     // pop the predicate type
@@ -269,7 +269,7 @@ lyric_compiler::WhenHandler::after(
 
     // if consequent is a statement and returns a result then pop the value
     if (!m_isExpression) {
-        if (m_consequent->expressionType.getType() != lyric_common::TypeDefType::NoReturn) {
+        if (m_consequent->consequentType.getType() != lyric_common::TypeDefType::NoReturn) {
             TU_RETURN_IF_NOT_OK (m_fragment->popValue());
         }
     }
@@ -283,8 +283,8 @@ lyric_compiler::WhenHandler::after(
     return {};
 }
 
-lyric_compiler::WhenBody::WhenBody(
-    WhenConsequent *consequent,
+lyric_compiler::ConditionalBody::ConditionalBody(
+    ConditionalConsequent *consequent,
     lyric_assembler::CodeFragment *fragment,
     bool isExpression,
     lyric_assembler::BlockHandle *block,
@@ -299,7 +299,7 @@ lyric_compiler::WhenBody::WhenBody(
 }
 
 tempo_utils::Status
-lyric_compiler::WhenBody::decide(
+lyric_compiler::ConditionalBody::decide(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     DecideContext &ctx)
@@ -315,8 +315,8 @@ lyric_compiler::WhenBody::decide(
     return {};
 }
 
-lyric_compiler::WhenDefault::WhenDefault(
-    WhenAlternative *alternative,
+lyric_compiler::ConditionalDefault::ConditionalDefault(
+    ConditionalAlternative *alternative,
     lyric_assembler::CodeFragment *fragment,
     bool isExpression,
     lyric_assembler::BlockHandle *block,
@@ -331,7 +331,7 @@ lyric_compiler::WhenDefault::WhenDefault(
 }
 
 tempo_utils::Status
-lyric_compiler::WhenDefault::decide(
+lyric_compiler::ConditionalDefault::decide(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     DecideContext &ctx)

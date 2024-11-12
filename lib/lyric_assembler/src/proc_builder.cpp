@@ -143,8 +143,12 @@ lyric_assembler::ProcBuilder::build(
         auto targetId = entry.first;
         auto patchOffset = entry.second;
         const auto &jumpLabel = m_jumpLabels.at(targetId);
-        auto labelOffset = labelOffsets.at(jumpLabel.name);
-        TU_RETURN_IF_NOT_OK (bytecodeBuilder.patch(patchOffset, labelOffset));
+        auto &labelName = jumpLabel.name;
+        auto labelOffset = labelOffsets.find(labelName);
+        if (labelOffset == labelOffsets.cend())
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "missing label '{}' for patch target {}", labelName, targetId);
+        TU_RETURN_IF_NOT_OK (bytecodeBuilder.patch(patchOffset, labelOffset->second));
     }
 
     return {};

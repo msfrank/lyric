@@ -10,22 +10,22 @@
 
 namespace lyric_compiler {
 
-    struct WhenConsequent {
+    struct ConditionalConsequent {
         lyric_assembler::JumpLabel jumpLabel;
         lyric_common::TypeDef predicateType;
-        lyric_common::TypeDef expressionType;
+        lyric_common::TypeDef consequentType;
         lyric_assembler::JumpTarget jumpTarget;
         lyric_assembler::CondWhenPatch patch;
     };
 
-    struct WhenAlternative {
+    struct ConditionalAlternative {
         lyric_assembler::JumpLabel enterLabel;
-        lyric_common::TypeDef expressionType;
+        lyric_common::TypeDef alternativeType;
     };
 
     struct Conditional {
-        std::vector<std::unique_ptr<WhenConsequent>> consequents;
-        std::unique_ptr<WhenAlternative> alternative;
+        std::vector<std::unique_ptr<ConditionalConsequent>> consequents;
+        std::unique_ptr<ConditionalAlternative> alternative;
     };
 
     class IfHandler : public BaseGrouping {
@@ -76,10 +76,10 @@ namespace lyric_compiler {
         Conditional m_conditional;
     };
 
-    class WhenHandler : public BaseGrouping {
+    class ConditionalWhen : public BaseGrouping {
     public:
-        WhenHandler(
-            WhenConsequent *consequent,
+        ConditionalWhen(
+            ConditionalConsequent *consequent,
             lyric_assembler::CodeFragment *fragment,
             bool isExpression,
             lyric_assembler::BlockHandle *block,
@@ -96,15 +96,15 @@ namespace lyric_compiler {
             AfterContext &ctx) override;
 
     private:
-        WhenConsequent *m_consequent;
+        ConditionalConsequent *m_consequent;
         lyric_assembler::CodeFragment *m_fragment;
         bool m_isExpression;
     };
 
-    class WhenBody : public BaseChoice {
+    class ConditionalBody : public BaseChoice {
     public:
-        WhenBody(
-            WhenConsequent *consequent,
+        ConditionalBody(
+            ConditionalConsequent *consequent,
             lyric_assembler::CodeFragment *fragment,
             bool isExpression,
             lyric_assembler::BlockHandle *block,
@@ -116,15 +116,15 @@ namespace lyric_compiler {
             DecideContext &ctx) override;
 
     private:
-        WhenConsequent *m_consequent;
+        ConditionalConsequent *m_consequent;
         lyric_assembler::CodeFragment *m_fragment;
         bool m_isExpression;
     };
 
-    class WhenDefault : public BaseChoice {
+    class ConditionalDefault : public BaseChoice {
     public:
-        WhenDefault(
-            WhenAlternative *alternative,
+        ConditionalDefault(
+            ConditionalAlternative *alternative,
             lyric_assembler::CodeFragment *fragment,
             bool isExpression,
             lyric_assembler::BlockHandle *block,
@@ -136,7 +136,7 @@ namespace lyric_compiler {
             DecideContext &ctx) override;
 
     private:
-        WhenAlternative *m_alternative;
+        ConditionalAlternative *m_alternative;
         lyric_assembler::CodeFragment *m_fragment;
         bool m_isExpression;
     };

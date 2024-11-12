@@ -17,6 +17,7 @@
 #include <lyric_compiler/form_handler.h>
 #include <lyric_compiler/iteration_handler.h>
 #include <lyric_compiler/lambda_handler.h>
+#include <lyric_compiler/match_handler.h>
 #include <lyric_compiler/new_handler.h>
 #include <lyric_compiler/symbol_deref_handler.h>
 #include <lyric_compiler/unary_operation_handler.h>
@@ -343,9 +344,17 @@ lyric_compiler::FormChoice::decide(
             break;
         }
 
-        // while form
+        // for form
         case lyric_schema::LyricAstId::For: {
             auto handler = std::make_unique<ForHandler>(
+                isSideEffect, m_fragment, block, driver);
+            ctx.setGrouping(std::move(handler));
+            break;
+        }
+
+        // match form
+        case lyric_schema::LyricAstId::Match: {
+            auto handler = std::make_unique<MatchHandler>(
                 isSideEffect, m_fragment, block, driver);
             ctx.setGrouping(std::move(handler));
             break;
