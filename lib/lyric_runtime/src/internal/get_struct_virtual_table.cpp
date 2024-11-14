@@ -30,9 +30,8 @@ lyric_runtime::internal::get_struct_virtual_table(
     auto structObject = structSegment->getObject().getObject();
     auto structIndex = entry->getDescriptorIndex();
     auto structDescriptor = structObject.getStruct(structIndex);
-    auto structType = DataCell::forDescriptor(
-        structSegment->lookupDescriptor(
-            lyric_object::LinkageSection::Type,
+    auto structType = DataCell::forType(
+        structSegment->lookupType(
             structDescriptor.getStructType().getDescriptorOffset()));
 
     const VirtualTable *parentTable = nullptr;

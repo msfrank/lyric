@@ -30,9 +30,8 @@ lyric_runtime::internal::get_concept_table(
     auto conceptObject = conceptSegment->getObject().getObject();
     auto conceptIndex = entry->getDescriptorIndex();
     auto conceptDescriptor = conceptObject.getConcept(conceptIndex);
-    auto conceptType = DataCell::forDescriptor(
-        conceptSegment->lookupDescriptor(
-            lyric_object::LinkageSection::Type,
+    auto conceptType = DataCell::forType(
+        conceptSegment->lookupType(
             conceptDescriptor.getConceptType().getDescriptorOffset()));
 
     const ConceptTable *parentTable = nullptr;

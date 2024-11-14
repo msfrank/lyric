@@ -160,9 +160,8 @@ allocate_type_manager(
                 lyric_runtime::InterpreterCondition::kRuntimeInvariant,
                 "invalid intrinsic mapping detected");
 
-        auto *typeDescriptor = bootstrapSegment->lookupDescriptor(
-            lyric_object::LinkageSection::Type, type.getDescriptorOffset());
-        intrinsiccache[index] = lyric_runtime::DataCell::forDescriptor(typeDescriptor);
+        auto *typeEntry = bootstrapSegment->lookupType(type.getDescriptorOffset());
+        intrinsiccache[index] = lyric_runtime::DataCell::forType(typeEntry);
     }
 
     *typeManagerPtr = new lyric_runtime::TypeManager(

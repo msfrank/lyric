@@ -3,6 +3,7 @@
 
 #include "builder_state.h"
 
-CoreExistential *build_core_Descriptor(BuilderState &state, const CoreExistential *ANyExistential);
+CoreExistential *declare_core_Descriptor(BuilderState &state, const CoreExistential *AnyExistential);
+void build_core_Descriptor(BuilderState &state, const CoreExistential *DescriptorExistential);
 
 #endif // ZURI_CORE_COMPILE_DESCRIPTOR_H

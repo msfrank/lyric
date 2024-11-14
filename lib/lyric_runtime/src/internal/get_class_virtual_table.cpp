@@ -30,9 +30,8 @@ lyric_runtime::internal::get_class_virtual_table(
     auto classObject = classSegment->getObject().getObject();
     auto classIndex = entry->getDescriptorIndex();
     auto classDescriptor = classObject.getClass(classIndex);
-    auto classType = DataCell::forDescriptor(
-        classSegment->lookupDescriptor(
-            lyric_object::LinkageSection::Type,
+    auto classType = DataCell::forType(
+        classSegment->lookupType(
             classDescriptor.getClassType().getDescriptorOffset()));
 
     const VirtualTable *parentTable = nullptr;

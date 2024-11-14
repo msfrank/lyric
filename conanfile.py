@@ -19,6 +19,7 @@ class Lyric(ConanFile):
     exports_sources = (
         'CMakeLists.txt',
         'bin/*',
+        'doc/*',
         'cmake/*',
         'lib/*',
         )

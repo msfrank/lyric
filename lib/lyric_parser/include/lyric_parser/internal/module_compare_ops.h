@@ -16,7 +16,6 @@ namespace lyric_parser::internal {
         void exitIsLessOrEqualExpression(ModuleParser::IsLessOrEqualExpressionContext *ctx);
         void exitIsGreaterThanExpression(ModuleParser::IsGreaterThanExpressionContext *ctx);
         void exitIsGreaterOrEqualExpression(ModuleParser::IsGreaterOrEqualExpressionContext *ctx);
-        void exitIsAExpression(ModuleParser::IsAExpressionContext *ctx);
 
     private:
         ArchetypeState *m_state;

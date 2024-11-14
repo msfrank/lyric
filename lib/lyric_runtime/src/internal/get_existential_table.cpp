@@ -30,9 +30,8 @@ lyric_runtime::internal::get_existential_table(
     auto existentialObject = existentialSegment->getObject().getObject();
     auto existentialIndex = entry->getDescriptorIndex();
     auto existentialDescriptor = existentialObject.getExistential(existentialIndex);
-    auto existentialType = DataCell::forDescriptor(
-        existentialSegment->lookupDescriptor(
-            lyric_object::LinkageSection::Type,
+    auto existentialType = DataCell::forType(
+        existentialSegment->lookupType(
             existentialDescriptor.getExistentialType().getDescriptorOffset()));
 
     const ExistentialTable *parentTable = nullptr;

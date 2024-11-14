@@ -30,9 +30,8 @@ lyric_runtime::internal::get_enum_virtual_table(
     auto enumObject = enumSegment->getObject().getObject();
     auto enumIndex = entry->getDescriptorIndex();
     auto enumDescriptor = enumObject.getEnum(enumIndex);
-    auto enumType = DataCell::forDescriptor(
-        enumSegment->lookupDescriptor(
-            lyric_object::LinkageSection::Type,
+    auto enumType = DataCell::forType(
+        enumSegment->lookupType(
             enumDescriptor.getEnumType().getDescriptorOffset()));
 
     const VirtualTable *parentTable = nullptr;

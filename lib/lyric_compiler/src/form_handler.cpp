@@ -20,6 +20,7 @@
 #include <lyric_compiler/match_handler.h>
 #include <lyric_compiler/new_handler.h>
 #include <lyric_compiler/symbol_deref_handler.h>
+#include <lyric_compiler/type_utils.h>
 #include <lyric_compiler/unary_operation_handler.h>
 #include <lyric_compiler/using_handler.h>
 #include <lyric_compiler/variable_handler.h>
@@ -90,6 +91,8 @@ lyric_compiler::TerminalFormBehavior::enter(
             lyric_assembler::DataReference unusedRef;
             return deref_name(node, unusedRef, &currentBlock, m_fragment, m_driver);
         }
+        case lyric_schema::LyricAstId::TypeOf:
+            return load_type(node, m_fragment, m_block, m_driver);
         default:
             return CompilerStatus::forCondition(
                 CompilerCondition::kCompilerInvariant, "expected terminal node");
@@ -142,7 +145,7 @@ node_is_valid_for_phrase(
         case lyric_schema::LyricAstId::IsLe:
         case lyric_schema::LyricAstId::IsGt:
         case lyric_schema::LyricAstId::IsGe:
-        case lyric_schema::LyricAstId::IsA:
+        case lyric_schema::LyricAstId::TypeOf:
         case lyric_schema::LyricAstId::Add:
         case lyric_schema::LyricAstId::Sub:
         case lyric_schema::LyricAstId::Mul:
@@ -261,7 +264,9 @@ lyric_compiler::FormChoice::decide(
         case lyric_schema::LyricAstId::String:
         case lyric_schema::LyricAstId::Url:
         case lyric_schema::LyricAstId::This:
-        case lyric_schema::LyricAstId::Name: {
+        case lyric_schema::LyricAstId::Name:
+        case lyric_schema::LyricAstId::TypeOf:
+        {
             auto terminal = std::make_unique<TerminalFormBehavior>(
                 isSideEffect, m_fragment, block, driver);
             ctx.setBehavior(std::move(terminal));

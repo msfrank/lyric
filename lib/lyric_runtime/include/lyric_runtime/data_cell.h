@@ -16,6 +16,7 @@ namespace lyric_runtime {
     class DescriptorEntry;
     class StatusRef;
     class StringRef;
+    class TypeEntry;
     class UrlRef;
 
     enum class DataCellType : uint8_t {
@@ -66,6 +67,7 @@ namespace lyric_runtime {
         static DataCell forDescriptor(DescriptorEntry *descriptor);
         static DataCell forRef(BaseRef *ref);
         static DataCell forString(StringRef *str);
+        static DataCell forType(TypeEntry *type);
         static DataCell forUrl(UrlRef *url);
 
         DataCellType type;
@@ -75,6 +77,7 @@ namespace lyric_runtime {
             double dbl;
             UChar32 chr;
             DescriptorEntry *descriptor;
+            TypeEntry *type;
             BaseRef *ref;
             BytesRef *bytes;
             StatusRef *status;

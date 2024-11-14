@@ -21,7 +21,7 @@ BaseFixture::SetUp()
 
     m_objectState = std::make_unique<lyric_assembler::ObjectState>(
         m_location, sharedModuleCache, m_scopeManager.get());
-    TU_RAISE_IF_NOT_OK (m_objectState->initialize());
+    TU_RAISE_IF_STATUS(m_objectState->defineRoot());
 
     m_typeSystem = std::make_unique<lyric_typing::TypeSystem>(m_objectState.get());
 }

@@ -7,6 +7,7 @@
 #include "data_cell.h"
 #include "descriptor_entry.h"
 #include "runtime_types.h"
+#include "type_entry.h"
 
 namespace lyric_runtime {
 
@@ -31,6 +32,7 @@ namespace lyric_runtime {
         tu_uint32 getBytecodeSize() const;
 
         DescriptorEntry *lookupDescriptor(lyric_object::LinkageSection section, tu_uint32 index);
+        TypeEntry *lookupType(tu_uint32 index);
 
         const LinkEntry *getLink(tu_uint32 index) const;
         bool setLink(tu_uint32 index, const LinkEntry &entry);
@@ -82,7 +84,7 @@ namespace lyric_runtime {
         DescriptorTable m_namespaceDescriptors;
         DescriptorTable m_staticDescriptors;
         DescriptorTable m_structDescriptors;
-        DescriptorTable m_typeDescriptors;
+        TypeTable m_types;
     };
 }
 

@@ -102,7 +102,6 @@ IsLtOperator                : '<' ;
 IsLeOperator                : '<=' ;
 IsGtOperator                : '>' ;
 IsGeOperator                : '>=' ;
-IsAOperator                 : '^?' ;
 
 AssignOperator              : '=' ;
 PlusAssignOperator          : '+=' ;
@@ -178,6 +177,7 @@ TrueKeyword             : 'true' ;
 FalseKeyword            : 'false' ;
 UndefKeyword            : 'undef' ;
 NilKeyword              : 'nil' ;
+TypeOfKeyword           : 'typeof' ;
 
 // an identifier is can be a variable, function, or state symbol
 

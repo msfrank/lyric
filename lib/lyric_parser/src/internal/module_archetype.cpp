@@ -346,11 +346,6 @@ void lyric_parser::internal::ModuleArchetype::exitIsGreaterOrEqualExpression(Mod
     return ModuleCompareOps::exitIsGreaterOrEqualExpression(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitIsAExpression(ModuleParser::IsAExpressionContext *ctx)
-{
-    return ModuleCompareOps::exitIsAExpression(ctx);
-}
-
 /*
  * assign ops
  */
@@ -644,6 +639,11 @@ void lyric_parser::internal::ModuleArchetype::exitCallExpression(ModuleParser::C
 void lyric_parser::internal::ModuleArchetype::exitSymbolExpression(ModuleParser::SymbolExpressionContext *ctx)
 {
     return ModuleDerefOps::exitSymbolExpression(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitTypeofExpression(ModuleParser::TypeofExpressionContext *ctx)
+{
+    return ModuleDerefOps::exitTypeofExpression(ctx);
 }
 
 /*

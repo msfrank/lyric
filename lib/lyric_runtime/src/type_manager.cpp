@@ -105,8 +105,7 @@ resolve_type_to_descriptor(
                 return resolve_type_to_descriptor(typeCell, descriptor, segmentManager);
             }
 
-            auto typeCell = lyric_runtime::DataCell::forDescriptor(
-                segment->lookupDescriptor(lyric_object::LinkageSection::Type, concreteIndex));
+            auto typeCell = lyric_runtime::DataCell::forType(segment->lookupType(concreteIndex));
             return resolve_type_to_descriptor(typeCell, descriptor, segmentManager);
         }
 

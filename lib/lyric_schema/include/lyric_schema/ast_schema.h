@@ -38,7 +38,6 @@ namespace lyric_schema {
         IsLe,                      // less-than-or-equals operator
         IsGt,                      // greater-than operator
         IsGe,                      // greater-than-or-equals operator
-        IsA,                       // type-equals operator
 
         And,                       // logical conjunction operator
         Or,                        // logical disjunction operator
@@ -49,6 +48,7 @@ namespace lyric_schema {
         IType,                     // intersection type
         UType,                     // union type
         TypeArguments,             // type arguments
+        TypeOf,                    // typeof expression
 
         Set,                       // value assignment
         Target,                    // assignment target
@@ -187,8 +187,6 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::IsGt, "IsGt");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIsGeClass(
         &kLyricAstNs, LyricAstId::IsGe, "IsGe");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIsAClass(
-        &kLyricAstNs, LyricAstId::IsA, "IsA");
 
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstAndClass(
         &kLyricAstNs, LyricAstId::And, "And");
@@ -207,6 +205,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::UType, "UType");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTypeArgumentsClass(
         &kLyricAstNs, LyricAstId::TypeArguments, "TypeArguments");
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTypeOfClass(
+        &kLyricAstNs, LyricAstId::TypeOf, "TypeOf");
 
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSetClass(
         &kLyricAstNs, LyricAstId::Set, "Set");
@@ -438,7 +438,6 @@ namespace lyric_schema {
         &kLyricAstIsLeClass,
         &kLyricAstIsGtClass,
         &kLyricAstIsGeClass,
-        &kLyricAstIsAClass,
 
         &kLyricAstAndClass,
         &kLyricAstOrClass,
@@ -449,6 +448,7 @@ namespace lyric_schema {
         &kLyricAstITypeClass,
         &kLyricAstUTypeClass,
         &kLyricAstTypeArgumentsClass,
+        &kLyricAstTypeOfClass,
 
         &kLyricAstSetClass,
         &kLyricAstTargetClass,

@@ -23,7 +23,7 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
       m_namespaceDescriptors(this, lyric_object::LinkageSection::Namespace),
       m_staticDescriptors(this, lyric_object::LinkageSection::Static),
       m_structDescriptors(this, lyric_object::LinkageSection::Struct),
-      m_typeDescriptors(this, lyric_object::LinkageSection::Type)
+      m_types(this)
 {
     TU_ASSERT (m_object.isValid());
     m_bytecodeSize = m_object.getBytecodeSize();
@@ -111,11 +111,15 @@ lyric_runtime::BytecodeSegment::lookupDescriptor(lyric_object::LinkageSection se
             return m_staticDescriptors.lookupDescriptor(index);
         case lyric_object::LinkageSection::Struct:
             return m_structDescriptors.lookupDescriptor(index);
-        case lyric_object::LinkageSection::Type:
-            return m_typeDescriptors.lookupDescriptor(index);
         default:
             return nullptr;
     }
+}
+
+lyric_runtime::TypeEntry *
+lyric_runtime::BytecodeSegment::lookupType(tu_uint32 index)
+{
+    return m_types.lookupType(index);
 }
 
 const lyric_runtime::LinkEntry *

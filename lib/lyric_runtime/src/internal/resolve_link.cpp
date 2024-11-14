@@ -179,14 +179,25 @@ lyric_runtime::internal::resolve_descriptor(
     }
 
     auto *segment = segmentManagerData->segments[segmentIndex];
-    auto *descriptor = segment->lookupDescriptor(section, valueIndex);
-    if (descriptor == nullptr) {
+
+    if (section == lyric_object::LinkageSection::Type) {
+        auto *typeEntry = segment->lookupType(valueIndex);
+        if (typeEntry == nullptr) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "missing type");
+            return {};
+        }
+        return DataCell::forType(typeEntry);
+    }
+
+    auto *descriptorEntry = segment->lookupDescriptor(section, valueIndex);
+    if (descriptorEntry == nullptr) {
         status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "unknown descriptor type");
+            InterpreterCondition::kRuntimeInvariant, "missing descriptor");
         return {};
     }
 
-    return DataCell::forDescriptor(descriptor);
+    return DataCell::forDescriptor(descriptorEntry);
 }
 
 lyric_runtime::LiteralCell

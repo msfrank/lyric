@@ -21,9 +21,11 @@ TEST(CompilerScanDriver, InitializeDriver)
     auto recorder = tempo_tracing::TraceRecorder::create();
     tempo_tracing::ScopeManager scopeManager(recorder);
     lyric_assembler::ObjectState objectState(location, systemModuleCache, &scopeManager);
-    ASSERT_THAT (objectState.initialize(), tempo_test::IsOk());
 
-    lyric_compiler::CompilerScanDriver driver(&objectState);
+    lyric_assembler::ObjectRoot *objectRoot;
+    TU_ASSIGN_OR_RAISE (objectRoot, objectState.defineRoot());
+
+    lyric_compiler::CompilerScanDriver driver(objectRoot, &objectState);
 
     auto rootHandler = std::make_unique<MockGrouping>(&driver);
     ASSERT_THAT (driver.initialize(std::move(rootHandler)), tempo_test::IsOk());
@@ -37,7 +39,9 @@ TEST(CompilerScanDriver, HandleRootNode)
     auto recorder = tempo_tracing::TraceRecorder::create();
     tempo_tracing::ScopeManager scopeManager(recorder);
     lyric_assembler::ObjectState objectState(location, systemModuleCache, &scopeManager);
-    ASSERT_THAT (objectState.initialize(), tempo_test::IsOk());
+
+    lyric_assembler::ObjectRoot *objectRoot;
+    TU_ASSIGN_OR_RAISE (objectRoot, objectState.defineRoot());
 
     lyric_parser::ArchetypeState archetypeState(location.toUrl(), &scopeManager);
     lyric_parser::ArchetypeNode *blockNode;
@@ -46,7 +50,7 @@ TEST(CompilerScanDriver, HandleRootNode)
     lyric_parser::LyricArchetype archetype;
     TU_ASSIGN_OR_RAISE (archetype, archetypeState.toArchetype());
 
-    auto driver = std::make_shared<lyric_compiler::CompilerScanDriver>(&objectState);
+    auto driver = std::make_shared<lyric_compiler::CompilerScanDriver>(objectRoot, &objectState);
 
     auto rootHandler = std::make_unique<MockGrouping>(driver.get());
     EXPECT_CALL (*rootHandler, before)
@@ -71,7 +75,9 @@ TEST(CompilerScanDriver, HandleRootAndSingleChild)
     auto recorder = tempo_tracing::TraceRecorder::create();
     tempo_tracing::ScopeManager scopeManager(recorder);
     lyric_assembler::ObjectState objectState(location, systemModuleCache, &scopeManager);
-    ASSERT_THAT (objectState.initialize(), tempo_test::IsOk());
+
+    lyric_assembler::ObjectRoot *objectRoot;
+    TU_ASSIGN_OR_RAISE (objectRoot, objectState.defineRoot());
 
     lyric_parser::ArchetypeState archetypeState(location.toUrl(), &scopeManager);
     lyric_parser::ArchetypeNode *blockNode;
@@ -85,7 +91,7 @@ TEST(CompilerScanDriver, HandleRootAndSingleChild)
     lyric_parser::LyricArchetype archetype;
     TU_ASSIGN_OR_RAISE (archetype, archetypeState.toArchetype());
 
-    auto driver = std::make_shared<lyric_compiler::CompilerScanDriver>(&objectState);
+    auto driver = std::make_shared<lyric_compiler::CompilerScanDriver>(objectRoot, &objectState);
 
     auto rootHandler = std::make_unique<MockGrouping>(driver.get());
     EXPECT_CALL (*rootHandler, before)
@@ -123,7 +129,9 @@ TEST(CompilerScanDriver, HandleRootAndMultipleChildren)
     auto recorder = tempo_tracing::TraceRecorder::create();
     tempo_tracing::ScopeManager scopeManager(recorder);
     lyric_assembler::ObjectState objectState(location, systemModuleCache, &scopeManager);
-    ASSERT_THAT (objectState.initialize(), tempo_test::IsOk());
+
+    lyric_assembler::ObjectRoot *objectRoot;
+    TU_ASSIGN_OR_RAISE (objectRoot, objectState.defineRoot());
 
     lyric_parser::ArchetypeState archetypeState(location.toUrl(), &scopeManager);
     lyric_parser::ArchetypeNode *blockNode;
@@ -145,7 +153,7 @@ TEST(CompilerScanDriver, HandleRootAndMultipleChildren)
     lyric_parser::LyricArchetype archetype;
     TU_ASSIGN_OR_RAISE (archetype, archetypeState.toArchetype());
 
-    auto driver = std::make_shared<lyric_compiler::CompilerScanDriver>(&objectState);
+    auto driver = std::make_shared<lyric_compiler::CompilerScanDriver>(objectRoot, &objectState);
 
     auto rootHandler = std::make_unique<MockGrouping>(driver.get());
     EXPECT_CALL (*rootHandler, before)

@@ -39,6 +39,7 @@
 #include "compile_string.h"
 #include "compile_struct.h"
 #include "compile_tuple.h"
+#include "compile_type.h"
 #include "compile_unwrap.h"
 #include "compile_url.h"
 #include "compile_utf8.h"
@@ -78,8 +79,11 @@ main(int argc, char *argv[])
     auto *StringExistential = declare_core_String(state, IntrinsicExistential);
     auto *UrlExistential = declare_core_Url(state, IntrinsicExistential);
 
-    // define Descriptor type
-    auto *DescriptorExistential = build_core_Descriptor(state, AnyExistential);
+    // declare Descriptor type
+    auto *DescriptorExistential = declare_core_Descriptor(state, AnyExistential);
+
+    // declare Type type
+    auto *TypeExistential = declare_core_Type(state, AnyExistential);
 
     // define descriptor subtypes
     build_core_Namespace(state, DescriptorExistential);
@@ -111,6 +115,8 @@ main(int argc, char *argv[])
     build_core_Float(state, FloatExistential);
     build_core_String(state, StringExistential, IntExistential->existentialType, CharExistential->existentialType);
     build_core_Url(state, UrlExistential);
+    build_core_Descriptor(state, DescriptorExistential);
+    build_core_Type(state, TypeExistential, IntExistential->existentialType, BoolExistential->existentialType);
 
     // define Function classes
     for (int i = 0; i <= NUM_FUNCTION_CLASSES; i++) {

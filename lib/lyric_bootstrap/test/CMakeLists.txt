@@ -30,6 +30,7 @@ set(TEST_CASES
     Status_tests.cpp
     String_tests.cpp
     Tuple_tests.cpp
+    Type_tests.cpp
     Undef_tests.cpp
     Url_tests.cpp
     Utf16_tests.cpp

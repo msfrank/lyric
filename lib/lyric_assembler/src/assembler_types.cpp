@@ -70,6 +70,8 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "String";
         case FundamentalSymbol::Struct:
             return "Struct";
+        case FundamentalSymbol::Type:
+            return "Type";
         case FundamentalSymbol::Undef:
             return "Undef";
         case FundamentalSymbol::Unwrap:

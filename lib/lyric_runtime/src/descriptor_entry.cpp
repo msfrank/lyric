@@ -18,6 +18,12 @@ lyric_runtime::DescriptorEntry::getSegment() const
     return m_descriptorTable->getSegment();
 }
 
+tu_uint32
+lyric_runtime::DescriptorEntry::getSegmentIndex() const
+{
+    return m_descriptorTable->getSegment()->getSegmentIndex();
+}
+
 lyric_object::LinkageSection
 lyric_runtime::DescriptorEntry::getLinkageSection() const
 {
@@ -38,12 +44,6 @@ lyric_runtime::DescriptorEntry::getSymbolUrl() const
     auto object = segment->getObject().getObject();
     auto symbolPath = object.getSymbolPath(m_descriptorTable->getLinkageSection(), m_index);
     return lyric_common::SymbolUrl(location, symbolPath);
-}
-
-tu_uint32
-lyric_runtime::DescriptorEntry::getSegmentIndex() const
-{
-    return m_descriptorTable->getSegment()->getSegmentIndex();
 }
 
 lyric_runtime::DescriptorTable::DescriptorTable(BytecodeSegment *segment, lyric_object::LinkageSection section)

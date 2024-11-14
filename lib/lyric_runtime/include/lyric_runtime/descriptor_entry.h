@@ -14,11 +14,11 @@ namespace lyric_runtime {
         DescriptorEntry(DescriptorTable *descriptorTable, tu_uint32 index);
 
         BytecodeSegment *getSegment() const;
+        tu_uint32 getSegmentIndex() const;
         lyric_object::LinkageSection getLinkageSection() const;
         tu_uint32 getDescriptorIndex() const;
 
         lyric_common::SymbolUrl getSymbolUrl() const;
-        tu_uint32 getSegmentIndex() const;
 
     private:
         DescriptorTable *m_descriptorTable;

@@ -88,6 +88,8 @@ add_executable(prelude-builder
     object/compile_struct.h
     object/compile_tuple.cpp
     object/compile_tuple.h
+    object/compile_type.cpp
+    object/compile_type.h
     object/compile_unwrap.cpp
     object/compile_unwrap.h
     object/compile_url.cpp

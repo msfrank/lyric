@@ -341,3 +341,16 @@ lyric_parser::internal::ModuleDerefOps::exitSymbolExpression(ModuleParser::Symbo
 
     m_state->pushNode(derefNode);
 }
+
+void
+lyric_parser::internal::ModuleDerefOps::exitTypeofExpression(ModuleParser::TypeofExpressionContext *ctx)
+{
+    auto *typeNode = make_Type_node(m_state, ctx->assignableType());
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    auto *typeofNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstTypeOfClass, location);
+    TU_RAISE_IF_NOT_OK (typeofNode->putAttr(kLyricAstTypeOffset, typeNode));
+    m_state->pushNode(typeofNode);
+}

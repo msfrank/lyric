@@ -118,7 +118,6 @@ namespace lyric_parser::internal {
         void exitIsLessOrEqualExpression(ModuleParser::IsLessOrEqualExpressionContext *ctx) override;
         void exitIsGreaterThanExpression(ModuleParser::IsGreaterThanExpressionContext *ctx) override;
         void exitIsGreaterOrEqualExpression(ModuleParser::IsGreaterOrEqualExpressionContext *ctx) override;
-        void exitIsAExpression(ModuleParser::IsAExpressionContext *ctx) override;
 
         // implemented by ModuleAssignOps
         void enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx) override;
@@ -185,6 +184,7 @@ namespace lyric_parser::internal {
         void exitNameExpression(ModuleParser::NameExpressionContext *ctx) override;
         void exitCallExpression(ModuleParser::CallExpressionContext *ctx) override;
         void exitSymbolExpression(ModuleParser::SymbolExpressionContext *ctx) override;
+        void exitTypeofExpression(ModuleParser::TypeofExpressionContext *ctx) override;
 
         // implemented by ModuleConstructOps
         void exitDerefNew(ModuleParser::DerefNewContext *ctx) override;

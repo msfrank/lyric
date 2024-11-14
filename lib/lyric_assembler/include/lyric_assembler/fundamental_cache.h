@@ -57,6 +57,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalStatus;
         lyric_common::SymbolUrl m_fundamentalString;
         lyric_common::SymbolUrl m_fundamentalStruct;
+        lyric_common::SymbolUrl m_fundamentalType;
         lyric_common::SymbolUrl m_fundamentalUndef;
         lyric_common::SymbolUrl m_fundamentalUnwrap;
         lyric_common::SymbolUrl m_fundamentalUrl;

@@ -177,7 +177,7 @@ set(ANTLR
     -Xmx500M
     -cp ${ANTLR_TOOL_JAR}
     org.antlr.v4.Tool
-)
+    )
 message(STATUS "antlr command is ${ANTLR}")
 
 #######################################################################
@@ -236,7 +236,7 @@ set(EMPTY_CPP ${CMAKE_CURRENT_BINARY_DIR}/empty.cpp)
 add_custom_command(
     OUTPUT ${EMPTY_CPP}
     COMMAND cmake -E touch ${EMPTY_CPP}
-)
+    )
 
 add_executable(lyric_testsuite ${EMPTY_CPP})
 target_link_libraries(lyric_testsuite
@@ -251,7 +251,7 @@ target_link_libraries(lyric_testsuite
     LyricParserTestSuite
     LyricSymbolizerTestSuite
     LyricTypingTestSuite
-)
+    )
 gtest_discover_tests(lyric_testsuite DISCOVERY_TIMEOUT 30)
 
 #######################################################################

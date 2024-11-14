@@ -342,8 +342,7 @@ basicExpression     : basicExpression ArrowOperator basicExpression             
                     | equality                                                              # equalityRule
                     ;
 
-equality            : equality IsAOperator assignableType                                   # isAExpression
-                    | equality IsEqOperator equality                                        # isEqualExpression
+equality            : equality IsEqOperator equality                                        # isEqualExpression
                     | equality IsLtOperator equality                                        # isLessThanExpression
                     | equality IsLeOperator equality                                        # isLessOrEqualExpression
                     | equality IsGtOperator equality                                        # isGreaterThanExpression
@@ -372,7 +371,9 @@ newOrDeref          : derefLiteral derefSpec*                                   
                     | callSpec derefSpec*                                                   # callExpression
                     | nameSpec derefSpec*                                                   # nameExpression
                     | HashOperator Identifier ( DotOperator Identifier)*                    # symbolExpression
+                    | TypeOfKeyword assignableType                                          # typeofExpression
                     ;
+
 
 derefLiteral        : literal ;
 derefGrouping       : ParenOpen expression ParenClose ;

@@ -125,22 +125,3 @@ lyric_parser::internal::ModuleCompareOps::exitIsGreaterOrEqualExpression(ModuleP
     isGeNode->appendChild(p2);
     m_state->pushNode(isGeNode);
 }
-
-void
-lyric_parser::internal::ModuleCompareOps::exitIsAExpression(ModuleParser::IsAExpressionContext *ctx)
-{
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *p1 = m_state->popNode();
-
-    auto *typeNode = make_Type_node(m_state, ctx->assignableType());
-
-    auto *token = ctx->getStart();
-    auto location = get_token_location(token);
-
-    auto *isANode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIsAClass, location);
-    isANode->appendChild(p1);
-    isANode->appendChild(typeNode);
-    m_state->pushNode(isANode);
-}

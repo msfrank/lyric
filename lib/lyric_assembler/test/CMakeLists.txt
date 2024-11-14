@@ -28,7 +28,7 @@ gtest_discover_tests(lyric_assembler_testsuite DISCOVERY_TIMEOUT 30)
 # define test suite static library
 
 add_library(LyricAssemblerTestSuite OBJECT ${TEST_CASES})
-target_compile_definitions(lyric_assembler_testsuite PRIVATE
+target_compile_definitions(LyricAssemblerTestSuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
     )

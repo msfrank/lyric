@@ -28,7 +28,12 @@ lyric_parser::internal::LexerErrorListener::syntaxError(
     try {
         std::rethrow_exception(e);
     } catch(antlr4::LexerNoViableAltException &ex) {
-        auto location = get_token_location(offendingSymbol);
+        ParseLocation location;
+        if (offendingSymbol) {
+            location = get_token_location(offendingSymbol);
+        } else {
+            location = ParseLocation(line, charPositionInLine, ex.getStartIndex(), 0);
+        }
         m_state->throwSyntaxError(location, message);
     } catch(antlr4::RuntimeException &ex) {
         throw tempo_utils::StatusException(

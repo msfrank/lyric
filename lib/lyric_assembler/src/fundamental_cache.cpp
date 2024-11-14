@@ -75,6 +75,8 @@ lyric_assembler::FundamentalCache::FundamentalCache(
         fundamentalTypeToSymbolPath(FundamentalSymbol::String));
     m_fundamentalStruct = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Struct));
+    m_fundamentalType = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::Type));
     m_fundamentalUndef = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Undef));
     m_fundamentalUnwrap = lyric_common::SymbolUrl(preludeLocation,
@@ -269,6 +271,8 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalString;
         case FundamentalSymbol::Struct:
             return m_fundamentalStruct;
+        case FundamentalSymbol::Type:
+            return m_fundamentalType;
         case FundamentalSymbol::Undef:
             return m_fundamentalUndef;
         case FundamentalSymbol::Unwrap:

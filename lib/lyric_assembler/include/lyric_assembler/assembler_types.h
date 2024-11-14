@@ -51,6 +51,7 @@ namespace lyric_assembler {
         Status,
         String,
         Struct,
+        Type,
         Undef,
         Unwrap,
         Url,

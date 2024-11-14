@@ -46,9 +46,11 @@ namespace lyric_runtime {
             case DataCellType::INSTANCE:
             case DataCellType::NAMESPACE:
             case DataCellType::STRUCT:
-            case DataCellType::TYPE:
                 // NOTE: we hash the pointer value in this case, not the descriptor content
                 return H::combine(std::move(h), cell.type, cell.data.descriptor);
+            case DataCellType::TYPE:
+                // NOTE: we hash the pointer value in this case, not the type content
+                return H::combine(std::move(h), cell.type, cell.data.type);
         }
         TU_UNREACHABLE();
     }

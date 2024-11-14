@@ -7,79 +7,40 @@
 
 #include "test_helpers.h"
 
-TEST(CoreMatch, TestIsAEquals)
+TEST(CoreMatch, TestMatchTypeEquals)
 {
     auto result = runModule(R"(
-        Object{} ^? Object
+        match Object{} {
+            when x: Object          true
+            else                    false
+        }
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreMatch, TestIsASubtype)
+TEST(CoreMatch, TestMatchSubtype)
 {
     auto result = runModule(R"(
-        Object{} ^? Any
+        match Object{} {
+            when x: Any             true
+            else                    false
+        }
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreMatch, TestIsADisjointType)
+TEST(CoreMatch, TestNoMatchDisjointType)
 {
     auto result = runModule(R"(
         defclass Test {
             init() from Object() {}
         }
-        Object{} ^? Test
-    )");
-
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
-}
-
-TEST(CoreMatch, TestIsAPlaceholderType)
-{
-    auto result = runModule(R"(
-        def generic[T](t: T): Bool {
-            t ^? Int
+        match Object{} {
+            when x: Test            true
+            else                    false
         }
-        generic(42)
-    )");
-
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
-}
-
-TEST(CoreMatch, TestIsAPlaceholderTypeNoMatch)
-{
-    auto result = runModule(R"(
-        def generic[T](t: T): Bool {
-            t ^? Float
-        }
-        generic(42)
-    )");
-
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
-}
-
-TEST(CoreMatch, TestIsABoundedPlaceholderType)
-{
-    auto result = runModule(R"(
-        def generic[T](t: T): Bool where T < Intrinsic {
-            t ^? Int
-        }
-        generic(42)
-    )");
-
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
-}
-
-TEST(CoreMatch, TestIsABoundedPlaceholderTypeNoMatch)
-{
-    auto result = runModule(R"(
-        def generic[T](t: T): Bool where T < Intrinsic {
-            t ^? Float
-        }
-        generic(42)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
@@ -89,7 +50,10 @@ TEST(CoreMatch, TestIsABoundedPlaceholderTypeDisjoint)
 {
     auto result = compileModule(R"(
         def generic[T](t: T): Bool where T < Int {
-            t ^? Float
+            match t {
+                when x: Float       true
+                else                false
+            }
         }
         generic(42)
     )");
@@ -130,7 +94,7 @@ TEST(CoreMatch, TestMatchPlaceholderType)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreMatch, TestMatchPlaceholderTypeNoMatch)
+TEST(CoreMatch, TestNoMatchPlaceholderType)
 {
     auto result = runModule(R"(
         def generic[T](t: T): Any {
@@ -160,7 +124,7 @@ TEST(CoreMatch, TestMatchBoundedPlaceholderType)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreMatch, TestMatchBoundedPlaceholderTypeNoMatch)
+TEST(CoreMatch, TestNoMatchBoundedPlaceholderType)
 {
     auto result = runModule(R"(
         def generic[T](t: T): Any where T < Intrinsic {
