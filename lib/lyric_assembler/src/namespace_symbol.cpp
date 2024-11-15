@@ -214,8 +214,6 @@ lyric_assembler::NamespaceSymbol::putBinding(
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "cannot put namespace binding {}; binding is already defined", name);
 
-    TU_RETURN_IF_STATUS (priv->namespaceBlock->declareAlias(name, symbolUrl));
-
     NamespaceBinding binding;
     binding.name = name;
     binding.symbolUrl = symbolUrl;

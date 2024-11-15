@@ -37,6 +37,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/deref_utils.h
     include/lyric_compiler/entry_handler.h
     include/lyric_compiler/impl_handler.h
+    include/lyric_compiler/import_handler.h
     include/lyric_compiler/iteration_handler.h
     include/lyric_compiler/lambda_handler.h
     include/lyric_compiler/lambda_utils.h
@@ -92,6 +93,7 @@ target_sources(lyric_compiler PRIVATE
     src/deref_utils.cpp
     src/entry_handler.cpp
     src/impl_handler.cpp
+    src/import_handler.cpp
     src/iteration_handler.cpp
     src/lambda_handler.cpp
     src/lambda_utils.cpp

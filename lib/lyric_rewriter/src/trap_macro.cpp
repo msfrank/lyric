@@ -19,7 +19,8 @@ lyric_rewriter::TrapMacro::rewriteBlock(
     TU_LOG_INFO << "rewrite trap macro";
 
     if (macroCallNode->numChildren() != 1)
-        return RewriterStatus::forCondition(RewriterCondition::kSyntaxError, "expected 1 argument for trap macro ");
+        return RewriterStatus::forCondition(RewriterCondition::kSyntaxError,
+            "expected 1 argument for trap macro ");
     auto *arg0 = macroCallNode->getChild(0);
 
     std::string literalValue;
@@ -30,7 +31,8 @@ lyric_rewriter::TrapMacro::rewriteBlock(
     tu_int64 i64;
     TU_ASSIGN_OR_RETURN (i64, lyric_parser::parse_integer_literal(literalValue, base));
     if (i64 < 0 || i64 > std::numeric_limits<tu_uint32>::max())
-        return RewriterStatus::forCondition(RewriterCondition::kSyntaxError, "trap number is out of range");
+        return RewriterStatus::forCondition(RewriterCondition::kSyntaxError,
+            "trap number is out of range");
     auto trapNumber = static_cast<tu_uint32>(i64);
 
     lyric_parser::ArchetypeNode *trapNode;

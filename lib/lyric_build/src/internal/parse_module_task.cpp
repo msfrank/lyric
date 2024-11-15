@@ -12,6 +12,10 @@
 #include <lyric_common/common_conversions.h>
 #include <lyric_common/common_types.h>
 #include <lyric_packaging/package_attrs.h>
+#include <lyric_rewriter/lyric_rewriter.h>
+#include <lyric_rewriter/macro_registry.h>
+#include <lyric_rewriter/macro_rewrite_driver.h>
+#include <lyric_rewriter/trap_macro.h>
 #include <tempo_config/base_conversions.h>
 #include <tempo_config/container_conversions.h>
 #include <tempo_config/parse_config.h>
@@ -103,8 +107,10 @@ lyric_build::internal::ParseModuleTask::runTask(
 
     auto span = getSpan();
 
-    TU_LOG_V << "parsing source from " << m_sourceUrl;
+    // parse the source file
     lyric_parser::LyricParser parser(m_parserOptions);
+
+    TU_LOG_V << "parsing source from " << m_sourceUrl;
     auto parseResult = parser.parseModule(std::string_view((const char *) bytes->getData(), bytes->getSize()),
         m_sourceUrl, traceDiagnostics());
 
@@ -116,14 +122,32 @@ lyric_build::internal::ParseModuleTask::runTask(
     }
     auto archetype = parseResult.getResult();
 
-    tempo_utils::Status status;
+    // rewrite macros
+    lyric_rewriter::RewriterOptions rewriterOptions;
+    lyric_rewriter::LyricRewriter rewriter(rewriterOptions);
+    absl::flat_hash_map<std::string,std::shared_ptr<lyric_rewriter::AbstractMacro>> macros;
+    macros["Trap"] = std::make_shared<lyric_rewriter::TrapMacro>();
+    lyric_rewriter::MacroRegistry macroRegistry(macros);
+
+    TU_LOG_V << "rewriting source from " << m_sourceUrl;
+    auto macroRewriteDriver = std::make_shared<lyric_rewriter::MacroRewriteDriver>(&macroRegistry);
+    auto rewriteResult = rewriter.rewriteArchetype(
+        archetype, m_sourceUrl, macroRewriteDriver, traceDiagnostics());
+
+    if (rewriteResult.isStatus()) {
+        span->logStatus(parseResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
+        return Option<tempo_utils::Status>(
+            BuildStatus::forCondition(BuildCondition::kTaskFailure,
+                "failed to rewrite source from {}", m_sourceUrl.toString()));
+    }
+    archetype = rewriteResult.getResult();
 
     // store the archetype content in the build cache
     ArtifactId archetypeArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourceUrl);
     auto archetypeBytes = archetype.bytesView();
-    status = cache->storeContent(archetypeArtifact, archetypeBytes);
-    if (!status.isOk())
-        return Option<tempo_utils::Status>(status);
+    auto storeContentStatus = cache->storeContent(archetypeArtifact, archetypeBytes);
+    if (!storeContentStatus.isOk())
+        return Option<tempo_utils::Status>(storeContentStatus);
 
     // generate the install path
     std::filesystem::path archetypeInstallPath = generate_install_path(
@@ -143,9 +167,9 @@ lyric_build::internal::ParseModuleTask::runTask(
             BuildStatus::forCondition(BuildCondition::kTaskFailure,
                 "failed to store metadata for {}", archetypeArtifact.toString()));
     }
-    status = cache->storeMetadata(archetypeArtifact, toMetadataResult.getResult());
-    if (!status.isOk())
-        return Option<tempo_utils::Status>(status);
+    auto storeMetadataStatus = cache->storeMetadata(archetypeArtifact, toMetadataResult.getResult());
+    if (!storeMetadataStatus.isOk())
+        return Option<tempo_utils::Status>(storeMetadataStatus);
 
     TU_LOG_V << "stored archetype at " << archetypeArtifact;
 

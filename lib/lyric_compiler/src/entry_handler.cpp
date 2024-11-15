@@ -9,6 +9,7 @@
 #include <lyric_compiler/defstatic_handler.h>
 #include <lyric_compiler/defstruct_handler.h>
 #include <lyric_compiler/entry_handler.h>
+#include <lyric_compiler/import_handler.h>
 #include <lyric_compiler/namespace_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
@@ -98,6 +99,14 @@ lyric_compiler::EntryHandler::before(
             case lyric_schema::LyricAstId::DefStruct: {
                 auto handler = std::make_unique<DefStructHandler>(
                     /* isSideEffect= */ true, globalNamespace->namespaceBlock(), driver);
+                ctx.appendGrouping(std::move(handler));
+                break;
+            }
+            case lyric_schema::LyricAstId::ImportAll:
+            case lyric_schema::LyricAstId::ImportModule:
+            case lyric_schema::LyricAstId::ImportSymbols: {
+                auto handler = std::make_unique<ImportHandler>(
+                    globalNamespace, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
                 break;
             }

@@ -91,11 +91,14 @@ lyric_parser::internal::ModuleArchetype::exitRoot(ModuleParser::RootContext *ctx
     // if ancestor node is not a kBlock, then report internal violation
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto blockNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(blockNode, lyric_schema::kLyricAstBlockClass);
+    auto *rootNode = m_state->peekNode();
+    m_state->checkNodeOrThrow(rootNode, lyric_schema::kLyricAstBlockClass);
 
     // pop the kBlock off the stack
     m_state->popNode();
+
+    // set the root node
+    m_state->setRoot(rootNode);
 
     // at this point m_stack should be empty
     if (!m_state->isEmpty())

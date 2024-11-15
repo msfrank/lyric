@@ -15,6 +15,7 @@
 #include <lyric_compiler/data_deref_handler.h>
 #include <lyric_compiler/deref_utils.h>
 #include <lyric_compiler/form_handler.h>
+#include <lyric_compiler/import_handler.h>
 #include <lyric_compiler/iteration_handler.h>
 #include <lyric_compiler/lambda_handler.h>
 #include <lyric_compiler/match_handler.h>
@@ -173,7 +174,7 @@ node_is_valid_for_phrase(
             }
         }
 
-            // statement phrase
+        // statement phrase
         case lyric_schema::LyricAstId::Val:
         case lyric_schema::LyricAstId::Var:
         case lyric_schema::LyricAstId::Def:
@@ -455,6 +456,14 @@ lyric_compiler::FormChoice::decide(
         case lyric_schema::LyricAstId::Using: {
             auto def = std::make_unique<UsingHandler>(isSideEffect, block, driver);
             ctx.setGrouping(std::move(def));
+            break;
+        }
+
+        case lyric_schema::LyricAstId::ImportAll:
+        case lyric_schema::LyricAstId::ImportModule:
+        case lyric_schema::LyricAstId::ImportSymbols: {
+            auto import = std::make_unique<ImportHandler>(isSideEffect, block, driver);
+            ctx.setGrouping(std::move(import));
             break;
         }
 
