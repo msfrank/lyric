@@ -9,23 +9,23 @@ set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/assembler_attrs.h
     include/lyric_rewriter/assembler_macro_visitor.h
     include/lyric_rewriter/compiler_macro_visitor.h
-    include/lyric_rewriter/lyric_ast_base_visitor.h
-    include/lyric_rewriter/lyric_ast_binary_visitor.h
-    include/lyric_rewriter/lyric_ast_cond_visitor.h
-    include/lyric_rewriter/lyric_ast_defclass_visitor.h
-    include/lyric_rewriter/lyric_ast_defconcept_visitor.h
-    include/lyric_rewriter/lyric_ast_defenum_visitor.h
-    include/lyric_rewriter/lyric_ast_definstance_visitor.h
-    include/lyric_rewriter/lyric_ast_defstruct_visitor.h
-    include/lyric_rewriter/lyric_ast_reverse_sequence_visitor.h
-    include/lyric_rewriter/lyric_ast_for_visitor.h
-    include/lyric_rewriter/lyric_ast_if_visitor.h
-    include/lyric_rewriter/lyric_ast_match_visitor.h
-    include/lyric_rewriter/lyric_ast_param_visitor.h
-    include/lyric_rewriter/lyric_ast_sequence_visitor.h
-    include/lyric_rewriter/lyric_ast_terminal_visitor.h
-    include/lyric_rewriter/lyric_ast_unary_visitor.h
-    include/lyric_rewriter/lyric_ast_while_visitor.h
+    include/lyric_rewriter/ast_base_visitor.h
+    include/lyric_rewriter/ast_binary_visitor.h
+    include/lyric_rewriter/ast_cond_visitor.h
+    include/lyric_rewriter/ast_defclass_visitor.h
+    include/lyric_rewriter/ast_defconcept_visitor.h
+    include/lyric_rewriter/ast_defenum_visitor.h
+    include/lyric_rewriter/ast_definstance_visitor.h
+    include/lyric_rewriter/ast_defstruct_visitor.h
+    include/lyric_rewriter/ast_reverse_sequence_visitor.h
+    include/lyric_rewriter/ast_for_visitor.h
+    include/lyric_rewriter/ast_if_visitor.h
+    include/lyric_rewriter/ast_match_visitor.h
+    include/lyric_rewriter/ast_param_visitor.h
+    include/lyric_rewriter/ast_sequence_visitor.h
+    include/lyric_rewriter/ast_terminal_visitor.h
+    include/lyric_rewriter/ast_unary_visitor.h
+    include/lyric_rewriter/ast_while_visitor.h
     include/lyric_rewriter/lyric_rewriter.h
     include/lyric_rewriter/macro_block.h
     include/lyric_rewriter/macro_registry.h
@@ -43,23 +43,23 @@ target_sources(lyric_rewriter PRIVATE
     src/assembler_attrs.cpp
     src/assembler_macro_visitor.cpp
     src/compiler_macro_visitor.cpp
-    src/lyric_ast_base_visitor.cpp
-    src/lyric_ast_binary_visitor.cpp
-    src/lyric_ast_cond_visitor.cpp
-    src/lyric_ast_defclass_visitor.cpp
-    src/lyric_ast_defconcept_visitor.cpp
-    src/lyric_ast_defenum_visitor.cpp
-    src/lyric_ast_definstance_visitor.cpp
-    src/lyric_ast_defstruct_visitor.cpp
-    src/lyric_ast_reverse_sequence_visitor.cpp
-    src/lyric_ast_for_visitor.cpp
-    src/lyric_ast_if_visitor.cpp
-    src/lyric_ast_match_visitor.cpp
-    src/lyric_ast_param_visitor.cpp
-    src/lyric_ast_sequence_visitor.cpp
-    src/lyric_ast_terminal_visitor.cpp
-    src/lyric_ast_unary_visitor.cpp
-    src/lyric_ast_while_visitor.cpp
+    src/ast_base_visitor.cpp
+    src/ast_binary_visitor.cpp
+    src/ast_cond_visitor.cpp
+    src/ast_defclass_visitor.cpp
+    src/ast_defconcept_visitor.cpp
+    src/ast_defenum_visitor.cpp
+    src/ast_definstance_visitor.cpp
+    src/ast_defstruct_visitor.cpp
+    src/ast_reverse_sequence_visitor.cpp
+    src/ast_for_visitor.cpp
+    src/ast_if_visitor.cpp
+    src/ast_match_visitor.cpp
+    src/ast_param_visitor.cpp
+    src/ast_sequence_visitor.cpp
+    src/ast_terminal_visitor.cpp
+    src/ast_unary_visitor.cpp
+    src/ast_while_visitor.cpp
     src/lyric_rewriter.cpp
     src/macro_block.cpp
     src/macro_registry.cpp

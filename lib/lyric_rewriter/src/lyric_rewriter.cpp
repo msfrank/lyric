@@ -2,7 +2,7 @@
 #include <lyric_parser/archetype_state.h>
 #include <lyric_parser/node_walker.h>
 #include <lyric_rewriter/abstract_rewrite_driver.h>
-#include <lyric_rewriter/lyric_ast_sequence_visitor.h>
+#include <lyric_rewriter/ast_sequence_visitor.h>
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_rewriter/rewriter_result.h>
 #include <lyric_rewriter/rewrite_processor.h>
@@ -86,7 +86,7 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
         RewriteProcessorState processorState(&m_options, rewriteDriver, &archetypeState);
 
         // construct the root visitor
-        auto visitor = std::make_shared<LyricAstSequenceVisitor>(
+        auto visitor = std::make_shared<AstSequenceVisitor>(
             lyric_schema::LyricAstId::Block, &processorState);
 
         // rewrite archetype
@@ -173,7 +173,7 @@ lyric_rewriter::LyricRewriter::scanArchetype(
         ScanProcessorState processorState(&m_options, scanDriver, &archetypeState);
 
         // construct the root visitor
-        auto visitor = std::make_shared<LyricAstSequenceVisitor>(
+        auto visitor = std::make_shared<AstSequenceVisitor>(
             lyric_schema::LyricAstId::Block, &processorState);
 
         // scan archetype
