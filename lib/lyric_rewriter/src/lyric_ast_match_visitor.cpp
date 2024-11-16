@@ -5,8 +5,8 @@
 
 lyric_rewriter::LyricAstMatchVisitor::LyricAstMatchVisitor(
     lyric_schema::LyricAstId astId,
-    LyricAstOptions *options)
-    : LyricAstBaseVisitor(options),
+    AbstractProcessorState *state)
+    : LyricAstBaseVisitor(state),
       m_astId(astId)
 {
 }

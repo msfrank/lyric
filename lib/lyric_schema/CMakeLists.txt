@@ -10,6 +10,7 @@ set(LYRIC_SCHEMA_INCLUDES
     include/lyric_schema/assembler_schema.h
     include/lyric_schema/ast_schema.h
     include/lyric_schema/build_schema.h
+    include/lyric_schema/compiler_schema.h
     include/lyric_schema/dcmi_elements_schema.h
     include/lyric_schema/literal_schema.h
     include/lyric_schema/packaging_schema.h

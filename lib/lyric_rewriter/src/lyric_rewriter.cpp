@@ -18,43 +18,41 @@ lyric_rewriter::LyricRewriter::LyricRewriter(const LyricRewriter &other)
 {
 }
 
-struct RewriteDriverState {
-    std::shared_ptr<lyric_rewriter::AbstractRewriteDriver> driver;
-    lyric_parser::ArchetypeState *state;
+class RewriteProcessorState : public lyric_rewriter::AbstractProcessorState {
+public:
+    RewriteProcessorState(
+        const lyric_rewriter::RewriterOptions *options,
+        std::shared_ptr<lyric_rewriter::AbstractRewriteDriver> driver,
+        lyric_parser::ArchetypeState *state)
+        : m_options(options),
+          m_driver(driver),
+          m_state(state)
+    {
+    };
+    tempo_utils::Status
+    enterNode(lyric_parser::ArchetypeNode *node, lyric_rewriter::VisitorContext &ctx) override
+    {
+        return m_driver->enter(m_state, node, ctx);
+    };
+    tempo_utils::Status
+    exitNode(lyric_parser::ArchetypeNode *node, const lyric_rewriter::VisitorContext &ctx) override
+    {
+        return m_driver->exit(m_state, node, ctx);
+    };
+    tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractNodeVisitor>>
+    makeUnknownVisitor(const lyric_parser::ArchetypeNode *node) override
+    {
+        if (m_options->makeUnknownVisitor != nullptr)
+            return m_options->makeUnknownVisitor(node);
+        return lyric_rewriter::RewriterStatus::forCondition(
+            lyric_rewriter::RewriterCondition::kRewriterInvariant, "unknown node");
+    };
+
+private:
+    const lyric_rewriter::RewriterOptions *m_options;
+    std::shared_ptr<lyric_rewriter::AbstractRewriteDriver> m_driver;
+    lyric_parser::ArchetypeState *m_state;
 };
-
-static tempo_utils::Status
-rewrite_arrange(
-    lyric_schema::LyricAstId astId,
-    lyric_parser::ArchetypeNode *node,
-    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children,
-    void *data)
-{
-    auto *driverState = static_cast<RewriteDriverState *>(data);
-    return driverState->driver->arrange(driverState->state, node, children);
-}
-
-static tempo_utils::Status
-rewrite_enter_node(
-    lyric_schema::LyricAstId astId,
-    lyric_parser::ArchetypeNode *node,
-    lyric_rewriter::VisitorContext &ctx,
-    void *data)
-{
-    auto *driverState = static_cast<RewriteDriverState *>(data);
-    return driverState->driver->enter(driverState->state, node, ctx);
-}
-
-static tempo_utils::Status
-rewrite_exit_node(
-    lyric_schema::LyricAstId astId,
-    lyric_parser::ArchetypeNode *node,
-    const lyric_rewriter::VisitorContext &ctx,
-    void *data)
-{
-    auto *driverState = static_cast<RewriteDriverState *>(data);
-    return driverState->driver->exit(driverState->state, node, ctx);
-}
 
 tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_rewriter::LyricRewriter::rewriteArchetype(
@@ -85,20 +83,11 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
         archetypeState.setRoot(root);
 
         // define the driver state
-        RewriteDriverState driverState;
-        driverState.driver = rewriteDriver;
-        driverState.state = &archetypeState;
+        RewriteProcessorState processorState(&m_options, rewriteDriver, &archetypeState);
 
         // construct the root visitor
-        LyricAstOptions options;
-        options.arrange = rewrite_arrange;
-        options.enter = rewrite_enter_node;
-        options.exit = rewrite_exit_node;
-        options.data = &driverState;
-        options.unknown = m_options.unknownVisitor;
-
         auto visitor = std::make_shared<LyricAstSequenceVisitor>(
-            lyric_schema::LyricAstId::Block, &options);
+            lyric_schema::LyricAstId::Block, &processorState);
 
         // rewrite archetype
         RewriteProcessor processor;
@@ -117,43 +106,40 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
     }
 }
 
-struct ScanDriverState {
-    std::shared_ptr<lyric_rewriter::AbstractScanDriver> driver;
-    lyric_parser::ArchetypeState *state;
+class ScanProcessorState : public lyric_rewriter::AbstractProcessorState {
+public:
+    ScanProcessorState(
+        const lyric_rewriter::RewriterOptions *options,
+        std::shared_ptr<lyric_rewriter::AbstractScanDriver> driver,
+        lyric_parser::ArchetypeState *state)
+        : m_options(options),
+          m_driver(driver),
+          m_state(state)
+    {
+    };
+    tempo_utils::Status
+    enterNode(lyric_parser::ArchetypeNode *node, lyric_rewriter::VisitorContext &ctx) override
+    {
+        return m_driver->enter(m_state, node, ctx);
+    };
+    tempo_utils::Status
+    exitNode(lyric_parser::ArchetypeNode *node, const lyric_rewriter::VisitorContext &ctx) override
+    {
+        return m_driver->exit(m_state, node, ctx);
+    };
+    tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractNodeVisitor>>
+    makeUnknownVisitor(const lyric_parser::ArchetypeNode *node) override
+    {
+        if (m_options->makeUnknownVisitor != nullptr)
+            return m_options->makeUnknownVisitor(node);
+        return lyric_rewriter::RewriterStatus::forCondition(
+            lyric_rewriter::RewriterCondition::kRewriterInvariant, "unknown node");
+    };
+private:
+    const lyric_rewriter::RewriterOptions *m_options;
+    std::shared_ptr<lyric_rewriter::AbstractScanDriver> m_driver;
+    lyric_parser::ArchetypeState *m_state;
 };
-
-static tempo_utils::Status
-scan_arrange(
-    lyric_schema::LyricAstId astId,
-    lyric_parser::ArchetypeNode *node,
-    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children,
-    void *data)
-{
-    auto *driverState = static_cast<ScanDriverState *>(data);
-    return driverState->driver->arrange(driverState->state, node, children);
-}
-
-static tempo_utils::Status
-scan_enter_node(
-    lyric_schema::LyricAstId astId,
-    lyric_parser::ArchetypeNode *node,
-    lyric_rewriter::VisitorContext &ctx,
-    void *data)
-{
-    auto *driverState = static_cast<ScanDriverState *>(data);
-    return driverState->driver->enter(driverState->state, node, ctx);
-}
-
-static tempo_utils::Status
-scan_exit_node(
-    lyric_schema::LyricAstId astId,
-    lyric_parser::ArchetypeNode *node,
-    const lyric_rewriter::VisitorContext &ctx,
-    void *data)
-{
-    auto *driverState = static_cast<ScanDriverState *>(data);
-    return driverState->driver->exit(driverState->state, node, ctx);
-}
 
 tempo_utils::Status
 lyric_rewriter::LyricRewriter::scanArchetype(
@@ -184,20 +170,11 @@ lyric_rewriter::LyricRewriter::scanArchetype(
         archetypeState.setRoot(root);
 
         // define the driver state
-        ScanDriverState driverState;
-        driverState.driver = scanDriver;
-        driverState.state = &archetypeState;
+        ScanProcessorState processorState(&m_options, scanDriver, &archetypeState);
 
         // construct the root visitor
-        LyricAstOptions options;
-        options.arrange = scan_arrange;
-        options.enter = scan_enter_node;
-        options.exit = scan_exit_node;
-        options.data = &driverState;
-        options.unknown = m_options.unknownVisitor;
-
         auto visitor = std::make_shared<LyricAstSequenceVisitor>(
-            lyric_schema::LyricAstId::Block, &options);
+            lyric_schema::LyricAstId::Block, &processorState);
 
         // scan archetype
         RewriteProcessor processor;

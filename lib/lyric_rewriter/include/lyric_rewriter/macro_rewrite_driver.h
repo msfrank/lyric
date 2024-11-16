@@ -10,11 +10,6 @@ namespace lyric_rewriter {
     public:
         explicit MacroRewriteDriver(MacroRegistry *registry);
 
-        tempo_utils::Status arrange(
-            const lyric_parser::ArchetypeState *state,
-            const lyric_parser::ArchetypeNode *node,
-            std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children) override;
-
         tempo_utils::Status enter(
             lyric_parser::ArchetypeState *state,
             lyric_parser::ArchetypeNode *node,

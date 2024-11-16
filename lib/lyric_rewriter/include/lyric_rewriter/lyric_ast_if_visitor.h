@@ -9,7 +9,7 @@ namespace lyric_rewriter {
 
     class LyricAstIfVisitor : public LyricAstBaseVisitor {
     public:
-        LyricAstIfVisitor(lyric_schema::LyricAstId astId, LyricAstOptions *options);
+        LyricAstIfVisitor(lyric_schema::LyricAstId astId, AbstractProcessorState *state);
 
         tempo_utils::Status enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx) override;
         tempo_utils::Status exit(lyric_parser::ArchetypeNode *node, const VisitorContext &ctx) override;

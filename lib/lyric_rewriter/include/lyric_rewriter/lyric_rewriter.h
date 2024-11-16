@@ -16,6 +16,9 @@
 
 namespace lyric_rewriter {
 
+    using UnknownFunc = std::function<
+        tempo_utils::Result<std::shared_ptr<AbstractNodeVisitor>>(const lyric_parser::ArchetypeNode *)>;
+
     /**
      *
      */
@@ -25,7 +28,7 @@ namespace lyric_rewriter {
 
         std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache;
 
-        std::shared_ptr<AbstractNodeVisitor> unknownVisitor;
+        UnknownFunc makeUnknownVisitor = nullptr;
     };
 
     class LyricRewriter {

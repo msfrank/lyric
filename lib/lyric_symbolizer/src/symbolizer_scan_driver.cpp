@@ -18,19 +18,6 @@ lyric_symbolizer::SymbolizerScanDriver::SymbolizerScanDriver(
 }
 
 tempo_utils::Status
-lyric_symbolizer::SymbolizerScanDriver::arrange(
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children)
-{
-    children.clear();
-    for (int i = node->numChildren() - 1; i >= 0; i--) {
-        children.emplace_back(node->getChild(i), i);
-    }
-    return {};
-}
-
-tempo_utils::Status
 lyric_symbolizer::SymbolizerScanDriver::enter(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,

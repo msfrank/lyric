@@ -1,5 +1,5 @@
-#ifndef LYRIC_REWRITER_LYRIC_AST_DYNAMIC_VISITOR_H
-#define LYRIC_REWRITER_LYRIC_AST_DYNAMIC_VISITOR_H
+#ifndef LYRIC_REWRITER_LYRIC_AST_REVERSE_SEQUENCE_VISITOR_H
+#define LYRIC_REWRITER_LYRIC_AST_REVERSE_SEQUENCE_VISITOR_H
 
 #include <lyric_schema/ast_schema.h>
 
@@ -7,17 +7,16 @@
 
 namespace lyric_rewriter {
 
-    class LyricAstDynamicVisitor : public LyricAstBaseVisitor {
+    class LyricAstReverseSequenceVisitor : public LyricAstBaseVisitor {
     public:
-        LyricAstDynamicVisitor(lyric_schema::LyricAstId astId, LyricAstOptions *options);
+        LyricAstReverseSequenceVisitor(lyric_schema::LyricAstId astId, AbstractProcessorState *state);
 
         tempo_utils::Status enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx) override;
         tempo_utils::Status exit(lyric_parser::ArchetypeNode *node, const VisitorContext &ctx) override;
 
     private:
         lyric_schema::LyricAstId m_astId;
-        ArrangeFunc m_arrange;
     };
 }
 
-#endif // LYRIC_REWRITER_LYRIC_AST_DYNAMIC_VISITOR_H
+#endif // LYRIC_REWRITER_LYRIC_AST_REVERSE_SEQUENCE_VISITOR_H

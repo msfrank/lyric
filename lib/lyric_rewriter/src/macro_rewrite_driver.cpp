@@ -12,19 +12,6 @@ lyric_rewriter::MacroRewriteDriver::MacroRewriteDriver(MacroRegistry *registry)
 }
 
 tempo_utils::Status
-lyric_rewriter::MacroRewriteDriver::arrange(
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children)
-{
-    children.clear();
-    for (int i = node->numChildren() - 1; i >= 0; i--) {
-        children.emplace_back(node->getChild(i), i);
-    }
-    return {};
-}
-
-tempo_utils::Status
 lyric_rewriter::MacroRewriteDriver::enter(
     lyric_parser::ArchetypeState *state,
     lyric_parser::ArchetypeNode *node,

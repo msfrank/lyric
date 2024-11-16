@@ -3,8 +3,8 @@
 
 lyric_rewriter::LyricAstSequenceVisitor::LyricAstSequenceVisitor(
     lyric_schema::LyricAstId astId,
-    LyricAstOptions *options)
-    : LyricAstBaseVisitor(options),
+    AbstractProcessorState *state)
+    : LyricAstBaseVisitor(state),
       m_astId(astId)
 {
 }

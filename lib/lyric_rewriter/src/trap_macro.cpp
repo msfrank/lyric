@@ -16,17 +16,17 @@ lyric_rewriter::TrapMacro::rewriteBlock(
     MacroBlock &macroBlock,
     lyric_parser::ArchetypeState *state)
 {
-    TU_LOG_INFO << "rewrite trap macro";
+    TU_LOG_INFO << "rewrite Trap macro";
 
     if (macroCallNode->numChildren() != 1)
         return RewriterStatus::forCondition(RewriterCondition::kSyntaxError,
-            "expected 1 argument for trap macro ");
+            "expected 1 argument for Trap macro ");
     auto *arg0 = macroCallNode->getChild(0);
 
     std::string literalValue;
-    arg0->parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue);
+    TU_RETURN_IF_NOT_OK (arg0->parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue));
     lyric_parser::BaseType base;
-    arg0->parseAttr(lyric_parser::kLyricAstBaseType, base);
+    TU_RETURN_IF_NOT_OK (arg0->parseAttr(lyric_parser::kLyricAstBaseType, base));
 
     tu_int64 i64;
     TU_ASSIGN_OR_RETURN (i64, lyric_parser::parse_integer_literal(literalValue, base));
@@ -37,9 +37,9 @@ lyric_rewriter::TrapMacro::rewriteBlock(
 
     lyric_parser::ArchetypeNode *trapNode;
     TU_ASSIGN_OR_RETURN (trapNode, state->appendNode(lyric_schema::kLyricAssemblerTrapClass, {}));
-    TU_RETURN_IF_NOT_OK (macroBlock.appendNode(trapNode));
+    TU_RETURN_IF_NOT_OK (trapNode->putAttr(kLyricAssemblerTrapNumber, trapNumber));
 
-    trapNode->putAttr(kLyricAssemblerTrapNumber, trapNumber);
+    TU_RETURN_IF_NOT_OK (macroBlock.appendNode(trapNode));
 
     return {};
 }

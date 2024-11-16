@@ -1,7 +1,9 @@
 
+#include <lyric_compiler/assembler_handler.h>
 #include <lyric_compiler/assignment_handler.h>
 #include <lyric_compiler/binary_operation_handler.h>
 #include <lyric_compiler/block_handler.h>
+#include <lyric_compiler/compiler_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/conditional_handler.h>
 #include <lyric_compiler/constant_utils.h>
@@ -26,7 +28,9 @@
 #include <lyric_compiler/using_handler.h>
 #include <lyric_compiler/variable_handler.h>
 #include <lyric_parser/ast_attrs.h>
+#include <lyric_schema/assembler_schema.h>
 #include <lyric_schema/ast_schema.h>
+#include <lyric_schema/compiler_schema.h>
 
 lyric_compiler::TerminalFormBehavior::TerminalFormBehavior(
     bool isSideEffect,
@@ -236,16 +240,32 @@ lyric_compiler::FormChoice::decide(
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::DecideContext &ctx)
 {
-    if (!node->isNamespace(lyric_schema::kLyricAstNs))
+    // assembler forms
+    if (node->isNamespace(lyric_schema::kLyricAssemblerNs)) {
+        auto choice = std::make_unique<AssemblerChoice>(m_fragment, getBlock(), getDriver());
+        ctx.setChoice(std::move(choice));
         return {};
-    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
+    }
 
-    auto astId = resource->getId();
-    TU_LOG_INFO << "decide FormChoice@" << this << ": "
-                << resource->getNsUrl() << "#" << resource->getName();
+    // compiler forms
+    if (node->isNamespace(lyric_schema::kLyricCompilerNs)) {
+        auto choice = std::make_unique<CompilerChoice>(m_fragment, getBlock(), getDriver());
+        ctx.setChoice(std::move(choice));
+        return {};
+    }
 
     auto *block = getBlock();
     auto *driver = getDriver();
+
+    if (!node->isNamespace(lyric_schema::kLyricAstNs))
+        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
+            tempo_tracing::LogSeverity::kError, "invalid form");
+
+    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
+    auto astId = resource->getId();
+
+    TU_LOG_INFO << "decide FormChoice@" << this << ": "
+                << resource->getNsUrl() << "#" << resource->getName();
 
     bool isSideEffect = m_type == FormType::SideEffect;
 

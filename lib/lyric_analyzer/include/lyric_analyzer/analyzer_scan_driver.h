@@ -16,11 +16,6 @@ namespace lyric_analyzer {
 
         tempo_utils::Status initialize();
 
-        tempo_utils::Status arrange(
-            const lyric_parser::ArchetypeState *state,
-            const lyric_parser::ArchetypeNode *node,
-            std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children) override;
-
         tempo_utils::Status enter(
             const lyric_parser::ArchetypeState *state,
             const lyric_parser::ArchetypeNode *node,

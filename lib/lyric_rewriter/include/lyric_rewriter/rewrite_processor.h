@@ -57,6 +57,18 @@ namespace lyric_rewriter {
         virtual tempo_utils::Status exit(lyric_parser::ArchetypeNode *node, const VisitorContext &ctx) = 0;
     };
 
+    class AbstractProcessorState {
+    public:
+        virtual tempo_utils::Status enterNode(
+            lyric_parser::ArchetypeNode *node,
+            lyric_rewriter::VisitorContext &ctx) = 0;
+        virtual tempo_utils::Status exitNode(
+            lyric_parser::ArchetypeNode *node,
+            const lyric_rewriter::VisitorContext &ctx) = 0;
+        virtual tempo_utils::Result<std::shared_ptr<AbstractNodeVisitor>> makeUnknownVisitor(
+            const lyric_parser::ArchetypeNode *node) = 0;
+    };
+
     class RewriteProcessor {
     public:
         RewriteProcessor();

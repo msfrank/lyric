@@ -15,6 +15,7 @@
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_rewriter/macro_registry.h>
 #include <lyric_rewriter/macro_rewrite_driver.h>
+#include <lyric_rewriter/push_result_macro.h>
 #include <lyric_rewriter/trap_macro.h>
 #include <tempo_config/base_conversions.h>
 #include <tempo_config/container_conversions.h>
@@ -127,6 +128,7 @@ lyric_build::internal::ParseModuleTask::runTask(
     lyric_rewriter::LyricRewriter rewriter(rewriterOptions);
     absl::flat_hash_map<std::string,std::shared_ptr<lyric_rewriter::AbstractMacro>> macros;
     macros["Trap"] = std::make_shared<lyric_rewriter::TrapMacro>();
+    macros["PushResult"] = std::make_shared<lyric_rewriter::PushResultMacro>();
     lyric_rewriter::MacroRegistry macroRegistry(macros);
 
     TU_LOG_V << "rewriting source from " << m_sourceUrl;

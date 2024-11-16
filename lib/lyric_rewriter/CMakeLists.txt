@@ -7,6 +7,8 @@ set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/abstract_macro.h
     include/lyric_rewriter/abstract_rewrite_driver.h
     include/lyric_rewriter/assembler_attrs.h
+    include/lyric_rewriter/assembler_macro_visitor.h
+    include/lyric_rewriter/compiler_macro_visitor.h
     include/lyric_rewriter/lyric_ast_base_visitor.h
     include/lyric_rewriter/lyric_ast_binary_visitor.h
     include/lyric_rewriter/lyric_ast_cond_visitor.h
@@ -15,7 +17,7 @@ set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/lyric_ast_defenum_visitor.h
     include/lyric_rewriter/lyric_ast_definstance_visitor.h
     include/lyric_rewriter/lyric_ast_defstruct_visitor.h
-    include/lyric_rewriter/lyric_ast_dynamic_visitor.h
+    include/lyric_rewriter/lyric_ast_reverse_sequence_visitor.h
     include/lyric_rewriter/lyric_ast_for_visitor.h
     include/lyric_rewriter/lyric_ast_if_visitor.h
     include/lyric_rewriter/lyric_ast_match_visitor.h
@@ -28,6 +30,7 @@ set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/macro_block.h
     include/lyric_rewriter/macro_registry.h
     include/lyric_rewriter/macro_rewrite_driver.h
+    include/lyric_rewriter/push_result_macro.h
     include/lyric_rewriter/rewrite_processor.h
     include/lyric_rewriter/rewriter_result.h
     include/lyric_rewriter/schema_class_node_visitor.h
@@ -38,6 +41,8 @@ set_target_properties(lyric_rewriter PROPERTIES PUBLIC_HEADER "${LYRIC_REWRITER_
 
 target_sources(lyric_rewriter PRIVATE
     src/assembler_attrs.cpp
+    src/assembler_macro_visitor.cpp
+    src/compiler_macro_visitor.cpp
     src/lyric_ast_base_visitor.cpp
     src/lyric_ast_binary_visitor.cpp
     src/lyric_ast_cond_visitor.cpp
@@ -46,7 +51,7 @@ target_sources(lyric_rewriter PRIVATE
     src/lyric_ast_defenum_visitor.cpp
     src/lyric_ast_definstance_visitor.cpp
     src/lyric_ast_defstruct_visitor.cpp
-    src/lyric_ast_dynamic_visitor.cpp
+    src/lyric_ast_reverse_sequence_visitor.cpp
     src/lyric_ast_for_visitor.cpp
     src/lyric_ast_if_visitor.cpp
     src/lyric_ast_match_visitor.cpp
@@ -59,6 +64,7 @@ target_sources(lyric_rewriter PRIVATE
     src/macro_block.cpp
     src/macro_registry.cpp
     src/macro_rewrite_driver.cpp
+    src/push_result_macro.cpp
     src/rewrite_processor.cpp
     src/rewriter_result.cpp
     src/trap_macro.cpp

@@ -9,12 +9,14 @@ add_library(lyric::lyric_compiler ALIAS lyric_compiler)
 set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/abstract_behavior.h
     include/lyric_compiler/action_handler.h
+    include/lyric_compiler/assembler_handler.h
     include/lyric_compiler/assignment_handler.h
     include/lyric_compiler/base_choice.h
     include/lyric_compiler/base_grouping.h
     include/lyric_compiler/base_invokable_handler.h
     include/lyric_compiler/binary_operation_handler.h
     include/lyric_compiler/block_handler.h
+    include/lyric_compiler/compiler_handler.h
     include/lyric_compiler/compiler_result.h
     include/lyric_compiler/compiler_scan_driver.h
     include/lyric_compiler/compiler_utils.h
@@ -65,12 +67,14 @@ set_target_properties(lyric_compiler PROPERTIES PUBLIC_HEADER "${LYRIC_COMPILER_
 
 target_sources(lyric_compiler PRIVATE
     src/action_handler.cpp
+    src/assembler_handler.cpp
     src/assignment_handler.cpp
     src/base_choice.cpp
     src/base_grouping.cpp
     src/base_invokable_handler.cpp
     src/binary_operation_handler.cpp
     src/block_handler.cpp
+    src/compiler_handler.cpp
     src/compiler_result.cpp
     src/compiler_scan_driver.cpp
     src/compiler_utils.cpp

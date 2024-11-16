@@ -1,17 +1,17 @@
 
-#include <lyric_rewriter/lyric_ast_dynamic_visitor.h>
+#include <lyric_rewriter/lyric_ast_reverse_sequence_visitor.h>
 #include <lyric_rewriter/rewriter_result.h>
 
-lyric_rewriter::LyricAstDynamicVisitor::LyricAstDynamicVisitor(
+lyric_rewriter::LyricAstReverseSequenceVisitor::LyricAstReverseSequenceVisitor(
     lyric_schema::LyricAstId astId,
-    LyricAstOptions *options)
-    : LyricAstBaseVisitor(options),
+    AbstractProcessorState *state)
+    : LyricAstBaseVisitor(state),
       m_astId(astId)
 {
 }
 
 tempo_utils::Status
-lyric_rewriter::LyricAstDynamicVisitor::enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx)
+lyric_rewriter::LyricAstReverseSequenceVisitor::enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx)
 {
     TU_RETURN_IF_NOT_OK (invokeEnter(m_astId, node, ctx));
 
@@ -19,7 +19,9 @@ lyric_rewriter::LyricAstDynamicVisitor::enter(lyric_parser::ArchetypeNode *node,
         return {};
 
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> children;
-    TU_RETURN_IF_NOT_OK (arrangeChildren(m_astId, node, children));
+    for (int i = node->numChildren() - 1; i >= 0; i--) {
+        children.emplace_back(node->getChild(i), i);
+    }
 
     for (auto &childAndIndex : children) {
         std::shared_ptr<AbstractNodeVisitor> visitor;
@@ -31,7 +33,7 @@ lyric_rewriter::LyricAstDynamicVisitor::enter(lyric_parser::ArchetypeNode *node,
 }
 
 tempo_utils::Status
-lyric_rewriter::LyricAstDynamicVisitor::exit(lyric_parser::ArchetypeNode *node, const VisitorContext &ctx)
+lyric_rewriter::LyricAstReverseSequenceVisitor::exit(lyric_parser::ArchetypeNode *node, const VisitorContext &ctx)
 {
     return invokeExit(m_astId, node, ctx);
 }

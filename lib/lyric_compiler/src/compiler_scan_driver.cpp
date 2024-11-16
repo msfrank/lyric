@@ -55,19 +55,6 @@ lyric_compiler::CompilerScanDriver::initialize(std::unique_ptr<BaseGrouping> &&r
 }
 
 tempo_utils::Status
-lyric_compiler::CompilerScanDriver::arrange(
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> &children)
-{
-    children.clear();
-    for (int i = node->numChildren() - 1; i >= 0; i--) {
-        children.emplace_back(node->getChild(i), i);
-    }
-    return {};
-}
-
-tempo_utils::Status
 lyric_compiler::CompilerScanDriver::enter(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
