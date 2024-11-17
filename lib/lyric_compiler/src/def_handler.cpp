@@ -10,8 +10,21 @@ lyric_compiler::DefHandler::DefHandler(
     lyric_assembler::BlockHandle *block,
     lyric_compiler::CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_isSideEffect(isSideEffect)
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(nullptr)
 {
+}
+
+lyric_compiler::DefHandler::DefHandler(
+    bool isSideEffect,
+    lyric_assembler::NamespaceSymbol *currentNamespace,
+    lyric_assembler::BlockHandle *block,
+    lyric_compiler::CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(currentNamespace)
+{
+    TU_ASSERT (m_currentNamespace != nullptr);
 }
 
 tempo_utils::Status
@@ -44,6 +57,12 @@ lyric_compiler::DefHandler::before(
     // declare the function call
     TU_ASSIGN_OR_RETURN (m_function.callSymbol, block->declareFunction(identifier,
         lyric_compiler::convert_access_type(access), m_function.templateSpec.templateParameters));
+
+    // add function to the current namespace if specified
+    if (m_currentNamespace != nullptr) {
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
+            identifier, m_function.callSymbol->getSymbolUrl(), m_function.callSymbol->getAccessType()));
+    }
 
     auto *resolver = m_function.callSymbol->callResolver();
     auto *packNode = node->getChild(0);

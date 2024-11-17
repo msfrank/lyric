@@ -15,8 +15,21 @@ lyric_compiler::DefClassHandler::DefClassHandler(
     lyric_assembler::BlockHandle *block,
     lyric_compiler::CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_isSideEffect(isSideEffect)
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(nullptr)
 {
+}
+
+lyric_compiler::DefClassHandler::DefClassHandler(
+    bool isSideEffect,
+    lyric_assembler::NamespaceSymbol *currentNamespace,
+    lyric_assembler::BlockHandle *block,
+    lyric_compiler::CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(currentNamespace)
+{
+    TU_ASSERT (m_currentNamespace != nullptr);
 }
 
 tempo_utils::Status
@@ -127,6 +140,12 @@ lyric_compiler::DefClassHandler::before(
         identifier, m_defclass.superclassSymbol, lyric_compiler::convert_access_type(access),
         m_defclass.templateSpec.templateParameters, lyric_compiler::convert_derive_type(derive),
         isAbstract));
+
+    // add class to the current namespace if specified
+    if (m_currentNamespace != nullptr) {
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
+            identifier, m_defclass.classSymbol->getSymbolUrl(), m_defclass.classSymbol->getAccessType()));
+    }
 
     // declare val members
     for (auto &valNode : valNodes) {

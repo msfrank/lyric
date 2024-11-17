@@ -379,9 +379,9 @@ lyric_build::LyricBuilder::computeTargets(
     }
 
     // write target artifacts to the install directory
-    for (auto iterator = targetComputations.cbegin(); iterator != targetComputations.cend(); iterator++) {
-        const auto &targetId = iterator->first;
-        const auto &targetComputation = iterator->second;
+    for (auto entry : targetComputations) {
+        const auto &targetId = entry.first;
+        const auto &targetComputation = entry.second;
 
         tempo_config::BooleanParser skipInstallParser(false);
 
@@ -402,7 +402,7 @@ lyric_build::LyricBuilder::computeTargets(
         auto hash = targetComputation.getState().getHash();
         if (hash.empty())
             return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                "invalid state for task {}", iterator->first.toString());
+                "invalid state for task {}", targetId.toString());
 
         TraceId artifactTrace(hash, targetId.getDomain(), targetId.getId());
         auto generation = m_cache->loadTrace(artifactTrace);

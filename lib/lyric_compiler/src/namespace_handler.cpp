@@ -102,43 +102,43 @@ lyric_compiler::NamespaceDefinition::decide(
     switch (astId) {
         case lyric_schema::LyricAstId::Def: {
             auto handler = std::make_unique<DefHandler>(
-                /* isSideEffect= */ true, namespaceBlock, driver);
+                /* isSideEffect= */ true, m_namespaceSymbol, namespaceBlock, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }
         case lyric_schema::LyricAstId::DefClass: {
             auto handler = std::make_unique<DefClassHandler>(
-                /* isSideEffect= */ true, namespaceBlock, driver);
+                /* isSideEffect= */ true, m_namespaceSymbol, namespaceBlock, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }
         case lyric_schema::LyricAstId::DefEnum: {
             auto handler = std::make_unique<DefEnumHandler>(
-                /* isSideEffect= */ true, namespaceBlock, driver);
+                /* isSideEffect= */ true, m_namespaceSymbol, namespaceBlock, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }
         case lyric_schema::LyricAstId::DefInstance: {
             auto handler = std::make_unique<DefInstanceHandler>(
-                /* isSideEffect= */ true, namespaceBlock, driver);
+                /* isSideEffect= */ true, m_namespaceSymbol, namespaceBlock, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }
         case lyric_schema::LyricAstId::DefConcept: {
             auto handler = std::make_unique<DefConceptHandler>(
-                /* isSideEffect= */ true, namespaceBlock, driver);
+                /* isSideEffect= */ true, m_namespaceSymbol, namespaceBlock, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }
         case lyric_schema::LyricAstId::DefStatic: {
             auto handler = std::make_unique<DefStaticHandler>(
-                /* isSideEffect= */ true, namespaceBlock, driver);
+                /* isSideEffect= */ true, m_namespaceSymbol, namespaceBlock, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }
         case lyric_schema::LyricAstId::DefStruct: {
             auto handler = std::make_unique<DefStructHandler>(
-                /* isSideEffect= */ true, namespaceBlock, driver);
+                /* isSideEffect= */ true, m_namespaceSymbol, namespaceBlock, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }

@@ -15,8 +15,21 @@ lyric_compiler::DefStructHandler::DefStructHandler(
     lyric_assembler::BlockHandle *block,
     lyric_compiler::CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_isSideEffect(isSideEffect)
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(nullptr)
 {
+}
+
+lyric_compiler::DefStructHandler::DefStructHandler(
+    bool isSideEffect,
+    lyric_assembler::NamespaceSymbol *currentNamespace,
+    lyric_assembler::BlockHandle *block,
+    lyric_compiler::CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(currentNamespace)
+{
+    TU_ASSERT (m_currentNamespace != nullptr);
 }
 
 tempo_utils::Status
@@ -114,6 +127,12 @@ lyric_compiler::DefStructHandler::before(
     TU_ASSIGN_OR_RETURN (m_defstruct.structSymbol, block->declareStruct(
         identifier, m_defstruct.superstructSymbol, lyric_compiler::convert_access_type(access),
         lyric_compiler::convert_derive_type(derive), isAbstract));
+
+    // add struct to the current namespace if specified
+    if (m_currentNamespace != nullptr) {
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
+            identifier, m_defstruct.structSymbol->getSymbolUrl(), m_defstruct.structSymbol->getAccessType()));
+    }
 
     // declare val members
     for (auto &valNode : valNodes) {

@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/compiler_utils.h>
@@ -15,8 +16,21 @@ lyric_compiler::DefInstanceHandler::DefInstanceHandler(
     lyric_assembler::BlockHandle *block,
     lyric_compiler::CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_isSideEffect(isSideEffect)
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(nullptr)
 {
+}
+
+lyric_compiler::DefInstanceHandler::DefInstanceHandler(
+    bool isSideEffect,
+    lyric_assembler::NamespaceSymbol *currentNamespace,
+    lyric_assembler::BlockHandle *block,
+    lyric_compiler::CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(currentNamespace)
+{
+    TU_ASSERT (m_currentNamespace != nullptr);
 }
 
 tempo_utils::Status
@@ -100,6 +114,12 @@ lyric_compiler::DefInstanceHandler::before(
     TU_ASSIGN_OR_RETURN (m_definstance.instanceSymbol, block->declareInstance(
         identifier, m_definstance.superinstanceSymbol, lyric_compiler::convert_access_type(access),
         lyric_compiler::convert_derive_type(derive), isAbstract));
+
+    // add instance to the current namespace if specified
+    if (m_currentNamespace != nullptr) {
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
+            identifier, m_definstance.instanceSymbol->getSymbolUrl(), m_definstance.instanceSymbol->getAccessType()));
+    }
 
     // declare val members
     for (auto &valNode : valNodes) {

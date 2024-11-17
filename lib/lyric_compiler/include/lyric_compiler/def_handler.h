@@ -20,6 +20,11 @@ namespace lyric_compiler {
     class DefHandler : public BaseGrouping {
     public:
         DefHandler(bool isSideEffect, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
+        DefHandler(
+            bool isSideEffect,
+            lyric_assembler::NamespaceSymbol *currentNamespace,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
 
         tempo_utils::Status before(
             const lyric_parser::ArchetypeState *state,
@@ -34,6 +39,7 @@ namespace lyric_compiler {
     private:
         Function m_function;
         bool m_isSideEffect;
+        lyric_assembler::NamespaceSymbol *m_currentNamespace;
     };
 
     class DefProc : public BaseChoice {

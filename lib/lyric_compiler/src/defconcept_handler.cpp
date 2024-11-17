@@ -10,8 +10,21 @@ lyric_compiler::DefConceptHandler::DefConceptHandler(
     lyric_assembler::BlockHandle *block,
     lyric_compiler::CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_isSideEffect(isSideEffect)
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(nullptr)
 {
+}
+
+lyric_compiler::DefConceptHandler::DefConceptHandler(
+    bool isSideEffect,
+    lyric_assembler::NamespaceSymbol *currentNamespace,
+    lyric_assembler::BlockHandle *block,
+    lyric_compiler::CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(currentNamespace)
+{
+    TU_ASSERT (m_currentNamespace != nullptr);
 }
 
 tempo_utils::Status
@@ -88,6 +101,12 @@ lyric_compiler::DefConceptHandler::before(
     TU_ASSIGN_OR_RETURN (m_defconcept.conceptSymbol, block->declareConcept(
         identifier, m_defconcept.superconceptSymbol, lyric_compiler::convert_access_type(access),
         m_defconcept.templateSpec.templateParameters, lyric_compiler::convert_derive_type(derive)));
+
+    // add concept to the current namespace if specified
+    if (m_currentNamespace != nullptr) {
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
+            identifier, m_defconcept.conceptSymbol->getSymbolUrl(), m_defconcept.conceptSymbol->getAccessType()));
+    }
 
     // declare actions
     for (auto &declNode : declNodes) {

@@ -1,7 +1,6 @@
 
 #include <lyric_assembler/internal/writer_utils.h>
 #include <lyric_assembler/internal/write_links.h>
-#include <lyric_assembler/internal/write_object.h>
 
 tempo_utils::Status
 lyric_assembler::internal::write_links(

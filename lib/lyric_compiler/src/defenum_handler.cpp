@@ -14,8 +14,21 @@ lyric_compiler::DefEnumHandler::DefEnumHandler(
     lyric_assembler::BlockHandle *block,
     lyric_compiler::CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_isSideEffect(isSideEffect)
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(nullptr)
 {
+}
+
+lyric_compiler::DefEnumHandler::DefEnumHandler(
+    bool isSideEffect,
+    lyric_assembler::NamespaceSymbol *currentNamespace,
+    lyric_assembler::BlockHandle *block,
+    lyric_compiler::CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(currentNamespace)
+{
+    TU_ASSERT (m_currentNamespace != nullptr);
 }
 
 tempo_utils::Status
@@ -103,6 +116,12 @@ lyric_compiler::DefEnumHandler::before(
     TU_ASSIGN_OR_RETURN (m_defenum.enumSymbol, block->declareEnum(
         identifier, m_defenum.superenumSymbol, lyric_compiler::convert_access_type(access),
         lyric_object::DeriveType::Sealed, isAbstract));
+
+    // add enum to the current namespace if specified
+    if (m_currentNamespace != nullptr) {
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
+            identifier, m_defenum.enumSymbol->getSymbolUrl(), m_defenum.enumSymbol->getAccessType()));
+    }
 
     // declare val members
     for (auto &valNode : valNodes) {

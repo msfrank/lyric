@@ -150,8 +150,6 @@ target_sources(lyric_assembler PRIVATE
     src/internal/write_literals.cpp
     include/lyric_assembler/internal/write_namespaces.h
     src/internal/write_namespaces.cpp
-    include/lyric_assembler/internal/write_object.h
-    src/internal/write_object.cpp
     include/lyric_assembler/internal/write_statics.h
     src/internal/write_statics.cpp
     include/lyric_assembler/internal/write_structs.h

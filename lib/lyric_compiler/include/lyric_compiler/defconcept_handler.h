@@ -25,6 +25,11 @@ namespace lyric_compiler {
     class DefConceptHandler : public BaseGrouping {
     public:
         DefConceptHandler(bool isSideEffect, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
+        DefConceptHandler(
+            bool isSideEffect,
+            lyric_assembler::NamespaceSymbol *currentNamespace,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
 
         tempo_utils::Status before(
             const lyric_parser::ArchetypeState *state,
@@ -39,6 +44,7 @@ namespace lyric_compiler {
     private:
         DefConcept m_defconcept;
         bool m_isSideEffect;
+        lyric_assembler::NamespaceSymbol *m_currentNamespace;
     };
 
     class ConceptDefinition : public BaseChoice {

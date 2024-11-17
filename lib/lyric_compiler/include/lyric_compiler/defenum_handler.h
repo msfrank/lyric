@@ -28,6 +28,11 @@ namespace lyric_compiler {
     class DefEnumHandler : public BaseGrouping {
     public:
         DefEnumHandler(bool isSideEffect, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
+        DefEnumHandler(
+            bool isSideEffect,
+            lyric_assembler::NamespaceSymbol *currentNamespace,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
 
         tempo_utils::Status before(
             const lyric_parser::ArchetypeState *state,
@@ -42,6 +47,7 @@ namespace lyric_compiler {
     private:
         DefEnum m_defenum;
         bool m_isSideEffect;
+        lyric_assembler::NamespaceSymbol *m_currentNamespace;
     };
 
     class EnumDefinition : public BaseChoice {

@@ -15,6 +15,11 @@ namespace lyric_compiler {
     class DefStaticHandler : public BaseGrouping {
     public:
         DefStaticHandler(bool isSideEffect, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
+        DefStaticHandler(
+            bool isSideEffect,
+            lyric_assembler::NamespaceSymbol *currentNamespace,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
 
         tempo_utils::Status before(
             const lyric_parser::ArchetypeState *state,
@@ -28,6 +33,7 @@ namespace lyric_compiler {
 
     private:
         bool m_isSideEffect;
+        lyric_assembler::NamespaceSymbol *m_currentNamespace;
         lyric_assembler::StaticSymbol *m_staticSymbol;
         lyric_assembler::ProcHandle *m_procHandle;
     };

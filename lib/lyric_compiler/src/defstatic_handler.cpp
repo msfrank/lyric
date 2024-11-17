@@ -12,8 +12,21 @@ lyric_compiler::DefStaticHandler::DefStaticHandler(
     lyric_assembler::BlockHandle *block,
     lyric_compiler::CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_isSideEffect(isSideEffect)
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(nullptr)
 {
+}
+
+lyric_compiler::DefStaticHandler::DefStaticHandler(
+    bool isSideEffect,
+    lyric_assembler::NamespaceSymbol *currentNamespace,
+    lyric_assembler::BlockHandle *block,
+    lyric_compiler::CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_isSideEffect(isSideEffect),
+      m_currentNamespace(currentNamespace)
+{
+    TU_ASSERT (m_currentNamespace != nullptr);
 }
 
 tempo_utils::Status
@@ -58,6 +71,12 @@ lyric_compiler::DefStaticHandler::before(
     lyric_assembler::DataReference staticRef;
     TU_ASSIGN_OR_RETURN (staticRef, block->declareStatic(
         identifier, convert_access_type(access), declarationType, isVariable));
+
+    // add global to the current namespace if specified
+    if (m_currentNamespace != nullptr) {
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
+            identifier, m_staticSymbol->getSymbolUrl(), m_staticSymbol->getAccessType()));
+    }
 
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(staticRef.symbolUrl));
