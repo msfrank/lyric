@@ -322,3 +322,4 @@ const lyric_parser::NodeAttr lyric_parser::kLyricAstFinallyOffset(&lyric_schema:
 const lyric_parser::NodeAttr lyric_parser::kLyricAstRestOffset(&lyric_schema::kLyricAstRestOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstGenericOffset(&lyric_schema::kLyricAstGenericOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstTypeArgumentsOffset(&lyric_schema::kLyricAstTypeArgumentsOffsetProperty);
+const lyric_parser::NodeAttr lyric_parser::kLyricAstMacroListOffset(&lyric_schema::kLyricAstMacroListOffsetProperty);

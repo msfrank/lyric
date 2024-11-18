@@ -1,13 +1,13 @@
-#ifndef LYRIC_REWRITER_TRAP_MACRO_H
-#define LYRIC_REWRITER_TRAP_MACRO_H
+#ifndef LYRIC_REWRITER_ALLOCATOR_TRAP_MACRO_H
+#define LYRIC_REWRITER_ALLOCATOR_TRAP_MACRO_H
 
 #include "abstract_macro.h"
 
 namespace lyric_rewriter {
 
-    class TrapMacro : public AbstractMacro {
+    class AllocatorTrapMacro : public AbstractMacro {
     public:
-        TrapMacro();
+        AllocatorTrapMacro();
 
         tempo_utils::Status rewriteDefinition(
             const lyric_parser::ArchetypeNode *macroCallNode,
@@ -21,4 +21,4 @@ namespace lyric_rewriter {
     };
 }
 
-#endif // LYRIC_REWRITER_TRAP_MACRO_H
+#endif // LYRIC_REWRITER_ALLOCATOR_TRAP_MACRO_H

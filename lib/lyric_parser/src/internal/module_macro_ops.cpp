@@ -83,6 +83,16 @@ lyric_parser::internal::ModuleMacroOps::exitMacroCall(ModuleParser::MacroCallCon
 void
 lyric_parser::internal::ModuleMacroOps::exitAnnotationList(ModuleParser::AnnotationListContext *ctx)
 {
+    // the macro list
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
+    auto *macroListNode = m_state->popNode();
+    m_state->checkNodeOrThrow(macroListNode, lyric_schema::kLyricAstMacroListClass);
+
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
+    auto *definitionNode = m_state->peekNode();
+    TU_RAISE_IF_NOT_OK (definitionNode->putAttr(lyric_parser::kLyricAstMacroListOffset, macroListNode));
 }
 
 void

@@ -17,6 +17,7 @@ namespace lyric_compiler {
     declare_struct_default_init(
         const DefStruct *defstruct,
         lyric_assembler::StructSymbol *structSymbol,
+        tu_uint32 allocatorTrap,
         lyric_assembler::SymbolCache *symbolCache,
         lyric_typing::TypeSystem *typeSystem);
 
@@ -24,6 +25,7 @@ namespace lyric_compiler {
     declare_struct_init(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::StructSymbol *structSymbol,
+        tu_uint32 allocatorTrap,
         lyric_typing::TypeSystem *typeSystem);
 
     tempo_utils::Status default_initialize_struct_members(

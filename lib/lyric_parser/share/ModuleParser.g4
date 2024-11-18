@@ -141,8 +141,8 @@ setStatement        : SetKeyword assignmentSpec assignmentOp expression ;
 
 // def statement
 
-defStatement        : DefKeyword symbolIdentifier
-                        placeholderSpec? paramSpec returnSpec constraintSpec?
+defStatement        : annotationList? DefKeyword
+                        symbolIdentifier placeholderSpec? paramSpec returnSpec constraintSpec?
                         CurlyOpen block CurlyClose ;
 
 // impl statement
@@ -164,7 +164,9 @@ classInit           : InitKeyword paramSpec classSuper? CurlyOpen block? CurlyCl
 genericClass        : placeholderSpec constraintSpec? ;
 classDerives        : ( SealedKeyword | FinalKeyword ) ;
 classSpec           : classInit | classVal | classVar | classDef | classImpl ;
-defclassStatement   : DefClassKeyword symbolIdentifier genericClass? classDerives? CurlyOpen classSpec*  CurlyClose ;
+defclassStatement   : annotationList? DefClassKeyword
+                        symbolIdentifier genericClass? classDerives?
+                        CurlyOpen classSpec*  CurlyClose ;
 
 
 // defconcept statement
@@ -174,7 +176,9 @@ conceptImpl         : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose 
 genericConcept      : placeholderSpec constraintSpec? ;
 conceptDerives      : ( SealedKeyword | FinalKeyword ) ;
 conceptSpec         : conceptDecl | conceptImpl ;
-defconceptStatement : DefConceptKeyword symbolIdentifier genericConcept? conceptDerives? CurlyOpen conceptSpec* CurlyClose ;
+defconceptStatement : annotationList? DefConceptKeyword
+                        symbolIdentifier genericConcept? conceptDerives?
+                        CurlyOpen conceptSpec* CurlyClose ;
 
 
 // definstance statement
@@ -185,7 +189,9 @@ instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen
 instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 instanceDerives     : ( SealedKeyword | FinalKeyword ) ;
 instanceSpec        : instanceVal | instanceVar | instanceDef | instanceImpl ;
-definstanceStatement: DefInstanceKeyword symbolIdentifier instanceDerives? CurlyOpen instanceSpec* CurlyClose ;
+definstanceStatement: annotationList? DefInstanceKeyword
+                        symbolIdentifier instanceDerives?
+                        CurlyOpen instanceSpec* CurlyClose ;
 
 
 // defenum statement
@@ -196,7 +202,9 @@ enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen
 enumCase            : CaseKeyword symbolIdentifier ( ParenOpen argList? ParenClose )? ;
 enumImpl            : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 enumSpec            : enumInit | enumVal | enumDef | enumCase | enumImpl ;
-defenumStatement    : DefEnumKeyword symbolIdentifier CurlyOpen enumSpec* CurlyClose ;
+defenumStatement    : annotationList? DefEnumKeyword
+                        symbolIdentifier
+                        CurlyOpen enumSpec* CurlyClose ;
 
 
 // defstruct statement
@@ -208,18 +216,20 @@ structDef           : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen
 structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 structDerives       : ( SealedKeyword | FinalKeyword ) ;
 structSpec          : structInit | structVal | structDef | structImpl ;
-defstructStatement  : DefStructKeyword symbolIdentifier structDerives? CurlyOpen structSpec* CurlyClose ;
+defstructStatement  : annotationList? DefStructKeyword
+                        symbolIdentifier structDerives?
+                        CurlyOpen structSpec* CurlyClose ;
 
 
 // global statement
 
-globalStatement     : GlobalKeyword ( ValKeyword | VarKeyword )
+globalStatement     : annotationList? GlobalKeyword ( ValKeyword | VarKeyword )
                         symbolIdentifier ColonOperator assignableType AssignOperator defaultInitializer ;
 
 
 // defalias statement
 
-defaliasStatement   : DefAliasKeyword Identifier placeholderSpec? assignableType ;
+defaliasStatement   : annotationList? DefAliasKeyword Identifier placeholderSpec? assignableType ;
 
 
 // namespace statement
@@ -232,7 +242,9 @@ namespaceSpec       : globalStatement
                     | definstanceStatement
                     | defstructStatement
                     ;
-namespaceStatement  : NamespaceKeyword symbolIdentifier CurlyOpen namespaceSpec* CurlyClose ;
+namespaceStatement  : annotationList? NamespaceKeyword
+                        symbolIdentifier
+                        CurlyOpen namespaceSpec* CurlyClose ;
 
 
 // symbol management statements

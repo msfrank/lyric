@@ -9,6 +9,7 @@
 #include <lyric_compiler/method_handler.h>
 #include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
+#include <lyric_rewriter/assembler_attrs.h>
 
 lyric_compiler::DefStructHandler::DefStructHandler(
     bool isSideEffect,
@@ -62,6 +63,13 @@ lyric_compiler::DefStructHandler::before(
     // get struct derive type
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
+
+    // get allocator trap
+    tu_uint32 allocatorTrapNumber = lyric_object::INVALID_ADDRESS_U32;
+    if (node->hasAttr(lyric_rewriter::kLyricAssemblerAllocatorTrapNumber)) {
+        TU_RETURN_IF_NOT_OK (node->parseAttr(
+            lyric_rewriter::kLyricAssemblerAllocatorTrapNumber, allocatorTrapNumber));
+    }
 
     // FIXME: get abstract flag from node
     bool isAbstract = false;
@@ -144,10 +152,10 @@ lyric_compiler::DefStructHandler::before(
     // declare struct init
     if (initNode != nullptr) {
         TU_ASSIGN_OR_RETURN (m_defstruct.initCall, declare_struct_init(
-            initNode, m_defstruct.structSymbol, typeSystem));
+            initNode, m_defstruct.structSymbol, allocatorTrapNumber, typeSystem));
     } else {
         TU_ASSIGN_OR_RETURN (m_defstruct.initCall, declare_struct_default_init(
-            &m_defstruct, m_defstruct.structSymbol, symbolCache, typeSystem));
+            &m_defstruct, m_defstruct.structSymbol, allocatorTrapNumber, symbolCache, typeSystem));
     }
 
     // declare methods

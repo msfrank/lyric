@@ -17,11 +17,13 @@ namespace lyric_schema {
 
         // Assembler classes
 
-        Trap,                       // trap macro
+        Trap,                       // invoke trap with the given trap number
+        AllocatorTrap,              // use the given trap as allocator
 
         // Assembler properties
 
         TrapNumber,                 // integer identifying the trap in the plugin
+        AllocatorTrapNumber,        // integer identifying the allocator trap in the plugin
         DefinitionSymbolPath,       //
 
         NUM_IDS,                    // must be last
@@ -30,9 +32,16 @@ namespace lyric_schema {
     constexpr tempo_utils::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerTrapClass(
         &kLyricAssemblerNs, LyricAssemblerId::Trap, "Trap");
 
+    constexpr tempo_utils::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerAllocatorTrapClass(
+        &kLyricAssemblerNs, LyricAssemblerId::AllocatorTrap, "AllocatorTrap");
+
     constexpr tempo_utils::SchemaProperty<LyricAssemblerNs,LyricAssemblerId>
         kLyricAssemblerTrapNumberProperty(
         &kLyricAssemblerNs, LyricAssemblerId::TrapNumber, "TrapNumber", tempo_utils::PropertyType::kUInt32);
+
+    constexpr tempo_utils::SchemaProperty<LyricAssemblerNs,LyricAssemblerId>
+        kLyricAssemblerAllocatorTrapNumberProperty(
+        &kLyricAssemblerNs, LyricAssemblerId::AllocatorTrapNumber, "AllocatorTrapNumber", tempo_utils::PropertyType::kUInt32);
 
     constexpr tempo_utils::SchemaProperty<LyricAssemblerNs,LyricAssemblerId>
         kLyricAssemblerDefinitionSymbolPathProperty(
@@ -43,7 +52,9 @@ namespace lyric_schema {
         static_cast<std::size_t>(LyricAssemblerId::NUM_IDS)>
     kLyricAssemblerResources = {
         &kLyricAssemblerTrapClass,
+        &kLyricAssemblerAllocatorTrapClass,
         &kLyricAssemblerTrapNumberProperty,
+        &kLyricAssemblerAllocatorTrapNumberProperty,
         &kLyricAssemblerDefinitionSymbolPathProperty,
     };
 

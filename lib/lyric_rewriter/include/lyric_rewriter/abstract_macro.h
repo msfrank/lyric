@@ -11,6 +11,11 @@ namespace lyric_rewriter {
     public:
         virtual ~AbstractMacro() = default;
 
+        virtual tempo_utils::Status rewriteDefinition(
+            const lyric_parser::ArchetypeNode *macroCallNode,
+            lyric_parser::ArchetypeNode *definitionNode,
+            lyric_parser::ArchetypeState *state) = 0;
+
         virtual tempo_utils::Status rewriteBlock(
             const lyric_parser::ArchetypeNode *macroCallNode,
             MacroBlock &macroBlock,

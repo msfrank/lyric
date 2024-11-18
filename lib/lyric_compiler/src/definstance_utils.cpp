@@ -11,6 +11,7 @@ tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_compiler::declare_instance_default_init(
     const DefInstance *definstance,
     lyric_assembler::InstanceSymbol *instanceSymbol,
+    tu_uint32 allocatorTrap,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_typing::TypeSystem *typeSystem)
 {
@@ -19,7 +20,7 @@ lyric_compiler::declare_instance_default_init(
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(lyric_object::AccessType::Public, allocatorTrap));
 
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));

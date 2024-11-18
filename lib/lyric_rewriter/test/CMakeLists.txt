@@ -5,6 +5,7 @@ include(GoogleTest)
 # define unit tests
 
 set(TEST_CASES
+    rewrite_allocator_trap_tests.cpp
     rewrite_trap_tests.cpp
     )
 

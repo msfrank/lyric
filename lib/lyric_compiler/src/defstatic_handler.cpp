@@ -72,12 +72,6 @@ lyric_compiler::DefStaticHandler::before(
     TU_ASSIGN_OR_RETURN (staticRef, block->declareStatic(
         identifier, convert_access_type(access), declarationType, isVariable));
 
-    // add global to the current namespace if specified
-    if (m_currentNamespace != nullptr) {
-        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
-            identifier, m_staticSymbol->getSymbolUrl(), m_staticSymbol->getAccessType()));
-    }
-
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(staticRef.symbolUrl));
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::STATIC)
@@ -85,6 +79,12 @@ lyric_compiler::DefStaticHandler::before(
             tempo_tracing::LogSeverity::kError,
             "invalid static symbol {}", staticRef.symbolUrl.toString());
     m_staticSymbol = cast_symbol_to_static(symbol);
+
+    // add global to the current namespace if specified
+    if (m_currentNamespace != nullptr) {
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
+            identifier, m_staticSymbol->getSymbolUrl(), m_staticSymbol->getAccessType()));
+    }
 
     //
     TU_ASSIGN_OR_RETURN (m_procHandle, m_staticSymbol->defineInitializer());

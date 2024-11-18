@@ -9,6 +9,11 @@ namespace lyric_rewriter {
     public:
         PushResultMacro();
 
+        tempo_utils::Status rewriteDefinition(
+            const lyric_parser::ArchetypeNode *macroCallNode,
+            lyric_parser::ArchetypeNode *definitionNode,
+            lyric_parser::ArchetypeState *state) override;
+
         tempo_utils::Status rewriteBlock(
             const lyric_parser::ArchetypeNode *macroCallNode,
             MacroBlock &macroBlock,

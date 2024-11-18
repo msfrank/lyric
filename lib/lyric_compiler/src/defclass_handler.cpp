@@ -9,6 +9,7 @@
 #include <lyric_compiler/method_handler.h>
 #include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
+#include <lyric_rewriter/assembler_attrs.h>
 
 lyric_compiler::DefClassHandler::DefClassHandler(
     bool isSideEffect,
@@ -68,6 +69,13 @@ lyric_compiler::DefClassHandler::before(
         lyric_parser::ArchetypeNode *genericNode;
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
         TU_ASSIGN_OR_RETURN (m_defclass.templateSpec, typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
+    }
+
+    // get allocator trap
+    tu_uint32 allocatorTrapNumber = lyric_object::INVALID_ADDRESS_U32;
+    if (node->hasAttr(lyric_rewriter::kLyricAssemblerAllocatorTrapNumber)) {
+        TU_RETURN_IF_NOT_OK (node->parseAttr(
+            lyric_rewriter::kLyricAssemblerAllocatorTrapNumber, allocatorTrapNumber));
     }
 
     // FIXME: get abstract flag from node
@@ -166,10 +174,10 @@ lyric_compiler::DefClassHandler::before(
     // declare class init
     if (initNode != nullptr) {
         TU_ASSIGN_OR_RETURN (m_defclass.initCall, declare_class_init(
-            initNode, m_defclass.classSymbol, typeSystem));
+            initNode, m_defclass.classSymbol, allocatorTrapNumber, typeSystem));
     } else {
         TU_ASSIGN_OR_RETURN (m_defclass.initCall, declare_class_default_init(
-            &m_defclass, m_defclass.classSymbol, symbolCache, typeSystem));
+            &m_defclass, m_defclass.classSymbol, allocatorTrapNumber, symbolCache, typeSystem));
     }
 
     // declare methods

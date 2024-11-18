@@ -9,6 +9,16 @@ lyric_rewriter::PushResultMacro::PushResultMacro()
 }
 
 tempo_utils::Status
+lyric_rewriter::PushResultMacro::rewriteDefinition(
+    const lyric_parser::ArchetypeNode *macroCallNode,
+    lyric_parser::ArchetypeNode *definitionNode,
+    lyric_parser::ArchetypeState *state)
+{
+    return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant,
+        "PushResult macro is not valid in definition context");
+}
+
+tempo_utils::Status
 lyric_rewriter::PushResultMacro::rewriteBlock(
     const lyric_parser::ArchetypeNode *macroCallNode,
     MacroBlock &macroBlock,

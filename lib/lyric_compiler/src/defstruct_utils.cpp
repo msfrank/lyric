@@ -11,6 +11,7 @@ tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_compiler::declare_struct_init(
     const lyric_parser::ArchetypeNode *initNode,
     lyric_assembler::StructSymbol *structSymbol,
+    tu_uint32 allocatorTrap,
     lyric_typing::TypeSystem *typeSystem)
 {
     TU_ASSERT (initNode != nullptr);
@@ -19,7 +20,7 @@ lyric_compiler::declare_struct_init(
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbol->declareCtor(lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbol->declareCtor(lyric_object::AccessType::Public, allocatorTrap));
 
     lyric_typing::PackSpec packSpec;
     lyric_assembler::ParameterPack parameterPack;
@@ -41,6 +42,7 @@ tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_compiler::declare_struct_default_init(
     const DefStruct *defstruct,
     lyric_assembler::StructSymbol *structSymbol,
+    tu_uint32 allocatorTrap,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_typing::TypeSystem *typeSystem)
 {
@@ -60,7 +62,7 @@ lyric_compiler::declare_struct_default_init(
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbol->declareCtor(lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbol->declareCtor(lyric_object::AccessType::Public, allocatorTrap));
 
     lyric_assembler::ParameterPack parameterPack;
     absl::flat_hash_map<std::string,lyric_common::SymbolUrl> paramInitializers;

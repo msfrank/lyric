@@ -22,7 +22,12 @@ namespace lyric_rewriter {
 
         tempo_utils::Status finish() override;
 
-        tempo_utils::Status rewriteMacroList(
+        tempo_utils::Status rewriteMacroDefinition(
+            lyric_parser::ArchetypeNode *macroListNode,
+            lyric_parser::ArchetypeNode *definitionNode,
+            lyric_parser::ArchetypeState *state);
+
+        tempo_utils::Status rewriteMacroBlock(
             lyric_parser::ArchetypeNode *macroListNode,
             MacroBlock &macroBlock);
 

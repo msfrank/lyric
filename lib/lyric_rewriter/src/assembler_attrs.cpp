@@ -4,3 +4,6 @@
 
 const tempo_utils::UInt32Attr lyric_rewriter::kLyricAssemblerTrapNumber(
     &lyric_schema::kLyricAssemblerTrapNumberProperty);
+
+const tempo_utils::UInt32Attr lyric_rewriter::kLyricAssemblerAllocatorTrapNumber(
+    &lyric_schema::kLyricAssemblerAllocatorTrapNumberProperty);
