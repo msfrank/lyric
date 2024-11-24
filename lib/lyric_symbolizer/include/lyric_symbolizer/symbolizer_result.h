@@ -11,7 +11,7 @@
 
 namespace lyric_symbolizer {
 
-    constexpr tempo_utils::SchemaNs kLyricSymbolizerStatusNs("dev.zuri.ns:lyric-symoblizer-status-1");
+    constexpr tempo_utils::SchemaNs kLyricSymbolizerStatusNs("dev.zuri.ns:lyric-symbolizer-status-1");
 
     enum class SymbolizerCondition {
         kSyntaxError,

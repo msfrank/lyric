@@ -217,6 +217,20 @@ lyric_assembler::TypeCache::getOrMakeType(const lyric_common::TypeDef &assignabl
     }
 }
 
+tempo_utils::Status
+lyric_assembler::TypeCache::appendType(lyric_assembler::TypeHandle *typeHandle)
+{
+    TU_ASSERT (typeHandle != nullptr);
+    auto typeDef = typeHandle->getTypeDef();
+
+    if (m_typecache.contains(typeDef))
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "type {} is already defined", typeDef.toString());
+
+    m_typecache[typeDef] = typeHandle;
+    return {};
+}
+
 tempo_utils::Result<lyric_assembler::TypeHandle *>
 lyric_assembler::TypeCache::importType(lyric_importer::TypeImport *typeImport)
 {
@@ -480,6 +494,20 @@ lyric_assembler::TypeCache::makeTemplate(
     TU_RETURN_IF_NOT_OK (touchTemplateParameters(templateParameters));
 
     return templateHandle;
+}
+
+tempo_utils::Status
+lyric_assembler::TypeCache::appendTemplate(lyric_assembler::TemplateHandle *templateHandle)
+{
+    TU_ASSERT (templateHandle != nullptr);
+    auto templateUrl = templateHandle->getTemplateUrl();
+
+    if (m_templatecache.contains(templateUrl))
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "template {} is already defined", templateUrl.toString());
+
+    m_templatecache[templateUrl] = templateHandle;
+    return {};
 }
 
 tempo_utils::Result<lyric_assembler::TemplateHandle *>

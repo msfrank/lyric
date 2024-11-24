@@ -7,8 +7,9 @@
 
 #include <absl/strings/string_view.h>
 
+#include <tempo_security/sha256_hash.h>
+
 #include "build_types.h"
-#include "sha256_hash.h"
 
 namespace lyric_build {
 
@@ -29,7 +30,7 @@ namespace lyric_build {
         static std::string uniqueHash();
 
     private:
-        Sha256Hash m_hasher;
+        tempo_security::Sha256Hash m_hasher;
     };
 }
 

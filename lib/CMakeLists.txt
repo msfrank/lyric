@@ -1,5 +1,6 @@
 
 add_subdirectory(lyric_analyzer)
+add_subdirectory(lyric_archiver)
 add_subdirectory(lyric_assembler)
 add_subdirectory(lyric_bootstrap)
 add_subdirectory(lyric_build)

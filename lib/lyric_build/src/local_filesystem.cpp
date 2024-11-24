@@ -1,6 +1,6 @@
 
 #include <lyric_build/local_filesystem.h>
-#include <lyric_build/sha256_hash.h>
+#include <tempo_security/sha256_hash.h>
 #include <tempo_utils/file_reader.h>
 
 lyric_build::LocalFilesystem::LocalFilesystem()
@@ -53,7 +53,8 @@ lyric_build::LocalFilesystem::fetchResource(const tempo_utils::Url &url)
 
     Resource resource;
     resource.id = path.string();
-    resource.entityTag = Sha256Hash::hash(std::string_view((const char *) bytes->getData(), bytes->getSize()));
+    resource.entityTag = tempo_security::Sha256Hash::hash(
+        std::string_view((const char *) bytes->getData(), bytes->getSize()));
     resource.lastModifiedMillis = 0;
 
     return Option(resource);

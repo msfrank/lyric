@@ -7,7 +7,6 @@ include(GoogleTest)
 set(TEST_CASES
     #builder_tests.cpp
     parse_module_task_tests.cpp
-    sha256_hash_tests.cpp
     )
 
 # define test suite driver

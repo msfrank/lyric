@@ -10,9 +10,9 @@
 #include <lyric_build/build_types.h>
 #include <lyric_build/config_store.h>
 #include <lyric_build/rocksdb_cache.h>
-#include <lyric_build/sha256_hash.h>
 #include <lyric_build/task_notification.h>
 #include <lyric_build/task_registry.h>
+#include <tempo_security/sha256_hash.h>
 
 // forward declarations for uv callbacks
 static void worker_thread(void *arg);
@@ -689,7 +689,7 @@ inline tempo_utils::Status worker_loop(const lyric_build::TaskThread *thread)
         // all dependent tasks are complete, generate the task hash
         std::string taskHash;
         if (!depStates.empty()) {
-            lyric_build::Sha256Hash hasher;
+            tempo_security::Sha256Hash hasher;
             hasher.addData(configHash);
             // FIXME: this is wrong, order of hashing is non-deterministic!
             for (const auto &depState : depStates) {

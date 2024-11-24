@@ -10,7 +10,6 @@
 #include <lyric_build/lyric_builder.h>
 #include <lyric_build/memory_cache.h>
 #include <lyric_build/rocksdb_cache.h>
-#include <lyric_build/sha256_hash.h>
 #include <lyric_build/task_notification.h>
 #include <lyric_build/task_registry.h>
 #include <tempo_config/base_conversions.h>
@@ -493,6 +492,12 @@ std::shared_ptr<lyric_packaging::PackageLoader>
 lyric_build::LyricBuilder::getPackageLoader() const
 {
     return m_packageLoader;
+}
+
+std::shared_ptr<lyric_importer::ModuleCache>
+lyric_build::LyricBuilder::getSharedModuleCache() const
+{
+    return m_sharedModuleCache;
 }
 
 static void

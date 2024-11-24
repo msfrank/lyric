@@ -21,6 +21,7 @@ namespace lyric_assembler {
         int numTypes() const;
 
         tempo_utils::Result<TypeHandle *> getOrMakeType(const lyric_common::TypeDef &assignableType);
+        tempo_utils::Status appendType(TypeHandle *typeHandle);
         tempo_utils::Result<TypeHandle *> importType(lyric_importer::TypeImport *typeImport);
 
         tempo_utils::Result<TypeHandle *> declareSubType(
@@ -53,6 +54,7 @@ namespace lyric_assembler {
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             BlockHandle *parentBlock);
         tempo_utils::Result<TemplateHandle *> importTemplate(lyric_importer::TemplateImport *templateImport);
+        tempo_utils::Status appendTemplate(TemplateHandle *templateHandle);
         tempo_utils::Status touchTemplateParameters(const std::vector<lyric_object::TemplateParameter> &parameters);
 
         tempo_utils::Result<lyric_common::TypeDef> resolveConcrete(

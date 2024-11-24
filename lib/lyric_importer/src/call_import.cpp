@@ -27,6 +27,12 @@ lyric_importer::CallImport::CallImport(std::shared_ptr<ModuleImport> moduleImpor
     TU_ASSERT (m_callOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
+tu_uint32
+lyric_importer::CallImport::getCallOffset() const
+{
+    return m_callOffset;
+}
+
 lyric_common::SymbolUrl
 lyric_importer::CallImport::getSymbolUrl()
 {

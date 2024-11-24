@@ -105,6 +105,7 @@ namespace lyric_build {
         std::shared_ptr<AbstractCache> getCache() const;
         std::shared_ptr<lyric_bootstrap::BootstrapLoader> getBootstrapLoader() const;
         std::shared_ptr<lyric_packaging::PackageLoader> getPackageLoader() const;
+        std::shared_ptr<lyric_importer::ModuleCache> getSharedModuleCache() const;
 
         void onTaskNotification(BuildRunner *runner, const TaskNotification *notification);
 

@@ -11,6 +11,8 @@ namespace lyric_importer {
     public:
         CallImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 callOffset);
 
+        tu_uint32 getCallOffset() const;
+
         lyric_common::SymbolUrl getSymbolUrl();
 
         bool isDeclOnly();
