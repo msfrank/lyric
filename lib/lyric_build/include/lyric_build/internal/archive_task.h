@@ -3,11 +3,12 @@
 
 #include <absl/container/flat_hash_set.h>
 
+#include <lyric_archiver/lyric_archiver.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/config_store.h>
 #include <lyric_build/build_types.h>
-#include <lyric_parser/lyric_parser.h>
+#include <lyric_common/module_location.h>
 
 namespace lyric_build::internal {
 
@@ -26,13 +27,20 @@ namespace lyric_build::internal {
         Option<tempo_utils::Status> runTask(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            BuildState *generation) override;
+            BuildState *buildState) override;
 
     private:
         absl::flat_hash_set<TaskKey> m_archiveTargets;
         std::string m_archiveName;
+        lyric_common::ModuleLocation m_moduleLocation;
+        lyric_archiver::ArchiverOptions m_archiverOptions;
 
         tempo_utils::Status configure(const ConfigStore *config);
+
+        tempo_utils::Status buildArchive(
+            const std::string &taskHash,
+            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+            BuildState *buildState);
     };
 
     BaseTask *new_archive_task(

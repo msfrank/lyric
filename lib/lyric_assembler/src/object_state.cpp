@@ -27,10 +27,12 @@
 
 lyric_assembler::ObjectState::ObjectState(
     const lyric_common::ModuleLocation &location,
+    std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     tempo_tracing::ScopeManager *scopeManager,
     const ObjectStateOptions &options)
     : m_location(location),
+      m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_scopeManager(scopeManager),
       m_options(options),
@@ -97,7 +99,7 @@ lyric_assembler::ObjectState::defineRoot()
     m_symbolcache = new SymbolCache(this, m_tracer);
     m_typecache = new TypeCache(this, m_tracer);
     m_implcache = new ImplCache(this, m_tracer);
-    m_importcache = new ImportCache(this, m_options.workspaceLoader, m_systemModuleCache, m_symbolcache, m_tracer);
+    m_importcache = new ImportCache(this, m_localModuleCache, m_systemModuleCache, m_symbolcache, m_tracer);
 
     // load the prelude object
     std::shared_ptr<lyric_importer::ModuleImport> preludeImport;

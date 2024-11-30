@@ -221,23 +221,20 @@ lyric_build::internal::CompileModuleTask::compileModule(
         return loadContentResult.getStatus();
     lyric_parser::LyricArchetype archetype(loadContentResult.getResult());
 
-    // configure compiler
-    lyric_compiler::LyricCompiler compiler(buildState->getSharedModuleCache(), m_compilerOptions);
+    // construct the local module cache
+    std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache));
+    auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
-    // configure loader
-    auto createDependencyLoaderResult = DependencyLoader::create(depStates, cache);
-    if (createDependencyLoaderResult.isStatus())
-        return createDependencyLoaderResult.getStatus();
-    std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
-    loaderChain.push_back(createDependencyLoaderResult.getResult());
-    loaderChain.push_back(buildState->getLoaderChain());
-    auto loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
+    // configure compiler
+    lyric_compiler::LyricCompiler compiler(localModuleCache, buildState->getSharedModuleCache(), m_compilerOptions);
 
     auto span = getSpan();
 
     // compile the module
     TU_LOG_V << "compiling module from " << m_sourceUrl;
-    auto compileResult = compiler.compileModule(m_moduleLocation, archetype, m_objectStateOptions, traceDiagnostics());
+    auto compileResult = compiler.compileModule(m_moduleLocation,
+        archetype, m_objectStateOptions, traceDiagnostics());
     if (compileResult.isStatus()) {
         span->logStatus(compileResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,

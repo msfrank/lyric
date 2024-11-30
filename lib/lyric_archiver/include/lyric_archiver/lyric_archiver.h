@@ -28,6 +28,7 @@ namespace lyric_archiver {
     public:
         LyricArchiver(
             const lyric_common::ModuleLocation &location,
+            std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             std::shared_ptr<tempo_tracing::TraceRecorder> recorder,
             const ArchiverOptions &options);
@@ -47,6 +48,7 @@ namespace lyric_archiver {
 
     private:
         lyric_common::ModuleLocation m_location;
+        std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         std::shared_ptr<tempo_tracing::TraceRecorder> m_recorder;
         ArchiverOptions m_options;

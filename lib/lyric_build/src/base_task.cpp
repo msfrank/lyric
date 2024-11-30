@@ -69,47 +69,6 @@ lyric_build::BaseTask::traceDiagnostics()
     return m_diagnostics;
 }
 
-//void
-//lyric_build::BaseTask::setSpan(std::shared_ptr<tempo_tracing::TraceSpan> span)
-//{
-//    m_span = span;
-//    m_span->setOperationName(getId().toString());
-//    m_span->setStartTime(absl::Now());
-//    m_span->putTag(tempo_tracing::kOpentracingComponent, std::string("lyric_build"));
-//    m_span->putTag(lyric_build::kLyricBuildGeneration, boost::uuids::to_string(m_generation));
-//    m_span->putTag(lyric_build::kLyricBuildTaskParams, m_key.getParams().toString());
-//}
-//
-//void
-//lyric_build::BaseTask::putTag(const tempo_utils::Attr &tag)
-//{
-//    TU_ASSERT (m_span);
-//    m_span->putTag(tag);
-//}
-//
-//void
-//lyric_build::BaseTask::putTags(std::initializer_list<tempo_utils::Attr> tags)
-//{
-//    TU_ASSERT (m_span);
-//    m_span->putTags(tags);
-//}
-//
-//void
-//lyric_build::BaseTask::putLog(std::initializer_list<tempo_utils::Attr> fields)
-//{
-//    TU_ASSERT (m_span);
-//    m_span->putLogs(fields);
-//}
-//
-//void
-//lyric_build::BaseTask::putError(std::error_code ec, std::string_view message)
-//{
-//    TU_ASSERT (m_span);
-//    m_span->putTag(tempo_tracing::kOpentracingEvent, std::string("error"));
-//    m_span->putTag(tempo_tracing::kOpentracingErrorKind, absl::StrCat(ec.category().name(), "|", ec.message()));
-//    m_span->putTag(tempo_tracing::kOpentracingMessage, std::string(message));
-//}
-
 Option<tempo_utils::Status>
 lyric_build::BaseTask::run(
     const std::string &taskHash,

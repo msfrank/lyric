@@ -19,8 +19,8 @@ namespace lyric_assembler {
     public:
         explicit ImportCache(
             lyric_assembler::ObjectState *state,
-            std::shared_ptr<lyric_runtime::AbstractLoader> loader,
-            std::shared_ptr<lyric_importer::ModuleCache> sharedModuleCache,
+            std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
+            std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             SymbolCache *symbolCache,
             AssemblerTracer *tracer);
         ~ImportCache();
@@ -64,8 +64,8 @@ namespace lyric_assembler {
     private:
         lyric_assembler::ObjectState *m_state;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_loader;
-        std::shared_ptr<lyric_importer::ModuleCache> m_privateModuleCache;
-        std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;
+        std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
+        std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         SymbolCache *m_symbolCache;
         AssemblerTracer *m_tracer;
         absl::flat_hash_map<lyric_common::ModuleLocation, ImportHandle *> m_importcache;

@@ -191,23 +191,20 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
         return loadContentResult.getStatus();
     lyric_parser::LyricArchetype archetype(loadContentResult.getResult());
 
-    // configure analyzer
-    lyric_analyzer::LyricAnalyzer analyzer(buildState->getSharedModuleCache(), m_analyzerOptions);
+    // construct the local module cache
+    std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache));
+    auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
-    // configure loader
-    auto createDependencyLoaderResult = DependencyLoader::create(depStates, cache);
-    if (createDependencyLoaderResult.isStatus())
-        return createDependencyLoaderResult.getStatus();
-    std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
-    loaderChain.push_back(createDependencyLoaderResult.getResult());
-    loaderChain.push_back(buildState->getLoaderChain());
-    auto loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
+    // configure analyzer
+    lyric_analyzer::LyricAnalyzer analyzer(localModuleCache, buildState->getSharedModuleCache(), m_analyzerOptions);
 
     auto span = getSpan();
 
     // generate the outline object by analyzing the archetype
     TU_LOG_INFO << "analyzing module from " << m_sourceUrl;
-    auto scanResult = analyzer.analyzeModule(m_moduleLocation, archetype, m_objectStateOptions, traceDiagnostics());
+    auto scanResult = analyzer.analyzeModule(m_moduleLocation,
+        archetype, m_objectStateOptions, traceDiagnostics());
     if (scanResult.isStatus()) {
         span->logStatus(scanResult.getStatus(), tempo_tracing::LogSeverity::kError);
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,

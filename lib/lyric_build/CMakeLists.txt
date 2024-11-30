@@ -159,6 +159,7 @@ target_include_directories(lyric_build PUBLIC
 target_link_libraries(lyric_build
     PUBLIC
     lyric::lyric_analyzer
+    lyric::lyric_archiver
     lyric::lyric_bootstrap
     lyric::lyric_compiler
     lyric::lyric_packaging

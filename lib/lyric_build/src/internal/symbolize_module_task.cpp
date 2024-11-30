@@ -117,16 +117,15 @@ lyric_build::internal::SymbolizeModuleTask::checkDependencies()
     return absl::flat_hash_set<TaskKey>({m_parseTarget});
 }
 
-Option<tempo_utils::Status>
-lyric_build::internal::SymbolizeModuleTask::runTask(
+tempo_utils::Status
+lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
 {
     if (!depStates.contains(m_parseTarget))
-        return Option<tempo_utils::Status>(
-            BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                "missing state for dependent task {}", m_parseTarget.toString()));
+        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+            "missing state for dependent task {}", m_parseTarget.toString());
 
     // get the archetype artifact from the cache
     auto cache = buildState->getCache();
@@ -136,41 +135,35 @@ lyric_build::internal::SymbolizeModuleTask::runTask(
     ArtifactId parseArtifact(generation, parseHash, m_sourceUrl);
     auto loadContentResult = cache->loadContentFollowingLinks(parseArtifact);
     if (loadContentResult.isStatus())
-        return Option<tempo_utils::Status>(loadContentResult.getStatus());
+        return loadContentResult.getStatus();
     lyric_parser::LyricArchetype archetype(loadContentResult.getResult());
 
-    auto span = getSpan();
+    // construct the local module cache
+    std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache));
+    auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     // configure symbolizer
-    lyric_symbolizer::LyricSymbolizer symbolizer(buildState->getSharedModuleCache(), m_symbolizerOptions);
+    lyric_symbolizer::LyricSymbolizer symbolizer(
+        localModuleCache, buildState->getSharedModuleCache(), m_symbolizerOptions);
 
-    // configure assembler
-    lyric_assembler::ObjectStateOptions objectStateOptions = m_objectStateOptions;
-    auto createDependencyLoaderResult = DependencyLoader::create(depStates, cache);
-    if (createDependencyLoaderResult.isStatus())
-        return Option(createDependencyLoaderResult.getStatus());
-    objectStateOptions.workspaceLoader = createDependencyLoaderResult.getResult();
+    auto span = getSpan();
 
     // generate the linkage object by symbolizing the archetype
     TU_LOG_V << "symbolizing module from " << m_sourceUrl;
     auto symbolizeModuleResult = symbolizer.symbolizeModule(
-        m_moduleLocation, archetype, objectStateOptions, traceDiagnostics());
+        m_moduleLocation, archetype, m_objectStateOptions, traceDiagnostics());
     if (symbolizeModuleResult.isStatus()) {
         span->logStatus(symbolizeModuleResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
-        return Option<tempo_utils::Status>(
-            BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                "failed to symbolize module {}", m_moduleLocation.toString()));
+        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+            "failed to symbolize module {}", m_moduleLocation.toString());
     }
     auto object = symbolizeModuleResult.getResult();
-
-    tempo_utils::Status status;
 
     // store the linkage object content in the build cache
     ArtifactId linkageArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourceUrl);
     auto linkageBytes = object.bytesView();
-    status = cache->storeContent(linkageArtifact, linkageBytes);
-    if (!status.isOk())
-        return Option<tempo_utils::Status>(status);
+    TU_RETURN_IF_NOT_OK (cache->storeContent(linkageArtifact, linkageBytes));
 
     // generate the install path
     std::filesystem::path linkageInstallPath = generate_install_path(
@@ -187,17 +180,24 @@ lyric_build::internal::SymbolizeModuleTask::runTask(
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
         span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
-        return Option<tempo_utils::Status>(
-            BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                "failed to store metadata for {}", linkageArtifact.toString()));
+        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+            "failed to store metadata for {}", linkageArtifact.toString());
     }
-    status = cache->storeMetadata(linkageArtifact, toMetadataResult.getResult());
-    if (!status.isOk())
-        return Option<tempo_utils::Status>(status);
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(linkageArtifact, toMetadataResult.getResult()));
 
     TU_LOG_V << "stored linkage at " << linkageArtifact;
 
-    return Option<tempo_utils::Status>(BuildStatus::ok());
+    return {};
+}
+
+Option<tempo_utils::Status>
+lyric_build::internal::SymbolizeModuleTask::runTask(
+    const std::string &taskHash,
+    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+    BuildState *buildState)
+{
+    auto status = symbolizeModule(taskHash, depStates, buildState);
+    return Option<tempo_utils::Status>(status);
 }
 
 lyric_build::BaseTask *

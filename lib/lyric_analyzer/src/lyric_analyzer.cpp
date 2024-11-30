@@ -8,15 +8,18 @@
 #include <tempo_utils/log_stream.h>
 
 lyric_analyzer::LyricAnalyzer::LyricAnalyzer(
+    std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     const AnalyzerOptions &options)
-    : m_systemModuleCache(std::move(systemModuleCache)),
+    : m_localModuleCache(std::move(localModuleCache)),
+      m_systemModuleCache(std::move(systemModuleCache)),
       m_options(options)
 {
 }
 
 lyric_analyzer::LyricAnalyzer::LyricAnalyzer(const LyricAnalyzer &other)
-    : m_systemModuleCache(other.m_systemModuleCache),
+    : m_localModuleCache(other.m_localModuleCache),
+      m_systemModuleCache(other.m_systemModuleCache),
       m_options(other.m_options)
 {
 }
@@ -46,7 +49,7 @@ lyric_analyzer::LyricAnalyzer::analyzeModule(
 
         // construct the analyzer state
         lyric_assembler::ObjectState objectState(
-            location, m_systemModuleCache, &scopeManager, objectStateOptions);
+            location, m_localModuleCache, m_systemModuleCache, &scopeManager, objectStateOptions);
         lyric_typing::TypeSystem typeSystem(&objectState);
 
         // initialize the assembler

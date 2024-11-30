@@ -7,15 +7,18 @@
 #include <tempo_utils/log_stream.h>
 
 lyric_symbolizer::LyricSymbolizer::LyricSymbolizer(
+    std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     const SymbolizerOptions &options)
-    : m_systemModuleCache(std::move(systemModuleCache)),
+    : m_localModuleCache(std::move(localModuleCache)),
+      m_systemModuleCache(std::move(systemModuleCache)),
       m_options(options)
 {
 }
 
 lyric_symbolizer::LyricSymbolizer::LyricSymbolizer(const LyricSymbolizer &other)
-    : m_systemModuleCache(other.m_systemModuleCache),
+    : m_localModuleCache(other.m_localModuleCache),
+      m_systemModuleCache(other.m_systemModuleCache),
       m_options(other.m_options)
 {
 }
@@ -45,7 +48,7 @@ lyric_symbolizer::LyricSymbolizer::symbolizeModule(
 
         // construct the assembler state
         lyric_assembler::ObjectState objectState(
-            location, m_systemModuleCache, &scopeManager, objectStateOptions);
+            location, m_localModuleCache, m_systemModuleCache, &scopeManager, objectStateOptions);
 
         // initialize the assembler
         lyric_assembler::ObjectRoot *root;

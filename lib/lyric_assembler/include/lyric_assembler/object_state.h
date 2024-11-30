@@ -53,7 +53,6 @@ namespace lyric_assembler {
         tu_uint32 majorVersion = 0;
         tu_uint32 minorVersion = 0;
         tu_uint32 patchVersion = 0;
-        std::shared_ptr<lyric_runtime::AbstractLoader> workspaceLoader = {};
         lyric_common::ModuleLocation preludeLocation = {};
         absl::flat_hash_map<std::string, std::string> pluginsMap = {};
     };
@@ -63,6 +62,7 @@ namespace lyric_assembler {
     public:
         ObjectState(
             const lyric_common::ModuleLocation &location,
+            std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             tempo_tracing::ScopeManager *scopeManager,
             const ObjectStateOptions &options = {});
@@ -146,6 +146,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::ModuleLocation m_location;
+        std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         tempo_tracing::ScopeManager *m_scopeManager;
         ObjectStateOptions m_options;

@@ -28,7 +28,7 @@ namespace lyric_build::internal {
         Option<tempo_utils::Status> runTask(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            BuildState *generation) override;
+            BuildState *buildState) override;
 
     private:
         tempo_utils::Url m_sourceUrl;
@@ -39,6 +39,10 @@ namespace lyric_build::internal {
         TaskKey m_parseTarget;
 
         tempo_utils::Status configure(const ConfigStore *config);
+        tempo_utils::Status symbolizeModule(
+            const std::string &taskHash,
+            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+            BuildState *buildState);
     };
 
     BaseTask *new_symbolize_module_task(

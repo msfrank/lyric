@@ -9,16 +9,19 @@
 #include <tempo_utils/log_stream.h>
 
 lyric_compiler::LyricCompiler::LyricCompiler(
+    std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     const CompilerOptions &options)
-    : m_systemModuleCache(systemModuleCache),
+    : m_localModuleCache(std::move(localModuleCache)),
+      m_systemModuleCache(std::move(systemModuleCache)),
       m_options(options)
 {
     TU_ASSERT (m_systemModuleCache != nullptr);
 }
 
 lyric_compiler::LyricCompiler::LyricCompiler(const LyricCompiler &other)
-    : m_systemModuleCache(other.m_systemModuleCache),
+    : m_localModuleCache(other.m_localModuleCache),
+      m_systemModuleCache(other.m_systemModuleCache),
       m_options(other.m_options)
 {
 }
@@ -48,7 +51,7 @@ lyric_compiler::LyricCompiler::compileModule(
 
         // construct the compiler state
         lyric_assembler::ObjectState objectState(
-            location, m_systemModuleCache, &scopeManager, objectStateOptions);
+            location, m_localModuleCache, m_systemModuleCache, &scopeManager, objectStateOptions);
 
         // initialize the assembler
         lyric_assembler::ObjectRoot *root;

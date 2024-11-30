@@ -17,25 +17,21 @@
 
 lyric_assembler::ImportCache::ImportCache(
     lyric_assembler::ObjectState *state,
-    std::shared_ptr<lyric_runtime::AbstractLoader> loader,
-    std::shared_ptr<lyric_importer::ModuleCache> sharedModuleCache,
+    std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
+    std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     SymbolCache *symbolCache,
     AssemblerTracer *tracer)
     : m_state(state),
-      m_loader(loader),
-      m_sharedModuleCache(sharedModuleCache),
+      m_localModuleCache(std::move(localModuleCache)),
+      m_systemModuleCache(std::move(systemModuleCache)),
       m_symbolCache(symbolCache),
       m_tracer(tracer)
 {
     TU_ASSERT (m_state != nullptr);
-    TU_ASSERT (m_sharedModuleCache != nullptr);
+    TU_ASSERT (m_localModuleCache != nullptr);
+    TU_ASSERT (m_systemModuleCache != nullptr);
     TU_ASSERT (m_symbolCache != nullptr);
     TU_ASSERT (m_tracer != nullptr);
-    if (loader != nullptr) {
-        m_privateModuleCache = lyric_importer::ModuleCache::create(loader);
-    } else {
-        m_privateModuleCache = lyric_importer::ModuleCache::create(m_sharedModuleCache->getLoader());
-    }
 }
 
 lyric_assembler::ImportCache::~ImportCache()
@@ -238,9 +234,9 @@ lyric_assembler::ImportCache::importModule(
 
     // get the shared module import
     if (!importLocation.hasScheme() && !importLocation.hasAuthority()) {
-        TU_ASSIGN_OR_RETURN (moduleImport, m_privateModuleCache->importModule(importLocation));
+        TU_ASSIGN_OR_RETURN (moduleImport, m_localModuleCache->importModule(importLocation));
     } else {
-        TU_ASSIGN_OR_RETURN (moduleImport, m_sharedModuleCache->importModule(importLocation));
+        TU_ASSIGN_OR_RETURN (moduleImport, m_systemModuleCache->importModule(importLocation));
     }
 
     auto location = moduleImport->getLocation();
@@ -271,9 +267,9 @@ lyric_assembler::ImportCache::importModule(
 
     // get the shared module import
     if (!importLocation.hasScheme() && !importLocation.hasAuthority()) {
-        TU_ASSIGN_OR_RETURN (moduleImport, m_privateModuleCache->importModule(importLocation));
+        TU_ASSIGN_OR_RETURN (moduleImport, m_localModuleCache->importModule(importLocation));
     } else {
-        TU_ASSIGN_OR_RETURN (moduleImport, m_sharedModuleCache->importModule(importLocation));
+        TU_ASSIGN_OR_RETURN (moduleImport, m_systemModuleCache->importModule(importLocation));
     }
     auto location = moduleImport->getLocation();
 
@@ -302,9 +298,9 @@ lyric_assembler::ImportCache::getModule(const lyric_common::ModuleLocation &impo
         return {};
 
     if (entry->second->isShared) {
-        return m_sharedModuleCache->getModule(importLocation);
+        return m_systemModuleCache->getModule(importLocation);
     } else {
-        return m_privateModuleCache->getModule(importLocation);
+        return m_localModuleCache->getModule(importLocation);
     }
 }
 
@@ -316,9 +312,9 @@ lyric_assembler::ImportCache::importSymbol(const lyric_common::SymbolUrl &symbol
     // get the shared module import
     auto importLocation = symbolUrl.getModuleLocation();
     if (!importLocation.hasScheme() && !importLocation.hasAuthority()) {
-        TU_ASSIGN_OR_RETURN (moduleImport, m_privateModuleCache->importModule(importLocation));
+        TU_ASSIGN_OR_RETURN (moduleImport, m_localModuleCache->importModule(importLocation));
     } else {
-        TU_ASSIGN_OR_RETURN (moduleImport, m_sharedModuleCache->importModule(importLocation));
+        TU_ASSIGN_OR_RETURN (moduleImport, m_systemModuleCache->importModule(importLocation));
     }
     auto location = moduleImport->getLocation();
 
