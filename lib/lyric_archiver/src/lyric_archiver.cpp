@@ -44,6 +44,16 @@ lyric_archiver::LyricArchiver::initialize()
 }
 
 tempo_utils::Status
+lyric_archiver::LyricArchiver::importModule(const lyric_common::ModuleLocation &location)
+{
+    if (m_archiverState == nullptr)
+        return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
+            "archiver is not initialized");
+
+    return m_archiverState->importObject(location);
+}
+
+tempo_utils::Status
 lyric_archiver::LyricArchiver::insertModule(
     const lyric_common::ModuleLocation &location,
     const lyric_object::LyricObject &object)
@@ -53,6 +63,17 @@ lyric_archiver::LyricArchiver::insertModule(
             "archiver is not initialized");
 
     return m_archiverState->insertObject(location, object);
+}
+
+tempo_utils::Status
+lyric_archiver::LyricArchiver::archiveSymbol(
+    const lyric_common::ModuleLocation &srcLocation,
+    const std::string &srcIdentifier,
+    const std::string &dstIdentifier,
+    lyric_object::AccessType access)
+{
+    lyric_common::SymbolUrl symbolUrl(srcLocation, lyric_common::SymbolPath({srcIdentifier}));
+    return archiveSymbol(symbolUrl, dstIdentifier, access);
 }
 
 tempo_utils::Status

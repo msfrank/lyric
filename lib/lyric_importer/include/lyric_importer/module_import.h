@@ -30,6 +30,10 @@ namespace lyric_importer {
     public:
         ModuleImport() = delete;
 
+        static tempo_utils::Result<std::shared_ptr<ModuleImport>> create(
+            const lyric_common::ModuleLocation &importLocation,
+            const lyric_object::LyricObject &importObject);
+
         lyric_common::ModuleLocation getLocation() const;
         lyric_object::LyricObject getObject() const;
 

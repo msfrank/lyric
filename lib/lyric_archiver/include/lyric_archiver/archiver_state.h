@@ -33,6 +33,8 @@ namespace lyric_archiver {
         lyric_importer::ModuleCache *systemModuleCache();
         lyric_assembler::ObjectRoot *objectRoot();
 
+        tempo_utils::Status importObject(const lyric_common::ModuleLocation &location);
+
         tempo_utils::Status insertObject(
             const lyric_common::ModuleLocation &location,
             const lyric_object::LyricObject &object);

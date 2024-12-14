@@ -18,6 +18,7 @@ lyric_test::LyricTester::LyricTester(const TesterOptions &options)
         options.isTemporary,
         options.keepBuildOnUnexpectedResult,
         options.preludeLocation,
+        options.fallbackLoader,
         options.packageMap,
         options.buildConfig,
         options.buildVendorConfig);
@@ -33,6 +34,16 @@ const lyric_test::TestRunner *
 lyric_test::LyricTester::getRunner() const
 {
     return m_runner.get();
+}
+
+tempo_utils::Result<std::filesystem::path>
+lyric_test::LyricTester::writeModule(
+    const std::string &code,
+    const std::filesystem::path &path)
+{
+    if (!m_runner->isConfigured())
+        return TestStatus::forCondition(TestCondition::kTestInvariant, "tester is unconfigured");
+    return m_runner->writeModuleInternal(code, path);
 }
 
 tempo_utils::Result<lyric_test::SymbolizeModule>

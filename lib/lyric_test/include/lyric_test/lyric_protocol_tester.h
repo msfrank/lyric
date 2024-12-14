@@ -19,6 +19,7 @@ namespace lyric_test {
         bool isTemporary = true;
         bool keepBuildOnUnexpectedResult = true;
         std::string preludeLocation;
+        std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader;
         absl::flat_hash_map<std::string,std::string> packageMap;
         tempo_config::ConfigMap buildConfig;
         tempo_config::ConfigMap buildVendorConfig;

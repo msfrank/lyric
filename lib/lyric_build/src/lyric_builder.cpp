@@ -176,6 +176,11 @@ lyric_build::LyricBuilder::configure()
     }
     m_packageLoader = std::make_shared<lyric_packaging::PackageLoader>(pkgDirectoryPathList, packageMap);
 
+    // set the fallback loader if one is specified
+    if (m_options.fallbackLoader != nullptr) {
+        m_fallbackLoader = m_options.fallbackLoader;
+    }
+
     // configure the task registry
     if (m_options.taskRegistry == nullptr) {
         m_taskRegistry = std::make_shared<TaskRegistry>();
@@ -188,6 +193,9 @@ lyric_build::LyricBuilder::configure()
         std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
         loaderChain.push_back(m_bootstrapLoader);
         loaderChain.push_back(m_packageLoader);
+        if (m_fallbackLoader != nullptr) {
+            loaderChain.push_back(m_fallbackLoader);
+        }
         auto loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
         m_sharedModuleCache = lyric_importer::ModuleCache::create(loader);
     } else {

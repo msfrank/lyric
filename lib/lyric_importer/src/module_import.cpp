@@ -27,6 +27,16 @@ lyric_importer::ModuleImport::ModuleImport(
     TU_ASSERT (m_object.isValid());
 }
 
+tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
+lyric_importer::ModuleImport::create(
+    const lyric_common::ModuleLocation &importLocation,
+    const lyric_object::LyricObject &importObject)
+{
+    auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(importLocation, importObject));
+    TU_RETURN_IF_NOT_OK (moduleImport->initialize());
+    return moduleImport;
+}
+
 tempo_utils::Status
 lyric_importer::ModuleImport::initialize()
 {

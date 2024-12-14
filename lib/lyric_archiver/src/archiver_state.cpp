@@ -6,6 +6,7 @@
 #include <lyric_archiver/copy_call.h>
 #include <lyric_archiver/copy_proc.h>
 #include <lyric_archiver/copy_template.h>
+#include <lyric_assembler/import_cache.h>
 #include <tempo_security/sha256_hash.h>
 
 lyric_archiver::ArchiverState::ArchiverState(
@@ -40,15 +41,32 @@ lyric_archiver::ArchiverState::objectRoot()
 }
 
 tempo_utils::Status
+lyric_archiver::ArchiverState::importObject(const lyric_common::ModuleLocation &location)
+{
+    if (m_moduleImports.contains(location))
+        return {};
+
+    auto *importCache = m_objectState->importCache();
+    std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN (moduleImport, importCache->importModule(
+        location, lyric_assembler::ImportFlags::ApiLinkage));
+    m_moduleImports[location] = std::move(moduleImport);
+
+    return {};
+}
+
+tempo_utils::Status
 lyric_archiver::ArchiverState::insertObject(
     const lyric_common::ModuleLocation &location,
     const lyric_object::LyricObject &object)
 {
     if (m_moduleImports.contains(location))
         return {};
+
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN (moduleImport, m_systemModuleCache->insertModule(location, object));
+    TU_ASSIGN_OR_RETURN (moduleImport, lyric_importer::ModuleImport::create(location, object));
     m_moduleImports[location] = std::move(moduleImport);
+
     return {};
 }
 
@@ -65,7 +83,9 @@ lyric_archiver::ArchiverState::archiveSymbol(
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
     auto importEntry = m_moduleImports.find(moduleLocation);
     if (importEntry == m_moduleImports.cend()) {
-        TU_ASSIGN_OR_RETURN (moduleImport, m_systemModuleCache->importModule(symbolUrl.getModuleLocation()));
+        auto *importCache = m_objectState->importCache();
+        TU_ASSIGN_OR_RETURN (moduleImport, importCache->importModule(
+            symbolUrl.getModuleLocation(), lyric_assembler::ImportFlags::ApiLinkage));
         m_moduleImports[moduleLocation] = moduleImport;
     } else {
         moduleImport = importEntry->second;

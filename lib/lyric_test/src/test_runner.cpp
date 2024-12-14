@@ -19,6 +19,7 @@ lyric_test::TestRunner::create(
     bool isTemporary,
     bool keepBuildOnUnexpectedResult,
     const std::string &preludeLocation,
+    std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
     const absl::flat_hash_map<std::string, std::string> &packageMap,
     const tempo_config::ConfigMap &buildConfig,
     const tempo_config::ConfigMap &buildVendorConfig)
@@ -29,6 +30,7 @@ lyric_test::TestRunner::create(
         isTemporary,
         keepBuildOnUnexpectedResult,
         preludeLocation,
+        fallbackLoader,
         packageMap,
         buildConfig,
         buildVendorConfig));
@@ -40,6 +42,7 @@ lyric_test::TestRunner::TestRunner(
     bool isTemporary,
     bool keepBuildOnUnexpectedResult,
     const std::string &preludeLocation,
+    std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
     const absl::flat_hash_map<std::string, std::string> &packageMap,
     const tempo_config::ConfigMap &buildConfig,
     const tempo_config::ConfigMap &buildVendorConfig)
@@ -49,6 +52,7 @@ lyric_test::TestRunner::TestRunner(
       m_isTemporary(isTemporary),
       m_keepBuildOnUnexpectedResult(keepBuildOnUnexpectedResult),
       m_preludeLocation(preludeLocation),
+      m_fallbackLoader(std::move(fallbackLoader)),
       m_packageMap(packageMap),
       m_buildConfig(buildConfig),
       m_buildVendorConfig(buildVendorConfig),
@@ -114,6 +118,7 @@ lyric_test::TestRunner::configureBaseTester()
     builderOptions.workspaceRoot = m_testerDirectory;
     builderOptions.numThreads = 1;
     builderOptions.waitTimeoutInMs = 1000;
+    builderOptions.fallbackLoader = m_fallbackLoader;
 
     // create the install directory and configure assembly to user it
     tempo_utils::DirectoryMaker installdirMaker(m_testerDirectory, "install");

@@ -27,6 +27,7 @@ namespace lyric_test {
             bool isTemporary,
             bool keepBuildOnUnexpectedResult,
             const std::string &preludeLocation,
+            std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
             const absl::flat_hash_map<std::string,std::string> &packageMap,
             const tempo_config::ConfigMap &buildConfig,
             const tempo_config::ConfigMap &buildVendorConfig);
@@ -95,6 +96,7 @@ namespace lyric_test {
         bool m_isTemporary;
         bool m_keepBuildOnUnexpectedResult;
         std::string m_preludeLocation;
+        std::shared_ptr<lyric_runtime::AbstractLoader> m_fallbackLoader;
         absl::flat_hash_map<std::string,std::string> m_packageMap;
         const tempo_config::ConfigMap m_buildConfig;
         const tempo_config::ConfigMap m_buildVendorConfig;
@@ -112,6 +114,7 @@ namespace lyric_test {
             bool isTemporary,
             bool keepBuildOnUnexpectedResult,
             const std::string &preludeLocation,
+            std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
             const absl::flat_hash_map<std::string,std::string> &packageMap,
             const tempo_config::ConfigMap &buildConfig,
             const tempo_config::ConfigMap &buildVendorConfig);

@@ -91,30 +91,35 @@ lyric_importer::ModuleCache::importModule(const lyric_common::ModuleLocation &lo
 {
     absl::MutexLock locker(m_lock);
 
-    Option<lyric_common::ModuleLocation> resolvedOption;
-    TU_ASSIGN_OR_RETURN (resolvedOption, m_loader->resolveModule(location));
+    lyric_common::ModuleLocation absoluteLocation;
+    if (!location.hasScheme()) {
+        Option<lyric_common::ModuleLocation> resolvedOption;
+        TU_ASSIGN_OR_RETURN (resolvedOption, m_loader->resolveModule(location));
+        if (resolvedOption.isEmpty())
+            return ImporterStatus::forCondition(
+                ImporterCondition::kModuleNotFound, "{} could not be resolved to an absolute location",
+                location.toString());
+        absoluteLocation = resolvedOption.getValue();
+    } else {
+        absoluteLocation = location;
+    }
 
-    if (resolvedOption.isEmpty())
-        return ImporterStatus::forCondition(
-            ImporterCondition::kModuleNotFound, "{} could not be resolved to an absolute location",
-            location.toString());
-    auto resolvedLocation = resolvedOption.getValue();
+    auto entry = m_moduleImports.find(absoluteLocation);
+    if (entry != m_moduleImports.cend())
+        return entry->second;
 
-    if (m_moduleImports.contains(resolvedLocation))
-        return m_moduleImports.at(resolvedLocation);
-
-    auto loadModuleResult = m_loader->loadModule(resolvedLocation);
+    auto loadModuleResult = m_loader->loadModule(absoluteLocation);
     TU_RETURN_IF_STATUS(loadModuleResult);
     auto objectOption = loadModuleResult.getResult();
     if (objectOption.isEmpty())
         return ImporterStatus::forCondition(
             ImporterCondition::kModuleNotFound, "module {} not found",
-            resolvedLocation.toString());
+            absoluteLocation.toString());
 
-    auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(resolvedLocation, objectOption.getValue()));
+    auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(absoluteLocation, objectOption.getValue()));
     TU_RETURN_IF_NOT_OK(moduleImport->initialize());
 
-    m_moduleImports[resolvedLocation] = moduleImport;
+    m_moduleImports[absoluteLocation] = moduleImport;
     return moduleImport;
 }
 

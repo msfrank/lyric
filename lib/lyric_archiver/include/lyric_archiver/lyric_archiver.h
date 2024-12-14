@@ -35,14 +35,22 @@ namespace lyric_archiver {
 
         tempo_utils::Status initialize();
 
+        tempo_utils::Status importModule(const lyric_common::ModuleLocation &location);
+
         tempo_utils::Status insertModule(
             const lyric_common::ModuleLocation &location,
             const lyric_object::LyricObject &object);
 
         tempo_utils::Status archiveSymbol(
-            const lyric_common::SymbolUrl &symbolUrl,
-            const std::string &identifier,
-            lyric_object::AccessType access);
+            const lyric_common::ModuleLocation &srcLocation,
+            const std::string &srcIdentifier,
+            const std::string &dstIdentifier = {},
+            lyric_object::AccessType access = lyric_object::AccessType::Public);
+
+        tempo_utils::Status archiveSymbol(
+            const lyric_common::SymbolUrl &srcUrl,
+            const std::string &dstIdentifier,
+            lyric_object::AccessType access = lyric_object::AccessType::Public);
 
         tempo_utils::Result<lyric_object::LyricObject> toObject() const;
 

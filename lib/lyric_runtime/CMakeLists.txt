@@ -38,6 +38,7 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/segment_manager.h
     include/lyric_runtime/serialize_value.h
     include/lyric_runtime/stackful_coroutine.h
+    include/lyric_runtime/static_loader.h
     include/lyric_runtime/string_ref.h
     include/lyric_runtime/subroutine_manager.h
     include/lyric_runtime/system_scheduler.h
@@ -73,6 +74,7 @@ target_sources(lyric_runtime PRIVATE
     src/segment_manager.cpp
     src/serialize_value.cpp
     src/stackful_coroutine.cpp
+    src/static_loader.cpp
     src/string_ref.cpp
     src/subroutine_manager.cpp
     src/system_scheduler.cpp

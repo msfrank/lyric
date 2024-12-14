@@ -19,6 +19,7 @@ namespace lyric_test {
         bool isTemporary = true;
         bool keepBuildOnUnexpectedResult = true;
         std::string preludeLocation;
+        std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader;
         absl::flat_hash_map<std::string,std::string> packageMap;
         tempo_config::ConfigMap buildConfig;
         tempo_config::ConfigMap buildVendorConfig;
@@ -32,6 +33,10 @@ namespace lyric_test {
         tempo_utils::Status configure();
 
         const TestRunner *getRunner() const;
+
+        tempo_utils::Result<std::filesystem::path> writeModule(
+            const std::string &code,
+            const std::filesystem::path &path = {});
 
         tempo_utils::Result<SymbolizeModule> symbolizeModule(
             const std::string &code,

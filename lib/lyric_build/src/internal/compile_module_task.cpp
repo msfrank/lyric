@@ -188,7 +188,7 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
         std::filesystem::path importSourcePath = location.getPath().toString();
         importSourcePath.replace_extension(lyric_common::kSourceFileSuffix);
         analyzeTargets.insert(
-            TaskKey("analyze_module", importSourcePath,tempo_config::ConfigMap({
+            TaskKey("analyze_module", importSourcePath, tempo_config::ConfigMap({
                 {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
                 {"moduleLocation", tempo_config::ConfigValue(m_moduleLocation.toString())},
             })
