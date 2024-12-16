@@ -25,6 +25,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/assembler_types.h
     include/lyric_assembler/base_handle.h
     include/lyric_assembler/base_symbol.h
+    include/lyric_assembler/binding_symbol.h
     include/lyric_assembler/block_handle.h
     include/lyric_assembler/callable_invoker.h
     include/lyric_assembler/call_symbol.h
@@ -77,6 +78,7 @@ target_sources(lyric_assembler PRIVATE
     src/assembler_result.cpp
     src/assembler_tracer.cpp
     src/assembler_types.cpp
+    src/binding_symbol.cpp
     src/block_handle.cpp
     src/callable_invoker.cpp
     src/call_symbol.cpp
@@ -122,6 +124,8 @@ target_sources(lyric_assembler PRIVATE
     src/internal/call_inline.cpp
     include/lyric_assembler/internal/import_proc.h
     src/internal/import_proc.cpp
+    include/lyric_assembler/internal/symbol_table.h
+    src/internal/symbol_table.cpp
     include/lyric_assembler/internal/writer_utils.h
     src/internal/writer_utils.cpp
     include/lyric_assembler/internal/write_actions.h

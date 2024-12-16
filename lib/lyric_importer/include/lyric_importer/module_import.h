@@ -9,6 +9,7 @@ namespace lyric_importer {
 
     // forward declarations
     class ActionImport;
+    class BindingImport;
     class CallImport;
     class ClassImport;
     class ConceptImport;
@@ -38,6 +39,7 @@ namespace lyric_importer {
         lyric_object::LyricObject getObject() const;
 
         ActionImport *getAction(tu_uint32 offset) const;
+        BindingImport *getBinding(tu_uint32 offset) const;
         CallImport *getCall(tu_uint32 offset) const;
         ClassImport *getClass(tu_uint32 offset) const;
         ConceptImport *getConcept(tu_uint32 offset) const;
@@ -56,6 +58,7 @@ namespace lyric_importer {
         lyric_common::ModuleLocation m_location;
         lyric_object::LyricObject m_object;
         std::vector<ActionImport *> m_importedActions;
+        std::vector<BindingImport *> m_importedBindings;
         std::vector<CallImport *> m_importedCalls;
         std::vector<ClassImport *> m_importedClasses;
         std::vector<ConceptImport *> m_importedConcepts;

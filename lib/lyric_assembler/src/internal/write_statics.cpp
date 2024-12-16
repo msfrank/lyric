@@ -41,7 +41,7 @@ write_static(
     const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     std::vector<flatbuffers::Offset<lyo1::StaticDescriptor>> &statics_vector,
-    std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
+    lyric_assembler::internal::SymbolTable &symbolTable)
 {
     auto index = static_cast<tu_uint32>(statics_vector.size());
 
@@ -90,8 +90,7 @@ write_static(
         fb_fullyQualifiedName, staticType, staticFlags, initCall));
 
     // add symbol descriptor
-    symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fb_fullyQualifiedName,
-        lyo1::DescriptorSection::Static, index));
+    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(staticPathString, lyo1::DescriptorSection::Static, index));
 
     return {};
 }
@@ -103,12 +102,12 @@ lyric_assembler::internal::write_statics(
     const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     StaticsOffset &staticsOffset,
-    std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
+    lyric_assembler::internal::SymbolTable &symbolTable)
 {
     std::vector<flatbuffers::Offset<lyo1::StaticDescriptor>> statics_vector;
 
     for (const auto *staticSymbol : statics) {
-        TU_RETURN_IF_NOT_OK (write_static(staticSymbol, writer, buffer, statics_vector, symbols_vector));
+        TU_RETURN_IF_NOT_OK (write_static(staticSymbol, writer, buffer, statics_vector, symbolTable));
     }
 
     // create the statics vector

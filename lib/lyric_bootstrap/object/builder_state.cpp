@@ -1538,6 +1538,7 @@ BuilderState::toBytes() const
     std::vector<flatbuffers::Offset<lyo1::StaticDescriptor>> statics_vector;
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> symbols_vector;
     std::vector<flatbuffers::Offset<lyo1::PluginDescriptor>> plugins_vector;
+    std::vector<flatbuffers::Offset<lyo1::SortedSymbolIdentifier>> sorted_symbol_identifiers_vector;
     std::vector<uint8_t> bytecode;
 
     // write the type descriptors
@@ -1799,10 +1800,12 @@ BuilderState::toBytes() const
 
     // write the symbol descriptors
     for (auto iterator = symbols.cbegin(); iterator != symbols.cend(); iterator++) {
+        tu_uint32 symbol_index = symbols_vector.size();
         const auto *symbol = iterator->second;
+        symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, symbol->section, symbol->index));
         auto fb_fullyQualifiedName = buffer.CreateSharedString(symbol->symbolPath.toString());
-        symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fb_fullyQualifiedName,
-            symbol->section, symbol->index));
+        sorted_symbol_identifiers_vector.push_back(lyo1::CreateSortedSymbolIdentifier(
+            buffer, fb_fullyQualifiedName, symbol_index));
     }
 
     // serialize vectors
@@ -1819,9 +1822,15 @@ BuilderState::toBytes() const
     auto fb_structs = buffer.CreateVector(structs_vector);
     auto fb_instances = buffer.CreateVector(instances_vector);
     auto fb_enums = buffer.CreateVector(enums_vector);
-    auto fb_symbols = buffer.CreateVectorOfSortedTables(&symbols_vector);
+    auto fb_symbols = buffer.CreateVector(symbols_vector);
     auto fb_plugins = buffer.CreateVector(plugins_vector);
     auto fb_bytecode = buffer.CreateVector(bytecode);
+
+    // serialize the symbol table
+    auto fb_sorted_symbol_identifiers = buffer.CreateVectorOfSortedTables(&sorted_symbol_identifiers_vector);
+    lyo1::SortedSymbolTableBuilder sorted_symbol_table(buffer);
+    sorted_symbol_table.add_identifiers(fb_sorted_symbol_identifiers);
+    auto fb_symbol_table = sorted_symbol_table.Finish();
 
     // serialize object and mark the buffer as finished
     lyo1::ObjectBuilder objectBuilder(buffer);
@@ -1844,6 +1853,8 @@ BuilderState::toBytes() const
     objectBuilder.add_enums(fb_enums);
     objectBuilder.add_symbols(fb_symbols);
     objectBuilder.add_plugins(fb_plugins);
+    objectBuilder.add_symboltable_type(lyo1::SymbolTable::SortedSymbolTable);
+    objectBuilder.add_symboltable(fb_symbol_table.Union());
     objectBuilder.add_bytecode(fb_bytecode);
     auto object = objectBuilder.Finish();
     buffer.Finish(object, lyo1::ObjectIdentifier());

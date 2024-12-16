@@ -340,6 +340,7 @@ namespace lyric_object {
         Concept,
         Enum,
         Namespace,
+        Binding,
     };
 
     LinkageSection descriptor_to_linkage_section(tu_uint8 section);

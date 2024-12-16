@@ -69,10 +69,13 @@ namespace lyric_object::internal {
         const lyo1::NamespaceDescriptor *getNamespace(tu_uint32 index) const;
         tu_uint32 numNamespaces() const;
 
+        const lyo1::BindingDescriptor *getBinding(tu_uint32 index) const;
+        tu_uint32 numBindings() const;
+
         const lyo1::SymbolDescriptor *getSymbol(tu_uint32 index) const;
+        tu_uint32 getSymbolIndex(const lyric_common::SymbolPath &symbolPath) const;
         const lyo1::SymbolDescriptor *findSymbol(const lyric_common::SymbolPath &symbolPath) const;
         const lyo1::SymbolDescriptor *findSymbol(lyo1::DescriptorSection section, tu_uint32 index) const;
-        tu_uint32 getSymbolIndex(const lyo1::SymbolDescriptor *symbol) const;
         tu_uint32 numSymbols() const;
 
         lyric_common::ModuleLocation getImportLocation(tu_uint32 index) const;

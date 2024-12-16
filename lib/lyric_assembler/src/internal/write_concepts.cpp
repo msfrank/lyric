@@ -54,7 +54,7 @@ write_concept(
     const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     std::vector<flatbuffers::Offset<lyo1::ConceptDescriptor>> &concepts_vector,
-    std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
+    lyric_assembler::internal::SymbolTable &symbolTable)
 {
     auto index = static_cast<tu_uint32>(concepts_vector.size());
 
@@ -127,8 +127,7 @@ write_concept(
         buffer.CreateVector(actions), buffer.CreateVector(impls), buffer.CreateVector(sealedSubtypes)));
 
     // add symbol descriptor
-    symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,
-        lyo1::DescriptorSection::Concept, index));
+    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(conceptPathString, lyo1::DescriptorSection::Concept, index));
 
     return {};
 }
@@ -139,12 +138,12 @@ lyric_assembler::internal::write_concepts(
     const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     ConceptsOffset &conceptsOffset,
-    std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
+    lyric_assembler::internal::SymbolTable &symbolTable)
 {
     std::vector<flatbuffers::Offset<lyo1::ConceptDescriptor>> concepts_vector;
 
     for (const auto *conceptSymbol : concepts) {
-        TU_RETURN_IF_NOT_OK (write_concept(conceptSymbol, writer, buffer, concepts_vector, symbols_vector));
+        TU_RETURN_IF_NOT_OK (write_concept(conceptSymbol, writer, buffer, concepts_vector, symbolTable));
     }
 
     // create the concepts vector

@@ -1,5 +1,6 @@
 
 #include <lyric_importer/action_import.h>
+#include <lyric_importer/binding_import.h>
 #include <lyric_importer/call_import.h>
 #include <lyric_importer/class_import.h>
 #include <lyric_importer/concept_import.h>
@@ -45,6 +46,11 @@ lyric_importer::ModuleImport::initialize()
     m_importedActions.resize(object.numActions());
     for (int i = 0; i < object.numActions(); i++) {
         m_importedActions[i] = new ActionImport(shared_from_this(), i);
+    }
+
+    m_importedBindings.resize(object.numBindings());
+    for (int i = 0; i < object.numBindings(); i++) {
+        m_importedBindings[i] = new BindingImport(shared_from_this(), i);
     }
 
     m_importedCalls.resize(object.numCalls());
@@ -132,6 +138,14 @@ lyric_importer::ModuleImport::getAction(tu_uint32 offset) const
 {
     if (offset < m_importedActions.size())
         return m_importedActions.at(offset);
+    return nullptr;
+}
+
+lyric_importer::BindingImport *
+lyric_importer::ModuleImport::getBinding(tu_uint32 offset) const
+{
+    if (offset < m_importedBindings.size())
+        return m_importedBindings.at(offset);
     return nullptr;
 }
 

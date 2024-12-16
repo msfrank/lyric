@@ -19,13 +19,16 @@ namespace lyric_object {
         LinkageSection getLinkageSection() const;
         tu_uint32 getLinkageIndex() const;
 
+        tu_uint32 getDescriptorOffset() const;
+
     private:
         std::shared_ptr<const internal::ObjectReader> m_reader;
-        void *m_symbol;
+        tu_uint32 m_symbolOffset;
 
-        SymbolWalker(std::shared_ptr<const internal::ObjectReader> reader, void *symbol);
+        SymbolWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 symbolOffset);
 
         friend class ActionWalker;
+        friend class BindingWalker;
         friend class CallWalker;
         friend class ImplWalker;
         friend class NamespaceWalker;

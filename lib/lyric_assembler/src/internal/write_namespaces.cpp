@@ -138,7 +138,7 @@ write_namespace(
     const lyric_common::ModuleLocation &location,
     flatbuffers::FlatBufferBuilder &buffer,
     std::vector<flatbuffers::Offset<lyo1::NamespaceDescriptor>> &namespaces_vector,
-    std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
+    lyric_assembler::internal::SymbolTable &symbolTable)
 {
     auto index = static_cast<tu_uint32>(namespaces_vector.size());
 
@@ -255,8 +255,7 @@ write_namespace(
         supernamespaceIndex, namespaceFlags, buffer.CreateVectorOfStructs(bindings)));
 
     // add symbol descriptor
-    symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,
-        lyo1::DescriptorSection::Namespace, index));
+    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(namespacePathString, lyo1::DescriptorSection::Namespace, index));
 
     return {};
 }
@@ -268,13 +267,13 @@ lyric_assembler::internal::write_namespaces(
     const lyric_common::ModuleLocation &location,
     flatbuffers::FlatBufferBuilder &buffer,
     NamespacesOffset &namespacesOffset,
-    std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
+    lyric_assembler::internal::SymbolTable &symbolTable)
 {
     std::vector<flatbuffers::Offset<lyo1::NamespaceDescriptor>> namespaces_vector;
 
     for (const auto *namespaceSymbol : namespaces) {
-        TU_RETURN_IF_NOT_OK (write_namespace(
-            namespaceSymbol, writer, location, buffer, namespaces_vector, symbols_vector));
+        TU_RETURN_IF_NOT_OK (
+            write_namespace(namespaceSymbol, writer, location, buffer, namespaces_vector, symbolTable));
     }
 
     // create the namespaces vector

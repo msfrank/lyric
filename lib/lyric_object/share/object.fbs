@@ -22,6 +22,7 @@ enum DescriptorSection : uint8 {
     Concept,
     Enum,
     Namespace,
+    Binding,
 }
 
 enum TrueFalseNilUndef  : uint8 { Nil = 0, Undef, False, True }
@@ -191,8 +192,8 @@ enum ParameterFlags : uint16 (bit_flags) {
 
 table Parameter {
     parameter_name: string;                     // the parameter name
-    parameter_type: uint32;                     // offset of the parameter type in the types section
-    initializer_call: uint32;                   // offset of the initializer call in the calls section, or 0xFFFFFFFF if no initializer
+    parameter_type: uint32 = 0xFFFFFFFF;        // offset of the parameter type in the types section
+    initializer_call: uint32 = 0xFFFFFFFF;      // offset of the initializer call in the calls section, or 0xFFFFFFFF if no initializer
     flags: ParameterFlags;                      // bitfield containing parameter flags
 }
 
@@ -454,6 +455,24 @@ table EnumDescriptor {
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
 
+// flags which apply to the BindingDecriptor
+
+enum BindingFlags : uint16 (bit_flags) {
+    InheritVisibility,                          // visible to the enclosing namespace and its child namespaces
+    GlobalVisibility,                           // visible to all namespaces
+}
+
+// an BindingDescriptor describes a binding for a symbol which has been defined elsewhere.
+//
+//
+
+table BindingDescriptor {
+    fqsn: string;                               // fully qualified symbol name for the binding
+    binding_type: DescriptorSection;            // object section containing the symbol
+    binding_descriptor: uint32 = 0xFFFFFFFF;    // offset of the symbol in the section
+    flags: BindingFlags;                        // bitfield containing binding flags
+}
+
 // flags which apply to the NamespaceDecriptor
 
 enum NamespaceFlags : uint16 (bit_flags) {
@@ -481,16 +500,6 @@ table NamespaceDescriptor {
 }
 
 //
-//
-//
-
-table SymbolDescriptor {
-    fqsn: string (key);                         // name of the symbol
-    symbol_type: DescriptorSection = Invalid;   // object section containing the symbol
-    symbol_descriptor: uint32 = 0xFFFFFFFF;     // offset of the symbol in the section
-}
-
-//
 
 enum HashType : uint8 {
     Invalid,                                    // invalid hash type
@@ -514,6 +523,32 @@ table ImportDescriptor {
     hash_type: HashType = Invalid;              // hashing algorithm used for the import hash
     import_hash: [uint8];                       // content hash of imported module, or empty if hash type is NONE
     flags: ImportFlags;                         // bitfield containing import flags
+}
+
+// a SymbolDescriptor describes the unique location for each symbol in the module.
+
+table SymbolDescriptor {
+    symbol_type: DescriptorSection = Invalid;   // object section containing the symbol
+    symbol_descriptor: uint32 = 0xFFFFFFFF;     // offset of the symbol in the section
+}
+
+// a SortedSymbolIdentifier maps the fully qualified name of a symbol to its index in the
+// symbols section.
+
+table SortedSymbolIdentifier {
+    fqsn: string (key);                         // fully qualified name of the symbol
+    symbol_index: uint32 = 0xFFFFFFFF;          // offset of the symbol in the symtable
+}
+
+table SortedSymbolTable {
+    identifiers: [SortedSymbolIdentifier];
+}
+
+// the SymbolTable contains the data required to find a symbol by its fully qualified name.
+// the mechanism for finding the symbol depends on which table implementation is selected.
+
+union SymbolTable {
+    SortedSymbolTable,
 }
 
 // a LinkDescriptor describes a symbol defined externally which must be resolved at runtime.
@@ -578,12 +613,15 @@ table Object {
     structs: [StructDescriptor];                // array of struct descriptors
     instances: [InstanceDescriptor];            // array of instance descriptors
     enums: [EnumDescriptor];                    // array of enum descriptors
+    bindings: [BindingDescriptor];              // array of binding descriptors
     namespaces: [NamespaceDescriptor];          // array of namespace descriptors
     symbols: [SymbolDescriptor];                // sorted array mapping symbol name to location in object
     imports: [ImportDescriptor];                // array of import descriptors
     links: [LinkDescriptor];                    // array of external references needed by object
     traps: [TrapDescriptor];                    // array of trap descriptors
     plugins: [PluginDescriptor];                // array of plugin descriptors
+
+    symboltable: SymbolTable;                   // symbol table maps fully qualified symbol name to descriptor
 
     bytecode: [uint8];                          // the bytecode for this object
 }

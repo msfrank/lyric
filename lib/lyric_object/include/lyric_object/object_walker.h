@@ -4,6 +4,7 @@
 #include <tempo_utils/integer_types.h>
 
 #include "action_walker.h"
+#include "binding_walker.h"
 #include "call_walker.h"
 #include "class_walker.h"
 #include "concept_walker.h"
@@ -47,6 +48,9 @@ namespace lyric_object {
 
         ActionWalker getAction(tu_uint32 index) const;
         int numActions() const;
+
+        BindingWalker getBinding(tu_uint32 index) const;
+        int numBindings() const;
 
         CallWalker getCall(tu_uint32 index) const;
         int numCalls() const;
@@ -101,7 +105,6 @@ namespace lyric_object {
         int numSymbols() const;
 
         lyric_common::SymbolPath getSymbolPath(LinkageSection section, tu_uint32 index) const;
-        tu_uint32 getSymbolIndex(const lyric_common::SymbolPath &symbolPath) const;
 
     private:
         std::shared_ptr<const internal::ObjectReader> m_reader;

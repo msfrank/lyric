@@ -8,6 +8,8 @@
 #include "../object_state.h"
 #include "../object_writer.h"
 
+#include "symbol_table.h"
+
 namespace lyric_assembler::internal {
 
     tempo_utils::Status touch_call(
@@ -22,7 +24,7 @@ namespace lyric_assembler::internal {
         const ObjectWriter &writer,
         flatbuffers::FlatBufferBuilder &buffer,
         CallsOffset &callsOffset,
-        std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector,
+        SymbolTable &symbolTable,
         std::vector<tu_uint8> &bytecode);
 }
 

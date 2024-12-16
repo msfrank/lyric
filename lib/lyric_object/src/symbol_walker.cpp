@@ -3,35 +3,29 @@
 #include <lyric_object/symbol_walker.h>
 
 lyric_object::SymbolWalker::SymbolWalker()
-    : m_reader(),
-      m_symbol(nullptr)
+    : m_symbolOffset(INVALID_ADDRESS_U32)
 {
 }
 
 lyric_object::SymbolWalker::SymbolWalker(
     std::shared_ptr<const internal::ObjectReader> reader,
-    void *symbol)
+    tu_uint32 symbolOffset)
     : m_reader(reader),
-      m_symbol(symbol)
+      m_symbolOffset(symbolOffset)
 {
     TU_ASSERT (m_reader != nullptr);
-    TU_ASSERT (m_symbol != nullptr);
 }
 
 lyric_object::SymbolWalker::SymbolWalker(const SymbolWalker &other)
     : m_reader(other.m_reader),
-      m_symbol(other.m_symbol)
+      m_symbolOffset(other.m_symbolOffset)
 {
 }
 
 bool
 lyric_object::SymbolWalker::isValid() const
 {
-    if (m_reader && m_reader->isValid() && m_symbol) {
-        auto *symbol = static_cast<lyo1::SymbolDescriptor *>(m_symbol);
-        return symbol->symbol_type() != lyo1::DescriptorSection::Invalid;
-    }
-    return false;
+    return m_reader && m_reader->isValid() && m_symbolOffset < m_reader->numSymbols();
 }
 
 lyric_common::SymbolPath
@@ -39,8 +33,10 @@ lyric_object::SymbolWalker::getSymbolPath() const
 {
     if (!isValid())
         return {};
-    auto *symbol = static_cast<lyo1::SymbolDescriptor *>(m_symbol);
-    return lyric_common::SymbolPath::fromString(symbol->fqsn()->str());
+    auto *symbolDescriptor = m_reader->getSymbol(m_symbolOffset);
+    if (symbolDescriptor == nullptr)
+        return {};
+    return m_reader->getSymbolPath(symbolDescriptor->symbol_type(), symbolDescriptor->symbol_descriptor());
 }
 
 lyric_object::LinkageSection
@@ -48,8 +44,10 @@ lyric_object::SymbolWalker::getLinkageSection() const
 {
     if (!isValid())
         return LinkageSection::Invalid;
-    auto *symbol = static_cast<lyo1::SymbolDescriptor *>(m_symbol);
-    return internal::descriptor_to_linkage_section(symbol->symbol_type());
+    auto *symbolDescriptor = m_reader->getSymbol(m_symbolOffset);
+    if (symbolDescriptor == nullptr)
+        return LinkageSection::Invalid;
+    return internal::descriptor_to_linkage_section(symbolDescriptor->symbol_type());
 }
 
 tu_uint32
@@ -57,6 +55,8 @@ lyric_object::SymbolWalker::getLinkageIndex() const
 {
     if (!isValid())
         return INVALID_ADDRESS_U32;
-    auto *symbol = static_cast<lyo1::SymbolDescriptor *>(m_symbol);
-    return symbol->symbol_descriptor();
+    auto *symbolDescriptor = m_reader->getSymbol(m_symbolOffset);
+    if (symbolDescriptor == nullptr)
+        return INVALID_ADDRESS_U32;
+    return symbolDescriptor->symbol_descriptor();
 }

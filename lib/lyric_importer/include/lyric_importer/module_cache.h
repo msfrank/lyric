@@ -7,6 +7,7 @@
 #include <tempo_utils/result.h>
 
 #include "action_import.h"
+#include "binding_import.h"
 #include "call_import.h"
 #include "existential_import.h"
 #include "field_import.h"
@@ -40,6 +41,7 @@ namespace lyric_importer {
             const lyric_common::ModuleLocation &location);
 
         tempo_utils::Result<ActionImport *> getAction(const lyric_common::SymbolUrl &actionUrl);
+        tempo_utils::Result<BindingImport *> getBinding(const lyric_common::SymbolUrl &bindingUrl);
         tempo_utils::Result<CallImport *> getCall(const lyric_common::SymbolUrl &callUrl);
         tempo_utils::Result<ClassImport *> getClass(const lyric_common::SymbolUrl &classUrl);
         tempo_utils::Result<ConceptImport *> getConcept(const lyric_common::SymbolUrl &conceptUrl);

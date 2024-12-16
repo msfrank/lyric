@@ -7,6 +7,8 @@
 
 #include "../object_state.h"
 
+#include "symbol_table.h"
+
 namespace lyric_assembler::internal {
 
     tempo_utils::Status touch_namespace(
@@ -23,7 +25,7 @@ namespace lyric_assembler::internal {
         const lyric_common::ModuleLocation &location,
         flatbuffers::FlatBufferBuilder &buffer,
         NamespacesOffset &namespacesOffset,
-        std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector);
+        SymbolTable &symbolTable);
 }
 
 #endif // LYRIC_ASSEMBLER_INTERNAL_WRITE_NAMESPACES_H

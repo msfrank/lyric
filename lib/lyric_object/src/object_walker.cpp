@@ -71,6 +71,22 @@ lyric_object::ObjectWalker::numActions() const
     return m_reader->numActions();
 }
 
+lyric_object::BindingWalker
+lyric_object::ObjectWalker::getBinding(tu_uint32 index) const
+{
+    if (m_reader == nullptr)
+        return {};
+    return BindingWalker(m_reader, index);
+}
+
+int
+lyric_object::ObjectWalker::numBindings() const
+{
+    if (m_reader == nullptr)
+        return {};
+    return m_reader->numBindings();
+}
+
 lyric_object::CallWalker
 lyric_object::ObjectWalker::getCall(tu_uint32 index) const
 {
@@ -332,19 +348,16 @@ lyric_object::ObjectWalker::getSymbol(tu_uint32 index) const
 {
     if (m_reader == nullptr)
         return {};
-    auto *symbol = m_reader->getSymbol(index);
-    if (symbol == nullptr)
-        return {};
-    return SymbolWalker(m_reader, (void *) symbol);
+    return SymbolWalker(m_reader, index);
 }
 
 lyric_object::SymbolWalker
 lyric_object::ObjectWalker::findSymbol(const lyric_common::SymbolPath &symbolPath) const
 {
-    auto *symbol = m_reader->findSymbol(symbolPath);
-    if (symbol == nullptr)
+    if (m_reader == nullptr)
         return {};
-    return SymbolWalker(m_reader, (void *) symbol);
+    auto index = m_reader->getSymbolIndex(symbolPath);
+    return SymbolWalker(m_reader, index);
 }
 
 int lyric_object::ObjectWalker::numSymbols() const
@@ -360,13 +373,4 @@ lyric_object::ObjectWalker::getSymbolPath(LinkageSection section, tu_uint32 inde
     if (!isValid())
         return {};
     return m_reader->getSymbolPath(internal::linkage_to_descriptor_section(section), index);
-}
-
-tu_uint32
-lyric_object::ObjectWalker::getSymbolIndex(const lyric_common::SymbolPath &symbolPath) const
-{
-    if (!isValid())
-        return {};
-    auto *symbol = m_reader->findSymbol(symbolPath);
-    return m_reader->getSymbolIndex(symbol);
 }

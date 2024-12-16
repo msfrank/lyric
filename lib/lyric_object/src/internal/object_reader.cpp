@@ -403,6 +403,24 @@ lyric_object::internal::ObjectReader::numNamespaces() const
     return m_object->namespaces() ? m_object->namespaces()->size() : 0;
 }
 
+const lyo1::BindingDescriptor *
+lyric_object::internal::ObjectReader::getBinding(tu_uint32 index) const
+{
+    if (m_object == nullptr)
+        return nullptr;
+    if (m_object->bindings() && index < m_object->bindings()->size())
+        return m_object->bindings()->Get(index);
+    return nullptr;
+}
+
+tu_uint32
+lyric_object::internal::ObjectReader::numBindings() const
+{
+    if (m_object == nullptr)
+        return 0;
+    return m_object->bindings() ? m_object->bindings()->size() : 0;
+}
+
 const lyo1::SymbolDescriptor *
 lyric_object::internal::ObjectReader::getSymbol(tu_uint32 index) const
 {
@@ -413,13 +431,31 @@ lyric_object::internal::ObjectReader::getSymbol(tu_uint32 index) const
     return nullptr;
 }
 
+tu_uint32
+lyric_object::internal::ObjectReader::getSymbolIndex(const lyric_common::SymbolPath &symbolPath) const
+{
+    if (m_object == nullptr)
+        return INVALID_ADDRESS_U32;
+    switch (m_object->symboltable_type()) {
+        case lyo1::SymbolTable::SortedSymbolTable: {
+            auto *sortedSymbolTable = m_object->symboltable_as_SortedSymbolTable();
+            if (sortedSymbolTable == nullptr)
+                return INVALID_ADDRESS_U32;
+            auto fullyQualifiedName = symbolPath.toString();
+            auto *identifier = sortedSymbolTable->identifiers()->LookupByKey(fullyQualifiedName.data());
+            if (identifier == nullptr)
+                return INVALID_ADDRESS_U32;
+            return identifier->symbol_index();
+        }
+        default:
+            return INVALID_ADDRESS_U32;
+    }
+}
+
 const lyo1::SymbolDescriptor *
 lyric_object::internal::ObjectReader::findSymbol(const lyric_common::SymbolPath &symbolPath) const
 {
-    if (m_object == nullptr)
-        return nullptr;
-    auto fullyQualifiedName = symbolPath.toString();
-    return m_object->symbols() ? m_object->symbols()->LookupByKey(fullyQualifiedName.data()) : nullptr;
+    return getSymbol(getSymbolIndex(symbolPath));
 }
 
 const lyo1::SymbolDescriptor *
@@ -427,17 +463,6 @@ lyric_object::internal::ObjectReader::findSymbol(lyo1::DescriptorSection section
 {
     auto symbolPath = getSymbolPath(section, index);
     return findSymbol(symbolPath);
-}
-
-tu_uint32
-lyric_object::internal::ObjectReader::getSymbolIndex(const lyo1::SymbolDescriptor *symbol) const
-{
-    if (m_object == nullptr || m_object->symbols() == nullptr)
-        return INVALID_ADDRESS_U32;
-    tu_uint32 index = std::distance(m_object->symbols()->Get(0), symbol);
-    if (index < m_object->symbols()->size())
-        return index;
-    return INVALID_ADDRESS_U32;
 }
 
 tu_uint32
@@ -453,7 +478,7 @@ lyric_object::internal::ObjectReader::getImportLocation(tu_uint32 index) const
 {
     auto *import = getImport(index);
     if (import == nullptr)
-        return lyric_common::ModuleLocation();
+        return {};
     return lyric_common::ModuleLocation::fromString(import->import_location()->c_str());
 }
 

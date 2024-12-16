@@ -24,6 +24,7 @@ namespace lyric_assembler {
         STRUCT,
         ENUM,
         NAMESPACE,
+        BINDING,
         UNDECLARED,
     };
 

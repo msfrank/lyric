@@ -141,8 +141,8 @@ lyric_object::NamespaceWalker::getBinding(tu_uint32 index) const
     if (namespaceDescriptor->bindings()->size() <= index)
         return {};
     auto *binding = namespaceDescriptor->bindings()->Get(index);
-    auto *symbol = m_reader->findSymbol(binding->binding_type(), binding->binding_descriptor());
-    return SymbolWalker(m_reader, (void *) symbol);
+    auto symbolPath = m_reader->getSymbolPath(binding->binding_type(), binding->binding_descriptor());
+    return SymbolWalker(m_reader, m_reader->getSymbolIndex(symbolPath));
 }
 
 tu_uint32

@@ -8,6 +8,7 @@ add_library(lyric::lyric_object ALIAS lyric_object)
 
 set(LYRIC_OBJECT_INCLUDES
     include/lyric_object/action_walker.h
+    include/lyric_object/binding_walker.h
     include/lyric_object/bytecode_builder.h
     include/lyric_object/bytecode_iterator.h
     include/lyric_object/call_walker.h
@@ -73,6 +74,7 @@ add_custom_command(
 
 target_sources(lyric_object PRIVATE
     src/action_walker.cpp
+    src/binding_walker.cpp
     src/bytecode_builder.cpp
     src/bytecode_iterator.cpp
     src/call_walker.cpp

@@ -53,7 +53,7 @@ write_action(
     const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     std::vector<flatbuffers::Offset<lyo1::ActionDescriptor>> &actions_vector,
-    std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
+    lyric_assembler::internal::SymbolTable &symbolTable)
 {
     auto index = static_cast<tu_uint32>(actions_vector.size());
 
@@ -190,8 +190,7 @@ write_action(
         fb_listParameters, fb_namedParameters, fb_restParameter, returnType));
 
     // add symbol descriptor
-    symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,
-        lyo1::DescriptorSection::Action, index));
+    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(actionPathString, lyo1::DescriptorSection::Action, index));
 
     return {};
 }
@@ -202,12 +201,12 @@ lyric_assembler::internal::write_actions(
     const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     ActionsOffset &actionsOffset,
-    std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector)
+    SymbolTable &symbolTable)
 {
     std::vector<flatbuffers::Offset<lyo1::ActionDescriptor>> actions_vector;
 
     for (const auto *actionSymbol : actions) {
-        TU_RETURN_IF_NOT_OK (write_action(actionSymbol, writer, buffer, actions_vector, symbols_vector));
+        TU_RETURN_IF_NOT_OK (write_action(actionSymbol, writer, buffer, actions_vector, symbolTable));
     }
 
     // create the actions vector

@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/namespace_symbol.h>
@@ -213,6 +214,18 @@ lyric_assembler::NamespaceSymbol::putBinding(
     if (priv->bindings.contains(name))
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "cannot put namespace binding {}; binding is already defined", name);
+
+    auto definition = priv->namespaceBlock->getDefinition();
+    auto parentPath = definition.getSymbolPath();
+    lyric_common::SymbolPath bindingPath(parentPath.getPath(), name);
+    lyric_common::SymbolUrl bindingUrl(m_namespaceUrl.getModuleLocation(), bindingPath);
+
+    if (bindingUrl != symbolUrl) {
+        auto bindingSymbol = std::make_unique<BindingSymbol>(
+            bindingUrl, symbolUrl, access, m_state);
+        TU_RETURN_IF_NOT_OK (m_state->appendBinding(bindingSymbol.get()));
+        bindingSymbol.release();
+    }
 
     NamespaceBinding binding;
     binding.name = name;

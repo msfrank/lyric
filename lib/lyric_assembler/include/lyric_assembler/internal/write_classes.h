@@ -8,6 +8,8 @@
 #include "../object_state.h"
 #include "../object_writer.h"
 
+#include "symbol_table.h"
+
 namespace lyric_assembler::internal {
 
     tempo_utils::Status touch_class(
@@ -22,7 +24,7 @@ namespace lyric_assembler::internal {
         const ObjectWriter &writer,
         flatbuffers::FlatBufferBuilder &buffer,
         ClassesOffset &classesOffset,
-        std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector);
+        SymbolTable &symbolTable);
 }
 
 #endif // LYRIC_ASSEMBLER_INTERNAL_WRITE_CLASSES_H

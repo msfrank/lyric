@@ -7,6 +7,7 @@
 #include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/internal/symbol_table.h>
 #include <lyric_assembler/internal/writer_utils.h>
 #include <lyric_assembler/internal/write_actions.h>
 #include <lyric_assembler/internal/write_calls.h>
@@ -623,7 +624,7 @@ lyric_assembler::ObjectWriter::toObject() const
 {
     flatbuffers::FlatBufferBuilder buffer;
 
-    std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> symbols_vector;
+    internal::SymbolTable symbolTable;
     std::vector<flatbuffers::Offset<lyo1::PluginDescriptor>> plugins_vector;
     std::vector<uint8_t> bytecode;
 
@@ -631,27 +632,27 @@ lyric_assembler::ObjectWriter::toObject() const
 
     // serialize array of action descriptors
     internal::ActionsOffset actionsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_actions(m_actions, *this, buffer, actionsOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_actions(m_actions, *this, buffer, actionsOffset, symbolTable));
 
     // serialize array of call descriptors
     internal::CallsOffset callsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_calls(m_calls, *this, buffer, callsOffset, symbols_vector, bytecode));
+    TU_RETURN_IF_NOT_OK (internal::write_calls(m_calls, *this, buffer, callsOffset, symbolTable, bytecode));
 
     // serialize array of class descriptors
     internal::ClassesOffset classesOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_classes(m_classes, *this, buffer, classesOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_classes(m_classes, *this, buffer, classesOffset, symbolTable));
 
     // serialize array of concept descriptors
     internal::ConceptsOffset conceptsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_concepts(m_concepts, *this, buffer, conceptsOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_concepts(m_concepts, *this, buffer, conceptsOffset, symbolTable));
 
     // serialize array of enum descriptors
     internal::EnumsOffset enumsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_enums(m_enums, *this, buffer, enumsOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_enums(m_enums, *this, buffer, enumsOffset, symbolTable));
 
     // serialize array of field descriptors
     internal::FieldsOffset fieldsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_fields(m_fields, *this, buffer, fieldsOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_fields(m_fields, *this, buffer, fieldsOffset, symbolTable));
 
     // serialize array of impl descriptors
     internal::ImplsOffset implsOffset;
@@ -663,7 +664,7 @@ lyric_assembler::ObjectWriter::toObject() const
 
     // serialize array of instance descriptors
     internal::InstancesOffset instancesOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_instances(m_instances, *this, buffer, instancesOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_instances(m_instances, *this, buffer, instancesOffset, symbolTable));
 
     // serialize arrays of link descriptors
     internal::LinksOffset linksOffset;
@@ -676,15 +677,15 @@ lyric_assembler::ObjectWriter::toObject() const
     // serialize array of namespace descriptors
     internal::NamespacesOffset namespacesOffset;
     TU_RETURN_IF_NOT_OK (internal::write_namespaces(
-        m_namespaces, *this, m_state->getLocation(), buffer, namespacesOffset, symbols_vector));
+        m_namespaces, *this, m_state->getLocation(), buffer, namespacesOffset, symbolTable));
 
     // serialize array of static descriptors
     internal::StaticsOffset staticsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_statics(m_statics, *this, buffer, staticsOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_statics(m_statics, *this, buffer, staticsOffset, symbolTable));
 
     // serialize array of struct descriptors
     internal::StructsOffset structsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_structs(m_structs, *this, buffer, structsOffset, symbols_vector));
+    TU_RETURN_IF_NOT_OK (internal::write_structs(m_structs, *this, buffer, structsOffset, symbolTable));
 
     // serialize array of template descriptors
     internal::TemplatesOffset templatesOffset;
@@ -699,16 +700,22 @@ lyric_assembler::ObjectWriter::toObject() const
         auto &undeclSymbol = *iterator;
 
         auto undeclPathString = undeclSymbol->getSymbolUrl().getSymbolPath().toString();
-        auto fb_fullyQualifiedName = buffer.CreateSharedString(undeclPathString);
 
         auto section = internal::linkage_to_descriptor(undeclSymbol->getLinkage());
         if (section == lyo1::DescriptorSection::Invalid)
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                 "invalid undeclared symbol {}: could not parse linkage", undeclPathString);
 
-        symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fb_fullyQualifiedName,
-            section, lyric_runtime::INVALID_ADDRESS_U32));
+        TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(undeclPathString, section, lyric_object::INVALID_ADDRESS_U32));
     }
+
+    // serialize array of symbol descriptors
+    internal::SymbolsOffset symbolsOffset;
+    TU_RETURN_IF_NOT_OK (internal::write_symbols(symbolTable, buffer, symbolsOffset));
+
+    // serialize the symbol table
+    internal::SortedSymbolTableOffset sortedSymbolTableOffset;
+    TU_RETURN_IF_NOT_OK (internal::write_sorted_symbol_table(symbolTable, buffer, sortedSymbolTableOffset));
 
     // serialize array of plugin descriptors
     auto *options = m_state->getOptions();
@@ -719,7 +726,6 @@ lyric_assembler::ObjectWriter::toObject() const
     }
 
     // serialize vectors
-    auto symbolsOffset = buffer.CreateVectorOfSortedTables(&symbols_vector);
     auto pluginsOffset = buffer.CreateVector(plugins_vector);
     auto bytecodeOffset = buffer.CreateVector(bytecode);
 
@@ -750,6 +756,9 @@ lyric_assembler::ObjectWriter::toObject() const
     objectBuilder.add_symbols(symbolsOffset);
     objectBuilder.add_templates(templatesOffset);
     objectBuilder.add_types(typesOffset);
+
+    objectBuilder.add_symboltable_type(lyo1::SymbolTable::SortedSymbolTable);
+    objectBuilder.add_symboltable(sortedSymbolTableOffset.Union());
 
     objectBuilder.add_bytecode(bytecodeOffset);
 

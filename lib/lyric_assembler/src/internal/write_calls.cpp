@@ -93,7 +93,7 @@ write_call(
     const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     std::vector<flatbuffers::Offset<lyo1::CallDescriptor>> &calls_vector,
-    std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector,
+    lyric_assembler::internal::SymbolTable &symbolTable,
     std::vector<uint8_t> &bytecode)
 {
     auto index = static_cast<tu_uint32>(calls_vector.size());
@@ -306,8 +306,7 @@ write_call(
         fb_listParameters, fb_namedParameters, fb_restParameter, returnType));
 
     // add symbol descriptor
-    symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, fullyQualifiedName,
-        lyo1::DescriptorSection::Call, index));
+    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(callPathString, lyo1::DescriptorSection::Call, index));
 
     return {};
 }
@@ -318,13 +317,13 @@ lyric_assembler::internal::write_calls(
     const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     CallsOffset &callsOffset,
-    std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> &symbols_vector,
+    lyric_assembler::internal::SymbolTable &symbolTable,
     std::vector<tu_uint8> &bytecode)
 {
     std::vector<flatbuffers::Offset<lyo1::CallDescriptor>> calls_vector;
 
     for (const auto *callSymbol : calls) {
-        TU_RETURN_IF_NOT_OK (write_call(callSymbol, writer, buffer, calls_vector, symbols_vector, bytecode));
+        TU_RETURN_IF_NOT_OK (write_call(callSymbol, writer, buffer, calls_vector, symbolTable, bytecode));
     }
 
     // create the calls vector

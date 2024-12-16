@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/action_symbol.h>
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/assembler_types.h>
 #include <lyric_assembler/object_state.h>
 #include <lyric_assembler/base_symbol.h>
@@ -481,6 +482,35 @@ int
 lyric_assembler::ObjectState::numEnums() const
 {
     return m_enums.size();
+}
+
+tempo_utils::Status lyric_assembler::ObjectState::appendBinding(BindingSymbol *bindingSymbol)
+{
+    TU_ASSERT (bindingSymbol != nullptr);
+    auto symbolUrl = bindingSymbol->getSymbolUrl();
+    if (m_symbolcache->hasSymbol(symbolUrl))
+        throwAssemblerInvariant("failed to append binding; symbol {} already exists", symbolUrl.toString());
+    m_bindings.push_back(bindingSymbol);
+    m_symbolcache->insertSymbol(symbolUrl, bindingSymbol);
+    return {};
+}
+
+std::vector<lyric_assembler::BindingSymbol *>::const_iterator
+lyric_assembler::ObjectState::bindingsBegin() const
+{
+    return m_bindings.cbegin();
+}
+
+std::vector<lyric_assembler::BindingSymbol *>::const_iterator
+lyric_assembler::ObjectState::bindingsEnd() const
+{
+    return m_bindings.cend();
+}
+
+int
+lyric_assembler::ObjectState::numBindings() const
+{
+    return m_bindings.size();
 }
 
 tempo_utils::Status

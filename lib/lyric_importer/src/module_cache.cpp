@@ -140,6 +140,23 @@ lyric_importer::ModuleCache::getAction(const lyric_common::SymbolUrl &actionUrl)
     return moduleImport->getAction(symbolWalker.getLinkageIndex());
 }
 
+tempo_utils::Result<lyric_importer::BindingImport *>
+lyric_importer::ModuleCache::getBinding(const lyric_common::SymbolUrl &bindingUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(bindingUrl.getModuleLocation()));
+
+    auto object = moduleImport->getObject().getObject();
+    auto symbolWalker = object.findSymbol(bindingUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Binding)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not a binding",
+            bindingUrl.toString());
+
+    return moduleImport->getBinding(symbolWalker.getLinkageIndex());
+}
+
 tempo_utils::Result<lyric_importer::CallImport *>
 lyric_importer::ModuleCache::getCall(const lyric_common::SymbolUrl &callUrl)
 {

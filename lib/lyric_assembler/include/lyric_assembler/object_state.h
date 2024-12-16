@@ -23,10 +23,10 @@ namespace lyric_assembler {
 
     // forward declarations
     class ActionSymbol;
+    class BindingSymbol;
     class BlockHandle;
     class CallSymbol;
     class ClassSymbol;
-    class CodeBuilder;
     class ConceptSymbol;
     class EnumSymbol;
     class ExistentialSymbol;
@@ -137,6 +137,11 @@ namespace lyric_assembler {
         std::vector<EnumSymbol *>::const_iterator enumsEnd() const;
         int numEnums() const;
 
+        tempo_utils::Status appendBinding(BindingSymbol *bindingSymbol);
+        std::vector<BindingSymbol *>::const_iterator bindingsBegin() const;
+        std::vector<BindingSymbol *>::const_iterator bindingsEnd() const;
+        int numBindings() const;
+
         tempo_utils::Status appendUndeclared(UndeclaredSymbol *undeclaredSymbol);
         std::vector<UndeclaredSymbol *>::const_iterator undeclaredBegin() const;
         std::vector<UndeclaredSymbol *>::const_iterator undeclaredEnd() const;
@@ -160,6 +165,7 @@ namespace lyric_assembler {
         TypeCache *m_typecache = nullptr;
         ImplCache *m_implcache = nullptr;
 
+        std::vector<BindingSymbol *> m_bindings;
         std::vector<NamespaceSymbol *> m_namespaces;
         std::vector<ExistentialSymbol *> m_existentials;
         std::vector<StaticSymbol *> m_statics;
