@@ -137,11 +137,8 @@ write_namespace(
     const lyric_assembler::ObjectWriter &writer,
     const lyric_common::ModuleLocation &location,
     flatbuffers::FlatBufferBuilder &buffer,
-    std::vector<flatbuffers::Offset<lyo1::NamespaceDescriptor>> &namespaces_vector,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    std::vector<flatbuffers::Offset<lyo1::NamespaceDescriptor>> &namespaces_vector)
 {
-    auto index = static_cast<tu_uint32>(namespaces_vector.size());
-
     auto namespacePathString = namespaceSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(namespacePathString);
 
@@ -171,7 +168,7 @@ write_namespace(
     }
 
     // serialize array of symbols
-    std::vector<lyo1::NamespaceBinding> bindings;
+    std::vector<tu_uint32> bindings;
     for (auto symbolIterator = namespaceSymbol->bindingsBegin();
          symbolIterator != namespaceSymbol->bindingsEnd();
          symbolIterator++) {
@@ -186,76 +183,15 @@ write_namespace(
             }
         }
 
-        // skip symbols which have not been touched
-        auto symbolEntryOption = writer.getSymbolEntryOption(symbolUrl);
-        if (symbolEntryOption.isEmpty())
-            continue;
-        const auto &symbolEntry = symbolEntryOption.peekValue();
+        tu_uint32 bindingAddress;
+        TU_ASSIGN_OR_RETURN (bindingAddress, writer.getSymbolAddress(symbolUrl));
 
-        lyo1::DescriptorSection binding_type = lyo1::DescriptorSection::Invalid;
-        tu_uint32 binding_descriptor;
-
-        switch (symbolEntry.section) {
-            case lyric_object::LinkageSection::Call: {
-                binding_type = lyo1::DescriptorSection::Call;
-                binding_descriptor = symbolEntry.address;
-                break;
-            }
-            case lyric_object::LinkageSection::Class: {
-                binding_type = lyo1::DescriptorSection::Class;
-                binding_descriptor = symbolEntry.address;
-                break;
-            }
-            case lyric_object::LinkageSection::Concept: {
-                binding_type = lyo1::DescriptorSection::Concept;
-                binding_descriptor = symbolEntry.address;
-                break;
-            }
-            case lyric_object::LinkageSection::Enum: {
-                binding_type = lyo1::DescriptorSection::Enum;
-                binding_descriptor = symbolEntry.address;
-                break;
-            }
-            case lyric_object::LinkageSection::Instance: {
-                binding_type = lyo1::DescriptorSection::Instance;
-                binding_descriptor = symbolEntry.address;
-                break;
-            }
-            case lyric_object::LinkageSection::Namespace: {
-                binding_type = lyo1::DescriptorSection::Namespace;
-                binding_descriptor = symbolEntry.address;
-                break;
-            }
-            case lyric_object::LinkageSection::Static: {
-                binding_type = lyo1::DescriptorSection::Static;
-                binding_descriptor = symbolEntry.address;
-                break;
-            }
-            case lyric_object::LinkageSection::Struct: {
-                binding_type = lyo1::DescriptorSection::Struct;
-                binding_descriptor = symbolEntry.address;
-                break;
-            }
-            default: {
-                TU_LOG_VV << "ignoring namespace binding " << symbolIterator->first
-                          << " for " << var.symbolUrl.toString();
-                binding_type = lyo1::DescriptorSection::Invalid;
-                break;
-            }
-        }
-
-        //
-        if (binding_type != lyo1::DescriptorSection::Invalid) {
-            bindings.emplace_back(lyo1::NamespaceBinding(binding_type, binding_descriptor));
-        }
+        bindings.push_back(bindingAddress);
     }
 
     // add namespace descriptor
     namespaces_vector.push_back(lyo1::CreateNamespaceDescriptor(buffer, fullyQualifiedName,
-        supernamespaceIndex, namespaceFlags, buffer.CreateVectorOfStructs(bindings)));
-
-    // add symbol descriptor
-    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(namespacePathString, lyo1::DescriptorSection::Namespace, index));
+        supernamespaceIndex, namespaceFlags, buffer.CreateVector(bindings)));
 
     return {};
 }
@@ -266,14 +202,13 @@ lyric_assembler::internal::write_namespaces(
     const ObjectWriter &writer,
     const lyric_common::ModuleLocation &location,
     flatbuffers::FlatBufferBuilder &buffer,
-    NamespacesOffset &namespacesOffset,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    NamespacesOffset &namespacesOffset)
 {
     std::vector<flatbuffers::Offset<lyo1::NamespaceDescriptor>> namespaces_vector;
 
     for (const auto *namespaceSymbol : namespaces) {
         TU_RETURN_IF_NOT_OK (
-            write_namespace(namespaceSymbol, writer, location, buffer, namespaces_vector, symbolTable));
+            write_namespace(namespaceSymbol, writer, location, buffer, namespaces_vector));
     }
 
     // create the namespaces vector

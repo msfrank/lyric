@@ -7,7 +7,7 @@
 
 #include "../object_state.h"
 
-#include "symbol_table.h"
+#include "write_symbols.h"
 
 namespace lyric_assembler::internal {
 
@@ -24,8 +24,7 @@ namespace lyric_assembler::internal {
         const ObjectWriter &writer,
         const lyric_common::ModuleLocation &location,
         flatbuffers::FlatBufferBuilder &buffer,
-        NamespacesOffset &namespacesOffset,
-        SymbolTable &symbolTable);
+        NamespacesOffset &namespacesOffset);
 }
 
 #endif // LYRIC_ASSEMBLER_INTERNAL_WRITE_NAMESPACES_H

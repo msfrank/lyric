@@ -26,12 +26,13 @@ declare_core_Singleton(BuilderState &state, const CoreExistential *AnyExistentia
     state.instances.push_back(SingletonInstance);
     state.instancecache[SingletonInstance->instancePath] = SingletonInstance;
 
+    tu_uint32 symbol_index = state.symbols.size();
     auto *SingletonSymbol = new CoreSymbol();
-    SingletonSymbol->symbolPath = SingletonInstance->instancePath;
     SingletonSymbol->section = lyo1::DescriptorSection::Instance;
     SingletonSymbol->index = instance_index;
-    TU_ASSERT (!state.symbols.contains(SingletonSymbol->symbolPath));
-    state.symbols[SingletonSymbol->symbolPath] = SingletonSymbol;
+    state.symbols.push_back(SingletonSymbol);
+    TU_ASSERT (!state.symboltable.contains(SingletonInstance->instancePath));
+    state.symboltable[SingletonInstance->instancePath] = symbol_index;
 
     return SingletonInstance;
 }

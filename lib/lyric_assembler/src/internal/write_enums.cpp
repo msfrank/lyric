@@ -54,11 +54,8 @@ write_enum(
     const lyric_assembler::EnumSymbol *enumSymbol,
     const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
-    std::vector<flatbuffers::Offset<lyo1::EnumDescriptor>> &enums_vector,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    std::vector<flatbuffers::Offset<lyo1::EnumDescriptor>> &enums_vector)
 {
-    auto index = static_cast<tu_uint32>(enums_vector.size());
-
     auto enumPathString = enumSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(enumPathString);
 
@@ -148,9 +145,6 @@ write_enum(
         buffer.CreateVector(members), buffer.CreateVector(methods), buffer.CreateVector(impls),
         enumSymbol->getAllocatorTrap(), ctorCall, buffer.CreateVector(sealedSubtypes)));
 
-    // add symbol descriptor
-    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(enumPathString, lyo1::DescriptorSection::Enum, index));
-
     return {};
 }
 
@@ -159,13 +153,12 @@ lyric_assembler::internal::write_enums(
     const std::vector<const EnumSymbol *> &enums,
     const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
-    EnumsOffset &enumsOffset,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    EnumsOffset &enumsOffset)
 {
     std::vector<flatbuffers::Offset<lyo1::EnumDescriptor>> enums_vector;
 
     for (const auto *enumSymbol :enums) {
-        TU_RETURN_IF_NOT_OK (write_enum(enumSymbol, writer, buffer, enums_vector, symbolTable));
+        TU_RETURN_IF_NOT_OK (write_enum(enumSymbol, writer, buffer, enums_vector));
     }
 
     // create the enums vector

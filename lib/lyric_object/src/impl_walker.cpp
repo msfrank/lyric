@@ -97,32 +97,7 @@ lyric_object::ImplWalker::getReceiver() const
     auto *implDescriptor = m_reader->getImpl(m_implOffset);
     if (implDescriptor == nullptr)
         return {};
-    lyo1::DescriptorSection section;
-    switch (implDescriptor->receiver_section()) {
-        case lyo1::TypeSection::Class:
-            section = lyo1::DescriptorSection::Class;
-            break;
-        case lyo1::TypeSection::Concept:
-            section = lyo1::DescriptorSection::Concept;
-            break;
-        case lyo1::TypeSection::Enum:
-            section = lyo1::DescriptorSection::Enum;
-            break;
-        case lyo1::TypeSection::Existential:
-            section = lyo1::DescriptorSection::Existential;
-            break;
-        case lyo1::TypeSection::Instance:
-            section = lyo1::DescriptorSection::Instance;
-            break;
-        case lyo1::TypeSection::Struct:
-            section = lyo1::DescriptorSection::Struct;
-            break;
-        default:
-            return {};
-    }
-    tu_uint32 index = implDescriptor->receiver_descriptor();
-    auto symbolPath = m_reader->getSymbolPath(section, index);
-    return SymbolWalker(m_reader, m_reader->getSymbolIndex(symbolPath));
+    return SymbolWalker(m_reader, implDescriptor->receiver_symbol());
 }
 
 lyric_object::ExtensionWalker

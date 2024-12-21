@@ -61,14 +61,14 @@ lyric_importer::BindingImport::load()
                 "cannot import binding at index {} in module {}; invalid access type",
                 m_bindingOffset, location.toString()));
 
-    switch (bindingWalker.bindingAddressType()) {
+    switch (bindingWalker.targetAddressType()) {
         case lyric_object::AddressType::Near: {
             priv->targetUrl = lyric_common::SymbolUrl(
-                location, bindingWalker.getNearBinding().getSymbolPath());
+                location, bindingWalker.getNearTarget().getSymbolPath());
             break;
         }
         case lyric_object::AddressType::Far: {
-            priv->targetUrl = bindingWalker.getFarBinding().getLinkUrl();
+            priv->targetUrl = bindingWalker.getFarTarget().getLinkUrl();
             break;
         }
         default:

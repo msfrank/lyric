@@ -82,17 +82,7 @@ lyric_object::ActionWalker::getReceiver() const
     auto *actionDescriptor = m_reader->getAction(m_actionOffset);
     if (actionDescriptor == nullptr)
         return {};
-    lyo1::DescriptorSection section;
-    switch (actionDescriptor->receiver_section()) {
-        case lyo1::TypeSection::Concept:
-            section = lyo1::DescriptorSection::Concept;
-            break;
-        default:
-            return {};
-    }
-    tu_uint32 index = actionDescriptor->receiver_descriptor();
-    auto symbolPath = m_reader->getSymbolPath(section, index);
-    return SymbolWalker(m_reader, m_reader->getSymbolIndex(symbolPath));
+    return SymbolWalker(m_reader, actionDescriptor->receiver_symbol());
 }
 
 bool

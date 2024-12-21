@@ -48,13 +48,17 @@ struct CoreConstraint {
     const CoreType *type;
 };
 
+struct CoreSymbol {
+    lyo1::DescriptorSection section;
+    tu_uint32 index;
+};
+
 struct CoreAction {
     tu_uint32 action_index;
     lyric_common::SymbolPath actionPath;
     const CoreTemplate *actionTemplate;
     const CoreType *returnType;
-    lyo1::TypeSection receiverSection;
-    tu_uint32 receiverDescriptor;
+    tu_uint32 receiver_symbol_index;
     lyo1::ActionFlags flags;
     std::vector<lyo1::ParameterT> listParameters;
     std::vector<lyo1::ParameterT> namedParameters;
@@ -89,8 +93,7 @@ struct CoreCall {
     const CoreType *callType;
     const CoreTemplate *callTemplate;
     const CoreType *returnType;
-    lyo1::TypeSection receiverSection;
-    tu_uint32 receiverDescriptor;
+    tu_uint32 receiver_symbol_index;
     lyo1::CallFlags flags;
     std::vector<lyo1::ParameterT> listParameters;
     std::vector<lyo1::ParameterT> namedParameters;
@@ -103,8 +106,7 @@ struct CoreImpl {
     const CoreType *implType;
     const CoreConcept *implConcept;
     lyric_common::SymbolPath receiverPath;
-    lyo1::TypeSection receiverSection;
-    tu_uint32 receiverDescriptor;
+    tu_uint32 receiver_symbol_index;
     lyo1::ImplFlags flags;
     std::vector<lyo1::ImplExtension> extensions;
 };
@@ -198,12 +200,6 @@ struct CoreStruct {
     std::vector<tu_uint32> sealedSubtypes;
 };
 
-struct CoreSymbol {
-    lyric_common::SymbolPath symbolPath;
-    lyo1::DescriptorSection section;
-    tu_uint32 index;
-};
-
 struct BuilderState {
 
     std::vector<CoreType *> types;
@@ -219,8 +215,9 @@ struct BuilderState {
     std::vector<CoreStruct *> structs;
     std::vector<CoreEnum *> enums;
     std::vector<CoreInstance *> instances;
+    std::vector<CoreSymbol *> symbols;
 
-    absl::flat_hash_map<lyric_common::SymbolPath,CoreSymbol *> symbols;
+    absl::flat_hash_map<lyric_common::SymbolPath,tu_uint32> symboltable;
 
     absl::flat_hash_map<lyric_common::SymbolPath,CoreExistential *> existentialcache;
     absl::flat_hash_map<lyric_common::SymbolPath,CoreConcept *> conceptcache;
@@ -228,6 +225,7 @@ struct BuilderState {
     absl::flat_hash_map<lyric_common::SymbolPath,CoreStruct *> structcache;
     absl::flat_hash_map<lyric_common::SymbolPath,CoreEnum *> enumcache;
     absl::flat_hash_map<lyric_common::SymbolPath,CoreInstance *> instancecache;
+
     absl::flat_hash_map<int, lyric_common::SymbolPath> functionclasspaths;
 
     const absl::flat_hash_map<std::string,std::string> plugins;
@@ -442,6 +440,9 @@ struct BuilderState {
         const CoreType *returnType,
         bool isInline = false);
     void addEnumSealedSubtype(const CoreEnum *receiver, const CoreEnum *subtypeEnum);
+
+    //CoreSymbol *addSymbol()
+    tu_uint32 getSymbolIndex(const lyric_common::SymbolPath &symbolPath) const;
 
     // serialize the state
     std::shared_ptr<const std::string> toBytes() const;

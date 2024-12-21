@@ -8,7 +8,7 @@
 #include "../object_state.h"
 #include "../object_writer.h"
 
-#include "symbol_table.h"
+#include "write_symbols.h"
 
 namespace lyric_assembler::internal {
 
@@ -24,7 +24,6 @@ namespace lyric_assembler::internal {
         const ObjectWriter &writer,
         flatbuffers::FlatBufferBuilder &buffer,
         CallsOffset &callsOffset,
-        SymbolTable &symbolTable,
         std::vector<tu_uint8> &bytecode);
 }
 

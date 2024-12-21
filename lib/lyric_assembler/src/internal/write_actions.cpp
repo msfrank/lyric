@@ -52,11 +52,8 @@ write_action(
     const lyric_assembler::ActionSymbol *actionSymbol,
     const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
-    std::vector<flatbuffers::Offset<lyo1::ActionDescriptor>> &actions_vector,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    std::vector<flatbuffers::Offset<lyo1::ActionDescriptor>> &actions_vector)
 {
-    auto index = static_cast<tu_uint32>(actions_vector.size());
-
     auto actionPathString = actionSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(actionPathString);
 
@@ -71,21 +68,20 @@ write_action(
     }
 
     auto receiverUrl = actionSymbol->getReceiverUrl();
-    lyric_assembler::SymbolEntry receiver;
-    TU_ASSIGN_OR_RETURN (receiver, writer.getSymbolEntry(receiverUrl));
 
-    lyo1::TypeSection receiverSection = lyo1::TypeSection::Invalid;
-    tu_uint32 receiverDescriptor = lyric_runtime::INVALID_ADDRESS_U32;
-    switch (receiver.section) {
+    lyric_object::LinkageSection receiverSection;
+    TU_ASSIGN_OR_RETURN (receiverSection, writer.getSymbolSection(receiverUrl));
+    switch (receiverSection) {
         case lyric_object::LinkageSection::Concept:
-            receiverSection = lyo1::TypeSection::Concept;
-            receiverDescriptor = receiver.address;
             break;
         default:
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant,
                 "invalid action receiver");
     }
+
+    tu_uint32 receiverSymbolIndex;
+    TU_ASSIGN_OR_RETURN (receiverSymbolIndex, writer.getSymbolAddress(receiverUrl));
 
     std::vector<flatbuffers::Offset<lyo1::Parameter>> listParameters;
     for (auto it = actionSymbol->listPlacementBegin(); it != actionSymbol->listPlacementEnd(); it++) {
@@ -185,12 +181,9 @@ write_action(
     TU_ASSIGN_OR_RETURN (returnType, writer.getTypeOffset(actionSymbol->getReturnType()));
 
     // add action descriptor
-    actions_vector.push_back(lyo1::CreateActionDescriptor(buffer, fullyQualifiedName,
-        actionTemplate, receiverSection, receiverDescriptor, actionFlags,
+    actions_vector.push_back(lyo1::CreateActionDescriptor(buffer,
+        fullyQualifiedName, actionTemplate, receiverSymbolIndex, actionFlags,
         fb_listParameters, fb_namedParameters, fb_restParameter, returnType));
-
-    // add symbol descriptor
-    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(actionPathString, lyo1::DescriptorSection::Action, index));
 
     return {};
 }
@@ -200,13 +193,12 @@ lyric_assembler::internal::write_actions(
     const std::vector<const ActionSymbol *> &actions,
     const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
-    ActionsOffset &actionsOffset,
-    SymbolTable &symbolTable)
+    ActionsOffset &actionsOffset)
 {
     std::vector<flatbuffers::Offset<lyo1::ActionDescriptor>> actions_vector;
 
     for (const auto *actionSymbol : actions) {
-        TU_RETURN_IF_NOT_OK (write_action(actionSymbol, writer, buffer, actions_vector, symbolTable));
+        TU_RETURN_IF_NOT_OK (write_action(actionSymbol, writer, buffer, actions_vector));
     }
 
     // create the actions vector

@@ -150,8 +150,7 @@ lyric_object::CallWalker::hasReceiver() const
     auto *callDescriptor = m_reader->getCall(m_callOffset);
     if (callDescriptor == nullptr)
         return {};
-    return callDescriptor->receiver_section() != lyo1::TypeSection::Invalid
-        && callDescriptor->receiver_descriptor() != INVALID_ADDRESS_U32;
+    return callDescriptor->receiver_symbol() != INVALID_ADDRESS_U32;
 }
 
 lyric_object::SymbolWalker
@@ -162,35 +161,7 @@ lyric_object::CallWalker::getReceiver() const
     auto *callDescriptor = m_reader->getCall(m_callOffset);
     if (callDescriptor == nullptr)
         return {};
-    lyo1::DescriptorSection section;
-    switch (callDescriptor->receiver_section()) {
-        case lyo1::TypeSection::Class:
-            section = lyo1::DescriptorSection::Class;
-            break;
-        case lyo1::TypeSection::Concept:
-            section = lyo1::DescriptorSection::Concept;
-            break;
-        case lyo1::TypeSection::Enum:
-            section = lyo1::DescriptorSection::Enum;
-            break;
-        case lyo1::TypeSection::Existential:
-            section = lyo1::DescriptorSection::Existential;
-            break;
-        case lyo1::TypeSection::Instance:
-            section = lyo1::DescriptorSection::Instance;
-            break;
-        case lyo1::TypeSection::Struct:
-            section = lyo1::DescriptorSection::Struct;
-            break;
-        case lyo1::TypeSection::Type:
-            section = lyo1::DescriptorSection::Type;
-            break;
-        default:
-            return {};
-    }
-    tu_uint32 index = callDescriptor->receiver_descriptor();
-    auto symbolPath = m_reader->getSymbolPath(section, index);
-    return SymbolWalker(m_reader, m_reader->getSymbolIndex(symbolPath));
+    return SymbolWalker(m_reader, callDescriptor->receiver_symbol());
 }
 
 tu_uint8

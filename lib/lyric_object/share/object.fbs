@@ -216,8 +216,7 @@ enum CallFlags : uint16 (bit_flags) {
 table CallDescriptor {
     fqsn: string;                               // fully qualified call name
     call_template: uint32 = 0xFFFFFFFF;         // offset of the template in the templates section, or 0xFFFFFFFF if not generic
-    receiver_section: TypeSection = Invalid;    // object section containing the descriptor for the receiver, or Invalid if the call is not bound
-    receiver_descriptor: uint32 = 0xFFFFFFFF;   // index of the descriptor for the receiver in the specified section, or 0xFFFFFFFF if the call is not bound
+    receiver_symbol: uint32 = 0xFFFFFFFF;       // index of the receiver in the symbols section
     bytecode_offset: uint32 = 0xFFFFFFFF;       // offset of the start of the proc in the bytecode section
     flags: CallFlags;                           // bitfield containing call flags
     list_parameters: [Parameter];               // array of list parameters
@@ -263,8 +262,7 @@ enum ActionFlags : uint16 (bit_flags) {
 table ActionDescriptor {
     fqsn: string;                               // fully qualified action name
     action_template: uint32 = 0xFFFFFFFF;       // offset of the template in the templates section, or 0xFFFFFFFF if not generic
-    receiver_section: TypeSection = Invalid;    // object section containing the descriptor for the receiver, or Invalid if the call is not bound
-    receiver_descriptor: uint32 = 0xFFFFFFFF;   // index of the descriptor for the receiver in the specified section, or 0xFFFFFFFF if the call is not bound
+    receiver_symbol: uint32 = 0xFFFFFFFF;       // index of the receiver in the symbols section
     flags: ActionFlags;                         // bitfield containing action flags
     list_parameters: [Parameter];               // array of list parameters
     named_parameters: [Parameter];              // array of named parameters
@@ -336,8 +334,7 @@ enum ImplFlags : uint16 (bit_flags) {
 table ImplDescriptor {
     impl_type: uint32 = 0xFFFFFFFF;             // offset of the impl type in the types section
     impl_concept: uint32 = 0xFFFFFFFF;          // offset of the impl concept in the concepts section
-    receiver_section: TypeSection = Invalid;    // object section containing the descriptor for the receiver, or Invalid if the call is not bound
-    receiver_descriptor: uint32 = 0xFFFFFFFF;   // index of the descriptor for the receiver in the specified section, or 0xFFFFFFFF if the call is not bound
+    receiver_symbol: uint32 = 0xFFFFFFFF;       // index of the receiver in the symbols section
     flags: ImplFlags;                           // bitfield containing impl flags
     extensions: [ImplExtension];                // array of extensions bound to the impl
 }
@@ -468,8 +465,8 @@ enum BindingFlags : uint16 (bit_flags) {
 
 table BindingDescriptor {
     fqsn: string;                               // fully qualified symbol name for the binding
-    binding_type: DescriptorSection;            // object section containing the symbol
-    binding_descriptor: uint32 = 0xFFFFFFFF;    // offset of the symbol in the section
+    target_address: uint32 = 0xFFFFFFFF;        // address of the target symbol. if >=0 then the target is in the symbols section, otherwise
+                                                // if <0 then the target is in the links section.
     flags: BindingFlags;                        // bitfield containing binding flags
 }
 
@@ -482,13 +479,6 @@ enum NamespaceFlags : uint16 (bit_flags) {
 }
 
 //
-
-struct NamespaceBinding {
-    binding_type: DescriptorSection;            // object section containing the symbol
-    binding_descriptor: uint32;                 // offset of the symbol in the section
-}
-
-//
 //
 //
 
@@ -496,7 +486,7 @@ table NamespaceDescriptor {
     fqsn: string;                               // fully qualified symbol name for the namespace
     super_namespace: uint32 = 0xFFFFFFFF;       // offset of the super namespace in the namespaces section
     flags: NamespaceFlags;                      // bitfield containing namespace flags
-    bindings: [NamespaceBinding];               // array of bindings contained in the namespace
+    bindings: [uint32];                         // array of bindings in the bindings section
 }
 
 //

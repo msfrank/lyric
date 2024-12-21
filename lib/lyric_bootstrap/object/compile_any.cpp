@@ -19,12 +19,13 @@ CoreExistential *build_core_Any(BuilderState &state)
     state.existentials.push_back(AnyExistential);
     state.existentialcache[AnyExistential->existentialPath] = AnyExistential;
 
+    tu_uint32 symbol_index = state.symbols.size();
     auto *AnySymbol = new CoreSymbol();
-    AnySymbol->symbolPath = AnyExistential->existentialPath;
     AnySymbol->section = lyo1::DescriptorSection::Existential;
     AnySymbol->index = existential_index;
-    TU_ASSERT (!state.symbols.contains(AnySymbol->symbolPath));
-    state.symbols[AnySymbol->symbolPath] = AnySymbol;
+    state.symbols.push_back(AnySymbol);
+    TU_ASSERT (!state.symboltable.contains(AnyExistential->existentialPath));
+    state.symboltable[AnyExistential->existentialPath] = symbol_index;
 
     return AnyExistential;
 }

@@ -54,11 +54,8 @@ write_instance(
     const lyric_assembler::InstanceSymbol *instanceSymbol,
     const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
-    std::vector<flatbuffers::Offset<lyo1::InstanceDescriptor>> &instances_vector,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    std::vector<flatbuffers::Offset<lyo1::InstanceDescriptor>> &instances_vector)
 {
-    auto index = static_cast<tu_uint32>(instances_vector.size());
-
     auto instancePathString = instanceSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(instancePathString);
 
@@ -149,9 +146,6 @@ write_instance(
         instanceSymbol->getAllocatorTrap(), ctorCall,
         buffer.CreateVector(sealedSubtypes)));
 
-    // add symbol descriptor
-    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(instancePathString, lyo1::DescriptorSection::Instance, index));
-
     return {};
 }
 
@@ -160,13 +154,12 @@ lyric_assembler::internal::write_instances(
     const std::vector<const InstanceSymbol *> &instances,
     const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
-    InstancesOffset &instancesOffset,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    InstancesOffset &instancesOffset)
 {
     std::vector<flatbuffers::Offset<lyo1::InstanceDescriptor>> instances_vector;
 
     for (const auto *instanceSymbol : instances) {
-        TU_RETURN_IF_NOT_OK (write_instance(instanceSymbol, writer, buffer, instances_vector, symbolTable));
+        TU_RETURN_IF_NOT_OK (write_instance(instanceSymbol, writer, buffer, instances_vector));
     }
 
     // create the instances vector

@@ -59,11 +59,8 @@ write_class(
     const lyric_assembler::ClassSymbol *classSymbol,
     const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
-    std::vector<flatbuffers::Offset<lyo1::ClassDescriptor>> &classes_vector,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    std::vector<flatbuffers::Offset<lyo1::ClassDescriptor>> &classes_vector)
 {
-    auto index = static_cast<tu_uint32>(classes_vector.size());
-
     auto classPathString = classSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(classPathString);
 
@@ -160,9 +157,6 @@ write_class(
         buffer.CreateVector(members), buffer.CreateVector(methods), buffer.CreateVector(impls),
         classSymbol->getAllocatorTrap(), ctorCall, buffer.CreateVector(sealedSubtypes)));
 
-    // add symbol descriptor
-    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(classPathString, lyo1::DescriptorSection::Class, index));
-
     return {};
 }
 
@@ -171,13 +165,12 @@ lyric_assembler::internal::write_classes(
     const std::vector<const ClassSymbol *> &classes,
     const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
-    ClassesOffset &classesOffset,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    ClassesOffset &classesOffset)
 {
     std::vector<flatbuffers::Offset<lyo1::ClassDescriptor>> classes_vector;
 
     for (const auto *classSymbol : classes) {
-        TU_RETURN_IF_NOT_OK (write_class(classSymbol, writer, buffer, classes_vector, symbolTable));
+        TU_RETURN_IF_NOT_OK (write_class(classSymbol, writer, buffer, classes_vector));
     }
 
     // create the classes vector

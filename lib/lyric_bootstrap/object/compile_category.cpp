@@ -28,12 +28,13 @@ declare_core_Category(BuilderState &state, const CoreExistential *AnyExistential
     state.enums.push_back(CategoryEnum);
     state.enumcache[CategoryEnum->enumPath] = CategoryEnum;
 
+    tu_uint32 symbol_index = state.symbols.size();
     auto *CategorySymbol = new CoreSymbol();
-    CategorySymbol->symbolPath = CategoryEnum->enumPath;
     CategorySymbol->section = lyo1::DescriptorSection::Enum;
     CategorySymbol->index = enum_index;
-    TU_ASSERT (!state.symbols.contains(CategorySymbol->symbolPath));
-    state.symbols[CategorySymbol->symbolPath] = CategorySymbol;
+    state.symbols.push_back(CategorySymbol);
+    TU_ASSERT (!state.symboltable.contains(CategoryEnum->enumPath));
+    state.symboltable[CategoryEnum->enumPath] = symbol_index;
 
     return CategoryEnum;
 }

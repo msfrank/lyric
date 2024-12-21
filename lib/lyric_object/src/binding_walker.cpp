@@ -42,37 +42,35 @@ lyric_object::BindingWalker::getSymbolPath() const
 }
 
 lyric_object::AddressType
-lyric_object::BindingWalker::bindingAddressType() const
+lyric_object::BindingWalker::targetAddressType() const
 {
     if (!isValid())
         return AddressType::Invalid;
     auto *bindingDescriptor = m_reader->getBinding(m_bindingOffset);
     if (bindingDescriptor == nullptr)
         return {};
-    return GET_ADDRESS_TYPE(bindingDescriptor->binding_descriptor());
+    return GET_ADDRESS_TYPE(bindingDescriptor->target_address());
 }
 
 lyric_object::SymbolWalker
-lyric_object::BindingWalker::getNearBinding() const
+lyric_object::BindingWalker::getNearTarget() const
 {
     if (!isValid())
         return {};
     auto *bindingDescriptor = m_reader->getBinding(m_bindingOffset);
     if (bindingDescriptor == nullptr)
         return {};
-    auto symbolPath = m_reader->getSymbolPath(
-        bindingDescriptor->binding_type(), bindingDescriptor->binding_descriptor());
-    return SymbolWalker(m_reader, m_reader->getSymbolIndex(symbolPath));
+    return SymbolWalker(m_reader, GET_DESCRIPTOR_OFFSET(bindingDescriptor->target_address()));
 }
 
 lyric_object::LinkWalker
-lyric_object::BindingWalker::getFarBinding() const
+lyric_object::BindingWalker::getFarTarget() const
 {    if (!isValid())
         return {};
     auto *bindingDescriptor = m_reader->getBinding(m_bindingOffset);
     if (bindingDescriptor == nullptr)
         return {};
-    return LinkWalker(m_reader, GET_LINK_OFFSET(bindingDescriptor->binding_descriptor()));
+    return LinkWalker(m_reader, GET_LINK_OFFSET(bindingDescriptor->target_address()));
 }
 
 lyric_object::AccessType

@@ -21,9 +21,9 @@ namespace lyric_object {
 
         lyric_common::SymbolPath getSymbolPath() const;
 
-        AddressType bindingAddressType() const;
-        SymbolWalker getNearBinding() const;
-        LinkWalker getFarBinding() const;
+        AddressType targetAddressType() const;
+        SymbolWalker getNearTarget() const;
+        LinkWalker getFarTarget() const;
 
         AccessType getAccess() const;
 
@@ -35,6 +35,7 @@ namespace lyric_object {
 
         BindingWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 bindingOffset);
 
+        friend class NamespaceWalker;
         friend class ObjectWalker;
     };
 }

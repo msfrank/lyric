@@ -93,35 +93,31 @@ write_type(
     switch (assignableType.getType()) {
 
         case lyric_common::TypeDefType::Concrete: {
-            lyric_assembler::SymbolEntry concrete;
-            TU_ASSIGN_OR_RETURN (concrete, writer.getSymbolEntry(assignableType.getConcreteUrl()));
             lyo1::TypeSection concreteSection;
             tu_uint32 concreteDescriptor;
             std::vector<tu_uint32> parameters;
-            switch (concrete.section) {
+            auto concreteUrl = assignableType.getConcreteUrl();
+            lyric_object::LinkageSection section;
+            TU_ASSIGN_OR_RETURN (section, writer.getSymbolSection(concreteUrl));
+            TU_ASSIGN_OR_RETURN (concreteDescriptor, writer.getSymbolAddress(concreteUrl));
+            switch (section) {
                 case lyric_object::LinkageSection::Class:
                     concreteSection = lyo1::TypeSection::Class;
-                    concreteDescriptor = concrete.address;
                     break;
                 case lyric_object::LinkageSection::Concept:
                     concreteSection = lyo1::TypeSection::Concept;
-                    concreteDescriptor = concrete.address;
                     break;
                 case lyric_object::LinkageSection::Enum:
                     concreteSection = lyo1::TypeSection::Enum;
-                    concreteDescriptor = concrete.address;
                     break;
                 case lyric_object::LinkageSection::Existential:
                     concreteSection = lyo1::TypeSection::Existential;
-                    concreteDescriptor = concrete.address;
                     break;
                 case lyric_object::LinkageSection::Instance:
                     concreteSection = lyo1::TypeSection::Instance;
-                    concreteDescriptor = concrete.address;
                     break;
                 case lyric_object::LinkageSection::Struct:
                     concreteSection = lyo1::TypeSection::Struct;
-                    concreteDescriptor = concrete.address;
                     break;
                 default:
                     return lyric_assembler::AssemblerStatus::forCondition(

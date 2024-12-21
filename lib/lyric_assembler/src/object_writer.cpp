@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/action_symbol.h>
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
@@ -7,9 +8,10 @@
 #include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/instance_symbol.h>
-#include <lyric_assembler/internal/symbol_table.h>
+#include <lyric_assembler/internal/write_symbols.h>
 #include <lyric_assembler/internal/writer_utils.h>
 #include <lyric_assembler/internal/write_actions.h>
+#include <lyric_assembler/internal/write_bindings.h>
 #include <lyric_assembler/internal/write_calls.h>
 #include <lyric_assembler/internal/write_classes.h>
 #include <lyric_assembler/internal/write_concepts.h>
@@ -67,6 +69,26 @@ lyric_assembler::ObjectWriter::initialize()
         TU_RETURN_IF_NOT_OK (touchNamespace(cast_symbol_to_namespace(globalSymbol)));
     }
 
+    // touch undecls
+    for (auto iterator = m_state->undeclaredBegin(); iterator != m_state->undeclaredEnd(); iterator++) {
+        auto &undeclSymbol = *iterator;
+        auto undeclUrl = undeclSymbol->getSymbolUrl();
+
+        auto section = internal::linkage_to_descriptor(undeclSymbol->getLinkage());
+        if (section == lyo1::DescriptorSection::Invalid)
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "invalid undeclared symbol {}: could not parse linkage", undeclUrl.toString());
+
+        SymbolEntry symbolEntry;
+        symbolEntry.type = SymbolEntry::EntryType::Descriptor;
+        symbolEntry.index = static_cast<tu_uint32>(m_symbols.size());
+        SymbolDefinition symbolDefinition;
+        symbolDefinition.section = undeclSymbol->getLinkage();
+        symbolDefinition.index = lyric_object::INVALID_ADDRESS_U32;
+        m_symbols.push_back(symbolDefinition);
+        m_symbolEntries[undeclUrl] = symbolEntry;
+    }
+
     // if we are including all symbols then insert all imports
     if (m_includeUnusedImports) {
         auto *importCache = m_state->importCache();
@@ -88,25 +110,107 @@ lyric_assembler::ObjectWriter::getLiteralAddress(const LiteralHandle *literalHan
     return entry->second;
 }
 
-tempo_utils::Result<lyric_assembler::SymbolEntry>
-lyric_assembler::ObjectWriter::getSymbolEntry(
+tempo_utils::Result<lyric_assembler::SymbolDefinition>
+lyric_assembler::ObjectWriter::getSymbolDefinition(
     const lyric_common::SymbolUrl &symbolUrl) const
 {
     auto entry = m_symbolEntries.find(symbolUrl);
     if (entry == m_symbolEntries.cend())
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
-    return entry->second;
+
+    auto &symbolEntry = entry->second;
+    switch (symbolEntry.type) {
+        case SymbolEntry::EntryType::Descriptor: {
+            if (m_symbols.size() <= symbolEntry.index)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
+            return m_symbols.at(symbolEntry.index);
+        }
+        default:
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "no definition available for imported symbol {}", symbolUrl.toString());
+    }
 }
 
-Option<lyric_assembler::SymbolEntry>
-lyric_assembler::ObjectWriter::getSymbolEntryOption(
+Option<lyric_assembler::SymbolDefinition>
+lyric_assembler::ObjectWriter::getSymbolDefinitionOption(
     const lyric_common::SymbolUrl &symbolUrl) const
 {
     auto entry = m_symbolEntries.find(symbolUrl);
     if (entry == m_symbolEntries.cend())
         return {};
-    return Option(entry->second);
+
+    auto &symbolEntry = entry->second;
+    switch (symbolEntry.type) {
+        case SymbolEntry::EntryType::Descriptor: {
+            if (m_symbols.size() <= symbolEntry.index)
+                return {};
+            return Option(m_symbols.at(symbolEntry.index));
+        }
+        default:
+            return {};
+    }
+}
+
+tempo_utils::Result<lyric_object::LinkageSection>
+lyric_assembler::ObjectWriter::getSymbolSection(const lyric_common::SymbolUrl &symbolUrl) const
+{
+    auto entry = m_symbolEntries.find(symbolUrl);
+    if (entry == m_symbolEntries.cend())
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
+
+    auto &symbolEntry = entry->second;
+    switch (symbolEntry.type) {
+        case SymbolEntry::EntryType::Descriptor: {
+            if (m_symbols.size() <= symbolEntry.index)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
+            auto symbolDefinition = m_symbols.at(symbolEntry.index);
+            return symbolDefinition.section;
+        }
+        case SymbolEntry::EntryType::Link: {
+            if (m_links.size() <= symbolEntry.index)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "missing link {}", symbolUrl.toString());
+            auto requestedLink = m_links.at(symbolEntry.index);
+            return requestedLink.linkType;
+        }
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid symbol {}", symbolUrl.toString());
+    }
+}
+
+tempo_utils::Result<tu_uint32>
+lyric_assembler::ObjectWriter::getSymbolAddress(const lyric_common::SymbolUrl &symbolUrl) const
+{
+    auto entry = m_symbolEntries.find(symbolUrl);
+    if (entry == m_symbolEntries.cend())
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
+
+    auto &symbolEntry = entry->second;
+    switch (symbolEntry.type) {
+        case SymbolEntry::EntryType::Descriptor: {
+            if (m_symbols.size() <= symbolEntry.index)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
+            auto symbolDefinition = m_symbols.at(symbolEntry.index);
+            return lyric_object::GET_DESCRIPTOR_ADDRESS(symbolDefinition.index);
+        }
+        case SymbolEntry::EntryType::Link: {
+            if (m_links.size() <= symbolEntry.index)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "missing link {}", symbolUrl.toString());
+            auto requestedLink = m_links.at(symbolEntry.index);
+            return lyric_object::GET_LINK_ADDRESS(symbolEntry.index);
+        }
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid symbol {}", symbolUrl.toString());
+    }
 }
 
 tempo_utils::Result<tu_uint32>
@@ -118,11 +222,33 @@ lyric_assembler::ObjectWriter::getSymbolAddress(
     if (entry == m_symbolEntries.cend())
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
+
     auto &symbolEntry = entry->second;
-    if (symbolEntry.section != section)
-        return AssemblerStatus::forCondition(
-            AssemblerCondition::kAssemblerInvariant, "invalid symbol {}", symbolUrl.toString());
-    return symbolEntry.address;
+    switch (symbolEntry.type) {
+        case SymbolEntry::EntryType::Descriptor: {
+            if (m_symbols.size() <= symbolEntry.index)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
+            auto symbolDefinition = m_symbols.at(symbolEntry.index);
+            if (symbolDefinition.section != section)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "invalid symbol {}", symbolUrl.toString());
+            return lyric_object::GET_DESCRIPTOR_ADDRESS(symbolDefinition.index);
+        }
+        case SymbolEntry::EntryType::Link: {
+            if (m_links.size() <= symbolEntry.index)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "missing link {}", symbolUrl.toString());
+            auto requestedLink = m_links.at(symbolEntry.index);
+            if (requestedLink.linkType != section)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "invalid link {}", symbolUrl.toString());
+            return lyric_object::GET_LINK_ADDRESS(symbolEntry.index);
+        }
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid symbol {}", symbolUrl.toString());
+    }
 }
 
 tempo_utils::Result<tu_uint32>
@@ -155,6 +281,30 @@ lyric_assembler::ObjectWriter::getTypeOffset(const lyric_common::TypeDef &typeDe
     return entry->second;
 }
 
+std::vector<lyric_assembler::SymbolDefinition>::const_iterator
+lyric_assembler::ObjectWriter::symbolDefinitionsBegin() const
+{
+    return m_symbols.cbegin();
+}
+
+std::vector<lyric_assembler::SymbolDefinition>::const_iterator
+lyric_assembler::ObjectWriter::symbolDefinitionsEnd() const
+{
+    return m_symbols.cend();
+}
+
+absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::SymbolEntry>::const_iterator
+lyric_assembler::ObjectWriter::symbolEntriesBegin() const
+{
+    return m_symbolEntries.cbegin();
+}
+
+absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::SymbolEntry>::const_iterator
+lyric_assembler::ObjectWriter::symbolEntriesEnd() const
+{
+    return m_symbolEntries.cend();
+}
+
 tempo_utils::Status
 lyric_assembler::ObjectWriter::insertImport(const lyric_common::ModuleLocation &location)
 {
@@ -169,6 +319,41 @@ lyric_assembler::ObjectWriter::insertImport(const lyric_common::ModuleLocation &
     return {};
 }
 
+template<class SymbolType>
+static tempo_utils::Status
+insert_symbol(
+    const SymbolType *symbol,
+    std::vector<const SymbolType *> &sectionVector,
+    std::vector<lyric_assembler::SymbolDefinition> &symbolsVector,
+    std::vector<lyric_assembler::RequestedLink> &linksVector,
+    absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::SymbolEntry> &symbolEntries,
+    lyric_assembler::ObjectWriter *writer)
+{
+    auto symbolUrl = symbol->getSymbolUrl();
+    auto section = symbol->getLinkage();
+
+    lyric_assembler::SymbolEntry symbolEntry;
+    if (symbol->isImported()) {
+        TU_RETURN_IF_NOT_OK (writer->insertImport(symbolUrl.getModuleLocation()));
+        symbolEntry.type = lyric_assembler::SymbolEntry::EntryType::Link;
+        symbolEntry.index = linksVector.size();
+        lyric_assembler::RequestedLink requestedLink;
+        requestedLink.linkType = section;
+        requestedLink.linkUrl = symbolUrl;
+        linksVector.push_back(std::move(requestedLink));
+    } else {
+        symbolEntry.type = lyric_assembler::SymbolEntry::EntryType::Descriptor;
+        symbolEntry.index = symbolsVector.size();
+        lyric_assembler::SymbolDefinition symbolDefinition;
+        symbolDefinition.section = section;
+        symbolDefinition.index = sectionVector.size();
+        sectionVector.push_back(symbol);
+        symbolsVector.push_back(symbolDefinition);
+    }
+    symbolEntries[symbolUrl] = symbolEntry;
+    return {};
+}
+
 tempo_utils::Status
 lyric_assembler::ObjectWriter::insertSymbol(
     const lyric_common::SymbolUrl &symbolUrl,
@@ -180,172 +365,77 @@ lyric_assembler::ObjectWriter::insertSymbol(
         return {};
     }
 
-    SymbolEntry symbolEntry;
-
     switch (symbol->getSymbolType()) {
 
         case SymbolType::ACTION: {
-            symbolEntry.section = lyric_object::LinkageSection::Action;
-            if (symbol->isImported()) {
-                TU_RETURN_IF_NOT_OK (insertImport(symbolUrl.getModuleLocation()));
-                symbolEntry.address = lyric_object::GET_LINK_ADDRESS(m_links.size());
-                RequestedLink requestedLink{symbolEntry.section, symbolUrl};
-                m_links.push_back(std::move(requestedLink));
-            } else {
-                symbolEntry.address = lyric_object::GET_DESCRIPTOR_ADDRESS(m_actions.size());
-                m_actions.push_back(cast_symbol_to_action(symbol));
-            }
-            m_symbolEntries[symbolUrl] = symbolEntry;
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_action(symbol),
+                m_actions, m_symbols, m_links, m_symbolEntries, this));
+            break;
+        }
+
+        case SymbolType::BINDING: {
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_binding(symbol),
+                m_bindings, m_symbols, m_links, m_symbolEntries, this));
             break;
         }
 
         case SymbolType::CALL: {
-            symbolEntry.section = lyric_object::LinkageSection::Call;
-            if (symbol->isImported()) {
-                TU_RETURN_IF_NOT_OK (insertImport(symbolUrl.getModuleLocation()));
-                symbolEntry.address = lyric_object::GET_LINK_ADDRESS(m_links.size());
-                RequestedLink requestedLink{symbolEntry.section, symbolUrl};
-                m_links.push_back(std::move(requestedLink));
-            } else {
-                symbolEntry.address = lyric_object::GET_DESCRIPTOR_ADDRESS(m_calls.size());
-                m_calls.push_back(cast_symbol_to_call(symbol));
-            }
-            m_symbolEntries[symbolUrl] = symbolEntry;
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_call(symbol),
+                m_calls, m_symbols, m_links, m_symbolEntries, this));
             break;
         }
 
         case SymbolType::CLASS: {
-            symbolEntry.section = lyric_object::LinkageSection::Class;
-            if (symbol->isImported()) {
-                TU_RETURN_IF_NOT_OK (insertImport(symbolUrl.getModuleLocation()));
-                symbolEntry.address = lyric_object::GET_LINK_ADDRESS(m_links.size());
-                RequestedLink requestedLink{symbolEntry.section, symbolUrl};
-                m_links.push_back(std::move(requestedLink));
-            } else {
-                symbolEntry.address = m_classes.size();
-                m_classes.push_back(cast_symbol_to_class(symbol));
-            }
-            m_symbolEntries[symbolUrl] = symbolEntry;
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_class(symbol),
+                m_classes, m_symbols, m_links, m_symbolEntries, this));
             break;
         }
 
         case SymbolType::CONCEPT: {
-            symbolEntry.section = lyric_object::LinkageSection::Concept;
-            if (symbol->isImported()) {
-                TU_RETURN_IF_NOT_OK (insertImport(symbolUrl.getModuleLocation()));
-                symbolEntry.address = lyric_object::GET_LINK_ADDRESS(m_links.size());
-                RequestedLink requestedLink{symbolEntry.section, symbolUrl};
-                m_links.push_back(std::move(requestedLink));
-            } else {
-                symbolEntry.address = lyric_object::GET_DESCRIPTOR_ADDRESS(m_concepts.size());
-                m_concepts.push_back(cast_symbol_to_concept(symbol));
-            }
-            m_symbolEntries[symbolUrl] = symbolEntry;
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_concept(symbol),
+                m_concepts, m_symbols, m_links, m_symbolEntries, this));
             break;
         }
 
         case SymbolType::ENUM: {
-            symbolEntry.section = lyric_object::LinkageSection::Enum;
-            if (symbol->isImported()) {
-                TU_RETURN_IF_NOT_OK (insertImport(symbolUrl.getModuleLocation()));
-                symbolEntry.address = lyric_object::GET_LINK_ADDRESS(m_links.size());
-                RequestedLink requestedLink{symbolEntry.section, symbolUrl};
-                m_links.push_back(std::move(requestedLink));
-            } else {
-                symbolEntry.address = lyric_object::GET_DESCRIPTOR_ADDRESS(m_enums.size());
-                m_enums.push_back(cast_symbol_to_enum(symbol));
-            }
-            m_symbolEntries[symbolUrl] = symbolEntry;
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_enum(symbol),
+                m_enums, m_symbols, m_links, m_symbolEntries, this));
             break;
         }
 
         case SymbolType::EXISTENTIAL: {
-            symbolEntry.section = lyric_object::LinkageSection::Existential;
-            if (symbol->isImported()) {
-                TU_RETURN_IF_NOT_OK (insertImport(symbolUrl.getModuleLocation()));
-                symbolEntry.address = lyric_object::GET_LINK_ADDRESS(m_links.size());
-                RequestedLink requestedLink{symbolEntry.section, symbolUrl};
-                m_links.push_back(std::move(requestedLink));
-            } else {
-                symbolEntry.address = lyric_object::GET_DESCRIPTOR_ADDRESS(m_existentials.size());
-                m_existentials.push_back(cast_symbol_to_existential(symbol));
-            }
-            m_symbolEntries[symbolUrl] = symbolEntry;
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_existential(symbol),
+                m_existentials, m_symbols, m_links, m_symbolEntries, this));
             break;
         }
 
         case SymbolType::FIELD: {
-            symbolEntry.section = lyric_object::LinkageSection::Field;
-            if (symbol->isImported()) {
-                TU_RETURN_IF_NOT_OK (insertImport(symbolUrl.getModuleLocation()));
-                symbolEntry.address = lyric_object::GET_LINK_ADDRESS(m_links.size());
-                RequestedLink requestedLink{symbolEntry.section, symbolUrl};
-                m_links.push_back(std::move(requestedLink));
-            } else {
-                symbolEntry.address = lyric_object::GET_DESCRIPTOR_ADDRESS(m_fields.size());
-                m_fields.push_back(cast_symbol_to_field(symbol));
-            }
-            m_symbolEntries[symbolUrl] = symbolEntry;
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_field(symbol),
+                m_fields, m_symbols, m_links, m_symbolEntries, this));
             break;
         }
 
         case SymbolType::INSTANCE: {
-            symbolEntry.section = lyric_object::LinkageSection::Instance;
-            if (symbol->isImported()) {
-                TU_RETURN_IF_NOT_OK (insertImport(symbolUrl.getModuleLocation()));
-                symbolEntry.address = lyric_object::GET_LINK_ADDRESS(m_links.size());
-                RequestedLink requestedLink{symbolEntry.section, symbolUrl};
-                m_links.push_back(std::move(requestedLink));
-            } else {
-                symbolEntry.address = lyric_object::GET_DESCRIPTOR_ADDRESS(m_instances.size());
-                m_instances.push_back(cast_symbol_to_instance(symbol));
-            }
-            m_symbolEntries[symbolUrl] = symbolEntry;
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_instance(symbol),
+                m_instances, m_symbols, m_links, m_symbolEntries, this));
             break;
         }
 
         case SymbolType::NAMESPACE: {
-            symbolEntry.section = lyric_object::LinkageSection::Namespace;
-            if (symbol->isImported()) {
-                TU_RETURN_IF_NOT_OK (insertImport(symbolUrl.getModuleLocation()));
-                symbolEntry.address = lyric_object::GET_LINK_ADDRESS(m_links.size());
-                RequestedLink requestedLink{symbolEntry.section, symbolUrl};
-                m_links.push_back(std::move(requestedLink));
-            } else {
-                symbolEntry.address = lyric_object::GET_DESCRIPTOR_ADDRESS(m_namespaces.size());
-                m_namespaces.push_back(cast_symbol_to_namespace(symbol));
-            }
-            m_symbolEntries[symbolUrl] = symbolEntry;
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_namespace(symbol),
+                m_namespaces, m_symbols, m_links, m_symbolEntries, this));
             break;
         }
 
         case SymbolType::STATIC: {
-            symbolEntry.section = lyric_object::LinkageSection::Static;
-            if (symbol->isImported()) {
-                TU_RETURN_IF_NOT_OK (insertImport(symbolUrl.getModuleLocation()));
-                symbolEntry.address = lyric_object::GET_LINK_ADDRESS(m_links.size());
-                RequestedLink requestedLink{symbolEntry.section, symbolUrl};
-                m_links.push_back(std::move(requestedLink));
-            } else {
-                symbolEntry.address = lyric_object::GET_DESCRIPTOR_ADDRESS(m_statics.size());
-                m_statics.push_back(cast_symbol_to_static(symbol));
-            }
-            m_symbolEntries[symbolUrl] = symbolEntry;
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_static(symbol),
+                m_statics, m_symbols, m_links, m_symbolEntries, this));
             break;
         }
 
         case SymbolType::STRUCT: {
-            symbolEntry.section = lyric_object::LinkageSection::Struct;
-            if (symbol->isImported()) {
-                TU_RETURN_IF_NOT_OK (insertImport(symbolUrl.getModuleLocation()));
-                symbolEntry.address = lyric_object::GET_LINK_ADDRESS(m_links.size());
-                RequestedLink requestedLink{symbolEntry.section, symbolUrl};
-                m_links.push_back(std::move(requestedLink));
-            } else {
-                symbolEntry.address = lyric_object::GET_DESCRIPTOR_ADDRESS(m_structs.size());
-                m_structs.push_back(cast_symbol_to_struct(symbol));
-            }
-            m_symbolEntries[symbolUrl] = symbolEntry;
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_struct(symbol),
+                m_structs, m_symbols, m_links, m_symbolEntries, this));
             break;
         }
 
@@ -419,6 +509,12 @@ tempo_utils::Status
 lyric_assembler::ObjectWriter::touchAction(const ActionSymbol *actionSymbol)
 {
     return internal::touch_action(actionSymbol, m_state, *this);
+}
+
+tempo_utils::Status
+lyric_assembler::ObjectWriter::touchBinding(const BindingSymbol *bindingSymbol)
+{
+    return internal::touch_binding(bindingSymbol, m_state, *this);
 }
 
 tempo_utils::Status
@@ -624,7 +720,6 @@ lyric_assembler::ObjectWriter::toObject() const
 {
     flatbuffers::FlatBufferBuilder buffer;
 
-    internal::SymbolTable symbolTable;
     std::vector<flatbuffers::Offset<lyo1::PluginDescriptor>> plugins_vector;
     std::vector<uint8_t> bytecode;
 
@@ -632,27 +727,31 @@ lyric_assembler::ObjectWriter::toObject() const
 
     // serialize array of action descriptors
     internal::ActionsOffset actionsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_actions(m_actions, *this, buffer, actionsOffset, symbolTable));
+    TU_RETURN_IF_NOT_OK (internal::write_actions(m_actions, *this, buffer, actionsOffset));
+
+    // serialize array of binding descriptors
+    internal::BindingsOffset bindingsOffset;
+    TU_RETURN_IF_NOT_OK (internal::write_bindings(m_bindings, *this, buffer, bindingsOffset));
 
     // serialize array of call descriptors
     internal::CallsOffset callsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_calls(m_calls, *this, buffer, callsOffset, symbolTable, bytecode));
+    TU_RETURN_IF_NOT_OK (internal::write_calls(m_calls, *this, buffer, callsOffset, bytecode));
 
     // serialize array of class descriptors
     internal::ClassesOffset classesOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_classes(m_classes, *this, buffer, classesOffset, symbolTable));
+    TU_RETURN_IF_NOT_OK (internal::write_classes(m_classes, *this, buffer, classesOffset));
 
     // serialize array of concept descriptors
     internal::ConceptsOffset conceptsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_concepts(m_concepts, *this, buffer, conceptsOffset, symbolTable));
+    TU_RETURN_IF_NOT_OK (internal::write_concepts(m_concepts, *this, buffer, conceptsOffset));
 
     // serialize array of enum descriptors
     internal::EnumsOffset enumsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_enums(m_enums, *this, buffer, enumsOffset, symbolTable));
+    TU_RETURN_IF_NOT_OK (internal::write_enums(m_enums, *this, buffer, enumsOffset));
 
     // serialize array of field descriptors
     internal::FieldsOffset fieldsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_fields(m_fields, *this, buffer, fieldsOffset, symbolTable));
+    TU_RETURN_IF_NOT_OK (internal::write_fields(m_fields, *this, buffer, fieldsOffset));
 
     // serialize array of impl descriptors
     internal::ImplsOffset implsOffset;
@@ -664,7 +763,7 @@ lyric_assembler::ObjectWriter::toObject() const
 
     // serialize array of instance descriptors
     internal::InstancesOffset instancesOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_instances(m_instances, *this, buffer, instancesOffset, symbolTable));
+    TU_RETURN_IF_NOT_OK (internal::write_instances(m_instances, *this, buffer, instancesOffset));
 
     // serialize arrays of link descriptors
     internal::LinksOffset linksOffset;
@@ -677,15 +776,15 @@ lyric_assembler::ObjectWriter::toObject() const
     // serialize array of namespace descriptors
     internal::NamespacesOffset namespacesOffset;
     TU_RETURN_IF_NOT_OK (internal::write_namespaces(
-        m_namespaces, *this, m_state->getLocation(), buffer, namespacesOffset, symbolTable));
+        m_namespaces, *this, m_state->getLocation(), buffer, namespacesOffset));
 
     // serialize array of static descriptors
     internal::StaticsOffset staticsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_statics(m_statics, *this, buffer, staticsOffset, symbolTable));
+    TU_RETURN_IF_NOT_OK (internal::write_statics(m_statics, *this, buffer, staticsOffset));
 
     // serialize array of struct descriptors
     internal::StructsOffset structsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_structs(m_structs, *this, buffer, structsOffset, symbolTable));
+    TU_RETURN_IF_NOT_OK (internal::write_structs(m_structs, *this, buffer, structsOffset));
 
     // serialize array of template descriptors
     internal::TemplatesOffset templatesOffset;
@@ -695,27 +794,13 @@ lyric_assembler::ObjectWriter::toObject() const
     internal::TypesOffset typesOffset;
     TU_RETURN_IF_NOT_OK (internal::write_types(m_types, *this, buffer, typesOffset));
 
-    // serialize array of undecl descriptors
-    for (auto iterator = m_state->undeclaredBegin(); iterator != m_state->undeclaredEnd(); iterator++) {
-        auto &undeclSymbol = *iterator;
-
-        auto undeclPathString = undeclSymbol->getSymbolUrl().getSymbolPath().toString();
-
-        auto section = internal::linkage_to_descriptor(undeclSymbol->getLinkage());
-        if (section == lyo1::DescriptorSection::Invalid)
-            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "invalid undeclared symbol {}: could not parse linkage", undeclPathString);
-
-        TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(undeclPathString, section, lyric_object::INVALID_ADDRESS_U32));
-    }
-
     // serialize array of symbol descriptors
     internal::SymbolsOffset symbolsOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_symbols(symbolTable, buffer, symbolsOffset));
+    TU_RETURN_IF_NOT_OK (internal::write_symbols(*this, buffer, symbolsOffset));
 
     // serialize the symbol table
     internal::SortedSymbolTableOffset sortedSymbolTableOffset;
-    TU_RETURN_IF_NOT_OK (internal::write_sorted_symbol_table(symbolTable, buffer, sortedSymbolTableOffset));
+    TU_RETURN_IF_NOT_OK (internal::write_sorted_symbol_table(*this, buffer, sortedSymbolTableOffset));
 
     // serialize array of plugin descriptors
     auto *options = m_state->getOptions();
@@ -739,6 +824,7 @@ lyric_assembler::ObjectWriter::toObject() const
     objectBuilder.add_version_patch(options->patchVersion);
 
     objectBuilder.add_actions(actionsOffset);
+    objectBuilder.add_bindings(bindingsOffset);
     objectBuilder.add_calls(callsOffset);
     objectBuilder.add_classes(classesOffset);
     objectBuilder.add_concepts(conceptsOffset);

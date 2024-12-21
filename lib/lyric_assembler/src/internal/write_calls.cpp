@@ -93,10 +93,8 @@ write_call(
     const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     std::vector<flatbuffers::Offset<lyo1::CallDescriptor>> &calls_vector,
-    lyric_assembler::internal::SymbolTable &symbolTable,
     std::vector<uint8_t> &bytecode)
 {
-    auto index = static_cast<tu_uint32>(calls_vector.size());
     auto bytecodeOffset = static_cast<tu_uint32>(bytecode.size());
 
     auto *proc = callSymbol->callProc();
@@ -156,39 +154,26 @@ write_call(
             writer.getTemplateOffset(callSymbol->callTemplate()->getTemplateUrl()));
     }
 
-    lyo1::TypeSection receiverSection = lyo1::TypeSection::Invalid;
-    tu_uint32 receiverDescriptor = lyric_runtime::INVALID_ADDRESS_U32;
-
     auto receiverUrl = callSymbol->getReceiverUrl();
+
+    tu_uint32 receiverSymbolIndex = lyric_object::INVALID_ADDRESS_U32;
     if (receiverUrl.isValid()) {
-        lyric_assembler::SymbolEntry receiver;
-        TU_ASSIGN_OR_RETURN (receiver, writer.getSymbolEntry(receiverUrl));
-        switch (receiver.section) {
+        lyric_object::LinkageSection receiverSection;
+        TU_ASSIGN_OR_RETURN (receiverSection, writer.getSymbolSection(receiverUrl));
+        switch (receiverSection) {
             case lyric_object::LinkageSection::Class:
-                receiverSection = lyo1::TypeSection::Class;
-                receiverDescriptor = receiver.address;
-                break;
             case lyric_object::LinkageSection::Concept:
-                receiverSection = lyo1::TypeSection::Concept;
-                receiverDescriptor = receiver.address;
-                break;
             case lyric_object::LinkageSection::Enum:
-                receiverSection = lyo1::TypeSection::Enum;
-                receiverDescriptor = receiver.address;
-                break;
+            case lyric_object::LinkageSection::Existential:
             case lyric_object::LinkageSection::Instance:
-                receiverSection = lyo1::TypeSection::Instance;
-                receiverDescriptor = receiver.address;
-                break;
             case lyric_object::LinkageSection::Struct:
-                receiverSection = lyo1::TypeSection::Struct;
-                receiverDescriptor = receiver.address;
                 break;
             default:
                 return lyric_assembler::AssemblerStatus::forCondition(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant,
                     "invalid call receiver");
         }
+        TU_ASSIGN_OR_RETURN (receiverSymbolIndex, writer.getSymbolAddress(receiverUrl));
         callFlags |= lyo1::CallFlags::Bound;
     }
 
@@ -301,12 +286,9 @@ write_call(
     TU_ASSIGN_OR_RETURN (returnType, writer.getTypeOffset(callSymbol->getReturnType()));
 
     // add call descriptor
-    calls_vector.push_back(lyo1::CreateCallDescriptor(buffer, fullyQualifiedName,
-        callTemplate, receiverSection, receiverDescriptor, bytecodeOffset, callFlags,
+    calls_vector.push_back(lyo1::CreateCallDescriptor(buffer,
+        fullyQualifiedName, callTemplate, receiverSymbolIndex, bytecodeOffset, callFlags,
         fb_listParameters, fb_namedParameters, fb_restParameter, returnType));
-
-    // add symbol descriptor
-    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(callPathString, lyo1::DescriptorSection::Call, index));
 
     return {};
 }
@@ -317,13 +299,12 @@ lyric_assembler::internal::write_calls(
     const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
     CallsOffset &callsOffset,
-    lyric_assembler::internal::SymbolTable &symbolTable,
     std::vector<tu_uint8> &bytecode)
 {
     std::vector<flatbuffers::Offset<lyo1::CallDescriptor>> calls_vector;
 
     for (const auto *callSymbol : calls) {
-        TU_RETURN_IF_NOT_OK (write_call(callSymbol, writer, buffer, calls_vector, symbolTable, bytecode));
+        TU_RETURN_IF_NOT_OK (write_call(callSymbol, writer, buffer, calls_vector, bytecode));
     }
 
     // create the calls vector

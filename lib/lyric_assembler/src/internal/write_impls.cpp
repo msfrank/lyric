@@ -82,43 +82,26 @@ write_impl(
     TU_ASSIGN_OR_RETURN (implConcept,
         writer.getSymbolAddress(implHandle->implConcept()->getSymbolUrl(), lyric_object::LinkageSection::Concept));
 
-    lyo1::TypeSection receiverSection = lyo1::TypeSection::Invalid;
-    tu_uint32 receiverDescriptor = lyric_runtime::INVALID_ADDRESS_U32;
-
     auto receiverUrl = implHandle->getReceiverUrl();
-    lyric_assembler::SymbolEntry receiver;
-    TU_ASSIGN_OR_RETURN (receiver, writer.getSymbolEntry(receiverUrl));
 
-    switch (receiver.section) {
+    lyric_object::LinkageSection receiverSection;
+    TU_ASSIGN_OR_RETURN (receiverSection, writer.getSymbolSection(receiverUrl));
+    switch (receiverSection) {
         case lyric_object::LinkageSection::Class:
-            receiverSection = lyo1::TypeSection::Class;
-            receiverDescriptor = receiver.address;
-            break;
         case lyric_object::LinkageSection::Concept:
-            receiverSection = lyo1::TypeSection::Concept;
-            receiverDescriptor = receiver.address;
-            break;
         case lyric_object::LinkageSection::Enum:
-            receiverSection = lyo1::TypeSection::Enum;
-            receiverDescriptor = receiver.address;
-            break;
         case lyric_object::LinkageSection::Existential:
-            receiverSection = lyo1::TypeSection::Existential;
-            receiverDescriptor = receiver.address;
-            break;
         case lyric_object::LinkageSection::Instance:
-            receiverSection = lyo1::TypeSection::Instance;
-            receiverDescriptor = receiver.address;
-            break;
         case lyric_object::LinkageSection::Struct:
-            receiverSection = lyo1::TypeSection::Struct;
-            receiverDescriptor = receiver.address;
             break;
         default:
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant,
                 "invalid impl receiver");
     }
+
+    tu_uint32 receiverSymbolIndex;
+    TU_ASSIGN_OR_RETURN (receiverSymbolIndex, writer.getSymbolAddress(receiverUrl));
 
     lyo1::ImplFlags implFlags = lyo1::ImplFlags::NONE;
     if (implHandle->isDeclOnly())
@@ -143,8 +126,8 @@ write_impl(
 
     auto fb_extensions = buffer.CreateVectorOfStructs(implExtensions);
 
-    impls_vector.push_back(lyo1::CreateImplDescriptor(buffer, implType, implConcept,
-        receiverSection, receiverDescriptor, implFlags, fb_extensions));
+    impls_vector.push_back(lyo1::CreateImplDescriptor(buffer,
+        implType, implConcept, receiverSymbolIndex, implFlags, fb_extensions));
 
     return {};
 }

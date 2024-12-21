@@ -4,7 +4,7 @@
 
 tempo_utils::Status
 lyric_assembler::internal::write_links(
-    const std::vector<const RequestedLink> &links,
+    const std::vector<RequestedLink> &links,
     const ObjectWriter &writer,
     const absl::flat_hash_map<lyric_common::ModuleLocation,tu_uint32> &importOffsets,
     flatbuffers::FlatBufferBuilder &buffer,

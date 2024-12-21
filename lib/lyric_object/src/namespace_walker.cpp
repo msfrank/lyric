@@ -1,9 +1,8 @@
 
+#include <lyric_object/binding_walker.h>
 #include <lyric_object/internal/object_reader.h>
 #include <lyric_object/link_walker.h>
 #include <lyric_object/namespace_walker.h>
-#include <lyric_object/symbol_walker.h>
-#include <lyric_object/type_walker.h>
 
 lyric_object::NamespaceWalker::NamespaceWalker()
     : m_namespaceOffset(INVALID_ADDRESS_U32)
@@ -128,7 +127,7 @@ lyric_object::NamespaceWalker::numBindings() const
     return namespaceDescriptor->bindings()->size();
 }
 
-lyric_object::SymbolWalker
+lyric_object::BindingWalker
 lyric_object::NamespaceWalker::getBinding(tu_uint32 index) const
 {
     if (!isValid())
@@ -140,9 +139,8 @@ lyric_object::NamespaceWalker::getBinding(tu_uint32 index) const
         return {};
     if (namespaceDescriptor->bindings()->size() <= index)
         return {};
-    auto *binding = namespaceDescriptor->bindings()->Get(index);
-    auto symbolPath = m_reader->getSymbolPath(binding->binding_type(), binding->binding_descriptor());
-    return SymbolWalker(m_reader, m_reader->getSymbolIndex(symbolPath));
+    auto bindingOffset = namespaceDescriptor->bindings()->Get(index);
+    return BindingWalker(m_reader, bindingOffset);
 }
 
 tu_uint32

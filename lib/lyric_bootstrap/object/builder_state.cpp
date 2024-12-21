@@ -208,7 +208,7 @@ BuilderState::addExistential(
     lyo1::ExistentialFlags existentialFlags,
     const CoreExistential *superExistential)
 {
-    TU_ASSERT (!symbols.contains(existentialPath));
+    TU_ASSERT (!symboltable.contains(existentialPath));
 
     tu_uint32 existential_index = existentials.size();
     auto *Existential = new CoreExistential();
@@ -225,12 +225,13 @@ BuilderState::addExistential(
     Existential->existentialType = Type;
     Existential->flags = existentialFlags;
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Existential->existentialPath;
     Symbol->section = lyo1::DescriptorSection::Existential;
     Symbol->index = Existential->existential_index;
+    symbols.push_back(Symbol);
+    symboltable[Existential->existentialPath] = symbol_index;
 
-    symbols[Symbol->symbolPath] = Symbol;
     existentialcache[Existential->existentialPath] = Existential;
 
     return Existential;
@@ -244,7 +245,7 @@ BuilderState::addGenericExistential(
     lyo1::ExistentialFlags existentialFlags,
     const CoreExistential *superExistential)
 {
-    TU_ASSERT (!symbols.contains(existentialPath));
+    TU_ASSERT (!symboltable.contains(existentialPath));
     TU_ASSERT (existentialTemplate != nullptr);
 
     tu_uint32 existential_index = existentials.size();
@@ -266,12 +267,13 @@ BuilderState::addGenericExistential(
     Existential->existentialType = Type;
     Existential->flags = existentialFlags;
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Existential->existentialPath;
     Symbol->section = lyo1::DescriptorSection::Existential;
     Symbol->index = Existential->existential_index;
+    symbols.push_back(Symbol);
+    symboltable[Existential->existentialPath] = symbol_index;
 
-    symbols[Symbol->symbolPath] = Symbol;
     existentialcache[Existential->existentialPath] = Existential;
 
     return Existential;
@@ -295,7 +297,7 @@ BuilderState::addExistentialMethod(
 
     auto *ReceiverExistential = existentialcache[receiver->existentialPath];
     lyric_common::SymbolPath callPath(ReceiverExistential->existentialPath.getPath(), methodName);
-    TU_ASSERT (!symbols.contains(callPath));
+    TU_ASSERT (!symboltable.contains(callPath));
 
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
 
@@ -307,8 +309,7 @@ BuilderState::addExistentialMethod(
     Call->callPath = callPath;
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
-    Call->receiverSection = lyo1::TypeSection::Existential;
-    Call->receiverDescriptor = receiver->existential_index;
+    Call->receiver_symbol_index = getSymbolIndex(receiver->existentialPath);
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -317,11 +318,12 @@ BuilderState::addExistentialMethod(
 
     ReceiverExistential->methods.push_back(Call);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Call->callPath;
     Symbol->section = lyo1::DescriptorSection::Call;
     Symbol->index = Call->call_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Call->callPath] = symbol_index;
 
     return Call;
 }
@@ -351,7 +353,7 @@ BuilderState::addFunction(
     bool isInline)
 {
     TU_ASSERT (functionPath.isValid());
-    TU_ASSERT (!symbols.contains(functionPath));
+    TU_ASSERT (!symboltable.contains(functionPath));
     TU_ASSERT (parameters.size() <= functionclasspaths.size());
 
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
@@ -365,19 +367,19 @@ BuilderState::addFunction(
     Call->callPath = functionPath;
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
-    Call->receiverSection = lyo1::TypeSection::Invalid;
-    Call->receiverDescriptor = lyric_object::INVALID_ADDRESS_U32;
+    Call->receiver_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = returnType;
     calls.push_back(Call);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Call->callPath;
     Symbol->section = lyo1::DescriptorSection::Call;
     Symbol->index = Call->call_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Call->callPath] = symbol_index;
 
     return Call;
 }
@@ -392,7 +394,7 @@ BuilderState::addGenericFunction(
     bool isInline)
 {
     TU_ASSERT (functionPath.isValid());
-    TU_ASSERT (!symbols.contains(functionPath));
+    TU_ASSERT (!symboltable.contains(functionPath));
     TU_ASSERT (functionTemplate != nullptr);
     TU_ASSERT (parameters.size() <= functionclasspaths.size());
 
@@ -407,19 +409,19 @@ BuilderState::addGenericFunction(
     Call->callPath = functionPath;
     Call->callTemplate = functionTemplate;
     Call->callType = FunctionClass->classType;
-    Call->receiverSection = lyo1::TypeSection::Invalid;
-    Call->receiverDescriptor = lyric_object::INVALID_ADDRESS_U32;
+    Call->receiver_symbol_index = lyric_object::INVALID_ADDRESS_U32;
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
     Call->returnType = returnType;
     calls.push_back(Call);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Call->callPath;
     Symbol->section = lyo1::DescriptorSection::Call;
     Symbol->index = Call->call_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Call->callPath] = symbol_index;
 
     return Call;
 }
@@ -430,7 +432,7 @@ BuilderState::addConcept(
     lyo1::ConceptFlags conceptFlags,
     const CoreConcept *superConcept)
 {
-    TU_ASSERT (!symbols.contains(conceptPath));
+    TU_ASSERT (!symboltable.contains(conceptPath));
 
     tu_uint32 concept_index = concepts.size();
     auto *Concept = new CoreConcept();
@@ -446,12 +448,13 @@ BuilderState::addConcept(
     Concept->conceptType = Type;
     Concept->flags = conceptFlags;
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Concept->conceptPath;
     Symbol->section = lyo1::DescriptorSection::Concept;
     Symbol->index = Concept->concept_index;
+    symbols.push_back(Symbol);
+    symboltable[Concept->conceptPath] = symbol_index;
 
-    symbols[Symbol->symbolPath] = Symbol;
     conceptcache[Concept->conceptPath] = Concept;
 
     return Concept;
@@ -464,7 +467,7 @@ BuilderState::addGenericConcept(
     lyo1::ConceptFlags conceptFlags,
     const CoreConcept *superConcept)
 {
-    TU_ASSERT (!symbols.contains(conceptPath));
+    TU_ASSERT (!symboltable.contains(conceptPath));
     TU_ASSERT (conceptTemplate != nullptr);
 
     tu_uint32 concept_index = concepts.size();
@@ -485,12 +488,13 @@ BuilderState::addGenericConcept(
     Concept->conceptType = Type;
     Concept->flags = conceptFlags;
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Concept->conceptPath;
     Symbol->section = lyo1::DescriptorSection::Concept;
     Symbol->index = Concept->concept_index;
+    symbols.push_back(Symbol);
+    symboltable[Concept->conceptPath] = symbol_index;
 
-    symbols[Symbol->symbolPath] = Symbol;
     conceptcache[Concept->conceptPath] = Concept;
 
     return Concept;
@@ -510,14 +514,13 @@ BuilderState::addConceptAction(
 
     auto *ReceiverConcept = conceptcache[receiver->conceptPath];
     lyric_common::SymbolPath actionPath(ReceiverConcept->conceptPath.getPath(), actionName);
-    TU_ASSERT (!symbols.contains(actionPath));
+    TU_ASSERT (!symboltable.contains(actionPath));
 
     auto *Action = new CoreAction();
     Action->action_index = actions.size();
     Action->actionPath = actionPath;
     Action->actionTemplate = ReceiverConcept->conceptTemplate;
-    Action->receiverSection = lyo1::TypeSection::Concept;
-    Action->receiverDescriptor = ReceiverConcept->concept_index;
+    Action->receiver_symbol_index = getSymbolIndex(receiver->conceptPath);
     Action->returnType = returnType;
     Action->flags = lyo1::ActionFlags::NONE;
     process_parameters(parameters, Action->listParameters, Action->namedParameters, Action->restParameter);
@@ -525,11 +528,12 @@ BuilderState::addConceptAction(
 
     ReceiverConcept->actions.push_back(Action);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Action->actionPath;
     Symbol->section = lyo1::DescriptorSection::Action;
     Symbol->index = Action->action_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Action->actionPath] = symbol_index;
 
     return Action;
 }
@@ -556,7 +560,7 @@ BuilderState::addClass(
     lyo1::ClassFlags classFlags,
     const CoreClass *superClass)
 {
-    TU_ASSERT (!symbols.contains(classPath));
+    TU_ASSERT (!symboltable.contains(classPath));
 
     tu_uint32 class_index = classes.size();
     auto *Class = new CoreClass();
@@ -574,12 +578,13 @@ BuilderState::addClass(
     Class->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
     Class->classCtor = nullptr;
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Class->classPath;
     Symbol->section = lyo1::DescriptorSection::Class;
     Symbol->index = Class->class_index;
+    symbols.push_back(Symbol);
+    symboltable[Class->classPath] = symbol_index;
 
-    symbols[Symbol->symbolPath] = Symbol;
     classcache[Class->classPath] = Class;
 
     return Class;
@@ -592,7 +597,7 @@ BuilderState::addGenericClass(
     lyo1::ClassFlags classFlags,
     const CoreClass *superClass)
 {
-    TU_ASSERT (!symbols.contains(classPath));
+    TU_ASSERT (!symboltable.contains(classPath));
     TU_ASSERT (classTemplate != nullptr);
 
     tu_uint32 class_index = classes.size();
@@ -615,12 +620,13 @@ BuilderState::addGenericClass(
     Class->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
     Class->classCtor = nullptr;
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Class->classPath;
     Symbol->section = lyo1::DescriptorSection::Class;
     Symbol->index = Class->class_index;
+    symbols.push_back(Symbol);
+    symboltable[Class->classPath] = symbol_index;
 
-    symbols[Symbol->symbolPath] = Symbol;
     classcache[Class->classPath] = Class;
 
     return Class;
@@ -650,7 +656,7 @@ BuilderState::addClassCtor(
 
     auto *ReceiverClass = classcache[receiver->classPath];
     lyric_common::SymbolPath ctorPath(ReceiverClass->classPath.getPath(), "$ctor");
-    TU_ASSERT (!symbols.contains(ctorPath));
+    TU_ASSERT (!symboltable.contains(ctorPath));
 
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
 
@@ -662,8 +668,7 @@ BuilderState::addClassCtor(
     Call->callPath = ctorPath;
     Call->callTemplate = ReceiverClass->classTemplate;
     Call->callType = FunctionClass->classType;
-    Call->receiverSection = lyo1::TypeSection::Class;
-    Call->receiverDescriptor = receiver->class_index;
+    Call->receiver_symbol_index = getSymbolIndex(receiver->classPath);
     Call->flags = ctorFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -673,11 +678,12 @@ BuilderState::addClassCtor(
     ReceiverClass->classCtor = Call;
     ReceiverClass->methods.push_back(Call);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Call->callPath;
     Symbol->section = lyo1::DescriptorSection::Call;
     Symbol->index = Call->call_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Call->callPath] = symbol_index;
 
     return Call;
 }
@@ -696,7 +702,7 @@ BuilderState::addClassMember(
 
     auto *ReceiverClass = classcache[receiver->classPath];
     lyric_common::SymbolPath fieldPath(ReceiverClass->classPath.getPath(), memberName);
-    TU_ASSERT (!symbols.contains(fieldPath));
+    TU_ASSERT (!symboltable.contains(fieldPath));
 
     auto *Field = new CoreField();
     Field->field_index = fields.size();
@@ -705,11 +711,12 @@ BuilderState::addClassMember(
     Field->flags = fieldFlags;
     fields.push_back(Field);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Field->fieldPath;
     Symbol->section = lyo1::DescriptorSection::Field;
     Symbol->index = Field->field_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Field->fieldPath] = symbol_index;
 
     ReceiverClass->members.push_back(Field);
 
@@ -734,7 +741,7 @@ BuilderState::addClassMethod(
 
     auto *ReceiverClass = classcache[receiver->classPath];
     lyric_common::SymbolPath callPath(ReceiverClass->classPath.getPath(), methodName);
-    TU_ASSERT (!symbols.contains(callPath));
+    TU_ASSERT (!symboltable.contains(callPath));
 
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
 
@@ -746,8 +753,7 @@ BuilderState::addClassMethod(
     Call->callPath = callPath;
     Call->callTemplate = ReceiverClass->classTemplate;
     Call->callType = FunctionClass->classType;
-    Call->receiverSection = lyo1::TypeSection::Class;
-    Call->receiverDescriptor = receiver->class_index;
+    Call->receiver_symbol_index = getSymbolIndex(receiver->classPath);
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -756,11 +762,12 @@ BuilderState::addClassMethod(
 
     ReceiverClass->methods.push_back(Call);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Call->callPath;
     Symbol->section = lyo1::DescriptorSection::Call;
     Symbol->index = Call->call_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Call->callPath] = symbol_index;
 
     return Call;
 }
@@ -787,7 +794,7 @@ BuilderState::addStruct(
     lyo1::StructFlags structFlags,
     const CoreStruct *superStruct)
 {
-    TU_ASSERT (!symbols.contains(structPath));
+    TU_ASSERT (!symboltable.contains(structPath));
 
     tu_uint32 struct_index = structs.size();
     auto *Struct = new CoreStruct();
@@ -804,12 +811,13 @@ BuilderState::addStruct(
     Struct->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
     Struct->structCtor = nullptr;
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Struct->structPath;
     Symbol->section = lyo1::DescriptorSection::Struct;
     Symbol->index = Struct->struct_index;
+    symbols.push_back(Symbol);
+    symboltable[Struct->structPath] = symbol_index;
 
-    symbols[Symbol->symbolPath] = Symbol;
     structcache[Struct->structPath] = Struct;
 
     return Struct;
@@ -839,7 +847,7 @@ BuilderState::addStructCtor(
 
     auto *ReceiverStruct = structcache[receiver->structPath];
     lyric_common::SymbolPath ctorPath(ReceiverStruct->structPath.getPath(), "$ctor");
-    TU_ASSERT (!symbols.contains(ctorPath));
+    TU_ASSERT (!symboltable.contains(ctorPath));
 
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
 
@@ -850,8 +858,7 @@ BuilderState::addStructCtor(
     Call->callPath = ctorPath;
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
-    Call->receiverSection = lyo1::TypeSection::Struct;
-    Call->receiverDescriptor = receiver->struct_index;
+    Call->receiver_symbol_index = getSymbolIndex(receiver->structPath);
     Call->flags = ctorFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -861,11 +868,12 @@ BuilderState::addStructCtor(
     ReceiverStruct->structCtor = Call;
     ReceiverStruct->methods.push_back(Call);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Call->callPath;
     Symbol->section = lyo1::DescriptorSection::Call;
     Symbol->index = Call->call_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Call->callPath] = symbol_index;
 
     return Call;
 }
@@ -884,7 +892,7 @@ BuilderState::addStructMember(
 
     auto *ReceiverStruct = structcache[receiver->structPath];
     lyric_common::SymbolPath fieldPath(ReceiverStruct->structPath.getPath(), memberName);
-    TU_ASSERT (!symbols.contains(fieldPath));
+    TU_ASSERT (!symboltable.contains(fieldPath));
 
     auto *Field = new CoreField();
     Field->field_index = fields.size();
@@ -893,11 +901,12 @@ BuilderState::addStructMember(
     Field->flags = fieldFlags;
     fields.push_back(Field);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Field->fieldPath;
     Symbol->section = lyo1::DescriptorSection::Field;
     Symbol->index = Field->field_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Field->fieldPath] = symbol_index;
 
     ReceiverStruct->members.push_back(Field);
 
@@ -922,7 +931,7 @@ BuilderState::addStructMethod(
 
     auto *ReceiverStruct = structcache[receiver->structPath];
     lyric_common::SymbolPath callPath(ReceiverStruct->structPath.getPath(), methodName);
-    TU_ASSERT (!symbols.contains(callPath));
+    TU_ASSERT (!symboltable.contains(callPath));
 
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
 
@@ -934,8 +943,7 @@ BuilderState::addStructMethod(
     Call->callPath = callPath;
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
-    Call->receiverSection = lyo1::TypeSection::Struct;
-    Call->receiverDescriptor = receiver->struct_index;
+    Call->receiver_symbol_index = getSymbolIndex(receiver->structPath);
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -944,11 +952,12 @@ BuilderState::addStructMethod(
 
     ReceiverStruct->methods.push_back(Call);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Call->callPath;
     Symbol->section = lyo1::DescriptorSection::Call;
     Symbol->index = Call->call_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Call->callPath] = symbol_index;
 
     return Call;
 }
@@ -975,7 +984,7 @@ BuilderState::addInstance(
     lyo1::InstanceFlags instanceFlags,
     const CoreInstance *superInstance)
 {
-    TU_ASSERT (!symbols.contains(instancePath));
+    TU_ASSERT (!symboltable.contains(instancePath));
 
     tu_uint32 instance_index = instances.size();
     auto *Instance = new CoreInstance();
@@ -992,12 +1001,13 @@ BuilderState::addInstance(
     Instance->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
     Instance->instanceCtor = nullptr;
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Instance->instancePath;
     Symbol->section = lyo1::DescriptorSection::Instance;
     Symbol->index = Instance->instance_index;
+    symbols.push_back(Symbol);
+    symboltable[Instance->instancePath] = symbol_index;
 
-    symbols[Symbol->symbolPath] = Symbol;
     instancecache[Instance->instancePath] = Instance;
 
     return Instance;
@@ -1029,7 +1039,7 @@ BuilderState::addInstanceCtor(
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
 
     lyric_common::SymbolPath ctorPath(ReceiverInstance->instancePath.getPath(), "$ctor");
-    TU_ASSERT (!symbols.contains(ctorPath));
+    TU_ASSERT (!symboltable.contains(ctorPath));
 
     auto ctorFlags = lyo1::CallFlags::Bound | lyo1::CallFlags::Ctor;
 
@@ -1038,8 +1048,7 @@ BuilderState::addInstanceCtor(
     Call->callPath = ctorPath;
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
-    Call->receiverSection = lyo1::TypeSection::Instance;
-    Call->receiverDescriptor = receiver->instance_index;
+    Call->receiver_symbol_index = getSymbolIndex(receiver->instancePath);
     Call->flags = ctorFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -1049,11 +1058,12 @@ BuilderState::addInstanceCtor(
     ReceiverInstance->instanceCtor = Call;
     ReceiverInstance->methods.push_back(Call);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Call->callPath;
     Symbol->section = lyo1::DescriptorSection::Call;
     Symbol->index = Call->call_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Call->callPath] = symbol_index;
 
     return Call;
 }
@@ -1073,7 +1083,7 @@ BuilderState::addInstanceMember(
     auto *ReceiverInstance = instancecache[receiver->instancePath];
 
     lyric_common::SymbolPath fieldPath(ReceiverInstance->instancePath.getPath(), memberName);
-    TU_ASSERT (!symbols.contains(fieldPath));
+    TU_ASSERT (!symboltable.contains(fieldPath));
 
     auto *Field = new CoreField();
     Field->field_index = fields.size();
@@ -1082,11 +1092,12 @@ BuilderState::addInstanceMember(
     Field->flags = fieldFlags;
     fields.push_back(Field);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Field->fieldPath;
     Symbol->section = lyo1::DescriptorSection::Field;
     Symbol->index = Field->field_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Field->fieldPath] = symbol_index;
 
     ReceiverInstance->members.push_back(Field);
 
@@ -1112,7 +1123,7 @@ BuilderState::addInstanceMethod(
     auto *ReceiverInstance = instancecache[receiver->instancePath];
 
     lyric_common::SymbolPath callPath(ReceiverInstance->instancePath.getPath(), methodName);
-    TU_ASSERT (!symbols.contains(callPath));
+    TU_ASSERT (!symboltable.contains(callPath));
 
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
 
@@ -1124,8 +1135,7 @@ BuilderState::addInstanceMethod(
     Call->callPath = callPath;
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
-    Call->receiverSection = lyo1::TypeSection::Instance;
-    Call->receiverDescriptor = receiver->instance_index;
+    Call->receiver_symbol_index = getSymbolIndex(receiver->instancePath);
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -1134,11 +1144,12 @@ BuilderState::addInstanceMethod(
 
     ReceiverInstance->methods.push_back(Call);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Call->callPath;
     Symbol->section = lyo1::DescriptorSection::Call;
     Symbol->index = Call->call_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Call->callPath] = symbol_index;
 
     return Call;
 }
@@ -1165,7 +1176,7 @@ BuilderState::addImpl(
     const CoreType *implType,
     const CoreConcept *implConcept)
 {
-    TU_ASSERT (symbols.contains(receiverPath));
+    TU_ASSERT (symboltable.contains(receiverPath));
     TU_ASSERT (implType != nullptr);
     TU_ASSERT (implConcept != nullptr);
 
@@ -1178,52 +1189,47 @@ BuilderState::addImpl(
     Impl->implConcept = implConcept;
     Impl->flags = lyo1::ImplFlags::NONE;
 
-    auto *symbol = symbols.at(receiverPath);
+    auto receiver_symbol_index = symboltable.at(receiverPath);
+    auto *symbol = symbols.at(receiver_symbol_index);
     switch (symbol->section) {
 
         case lyo1::DescriptorSection::Class: {
-            Impl->receiverSection = lyo1::TypeSection::Class;
-            Impl->receiverDescriptor = symbol->index;
+            Impl->receiver_symbol_index = receiver_symbol_index;
             auto *receiver = classes.at(symbol->index);
             receiver->impls.push_back(Impl);
             break;
         }
 
         case lyo1::DescriptorSection::Concept: {
-            Impl->receiverSection = lyo1::TypeSection::Concept;
-            Impl->receiverDescriptor = symbol->index;
+            Impl->receiver_symbol_index = receiver_symbol_index;
             auto *receiver = concepts.at(symbol->index);
             receiver->impls.push_back(Impl);
             break;
         }
 
         case lyo1::DescriptorSection::Enum: {
-            Impl->receiverSection = lyo1::TypeSection::Enum;
-            Impl->receiverDescriptor = symbol->index;
+            Impl->receiver_symbol_index = receiver_symbol_index;
             auto *receiver = enums.at(symbol->index);
             receiver->impls.push_back(Impl);
             break;
         }
 
         case lyo1::DescriptorSection::Existential: {
-            Impl->receiverSection = lyo1::TypeSection::Existential;
-            Impl->receiverDescriptor = symbol->index;
+            Impl->receiver_symbol_index = receiver_symbol_index;
             auto *receiver = existentials.at(symbol->index);
             receiver->impls.push_back(Impl);
             break;
         }
 
         case lyo1::DescriptorSection::Instance: {
-            Impl->receiverSection = lyo1::TypeSection::Instance;
-            Impl->receiverDescriptor = symbol->index;
+            Impl->receiver_symbol_index = receiver_symbol_index;
             auto *receiver = instances.at(symbol->index);
             receiver->impls.push_back(Impl);
             break;
         }
 
         case lyo1::DescriptorSection::Struct: {
-            Impl->receiverSection = lyo1::TypeSection::Struct;
-            Impl->receiverDescriptor = symbol->index;
+            Impl->receiver_symbol_index = receiver_symbol_index;
             auto *receiver = structs.at(symbol->index);
             receiver->impls.push_back(Impl);
             break;
@@ -1253,13 +1259,16 @@ BuilderState::addImplExtension(
 
     lyric_common::SymbolPath callPath(receiver->receiverPath.getPath(),
         absl::StrCat("$impl", receiver->impl_index, "$", extensionName));
-    TU_ASSERT (!symbols.contains(callPath));
+    TU_ASSERT (!symboltable.contains(callPath));
 
     auto *ImplConcept = receiver->implConcept;
     lyric_common::SymbolPath actionPath(ImplConcept->conceptPath.getPath(), extensionName);
-    TU_ASSERT (symbols.contains(actionPath));
+    TU_ASSERT (symboltable.contains(actionPath));
+    auto action_index = symboltable.at(actionPath);
 
-    auto *ConceptAction = symbols[actionPath];
+    auto *ConceptAction = symbols[action_index];
+    TU_ASSERT (ConceptAction->section == lyo1::DescriptorSection::Action);
+
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
     auto *MutableImpl = impls.at(receiver->impl_index);
 
@@ -1272,8 +1281,7 @@ BuilderState::addImplExtension(
     Call->callPath = callPath;
     Call->callTemplate = ImplConcept->conceptTemplate;
     Call->callType = FunctionClass->classType;
-    Call->receiverSection = receiver->receiverSection;
-    Call->receiverDescriptor = receiver->receiverDescriptor;
+    Call->receiver_symbol_index = receiver->receiver_symbol_index;
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -1282,11 +1290,12 @@ BuilderState::addImplExtension(
 
     MutableImpl->extensions.emplace_back(lyo1::ImplExtension(ConceptAction->index, Call->call_index));
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Call->callPath;
     Symbol->section = lyo1::DescriptorSection::Call;
     Symbol->index = Call->call_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Call->callPath] = symbol_index;
 
     return Call;
 }
@@ -1297,7 +1306,7 @@ BuilderState::addEnum(
     lyo1::EnumFlags instanceFlags,
     const CoreEnum *superEnum)
 {
-    TU_ASSERT (!symbols.contains(enumPath));
+    TU_ASSERT (!symboltable.contains(enumPath));
 
     tu_uint32 enum_index = enums.size();
     auto *Enum = new CoreEnum();
@@ -1314,12 +1323,13 @@ BuilderState::addEnum(
     Enum->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
     Enum->enumCtor = nullptr;
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Enum->enumPath;
     Symbol->section = lyo1::DescriptorSection::Enum;
     Symbol->index = Enum->enum_index;
+    symbols.push_back(Symbol);
+    symboltable[Enum->enumPath] = symbol_index;
 
-    symbols[Symbol->symbolPath] = Symbol;
     enumcache[Enum->enumPath] = Enum;
 
     return Enum;
@@ -1349,7 +1359,7 @@ BuilderState::addEnumCtor(
 
     auto *ReceiverEnum = enumcache[receiver->enumPath];
     lyric_common::SymbolPath ctorPath(ReceiverEnum->enumPath.getPath(), "$ctor");
-    TU_ASSERT (!symbols.contains(ctorPath));
+    TU_ASSERT (!symboltable.contains(ctorPath));
 
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
 
@@ -1360,8 +1370,7 @@ BuilderState::addEnumCtor(
     Call->callPath = ctorPath;
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
-    Call->receiverSection = lyo1::TypeSection::Enum;
-    Call->receiverDescriptor = receiver->enum_index;
+    Call->receiver_symbol_index = getSymbolIndex(receiver->enumPath);
     Call->flags = ctorFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -1371,11 +1380,12 @@ BuilderState::addEnumCtor(
     ReceiverEnum->enumCtor = Call;
     ReceiverEnum->methods.push_back(Call);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Call->callPath;
     Symbol->section = lyo1::DescriptorSection::Call;
     Symbol->index = Call->call_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Call->callPath] = symbol_index;
 
     return Call;
 }
@@ -1394,7 +1404,7 @@ BuilderState::addEnumMember(
 
     auto *ReceiverEnum = enumcache[receiver->enumPath];
     lyric_common::SymbolPath fieldPath(ReceiverEnum->enumPath.getPath(), memberName);
-    TU_ASSERT (!symbols.contains(fieldPath));
+    TU_ASSERT (!symboltable.contains(fieldPath));
 
     auto *Field = new CoreField();
     Field->field_index = fields.size();
@@ -1403,11 +1413,12 @@ BuilderState::addEnumMember(
     Field->flags = fieldFlags;
     fields.push_back(Field);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Field->fieldPath;
     Symbol->section = lyo1::DescriptorSection::Field;
     Symbol->index = Field->field_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Field->fieldPath] = symbol_index;
 
     ReceiverEnum->members.push_back(Field);
 
@@ -1432,7 +1443,7 @@ BuilderState::addEnumMethod(
 
     auto *ReceiverEnum = enumcache[receiver->enumPath];
     lyric_common::SymbolPath callPath(ReceiverEnum->enumPath.getPath(), methodName);
-    TU_ASSERT (!symbols.contains(callPath));
+    TU_ASSERT (!symboltable.contains(callPath));
 
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
 
@@ -1444,8 +1455,7 @@ BuilderState::addEnumMethod(
     Call->callPath = callPath;
     Call->callTemplate = nullptr;
     Call->callType = FunctionClass->classType;
-    Call->receiverSection = lyo1::TypeSection::Instance;
-    Call->receiverDescriptor = receiver->enum_index;
+    Call->receiver_symbol_index = getSymbolIndex(receiver->enumPath);
     Call->flags = callFlags;
     process_parameters(parameters, Call->listParameters, Call->namedParameters, Call->restParameter);
     Call->code = code;
@@ -1454,11 +1464,12 @@ BuilderState::addEnumMethod(
 
     ReceiverEnum->methods.push_back(Call);
 
+    tu_uint32 symbol_index = symbols.size();
     auto *Symbol = new CoreSymbol();
-    Symbol->symbolPath = Call->callPath;
     Symbol->section = lyo1::DescriptorSection::Call;
     Symbol->index = Call->call_index;
-    symbols[Symbol->symbolPath] = Symbol;
+    symbols.push_back(Symbol);
+    symboltable[Call->callPath] = symbol_index;
 
     return Call;
 }
@@ -1477,6 +1488,15 @@ BuilderState::addEnumSealedSubtype(const CoreEnum *receiver, const CoreEnum *sub
     TU_ASSERT (bool(SubTypeEnum->flags & lyo1::EnumFlags::Final));
     TU_ASSERT (SubTypeEnum->superEnum == ReceiverEnum);
     ReceiverEnum->sealedSubtypes.push_back(SubTypeEnum->enumType->type_index);
+}
+
+tu_uint32
+BuilderState::getSymbolIndex(const lyric_common::SymbolPath &symbolPath) const
+{
+    TU_ASSERT (symboltable.contains(symbolPath));
+    auto symbol_index = symboltable.at(symbolPath);
+    TU_ASSERT (symbol_index < symbols.size());
+    return symbol_index;
 }
 
 inline flatbuffers::Offset<flatbuffers::Vector<tu_uint32>>
@@ -1626,7 +1646,7 @@ BuilderState::toBytes() const
             : lyric_object::INVALID_ADDRESS_U32;
 
         actions_vector.push_back(lyo1::CreateActionDescriptor(buffer,
-            fb_fullyQualifiedName, actionTemplate, Action->receiverSection, Action->receiverDescriptor,
+            fb_fullyQualifiedName, actionTemplate, Action->receiver_symbol_index,
             Action->flags, fb_list_parameters, fb_named_parameters, fb_rest_parameter,
             Action->returnType->type_index));
     }
@@ -1683,7 +1703,7 @@ BuilderState::toBytes() const
         bytecode.insert(bytecode.cend(), Call->code.bytecodeBegin(), Call->code.bytecodeEnd());
 
         calls_vector.push_back(lyo1::CreateCallDescriptor(buffer, fb_fullyQualifiedName,
-            callTemplate, Call->receiverSection, Call->receiverDescriptor, bytecodeOffset,
+            callTemplate, Call->receiver_symbol_index, bytecodeOffset,
             Call->flags, fb_list_parameters, fb_named_parameters, fb_rest_parameter,
             returnType));
     }
@@ -1692,7 +1712,7 @@ BuilderState::toBytes() const
     for (const auto *Impl : impls) {
         auto fb_extensions = buffer.CreateVectorOfStructs(Impl->extensions);
         impls_vector.push_back(lyo1::CreateImplDescriptor(buffer, Impl->implType->type_index,
-            Impl->implConcept->concept_index, Impl->receiverSection, Impl->receiverDescriptor, Impl->flags,
+            Impl->implConcept->concept_index, Impl->receiver_symbol_index, Impl->flags,
             fb_extensions));
     }
 
@@ -1800,12 +1820,15 @@ BuilderState::toBytes() const
 
     // write the symbol descriptors
     for (auto iterator = symbols.cbegin(); iterator != symbols.cend(); iterator++) {
-        tu_uint32 symbol_index = symbols_vector.size();
-        const auto *symbol = iterator->second;
+        const auto *symbol = *iterator;
         symbols_vector.push_back(lyo1::CreateSymbolDescriptor(buffer, symbol->section, symbol->index));
-        auto fb_fullyQualifiedName = buffer.CreateSharedString(symbol->symbolPath.toString());
+    }
+
+    // write the symbol table
+    for (auto iterator = symboltable.cbegin(); iterator != symboltable.cend(); iterator++) {
+        auto fb_fullyQualifiedName = buffer.CreateSharedString(iterator->first.toString());
         sorted_symbol_identifiers_vector.push_back(lyo1::CreateSortedSymbolIdentifier(
-            buffer, fb_fullyQualifiedName, symbol_index));
+            buffer, fb_fullyQualifiedName, iterator->second));
     }
 
     // serialize vectors

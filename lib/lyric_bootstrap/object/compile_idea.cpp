@@ -25,12 +25,13 @@ CoreConcept *declare_core_Idea(BuilderState &state, const CoreExistential *AnyEx
     state.concepts.push_back(IdeaConcept);
     state.conceptcache[IdeaConcept->conceptPath] = IdeaConcept;
 
-    auto *CategorySymbol = new CoreSymbol();
-    CategorySymbol->symbolPath = IdeaConcept->conceptPath;
-    CategorySymbol->section = lyo1::DescriptorSection::Concept;
-    CategorySymbol->index = concept_index;
-    TU_ASSERT (!state.symbols.contains(CategorySymbol->symbolPath));
-    state.symbols[CategorySymbol->symbolPath] = CategorySymbol;
+    tu_uint32 symbol_index = state.symbols.size();
+    auto *IdeaSymbol = new CoreSymbol();
+    IdeaSymbol->section = lyo1::DescriptorSection::Concept;
+    IdeaSymbol->index = concept_index;
+    state.symbols.push_back(IdeaSymbol);
+    TU_ASSERT (!state.symboltable.contains(IdeaConcept->conceptPath));
+    state.symboltable[IdeaConcept->conceptPath] = symbol_index;
 
     return IdeaConcept;
 }

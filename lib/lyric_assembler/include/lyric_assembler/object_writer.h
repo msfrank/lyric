@@ -8,9 +8,15 @@
 
 namespace lyric_assembler {
 
+    struct SymbolDefinition {
+        lyric_object::LinkageSection section = lyric_object::LinkageSection::Invalid;
+        tu_uint32 index = lyric_object::INVALID_ADDRESS_U32;
+    };
+
     struct SymbolEntry {
-        lyric_object::LinkageSection section;
-        tu_uint32 address;
+        enum class EntryType { Invalid, Descriptor, Link };
+        EntryType type = EntryType::Invalid;
+        tu_uint32 index = lyric_object::INVALID_ADDRESS_U32;
     };
 
     class ObjectWriter {
@@ -20,6 +26,7 @@ namespace lyric_assembler {
         tempo_utils::Status initialize();
 
         tempo_utils::Status touchAction(const ActionSymbol *actionSymbol);
+        tempo_utils::Status touchBinding(const BindingSymbol *bindingSymbol);
         tempo_utils::Status touchCall(const CallSymbol *callSymbol);
         tempo_utils::Status touchClass(const ClassSymbol *classSymbol);
         tempo_utils::Status touchConcept(const ConceptSymbol *conceptSymbol);
@@ -65,9 +72,11 @@ namespace lyric_assembler {
 
         tempo_utils::Status insertImport(const lyric_common::ModuleLocation &location);
 
-        tempo_utils::Result<SymbolEntry> getSymbolEntry(
+        tempo_utils::Result<SymbolDefinition> getSymbolDefinition(
             const lyric_common::SymbolUrl &symbolUrl) const;
-        Option<SymbolEntry> getSymbolEntryOption(const lyric_common::SymbolUrl &symbolUrl) const;
+        Option<SymbolDefinition> getSymbolDefinitionOption(const lyric_common::SymbolUrl &symbolUrl) const;
+        tempo_utils::Result<lyric_object::LinkageSection> getSymbolSection(const lyric_common::SymbolUrl &symbolUrl) const;
+        tempo_utils::Result<tu_uint32> getSymbolAddress(const lyric_common::SymbolUrl &symbolUrl) const;
         tempo_utils::Result<tu_uint32> getSymbolAddress(
             const lyric_common::SymbolUrl &symbolUrl,
             lyric_object::LinkageSection section) const;
@@ -76,6 +85,12 @@ namespace lyric_assembler {
         tempo_utils::Result<tu_uint32> getTemplateOffset(const lyric_common::SymbolUrl &templateUrl) const;
         tempo_utils::Result<tu_uint32> getTypeOffset(const lyric_common::TypeDef &typeDef) const;
 
+        std::vector<SymbolDefinition>::const_iterator symbolDefinitionsBegin() const;
+        std::vector<SymbolDefinition>::const_iterator symbolDefinitionsEnd() const;
+
+        absl::flat_hash_map<lyric_common::SymbolUrl,SymbolEntry>::const_iterator symbolEntriesBegin() const;
+        absl::flat_hash_map<lyric_common::SymbolUrl,SymbolEntry>::const_iterator symbolEntriesEnd() const;
+
         tempo_utils::Result<lyric_object::LyricObject> toObject() const;
 
     private:
@@ -83,6 +98,7 @@ namespace lyric_assembler {
         bool m_includeUnusedPrivateSymbols;
         bool m_includeUnusedImports;
         std::vector<const ActionSymbol *> m_actions;
+        std::vector<const BindingSymbol *> m_bindings;
         std::vector<const CallSymbol *> m_calls;
         std::vector<const ClassSymbol *> m_classes;
         std::vector<const ConceptSymbol *> m_concepts;
@@ -100,10 +116,12 @@ namespace lyric_assembler {
         std::vector<const UndeclaredSymbol *> m_undecls;
 
         std::vector<const ImportHandle *> m_imports;
-        std::vector<const RequestedLink> m_links;
+        std::vector<SymbolDefinition> m_symbols;
+        std::vector<RequestedLink> m_links;
+
+        absl::flat_hash_map<lyric_common::SymbolUrl,SymbolEntry> m_symbolEntries;
 
         absl::flat_hash_map<const LiteralHandle *,tu_uint32> m_literalOffsets;
-        absl::flat_hash_map<lyric_common::SymbolUrl,SymbolEntry> m_symbolEntries;
         absl::flat_hash_map<ImplRef,tu_uint32> m_implOffsets;
         absl::flat_hash_map<lyric_common::ModuleLocation,tu_uint32> m_importOffsets;
         absl::flat_hash_map<lyric_common::SymbolUrl,tu_uint32> m_templateOffsets;

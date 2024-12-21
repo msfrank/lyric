@@ -124,12 +124,12 @@ target_sources(lyric_assembler PRIVATE
     src/internal/call_inline.cpp
     include/lyric_assembler/internal/import_proc.h
     src/internal/import_proc.cpp
-    include/lyric_assembler/internal/symbol_table.h
-    src/internal/symbol_table.cpp
     include/lyric_assembler/internal/writer_utils.h
     src/internal/writer_utils.cpp
     include/lyric_assembler/internal/write_actions.h
     src/internal/write_actions.cpp
+    include/lyric_assembler/internal/write_bindings.h
+    src/internal/write_bindings.cpp
     include/lyric_assembler/internal/write_calls.h
     src/internal/write_calls.cpp
     include/lyric_assembler/internal/write_classes.h
@@ -158,6 +158,8 @@ target_sources(lyric_assembler PRIVATE
     src/internal/write_statics.cpp
     include/lyric_assembler/internal/write_structs.h
     src/internal/write_structs.cpp
+    include/lyric_assembler/internal/write_symbols.h
+    src/internal/write_symbols.cpp
     include/lyric_assembler/internal/write_templates.h
     src/internal/write_templates.cpp
     include/lyric_assembler/internal/write_types.h

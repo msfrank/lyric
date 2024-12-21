@@ -19,12 +19,13 @@ CoreExistential *build_core_Nil(BuilderState &state)
     state.existentials.push_back(NilExistential);
     state.existentialcache[NilExistential->existentialPath] = NilExistential;
 
+    tu_uint32 symbol_index = state.symbols.size();
     auto *NilSymbol = new CoreSymbol();
-    NilSymbol->symbolPath = NilExistential->existentialPath;
     NilSymbol->section = lyo1::DescriptorSection::Existential;
     NilSymbol->index = existential_index;
-    TU_ASSERT (!state.symbols.contains(NilSymbol->symbolPath));
-    state.symbols[NilSymbol->symbolPath] = NilSymbol;
+    state.symbols.push_back(NilSymbol);
+    TU_ASSERT (!state.symboltable.contains(NilExistential->existentialPath));
+    state.symboltable[NilExistential->existentialPath] = symbol_index;
 
     return NilExistential;
 }

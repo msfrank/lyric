@@ -26,12 +26,13 @@ declare_core_Record(BuilderState &state, const CoreExistential *AnyExistential)
     state.structs.push_back(RecordStruct);
     state.structcache[RecordStruct->structPath] = RecordStruct;
 
+    tu_uint32 symbol_index = state.symbols.size();
     auto *RecordSymbol = new CoreSymbol();
-    RecordSymbol->symbolPath = RecordStruct->structPath;
     RecordSymbol->section = lyo1::DescriptorSection::Struct;
     RecordSymbol->index = struct_index;
-    TU_ASSERT (!state.symbols.contains(RecordSymbol->symbolPath));
-    state.symbols[RecordSymbol->symbolPath] = RecordSymbol;
+    state.symbols.push_back(RecordSymbol);
+    TU_ASSERT (!state.symboltable.contains(RecordStruct->structPath));
+    state.symboltable[RecordStruct->structPath] = symbol_index;
 
     return RecordStruct;
 }

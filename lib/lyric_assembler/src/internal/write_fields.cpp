@@ -39,11 +39,8 @@ write_field(
     const lyric_assembler::FieldSymbol *fieldSymbol,
     const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
-    std::vector<flatbuffers::Offset<lyo1::FieldDescriptor>> &fields_vector,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    std::vector<flatbuffers::Offset<lyo1::FieldDescriptor>> &fields_vector)
 {
-    auto index = static_cast<tu_uint32>(fields_vector.size());
-
     auto fieldPathString = fieldSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(fieldPathString);
 
@@ -73,9 +70,6 @@ write_field(
     // add field descriptor
     fields_vector.push_back(lyo1::CreateFieldDescriptor(buffer, fullyQualifiedName, fieldType, fieldFlags));
 
-    // add symbol descriptor
-    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(fieldPathString, lyo1::DescriptorSection::Field, index));
-
     return {};
 }
 
@@ -84,13 +78,12 @@ lyric_assembler::internal::write_fields(
     const std::vector<const FieldSymbol *> &fields,
     const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
-    FieldsOffset &fieldsOffset,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    FieldsOffset &fieldsOffset)
 {
     std::vector<flatbuffers::Offset<lyo1::FieldDescriptor>> fields_vector;
 
     for (const auto *fieldSymbol : fields) {
-        TU_RETURN_IF_NOT_OK (write_field(fieldSymbol, writer, buffer, fields_vector, symbolTable));
+        TU_RETURN_IF_NOT_OK (write_field(fieldSymbol, writer, buffer, fields_vector));
     }
 
     // create the fields vector

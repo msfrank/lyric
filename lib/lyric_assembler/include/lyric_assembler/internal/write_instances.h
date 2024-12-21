@@ -8,7 +8,7 @@
 #include "../object_state.h"
 #include "../object_writer.h"
 
-#include "symbol_table.h"
+#include "write_symbols.h"
 
 namespace lyric_assembler::internal {
 
@@ -23,8 +23,7 @@ namespace lyric_assembler::internal {
         const std::vector<const InstanceSymbol *> &instances,
         const ObjectWriter &writer,
         flatbuffers::FlatBufferBuilder &buffer,
-        InstancesOffset &instancesOffset,
-        SymbolTable &symbolTable);
+        InstancesOffset &instancesOffset);
 }
 
 #endif // LYRIC_ASSEMBER_INTERNAL_WRITE_INSTANCES_H

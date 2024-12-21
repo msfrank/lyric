@@ -26,12 +26,13 @@ declare_core_Object(BuilderState &state, const CoreExistential *AnyExistential)
     state.classes.push_back(ObjectClass);
     state.classcache[ObjectClass->classPath] = ObjectClass;
 
+    tu_uint32 symbol_index = state.symbols.size();
     auto *ObjectSymbol = new CoreSymbol();
-    ObjectSymbol->symbolPath = ObjectClass->classPath;
     ObjectSymbol->section = lyo1::DescriptorSection::Class;
     ObjectSymbol->index = class_index;
-    TU_ASSERT (!state.symbols.contains(ObjectSymbol->symbolPath));
-    state.symbols[ObjectSymbol->symbolPath] = ObjectSymbol;
+    state.symbols.push_back(ObjectSymbol);
+    TU_ASSERT (!state.symboltable.contains(ObjectClass->classPath));
+    state.symboltable[ObjectClass->classPath] = symbol_index;
 
     return ObjectClass;
 }

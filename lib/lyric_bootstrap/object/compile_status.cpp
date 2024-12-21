@@ -19,12 +19,13 @@ build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *
     state.structs.push_back(StatusStruct);
     state.structcache[StatusStruct->structPath] = StatusStruct;
 
+    tu_uint32 symbol_index = state.symbols.size();
     auto *StatusSymbol = new CoreSymbol();
-    StatusSymbol->symbolPath = StatusStruct->structPath;
     StatusSymbol->section = lyo1::DescriptorSection::Struct;
     StatusSymbol->index = struct_index;
-    TU_ASSERT (!state.symbols.contains(StatusSymbol->symbolPath));
-    state.symbols[StatusSymbol->symbolPath] = StatusSymbol;
+    state.symbols.push_back(StatusSymbol);
+    TU_ASSERT (!state.symboltable.contains(StatusStruct->structPath));
+    state.symboltable[StatusStruct->structPath] = symbol_index;
 
     auto *CodeField = state.addStructMember("code", StatusStruct,
         lyo1::FieldFlags::GlobalVisibility, IntType);

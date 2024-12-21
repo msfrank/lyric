@@ -54,11 +54,8 @@ write_struct(
     const lyric_assembler::StructSymbol *structSymbol,
     const lyric_assembler::ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
-    std::vector<flatbuffers::Offset<lyo1::StructDescriptor>> &structs_vector,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    std::vector<flatbuffers::Offset<lyo1::StructDescriptor>> &structs_vector)
 {
-    auto index = static_cast<tu_uint32>(structs_vector.size());
-
     auto structPathString = structSymbol->getSymbolUrl().getSymbolPath().toString();
     auto fullyQualifiedName = buffer.CreateSharedString(structPathString);
 
@@ -150,9 +147,6 @@ write_struct(
         buffer.CreateVector(members), buffer.CreateVector(methods), buffer.CreateVector(impls),
         structSymbol->getAllocatorTrap(), ctorCall, buffer.CreateVector(sealedSubtypes)));
 
-    // add symbol descriptor
-    TU_RETURN_IF_NOT_OK (symbolTable.addSymbol(structPathString, lyo1::DescriptorSection::Struct, index));
-
     return {};
 }
 
@@ -161,13 +155,12 @@ lyric_assembler::internal::write_structs(
     const std::vector<const StructSymbol *> &structs,
     const ObjectWriter &writer,
     flatbuffers::FlatBufferBuilder &buffer,
-    StructsOffset &structsOffset,
-    lyric_assembler::internal::SymbolTable &symbolTable)
+    StructsOffset &structsOffset)
 {
     std::vector<flatbuffers::Offset<lyo1::StructDescriptor>> structs_vector;
 
     for (const auto *structSymbol : structs) {
-        TU_RETURN_IF_NOT_OK (write_struct(structSymbol, writer, buffer, structs_vector, symbolTable));
+        TU_RETURN_IF_NOT_OK (write_struct(structSymbol, writer, buffer, structs_vector));
     }
 
     // create the structs vector
