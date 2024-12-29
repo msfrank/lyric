@@ -21,6 +21,7 @@ namespace lyric_assembler {
     enum class FundamentalSymbol {
         Any,
         Arithmetic,
+        Binding,
         Bool,
         Call,
         Category,
@@ -267,15 +268,6 @@ namespace lyric_assembler {
             BindingType bindingType,
             const lyric_common::SymbolUrl &symbol,
             const lyric_common::TypeDef &type);
-    };
-
-    /**
-     *
-     */
-    struct NamespaceBinding {
-        std::string name;
-        lyric_common::SymbolUrl symbolUrl;
-        lyric_object::AccessType access;
     };
 
     /**

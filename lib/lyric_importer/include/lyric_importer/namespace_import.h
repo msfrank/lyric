@@ -16,8 +16,8 @@ namespace lyric_importer {
 
         lyric_common::SymbolUrl getSuperNamespace();
 
-        absl::flat_hash_set<lyric_common::SymbolUrl>::const_iterator bindingsBegin();
-        absl::flat_hash_set<lyric_common::SymbolUrl>::const_iterator bindingsEnd();
+        absl::flat_hash_set<lyric_common::SymbolUrl>::const_iterator symbolsBegin();
+        absl::flat_hash_set<lyric_common::SymbolUrl>::const_iterator symbolsEnd();
         int numBindings();
 
     private:

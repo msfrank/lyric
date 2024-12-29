@@ -12,7 +12,9 @@ namespace lyric_importer {
         lyric_common::SymbolUrl getSymbolUrl();
 
         lyric_object::AccessType getAccess();
-        lyric_common::SymbolUrl getTargetUrl();
+        TypeImport *getBindingType();
+        TemplateImport *getBindingTemplate();
+        TypeImport *getTargetType();
 
     private:
         std::shared_ptr<ModuleImport> m_moduleImport;

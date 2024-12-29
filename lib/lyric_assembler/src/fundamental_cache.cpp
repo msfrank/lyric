@@ -15,6 +15,8 @@ lyric_assembler::FundamentalCache::FundamentalCache(
         fundamentalTypeToSymbolPath(FundamentalSymbol::Any));
     m_fundamentalArithmetic = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Arithmetic));
+    m_fundamentalBinding = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::Binding));
     m_fundamentalBool = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Bool));
     m_fundamentalCall = lyric_common::SymbolUrl(preludeLocation,
@@ -211,6 +213,8 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalAny;
         case FundamentalSymbol::Arithmetic:
             return m_fundamentalArithmetic;
+        case FundamentalSymbol::Binding:
+            return m_fundamentalBinding;
         case FundamentalSymbol::Bool:
             return m_fundamentalBool;
         case FundamentalSymbol::Call:

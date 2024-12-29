@@ -39,10 +39,11 @@ namespace lyric_symbolizer {
         tempo_utils::Status popDefinition();
 
         tempo_utils::Status pushNamespace(const lyric_parser::ArchetypeNode *node);
-        tempo_utils::Status putNamespaceBinding(
-            const std::string &name,
-            const lyric_common::SymbolUrl &symbolUrl,
-            lyric_object::AccessType access);
+        tempo_utils::Status putNamespaceTarget(const lyric_common::SymbolUrl &symbolUrl);
+        // tempo_utils::Status putNamespaceBinding(
+        //     const std::string &name,
+        //     const lyric_common::SymbolUrl &symbolUrl,
+        //     lyric_object::AccessType access);
         tempo_utils::Status popNamespace();
     };
 }

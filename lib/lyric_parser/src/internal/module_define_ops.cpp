@@ -133,7 +133,37 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
 void
 lyric_parser::internal::ModuleDefineOps::exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx)
 {
+    auto *scopeManager = m_state->scopeManager();
+    auto span = scopeManager->peekSpan();
+    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+
+    // if stack is empty, then mark source as incomplete
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
+
+    auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
+    auto *typeNode = make_Type_node(m_state, ctx->assignableType());
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    m_state->throwSyntaxError(location, "defalias unimplemented");
+
+    auto *defaliasNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefAliasClass, location);
+    m_state->pushNode(defaliasNode);
+
+    defaliasNode->putAttr(kLyricAstIdentifier, id);
+    defaliasNode->putAttrOrThrow(kLyricAstAccessType, access);
+    defaliasNode->putAttr(kLyricAstTypeOffset, typeNode);
+
+    // generic information
+    if (ctx->placeholderSpec()) {
+        auto *placeholderSpec = ctx->placeholderSpec();
+        auto *genericNode = make_Generic_node(m_state, placeholderSpec);
+        defaliasNode->putAttr(kLyricAstGenericOffset, genericNode);
+    }
+
+    scopeManager->popSpan();
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    m_state->popSymbolAndCheck(id);
 }

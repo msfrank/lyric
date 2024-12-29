@@ -127,8 +127,7 @@ lyric_compiler::DefEnumHandler::before(
 
     // add enum to the current namespace if specified
     if (m_currentNamespace != nullptr) {
-        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
-            identifier, m_defenum.enumSymbol->getSymbolUrl(), m_defenum.enumSymbol->getAccessType()));
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_defenum.enumSymbol->getSymbolUrl()));
     }
 
     // declare val members

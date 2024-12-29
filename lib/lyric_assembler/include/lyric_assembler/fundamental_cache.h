@@ -27,6 +27,7 @@ namespace lyric_assembler {
 
         lyric_common::SymbolUrl m_fundamentalAny;
         lyric_common::SymbolUrl m_fundamentalArithmetic;
+        lyric_common::SymbolUrl m_fundamentalBinding;
         lyric_common::SymbolUrl m_fundamentalBool;
         lyric_common::SymbolUrl m_fundamentalCall;
         lyric_common::SymbolUrl m_fundamentalCategory;

@@ -31,6 +31,8 @@ lyric_symbolizer::SymbolizerScanDriver::enter(
     switch (astId) {
         case lyric_schema::LyricAstId::Decl:
             return pushDefinition(node, lyric_object::LinkageSection::Action);
+        case lyric_schema::LyricAstId::DefAlias:
+            return pushDefinition(node, lyric_object::LinkageSection::Binding);
         case lyric_schema::LyricAstId::Def:
             return pushDefinition(node, lyric_object::LinkageSection::Call);
         case lyric_schema::LyricAstId::DefClass:
@@ -68,6 +70,7 @@ lyric_symbolizer::SymbolizerScanDriver::exit(
             return declareStatic(node);
         case lyric_schema::LyricAstId::Decl:
         case lyric_schema::LyricAstId::Def:
+        case lyric_schema::LyricAstId::DefAlias:
         case lyric_schema::LyricAstId::DefClass:
         case lyric_schema::LyricAstId::DefConcept:
         case lyric_schema::LyricAstId::DefEnum:
@@ -110,7 +113,7 @@ lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::Archet
     undecl.release();
     TU_LOG_INFO << "declared static " << symbolUrl;
 
-    return putNamespaceBinding(identifier, symbolUrl, lyric_object::AccessType::Public);
+    return putNamespaceTarget(symbolUrl);
 }
 
 tempo_utils::Status
@@ -133,7 +136,7 @@ lyric_symbolizer::SymbolizerScanDriver::pushDefinition(
     auto *currentNamespace = m_namespaces.top();
     auto namespacePath = currentNamespace->getSymbolUrl().getSymbolPath();
     if (symbolPath.getEnclosure() == namespacePath.getPath()) {
-        TU_RETURN_IF_NOT_OK (putNamespaceBinding(identifier, symbolUrl, lyric_object::AccessType::Public));
+        TU_RETURN_IF_NOT_OK (putNamespaceTarget(symbolUrl));
     }
 
     return {};
@@ -184,17 +187,27 @@ lyric_symbolizer::SymbolizerScanDriver::pushNamespace(const lyric_parser::Archet
 }
 
 tempo_utils::Status
-lyric_symbolizer::SymbolizerScanDriver::putNamespaceBinding(
-    const std::string &name,
-    const lyric_common::SymbolUrl &symbolUrl,
-    lyric_object::AccessType access)
+lyric_symbolizer::SymbolizerScanDriver::putNamespaceTarget(const lyric_common::SymbolUrl &symbolUrl)
 {
     if (m_namespaces.empty())
         return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
             "namespace stack is empty");
     auto *currentNamespace = m_namespaces.top();
-    return currentNamespace->putBinding(name, symbolUrl, access);
+    return currentNamespace->putTarget(symbolUrl);
 }
+
+// tempo_utils::Status
+// lyric_symbolizer::SymbolizerScanDriver::putNamespaceBinding(
+//     const std::string &name,
+//     const lyric_common::SymbolUrl &symbolUrl,
+//     lyric_object::AccessType access)
+// {
+//     if (m_namespaces.empty())
+//         return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
+//             "namespace stack is empty");
+//     auto *currentNamespace = m_namespaces.top();
+//     return currentNamespace->putBinding(name, symbolUrl, access);
+// }
 
 tempo_utils::Status
 lyric_symbolizer::SymbolizerScanDriver::popNamespace()

@@ -6,8 +6,8 @@
 namespace lyric_object {
 
     // forward declarations
-    class BindingWalker;
     class LinkWalker;
+    class SymbolWalker;
 
     /**
      *
@@ -29,8 +29,8 @@ namespace lyric_object {
         NamespaceWalker getNearSuperNamespace() const;
         LinkWalker getFarSuperNamespace() const;
 
-        tu_uint32 numBindings() const;
-        BindingWalker getBinding(tu_uint32 index) const;
+        tu_uint32 numSymbols() const;
+        SymbolWalker getSymbol(tu_uint32 index) const;
 
         tu_uint32 getDescriptorOffset() const;
 

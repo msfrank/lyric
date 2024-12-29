@@ -106,7 +106,7 @@ TEST_F(ArchiveCallTests, RunSingleCall)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { call1 }
+        import from "dev.zuri.test:///archive" { Call1 }
         Call1()
     )");
 

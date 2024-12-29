@@ -14,7 +14,7 @@ namespace lyric_assembler {
         bool isDeclOnly;
         TypeHandle *namespaceType;
         NamespaceSymbol *superNamespace;
-        absl::flat_hash_map<std::string,NamespaceBinding> bindings;
+        absl::flat_hash_map<std::string,lyric_common::SymbolUrl> symbols;
         std::unique_ptr<BlockHandle> namespaceBlock;
     };
 
@@ -52,16 +52,18 @@ namespace lyric_assembler {
         TypeHandle *namespaceType() const;
         BlockHandle *namespaceBlock() const;
 
-        bool hasBinding(const std::string &name) const;
-        NamespaceBinding getBinding(const std::string &name) const;
-        absl::flat_hash_map<std::string,NamespaceBinding>::const_iterator bindingsBegin() const;
-        absl::flat_hash_map<std::string,NamespaceBinding>::const_iterator bindingsEnd() const;
-        tu_uint32 numBindings() const;
+        bool hasSymbol(const std::string &name) const;
+        lyric_common::SymbolUrl getSymbol(const std::string &name) const;
+        absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator symbolsBegin() const;
+        absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator symbolsEnd() const;
+        tu_uint32 numSymbols() const;
 
-        tempo_utils::Status putBinding(
+        tempo_utils::Status putTarget(const lyric_common::SymbolUrl &symbolUrl);
+
+        tempo_utils::Result<BindingSymbol *> declareBinding(
             const std::string &name,
-            const lyric_common::SymbolUrl &symbolUrl,
-            lyric_object::AccessType access);
+            lyric_object::AccessType access,
+            const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
         tempo_utils::Result<NamespaceSymbol *> declareSubspace(
             const std::string &name,

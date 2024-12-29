@@ -1,7 +1,7 @@
 
 #include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/assembler_result.h>
-#include <lyric_assembler/object_state.h>
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/block_handle.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
@@ -12,6 +12,7 @@
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/namespace_symbol.h>
+#include <lyric_assembler/object_state.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 
@@ -58,6 +59,11 @@ insert_symbol_into_cache(
         case lyric_object::LinkageSection::Action: {
             auto *actionImport = moduleImport->getAction(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::ActionSymbol(symbolUrl, actionImport, state);
+            break;
+        }
+        case lyric_object::LinkageSection::Binding: {
+            auto *bindingImport = moduleImport->getBinding(symbolWalker.getLinkageIndex());
+            symbolPtr = new lyric_assembler::BindingSymbol(symbolUrl, bindingImport, state);
             break;
         }
         case lyric_object::LinkageSection::Call: {

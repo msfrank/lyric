@@ -4,6 +4,7 @@
 #include "builder_state.h"
 #include "compile_any.h"
 #include "compile_arithmetic.h"
+#include "compile_binding.h"
 #include "compile_bool.h"
 #include "compile_call.h"
 #include "compile_category.h"
@@ -86,6 +87,7 @@ main(int argc, char *argv[])
     auto *TypeExistential = declare_core_Type(state, AnyExistential);
 
     // define descriptor subtypes
+    build_core_Binding(state, DescriptorExistential);
     build_core_Namespace(state, DescriptorExistential);
     build_core_Class(state, DescriptorExistential);
     build_core_Struct(state, DescriptorExistential);

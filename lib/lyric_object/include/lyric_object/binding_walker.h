@@ -8,6 +8,8 @@ namespace lyric_object {
     // forward declarations
     class LinkWalker;
     class SymbolWalker;
+    class TemplateWalker;
+    class TypeWalker;
 
     /**
      *
@@ -21,11 +23,14 @@ namespace lyric_object {
 
         lyric_common::SymbolPath getSymbolPath() const;
 
-        AddressType targetAddressType() const;
-        SymbolWalker getNearTarget() const;
-        LinkWalker getFarTarget() const;
-
         AccessType getAccess() const;
+
+        TypeWalker getBindingType() const;
+
+        bool hasTemplate() const;
+        TemplateWalker getTemplate() const;
+
+        TypeWalker getTargetType() const;
 
         tu_uint32 getDescriptorOffset() const;
 

@@ -1,8 +1,9 @@
 
 #include <lyric_object/binding_walker.h>
 #include <lyric_object/internal/object_reader.h>
-#include <lyric_object/link_walker.h>
 #include <lyric_object/symbol_walker.h>
+#include <lyric_object/template_walker.h>
+#include <lyric_object/type_walker.h>
 
 lyric_object::BindingWalker::BindingWalker()
     : m_bindingOffset(INVALID_ADDRESS_U32)
@@ -41,38 +42,6 @@ lyric_object::BindingWalker::getSymbolPath() const
     return lyric_common::SymbolPath::fromString(bindingDescriptor->fqsn()->str());
 }
 
-lyric_object::AddressType
-lyric_object::BindingWalker::targetAddressType() const
-{
-    if (!isValid())
-        return AddressType::Invalid;
-    auto *bindingDescriptor = m_reader->getBinding(m_bindingOffset);
-    if (bindingDescriptor == nullptr)
-        return {};
-    return GET_ADDRESS_TYPE(bindingDescriptor->target_address());
-}
-
-lyric_object::SymbolWalker
-lyric_object::BindingWalker::getNearTarget() const
-{
-    if (!isValid())
-        return {};
-    auto *bindingDescriptor = m_reader->getBinding(m_bindingOffset);
-    if (bindingDescriptor == nullptr)
-        return {};
-    return SymbolWalker(m_reader, GET_DESCRIPTOR_OFFSET(bindingDescriptor->target_address()));
-}
-
-lyric_object::LinkWalker
-lyric_object::BindingWalker::getFarTarget() const
-{    if (!isValid())
-        return {};
-    auto *bindingDescriptor = m_reader->getBinding(m_bindingOffset);
-    if (bindingDescriptor == nullptr)
-        return {};
-    return LinkWalker(m_reader, GET_LINK_OFFSET(bindingDescriptor->target_address()));
-}
-
 lyric_object::AccessType
 lyric_object::BindingWalker::getAccess() const
 {
@@ -87,6 +56,54 @@ lyric_object::BindingWalker::getAccess() const
     if (bool(bindingDescriptor->flags() & lyo1::BindingFlags::InheritVisibility))
         return AccessType::Protected;
     return AccessType::Private;
+}
+
+lyric_object::TypeWalker
+lyric_object::BindingWalker::getBindingType() const
+{
+    if (!isValid())
+        return {};
+    auto *bindingDescriptor = m_reader->getBinding(m_bindingOffset);
+    if (bindingDescriptor == nullptr)
+        return {};
+    if (bindingDescriptor->binding_type() == INVALID_ADDRESS_U32)
+        return {};
+    return TypeWalker(m_reader, bindingDescriptor->binding_type());
+}
+
+bool
+lyric_object::BindingWalker::hasTemplate() const
+{
+    if (!isValid())
+        return false;
+    auto *bindingDescriptor = m_reader->getBinding(m_bindingOffset);
+    if (bindingDescriptor == nullptr)
+        return false;
+    return bindingDescriptor->binding_template() != INVALID_ADDRESS_U32;
+}
+
+lyric_object::TemplateWalker
+lyric_object::BindingWalker::getTemplate() const
+{
+    if (!isValid())
+        return {};
+    auto *bindingDescriptor = m_reader->getBinding(m_bindingOffset);
+    if (bindingDescriptor == nullptr)
+        return {};
+    return TemplateWalker(m_reader, bindingDescriptor->binding_template());
+}
+
+lyric_object::TypeWalker
+lyric_object::BindingWalker::getTargetType() const
+{
+    if (!isValid())
+        return {};
+    auto *bindingDescriptor = m_reader->getBinding(m_bindingOffset);
+    if (bindingDescriptor == nullptr)
+        return {};
+    if (bindingDescriptor->binding_type() == INVALID_ADDRESS_U32)
+        return {};
+    return TypeWalker(m_reader, bindingDescriptor->target_type());
 }
 
 tu_uint32

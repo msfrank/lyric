@@ -151,8 +151,7 @@ lyric_compiler::DefClassHandler::before(
 
     // add class to the current namespace if specified
     if (m_currentNamespace != nullptr) {
-        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
-            identifier, m_defclass.classSymbol->getSymbolUrl(), m_defclass.classSymbol->getAccessType()));
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_defclass.classSymbol->getSymbolUrl()));
     }
 
     // declare val members

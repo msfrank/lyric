@@ -107,6 +107,8 @@ namespace lyric_object::internal {
         switch (section) {
             case lyo1::DescriptorSection::Action:
                 return lyric_object::LinkageSection::Action;
+            case lyo1::DescriptorSection::Binding:
+                return lyric_object::LinkageSection::Binding;
             case lyo1::DescriptorSection::Call:
                 return lyric_object::LinkageSection::Call;
             case lyo1::DescriptorSection::Class:
@@ -143,6 +145,8 @@ namespace lyric_object::internal {
         switch (section) {
             case LinkageSection::Action:
                 return lyo1::DescriptorSection::Action;
+            case LinkageSection::Binding:
+                return lyo1::DescriptorSection::Binding;
             case LinkageSection::Call:
                 return lyo1::DescriptorSection::Call;
             case LinkageSection::Class:

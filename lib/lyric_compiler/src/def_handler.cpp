@@ -60,8 +60,7 @@ lyric_compiler::DefHandler::before(
 
     // add function to the current namespace if specified
     if (m_currentNamespace != nullptr) {
-        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
-            identifier, m_function.callSymbol->getSymbolUrl(), m_function.callSymbol->getAccessType()));
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_function.callSymbol->getSymbolUrl()));
     }
 
     auto *resolver = m_function.callSymbol->callResolver();

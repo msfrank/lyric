@@ -1,5 +1,6 @@
 
 #include <absl/container/flat_hash_set.h>
+#include <lyric_assembler/binding_symbol.h>
 
 #include <lyric_assembler/block_handle.h>
 #include <lyric_assembler/function_callable.h>
@@ -289,22 +290,22 @@ resolve_binding_tail_recursive(
     std::vector<std::string>::const_iterator curr,
     std::vector<std::string>::const_iterator end)   // NOLINT(misc-no-recursion)
 {
-    if (curr == end || !targetNs->hasBinding(*curr))
+    if (curr == end || !targetNs->hasSymbol(*curr))
         return resolveBlock->logAndContinue(
             lyric_assembler::AssemblerCondition::kMissingSymbol,
             tempo_tracing::LogSeverity::kError,
             "missing symbol {}", lyric_common::SymbolPath(path).toString());
 
-    auto namespaceBinding = targetNs->getBinding(*curr);
+    auto symbolUrl = targetNs->getSymbol(*curr);
 
     auto *state = resolveBlock->blockState();
     lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(namespaceBinding.symbolUrl));
+    TU_ASSIGN_OR_RETURN (symbol, state->symbolCache()->getOrImportSymbol(symbolUrl));
 
     // if we have reached the last segment then return the binding
     if (++curr == end) {
         lyric_assembler::SymbolBinding symbolBinding;
-        symbolBinding.symbolUrl = namespaceBinding.symbolUrl;
+        symbolBinding.symbolUrl = symbolUrl;
         symbolBinding.bindingType = lyric_assembler::BindingType::Descriptor;
         switch (symbol->getSymbolType()) {
             case lyric_assembler::SymbolType::CALL:
@@ -393,9 +394,20 @@ lyric_assembler::BlockHandle::resolveSingular(
             break;
         default:
             return logAndContinue(
-                lyric_assembler::AssemblerCondition::kMissingSymbol,
+                AssemblerCondition::kMissingSymbol,
                 tempo_tracing::LogSeverity::kError,
                 "{} does not refer to a valid type", typePath.toString());
+    }
+
+    // if the type is concrete and the symbol is a binding then resolve the binding target
+    if (typeDef.getType() == lyric_common::TypeDefType::Concrete) {
+        auto *symbolCache = m_state->symbolCache();
+        AbstractSymbol *sym;
+        TU_ASSIGN_OR_RETURN (sym, symbolCache->getOrImportSymbol(typeDef.getConcreteUrl()));
+        if (sym->getSymbolType() == SymbolType::BINDING) {
+            auto *bindingSymbol = cast_symbol_to_binding(sym);
+            TU_ASSIGN_OR_RETURN (typeDef, bindingSymbol->resolveTarget(typeArguments));
+        }
     }
 
     auto *typeCache = m_state->typeCache();
@@ -1288,6 +1300,63 @@ lyric_assembler::BlockHandle::resolveImpl(const lyric_common::TypeDef &implType,
         default:
             throwAssemblerInvariant("invalid resolve mode");
     }
+}
+
+tempo_utils::Result<lyric_assembler::BindingSymbol *>
+lyric_assembler::BlockHandle::declareBinding(
+    const std::string &name,
+    lyric_object::AccessType access,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters)
+{
+    auto *fundamentalCache = m_state->fundamentalCache();
+    auto *typeCache = m_state->typeCache();
+
+    if (m_bindings.contains(name))
+        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+            tempo_tracing::LogSeverity::kError,
+            "cannot declare binding {}; symbol is already defined", name);
+
+    auto bindingUrl = makeSymbolUrl(name);
+
+    // create the template if there are any template parameters
+    TemplateHandle *bindingTemplate = nullptr;
+    if (!templateParameters.empty()) {
+        TU_ASSIGN_OR_RETURN (bindingTemplate, typeCache->makeTemplate(bindingUrl, templateParameters, this));
+    }
+
+    // ensure that Binding is in the type cache
+    auto bindingType = fundamentalCache->getFundamentalType(FundamentalSymbol::Binding);
+    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(bindingType));
+
+    // create the type
+    TypeHandle *typeHandle;
+    if (bindingTemplate) {
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
+            bindingUrl, bindingTemplate->getPlaceholders(), bindingType));
+    } else {
+        TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(bindingUrl, {}, bindingType));
+    }
+
+    // create the binding
+    std::unique_ptr<BindingSymbol> bindingSymbol;
+    if (bindingTemplate) {
+        bindingSymbol = std::make_unique<BindingSymbol>(bindingUrl, access, typeHandle,
+            bindingTemplate, this, m_state);
+    } else {
+        bindingSymbol = std::make_unique<BindingSymbol>(bindingUrl, access, typeHandle,
+            this, m_state);
+    }
+
+    TU_RETURN_IF_NOT_OK (m_state->appendBinding(bindingSymbol.get()));
+    auto *bindingPtr = bindingSymbol.release();
+
+    SymbolBinding binding;
+    binding.bindingType = BindingType::Descriptor;
+    binding.symbolUrl = bindingUrl;
+    binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
+    m_bindings[name] = binding;
+
+    return bindingPtr;
 }
 
 tempo_utils::Result<lyric_assembler::SymbolBinding>

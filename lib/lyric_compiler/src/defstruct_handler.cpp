@@ -138,8 +138,7 @@ lyric_compiler::DefStructHandler::before(
 
     // add struct to the current namespace if specified
     if (m_currentNamespace != nullptr) {
-        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
-            identifier, m_defstruct.structSymbol->getSymbolUrl(), m_defstruct.structSymbol->getAccessType()));
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_defstruct.structSymbol->getSymbolUrl()));
     }
 
     // declare val members

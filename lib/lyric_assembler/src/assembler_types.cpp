@@ -10,6 +10,8 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Any";
         case FundamentalSymbol::Arithmetic:
             return "Arithmetic";
+        case FundamentalSymbol::Binding:
+            return "Binding";
         case FundamentalSymbol::Bool:
             return "Bool";
         case FundamentalSymbol::Category:

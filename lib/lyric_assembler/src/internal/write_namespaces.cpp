@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
@@ -46,11 +47,10 @@ lyric_assembler::internal::touch_namespace(
 
     auto *symbolCache = objectState->symbolCache();
 
-    for (auto symbolIterator = namespaceSymbol->bindingsBegin();
-        symbolIterator != namespaceSymbol->bindingsEnd();
+    for (auto symbolIterator = namespaceSymbol->symbolsBegin();
+        symbolIterator != namespaceSymbol->symbolsEnd();
         symbolIterator++) {
-        const auto &var = symbolIterator->second;
-        const auto &symbolUrl = var.symbolUrl;
+        const auto &symbolUrl = symbolIterator->second;
 
         AbstractSymbol *symbol;
         TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(symbolUrl));
@@ -66,6 +66,13 @@ lyric_assembler::internal::touch_namespace(
                 auto *callSymbol = cast_symbol_to_call(symbol);
                 if (is_in_scope(callSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
                     TU_RETURN_IF_NOT_OK (writer.touchCall(callSymbol));
+                }
+                break;
+            }
+            case SymbolType::BINDING: {
+                auto *bindingSymbol = cast_symbol_to_binding(symbol);
+                if (is_in_scope(bindingSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                    TU_RETURN_IF_NOT_OK (writer.touchBinding(bindingSymbol));
                 }
                 break;
             }
@@ -169,11 +176,10 @@ write_namespace(
 
     // serialize array of symbols
     std::vector<tu_uint32> bindings;
-    for (auto symbolIterator = namespaceSymbol->bindingsBegin();
-         symbolIterator != namespaceSymbol->bindingsEnd();
+    for (auto symbolIterator = namespaceSymbol->symbolsBegin();
+         symbolIterator != namespaceSymbol->symbolsEnd();
          symbolIterator++) {
-        const auto &var = symbolIterator->second;
-        const auto &symbolUrl = var.symbolUrl;
+        const auto &symbolUrl = symbolIterator->second;
 
         // skip symbols which are not in the current module
         if (symbolUrl.isAbsolute()) {

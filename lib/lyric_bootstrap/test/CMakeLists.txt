@@ -10,6 +10,7 @@ set(TEST_CASES
     Char_tests.cpp
     conditional_tests.cpp
     def_tests.cpp
+    defalias_tests.cpp
     defclass_tests.cpp
     defconcept_tests.cpp
     defenum_tests.cpp

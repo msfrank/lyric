@@ -24,6 +24,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/constant_utils.h
     include/lyric_compiler/constructor_handler.h
     include/lyric_compiler/def_handler.h
+    include/lyric_compiler/defalias_handler.h
     include/lyric_compiler/defclass_handler.h
     include/lyric_compiler/defclass_utils.h
     include/lyric_compiler/defconcept_handler.h
@@ -82,6 +83,7 @@ target_sources(lyric_compiler PRIVATE
     src/constant_utils.cpp
     src/constructor_handler.cpp
     src/def_handler.cpp
+    src/defalias_handler.cpp
     src/defclass_handler.cpp
     src/defclass_utils.cpp
     src/defconcept_handler.cpp

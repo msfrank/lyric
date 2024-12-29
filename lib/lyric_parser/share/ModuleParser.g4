@@ -229,7 +229,7 @@ globalStatement     : annotationList? GlobalKeyword ( ValKeyword | VarKeyword )
 
 // defalias statement
 
-defaliasStatement   : annotationList? DefAliasKeyword Identifier placeholderSpec? assignableType ;
+defaliasStatement   : annotationList? DefAliasKeyword symbolIdentifier placeholderSpec? FromKeyword assignableType ;
 
 
 // namespace statement

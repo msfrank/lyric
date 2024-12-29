@@ -88,19 +88,11 @@ lyric_assembler::NamespaceSymbol::load()
         TU_ASSIGN_OR_RAISE (priv->superNamespace, importCache->importNamespace(superNamespaceUrl));
     }
 
-    for (auto it = m_namespaceImport->bindingsBegin(); it != m_namespaceImport->bindingsEnd(); it++) {
-        auto &bindingUrl = *it;
-        auto bindingPath = bindingUrl.getSymbolPath();
-        auto identifier = bindingPath.getName();
-
-        TU_RAISE_IF_STATUS (importCache->importSymbol(bindingUrl));
-
-        NamespaceBinding binding;
-        binding.name = bindingPath.getName();
-        binding.symbolUrl = bindingUrl;
-        binding.access = lyric_object::AccessType::Public;
-
-        priv->bindings[identifier] = std::move(binding);
+    for (auto it = m_namespaceImport->symbolsBegin(); it != m_namespaceImport->symbolsEnd(); it++) {
+        const auto &symbolUrl = *it;
+        auto identifier = symbolUrl.getSymbolName();
+        TU_RAISE_IF_STATUS (importCache->importSymbol(symbolUrl));
+        priv->symbols[identifier] = symbolUrl;
     }
 
     return priv.release();
@@ -167,73 +159,74 @@ lyric_assembler::NamespaceSymbol::namespaceBlock() const
 }
 
 bool
-lyric_assembler::NamespaceSymbol::hasBinding(const std::string &name) const
+lyric_assembler::NamespaceSymbol::hasSymbol(const std::string &name) const
 {
     auto *priv = getPriv();
-    return priv->bindings.contains(name);
+    return priv->symbols.contains(name);
 }
 
-lyric_assembler::NamespaceBinding
-lyric_assembler::NamespaceSymbol::getBinding(const std::string &name) const
+lyric_common::SymbolUrl
+lyric_assembler::NamespaceSymbol::getSymbol(const std::string &name) const
 {
     auto *priv = getPriv();
-    auto entry = priv->bindings.find(name);
-    if (entry != priv->bindings.cend())
+    auto entry = priv->symbols.find(name);
+    if (entry != priv->symbols.cend())
         return entry->second;
     return {};
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::NamespaceBinding>::const_iterator
-lyric_assembler::NamespaceSymbol::bindingsBegin() const
+absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator
+lyric_assembler::NamespaceSymbol::symbolsBegin() const
 {
     auto *priv = getPriv();
-    return priv->bindings.cbegin();
+    return priv->symbols.cbegin();
 }
 
-absl::flat_hash_map<std::string,lyric_assembler::NamespaceBinding>::const_iterator
-lyric_assembler::NamespaceSymbol::bindingsEnd() const
+absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator
+lyric_assembler::NamespaceSymbol::symbolsEnd() const
 {
     auto *priv = getPriv();
-    return priv->bindings.cend();
+    return priv->symbols.cend();
 }
 
 tu_uint32
-lyric_assembler::NamespaceSymbol::numBindings() const
+lyric_assembler::NamespaceSymbol::numSymbols() const
 {
     auto *priv = getPriv();
-    return priv->bindings.size();
+    return priv->symbols.size();
 }
 
 tempo_utils::Status
-lyric_assembler::NamespaceSymbol::putBinding(
-    const std::string &name,
-    const lyric_common::SymbolUrl &symbolUrl,
-    lyric_object::AccessType access)
+lyric_assembler::NamespaceSymbol::putTarget(const lyric_common::SymbolUrl &symbolUrl)
 {
+    auto name = symbolUrl.getSymbolName();
     auto *priv = getPriv();
-    if (priv->bindings.contains(name))
+    if (priv->symbols.contains(name))
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-            "cannot put namespace binding {}; binding is already defined", name);
+            "cannot put namespace target {}; symbol is already defined", symbolUrl.toString());
 
-    auto definition = priv->namespaceBlock->getDefinition();
-    auto parentPath = definition.getSymbolPath();
-    lyric_common::SymbolPath bindingPath(parentPath.getPath(), name);
-    lyric_common::SymbolUrl bindingUrl(m_namespaceUrl.getModuleLocation(), bindingPath);
-
-    if (bindingUrl != symbolUrl) {
-        auto bindingSymbol = std::make_unique<BindingSymbol>(
-            bindingUrl, symbolUrl, access, m_state);
-        TU_RETURN_IF_NOT_OK (m_state->appendBinding(bindingSymbol.get()));
-        bindingSymbol.release();
-    }
-
-    NamespaceBinding binding;
-    binding.name = name;
-    binding.symbolUrl = symbolUrl;
-    binding.access = access;
-    priv->bindings[name] = std::move(binding);
+    priv->symbols[name] = symbolUrl;
 
     return {};
+}
+
+tempo_utils::Result<lyric_assembler::BindingSymbol *>
+lyric_assembler::NamespaceSymbol::declareBinding(
+    const std::string &name,
+    lyric_object::AccessType access,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters)
+{
+    auto *priv = getPriv();
+    if (priv->symbols.contains(name))
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "cannot put namespace binding {}; symbol is already defined", name);
+
+    BindingSymbol *bindingSymbol;
+    TU_ASSIGN_OR_RETURN (bindingSymbol, priv->namespaceBlock->declareBinding(name, access, templateParameters));
+
+    priv->symbols[name] = bindingSymbol->getSymbolUrl();
+
+    return bindingSymbol;
 }
 
 tempo_utils::Result<lyric_assembler::NamespaceSymbol *>
@@ -242,9 +235,9 @@ lyric_assembler::NamespaceSymbol::declareSubspace(
     lyric_object::AccessType access)
 {
     auto *priv = getPriv();
-    if (priv->bindings.contains(name))
+    if (priv->symbols.contains(name))
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-            "cannot declare namespace {}; binding is already defined", name);
+            "cannot declare namespace {}; symbol is already defined", name);
 
     auto definition = priv->namespaceBlock->getDefinition();
     auto parentPath = definition.getSymbolPath();
@@ -258,11 +251,7 @@ lyric_assembler::NamespaceSymbol::declareSubspace(
 
     TU_RETURN_IF_STATUS (priv->namespaceBlock->declareAlias(name, namespaceUrl));
 
-    NamespaceBinding binding;
-    binding.name = name;
-    binding.symbolUrl = namespaceUrl;
-    binding.access = access;
-    priv->bindings[name] = std::move(binding);
+    priv->symbols[name] = namespaceUrl;
 
     return namespacePtr;
 }

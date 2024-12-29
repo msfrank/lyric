@@ -23,7 +23,7 @@ namespace lyric_parser::internal {
     ArchetypeNode *make_Generic_node(
         ArchetypeState *state,
         ModuleParser::PlaceholderSpecContext *pctx,
-        ModuleParser::ConstraintSpecContext *cctx);
+        ModuleParser::ConstraintSpecContext *cctx = nullptr);
     AccessType parse_access_type(std::string_view identifier);
 }
 

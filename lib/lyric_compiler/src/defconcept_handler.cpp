@@ -104,8 +104,7 @@ lyric_compiler::DefConceptHandler::before(
 
     // add concept to the current namespace if specified
     if (m_currentNamespace != nullptr) {
-        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
-            identifier, m_defconcept.conceptSymbol->getSymbolUrl(), m_defconcept.conceptSymbol->getAccessType()));
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_defconcept.conceptSymbol->getSymbolUrl()));
     }
 
     // declare actions

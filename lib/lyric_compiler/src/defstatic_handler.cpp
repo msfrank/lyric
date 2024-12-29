@@ -82,8 +82,7 @@ lyric_compiler::DefStaticHandler::before(
 
     // add global to the current namespace if specified
     if (m_currentNamespace != nullptr) {
-        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
-            identifier, m_staticSymbol->getSymbolUrl(), m_staticSymbol->getAccessType()));
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_staticSymbol->getSymbolUrl()));
     }
 
     //

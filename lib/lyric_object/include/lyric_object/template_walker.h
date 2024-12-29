@@ -33,6 +33,7 @@ namespace lyric_object {
         TemplateWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 templateOffset);
 
         friend class ActionWalker;
+        friend class BindingWalker;
         friend class CallWalker;
         friend class ClassWalker;
         friend class ConceptWalker;

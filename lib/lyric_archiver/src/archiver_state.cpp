@@ -6,6 +6,7 @@
 #include <lyric_archiver/copy_call.h>
 #include <lyric_archiver/copy_proc.h>
 #include <lyric_archiver/copy_template.h>
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/import_cache.h>
 #include <tempo_security/sha256_hash.h>
 
@@ -132,7 +133,9 @@ lyric_archiver::ArchiverState::archiveSymbol(
             "cannot archive {}; symbol named '{}' already exists",
             symbolUrl.toString(), identifier);
 
-    TU_RETURN_IF_NOT_OK (globalNamespace->putBinding(identifier, archiveUrl, access));
+    // lyric_assembler::BindingSymbol *bindingSymbol;
+    // TU_ASSIGN_OR_RETURN (bindingSymbol, globalNamespace->declareBinding(identifier, access));
+    // TU_RETURN_IF_NOT_OK (bindingSymbol->defineTarget());
 
     return {};
 }

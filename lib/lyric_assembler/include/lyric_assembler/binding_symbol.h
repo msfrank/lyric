@@ -1,6 +1,7 @@
 #ifndef LYRIC_ASSEMBLER_BINDING_SYMBOL_H
 #define LYRIC_ASSEMBLER_BINDING_SYMBOL_H
 
+#include "abstract_resolver.h"
 #include "abstract_symbol.h"
 #include "base_symbol.h"
 #include "object_state.h"
@@ -8,16 +9,27 @@
 namespace lyric_assembler {
 
     struct BindingSymbolPriv {
-        lyric_common::SymbolUrl targetUrl;
-        lyric_object::AccessType access;
+        lyric_object::AccessType access = lyric_object::AccessType::Invalid;
+        TypeHandle *bindingType = nullptr;
+        TemplateHandle *bindingTemplate = nullptr;
+        TypeHandle *targetType = nullptr;
+        BlockHandle *parentBlock = nullptr;
     };
 
     class BindingSymbol : public BaseSymbol<BindingSymbolPriv> {
     public:
         BindingSymbol(
             const lyric_common::SymbolUrl &bindingUrl,
-            const lyric_common::SymbolUrl &targetUrl,
             lyric_object::AccessType access,
+            TypeHandle *bindingType,
+            BlockHandle *parentBlock,
+            ObjectState *state);
+        BindingSymbol(
+            const lyric_common::SymbolUrl &bindingUrl,
+            lyric_object::AccessType access,
+            TypeHandle *bindingType,
+            TemplateHandle *bindingTemplate,
+            BlockHandle *parentBlock,
             ObjectState *state);
 
         BindingSymbol(
@@ -33,7 +45,17 @@ namespace lyric_assembler {
 
         std::string getName() const;
         lyric_object::AccessType getAccessType() const;
-        lyric_common::SymbolUrl getTargetUrl() const;
+
+        TypeHandle *bindingType() const;
+        TemplateHandle *bindingTemplate() const;
+        TypeHandle *targetType() const;
+
+        AbstractResolver *bindingResolver() const;
+
+        tempo_utils::Status defineTarget(const lyric_common::TypeDef &targetType);
+
+        tempo_utils::Result<lyric_common::TypeDef> resolveTarget(
+            const std::vector<lyric_common::TypeDef> &typeArguments);
 
     private:
         lyric_common::SymbolUrl m_bindingUrl;

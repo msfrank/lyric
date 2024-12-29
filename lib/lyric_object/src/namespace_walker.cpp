@@ -1,8 +1,8 @@
 
-#include <lyric_object/binding_walker.h>
 #include <lyric_object/internal/object_reader.h>
 #include <lyric_object/link_walker.h>
 #include <lyric_object/namespace_walker.h>
+#include <lyric_object/symbol_walker.h>
 
 lyric_object::NamespaceWalker::NamespaceWalker()
     : m_namespaceOffset(INVALID_ADDRESS_U32)
@@ -115,32 +115,32 @@ lyric_object::NamespaceWalker::getFarSuperNamespace() const
 }
 
 tu_uint32
-lyric_object::NamespaceWalker::numBindings() const
+lyric_object::NamespaceWalker::numSymbols() const
 {
     if (!isValid())
         return 0;
     auto *namespaceDescriptor = m_reader->getNamespace(m_namespaceOffset);
     if (namespaceDescriptor == nullptr)
         return 0;
-    if (namespaceDescriptor->bindings() == nullptr)
+    if (namespaceDescriptor->symbols() == nullptr)
         return 0;
-    return namespaceDescriptor->bindings()->size();
+    return namespaceDescriptor->symbols()->size();
 }
 
-lyric_object::BindingWalker
-lyric_object::NamespaceWalker::getBinding(tu_uint32 index) const
+lyric_object::SymbolWalker
+lyric_object::NamespaceWalker::getSymbol(tu_uint32 index) const
 {
     if (!isValid())
         return {};
     auto *namespaceDescriptor = m_reader->getNamespace(m_namespaceOffset);
     if (namespaceDescriptor == nullptr)
         return {};
-    if (namespaceDescriptor->bindings() == nullptr)
+    if (namespaceDescriptor->symbols() == nullptr)
         return {};
-    if (namespaceDescriptor->bindings()->size() <= index)
+    if (namespaceDescriptor->symbols()->size() <= index)
         return {};
-    auto bindingOffset = namespaceDescriptor->bindings()->Get(index);
-    return BindingWalker(m_reader, bindingOffset);
+    auto symbolOffset = namespaceDescriptor->symbols()->Get(index);
+    return SymbolWalker(m_reader, symbolOffset);
 }
 
 tu_uint32

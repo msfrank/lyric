@@ -1,4 +1,5 @@
 
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/symbol_cache.h>
 
@@ -57,11 +58,17 @@ lyric_assembler::SymbolCache::getSymbolOrNull(const lyric_common::SymbolUrl &sym
 tempo_utils::Result<lyric_assembler::AbstractSymbol *>
 lyric_assembler::SymbolCache::getOrImportSymbol(const lyric_common::SymbolUrl &symbolUrl) const
 {
+    AbstractSymbol *sym;
+
     auto iterator = m_symcache.find(symbolUrl);
-    if (iterator != m_symcache.cend())
-        return iterator->second;
-    auto *importCache = m_state->importCache();
-    return importCache->importSymbol(symbolUrl);
+    if (iterator != m_symcache.cend()) {
+        sym = iterator->second;
+    } else {
+        auto *importCache = m_state->importCache();
+        TU_ASSIGN_OR_RETURN (sym, importCache->importSymbol(symbolUrl));
+    }
+
+    return sym;
 }
 
 tempo_utils::Status

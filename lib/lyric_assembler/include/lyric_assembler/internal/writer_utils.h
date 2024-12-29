@@ -12,6 +12,8 @@ namespace lyric_assembler::internal {
         switch (linkage) {
             case lyric_object::LinkageSection::Action:
                 return lyo1::DescriptorSection::Action;
+            case lyric_object::LinkageSection::Binding:
+                return lyo1::DescriptorSection::Binding;
             case lyric_object::LinkageSection::Call:
                 return lyo1::DescriptorSection::Call;
             case lyric_object::LinkageSection::Class:

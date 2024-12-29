@@ -121,8 +121,8 @@ archive_symbols_for_module(
             lyric_build::BuildCondition::kTaskFailure,
             "module {} has invalid $global symbol", moduleLocation.toString());
 
-    for (int i = 0; i < globalNamespace.numBindings(); i++) {
-        auto bindingSymbol = globalNamespace.getBinding(i);
+    for (int i = 0; i < globalNamespace.numSymbols(); i++) {
+        auto bindingSymbol = globalNamespace.getSymbol(i);
         auto bindingPath = bindingSymbol.getSymbolPath();
         lyric_common::SymbolUrl bindingUrl(moduleLocation, bindingPath);
         TU_RETURN_IF_NOT_OK (archiver.archiveSymbol(

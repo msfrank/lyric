@@ -14,6 +14,8 @@ add_executable(prelude-builder
     object/compile_any.h
     object/compile_arithmetic.cpp
     object/compile_arithmetic.h
+    object/compile_binding.cpp
+    object/compile_binding.h
     object/compile_bool.cpp
     object/compile_bool.h
     object/compile_call.cpp

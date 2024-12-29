@@ -125,8 +125,7 @@ lyric_compiler::DefInstanceHandler::before(
 
     // add instance to the current namespace if specified
     if (m_currentNamespace != nullptr) {
-        TU_RETURN_IF_NOT_OK (m_currentNamespace->putBinding(
-            identifier, m_definstance.instanceSymbol->getSymbolUrl(), m_definstance.instanceSymbol->getAccessType()));
+        TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_definstance.instanceSymbol->getSymbolUrl()));
     }
 
     // declare val members

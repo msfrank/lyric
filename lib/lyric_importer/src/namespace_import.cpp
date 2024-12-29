@@ -8,7 +8,7 @@ namespace lyric_importer {
         bool isDeclOnly;
         lyric_object::AccessType access;
         lyric_common::SymbolUrl superNamespace;
-        absl::flat_hash_set<lyric_common::SymbolUrl> bindings;
+        absl::flat_hash_set<lyric_common::SymbolUrl> symbols;
     };
 }
 
@@ -51,24 +51,24 @@ lyric_importer::NamespaceImport::getSuperNamespace()
 }
 
 absl::flat_hash_set<lyric_common::SymbolUrl>::const_iterator
-lyric_importer::NamespaceImport::bindingsBegin()
+lyric_importer::NamespaceImport::symbolsBegin()
 {
     load();
-    return m_priv->bindings.cbegin();
+    return m_priv->symbols.cbegin();
 }
 
 absl::flat_hash_set<lyric_common::SymbolUrl>::const_iterator
-lyric_importer::NamespaceImport::bindingsEnd()
+lyric_importer::NamespaceImport::symbolsEnd()
 {
     load();
-    return m_priv->bindings.cend();
+    return m_priv->symbols.cend();
 }
 
 int
 lyric_importer::NamespaceImport::numBindings()
 {
     load();
-    return m_priv->bindings.size();
+    return m_priv->symbols.size();
 }
 
 void
@@ -114,12 +114,12 @@ lyric_importer::NamespaceImport::load()
     }
 
     // preallocate space for all the bindings
-    priv->bindings.reserve(namespaceWalker.numBindings());
+    priv->symbols.reserve(namespaceWalker.numSymbols());
 
-    for (tu_uint32 i = 0; i < namespaceWalker.numBindings(); i++) {
-        auto bindingSymbol = namespaceWalker.getBinding(i);
-        lyric_common::SymbolUrl bindingUrl(location, bindingSymbol.getSymbolPath());
-        priv->bindings.insert(std::move(bindingUrl));
+    for (tu_uint32 i = 0; i < namespaceWalker.numSymbols(); i++) {
+        auto symbol = namespaceWalker.getSymbol(i);
+        lyric_common::SymbolUrl symbolUrl(location, symbol.getSymbolPath());
+        priv->symbols.insert(std::move(symbolUrl));
     }
 
     m_priv = std::move(priv);

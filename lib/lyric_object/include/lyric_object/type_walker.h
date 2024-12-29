@@ -41,6 +41,7 @@ namespace lyric_object {
         TypeWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 typeOffset);
 
         friend class ActionWalker;
+        friend class BindingWalker;
         friend class CallWalker;
         friend class ClassWalker;
         friend class ConceptWalker;

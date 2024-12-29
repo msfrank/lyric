@@ -163,10 +163,10 @@ namespace lyric_assembler {
             const lyric_common::TypeDef &implType,
             ResolveMode mode = ResolveMode::kDefault);
 
-//        tempo_utils::Result<NamespaceSymbol *> declareNamespace(
-//            const std::string &name,
-//            lyric_object::AccessType access,
-//            bool declOnly = false);
+        tempo_utils::Result<BindingSymbol *> declareBinding(
+            const std::string &name,
+            lyric_object::AccessType access,
+            const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
         tempo_utils::Result<SymbolBinding> declareAlias(
             const std::string &alias,
