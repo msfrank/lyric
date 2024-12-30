@@ -71,9 +71,9 @@ namespace lyric_assembler {
             const std::vector<lyric_common::TypeDef> &typeArguments) override;
 
         tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
-            const std::vector<std::string> &typePath);
-        tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
             const lyric_common::SymbolPath &symbolPath);
+
+        tempo_utils::Result<lyric_common::SymbolUrl> resolveFunction(const std::string &name);
 
         tempo_utils::Result<DataReference> declareVariable(
             const std::string &name,

@@ -82,7 +82,7 @@ resolve_binding(
 }
 
 inline tempo_utils::Result<lyric_common::TypeDef>
-deref_descriptor_instance_or_enum(
+deref_descriptor_if_allowed(
     lyric_common::SymbolUrl &symbolUrl,
     lyric_assembler::CodeFragment *fragment,
     lyric_compiler::CompilerScanDriver *driver)
@@ -93,6 +93,7 @@ deref_descriptor_instance_or_enum(
     switch (symbol->getSymbolType()) {
         case lyric_assembler::SymbolType::ENUM:
         case lyric_assembler::SymbolType::INSTANCE:
+        case lyric_assembler::SymbolType::STATIC:
             TU_RETURN_IF_NOT_OK (fragment->loadData(symbol));
             return symbol->getTypeDef();
         default:
@@ -125,7 +126,7 @@ lyric_compiler::deref_name(
             break;
 
         case lyric_assembler::ReferenceType::Descriptor:
-            TU_ASSIGN_OR_RETURN (resultType, deref_descriptor_instance_or_enum(ref.symbolUrl, fragment, driver));
+            TU_ASSIGN_OR_RETURN (resultType, deref_descriptor_if_allowed(ref.symbolUrl, fragment, driver));
             break;
         default:
             return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
@@ -173,7 +174,7 @@ lyric_compiler::deref_name(
             return update_namespace_block(symbol, blockptr);
 
         case lyric_assembler::ReferenceType::Descriptor: {
-            TU_ASSIGN_OR_RETURN (resultType, deref_descriptor_instance_or_enum(ref.symbolUrl, fragment, driver));
+            TU_ASSIGN_OR_RETURN (resultType, deref_descriptor_if_allowed(ref.symbolUrl, fragment, driver));
             break;
         }
 
@@ -223,6 +224,16 @@ lyric_compiler::deref_namespace(
             break;
 
         case lyric_assembler::ReferenceType::Descriptor:
+            switch (symbol->getSymbolType()) {
+                case lyric_assembler::SymbolType::ENUM:
+                case lyric_assembler::SymbolType::INSTANCE:
+                case lyric_assembler::SymbolType::STATIC:
+                    break;
+                default:
+                    return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+                        "invalid namespace binding");
+            }
+            break;
         default:
             return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "invalid namespace binding");

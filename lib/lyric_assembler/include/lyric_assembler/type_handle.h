@@ -32,13 +32,11 @@ namespace lyric_assembler {
         std::vector<lyric_common::TypeDef>::const_iterator typeArgumentsBegin() const;
         std::vector<lyric_common::TypeDef>::const_iterator typeArgumentsEnd() const;
         TypeHandle *getSuperType() const;
-        //TypeSignature getTypeSignature() const;
 
     private:
         lyric_common::TypeDef m_typeDef;
         TypeHandle *m_superType;
         TypeSignature m_signature;
-        //ObjectState *m_state;
     };
 }
 

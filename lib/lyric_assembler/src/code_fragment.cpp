@@ -292,13 +292,19 @@ lyric_assembler::CodeFragment::loadRef(const DataReference &ref)
         statement.instruction = std::make_shared<LoadSyntheticInstruction>(syntheticSymbol->getSyntheticType());
     } else {
         switch (ref.referenceType) {
-            case ReferenceType::Descriptor:
             case ReferenceType::Namespace:
                 statement.instruction = std::make_shared<LoadDescriptorInstruction>(symbol);
                 break;
             case ReferenceType::Value:
             case ReferenceType::Variable:
                 statement.instruction = std::make_shared<LoadDataInstruction>(symbol);
+                break;
+            case ReferenceType::Descriptor:
+                if (symbol->getSymbolType() == SymbolType::STATIC) {
+                    statement.instruction = std::make_shared<LoadDataInstruction>(symbol);
+                } else {
+                    statement.instruction = std::make_shared<LoadDescriptorInstruction>(symbol);
+                }
                 break;
             default:
                 return AssemblerStatus::forCondition(
@@ -368,8 +374,11 @@ lyric_assembler::CodeFragment::storeRef(const DataReference &ref, bool initialSt
             statement.instruction = std::make_shared<StoreDataInstruction>(symbol);
             break;
         case ReferenceType::Descriptor:
-            return AssemblerStatus::forCondition(
-                AssemblerCondition::kInvalidBinding, "cannot store to descriptor {}", ref.symbolUrl.toString());
+            if (symbol->getSymbolType() != SymbolType::STATIC)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kInvalidBinding, "cannot store to descriptor {}", ref.symbolUrl.toString());
+            statement.instruction = std::make_shared<StoreDataInstruction>(symbol);
+            break;
         default:
             return AssemblerStatus::forCondition(
                 AssemblerCondition::kAssemblerInvariant, "invalid data reference");

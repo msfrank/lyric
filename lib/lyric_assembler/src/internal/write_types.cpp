@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/assembler_types.h>
+#include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
@@ -7,6 +8,7 @@
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/internal/write_types.h>
 #include <lyric_assembler/object_writer.h>
+#include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 
 tempo_utils::Status
@@ -30,6 +32,9 @@ lyric_assembler::internal::touch_type(
         AbstractSymbol *symbol;
         TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(symbolUrl));
         switch (symbol->getSymbolType()) {
+            case SymbolType::CALL:
+                TU_RETURN_IF_NOT_OK (writer.touchCall(cast_symbol_to_call(symbol)));
+                break;
             case SymbolType::CLASS:
                 TU_RETURN_IF_NOT_OK (writer.touchClass(cast_symbol_to_class(symbol)));
                 break;
@@ -44,6 +49,9 @@ lyric_assembler::internal::touch_type(
                 break;
             case SymbolType::INSTANCE:
                 TU_RETURN_IF_NOT_OK (writer.touchInstance(cast_symbol_to_instance(symbol)));
+                break;
+            case SymbolType::STATIC:
+                TU_RETURN_IF_NOT_OK (writer.touchStatic(cast_symbol_to_static(symbol)));
                 break;
             case SymbolType::STRUCT:
                 TU_RETURN_IF_NOT_OK (writer.touchStruct(cast_symbol_to_struct(symbol)));
@@ -101,6 +109,9 @@ write_type(
             TU_ASSIGN_OR_RETURN (section, writer.getSymbolSection(concreteUrl));
             TU_ASSIGN_OR_RETURN (concreteDescriptor, writer.getSymbolAddress(concreteUrl));
             switch (section) {
+                case lyric_object::LinkageSection::Call:
+                    concreteSection = lyo1::TypeSection::Call;
+                    break;
                 case lyric_object::LinkageSection::Class:
                     concreteSection = lyo1::TypeSection::Class;
                     break;
@@ -115,6 +126,9 @@ write_type(
                     break;
                 case lyric_object::LinkageSection::Instance:
                     concreteSection = lyo1::TypeSection::Instance;
+                    break;
+                case lyric_object::LinkageSection::Static:
+                    concreteSection = lyo1::TypeSection::Static;
                     break;
                 case lyric_object::LinkageSection::Struct:
                     concreteSection = lyo1::TypeSection::Struct;

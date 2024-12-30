@@ -58,79 +58,136 @@ lyric_assembler::TypeCache::numTypes() const
     return m_typecache.size();
 }
 
-inline lyric_assembler::TypeHandle *
-get_symbol_type_handle(const lyric_common::SymbolUrl &symbolUrl, lyric_assembler::ObjectState *state)
-{
-    // if the symbol url does not have a location then check the assembly state only
-    if (symbolUrl.isRelative()) {
-        auto *symbolCache = state->symbolCache();
-        auto getSymbolResult = symbolCache->getOrImportSymbol(symbolUrl);
-        if (getSymbolResult.isStatus())
-            return nullptr;
-        auto *sym = getSymbolResult.getResult();
-        switch (sym->getSymbolType()) {
-            case lyric_assembler::SymbolType::CLASS:
-                return cast_symbol_to_class(sym)->classType();
-            case lyric_assembler::SymbolType::CONCEPT:
-                return cast_symbol_to_concept(sym)->conceptType();
-            case lyric_assembler::SymbolType::ENUM:
-                return cast_symbol_to_enum(sym)->enumType();
-            case lyric_assembler::SymbolType::EXISTENTIAL:
-                return cast_symbol_to_existential(sym)->existentialType();
-            case lyric_assembler::SymbolType::INSTANCE:
-                return cast_symbol_to_instance(sym)->instanceType();
-            case lyric_assembler::SymbolType::STRUCT:
-                return cast_symbol_to_struct(sym)->structType();
-            default:
-                return nullptr;
-        }
-    }
+// inline lyric_assembler::TypeHandle *
+// get_symbol_type_handle(const lyric_common::SymbolUrl &symbolUrl, lyric_assembler::ObjectState *state)
+// {
+//     // if the symbol url does not have a location then check the assembly state only
+//     if (symbolUrl.isRelative()) {
+//         auto *symbolCache = state->symbolCache();
+//         auto getSymbolResult = symbolCache->getOrImportSymbol(symbolUrl);
+//         if (getSymbolResult.isStatus())
+//             return nullptr;
+//         auto *sym = getSymbolResult.getResult();
+//         switch (sym->getSymbolType()) {
+//             case lyric_assembler::SymbolType::CLASS:
+//                 return cast_symbol_to_class(sym)->classType();
+//             case lyric_assembler::SymbolType::CONCEPT:
+//                 return cast_symbol_to_concept(sym)->conceptType();
+//             case lyric_assembler::SymbolType::ENUM:
+//                 return cast_symbol_to_enum(sym)->enumType();
+//             case lyric_assembler::SymbolType::EXISTENTIAL:
+//                 return cast_symbol_to_existential(sym)->existentialType();
+//             case lyric_assembler::SymbolType::INSTANCE:
+//                 return cast_symbol_to_instance(sym)->instanceType();
+//             case lyric_assembler::SymbolType::STRUCT:
+//                 return cast_symbol_to_struct(sym)->structType();
+//             default:
+//                 return nullptr;
+//         }
+//     }
+//
+//     auto *importCache = state->importCache();
+//     auto *typeCache = state->typeCache();
+//
+//     auto moduleImport = importCache->getModule(symbolUrl.getModuleLocation());
+//     if (moduleImport == nullptr)
+//         return nullptr;
+//     auto object = moduleImport->getObject().getObject();
+//     if (!object.isValid())
+//         return nullptr;
+//     auto symbolWalker = object.findSymbol(symbolUrl.getSymbolPath());
+//     if (!symbolWalker.isValid())
+//         return nullptr;
+//
+//     lyric_object::TypeWalker typeWalker;
+//     switch (symbolWalker.getLinkageSection()) {
+//         case lyric_object::LinkageSection::Class: {
+//             typeWalker = object.getClass(symbolWalker.getLinkageIndex()).getClassType();
+//             break;
+//         }
+//         case lyric_object::LinkageSection::Concept: {
+//             typeWalker = object.getConcept(symbolWalker.getLinkageIndex()).getConceptType();
+//             break;
+//         }
+//         case lyric_object::LinkageSection::Enum: {
+//             typeWalker = object.getEnum(symbolWalker.getLinkageIndex()).getEnumType();
+//             break;
+//         }
+//         case lyric_object::LinkageSection::Existential: {
+//             typeWalker = object.getExistential(symbolWalker.getLinkageIndex()).getExistentialType();
+//             break;
+//         }
+//         case lyric_object::LinkageSection::Instance: {
+//             typeWalker = object.getInstance(symbolWalker.getLinkageIndex()).getInstanceType();
+//             break;
+//         }
+//         case lyric_object::LinkageSection::Struct: {
+//             typeWalker = object.getStruct(symbolWalker.getLinkageIndex()).getStructType();
+//             break;
+//         }
+//         default:
+//             return nullptr;
+//     }
+//
+//     auto *typeImport = moduleImport->getType(typeWalker.getDescriptorOffset());
+//     return typeCache->importType(typeImport).orElseThrow();
+// }
 
-    auto *importCache = state->importCache();
+static tempo_utils::Result<lyric_assembler::TypeHandle *>
+get_or_make_definition_type(
+    const lyric_common::TypeDef &typeDef,
+    lyric_assembler::TypeHandle *concreteTypeHandle,
+    absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::TypeHandle *> &typecache,
+    lyric_assembler::ObjectState *state)
+{
+    // if concrete type is not parameterized then we are done, return the handle
+    auto it = typeDef.concreteArgumentsBegin();
+    if (it == typeDef.concreteArgumentsEnd())
+        return concreteTypeHandle;
+
     auto *typeCache = state->typeCache();
 
-    auto moduleImport = importCache->getModule(symbolUrl.getModuleLocation());
-    if (moduleImport == nullptr)
-        return nullptr;
-    auto object = moduleImport->getObject().getObject();
-    if (!object.isValid())
-        return nullptr;
-    auto symbolWalker = object.findSymbol(symbolUrl.getSymbolPath());
-    if (!symbolWalker.isValid())
-        return nullptr;
-
-    lyric_object::TypeWalker typeWalker;
-    switch (symbolWalker.getLinkageSection()) {
-        case lyric_object::LinkageSection::Class: {
-            typeWalker = object.getClass(symbolWalker.getLinkageIndex()).getClassType();
-            break;
-        }
-        case lyric_object::LinkageSection::Concept: {
-            typeWalker = object.getConcept(symbolWalker.getLinkageIndex()).getConceptType();
-            break;
-        }
-        case lyric_object::LinkageSection::Enum: {
-            typeWalker = object.getEnum(symbolWalker.getLinkageIndex()).getEnumType();
-            break;
-        }
-        case lyric_object::LinkageSection::Existential: {
-            typeWalker = object.getExistential(symbolWalker.getLinkageIndex()).getExistentialType();
-            break;
-        }
-        case lyric_object::LinkageSection::Instance: {
-            typeWalker = object.getInstance(symbolWalker.getLinkageIndex()).getInstanceType();
-            break;
-        }
-        case lyric_object::LinkageSection::Struct: {
-            typeWalker = object.getStruct(symbolWalker.getLinkageIndex()).getStructType();
-            break;
-        }
-        default:
-            return nullptr;
+    // otherwise the handle is the supertype, so we make the parameterized type
+    lyric_assembler::TypeHandle *superTypeHandle = nullptr;
+    for (; it != typeDef.concreteArgumentsEnd(); it++) {
+        TU_RETURN_IF_STATUS(typeCache->getOrMakeType(*it));
     }
 
-    auto *typeImport = moduleImport->getType(typeWalker.getDescriptorOffset());
-    return typeCache->importType(typeImport).orElseThrow();
+    auto *typeHandle = new lyric_assembler::TypeHandle(typeDef, superTypeHandle, state);
+    typecache[typeDef] = typeHandle;
+    return typeHandle;
+}
+
+static tempo_utils::Result<lyric_assembler::TypeHandle *>
+make_function_type(
+    const lyric_common::TypeDef &typeDef,
+    lyric_assembler::CallSymbol *callSymbol,
+    absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::TypeHandle *> &typecache,
+    lyric_assembler::ObjectState *state)
+{
+    auto *typeCache = state->typeCache();
+
+    lyric_assembler::TypeHandle *superTypeHandle = nullptr;
+    for (auto it = typeDef.concreteArgumentsBegin(); it != typeDef.concreteArgumentsEnd(); it++) {
+        TU_RETURN_IF_STATUS(typeCache->getOrMakeType(*it));
+    }
+
+    auto *typeHandle = new lyric_assembler::TypeHandle(typeDef, superTypeHandle, state);
+    typecache[typeDef] = typeHandle;
+    return typeHandle;
+}
+
+static tempo_utils::Result<lyric_assembler::TypeHandle *>
+make_global_type(
+    const lyric_common::TypeDef &typeDef,
+    lyric_assembler::StaticSymbol *staticSymbol,
+    absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::TypeHandle *> &typecache,
+    lyric_assembler::ObjectState *state)
+{
+    lyric_assembler::TypeHandle *superTypeHandle = nullptr;
+    auto *typeHandle = new lyric_assembler::TypeHandle(typeDef, superTypeHandle, state);
+    typecache[typeDef] = typeHandle;
+    return typeHandle;
 }
 
 /**
@@ -155,26 +212,38 @@ lyric_assembler::TypeCache::getOrMakeType(const lyric_common::TypeDef &assignabl
     switch (assignableType.getType()) {
 
         case lyric_common::TypeDefType::Concrete: {
-            // import the type handle for the concrete url (this inserts the handle into the cache)
-            auto concreteUrl = assignableType.getConcreteUrl();
-            auto *concreteTypeHandle = get_symbol_type_handle(concreteUrl, m_objectState);
-            if (concreteTypeHandle == nullptr)
-                m_tracer->throwAssemblerInvariant("failed to make type {}; invalid type", assignableType.toString());
+            auto *symbolCache = m_objectState->symbolCache();
 
-            // if concrete type is not parameterized then we are done, return the handle
-            auto it = assignableType.concreteArgumentsBegin();
-            if (it == assignableType.concreteArgumentsEnd())
-                return concreteTypeHandle;
+            // get or import the type handle for the concrete url (which inserts the handle into the cache)
+            AbstractSymbol *sym;
+            TU_ASSIGN_OR_RETURN (sym, symbolCache->getOrImportSymbol(assignableType.getConcreteUrl()));
 
-            // otherwise the handle is the supertype, so we make the parameterized type
-            TypeHandle *superTypeHandle = nullptr;
-            for (; it != assignableType.concreteArgumentsEnd(); it++) {
-                TU_RETURN_IF_STATUS(getOrMakeType(*it));
+            switch (sym->getSymbolType()) {
+                case SymbolType::CALL:
+                    return make_function_type(assignableType, cast_symbol_to_call(sym), m_typecache, m_objectState);
+                case SymbolType::CLASS:
+                    return get_or_make_definition_type(assignableType,
+                        cast_symbol_to_class(sym)->classType(), m_typecache, m_objectState);
+                case SymbolType::CONCEPT:
+                    return get_or_make_definition_type(assignableType,
+                        cast_symbol_to_concept(sym)->conceptType(), m_typecache, m_objectState);
+                case SymbolType::ENUM:
+                    return get_or_make_definition_type(assignableType,
+                        cast_symbol_to_enum(sym)->enumType(), m_typecache, m_objectState);
+                case SymbolType::EXISTENTIAL:
+                    return get_or_make_definition_type(assignableType,
+                        cast_symbol_to_existential(sym)->existentialType(), m_typecache, m_objectState);
+                case SymbolType::INSTANCE:
+                    return get_or_make_definition_type(assignableType,
+                        cast_symbol_to_instance(sym)->instanceType(), m_typecache, m_objectState);
+                case SymbolType::STATIC:
+                    return make_global_type(assignableType, cast_symbol_to_static(sym), m_typecache, m_objectState);
+                case SymbolType::STRUCT:
+                    return get_or_make_definition_type(assignableType,
+                        cast_symbol_to_struct(sym)->structType(), m_typecache, m_objectState);
+                default:
+                    m_tracer->throwAssemblerInvariant("failed to make type {}; invalid type", assignableType.toString());
             }
-
-            auto *typeHandle = new TypeHandle(assignableType, superTypeHandle, m_objectState);
-            m_typecache[assignableType] = typeHandle;
-            return typeHandle;
         }
 
         case lyric_common::TypeDefType::Placeholder: {

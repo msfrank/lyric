@@ -72,11 +72,13 @@ enum IntrinsicType : uint8 {
 
 enum TypeSection : uint8 {
     Invalid,
+    Call,
     Class,
     Concept,
     Enum,
     Existential,
     Instance,
+    Static,
     Struct,
     Type,
 }

@@ -5,14 +5,27 @@
 
 #include "test_helpers.h"
 
+TEST(CoreDefalias, EvaluateGlobalAlias)
+{
+    auto result = runModule(R"(
+        global val Fortytwo: Int = 42
+        defalias Fortytwoalias from Fortytwo
+        Fortytwoalias
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(42))));
+}
+
 TEST(CoreDefalias, EvaluateFunctionAlias)
 {
     auto result = runModule(R"(
-        def add10(x: Int): Int {
+        def Add10(x: Int): Int {
             x + 10
         }
-        defalias add10alias from add10
-        add10alias(5)
+        defalias Add10alias from Add10
+        Add10alias(5)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
