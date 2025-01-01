@@ -29,6 +29,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalArithmetic;
         lyric_common::SymbolUrl m_fundamentalBinding;
         lyric_common::SymbolUrl m_fundamentalBool;
+        lyric_common::SymbolUrl m_fundamentalBytes;
         lyric_common::SymbolUrl m_fundamentalCall;
         lyric_common::SymbolUrl m_fundamentalCategory;
         lyric_common::SymbolUrl m_fundamentalChar;
@@ -87,6 +88,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalCharInstance;
         lyric_common::SymbolUrl m_fundamentalFloatInstance;
         lyric_common::SymbolUrl m_fundamentalIntInstance;
+        lyric_common::SymbolUrl m_fundamentalBytesInstance;
         lyric_common::SymbolUrl m_fundamentalStringInstance;
         lyric_common::SymbolUrl m_fundamentalUrlInstance;
         std::vector<lyric_common::SymbolUrl> m_fundamentalTupleInstance;

@@ -10,5 +10,6 @@
 tempo_utils::Status string_at(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
 tempo_utils::Status string_compare(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
 tempo_utils::Status string_length(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
+tempo_utils::Status string_to_bytes(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
 
 #endif // ZURI_CORE_STRING_TRAPS_H

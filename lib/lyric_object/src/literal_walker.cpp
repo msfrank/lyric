@@ -58,6 +58,8 @@ lyric_object::LiteralWalker::getValueType() const
             return ValueType::Int64;
         case lyo1::Value::Float64Value:
             return ValueType::Float64;
+        case lyo1::Value::BytesValue:
+            return ValueType::Bytes;
         case lyo1::Value::StringValue:
             return ValueType::String;
         default:
@@ -127,7 +129,26 @@ lyric_object::LiteralWalker::stringValue() const
         return {};
     if (literalDescriptor->literal_value_type() != lyo1::Value::StringValue)
         return {};
-    return literalDescriptor->literal_value_as_StringValue()->str()->string_view();
+    auto *str = literalDescriptor->literal_value_as_StringValue()->str();
+    if (str == nullptr)
+        return {};
+    return str->string_view();
+}
+
+std::span<const tu_uint8>
+lyric_object::LiteralWalker::bytesValue() const
+{
+    if (!isValid())
+        return {};
+    auto *literalDescriptor = m_reader->getLiteral(m_literalOffset);
+    if (literalDescriptor == nullptr)
+        return {};
+    if (literalDescriptor->literal_value_type() != lyo1::Value::BytesValue)
+        return {};
+    auto *bytes = literalDescriptor->literal_value_as_BytesValue()->bytes();
+    if (bytes == nullptr)
+        return {};
+    return std::span<const tu_uint8>(bytes->data(), bytes->size());
 }
 
 tu_uint32 lyric_object::LiteralWalker::getDescriptorOffset() const

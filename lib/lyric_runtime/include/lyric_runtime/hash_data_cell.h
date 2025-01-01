@@ -24,6 +24,10 @@ namespace lyric_runtime {
             case DataCellType::CHAR32:
                 return H::combine(std::move(h), cell.type, cell.data.chr);
 
+            case DataCellType::BYTES:
+                // NOTE: we hash the pointer value in this case, not the string content
+                return H::combine(std::move(h), cell.type, cell.data.bytes);
+
             case DataCellType::STRING:
                 // NOTE: we hash the pointer value in this case, not the string content
                 return H::combine(std::move(h), cell.type, cell.data.str);
@@ -37,6 +41,7 @@ namespace lyric_runtime {
                 return H::combine(std::move(h), cell.type, cell.data.ref);
 
             case DataCellType::ACTION:
+            case DataCellType::BINDING:
             case DataCellType::CALL:
             case DataCellType::CLASS:
             case DataCellType::CONCEPT:
@@ -45,6 +50,7 @@ namespace lyric_runtime {
             case DataCellType::FIELD:
             case DataCellType::INSTANCE:
             case DataCellType::NAMESPACE:
+            case DataCellType::STATIC:
             case DataCellType::STRUCT:
                 // NOTE: we hash the pointer value in this case, not the descriptor content
                 return H::combine(std::move(h), cell.type, cell.data.descriptor);

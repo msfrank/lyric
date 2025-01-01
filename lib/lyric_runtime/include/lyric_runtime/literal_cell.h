@@ -1,9 +1,12 @@
 #ifndef LYRIC_RUNTIME_LITERAL_CELL_H
 #define LYRIC_RUNTIME_LITERAL_CELL_H
 
+#include <span>
+
 #include <absl/strings/string_view.h>
 #include <unicode/ustring.h>
 
+#include <tempo_utils/integer_types.h>
 #include <tempo_utils/log_message.h>
 
 namespace lyric_runtime {
@@ -17,6 +20,7 @@ namespace lyric_runtime {
         DBL,
         CHAR32,
         UTF8,
+        BYTES,
     };
 
     struct LiteralCell {
@@ -26,7 +30,8 @@ namespace lyric_runtime {
         explicit LiteralCell(int64_t i64);
         explicit LiteralCell(double dbl);
         explicit LiteralCell(UChar32 chr);
-        explicit LiteralCell(std::string_view sv);
+        explicit LiteralCell(std::string_view utf8);
+        explicit LiteralCell(std::span<const tu_uint8> bytes);
         LiteralCell(const LiteralCell &other);
         LiteralCell(LiteralCell &&other) noexcept;
 
@@ -53,6 +58,10 @@ namespace lyric_runtime {
                 const char *data;
                 int32_t size;
             } utf8;
+            struct {
+                const tu_uint8 *data;
+                int32_t size;
+            } bytes;
         } literal;
     };
 
@@ -76,6 +85,10 @@ namespace lyric_runtime {
             case LiteralCellType::UTF8: {
                 auto state = H::combine(std::move(h), cell.type);
                 return H::combine_contiguous(std::move(state), cell.literal.utf8.data, cell.literal.utf8.size);
+            }
+            case LiteralCellType::BYTES: {
+                auto state = H::combine(std::move(h), cell.type);
+                return H::combine_contiguous(std::move(state), cell.literal.bytes.data, cell.literal.bytes.size);
             }
         }
         TU_UNREACHABLE();

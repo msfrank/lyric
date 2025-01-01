@@ -18,6 +18,8 @@ add_executable(prelude-builder
     object/compile_binding.h
     object/compile_bool.cpp
     object/compile_bool.h
+    object/compile_bytes.cpp
+    object/compile_bytes.h
     object/compile_call.cpp
     object/compile_call.h
     object/compile_category.cpp
@@ -28,8 +30,6 @@ add_executable(prelude-builder
     object/compile_class.h
     object/compile_closure.cpp
     object/compile_closure.h
-    object/compile_code.cpp
-    object/compile_code.h
     object/compile_comparison.cpp
     object/compile_comparison.h
     object/compile_concept.cpp
@@ -96,8 +96,6 @@ add_executable(prelude-builder
     object/compile_unwrap.h
     object/compile_url.cpp
     object/compile_url.h
-    object/compile_utf8.cpp
-    object/compile_utf8.h
     object/compile_varargs.cpp
     object/compile_varargs.h
     object/lib_builder.cpp
@@ -124,6 +122,8 @@ add_custom_target(prelude-object DEPENDS ${PRELUDE_OBJECT_PATH})
 # build prelude plugin as a shared library
 add_library(prelude-plugin SHARED
     include/lyric_bootstrap/internal/bootstrap_types.h
+    plugin/bytes_traps.cpp
+    plugin/bytes_traps.h
     plugin/category_ref.cpp
     plugin/category_ref.h
     plugin/closure_ref.cpp

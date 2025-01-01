@@ -1,5 +1,6 @@
 
 #include <lyric_runtime/base_ref.h>
+#include <lyric_runtime/bytes_ref.h>
 #include <lyric_runtime/heap_manager.h>
 #include <lyric_runtime/system_scheduler.h>
 #include <lyric_runtime/string_ref.h>
@@ -98,6 +99,49 @@ lyric_runtime::HeapManager::loadUrlOntoStack(const tempo_utils::Url &url)
     auto *instance = new UrlRef(url);
     m_heap->insertInstance(instance);
     auto cell = DataCell::forUrl(instance);
+    currentCoro->pushData(cell);
+
+    return {};
+}
+
+lyric_runtime::DataCell
+lyric_runtime::HeapManager::allocateBytes(std::span<const tu_uint8> bytes)
+{
+    auto *instance = new BytesRef(bytes.data(), bytes.size());
+    m_heap->insertInstance(instance);
+    return DataCell::forBytes(instance);
+}
+
+tempo_utils::Status
+lyric_runtime::HeapManager::loadLiteralBytesOntoStack(tu_uint32 address)
+{
+    auto *currentCoro = m_systemScheduler->currentCoro();
+    TU_ASSERT(currentCoro != nullptr);
+    auto *sp = currentCoro->peekSP();
+    TU_ASSERT (sp != nullptr);
+
+    LiteralCell literal;
+    tempo_utils::Status status;
+    literal = m_segmentManager->resolveLiteral(sp, address, status);
+    TU_RETURN_IF_NOT_OK (status);
+
+    auto *instance = new BytesRef(literal);
+    m_heap->insertInstance(instance);
+    auto cell = DataCell::forBytes(instance);
+    currentCoro->pushData(cell);
+
+    return status;
+}
+
+tempo_utils::Status
+lyric_runtime::HeapManager::loadBytesOntoStack(std::span<const tu_uint8> bytes)
+{
+    auto *currentCoro = m_systemScheduler->currentCoro();
+    TU_ASSERT(currentCoro != nullptr);
+
+    auto *instance = new BytesRef(bytes.data(), bytes.size());
+    m_heap->insertInstance(instance);
+    auto cell = DataCell::forBytes(instance);
     currentCoro->pushData(cell);
 
     return {};

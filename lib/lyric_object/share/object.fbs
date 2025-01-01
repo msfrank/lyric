@@ -30,8 +30,9 @@ enum TrueFalseNilUndef  : uint8 { Nil = 0, Undef, False, True }
 table TFNUValue         { tfnu: TrueFalseNilUndef; }    // true, false, nil, or undef value
 table Int64Value        { i64: int64; }                 // int64 value
 table Float64Value      { dbl: float64; }               // float64 value
-table CharValue         { chr: int32; }                 // char value serialized as a utf32 code unit
-table StringValue       { str: string; }                // string value serialized as a utf8 string
+table CharValue         { chr: int32; }                 // char value encoded as a utf32 code unit
+table StringValue       { str: string; }                // utf-8 encoded string value
+table BytesValue        { bytes: [ubyte]; }             // bytes value
 
 union Value {
     TFNUValue,
@@ -39,9 +40,9 @@ union Value {
     Float64Value,
     CharValue,
     StringValue,
+    BytesValue,
 }
 
-// FIXME: rename to ConstantDescriptor
 // FIXME: add constants to symbol table
 table LiteralDescriptor {
     literal_value: Value;                        // the value of the literal
@@ -55,6 +56,7 @@ enum IntrinsicType : uint8 {
     Char,
     Float64,
     Int64,
+    Bytes,
     String,
     Url,
     Class,

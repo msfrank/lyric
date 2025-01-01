@@ -16,6 +16,7 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/base_ref.h
     include/lyric_runtime/bytecode_interpreter.h
     include/lyric_runtime/bytecode_segment.h
+    include/lyric_runtime/bytes_ref.h
     include/lyric_runtime/call_cell.h
     include/lyric_runtime/chain_loader.h
     include/lyric_runtime/data_cell.h
@@ -54,6 +55,7 @@ target_sources(lyric_runtime PRIVATE
     src/base_ref.cpp
     src/bytecode_interpreter.cpp
     src/bytecode_segment.cpp
+    src/bytes_ref.cpp
     src/call_cell.cpp
     src/chain_loader.cpp
     src/data_cell.cpp

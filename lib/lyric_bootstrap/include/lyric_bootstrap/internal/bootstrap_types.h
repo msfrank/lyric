@@ -6,6 +6,9 @@
 namespace lyric_bootstrap::internal {
 
     enum class BootstrapTrap : uint32_t {
+        BYTES_AT,
+        BYTES_COMPARE,
+        BYTES_LENGTH,
         CATEGORY_ALLOC,
         CLOSURE_ALLOC,
         CLOSURE_APPLY,
@@ -44,13 +47,10 @@ namespace lyric_bootstrap::internal {
         SINGLETON_ALLOC,
         STATUS_ALLOC,
         STATUS_CTOR,
-        STRING_ALLOC,
         STRING_AT,
         STRING_COMPARE,
-        STRING_CTOR,
         STRING_LENGTH,
-        URL_ALLOC,
-        URL_CTOR,
+        STRING_TO_BYTES,
         URL_EQUALS,
         LAST_,
     };

@@ -2,6 +2,7 @@
 #define ZURI_CORE_MAP_KEY_H
 
 #include <lyric_runtime/base_ref.h>
+#include <lyric_runtime/bytes_ref.h>
 #include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/string_ref.h>
 #include <lyric_runtime/url_ref.h>
@@ -37,11 +38,16 @@ H AbslHashValue(H state, const MapKey &key) {
         case lyric_runtime::DataCellType::ACTION:
         case lyric_runtime::DataCellType::EXISTENTIAL:
         case lyric_runtime::DataCellType::NAMESPACE:
+        case lyric_runtime::DataCellType::BINDING:
+        case lyric_runtime::DataCellType::STATIC:
             return H::combine(std::move(state),
                 cell.data.descriptor->getSegmentIndex(),
                 cell.data.descriptor->getDescriptorIndex());
         case lyric_runtime::DataCellType::REF:
             cell.data.ref->hashValue(absl::HashState::Create(&state));
+            return std::move(state);
+        case lyric_runtime::DataCellType::BYTES:
+            cell.data.bytes->hashValue(absl::HashState::Create(&state));
             return std::move(state);
         case lyric_runtime::DataCellType::STRING:
             cell.data.str->hashValue(absl::HashState::Create(&state));

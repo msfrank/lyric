@@ -28,6 +28,7 @@ namespace lyric_runtime {
         DBL,
         CHAR32,
         REF,
+        BYTES,
         STRING,
         URL,
         CLASS,
@@ -41,6 +42,8 @@ namespace lyric_runtime {
         TYPE,
         EXISTENTIAL,
         NAMESPACE,
+        BINDING,
+        STATIC,
     };
 
     struct DataCell {
@@ -63,7 +66,8 @@ namespace lyric_runtime {
         static DataCell nil();
         static DataCell undef();
 
-        static DataCell forLiteral(const lyric_runtime::LiteralCell &literal);
+        static DataCell forLiteral(const LiteralCell &literal);
+        static DataCell forBytes(BytesRef *bytes);
         static DataCell forDescriptor(DescriptorEntry *descriptor);
         static DataCell forRef(BaseRef *ref);
         static DataCell forString(StringRef *str);
@@ -86,7 +90,7 @@ namespace lyric_runtime {
         } data;
     };
 
-    bool operator==(const lyric_runtime::DataCell &lhs, const lyric_runtime::DataCell &rhs);
+    bool operator==(const DataCell &lhs, const DataCell &rhs);
 
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const DataCell &cell);
 }

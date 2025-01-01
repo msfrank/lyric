@@ -1,15 +1,15 @@
-#ifndef LYRIC_RUNTIME_STRING_REF_H
-#define LYRIC_RUNTIME_STRING_REF_H
+#ifndef LYRIC_RUNTIME_BYTES_REF_H
+#define LYRIC_RUNTIME_BYTES_REF_H
 
 #include "abstract_ref.h"
 
 namespace lyric_runtime {
 
-    class StringRef final : public AbstractRef {
+    class BytesRef final : public AbstractRef {
     public:
-        explicit StringRef(const LiteralCell &literal);
-        StringRef(const char *data, int32_t size);
-        ~StringRef() override;
+        explicit BytesRef(const LiteralCell &literal);
+        BytesRef(const tu_uint8 *data, int32_t size);
+        ~BytesRef() override;
 
         bool equals(const AbstractRef *other) const override;
         bool rawSize(tu_int32 &size) const override;
@@ -20,12 +20,12 @@ namespace lyric_runtime {
         tempo_utils::StatusCode errorStatusCode() override;
         std::string toString() const override;
 
-        lyric_runtime::DataCell stringAt(int index) const;
-        lyric_runtime::DataCell stringCompare(StringRef *other) const;
-        lyric_runtime::DataCell stringLength() const;
+        DataCell byteAt(int index) const;
+        DataCell bytesCompare(BytesRef *other) const;
+        DataCell bytesLength() const;
 
-        const char *getStringData() const;
-        int32_t getStringSize() const;
+        const tu_uint8 *getBytesData() const;
+        int32_t getBytesSize() const;
 
         bool isReachable() const override;
         void setReachable() override;
@@ -36,22 +36,22 @@ namespace lyric_runtime {
          * methods below have the default no-op implementation
          */
         const VirtualTable *getVirtualTable() const override;
-        lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
-        lyric_runtime::DataCell setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value) override;
+        DataCell getField(const DataCell &field) const override;
+        DataCell setField(const DataCell &field, const DataCell &value) override;
         bool uriValue(tempo_utils::Url &url) const override;
         bool iteratorValid() override;
         bool iteratorNext(DataCell &next) override;
         bool prepareFuture(std::shared_ptr<Promise> promise) override;
         bool awaitFuture(SystemScheduler *systemScheduler) override;
         bool resolveFuture(DataCell &result) override;
-        bool applyClosure(Task *task, std::vector<DataCell> &args, lyric_runtime::InterpreterState *state) override;
+        bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) override;
 
     private:
         bool m_owned;
-        const char *m_data;
+        const tu_uint8 *m_data;
         int32_t m_size;
         bool m_reachable;
     };
 }
 
-#endif // LYRIC_RUNTIME_STRING_REF_H
+#endif // LYRIC_RUNTIME_BYTES_REF_H

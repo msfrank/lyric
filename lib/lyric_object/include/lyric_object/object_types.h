@@ -163,6 +163,7 @@ namespace lyric_object {
         Int64,
         Float64,
         Char,
+        Bytes,
         String,
         Url,
     };

@@ -164,6 +164,8 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
                 case lyric_runtime::DataCellType::FIELD:       *os << "cell contains field descriptor"; break;
                 case lyric_runtime::DataCellType::ACTION:      *os << "cell contains action descriptor"; break;
                 case lyric_runtime::DataCellType::NAMESPACE:   *os << "cell contains namespace descriptor"; break;
+                case lyric_runtime::DataCellType::BINDING:     *os << "cell contains binding descriptor"; break;
+                case lyric_runtime::DataCellType::STATIC:      *os << "cell contains static descriptor"; break;
                 default:
                     TU_UNREACHABLE();
             }
@@ -177,6 +179,7 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
                 case lyric_runtime::DataCellType::I64:         *os << "cell contains i64 cell"; break;
                 case lyric_runtime::DataCellType::DBL:         *os << "cell contains dbl cell"; break;
                 case lyric_runtime::DataCellType::CHAR32:      *os << "cell contains chr cell"; break;
+                case lyric_runtime::DataCellType::BYTES:       *os << "cell contains bytes cell"; break;
                 case lyric_runtime::DataCellType::STRING:      *os << "cell contains string cell"; break;
                 case lyric_runtime::DataCellType::URL:         *os << "cell contains url cell"; break;
                 case lyric_runtime::DataCellType::REF:         *os << "cell contains ref cell"; break;
@@ -191,6 +194,8 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
                 case lyric_runtime::DataCellType::ACTION:      *os << "cell contains action cell"; break;
                 case lyric_runtime::DataCellType::EXISTENTIAL: *os << "cell contains existential cell"; break;
                 case lyric_runtime::DataCellType::NAMESPACE:   *os << "cell contains namespace cell"; break;
+                case lyric_runtime::DataCellType::BINDING:     *os << "cell contains binding cell"; break;
+                case lyric_runtime::DataCellType::STATIC:      *os << "cell contains static cell"; break;
             }
             break;
         }

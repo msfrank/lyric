@@ -1,10 +1,10 @@
 
 #include <lyric_bootstrap/internal/bootstrap_types.h>
 
+#include "bytes_traps.h"
 #include "category_ref.h"
 #include "closure_ref.h"
 #include "float_traps.h"
-#include "iterator_ref.h"
 #include "map_ref.h"
 #include "native_prelude.h"
 #include "object_ref.h"
@@ -21,6 +21,12 @@ NativeCore::getTrap(uint32_t index) const
 {
     auto trapFunction = static_cast<lyric_bootstrap::internal::BootstrapTrap>(index);
     switch (trapFunction) {
+        case lyric_bootstrap::internal::BootstrapTrap::BYTES_AT:
+            return bytes_at;
+        case lyric_bootstrap::internal::BootstrapTrap::BYTES_COMPARE:
+            return bytes_compare;
+        case lyric_bootstrap::internal::BootstrapTrap::BYTES_LENGTH:
+            return bytes_length;
         case lyric_bootstrap::internal::BootstrapTrap::CATEGORY_ALLOC:
             return category_alloc;
         case lyric_bootstrap::internal::BootstrapTrap::CLOSURE_ALLOC:
@@ -103,6 +109,8 @@ NativeCore::getTrap(uint32_t index) const
             return string_compare;
         case lyric_bootstrap::internal::BootstrapTrap::STRING_LENGTH:
             return string_length;
+        case lyric_bootstrap::internal::BootstrapTrap::STRING_TO_BYTES:
+            return string_to_bytes;
         case lyric_bootstrap::internal::BootstrapTrap::URL_EQUALS:
             return url_equals;
         case lyric_bootstrap::internal::BootstrapTrap::LAST_:

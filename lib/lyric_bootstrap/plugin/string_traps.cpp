@@ -20,7 +20,7 @@ string_at(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STRING);
     auto *instance = receiver.data.str;
     currentCoro->pushData(instance->stringAt(index.data.i64));
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -39,7 +39,7 @@ string_compare(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interp
     auto *lhs = arg0.data.str;
     auto *rhs = arg1.data.str;
     currentCoro->pushData(lhs->stringCompare(rhs));
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -53,5 +53,23 @@ string_length(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STRING);
     auto *instance = receiver.data.str;
     currentCoro->pushData(instance->stringLength());
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
+}
+
+tempo_utils::Status
+string_to_bytes(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+{
+    auto *heapManager = state->heapManager();
+
+    auto *currentCoro = state->currentCoro();
+
+    auto &frame = currentCoro->peekCall();
+
+    auto receiver = frame.getReceiver();
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::STRING);
+    auto *instance = receiver.data.str;
+    auto *data = (const tu_uint8 *) instance->getStringData();
+    auto size = instance->getStringSize();
+    auto bytes = std::span<const tu_uint8>(data, size);
+    return heapManager->loadBytesOntoStack(bytes);
 }

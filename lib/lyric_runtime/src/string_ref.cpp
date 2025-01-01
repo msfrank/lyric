@@ -96,7 +96,7 @@ lyric_runtime::StringRef::serializeValue(lyric_serde::PatchsetState &state, tu_u
     }
     auto appendValueResult = state.appendValue(tempo_utils::AttrValue(s));
     if (appendValueResult.isStatus()) {
-        index = lyric_runtime::INVALID_ADDRESS_U32;
+        index = INVALID_ADDRESS_U32;
         return false;
     }
     auto *value = appendValueResult.getResult();
@@ -124,10 +124,12 @@ lyric_runtime::DataCell
 lyric_runtime::StringRef::stringAt(int index) const
 {
     if (m_data == nullptr)
-        return lyric_runtime::DataCell::nil();
+        return DataCell::nil();
     UChar32 char32;
-    U8_GET_UNSAFE((const tu_uint8 *) m_data, index, char32);
-    return lyric_runtime::DataCell(char32);
+    U8_GET((const tu_uint8 *) m_data, 0, index, m_size, char32);
+    if (char32 < 0)
+        return DataCell::nil();
+    return DataCell(char32);
 }
 
 lyric_runtime::DataCell
@@ -136,18 +138,18 @@ lyric_runtime::StringRef::stringCompare(StringRef *other) const
     TU_ASSERT (other != nullptr);
 
     if (m_data == nullptr && other->m_data == nullptr)
-        return lyric_runtime::DataCell(static_cast<int64_t>(0));
+        return DataCell(static_cast<int64_t>(0));
     if (m_data == nullptr && other->m_data != nullptr)
-        return lyric_runtime::DataCell(static_cast<int64_t>(-1));
+        return DataCell(static_cast<int64_t>(-1));
     if (m_data != nullptr && other->m_data == nullptr)
-        return lyric_runtime::DataCell(static_cast<int64_t>(1));
+        return DataCell(static_cast<int64_t>(1));
 
     UCharIterator lhs, rhs;
     uiter_setUTF8(&lhs, m_data, m_size);
     uiter_setUTF8(&rhs, other->m_data, other->m_size);
 
     auto cmp = u_strCompareIter(&lhs, &rhs, true);
-    return lyric_runtime::DataCell(static_cast<int64_t>(cmp));
+    return DataCell(static_cast<int64_t>(cmp));
 }
 
 lyric_runtime::DataCell

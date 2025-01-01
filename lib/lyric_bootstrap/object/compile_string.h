@@ -8,7 +8,8 @@ void build_core_String(
     BuilderState &state,
     const CoreExistential *StringExistential,
     const CoreType *IntType,
-    const CoreType *CharType);
+    const CoreType *CharType,
+    const CoreType *BytesType);
 
 CoreInstance *build_core_StringInstance(
     BuilderState &state,

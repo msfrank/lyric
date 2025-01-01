@@ -14,6 +14,8 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Binding";
         case FundamentalSymbol::Bool:
             return "Bool";
+        case FundamentalSymbol::Bytes:
+            return "Bytes";
         case FundamentalSymbol::Category:
             return "Category";
         case FundamentalSymbol::Call:
@@ -154,6 +156,8 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "FloatInstance";
         case FundamentalSymbol::IntInstance:
             return "IntInstance";
+        case FundamentalSymbol::BytesInstance:
+            return "BytesInstance";
         case FundamentalSymbol::StringInstance:
             return "StringInstance";
         case FundamentalSymbol::UrlInstance:

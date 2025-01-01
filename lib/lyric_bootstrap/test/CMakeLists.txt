@@ -7,6 +7,7 @@ include(GoogleTest)
 set(TEST_CASES
     assignment_tests.cpp
     Bool_tests.cpp
+    Bytes_tests.cpp
     Char_tests.cpp
     conditional_tests.cpp
     def_tests.cpp

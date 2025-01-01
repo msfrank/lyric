@@ -6,12 +6,12 @@
 #include "compile_arithmetic.h"
 #include "compile_binding.h"
 #include "compile_bool.h"
+#include "compile_bytes.h"
 #include "compile_call.h"
 #include "compile_category.h"
 #include "compile_char.h"
 #include "compile_class.h"
 #include "compile_closure.h"
-#include "compile_code.h"
 #include "compile_comparison.h"
 #include "compile_concept.h"
 #include "compile_descriptor.h"
@@ -43,7 +43,6 @@
 #include "compile_type.h"
 #include "compile_unwrap.h"
 #include "compile_url.h"
-#include "compile_utf8.h"
 #include "compile_varargs.h"
 #include "compile_status.h"
 
@@ -77,6 +76,7 @@ main(int argc, char *argv[])
     auto *CharExistential = declare_core_Char(state, IntrinsicExistential);
     auto *IntExistential = declare_core_Int(state, IntrinsicExistential);
     auto *FloatExistential = declare_core_Float(state, IntrinsicExistential);
+    auto *BytesExistential = declare_core_Bytes(state, IntrinsicExistential);
     auto *StringExistential = declare_core_String(state, IntrinsicExistential);
     auto *UrlExistential = declare_core_Url(state, IntrinsicExistential);
 
@@ -115,7 +115,9 @@ main(int argc, char *argv[])
     build_core_Char(state, CharExistential);
     build_core_Int(state, IntExistential);
     build_core_Float(state, FloatExistential);
-    build_core_String(state, StringExistential, IntExistential->existentialType, CharExistential->existentialType);
+    build_core_Bytes(state, BytesExistential, IntExistential->existentialType);
+    build_core_String(state, StringExistential, IntExistential->existentialType,
+        CharExistential->existentialType, BytesExistential->existentialType);
     build_core_Url(state, UrlExistential);
     build_core_Descriptor(state, DescriptorExistential);
     build_core_Type(state, TypeExistential, IntExistential->existentialType, BoolExistential->existentialType);
@@ -190,6 +192,9 @@ main(int argc, char *argv[])
         BoolExistential->existentialType);
     build_core_FloatInstance(state, FloatExistential->existentialType, SingletonInstance,
         ArithmeticConcept, ComparisonConcept, EqualityConcept, OrderedConcept,
+        IntExistential->existentialType, BoolExistential->existentialType);
+    build_core_BytesInstance(state, BytesExistential->existentialType, SingletonInstance,
+        ComparisonConcept, EqualityConcept, OrderedConcept,
         IntExistential->existentialType, BoolExistential->existentialType);
     build_core_StringInstance(state, StringExistential->existentialType, SingletonInstance,
         ComparisonConcept, EqualityConcept, OrderedConcept,

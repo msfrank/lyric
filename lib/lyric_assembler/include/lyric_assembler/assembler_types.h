@@ -23,6 +23,7 @@ namespace lyric_assembler {
         Arithmetic,
         Binding,
         Bool,
+        Bytes,
         Call,
         Category,
         Char,
@@ -99,6 +100,7 @@ namespace lyric_assembler {
         CharInstance,
         FloatInstance,
         IntInstance,
+        BytesInstance,
         StringInstance,
         UrlInstance,
 

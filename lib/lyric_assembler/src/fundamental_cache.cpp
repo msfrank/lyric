@@ -19,6 +19,8 @@ lyric_assembler::FundamentalCache::FundamentalCache(
         fundamentalTypeToSymbolPath(FundamentalSymbol::Binding));
     m_fundamentalBool = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Bool));
+    m_fundamentalBytes = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::Bytes));
     m_fundamentalCall = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Call));
     m_fundamentalCategory = lyric_common::SymbolUrl(preludeLocation,
@@ -129,6 +131,8 @@ lyric_assembler::FundamentalCache::FundamentalCache(
         fundamentalTypeToSymbolPath(FundamentalSymbol::FloatInstance));
     m_fundamentalIntInstance = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::IntInstance));
+    m_fundamentalBytesInstance = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::BytesInstance));
     m_fundamentalStringInstance = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::StringInstance));
     m_fundamentalUrlInstance = lyric_common::SymbolUrl(preludeLocation,
@@ -217,6 +221,8 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalBinding;
         case FundamentalSymbol::Bool:
             return m_fundamentalBool;
+        case FundamentalSymbol::Bytes:
+            return m_fundamentalBytes;
         case FundamentalSymbol::Call:
             return m_fundamentalCall;
         case FundamentalSymbol::Category:
@@ -358,6 +364,8 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalFloatInstance;
         case FundamentalSymbol::IntInstance:
             return m_fundamentalIntInstance;
+        case FundamentalSymbol::BytesInstance:
+            return m_fundamentalBytesInstance;
         case FundamentalSymbol::StringInstance:
             return m_fundamentalStringInstance;
         case FundamentalSymbol::UrlInstance:
