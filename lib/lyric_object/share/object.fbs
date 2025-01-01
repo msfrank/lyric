@@ -72,6 +72,7 @@ enum IntrinsicType : uint8 {
 
 enum TypeSection : uint8 {
     Invalid,
+    Binding,
     Call,
     Class,
     Concept,

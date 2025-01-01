@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/assembler_types.h>
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
@@ -32,6 +33,9 @@ lyric_assembler::internal::touch_type(
         AbstractSymbol *symbol;
         TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(symbolUrl));
         switch (symbol->getSymbolType()) {
+            case SymbolType::BINDING:
+                TU_RETURN_IF_NOT_OK (writer.touchBinding(cast_symbol_to_binding(symbol)));
+                break;
             case SymbolType::CALL:
                 TU_RETURN_IF_NOT_OK (writer.touchCall(cast_symbol_to_call(symbol)));
                 break;
@@ -109,6 +113,9 @@ write_type(
             TU_ASSIGN_OR_RETURN (section, writer.getSymbolSection(concreteUrl));
             TU_ASSIGN_OR_RETURN (concreteDescriptor, writer.getSymbolAddress(concreteUrl));
             switch (section) {
+                case lyric_object::LinkageSection::Binding:
+                    concreteSection = lyo1::TypeSection::Binding;
+                    break;
                 case lyric_object::LinkageSection::Call:
                     concreteSection = lyo1::TypeSection::Call;
                     break;

@@ -41,16 +41,12 @@ namespace lyric_archiver {
             const lyric_common::ModuleLocation &location,
             const lyric_object::LyricObject &object);
 
-        tempo_utils::Status archiveSymbol(
-            const lyric_common::ModuleLocation &srcLocation,
-            const std::string &srcIdentifier,
-            const std::string &dstIdentifier = {},
-            lyric_object::AccessType access = lyric_object::AccessType::Public);
+        tempo_utils::Result<lyric_common::SymbolUrl> archiveSymbol(const lyric_common::SymbolUrl &symbolUrl);
 
-        tempo_utils::Status archiveSymbol(
-            const lyric_common::SymbolUrl &srcUrl,
-            const std::string &dstIdentifier,
-            lyric_object::AccessType access = lyric_object::AccessType::Public);
+        tempo_utils::Result<lyric_assembler::BindingSymbol *> declareBinding(
+            const std::string &name,
+            lyric_object::AccessType access,
+            const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
         tempo_utils::Result<lyric_object::LyricObject> toObject() const;
 

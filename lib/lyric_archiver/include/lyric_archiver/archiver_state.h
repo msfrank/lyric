@@ -39,10 +39,7 @@ namespace lyric_archiver {
             const lyric_common::ModuleLocation &location,
             const lyric_object::LyricObject &object);
 
-        tempo_utils::Status archiveSymbol(
-            const lyric_common::SymbolUrl &symbolUrl,
-            const std::string &identifier,
-            lyric_object::AccessType access);
+        tempo_utils::Result<lyric_common::SymbolUrl> archiveSymbol(const lyric_common::SymbolUrl &symbolUrl);
 
         tempo_utils::Status putPendingProc(
             const lyric_common::SymbolUrl &importUrl,
@@ -52,6 +49,11 @@ namespace lyric_archiver {
             lyric_assembler::ProcHandle *procHandle);
 
         tempo_utils::Status performFixups();
+
+        tempo_utils::Result<lyric_assembler::BindingSymbol *> declareBinding(
+            const std::string &name,
+            lyric_object::AccessType access,
+            const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
         tempo_utils::Result<lyric_object::LyricObject> toObject() const;
 

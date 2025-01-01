@@ -66,6 +66,7 @@ namespace lyric_schema {
 
         New,                       // create object
         Lambda,                    // anonymous function
+        LambdaFrom,                // anonymous function from an existing function
 
         Block,                     // list of forms evaluated in order
         If,                        // if statement
@@ -238,6 +239,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::New, "New");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstLambdaClass(
         &kLyricAstNs, LyricAstId::Lambda, "Lambda");
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstLambdaFromClass(
+        &kLyricAstNs, LyricAstId::LambdaFrom, "LambdaFrom");
 
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstBlockClass(
         &kLyricAstNs, LyricAstId::Block, "Block");
@@ -466,6 +469,7 @@ namespace lyric_schema {
 
         &kLyricAstNewClass,
         &kLyricAstLambdaClass,
+        &kLyricAstLambdaFromClass,
 
         &kLyricAstBlockClass,
         &kLyricAstIfClass,

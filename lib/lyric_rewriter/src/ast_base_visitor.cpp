@@ -70,6 +70,7 @@ lyric_rewriter::AstBaseVisitor::makeVisitor(const lyric_parser::ArchetypeNode *n
         case lyric_schema::LyricAstId::Ctx:
         case lyric_schema::LyricAstId::TypeOf:
         case lyric_schema::LyricAstId::DefAlias:
+        case lyric_schema::LyricAstId::LambdaFrom:
             visitor = std::make_shared<AstTerminalVisitor>(astId, m_state);
             break;
 

@@ -1,4 +1,5 @@
 
+#include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/compiler_utils.h>
 #include <lyric_compiler/lambda_handler.h>
 #include <lyric_compiler/lambda_utils.h>
@@ -144,5 +145,70 @@ lyric_compiler::LambdaProc::decide(
     auto handler = std::make_unique<ProcHandler>(
         m_lambda->procHandle, /* requiresResult= */ true, getBlock(), getDriver());
     ctx.setGrouping(std::move(handler));
+    return {};
+}
+
+lyric_compiler::LambdaFrom::LambdaFrom(
+    bool isSideEffect,
+    lyric_assembler::CodeFragment *fragment,
+    lyric_assembler::BlockHandle *block,
+    CompilerScanDriver *driver)
+    : BaseChoice(block, driver),
+      m_isSideEffect(isSideEffect),
+      m_fragment(fragment)
+{
+    TU_ASSERT (m_fragment != nullptr);
+}
+
+tempo_utils::Status
+lyric_compiler::LambdaFrom::decide(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    DecideContext &ctx)
+{
+    TU_LOG_INFO << "decide LambdaFrom@" << this;
+
+    auto *block = getBlock();
+    auto *driver = getDriver();
+    auto *fundamentalCache = driver->getFundamentalCache();
+    auto *symbolCache = driver->getSymbolCache();
+    auto *typeSystem = driver->getTypeSystem();
+
+    // resolve the source function
+    lyric_common::SymbolPath symbolPath;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstSymbolPath, symbolPath));
+    lyric_common::SymbolUrl symbolUrl;
+    TU_ASSIGN_OR_RETURN (symbolUrl, block->resolveDefinition(symbolPath));
+    lyric_assembler::AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, symbolCache->getOrImportSymbol(symbolUrl));
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+        return block->logAndContinue(CompilerCondition::kInvalidSymbol,
+            tempo_tracing::LogSeverity::kError,
+            "lambda cannot be constructed from {}", symbolUrl.toString());
+
+    // define the lambda builder
+    lyric_assembler::CallSymbol *builderCall;
+    TU_ASSIGN_OR_RETURN (builderCall, define_lambda_builder(
+        cast_symbol_to_call(sym), block, fundamentalCache, symbolCache, typeSystem));
+
+    // invoke the lambda builder
+    lyric_assembler::CallableInvoker invoker;
+    TU_RETURN_IF_NOT_OK (block->prepareFunction(builderCall->getName(), invoker));
+
+    lyric_typing::CallsiteReifier reifier(typeSystem);
+    TU_RETURN_IF_NOT_OK (reifier.initialize(invoker));
+
+    // the return value of the lambda builder is the lambda closure
+    lyric_common::TypeDef resultType;
+    TU_ASSIGN_OR_RETURN (resultType, invoker.invoke(block, reifier, m_fragment));
+
+    if (m_isSideEffect) {
+        if (resultType.getType() != lyric_common::TypeDefType::NoReturn) {
+            TU_RETURN_IF_NOT_OK (m_fragment->popValue());
+        }
+    } else {
+        TU_RETURN_IF_NOT_OK (driver->pushResult(resultType));
+    }
+
     return {};
 }

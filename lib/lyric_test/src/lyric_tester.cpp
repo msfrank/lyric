@@ -125,6 +125,9 @@ lyric_test::LyricTester::runModule(const std::string &code, const std::filesyste
     loaderChain.push_back(builder->getBootstrapLoader());
     loaderChain.push_back(createDependencyLoaderResult.getResult());
     loaderChain.push_back(builder->getPackageLoader());
+    if (m_options.fallbackLoader) {
+        loaderChain.push_back(m_options.fallbackLoader);
+    }
     options.loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
 
     // construct the interpreter state
@@ -175,6 +178,9 @@ lyric_test::LyricTester::runModule(
     loaderChain.push_back(builder->getBootstrapLoader());
     loaderChain.push_back(std::make_shared<lyric_packaging::PackageLoader>(std::vector{m_runner->getInstallDirectory()}));
     loaderChain.push_back(builder->getPackageLoader());
+    if (m_options.fallbackLoader) {
+        loaderChain.push_back(m_options.fallbackLoader);
+    }
     options.loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
 
     auto mainLocation = lyric_common::ModuleLocation::fromUrl(packageUrl);

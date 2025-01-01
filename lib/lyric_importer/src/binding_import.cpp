@@ -31,6 +31,7 @@ lyric_importer::BindingImport::getSymbolUrl()
 lyric_object::AccessType
 lyric_importer::BindingImport::getAccess()
 {
+    load();
     return m_priv->access;
 }
 

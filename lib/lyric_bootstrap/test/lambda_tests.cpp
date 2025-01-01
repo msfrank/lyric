@@ -21,12 +21,39 @@ TEST(CoreLambda, TestEvaluatePureLambda)
                      RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Function1")))));
 }
 
+TEST(CoreLambda, TestEvaluatePureLambdaFrom)
+{
+    auto result = runModule(R"(
+        def fn(n: Int): Int {
+          n + 1
+        }
+        lambda from fn
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(
+                     RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Function1")))));
+}
+
 TEST(CoreLambda, TestEvaluateInvokePureLambda)
 {
     auto result = runModule(R"(
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + 1
         }
+        f.apply(2)
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
+}
+
+TEST(CoreLambda, TestEvaluateInvokePureLambdaFrom)
+{
+    auto result = runModule(R"(
+        def fn(n: Int): Int {
+          n + 1
+        }
+        val f: Function1[Int,Int] = lambda from fn
         f.apply(2)
     )");
 

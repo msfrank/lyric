@@ -9,6 +9,7 @@ block               : form+ ;
 form                : statement | expression | macro ;
 
 expression          : basicExpression
+                    | lambdaFromExpression
                     | lambdaExpression
                     | ifThenElseExpression
                     | matchExpression
@@ -278,6 +279,10 @@ usingStatement      : UsingKeyword FromKeyword moduleLocation usingSpec         
 // lambda expression
 
 lambdaExpression    : LambdaKeyword paramSpec returnSpec CurlyOpen block CurlyClose ;
+
+// lambda-from expression
+
+lambdaFromExpression: LambdaKeyword FromKeyword symbolPath ;
 
 
 // return statement

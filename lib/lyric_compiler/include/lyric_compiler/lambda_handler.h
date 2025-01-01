@@ -53,6 +53,25 @@ namespace lyric_compiler {
     private:
         Lambda *m_lambda;
     };
+
+    class LambdaFrom : public BaseChoice {
+    public:
+        LambdaFrom(
+            bool isSideEffect,
+            lyric_assembler::CodeFragment *fragment,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
+
+        tempo_utils::Status decide(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            DecideContext &ctx) override;
+
+    private:
+        Lambda m_lambda;
+        bool m_isSideEffect;
+        lyric_assembler::CodeFragment *m_fragment;
+    };
 }
 
 #endif // LYRIC_COMPILER_LAMBDA_HANDLER_H

@@ -667,6 +667,11 @@ void lyric_parser::internal::ModuleArchetype::exitLambdaExpression(ModuleParser:
     return ModuleConstructOps::exitLambdaExpression(ctx);
 }
 
+void lyric_parser::internal::ModuleArchetype::exitLambdaFromExpression(ModuleParser::LambdaFromExpressionContext *ctx)
+{
+    return ModuleConstructOps::exitLambdaFromExpression(ctx);
+}
+
 void lyric_parser::internal::ModuleArchetype::exitDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx)
 {
     return ModuleConstructOps::exitDefaultInitializerTypedNew(ctx);

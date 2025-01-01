@@ -17,6 +17,7 @@ namespace lyric_parser::internal {
 
         void exitPairExpression(ModuleParser::PairExpressionContext *ctx);
         void exitLambdaExpression(ModuleParser::LambdaExpressionContext *ctx);
+        void exitLambdaFromExpression(ModuleParser::LambdaFromExpressionContext *ctx);
 
         void exitDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx);
         void exitDefaultInitializerNew(ModuleParser::DefaultInitializerNewContext *ctx);

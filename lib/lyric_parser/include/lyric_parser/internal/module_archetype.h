@@ -190,6 +190,7 @@ namespace lyric_parser::internal {
         void exitDerefNew(ModuleParser::DerefNewContext *ctx) override;
         void exitPairExpression(ModuleParser::PairExpressionContext *ctx) override;
         void exitLambdaExpression(ModuleParser::LambdaExpressionContext *ctx) override;
+        void exitLambdaFromExpression(ModuleParser::LambdaFromExpressionContext *ctx) override;
         void exitDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx) override;
         void exitDefaultInitializerNew(ModuleParser::DefaultInitializerNewContext *ctx) override;
 

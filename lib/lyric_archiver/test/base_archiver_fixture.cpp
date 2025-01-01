@@ -57,14 +57,22 @@ BaseArchiverFixture::importModule(const lyric_common::ModuleLocation &location)
     return m_archiver->importModule(location);
 }
 
-tempo_utils::Status
+tempo_utils::Result<lyric_common::SymbolUrl>
 BaseArchiverFixture::archiveSymbol(
-    const lyric_common::ModuleLocation &srcLocation,
-    const std::string &srcIdentifier,
-    const std::string &dstIdentifier,
-    lyric_object::AccessType access)
+    const lyric_common::ModuleLocation &location,
+    const std::string &identifier)
 {
-    return m_archiver->archiveSymbol(srcLocation, srcIdentifier, dstIdentifier, access);
+    lyric_common::SymbolUrl symbolUrl(location, lyric_common::SymbolPath({identifier}));
+    return m_archiver->archiveSymbol(symbolUrl);
+}
+
+tempo_utils::Result<lyric_assembler::BindingSymbol *>
+BaseArchiverFixture::declareBinding(
+    const std::string &name,
+    lyric_object::AccessType access,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters)
+{
+    return m_archiver->declareBinding(name, access, templateParameters);
 }
 
 tempo_utils::Status

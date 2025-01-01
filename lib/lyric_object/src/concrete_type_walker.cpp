@@ -67,6 +67,10 @@ lyric_object::ConcreteTypeWalker::getLinkageSection() const
         return {};
     auto *concreteAssignable = static_cast<const lyo1::ConcreteAssignable *>(m_concreteAssignable);
     switch (concreteAssignable->concrete_section()) {
+        case lyo1::TypeSection::Binding:
+            return LinkageSection::Binding;
+        case lyo1::TypeSection::Call:
+            return LinkageSection::Call;
         case lyo1::TypeSection::Class:
             return LinkageSection::Class;
         case lyo1::TypeSection::Concept:
@@ -77,6 +81,8 @@ lyric_object::ConcreteTypeWalker::getLinkageSection() const
             return LinkageSection::Existential;
         case lyo1::TypeSection::Instance:
             return LinkageSection::Instance;
+        case lyo1::TypeSection::Static:
+            return LinkageSection::Static;
         case lyo1::TypeSection::Struct:
             return LinkageSection::Struct;
         default:

@@ -103,6 +103,25 @@ lyric_parser::internal::ModuleConstructOps::exitLambdaExpression(ModuleParser::L
 }
 
 void
+lyric_parser::internal::ModuleConstructOps::exitLambdaFromExpression(ModuleParser::LambdaFromExpressionContext *ctx)
+{
+    std::vector<std::string> parts;
+    for (size_t i = 0; i < ctx->symbolPath()->getRuleIndex(); i++) {
+        if (ctx->symbolPath()->Identifier(i) == nullptr)
+            continue;
+        parts.push_back(ctx->symbolPath()->Identifier(i)->getText());
+    }
+    lyric_common::SymbolPath symbolPath(parts);
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    auto *lambdaFromNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstLambdaFromClass, location);
+    lambdaFromNode->putAttr(kLyricAstSymbolPath, symbolPath);
+    m_state->pushNode(lambdaFromNode);
+}
+
+void
 lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx)
 {
     auto *typeNode = make_Type_node(m_state, ctx->assignableType());

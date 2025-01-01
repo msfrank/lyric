@@ -68,13 +68,13 @@ lyric_object::internal::ObjectReader::getSymbolPath(lyo1::DescriptorSection sect
     const char *fullyQualifiedName = nullptr;
 
     switch (section) {
-        case lyo1::DescriptorSection::Existential: {
-            auto *descriptor = getExistential(index);
+        case lyo1::DescriptorSection::Action: {
+            auto *descriptor = getAction(index);
             fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
             break;
         }
-        case lyo1::DescriptorSection::Action: {
-            auto *descriptor = getAction(index);
+        case lyo1::DescriptorSection::Binding: {
+            auto *descriptor = getBinding(index);
             fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
             break;
         }
@@ -88,13 +88,18 @@ lyric_object::internal::ObjectReader::getSymbolPath(lyo1::DescriptorSection sect
             fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
             break;
         }
-        case lyo1::DescriptorSection::Struct: {
-            auto *descriptor = getStruct(index);
+        case lyo1::DescriptorSection::Concept: {
+            auto *descriptor = getConcept(index);
             fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
             break;
         }
-        case lyo1::DescriptorSection::Concept: {
-            auto *descriptor = getConcept(index);
+        case lyo1::DescriptorSection::Enum: {
+            auto *descriptor = getEnum(index);
+            fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
+            break;
+        }
+        case lyo1::DescriptorSection::Existential: {
+            auto *descriptor = getExistential(index);
             fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
             break;
         }
@@ -108,8 +113,8 @@ lyric_object::internal::ObjectReader::getSymbolPath(lyo1::DescriptorSection sect
             fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
             break;
         }
-        case lyo1::DescriptorSection::Enum: {
-            auto *descriptor = getEnum(index);
+        case lyo1::DescriptorSection::Namespace: {
+            auto *descriptor = getNamespace(index);
             fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
             break;
         }
@@ -118,8 +123,8 @@ lyric_object::internal::ObjectReader::getSymbolPath(lyo1::DescriptorSection sect
             fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
             break;
         }
-        case lyo1::DescriptorSection::Namespace: {
-            auto *descriptor = getNamespace(index);
+        case lyo1::DescriptorSection::Struct: {
+            auto *descriptor = getStruct(index);
             fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
             break;
         }

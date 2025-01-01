@@ -435,6 +435,8 @@ lyric_assembler::BlockHandle::resolveDefinition(const lyric_common::SymbolPath &
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(binding.symbolUrl));
 
     switch (symbol->getSymbolType()) {
+        case SymbolType::BINDING:
+        case SymbolType::CALL:
         case SymbolType::CLASS:
         case SymbolType::CONCEPT:
         case SymbolType::ENUM:
@@ -1449,6 +1451,7 @@ lyric_assembler::BlockHandle::declareAlias(
     if (symbolType == SymbolType::UNDECLARED) {
         switch (cast_symbol_to_undeclared(symbol)->getLinkage()) {
             case lyric_object::LinkageSection::Action:
+            case lyric_object::LinkageSection::Binding:
             case lyric_object::LinkageSection::Call:
             case lyric_object::LinkageSection::Class:
             case lyric_object::LinkageSection::Concept:
@@ -1479,6 +1482,7 @@ lyric_assembler::BlockHandle::declareAlias(
 
     // set binding type
     switch (symbolType) {
+        case SymbolType::BINDING:
         case SymbolType::CALL:
         case SymbolType::CLASS:
         case SymbolType::CONCEPT:
@@ -1486,16 +1490,11 @@ lyric_assembler::BlockHandle::declareAlias(
         case SymbolType::ENUM:
         case SymbolType::EXISTENTIAL:
         case SymbolType::INSTANCE:
+        case SymbolType::STATIC:
         case SymbolType::STRUCT:
             binding.bindingType = BindingType::Descriptor;
             binding.symbolUrl = targetUrl;
             binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
-            break;
-
-        case SymbolType::STATIC:
-            binding.bindingType = BindingType::Value;
-            binding.symbolUrl = targetUrl;
-            binding.typeDef = symbol->getTypeDef();
             break;
 
         case SymbolType::NAMESPACE:

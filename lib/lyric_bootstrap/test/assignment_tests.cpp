@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <lyric_assembler/assembler_result.h>
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 #include <tempo_test/spanset_matchers.h>
@@ -16,7 +17,7 @@ TEST(CoreAssignment, EvaluateValAssignmentFails)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         CompileModule(
-            tempo_test::SpansetContainsError(lyric_compiler::CompilerCondition::kInvalidBinding))));
+            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidBinding))));
 }
 
 TEST(CoreAssignment, EvaluateVarAssignment)

@@ -71,11 +71,8 @@ lyric_archiver::ArchiverState::insertObject(
     return {};
 }
 
-tempo_utils::Status
-lyric_archiver::ArchiverState::archiveSymbol(
-    const lyric_common::SymbolUrl &symbolUrl,
-    const std::string &identifier,
-    lyric_object::AccessType access)
+tempo_utils::Result<lyric_common::SymbolUrl>
+lyric_archiver::ArchiverState::archiveSymbol(const lyric_common::SymbolUrl &symbolUrl)
 {
     auto *globalNamespace = m_objectRoot->globalNamespace();
 
@@ -111,8 +108,7 @@ lyric_archiver::ArchiverState::archiveSymbol(
 
         case lyric_object::LinkageSection::Call: {
             auto *callImport = moduleImport->getCall(symbol.getLinkageIndex());
-            TU_ASSIGN_OR_RETURN (archiveUrl, copy_call(callImport, importHash, globalNamespace, *this));
-            break;
+            return copy_call(callImport, importHash, globalNamespace, *this);
         }
 
         case lyric_object::LinkageSection::Class:
@@ -127,17 +123,6 @@ lyric_archiver::ArchiverState::archiveSymbol(
                 "cannot archive symbol {}", symbolUrl.toString());
     }
 
-    auto *namespaceBlock = globalNamespace->namespaceBlock();
-    if (namespaceBlock->hasBinding(identifier))
-        return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
-            "cannot archive {}; symbol named '{}' already exists",
-            symbolUrl.toString(), identifier);
-
-    // lyric_assembler::BindingSymbol *bindingSymbol;
-    // TU_ASSIGN_OR_RETURN (bindingSymbol, globalNamespace->declareBinding(identifier, access));
-    // TU_RETURN_IF_NOT_OK (bindingSymbol->defineTarget());
-
-    return {};
 }
 
 tempo_utils::Status
@@ -173,10 +158,18 @@ lyric_archiver::ArchiverState::performFixups()
     return {};
 }
 
+tempo_utils::Result<lyric_assembler::BindingSymbol *>
+lyric_archiver::ArchiverState::declareBinding(
+    const std::string &name,
+    lyric_object::AccessType access,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters)
+{
+    auto *globalNamespace = m_objectRoot->globalNamespace();
+    return globalNamespace->declareBinding(name, access, templateParameters);
+}
+
 tempo_utils::Result<lyric_object::LyricObject>
 lyric_archiver::ArchiverState::toObject() const
 {
-
-
     return m_objectState->toObject();
 }

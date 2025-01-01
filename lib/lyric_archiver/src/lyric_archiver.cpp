@@ -65,31 +65,30 @@ lyric_archiver::LyricArchiver::insertModule(
     return m_archiverState->insertObject(location, object);
 }
 
-tempo_utils::Status
-lyric_archiver::LyricArchiver::archiveSymbol(
-    const lyric_common::ModuleLocation &srcLocation,
-    const std::string &srcIdentifier,
-    const std::string &dstIdentifier,
-    lyric_object::AccessType access)
-{
-    lyric_common::SymbolUrl symbolUrl(srcLocation, lyric_common::SymbolPath({srcIdentifier}));
-    return archiveSymbol(symbolUrl, dstIdentifier, access);
-}
-
-tempo_utils::Status
-lyric_archiver::LyricArchiver::archiveSymbol(
-    const lyric_common::SymbolUrl &symbolUrl,
-    const std::string &identifier,
-    lyric_object::AccessType access)
+tempo_utils::Result<lyric_common::SymbolUrl>
+lyric_archiver::LyricArchiver::archiveSymbol(const lyric_common::SymbolUrl &symbolUrl)
 {
     if (m_archiverState == nullptr)
         return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
             "archiver is not initialized");
 
-    TU_RETURN_IF_NOT_OK (m_archiverState->archiveSymbol(symbolUrl, identifier, access));
+    lyric_common::SymbolUrl archivedUrl;
+    TU_ASSIGN_OR_RETURN (archivedUrl, m_archiverState->archiveSymbol(symbolUrl));
     TU_RETURN_IF_NOT_OK (m_archiverState->performFixups());
+    return archivedUrl;
+}
 
-    return {};
+tempo_utils::Result<lyric_assembler::BindingSymbol *>
+lyric_archiver::LyricArchiver::declareBinding(
+    const std::string &name,
+    lyric_object::AccessType access,
+    const std::vector<lyric_object::TemplateParameter> &templateParameters)
+{
+    if (m_archiverState == nullptr)
+        return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
+            "archiver is not initialized");
+
+    return m_archiverState->declareBinding(name, access, templateParameters);
 }
 
 tempo_utils::Result<lyric_object::LyricObject>

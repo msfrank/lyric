@@ -166,6 +166,7 @@ node_is_valid_for_phrase(
         case lyric_schema::LyricAstId::Block:
         case lyric_schema::LyricAstId::Cond:
         case lyric_schema::LyricAstId::Match:
+        case lyric_schema::LyricAstId::LambdaFrom:
         case lyric_schema::LyricAstId::Lambda: {
             switch (type) {
                 case lyric_compiler::FormType::Any:
@@ -338,6 +339,13 @@ lyric_compiler::FormChoice::decide(
             auto group = std::make_unique<BlockHandler>(
                 std::move(groupBlock), requiresResult, isSideEffect, m_fragment, driver);
             ctx.setGrouping(std::move(group));
+            break;
+        }
+
+        case lyric_schema::LyricAstId::LambdaFrom: {
+            auto choice = std::make_unique<LambdaFrom>(
+                isSideEffect, m_fragment, block, driver);
+            ctx.setChoice(std::move(choice));
             break;
         }
 

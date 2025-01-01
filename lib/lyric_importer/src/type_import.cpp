@@ -61,12 +61,15 @@ import_type_symbol(
     const lyric_common::ModuleLocation &location)
 {
     switch (concreteTypeWalker.getLinkageSection()) {
-        case lyric_object::LinkageSection::Existential:
+        case lyric_object::LinkageSection::Binding:
+        case lyric_object::LinkageSection::Call:
         case lyric_object::LinkageSection::Class:
         case lyric_object::LinkageSection::Concept:
-        case lyric_object::LinkageSection::Instance:
-        case lyric_object::LinkageSection::Struct:
         case lyric_object::LinkageSection::Enum:
+        case lyric_object::LinkageSection::Existential:
+        case lyric_object::LinkageSection::Instance:
+        case lyric_object::LinkageSection::Static:
+        case lyric_object::LinkageSection::Struct:
             break;
         default:
             throw tempo_utils::StatusException(
