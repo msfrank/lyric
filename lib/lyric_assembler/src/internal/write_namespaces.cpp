@@ -153,7 +153,7 @@ write_namespace(
     auto *supernamespaceSymbol = namespaceSymbol->superNamespace();
     if (supernamespaceSymbol != nullptr) {
         TU_ASSIGN_OR_RETURN (supernamespaceIndex,
-            writer.getSymbolAddress(supernamespaceSymbol->getSymbolUrl(), lyric_object::LinkageSection::Namespace));
+            writer.getSectionAddress(supernamespaceSymbol->getSymbolUrl(), lyric_object::LinkageSection::Namespace));
     }
 
     lyo1::NamespaceFlags namespaceFlags = lyo1::NamespaceFlags::NONE;
@@ -189,10 +189,10 @@ write_namespace(
             }
         }
 
-        tu_uint32 bindingAddress;
-        TU_ASSIGN_OR_RETURN (bindingAddress, writer.getSymbolAddress(symbolUrl));
+        tu_uint32 bindingSymbolIndex;
+        TU_ASSIGN_OR_RETURN (bindingSymbolIndex, writer.getSymbolAddress(symbolUrl));
 
-        bindings.push_back(bindingAddress);
+        bindings.push_back(bindingSymbolIndex);
     }
 
     // add namespace descriptor

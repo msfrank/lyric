@@ -7,22 +7,36 @@ add_library(lyric_archiver SHARED)
 add_library(lyric::lyric_archiver ALIAS lyric_archiver)
 
 set(LYRIC_COMPILER_INCLUDES
+    include/lyric_archiver/archive_utils.h
     include/lyric_archiver/archiver_result.h
     include/lyric_archiver/archiver_state.h
     include/lyric_archiver/copy_call.h
+    include/lyric_archiver/copy_class.h
+    include/lyric_archiver/copy_field.h
+    include/lyric_archiver/copy_impl.h
     include/lyric_archiver/copy_proc.h
     include/lyric_archiver/copy_template.h
+    include/lyric_archiver/copy_type.h
     include/lyric_archiver/lyric_archiver.h
+    include/lyric_archiver/scan_proc.h
+    include/lyric_archiver/symbol_reference_set.h
     )
 set_target_properties(lyric_archiver PROPERTIES PUBLIC_HEADER "${LYRIC_COMPILER_INCLUDES}")
 
 target_sources(lyric_archiver PRIVATE
+    src/archive_utils.cpp
     src/archiver_result.cpp
     src/archiver_state.cpp
     src/copy_call.cpp
+    src/copy_class.cpp
+    src/copy_field.cpp
+    src/copy_impl.cpp
     src/copy_proc.cpp
     src/copy_template.cpp
+    src/copy_type.cpp
     src/lyric_archiver.cpp
+    src/scan_proc.cpp
+    src/symbol_reference_set.cpp
     )
 
 # set the library version

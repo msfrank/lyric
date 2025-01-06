@@ -16,6 +16,9 @@ namespace lyric_importer {
         std::vector<TypeImport *>::const_iterator argumentsEnd();
         int numArguments();
 
+        std::shared_ptr<ModuleImport> getModuleImport() const;
+        tu_uint32 getTypeOffset() const;
+
     private:
         std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_typeOffset;

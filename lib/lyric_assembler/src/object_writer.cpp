@@ -124,7 +124,7 @@ lyric_assembler::ObjectWriter::getSymbolDefinition(
         case SymbolEntry::EntryType::Descriptor: {
             if (m_symbols.size() <= symbolEntry.index)
                 return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
+                    AssemblerCondition::kAssemblerInvariant, "invalid symbol {}", symbolUrl.toString());
             return m_symbols.at(symbolEntry.index);
         }
         default:
@@ -166,14 +166,14 @@ lyric_assembler::ObjectWriter::getSymbolSection(const lyric_common::SymbolUrl &s
         case SymbolEntry::EntryType::Descriptor: {
             if (m_symbols.size() <= symbolEntry.index)
                 return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
+                    AssemblerCondition::kAssemblerInvariant, "invalid symbol {}", symbolUrl.toString());
             auto symbolDefinition = m_symbols.at(symbolEntry.index);
             return symbolDefinition.section;
         }
         case SymbolEntry::EntryType::Link: {
             if (m_links.size() <= symbolEntry.index)
                 return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "missing link {}", symbolUrl.toString());
+                    AssemblerCondition::kAssemblerInvariant, "invalid link {}", symbolUrl.toString());
             auto requestedLink = m_links.at(symbolEntry.index);
             return requestedLink.linkType;
         }
@@ -196,16 +196,12 @@ lyric_assembler::ObjectWriter::getSymbolAddress(const lyric_common::SymbolUrl &s
         case SymbolEntry::EntryType::Descriptor: {
             if (m_symbols.size() <= symbolEntry.index)
                 return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
-            auto symbolDefinition = m_symbols.at(symbolEntry.index);
-            return lyric_object::GET_DESCRIPTOR_ADDRESS(symbolDefinition.index);
+                    AssemblerCondition::kAssemblerInvariant, "invalid symbol {}", symbolUrl.toString());
+            return lyric_object::GET_DESCRIPTOR_ADDRESS(symbolEntry.index);
         }
         case SymbolEntry::EntryType::Link: {
-            if (m_links.size() <= symbolEntry.index)
-                return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "missing link {}", symbolUrl.toString());
-            auto requestedLink = m_links.at(symbolEntry.index);
-            return lyric_object::GET_LINK_ADDRESS(symbolEntry.index);
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
         }
         default:
             return AssemblerStatus::forCondition(
@@ -214,7 +210,33 @@ lyric_assembler::ObjectWriter::getSymbolAddress(const lyric_common::SymbolUrl &s
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_assembler::ObjectWriter::getSymbolAddress(
+lyric_assembler::ObjectWriter::getLinkAddress(const lyric_common::SymbolUrl &symbolUrl) const
+{
+    auto entry = m_symbolEntries.find(symbolUrl);
+    if (entry == m_symbolEntries.cend())
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "missing link {}", symbolUrl.toString());
+
+    auto &symbolEntry = entry->second;
+    switch (symbolEntry.type) {
+        case SymbolEntry::EntryType::Link: {
+            if (m_links.size() <= symbolEntry.index)
+                return AssemblerStatus::forCondition(
+                    AssemblerCondition::kAssemblerInvariant, "invalid link {}", symbolUrl.toString());
+            return lyric_object::GET_LINK_ADDRESS(symbolEntry.index);
+        }
+        case SymbolEntry::EntryType::Descriptor: {
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "missing link {}", symbolUrl.toString());
+        }
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid link {}", symbolUrl.toString());
+    }
+}
+
+tempo_utils::Result<tu_uint32>
+lyric_assembler::ObjectWriter::getSectionAddress(
     const lyric_common::SymbolUrl &symbolUrl,
     lyric_object::LinkageSection section) const
 {
@@ -228,7 +250,7 @@ lyric_assembler::ObjectWriter::getSymbolAddress(
         case SymbolEntry::EntryType::Descriptor: {
             if (m_symbols.size() <= symbolEntry.index)
                 return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "missing symbol {}", symbolUrl.toString());
+                    AssemblerCondition::kAssemblerInvariant, "invalid symbol {}", symbolUrl.toString());
             auto symbolDefinition = m_symbols.at(symbolEntry.index);
             if (symbolDefinition.section != section)
                 return AssemblerStatus::forCondition(
@@ -238,7 +260,7 @@ lyric_assembler::ObjectWriter::getSymbolAddress(
         case SymbolEntry::EntryType::Link: {
             if (m_links.size() <= symbolEntry.index)
                 return AssemblerStatus::forCondition(
-                    AssemblerCondition::kAssemblerInvariant, "missing link {}", symbolUrl.toString());
+                    AssemblerCondition::kAssemblerInvariant, "invalid link {}", symbolUrl.toString());
             auto requestedLink = m_links.at(symbolEntry.index);
             if (requestedLink.linkType != section)
                 return AssemblerStatus::forCondition(

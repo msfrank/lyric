@@ -54,6 +54,18 @@ lyric_importer::TypeImport::numArguments()
     return m_priv->typeArguments.size();
 }
 
+std::shared_ptr<lyric_importer::ModuleImport>
+lyric_importer::TypeImport::getModuleImport() const
+{
+    return m_moduleImport;
+}
+
+tu_uint32
+lyric_importer::TypeImport::getTypeOffset() const
+{
+    return m_typeOffset;
+}
+
 static lyric_common::SymbolUrl
 import_type_symbol(
     const lyric_object::ObjectWalker &object,

@@ -113,7 +113,7 @@ write_action(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid placement");
             auto initializerUrl = actionSymbol->getInitializer(param.name);
             TU_ASSIGN_OR_RETURN (p.initializer_call,
-                writer.getSymbolAddress(initializerUrl, lyric_object::LinkageSection::Call));
+                writer.getSectionAddress(initializerUrl, lyric_object::LinkageSection::Call));
         }
 
         listParameters.push_back(lyo1::CreateParameter(buffer, &p));
@@ -153,7 +153,7 @@ write_action(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid placement");
             auto initializerUrl = actionSymbol->getInitializer(param.name);
             TU_ASSIGN_OR_RETURN (p.initializer_call,
-                writer.getSymbolAddress(initializerUrl, lyric_object::LinkageSection::Call));
+                writer.getSectionAddress(initializerUrl, lyric_object::LinkageSection::Call));
         }
 
         namedParameters.push_back(lyo1::CreateParameter(buffer, &p));

@@ -271,22 +271,22 @@ lyric_assembler::LoadDataInstruction::apply(
             break;
         case SymbolType::ENUM:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
             flags = lyric_object::LOAD_ENUM;
             break;
         case SymbolType::FIELD:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
             flags = lyric_object::LOAD_FIELD;
             break;
         case SymbolType::INSTANCE:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
             flags = lyric_object::LOAD_INSTANCE;
             break;
         case SymbolType::STATIC:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Static));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Static));
             flags = lyric_object::LOAD_STATIC;
             break;
         default:
@@ -364,52 +364,52 @@ lyric_assembler::LoadDescriptorInstruction::apply(
     switch (m_symbol->getSymbolType()) {
         case SymbolType::ACTION:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Action));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Action));
             section = lyric_object::LinkageSection::Action;
             break;
         case SymbolType::CALL:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
             section = lyric_object::LinkageSection::Call;
             break;
         case SymbolType::CLASS:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Class));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Class));
             section = lyric_object::LinkageSection::Class;
             break;
         case SymbolType::CONCEPT:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Concept));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Concept));
             section = lyric_object::LinkageSection::Concept;
             break;
         case SymbolType::ENUM:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
             section = lyric_object::LinkageSection::Enum;
             break;
         case SymbolType::EXISTENTIAL:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Existential));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Existential));
             section = lyric_object::LinkageSection::Existential;
             break;
         case SymbolType::FIELD:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
             section = lyric_object::LinkageSection::Field;
             break;
         case SymbolType::INSTANCE:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
             section = lyric_object::LinkageSection::Instance;
             break;
         case SymbolType::NAMESPACE:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Namespace));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Namespace));
             section = lyric_object::LinkageSection::Namespace;
             break;
         case SymbolType::STRUCT:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Struct));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Struct));
             section = lyric_object::LinkageSection::Struct;
             break;
         default:
@@ -554,12 +554,12 @@ lyric_assembler::StoreDataInstruction::apply(
             break;
         case SymbolType::FIELD:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Field));
             flags = lyric_object::STORE_FIELD;
             break;
         case SymbolType::STATIC:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Static));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Static));
             flags = lyric_object::STORE_STATIC;
             break;
         default:
@@ -788,12 +788,12 @@ lyric_assembler::CallInstruction::apply(
         case lyric_object::Opcode::OP_CALL_STATIC:
         case lyric_object::Opcode::OP_CALL_VIRTUAL: {
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
             break;
         }
         case lyric_object::Opcode::OP_CALL_CONCEPT: {
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Action));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Action));
             break;
         }
         default:
@@ -886,22 +886,22 @@ lyric_assembler::NewInstruction::apply(
     switch (m_symbol->getSymbolType()) {
         case SymbolType::CLASS:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Class));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Class));
             newType = lyric_object::NEW_CLASS;
             break;
         case SymbolType::ENUM:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
             newType = lyric_object::NEW_ENUM;
             break;
         case SymbolType::INSTANCE:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
             newType = lyric_object::NEW_INSTANCE;
             break;
         case SymbolType::STRUCT:
             TU_ASSIGN_OR_RETURN (address,
-                writer.getSymbolAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Struct));
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Struct));
             newType = lyric_object::NEW_STRUCT;
             break;
         default:

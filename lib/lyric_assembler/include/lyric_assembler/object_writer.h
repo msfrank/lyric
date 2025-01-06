@@ -77,7 +77,8 @@ namespace lyric_assembler {
         Option<SymbolDefinition> getSymbolDefinitionOption(const lyric_common::SymbolUrl &symbolUrl) const;
         tempo_utils::Result<lyric_object::LinkageSection> getSymbolSection(const lyric_common::SymbolUrl &symbolUrl) const;
         tempo_utils::Result<tu_uint32> getSymbolAddress(const lyric_common::SymbolUrl &symbolUrl) const;
-        tempo_utils::Result<tu_uint32> getSymbolAddress(
+        tempo_utils::Result<tu_uint32> getLinkAddress(const lyric_common::SymbolUrl &symbolUrl) const;
+        tempo_utils::Result<tu_uint32> getSectionAddress(
             const lyric_common::SymbolUrl &symbolUrl,
             lyric_object::LinkageSection section) const;
         tempo_utils::Result<tu_uint32> getLiteralAddress(const LiteralHandle *literalHandle) const;

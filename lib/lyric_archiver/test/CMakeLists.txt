@@ -6,6 +6,7 @@ include(GoogleTest)
 
 set(TEST_CASES
     archive_call_tests.cpp
+    archive_class_tests.cpp
     )
 
 # define test suite driver

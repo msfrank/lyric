@@ -2,6 +2,7 @@
 #include <lyric_archiver/archiver_result.h>
 #include <lyric_archiver/archiver_state.h>
 #include <lyric_archiver/lyric_archiver.h>
+#include <lyric_archiver/symbol_reference_set.h>
 
 lyric_archiver::LyricArchiver::LyricArchiver(
     const lyric_common::ModuleLocation &location,
@@ -72,9 +73,19 @@ lyric_archiver::LyricArchiver::archiveSymbol(const lyric_common::SymbolUrl &symb
         return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
             "archiver is not initialized");
 
+    SymbolReferenceSet symbolReferenceSet(m_archiverState.get());
+
     lyric_common::SymbolUrl archivedUrl;
-    TU_ASSIGN_OR_RETURN (archivedUrl, m_archiverState->archiveSymbol(symbolUrl));
-    TU_RETURN_IF_NOT_OK (m_archiverState->performFixups());
+    TU_ASSIGN_OR_RETURN (archivedUrl, m_archiverState->archiveSymbol(symbolUrl, symbolReferenceSet));
+
+    while (!symbolReferenceSet.isEmpty()) {
+        lyric_common::SymbolUrl referencedSymbolUrl;
+        TU_ASSIGN_OR_RETURN (referencedSymbolUrl, symbolReferenceSet.takeReference());
+        TU_RETURN_IF_STATUS (m_archiverState->archiveSymbol(referencedSymbolUrl, symbolReferenceSet));
+    }
+
+    TU_RETURN_IF_NOT_OK (m_archiverState->copyPendingProcs());
+
     return archivedUrl;
 }
 

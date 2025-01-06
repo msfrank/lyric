@@ -348,8 +348,49 @@ result onto the data stack.
 ``CALL_STATIC``
 ...............
 
+:OpInfo Type:               `FLAGS_U8_ADDRESS_U32_PLACEMENT_U16`_
+:Flags Allowed Values:
+   .. table::
+      :align: left
+
+      =====  =====
+      Index  Value
+      =====  =====
+      1-255  Reserved for future expansion
+      =====  =====
+:Address Type:              Call Address
+:Preconditions:             None
+:Side Effects:              1. <placement> elements are popped from the top of the data stack on the current coroutine
+                            2. Instruction Pointer (IP) for the current coroutine is set to the beginning of the
+                               callee proc
+                            3. Segment Pointer (SP) for the current coroutine is set to the segment containing the
+                               callee
+                            4. Call cell is allocated on the top of the call stack on the current coroutine
+
+
 ``CALL_VIRTUAL``
 ................
+:OpInfo Type:               `FLAGS_U8_ADDRESS_U32_PLACEMENT_U16`_
+:Flags Allowed Values:
+   .. table::
+      :align: left
+
+      =====  =====
+      Index  Value
+      =====  =====
+      1      RECEIVER_FOLLOWS
+      2      FORWARD_REST
+      =====  =====
+:Address Type:              Call Address
+:Preconditions:             None
+:Side Effects:              1. if RECEIVER_FOLLOWS is set then receiver cell is popped from the top of the data stack
+                               on the current coroutine,
+                            2. <placement> elements are popped from the top of the data stack on the current coroutine
+                            3. Instruction Pointer (IP) for the current coroutine is set to the beginning of the
+                               callee proc
+                            4. Segment Pointer (SP) for the current coroutine is set to the segment containing the
+                               callee
+                            5. Call cell is allocated on the top of the call stack on the current coroutine
 
 ``CALL_CONCEPT``
 ................

@@ -66,7 +66,7 @@ write_struct(
     auto *superstructSymbol = structSymbol->superStruct();
     if (superstructSymbol != nullptr) {
         TU_ASSIGN_OR_RETURN (superstructIndex,
-            writer.getSymbolAddress(superstructSymbol->getSymbolUrl(), lyric_object::LinkageSection::Struct));
+            writer.getSectionAddress(superstructSymbol->getSymbolUrl(), lyric_object::LinkageSection::Struct));
     }
 
     lyo1::StructFlags structFlags = lyo1::StructFlags::NONE;
@@ -105,7 +105,7 @@ write_struct(
         const auto &memberRef = iterator->second;
         tu_uint32 fieldIndex;
         TU_ASSIGN_OR_RETURN (fieldIndex,
-            writer.getSymbolAddress(memberRef.symbolUrl, lyric_object::LinkageSection::Field));
+            writer.getSectionAddress(memberRef.symbolUrl, lyric_object::LinkageSection::Field));
         members.push_back(fieldIndex);
     }
 
@@ -115,7 +115,7 @@ write_struct(
         const auto &boundMethod = iterator->second;
         tu_uint32 callIndex;
         TU_ASSIGN_OR_RETURN (callIndex,
-            writer.getSymbolAddress(boundMethod.methodCall, lyric_object::LinkageSection::Call));
+            writer.getSectionAddress(boundMethod.methodCall, lyric_object::LinkageSection::Call));
         methods.push_back(callIndex);
     }
 
@@ -131,7 +131,7 @@ write_struct(
     // get struct ctor
     tu_uint32 ctorCall;
     TU_ASSIGN_OR_RETURN (ctorCall,
-        writer.getSymbolAddress(structSymbol->getCtor(), lyric_object::LinkageSection::Call));
+        writer.getSectionAddress(structSymbol->getCtor(), lyric_object::LinkageSection::Call));
 
     // serialize the sealed subtypes
     std::vector<tu_uint32> sealedSubtypes;

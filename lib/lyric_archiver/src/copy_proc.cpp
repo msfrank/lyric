@@ -25,13 +25,14 @@ struct CopyProcData {
     lyric_assembler::ObjectState *state;
     std::vector<tu_uint32> instructionOffsets;
     std::vector<std::pair<tu_uint32,lyric_assembler::JumpTarget>> jumpTargets;
+    const absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::AbstractSymbol *> *copiedSymbols;
 };
 
 static tempo_utils::Status
 apply_literal(const lyric_object::OpCell &op, CopyProcData &data)
 {
-    return lyric_assembler::AssemblerStatus::forCondition(
-        lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid synthetic type");
+    return lyric_archiver::ArchiverStatus::forCondition(
+        lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid synthetic type");
 }
 
 static tempo_utils::Status
@@ -42,29 +43,164 @@ apply_synthetic(const lyric_object::OpCell &op, CopyProcData &data)
         case lyric_object::SYNTHETIC_THIS:
             return data.fragment->loadThis();
         default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid synthetic type");
+            return lyric_archiver::ArchiverStatus::forCondition(
+                lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid synthetic type");
     }
 }
 
-static lyric_common::SymbolUrl
-lookup_symbol(
-    tu_uint32 address,
-    lyric_object::LinkageSection section,
-    CopyProcData &data)
+// static lyric_common::SymbolUrl
+// lookup_symbol(
+//     tu_uint32 address,
+//     lyric_object::LinkageSection section,
+//     CopyProcData &data)
+// {
+//     auto root = data.object.getObject();
+//     if (lyric_object::IS_NEAR(address)) {
+//         auto symbolPath = root.getSymbolPath(section, address);
+//         if (!symbolPath.isValid())
+//             return {};
+//         return {data.location, symbolPath};
+//     } else {
+//         auto link = root.getLink(address);
+//         if (link.getLinkageSection() != section)
+//             return {};
+//         return link.getLinkUrl();
+//     }
+// }
+
+static tempo_utils::Result<lyric_assembler::AbstractSymbol *>
+resolve_symbol(lyric_object::LinkageSection section, tu_uint32 address, CopyProcData &data)
 {
     auto root = data.object.getObject();
     if (lyric_object::IS_NEAR(address)) {
-        auto symbolPath = root.getSymbolPath(section, address);
-        if (!symbolPath.isValid())
-            return {};
-        return {data.location, symbolPath};
-    } else {
-        auto link = root.getLink(address);
+        auto symbolPath = root.getSymbolPath(section, lyric_object::GET_DESCRIPTOR_OFFSET(address));
+        lyric_common::SymbolUrl symbolUrl(data.location, symbolPath);
+        auto entry = data.copiedSymbols->find(symbolUrl);
+        if (entry == data.copiedSymbols->cend())
+            return lyric_archiver::ArchiverStatus::forCondition(
+                lyric_archiver::ArchiverCondition::kArchiverInvariant, "no such symbol");
+        return entry->second;
+    } else if (lyric_object::IS_FAR(address)) {
+        auto link = root.getLink(lyric_object::GET_LINK_OFFSET(address));
         if (link.getLinkageSection() != section)
-            return {};
-        return link.getLinkUrl();
+            return lyric_archiver::ArchiverStatus::forCondition(
+                lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid symbol");
+        auto *symbolCache = data.state->symbolCache();
+        return symbolCache->getOrImportSymbol(link.getLinkUrl());
+    } else {
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid symbol");
     }
+}
+
+static tempo_utils::Result<lyric_assembler::ActionSymbol *>
+resolve_action(tu_uint32 address, CopyProcData &data)
+{
+    lyric_assembler::AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, resolve_symbol(lyric_object::LinkageSection::Action, address, data));
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::ACTION)
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid action address");
+    return cast_symbol_to_action(sym);
+}
+
+static tempo_utils::Result<lyric_assembler::CallSymbol *>
+resolve_call(tu_uint32 address, CopyProcData &data)
+{
+    lyric_assembler::AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, resolve_symbol(lyric_object::LinkageSection::Call, address, data));
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid call address");
+    return cast_symbol_to_call(sym);
+}
+
+static tempo_utils::Result<lyric_assembler::ClassSymbol *>
+resolve_class(tu_uint32 address, CopyProcData &data)
+{
+    lyric_assembler::AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, resolve_symbol(lyric_object::LinkageSection::Class, address, data));
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::CLASS)
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid class address");
+    return cast_symbol_to_class(sym);
+}
+
+static tempo_utils::Result<lyric_assembler::ConceptSymbol *>
+resolve_concept(tu_uint32 address, CopyProcData &data)
+{
+    lyric_assembler::AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, resolve_symbol(lyric_object::LinkageSection::Concept, address, data));
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid concept address");
+    return cast_symbol_to_concept(sym);
+}
+
+static tempo_utils::Result<lyric_assembler::EnumSymbol *>
+resolve_enum(tu_uint32 address, CopyProcData &data)
+{
+    lyric_assembler::AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, resolve_symbol(lyric_object::LinkageSection::Enum, address, data));
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::ENUM)
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid enum address");
+    return cast_symbol_to_enum(sym);
+}
+
+static tempo_utils::Result<lyric_assembler::ExistentialSymbol *>
+resolve_existential(tu_uint32 address, CopyProcData &data)
+{
+    lyric_assembler::AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, resolve_symbol(lyric_object::LinkageSection::Existential, address, data));
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::EXISTENTIAL)
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid existential address");
+    return cast_symbol_to_existential(sym);
+}
+
+static tempo_utils::Result<lyric_assembler::FieldSymbol *>
+resolve_field(tu_uint32 address, CopyProcData &data)
+{
+    lyric_assembler::AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, resolve_symbol(lyric_object::LinkageSection::Field, address, data));
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::FIELD)
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid field address");
+    return cast_symbol_to_field(sym);
+}
+
+static tempo_utils::Result<lyric_assembler::InstanceSymbol *>
+resolve_instance(tu_uint32 address, CopyProcData &data)
+{
+    lyric_assembler::AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, resolve_symbol(lyric_object::LinkageSection::Instance, address, data));
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid instance address");
+    return cast_symbol_to_instance(sym);
+}
+
+static tempo_utils::Result<lyric_assembler::StaticSymbol *>
+resolve_static(tu_uint32 address, CopyProcData &data)
+{
+    lyric_assembler::AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, resolve_symbol(lyric_object::LinkageSection::Static, address, data));
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::STATIC)
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid static address");
+    return cast_symbol_to_static(sym);
+}
+
+static tempo_utils::Result<lyric_assembler::StructSymbol *>
+resolve_struct(tu_uint32 address, CopyProcData &data)
+{
+    lyric_assembler::AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, resolve_symbol(lyric_object::LinkageSection::Struct, address, data));
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::STRUCT)
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid struct address");
+    return cast_symbol_to_struct(sym);
 }
 
 inline lyric_common::SymbolUrl
@@ -114,40 +250,28 @@ apply_load(const lyric_object::OpCell &op, CopyProcData &data)
             return data.fragment->loadData(symbol);
         }
         case lyric_object::LOAD_ENUM: {
-            auto enumUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Enum, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::EnumSymbol *enumSymbol;
-            TU_ASSIGN_OR_RETURN (enumSymbol, importCache->importEnum(enumUrl));
+            TU_ASSIGN_OR_RETURN(enumSymbol, resolve_enum(operands.address, data));
             return data.fragment->loadData(enumSymbol);
         }
         case lyric_object::LOAD_FIELD: {
-            auto fieldUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Field, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::FieldSymbol *fieldSymbol;
-            TU_ASSIGN_OR_RETURN (fieldSymbol, importCache->importField(fieldUrl));
+            TU_ASSIGN_OR_RETURN (fieldSymbol, resolve_field(operands.address, data));
             return data.fragment->loadData(fieldSymbol);
         }
         case lyric_object::LOAD_INSTANCE: {
-            auto instanceUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Instance, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::InstanceSymbol *instanceSymbol;
-            TU_ASSIGN_OR_RETURN (instanceSymbol, importCache->importInstance(instanceUrl));
+            TU_ASSIGN_OR_RETURN (instanceSymbol, resolve_instance(operands.address, data));
             return data.fragment->loadData(instanceSymbol);
         }
         case lyric_object::LOAD_STATIC: {
-            auto staticUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Static, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::StaticSymbol *staticSymbol;
-            TU_ASSIGN_OR_RETURN (staticSymbol, importCache->importStatic(staticUrl));
+            TU_ASSIGN_OR_RETURN (staticSymbol, resolve_static(operands.address, data));
             return data.fragment->loadData(staticSymbol);
         }
         default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid load type");
+            return lyric_archiver::ArchiverStatus::forCondition(
+                lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid load type");
     }
 }
 
@@ -160,80 +284,53 @@ apply_descriptor(const lyric_object::OpCell &op, CopyProcData &data)
     switch (linkage) {
 
         case lyric_object::LinkageSection::Action: {
-            auto actionUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Action, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::ActionSymbol *actionSymbol;
-            TU_ASSIGN_OR_RETURN (actionSymbol, importCache->importAction(actionUrl));
+            TU_ASSIGN_OR_RETURN (actionSymbol, resolve_action(operands.address, data));
             return data.fragment->loadDescriptor(actionSymbol);
         }
         case lyric_object::LinkageSection::Call: {
-            auto callUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Call, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::CallSymbol *callSymbol;
-            TU_ASSIGN_OR_RETURN (callSymbol, importCache->importCall(callUrl));
+            TU_ASSIGN_OR_RETURN (callSymbol, resolve_call(operands.address, data));
             return data.fragment->loadDescriptor(callSymbol);
         }
         case lyric_object::LinkageSection::Class: {
-            auto classUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Class, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::ClassSymbol *classSymbol;
-            TU_ASSIGN_OR_RETURN (classSymbol, importCache->importClass(classUrl));
+            TU_ASSIGN_OR_RETURN (classSymbol, resolve_class(operands.address, data));
             return data.fragment->loadDescriptor(classSymbol);
         }
         case lyric_object::LinkageSection::Concept: {
-            auto conceptUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Concept, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::ConceptSymbol *conceptSymbol;
-            TU_ASSIGN_OR_RETURN (conceptSymbol, importCache->importConcept(conceptUrl));
+            TU_ASSIGN_OR_RETURN (conceptSymbol, resolve_concept(operands.address, data));
             return data.fragment->loadDescriptor(conceptSymbol);
         }
         case lyric_object::LinkageSection::Enum: {
-            auto enumUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Enum, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::EnumSymbol *enumSymbol;
-            TU_ASSIGN_OR_RETURN (enumSymbol, importCache->importEnum(enumUrl));
+            TU_ASSIGN_OR_RETURN (enumSymbol, resolve_enum(operands.address, data));
             return data.fragment->loadDescriptor(enumSymbol);
         }
         case lyric_object::LinkageSection::Existential: {
-            auto existentialUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Existential, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::ExistentialSymbol *existentialSymbol;
-            TU_ASSIGN_OR_RETURN (existentialSymbol, importCache->importExistential(existentialUrl));
+            TU_ASSIGN_OR_RETURN (existentialSymbol, resolve_existential(operands.address, data));
             return data.fragment->loadDescriptor(existentialSymbol);
         }
         case lyric_object::LinkageSection::Field: {
-            auto fieldUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Field, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::FieldSymbol *fieldSymbol;
-            TU_ASSIGN_OR_RETURN (fieldSymbol, importCache->importField(fieldUrl));
+            TU_ASSIGN_OR_RETURN (fieldSymbol, resolve_field(operands.address, data));
             return data.fragment->loadDescriptor(fieldSymbol);
         }
         case lyric_object::LinkageSection::Instance: {
-            auto instanceUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Instance, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::InstanceSymbol *instanceSymbol;
-            TU_ASSIGN_OR_RETURN (instanceSymbol, importCache->importInstance(instanceUrl));
+            TU_ASSIGN_OR_RETURN (instanceSymbol, resolve_instance(operands.address, data));
             return data.fragment->loadDescriptor(instanceSymbol);
         }
         case lyric_object::LinkageSection::Struct: {
-            auto structUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Struct, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::StructSymbol *structSymbol;
-            TU_ASSIGN_OR_RETURN (structSymbol, importCache->importStruct(structUrl));
+            TU_ASSIGN_OR_RETURN (structSymbol, resolve_struct(operands.address, data));
             return data.fragment->loadData(structSymbol);
         }
         default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid load type");
+            return lyric_archiver::ArchiverStatus::forCondition(
+                lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid load type");
     }
 }
 
@@ -276,24 +373,18 @@ apply_store(const lyric_object::OpCell &op, CopyProcData &data)
             return data.fragment->storeData(symbol);
         }
         case lyric_object::STORE_FIELD: {
-            auto fieldUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Field, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::FieldSymbol *fieldSymbol;
-            TU_ASSIGN_OR_RETURN (fieldSymbol, importCache->importField(fieldUrl));
+            TU_ASSIGN_OR_RETURN (fieldSymbol, resolve_field(operands.address, data));
             return data.fragment->storeData(fieldSymbol);
         }
         case lyric_object::STORE_STATIC: {
-            auto staticUrl = lookup_symbol(
-                operands.address, lyric_object::LinkageSection::Static, data);
-            auto *importCache = data.state->importCache();
             lyric_assembler::StaticSymbol *staticSymbol;
-            TU_ASSIGN_OR_RETURN (staticSymbol, importCache->importStatic(staticUrl));
+            TU_ASSIGN_OR_RETURN (staticSymbol, resolve_static(operands.address, data));
             return data.fragment->storeData(staticSymbol);
         }
         default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid store type");
+            return lyric_archiver::ArchiverStatus::forCondition(
+                lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid store type");
     }
 }
 
@@ -340,8 +431,8 @@ apply_jump(const lyric_object::OpCell &op, CopyProcData &data)
             TU_ASSIGN_OR_RETURN (jumpTarget, data.fragment->unconditionalJump());
             break;
         default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid jump opcode");
+            return lyric_archiver::ArchiverStatus::forCondition(
+                lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid jump opcode");
     }
 
     data.jumpTargets.emplace_back(address, jumpTarget);
@@ -352,7 +443,74 @@ apply_jump(const lyric_object::OpCell &op, CopyProcData &data)
 static tempo_utils::Status
 apply_call(const lyric_object::OpCell &op, CopyProcData &data)
 {
-    TU_UNREACHABLE();
+    switch (op.opcode) {
+        case lyric_object::Opcode::OP_CALL_STATIC: {
+            auto &operands = op.operands.flags_u8_address_u32_placement_u16;
+            lyric_assembler::CallSymbol *callSymbol;
+            TU_ASSIGN_OR_RETURN (callSymbol, resolve_call(operands.address, data));
+            return data.fragment->callStatic(callSymbol, operands.placement, operands.flags);
+        }
+        case lyric_object::Opcode::OP_CALL_VIRTUAL: {
+            auto &operands = op.operands.flags_u8_address_u32_placement_u16;
+            lyric_assembler::CallSymbol *callSymbol;
+            TU_ASSIGN_OR_RETURN (callSymbol, resolve_call(operands.address, data));
+            return data.fragment->callVirtual(callSymbol, operands.placement, operands.flags);
+        }
+        case lyric_object::Opcode::OP_CALL_EXISTENTIAL: {
+            auto &operands = op.operands.flags_u8_address_u32_placement_u16;
+            lyric_assembler::CallSymbol *callSymbol;
+            TU_ASSIGN_OR_RETURN (callSymbol, resolve_call(operands.address, data));
+            return data.fragment->callExistential(callSymbol, operands.placement, operands.flags);
+        }
+        case lyric_object::Opcode::OP_CALL_CONCEPT: {
+            auto &operands = op.operands.flags_u8_address_u32_placement_u16;
+            lyric_assembler::ActionSymbol *actionSymbol;
+            TU_ASSIGN_OR_RETURN (actionSymbol, resolve_action(operands.address, data));
+            return data.fragment->callConcept(actionSymbol, operands.placement, operands.flags);
+        }
+        default:
+            return lyric_archiver::ArchiverStatus::forCondition(
+                lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid call opcode");
+    }
+}
+
+static tempo_utils::Status
+apply_new(const lyric_object::OpCell &op, CopyProcData &data)
+{
+    if (op.opcode != lyric_object::Opcode::OP_NEW)
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid call opcode");
+
+    auto &operands = op.operands.flags_u8_address_u32_placement_u16;
+
+    lyric_assembler::AbstractSymbol *newSymbol;
+    switch (lyric_object::GET_NEW_TYPE(operands.flags)) {
+        case lyric_object::NEW_CLASS: {
+            TU_ASSIGN_OR_RETURN (newSymbol, resolve_symbol(
+                lyric_object::LinkageSection::Class, operands.address, data));
+            break;
+        }
+        case lyric_object::NEW_ENUM: {
+            TU_ASSIGN_OR_RETURN (newSymbol, resolve_symbol(
+                lyric_object::LinkageSection::Enum, operands.address, data));
+            break;
+        }
+        case lyric_object::NEW_INSTANCE: {
+            TU_ASSIGN_OR_RETURN (newSymbol, resolve_symbol(
+                lyric_object::LinkageSection::Instance, operands.address, data));
+            break;
+        }
+        case lyric_object::NEW_STRUCT: {
+            TU_ASSIGN_OR_RETURN (newSymbol, resolve_symbol(
+                lyric_object::LinkageSection::Struct, operands.address, data));
+            break;
+        }
+        default:
+            return lyric_archiver::ArchiverStatus::forCondition(
+                lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid new type");
+    }
+
+    return data.fragment->constructNew(newSymbol, operands.placement, operands.flags);
 }
 
 tempo_utils::Status
@@ -360,6 +518,7 @@ lyric_archiver::copy_proc(
     const lyric_common::ModuleLocation &location,
     const lyric_object::LyricObject &object,
     const lyric_object::ProcHeader &header,
+    const absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::AbstractSymbol *> *copiedSymbols,
     lyric_object::BytecodeIterator it,
     lyric_assembler::ProcHandle *procHandle,
     lyric_assembler::ObjectState *state)
@@ -372,6 +531,7 @@ lyric_archiver::copy_proc(
     data.activation = procHandle->getActivation();
     data.state = state;
     data.fragment = procCode->rootFragment();
+    data.copiedSymbols = copiedSymbols;
 
     lyric_object::OpCell op;
 
@@ -513,8 +673,11 @@ lyric_archiver::copy_proc(
             case lyric_object::Opcode::OP_CALL_VIRTUAL:
             case lyric_object::Opcode::OP_CALL_CONCEPT:
             case lyric_object::Opcode::OP_CALL_EXISTENTIAL:
-            case lyric_object::Opcode::OP_NEW:
                 TU_RETURN_IF_NOT_OK (apply_call(op, data));
+                break;
+
+            case lyric_object::Opcode::OP_NEW:
+                TU_RETURN_IF_NOT_OK (apply_new(op, data));
                 break;
 
             case lyric_object::Opcode::OP_RETURN:

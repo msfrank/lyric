@@ -66,7 +66,7 @@ write_enum(
     auto *superenumSymbol = enumSymbol->superEnum();
     if (superenumSymbol != nullptr) {
         TU_ASSIGN_OR_RETURN (superenumIndex,
-            writer.getSymbolAddress(superenumSymbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
+            writer.getSectionAddress(superenumSymbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
     }
 
     lyo1::EnumFlags enumFlags = lyo1::EnumFlags::NONE;
@@ -103,7 +103,7 @@ write_enum(
         const auto &memberRef = iterator->second;
         tu_uint32 fieldIndex;
         TU_ASSIGN_OR_RETURN (fieldIndex,
-            writer.getSymbolAddress(memberRef.symbolUrl, lyric_object::LinkageSection::Field));
+            writer.getSectionAddress(memberRef.symbolUrl, lyric_object::LinkageSection::Field));
         members.push_back(fieldIndex);
     }
 
@@ -113,7 +113,7 @@ write_enum(
         const auto &boundMethod = iterator->second;
         tu_uint32 callIndex;
         TU_ASSIGN_OR_RETURN (callIndex,
-            writer.getSymbolAddress(boundMethod.methodCall, lyric_object::LinkageSection::Call));
+            writer.getSectionAddress(boundMethod.methodCall, lyric_object::LinkageSection::Call));
         methods.push_back(callIndex);
     }
 
@@ -129,7 +129,7 @@ write_enum(
     // get enum ctor
     tu_uint32 ctorCall;
     TU_ASSIGN_OR_RETURN (ctorCall,
-        writer.getSymbolAddress(enumSymbol->getCtor(), lyric_object::LinkageSection::Call));
+        writer.getSectionAddress(enumSymbol->getCtor(), lyric_object::LinkageSection::Call));
 
     // serialize the sealed subtypes
     std::vector<tu_uint32> sealedSubtypes;

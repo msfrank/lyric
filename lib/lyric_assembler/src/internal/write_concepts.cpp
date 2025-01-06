@@ -70,7 +70,7 @@ write_concept(
     auto *superconceptSymbol = conceptSymbol->superConcept();
     if (superconceptSymbol != nullptr) {
         TU_ASSIGN_OR_RETURN (superconceptIndex,
-            writer.getSymbolAddress(superconceptSymbol->getSymbolUrl(), lyric_object::LinkageSection::Concept));
+            writer.getSectionAddress(superconceptSymbol->getSymbolUrl(), lyric_object::LinkageSection::Concept));
     }
 
     lyo1::ConceptFlags conceptFlags = lyo1::ConceptFlags::NONE;
@@ -97,7 +97,7 @@ write_concept(
         const auto &actionMethod = iterator->second;
         tu_uint32 actionIndex;
         TU_ASSIGN_OR_RETURN (actionIndex,
-            writer.getSymbolAddress(actionMethod.methodAction, lyric_object::LinkageSection::Action));
+            writer.getSectionAddress(actionMethod.methodAction, lyric_object::LinkageSection::Action));
         actions.push_back(actionIndex);
     }
 

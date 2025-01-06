@@ -80,7 +80,7 @@ write_impl(
 
     tu_uint32 implConcept;
     TU_ASSIGN_OR_RETURN (implConcept,
-        writer.getSymbolAddress(implHandle->implConcept()->getSymbolUrl(), lyric_object::LinkageSection::Concept));
+        writer.getSectionAddress(implHandle->implConcept()->getSymbolUrl(), lyric_object::LinkageSection::Concept));
 
     auto receiverUrl = implHandle->getReceiverUrl();
 
@@ -115,11 +115,11 @@ write_impl(
 
         tu_uint32 actionIndex;
         TU_ASSIGN_OR_RETURN (actionIndex,
-            writer.getSymbolAddress(extension.methodAction, lyric_object::LinkageSection::Action));
+            writer.getSectionAddress(extension.methodAction, lyric_object::LinkageSection::Action));
 
         tu_uint32 callIndex;
         TU_ASSIGN_OR_RETURN (callIndex,
-            writer.getSymbolAddress(extension.methodCall, lyric_object::LinkageSection::Call));
+            writer.getSectionAddress(extension.methodCall, lyric_object::LinkageSection::Call));
 
         implExtensions.emplace_back(actionIndex, callIndex);
     }

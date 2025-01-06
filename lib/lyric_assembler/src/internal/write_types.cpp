@@ -111,7 +111,7 @@ write_type(
             auto concreteUrl = assignableType.getConcreteUrl();
             lyric_object::LinkageSection section;
             TU_ASSIGN_OR_RETURN (section, writer.getSymbolSection(concreteUrl));
-            TU_ASSIGN_OR_RETURN (concreteDescriptor, writer.getSymbolAddress(concreteUrl));
+            TU_ASSIGN_OR_RETURN (concreteDescriptor, writer.getSectionAddress(concreteUrl, section));
             switch (section) {
                 case lyric_object::LinkageSection::Binding:
                     concreteSection = lyo1::TypeSection::Binding;

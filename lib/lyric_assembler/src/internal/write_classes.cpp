@@ -76,7 +76,7 @@ write_class(
     auto *superclassSymbol = classSymbol->superClass();
     if (superclassSymbol != nullptr) {
         TU_ASSIGN_OR_RETURN (superclassIndex,
-            writer.getSymbolAddress(superclassSymbol->getSymbolUrl(), lyric_object::LinkageSection::Class));
+            writer.getSectionAddress(superclassSymbol->getSymbolUrl(), lyric_object::LinkageSection::Class));
     }
 
     lyo1::ClassFlags classFlags = lyo1::ClassFlags::NONE;
@@ -115,7 +115,7 @@ write_class(
         const auto &memberRef = iterator->second;
         tu_uint32 fieldIndex;
         TU_ASSIGN_OR_RETURN (fieldIndex,
-            writer.getSymbolAddress(memberRef.symbolUrl, lyric_object::LinkageSection::Field));
+            writer.getSectionAddress(memberRef.symbolUrl, lyric_object::LinkageSection::Field));
         members.push_back(fieldIndex);
     }
 
@@ -125,7 +125,7 @@ write_class(
         const auto &boundMethod = iterator->second;
         tu_uint32 callIndex;
         TU_ASSIGN_OR_RETURN (callIndex,
-            writer.getSymbolAddress(boundMethod.methodCall, lyric_object::LinkageSection::Call));
+            writer.getSectionAddress(boundMethod.methodCall, lyric_object::LinkageSection::Call));
         methods.push_back(callIndex);
     }
 
@@ -141,7 +141,7 @@ write_class(
     // get class ctor
     tu_uint32 ctorCall;
     TU_ASSIGN_OR_RETURN (ctorCall,
-        writer.getSymbolAddress(classSymbol->getCtor(), lyric_object::LinkageSection::Call));
+        writer.getSectionAddress(classSymbol->getCtor(), lyric_object::LinkageSection::Call));
 
     // serialize the sealed subtypes
     std::vector<tu_uint32> sealedSubtypes;

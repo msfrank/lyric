@@ -111,7 +111,7 @@ write_call(
     for (auto lexical = proc->lexicalsBegin(); lexical != proc->lexicalsEnd(); lexical++) {
         tu_uint32 address;
         TU_ASSIGN_OR_RETURN (address,
-            writer.getSymbolAddress(lexical->activationCall->getSymbolUrl(), lyric_object::LinkageSection::Call));
+            writer.getSectionAddress(lexical->activationCall->getSymbolUrl(), lyric_object::LinkageSection::Call));
         prologue.appendU32(address);
         prologue.appendU32(lexical->targetOffset);
         prologue.appendU8(static_cast<tu_uint8>(lexical->lexicalTarget));
@@ -218,7 +218,7 @@ write_call(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid placement");
             auto initializerUrl = callSymbol->getInitializer(param.name);
             TU_ASSIGN_OR_RETURN (p.initializer_call,
-                writer.getSymbolAddress(initializerUrl, lyric_object::LinkageSection::Call));
+                writer.getSectionAddress(initializerUrl, lyric_object::LinkageSection::Call));
         }
 
         listParameters.push_back(lyo1::CreateParameter(buffer, &p));
@@ -258,7 +258,7 @@ write_call(
                     lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid placement");
             auto initializerUrl = callSymbol->getInitializer(param.name);
             TU_ASSIGN_OR_RETURN (p.initializer_call,
-                writer.getSymbolAddress(initializerUrl, lyric_object::LinkageSection::Call));
+                writer.getSectionAddress(initializerUrl, lyric_object::LinkageSection::Call));
         }
 
         namedParameters.push_back(lyo1::CreateParameter(buffer, &p));

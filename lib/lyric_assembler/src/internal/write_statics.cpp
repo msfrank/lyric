@@ -76,7 +76,7 @@ write_static(
         // get static initializer
         auto initializerUrl = staticSymbol->getInitializer();
         TU_ASSIGN_OR_RETURN (initCall,
-            writer.getSymbolAddress(initializerUrl, lyric_object::LinkageSection::Call));
+            writer.getSectionAddress(initializerUrl, lyric_object::LinkageSection::Call));
 
     } else {
         staticFlags |= lyo1::StaticFlags::DeclOnly;

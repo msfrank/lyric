@@ -7,9 +7,13 @@
 #include <lyric_common/module_location.h>
 #include <lyric_common/symbol_url.h>
 #include <lyric_importer/module_cache.h>
+#include <lyric_importer/call_import.h>
+#include <lyric_importer/field_import.h>
 #include <lyric_object/lyric_object.h>
 #include <lyric_runtime/abstract_loader.h>
 #include <tempo_tracing/scope_manager.h>
+
+#include "symbol_reference_set.h"
 
 namespace lyric_archiver {
 
@@ -33,13 +37,20 @@ namespace lyric_archiver {
         lyric_importer::ModuleCache *systemModuleCache();
         lyric_assembler::ObjectRoot *objectRoot();
 
-        tempo_utils::Status importObject(const lyric_common::ModuleLocation &location);
-
         tempo_utils::Status insertObject(
             const lyric_common::ModuleLocation &location,
             const lyric_object::LyricObject &object);
 
-        tempo_utils::Result<lyric_common::SymbolUrl> archiveSymbol(const lyric_common::SymbolUrl &symbolUrl);
+        tempo_utils::Status importObject(const lyric_common::ModuleLocation &location);
+
+        bool hasImport(const lyric_common::ModuleLocation &location) const;
+
+        tempo_utils::Result<lyric_importer::CallImport *> importCall(const lyric_common::SymbolUrl &callUrl);
+        tempo_utils::Result<lyric_importer::FieldImport *> importField(const lyric_common::SymbolUrl &fieldUrl);
+
+        tempo_utils::Result<lyric_common::SymbolUrl> archiveSymbol(
+            const lyric_common::SymbolUrl &symbolUrl,
+            SymbolReferenceSet &symbolReferenceSet);
 
         tempo_utils::Status putPendingProc(
             const lyric_common::SymbolUrl &importUrl,
@@ -48,7 +59,7 @@ namespace lyric_archiver {
             const lyric_object::BytecodeIterator &code,
             lyric_assembler::ProcHandle *procHandle);
 
-        tempo_utils::Status performFixups();
+        tempo_utils::Status copyPendingProcs();
 
         tempo_utils::Result<lyric_assembler::BindingSymbol *> declareBinding(
             const std::string &name,
@@ -68,6 +79,9 @@ namespace lyric_archiver {
         absl::flat_hash_map<
             lyric_common::ModuleLocation,
             std::string> m_importHashes;
+        absl::flat_hash_map<
+            lyric_common::SymbolUrl,
+            lyric_assembler::AbstractSymbol *> m_copiedSymbols;
 
         struct PendingProc {
             lyric_object::LyricObject object;
@@ -77,7 +91,7 @@ namespace lyric_archiver {
         };
         absl::flat_hash_map<
             lyric_common::SymbolUrl,
-            PendingProc> m_pendingProcs;
+            std::unique_ptr<PendingProc>> m_pendingProcs;
     };
 }
 

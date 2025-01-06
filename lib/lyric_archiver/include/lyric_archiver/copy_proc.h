@@ -10,6 +10,7 @@ namespace lyric_archiver {
         const lyric_common::ModuleLocation &location,
         const lyric_object::LyricObject &object,
         const lyric_object::ProcHeader &header,
+        const absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::AbstractSymbol *> *copiedSymbols,
         lyric_object::BytecodeIterator it,
         lyric_assembler::ProcHandle *procHandle,
         lyric_assembler::ObjectState *state);
