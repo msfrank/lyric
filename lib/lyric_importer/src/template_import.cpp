@@ -13,10 +13,9 @@ namespace lyric_importer {
 }
 
 lyric_importer::TemplateImport::TemplateImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 templateOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_templateOffset(templateOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_templateOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -74,12 +73,13 @@ lyric_importer::TemplateImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto templateWalker = m_moduleImport->getObject().getObject().getTemplate(m_templateOffset);
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto templateWalker = moduleImport->getObject().getObject().getTemplate(m_templateOffset);
     priv->templateUrl = lyric_common::SymbolUrl(location, templateWalker.getSymbolPath());
 
     if (templateWalker.hasSuperTemplate()) {
-        priv->superTemplate = m_moduleImport->getTemplate(
+        priv->superTemplate = moduleImport->getTemplate(
             templateWalker.getSuperTemplate().getDescriptorOffset());
     } else {
         priv->superTemplate = nullptr;
@@ -96,7 +96,7 @@ lyric_importer::TemplateImport::load()
 
         auto constraintType = templateParameter.getConstraintType();
         if (constraintType.isValid()) {
-            tp.type = m_moduleImport->getType(constraintType.getDescriptorOffset());
+            tp.type = moduleImport->getType(constraintType.getDescriptorOffset());
         } else {
             tp.type = nullptr;
         }

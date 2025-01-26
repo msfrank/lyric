@@ -1,12 +1,13 @@
 #ifndef LYRIC_IMPORTER_TEMPLATE_IMPORT_H
 #define LYRIC_IMPORTER_TEMPLATE_IMPORT_H
 
+#include "base_import.h"
 #include "importer_types.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class TemplateImport {
+    class TemplateImport : public BaseImport {
     public:
         TemplateImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 templateOffset);
 
@@ -19,7 +20,6 @@ namespace lyric_importer {
         int numTemplateParameters();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_templateOffset;
         absl::Mutex m_lock;
 

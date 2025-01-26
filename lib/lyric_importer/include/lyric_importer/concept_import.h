@@ -3,11 +3,12 @@
 
 #include <lyric_common/type_def.h>
 
+#include "base_import.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class ConceptImport {
+    class ConceptImport : public BaseImport {
     public:
         ConceptImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 conceptOffset);
 
@@ -35,7 +36,6 @@ namespace lyric_importer {
         int numSealedTypes();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_conceptOffset;
         absl::Mutex m_lock;
 

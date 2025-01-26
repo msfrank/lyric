@@ -13,10 +13,9 @@ namespace lyric_importer {
 }
 
 lyric_importer::ImplImport::ImplImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 implOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_implOffset(implOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_implOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -79,13 +78,14 @@ lyric_importer::ImplImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto implWalker = m_moduleImport->getObject().getObject().getImpl(m_implOffset);
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto implWalker = moduleImport->getObject().getObject().getImpl(m_implOffset);
 
     priv->isDeclOnly = implWalker.isDeclOnly();
     priv->receiverUrl = lyric_common::SymbolUrl(location, implWalker.getReceiver().getSymbolPath());
 
-    priv->implType = m_moduleImport->getType(
+    priv->implType = moduleImport->getType(
         implWalker.getImplType().getDescriptorOffset());
 
     switch (implWalker.implConceptAddressType()) {

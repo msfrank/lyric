@@ -1,11 +1,12 @@
 #ifndef LYRIC_IMPORTER_EXISTENTIAL_IMPORT_H
 #define LYRIC_IMPORTER_EXISTENTIAL_IMPORT_H
 
+#include "base_import.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class ExistentialImport {
+    class ExistentialImport : public BaseImport {
     public:
         ExistentialImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 existentialOffset);
 
@@ -33,7 +34,6 @@ namespace lyric_importer {
         int numSealedTypes();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_existentialOffset;
         absl::Mutex m_lock;
 

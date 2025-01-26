@@ -25,10 +25,9 @@ namespace lyric_importer {
 lyric_importer::ClassImport::ClassImport(
     std::shared_ptr<ModuleImport> moduleImport,
     tu_uint32 classOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_classOffset(classOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_classOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -213,8 +212,9 @@ lyric_importer::ClassImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto classWalker = m_moduleImport->getObject().getObject().getClass(m_classOffset);
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto classWalker = moduleImport->getObject().getObject().getClass(m_classOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, classWalker.getSymbolPath());
 
     priv->isAbstract = classWalker.isAbstract();
@@ -236,11 +236,11 @@ lyric_importer::ClassImport::load()
                 "cannot import class at index {} in module {}; invalid access type",
                 m_classOffset, location.toString()));
 
-    priv->classType = m_moduleImport->getType(
+    priv->classType = moduleImport->getType(
         classWalker.getClassType().getDescriptorOffset());
 
     if (classWalker.hasTemplate()) {
-        priv->classTemplate = m_moduleImport->getTemplate(
+        priv->classTemplate = moduleImport->getTemplate(
             classWalker.getTemplate().getDescriptorOffset());
     } else {
         priv->classTemplate = nullptr;
@@ -309,14 +309,14 @@ lyric_importer::ClassImport::load()
     for (tu_uint8 i = 0; i < classWalker.numImpls(); i++) {
         auto implWalker = classWalker.getImpl(i);
 
-        auto *implType = m_moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
-        auto *implImport = m_moduleImport->getImpl(implWalker.getDescriptorOffset());
+        auto *implType = moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
+        auto *implImport = moduleImport->getImpl(implWalker.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 
     for (tu_uint8 i = 0; i < classWalker.numSealedSubClasses(); i++) {
         auto subClassType = classWalker.getSealedSubClass(i);
-        auto *sealedType = m_moduleImport->getType(subClassType.getDescriptorOffset());
+        auto *sealedType = moduleImport->getType(subClassType.getDescriptorOffset());
         priv->sealedTypes.insert(sealedType->getTypeDef());
     }
 

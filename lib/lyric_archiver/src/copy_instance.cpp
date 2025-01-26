@@ -2,7 +2,7 @@
 #include <lyric_archiver/archiver_result.h>
 #include <lyric_archiver/archive_utils.h>
 #include <lyric_archiver/copy_call.h>
-#include <lyric_archiver/copy_class.h>
+#include <lyric_archiver/copy_instance.h>
 #include <lyric_archiver/copy_impl.h>
 #include <lyric_archiver/copy_template.h>
 #include <lyric_archiver/copy_type.h>
@@ -10,9 +10,9 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
-tempo_utils::Result<lyric_assembler::ClassSymbol *>
-lyric_archiver::copy_class(
-    lyric_importer::ClassImport *classImport,
+tempo_utils::Result<lyric_assembler::InstanceSymbol *>
+lyric_archiver::copy_instance(
+    lyric_importer::InstanceImport *instanceImport,
     const std::string &importHash,
     lyric_assembler::NamespaceSymbol *targetNamespace,
     SymbolReferenceSet &symbolReferenceSet,
@@ -23,73 +23,54 @@ lyric_archiver::copy_class(
     auto *typeCache = objectState->typeCache();
     auto *namespaceBlock = targetNamespace->namespaceBlock();
 
-    auto importUrl = classImport->getSymbolUrl();
+    auto importUrl = instanceImport->getSymbolUrl();
     auto namespaceUrl = targetNamespace->getSymbolUrl();
-    auto classUrl = build_relative_url(importHash, importUrl);
+    auto instanceUrl = build_relative_url(importHash, importUrl);
 
-    // if class is already present in the symbol cache then we are done
-    if (symbolCache->hasSymbol(classUrl)) {
-        auto *sym = symbolCache->getSymbolOrNull(classUrl);
-        if (sym->getSymbolType() == lyric_assembler::SymbolType::CLASS)
-            return cast_symbol_to_class(sym);
+    // if instance is already present in the symbol cache then we are done
+    if (symbolCache->hasSymbol(instanceUrl)) {
+        auto *sym = symbolCache->getSymbolOrNull(instanceUrl);
+        if (sym->getSymbolType() == lyric_assembler::SymbolType::INSTANCE)
+            return cast_symbol_to_instance(sym);
         return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
             "cannot archive {}; symbol is already defined", importUrl.toString());
     }
 
-    auto access = classImport->getAccess();
-    auto derive = classImport->getDerive();
-    auto isAbstract = classImport->isAbstract();
+    auto access = instanceImport->getAccess();
+    auto derive = instanceImport->getDerive();
+    auto isAbstract = instanceImport->isAbstract();
 
-    auto *classTemplateImport = classImport->getClassTemplate();
-    lyric_assembler::TemplateHandle *classTemplate = nullptr;
-    if (classTemplateImport != nullptr) {
-        TU_ASSIGN_OR_RETURN (classTemplate, copy_template(classTemplateImport, classUrl, objectState));
-    }
-
-    auto superClassUrl = classImport->getSuperClass();
-    lyric_assembler::ClassSymbol *superClass = nullptr;
-    if (superClassUrl.isValid()) {
+    auto superInstanceUrl = instanceImport->getSuperInstance();
+    lyric_assembler::InstanceSymbol *superInstance = nullptr;
+    if (superInstanceUrl.isValid()) {
         lyric_assembler::AbstractSymbol *sym;
-        TU_ASSIGN_OR_RETURN (sym, archiverState.getSymbol(superClassUrl));
-        if (sym->getSymbolType() != lyric_assembler::SymbolType::CLASS)
+        TU_ASSIGN_OR_RETURN (sym, archiverState.getSymbol(superInstanceUrl));
+        if (sym->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
             return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
-                "cannot archive {}; missing superclass", importUrl.toString());
-        superClass = cast_symbol_to_class(sym);
+                "cannot archive {}; missing superinstance", importUrl.toString());
+        superInstance = cast_symbol_to_instance(sym);
     }
 
    // create the type
-    lyric_assembler::TypeHandle *classType;
-    if (classTemplate) {
-        TU_ASSIGN_OR_RETURN (classType, typeCache->declareSubType(
-            classUrl, classTemplate->getPlaceholders(), superClass->getTypeDef()));
-    } else {
-        TU_ASSIGN_OR_RETURN (classType, typeCache->declareSubType(
-            classUrl, {}, superClass->getTypeDef()));
-    }
+    lyric_assembler::TypeHandle *instanceType;
+    TU_ASSIGN_OR_RETURN (instanceType, typeCache->declareSubType(instanceUrl, {}, superInstance->getTypeDef()));
 
-    // declare the class
-    std::unique_ptr<lyric_assembler::ClassSymbol> classSymbol;
-
-    if (classTemplate != nullptr) {
-        classSymbol = std::make_unique<lyric_assembler::ClassSymbol>(
-            classUrl, access, derive, isAbstract, classType, classTemplate, superClass,
+    // declare the instance
+    std::unique_ptr<lyric_assembler::InstanceSymbol> instanceSymbol;
+    instanceSymbol = std::make_unique<lyric_assembler::InstanceSymbol>(
+            instanceUrl, access, derive, isAbstract, instanceType, superInstance,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
-    } else {
-        classSymbol = std::make_unique<lyric_assembler::ClassSymbol>(
-            classUrl, access, derive, isAbstract, classType, superClass,
-            /* isDeclOnly= */ false, namespaceBlock, objectState);
-    }
 
-    // append the class to the object
-    TU_RETURN_IF_NOT_OK (objectState->appendClass(classSymbol.get()));
-    auto *classSymbolPtr = classSymbol.release();
+    // append the instance to the object
+    TU_RETURN_IF_NOT_OK (objectState->appendInstance(instanceSymbol.get()));
+    auto *instanceSymbolPtr = instanceSymbol.release();
 
-    // add the class to the copied symbols map
-    TU_RETURN_IF_NOT_OK (archiverState.putSymbol(importUrl, classSymbolPtr));
+    // add the instance to the copied symbols map
+    TU_RETURN_IF_NOT_OK (archiverState.putSymbol(importUrl, instanceSymbolPtr));
 
-    // define the class members
+    // define the instance members
 
-    for (auto it = classImport->membersBegin(); it != classImport->membersEnd(); it++) {
+    for (auto it = instanceImport->membersBegin(); it != instanceImport->membersEnd(); it++) {
         auto &name = it->first;
         lyric_importer::FieldImport *fieldImport;
         TU_ASSIGN_OR_RETURN (fieldImport, archiverState.importField(it->second));
@@ -97,7 +78,7 @@ lyric_archiver::copy_class(
         TU_ASSIGN_OR_RETURN (memberTypeHandle, copy_type(
             fieldImport->getFieldType(), importHash, targetNamespace, symbolReferenceSet, archiverState));
         lyric_assembler::FieldSymbol *fieldSymbol;
-        TU_ASSIGN_OR_RETURN (fieldSymbol, classSymbolPtr->declareMember(
+        TU_ASSIGN_OR_RETURN (fieldSymbol, instanceSymbolPtr->declareMember(
             name, memberTypeHandle->getTypeDef(), fieldImport->isVariable(), fieldImport->getAccess()));
         TU_RETURN_IF_NOT_OK (archiverState.putSymbol(fieldImport->getSymbolUrl(), fieldSymbol));
         auto initializerUrl = fieldImport->getInitializer();
@@ -120,9 +101,9 @@ lyric_archiver::copy_class(
 
     lyric_common::SymbolUrl ctorUrl;
 
-    // define the class methods
+    // define the instance methods
 
-    for (auto it = classImport->methodsBegin(); it != classImport->methodsEnd(); it++) {
+    for (auto it = instanceImport->methodsBegin(); it != instanceImport->methodsEnd(); it++) {
         auto &name = it->first;
         // delay constructor definition until the end
         if (name == "$ctor") {
@@ -137,21 +118,20 @@ lyric_archiver::copy_class(
             TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
         }
         lyric_assembler::CallSymbol *callSymbol;
-        TU_ASSIGN_OR_RETURN (callSymbol, classSymbolPtr->declareMethod(
-            name, callImport->getAccess(), templateParameters));
+        TU_ASSIGN_OR_RETURN (callSymbol, instanceSymbolPtr->declareMethod(name, callImport->getAccess()));
         TU_RETURN_IF_NOT_OK (archiverState.putSymbol(it->second, callSymbol));
         TU_RETURN_IF_NOT_OK (define_call(
             callImport, callSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));
     }
 
-    // define the class impls
-    for (auto it = classImport->implsBegin(); it != classImport->implsEnd(); it++) {
+    // define the instance impls
+    for (auto it = instanceImport->implsBegin(); it != instanceImport->implsEnd(); it++) {
         auto *implImport = it->second;
         lyric_assembler::TypeHandle *implType;
         TU_ASSIGN_OR_RETURN (implType, copy_type(
             implImport->getImplType(), importHash, targetNamespace, symbolReferenceSet, archiverState));
         lyric_assembler::ImplHandle *implHandle;
-        TU_ASSIGN_OR_RETURN (implHandle, classSymbolPtr->declareImpl(implType->getTypeDef()));
+        TU_ASSIGN_OR_RETURN (implHandle, instanceSymbolPtr->declareImpl(implType->getTypeDef()));
         TU_RETURN_IF_NOT_OK (copy_impl(
             implImport, implHandle, importHash, targetNamespace, symbolReferenceSet, archiverState));
     }
@@ -160,19 +140,19 @@ lyric_archiver::copy_class(
     TU_ASSIGN_OR_RETURN (ctorImport, archiverState.importCall(ctorUrl));
 
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, classSymbolPtr->declareCtor(ctorImport->getAccess(), classImport->getAllocator()));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbolPtr->declareCtor(ctorImport->getAccess(), instanceImport->getAllocator()));
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(ctorImport->getSymbolUrl(), ctorSymbol));
     TU_RETURN_IF_NOT_OK (define_call(
         ctorImport, ctorSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));
 
-    // put sealed subclasses
-    for (auto it = classImport->sealedTypesBegin(); it != classImport->sealedTypesEnd(); it++) {
-        auto subclassUrl = it->getConcreteUrl();
-        TU_ASSIGN_OR_RETURN (subclassUrl, archiverState.archiveSymbol(subclassUrl, symbolReferenceSet));
+    // put sealed subinstances
+    for (auto it = instanceImport->sealedTypesBegin(); it != instanceImport->sealedTypesEnd(); it++) {
+        auto subinstanceUrl = it->getConcreteUrl();
+        TU_ASSIGN_OR_RETURN (subinstanceUrl, archiverState.archiveSymbol(subinstanceUrl, symbolReferenceSet));
         lyric_assembler::AbstractSymbol *sym;
-        TU_ASSIGN_OR_RETURN (sym, archiverState.getSymbol(subclassUrl));
-        TU_RETURN_IF_NOT_OK (classSymbolPtr->putSealedType(sym->getTypeDef()));
+        TU_ASSIGN_OR_RETURN (sym, archiverState.getSymbol(subinstanceUrl));
+        TU_RETURN_IF_NOT_OK (instanceSymbolPtr->putSealedType(sym->getTypeDef()));
     }
 
-    return classSymbolPtr;
+    return instanceSymbolPtr;
 }

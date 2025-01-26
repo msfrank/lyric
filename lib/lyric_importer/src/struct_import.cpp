@@ -24,10 +24,9 @@ namespace lyric_importer {
 lyric_importer::StructImport::StructImport(
     std::shared_ptr<ModuleImport> moduleImport,
     tu_uint32 structOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_structOffset(structOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_structOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -204,8 +203,9 @@ lyric_importer::StructImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto structWalker = m_moduleImport->getObject().getObject().getStruct(m_structOffset);
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto structWalker = moduleImport->getObject().getObject().getStruct(m_structOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, structWalker.getSymbolPath());
 
     priv->isAbstract = structWalker.isAbstract();
@@ -227,7 +227,7 @@ lyric_importer::StructImport::load()
                 "cannot import struct at index {} in module {}; invalid access type",
                 m_structOffset, location.toString()));
 
-    priv->structType = m_moduleImport->getType(
+    priv->structType = moduleImport->getType(
         structWalker.getStructType().getDescriptorOffset());
 
     if (structWalker.hasSuperStruct()) {
@@ -293,14 +293,14 @@ lyric_importer::StructImport::load()
     for (tu_uint8 i = 0; i < structWalker.numImpls(); i++) {
         auto implWalker = structWalker.getImpl(i);
 
-        auto *implType = m_moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
-        auto *implImport = m_moduleImport->getImpl(implWalker.getDescriptorOffset());
+        auto *implType = moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
+        auto *implImport = moduleImport->getImpl(implWalker.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 
     for (tu_uint8 i = 0; i < structWalker.numSealedSubStructs(); i++) {
         auto subStructType = structWalker.getSealedSubStruct(i);
-        auto *sealedType = m_moduleImport->getType(subStructType.getDescriptorOffset());
+        auto *sealedType = moduleImport->getType(subStructType.getDescriptorOffset());
         priv->sealedTypes.insert(sealedType->getTypeDef());
     }
 

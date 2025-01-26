@@ -85,6 +85,9 @@ lyric_archiver::copy_call(
     TU_RETURN_IF_NOT_OK (objectState->appendCall(callSymbol.get()));
     auto *callSymbolPtr = callSymbol.release();
 
+    // add the call to the copied symbols map
+    TU_RETURN_IF_NOT_OK (archiverState.putSymbol(importUrl, callSymbolPtr));
+
     return callSymbolPtr;
 }
 
@@ -145,8 +148,12 @@ lyric_archiver::define_call(
         parameterPack.restParameter = Option(p);
     }
 
+    lyric_assembler::TypeHandle *returnTypeHandle;
+    TU_ASSIGN_OR_RETURN (returnTypeHandle, copy_type(
+            callImport->getReturnType(), importHash, targetNamespace, symbolReferenceSet, archiverState));
+
     lyric_assembler::ProcHandle *procHandle;
-    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, callImport->getReturnType()->getTypeDef()));
+    TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnTypeHandle->getTypeDef()));
 
     auto moduleImport = callImport->getModuleImport();
     auto object = moduleImport->getObject();

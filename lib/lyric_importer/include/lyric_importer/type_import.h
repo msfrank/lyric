@@ -1,11 +1,12 @@
 #ifndef LYRIC_IMPORTER_TYPE_IMPORT_H
 #define LYRIC_IMPORTER_TYPE_IMPORT_H
 
+#include "base_import.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class TypeImport {
+    class TypeImport : public BaseImport {
     public:
         TypeImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 typeOffset);
 
@@ -16,11 +17,9 @@ namespace lyric_importer {
         std::vector<TypeImport *>::const_iterator argumentsEnd();
         int numArguments();
 
-        std::shared_ptr<ModuleImport> getModuleImport() const;
         tu_uint32 getTypeOffset() const;
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_typeOffset;
         absl::Mutex m_lock;
 

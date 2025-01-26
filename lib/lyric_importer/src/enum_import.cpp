@@ -24,10 +24,9 @@ namespace lyric_importer {
 lyric_importer::EnumImport::EnumImport(
     std::shared_ptr<ModuleImport> moduleImport,
     tu_uint32 enumOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_enumOffset(enumOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_enumOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -204,8 +203,9 @@ lyric_importer::EnumImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto enumWalker = m_moduleImport->getObject().getObject().getEnum(m_enumOffset);
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto enumWalker = moduleImport->getObject().getObject().getEnum(m_enumOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, enumWalker.getSymbolPath());
 
     priv->isAbstract = enumWalker.isAbstract();
@@ -227,7 +227,7 @@ lyric_importer::EnumImport::load()
                 "cannot import enum at index {} in module {}; invalid access type",
                 m_enumOffset, location.toString()));
 
-    priv->enumType = m_moduleImport->getType(
+    priv->enumType = moduleImport->getType(
         enumWalker.getEnumType().getDescriptorOffset());
 
     if (enumWalker.hasSuperEnum()) {
@@ -293,14 +293,14 @@ lyric_importer::EnumImport::load()
     for (tu_uint8 i = 0; i < enumWalker.numImpls(); i++) {
         auto implWalker = enumWalker.getImpl(i);
 
-        auto *implType = m_moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
-        auto *implImport = m_moduleImport->getImpl(implWalker.getDescriptorOffset());
+        auto *implType = moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
+        auto *implImport = moduleImport->getImpl(implWalker.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 
     for (tu_uint8 i = 0; i < enumWalker.numSealedSubEnums(); i++) {
         auto subEnumType = enumWalker.getSealedSubEnum(i);
-        auto *sealedType = m_moduleImport->getType(subEnumType.getDescriptorOffset());
+        auto *sealedType = moduleImport->getType(subEnumType.getDescriptorOffset());
         priv->sealedTypes.insert(sealedType->getTypeDef());
     }
 

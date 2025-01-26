@@ -49,6 +49,9 @@ lyric_archiver::copy_field(
     TU_RETURN_IF_NOT_OK (objectState->appendField(fieldSymbol.get()));
     auto *fieldSymbolPtr = fieldSymbol.release();
 
+    // add the field to the copied symbols map
+    TU_RETURN_IF_NOT_OK (archiverState.putSymbol(fieldUrl, fieldSymbolPtr));
+
     // define the initializer if it exists
     auto initializerUrl = fieldImport->getInitializer();
     if (initializerUrl.isValid()) {

@@ -6,11 +6,11 @@
 #include <lyric_assembler/object_state.h>
 #include <lyric_common/module_location.h>
 #include <lyric_common/symbol_url.h>
-#include <lyric_importer/module_cache.h>
+#include <lyric_importer/action_import.h>
 #include <lyric_importer/call_import.h>
 #include <lyric_importer/field_import.h>
+#include <lyric_importer/module_cache.h>
 #include <lyric_object/lyric_object.h>
-#include <lyric_runtime/abstract_loader.h>
 #include <tempo_tracing/scope_manager.h>
 
 #include "symbol_reference_set.h"
@@ -45,8 +45,14 @@ namespace lyric_archiver {
 
         bool hasImport(const lyric_common::ModuleLocation &location) const;
 
+        tempo_utils::Result<lyric_importer::ActionImport *> importAction(const lyric_common::SymbolUrl &actionUrl);
         tempo_utils::Result<lyric_importer::CallImport *> importCall(const lyric_common::SymbolUrl &callUrl);
         tempo_utils::Result<lyric_importer::FieldImport *> importField(const lyric_common::SymbolUrl &fieldUrl);
+
+        tempo_utils::Result<lyric_assembler::AbstractSymbol *> getSymbol(const lyric_common::SymbolUrl &symbolUrl);
+        tempo_utils::Status putSymbol(
+            const lyric_common::SymbolUrl &symbolUrl,
+            lyric_assembler::AbstractSymbol *symbol);
 
         tempo_utils::Result<lyric_common::SymbolUrl> archiveSymbol(
             const lyric_common::SymbolUrl &symbolUrl,

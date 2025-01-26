@@ -3,11 +3,12 @@
 
 #include <lyric_common/type_def.h>
 
+#include "base_import.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class EnumImport {
+    class EnumImport : public BaseImport {
     public:
         EnumImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 enumOffset);
 
@@ -19,7 +20,6 @@ namespace lyric_importer {
         lyric_object::AccessType getAccess();
 
         TypeImport *getEnumType();
-        TemplateImport *getEnumTemplate();
         lyric_common::SymbolUrl getSuperEnum();
 
         lyric_common::SymbolUrl getMember(std::string_view name);
@@ -44,7 +44,6 @@ namespace lyric_importer {
         tu_uint32 getAllocator();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_enumOffset;
         absl::Mutex m_lock;
 

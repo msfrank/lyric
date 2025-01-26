@@ -1,11 +1,12 @@
 #ifndef LYRIC_IMPORTER_NAMESPACE_IMPORT_H
 #define LYRIC_IMPORTER_NAMESPACE_IMPORT_H
 
+#include "base_import.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class NamespaceImport {
+    class NamespaceImport : public BaseImport {
     public:
         NamespaceImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 namespaceOffset);
 
@@ -21,7 +22,6 @@ namespace lyric_importer {
         int numBindings();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_namespaceOffset;
         absl::Mutex m_lock;
 

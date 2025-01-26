@@ -1,12 +1,13 @@
 #ifndef LYRIC_IMPORTER_ACTION_IMPORT_H
 #define LYRIC_IMPORTER_ACTION_IMPORT_H
 
+#include "base_import.h"
 #include "importer_types.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class ActionImport {
+    class ActionImport : public BaseImport {
     public:
         ActionImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 actionOffset);
 
@@ -38,7 +39,6 @@ namespace lyric_importer {
         tu_uint8 numInitializers();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_actionOffset;
         absl::Mutex m_lock;
 

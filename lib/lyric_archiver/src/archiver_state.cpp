@@ -3,10 +3,15 @@
 
 #include <lyric_archiver/archiver_result.h>
 #include <lyric_archiver/archiver_state.h>
+#include <lyric_archiver/copy_action.h>
 #include <lyric_archiver/copy_call.h>
 #include <lyric_archiver/copy_class.h>
+#include <lyric_archiver/copy_concept.h>
+#include <lyric_archiver/copy_enum.h>
 #include <lyric_archiver/copy_field.h>
+#include <lyric_archiver/copy_instance.h>
 #include <lyric_archiver/copy_proc.h>
+#include <lyric_archiver/copy_struct.h>
 #include <lyric_archiver/copy_template.h>
 #include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/import_cache.h>
@@ -79,6 +84,19 @@ lyric_archiver::ArchiverState::hasImport(const lyric_common::ModuleLocation &loc
     return m_moduleImports.contains(location);
 }
 
+tempo_utils::Result<lyric_importer::ActionImport *>
+lyric_archiver::ArchiverState::importAction(const lyric_common::SymbolUrl &actionUrl)
+{
+    auto entry = m_moduleImports.find(actionUrl.getModuleLocation());
+    if (entry == m_moduleImports.cend())
+        return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
+            "missing module import {}", actionUrl.getModuleLocation().toString());
+    auto &moduleImport = entry->second;
+    auto object = moduleImport->getObject().getObject();
+    auto symbol = object.findSymbol(actionUrl.getSymbolPath());
+    return moduleImport->getAction(symbol.getLinkageIndex());
+}
+
 tempo_utils::Result<lyric_importer::CallImport *>
 lyric_archiver::ArchiverState::importCall(const lyric_common::SymbolUrl &callUrl)
 {
@@ -103,6 +121,32 @@ lyric_archiver::ArchiverState::importField(const lyric_common::SymbolUrl &fieldU
     auto object = moduleImport->getObject().getObject();
     auto symbol = object.findSymbol(fieldUrl.getSymbolPath());
     return moduleImport->getField(symbol.getLinkageIndex());
+}
+
+tempo_utils::Result<lyric_assembler::AbstractSymbol *>
+lyric_archiver::ArchiverState::getSymbol(const lyric_common::SymbolUrl &symbolUrl)
+{
+    auto entry = m_copiedSymbols.find(symbolUrl);
+    if (entry != m_copiedSymbols.cend())
+        return entry->second;
+    auto *symbolCache = m_objectState->symbolCache();
+    auto *symbol = symbolCache->getSymbolOrNull(symbolUrl);
+    if (symbol == nullptr)
+        return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
+            "missing symbol {}", symbolUrl.toString());
+    return symbol;
+}
+
+tempo_utils::Status
+lyric_archiver::ArchiverState::putSymbol(
+    const lyric_common::SymbolUrl &symbolUrl,
+    lyric_assembler::AbstractSymbol *symbol)
+{
+    if (m_copiedSymbols.contains(symbolUrl))
+        return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
+            "cannot archive {}; symbol is already defined", symbolUrl.toString());
+    m_copiedSymbols[symbolUrl] = symbol;
+    return {};
 }
 
 tempo_utils::Result<lyric_common::SymbolUrl>
@@ -140,12 +184,19 @@ lyric_archiver::ArchiverState::archiveSymbol(
 
     switch (symbol.getLinkageSection()) {
 
+        case lyric_object::LinkageSection::Action: {
+            auto *actionImport = moduleImport->getAction(symbol.getLinkageIndex());
+            lyric_assembler::ActionSymbol *copiedAction;
+            TU_ASSIGN_OR_RETURN (copiedAction, copy_action(
+                actionImport, importHash, globalNamespace, symbolReferenceSet, *this));
+            return copiedAction->getSymbolUrl();
+        }
+
         case lyric_object::LinkageSection::Call: {
             auto *callImport = moduleImport->getCall(symbol.getLinkageIndex());
             lyric_assembler::CallSymbol *copiedCall;
             TU_ASSIGN_OR_RETURN (copiedCall, copy_call(
                 callImport, importHash, globalNamespace, symbolReferenceSet, *this));
-            m_copiedSymbols[symbolUrl] = copiedCall;
             return copiedCall->getSymbolUrl();
         }
 
@@ -154,8 +205,23 @@ lyric_archiver::ArchiverState::archiveSymbol(
             lyric_assembler::ClassSymbol *copiedClass;
             TU_ASSIGN_OR_RETURN (copiedClass, copy_class(
                 classImport, importHash, globalNamespace, symbolReferenceSet, *this));
-            m_copiedSymbols[symbolUrl] = copiedClass;
             return copiedClass->getSymbolUrl();
+        }
+
+        case lyric_object::LinkageSection::Concept: {
+            auto *conceptImport = moduleImport->getConcept(symbol.getLinkageIndex());
+            lyric_assembler::ConceptSymbol *copiedConcept;
+            TU_ASSIGN_OR_RETURN (copiedConcept, copy_concept(
+                conceptImport, importHash, globalNamespace, symbolReferenceSet, *this));
+            return copiedConcept->getSymbolUrl();
+        }
+
+        case lyric_object::LinkageSection::Enum: {
+            auto *enumImport = moduleImport->getEnum(symbol.getLinkageIndex());
+            lyric_assembler::EnumSymbol *copiedEnum;
+            TU_ASSIGN_OR_RETURN (copiedEnum, copy_enum(
+                enumImport, importHash, globalNamespace, symbolReferenceSet, *this));
+            return copiedEnum->getSymbolUrl();
         }
 
         case lyric_object::LinkageSection::Field: {
@@ -163,13 +229,29 @@ lyric_archiver::ArchiverState::archiveSymbol(
             lyric_assembler::FieldSymbol *copiedField;
             TU_ASSIGN_OR_RETURN (copiedField, copy_field(
                 fieldImport, importHash, globalNamespace, symbolReferenceSet, *this));
-            m_copiedSymbols[symbolUrl] = copiedField;
             return copiedField->getSymbolUrl();
+        }
+
+        case lyric_object::LinkageSection::Instance: {
+            auto *instanceImport = moduleImport->getInstance(symbol.getLinkageIndex());
+            lyric_assembler::InstanceSymbol *copiedInstance;
+            TU_ASSIGN_OR_RETURN (copiedInstance, copy_instance(
+                instanceImport, importHash, globalNamespace, symbolReferenceSet, *this));
+            return copiedInstance->getSymbolUrl();
+        }
+
+        case lyric_object::LinkageSection::Struct: {
+            auto *structImport = moduleImport->getStruct(symbol.getLinkageIndex());
+            lyric_assembler::StructSymbol *copiedStruct;
+            TU_ASSIGN_OR_RETURN (copiedStruct, copy_struct(
+                structImport, importHash, globalNamespace, symbolReferenceSet, *this));
+            return copiedStruct->getSymbolUrl();
         }
 
         default:
             return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
-                "cannot archive symbol {}; unsupported symbol", symbolUrl.toString());
+                "cannot archive symbol {}; unsupported symbol",
+                symbolUrl.toString());
     }
 }
 

@@ -17,10 +17,9 @@ namespace lyric_importer {
 lyric_importer::FieldImport::FieldImport(
     std::shared_ptr<ModuleImport> moduleImport,
     tu_uint32 fieldOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_fieldOffset(fieldOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_fieldOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -76,8 +75,9 @@ lyric_importer::FieldImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto fieldWalker = m_moduleImport->getObject().getObject().getField(m_fieldOffset);
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto fieldWalker = moduleImport->getObject().getObject().getField(m_fieldOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, fieldWalker.getSymbolPath());
 
     if (fieldWalker.getAccess() == lyric_object::AccessType::Invalid)
@@ -91,7 +91,7 @@ lyric_importer::FieldImport::load()
     priv->isVariable = fieldWalker.isVariable();
     priv->isDeclOnly = fieldWalker.isDeclOnly();
 
-    priv->fieldType = m_moduleImport->getType(
+    priv->fieldType = moduleImport->getType(
         fieldWalker.getFieldType().getDescriptorOffset());
 
     if (fieldWalker.hasInitializer()) {

@@ -67,8 +67,17 @@ write_field(
                 "invalid field access");
     }
 
+    tu_uint32 initIndex = lyric_object::INVALID_ADDRESS_U32;
+
+    auto initializerUrl = fieldSymbol->getInitializer();
+    if (initializerUrl.isValid()) {
+        TU_ASSIGN_OR_RETURN (initIndex,
+            writer.getSectionAddress(initializerUrl, lyric_object::LinkageSection::Call));
+    }
+
     // add field descriptor
-    fields_vector.push_back(lyo1::CreateFieldDescriptor(buffer, fullyQualifiedName, fieldType, fieldFlags));
+    fields_vector.push_back(lyo1::CreateFieldDescriptor(
+        buffer, fullyQualifiedName, fieldType, fieldFlags, initIndex));
 
     return {};
 }

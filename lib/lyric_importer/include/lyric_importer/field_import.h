@@ -1,11 +1,12 @@
 #ifndef LYRIC_IMPORTER_FIELD_IMPORT_H
 #define LYRIC_IMPORTER_FIELD_IMPORT_H
 
+#include "base_import.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class FieldImport {
+    class FieldImport : public BaseImport {
     public:
         FieldImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 fieldOffset);
 
@@ -20,7 +21,6 @@ namespace lyric_importer {
         lyric_common::SymbolUrl getInitializer();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_fieldOffset;
         absl::Mutex m_lock;
 

@@ -1,11 +1,12 @@
 #ifndef LYRIC_IMPORTER_STATIC_IMPORT_H
 #define LYRIC_IMPORTER_STATIC_IMPORT_H
 
+#include "base_import.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class StaticImport {
+    class StaticImport : public BaseImport {
     public:
         StaticImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 staticOffset);
 
@@ -19,7 +20,6 @@ namespace lyric_importer {
         lyric_common::SymbolUrl getInitializer();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_staticOffset;
         absl::Mutex m_lock;
 

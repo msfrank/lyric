@@ -22,10 +22,9 @@ namespace lyric_importer {
 lyric_importer::ConceptImport::ConceptImport(
     std::shared_ptr<ModuleImport> moduleImport,
     tu_uint32 conceptOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_conceptOffset(conceptOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_conceptOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -160,8 +159,9 @@ lyric_importer::ConceptImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto conceptWalker = m_moduleImport->getObject().getObject().getConcept(m_conceptOffset);
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto conceptWalker = moduleImport->getObject().getObject().getConcept(m_conceptOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, conceptWalker.getSymbolPath());
 
     priv->isDeclOnly = conceptWalker.isDeclOnly();
@@ -182,11 +182,11 @@ lyric_importer::ConceptImport::load()
                 "cannot import concept at index {} in module {}; invalid access type",
                 m_conceptOffset, location.toString()));
 
-    priv->conceptType = m_moduleImport->getType(
+    priv->conceptType = moduleImport->getType(
         conceptWalker.getConceptType().getDescriptorOffset());
 
     if (conceptWalker.hasTemplate()) {
-        priv->conceptTemplate = m_moduleImport->getTemplate(
+        priv->conceptTemplate = moduleImport->getTemplate(
             conceptWalker.getTemplate().getDescriptorOffset());
     } else {
         priv->conceptTemplate = nullptr;
@@ -234,14 +234,14 @@ lyric_importer::ConceptImport::load()
     for (tu_uint8 i = 0; i < conceptWalker.numImpls(); i++) {
         auto implWalker = conceptWalker.getImpl(i);
 
-        auto *implType = m_moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
-        auto *implImport = m_moduleImport->getImpl(implWalker.getDescriptorOffset());
+        auto *implType = moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
+        auto *implImport = moduleImport->getImpl(implWalker.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 
     for (tu_uint8 i = 0; i < conceptWalker.numSealedSubConcepts(); i++) {
         auto subConceptType = conceptWalker.getSealedSubConcept(i);
-        auto *sealedType = m_moduleImport->getType(subConceptType.getDescriptorOffset());
+        auto *sealedType = moduleImport->getType(subConceptType.getDescriptorOffset());
         priv->sealedTypes.insert(sealedType->getTypeDef());
     }
 

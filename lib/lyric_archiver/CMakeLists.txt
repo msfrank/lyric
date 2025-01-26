@@ -10,11 +10,16 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_archiver/archive_utils.h
     include/lyric_archiver/archiver_result.h
     include/lyric_archiver/archiver_state.h
+    include/lyric_archiver/copy_action.h
     include/lyric_archiver/copy_call.h
     include/lyric_archiver/copy_class.h
+    include/lyric_archiver/copy_concept.h
+    include/lyric_archiver/copy_enum.h
     include/lyric_archiver/copy_field.h
     include/lyric_archiver/copy_impl.h
+    include/lyric_archiver/copy_instance.h
     include/lyric_archiver/copy_proc.h
+    include/lyric_archiver/copy_struct.h
     include/lyric_archiver/copy_template.h
     include/lyric_archiver/copy_type.h
     include/lyric_archiver/lyric_archiver.h
@@ -27,11 +32,16 @@ target_sources(lyric_archiver PRIVATE
     src/archive_utils.cpp
     src/archiver_result.cpp
     src/archiver_state.cpp
+    src/copy_action.cpp
     src/copy_call.cpp
     src/copy_class.cpp
+    src/copy_concept.cpp
+    src/copy_enum.cpp
     src/copy_field.cpp
     src/copy_impl.cpp
+    src/copy_instance.cpp
     src/copy_proc.cpp
+    src/copy_struct.cpp
     src/copy_template.cpp
     src/copy_type.cpp
     src/lyric_archiver.cpp

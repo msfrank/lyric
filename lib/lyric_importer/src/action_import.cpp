@@ -21,10 +21,9 @@ namespace lyric_importer {
 lyric_importer::ActionImport::ActionImport(
     std::shared_ptr<ModuleImport> moduleImport,
     tu_uint32 actionOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_actionOffset(actionOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_actionOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -184,8 +183,9 @@ lyric_importer::ActionImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto actionWalker = m_moduleImport->getObject().getObject().getAction(m_actionOffset);
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto actionWalker = moduleImport->getObject().getObject().getAction(m_actionOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, actionWalker.getSymbolPath());
 
     priv->isDeclOnly = actionWalker.isDeclOnly();
@@ -213,13 +213,13 @@ lyric_importer::ActionImport::load()
     }
 
     if (actionWalker.hasTemplate()) {
-        priv->actionTemplate = m_moduleImport->getTemplate(
+        priv->actionTemplate = moduleImport->getTemplate(
             actionWalker.getTemplate().getDescriptorOffset());
     } else {
         priv->actionTemplate = nullptr;
     }
 
-    priv->returnType = m_moduleImport->getType(actionWalker.getResultType().getDescriptorOffset());
+    priv->returnType = moduleImport->getType(actionWalker.getResultType().getDescriptorOffset());
 
     tu_uint8 currparam = 0;
 
@@ -230,7 +230,7 @@ lyric_importer::ActionImport::load()
         Parameter p;
         p.index = currparam++;
         p.name = parameter.getParameterName();
-        p.type = m_moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
+        p.type = moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
         p.placement = parameter.getPlacement();
         p.isVariable = parameter.isVariable();
 
@@ -290,7 +290,7 @@ lyric_importer::ActionImport::load()
         Parameter p;
         p.index = currparam++;
         p.name = parameter.getParameterName();
-        p.type = m_moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
+        p.type = moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
         p.placement = parameter.getPlacement();
         p.isVariable = parameter.isVariable();
 
@@ -349,7 +349,7 @@ lyric_importer::ActionImport::load()
         Parameter p;
         p.index = -1;
         p.name = parameter.getParameterName();
-        p.type = m_moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
+        p.type = moduleImport->getType(parameter.getParameterType().getDescriptorOffset());
         p.placement = parameter.getPlacement();
         p.isVariable = parameter.isVariable();
 

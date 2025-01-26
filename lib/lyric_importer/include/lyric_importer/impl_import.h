@@ -1,12 +1,13 @@
 #ifndef LYRIC_IMPORTER_IMPL_IMPORT_H
 #define LYRIC_IMPORTER_IMPL_IMPORT_H
 
+#include "base_import.h"
 #include "importer_types.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class ImplImport {
+    class ImplImport : public BaseImport {
     public:
         ImplImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 implOffset);
 
@@ -20,7 +21,6 @@ namespace lyric_importer {
         int numExtensions();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_implOffset;
         absl::Mutex m_lock;
 

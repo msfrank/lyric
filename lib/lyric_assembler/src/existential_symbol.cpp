@@ -379,16 +379,12 @@ lyric_assembler::ExistentialSymbol::declareImpl(const lyric_common::TypeDef &imp
             "impl {} already defined for existential {}", implType.toString(), m_existentialUrl.toString());
 
     // touch the impl type
-    lyric_assembler::TypeHandle *implTypeHandle;
+    TypeHandle *implTypeHandle;
     TU_ASSIGN_OR_RETURN (implTypeHandle, m_state->typeCache()->getOrMakeType(implType));
-
-    // confirm that the impl concept exists
     auto implConcept = implType.getConcreteUrl();
-    if (!m_state->symbolCache()->hasSymbol(implConcept))
-        m_state->throwAssemblerInvariant("missing concept symbol {}", implConcept.toString());
 
     // resolve the concept symbol
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(implConcept));
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
         m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());

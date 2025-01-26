@@ -15,10 +15,9 @@ namespace lyric_importer {
 lyric_importer::NamespaceImport::NamespaceImport(
     std::shared_ptr<ModuleImport> moduleImport,
     tu_uint32 namespaceOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_namespaceOffset(namespaceOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_namespaceOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -81,8 +80,9 @@ lyric_importer::NamespaceImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto namespaceWalker = m_moduleImport->getObject().getObject().getNamespace(m_namespaceOffset);
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto namespaceWalker = moduleImport->getObject().getObject().getNamespace(m_namespaceOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, namespaceWalker.getSymbolPath());
 
     priv->isDeclOnly = namespaceWalker.isDeclOnly();

@@ -1,11 +1,12 @@
 #ifndef LYRIC_IMPORTER_BINDING_IMPORT_H
 #define LYRIC_IMPORTER_BINDING_IMPORT_H
 
+#include "base_import.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class BindingImport {
+    class BindingImport : public BaseImport {
     public:
         BindingImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 bindingOffset);
 
@@ -17,7 +18,6 @@ namespace lyric_importer {
         TypeImport *getTargetType();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_bindingOffset;
         absl::Mutex m_lock;
 

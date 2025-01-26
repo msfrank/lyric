@@ -12,10 +12,9 @@ namespace lyric_importer {
 }
 
 lyric_importer::TypeImport::TypeImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 typeOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_typeOffset(typeOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_typeOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -52,12 +51,6 @@ lyric_importer::TypeImport::numArguments()
 {
     load();
     return m_priv->typeArguments.size();
-}
-
-std::shared_ptr<lyric_importer::ModuleImport>
-lyric_importer::TypeImport::getModuleImport() const
-{
-    return m_moduleImport;
 }
 
 tu_uint32
@@ -388,13 +381,14 @@ lyric_importer::TypeImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto typeWalker = m_moduleImport->getObject().getObject().getType(m_typeOffset);
-    priv->typeDef = import_assignable_type(typeWalker, m_moduleImport.get());
-    priv->typeArguments = import_type_arguments(typeWalker, m_moduleImport.get());
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto typeWalker = moduleImport->getObject().getObject().getType(m_typeOffset);
+    priv->typeDef = import_assignable_type(typeWalker, moduleImport.get());
+    priv->typeArguments = import_type_arguments(typeWalker, moduleImport.get());
 
     if (typeWalker.hasSuperType()) {
-        priv->superType = m_moduleImport->getType(typeWalker.getSuperType().getDescriptorOffset());
+        priv->superType = moduleImport->getType(typeWalker.getSuperType().getDescriptorOffset());
     } else {
         priv->superType = nullptr;
     }

@@ -3,12 +3,13 @@
 
 #include <lyric_common/type_def.h>
 
+#include "base_import.h"
 #include "importer_types.h"
 #include "module_import.h"
 
 namespace lyric_importer {
 
-    class InstanceImport {
+    class InstanceImport : public BaseImport {
     public:
         InstanceImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 instanceOffset);
 
@@ -45,7 +46,6 @@ namespace lyric_importer {
         tu_uint32 getAllocator();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
         tu_uint32 m_instanceOffset;
         absl::Mutex m_lock;
 

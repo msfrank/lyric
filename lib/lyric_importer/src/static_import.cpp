@@ -15,10 +15,9 @@ namespace lyric_importer {
 }
 
 lyric_importer::StaticImport::StaticImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 staticOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_staticOffset(staticOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_staticOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -73,8 +72,9 @@ lyric_importer::StaticImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto staticWalker = m_moduleImport->getObject().getObject().getStatic(m_staticOffset);
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto staticWalker = moduleImport->getObject().getObject().getStatic(m_staticOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, staticWalker.getSymbolPath());
 
     priv->isVariable = staticWalker.isVariable();
@@ -88,7 +88,7 @@ lyric_importer::StaticImport::load()
                 "cannot import static at index {} in module {}; invalid access type",
                 m_staticOffset, location.toString()));
 
-    priv->staticType = m_moduleImport->getType(staticWalker.getStaticType().getDescriptorOffset());
+    priv->staticType = moduleImport->getType(staticWalker.getStaticType().getDescriptorOffset());
 
     switch (staticWalker.initializerAddressType()) {
         case lyric_object::AddressType::Near: {

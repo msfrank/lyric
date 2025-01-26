@@ -14,10 +14,9 @@ namespace lyric_importer {
 }
 
 lyric_importer::BindingImport::BindingImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 bindingOffset)
-    : m_moduleImport(moduleImport),
+    : BaseImport(moduleImport),
       m_bindingOffset(bindingOffset)
 {
-    TU_ASSERT (m_moduleImport != nullptr);
     TU_ASSERT (m_bindingOffset != lyric_object::INVALID_ADDRESS_U32);
 }
 
@@ -66,8 +65,9 @@ lyric_importer::BindingImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto location = m_moduleImport->getLocation();
-    auto bindingWalker = m_moduleImport->getObject().getObject().getBinding(m_bindingOffset);
+    auto moduleImport = getModuleImport();
+    auto location = moduleImport->getLocation();
+    auto bindingWalker = moduleImport->getObject().getObject().getBinding(m_bindingOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(location, bindingWalker.getSymbolPath());
 
     priv->access = bindingWalker.getAccess();
@@ -78,17 +78,17 @@ lyric_importer::BindingImport::load()
                 "cannot import binding at index {} in module {}; invalid access type",
                 m_bindingOffset, location.toString()));
 
-    priv->bindingType = m_moduleImport->getType(
+    priv->bindingType = moduleImport->getType(
         bindingWalker.getBindingType().getDescriptorOffset());
 
     if (bindingWalker.hasTemplate()) {
-        priv->bindingTemplate = m_moduleImport->getTemplate(
+        priv->bindingTemplate = moduleImport->getTemplate(
             bindingWalker.getTemplate().getDescriptorOffset());
     } else {
         priv->bindingTemplate = nullptr;
     }
 
-    priv->targetType = m_moduleImport->getType(
+    priv->targetType = moduleImport->getType(
         bindingWalker.getTargetType().getDescriptorOffset());
 
     m_priv = std::move(priv);

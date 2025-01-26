@@ -1,7 +1,6 @@
 #ifndef LYRIC_IMPORTER_BASE_IMPORT_H
 #define LYRIC_IMPORTER_BASE_IMPORT_H
 
-#include "importer_types.h"
 #include "module_import.h"
 
 namespace lyric_importer {
