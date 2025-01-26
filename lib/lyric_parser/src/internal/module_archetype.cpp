@@ -133,30 +133,26 @@ void lyric_parser::internal::ModuleArchetype::exitNamespaceStatement(ModuleParse
     return ModuleSymbolOps::exitNamespaceStatement(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitUsingPath(ModuleParser::UsingPathContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterUsingStatement(ModuleParser::UsingStatementContext *ctx)
 {
-    return ModuleSymbolOps::exitUsingPath(ctx);
+    return ModuleSymbolOps::enterUsingStatement(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::enterUsingFromStatement(ModuleParser::UsingFromStatementContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitUsingRef(ModuleParser::UsingRefContext *ctx)
 {
-    return ModuleSymbolOps::enterUsingFromStatement(ctx);
+    return ModuleSymbolOps::exitUsingRef(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitUsingFromStatement(ModuleParser::UsingFromStatementContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitUsingType(ModuleParser::UsingTypeContext *ctx)
 {
-    return ModuleSymbolOps::exitUsingFromStatement(ctx);
+    return ModuleSymbolOps::exitUsingType(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::enterUsingLocalStatement(ModuleParser::UsingLocalStatementContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitUsingStatement(ModuleParser::UsingStatementContext *ctx)
 {
-    return ModuleSymbolOps::enterUsingLocalStatement(ctx);
+    return ModuleSymbolOps::exitUsingStatement(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitUsingLocalStatement(ModuleParser::UsingLocalStatementContext *ctx)
-{
-    return ModuleSymbolOps::exitUsingLocalStatement(ctx);
-}
 void lyric_parser::internal::ModuleArchetype::exitImportRef(ModuleParser::ImportRefContext *ctx)
 {
     return ModuleSymbolOps::exitImportRef(ctx);
@@ -180,31 +176,6 @@ void lyric_parser::internal::ModuleArchetype::enterImportSymbolsStatement(Module
 void lyric_parser::internal::ModuleArchetype::exitImportSymbolsStatement(ModuleParser::ImportSymbolsStatementContext *ctx)
 {
     return ModuleSymbolOps::exitImportSymbolsStatement(ctx);
-}
-
-void lyric_parser::internal::ModuleArchetype::exitExportRef(ModuleParser::ExportRefContext *ctx)
-{
-    return ModuleSymbolOps::exitExportRef(ctx);
-}
-
-void lyric_parser::internal::ModuleArchetype::exitExportModuleStatement(ModuleParser::ExportModuleStatementContext *ctx)
-{
-    return ModuleSymbolOps::exitExportModuleStatement(ctx);
-}
-
-void lyric_parser::internal::ModuleArchetype::exitExportAllStatement(ModuleParser::ExportAllStatementContext *ctx)
-{
-    return ModuleSymbolOps::exitExportAllStatement(ctx);
-}
-
-void lyric_parser::internal::ModuleArchetype::enterExportSymbolsStatement(ModuleParser::ExportSymbolsStatementContext *ctx)
-{
-    return ModuleSymbolOps::enterExportSymbolsStatement(ctx);
-}
-
-void lyric_parser::internal::ModuleArchetype::exitExportSymbolsStatement(ModuleParser::ExportSymbolsStatementContext *ctx)
-{
-    return ModuleSymbolOps::exitExportSymbolsStatement(ctx);
 }
 
 /*

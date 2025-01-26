@@ -317,6 +317,29 @@ lyric_assembler::CodeFragment::loadRef(const DataReference &ref)
 }
 
 tempo_utils::Status
+lyric_assembler::CodeFragment::loadRef(const ImplReference &ref)
+{
+    auto *state = m_procBuilder->objectState();
+    auto *symbolCache = state->symbolCache();
+
+    Statement statement;
+    statement.type = StatementType::Instruction;
+
+    AbstractSymbol *symbol;
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.usingRef.symbolUrl));
+
+    if (symbol->getSymbolType() == SymbolType::SYNTHETIC) {
+        auto *syntheticSymbol = cast_symbol_to_synthetic(symbol);
+        statement.instruction = std::make_shared<LoadSyntheticInstruction>(syntheticSymbol->getSyntheticType());
+    } else {
+        statement.instruction = std::make_shared<LoadDataInstruction>(symbol);
+    }
+
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::CodeFragment::loadThis()
 {
     Statement statement;

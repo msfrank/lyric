@@ -2,6 +2,7 @@
 #include <lyric_archiver/archive_utils.h>
 #include <lyric_archiver/archiver_result.h>
 #include <lyric_archiver/copy_call.h>
+#include <lyric_archiver/copy_type.h>
 #include <lyric_archiver/scan_proc.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/namespace_symbol.h>
@@ -101,20 +102,28 @@ lyric_archiver::define_call(
     lyric_assembler::ParameterPack parameterPack;
 
     for (auto it = callImport->listParametersBegin(); it != callImport->listParametersEnd(); it++) {
+        lyric_assembler::TypeHandle *paramTypeHandle;
+        TU_ASSIGN_OR_RETURN (paramTypeHandle, copy_type(
+            it->type, importHash, targetNamespace, symbolReferenceSet, archiverState));
+
         lyric_assembler::Parameter p;
         p.index = it->index;
         p.name = it->name;
-        p.typeDef = it->type->getTypeDef();
+        p.typeDef = paramTypeHandle->getTypeDef();
         p.isVariable = it->isVariable;
         p.placement = it->placement;
         parameterPack.listParameters.push_back(std::move(p));
     }
 
     for (auto it = callImport->namedParametersBegin(); it != callImport->namedParametersEnd(); it++) {
+        lyric_assembler::TypeHandle *paramTypeHandle;
+        TU_ASSIGN_OR_RETURN (paramTypeHandle, copy_type(
+            it->type, importHash, targetNamespace, symbolReferenceSet, archiverState));
+
         lyric_assembler::Parameter p;
         p.index = it->index;
         p.name = it->name;
-        p.typeDef = it->type->getTypeDef();
+        p.typeDef = paramTypeHandle->getTypeDef();
         p.isVariable = it->isVariable;
         p.placement = it->placement;
         parameterPack.namedParameters.push_back(std::move(p));
@@ -122,10 +131,15 @@ lyric_archiver::define_call(
 
     if (callImport->hasRestParameter()) {
         auto rest = callImport->getRestParameter();
+
+        lyric_assembler::TypeHandle *restTypeHandle;
+        TU_ASSIGN_OR_RETURN (restTypeHandle, copy_type(
+            rest.type, importHash, targetNamespace, symbolReferenceSet, archiverState));
+
         lyric_assembler::Parameter p;
         p.index = rest.index;
         p.name = rest.name;
-        p.typeDef = rest.type->getTypeDef();
+        p.typeDef = restTypeHandle->getTypeDef();
         p.isVariable = rest.isVariable;
         p.placement = rest.placement;
         parameterPack.restParameter = Option(p);

@@ -191,14 +191,14 @@ lyric_assembler::BlockHandle::symbolsEnd() const
     return m_bindings.cend();
 }
 
-absl::flat_hash_map<lyric_common::TypeDef, lyric_common::SymbolUrl>::const_iterator
-lyric_assembler::BlockHandle::instancesBegin() const
+absl::flat_hash_map<lyric_common::TypeDef, lyric_assembler::ImplReference>::const_iterator
+lyric_assembler::BlockHandle::implsBegin() const
 {
     return m_impls.cbegin();
 }
 
-absl::flat_hash_map<lyric_common::TypeDef, lyric_common::SymbolUrl>::const_iterator
-lyric_assembler::BlockHandle::instancesEnd() const
+absl::flat_hash_map<lyric_common::TypeDef, lyric_assembler::ImplReference>::const_iterator
+lyric_assembler::BlockHandle::implsEnd() const
 {
     return m_impls.cend();
 }
@@ -1264,12 +1264,43 @@ lyric_assembler::BlockHandle::resolveStruct(const lyric_common::TypeDef &structT
 }
 
 tempo_utils::Status
-lyric_assembler::BlockHandle::useSymbol(
-    const lyric_common::SymbolUrl &symbolUrl,
+lyric_assembler::BlockHandle::useImpls(
+    const DataReference &usingRef,
     const absl::flat_hash_set<lyric_common::TypeDef> &implTypes)
 {
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(symbolUrl));
+    AbstractSymbol *symbol;
+    auto *symbolCache = m_state->symbolCache();
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(usingRef.symbolUrl));
+
+    switch (symbol->getSymbolType()) {
+        case SymbolType::BINDING: {
+            auto *bindingSymbol = cast_symbol_to_binding(symbol);
+            lyric_common::TypeDef targetType;
+            TU_ASSIGN_OR_RETURN (targetType, bindingSymbol->resolveTarget({}));
+            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(targetType.getConcreteUrl()));
+            break;
+        }
+        case SymbolType::LOCAL: {
+            auto *localVariable = cast_symbol_to_local(symbol);
+            auto localType = localVariable->getTypeDef();
+            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(localType.getConcreteUrl()));
+            break;
+        }
+        case SymbolType::LEXICAL: {
+            auto *lexicalVariable = cast_symbol_to_lexical(symbol);
+            auto lexicalType = lexicalVariable->getTypeDef();
+            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(lexicalType.getConcreteUrl()));
+            break;
+        }
+        case SymbolType::ARGUMENT: {
+            auto *argumentVariable = cast_symbol_to_local(symbol);
+            auto argumentType = argumentVariable->getTypeDef();
+            TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(argumentType.getConcreteUrl()));
+            break;
+        }
+        default:
+            break;
+    }
 
     absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsBegin;
     absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *>::const_iterator implsEnd;
@@ -1314,7 +1345,7 @@ lyric_assembler::BlockHandle::useSymbol(
         default:
             return logAndContinue(AssemblerCondition::kInvalidSymbol,
                 tempo_tracing::LogSeverity::kError,
-                "symbol {} does not support impls", symbolUrl.toString());
+                "symbol {} does not support impls", usingRef.symbolUrl.toString());
     }
 
     for (auto iterator = implsBegin; iterator != implsEnd; iterator++) {
@@ -1322,16 +1353,31 @@ lyric_assembler::BlockHandle::useSymbol(
         auto implType = implHandle->implType()->getTypeDef();
         if (!implTypes.empty() && !implTypes.contains(implType))
             continue;
-        if (m_impls.contains(implType)) {
-            const auto &impl = m_impls.at(implType);
+        if (m_impls.contains(implType))
             return logAndContinue(AssemblerCondition::kImplConflict,
                 tempo_tracing::LogSeverity::kError,
-                "symbol {} conflicts with impl {}", symbolUrl.toString(), impl.toString());
-        }
-        m_impls[implType] = symbolUrl;
+                "symbol {} conflicts with impl {}", usingRef.symbolUrl.toString(), implType.toString());
+        ImplReference implRef;
+        implRef.implType = implType;
+        implRef.usingRef = usingRef;
+        m_impls[implType] = implRef;
     }
 
-    return AssemblerStatus::ok();
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::BlockHandle::useImpls(
+    const InstanceSymbol *instanceSymbol,
+    const absl::flat_hash_set<lyric_common::TypeDef> &implTypes)
+{
+    TU_ASSERT (instanceSymbol != nullptr);
+
+    DataReference usingRef;
+    usingRef.referenceType = ReferenceType::Value;
+    usingRef.symbolUrl = instanceSymbol->getSymbolUrl();
+    usingRef.typeDef = instanceSymbol->getTypeDef();
+    return useImpls(usingRef, implTypes);
 }
 
 bool
@@ -1340,35 +1386,38 @@ lyric_assembler::BlockHandle::hasImpl(const lyric_common::TypeDef &implType) con
     return m_impls.contains(implType);
 }
 
-Option<lyric_common::SymbolUrl>
+Option<lyric_assembler::ImplReference>
 lyric_assembler::BlockHandle::getImpl(const lyric_common::TypeDef &implType) const
 {
-    if (m_impls.contains(implType))
-        return Option<lyric_common::SymbolUrl>(m_impls.at(implType));
+    auto entry = m_impls.find(implType);
+    if (entry != m_impls.cend())
+        return Option(entry->second);
     return {};
 }
 
-tempo_utils::Result<lyric_common::SymbolUrl>
-lyric_assembler::BlockHandle::resolveImpl(const lyric_common::TypeDef &implType, ResolveMode mode)
+tempo_utils::Result<lyric_assembler::ImplReference>
+lyric_assembler::BlockHandle::resolveImpl(
+    const lyric_common::TypeDef &implType,
+    const std::vector<lyric_common::TypeDef> &fallbackImplTypes)
 {
     // look for a suitable instance in the current block or an ancestor block
     for (auto *block = this; block != nullptr; block = block->m_parentBlock) {
         if (block->m_impls.contains(implType)) {
-            const auto &instanceUrl = block->m_impls[implType];
-            return instanceUrl;
+            auto entry = block->m_impls.find(implType);
+            if (entry != m_impls.cend())
+                return entry->second;
         }
     }
 
-    switch (mode) {
-        case ResolveMode::kDefault:
-            return logAndContinue(AssemblerCondition::kMissingImpl,
-                tempo_tracing::LogSeverity::kError,
-                "no instance found implementing {}", implType.toString());
-        case ResolveMode::kNoStatusIfMissing:
-            return lyric_common::SymbolUrl();
-        default:
-            throwAssemblerInvariant("invalid resolve mode");
-    }
+    if (fallbackImplTypes.empty())
+        return logAndContinue(AssemblerCondition::kMissingImpl,
+            tempo_tracing::LogSeverity::kError,
+            "no instance found implementing {}", implType.toString());
+
+    auto &front = fallbackImplTypes.front();
+    auto cbegin = fallbackImplTypes.cbegin();
+    std::vector remaining(++cbegin, fallbackImplTypes.cend());
+    return resolveImpl(front, remaining);
 }
 
 tempo_utils::Result<lyric_assembler::BindingSymbol *>

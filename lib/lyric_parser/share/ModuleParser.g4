@@ -35,7 +35,6 @@ statement           : valStatement
                     | tryStatement
                     | returnStatement
                     | importStatement
-                    | exportStatement
                     | usingStatement
                     ;
 
@@ -260,25 +259,18 @@ importStatement     : ImportKeyword FromKeyword moduleLocation EllipsisOperator 
                     | ImportKeyword moduleLocation NamedKeyword Identifier              # importModuleStatement
                     ;
 
-exportRef           : symbolPath symbolAlias? ;
-exportSet           : CurlyOpen exportRef ( CommaOperator exportRef )* CurlyClose ;
-exportSpec          : exportRef | exportSet ;
-exportStatement     : ExportKeyword FromKeyword moduleLocation EllipsisOperator         # exportAllStatement
-                    | ExportKeyword FromKeyword moduleLocation exportSpec               # exportSymbolsStatement
-                    | ExportKeyword moduleLocation NamedKeyword Identifier              # exportModuleStatement
-                    ;
-
-usingPath           : Identifier ( DotOperator Identifier )? ;
-usingSet            : CurlyOpen usingPath ( CommaOperator usingPath )* CurlyClose ;
-usingSpec           : usingPath | usingSet ;
-usingStatement      : UsingKeyword FromKeyword moduleLocation usingSpec                 # usingFromStatement
-                    | UsingKeyword usingSpec                                            # usingLocalStatement
-                    ;
+usingRef            : newOrDeref ;
+usingType           : singularType ;
+usingSet            : CurlyOpen usingType ( CommaOperator usingType )* CurlyClose ;
+usingAll            : UsingKeyword usingRef ;
+usingImpls          : UsingKeyword FromKeyword usingRef usingSet ;
+usingStatement      : usingAll | usingImpls ;
 
 
 // lambda expression
 
 lambdaExpression    : LambdaKeyword paramSpec returnSpec CurlyOpen block CurlyClose ;
+
 
 // lambda-from expression
 
@@ -378,6 +370,14 @@ multOrDiv           : multOrDiv StarOperator negation                           
                     ;
 
 negation            : MinusOperator negation                                                # negExpression
+                    | symbol                                                                # symbolRule
+                    ;
+
+symbol              : HashOperator Identifier ( DotOperator Identifier)*                    # symbolExpression
+                    | typeof                                                                # typeofRule
+                    ;
+
+typeof              : TypeOfKeyword assignableType                                          # typeofExpression
                     | newOrDeref                                                            # newOrDerefRule
                     ;
 
@@ -387,8 +387,6 @@ newOrDeref          : derefLiteral derefSpec*                                   
                     | thisSpec derefSpec*                                                   # thisExpression
                     | callSpec derefSpec*                                                   # callExpression
                     | nameSpec derefSpec*                                                   # nameExpression
-                    | HashOperator Identifier ( DotOperator Identifier)*                    # symbolExpression
-                    | TypeOfKeyword assignableType                                          # typeofExpression
                     ;
 
 

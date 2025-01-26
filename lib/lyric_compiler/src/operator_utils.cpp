@@ -1,8 +1,11 @@
 
-#include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/class_symbol.h>
+#include <lyric_assembler/concept_symbol.h>
+#include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/compiler_utils.h>
+#include <lyric_compiler/impl_utils.h>
 #include <lyric_compiler/operator_utils.h>
 #include <lyric_typing/callsite_reifier.h>
 
@@ -28,28 +31,15 @@ lyric_compiler::compile_unary_operator(
     TU_ASSIGN_OR_RETURN (operatorType, resolve_unary_operator_concept_type(
         fundamentalCache, operationId, operandType));
 
-    // resolve operator impl
-    lyric_common::SymbolUrl instanceUrl;
-    TU_ASSIGN_OR_RETURN (instanceUrl, block->resolveImpl(operatorType));
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(instanceUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
-        block->throwAssemblerInvariant("invalid instance symbol {}", instanceUrl.toString());
-    auto *instanceSymbol = cast_symbol_to_instance(symbol);
-
-    // resolve Operator impl
-    auto *impl = instanceSymbol->getImpl(operatorType);
-    if (impl == nullptr)
-        return block->logAndContinue(CompilerCondition::kMissingImpl,
-            tempo_tracing::LogSeverity::kError,
-            "missing impl for {}", operatorType.toString());
-
     std::string actionName;
     TU_ASSIGN_OR_RETURN (actionName, resolve_operator_action_name(operationId));
 
-    lyric_assembler::DataReference instanceRef{lyric_assembler::ReferenceType::Value, instanceUrl, operatorType};
+    // resolve operator impl reference
+    lyric_assembler::ImplReference implRef;
+    TU_ASSIGN_OR_RETURN (implRef, block->resolveImpl(operatorType));
+
     lyric_assembler::CallableInvoker extensionInvoker;
-    TU_RETURN_IF_NOT_OK (impl->prepareExtension(actionName, instanceRef, extensionInvoker));
+    TU_RETURN_IF_NOT_OK (prepare_impl_action(actionName, implRef, extensionInvoker, block, symbolCache));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier.initialize(extensionInvoker));
@@ -87,28 +77,15 @@ lyric_compiler::compile_binary_operator(
     TU_ASSIGN_OR_RETURN (operatorType, resolve_binary_operator_concept_type(
         fundamentalCache, operationId, lhsType, rhsType));
 
-    // resolve operator impl
-    lyric_common::SymbolUrl instanceUrl;
-    TU_ASSIGN_OR_RETURN (instanceUrl, block->resolveImpl(operatorType));
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(instanceUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
-        block->throwAssemblerInvariant("invalid instance symbol {}", instanceUrl.toString());
-    auto *instanceSymbol = cast_symbol_to_instance(symbol);
-
-    // resolve Operator impl
-    auto *impl = instanceSymbol->getImpl(operatorType);
-    if (impl == nullptr)
-        return block->logAndContinue(CompilerCondition::kMissingImpl,
-            tempo_tracing::LogSeverity::kError,
-            "missing impl for {}", operatorType.toString());
-
     std::string actionName;
     TU_ASSIGN_OR_RETURN (actionName, resolve_operator_action_name(operationId));
 
-    lyric_assembler::DataReference instanceRef{lyric_assembler::ReferenceType::Value, instanceUrl, operatorType};
+    // resolve operator impl reference
+    lyric_assembler::ImplReference implRef;
+    TU_ASSIGN_OR_RETURN (implRef, block->resolveImpl(operatorType));
+
     lyric_assembler::CallableInvoker extensionInvoker;
-    TU_RETURN_IF_NOT_OK (impl->prepareExtension(actionName, instanceRef, extensionInvoker));
+    TU_RETURN_IF_NOT_OK (prepare_impl_action(actionName, implRef, extensionInvoker, block, symbolCache));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier.initialize(extensionInvoker));

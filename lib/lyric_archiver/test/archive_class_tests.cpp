@@ -86,3 +86,41 @@ TEST_F(ArchiveClassTests, ArchiveClassAndCheckMethod)
 
     ASSERT_THAT (runModuleResult, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
+
+TEST_F(ArchiveClassTests, ArchiveClassAndCheckImpl)
+{
+    ASSERT_THAT (configure(), tempo_test::IsOk());
+
+    lyric_common::ModuleLocation mod1location;
+    TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
+        defclass FooClass {
+            impl Equality[FooClass,FooClass] {
+                def equals(lhs: FooClass, rhs: FooClass): Bool {
+                    true
+                }
+            }
+        }
+    )", "mod1"));
+
+    ASSERT_THAT (prepare(), tempo_test::IsOk());
+
+    ASSERT_THAT (importModule(mod1location), tempo_test::IsOk());
+
+    lyric_common::SymbolUrl archivedUrl;
+    TU_ASSIGN_OR_RAISE (archivedUrl, archiveSymbol(mod1location, "FooClass"));
+    lyric_assembler::BindingSymbol *bindingSymbol;
+    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooClassAlias", lyric_object::AccessType::Public));
+    ASSERT_THAT (bindingSymbol->defineTarget(lyric_common::TypeDef::forConcrete(archivedUrl)), tempo_test::IsOk());
+
+    ASSERT_THAT (build(), tempo_test::IsOk());
+
+    auto runModuleResult = runCode(R"(
+        import from "dev.zuri.test:///archive" { FooClassAlias }
+        val foo1: FooClassAlias = FooClassAlias{}
+        val foo2: FooClassAlias = FooClassAlias{}
+        using foo1
+        foo1 == foo2
+    )");
+
+    ASSERT_THAT (runModuleResult, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+}

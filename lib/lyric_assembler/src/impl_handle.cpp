@@ -238,9 +238,11 @@ lyric_assembler::ImplHandle::prepareExtension(
             tempo_tracing::LogSeverity::kError,
             "missing extension {}", name);
 
-    if (ref.symbolUrl != priv->receiverUrl)
+    auto refUrl = ref.typeDef.getConcreteUrl();
+    if (refUrl != priv->receiverUrl)
         m_state->throwAssemblerInvariant(
-            "ref {} does not match receiver {}", ref.symbolUrl.toString(), priv->receiverUrl.toString());
+            "ref {} is not an instance of impl receiver {}",
+            ref.symbolUrl.toString(), priv->receiverUrl.toString());
 
     const auto &extension = priv->extensions.at(name);
     lyric_assembler::AbstractSymbol *symbol;

@@ -139,10 +139,26 @@ lyric_parser::internal::make_IType_node(
 }
 
 lyric_parser::ArchetypeNode *
+lyric_parser::internal::make_SType_or_PType_node(
+    ArchetypeState *state,
+    ModuleParser::SingularTypeContext *ctx)
+{
+    TU_ASSERT (ctx != nullptr);
+    if (ctx->simpleType()) {
+        return make_SType_node(state, ctx->simpleType());
+    } else if (ctx->parametricType()) {
+        return make_PType_node(state, ctx->parametricType());
+    }
+    state->throwSyntaxError(get_token_location(ctx->getStart()), "illegal assignable type");
+    TU_UNREACHABLE();
+}
+
+lyric_parser::ArchetypeNode *
 lyric_parser::internal::make_Type_node(
     ArchetypeState *state,
     ModuleParser::AssignableTypeContext *ctx)
 {
+    TU_ASSERT (ctx != nullptr);
     if (ctx->singularType()) {
         if (ctx->singularType()->parametricType())
             return make_PType_node(state, ctx->singularType()->parametricType());

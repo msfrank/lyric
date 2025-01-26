@@ -5,6 +5,7 @@
 #include <lyric_archiver/copy_class.h>
 #include <lyric_archiver/copy_impl.h>
 #include <lyric_archiver/copy_template.h>
+#include <lyric_archiver/copy_type.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
@@ -85,10 +86,12 @@ lyric_archiver::copy_class(
         auto &name = it->first;
         lyric_importer::FieldImport *fieldImport;
         TU_ASSIGN_OR_RETURN (fieldImport, archiverState.importField(it->second));
-        auto memberType = fieldImport->getFieldType()->getTypeDef();
+        lyric_assembler::TypeHandle *memberTypeHandle;
+        TU_ASSIGN_OR_RETURN (memberTypeHandle, copy_type(
+            fieldImport->getFieldType(), importHash, targetNamespace, symbolReferenceSet, archiverState));
         lyric_assembler::FieldSymbol *fieldSymbol;
         TU_ASSIGN_OR_RETURN (fieldSymbol, classSymbolPtr->declareMember(
-            name, memberType, fieldImport->isVariable(), fieldImport->getAccess()));
+            name, memberTypeHandle->getTypeDef(), fieldImport->isVariable(), fieldImport->getAccess()));
         auto initializerUrl = fieldImport->getInitializer();
         if (initializerUrl.isValid()) {
             lyric_importer::CallImport *initImport;
@@ -131,11 +134,14 @@ lyric_archiver::copy_class(
 
     // define the class impls
     for (auto it = classImport->implsBegin(); it != classImport->implsEnd(); it++) {
-        auto implType = it->first;
         auto *implImport = it->second;
+        lyric_assembler::TypeHandle *implType;
+        TU_ASSIGN_OR_RETURN (implType, copy_type(
+            implImport->getImplType(), importHash, targetNamespace, symbolReferenceSet, archiverState));
         lyric_assembler::ImplHandle *implHandle;
-        TU_ASSIGN_OR_RETURN (implHandle, classSymbolPtr->declareImpl(implType));
-        TU_RETURN_IF_NOT_OK (copy_impl(implImport, implHandle, symbolReferenceSet, archiverState));
+        TU_ASSIGN_OR_RETURN (implHandle, classSymbolPtr->declareImpl(implType->getTypeDef()));
+        TU_RETURN_IF_NOT_OK (copy_impl(
+            implImport, implHandle, importHash, targetNamespace, symbolReferenceSet, archiverState));
     }
 
     // put sealed subclasses

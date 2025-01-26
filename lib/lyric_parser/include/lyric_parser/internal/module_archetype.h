@@ -67,23 +67,16 @@ namespace lyric_parser::internal {
         void exitNamespaceSpec(ModuleParser::NamespaceSpecContext *ctx) override;
         void exitNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx) override;
 
-        void exitUsingPath(ModuleParser::UsingPathContext *ctx) override;
-        void enterUsingFromStatement(ModuleParser::UsingFromStatementContext *ctx) override;
-        void exitUsingFromStatement(ModuleParser::UsingFromStatementContext *ctx) override;
-        void enterUsingLocalStatement(ModuleParser::UsingLocalStatementContext *ctx) override;
-        void exitUsingLocalStatement(ModuleParser::UsingLocalStatementContext *ctx) override;
+        void enterUsingStatement(ModuleParser::UsingStatementContext *ctx) override;
+        void exitUsingRef(ModuleParser::UsingRefContext *ctx) override;
+        void exitUsingType(ModuleParser::UsingTypeContext *ctx) override;
+        void exitUsingStatement(ModuleParser::UsingStatementContext *ctx) override;
 
         void exitImportRef(ModuleParser::ImportRefContext *ctx) override;
         void exitImportModuleStatement(ModuleParser::ImportModuleStatementContext *ctx) override;
         void exitImportAllStatement(ModuleParser::ImportAllStatementContext *ctx) override;
         void enterImportSymbolsStatement(ModuleParser::ImportSymbolsStatementContext *ctx) override;
         void exitImportSymbolsStatement(ModuleParser::ImportSymbolsStatementContext *ctx) override;
-
-        void exitExportRef(ModuleParser::ExportRefContext *ctx) override;
-        void exitExportModuleStatement(ModuleParser::ExportModuleStatementContext *ctx) override;
-        void exitExportAllStatement(ModuleParser::ExportAllStatementContext *ctx) override;
-        void enterExportSymbolsStatement(ModuleParser::ExportSymbolsStatementContext *ctx) override;
-        void exitExportSymbolsStatement(ModuleParser::ExportSymbolsStatementContext *ctx) override;
 
         // implemented by ModuleConstantOps
         void exitTrueLiteral(ModuleParser::TrueLiteralContext *ctx) override;

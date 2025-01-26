@@ -57,13 +57,13 @@ namespace lyric_assembler {
 
         absl::flat_hash_map<std::string, SymbolBinding>::const_iterator symbolsBegin() const;
         absl::flat_hash_map<std::string, SymbolBinding>::const_iterator symbolsEnd() const;
-        absl::flat_hash_map<lyric_common::TypeDef, lyric_common::SymbolUrl>::const_iterator instancesBegin() const;
-        absl::flat_hash_map<lyric_common::TypeDef, lyric_common::SymbolUrl>::const_iterator instancesEnd() const;
+        absl::flat_hash_map<lyric_common::TypeDef, ImplReference>::const_iterator implsBegin() const;
+        absl::flat_hash_map<lyric_common::TypeDef, ImplReference>::const_iterator implsEnd() const;
 
         bool hasBinding(const std::string &name) const;
         SymbolBinding getBinding(const std::string &name) const;
 
-        tempo_utils::Result<lyric_assembler::SymbolBinding>
+        tempo_utils::Result<SymbolBinding>
         resolveBinding(const std::vector<std::string> &path);
 
         tempo_utils::Result<lyric_common::TypeDef> resolveSingular(
@@ -93,6 +93,7 @@ namespace lyric_assembler {
             bool declOnly = false);
 
         tempo_utils::Result<DataReference> resolveReference(const std::string &name);
+        tempo_utils::Result<DataReference> resolveReference(const std::vector<std::string> &path);
 
         tempo_utils::Result<CallSymbol *> declareFunction(
             const std::string &name,
@@ -153,15 +154,18 @@ namespace lyric_assembler {
 
         tempo_utils::Result<StructSymbol *> resolveStruct(const lyric_common::TypeDef &structType);
 
-        tempo_utils::Status useSymbol(
-            const lyric_common::SymbolUrl &symbolUrl,
+        tempo_utils::Status useImpls(
+            const DataReference &usingRef,
+            const absl::flat_hash_set<lyric_common::TypeDef> &implTypes = {});
+        tempo_utils::Status useImpls(
+            const InstanceSymbol *usingInstance,
             const absl::flat_hash_set<lyric_common::TypeDef> &implTypes = {});
 
         bool hasImpl(const lyric_common::TypeDef &implType) const;
-        Option<lyric_common::SymbolUrl> getImpl(const lyric_common::TypeDef &implType) const;
-        tempo_utils::Result<lyric_common::SymbolUrl> resolveImpl(
+        Option<ImplReference> getImpl(const lyric_common::TypeDef &implType) const;
+        tempo_utils::Result<ImplReference> resolveImpl(
             const lyric_common::TypeDef &implType,
-            ResolveMode mode = ResolveMode::kDefault);
+            const std::vector<lyric_common::TypeDef> &fallbackImplTypes = {});
 
         tempo_utils::Result<BindingSymbol *> declareBinding(
             const std::string &name,
@@ -201,7 +205,7 @@ namespace lyric_assembler {
         BlockHandle *m_parentBlock;
         ObjectState *m_state;
         absl::flat_hash_map<std::string, SymbolBinding> m_bindings;
-        absl::flat_hash_map<lyric_common::TypeDef, lyric_common::SymbolUrl> m_impls;
+        absl::flat_hash_map<lyric_common::TypeDef, ImplReference> m_impls;
 
     public:
         /**

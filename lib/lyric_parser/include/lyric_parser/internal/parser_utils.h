@@ -18,6 +18,7 @@ namespace lyric_parser::internal {
     ArchetypeNode *make_PType_node(ArchetypeState *state, ModuleParser::ParametricTypeContext *ctx);
     ArchetypeNode *make_UType_node(ArchetypeState *state, ModuleParser::UnionTypeContext *ctx);
     ArchetypeNode *make_IType_node(ArchetypeState *state, ModuleParser::IntersectionTypeContext *ctx);
+    ArchetypeNode *make_SType_or_PType_node(ArchetypeState *state, ModuleParser::SingularTypeContext *ctx);
     ArchetypeNode *make_Type_node(ArchetypeState *state, ModuleParser::AssignableTypeContext *ctx);
     ArchetypeNode *make_TypeArguments_node(ArchetypeState *state, ModuleParser::TypeArgumentsContext *ctx);
     ArchetypeNode *make_Generic_node(

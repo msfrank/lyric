@@ -287,6 +287,14 @@ namespace lyric_assembler {
             const lyric_common::TypeDef &typeDef);
     };
 
+    /**
+     * A reference to an implementation of a concept.
+     */
+    struct ImplReference {
+        lyric_common::TypeDef implType;             /**< The impl concept type */
+        DataReference usingRef;                     /**< The data reference which implements the concept */
+    };
+
     struct Parameter {
         tu_uint8 index;
         std::string name;                           // name of the parameter

@@ -6,12 +6,14 @@
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
+#include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/namespace_symbol.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/object_root.h>
 #include <lyric_assembler/object_state.h>
+#include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
 lyric_assembler::ObjectRoot::ObjectRoot(ObjectState *state)
@@ -30,6 +32,7 @@ lyric_assembler::ObjectRoot::initialize(std::shared_ptr<lyric_importer::ModuleIm
     TU_ASSERT (preludeImport != nullptr);
 
     auto *fundamentalCache = m_state->fundamentalCache();
+    auto *importCache = m_state->importCache();
     auto *typeCache = m_state->typeCache();
 
     auto location = m_state->getLocation();
@@ -109,12 +112,9 @@ lyric_assembler::ObjectRoot::initialize(std::shared_ptr<lyric_importer::ModuleIm
                 auto *instanceImport = preludeImport->getInstance(symbolWalker.getLinkageIndex());
                 binding.typeDef = instanceImport->getInstanceType()->getTypeDef();
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
-                absl::flat_hash_set<lyric_common::TypeDef> implTypes;
-                for (auto it = instanceImport->implsBegin(); it != instanceImport->implsEnd(); it++) {
-                    auto *implImport = it->second;
-                    implTypes.insert(implImport->getImplType()->getTypeDef());
-                }
-                TU_RETURN_IF_NOT_OK (m_preludeBlock->useSymbol(symbolUrl, implTypes));
+                InstanceSymbol *instanceSymbol;
+                TU_ASSIGN_OR_RETURN (instanceSymbol, importCache->importInstance(symbolUrl));
+                TU_RETURN_IF_NOT_OK (m_preludeBlock->useImpls(instanceSymbol));
                 break;
             }
             case lyric_object::LinkageSection::Static: {

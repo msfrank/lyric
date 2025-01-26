@@ -67,7 +67,6 @@ lyric_compiler::BaseInvokableHandler::placeArguments(
     lyric_typing::CallsiteReifier &reifier,
     lyric_assembler::CodeFragment *fragment)
 {
-    absl::flat_hash_set<lyric_common::SymbolUrl> usedEvidence;
     ssize_t currpos = 0;
     ssize_t firstListOptArgument = -1;
 
@@ -222,17 +221,9 @@ lyric_compiler::BaseInvokableHandler::placeArguments(
                 auto entry = m_invocation.keywordOffsets.find(param->name);
 
                 if (entry == m_invocation.keywordOffsets.cend()) {
-                    lyric_common::SymbolUrl evidenceUrl;
-                    TU_ASSIGN_OR_RETURN (evidenceUrl, m_bindingBlock->resolveImpl(contextType));
-                    lyric_assembler::AbstractSymbol *symbol;
-                    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(evidenceUrl));
-                    if (symbol->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
-                        return state->logAndContinue(CompilerCondition::kCompilerInvariant,
-                            tempo_tracing::LogSeverity::kError,
-                            "invalid ctx symbol {}", evidenceUrl.toString());
-                    auto *instanceSymbol = cast_symbol_to_instance(symbol);
-                    TU_RETURN_IF_NOT_OK (fragment->loadData(instanceSymbol));
-                    usedEvidence.insert(evidenceUrl);
+                    lyric_assembler::ImplReference implRef;
+                    TU_ASSIGN_OR_RETURN (implRef, m_bindingBlock->resolveImpl(contextType));
+                    TU_RETURN_IF_NOT_OK (fragment->loadRef(implRef));
                 }
                 else {
                     auto offset = entry->second;

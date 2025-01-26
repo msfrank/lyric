@@ -58,6 +58,7 @@ namespace lyric_assembler {
         tempo_utils::Status loadData(AbstractSymbol *symbol);
         tempo_utils::Status loadDescriptor(AbstractSymbol *symbol);
         tempo_utils::Status loadRef(const DataReference &ref);
+        tempo_utils::Status loadRef(const ImplReference &ref);
         tempo_utils::Status loadThis();
         tempo_utils::Status loadType(const lyric_common::TypeDef &loadType);
         tempo_utils::Status storeData(AbstractSymbol *symbol);

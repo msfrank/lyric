@@ -4,6 +4,7 @@
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/compiler_result.h>
+#include <lyric_compiler/impl_utils.h>
 #include <lyric_compiler/unpack_handler.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_typing/callsite_reifier.h>
@@ -48,8 +49,8 @@ tempo_utils::Status lyric_compiler::UnpackHandler::before(
     return {};
 }
 
-static tempo_utils::Result<lyric_assembler::DataReference>
-resolve_unwrap_instance(
+static tempo_utils::Result<lyric_assembler::ImplReference>
+resolve_unwrap_impl(
     const lyric_common::TypeDef &unwrapType,
     const std::vector<lyric_common::TypeDef> &tupleTypeArguments,
     lyric_assembler::BlockHandle *block,
@@ -71,14 +72,6 @@ resolve_unwrap_instance(
     auto fundamentalUnwrap = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Unwrap);
     auto concreteReceiverType = lyric_common::TypeDef::forConcrete(
         fundamentalUnwrap, {unwrapType, tupleType});
-    lyric_common::SymbolUrl concreteInstanceUrl;
-    TU_ASSIGN_OR_RETURN (concreteInstanceUrl, block->resolveImpl(
-        concreteReceiverType, lyric_assembler::ResolveMode::kNoStatusIfMissing));
-
-    // if the result is a valid symbol, then return symbol binding
-    if (concreteInstanceUrl.isValid())
-        return lyric_assembler::DataReference(
-            lyric_assembler::ReferenceType::Value, concreteInstanceUrl, concreteReceiverType);
 
     // resolve the instance for a generic unwrap type with a concrete tuple type
     lyric_assembler::AbstractSymbol *unwrapSym;
@@ -86,14 +79,6 @@ resolve_unwrap_instance(
     auto genericUnwrapType = unwrapSym->getTypeDef();
     auto genericConcreteReceiverType = lyric_common::TypeDef::forConcrete(
         fundamentalUnwrap, {genericUnwrapType, tupleType});
-    lyric_common::SymbolUrl genericConcreteInstanceUrl;
-    TU_ASSIGN_OR_RETURN (genericConcreteInstanceUrl, block->resolveImpl(
-        genericConcreteReceiverType, lyric_assembler::ResolveMode::kNoStatusIfMissing));
-
-    // if the result is a valid symbol, then return symbol binding
-    if (genericConcreteInstanceUrl.isValid())
-        return lyric_assembler::DataReference(
-            lyric_assembler::ReferenceType::Value, genericConcreteInstanceUrl, genericConcreteReceiverType);
 
     // resolve the instance for a generic unwrap type with a generic tuple type of the same arity
     auto genericUnwrapTypeArguments = genericUnwrapType.getConcreteArguments();
@@ -109,11 +94,8 @@ resolve_unwrap_instance(
     auto genericGenericReceiverType = lyric_common::TypeDef::forConcrete(
         fundamentalUnwrap, {genericUnwrapType, genericTupleType});
 
-    lyric_common::SymbolUrl genericGenericInstanceUrl;
-    TU_ASSIGN_OR_RETURN (genericGenericInstanceUrl, block->resolveImpl(genericGenericReceiverType));
-
-    return lyric_assembler::DataReference(
-        lyric_assembler::ReferenceType::Value, genericGenericInstanceUrl, genericGenericReceiverType);
+    return block->resolveImpl(concreteReceiverType,
+        { genericConcreteReceiverType, genericGenericReceiverType});
 }
 
 tempo_utils::Status
@@ -131,30 +113,16 @@ lyric_compiler::UnpackHandler::after(
     if (m_unpack.tupleTypeArguments.empty())
         return {};
 
-    // resolve the instance implementing unwrap() for the specified unwrap type and tuple type
-    lyric_assembler::DataReference instanceRef;
-    TU_ASSIGN_OR_RETURN (instanceRef, resolve_unwrap_instance(
+    // resolve the impl implementing unwrap() for the specified unwrap type and tuple type
+    lyric_assembler::ImplReference implRef;
+    TU_ASSIGN_OR_RETURN (implRef, resolve_unwrap_impl(
         m_unpack.unwrapType, m_unpack.tupleTypeArguments, block, driver));
 
-    lyric_assembler::AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(instanceRef.symbolUrl));
-    if (symbol->getSymbolType() != lyric_assembler::SymbolType::INSTANCE)
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
-            "invalid instance symbol {}", instanceRef.symbolUrl.toString());
-    auto *instanceSymbol = cast_symbol_to_instance(symbol);
-
-    // resolve Unwrap magnet
-    auto *impl = instanceSymbol->getImpl(instanceRef.typeDef);
-    if (impl == nullptr)
-        return block->logAndContinue(CompilerCondition::kMissingImpl,
-            tempo_tracing::LogSeverity::kError,
-            "missing impl for {}", instanceRef.typeDef.toString());
-
     lyric_assembler::CallableInvoker extensionInvoker;
-    TU_RETURN_IF_NOT_OK (impl->prepareExtension(kUnwrapExtensionName, instanceRef, extensionInvoker));
+    TU_RETURN_IF_NOT_OK (prepare_impl_action(kUnwrapExtensionName, implRef, extensionInvoker, block, symbolCache));
 
-    auto instanceTypeArguments = instanceRef.typeDef.getConcreteArguments();
+    auto &usingRef = implRef.usingRef;
+    auto instanceTypeArguments = usingRef.typeDef.getConcreteArguments();
     std::vector<lyric_common::TypeDef> callsiteTypeArguments(
         instanceTypeArguments.begin(), instanceTypeArguments.end());
     lyric_typing::CallsiteReifier reifier(typeSystem);
