@@ -1,12 +1,11 @@
 
 #include <lyric_assembler/object_state.h>
 #include <lyric_compiler/compiler_scan_driver.h>
+#include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/entry_handler.h>
-#include <lyric_compiler/internal/compile_module.h>
 #include <lyric_compiler/lyric_compiler.h>
 #include <lyric_parser/node_walker.h>
 #include <lyric_rewriter/lyric_rewriter.h>
-#include <tempo_utils/log_stream.h>
 
 lyric_compiler::LyricCompiler::LyricCompiler(
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
