@@ -65,10 +65,6 @@ lyric_assembler::internal::call_inline(
     for (auto it = srcFragment->statementsBegin(); it != srcFragment->statementsEnd(); it++) {
         const auto &statement = *it;
 
-        if (statement.type != StatementType::Instruction)
-            return AssemblerStatus::forCondition(
-                AssemblerCondition::kAssemblerInvariant, "unhandled instruction for inline call");
-
         switch (statement.instruction->getType()) {
 
             // rewrite argument load

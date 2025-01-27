@@ -1,5 +1,5 @@
-#ifndef BASE_ARCHIVER_TESTSUITE_H
-#define BASE_ARCHIVER_TESTSUITE_H
+#ifndef BASE_ARCHIVER_FIXTURE_H
+#define BASE_ARCHIVER_FIXTURE_H
 
 #include <gtest/gtest.h>
 
@@ -45,4 +45,4 @@ private:
 };
 
 
-#endif // BASE_ARCHIVER_TESTSUITE_H
+#endif // BASE_ARCHIVER_FIXTURE_H

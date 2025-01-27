@@ -39,7 +39,6 @@ lyric_assembler::CodeFragment::insertInstruction(int index, std::shared_ptr<Abst
     std::advance(it, index);
 
     Statement statement;
-    statement.type = StatementType::Fragment;
     statement.instruction = instruction;
     m_statements.insert(it, std::move(statement));
     return {};
@@ -49,7 +48,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::appendInstruction(std::shared_ptr<AbstractInstruction> instruction)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = instruction;
     m_statements.push_back(std::move(statement));
     return {};
@@ -68,7 +66,6 @@ lyric_assembler::CodeFragment::insertLabel(int index, std::string_view userLabel
     std::advance(it, index);
 
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<LabelInstruction>(labelName);
     m_statements.insert(it, std::move(statement));
     return JumpLabel(labelName);
@@ -81,7 +78,6 @@ lyric_assembler::CodeFragment::appendLabel(std::string_view userLabel)
     TU_ASSIGN_OR_RETURN (labelName, m_procBuilder->makeLabel(userLabel));
 
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<LabelInstruction>(labelName);
     m_statements.push_back(std::move(statement));
     return JumpLabel(labelName);
@@ -104,10 +100,9 @@ lyric_assembler::CodeFragment::insertFragment(int index, std::unique_ptr<CodeFra
     auto it = m_statements.begin();
     std::advance(it, index);
 
-    Statement statement;
-    statement.type = StatementType::Fragment;
-    statement.fragment = std::move(fragment);
-    m_statements.insert(it, std::move(statement));
+    auto &statements = fragment->m_statements;
+    m_statements.insert(it, statements.begin(), statements.end());
+
     return {};
 }
 
@@ -116,10 +111,9 @@ lyric_assembler::CodeFragment::appendFragment(std::unique_ptr<CodeFragment> &&fr
 {
     TU_ASSERT (fragment != nullptr);
 
-    Statement statement;
-    statement.type = StatementType::Fragment;
-    statement.fragment = std::move(fragment);
-    m_statements.push_back(std::move(statement));
+    auto &statements = fragment->m_statements;
+    m_statements.insert(m_statements.end(), statements.begin(), statements.end());
+
     return {};
 }
 
@@ -159,7 +153,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::noOperation()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_NOOP);
     m_statements.push_back(std::move(statement));
     return {};
@@ -169,7 +162,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::immediateNil()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_NIL);
     m_statements.push_back(std::move(statement));
     return {};
@@ -179,7 +171,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::immediateUndef()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_UNDEF);
     m_statements.push_back(std::move(statement));
     return {};
@@ -189,7 +180,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::immediateBool(bool b)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<BoolImmediateInstruction>(b);
     m_statements.push_back(std::move(statement));
     return {};
@@ -199,7 +189,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::immediateInt(int64_t i64)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<IntImmediateInstruction>(i64);
     m_statements.push_back(std::move(statement));
     return {};
@@ -209,7 +198,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::immediateFloat(double dbl)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<FloatImmediateInstruction>(dbl);
     m_statements.push_back(std::move(statement));
     return {};
@@ -219,7 +207,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::immediateChar(UChar32 chr)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<CharImmediateInstruction>(chr);
     m_statements.push_back(std::move(statement));
     return {};
@@ -234,7 +221,6 @@ lyric_assembler::CodeFragment::loadString(const std::string &str)
     TU_ASSIGN_OR_RETURN (literal, literalCache->makeUtf8(str));
 
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_STRING, literal);
     m_statements.push_back(std::move(statement));
     return {};
@@ -249,7 +235,6 @@ lyric_assembler::CodeFragment::loadUrl(const tempo_utils::Url &url)
     TU_ASSIGN_OR_RETURN (literal, literalCache->makeUtf8(url.toString()));
 
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<LoadLiteralInstruction>(lyric_object::Opcode::OP_URL, literal);
     m_statements.push_back(std::move(statement));
     return {};
@@ -259,7 +244,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::loadData(AbstractSymbol *symbol)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<LoadDataInstruction>(symbol);
     m_statements.push_back(std::move(statement));
     return {};
@@ -269,7 +253,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::loadDescriptor(AbstractSymbol *symbol)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<LoadDescriptorInstruction>(symbol);
     m_statements.push_back(std::move(statement));
     return {};
@@ -282,7 +265,6 @@ lyric_assembler::CodeFragment::loadRef(const DataReference &ref)
     auto *symbolCache = state->symbolCache();
 
     Statement statement;
-    statement.type = StatementType::Instruction;
 
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.symbolUrl));
@@ -323,7 +305,6 @@ lyric_assembler::CodeFragment::loadRef(const ImplReference &ref)
     auto *symbolCache = state->symbolCache();
 
     Statement statement;
-    statement.type = StatementType::Instruction;
 
     AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.usingRef.symbolUrl));
@@ -343,7 +324,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::loadThis()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<LoadSyntheticInstruction>(SyntheticType::This);
     m_statements.push_back(std::move(statement));
     return {};
@@ -359,7 +339,6 @@ lyric_assembler::CodeFragment::loadType(const lyric_common::TypeDef &loadType)
     TU_ASSIGN_OR_RETURN (typeHandle, typeCache->getOrMakeType(loadType));
 
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<LoadTypeInstruction>(typeHandle);
     m_statements.push_back(std::move(statement));
     return {};
@@ -369,7 +348,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::storeData(AbstractSymbol *symbol)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<StoreDataInstruction>(symbol);
     m_statements.push_back(std::move(statement));
     return {};
@@ -382,7 +360,6 @@ lyric_assembler::CodeFragment::storeRef(const DataReference &ref, bool initialSt
     auto *symbolCache = state->symbolCache();
 
     Statement statement;
-    statement.type = StatementType::Instruction;
 
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.symbolUrl));
@@ -415,7 +392,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::popValue()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<StackModificationInstruction>(lyric_object::Opcode::OP_POP, 0);
     m_statements.push_back(std::move(statement));
     return {};
@@ -425,7 +401,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::dupValue()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<StackModificationInstruction>(lyric_object::Opcode::OP_DUP, 0);
     m_statements.push_back(std::move(statement));
     return {};
@@ -435,7 +410,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::pickValue(tu_uint16 pickOffset)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<StackModificationInstruction>(lyric_object::Opcode::OP_PICK, pickOffset);
     m_statements.push_back(std::move(statement));
     return {};
@@ -445,7 +419,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::dropValue(tu_uint16 dropOffset)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<StackModificationInstruction>(lyric_object::Opcode::OP_DROP, dropOffset);
     m_statements.push_back(std::move(statement));
     return {};
@@ -455,7 +428,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::rpickValue(tu_uint16 pickOffset)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<StackModificationInstruction>(lyric_object::Opcode::OP_RPICK, pickOffset);
     m_statements.push_back(std::move(statement));
     return {};
@@ -465,7 +437,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::rdropValue(tu_uint16 dropOffset)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<StackModificationInstruction>(lyric_object::Opcode::OP_RDROP, dropOffset);
     m_statements.push_back(std::move(statement));
     return {};
@@ -475,7 +446,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::intAdd()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_I64_ADD);
     m_statements.push_back(std::move(statement));
     return {};
@@ -485,7 +455,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::intSubtract()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_I64_SUB);
     m_statements.push_back(std::move(statement));
     return {};
@@ -495,7 +464,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::intMultiply()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_I64_MUL);
     m_statements.push_back(std::move(statement));
     return {};
@@ -505,7 +473,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::intDivide()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_I64_DIV);
     m_statements.push_back(std::move(statement));
     return {};
@@ -515,7 +482,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::intNegate()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_I64_NEG);
     m_statements.push_back(std::move(statement));
     return {};
@@ -525,7 +491,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::floatAdd()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_DBL_ADD);
     m_statements.push_back(std::move(statement));
     return {};
@@ -535,7 +500,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::floatSubtract()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_DBL_SUB);
     m_statements.push_back(std::move(statement));
     return {};
@@ -545,7 +509,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::floatMultiply()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_DBL_MUL);
     m_statements.push_back(std::move(statement));
     return {};
@@ -555,7 +518,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::floatDivide()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_DBL_DIV);
     m_statements.push_back(std::move(statement));
     return {};
@@ -565,7 +527,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::floatNegate()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_DBL_NEG);
     m_statements.push_back(std::move(statement));
     return {};
@@ -575,7 +536,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::boolCompare()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_BOOL_CMP);
     m_statements.push_back(std::move(statement));
     return {};
@@ -585,7 +545,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::intCompare()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_I64_CMP);
     m_statements.push_back(std::move(statement));
     return {};
@@ -595,7 +554,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::floatCompare()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_DBL_CMP);
     m_statements.push_back(std::move(statement));
     return {};
@@ -605,7 +563,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::charCompare()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_CHR_CMP);
     m_statements.push_back(std::move(statement));
     return {};
@@ -615,7 +572,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::typeCompare()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_TYPE_CMP);
     m_statements.push_back(std::move(statement));
     return {};
@@ -625,7 +581,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::logicalAnd()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_LOGICAL_AND);
     m_statements.push_back(std::move(statement));
     return {};
@@ -635,7 +590,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::logicalOr()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_LOGICAL_OR);
     m_statements.push_back(std::move(statement));
     return {};
@@ -645,7 +599,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::logicalNot()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_LOGICAL_NOT);
     m_statements.push_back(std::move(statement));
     return {};
@@ -658,7 +611,6 @@ lyric_assembler::CodeFragment::makeJump(lyric_object::Opcode opcode)
     TU_ASSIGN_OR_RETURN (targetId, m_procBuilder->makeJump());
 
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<JumpInstruction>(opcode, targetId);
     m_statements.push_back(std::move(statement));
     return JumpTarget(targetId);
@@ -747,7 +699,6 @@ lyric_assembler::CodeFragment::callStatic(CallSymbol *callSymbol, tu_uint16 plac
             AssemblerCondition::kAssemblerInvariant, "invalid symbol for static call");
 
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<CallInstruction>(
         lyric_object::Opcode::OP_CALL_STATIC, callSymbol, placement, flags);
     m_statements.push_back(std::move(statement));
@@ -763,7 +714,6 @@ lyric_assembler::CodeFragment::callVirtual(CallSymbol *callSymbol, tu_uint16 pla
             AssemblerCondition::kAssemblerInvariant, "invalid symbol for virtual call");
 
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<CallInstruction>(
         lyric_object::Opcode::OP_CALL_VIRTUAL, callSymbol, placement, flags);
     m_statements.push_back(std::move(statement));
@@ -776,7 +726,6 @@ lyric_assembler::CodeFragment::callConcept(ActionSymbol *actionSymbol, tu_uint16
     TU_ASSERT (actionSymbol != nullptr);
 
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<CallInstruction>(
         lyric_object::Opcode::OP_CALL_CONCEPT, actionSymbol, placement, flags);
     m_statements.push_back(std::move(statement));
@@ -792,7 +741,6 @@ lyric_assembler::CodeFragment::callExistential(
     TU_ASSERT (callSymbol != nullptr);
 
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<CallInstruction>(
         lyric_object::Opcode::OP_CALL_EXISTENTIAL, callSymbol, placement, flags);
     m_statements.push_back(std::move(statement));
@@ -823,7 +771,6 @@ lyric_assembler::CodeFragment::constructNew(AbstractSymbol *newSymbol, tu_uint16
     TU_ASSERT (newSymbol != nullptr);
 
     Statement statement;
-    statement.type = StatementType::Instruction;
 
     switch (newSymbol->getSymbolType()) {
         case SymbolType::CLASS:
@@ -846,7 +793,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::trap(tu_uint32 trapNumber, tu_uint8 flags)
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<TrapInstruction>(trapNumber, flags);
     m_statements.push_back(std::move(statement));
     return {};
@@ -856,7 +802,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::returnToCaller()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_RETURN);
     m_statements.push_back(std::move(statement));
     return {};
@@ -866,7 +811,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::invokeTypeOf()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_TYPE_OF);
     m_statements.push_back(std::move(statement));
     return {};
@@ -876,7 +820,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::invokeInterrupt()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_INTERRUPT);
     m_statements.push_back(std::move(statement));
     return {};
@@ -886,7 +829,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::invokeHalt()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_HALT);
     m_statements.push_back(std::move(statement));
     return {};
@@ -896,7 +838,6 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::invokeAbort()
 {
     Statement statement;
-    statement.type = StatementType::Instruction;
     statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_ABORT);
     m_statements.push_back(std::move(statement));
     return {};
@@ -906,21 +847,8 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::touch(ObjectWriter &writer) const
 {
     for (auto &statement : m_statements) {
-
-        switch (statement.type) {
-            case StatementType::Fragment: {
-                TU_RETURN_IF_NOT_OK (statement.fragment->touch(writer));
-                break;
-            }
-            case StatementType::Instruction: {
-                TU_RETURN_IF_NOT_OK (statement.instruction->touch(writer));
-                break;
-            }
-            default:
-                break;
-        }
+        TU_RETURN_IF_NOT_OK (statement.instruction->touch(writer));
     }
-
     return {};
 }
 
@@ -932,41 +860,26 @@ lyric_assembler::CodeFragment::build(
     absl::flat_hash_map<tu_uint32,tu_uint16> &patchOffsets) const
 {
     for (auto &statement : m_statements) {
+        auto instruction = statement.instruction;
 
-        switch (statement.type) {
-            case StatementType::Fragment: {
-                TU_RETURN_IF_NOT_OK (
-                    statement.fragment->build(writer, bytecodeBuilder, labelOffsets, patchOffsets));
+        std::string labelName;
+        tu_uint16 labelOffset;
+        tu_uint32 targetId;
+        tu_uint16 patchOffset;
+        TU_RETURN_IF_NOT_OK (
+            instruction->apply(writer, bytecodeBuilder, labelName, labelOffset, targetId, patchOffset));
+
+        auto instructionType = instruction->getType();
+        switch (instructionType) {
+            case InstructionType::Label: {
+                TU_ASSERT (!labelName.empty());
+                labelOffsets[labelName] = labelOffset;
                 break;
             }
-
-            case StatementType::Instruction: {
-                auto instruction = statement.instruction;
-
-                std::string labelName;
-                tu_uint16 labelOffset;
-                tu_uint32 targetId;
-                tu_uint16 patchOffset;
-                TU_RETURN_IF_NOT_OK (
-                    instruction->apply(writer, bytecodeBuilder, labelName, labelOffset, targetId, patchOffset));
-
-                auto instructionType = instruction->getType();
-                switch (instructionType) {
-                    case InstructionType::Label: {
-                        TU_ASSERT (!labelName.empty());
-                        labelOffsets[labelName] = labelOffset;
-                        break;
-                    }
-                    case InstructionType::Jump: {
-                        patchOffsets[targetId] = patchOffset;
-                        break;
-                    }
-                    default:
-                        break;
-                }
+            case InstructionType::Jump: {
+                patchOffsets[targetId] = patchOffset;
                 break;
             }
-
             default:
                 break;
         }

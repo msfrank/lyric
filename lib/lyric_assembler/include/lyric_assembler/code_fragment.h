@@ -13,15 +13,8 @@ namespace lyric_assembler {
     class ProcBuilder;
     class CodeFragment;
 
-    enum class StatementType {
-        Instruction,
-        Fragment,
-    };
-
     struct Statement {
-        StatementType type;
         std::shared_ptr<AbstractInstruction> instruction;
-        std::unique_ptr<CodeFragment> fragment;
     };
 
     class CodeFragment {
