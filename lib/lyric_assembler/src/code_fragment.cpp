@@ -611,7 +611,26 @@ lyric_assembler::CodeFragment::makeJump(lyric_object::Opcode opcode)
     TU_ASSIGN_OR_RETURN (targetId, m_procBuilder->makeJump());
 
     Statement statement;
-    statement.instruction = std::make_shared<JumpInstruction>(opcode, targetId);
+    switch (opcode) {
+        case lyric_object::Opcode::OP_JUMP:
+            statement.instruction = std::make_shared<JumpInstruction>(targetId);
+            break;
+        case lyric_object::Opcode::OP_IF_GE:
+        case lyric_object::Opcode::OP_IF_GT:
+        case lyric_object::Opcode::OP_IF_LE:
+        case lyric_object::Opcode::OP_IF_LT:
+        case lyric_object::Opcode::OP_IF_TRUE:
+        case lyric_object::Opcode::OP_IF_FALSE:
+        case lyric_object::Opcode::OP_IF_NIL:
+        case lyric_object::Opcode::OP_IF_NOTNIL:
+        case lyric_object::Opcode::OP_IF_ZERO:
+        case lyric_object::Opcode::OP_IF_NOTZERO:
+            statement.instruction = std::make_shared<BranchInstruction>(opcode, targetId);
+            break;
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
     m_statements.push_back(std::move(statement));
     return JumpTarget(targetId);
 }
@@ -747,24 +766,6 @@ lyric_assembler::CodeFragment::callExistential(
     return {};
 }
 
-//tempo_utils::Status
-//lyric_assembler::CodeFragment::callInline(CallSymbol *callSymbol)
-//{
-//    TU_ASSERT (callSymbol != nullptr);
-//    if (!callSymbol->isInline())
-//        return AssemblerStatus::forCondition(
-//            AssemblerCondition::kAssemblerInvariant, "invalid symbol for inline call");
-//
-//    // store arguments in temporaries
-//
-//    // rewrite argument loads as temporary loads
-//    Statement statement;
-//    statement.type = StatementType::Instruction;
-//    statement.instruction = std::make_shared<InlineInstruction>(callSymbol);
-//    m_statements.push_back(std::move(statement));
-//    return {};
-//}
-
 tempo_utils::Status
 lyric_assembler::CodeFragment::constructNew(AbstractSymbol *newSymbol, tu_uint16 placement, tu_uint8 flags)
 {
@@ -802,7 +803,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::returnToCaller()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_RETURN);
+    statement.instruction = std::make_shared<ReturnInstruction>();
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -876,6 +877,7 @@ lyric_assembler::CodeFragment::build(
                 labelOffsets[labelName] = labelOffset;
                 break;
             }
+            case InstructionType::Branch:
             case InstructionType::Jump: {
                 patchOffsets[targetId] = patchOffset;
                 break;

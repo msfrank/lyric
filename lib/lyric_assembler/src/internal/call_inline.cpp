@@ -117,6 +117,22 @@ lyric_assembler::internal::call_inline(
                 auto srcTarget = instruction->getTargetId();
                 JumpTarget dstTarget;
                 switch (instruction->getOpcode()) {
+                    case lyric_object::Opcode::OP_JUMP:
+                        TU_ASSIGN_OR_RETURN (dstTarget, dstFragment->unconditionalJump());
+                        break;
+                    default:
+                        return AssemblerStatus::forCondition(
+                            AssemblerCondition::kAssemblerInvariant, "invalid jump instruction");
+                }
+                targets[srcTarget] = dstTarget;
+                break;
+            }
+
+            case InstructionType::Branch: {
+                auto instruction = std::dynamic_pointer_cast<BranchInstruction>(statement.instruction);
+                auto srcTarget = instruction->getTargetId();
+                JumpTarget dstTarget;
+                switch (instruction->getOpcode()) {
                     case lyric_object::Opcode::OP_IF_NIL:
                         TU_ASSIGN_OR_RETURN (dstTarget, dstFragment->jumpIfNil());
                         break;
@@ -147,12 +163,9 @@ lyric_assembler::internal::call_inline(
                     case lyric_object::Opcode::OP_IF_LE:
                         TU_ASSIGN_OR_RETURN (dstTarget, dstFragment->jumpIfLessOrEqual());
                         break;
-                    case lyric_object::Opcode::OP_JUMP:
-                        TU_ASSIGN_OR_RETURN (dstTarget, dstFragment->unconditionalJump());
-                        break;
                     default:
                         return AssemblerStatus::forCondition(
-                            AssemblerCondition::kAssemblerInvariant, "invalid jump instruction");
+                            AssemblerCondition::kAssemblerInvariant, "invalid branch instruction");
                 }
                 targets[srcTarget] = dstTarget;
                 break;

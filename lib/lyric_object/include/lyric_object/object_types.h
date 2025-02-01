@@ -321,6 +321,7 @@ namespace lyric_object {
         LAST_
     };
 
+    const char *opcode_to_name(Opcode opcode);
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage&& message, Opcode opcode);
 
     /**

@@ -16,210 +16,214 @@ lyric_object::linkage_to_descriptor_section(lyric_object::LinkageSection section
     return static_cast<tu_uint8>(internal::linkage_to_descriptor_section(section));
 }
 
-tempo_utils::LogMessage&& lyric_object::operator<<(tempo_utils::LogMessage&& message, Opcode opcode) {
+static const char *OP_UNKNOWN_name             = "???";
+static const char *OP_NOOP_name                = "OP_NOOP";
+static const char *OP_NIL_name                 = "OP_NIL";
+static const char *OP_UNDEF_name               = "OP_UNDEF";
+static const char *OP_TRUE_name                = "OP_TRUE";
+static const char *OP_FALSE_name               = "OP_FALSE";
+static const char *OP_I64_name                 = "OP_I64";
+static const char *OP_DBL_name                 = "OP_DBL";
+static const char *OP_CHR_name                 = "OP_CHR";
+static const char *OP_LITERAL_name             = "OP_LITERAL";
+static const char *OP_STRING_name              = "OP_STRING";
+static const char *OP_URL_name                 = "OP_URL";
+static const char *OP_STATIC_name              = "OP_STATIC";
+static const char *OP_SYNTHETIC_name           = "OP_SYNTHETIC";
+static const char *OP_DESCRIPTOR_name          = "OP_DESCRIPTOR";
+static const char *OP_LOAD_name                = "OP_LOAD";
+static const char *OP_STORE_name               = "OP_STORE";
+static const char *OP_VA_LOAD_name             = "OP_VA_LOAD";
+static const char *OP_VA_SIZE_name             = "OP_VA_SIZE";
+static const char *OP_POP_name                 = "OP_POP";
+static const char *OP_DUP_name                 = "OP_DUP";
+static const char *OP_PICK_name                = "OP_PICK";
+static const char *OP_DROP_name                = "OP_DROP";
+static const char *OP_RPICK_name               = "OP_RPICK";
+static const char *OP_RDROP_name               = "OP_RDROP";
+static const char *OP_I64_ADD_name             = "OP_I64_ADD";
+static const char *OP_I64_SUB_name             = "OP_I64_SUB";
+static const char *OP_I64_MUL_name             = "OP_I64_MUL";
+static const char *OP_I64_DIV_name             = "OP_I64_DIV";
+static const char *OP_I64_NEG_name             = "OP_I64_NEG";
+static const char *OP_DBL_ADD_name             = "OP_DBL_ADD";
+static const char *OP_DBL_SUB_name             = "OP_DBL_SUB";
+static const char *OP_DBL_MUL_name             = "OP_DBL_MUL";
+static const char *OP_DBL_DIV_name             = "OP_DBL_DIV";
+static const char *OP_DBL_NEG_name             = "OP_DBL_NEG";
+static const char *OP_BOOL_CMP_name            = "OP_BOOL_CMP";
+static const char *OP_I64_CMP_name             = "OP_I64_CMP";
+static const char *OP_DBL_CMP_name             = "OP_DBL_CMP";
+static const char *OP_CHR_CMP_name             = "OP_CHR_CMP";
+static const char *OP_TYPE_CMP_name            = "OP_TYPE_CMP";
+static const char *OP_LOGICAL_AND_name         = "OP_LOGICAL_AND";
+static const char *OP_LOGICAL_OR_name          = "OP_LOGICAL_OR";
+static const char *OP_LOGICAL_NOT_name         = "OP_LOGICAL_NOT";
+static const char *OP_IF_NIL_name              = "OP_IF_NIL";
+static const char *OP_IF_NOTNIL_name           = "OP_IF_NOTNIL";
+static const char *OP_IF_TRUE_name             = "OP_IF_TRUE";
+static const char *OP_IF_FALSE_name            = "OP_IF_FALSE";
+static const char *OP_IF_ZERO_name             = "OP_IF_ZERO";
+static const char *OP_IF_NOTZERO_name          = "OP_IF_NOTZERO";
+static const char *OP_IF_GT_name               = "OP_IF_GT";
+static const char *OP_IF_GE_name               = "OP_IF_GE";
+static const char *OP_IF_LT_name               = "OP_IF_LT";
+static const char *OP_IF_LE_name               = "OP_IF_LE";
+static const char *OP_JUMP_name                = "OP_JUMP";
+static const char *OP_IMPORT_name              = "OP_IMPORT";
+static const char *OP_CALL_STATIC_name         = "OP_CALL_STATIC";
+static const char *OP_CALL_VIRTUAL_name        = "OP_CALL_VIRTUAL";
+static const char *OP_CALL_CONCEPT_name        = "OP_CALL_CONCEPT";
+static const char *OP_CALL_EXISTENTIAL_name    = "OP_CALL_EXISTENTIAL";
+static const char *OP_TRAP_name                = "OP_TRAP";
+static const char *OP_RETURN_name              = "OP_RETURN";
+static const char *OP_NEW_name                 = "OP_NEW";
+static const char *OP_TYPE_OF_name             = "OP_TYPE_OF";
+static const char *OP_INTERRUPT_name           = "OP_INTERRUPT";
+static const char *OP_HALT_name                = "OP_HALT";
+static const char *OP_ABORT_name               = "OP_ABORT";
+
+const char *lyric_object::opcode_to_name(Opcode opcode)
+{
     switch (opcode) {
-        case Opcode::OP_UNKNOWN:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_UNKNOWN";
-            break;
         case Opcode::OP_NOOP:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_NOOP";
-            break;
+            return OP_NOOP_name;
         case Opcode::OP_NIL:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_NIL";
-            break;
+            return OP_NIL_name;
         case Opcode::OP_UNDEF:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_UNDEF";
-            break;
+            return OP_UNDEF_name;
         case Opcode::OP_TRUE:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_TRUE";
-            break;
+            return OP_TRUE_name;
         case Opcode::OP_FALSE:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_FALSE";
-            break;
+            return OP_FALSE_name;
         case Opcode::OP_I64:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_I64";
-            break;
+            return OP_I64_name;
         case Opcode::OP_DBL:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_DBL";
-            break;
+            return OP_DBL_name;
         case Opcode::OP_CHR:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_CHR";
-            break;
+            return OP_CHR_name;
         case Opcode::OP_LITERAL:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_LITERAL";
-            break;
+            return OP_LITERAL_name;
         case Opcode::OP_STRING:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_STRING";
-            break;
+            return OP_STRING_name;
         case Opcode::OP_URL:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_URL";
-            break;
+            return OP_URL_name;
         case Opcode::OP_STATIC:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_STATIC";
-            break;
+            return OP_STATIC_name;
         case Opcode::OP_SYNTHETIC:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_SYNTHETIC";
-            break;
+            return OP_SYNTHETIC_name;
         case Opcode::OP_DESCRIPTOR:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_DESCRIPTOR";
-            break;
+            return OP_DESCRIPTOR_name;
         case Opcode::OP_LOAD:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_LOAD";
-            break;
+            return OP_LOAD_name;
         case Opcode::OP_STORE:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_STORE";
-            break;
+            return OP_STORE_name;
         case Opcode::OP_VA_LOAD:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_VA_LOAD";
-            break;
+            return OP_VA_LOAD_name;
         case Opcode::OP_VA_SIZE:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_VA_SIZE";
-            break;
+            return OP_VA_SIZE_name;
         case Opcode::OP_POP:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_POP";
-            break;
+            return OP_POP_name;
         case Opcode::OP_DUP:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_DUP";
-            break;
+            return OP_DUP_name;
         case Opcode::OP_PICK:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_PICK";
-            break;
+            return OP_PICK_name;
         case Opcode::OP_DROP:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_DROP";
-            break;
+            return OP_DROP_name;
         case Opcode::OP_RPICK:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_RPICK";
-            break;
+            return OP_RPICK_name;
         case Opcode::OP_RDROP:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_RDROP";
-            break;
+            return OP_RDROP_name;
         case Opcode::OP_I64_ADD:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_I64_ADD";
-            break;
+            return OP_I64_ADD_name;
         case Opcode::OP_I64_SUB:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_I64_SUB";
-            break;
+            return OP_I64_SUB_name;
         case Opcode::OP_I64_MUL:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_I64_MUL";
-            break;
+            return OP_I64_MUL_name;
         case Opcode::OP_I64_DIV:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_I64_DIV";
-            break;
+            return OP_I64_DIV_name;
         case Opcode::OP_I64_NEG:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_I64_NEG";
-            break;
+            return OP_I64_NEG_name;
         case Opcode::OP_DBL_ADD:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_DBL_ADD";
-            break;
+            return OP_DBL_ADD_name;
         case Opcode::OP_DBL_SUB:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_DBL_SUB";
-            break;
+            return OP_DBL_SUB_name;
         case Opcode::OP_DBL_MUL:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_DBL_MUL";
-            break;
+            return OP_DBL_MUL_name;
         case Opcode::OP_DBL_DIV:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_DBL_DIV";
-            break;
+            return OP_DBL_DIV_name;
         case Opcode::OP_DBL_NEG:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_DBL_NEG";
-            break;
+            return OP_DBL_NEG_name;
         case Opcode::OP_BOOL_CMP:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_BOOL_CMP";
-            break;
+            return OP_BOOL_CMP_name;
         case Opcode::OP_I64_CMP:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_I64_CMP";
-            break;
+            return OP_I64_CMP_name;
         case Opcode::OP_DBL_CMP:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_DBL_CMP";
-            break;
+            return OP_DBL_CMP_name;
         case Opcode::OP_CHR_CMP:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_CHR_CMP";
-            break;
+            return OP_CHR_CMP_name;
         case Opcode::OP_TYPE_CMP:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_TYPE_CMP";
-            break;
+            return OP_TYPE_CMP_name;
         case Opcode::OP_LOGICAL_AND:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_LOGICAL_AND";
-            break;
+            return OP_LOGICAL_AND_name;
         case Opcode::OP_LOGICAL_OR:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_LOGICAL_OR";
-            break;
+            return OP_LOGICAL_OR_name;
         case Opcode::OP_LOGICAL_NOT:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_LOGICAL_NOT";
-            break;
+            return OP_LOGICAL_NOT_name;
         case Opcode::OP_IF_NIL:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_IF_NIL";
-            break;
+            return OP_IF_NIL_name;
         case Opcode::OP_IF_NOTNIL:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_IF_NOTNIL";
-            break;
+            return OP_IF_NOTNIL_name;
         case Opcode::OP_IF_TRUE:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_IF_TRUE";
-            break;
+            return OP_IF_TRUE_name;
         case Opcode::OP_IF_FALSE:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_IF_FALSE";
-            break;
+            return OP_IF_FALSE_name;
         case Opcode::OP_IF_ZERO:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_IF_ZERO";
-            break;
+            return OP_IF_ZERO_name;
         case Opcode::OP_IF_NOTZERO:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_IF_NOTZERO";
-            break;
+            return OP_IF_NOTZERO_name;
         case Opcode::OP_IF_GT:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_IF_GT";
-            break;
+            return OP_IF_GT_name;
         case Opcode::OP_IF_GE:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_IF_GE";
-            break;
+            return OP_IF_GE_name;
         case Opcode::OP_IF_LT:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_IF_LT";
-            break;
+            return OP_IF_LT_name;
         case Opcode::OP_IF_LE:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_IF_LE";
-            break;
+            return OP_IF_LE_name;
         case Opcode::OP_JUMP:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_JUMP";
-            break;
+            return OP_JUMP_name;
         case Opcode::OP_IMPORT:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_IMPORT";
-            break;
+            return OP_IMPORT_name;
         case Opcode::OP_CALL_STATIC:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_CALL_STATIC";
-            break;
+            return OP_CALL_STATIC_name;
         case Opcode::OP_CALL_VIRTUAL:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_CALL_VIRTUAL";
-            break;
+            return OP_CALL_VIRTUAL_name;
         case Opcode::OP_CALL_CONCEPT:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_CALL_CONCEPT";
-            break;
+            return OP_CALL_CONCEPT_name;
         case Opcode::OP_CALL_EXISTENTIAL:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_CALL_EXISTENTIAL";
-            break;
+            return OP_CALL_EXISTENTIAL_name;
         case Opcode::OP_TRAP:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_TRAP";
-            break;
+            return OP_TRAP_name;
         case Opcode::OP_RETURN:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_RETURN";
-            break;
+            return OP_RETURN_name;
         case Opcode::OP_NEW:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_NEW";
-            break;
+            return OP_NEW_name;
         case Opcode::OP_TYPE_OF:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_TYPE_OF";
-            break;
+            return OP_TYPE_OF_name;
         case Opcode::OP_INTERRUPT:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_INTERRUPT";
-            break;
+            return OP_INTERRUPT_name;
         case Opcode::OP_HALT:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_HALT";
-            break;
+            return OP_HALT_name;
         case Opcode::OP_ABORT:
-            std::forward<tempo_utils::LogMessage>(message) << "OP_ABORT";
-            break;
+            return OP_ABORT_name;
+        case Opcode::OP_UNKNOWN:
         case Opcode::LAST_:
         default:
-            std::forward<tempo_utils::LogMessage>(message) << "???";
-            break;
+            return OP_UNKNOWN_name;
     }
+}
+
+tempo_utils::LogMessage&& lyric_object::operator<<(tempo_utils::LogMessage&& message, Opcode opcode) {
+    std::forward<tempo_utils::LogMessage>(message) << opcode_to_name(opcode);
     return std::move(message);
 }

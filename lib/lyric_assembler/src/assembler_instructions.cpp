@@ -22,6 +22,7 @@
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/synthetic_symbol.h>
+#include <tempo_utils/unicode.h>
 
 lyric_assembler::NoOperandsInstruction::NoOperandsInstruction(lyric_object::Opcode opcode)
     : m_opcode(opcode)
@@ -53,6 +54,18 @@ lyric_assembler::NoOperandsInstruction::apply(
     return bytecodeBuilder.writeOpcode(m_opcode);
 }
 
+lyric_object::Opcode
+lyric_assembler::NoOperandsInstruction::getOpcode() const
+{
+    return m_opcode;
+}
+
+std::string
+lyric_assembler::NoOperandsInstruction::toString() const
+{
+    return absl::StrCat("Opcode: ", lyric_object::opcode_to_name(m_opcode));
+}
+
 lyric_assembler::BoolImmediateInstruction::BoolImmediateInstruction(bool b)
     : m_b(b)
 {
@@ -80,6 +93,12 @@ lyric_assembler::BoolImmediateInstruction::apply(
     tu_uint16 &patchOffset) const
 {
     return bytecodeBuilder.loadBool(m_b);
+}
+
+std::string
+lyric_assembler::BoolImmediateInstruction::toString() const
+{
+    return absl::StrCat("Immediate Bool: ", m_b? "true" : "false");
 }
 
 lyric_assembler::IntImmediateInstruction::IntImmediateInstruction(tu_int64 i64)
@@ -111,6 +130,12 @@ lyric_assembler::IntImmediateInstruction::apply(
     return bytecodeBuilder.loadInt(m_i64);
 }
 
+std::string
+lyric_assembler::IntImmediateInstruction::toString() const
+{
+    return absl::StrCat("Immediate Int: ", m_i64);
+}
+
 lyric_assembler::FloatImmediateInstruction::FloatImmediateInstruction(double dbl)
     : m_dbl(dbl)
 {
@@ -140,6 +165,12 @@ lyric_assembler::FloatImmediateInstruction::apply(
     return bytecodeBuilder.loadFloat(m_dbl);
 }
 
+std::string
+lyric_assembler::FloatImmediateInstruction::toString() const
+{
+    return absl::StrCat("Immediate Float: ", m_dbl);
+}
+
 lyric_assembler::CharImmediateInstruction::CharImmediateInstruction(UChar32 chr)
     : m_chr(chr)
 {
@@ -167,6 +198,12 @@ lyric_assembler::CharImmediateInstruction::apply(
     tu_uint16 &patchOffset) const
 {
     return bytecodeBuilder.loadChar(m_chr);
+}
+
+std::string
+lyric_assembler::CharImmediateInstruction::toString() const
+{
+    return absl::StrCat("Immediate Char: ", tempo_utils::convert_to_utf8(m_chr));
 }
 
 lyric_assembler::LoadLiteralInstruction::LoadLiteralInstruction(
@@ -213,6 +250,12 @@ lyric_assembler::LoadLiteralInstruction::apply(
             return AssemblerStatus::forCondition(
                 AssemblerCondition::kAssemblerInvariant, "invalid opcode");
     }
+}
+
+std::string
+lyric_assembler::LoadLiteralInstruction::toString() const
+{
+    return absl::StrCat("Load Literal: opcode=", lyric_object::opcode_to_name(m_opcode));
 }
 
 lyric_assembler::LoadDataInstruction::LoadDataInstruction(AbstractSymbol *symbol)
@@ -298,6 +341,12 @@ lyric_assembler::LoadDataInstruction::apply(
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_LOAD));
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeU8(flags));
     return bytecodeBuilder.writeU32(address);
+}
+
+std::string
+lyric_assembler::LoadDataInstruction::toString() const
+{
+    return absl::StrCat("Load Data: symbol=", m_symbol->getSymbolUrl().toString());
 }
 
 lyric_assembler::AbstractSymbol *
@@ -423,6 +472,12 @@ lyric_assembler::LoadDescriptorInstruction::apply(
     return bytecodeBuilder.writeU32(address);
 }
 
+std::string
+lyric_assembler::LoadDescriptorInstruction::toString() const
+{
+    return absl::StrCat("Load Descriptor: symbol=", m_symbol->getSymbolUrl().toString());
+}
+
 lyric_assembler::AbstractSymbol *
 lyric_assembler::LoadDescriptorInstruction::getSymbol() const
 {
@@ -465,6 +520,12 @@ lyric_assembler::LoadSyntheticInstruction::apply(
    }
 }
 
+std::string
+lyric_assembler::LoadSyntheticInstruction::toString() const
+{
+    return "Load Synthetic";
+}
+
 lyric_assembler::LoadTypeInstruction::LoadTypeInstruction(TypeHandle *typeHandle)
     : m_typeHandle(typeHandle)
 {
@@ -499,6 +560,12 @@ lyric_assembler::LoadTypeInstruction::apply(
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeU8(
         lyric_object::linkage_to_descriptor_section(lyric_object::LinkageSection::Type)));
     return bytecodeBuilder.writeU32(offset);
+}
+
+std::string
+lyric_assembler::LoadTypeInstruction::toString() const
+{
+    return absl::StrCat("Load Type: typeDef=", m_typeHandle->getTypeDef().toString());
 }
 
 lyric_assembler::StoreDataInstruction::StoreDataInstruction(AbstractSymbol *symbol)
@@ -573,6 +640,12 @@ lyric_assembler::StoreDataInstruction::apply(
     return bytecodeBuilder.writeU32(address);
 }
 
+std::string
+lyric_assembler::StoreDataInstruction::toString() const
+{
+    return absl::StrCat("Store Data: symbol=", m_symbol->getSymbolUrl().toString());
+}
+
 lyric_assembler::AbstractSymbol *
 lyric_assembler::StoreDataInstruction::getSymbol() const
 {
@@ -626,6 +699,14 @@ lyric_assembler::StackModificationInstruction::apply(
     }
 }
 
+std::string
+lyric_assembler::StackModificationInstruction::toString() const
+{
+    return absl::StrCat("Stack Modification: opcode=",
+        lyric_object::opcode_to_name(m_opcode),
+        " offset=", m_offset);
+}
+
 lyric_assembler::LabelInstruction::LabelInstruction(std::string_view name)
     : m_name(name)
 {
@@ -658,22 +739,20 @@ lyric_assembler::LabelInstruction::apply(
 }
 
 std::string
+lyric_assembler::LabelInstruction::toString() const
+{
+    return absl::StrCat("Label: ", m_name);
+}
+
+std::string
 lyric_assembler::LabelInstruction::getName() const
 {
     return m_name;
 }
 
-lyric_assembler::JumpInstruction::JumpInstruction(lyric_object::Opcode opcode)
-    : m_opcode(opcode)
+lyric_assembler::JumpInstruction::JumpInstruction(tu_uint32 targetId)
+    : m_targetId(targetId)
 {
-    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
-}
-
-lyric_assembler::JumpInstruction::JumpInstruction(lyric_object::Opcode opcode, tu_uint32 targetId)
-    : m_opcode(opcode),
-      m_targetId(targetId)
-{
-    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
 }
 
 lyric_assembler::InstructionType
@@ -690,6 +769,56 @@ lyric_assembler::JumpInstruction::touch(ObjectWriter &writer) const
 
 tempo_utils::Status
 lyric_assembler::JumpInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    targetId = m_targetId;
+    return bytecodeBuilder.jump(patchOffset);
+}
+
+std::string
+lyric_assembler::JumpInstruction::toString() const
+{
+    return absl::StrCat("Jump: targetId=", m_targetId);
+}
+
+lyric_object::Opcode
+lyric_assembler::JumpInstruction::getOpcode() const
+{
+    return lyric_object::Opcode::OP_JUMP;
+}
+
+tu_uint32
+lyric_assembler::JumpInstruction::getTargetId() const
+{
+    return m_targetId;
+}
+
+lyric_assembler::BranchInstruction::BranchInstruction(lyric_object::Opcode opcode, tu_uint32 targetId)
+    : m_opcode(opcode),
+      m_targetId(targetId)
+{
+    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::BranchInstruction::getType() const
+{
+    return InstructionType::Branch;
+}
+
+tempo_utils::Status
+lyric_assembler::BranchInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::BranchInstruction::apply(
     const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
@@ -719,22 +848,28 @@ lyric_assembler::JumpInstruction::apply(
             return bytecodeBuilder.jumpIfLessThan(patchOffset);
         case lyric_object::Opcode::OP_IF_LE:
             return bytecodeBuilder.jumpIfLessOrEqual(patchOffset);
-        case lyric_object::Opcode::OP_JUMP:
-            return bytecodeBuilder.jump(patchOffset);
         default:
             return AssemblerStatus::forCondition(
                 AssemblerCondition::kAssemblerInvariant, "invalid opcode");
     }
 }
 
+std::string
+lyric_assembler::BranchInstruction::toString() const
+{
+    return absl::StrCat("Branch: opcode=",
+        lyric_object::opcode_to_name(m_opcode),
+        " targetId=", m_targetId);
+}
+
 lyric_object::Opcode
-lyric_assembler::JumpInstruction::getOpcode() const
+lyric_assembler::BranchInstruction::getOpcode() const
 {
     return m_opcode;
 }
 
 tu_uint32
-lyric_assembler::JumpInstruction::getTargetId() const
+lyric_assembler::BranchInstruction::getTargetId() const
 {
     return m_targetId;
 }
@@ -807,26 +942,33 @@ lyric_assembler::CallInstruction::apply(
     return bytecodeBuilder.writeU16(m_placement);
 }
 
-lyric_assembler::InlineInstruction::InlineInstruction(CallSymbol *callSymbol)
-    : m_symbol(callSymbol)
+std::string
+lyric_assembler::CallInstruction::toString() const
 {
-    TU_ASSERT (m_symbol != nullptr);
+    return absl::StrCat("Call: opcode=", lyric_object::opcode_to_name(m_opcode),
+        " symbol=", m_symbol->getSymbolUrl().toString(),
+        " placement=", m_placement,
+        " flags=", m_flags);
+}
+
+lyric_assembler::ReturnInstruction::ReturnInstruction()
+{
 }
 
 lyric_assembler::InstructionType
-lyric_assembler::InlineInstruction::getType() const
+lyric_assembler::ReturnInstruction::getType() const
 {
-    return InstructionType::Inline;
+    return InstructionType::Return;
 }
 
 tempo_utils::Status
-lyric_assembler::InlineInstruction::touch(ObjectWriter &writer) const
+lyric_assembler::ReturnInstruction::touch(ObjectWriter &writer) const
 {
-    return writer.touchCall(m_symbol);
+    return {};
 }
 
 tempo_utils::Status
-lyric_assembler::InlineInstruction::apply(
+lyric_assembler::ReturnInstruction::apply(
     const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
@@ -834,8 +976,44 @@ lyric_assembler::InlineInstruction::apply(
     tu_uint32 &targetId,
     tu_uint16 &patchOffset) const
 {
-    TU_UNREACHABLE();
+    return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_RETURN);
 }
+
+std::string
+lyric_assembler::ReturnInstruction::toString() const
+{
+    return "Return";
+}
+
+// lyric_assembler::InlineInstruction::InlineInstruction(CallSymbol *callSymbol)
+//     : m_symbol(callSymbol)
+// {
+//     TU_ASSERT (m_symbol != nullptr);
+// }
+//
+// lyric_assembler::InstructionType
+// lyric_assembler::InlineInstruction::getType() const
+// {
+//     return InstructionType::Inline;
+// }
+//
+// tempo_utils::Status
+// lyric_assembler::InlineInstruction::touch(ObjectWriter &writer) const
+// {
+//     return writer.touchCall(m_symbol);
+// }
+//
+// tempo_utils::Status
+// lyric_assembler::InlineInstruction::apply(
+//     const ObjectWriter &writer,
+//     lyric_object::BytecodeBuilder &bytecodeBuilder,
+//     std::string &labelName,
+//     tu_uint16 &labelOffset,
+//     tu_uint32 &targetId,
+//     tu_uint16 &patchOffset) const
+// {
+//     TU_UNREACHABLE();
+// }
 
 lyric_assembler::NewInstruction::NewInstruction(
     AbstractSymbol *symbol,
@@ -915,6 +1093,14 @@ lyric_assembler::NewInstruction::apply(
     return bytecodeBuilder.writeU16(m_placement);
 }
 
+std::string
+lyric_assembler::NewInstruction::toString() const
+{
+    return absl::StrCat("New: symbol=", m_symbol->getSymbolUrl().toString(),
+        " placement=", m_placement,
+        " flags=", m_flags);
+}
+
 lyric_assembler::TrapInstruction::TrapInstruction(tu_uint32 trapNumber, tu_uint8 flags)
     : m_trapNumber(trapNumber),
       m_flags(flags)
@@ -943,4 +1129,10 @@ lyric_assembler::TrapInstruction::apply(
     tu_uint16 &patchOffset) const
 {
     return bytecodeBuilder.trap(m_trapNumber, m_flags);
+}
+
+std::string
+lyric_assembler::TrapInstruction::toString() const
+{
+    return absl::StrCat("Trap: trapNumber=", m_trapNumber, " flags=", m_flags);
 }

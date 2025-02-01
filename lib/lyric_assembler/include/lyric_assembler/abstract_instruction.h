@@ -23,8 +23,10 @@ namespace lyric_assembler {
         StoreData,
         StackModification,
         Jump,
+        Branch,
         Call,
-        Inline,
+        Return,
+        //Inline,
         New,
         Trap,
     };
@@ -44,6 +46,8 @@ namespace lyric_assembler {
             tu_uint16 &labelOffset,
             tu_uint32 &targetId,
             tu_uint16 &patchOffset) const = 0;
+
+        virtual std::string toString() const = 0;
     };
 }
 

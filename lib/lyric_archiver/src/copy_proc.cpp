@@ -48,26 +48,6 @@ apply_synthetic(const lyric_object::OpCell &op, CopyProcData &data)
     }
 }
 
-// static lyric_common::SymbolUrl
-// lookup_symbol(
-//     tu_uint32 address,
-//     lyric_object::LinkageSection section,
-//     CopyProcData &data)
-// {
-//     auto root = data.object.getObject();
-//     if (lyric_object::IS_NEAR(address)) {
-//         auto symbolPath = root.getSymbolPath(section, address);
-//         if (!symbolPath.isValid())
-//             return {};
-//         return {data.location, symbolPath};
-//     } else {
-//         auto link = root.getLink(address);
-//         if (link.getLinkageSection() != section)
-//             return {};
-//         return link.getLinkUrl();
-//     }
-// }
-
 static tempo_utils::Result<lyric_assembler::AbstractSymbol *>
 resolve_symbol(lyric_object::LinkageSection section, tu_uint32 address, CopyProcData &data)
 {
