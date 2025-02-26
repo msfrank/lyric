@@ -4,17 +4,27 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 
+#include <tempo_utils/integer_types.h>
+
 namespace lyric_optimizer::internal {
+
+    enum class EdgeType {
+        Invalid,
+        Next,
+        Branch,
+        Jump,
+        Return,
+    };
 
     struct instruction_offset_t {
         typedef boost::vertex_property_tag kind;
     };
 
-    // struct abstract_block_t {
-    //     typedef boost::vertex_property_tag kind;
-    // };
-
     struct target_id_t {
+        typedef boost::edge_property_tag kind;
+    };
+
+    struct edge_type_t {
         typedef boost::edge_property_tag kind;
     };
 
@@ -22,18 +32,16 @@ namespace lyric_optimizer::internal {
         typedef boost::edge_property_tag kind;
     };
 
-    struct AbstractBlock {
-        virtual ~AbstractBlock() = default;
-    };
-
     // collection of vertex properties
-    typedef boost::property<instruction_offset_t, tu_uint32
-    > VertexProperties;
+    typedef boost::property<instruction_offset_t, tu_uint32,
+            boost::property<boost::vertex_index_t, std::size_t
+    >> VertexProperties;
 
     // collection of edge properties
     typedef boost::property<target_id_t, tu_uint32,
+            boost::property<edge_type_t, EdgeType,
             boost::property<label_name_t, std::string
-    >> EdgeProperties;
+    >>> EdgeProperties;
 
     // concrete graph type
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, VertexProperties, EdgeProperties> Graph;

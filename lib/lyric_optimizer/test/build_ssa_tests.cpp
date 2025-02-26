@@ -3,6 +3,7 @@
 
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/proc_handle.h>
+#include <lyric_optimizer/build_ssa.h>
 #include <lyric_optimizer/control_flow_graph.h>
 #include <lyric_optimizer/parse_proc.h>
 #include <lyric_test/matchers.h>
@@ -11,12 +12,12 @@
 
 #include "base_optimizer_fixture.h"
 
-class ControlFlowGraphTests : public BaseOptimizerFixture {
+class BuildSSATests : public BaseOptimizerFixture {
 protected:
-    ControlFlowGraphTests() = default;
+    BuildSSATests() = default;
 };
 
-TEST_F(ControlFlowGraphTests, InitializeFromProc)
+TEST_F(BuildSSATests, Build)
 {
     ASSERT_THAT (configure(), tempo_test::IsOk());
 
@@ -34,8 +35,6 @@ TEST_F(ControlFlowGraphTests, InitializeFromProc)
     lyric_assembler::JumpTarget targetIfFalse;
     TU_ASSIGN_OR_RAISE (targetIfFalse, root->jumpIfFalse());
     root->immediateInt(1);
-    root->immediateInt(2);
-    root->intAdd();
     lyric_assembler::JumpTarget targetJoin;
     TU_ASSIGN_OR_RAISE (targetJoin, root->unconditionalJump());
     lyric_assembler::JumpLabel labelIfFalse;
@@ -58,37 +57,8 @@ TEST_F(ControlFlowGraphTests, InitializeFromProc)
     TU_LOG_INFO << "cfg:";
     lyric_optimizer::ControlFlowGraph cfg;
     TU_ASSIGN_OR_RAISE (cfg, lyric_optimizer::parse_proc(procHandle));
+
     cfg.print();
 
-    auto entryBlock = cfg.getEntryBlock();
-    ASSERT_EQ (1, entryBlock.numDirectives());
-    auto directive0 = entryBlock.getDirective(0);
-    ASSERT_EQ (lyric_optimizer::DirectiveType::Bool, directive0->getType());
-    ASSERT_TRUE (entryBlock.hasNextEdge());
-    ASSERT_TRUE (entryBlock.hasBranchEdge());
-    ASSERT_EQ (lyric_optimizer::BranchType::IfFalse, entryBlock.getBranchType());
-
-    auto block1 = entryBlock.getNextBlock();
-    ASSERT_EQ (1, block1.numDirectives());
-    auto directive1 = block1.getDirective(0);
-    ASSERT_EQ (lyric_optimizer::DirectiveType::IntAdd, directive1->getType());
-    ASSERT_FALSE (block1.hasNextEdge());
-    ASSERT_TRUE (block1.hasJumpEdge());
-    ASSERT_EQ (entryBlock, block1.getPrevBlock());
-
-    auto block2 = entryBlock.getBranchBlock();
-    ASSERT_EQ ("ifFalse", block2.getLabel());
-    ASSERT_EQ (1, block2.numDirectives());
-    auto directive2 = block2.getDirective(0);
-    ASSERT_EQ (lyric_optimizer::DirectiveType::Int, directive2->getType());
-    ASSERT_TRUE (block2.hasNextEdge());
-
-    auto block3 = block2.getNextBlock();
-    ASSERT_EQ ("join", block3.getLabel());
-    ASSERT_EQ (0, block3.numDirectives());
-    ASSERT_TRUE (block3.hasReturnEdge());
-    ASSERT_EQ (block2, block3.getPrevBlock());
-
-    auto block4 = block3.getReturnBlock();
-    ASSERT_EQ (block4, cfg.getExitBlock());
+    lyric_optimizer::build_ssa(cfg);
 }

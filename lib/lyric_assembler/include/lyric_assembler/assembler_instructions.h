@@ -11,15 +11,8 @@
 
 namespace lyric_assembler {
 
-    class BasicInstruction : public AbstractInstruction {
-    };
-
-    class ControlInstruction : public AbstractInstruction {
-    };
-
-    class NoOperandsInstruction: public BasicInstruction {
+    class NoopInstruction: public AbstractInstruction {
     public:
-        explicit NoOperandsInstruction(lyric_object::Opcode opcode);
         InstructionType getType() const override;
         tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
@@ -29,13 +22,38 @@ namespace lyric_assembler {
             tu_uint16 &labelOffset,
             tu_uint32 &targetId,
             tu_uint16 &patchOffset) const override;
-        lyric_object::Opcode getOpcode() const;
         std::string toString() const override;
-    private:
-        lyric_object::Opcode m_opcode;
     };
 
-    class BoolImmediateInstruction: public BasicInstruction {
+    class NilImmediateInstruction: public AbstractInstruction {
+    public:
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+    };
+
+    class UndefImmediateInstruction: public AbstractInstruction {
+    public:
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+    };
+
+    class BoolImmediateInstruction: public AbstractInstruction {
     public:
         explicit BoolImmediateInstruction(bool b);
         InstructionType getType() const override;
@@ -48,11 +66,12 @@ namespace lyric_assembler {
             tu_uint32 &targetId,
             tu_uint16 &patchOffset) const override;
         std::string toString() const override;
+        bool boolValue() const;
     private:
         bool m_b;
     };
 
-    class IntImmediateInstruction: public BasicInstruction {
+    class IntImmediateInstruction: public AbstractInstruction {
     public:
         explicit IntImmediateInstruction(tu_int64 i64);
         InstructionType getType() const override;
@@ -65,11 +84,12 @@ namespace lyric_assembler {
             tu_uint32 &targetId,
             tu_uint16 &patchOffset) const override;
         std::string toString() const override;
+        tu_int64 intValue() const;
     private:
         tu_int64 m_i64;
     };
 
-    class FloatImmediateInstruction: public BasicInstruction {
+    class FloatImmediateInstruction: public AbstractInstruction {
     public:
         explicit FloatImmediateInstruction(double dbl);
         InstructionType getType() const override;
@@ -82,11 +102,12 @@ namespace lyric_assembler {
             tu_uint32 &targetId,
             tu_uint16 &patchOffset) const override;
         std::string toString() const override;
+        double floatValue() const;
     private:
         double m_dbl;
     };
 
-    class CharImmediateInstruction: public BasicInstruction {
+    class CharImmediateInstruction: public AbstractInstruction {
     public:
         explicit CharImmediateInstruction(UChar32 chr);
         InstructionType getType() const override;
@@ -99,11 +120,139 @@ namespace lyric_assembler {
             tu_uint32 &targetId,
             tu_uint16 &patchOffset) const override;
         std::string toString() const override;
+        UChar32 charValue() const;
     private:
         UChar32 m_chr;
     };
 
-    class LoadLiteralInstruction: public BasicInstruction {
+    class BoolOperationInstruction: public AbstractInstruction {
+    public:
+        explicit BoolOperationInstruction(lyric_object::Opcode opcode);
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+        lyric_object::Opcode getOpcode() const;
+    private:
+        lyric_object::Opcode m_opcode;
+    };
+
+    class IntOperationInstruction: public AbstractInstruction {
+    public:
+        explicit IntOperationInstruction(lyric_object::Opcode opcode);
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+        lyric_object::Opcode getOpcode() const;
+    private:
+        lyric_object::Opcode m_opcode;
+    };
+
+    class FloatOperationInstruction: public AbstractInstruction {
+    public:
+        explicit FloatOperationInstruction(lyric_object::Opcode opcode);
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+        lyric_object::Opcode getOpcode() const;
+    private:
+        lyric_object::Opcode m_opcode;
+    };
+
+    class CharOperationInstruction: public AbstractInstruction {
+    public:
+        explicit CharOperationInstruction(lyric_object::Opcode opcode);
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+        lyric_object::Opcode getOpcode() const;
+    private:
+        lyric_object::Opcode m_opcode;
+    };
+
+    class LogicalOperationInstruction: public AbstractInstruction {
+    public:
+        explicit LogicalOperationInstruction(lyric_object::Opcode opcode);
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+        lyric_object::Opcode getOpcode() const;
+    private:
+        lyric_object::Opcode m_opcode;
+    };
+
+    class TypeOperationInstruction: public AbstractInstruction {
+    public:
+        explicit TypeOperationInstruction(lyric_object::Opcode opcode);
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+        lyric_object::Opcode getOpcode() const;
+    private:
+        lyric_object::Opcode m_opcode;
+    };
+
+    class StackOperationInstruction: public AbstractInstruction {
+    public:
+        StackOperationInstruction(lyric_object::Opcode opcode, tu_uint16 offset);
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+        lyric_object::Opcode getOpcode() const;
+    private:
+        lyric_object::Opcode m_opcode;
+        tu_uint16 m_offset;
+    };
+
+    class LoadLiteralInstruction: public AbstractInstruction {
     public:
         LoadLiteralInstruction(lyric_object::Opcode opcode, LiteralHandle *literalHandle);
         InstructionType getType() const override;
@@ -116,12 +265,13 @@ namespace lyric_assembler {
             tu_uint32 &targetId,
             tu_uint16 &patchOffset) const override;
         std::string toString() const override;
+        lyric_object::Opcode getOpcode() const;
     private:
         lyric_object::Opcode m_opcode;
         LiteralHandle *m_literal;
     };
 
-    class LoadDataInstruction: public BasicInstruction {
+    class LoadDataInstruction: public AbstractInstruction {
     public:
         explicit LoadDataInstruction(AbstractSymbol *symbol);
         InstructionType getType() const override;
@@ -139,7 +289,7 @@ namespace lyric_assembler {
         AbstractSymbol *m_symbol;
     };
 
-    class LoadDescriptorInstruction: public BasicInstruction {
+    class LoadDescriptorInstruction: public AbstractInstruction {
     public:
         explicit LoadDescriptorInstruction(AbstractSymbol *symbol);
         InstructionType getType() const override;
@@ -157,7 +307,7 @@ namespace lyric_assembler {
         AbstractSymbol *m_symbol;
     };
 
-    class LoadSyntheticInstruction: public BasicInstruction {
+    class LoadSyntheticInstruction: public AbstractInstruction {
     public:
         explicit LoadSyntheticInstruction(SyntheticType type);
         InstructionType getType() const override;
@@ -174,7 +324,7 @@ namespace lyric_assembler {
         SyntheticType m_type;
     };
 
-    class LoadTypeInstruction: public BasicInstruction {
+    class LoadTypeInstruction: public AbstractInstruction {
     public:
         explicit LoadTypeInstruction(TypeHandle *typeHandle);
         InstructionType getType() const override;
@@ -191,7 +341,7 @@ namespace lyric_assembler {
         TypeHandle *m_typeHandle;
     };
 
-    class StoreDataInstruction: public BasicInstruction {
+    class StoreDataInstruction: public AbstractInstruction {
     public:
         explicit StoreDataInstruction(AbstractSymbol *symbol);
         InstructionType getType() const override;
@@ -207,24 +357,6 @@ namespace lyric_assembler {
         AbstractSymbol *getSymbol() const;
     private:
         AbstractSymbol *m_symbol;
-    };
-
-    class StackModificationInstruction: public BasicInstruction {
-    public:
-        StackModificationInstruction(lyric_object::Opcode opcode, tu_uint16 offset);
-        InstructionType getType() const override;
-        tempo_utils::Status touch(ObjectWriter &writer) const override;
-        tempo_utils::Status apply(
-            const ObjectWriter &writer,
-            lyric_object::BytecodeBuilder &bytecodeBuilder,
-            std::string &labelName,
-            tu_uint16 &labelOffset,
-            tu_uint32 &targetId,
-            tu_uint16 &patchOffset) const override;
-        std::string toString() const override;
-    private:
-        lyric_object::Opcode m_opcode;
-        tu_uint16 m_offset;
     };
 
     class LabelInstruction : public AbstractInstruction {
@@ -245,7 +377,7 @@ namespace lyric_assembler {
         std::string m_name;
     };
 
-    class JumpInstruction: public ControlInstruction {
+    class JumpInstruction: public AbstractInstruction {
     public:
         explicit JumpInstruction(tu_uint32 targetId);
         InstructionType getType() const override;
@@ -264,7 +396,7 @@ namespace lyric_assembler {
         tu_uint32 m_targetId;
     };
 
-    class BranchInstruction: public ControlInstruction {
+    class BranchInstruction: public AbstractInstruction {
     public:
         BranchInstruction(lyric_object::Opcode opcode, tu_uint32 targetId);
         InstructionType getType() const override;
@@ -284,7 +416,7 @@ namespace lyric_assembler {
         tu_uint32 m_targetId;
     };
 
-    class CallInstruction: public BasicInstruction {
+    class CallInstruction: public AbstractInstruction {
     public:
         CallInstruction(
             lyric_object::Opcode opcode,
@@ -308,7 +440,7 @@ namespace lyric_assembler {
         tu_uint8 m_flags;
     };
 
-    class ReturnInstruction: public ControlInstruction {
+    class ReturnInstruction: public AbstractInstruction {
     public:
         ReturnInstruction();
         InstructionType getType() const override;
@@ -323,7 +455,7 @@ namespace lyric_assembler {
         std::string toString() const override;
     };
 
-    class NewInstruction: public BasicInstruction {
+    class NewInstruction: public AbstractInstruction {
     public:
         NewInstruction(
             AbstractSymbol *symbol,
@@ -345,7 +477,7 @@ namespace lyric_assembler {
         tu_uint8 m_flags;
     };
 
-    class TrapInstruction: public BasicInstruction {
+    class TrapInstruction: public AbstractInstruction {
     public:
         TrapInstruction(tu_uint32 trapNumber, tu_uint8 flags);
         InstructionType getType() const override;
@@ -361,6 +493,48 @@ namespace lyric_assembler {
     private:
         tu_uint32 m_trapNumber;
         tu_uint8 m_flags;
+    };
+
+    class InterruptInstruction: public AbstractInstruction {
+    public:
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+    };
+
+    class HaltInstruction: public AbstractInstruction {
+    public:
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+    };
+
+    class AbortInstruction: public AbstractInstruction {
+    public:
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
     };
 }
 

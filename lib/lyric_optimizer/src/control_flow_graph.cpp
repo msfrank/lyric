@@ -82,12 +82,20 @@ public:
         } else {
             TU_LOG_INFO << "vertex " << index;
         }
+        const auto &basicBlock = m_priv->vertexBlocks.at(v);
+
+        if (!basicBlock->name.empty()) {
+            TU_LOG_INFO << "    label: " << basicBlock->name;
+        }
 
         TU_LOG_INFO << "    block:";
-        const auto &basicBlock = m_priv->vertexBlocks.at(v);
-        const auto &instructions = basicBlock->instructions;
-        for (const auto &instruction : instructions) {
-            TU_LOG_INFO << "        " << instruction->toString();
+        const auto &directives = basicBlock->directives;
+        for (const auto &directive : directives) {
+            if (directive->isValid()) {
+                TU_LOG_INFO << "        " << directive->resolveDirective()->toString();
+            } else {
+                TU_LOG_INFO << "        ???";
+            }
         }
 
         typename boost::graph_traits<Graph>::out_edge_iterator out_i, out_end;
@@ -117,4 +125,10 @@ lyric_optimizer::ControlFlowGraph::print()
 {
     const cfg_print_visitor vis(m_priv.get());
     boost::breadth_first_search(m_priv->graph, m_priv->entry->blockVertex, visitor(vis));
+}
+
+std::shared_ptr<lyric_optimizer::internal::GraphPriv>
+lyric_optimizer::ControlFlowGraph::getPriv() const
+{
+    return m_priv;
 }

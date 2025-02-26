@@ -25,7 +25,14 @@ namespace lyric_optimizer {
 
     public:
         LyricOptimizer(
-            lyric_assembler::ObjectState *objectState,
+            std::unique_ptr<lyric_assembler::ObjectState> &&objectState,
+            std::shared_ptr<tempo_tracing::TraceRecorder> recorder,
+            const OptimizerOptions &options);
+
+        LyricOptimizer(
+            const lyric_common::ModuleLocation &location,
+            std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
+            std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             std::shared_ptr<tempo_tracing::TraceRecorder> recorder,
             const OptimizerOptions &options);
 
@@ -36,11 +43,10 @@ namespace lyric_optimizer {
         tempo_utils::Result<lyric_object::LyricObject> toObject() const;
 
     private:
-        lyric_assembler::ObjectState *m_objectState;
+        std::unique_ptr<lyric_assembler::ObjectState> m_objectState;
         std::shared_ptr<tempo_tracing::TraceRecorder> m_recorder;
-        OptimizerOptions m_options;
-
         std::unique_ptr<tempo_tracing::ScopeManager> m_scopeManager;
+        OptimizerOptions m_options;
     };
 }
 

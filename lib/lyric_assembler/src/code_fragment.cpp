@@ -153,7 +153,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::noOperation()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_NOOP);
+    statement.instruction = std::make_shared<NoopInstruction>();
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -162,7 +162,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::immediateNil()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_NIL);
+    statement.instruction = std::make_shared<NilImmediateInstruction>();
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -171,7 +171,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::immediateUndef()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_UNDEF);
+    statement.instruction = std::make_shared<UndefImmediateInstruction>();
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -392,7 +392,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::popValue()
 {
     Statement statement;
-    statement.instruction = std::make_shared<StackModificationInstruction>(lyric_object::Opcode::OP_POP, 0);
+    statement.instruction = std::make_shared<StackOperationInstruction>(lyric_object::Opcode::OP_POP, 0);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -401,7 +401,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::dupValue()
 {
     Statement statement;
-    statement.instruction = std::make_shared<StackModificationInstruction>(lyric_object::Opcode::OP_DUP, 0);
+    statement.instruction = std::make_shared<StackOperationInstruction>(lyric_object::Opcode::OP_DUP, 0);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -410,7 +410,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::pickValue(tu_uint16 pickOffset)
 {
     Statement statement;
-    statement.instruction = std::make_shared<StackModificationInstruction>(lyric_object::Opcode::OP_PICK, pickOffset);
+    statement.instruction = std::make_shared<StackOperationInstruction>(lyric_object::Opcode::OP_PICK, pickOffset);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -419,7 +419,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::dropValue(tu_uint16 dropOffset)
 {
     Statement statement;
-    statement.instruction = std::make_shared<StackModificationInstruction>(lyric_object::Opcode::OP_DROP, dropOffset);
+    statement.instruction = std::make_shared<StackOperationInstruction>(lyric_object::Opcode::OP_DROP, dropOffset);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -428,7 +428,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::rpickValue(tu_uint16 pickOffset)
 {
     Statement statement;
-    statement.instruction = std::make_shared<StackModificationInstruction>(lyric_object::Opcode::OP_RPICK, pickOffset);
+    statement.instruction = std::make_shared<StackOperationInstruction>(lyric_object::Opcode::OP_RPICK, pickOffset);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -437,7 +437,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::rdropValue(tu_uint16 dropOffset)
 {
     Statement statement;
-    statement.instruction = std::make_shared<StackModificationInstruction>(lyric_object::Opcode::OP_RDROP, dropOffset);
+    statement.instruction = std::make_shared<StackOperationInstruction>(lyric_object::Opcode::OP_RDROP, dropOffset);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -446,7 +446,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::intAdd()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_I64_ADD);
+    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_I64_ADD);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -455,7 +455,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::intSubtract()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_I64_SUB);
+    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_I64_SUB);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -464,7 +464,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::intMultiply()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_I64_MUL);
+    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_I64_MUL);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -473,7 +473,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::intDivide()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_I64_DIV);
+    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_I64_DIV);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -482,7 +482,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::intNegate()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_I64_NEG);
+    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_I64_NEG);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -491,7 +491,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::floatAdd()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_DBL_ADD);
+    statement.instruction = std::make_shared<FloatOperationInstruction>(lyric_object::Opcode::OP_DBL_ADD);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -500,7 +500,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::floatSubtract()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_DBL_SUB);
+    statement.instruction = std::make_shared<FloatOperationInstruction>(lyric_object::Opcode::OP_DBL_SUB);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -509,7 +509,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::floatMultiply()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_DBL_MUL);
+    statement.instruction = std::make_shared<FloatOperationInstruction>(lyric_object::Opcode::OP_DBL_MUL);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -518,7 +518,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::floatDivide()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_DBL_DIV);
+    statement.instruction = std::make_shared<FloatOperationInstruction>(lyric_object::Opcode::OP_DBL_DIV);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -527,7 +527,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::floatNegate()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_DBL_NEG);
+    statement.instruction = std::make_shared<FloatOperationInstruction>(lyric_object::Opcode::OP_DBL_NEG);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -536,7 +536,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::boolCompare()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_BOOL_CMP);
+    statement.instruction = std::make_shared<BoolOperationInstruction>(lyric_object::Opcode::OP_BOOL_CMP);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -545,7 +545,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::intCompare()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_I64_CMP);
+    statement.instruction = std::make_shared<IntOperationInstruction>(lyric_object::Opcode::OP_I64_CMP);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -554,7 +554,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::floatCompare()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_DBL_CMP);
+    statement.instruction = std::make_shared<FloatOperationInstruction>(lyric_object::Opcode::OP_DBL_CMP);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -563,7 +563,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::charCompare()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_CHR_CMP);
+    statement.instruction = std::make_shared<CharOperationInstruction>(lyric_object::Opcode::OP_CHR_CMP);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -572,7 +572,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::typeCompare()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_TYPE_CMP);
+    statement.instruction = std::make_shared<TypeOperationInstruction>(lyric_object::Opcode::OP_TYPE_CMP);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -581,7 +581,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::logicalAnd()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_LOGICAL_AND);
+    statement.instruction = std::make_shared<LogicalOperationInstruction>(lyric_object::Opcode::OP_LOGICAL_AND);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -590,7 +590,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::logicalOr()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_LOGICAL_OR);
+    statement.instruction = std::make_shared<LogicalOperationInstruction>(lyric_object::Opcode::OP_LOGICAL_OR);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -599,7 +599,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::logicalNot()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_LOGICAL_NOT);
+    statement.instruction = std::make_shared<LogicalOperationInstruction>(lyric_object::Opcode::OP_LOGICAL_NOT);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -812,7 +812,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::invokeTypeOf()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_TYPE_OF);
+    statement.instruction = std::make_shared<TypeOperationInstruction>(lyric_object::Opcode::OP_TYPE_OF);
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -821,7 +821,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::invokeInterrupt()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_INTERRUPT);
+    statement.instruction = std::make_shared<InterruptInstruction>();
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -830,7 +830,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::invokeHalt()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_HALT);
+    statement.instruction = std::make_shared<HaltInstruction>();
     m_statements.push_back(std::move(statement));
     return {};
 }
@@ -839,7 +839,7 @@ tempo_utils::Status
 lyric_assembler::CodeFragment::invokeAbort()
 {
     Statement statement;
-    statement.instruction = std::make_shared<NoOperandsInstruction>(lyric_object::Opcode::OP_ABORT);
+    statement.instruction = std::make_shared<AbortInstruction>();
     m_statements.push_back(std::move(statement));
     return {};
 }

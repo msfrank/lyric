@@ -24,26 +24,20 @@
 #include <lyric_assembler/synthetic_symbol.h>
 #include <tempo_utils/unicode.h>
 
-lyric_assembler::NoOperandsInstruction::NoOperandsInstruction(lyric_object::Opcode opcode)
-    : m_opcode(opcode)
-{
-    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
-}
-
 lyric_assembler::InstructionType
-lyric_assembler::NoOperandsInstruction::getType() const
+lyric_assembler::NoopInstruction::getType() const
 {
-    return InstructionType::NoOperands;
+    return InstructionType::Noop;
 }
 
 tempo_utils::Status
-lyric_assembler::NoOperandsInstruction::touch(ObjectWriter &writer) const
+lyric_assembler::NoopInstruction::touch(ObjectWriter &writer) const
 {
     return {};
 }
 
 tempo_utils::Status
-lyric_assembler::NoOperandsInstruction::apply(
+lyric_assembler::NoopInstruction::apply(
     const ObjectWriter &writer,
     lyric_object::BytecodeBuilder &bytecodeBuilder,
     std::string &labelName,
@@ -51,19 +45,73 @@ lyric_assembler::NoOperandsInstruction::apply(
     tu_uint32 &targetId,
     tu_uint16 &patchOffset) const
 {
-    return bytecodeBuilder.writeOpcode(m_opcode);
-}
-
-lyric_object::Opcode
-lyric_assembler::NoOperandsInstruction::getOpcode() const
-{
-    return m_opcode;
+    return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_NOOP);
 }
 
 std::string
-lyric_assembler::NoOperandsInstruction::toString() const
+lyric_assembler::NoopInstruction::toString() const
 {
-    return absl::StrCat("Opcode: ", lyric_object::opcode_to_name(m_opcode));
+    return "No Operation";
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::NilImmediateInstruction::getType() const
+{
+    return InstructionType::NilImmediate;
+}
+
+tempo_utils::Status
+lyric_assembler::NilImmediateInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::NilImmediateInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_NIL);
+}
+
+std::string
+lyric_assembler::NilImmediateInstruction::toString() const
+{
+    return "Nil Immediate";
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::UndefImmediateInstruction::getType() const
+{
+    return InstructionType::UndefImmediate;
+}
+
+tempo_utils::Status
+lyric_assembler::UndefImmediateInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::UndefImmediateInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_UNDEF);
+}
+
+std::string
+lyric_assembler::UndefImmediateInstruction::toString() const
+{
+    return "Undef Immediate";
 }
 
 lyric_assembler::BoolImmediateInstruction::BoolImmediateInstruction(bool b)
@@ -101,6 +149,12 @@ lyric_assembler::BoolImmediateInstruction::toString() const
     return absl::StrCat("Immediate Bool: ", m_b? "true" : "false");
 }
 
+bool
+lyric_assembler::BoolImmediateInstruction::boolValue() const
+{
+    return m_b;
+}
+
 lyric_assembler::IntImmediateInstruction::IntImmediateInstruction(tu_int64 i64)
     : m_i64(i64)
 {
@@ -134,6 +188,12 @@ std::string
 lyric_assembler::IntImmediateInstruction::toString() const
 {
     return absl::StrCat("Immediate Int: ", m_i64);
+}
+
+tu_int64
+lyric_assembler::IntImmediateInstruction::intValue() const
+{
+    return m_i64;
 }
 
 lyric_assembler::FloatImmediateInstruction::FloatImmediateInstruction(double dbl)
@@ -171,6 +231,12 @@ lyric_assembler::FloatImmediateInstruction::toString() const
     return absl::StrCat("Immediate Float: ", m_dbl);
 }
 
+double
+lyric_assembler::FloatImmediateInstruction::floatValue() const
+{
+    return m_dbl;
+}
+
 lyric_assembler::CharImmediateInstruction::CharImmediateInstruction(UChar32 chr)
     : m_chr(chr)
 {
@@ -204,6 +270,380 @@ std::string
 lyric_assembler::CharImmediateInstruction::toString() const
 {
     return absl::StrCat("Immediate Char: ", tempo_utils::convert_to_utf8(m_chr));
+}
+
+UChar32
+lyric_assembler::CharImmediateInstruction::charValue() const
+{
+    return m_chr;
+}
+
+lyric_assembler::BoolOperationInstruction::BoolOperationInstruction(lyric_object::Opcode opcode)
+    : m_opcode(opcode)
+{
+    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::BoolOperationInstruction::getType() const
+{
+    return InstructionType::BoolOperation;
+}
+
+tempo_utils::Status
+lyric_assembler::BoolOperationInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::BoolOperationInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    switch (m_opcode) {
+        case lyric_object::Opcode::OP_BOOL_CMP:
+            return bytecodeBuilder.writeOpcode(m_opcode);
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
+}
+
+std::string
+lyric_assembler::BoolOperationInstruction::toString() const
+{
+    return absl::StrCat("Bool Operation: opcode=",
+        lyric_object::opcode_to_name(m_opcode));
+}
+
+lyric_object::Opcode
+lyric_assembler::BoolOperationInstruction::getOpcode() const
+{
+    return m_opcode;
+}
+
+lyric_assembler::IntOperationInstruction::IntOperationInstruction(lyric_object::Opcode opcode)
+    : m_opcode(opcode)
+{
+    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::IntOperationInstruction::getType() const
+{
+    return InstructionType::IntOperation;
+}
+
+tempo_utils::Status
+lyric_assembler::IntOperationInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::IntOperationInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    switch (m_opcode) {
+        case lyric_object::Opcode::OP_I64_ADD:
+        case lyric_object::Opcode::OP_I64_SUB:
+        case lyric_object::Opcode::OP_I64_MUL:
+        case lyric_object::Opcode::OP_I64_DIV:
+        case lyric_object::Opcode::OP_I64_NEG:
+        case lyric_object::Opcode::OP_I64_CMP:
+            return bytecodeBuilder.writeOpcode(m_opcode);
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
+}
+
+std::string
+lyric_assembler::IntOperationInstruction::toString() const
+{
+    return absl::StrCat("Int Operation: opcode=",
+        lyric_object::opcode_to_name(m_opcode));
+}
+
+lyric_object::Opcode
+lyric_assembler::IntOperationInstruction::getOpcode() const
+{
+    return m_opcode;
+}
+
+lyric_assembler::FloatOperationInstruction::FloatOperationInstruction(lyric_object::Opcode opcode)
+    : m_opcode(opcode)
+{
+    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::FloatOperationInstruction::getType() const
+{
+    return InstructionType::FloatOperation;
+}
+
+tempo_utils::Status
+lyric_assembler::FloatOperationInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::FloatOperationInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    switch (m_opcode) {
+        case lyric_object::Opcode::OP_DBL_ADD:
+        case lyric_object::Opcode::OP_DBL_SUB:
+        case lyric_object::Opcode::OP_DBL_MUL:
+        case lyric_object::Opcode::OP_DBL_DIV:
+        case lyric_object::Opcode::OP_DBL_NEG:
+        case lyric_object::Opcode::OP_DBL_CMP:
+            return bytecodeBuilder.writeOpcode(m_opcode);
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
+}
+
+std::string
+lyric_assembler::FloatOperationInstruction::toString() const
+{
+    return absl::StrCat("Float Operation: opcode=",
+        lyric_object::opcode_to_name(m_opcode));
+}
+
+lyric_object::Opcode
+lyric_assembler::FloatOperationInstruction::getOpcode() const
+{
+    return m_opcode;
+}
+
+lyric_assembler::CharOperationInstruction::CharOperationInstruction(lyric_object::Opcode opcode)
+    : m_opcode(opcode)
+{
+    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::CharOperationInstruction::getType() const
+{
+    return InstructionType::CharOperation;
+}
+
+tempo_utils::Status
+lyric_assembler::CharOperationInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CharOperationInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    switch (m_opcode) {
+        case lyric_object::Opcode::OP_CHR_CMP:
+            return bytecodeBuilder.writeOpcode(m_opcode);
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
+}
+
+std::string
+lyric_assembler::CharOperationInstruction::toString() const
+{
+    return absl::StrCat("Char Operation: opcode=",
+        lyric_object::opcode_to_name(m_opcode));
+}
+
+lyric_object::Opcode
+lyric_assembler::CharOperationInstruction::getOpcode() const
+{
+    return m_opcode;
+}
+
+lyric_assembler::LogicalOperationInstruction::LogicalOperationInstruction(lyric_object::Opcode opcode)
+    : m_opcode(opcode)
+{
+    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::LogicalOperationInstruction::getType() const
+{
+    return InstructionType::LogicalOperation;
+}
+
+tempo_utils::Status
+lyric_assembler::LogicalOperationInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::LogicalOperationInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    switch (m_opcode) {
+        case lyric_object::Opcode::OP_LOGICAL_AND:
+        case lyric_object::Opcode::OP_LOGICAL_OR:
+        case lyric_object::Opcode::OP_LOGICAL_NOT:
+            return bytecodeBuilder.writeOpcode(m_opcode);
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
+}
+
+std::string
+lyric_assembler::LogicalOperationInstruction::toString() const
+{
+    return absl::StrCat("Logical Operation: opcode=",
+        lyric_object::opcode_to_name(m_opcode));
+}
+
+lyric_object::Opcode
+lyric_assembler::LogicalOperationInstruction::getOpcode() const
+{
+    return m_opcode;
+}
+
+lyric_assembler::TypeOperationInstruction::TypeOperationInstruction(lyric_object::Opcode opcode)
+    : m_opcode(opcode)
+{
+    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::TypeOperationInstruction::getType() const
+{
+    return InstructionType::TypeOperation;
+}
+
+tempo_utils::Status
+lyric_assembler::TypeOperationInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::TypeOperationInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    switch (m_opcode) {
+        case lyric_object::Opcode::OP_TYPE_CMP:
+        case lyric_object::Opcode::OP_TYPE_OF:
+            return bytecodeBuilder.writeOpcode(m_opcode);
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
+}
+
+std::string
+lyric_assembler::TypeOperationInstruction::toString() const
+{
+    return absl::StrCat("Type Operation: opcode=",
+        lyric_object::opcode_to_name(m_opcode));
+}
+
+lyric_object::Opcode
+lyric_assembler::TypeOperationInstruction::getOpcode() const
+{
+    return m_opcode;
+}
+
+lyric_assembler::StackOperationInstruction::StackOperationInstruction(
+    lyric_object::Opcode opcode,
+    tu_uint16 offset)
+    : m_opcode(opcode),
+      m_offset(offset)
+{
+    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::StackOperationInstruction::getType() const
+{
+    return InstructionType::StackOperation;
+}
+
+tempo_utils::Status
+lyric_assembler::StackOperationInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::StackOperationInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    switch (m_opcode) {
+        case lyric_object::Opcode::OP_POP:
+            return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_POP);
+        case lyric_object::Opcode::OP_DUP:
+            return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_DUP);
+        case lyric_object::Opcode::OP_PICK:
+        case lyric_object::Opcode::OP_DROP:
+        case lyric_object::Opcode::OP_RPICK:
+        case lyric_object::Opcode::OP_RDROP:
+            TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(m_opcode));
+            return bytecodeBuilder.writeU16(m_offset);
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
+}
+
+std::string
+lyric_assembler::StackOperationInstruction::toString() const
+{
+    return absl::StrCat("Stack Operation: opcode=",
+        lyric_object::opcode_to_name(m_opcode),
+        " offset=", m_offset);
+}
+
+lyric_object::Opcode
+lyric_assembler::StackOperationInstruction::getOpcode() const
+{
+    return m_opcode;
 }
 
 lyric_assembler::LoadLiteralInstruction::LoadLiteralInstruction(
@@ -652,61 +1092,6 @@ lyric_assembler::StoreDataInstruction::getSymbol() const
     return m_symbol;
 }
 
-lyric_assembler::StackModificationInstruction::StackModificationInstruction(
-    lyric_object::Opcode opcode,
-    tu_uint16 offset)
-    : m_opcode(opcode),
-      m_offset(offset)
-{
-    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
-}
-
-lyric_assembler::InstructionType
-lyric_assembler::StackModificationInstruction::getType() const
-{
-    return InstructionType::StackModification;
-}
-
-tempo_utils::Status
-lyric_assembler::StackModificationInstruction::touch(ObjectWriter &writer) const
-{
-    return {};
-}
-
-tempo_utils::Status
-lyric_assembler::StackModificationInstruction::apply(
-    const ObjectWriter &writer,
-    lyric_object::BytecodeBuilder &bytecodeBuilder,
-    std::string &labelName,
-    tu_uint16 &labelOffset,
-    tu_uint32 &targetId,
-    tu_uint16 &patchOffset) const
-{
-    switch (m_opcode) {
-        case lyric_object::Opcode::OP_POP:
-            return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_POP);
-        case lyric_object::Opcode::OP_DUP:
-            return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_DUP);
-        case lyric_object::Opcode::OP_PICK:
-        case lyric_object::Opcode::OP_DROP:
-        case lyric_object::Opcode::OP_RPICK:
-        case lyric_object::Opcode::OP_RDROP:
-            TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(m_opcode));
-            return bytecodeBuilder.writeU16(m_offset);
-        default:
-            return AssemblerStatus::forCondition(
-                AssemblerCondition::kAssemblerInvariant, "invalid opcode");
-    }
-}
-
-std::string
-lyric_assembler::StackModificationInstruction::toString() const
-{
-    return absl::StrCat("Stack Modification: opcode=",
-        lyric_object::opcode_to_name(m_opcode),
-        " offset=", m_offset);
-}
-
 lyric_assembler::LabelInstruction::LabelInstruction(std::string_view name)
     : m_name(name)
 {
@@ -985,36 +1370,6 @@ lyric_assembler::ReturnInstruction::toString() const
     return "Return";
 }
 
-// lyric_assembler::InlineInstruction::InlineInstruction(CallSymbol *callSymbol)
-//     : m_symbol(callSymbol)
-// {
-//     TU_ASSERT (m_symbol != nullptr);
-// }
-//
-// lyric_assembler::InstructionType
-// lyric_assembler::InlineInstruction::getType() const
-// {
-//     return InstructionType::Inline;
-// }
-//
-// tempo_utils::Status
-// lyric_assembler::InlineInstruction::touch(ObjectWriter &writer) const
-// {
-//     return writer.touchCall(m_symbol);
-// }
-//
-// tempo_utils::Status
-// lyric_assembler::InlineInstruction::apply(
-//     const ObjectWriter &writer,
-//     lyric_object::BytecodeBuilder &bytecodeBuilder,
-//     std::string &labelName,
-//     tu_uint16 &labelOffset,
-//     tu_uint32 &targetId,
-//     tu_uint16 &patchOffset) const
-// {
-//     TU_UNREACHABLE();
-// }
-
 lyric_assembler::NewInstruction::NewInstruction(
     AbstractSymbol *symbol,
     tu_uint16 placement,
@@ -1135,4 +1490,94 @@ std::string
 lyric_assembler::TrapInstruction::toString() const
 {
     return absl::StrCat("Trap: trapNumber=", m_trapNumber, " flags=", m_flags);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::InterruptInstruction::getType() const
+{
+    return InstructionType::Interrupt;
+}
+
+tempo_utils::Status
+lyric_assembler::InterruptInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::InterruptInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_INTERRUPT);
+}
+
+std::string
+lyric_assembler::InterruptInstruction::toString() const
+{
+    return "Opcode: OP_INTERRUPT";
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::HaltInstruction::getType() const
+{
+    return InstructionType::Halt;
+}
+
+tempo_utils::Status
+lyric_assembler::HaltInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::HaltInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_HALT);
+}
+
+std::string
+lyric_assembler::HaltInstruction::toString() const
+{
+    return "Opcode: OP_HALT";
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::AbortInstruction::getType() const
+{
+    return InstructionType::Abort;
+}
+
+tempo_utils::Status
+lyric_assembler::AbortInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::AbortInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_ABORT);
+}
+
+std::string
+lyric_assembler::AbortInstruction::toString() const
+{
+    return "Opcode: OP_ABORT";
 }

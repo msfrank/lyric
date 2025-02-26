@@ -1,9 +1,6 @@
 #ifndef LYRIC_OPTIMIZER_CONTROL_FLOW_GRAPH_H
 #define LYRIC_OPTIMIZER_CONTROL_FLOW_GRAPH_H
 
-#include <lyric_assembler/proc_handle.h>
-#include <lyric_common/symbol_url.h>
-
 #include "basic_block.h"
 
 namespace lyric_optimizer {
@@ -22,8 +19,11 @@ namespace lyric_optimizer {
         BasicBlock getExitBlock() const;
 
         tempo_utils::Result<BasicBlock> addBasicBlock();
+        int numBasicBlocks() const;
 
         void print();
+
+        std::shared_ptr<internal::GraphPriv> getPriv() const;
 
     private:
         std::shared_ptr<internal::GraphPriv> m_priv;
