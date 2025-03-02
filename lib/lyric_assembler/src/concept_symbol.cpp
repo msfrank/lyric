@@ -74,8 +74,10 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
 lyric_assembler::ConceptSymbol::ConceptSymbol(
     const lyric_common::SymbolUrl &conceptUrl,
     lyric_importer::ConceptImport *conceptImport,
+    bool isCopied,
     ObjectState *state)
-    : m_conceptUrl(conceptUrl),
+    : BaseSymbol(isCopied),
+      m_conceptUrl(conceptUrl),
       m_conceptImport(conceptImport),
       m_state(state)
 {

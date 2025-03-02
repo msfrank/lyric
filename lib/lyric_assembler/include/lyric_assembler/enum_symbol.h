@@ -48,6 +48,7 @@ namespace lyric_assembler {
         EnumSymbol(
             const lyric_common::SymbolUrl &enumUrl,
             lyric_importer::EnumImport *enumImport,
+            bool isCopied,
             ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;

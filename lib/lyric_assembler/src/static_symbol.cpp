@@ -35,8 +35,10 @@ lyric_assembler::StaticSymbol::StaticSymbol(
 lyric_assembler::StaticSymbol::StaticSymbol(
     const lyric_common::SymbolUrl &staticUrl,
     lyric_importer::StaticImport *staticImport,
+    bool isCopied,
     ObjectState *state)
-    : m_staticUrl(staticUrl),
+    : BaseSymbol(isCopied),
+      m_staticUrl(staticUrl),
       m_staticImport(staticImport),
       m_state(state)
 {

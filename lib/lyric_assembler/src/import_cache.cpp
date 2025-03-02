@@ -58,62 +58,62 @@ insert_symbol_into_cache(
     switch (symbolWalker.getLinkageSection()) {
         case lyric_object::LinkageSection::Action: {
             auto *actionImport = moduleImport->getAction(symbolWalker.getLinkageIndex());
-            symbolPtr = new lyric_assembler::ActionSymbol(symbolUrl, actionImport, state);
+            symbolPtr = new lyric_assembler::ActionSymbol(symbolUrl, actionImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Binding: {
             auto *bindingImport = moduleImport->getBinding(symbolWalker.getLinkageIndex());
-            symbolPtr = new lyric_assembler::BindingSymbol(symbolUrl, bindingImport, state);
+            symbolPtr = new lyric_assembler::BindingSymbol(symbolUrl, bindingImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Call: {
             auto *callImport = moduleImport->getCall(symbolWalker.getLinkageIndex());
-            symbolPtr = new lyric_assembler::CallSymbol(symbolUrl, callImport, state);
+            symbolPtr = new lyric_assembler::CallSymbol(symbolUrl, callImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Class: {
             auto *classImport = moduleImport->getClass(symbolWalker.getLinkageIndex());
-            symbolPtr = new lyric_assembler::ClassSymbol(symbolUrl, classImport, state);
+            symbolPtr = new lyric_assembler::ClassSymbol(symbolUrl, classImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Concept: {
             auto *conceptImport = moduleImport->getConcept(symbolWalker.getLinkageIndex());
-            symbolPtr = new lyric_assembler::ConceptSymbol(symbolUrl, conceptImport, state);
+            symbolPtr = new lyric_assembler::ConceptSymbol(symbolUrl, conceptImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Enum: {
             auto *enumImport = moduleImport->getEnum(symbolWalker.getLinkageIndex());
-            symbolPtr = new lyric_assembler::EnumSymbol(symbolUrl, enumImport, state);
+            symbolPtr = new lyric_assembler::EnumSymbol(symbolUrl, enumImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Existential: {
             auto *existentialImport = moduleImport->getExistential(symbolWalker.getLinkageIndex());
-            symbolPtr = new lyric_assembler::ExistentialSymbol(symbolUrl, existentialImport, state);
+            symbolPtr = new lyric_assembler::ExistentialSymbol(symbolUrl, existentialImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Field: {
             auto *fieldImport = moduleImport->getField(symbolWalker.getLinkageIndex());
-            symbolPtr = new lyric_assembler::FieldSymbol(symbolUrl, fieldImport, state);
+            symbolPtr = new lyric_assembler::FieldSymbol(symbolUrl, fieldImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Instance: {
             auto *instanceImport = moduleImport->getInstance(symbolWalker.getLinkageIndex());
-            symbolPtr = new lyric_assembler::InstanceSymbol(symbolUrl, instanceImport, state);
+            symbolPtr = new lyric_assembler::InstanceSymbol(symbolUrl, instanceImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Namespace: {
             auto *namespaceImport = moduleImport->getNamespace(symbolWalker.getLinkageIndex());
-            symbolPtr = new lyric_assembler::NamespaceSymbol(symbolUrl, namespaceImport, state);
+            symbolPtr = new lyric_assembler::NamespaceSymbol(symbolUrl, namespaceImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Static: {
             auto *staticImport = moduleImport->getStatic(symbolWalker.getLinkageIndex());
-            symbolPtr = new lyric_assembler::StaticSymbol(symbolUrl, staticImport, state);
+            symbolPtr = new lyric_assembler::StaticSymbol(symbolUrl, staticImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Struct: {
             auto *structImport = moduleImport->getStruct(symbolWalker.getLinkageIndex());
-            symbolPtr = new lyric_assembler::StructSymbol(symbolUrl, structImport, state);
+            symbolPtr = new lyric_assembler::StructSymbol(symbolUrl, structImport, /* isCopied= */ false, state);
             break;
         }
         default:

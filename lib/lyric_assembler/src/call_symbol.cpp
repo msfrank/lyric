@@ -180,8 +180,10 @@ lyric_assembler::CallSymbol::CallSymbol(
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
     lyric_importer::CallImport *callImport,
+    bool isCopied,
     ObjectState *state)
-    : m_callUrl(callUrl),
+    : BaseSymbol(isCopied),
+      m_callUrl(callUrl),
       m_callImport(callImport),
       m_state(state)
 {
@@ -194,6 +196,7 @@ lyric_assembler::CallSymbolPriv *
 lyric_assembler::CallSymbol::load()
 {
     auto *typeCache = m_state->typeCache();
+    auto *options = m_state->getOptions();
 
     auto priv = std::make_unique<CallSymbolPriv>();
 
@@ -269,7 +272,22 @@ lyric_assembler::CallSymbol::load()
         TU_RAISE_IF_STATUS (importCache->importCall(entry.second));
     }
 
-    if (priv->mode == lyric_object::CallMode::Inline) {
+    bool importProc = false;
+    switch (options->procImportMode) {
+        case ProcImportMode::None:
+            importProc = false;
+            break;
+        case ProcImportMode::InlineableOnly:
+            importProc = priv->mode == lyric_object::CallMode::Inline;
+            break;
+        case ProcImportMode::All:
+            importProc = true;
+            break;
+        default:
+            break;
+    }
+
+    if (importProc) {
         auto moduleImport = m_callImport->getModuleImport();
         auto bytecode = m_callImport->getInlineBytecode();
         lyric_object::BytecodeIterator it(bytecode.data(), bytecode.size());

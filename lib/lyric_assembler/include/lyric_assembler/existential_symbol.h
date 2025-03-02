@@ -50,6 +50,7 @@ namespace lyric_assembler {
         ExistentialSymbol(
             const lyric_common::SymbolUrl &existentialUrl,
             lyric_importer::ExistentialImport *existentialImport,
+            bool isCopied,
             ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;

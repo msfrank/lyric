@@ -30,6 +30,7 @@ namespace lyric_assembler {
         FieldSymbol(
             const lyric_common::SymbolUrl &fieldUrl,
             lyric_importer::FieldImport *fieldImport,
+            bool isCopied,
             ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;

@@ -43,6 +43,7 @@ namespace lyric_assembler {
         ActionSymbol(
             const lyric_common::SymbolUrl &actionUrl,
             lyric_importer::ActionImport *actionImport,
+            bool isCopied,
             ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;

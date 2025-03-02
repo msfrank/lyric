@@ -7,6 +7,7 @@
 #include <lyric_importer/module_cache.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
+#include <lyric_runtime/static_loader.h>
 #include <lyric_schema/assembler_schema.h>
 #include <lyric_symbolizer/lyric_symbolizer.h>
 #include <lyric_test/lyric_tester.h>
@@ -27,11 +28,13 @@ TEST(SymbolizeBlock, NoDefinitionsOrImports)
     auto archetype = parseResult.getResult();
 
     auto location = lyric_common::ModuleLocation::fromString("/test");
-    auto loader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
-    auto systemModuleCache = lyric_importer::ModuleCache::create(loader);
+    auto staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
+    auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
+    auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
+    auto systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
 
     lyric_symbolizer::SymbolizerOptions options;
-    lyric_symbolizer::LyricSymbolizer symbolizer(systemModuleCache, options);
+    lyric_symbolizer::LyricSymbolizer symbolizer(localModuleCache, systemModuleCache, options);
 
     lyric_assembler::ObjectStateOptions objectStateOptions;
     lyric_object::LyricObject object;

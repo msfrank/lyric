@@ -5,6 +5,7 @@
 #include <lyric_assembler/object_state.h>
 #include <lyric_bootstrap/bootstrap_loader.h>
 #include <lyric_importer/module_cache.h>
+#include <lyric_runtime/static_loader.h>
 #include <tempo_test/status_matchers.h>
 #include <tempo_tracing/scope_manager.h>
 #include <tempo_tracing/trace_recorder.h>
@@ -12,11 +13,13 @@
 TEST(CodeFragment, ImmediateNil)
 {
     auto location = lyric_common::ModuleLocation::fromString("/test");
-    auto loader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
-    auto systemModuleCache = lyric_importer::ModuleCache::create(loader);
+    auto staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
+    auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
+    auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
+    auto systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
     auto recorder = tempo_tracing::TraceRecorder::create();
     tempo_tracing::ScopeManager scopeManager(recorder);
-    lyric_assembler::ObjectState objectState(location, systemModuleCache, &scopeManager);
+    lyric_assembler::ObjectState objectState(location, localModuleCache, systemModuleCache, &scopeManager);
 
     lyric_assembler::ObjectRoot *root;
     TU_ASSIGN_OR_RAISE (root, objectState.defineRoot());
@@ -45,11 +48,13 @@ TEST(CodeFragment, ImmediateNil)
 TEST(CodeFragment, UnconditionalJump)
 {
     auto location = lyric_common::ModuleLocation::fromString("/test");
-    auto loader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
-    auto systemModuleCache = lyric_importer::ModuleCache::create(loader);
+    auto staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
+    auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
+    auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
+    auto systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
     auto recorder = tempo_tracing::TraceRecorder::create();
     tempo_tracing::ScopeManager scopeManager(recorder);
-    lyric_assembler::ObjectState objectState(location, systemModuleCache, &scopeManager);
+    lyric_assembler::ObjectState objectState(location, localModuleCache, systemModuleCache, &scopeManager);
 
     lyric_assembler::ObjectRoot *root;
     TU_ASSIGN_OR_RAISE (root, objectState.defineRoot());

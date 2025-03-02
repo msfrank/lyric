@@ -19,6 +19,12 @@ lyric_assembler::ArgumentVariable::isImported() const
     return false;
 }
 
+bool
+lyric_assembler::ArgumentVariable::isCopied() const
+{
+    return false;
+}
+
 lyric_assembler::SymbolType
 lyric_assembler::ArgumentVariable::getSymbolType() const
 {

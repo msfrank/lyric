@@ -13,7 +13,10 @@ namespace lyric_optimizer {
     class ControlFlowGraph {
     public:
         ControlFlowGraph();
+        ControlFlowGraph(tu_int32 numArguments, tu_int32 numLocals, tu_int32 numLexicals);
         ControlFlowGraph(const ControlFlowGraph &other);
+
+        bool isValid() const;
 
         BasicBlock getEntryBlock() const;
         BasicBlock getExitBlock() const;

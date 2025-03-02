@@ -48,6 +48,7 @@ namespace lyric_assembler {
         // load and store instructions
         tempo_utils::Status loadString(const std::string &str);
         tempo_utils::Status loadUrl(const tempo_utils::Url &url);
+        tempo_utils::Status loadLiteral(LiteralHandle *literal);
         tempo_utils::Status loadData(AbstractSymbol *symbol);
         tempo_utils::Status loadDescriptor(AbstractSymbol *symbol);
         tempo_utils::Status loadRef(const DataReference &ref);

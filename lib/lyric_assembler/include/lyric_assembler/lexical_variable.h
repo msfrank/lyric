@@ -15,6 +15,7 @@ namespace lyric_assembler {
             LexicalOffset offset);
 
         bool isImported() const override;
+        bool isCopied() const override;
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;

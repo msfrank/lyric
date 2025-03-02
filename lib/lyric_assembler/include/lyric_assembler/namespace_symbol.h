@@ -37,6 +37,7 @@ namespace lyric_assembler {
         NamespaceSymbol(
             const lyric_common::SymbolUrl &nsUrl,
             lyric_importer::NamespaceImport *namespaceImport,
+            bool isCopied,
             ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;

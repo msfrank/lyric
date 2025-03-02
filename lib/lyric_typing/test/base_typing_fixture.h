@@ -7,7 +7,7 @@
 #include <lyric_typing/type_system.h>
 #include <tempo_tracing/scope_manager.h>
 
-class BaseFixture : public ::testing::Test {
+class BaseTypingFixture : public ::testing::Test {
 protected:
     lyric_common::ModuleLocation m_location;
     std::unique_ptr<tempo_tracing::ScopeManager> m_scopeManager;

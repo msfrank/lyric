@@ -67,6 +67,9 @@ namespace lyric_optimizer::internal {
         absl::flat_hash_map<Vertex,std::shared_ptr<BasicBlockPriv>> vertexBlocks;
         absl::flat_hash_map<std::string,std::shared_ptr<BasicBlockPriv>> labeledBlocks;
         absl::flat_hash_map<std::string,std::shared_ptr<VariablePriv>> variables;
+        std::vector<std::shared_ptr<VariablePriv>> arguments;
+        std::vector<std::shared_ptr<VariablePriv>> locals;
+        std::vector<std::shared_ptr<VariablePriv>> lexicals;
     };
 }
 

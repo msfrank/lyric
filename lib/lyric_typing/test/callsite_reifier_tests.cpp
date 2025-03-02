@@ -7,10 +7,10 @@
 #include <lyric_assembler/type_cache.h>
 #include <lyric_typing/callsite_reifier.h>
 
-#include "base_fixture.h"
+#include "base_typing_fixture.h"
 #include "test_callable.h"
 
-class CallsiteReifier : public BaseFixture {};
+class CallsiteReifier : public BaseTypingFixture {};
 
 TEST_F(CallsiteReifier, NullaryFunction_takesNoArguments_returnsBool)
 {

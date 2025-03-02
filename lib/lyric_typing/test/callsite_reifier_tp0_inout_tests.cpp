@@ -6,10 +6,10 @@
 #include <lyric_assembler/type_cache.h>
 #include <lyric_typing/callsite_reifier.h>
 
-#include "base_fixture.h"
+#include "base_typing_fixture.h"
 #include "test_callable.h"
 
-class CallsiteReifierTP0InOut : public BaseFixture {};
+class CallsiteReifierTP0InOut : public BaseTypingFixture {};
 
 TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesT_returnsT)
 {

@@ -40,5 +40,5 @@ TEST(AnalyzeNamespace, DeclareNamespace)
     ASSERT_TRUE (ns1.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), ns1.getSymbolPath());
     ASSERT_EQ (lyric_object::AccessType::Public, ns1.getAccess());
-    ASSERT_EQ (0, ns1.numBindings());
+    ASSERT_EQ (0, ns1.numSymbols());
 }

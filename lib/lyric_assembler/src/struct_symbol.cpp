@@ -52,8 +52,10 @@ lyric_assembler::StructSymbol::StructSymbol(
 lyric_assembler::StructSymbol::StructSymbol(
     const lyric_common::SymbolUrl &structUrl,
     lyric_importer::StructImport *structImport,
+    bool isCopied,
     ObjectState *state)
-    : m_structUrl(structUrl),
+    : BaseSymbol(isCopied),
+      m_structUrl(structUrl),
       m_structImport(structImport),
       m_state(state)
 {

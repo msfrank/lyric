@@ -18,8 +18,6 @@ namespace lyric_assembler {
     class BaseSymbol : public AbstractSymbol {
 
     public:
-        BaseSymbol() = default;
-
         virtual ~BaseSymbol()
         {
             delete m_priv;
@@ -42,17 +40,40 @@ namespace lyric_assembler {
             return m_isImported;
         }
 
+        /**
+         * Indicates whether the symbol is copied.
+         *
+         * @return true if the symbol is copied, otherwise false.
+         */
+        bool isCopied() const override
+        {
+            return m_isCopied;
+        }
+
     protected:
         /**
+         * Constructor for a symbol which is either copied or imported.
          *
-         * @param address
+         * @param isCopied true if the symbol is being copied into the object state, otherwise false.
+         */
+        explicit BaseSymbol(bool isCopied)
+            : m_isImported(!isCopied),
+              m_isCopied(isCopied)
+        {
+        }
+
+        /**
+         * Constructor for a symbol which is declared.
+         *
+         * @param priv a pointer to private symbol data.
          */
         explicit BaseSymbol(PrivType *priv)
             : m_isImported(false),
+              m_isCopied(false),
               m_priv(priv)
         {
             TU_ASSERT (m_priv != nullptr);
-        };
+        }
 
         /**
          *
@@ -64,7 +85,7 @@ namespace lyric_assembler {
                 m_priv = load();
             }
             return m_priv;
-        };
+        }
 
         /**
          *
@@ -77,7 +98,7 @@ namespace lyric_assembler {
                 thiz->m_priv = thiz->load();
             }
             return m_priv;
-        };
+        }
 
         /**
          *
@@ -85,7 +106,8 @@ namespace lyric_assembler {
         virtual PrivType *load() = 0;
 
     private:
-        const bool m_isImported = true;
+        bool m_isImported;
+        bool m_isCopied;
         PrivType *m_priv = nullptr;
     };
 }

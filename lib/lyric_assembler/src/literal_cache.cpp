@@ -17,7 +17,27 @@ lyric_assembler::LiteralCache::~LiteralCache()
 tempo_utils::Result<lyric_assembler::LiteralHandle *>
 lyric_assembler::LiteralCache::makeNil()
 {
-    lyric_runtime::LiteralCell literalCell;
+    auto literalCell = lyric_runtime::LiteralCell::nil();
+    if (m_literalcache.contains(literalCell)) {
+        auto offset = m_literalcache[literalCell];
+        return m_literals.at(offset);
+    }
+
+    auto offset = m_literals.size();
+    if (offset == std::numeric_limits<int>::max())
+        m_tracer->throwAssemblerInvariant("overflowed max literals");
+
+    auto *literalHandle = new LiteralHandle();
+    m_literals.push_back(literalHandle);
+
+    m_literalcache[literalCell] = offset;
+    return literalHandle;
+}
+
+tempo_utils::Result<lyric_assembler::LiteralHandle *>
+lyric_assembler::LiteralCache::makeUndef()
+{
+    auto literalCell = lyric_runtime::LiteralCell::undef();
     if (m_literalcache.contains(literalCell)) {
         auto offset = m_literalcache[literalCell];
         return m_literals.at(offset);

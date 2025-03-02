@@ -3,9 +3,9 @@
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/type_cache.h>
 
-#include "base_fixture.h"
+#include "base_typing_fixture.h"
 
-class CompareAssignable : public BaseFixture {};
+class CompareAssignable : public BaseTypingFixture {};
 
 TEST_F(CompareAssignable, CompareSingularToItself)
 {

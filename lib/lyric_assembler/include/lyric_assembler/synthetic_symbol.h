@@ -14,6 +14,7 @@ namespace lyric_assembler {
             const lyric_common::TypeDef &assignableType);
 
         bool isImported() const override;
+        bool isCopied() const override;
         SymbolType getSymbolType() const override;
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;

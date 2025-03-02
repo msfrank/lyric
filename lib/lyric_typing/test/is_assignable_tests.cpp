@@ -2,9 +2,9 @@
 
 #include <lyric_assembler/fundamental_cache.h>
 
-#include "base_fixture.h"
+#include "base_typing_fixture.h"
 
-class IsAssignable : public BaseFixture {};
+class IsAssignable : public BaseTypingFixture {};
 
 TEST_F(IsAssignable, TypeIsAssignableToItself)
 {

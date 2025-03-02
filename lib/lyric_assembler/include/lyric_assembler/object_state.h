@@ -49,12 +49,20 @@ namespace lyric_assembler {
     class TypeHandle;
     class UndeclaredSymbol;
 
+    enum class ProcImportMode {
+        Invalid,
+        None,
+        InlineableOnly,
+        All,
+    };
+
     struct ObjectStateOptions {
         tu_uint32 majorVersion = 0;
         tu_uint32 minorVersion = 0;
         tu_uint32 patchVersion = 0;
         lyric_common::ModuleLocation preludeLocation = {};
         absl::flat_hash_map<std::string, std::string> pluginsMap = {};
+        ProcImportMode procImportMode = ProcImportMode::InlineableOnly;
     };
 
     class ObjectState {
@@ -71,6 +79,8 @@ namespace lyric_assembler {
         lyric_common::ModuleLocation getLocation() const;
         tempo_tracing::ScopeManager *scopeManager() const;
         const ObjectStateOptions *getOptions() const;
+
+        tempo_utils::Status load(const lyric_object::LyricObject &object);
 
         tempo_utils::Result<ObjectRoot *> defineRoot();
 
@@ -178,6 +188,8 @@ namespace lyric_assembler {
         std::vector<InstanceSymbol *> m_instances;
         std::vector<EnumSymbol *> m_enums;
         std::vector<UndeclaredSymbol *> m_undecls;
+
+        tempo_utils::Status createRoot(const lyric_common::ModuleLocation &preludeLocation);
 
     public:
         /**

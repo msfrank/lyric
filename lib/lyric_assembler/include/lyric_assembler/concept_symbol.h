@@ -54,6 +54,7 @@ namespace lyric_assembler {
         ConceptSymbol(
             const lyric_common::SymbolUrl &conceptUrl,
             lyric_importer::ConceptImport *conceptImport,
+            bool isCopied,
             ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;

@@ -46,6 +46,7 @@ namespace lyric_assembler {
         StructSymbol(
             const lyric_common::SymbolUrl &structUrl,
             lyric_importer::StructImport *structImport,
+            bool isCopied,
             ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;

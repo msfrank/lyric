@@ -13,8 +13,11 @@
 #include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/field_symbol.h>
 #include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/literal_cache.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
+
+#include "../../../lyric_bootstrap/plugin/string_traps.h"
 
 struct ImportProcData {
     lyric_common::ModuleLocation location;
@@ -27,10 +30,86 @@ struct ImportProcData {
 };
 
 static tempo_utils::Status
+apply_string(const lyric_object::OpCell &op, ImportProcData &data)
+{
+    if (op.opcode != lyric_object::Opcode::OP_STRING)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+
+    auto root = data.object.getObject();
+    auto literal = root.getLiteral(op.operands.address_u32.address);
+    if (literal.getValueType() != lyric_object::ValueType::String)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid string literal");
+    std::string str(literal.stringValue());
+
+    return data.fragment->loadString(str);
+}
+
+static tempo_utils::Status
+apply_url(const lyric_object::OpCell &op, ImportProcData &data)
+{
+    if (op.opcode != lyric_object::Opcode::OP_URL)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+
+    auto root = data.object.getObject();
+    auto literal = root.getLiteral(op.operands.address_u32.address);
+    if (literal.getValueType() != lyric_object::ValueType::Url)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid url literal");
+    auto url = tempo_utils::Url::fromString(literal.stringValue());
+
+    return data.fragment->loadUrl(url);
+}
+
+static tempo_utils::Status
 apply_literal(const lyric_object::OpCell &op, ImportProcData &data)
 {
-    return lyric_assembler::AssemblerStatus::forCondition(
-        lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid synthetic type");
+    if (op.opcode != lyric_object::Opcode::OP_LITERAL)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+
+    auto *literalCache = data.state->literalCache();
+
+    auto root = data.object.getObject();
+    auto literal = root.getLiteral(op.operands.address_u32.address);
+
+    lyric_assembler::LiteralHandle *literalHandle;
+
+    switch (literal.getValueType()) {
+        case lyric_object::ValueType::String: {
+            std::string str(literal.stringValue());
+            return data.fragment->loadString(str);
+        }
+        case lyric_object::ValueType::Url: {
+            auto url = tempo_utils::Url::fromString(literal.stringValue());
+            return data.fragment->loadUrl(url);
+        }
+        case lyric_object::ValueType::Nil:
+            TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeNil());
+            break;
+        case lyric_object::ValueType::Undef:
+            TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeUndef());
+            break;
+        case lyric_object::ValueType::Char:
+            TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeChar(literal.charValue()));
+            break;
+        case lyric_object::ValueType::Bool:
+            TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeBool(literal.boolValue()));
+            break;
+        case lyric_object::ValueType::Int64:
+            TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeInteger(literal.int64Value()));
+            break;
+        case lyric_object::ValueType::Float64:
+            TU_ASSIGN_OR_RETURN (literalHandle, literalCache->makeFloat(literal.float64Value()));
+            break;
+        default:
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid literal");
+    }
+
+    return data.fragment->loadLiteral(literalHandle);
 }
 
 static tempo_utils::Status
@@ -351,7 +430,91 @@ apply_jump(const lyric_object::OpCell &op, ImportProcData &data)
 static tempo_utils::Status
 apply_call(const lyric_object::OpCell &op, ImportProcData &data)
 {
-    TU_UNREACHABLE();
+    const auto &operands = op.operands.flags_u8_address_u32_placement_u16;
+    auto root = data.object.getObject();
+    auto call = root.getCall(operands.address);
+
+    auto *importCache = data.state->importCache();
+    lyric_common::SymbolUrl callUrl(data.location, call.getSymbolPath());
+
+    lyric_assembler::CallSymbol *callSymbol;
+    TU_ASSIGN_OR_RETURN (callSymbol, importCache->importCall(callUrl));
+
+    switch (op.opcode) {
+        case lyric_object::Opcode::OP_CALL_STATIC:
+            return data.fragment->callStatic(callSymbol, operands.placement, operands.flags);
+        case lyric_object::Opcode::OP_CALL_VIRTUAL:
+            return data.fragment->callVirtual(callSymbol, operands.placement, operands.flags);
+        case lyric_object::Opcode::OP_CALL_EXISTENTIAL:
+            return data.fragment->callExistential(callSymbol, operands.placement, operands.flags);
+        default:
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
+}
+
+static tempo_utils::Status
+apply_action(const lyric_object::OpCell &op, ImportProcData &data)
+{
+    if (op.opcode != lyric_object::Opcode::OP_CALL_CONCEPT)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+
+    const auto &operands = op.operands.flags_u8_address_u32_placement_u16;
+    auto root = data.object.getObject();
+    auto action = root.getAction(operands.address);
+
+    auto *importCache = data.state->importCache();
+    lyric_common::SymbolUrl actionUrl(data.location, action.getSymbolPath());
+
+    lyric_assembler::ActionSymbol *actionSymbol;
+    TU_ASSIGN_OR_RETURN (actionSymbol, importCache->importAction(actionUrl));
+
+    return data.fragment->callConcept(actionSymbol, operands.placement, operands.flags);
+}
+
+static tempo_utils::Status
+apply_new(const lyric_object::OpCell &op, ImportProcData &data)
+{
+    if (op.opcode != lyric_object::Opcode::OP_NEW)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+
+    const auto &operands = op.operands.flags_u8_address_u32_placement_u16;
+    auto *importCache = data.state->importCache();
+    auto root = data.object.getObject();
+
+    lyric_common::SymbolUrl newUrl;
+    switch (lyric_object::GET_NEW_TYPE(operands.flags)) {
+        case lyric_object::NEW_CLASS: {
+            auto walker = root.getClass(operands.address);
+            newUrl = lyric_common::SymbolUrl(data.location, walker.getSymbolPath());
+            break;
+        }
+        case lyric_object::NEW_ENUM: {
+            auto walker = root.getEnum(operands.address);
+            newUrl = lyric_common::SymbolUrl(data.location, walker.getSymbolPath());
+            break;
+        }
+        case lyric_object::NEW_INSTANCE: {
+            auto walker = root.getInstance(operands.address);
+            newUrl = lyric_common::SymbolUrl(data.location, walker.getSymbolPath());
+            break;
+        }
+        case lyric_object::NEW_STRUCT: {
+            auto walker = root.getStruct(operands.address);
+            newUrl = lyric_common::SymbolUrl(data.location, walker.getSymbolPath());
+            break;
+        }
+        default:
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid new type");
+    }
+
+    lyric_assembler::AbstractSymbol *newSymbol;
+    TU_ASSIGN_OR_RETURN (newSymbol, importCache->importSymbol(newUrl));
+
+    return data.fragment->constructNew(newSymbol, operands.placement, operands.flags);
 }
 
 tempo_utils::Status
@@ -405,7 +568,11 @@ lyric_assembler::internal::import_proc(
                 break;
 
             case lyric_object::Opcode::OP_STRING:
+                TU_RETURN_IF_NOT_OK (apply_string(op, data));
+                break;
             case lyric_object::Opcode::OP_URL:
+                TU_RETURN_IF_NOT_OK (apply_url(op, data));
+                break;
             case lyric_object::Opcode::OP_LITERAL:
                 TU_RETURN_IF_NOT_OK (apply_literal(op, data));
                 break;
@@ -511,10 +678,16 @@ lyric_assembler::internal::import_proc(
 
             case lyric_object::Opcode::OP_CALL_STATIC:
             case lyric_object::Opcode::OP_CALL_VIRTUAL:
-            case lyric_object::Opcode::OP_CALL_CONCEPT:
             case lyric_object::Opcode::OP_CALL_EXISTENTIAL:
-            case lyric_object::Opcode::OP_NEW:
                 TU_RETURN_IF_NOT_OK (apply_call(op, data));
+                break;
+
+            case lyric_object::Opcode::OP_CALL_CONCEPT:
+                TU_RETURN_IF_NOT_OK (apply_action(op, data));
+                break;
+
+            case lyric_object::Opcode::OP_NEW:
+                TU_RETURN_IF_NOT_OK (apply_new(op, data));
                 break;
 
             case lyric_object::Opcode::OP_RETURN:

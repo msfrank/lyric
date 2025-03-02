@@ -52,8 +52,10 @@ lyric_assembler::InstanceSymbol::InstanceSymbol(
 lyric_assembler::InstanceSymbol::InstanceSymbol(
     const lyric_common::SymbolUrl &instanceUrl,
     lyric_importer::InstanceImport *instanceImport,
+    bool isCopied,
     ObjectState *state)
-    : m_instanceUrl(instanceUrl),
+    : BaseSymbol(isCopied),
+      m_instanceUrl(instanceUrl),
       m_instanceImport(instanceImport),
       m_state(state)
 {

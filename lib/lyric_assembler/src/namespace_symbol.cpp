@@ -58,8 +58,10 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
 lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     const lyric_common::SymbolUrl &namespaceUrl,
     lyric_importer::NamespaceImport *namespaceImport,
+    bool isCopied,
     ObjectState *state)
-    : m_namespaceUrl(namespaceUrl),
+    : BaseSymbol(isCopied),
+      m_namespaceUrl(namespaceUrl),
       m_namespaceImport(namespaceImport),
       m_state(state)
 {

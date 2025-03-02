@@ -53,8 +53,10 @@ lyric_assembler::BindingSymbol::BindingSymbol(
 lyric_assembler::BindingSymbol::BindingSymbol(
     const lyric_common::SymbolUrl &bindingUrl,
     lyric_importer::BindingImport *bindingImport,
+    bool isCopied,
     ObjectState *state)
-    : m_bindingUrl(bindingUrl),
+    : BaseSymbol(isCopied),
+      m_bindingUrl(bindingUrl),
       m_bindingImport(bindingImport),
       m_state(state)
 {

@@ -33,6 +33,7 @@ namespace lyric_assembler {
         StaticSymbol(
             const lyric_common::SymbolUrl &staticUrl,
             lyric_importer::StaticImport *staticImport,
+            bool isCopied,
             ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;

@@ -13,6 +13,7 @@ namespace lyric_assembler {
         ~LiteralCache();
 
         tempo_utils::Result<LiteralHandle *> makeNil();
+        tempo_utils::Result<LiteralHandle *> makeUndef();
         tempo_utils::Result<LiteralHandle *> makeBool(bool b);
         tempo_utils::Result<LiteralHandle *> makeInteger(tu_int64 i64);
         tempo_utils::Result<LiteralHandle *> makeFloat(double dbl);

@@ -50,8 +50,10 @@ lyric_assembler::EnumSymbol::EnumSymbol(
 lyric_assembler::EnumSymbol::EnumSymbol(
     const lyric_common::SymbolUrl &enumUrl,
     lyric_importer::EnumImport *enumImport,
+    bool isCopied,
     ObjectState *state)
-    : m_enumUrl(enumUrl),
+    : BaseSymbol(isCopied),
+      m_enumUrl(enumUrl),
       m_enumImport(enumImport),
       m_state(state)
 {

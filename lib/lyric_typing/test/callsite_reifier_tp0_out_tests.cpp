@@ -5,10 +5,10 @@
 #include <lyric_assembler/type_cache.h>
 #include <lyric_typing/callsite_reifier.h>
 
-#include "base_fixture.h"
+#include "base_typing_fixture.h"
 #include "test_callable.h"
 
-class CallsiteReifierTP0Out : public BaseFixture {};
+class CallsiteReifierTP0Out : public BaseTypingFixture {};
 
 TEST_F(CallsiteReifierTP0Out, NullaryFunctionGivenT_IntCallsiteTypeArgument_returnsT)
 {

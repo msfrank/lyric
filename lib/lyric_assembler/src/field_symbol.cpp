@@ -33,8 +33,10 @@ lyric_assembler::FieldSymbol::FieldSymbol(
 lyric_assembler::FieldSymbol::FieldSymbol(
     const lyric_common::SymbolUrl &fieldUrl,
     lyric_importer::FieldImport *fieldImport,
+    bool isCopied,
     ObjectState *state)
-    : m_fieldUrl(fieldUrl),
+    : BaseSymbol(isCopied),
+      m_fieldUrl(fieldUrl),
       m_fieldImport(fieldImport),
       m_state(state)
 {

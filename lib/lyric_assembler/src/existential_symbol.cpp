@@ -76,8 +76,10 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
 lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     const lyric_common::SymbolUrl &existentialUrl,
     lyric_importer::ExistentialImport *existentialImport,
+    bool isCopied,
     ObjectState *state)
-    : m_existentialUrl(existentialUrl),
+    : BaseSymbol(isCopied),
+      m_existentialUrl(existentialUrl),
       m_existentialImport(existentialImport),
       m_state(state)
 {

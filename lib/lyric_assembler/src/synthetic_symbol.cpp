@@ -17,6 +17,12 @@ lyric_assembler::SyntheticSymbol::isImported() const
     return false;
 }
 
+bool
+lyric_assembler::SyntheticSymbol::isCopied() const
+{
+    return false;
+}
+
 lyric_assembler::SymbolType
 lyric_assembler::SyntheticSymbol::getSymbolType() const
 {

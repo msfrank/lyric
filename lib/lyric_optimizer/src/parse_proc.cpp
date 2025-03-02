@@ -373,7 +373,12 @@ lyric_optimizer::parse_proc(const lyric_assembler::ProcHandle *procHandle)
     auto *code = procHandle->procCode();
     auto *fragment = code->rootFragment();
 
-    ControlFlowGraph cfg;
+    auto numArguments = procHandle->numListParameters() + procHandle->numNamedParameters();
+    auto numLocals = procHandle->numLocals();
+    auto numLexicals = procHandle->numLexicals();
+
+    ControlFlowGraph cfg(numArguments, numLocals, numLexicals);
+
     std::vector<std::unique_ptr<ProposedBlock>> proposedBlocks;
     absl::flat_hash_map<std::string, BasicBlock> labelBlocks;
     TU_RETURN_IF_NOT_OK (scan_for_basic_blocks(fragment, proposedBlocks, labelBlocks, cfg));

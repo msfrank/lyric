@@ -33,18 +33,25 @@ namespace lyric_optimizer::internal {
     };
 
     // collection of vertex properties
-    typedef boost::property<instruction_offset_t, tu_uint32,
-            boost::property<boost::vertex_index_t, std::size_t
+    typedef boost::property<boost::vertex_index_t, std::size_t,
+            boost::property<instruction_offset_t, tu_uint32
     >> VertexProperties;
 
     // collection of edge properties
-    typedef boost::property<target_id_t, tu_uint32,
+    typedef boost::property<boost::edge_index_t, std::size_t,
+            boost::property<target_id_t, tu_uint32,
             boost::property<edge_type_t, EdgeType,
             boost::property<label_name_t, std::string
-    >>> EdgeProperties;
+    >>>> EdgeProperties;
 
     // concrete graph type
-    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, VertexProperties, EdgeProperties> Graph;
+    typedef boost::adjacency_list<
+        boost::listS,                       // edge list type
+        boost::listS,                       // vertex list type
+        boost::bidirectionalS,              // directed type
+        VertexProperties,                   // vertex properties type
+        EdgeProperties>                     // edge properties type
+            Graph;
 
     // vertex type for Graph
     typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;

@@ -17,7 +17,7 @@ set(TEST_CASES
 
 add_executable(lyric_typing_testsuite
     ${TEST_CASES}
-    base_fixture.cpp base_fixture.h
+    base_typing_fixture.cpp base_typing_fixture.h
     test_callable.cpp test_callable.h
     )
 target_compile_definitions(lyric_typing_testsuite PRIVATE
@@ -34,7 +34,7 @@ gtest_discover_tests(lyric_typing_testsuite DISCOVERY_TIMEOUT 30)
 
 add_library(LyricTypingTestSuite OBJECT
     ${TEST_CASES}
-    base_fixture.cpp base_fixture.h
+    base_typing_fixture.cpp base_typing_fixture.h
     test_callable.cpp test_callable.h
     )
 target_compile_definitions(LyricTypingTestSuite PRIVATE

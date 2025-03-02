@@ -124,6 +124,8 @@ target_sources(lyric_assembler PRIVATE
     src/internal/call_inline.cpp
     include/lyric_assembler/internal/import_proc.h
     src/internal/import_proc.cpp
+    include/lyric_assembler/internal/load_object.h
+    src/internal/load_object.cpp
     include/lyric_assembler/internal/writer_utils.h
     src/internal/writer_utils.cpp
     include/lyric_assembler/internal/write_actions.h

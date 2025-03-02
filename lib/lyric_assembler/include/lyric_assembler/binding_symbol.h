@@ -35,6 +35,7 @@ namespace lyric_assembler {
         BindingSymbol(
             const lyric_common::SymbolUrl &bindingUrl,
             lyric_importer::BindingImport *bindingImport,
+            bool isCopied,
             ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;

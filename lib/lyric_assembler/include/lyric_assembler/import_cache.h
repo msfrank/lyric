@@ -18,7 +18,7 @@ namespace lyric_assembler {
     class ImportCache {
     public:
         explicit ImportCache(
-            lyric_assembler::ObjectState *state,
+            ObjectState *state,
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             SymbolCache *symbolCache,
@@ -62,7 +62,7 @@ namespace lyric_assembler {
             ImportFlags importFlags);
 
     private:
-        lyric_assembler::ObjectState *m_state;
+        ObjectState *m_state;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_loader;
         std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;

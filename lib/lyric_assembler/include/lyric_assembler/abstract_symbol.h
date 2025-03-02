@@ -32,6 +32,7 @@ namespace lyric_assembler {
     public:
         virtual ~AbstractSymbol() = default;
         virtual bool isImported() const = 0;
+        virtual bool isCopied() const = 0;
         virtual SymbolType getSymbolType() const = 0;
         virtual lyric_common::SymbolUrl getSymbolUrl() const = 0;
         virtual lyric_common::TypeDef getTypeDef() const = 0;

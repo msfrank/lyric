@@ -61,6 +61,7 @@ namespace lyric_assembler {
         ClassSymbol(
             const lyric_common::SymbolUrl &classUrl,
             lyric_importer::ClassImport *classImport,
+            bool isCopied,
             ObjectState *state);
 
         lyric_object::LinkageSection getLinkage() const override;

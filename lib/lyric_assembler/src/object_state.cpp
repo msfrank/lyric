@@ -14,6 +14,7 @@
 #include <lyric_assembler/impl_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/internal/load_object.h>
 #include <lyric_assembler/literal_cache.h>
 #include <lyric_assembler/namespace_symbol.h>
 #include <lyric_assembler/object_root.h>
@@ -78,25 +79,25 @@ lyric_assembler::ObjectState::getOptions() const
 }
 
 /**
- * Initialize the assembler state. Notably, this process ensures that all fundamental symbols exist,
+ * Initialize the object state. Notably, this process ensures that all fundamental symbols exist,
  * are imported into the symbol cache, and are bound to the environment.
  *
  * @return Status
  */
-tempo_utils::Result<lyric_assembler::ObjectRoot *>
-lyric_assembler::ObjectState::defineRoot()
+tempo_utils::Status
+lyric_assembler::ObjectState::createRoot(const lyric_common::ModuleLocation &preludeLocation)
 {
     if (m_root != nullptr)
         return logAndContinue(AssemblerCondition::kAssemblerInvariant,
             tempo_tracing::LogSeverity::kError,
-            "assembler state is already initialized");
+            "object state is already initialized");
 
     m_root = new ObjectRoot(this);
 
     // construct the assembler component classes
     m_tracer = new AssemblerTracer(m_scopeManager);
     m_literalcache = new LiteralCache(m_tracer);
-    m_fundamentalcache = new FundamentalCache(m_options.preludeLocation, m_tracer);
+    m_fundamentalcache = new FundamentalCache(preludeLocation, m_tracer);
     m_symbolcache = new SymbolCache(this, m_tracer);
     m_typecache = new TypeCache(this, m_tracer);
     m_implcache = new ImplCache(this, m_tracer);
@@ -105,10 +106,47 @@ lyric_assembler::ObjectState::defineRoot()
     // load the prelude object
     std::shared_ptr<lyric_importer::ModuleImport> preludeImport;
     TU_ASSIGN_OR_RETURN (preludeImport, m_importcache->importModule(
-        m_options.preludeLocation, ImportFlags::SystemBootstrap));
+        preludeLocation, ImportFlags::SystemBootstrap));
 
     // initialize the root
-    TU_RETURN_IF_NOT_OK (m_root->initialize(preludeImport));
+    return m_root->initialize(preludeImport);
+}
+
+tempo_utils::Status
+lyric_assembler::ObjectState::load(const lyric_object::LyricObject &object)
+{
+    if (m_root != nullptr)
+        return logAndContinue(AssemblerCondition::kAssemblerInvariant,
+            tempo_tracing::LogSeverity::kError,
+            "object state is already initialized");
+
+    std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN (moduleImport, m_localModuleCache->insertModule(m_location, object));
+    auto root = object.getObject();
+
+    // determine the prelude location from the object
+    lyric_common::ModuleLocation preludeLocation;
+    TU_ASSIGN_OR_RETURN (preludeLocation, internal::find_system_bootstrap(moduleImport, this));
+
+    // create the object root using the specified prelude location
+    TU_RETURN_IF_NOT_OK (createRoot(preludeLocation));
+
+    // copy all symbols into the state
+    TU_RETURN_IF_NOT_OK (internal::load_object_symbols(moduleImport, this));
+
+    return {};
+}
+
+/**
+ * Initialize the object state. Notably, this process ensures that all fundamental symbols exist,
+ * are imported into the symbol cache, and are bound to the environment.
+ *
+ * @return Status
+ */
+tempo_utils::Result<lyric_assembler::ObjectRoot *>
+lyric_assembler::ObjectState::defineRoot()
+{
+    TU_RETURN_IF_NOT_OK (createRoot(m_options.preludeLocation));
     return m_root;
 }
 

@@ -18,6 +18,12 @@ lyric_assembler::UndeclaredSymbol::isImported() const
     return false;
 }
 
+bool
+lyric_assembler::UndeclaredSymbol::isCopied() const
+{
+    return false;
+}
+
 lyric_assembler::SymbolType
 lyric_assembler::UndeclaredSymbol::getSymbolType() const
 {

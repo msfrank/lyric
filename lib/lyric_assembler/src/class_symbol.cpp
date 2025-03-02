@@ -81,8 +81,10 @@ lyric_assembler::ClassSymbol::ClassSymbol(
 lyric_assembler::ClassSymbol::ClassSymbol(
     const lyric_common::SymbolUrl &classUrl,
     lyric_importer::ClassImport *classImport,
+    bool isCopied,
     ObjectState *state)
-    : m_classUrl(classUrl),
+    : BaseSymbol(isCopied),
+      m_classUrl(classUrl),
       m_classImport(classImport),
       m_state(state)
 {
