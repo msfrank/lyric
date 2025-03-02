@@ -11,6 +11,7 @@
 
 #include "../directive_chain.h"
 #include "../instance.h"
+#include "../phi_function.h"
 #include "../variable.h"
 
 namespace lyric_optimizer::internal {
@@ -18,6 +19,8 @@ namespace lyric_optimizer::internal {
     // forward declarations
     struct BasicBlockPriv;
     struct InstancePriv;
+
+    constexpr tu_uint32 kCounterMax = 0xFFFFFFFF;
 
     struct TransferPriv {
         Edge transferEdge;
@@ -34,7 +37,8 @@ namespace lyric_optimizer::internal {
 
     struct VariablePriv {
         std::string name;
-        std::weak_ptr<BasicBlockPriv> declaration;
+        lyric_assembler::SymbolType type;
+        int offset;
         std::vector<std::shared_ptr<InstancePriv>> instances;
         tu_uint32 counter;
     };
@@ -42,18 +46,14 @@ namespace lyric_optimizer::internal {
     struct InstancePriv {
         std::weak_ptr<VariablePriv> variable;
         tu_uint32 generation;
-    };
-
-    struct PhiPriv {
-        Instance target;
-        std::vector<Instance> arguments;
+        std::forward_list<std::shared_ptr<AbstractDirective>> values;
     };
 
     struct BasicBlockPriv {
+        tu_uint32 id;
         Vertex blockVertex;
         std::string name;
-        absl::flat_hash_map<std::string,std::shared_ptr<VariablePriv>> declarations;
-        absl::flat_hash_map<std::string,std::shared_ptr<PhiPriv>> phis;
+        absl::flat_hash_map<std::string,std::shared_ptr<PhiFunction>> phis;
         std::vector<std::shared_ptr<DirectiveChain>> directives;
         std::unique_ptr<TransferPriv> transfer;
         std::unique_ptr<PrevPriv> prev;
@@ -70,6 +70,7 @@ namespace lyric_optimizer::internal {
         std::vector<std::shared_ptr<VariablePriv>> arguments;
         std::vector<std::shared_ptr<VariablePriv>> locals;
         std::vector<std::shared_ptr<VariablePriv>> lexicals;
+        tu_uint32 counter;
     };
 }
 

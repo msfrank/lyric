@@ -8,6 +8,7 @@ add_library(lyric::lyric_optimizer ALIAS lyric_optimizer)
 
 set(LYRIC_COMPILER_INCLUDES
     include/lyric_optimizer/abstract_directive.h
+    include/lyric_optimizer/activation_state.h
     include/lyric_optimizer/basic_block.h
     include/lyric_optimizer/build_proc.h
     include/lyric_optimizer/build_ssa.h
@@ -24,6 +25,7 @@ set(LYRIC_COMPILER_INCLUDES
 set_target_properties(lyric_optimizer PROPERTIES PUBLIC_HEADER "${LYRIC_COMPILER_INCLUDES}")
 
 target_sources(lyric_optimizer PRIVATE
+    src/activation_state.cpp
     src/basic_block.cpp
     src/build_proc.cpp
     src/build_ssa.cpp

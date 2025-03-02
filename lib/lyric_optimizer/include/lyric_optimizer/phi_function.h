@@ -1,36 +1,31 @@
 #ifndef LYRIC_OPTIMIZER_PHI_FUNCTION_H
 #define LYRIC_OPTIMIZER_PHI_FUNCTION_H
 
-#include <memory>
 #include <vector>
 
+#include "abstract_directive.h"
 #include "instance.h"
 
 namespace lyric_optimizer {
 
-    namespace internal {
-        struct PhiPriv;
-        struct GraphPriv;
-    }
-
-    class PhiFunction {
+    class PhiFunction : public AbstractDirective {
     public:
-        PhiFunction();
-        PhiFunction(const PhiFunction &other);
+        explicit PhiFunction(const std::vector<Instance> &arguments);
 
-        bool isValid() const;
+        DirectiveType getType() const override;
+        bool isExpression() const override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
+        tempo_utils::Status buildCode(
+            lyric_assembler::CodeFragment *codeFragment,
+            lyric_assembler::ProcHandle *procHandle) override;
+        std::string toString() const override;
 
-        Instance getPhiTarget() const;
-        std::vector<Instance>::const_iterator phiArgumentsBegin() const;
-        std::vector<Instance>::const_iterator phiArgumentsEnd() const;
-        int numPhiArguments() const;
-
-        std::string toString() const;
+        std::vector<Instance>::const_iterator argumentsBegin() const;
+        std::vector<Instance>::const_iterator argumentsEnd() const;
+        int numArguments() const;
 
     private:
-        std::shared_ptr<internal::PhiPriv> m_phi;
-
-        PhiFunction(std::shared_ptr<internal::PhiPriv> phi);
+        std::vector<Instance> m_arguments;
 
         friend class BasicBlock;
     };

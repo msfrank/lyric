@@ -27,7 +27,7 @@ namespace lyric_optimizer {
     public:
         DirectiveType getType() const override;
         bool isExpression() const override;
-        tempo_utils::Status applyOperands(OperandStack &stack) override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
@@ -37,7 +37,7 @@ namespace lyric_optimizer {
     class Nil : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
-        tempo_utils::Status applyOperands(OperandStack &stack) override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
@@ -47,7 +47,7 @@ namespace lyric_optimizer {
     class Undef : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
-        tempo_utils::Status applyOperands(OperandStack &stack) override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
@@ -58,7 +58,7 @@ namespace lyric_optimizer {
     public:
         explicit Bool(bool b);
         DirectiveType getType() const override;
-        tempo_utils::Status applyOperands(OperandStack &stack) override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
@@ -71,7 +71,7 @@ namespace lyric_optimizer {
     public:
         explicit Int(tu_int64 i64);
         DirectiveType getType() const override;
-        tempo_utils::Status applyOperands(OperandStack &stack) override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
@@ -84,7 +84,7 @@ namespace lyric_optimizer {
     public:
         explicit Float(double dbl);
         DirectiveType getType() const override;
-        tempo_utils::Status applyOperands(OperandStack &stack) override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
@@ -97,7 +97,7 @@ namespace lyric_optimizer {
     public:
         explicit Char(UChar32 chr);
         DirectiveType getType() const override;
-        tempo_utils::Status applyOperands(OperandStack &stack) override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
@@ -109,7 +109,7 @@ namespace lyric_optimizer {
     class IntAdd : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
-        tempo_utils::Status applyOperands(OperandStack &stack) override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
@@ -119,34 +119,49 @@ namespace lyric_optimizer {
         DirectiveChain m_rhs;
     };
 
-    // class IntSub : public ExpressionDirective {
-    // public:
-    //     IntSub(std::shared_ptr<DirectiveChain> lhs, std::shared_ptr<DirectiveChain> rhs);
-    // private:
-    //     std::shared_ptr<DirectiveChain> m_lhs;
-    //     std::shared_ptr<DirectiveChain> m_rhs;
-    // };
-    //
-    // class IntMul : public ExpressionDirective {
-    // public:
-    //     IntMul(std::shared_ptr<DirectiveChain> lhs, std::shared_ptr<DirectiveChain> rhs);
-    // private:
-    //     std::shared_ptr<DirectiveChain> m_lhs;
-    //     std::shared_ptr<DirectiveChain> m_rhs;
-    // };
-    //
-    // class IntDiv : public ExpressionDirective {
-    // public:
-    //     IntDiv(std::shared_ptr<DirectiveChain> lhs, std::shared_ptr<DirectiveChain> rhs);
-    // private:
-    //     std::shared_ptr<DirectiveChain> m_lhs;
-    //     std::shared_ptr<DirectiveChain> m_rhs;
-    // };
+    class IntSub : public ExpressionDirective {
+    public:
+        DirectiveType getType() const override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
+        tempo_utils::Status buildCode(
+            lyric_assembler::CodeFragment *codeFragment,
+            lyric_assembler::ProcHandle *procHandle) override;
+        std::string toString() const override;
+    private:
+        DirectiveChain m_lhs;
+        DirectiveChain m_rhs;
+    };
+
+    class IntMul : public ExpressionDirective {
+    public:
+        DirectiveType getType() const override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
+        tempo_utils::Status buildCode(
+            lyric_assembler::CodeFragment *codeFragment,
+            lyric_assembler::ProcHandle *procHandle) override;
+        std::string toString() const override;
+    private:
+        DirectiveChain m_lhs;
+        DirectiveChain m_rhs;
+    };
+
+    class IntDiv : public ExpressionDirective {
+    public:
+        DirectiveType getType() const override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
+        tempo_utils::Status buildCode(
+            lyric_assembler::CodeFragment *codeFragment,
+            lyric_assembler::ProcHandle *procHandle) override;
+        std::string toString() const override;
+    private:
+        DirectiveChain m_lhs;
+        DirectiveChain m_rhs;
+    };
 
     class IntNeg : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
-        tempo_utils::Status applyOperands(OperandStack &stack) override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
@@ -155,31 +170,31 @@ namespace lyric_optimizer {
         DirectiveChain m_lhs;
     };
 
-    class LoadLocal : public ExpressionDirective {
+    class LoadValue : public ExpressionDirective {
     public:
-        explicit LoadLocal(const Variable &variable);
+        explicit LoadValue(const Instance &instance);
         DirectiveType getType() const override;
-        tempo_utils::Status applyOperands(OperandStack &stack) override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
         std::string toString() const override;
     private:
-        Variable m_variable;
+        Instance m_instance;
     };
 
-    class StoreLocal : public StatementDirective {
+    class StoreValue : public StatementDirective {
     public:
-        explicit StoreLocal(const Variable &variable);
+        explicit StoreValue(const Instance &instance);
         DirectiveType getType() const override;
-        tempo_utils::Status applyOperands(OperandStack &stack) override;
+        tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
         std::string toString() const override;
+        Instance getInstance();
     private:
-        Variable m_variable;
-        DirectiveChain m_expression;
+        Instance m_instance;
     };
 }
 

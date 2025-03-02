@@ -15,6 +15,13 @@ namespace lyric_optimizer {
         struct GraphPriv;
     }
 
+    enum class VariableType {
+        Invalid,
+        Argument,
+        Local,
+        Lexical,
+    };
+
     class Variable {
     public:
         Variable();
@@ -22,6 +29,10 @@ namespace lyric_optimizer {
 
         bool isValid() const;
 
+        VariableType getType() const;
+        int getOffset() const;
+
+        tempo_utils::Result<Instance> currentInstance() const;
         tempo_utils::Result<Instance> pushInstance();
 
         std::string toString() const;
@@ -35,6 +46,7 @@ namespace lyric_optimizer {
             std::shared_ptr<internal::GraphPriv> graph);
 
         friend class BasicBlock;
+        friend class ControlFlowGraph;
     };
 }
 

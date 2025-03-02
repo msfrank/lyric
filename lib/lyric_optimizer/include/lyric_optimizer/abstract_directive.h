@@ -8,6 +8,7 @@
 namespace lyric_optimizer {
 
     // forward declarations
+    class ActivationState;
     class OperandStack;
 
     enum class DirectiveType {
@@ -20,9 +21,13 @@ namespace lyric_optimizer {
         Float,
         Char,
         IntAdd,
+        IntSub,
+        IntMul,
+        IntDiv,
         IntNeg,
-        LoadLocal,
-        StoreLocal,
+        LoadValue,
+        StoreValue,
+        PhiFunction,
     };
 
     class AbstractDirective {
@@ -33,7 +38,7 @@ namespace lyric_optimizer {
 
         virtual bool isExpression() const = 0;
 
-        virtual tempo_utils::Status applyOperands(OperandStack &stack) = 0;
+        virtual tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) = 0;
 
         virtual tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,

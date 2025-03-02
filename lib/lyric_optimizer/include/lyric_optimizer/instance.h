@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include "abstract_directive.h"
+
 namespace lyric_optimizer {
 
     namespace internal {
@@ -16,6 +18,14 @@ namespace lyric_optimizer {
 
         bool isValid() const;
 
+        std::string getName() const;
+        std::string getVariableName() const;
+        tu_uint32 getGeneration() const;
+
+        bool hasValue() const;
+        std::shared_ptr<AbstractDirective> getValue() const;
+        tempo_utils::Status updateValue(std::shared_ptr<AbstractDirective> value);
+
         std::string toString() const;
 
     private:
@@ -23,6 +33,7 @@ namespace lyric_optimizer {
 
         explicit Instance(std::shared_ptr<internal::InstancePriv> instance);
 
+        friend class ActivationState;
         friend class Variable;
     };
 }

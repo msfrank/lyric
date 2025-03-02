@@ -3,6 +3,7 @@
 
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/proc_handle.h>
+#include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_optimizer/control_flow_graph.h>
 #include <lyric_optimizer/parse_proc.h>
 #include <lyric_test/matchers.h>
@@ -28,21 +29,35 @@ TEST_F(ControlFlowGraphTests, InitializeFromProc)
     TU_ASSIGN_OR_RAISE (procHandle, callSymbol->defineCall({}));
 
     auto *code = procHandle->procCode();
+    auto *block = procHandle->procBlock();
     auto *root = code->rootFragment();
 
+    lyric_assembler::DataReference cond;
+    TU_ASSIGN_OR_RAISE (cond, block->declareTemporary(
+        lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Bool")), true));
+    lyric_assembler::DataReference result;
+    TU_ASSIGN_OR_RAISE (result, block->declareTemporary(
+        lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), true));
+
     root->immediateBool(true);
+    root->storeRef(cond);
+    root->loadRef(cond);
+
     lyric_assembler::JumpTarget targetIfFalse;
     TU_ASSIGN_OR_RAISE (targetIfFalse, root->jumpIfFalse());
     root->immediateInt(1);
     root->immediateInt(2);
     root->intAdd();
+    root->storeRef(result);
     lyric_assembler::JumpTarget targetJoin;
     TU_ASSIGN_OR_RAISE (targetJoin, root->unconditionalJump());
     lyric_assembler::JumpLabel labelIfFalse;
     TU_ASSIGN_OR_RAISE (labelIfFalse, root->appendLabel("ifFalse"));
     root->immediateInt(0);
+    root->storeRef(result);
     lyric_assembler::JumpLabel labelJoin;
     TU_ASSIGN_OR_RAISE (labelJoin, root->appendLabel("join"));
+    root->loadRef(result);
     root->patchTarget(targetIfFalse, labelIfFalse);
     root->patchTarget(targetJoin, labelJoin);
     root->returnToCaller();

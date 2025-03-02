@@ -1,57 +1,66 @@
 
-#include <lyric_optimizer/internal/cfg_data.h>
+#include <absl/strings/str_join.h>
 #include <lyric_optimizer/optimizer_result.h>
 #include <lyric_optimizer/phi_function.h>
 
-lyric_optimizer::PhiFunction::PhiFunction()
+lyric_optimizer::PhiFunction::PhiFunction(const std::vector<Instance> &arguments)
+    : m_arguments(arguments)
 {
+    TU_ASSERT (!m_arguments.empty());
 }
 
-lyric_optimizer::PhiFunction::PhiFunction(const PhiFunction &other)
-    : m_phi(other.m_phi)
+lyric_optimizer::DirectiveType
+lyric_optimizer::PhiFunction::getType() const
 {
-}
-
-lyric_optimizer::PhiFunction::PhiFunction(std::shared_ptr<internal::PhiPriv> phi)
-    : m_phi(phi)
-{
-    TU_ASSERT (m_phi != nullptr);
+    return DirectiveType::PhiFunction;
 }
 
 bool
-lyric_optimizer::PhiFunction::isValid() const
+lyric_optimizer::PhiFunction::isExpression() const
 {
-    return m_phi != nullptr;
+    return false;
 }
 
-lyric_optimizer::Instance
-lyric_optimizer::PhiFunction::getPhiTarget() const
+tempo_utils::Status
+lyric_optimizer::PhiFunction::applyOperands(ActivationState &state, OperandStack &stack)
 {
-    if (m_phi == nullptr)
-        return {};
-    return m_phi->target;
+    return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::PhiFunction::buildCode(
+    lyric_assembler::CodeFragment *codeFragment,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    return OptimizerStatus::forCondition(
+        OptimizerCondition::kOptimizerInvariant, "unimplemented");
+}
+
+std::string
+lyric_optimizer::PhiFunction::toString() const
+{
+    std::vector<std::string> arguments;
+    for (const auto &argument : m_arguments) {
+        arguments.push_back(argument.getName());
+    }
+    auto arglist = absl::StrJoin(arguments.begin(), arguments.end(), ",");
+    return absl::StrCat("PhiFunction(", arglist, ")");
 }
 
 std::vector<lyric_optimizer::Instance>::const_iterator
-lyric_optimizer::PhiFunction::phiArgumentsBegin() const
+lyric_optimizer::PhiFunction::argumentsBegin() const
 {
-    if (m_phi == nullptr)
-        return {};
-    return m_phi->arguments.cbegin();
+    return m_arguments.cbegin();
 }
 
 std::vector<lyric_optimizer::Instance>::const_iterator
-lyric_optimizer::PhiFunction::phiArgumentsEnd() const
+lyric_optimizer::PhiFunction::argumentsEnd() const
 {
-    if (m_phi == nullptr)
-        return {};
-    return m_phi->arguments.cend();
+    return m_arguments.cend();
 }
 
 int
-lyric_optimizer::PhiFunction::numPhiArguments() const
+lyric_optimizer::PhiFunction::numArguments() const
 {
-    if (m_phi == nullptr)
-        return 0;
-    return m_phi->arguments.size();
+    return m_arguments.size();
 }

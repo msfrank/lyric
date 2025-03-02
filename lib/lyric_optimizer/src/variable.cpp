@@ -29,6 +29,44 @@ lyric_optimizer::Variable::isValid() const
     return m_variable != nullptr;
 }
 
+lyric_optimizer::VariableType
+lyric_optimizer::Variable::getType() const
+{
+    if (m_variable == nullptr)
+        return VariableType::Invalid;
+    switch (m_variable->type) {
+        case lyric_assembler::SymbolType::ARGUMENT:
+            return VariableType::Argument;
+        case lyric_assembler::SymbolType::LOCAL:
+            return VariableType::Local;
+        case lyric_assembler::SymbolType::LEXICAL:
+            return VariableType::Lexical;
+        default:
+            return VariableType::Invalid;
+    }
+}
+
+int
+lyric_optimizer::Variable::getOffset() const
+{
+    if (m_variable == nullptr)
+        return -1;
+    return m_variable->offset;
+}
+
+tempo_utils::Result<lyric_optimizer::Instance>
+lyric_optimizer::Variable::currentInstance() const
+{
+    if (m_variable == nullptr)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "invalid variable");
+    if (m_variable->instances.empty())
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "invalid variable");
+    auto instance = m_variable->instances.back();
+    return Instance(instance);
+}
+
 tempo_utils::Result<lyric_optimizer::Instance>
 lyric_optimizer::Variable::pushInstance()
 {

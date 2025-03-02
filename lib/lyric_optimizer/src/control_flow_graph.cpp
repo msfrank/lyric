@@ -13,17 +13,68 @@ lyric_optimizer::ControlFlowGraph::ControlFlowGraph()
 {
 }
 
+inline char chr(tu_uint8 value) {
+    if (value >= 26)
+        return '?';
+    char c = static_cast<char>(0x61) + value;
+    return c;
+}
+
+inline std::string counter_to_name(int counter)
+{
+    std::string name;
+    while (counter >= 26) {
+        tu_uint8 next = counter / 26;
+        name.push_back(chr(next));
+        counter = counter - (26 * next);
+    }
+    name.push_back(chr(counter));
+    return name;
+}
+
+inline std::shared_ptr<lyric_optimizer::internal::VariablePriv>
+create_variable(
+    lyric_assembler::SymbolType type,
+    int offset,
+    int variableCount)
+{
+    auto variable = std::make_shared<lyric_optimizer::internal::VariablePriv>();
+    variable->name = counter_to_name(variableCount);
+    variable->type = type;
+    variable->offset = offset;
+    variable->counter = 0;
+    return variable;
+}
+
 lyric_optimizer::ControlFlowGraph::ControlFlowGraph(
     tu_int32 numArguments,
     tu_int32 numLocals,
     tu_int32 numLexicals)
 {
     m_priv = std::make_shared<internal::GraphPriv>();
+    m_priv->counter = 0;
 
-    // allocate space for variable vectors
-    m_priv->arguments.resize(numArguments);
-    m_priv->locals.resize(numLocals);
-    m_priv->lexicals.resize(numLexicals);
+    int variableCount = 0;
+
+    // allocate variables
+    for (int i = 0; i < numArguments; i++) {
+        auto variable = create_variable(
+            lyric_assembler::SymbolType::ARGUMENT, i, variableCount++);
+        m_priv->arguments.push_back(variable);
+        m_priv->variables[variable->name] = variable;
+    }
+    for (int i = 0; i < numLocals; i++) {
+        auto variable = create_variable(
+            lyric_assembler::SymbolType::LOCAL, i, variableCount++);
+        m_priv->locals.push_back(variable);
+        m_priv->variables[variable->name] = variable;
+    }
+    for (int i = 0; i < numLexicals; i++) {
+        auto variable = create_variable(
+            lyric_assembler::SymbolType::LEXICAL, i, variableCount++);
+        m_priv->lexicals.push_back(variable);
+        m_priv->variables[variable->name] = variable;
+    }
 
     // create the entry block
     auto entryVertex = boost::add_vertex(m_priv->graph);
@@ -73,16 +124,112 @@ lyric_optimizer::ControlFlowGraph::addBasicBlock()
     if (m_priv == nullptr)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "invalid control flow graph");
+    if (m_priv->counter == internal::kCounterMax - 1)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "exceeded maximum basic blocks");
 
     // create the vertex and basic block
     auto vertex = boost::add_vertex(m_priv->graph);
     auto basicBlock = std::make_shared<internal::BasicBlockPriv>();
+    basicBlock->id = m_priv->counter++;
 
     // link the block to the vertex and vice versa
     basicBlock->blockVertex = vertex;
     m_priv->vertexBlocks[vertex] = basicBlock;
 
     return BasicBlock(basicBlock, m_priv);
+}
+
+lyric_optimizer::Variable
+lyric_optimizer::ControlFlowGraph::getArgument(int offset) const
+{
+    if (m_priv == nullptr)
+        return {};
+    if (m_priv->arguments.size() <= offset)
+        return {};
+    auto variable = m_priv->arguments.at(offset);
+    return Variable(variable, m_priv);
+}
+
+lyric_optimizer::Variable
+lyric_optimizer::ControlFlowGraph::resolveArgument(lyric_assembler::ArgumentVariable *argumentVariable) const
+{
+    if (m_priv == nullptr)
+        return {};
+    auto offset = argumentVariable->getOffset().getOffset();
+    if (m_priv->arguments.size() <= offset)
+        return {};
+    auto variable = m_priv->arguments.at(offset);
+    return Variable(variable, m_priv);
+}
+
+int
+lyric_optimizer::ControlFlowGraph::numArguments() const
+{
+    if (m_priv == nullptr)
+        return {};
+    return m_priv->arguments.size();
+}
+
+lyric_optimizer::Variable
+lyric_optimizer::ControlFlowGraph::getLocal(int offset) const
+{
+    if (m_priv == nullptr)
+        return {};
+    if (m_priv->locals.size() <= offset)
+        return {};
+    auto variable = m_priv->locals.at(offset);
+    return Variable(variable, m_priv);
+}
+
+lyric_optimizer::Variable
+lyric_optimizer::ControlFlowGraph::resolveLocal(lyric_assembler::LocalVariable *localVariable) const
+{
+    if (m_priv == nullptr)
+        return {};
+    auto offset = localVariable->getOffset().getOffset();
+    if (m_priv->locals.size() <= offset)
+        return {};
+    auto variable = m_priv->locals.at(offset);
+    return Variable(variable, m_priv);
+}
+
+int
+lyric_optimizer::ControlFlowGraph::numLocals() const
+{
+    if (m_priv == nullptr)
+        return {};
+    return m_priv->locals.size();
+}
+lyric_optimizer::Variable
+lyric_optimizer::ControlFlowGraph::getLexical(int offset) const
+{
+    if (m_priv == nullptr)
+        return {};
+    if (m_priv->lexicals.size() <= offset)
+        return {};
+    auto variable = m_priv->lexicals.at(offset);
+    return Variable(variable, m_priv);
+}
+
+lyric_optimizer::Variable
+lyric_optimizer::ControlFlowGraph::resolveLexical(lyric_assembler::LexicalVariable *lexicalVariable) const
+{
+    if (m_priv == nullptr)
+        return {};
+    auto offset = lexicalVariable->getOffset().getOffset();
+    if (m_priv->lexicals.size() <= offset)
+        return {};
+    auto variable = m_priv->lexicals.at(offset);
+    return Variable(variable, m_priv);
+}
+
+int
+lyric_optimizer::ControlFlowGraph::numLexicals() const
+{
+    if (m_priv == nullptr)
+        return {};
+    return m_priv->lexicals.size();
 }
 
 class cfg_print_visitor : public boost::default_bfs_visitor {
@@ -133,6 +280,15 @@ public:
             TU_LOG_INFO << "    label: " << basicBlock->name;
         }
 
+        if (!basicBlock->phis.empty()) {
+            TU_LOG_INFO << "    phis:";
+            for (const auto &entry : basicBlock->phis) {
+                const auto &target = entry.first;
+                const auto &phiFunction = entry.second;
+                TU_LOG_INFO << "        " << target << " = " << phiFunction->toString();
+            }
+        }
+
         TU_LOG_INFO << "    block:";
         const auto &directives = basicBlock->directives;
         for (const auto &directive : directives) {
@@ -143,20 +299,20 @@ public:
             }
         }
 
-        typename boost::graph_traits<Graph>::out_edge_iterator out_i, out_end;
-        typename boost::graph_traits<Graph>::edge_descriptor e;
+        lyric_optimizer::internal::OutEdgeIterator it, end;
 
         TU_LOG_INFO << "    out edges:";
-        for (boost::tie(out_i, out_end) = out_edges(v, g); out_i != out_end; ++out_i) {
-            e = *out_i;
-            Vertex src = source(e, g), targ = target(e, g);
+        for (boost::tie(it, end) = boost::out_edges(v, g); it != end; ++it) {
+            auto e = *it;
+            Vertex src = boost::source(e, g);
+            Vertex tgt = boost::target(e, g);
             tu_uint32 targetId = target_id[e];
             const auto &labelName = label_name[e];
             if (!labelName.empty()) {
-                TU_LOG_INFO << "        " << (int) m_props[src] << " -> " << (int) m_props[targ]
+                TU_LOG_INFO << "        " << (int) m_props[src] << " -> " << (int) m_props[tgt]
                             << " label=" << labelName << " targetId=" << targetId;
             } else {
-                TU_LOG_INFO << "        " << (int) m_props[src] << " -> " << (int) m_props[targ];
+                TU_LOG_INFO << "        " << (int) m_props[src] << " -> " << (int) m_props[tgt];
             }
         }
     }

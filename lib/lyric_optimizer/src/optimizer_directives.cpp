@@ -1,4 +1,5 @@
 
+#include <lyric_optimizer/activation_state.h>
 #include <lyric_optimizer/instance.h>
 #include <lyric_optimizer/operand_stack.h>
 #include <lyric_optimizer/optimizer_directives.h>
@@ -30,7 +31,7 @@ lyric_optimizer::Noop::isExpression() const
 }
 
 tempo_utils::Status
-lyric_optimizer::Noop::applyOperands(OperandStack &stack)
+lyric_optimizer::Noop::applyOperands(ActivationState &state, OperandStack &stack)
 {
     return {};
 }
@@ -56,7 +57,7 @@ lyric_optimizer::Nil::getType() const
 }
 
 tempo_utils::Status
-lyric_optimizer::Nil::applyOperands(OperandStack &stack)
+lyric_optimizer::Nil::applyOperands(ActivationState &state, OperandStack &stack)
 {
     return {};
 }
@@ -82,7 +83,7 @@ lyric_optimizer::Undef::getType() const
 }
 
 tempo_utils::Status
-lyric_optimizer::Undef::applyOperands(OperandStack &stack)
+lyric_optimizer::Undef::applyOperands(ActivationState &state, OperandStack &stack)
 {
     return {};
 }
@@ -113,7 +114,7 @@ lyric_optimizer::Bool::getType() const
 }
 
 tempo_utils::Status
-lyric_optimizer::Bool::applyOperands(OperandStack &stack)
+lyric_optimizer::Bool::applyOperands(ActivationState &state, OperandStack &stack)
 {
     return {};
 }
@@ -144,7 +145,7 @@ lyric_optimizer::Int::getType() const
 }
 
 tempo_utils::Status
-lyric_optimizer::Int::applyOperands(OperandStack &stack)
+lyric_optimizer::Int::applyOperands(ActivationState &state, OperandStack &stack)
 {
     return {};
 }
@@ -175,7 +176,7 @@ lyric_optimizer::Float::getType() const
 }
 
 tempo_utils::Status
-lyric_optimizer::Float::applyOperands(OperandStack &stack)
+lyric_optimizer::Float::applyOperands(ActivationState &state, OperandStack &stack)
 {
     return {};
 }
@@ -206,7 +207,7 @@ lyric_optimizer::Char::getType() const
 }
 
 tempo_utils::Status
-lyric_optimizer::Char::applyOperands(OperandStack &stack)
+lyric_optimizer::Char::applyOperands(ActivationState &state, OperandStack &stack)
 {
     return {};
 }
@@ -232,7 +233,7 @@ lyric_optimizer::IntAdd::getType() const
 }
 
 tempo_utils::Status
-lyric_optimizer::IntAdd::applyOperands(OperandStack &stack)
+lyric_optimizer::IntAdd::applyOperands(ActivationState &state, OperandStack &stack)
 {
     auto rhs = stack.popOperand();
     if (!rhs)
@@ -274,13 +275,157 @@ lyric_optimizer::IntAdd::toString() const
 }
 
 lyric_optimizer::DirectiveType
+lyric_optimizer::IntSub::getType() const
+{
+    return DirectiveType::IntSub;
+}
+
+tempo_utils::Status
+lyric_optimizer::IntSub::applyOperands(ActivationState &state, OperandStack &stack)
+{
+    auto rhs = stack.popOperand();
+    if (!rhs)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "missing lhs operand");
+    auto lhs = stack.popOperand();
+    if (!lhs)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "missing lhs operand");
+    m_rhs.forwardDirective(rhs);
+    m_lhs.forwardDirective(lhs);
+    return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::IntSub::buildCode(
+    lyric_assembler::CodeFragment *codeFragment,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    auto lhs = m_lhs.resolveDirective();
+    if (!lhs)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "missing lhs operand");
+    auto rhs = m_rhs.resolveDirective();
+    if (!rhs)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "missing rhs operand");
+    TU_RETURN_IF_NOT_OK (lhs->buildCode(codeFragment, procHandle));
+    TU_RETURN_IF_NOT_OK (rhs->buildCode(codeFragment, procHandle));
+    return codeFragment->intSubtract();
+}
+
+std::string
+lyric_optimizer::IntSub::toString() const
+{
+    auto lhs = m_lhs.isValid() ? m_lhs.resolveDirective()->toString() : "?";
+    auto rhs = m_rhs.isValid() ? m_rhs.resolveDirective()->toString() : "?";
+    return absl::StrCat("IntSub(", lhs, ", ", rhs, ")");
+}
+
+lyric_optimizer::DirectiveType
+lyric_optimizer::IntMul::getType() const
+{
+    return DirectiveType::IntMul;
+}
+
+tempo_utils::Status
+lyric_optimizer::IntMul::applyOperands(ActivationState &state, OperandStack &stack)
+{
+    auto rhs = stack.popOperand();
+    if (!rhs)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "missing lhs operand");
+    auto lhs = stack.popOperand();
+    if (!lhs)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "missing lhs operand");
+    m_rhs.forwardDirective(rhs);
+    m_lhs.forwardDirective(lhs);
+    return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::IntMul::buildCode(
+    lyric_assembler::CodeFragment *codeFragment,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    auto lhs = m_lhs.resolveDirective();
+    if (!lhs)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "missing lhs operand");
+    auto rhs = m_rhs.resolveDirective();
+    if (!rhs)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "missing rhs operand");
+    TU_RETURN_IF_NOT_OK (lhs->buildCode(codeFragment, procHandle));
+    TU_RETURN_IF_NOT_OK (rhs->buildCode(codeFragment, procHandle));
+    return codeFragment->intMultiply();
+}
+
+std::string
+lyric_optimizer::IntMul::toString() const
+{
+    auto lhs = m_lhs.isValid() ? m_lhs.resolveDirective()->toString() : "?";
+    auto rhs = m_rhs.isValid() ? m_rhs.resolveDirective()->toString() : "?";
+    return absl::StrCat("IntMul(", lhs, ", ", rhs, ")");
+}
+
+lyric_optimizer::DirectiveType
+lyric_optimizer::IntDiv::getType() const
+{
+    return DirectiveType::IntDiv;
+}
+
+tempo_utils::Status
+lyric_optimizer::IntDiv::applyOperands(ActivationState &state, OperandStack &stack)
+{
+    auto rhs = stack.popOperand();
+    if (!rhs)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "missing lhs operand");
+    auto lhs = stack.popOperand();
+    if (!lhs)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "missing lhs operand");
+    m_rhs.forwardDirective(rhs);
+    m_lhs.forwardDirective(lhs);
+    return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::IntDiv::buildCode(
+    lyric_assembler::CodeFragment *codeFragment,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    auto lhs = m_lhs.resolveDirective();
+    if (!lhs)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "missing lhs operand");
+    auto rhs = m_rhs.resolveDirective();
+    if (!rhs)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "missing rhs operand");
+    TU_RETURN_IF_NOT_OK (lhs->buildCode(codeFragment, procHandle));
+    TU_RETURN_IF_NOT_OK (rhs->buildCode(codeFragment, procHandle));
+    return codeFragment->intDivide();
+}
+
+std::string
+lyric_optimizer::IntDiv::toString() const
+{
+    auto lhs = m_lhs.isValid() ? m_lhs.resolveDirective()->toString() : "?";
+    auto rhs = m_rhs.isValid() ? m_rhs.resolveDirective()->toString() : "?";
+    return absl::StrCat("IntDiv(", lhs, ", ", rhs, ")");
+}
+
+lyric_optimizer::DirectiveType
 lyric_optimizer::IntNeg::getType() const
 {
     return DirectiveType::IntNeg;
 }
 
 tempo_utils::Status
-lyric_optimizer::IntNeg::applyOperands(OperandStack &stack)
+lyric_optimizer::IntNeg::applyOperands(ActivationState &state, OperandStack &stack)
 {
     auto lhs = stack.popOperand();
     if (!lhs)
@@ -310,76 +455,77 @@ lyric_optimizer::IntNeg::toString() const
     return absl::StrCat("IntNeg(", lhs, ")");
 }
 
-lyric_optimizer::LoadLocal::LoadLocal(const Variable &variable)
-    : m_variable(variable)
+lyric_optimizer::LoadValue::LoadValue(const Instance &instance)
+    : m_instance(instance)
 {
-    TU_ASSERT (m_variable.isValid());
+    TU_ASSERT (m_instance.isValid());
 }
 
 lyric_optimizer::DirectiveType
-lyric_optimizer::LoadLocal::getType() const
+lyric_optimizer::LoadValue::getType() const
 {
-    return DirectiveType::LoadLocal;
+    return DirectiveType::LoadValue;
 }
 
 tempo_utils::Status
-lyric_optimizer::LoadLocal::applyOperands(OperandStack &stack)
+lyric_optimizer::LoadValue::applyOperands(ActivationState &state, OperandStack &stack)
 {
     return {};
 }
 
 tempo_utils::Status
-lyric_optimizer::LoadLocal::buildCode(
+lyric_optimizer::LoadValue::buildCode(
     lyric_assembler::CodeFragment *codeFragment,
     lyric_assembler::ProcHandle *procHandle)
 {
-    //return codeFragment->loadData();
-    return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant, "unimplemented");
+    return OptimizerStatus::forCondition(
+        OptimizerCondition::kOptimizerInvariant, "unimplemented");
 }
 
 std::string
-lyric_optimizer::LoadLocal::toString() const
+lyric_optimizer::LoadValue::toString() const
 {
-    auto variable = m_variable.toString();
-    return absl::StrCat("LoadLocal(", variable, ")");
+    auto name = m_instance.getName();
+    return absl::StrCat("LoadValue(", name, ")");
 }
 
-lyric_optimizer::StoreLocal::StoreLocal(const Variable &variable)
-    : m_variable(variable)
+lyric_optimizer::StoreValue::StoreValue(const Instance &instance)
+    : m_instance(instance)
 {
-    TU_ASSERT (m_variable.isValid());
+    TU_ASSERT (m_instance.isValid());
 }
 
 lyric_optimizer::DirectiveType
-lyric_optimizer::StoreLocal::getType() const
+lyric_optimizer::StoreValue::getType() const
 {
-    return DirectiveType::StoreLocal;
+    return DirectiveType::StoreValue;
 }
 
 tempo_utils::Status
-lyric_optimizer::StoreLocal::applyOperands(OperandStack &stack)
+lyric_optimizer::StoreValue::applyOperands(ActivationState &state, OperandStack &stack)
 {
     auto expression = stack.popOperand();
     if (!expression)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-            "missing store expression operand");
-    m_expression.forwardDirective(expression);
+            "missing store operand");
+    TU_RETURN_IF_NOT_OK (m_instance.updateValue(expression));
     return {};
 }
 
 tempo_utils::Status
-lyric_optimizer::StoreLocal::buildCode(
+lyric_optimizer::StoreValue::buildCode(
     lyric_assembler::CodeFragment *codeFragment,
     lyric_assembler::ProcHandle *procHandle)
 {
-    //return codeFragment->storeData();
-    return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant, "unimplemented");
+    return OptimizerStatus::forCondition(
+        OptimizerCondition::kOptimizerInvariant, "unimplemented");
 }
 
 std::string
-lyric_optimizer::StoreLocal::toString() const
+lyric_optimizer::StoreValue::toString() const
 {
-    auto variable = m_variable.toString();
-    auto expression = m_expression.isValid() ? m_expression.resolveDirective()->toString() : "?";
-    return absl::StrCat("[StoreLocal ", variable, ", ", expression, "]");
+    auto instance = m_instance.toString();
+    auto value = m_instance.getValue();
+    auto expression = value ? value->toString() : "?";
+    return absl::StrCat("StoreValue ", instance);
 }

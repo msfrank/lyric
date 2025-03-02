@@ -38,6 +38,8 @@ namespace lyric_optimizer {
 
         bool isValid() const;
 
+        tu_uint32 getId() const;
+
         bool hasLabel() const;
         std::string getLabel() const;
         tempo_utils::Status setLabel(const std::string &labelName);
@@ -46,9 +48,9 @@ namespace lyric_optimizer {
         BranchType getBranchType() const;
         lyric_object::Opcode getTrailer() const;
 
-        tempo_utils::Result<PhiFunction> putPhiFunction(
-            const std::string &name,
-            const std::vector<Instance> &arguments);
+        tempo_utils::Status putPhiFunction(
+             const Instance &target,
+             std::shared_ptr<PhiFunction> phiFunction);
         int numPhiFunctions() const;
 
         tempo_utils::Status appendDirective(std::shared_ptr<AbstractDirective> instruction);
@@ -58,11 +60,6 @@ namespace lyric_optimizer {
         std::shared_ptr<AbstractDirective> getDirective(int index) const;
         int numDirectives() const;
 
-        tempo_utils::Result<Variable> getOrDeclareVariable(const std::string &name = {});
-        tempo_utils::Result<Variable> getOrDeclareVariable(const lyric_assembler::LocalVariable *localVariable);
-        tempo_utils::Result<Variable> resolveVariable(const std::string &name);
-        tempo_utils::Result<Variable> resolveVariable(const lyric_assembler::LocalVariable *localVariable);
-
         bool hasPrevEdge() const;
         bool hasBranchEdge() const;
         bool hasJumpEdge() const;
@@ -70,8 +67,7 @@ namespace lyric_optimizer {
         bool hasNextEdge() const;
 
         BasicBlock getPrevBlock() const;
-        tempo_utils::Status setPrevBlock(const BasicBlock &prevBlock);
-        tempo_utils::Status removePrevBlock();
+        std::vector<BasicBlock> listPredecessorBlocks() const;
 
         BasicBlock getBranchBlock() const;
         tempo_utils::Status setBranchBlock(const BasicBlock &branchBlock, BranchType branch, const std::string &label);

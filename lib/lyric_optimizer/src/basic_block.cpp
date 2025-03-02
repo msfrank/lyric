@@ -58,6 +58,14 @@ lyric_optimizer::BasicBlock::isValid() const
     return m_block != nullptr;
 }
 
+tu_uint32
+lyric_optimizer::BasicBlock::getId() const
+{
+    if (m_block == nullptr)
+        return internal::kCounterMax;
+    return m_block->id;
+}
+
 bool
 lyric_optimizer::BasicBlock::hasLabel() const
 {
@@ -153,24 +161,23 @@ lyric_optimizer::BasicBlock::getTrailer() const
     return m_block->transfer->trailer;
 }
 
-tempo_utils::Result<lyric_optimizer::PhiFunction>
-lyric_optimizer::BasicBlock::putPhiFunction(const std::string &name, const std::vector<Instance> &arguments)
+tempo_utils::Status
+lyric_optimizer::BasicBlock::putPhiFunction(
+    const Instance &target,
+    std::shared_ptr<PhiFunction> phiFunction)
 {
     if (m_block == nullptr)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "invalid basic block");
+    auto name = target.getName();
     auto entry = m_graph->variables.find(name);
-    if (entry == m_graph->variables.cend())
+    if (entry != m_graph->variables.cend())
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-            "missing variable {}", name);
-    Variable variable(entry->second, m_graph);
+            "phi function already defined for {}", name);
 
-    auto phi = std::make_shared<internal::PhiPriv>();
-    TU_ASSIGN_OR_RETURN (phi->target, variable.pushInstance());
-    phi->arguments = arguments;
-    m_block->phis[name] = phi;
+    m_block->phis[name] = phiFunction;
 
-    return PhiFunction(phi);
+    return {};
 }
 
 int
@@ -232,51 +239,6 @@ lyric_optimizer::BasicBlock::numDirectives() const
     if (m_block == nullptr)
         return 0;
     return m_block->directives.size();
-}
-
-tempo_utils::Result<lyric_optimizer::Variable>
-lyric_optimizer::BasicBlock::getOrDeclareVariable(const std::string &name)
-{
-    auto entry = m_graph->variables.find(name);
-    if (entry != m_graph->variables.cend())
-        return Variable(entry->second, m_graph);
-
-    // create the variable
-    auto variable = std::make_shared<internal::VariablePriv>();
-    variable->name = name;
-    variable->declaration = m_block;
-    variable->counter = 0;
-
-    // link the variable to the cfg
-    m_graph->variables[name] = variable;
-
-    // link the declaration to the block
-    m_block->declarations[name] = variable;
-
-    return Variable(variable, m_graph);
-}
-
-tempo_utils::Result<lyric_optimizer::Variable>
-lyric_optimizer::BasicBlock::getOrDeclareVariable(const lyric_assembler::LocalVariable *localVariable)
-{
-    return getOrDeclareVariable(localVariable->getSymbolUrl().toString());
-}
-
-tempo_utils::Result<lyric_optimizer::Variable>
-lyric_optimizer::BasicBlock::resolveVariable(const std::string &name)
-{
-    auto entry = m_graph->variables.find(name);
-    if (entry == m_graph->variables.cend())
-        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-            "missing variable {}", name);
-    Variable variable(entry->second, m_graph);
-    return variable;
-}
-
-tempo_utils::Result<lyric_optimizer::Variable>
-lyric_optimizer::BasicBlock::resolveVariable(const lyric_assembler::LocalVariable *localVariable)
-{
-    return resolveVariable(localVariable->getSymbolUrl().toString());
 }
 
 bool
@@ -341,47 +303,26 @@ lyric_optimizer::BasicBlock::getPrevBlock() const
     return BasicBlock(block, m_graph);
 }
 
-// tempo_utils::Status
-// lyric_optimizer::BasicBlock::setNextBlock(const BasicBlock &nextBlock)
-// {
-//     if (m_block == nullptr)
-//         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-//             "invalid basic block");
-//     if (!nextBlock.isValid())
-//         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-//             "invalid next block");
-//     if (nextBlock.hasPrevEdge())
-//         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-//             "next block is already a successor");
-//     TU_RETURN_IF_NOT_OK (removeReturnBlock());
-//     TU_RETURN_IF_NOT_OK (removeNextBlock());
-//     auto ret = boost::add_edge(m_block->blockVertex, nextBlock.m_block->blockVertex, m_graph->graph);
-//     if (ret.second == false)
-//         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-//             "next edge already exists");
-//     m_block->next = std::make_unique<internal::NextPriv>();
-//     m_block->next->nextEdge = ret.first;
-//     nextBlock.m_block->prev = std::make_unique<internal::PrevPriv>();
-//     nextBlock.m_block->prev->prevEdge = ret.first;
-//     return {};
-// }
-//
-// tempo_utils::Status
-// lyric_optimizer::BasicBlock::removeNextBlock()
-// {
-//     if (m_block == nullptr)
-//         return {};
-//     if (m_block->next == nullptr)
-//         return {};
-//     auto target = boost::target(m_block->next->nextEdge, m_graph->graph);
-//     if (target == m_graph->exit->blockVertex)
-//         return {};
-//     auto nextBlock = m_graph->vertexBlocks.at(target);
-//     nextBlock->prev.reset();
-//     boost::remove_edge(m_block->next->nextEdge, m_graph->graph);
-//     m_block->next.reset();
-//     return {};
-// }
+std::vector<lyric_optimizer::BasicBlock>
+lyric_optimizer::BasicBlock::listPredecessorBlocks() const
+{
+    if (m_block == nullptr)
+        return {};
+
+    auto v = m_block->blockVertex;
+    auto g = m_graph->graph;
+    internal::InEdgeIterator it, end;
+
+    std::vector<BasicBlock> predecessors;
+
+    for (boost::tie(it, end) = boost::in_edges(v, g); it != end; ++it) {
+        internal::Vertex src = source(*it, g);
+        BasicBlock predecessor(m_graph->vertexBlocks[src], m_graph);
+        predecessors.push_back(predecessor);
+    }
+
+    return predecessors;
+}
 
 lyric_optimizer::BasicBlock
 lyric_optimizer::BasicBlock::getBranchBlock() const
