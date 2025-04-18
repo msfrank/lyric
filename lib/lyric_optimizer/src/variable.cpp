@@ -29,6 +29,14 @@ lyric_optimizer::Variable::isValid() const
     return m_variable != nullptr;
 }
 
+std::string
+lyric_optimizer::Variable::getName() const
+{
+    if (m_variable != nullptr)
+        return m_variable->name;
+    return "";
+}
+
 lyric_optimizer::VariableType
 lyric_optimizer::Variable::getType() const
 {
@@ -54,33 +62,35 @@ lyric_optimizer::Variable::getOffset() const
     return m_variable->offset;
 }
 
-tempo_utils::Result<lyric_optimizer::Instance>
-lyric_optimizer::Variable::currentInstance() const
+lyric_optimizer::Instance
+lyric_optimizer::Variable::getInstance(int offset) const
 {
     if (m_variable == nullptr)
-        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-            "invalid variable");
-    if (m_variable->instances.empty())
-        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-            "invalid variable");
-    auto instance = m_variable->instances.back();
+        return {};
+    if (m_variable->instances.size() <= offset)
+        return {};
+    auto instance = m_variable->instances.at(offset);
     return Instance(instance);
 }
 
 tempo_utils::Result<lyric_optimizer::Instance>
-lyric_optimizer::Variable::pushInstance()
+lyric_optimizer::Variable::makeInstance()
 {
     if (m_variable == nullptr)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "invalid variable");
-    if (m_variable->counter == std::numeric_limits<tu_uint32>::max())
-        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-            "exceeded maximum variable instances");
     auto instance = std::make_shared<internal::InstancePriv>();
     instance->variable = m_variable;
-    instance->generation = m_variable->counter++;
-    m_variable->instances.push_back(instance);
+    instance->generation = internal::kCounterMax;
     return Instance(instance);
+}
+
+int
+lyric_optimizer::Variable::numInstances() const
+{
+    if (m_variable == nullptr)
+        return 0;
+    return m_variable->instances.size();
 }
 
 std::string
@@ -89,4 +99,16 @@ lyric_optimizer::Variable::toString() const
     if (m_variable != nullptr)
         return m_variable->name;
     return "???";
+}
+
+bool
+lyric_optimizer::Variable::operator<(const Variable &other) const
+{
+    return getName() < other.getName();
+}
+
+bool
+lyric_optimizer::Variable::operator==(const Variable &other) const
+{
+    return getName() == other.getName();
 }

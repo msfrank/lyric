@@ -10,22 +10,23 @@ namespace lyric_optimizer {
 
     class PhiFunction : public AbstractDirective {
     public:
-        explicit PhiFunction(const std::vector<Instance> &arguments);
+        explicit PhiFunction(const absl::flat_hash_set<Instance> &arguments);
 
         DirectiveType getType() const override;
         bool isExpression() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
         std::string toString() const override;
 
-        std::vector<Instance>::const_iterator argumentsBegin() const;
-        std::vector<Instance>::const_iterator argumentsEnd() const;
+        absl::flat_hash_set<Instance>::const_iterator argumentsBegin() const;
+        absl::flat_hash_set<Instance>::const_iterator argumentsEnd() const;
         int numArguments() const;
 
     private:
-        std::vector<Instance> m_arguments;
+        absl::flat_hash_set<Instance> m_arguments;
 
         friend class BasicBlock;
     };

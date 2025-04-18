@@ -7,6 +7,8 @@
 #include <lyric_optimizer/control_flow_graph.h>
 #include <lyric_optimizer/internal/cfg_data.h>
 #include <lyric_optimizer/optimizer_result.h>
+#include <lyric_optimizer/value.h>
+#include <lyric_optimizer/variable.h>
 #include <tempo_utils/status.h>
 
 lyric_optimizer::ControlFlowGraph::ControlFlowGraph()
@@ -282,10 +284,8 @@ public:
 
         if (!basicBlock->phis.empty()) {
             TU_LOG_INFO << "    phis:";
-            for (const auto &entry : basicBlock->phis) {
-                const auto &target = entry.first;
-                const auto &phiFunction = entry.second;
-                TU_LOG_INFO << "        " << target << " = " << phiFunction->toString();
+            for (const auto &phi : basicBlock->phis) {
+                TU_LOG_INFO << "        " << phi.toString();
             }
         }
 
@@ -296,6 +296,25 @@ public:
                 TU_LOG_INFO << "        " << directive->resolveDirective()->toString();
             } else {
                 TU_LOG_INFO << "        ???";
+            }
+        }
+
+        if (basicBlock->transfer) {
+            auto &transfer = basicBlock->transfer;
+            TU_LOG_INFO << "    transfer: " << lyric_object::opcode_to_name(transfer->trailer);
+            if (transfer->operand) {
+                TU_LOG_INFO << "        operand: " << transfer->operand->toString();
+            }
+        }
+
+        if (basicBlock->next) {
+            auto &next = basicBlock->next;
+            if (m_priv->exit->blockVertex == boost::target(next->nextEdge, g)) {
+                if (next->operand) {
+                    TU_LOG_INFO << "    return: " << next->operand->toString();
+                } else {
+                    TU_LOG_INFO << "    return";
+                }
             }
         }
 

@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "abstract_directive.h"
+#include "value.h"
 
 namespace lyric_optimizer {
 
@@ -23,10 +24,16 @@ namespace lyric_optimizer {
         tu_uint32 getGeneration() const;
 
         bool hasValue() const;
-        std::shared_ptr<AbstractDirective> getValue() const;
-        tempo_utils::Status updateValue(std::shared_ptr<AbstractDirective> value);
+        Value getValue() const;
+        tempo_utils::Status setValue(const Value &value);
+
+        bool isEquivalentTo(const Instance &other) const;
 
         std::string toString() const;
+
+        bool operator<(const Instance &other) const;
+        bool operator==(const Instance &other) const;
+        template <typename H> friend H AbslHashValue(H h, const Instance &instance);
 
     private:
         std::shared_ptr<internal::InstancePriv> m_instance;
@@ -36,6 +43,11 @@ namespace lyric_optimizer {
         friend class ActivationState;
         friend class Variable;
     };
+
+    template <typename H>
+    H AbslHashValue(H h, const Instance &instance) {
+        return H::combine(std::move(h), instance.getName());
+    }
 }
 
 #endif // LYRIC_OPTIMIZER_INSTANCE_H

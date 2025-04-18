@@ -1,8 +1,12 @@
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <lyric_assembler/block_handle.h>
 #include <lyric_runtime/static_loader.h>
 
 #include "base_optimizer_fixture.h"
+
+#include <lyric_optimizer/parse_proc.h>
 
 BaseOptimizerFixture::BaseOptimizerFixture()
 {
@@ -43,4 +47,53 @@ BaseOptimizerFixture::declareFunction(
 {
     auto *rootBlock = m_objectRoot->rootBlock();
     return rootBlock->declareFunction(name, access, templateParameters);
+}
+
+lyric_optimizer::ControlFlowGraph
+BaseOptimizerFixture::parseProc(lyric_assembler::ProcHandle *procHandle)
+{
+    auto *code = procHandle->procCode();
+    auto *root = code->rootFragment();
+
+    TU_LOG_INFO;
+    TU_LOG_INFO << "parsing proc:";
+    for (auto it = root->statementsBegin(); it != root->statementsEnd(); it++) {
+        const auto &instruction = it->instruction;
+        TU_LOG_INFO << "  " << instruction->toString();
+    }
+
+    TU_LOG_INFO;
+    TU_LOG_INFO << "constructed cfg:";
+    lyric_optimizer::ControlFlowGraph cfg;
+    TU_ASSIGN_OR_RAISE (cfg, lyric_optimizer::parse_proc(procHandle));
+    cfg.print();
+
+    TU_LOG_INFO;
+    TU_LOG_INFO << "declared variables:";
+    for (int i = 0; i < cfg.numArguments(); i++) {
+        auto variable = cfg.getArgument(i);
+        TU_LOG_INFO << "  argument " << variable.getName();
+        for (int j = 0; j < variable.numInstances(); j++) {
+            auto instance = variable.getInstance(j);
+            TU_LOG_INFO << "    " << instance.toString();
+        }
+    }
+    for (int i = 0; i < cfg.numLocals(); i++) {
+        auto variable = cfg.getLocal(i);
+        TU_LOG_INFO << "  local " << variable.getName();
+        for (int j = 0; j < variable.numInstances(); j++) {
+            auto instance = variable.getInstance(j);
+            TU_LOG_INFO << "    " << instance.toString();
+        }
+    }
+    for (int i = 0; i < cfg.numLexicals(); i++) {
+        auto variable = cfg.getLexical(i);
+        TU_LOG_INFO << "  lexical " << variable.getName();
+        for (int j = 0; j < variable.numInstances(); j++) {
+            auto instance = variable.getInstance(j);
+            TU_LOG_INFO << "    " << instance.toString();
+        }
+    }
+
+    return cfg;
 }

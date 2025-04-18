@@ -7,6 +7,7 @@
 #include "abstract_directive.h"
 #include "directive_chain.h"
 #include "instance.h"
+#include "value.h"
 #include "variable.h"
 
 namespace lyric_optimizer {
@@ -27,6 +28,7 @@ namespace lyric_optimizer {
     public:
         DirectiveType getType() const override;
         bool isExpression() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
@@ -37,6 +39,7 @@ namespace lyric_optimizer {
     class Nil : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
@@ -47,6 +50,7 @@ namespace lyric_optimizer {
     class Undef : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
@@ -58,6 +62,7 @@ namespace lyric_optimizer {
     public:
         explicit Bool(bool b);
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
@@ -71,6 +76,7 @@ namespace lyric_optimizer {
     public:
         explicit Int(tu_int64 i64);
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
@@ -84,6 +90,7 @@ namespace lyric_optimizer {
     public:
         explicit Float(double dbl);
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
@@ -97,6 +104,7 @@ namespace lyric_optimizer {
     public:
         explicit Char(UChar32 chr);
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
@@ -109,71 +117,77 @@ namespace lyric_optimizer {
     class IntAdd : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
         std::string toString() const override;
     private:
-        DirectiveChain m_lhs;
-        DirectiveChain m_rhs;
+        std::shared_ptr<AbstractDirective> m_lhs;
+        std::shared_ptr<AbstractDirective> m_rhs;
     };
 
     class IntSub : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
         std::string toString() const override;
     private:
-        DirectiveChain m_lhs;
-        DirectiveChain m_rhs;
+        std::shared_ptr<AbstractDirective> m_lhs;
+        std::shared_ptr<AbstractDirective> m_rhs;
     };
 
     class IntMul : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
         std::string toString() const override;
     private:
-        DirectiveChain m_lhs;
-        DirectiveChain m_rhs;
+        std::shared_ptr<AbstractDirective> m_lhs;
+        std::shared_ptr<AbstractDirective> m_rhs;
     };
 
     class IntDiv : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
         std::string toString() const override;
     private:
-        DirectiveChain m_lhs;
-        DirectiveChain m_rhs;
+        std::shared_ptr<AbstractDirective> m_lhs;
+        std::shared_ptr<AbstractDirective> m_rhs;
     };
 
     class IntNeg : public ExpressionDirective {
     public:
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
             lyric_assembler::ProcHandle *procHandle) override;
         std::string toString() const override;
     private:
-        DirectiveChain m_lhs;
+        std::shared_ptr<AbstractDirective> m_lhs;
     };
 
-    class LoadValue : public ExpressionDirective {
+    class UseValue : public ExpressionDirective {
     public:
-        explicit LoadValue(const Instance &instance);
+        explicit UseValue(const Instance &instance);
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
@@ -183,10 +197,11 @@ namespace lyric_optimizer {
         Instance m_instance;
     };
 
-    class StoreValue : public StatementDirective {
+    class DefineValue : public StatementDirective {
     public:
-        explicit StoreValue(const Instance &instance);
+        explicit DefineValue(const Variable &variable);
         DirectiveType getType() const override;
+        bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
         tempo_utils::Status buildCode(
             lyric_assembler::CodeFragment *codeFragment,
@@ -194,6 +209,7 @@ namespace lyric_optimizer {
         std::string toString() const override;
         Instance getInstance();
     private:
+        Variable m_variable;
         Instance m_instance;
     };
 }

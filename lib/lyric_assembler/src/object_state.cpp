@@ -121,8 +121,14 @@ lyric_assembler::ObjectState::load(const lyric_object::LyricObject &object)
             "object state is already initialized");
 
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN (moduleImport, m_localModuleCache->insertModule(m_location, object));
-    auto root = object.getObject();
+
+    // if object is specified then insert it into local cache, otherwise import module from location
+    if (!object.isValid()) {
+        TU_ASSIGN_OR_RETURN (moduleImport, m_localModuleCache->importModule(m_location));
+    } else {
+        TU_ASSIGN_OR_RETURN (moduleImport, m_localModuleCache->insertModule(m_location, object));
+    }
+    auto root = moduleImport->getObject().getObject();
 
     // determine the prelude location from the object
     lyric_common::ModuleLocation preludeLocation;

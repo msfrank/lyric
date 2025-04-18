@@ -9,6 +9,7 @@
 
 #include "instance.h"
 #include "optimizer_directives.h"
+#include "value.h"
 
 namespace lyric_optimizer {
 
@@ -25,11 +26,15 @@ namespace lyric_optimizer {
 
         bool isValid() const;
 
-        tempo_utils::Result<Instance> resolveArgument(lyric_assembler::ArgumentVariable *argumentVariable);
-        tempo_utils::Result<Instance> resolveLocal(lyric_assembler::LocalVariable *localVariable);
-        tempo_utils::Result<Instance> resolveLexical(lyric_assembler::LexicalVariable *lexicalVariable);
+        tempo_utils::Result<Instance> resolveArgument(
+            lyric_assembler::ArgumentVariable *argumentVariable);
+        tempo_utils::Result<Instance> resolveLocal(
+            lyric_assembler::LocalVariable *localVariable);
+        tempo_utils::Result<Instance> resolveLexical(
+            lyric_assembler::LexicalVariable *lexicalVariable);
+        tempo_utils::Result<Instance> resolveVariable(
+            const Variable &variable);
 
-        tempo_utils::Result<Instance> resolveVariable(const Variable &variable);
         tempo_utils::Status mutateVariable(const Variable &variable, const Instance &instance);
 
     private:
@@ -37,10 +42,6 @@ namespace lyric_optimizer {
         std::vector<Instance> m_arguments;
         std::vector<Instance> m_locals;
         std::vector<Instance> m_lexicals;
-
-        Instance mutateArgument(int offset);
-        Instance mutateLocal(int offset);
-        Instance mutateLexical(int offset);
     };
 }
 

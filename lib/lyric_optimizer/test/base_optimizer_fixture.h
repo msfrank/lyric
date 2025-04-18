@@ -5,6 +5,7 @@
 
 #include <lyric_assembler/object_root.h>
 #include <lyric_assembler/object_state.h>
+#include <lyric_optimizer/control_flow_graph.h>
 #include <lyric_optimizer/lyric_optimizer.h>
 #include <lyric_runtime/static_loader.h>
 #include <lyric_test/lyric_tester.h>
@@ -19,6 +20,8 @@ protected:
         const std::string &name,
         lyric_object::AccessType access,
         const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
+
+    lyric_optimizer::ControlFlowGraph parseProc(lyric_assembler::ProcHandle *procHandle);
 
     std::shared_ptr<lyric_runtime::StaticLoader> m_staticLoader;
     lyric_test::TesterOptions m_testerOptions;

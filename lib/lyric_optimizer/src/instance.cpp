@@ -34,7 +34,7 @@ lyric_optimizer::Instance::getName() const
             return absl::StrCat(variable->name, ":", m_instance->generation);
         }
     }
-    return "???";
+    return "";
 }
 
 std::string
@@ -44,7 +44,7 @@ lyric_optimizer::Instance::getVariableName() const
         auto variable = m_instance->variable.lock();
         return variable->name;
     }
-    return "???";
+    return "";
 }
 
 tu_uint32
@@ -60,27 +60,48 @@ lyric_optimizer::Instance::hasValue() const
 {
     if (m_instance == nullptr)
         return false;
-    return !m_instance->values.empty();
+    return m_instance->value.hasValue();
 }
 
-std::shared_ptr<lyric_optimizer::AbstractDirective>
+lyric_optimizer::Value
 lyric_optimizer::Instance::getValue() const
 {
     if (m_instance == nullptr)
         return {};
-    if (m_instance->values.empty())
-        return {};
-    return m_instance->values.front();;
+    return m_instance->value;
 }
 
 tempo_utils::Status
-lyric_optimizer::Instance::updateValue(std::shared_ptr<AbstractDirective> value)
+lyric_optimizer::Instance::setValue(const Value &value)
 {
+    if (!value.hasValue())
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "invalid value for instance");
     if (m_instance == nullptr)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "invalid instance");
-    m_instance->values.push_front(value);
+    if (m_instance->value.hasValue())
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "instance already has a value");
+    auto variable = m_instance->variable.lock();
+    if (variable == nullptr)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "invalid instance");
+    if (variable->counter == internal::kCounterMax)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "exceeded maximum instances for variable {}", variable->name);
+    m_instance->generation = variable->counter++;
+    m_instance->value = value;
+    variable->instances.push_back(m_instance);
     return {};
+}
+
+bool
+lyric_optimizer::Instance::isEquivalentTo(const Instance &other) const
+{
+    auto lhs = getValue();
+    auto rhs = other.getValue();
+    return lhs.isEquivalentTo(rhs);
 }
 
 std::string
@@ -92,12 +113,22 @@ lyric_optimizer::Instance::toString() const
     if (variable == nullptr)
         return "???";
     auto name = variable->name;
-    if (m_instance->values.empty())
+    if (!m_instance->value.hasValue())
         return absl::StrCat(variable->name, ":", m_instance->generation, " = ???");
-    auto value = m_instance->values.front();
     return absl::StrCat(
         variable->name, ":", m_instance->generation,
         " = ",
-        value->toString());
+        m_instance->value.toString());
 }
 
+bool
+lyric_optimizer::Instance::operator<(const Instance &other) const
+{
+    return getName() < other.getName();
+}
+
+bool
+lyric_optimizer::Instance::operator==(const Instance &other) const
+{
+    return getName() == other.getName();
+}

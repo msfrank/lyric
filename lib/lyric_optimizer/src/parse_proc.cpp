@@ -7,13 +7,19 @@
 #include <lyric_optimizer/optimizer_result.h>
 #include <lyric_optimizer/parse_proc.h>
 
+struct ProposedTrailer {
+    std::shared_ptr<lyric_assembler::AbstractInstruction> instruction;
+    lyric_optimizer::BasicBlock targetBlock;
+    std::shared_ptr<lyric_assembler::AbstractInstruction> operand;
+};
+
 struct ProposedBlock {
     std::string labelName;
     lyric_optimizer::BasicBlock basicBlock;
     std::unique_ptr<lyric_optimizer::ActivationState> entryState;
     std::unique_ptr<lyric_optimizer::ActivationState> exitState;
     std::vector<std::shared_ptr<lyric_assembler::AbstractInstruction>> instructions;
-    std::shared_ptr<lyric_assembler::AbstractInstruction> trailer;
+    std::unique_ptr<ProposedTrailer> trailer;
 };
 
 static tempo_utils::Status
@@ -47,7 +53,8 @@ scan_for_basic_blocks(
             case lyric_assembler::InstructionType::Return: {
 
                 // set branch/jump/return as the trailer
-                currProposed->trailer = instruction;
+                currProposed->trailer = std::make_unique<ProposedTrailer>();
+                currProposed->trailer->instruction = instruction;
 
                 // if this is not the last instruction then create the next block
                 if (i < numStatements - 1) {
@@ -179,34 +186,30 @@ apply_control_flow(
 
         // if block is not empty then add edges based on the type of the last instruction
         if (currProposed->trailer != nullptr) {
-            auto trailer = currProposed->trailer;
-            switch (trailer->getType()) {
+            auto &trailer = currProposed->trailer;
+            auto &instruction = trailer->instruction;
+            switch (instruction->getType()) {
                 case lyric_assembler::InstructionType::Branch: {
-                    auto branchInstruction = std::static_pointer_cast<lyric_assembler::BranchInstruction>(trailer);
+                    auto branchInstruction = std::static_pointer_cast<lyric_assembler::BranchInstruction>(instruction);
                     auto targetId = branchInstruction->getTargetId();
                     auto labelName = code->getLabelForTarget(targetId);
-                    auto &currBlock = currProposed->basicBlock;
-                    auto &targetBlock = labelBlocks.at(labelName);
-                    TU_RETURN_IF_NOT_OK (currBlock.setBranchBlock(
-                        targetBlock, opcode_to_branch_type(branchInstruction->getOpcode()), labelName));
-                    // set prevProposed so that we add edge to the next block or the exit block
+                    trailer->targetBlock = labelBlocks.at(labelName);
                     prevProposed = currProposed.get();
                     break;
                 }
 
                 case lyric_assembler::InstructionType::Jump: {
-                    auto jumpInstruction = std::static_pointer_cast<lyric_assembler::JumpInstruction>(trailer);
+                    auto jumpInstruction = std::static_pointer_cast<lyric_assembler::JumpInstruction>(instruction);
                     auto targetId = jumpInstruction->getTargetId();
                     auto labelName = code->getLabelForTarget(targetId);
-                    auto &currBlock = currProposed->basicBlock;
-                    auto &targetBlock = labelBlocks.at(labelName);
-                    TU_RETURN_IF_NOT_OK (currBlock.setJumpBlock(targetBlock, labelName));
+                    trailer->targetBlock = labelBlocks.at(labelName);
                     break;
                 }
 
                 case lyric_assembler::InstructionType::Return: {
-                    auto &currBlock = currProposed->basicBlock;
-                    currBlock.setReturnBlock();
+                    trailer->targetBlock = cfg.getExitBlock();
+                    //auto &currBlock = currProposed->basicBlock;
+                    // currBlock.setReturnBlock();
                     break;
                 }
 
@@ -318,12 +321,11 @@ translate_instruction(
                     return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
                         "invalid load target {}", symbol->getSymbolUrl().toString());
             }
-            return std::static_pointer_cast<AbstractDirective>(std::make_shared<LoadValue>(instance));
+            return std::static_pointer_cast<AbstractDirective>(std::make_shared<UseValue>(instance));
         }
         case InstructionType::StoreData: {
             auto storeData = std::static_pointer_cast<StoreDataInstruction>(instruction);
             auto *symbol = storeData->getSymbol();
-            auto &state = proposedBlock->exitState;
             Variable variable;
             switch (symbol->getSymbolType()) {
                 case SymbolType::ARGUMENT: {
@@ -343,9 +345,8 @@ translate_instruction(
                         "invalid store target {}", symbol->getSymbolUrl().toString());
             }
             Instance instance;
-            TU_ASSIGN_OR_RETURN (instance, variable.pushInstance());
-            TU_RETURN_IF_NOT_OK (state->mutateVariable(variable, instance));
-            return std::static_pointer_cast<AbstractDirective>(std::make_shared<StoreValue>(instance));
+            TU_ASSIGN_OR_RETURN (instance, variable.makeInstance());
+            return std::static_pointer_cast<AbstractDirective>(std::make_shared<DefineValue>(variable));
         }
 
         default:
@@ -354,7 +355,7 @@ translate_instruction(
     }
 }
 
-static tempo_utils::Status
+tempo_utils::Status
 flush_operand_stack(
     std::unique_ptr<ProposedBlock> &proposedBlock,
     lyric_optimizer::OperandStack &stack,
@@ -379,6 +380,41 @@ flush_operand_stack(
     return {};
 }
 
+tempo_utils::Status
+translate_block_trailer(
+    std::unique_ptr<ProposedBlock> &proposedBlock,
+    lyric_optimizer::OperandStack &stack,
+    lyric_optimizer::ControlFlowGraph &cfg)
+{
+    auto &trailer = proposedBlock->trailer;
+    auto &instruction = trailer->instruction;
+    auto currBlock = proposedBlock->basicBlock;
+
+    switch (instruction->getType()) {
+        case lyric_assembler::InstructionType::Jump: {
+            auto jump = std::static_pointer_cast<lyric_assembler::JumpInstruction>(instruction);
+            TU_RETURN_IF_NOT_OK (currBlock.setJumpBlock(trailer->targetBlock));
+            return {};
+        }
+        case lyric_assembler::InstructionType::Branch: {
+            auto branch = std::static_pointer_cast<lyric_assembler::BranchInstruction>(instruction);
+            auto branchType = opcode_to_branch_type(branch->getOpcode());
+            auto operand = stack.popOperand();
+            TU_RETURN_IF_NOT_OK (currBlock.setBranchBlock(trailer->targetBlock, branchType, operand));
+            return {};
+        }
+        case lyric_assembler::InstructionType::Return: {
+            auto ret = std::static_pointer_cast<lyric_assembler::ReturnInstruction>(instruction);
+            auto operand = stack.popOperand();
+            TU_RETURN_IF_NOT_OK (currBlock.setReturnBlock(operand));
+            return {};
+        }
+        default:
+            return lyric_optimizer::OptimizerStatus::forCondition(
+                lyric_optimizer::OptimizerCondition::kOptimizerInvariant, "invalid trailer");
+    }
+}
+
 static tempo_utils::Status
 translate_block_instructions(
     const lyric_assembler::ProcBuilder *code,
@@ -386,8 +422,8 @@ translate_block_instructions(
     lyric_optimizer::ControlFlowGraph &cfg)
 {
     for (auto &currProposed : proposedBlocks) {
-
         lyric_optimizer::OperandStack stack;
+
         for (const auto &instruction : currProposed->instructions) {
             std::shared_ptr<lyric_optimizer::AbstractDirective> directive;
             TU_ASSIGN_OR_RETURN (directive, translate_instruction(currProposed, instruction, cfg));
@@ -398,6 +434,11 @@ translate_block_instructions(
                 TU_RETURN_IF_NOT_OK (flush_operand_stack(currProposed, stack, directive));
             }
         }
+
+        if (currProposed->trailer) {
+            TU_RETURN_IF_NOT_OK (translate_block_trailer(currProposed, stack, cfg));
+        }
+
         TU_RETURN_IF_NOT_OK (flush_operand_stack(currProposed, stack));
     }
 
@@ -435,37 +476,129 @@ link_activation_states(
     };
 
     for (auto &currProposed : proposedBlocks) {
-        auto basicBlock = currProposed->basicBlock;
+        auto &basicBlock = currProposed->basicBlock;
 
         auto predecessorBlocks = basicBlock.listPredecessorBlocks();
         if (predecessorBlocks.empty())
             continue;
 
         for (const auto &variable : variables) {
-            absl::btree_set<lyric_optimizer::Instance,InstanceLess> exitStateInstances;
+            absl::flat_hash_set<lyric_optimizer::Instance> exitStateInstances;
 
             for (const auto &predecessor : predecessorBlocks) {
                 auto *exitState = exitStates.at(predecessor.getId());
-                lyric_optimizer::Instance instance;
-                TU_ASSIGN_OR_RETURN (instance, exitState->resolveVariable(variable));
-                exitStateInstances.insert(instance);
+                lyric_optimizer::Instance exitInstance;
+                TU_ASSIGN_OR_RETURN (exitInstance, exitState->resolveVariable(variable));
+                exitStateInstances.insert(exitInstance);
             }
 
+            /* 4 cases:
+             *   1. entry instance has no value
+             *
+             */
             auto &entryState = currProposed->entryState;
             lyric_optimizer::Instance entryInstance;
             TU_ASSIGN_OR_RETURN (entryInstance, entryState->resolveVariable(variable));
+            //auto entryValue = entryInstance.getValue();
 
             if (exitStateInstances.size() == 1) {
                 auto exitInstance = *exitStateInstances.cbegin();
-                TU_RETURN_IF_NOT_OK (entryInstance.updateValue(exitInstance.getValue()));
+                auto exitValue = exitInstance.getValue();
+                if (entryInstance.hasValue()) {
+                    auto entryValue = entryInstance.getValue();
+                    TU_RETURN_IF_NOT_OK (entryValue.updateValue(exitValue));
+                } else {
+                    entryInstance.setValue(exitValue);
+                }
             } else {
-                std::vector arguments(exitStateInstances.cbegin(), exitStateInstances.cend());
-                auto phiFunction = std::make_shared<lyric_optimizer::PhiFunction>(arguments);
-                TU_RETURN_IF_NOT_OK (entryInstance.updateValue(phiFunction));
-                TU_RETURN_IF_NOT_OK (basicBlock.putPhiFunction(entryInstance, phiFunction));
+                auto phiFunction = std::make_shared<lyric_optimizer::PhiFunction>(exitStateInstances);
+                if (entryInstance.hasValue()) {
+                    auto entryValue = entryInstance.getValue();
+                    TU_RETURN_IF_NOT_OK (entryValue.updateValue(phiFunction));
+                } else {
+                    entryInstance.setValue(lyric_optimizer::Value(phiFunction));
+                }
+                TU_RETURN_IF_NOT_OK (basicBlock.putPhiFunction(entryInstance));
             }
         }
     }
+
+    return {};
+}
+
+static tempo_utils::Status
+minimize_phi_functions(
+    std::vector<std::unique_ptr<ProposedBlock>> &proposedBlocks,
+    lyric_optimizer::ControlFlowGraph &cfg)
+{
+    struct PhiState {
+        lyric_optimizer::BasicBlock basicBlock;
+        lyric_optimizer::Instance instance;
+        lyric_optimizer::Value value;
+    };
+    std::list<PhiState> phiStates;
+
+    // build the full set of phi functions
+    for (auto &currProposed : proposedBlocks) {
+        auto basicBlock = currProposed->basicBlock;
+        for (auto it = basicBlock.phiFunctionsBegin(); it != basicBlock.phiFunctionsEnd(); it++) {
+            PhiState phiState{basicBlock, *it, it->getValue()};
+            phiStates.push_front(std::move(phiState));
+        }
+    }
+
+    bool progress;
+    int numRounds = 0;
+    do {
+        std::forward_list<PhiState> phiReplacements;
+        progress = false;
+        numRounds++;
+        for (auto it = phiStates.begin(); it != phiStates.end(); it++) {
+            auto &phiState = *it;
+
+            // if ssa value is empty or not a phi function then mark it for removal
+            auto value = phiState.value.getValue();
+            if (value == nullptr || value->getType() != lyric_optimizer::DirectiveType::PhiFunction) {
+                phiReplacements.emplace_front(phiState.basicBlock, phiState.instance, lyric_optimizer::Value{});
+                phiStates.erase(it);
+                progress = true;
+                continue;
+            }
+
+            // extract and deduplicate the phi arguments
+            auto phiFunction = std::static_pointer_cast<lyric_optimizer::PhiFunction>(value);
+            absl::flat_hash_set<lyric_optimizer::Instance> arguments(
+                phiFunction->argumentsBegin(), phiFunction->argumentsEnd());
+            auto numArguments = arguments.size();
+
+            if (numArguments == 1) {
+                // case 1: functions of the form v2 =φ(v1,v1,...,v1) are forwarded to v1
+                auto arg0 = arguments.cbegin()->getValue();
+                phiReplacements.emplace_front(phiState.basicBlock, phiState.instance, arg0);
+                phiReplacements.push_front(phiState);
+                progress = true;
+            } else if (numArguments == 2 && arguments.contains(phiState.instance)) {
+                // case 2: functions of the form v2 = φ(v1,v2,...,v2) are forwarded to v1
+                arguments.erase(phiState.instance);
+                auto arg0 = arguments.cbegin()->getValue();
+                phiReplacements.emplace_front(phiState.basicBlock, phiState.instance, arg0);
+                phiReplacements.push_front(phiState);
+                progress = true;
+            }
+        }
+
+        // replace or remove functions identified by the previous round
+        for (auto &replacement : phiReplacements) {
+            if (replacement.value.hasValue()) {
+                TU_RETURN_IF_NOT_OK (replacement.basicBlock.putPhiFunction(replacement.instance));
+            } else {
+                TU_RETURN_IF_NOT_OK (replacement.basicBlock.removePhiFunction(replacement.instance));
+            }
+        }
+
+    } while (progress);
+
+    TU_LOG_INFO << "minimized CFG to " << (int) phiStates.size() << " phis after " << numRounds << " rounds";
 
     return {};
 }
@@ -488,6 +621,7 @@ lyric_optimizer::parse_proc(const lyric_assembler::ProcHandle *procHandle)
     TU_RETURN_IF_NOT_OK (apply_control_flow(code, proposedBlocks, labelBlocks, cfg));
     TU_RETURN_IF_NOT_OK (translate_block_instructions(code, proposedBlocks, cfg));
     TU_RETURN_IF_NOT_OK (link_activation_states(proposedBlocks, cfg));
+    TU_RETURN_IF_NOT_OK (minimize_phi_functions(proposedBlocks, cfg));
 
     return cfg;
 }

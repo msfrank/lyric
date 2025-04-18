@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
 
 #include <lyric_object/object_types.h>
 
@@ -12,6 +13,7 @@
 #include "../directive_chain.h"
 #include "../instance.h"
 #include "../phi_function.h"
+#include "../value.h"
 #include "../variable.h"
 
 namespace lyric_optimizer::internal {
@@ -22,17 +24,23 @@ namespace lyric_optimizer::internal {
 
     constexpr tu_uint32 kCounterMax = 0xFFFFFFFF;
 
-    struct TransferPriv {
-        Edge transferEdge;
-        lyric_object::Opcode trailer = lyric_object::Opcode::OP_UNKNOWN;
-    };
-
     struct PrevPriv {
         Edge prevEdge;
     };
 
     struct NextPriv {
         Edge nextEdge;
+        std::shared_ptr<AbstractDirective> operand;
+    };
+
+    struct TransferPriv {
+        Edge transferEdge;
+        lyric_object::Opcode trailer = lyric_object::Opcode::OP_UNKNOWN;
+        std::shared_ptr<AbstractDirective> operand;
+    };
+
+    struct ValuePriv {
+        std::forward_list<std::shared_ptr<AbstractDirective>> values;
     };
 
     struct VariablePriv {
@@ -46,18 +54,18 @@ namespace lyric_optimizer::internal {
     struct InstancePriv {
         std::weak_ptr<VariablePriv> variable;
         tu_uint32 generation;
-        std::forward_list<std::shared_ptr<AbstractDirective>> values;
+        Value value;
     };
 
     struct BasicBlockPriv {
         tu_uint32 id;
         Vertex blockVertex;
         std::string name;
-        absl::flat_hash_map<std::string,std::shared_ptr<PhiFunction>> phis;
+        absl::flat_hash_set<Instance> phis;
         std::vector<std::shared_ptr<DirectiveChain>> directives;
-        std::unique_ptr<TransferPriv> transfer;
         std::unique_ptr<PrevPriv> prev;
         std::unique_ptr<NextPriv> next;
+        std::unique_ptr<TransferPriv> transfer;
     };
 
     struct GraphPriv {

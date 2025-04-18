@@ -5,8 +5,8 @@ include(GoogleTest)
 # define unit tests
 
 set(TEST_CASES
-    build_ssa_tests.cpp
-    control_flow_graph_tests.cpp
+    build_proc_tests.cpp
+    parse_proc_tests.cpp
     )
 
 # define test suite driver

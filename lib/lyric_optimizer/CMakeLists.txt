@@ -11,7 +11,6 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_optimizer/activation_state.h
     include/lyric_optimizer/basic_block.h
     include/lyric_optimizer/build_proc.h
-    include/lyric_optimizer/build_ssa.h
     include/lyric_optimizer/control_flow_graph.h
     include/lyric_optimizer/directive_chain.h
     include/lyric_optimizer/operand_stack.h
@@ -20,6 +19,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_optimizer/optimizer_result.h
     include/lyric_optimizer/parse_proc.h
     include/lyric_optimizer/phi_function.h
+    include/lyric_optimizer/value.h
     include/lyric_optimizer/variable.h
     )
 set_target_properties(lyric_optimizer PROPERTIES PUBLIC_HEADER "${LYRIC_COMPILER_INCLUDES}")
@@ -28,7 +28,6 @@ target_sources(lyric_optimizer PRIVATE
     src/activation_state.cpp
     src/basic_block.cpp
     src/build_proc.cpp
-    src/build_ssa.cpp
     src/control_flow_graph.cpp
     src/directive_chain.cpp
     src/instance.cpp
@@ -38,6 +37,7 @@ target_sources(lyric_optimizer PRIVATE
     src/optimizer_result.cpp
     src/parse_proc.cpp
     src/phi_function.cpp
+    src/value.cpp
     src/variable.cpp
 
     include/lyric_optimizer/internal/cfg_types.h

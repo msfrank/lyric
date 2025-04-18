@@ -25,8 +25,8 @@ namespace lyric_optimizer {
         IntMul,
         IntDiv,
         IntNeg,
-        LoadValue,
-        StoreValue,
+        UseValue,
+        DefineValue,
         PhiFunction,
     };
 
@@ -37,6 +37,8 @@ namespace lyric_optimizer {
         virtual DirectiveType getType() const = 0;
 
         virtual bool isExpression() const = 0;
+
+        virtual bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const = 0;
 
         virtual tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) = 0;
 

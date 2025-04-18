@@ -8,6 +8,7 @@
 
 #include "abstract_directive.h"
 #include "phi_function.h"
+#include "value.h"
 #include "variable.h"
 
 namespace lyric_optimizer {
@@ -45,12 +46,12 @@ namespace lyric_optimizer {
         tempo_utils::Status setLabel(const std::string &labelName);
         tempo_utils::Status removeLabel();
 
-        BranchType getBranchType() const;
         lyric_object::Opcode getTrailer() const;
 
-        tempo_utils::Status putPhiFunction(
-             const Instance &target,
-             std::shared_ptr<PhiFunction> phiFunction);
+        tempo_utils::Status putPhiFunction(const Instance &instance);
+        tempo_utils::Status removePhiFunction(const Instance &instance);
+        absl::flat_hash_set<Instance>::const_iterator phiFunctionsBegin() const;
+        absl::flat_hash_set<Instance>::const_iterator phiFunctionsEnd() const;
         int numPhiFunctions() const;
 
         tempo_utils::Status appendDirective(std::shared_ptr<AbstractDirective> instruction);
@@ -68,18 +69,25 @@ namespace lyric_optimizer {
 
         BasicBlock getPrevBlock() const;
         std::vector<BasicBlock> listPredecessorBlocks() const;
+        std::vector<BasicBlock> listSuccessorBlocks() const;
 
         BasicBlock getBranchBlock() const;
-        tempo_utils::Status setBranchBlock(const BasicBlock &branchBlock, BranchType branch, const std::string &label);
+        tempo_utils::Status setBranchBlock(
+            const BasicBlock &branchBlock,
+            BranchType branch,
+            std::shared_ptr<AbstractDirective> operand);
         tempo_utils::Status removeBranchBlock();
+        BranchType getBranchType() const;
+        std::shared_ptr<AbstractDirective> getBranchOperand() const;
 
         BasicBlock getJumpBlock() const;
-        tempo_utils::Status setJumpBlock(const BasicBlock &jumpBlock, const std::string &label);
+        tempo_utils::Status setJumpBlock(const BasicBlock &jumpBlock);
         tempo_utils::Status removeJumpBlock();
 
         BasicBlock getReturnBlock() const;
-        tempo_utils::Status setReturnBlock();
+        tempo_utils::Status setReturnBlock(std::shared_ptr<AbstractDirective> operand);
         tempo_utils::Status removeReturnBlock();
+        std::shared_ptr<AbstractDirective> getReturnOperand() const;
 
         BasicBlock getNextBlock() const;
         tempo_utils::Status setNextBlock(const BasicBlock &nextBlock);

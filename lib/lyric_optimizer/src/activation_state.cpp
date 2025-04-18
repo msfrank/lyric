@@ -12,19 +12,23 @@ lyric_optimizer::ActivationState::ActivationState(std::weak_ptr<internal::GraphP
     auto g = m_graph.lock();
     TU_ASSERT (g != nullptr);
 
-    m_arguments.resize(g->arguments.size());
-    for (int i = 0; i < g->arguments.size(); i++) {
-        mutateArgument(i);
+    for (auto &priv : g->arguments) {
+        Variable argument(priv, g);
+        Instance instance;
+        TU_ASSIGN_OR_RAISE (instance, argument.makeInstance());
+        m_arguments.push_back(instance);
     }
-
-    m_locals.resize(g->locals.size());
-    for (int i = 0; i < g->locals.size(); i++) {
-        mutateLocal(i);
+    for (auto &priv : g->locals) {
+        Variable local(priv, g);
+        Instance instance;
+        TU_ASSIGN_OR_RAISE (instance, local.makeInstance());
+        m_locals.push_back(instance);
     }
-
-    m_lexicals.resize(g->lexicals.size());
-    for (int i = 0; i < g->lexicals.size(); i++) {
-        mutateLexical(i);
+    for (auto &priv : g->lexicals) {
+        Variable lexical(priv, g);
+        Instance instance;
+        TU_ASSIGN_OR_RAISE (instance, lexical.makeInstance());
+        m_lexicals.push_back(instance);
     }
 }
 
@@ -50,8 +54,8 @@ lyric_optimizer::ActivationState::resolveArgument(lyric_assembler::ArgumentVaria
     if (m_arguments.size() <= offset)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "missing argument {}", argumentVariable->getSymbolUrl().toString());
-    auto &argument = m_arguments.at(offset);
-    return argument;
+    auto &instance = m_arguments.at(offset);
+    return instance;
 }
 
 tempo_utils::Result<lyric_optimizer::Instance>
@@ -62,8 +66,8 @@ lyric_optimizer::ActivationState::resolveLocal(lyric_assembler::LocalVariable *l
     if (m_locals.size() <= offset)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "missing local {}", localVariable->getSymbolUrl().toString());
-    auto &local = m_locals.at(offset);
-    return local;
+    auto &instance = m_locals.at(offset);
+    return instance;
 }
 
 tempo_utils::Result<lyric_optimizer::Instance>
@@ -74,8 +78,8 @@ lyric_optimizer::ActivationState::resolveLexical(lyric_assembler::LexicalVariabl
     if (m_lexicals.size() <= offset)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "missing lexical {}", lexicalVariable->getSymbolUrl().toString());
-    auto lexical = m_lexicals.at(offset);
-    return lexical;
+    auto instance = m_lexicals.at(offset);
+    return instance;
 }
 
 tempo_utils::Result<lyric_optimizer::Instance>
@@ -137,58 +141,4 @@ lyric_optimizer::ActivationState::mutateVariable(const Variable &variable, const
             return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
                 "invalid variable {}", variable.toString());
     }
-}
-
-lyric_optimizer::Instance
-lyric_optimizer::ActivationState::mutateArgument(int offset)
-{
-    auto graph = m_graph.lock();
-    if (graph->arguments.size() <= offset)
-        return {};
-    auto variable = graph->arguments.at(offset);
-
-    auto priv = std::make_shared<internal::InstancePriv>();
-    priv->variable = variable;
-    priv->generation = variable->counter++;
-    variable->instances.push_back(priv);
-
-    Instance instance(priv);
-    m_arguments[offset] = instance;
-    return instance;
-}
-
-lyric_optimizer::Instance
-lyric_optimizer::ActivationState::mutateLocal(int offset)
-{
-    auto graph = m_graph.lock();
-    if (graph->locals.size() <= offset)
-        return {};
-    auto variable = graph->locals.at(offset);
-
-    auto priv = std::make_shared<internal::InstancePriv>();
-    priv->variable = variable;
-    priv->generation = variable->counter++;
-    variable->instances.push_back(priv);
-
-    Instance instance(priv);
-    m_locals[offset] = instance;
-    return instance;
-}
-
-lyric_optimizer::Instance
-lyric_optimizer::ActivationState::mutateLexical(int offset)
-{
-    auto graph = m_graph.lock();
-    if (graph->lexicals.size() <= offset)
-        return {};
-    auto variable = graph->lexicals.at(offset);
-
-    auto priv = std::make_shared<internal::InstancePriv>();
-    priv->variable = variable;
-    priv->generation = variable->counter++;
-    variable->instances.push_back(priv);
-
-    Instance instance(priv);
-    m_lexicals[offset] = instance;
-    return instance;
 }

@@ -29,13 +29,19 @@ namespace lyric_optimizer {
 
         bool isValid() const;
 
+        std::string getName() const;
         VariableType getType() const;
         int getOffset() const;
 
-        tempo_utils::Result<Instance> currentInstance() const;
-        tempo_utils::Result<Instance> pushInstance();
+        Instance getInstance(int offset) const;
+        tempo_utils::Result<Instance> makeInstance();
+        int numInstances() const;
 
         std::string toString() const;
+
+        bool operator<(const Variable &other) const;
+        bool operator==(const Variable &other) const;
+        template <typename H> friend H AbslHashValue(H h, const Variable &instance);
 
     private:
         std::shared_ptr<internal::VariablePriv> m_variable;
@@ -45,9 +51,15 @@ namespace lyric_optimizer {
             std::shared_ptr<internal::VariablePriv> variable,
             std::shared_ptr<internal::GraphPriv> graph);
 
+        friend class ActivationState;
         friend class BasicBlock;
         friend class ControlFlowGraph;
     };
+
+    template <typename H>
+    H AbslHashValue(H h, const Variable &variable) {
+        return H::combine(std::move(h), variable.getName());
+    }
 }
 
 #endif // LYRIC_OPTIMIZER_VARIABLE_H

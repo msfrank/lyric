@@ -1,5 +1,11 @@
 
+// NOTE: this must come before topological_sort.hpp!
+#include <boost/graph/vector_as_graph.hpp>
+
+#include <boost/graph/topological_sort.hpp>
+
 #include <lyric_optimizer/build_proc.h>
+#include <lyric_optimizer/internal/cfg_types.h>
 
 tempo_utils::Result<lyric_optimizer::BasicBlock>
 find_leader_block(lyric_optimizer::BasicBlock block)
@@ -46,6 +52,102 @@ write_branch(lyric_optimizer::BranchType branch, lyric_assembler::CodeFragment *
     }
 }
 
+static int
+get_vertex_index(
+    const lyric_optimizer::Instance &instance,
+    absl::flat_hash_map<lyric_optimizer::Instance,int> &instancesMap)
+{
+    int vertexIndex;
+    auto entry = instancesMap.find(instance);
+    if (entry != instancesMap.cend())
+        return entry->second;
+
+    vertexIndex = instancesMap.size();
+    instancesMap[instance] = vertexIndex;
+    return vertexIndex;
+}
+
+static void
+add_instance_dependency(
+    int sourceIndex,
+    int targetIndex,
+    std::vector<std::list<int>> &dependencies)
+{
+    auto requiredSize = std::max(sourceIndex, targetIndex) + 1;
+    if (dependencies.size() <= sourceIndex) {
+        dependencies.resize(requiredSize);
+    }
+    auto &targets = dependencies.at(sourceIndex);
+    targets.push_back(targetIndex);
+}
+
+tempo_utils::Status
+apply_phi_functions(
+    const lyric_optimizer::BasicBlock &basicBlock,
+    lyric_assembler::ProcHandle *procHandle)
+{
+    auto successors = basicBlock.listSuccessorBlocks();
+
+    std::queue<lyric_optimizer::Instance> phisFound;
+
+    // find the phi functions in each successor block
+    for (const auto &successor : successors) {
+        for (auto it = successor.phiFunctionsBegin(); it != successor.phiFunctionsEnd(); it++) {
+            phisFound.push(*it);
+        }
+    }
+
+    std::vector<std::list<int>> dependencies;
+    absl::flat_hash_map<lyric_optimizer::Instance,int> instancesMap;
+
+    // recursively inspect the arguments of each phi function and build a dependency graph
+    while (!phisFound.empty()) {
+        auto instance = phisFound.front();
+        phisFound.pop();
+
+        int targetIndex = get_vertex_index(instance, instancesMap);
+
+        auto value = instance.getValue();
+        if (!value.hasValue())
+            continue;
+
+        auto directive = value.getValue();
+        if (directive->getType() != lyric_optimizer::DirectiveType::PhiFunction)
+            continue;
+        auto phiFunction = std::static_pointer_cast<lyric_optimizer::PhiFunction>(directive);
+
+        for (auto it = phiFunction->argumentsBegin(); it != phiFunction->argumentsEnd(); it++) {
+            const auto &argument = *it;
+            int sourceIndex = get_vertex_index(argument, instancesMap);
+            add_instance_dependency(sourceIndex, targetIndex, dependencies);
+            auto argumentValue = argument.getValue();
+            auto argumentDirective = argumentValue.getValue();
+            if (argumentDirective->getType() == lyric_optimizer::DirectiveType::PhiFunction) {
+                phisFound.push(argument);
+            }
+        }
+    }
+
+    // order the instances based on phi function dependencies
+    std::deque<int> topologicalOrder;
+    boost::topological_sort(dependencies, std::front_inserter(topologicalOrder),
+        boost::vertex_index_map(boost::identity_property_map()));
+
+    // create vector containing instances ordered by target index
+    std::vector<lyric_optimizer::Instance> instances(dependencies.size());
+    for (const auto &entry : instancesMap) {
+        instances[entry.second] = entry.first;
+    }
+
+    // apply each phi function in order
+    for (auto index : topologicalOrder) {
+        auto &instance = instances.at(index);
+        TU_LOG_INFO << "apply phi " << instance.toString();
+    }
+
+    return {};
+}
+
 tempo_utils::Status
 lyric_optimizer::build_proc(const ControlFlowGraph &cfg, lyric_assembler::ProcHandle *procHandle)
 {
@@ -80,6 +182,9 @@ lyric_optimizer::build_proc(const ControlFlowGraph &cfg, lyric_assembler::ProcHa
                 auto directive = currBlock.getDirective(i);
                 TU_RETURN_IF_NOT_OK (directive->buildCode(codeFragment, procHandle));
             }
+
+            // apply phi functions from successor blocks
+            TU_RETURN_IF_NOT_OK (apply_phi_functions(currBlock, procHandle));
 
             // if block has a transfer edge then get the transfer target and block
             lyric_assembler::JumpTarget transferTarget;

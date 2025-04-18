@@ -118,39 +118,6 @@ lyric_optimizer::BasicBlock::removeLabel()
     return {};
 }
 
-lyric_optimizer::BranchType
-lyric_optimizer::BasicBlock::getBranchType() const
-{
-    if (m_block == nullptr)
-        return {};
-    if (m_block->transfer == nullptr)
-        return BranchType::Invalid;
-    switch (m_block->transfer->trailer) {
-        case lyric_object::Opcode::OP_IF_NIL:
-            return BranchType::IfNil;
-        case lyric_object::Opcode::OP_IF_NOTNIL:
-            return BranchType::IfNotNil;
-        case lyric_object::Opcode::OP_IF_TRUE:
-            return BranchType::IfTrue;
-        case lyric_object::Opcode::OP_IF_FALSE:
-            return BranchType::IfFalse;
-        case lyric_object::Opcode::OP_IF_ZERO:
-            return BranchType::IfZero;
-        case lyric_object::Opcode::OP_IF_NOTZERO:
-            return BranchType::IfNotZero;
-        case lyric_object::Opcode::OP_IF_GT:
-            return BranchType::IfGreaterThan;
-        case lyric_object::Opcode::OP_IF_GE:
-            return BranchType::IfGreaterOrEqual;
-        case lyric_object::Opcode::OP_IF_LT:
-            return BranchType::IfLessThan;
-        case lyric_object::Opcode::OP_IF_LE:
-            return BranchType::IfLessOrEqual;
-        default:
-            return BranchType::Invalid;
-    }
-}
-
 lyric_object::Opcode
 lyric_optimizer::BasicBlock::getTrailer() const
 {
@@ -162,22 +129,39 @@ lyric_optimizer::BasicBlock::getTrailer() const
 }
 
 tempo_utils::Status
-lyric_optimizer::BasicBlock::putPhiFunction(
-    const Instance &target,
-    std::shared_ptr<PhiFunction> phiFunction)
+lyric_optimizer::BasicBlock::putPhiFunction(const Instance &instance)
 {
     if (m_block == nullptr)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "invalid basic block");
-    auto name = target.getName();
-    auto entry = m_graph->variables.find(name);
-    if (entry != m_graph->variables.cend())
+    if (m_block->phis.contains(instance))
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-            "phi function already defined for {}", name);
-
-    m_block->phis[name] = phiFunction;
-
+            "phi already exists");
+    m_block->phis.insert(instance);
     return {};
+}
+
+tempo_utils::Status
+lyric_optimizer::BasicBlock::removePhiFunction(const Instance &instance)
+{
+    auto entry = m_block->phis.find(instance);
+    if (entry == m_block->phis.cend())
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "phi does not exist");
+    m_block->phis.erase(entry);
+    return {};
+}
+
+absl::flat_hash_set<lyric_optimizer::Instance>::const_iterator
+lyric_optimizer::BasicBlock::phiFunctionsBegin() const
+{
+    return m_block->phis.cbegin();
+}
+
+absl::flat_hash_set<lyric_optimizer::Instance>::const_iterator
+lyric_optimizer::BasicBlock::phiFunctionsEnd() const
+{
+    return m_block->phis.cend();
 }
 
 int
@@ -324,6 +308,27 @@ lyric_optimizer::BasicBlock::listPredecessorBlocks() const
     return predecessors;
 }
 
+std::vector<lyric_optimizer::BasicBlock>
+lyric_optimizer::BasicBlock::listSuccessorBlocks() const
+{
+    if (m_block == nullptr)
+        return {};
+
+    auto v = m_block->blockVertex;
+    auto g = m_graph->graph;
+    internal::OutEdgeIterator it, end;
+
+    std::vector<BasicBlock> successors;
+
+    for (boost::tie(it, end) = boost::out_edges(v, g); it != end; ++it) {
+        internal::Vertex tgt = boost::target(*it, g);
+        BasicBlock successor(m_graph->vertexBlocks[tgt], m_graph);
+        successors.push_back(successor);
+    }
+
+    return successors;
+}
+
 lyric_optimizer::BasicBlock
 lyric_optimizer::BasicBlock::getBranchBlock() const
 {
@@ -342,7 +347,7 @@ tempo_utils::Status
 lyric_optimizer::BasicBlock::setBranchBlock(
     const BasicBlock &branchBlock,
     BranchType branch,
-    const std::string &label)
+    std::shared_ptr<AbstractDirective> operand)
 {
     if (m_block == nullptr)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
@@ -350,6 +355,13 @@ lyric_optimizer::BasicBlock::setBranchBlock(
     if (!branchBlock.isValid())
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "invalid branch block");
+    auto label = branchBlock.getLabel();
+    if (label.empty())
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "branch block is missing label");
+    if (operand == nullptr)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "invalid branch operand");
     lyric_object::Opcode trailer;
     TU_ASSIGN_OR_RETURN (trailer, branch_type_to_opcode(branch));
     TU_RETURN_IF_NOT_OK (removeBranchBlock());
@@ -364,6 +376,7 @@ lyric_optimizer::BasicBlock::setBranchBlock(
     m_block->transfer = std::make_unique<internal::TransferPriv>();
     m_block->transfer->transferEdge = ret.first;
     m_block->transfer->trailer = trailer;
+    m_block->transfer->operand = operand;
     return {};
 }
 
@@ -381,6 +394,49 @@ lyric_optimizer::BasicBlock::removeBranchBlock()
     return {};
 }
 
+lyric_optimizer::BranchType
+lyric_optimizer::BasicBlock::getBranchType() const
+{
+    if (m_block == nullptr)
+        return BranchType::Invalid;
+    if (m_block->transfer == nullptr)
+        return BranchType::Invalid;
+    switch (m_block->transfer->trailer) {
+        case lyric_object::Opcode::OP_IF_NIL:
+            return BranchType::IfNil;
+        case lyric_object::Opcode::OP_IF_NOTNIL:
+            return BranchType::IfNotNil;
+        case lyric_object::Opcode::OP_IF_TRUE:
+            return BranchType::IfTrue;
+        case lyric_object::Opcode::OP_IF_FALSE:
+            return BranchType::IfFalse;
+        case lyric_object::Opcode::OP_IF_ZERO:
+            return BranchType::IfZero;
+        case lyric_object::Opcode::OP_IF_NOTZERO:
+            return BranchType::IfNotZero;
+        case lyric_object::Opcode::OP_IF_GT:
+            return BranchType::IfGreaterThan;
+        case lyric_object::Opcode::OP_IF_GE:
+            return BranchType::IfGreaterOrEqual;
+        case lyric_object::Opcode::OP_IF_LT:
+            return BranchType::IfLessThan;
+        case lyric_object::Opcode::OP_IF_LE:
+            return BranchType::IfLessOrEqual;
+        default:
+            return BranchType::Invalid;
+    }
+}
+
+std::shared_ptr<lyric_optimizer::AbstractDirective>
+lyric_optimizer::BasicBlock::getBranchOperand() const
+{
+    if (m_block == nullptr)
+        return {};
+    if (m_block->transfer == nullptr)
+        return {};
+    return m_block->transfer->operand;
+}
+
 lyric_optimizer::BasicBlock
 lyric_optimizer::BasicBlock::getJumpBlock() const
 {
@@ -396,7 +452,7 @@ lyric_optimizer::BasicBlock::getJumpBlock() const
 }
 
 tempo_utils::Status
-lyric_optimizer::BasicBlock::setJumpBlock(const BasicBlock &jumpBlock, const std::string &label)
+lyric_optimizer::BasicBlock::setJumpBlock(const BasicBlock &jumpBlock)
 {
     if (m_block == nullptr)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
@@ -404,6 +460,10 @@ lyric_optimizer::BasicBlock::setJumpBlock(const BasicBlock &jumpBlock, const std
     if (!jumpBlock.isValid())
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "invalid jump block");
+    auto label = jumpBlock.getLabel();
+    if (label.empty())
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "jump block is missing label");
     TU_RETURN_IF_NOT_OK (removeBranchBlock());
     TU_RETURN_IF_NOT_OK (removeJumpBlock());
 
@@ -447,19 +507,23 @@ lyric_optimizer::BasicBlock::getReturnBlock() const
 }
 
 tempo_utils::Status
-lyric_optimizer::BasicBlock::setReturnBlock()
+lyric_optimizer::BasicBlock::setReturnBlock(std::shared_ptr<AbstractDirective> operand)
 {
     if (m_block == nullptr)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
             "invalid basic block");
+    if (operand == nullptr)
+        return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
+            "invalid return operand");
     TU_RETURN_IF_NOT_OK (removeReturnBlock());
     TU_RETURN_IF_NOT_OK (removeNextBlock());
     auto ret = boost::add_edge(m_block->blockVertex, m_graph->exit->blockVertex, m_graph->graph);
     if (ret.second == false)
         return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant,
-            "next edge already exists");
+            "return edge already exists");
     m_block->next = std::make_unique<internal::NextPriv>();
     m_block->next->nextEdge = ret.first;
+    m_block->next->operand = operand;
     return {};
 }
 
@@ -476,6 +540,16 @@ lyric_optimizer::BasicBlock::removeReturnBlock()
     boost::remove_edge(m_block->next->nextEdge, m_graph->graph);
     m_block->next.reset();
     return {};
+}
+
+std::shared_ptr<lyric_optimizer::AbstractDirective>
+lyric_optimizer::BasicBlock::getReturnOperand() const
+{
+    if (m_block == nullptr)
+        return {};
+    if (m_block->next == nullptr)
+        return {};
+    return m_block->next->operand;
 }
 
 lyric_optimizer::BasicBlock

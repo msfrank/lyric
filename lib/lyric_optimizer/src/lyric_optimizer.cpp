@@ -35,7 +35,7 @@ lyric_optimizer::LyricOptimizer::initialize()
 {
     if (m_objectState->objectRoot() != nullptr)
         return {};
-    TU_RETURN_IF_STATUS (m_objectState->defineRoot());
+    TU_RETURN_IF_NOT_OK (m_objectState->load());
     return {};
 }
 

@@ -80,7 +80,7 @@ namespace lyric_assembler {
         tempo_tracing::ScopeManager *scopeManager() const;
         const ObjectStateOptions *getOptions() const;
 
-        tempo_utils::Status load(const lyric_object::LyricObject &object);
+        tempo_utils::Status load(const lyric_object::LyricObject &object = {});
 
         tempo_utils::Result<ObjectRoot *> defineRoot();
 
