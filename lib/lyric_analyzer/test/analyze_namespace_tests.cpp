@@ -24,7 +24,7 @@ TEST(AnalyzeNamespace, DeclareNamespace)
 
     auto analyzeModuleResult = tester.analyzeModule(R"(
         namespace Foo {
-            1
+            global val FortyTwo: Int = 42
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
@@ -37,7 +37,7 @@ TEST(AnalyzeNamespace, DeclareNamespace)
     ASSERT_EQ (2, root.numNamespaces());
 
     auto ns1 = root.getNamespace(1);
-    ASSERT_TRUE (ns1.isDeclOnly());
+    ASSERT_FALSE (ns1.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), ns1.getSymbolPath());
     ASSERT_EQ (lyric_object::AccessType::Public, ns1.getAccess());
     ASSERT_EQ (0, ns1.numSymbols());

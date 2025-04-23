@@ -122,7 +122,7 @@ build_core_BoolInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addInstanceCtor(BoolInstance, {}, code);
-        state.setInstanceAllocator(BoolInstance, lyric_bootstrap::internal::BootstrapTrap::SINGLETON_ALLOC);
+        state.setInstanceAllocator(BoolInstance, "SingletonAlloc");
     }
 
     return BoolInstance;

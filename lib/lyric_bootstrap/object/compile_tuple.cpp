@@ -89,7 +89,7 @@ build_core_TupleNInstance(
         lyric_object::BytecodeBuilder code;
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addInstanceCtor(TupleInstance, {}, code);
-        state.setInstanceAllocator(TupleInstance, lyric_bootstrap::internal::BootstrapTrap::SINGLETON_ALLOC);
+        state.setInstanceAllocator(TupleInstance, "SingletonAlloc");
     }
 
     return TupleInstance;

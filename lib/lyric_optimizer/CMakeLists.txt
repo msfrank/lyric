@@ -3,7 +3,8 @@
 set(CMAKE_AUTOMOC OFF)
 
 # build lyric_optimizer as a shared library
-add_library(lyric_optimizer SHARED)
+add_library(lyric_optimizer SHARED
+    include/lyric_optimizer/abstract_analysis.h)
 add_library(lyric::lyric_optimizer ALIAS lyric_optimizer)
 
 set(LYRIC_COMPILER_INCLUDES
@@ -12,6 +13,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_optimizer/basic_block.h
     include/lyric_optimizer/build_proc.h
     include/lyric_optimizer/control_flow_graph.h
+    include/lyric_optimizer/data_flow_analysis.h
     include/lyric_optimizer/directive_chain.h
     include/lyric_optimizer/operand_stack.h
     include/lyric_optimizer/lyric_optimizer.h
@@ -29,6 +31,7 @@ target_sources(lyric_optimizer PRIVATE
     src/basic_block.cpp
     src/build_proc.cpp
     src/control_flow_graph.cpp
+    src/data_flow_analysis.cpp
     src/directive_chain.cpp
     src/instance.cpp
     src/lyric_optimizer.cpp

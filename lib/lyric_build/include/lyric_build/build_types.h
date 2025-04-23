@@ -75,7 +75,12 @@ namespace lyric_build {
 
         template <typename H>
         friend H AbslHashValue(H h, const TaskKey &taskKey) {
-            return H::combine(std::move(h), taskKey.m_domain, taskKey.m_id, taskKey.m_params.toString());
+            std::vector<std::pair<std::string,tempo_config::ConfigNode>> nodes(
+                taskKey.m_params.mapBegin(), taskKey.m_params.mapEnd());
+            std::sort(nodes.begin(), nodes.end(), [](auto &a, auto &b) -> bool {
+                return a.first < b.first;
+            });
+            return H::combine(std::move(h), taskKey.m_domain, taskKey.m_id, taskKey.m_params);
         }
 
     private:

@@ -18,7 +18,8 @@ TEST_F(CallsiteReifierTP0Out, NullaryFunctionGivenT_IntCallsiteTypeArgument_retu
     auto *typeCache = m_objectState->typeCache();
 
     lyric_common::SymbolUrl entryUrl(lyric_common::SymbolPath({"$entry"}));
-    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, m_objectState.get());
+    lyric_assembler::BlockHandle rootBlock(m_objectState.get());
+    auto proc = std::make_unique<lyric_assembler::ProcHandle>(entryUrl, &rootBlock, m_objectState.get());
 
     lyric_object::TemplateParameter tp;
     tp.index = 0;

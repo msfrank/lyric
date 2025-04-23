@@ -1,6 +1,8 @@
 #include <tempo_utils/file_writer.h>
 #include <tempo_utils/log_stream.h>
 
+#include <lyric_runtime/trap_index.h>
+
 #include "builder_state.h"
 #include "compile_any.h"
 #include "compile_arithmetic.h"
@@ -45,6 +47,7 @@
 #include "compile_url.h"
 #include "compile_varargs.h"
 #include "compile_status.h"
+#include "lyric_runtime/library_plugin.h"
 
 #define NUM_FUNCTION_CLASSES        8
 #define NUM_TUPLE_CLASSES           8
@@ -57,9 +60,13 @@ main(int argc, char *argv[])
         return -1;
     std::filesystem::path destinationPath(argv[1]);
 
-    absl::flat_hash_map<std::string,std::string> pluginsMap;
+    auto preludeLib = std::make_shared<tempo_utils::LibraryLoader>(PRELUDE_PLUGIN_PATH, "native_init");
+    auto native_init = (lyric_runtime::NativeInitFunc) preludeLib->symbolPointer();
+    auto preludePlugin = std::make_shared<lyric_runtime::LibraryPlugin>(preludeLib, native_init());
+    auto trapIndex = std::make_shared<lyric_runtime::TrapIndex>(preludePlugin);
+    TU_RAISE_IF_NOT_OK (trapIndex->initialize());
 
-    BuilderState state(pluginsMap);
+    BuilderState state(trapIndex);
 
     // define the Any type, which is the top of the type hierarchy
     auto *AnyExistential = build_core_Any(state);

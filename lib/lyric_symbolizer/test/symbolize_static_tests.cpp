@@ -22,7 +22,7 @@ TEST(SymbolizeStatic, DeclareStaticVal)
     ASSERT_TRUE (tester.configure().isOk());
 
     auto symbolizeModuleResult = tester.symbolizeModule(R"(
-        val Static: Int = 0
+        global val Static: Int = 0
     )");
     ASSERT_THAT (symbolizeModuleResult,
         tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
@@ -30,11 +30,10 @@ TEST(SymbolizeStatic, DeclareStaticVal)
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
     auto root = object.getObject();
+    ASSERT_EQ (3, root.numSymbols());
     ASSERT_EQ (1, root.numImports());
-    ASSERT_EQ (2, root.numSymbols());
 
-    auto symbol1 = root.getSymbol(1);
-    ASSERT_EQ (lyric_common::SymbolPath::fromString("Static"), symbol1.getSymbolPath());
+    auto symbol1 = root.findSymbol(lyric_common::SymbolPath::fromString("Static"));
     ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Static);
     ASSERT_EQ (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
 }
@@ -52,7 +51,7 @@ TEST(SymbolizeStatic, DeclareStaticVar)
     ASSERT_TRUE (tester.configure().isOk());
 
     auto symbolizeModuleResult = tester.symbolizeModule(R"(
-        var Static: Int = 0
+        global var Static: Int = 0
     )");
     ASSERT_THAT (symbolizeModuleResult,
                  tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
@@ -60,11 +59,10 @@ TEST(SymbolizeStatic, DeclareStaticVar)
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
     auto root = object.getObject();
+    ASSERT_EQ (3, root.numSymbols());
     ASSERT_EQ (1, root.numImports());
-    ASSERT_EQ (2, root.numSymbols());
 
-    auto symbol1 = root.getSymbol(1);
-    ASSERT_EQ (lyric_common::SymbolPath::fromString("Static"), symbol1.getSymbolPath());
+    auto symbol1 = root.findSymbol(lyric_common::SymbolPath::fromString("Static"));
     ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Static);
     ASSERT_EQ (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
 }

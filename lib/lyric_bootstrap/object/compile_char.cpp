@@ -165,7 +165,7 @@ build_core_CharInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addInstanceCtor(CharInstance, {}, code);
-        state.setInstanceAllocator(CharInstance, lyric_bootstrap::internal::BootstrapTrap::SINGLETON_ALLOC);
+        state.setInstanceAllocator(CharInstance, "SingletonAlloc");
     }
 
     return CharInstance;

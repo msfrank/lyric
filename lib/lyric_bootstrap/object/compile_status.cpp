@@ -42,9 +42,9 @@ build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *
         // load the message argument and store it in member
         code.loadArgument(1);
         code.storeField(MessageField->field_index);
-        code.trap(static_cast<tu_uint32>(lyric_bootstrap::internal::BootstrapTrap::STATUS_CTOR));
+        state.writeTrap(code, "StatusCtor");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
-        state.setStructAllocator(StatusStruct, lyric_bootstrap::internal::BootstrapTrap::STATUS_ALLOC);
+        state.setStructAllocator(StatusStruct, "StatusAlloc");
         state.addStructCtor(StatusStruct,
             {
                 make_list_param("code", IntType),

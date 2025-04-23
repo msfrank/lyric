@@ -12,7 +12,7 @@ build_core_Pair(BuilderState &state, const CoreStruct *RecordStruct, const CoreT
 
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::PAIR_CTOR));
+        state.writeTrap(code, "PairCtor");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructCtor(PairStruct,
             {
@@ -20,11 +20,11 @@ build_core_Pair(BuilderState &state, const CoreStruct *RecordStruct, const CoreT
                 make_named_param("second", DataType),
             },
             code);
-        state.setStructAllocator(PairStruct, lyric_bootstrap::internal::BootstrapTrap::PAIR_ALLOC);
+        state.setStructAllocator(PairStruct, "PairAlloc");
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::PAIR_FIRST));
+        state.writeTrap(code, "PairFirst");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("first",
             PairStruct,
@@ -35,7 +35,7 @@ build_core_Pair(BuilderState &state, const CoreStruct *RecordStruct, const CoreT
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::PAIR_SECOND));
+        state.writeTrap(code, "PairSecond");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("second",
             PairStruct,

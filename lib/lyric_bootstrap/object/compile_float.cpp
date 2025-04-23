@@ -19,19 +19,19 @@ build_core_Float(BuilderState &state, const CoreExistential *FloatExistential)
 
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::FLOAT_CEIL)));
+        state.writeTrap(code, "FloatCeil");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Ceil", FloatExistential, {}, {}, code, FloatType);
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::FLOAT_FLOOR)));
+        state.writeTrap(code, "FloatFloor");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Floor", FloatExistential, {}, {}, code, FloatType);
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::FLOAT_TRUNC)));
+        state.writeTrap(code, "FloatTrunc");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Trunc", FloatExistential, {}, {}, code, FloatType);
     }
@@ -262,7 +262,7 @@ build_core_FloatInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addInstanceCtor(FloatInstance, {}, code);
-        state.setInstanceAllocator(FloatInstance, lyric_bootstrap::internal::BootstrapTrap::SINGLETON_ALLOC);
+        state.setInstanceAllocator(FloatInstance, "SingletonAlloc");
     }
 
     return FloatInstance;

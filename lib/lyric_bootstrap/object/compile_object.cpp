@@ -44,6 +44,6 @@ build_core_Object(BuilderState &state, const CoreClass *ObjectClass)
         lyric_object::BytecodeBuilder code;
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addClassCtor(ObjectClass, {}, code);
-        state.setClassAllocator(ObjectClass, lyric_bootstrap::internal::BootstrapTrap::OBJECT_ALLOC);
+        state.setClassAllocator(ObjectClass, "ObjectAlloc");
     }
 }

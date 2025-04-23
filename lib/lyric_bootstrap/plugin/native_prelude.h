@@ -11,8 +11,8 @@ public:
     NativeCore() = default;
     bool load(lyric_runtime::BytecodeSegment *segment) const override;
     void unload(lyric_runtime::BytecodeSegment *segment) const override;
-    lyric_runtime::NativeFunc getTrap(uint32_t index) const override;
-    uint32_t numTraps() const override;
+    const lyric_runtime::NativeTrap *getTrap(tu_uint32 index) const override;
+    tu_uint32 numTraps() const override;
 };
 
 #if defined(BOOST_OS_LINUX) || defined(BOOST_OS_MACOS)

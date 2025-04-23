@@ -239,7 +239,7 @@ build_core_IntInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addInstanceCtor(IntInstance, {}, code);
-        state.setInstanceAllocator(IntInstance, lyric_bootstrap::internal::BootstrapTrap::SINGLETON_ALLOC);
+        state.setInstanceAllocator(IntInstance, "SingletonAlloc");
     }
 
     return IntInstance;

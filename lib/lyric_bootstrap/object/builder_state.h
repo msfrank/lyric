@@ -12,6 +12,9 @@
 #include <lyric_object/bytecode_builder.h>
 #include <tempo_utils/option_template.h>
 
+#include "lyric_runtime/abstract_heap.h"
+#include "lyric_runtime/trap_index.h"
+
 struct CoreCall;
 struct CoreConcept;
 struct CoreTemplate;
@@ -230,7 +233,9 @@ struct BuilderState {
 
     const absl::flat_hash_map<std::string,std::string> plugins;
 
-    explicit BuilderState(const absl::flat_hash_map<std::string,std::string> &plugins);
+    std::shared_ptr<const lyric_runtime::TrapIndex> trapIndex;
+
+    explicit BuilderState(std::shared_ptr<const lyric_runtime::TrapIndex> trapIndex);
 
     /*
      * type definitions
@@ -248,6 +253,9 @@ struct BuilderState {
         const lyric_common::SymbolPath &templatePath,
         const std::vector<CorePlaceholder> &placeholders,
         const std::vector<CoreConstraint> &constraints = {});
+
+    void writeTrap(lyric_object::BytecodeBuilder &code, std::string_view trapName, tu_uint8 flags = 0);
+
     /*
      *
      */
@@ -322,7 +330,7 @@ struct BuilderState {
         const CoreTemplate *classTemplate,
         lyo1::ClassFlags classFlags,
         const CoreClass *superClass = nullptr);
-    void setClassAllocator(const CoreClass *receiver, lyric_bootstrap::internal::BootstrapTrap allocatorTrap);
+    void setClassAllocator(const CoreClass *receiver, std::string_view trapName);
     CoreCall *addClassCtor(
         const CoreClass *receiver,
         const std::vector<CoreParam> &parameters,
@@ -350,7 +358,7 @@ struct BuilderState {
         const lyric_common::SymbolPath &classPath,
         lyo1::StructFlags structFlags,
         const CoreStruct *superStruct = nullptr);
-    void setStructAllocator(const CoreStruct *receiver, lyric_bootstrap::internal::BootstrapTrap allocatorTrap);
+    void setStructAllocator(const CoreStruct *receiver, std::string_view trapName);
     CoreCall *addStructCtor(
         const CoreStruct *receiver,
         const std::vector<CoreParam> &parameters,
@@ -378,7 +386,7 @@ struct BuilderState {
         const lyric_common::SymbolPath &instancePath,
         lyo1::InstanceFlags instanceFlags,
         const CoreInstance *superInstance = nullptr);
-    void setInstanceAllocator(const CoreInstance *receiver, lyric_bootstrap::internal::BootstrapTrap allocatorTrap);
+    void setInstanceAllocator(const CoreInstance *receiver, std::string_view trapName);
     CoreCall *addInstanceCtor(
         const CoreInstance *receiver,
         const std::vector<CoreParam> &parameters,
@@ -421,7 +429,7 @@ struct BuilderState {
         const lyric_common::SymbolPath &enumPath,
         lyo1::EnumFlags enumFlags,
         const CoreEnum *superEnum = nullptr);
-    void setEnumAllocator(const CoreEnum *receiver, lyric_bootstrap::internal::BootstrapTrap allocatorTrap);
+    void setEnumAllocator(const CoreEnum *receiver, std::string_view trapName);
     CoreCall *addEnumCtor(
         const CoreEnum *receiver,
         const std::vector<CoreParam> &parameters,

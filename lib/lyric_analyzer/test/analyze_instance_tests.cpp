@@ -62,7 +62,7 @@ TEST(AnalyzeInstance, DeclareInstanceMemberVal)
 
     auto analyzeModuleResult = tester.analyzeModule(R"(
         definstance Foo {
-            val answer: Int
+            val answer: Int = 42
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
@@ -102,7 +102,7 @@ TEST(AnalyzeInstance, DeclareInstanceMemberVar)
 
     auto analyzeModuleResult = tester.analyzeModule(R"(
         definstance Foo {
-            var answer: Int
+            var answer: Int = 42
         }
     )");
     ASSERT_THAT (analyzeModuleResult,

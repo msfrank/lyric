@@ -104,11 +104,18 @@ add_executable(prelude-builder
 
 target_include_directories(prelude-builder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+target_compile_definitions(prelude-builder PRIVATE
+    "PRELUDE_PLUGIN_PATH=\"${PRELUDE_PLUGIN_PATH}\""
+    )
+
 target_link_libraries(prelude-builder PRIVATE
     lyric::lyric_runtime
     tempo::tempo_utils
     flatbuffers::flatbuffers
     )
+
+#
+add_dependencies(prelude-builder prelude-plugin)
 
 # build prelude object file
 add_custom_command (
@@ -116,7 +123,7 @@ add_custom_command (
     COMMAND prelude-builder ${PRELUDE_OBJECT_PATH}
     COMMENT "generating ${PRELUDE_OBJECT_NAME}"
     DEPENDS prelude-builder
-)
+    )
 add_custom_target(prelude-object DEPENDS ${PRELUDE_OBJECT_PATH})
 
 # build prelude plugin as a shared library

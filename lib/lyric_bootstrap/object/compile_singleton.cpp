@@ -44,6 +44,6 @@ build_core_Singleton(BuilderState &state, const CoreInstance *SingletonInstance)
         lyric_object::BytecodeBuilder code;
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addInstanceCtor(SingletonInstance, {}, code);
-        state.setInstanceAllocator(SingletonInstance, lyric_bootstrap::internal::BootstrapTrap::SINGLETON_ALLOC);
+        state.setInstanceAllocator(SingletonInstance, "SingletonAlloc");
     }
 }

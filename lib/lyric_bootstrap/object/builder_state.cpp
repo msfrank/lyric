@@ -117,9 +117,10 @@ CoreParam make_rest_param(const CoreType *type)
     return {{}, lyric_object::PlacementType::Rest, type, nullptr, false, false};
 }
 
-BuilderState::BuilderState(const absl::flat_hash_map<std::string,std::string> &plugins)
-    : plugins(plugins)
+BuilderState::BuilderState(std::shared_ptr<const lyric_runtime::TrapIndex> trapIndex)
+    : trapIndex(std::move(trapIndex))
 {
+    TU_ASSERT (this->trapIndex != nullptr);
 }
 
 CoreType *
@@ -199,6 +200,15 @@ BuilderState::addTemplate(
 
     templates.push_back(Template);
     return Template;
+}
+
+void
+BuilderState::writeTrap(lyric_object::BytecodeBuilder &code, std::string_view trapName, tu_uint8 flags)
+{
+    auto trapNumber = trapIndex->lookupTrap(trapName);
+    TU_ASSERT (trapNumber != lyric_runtime::INVALID_ADDRESS_U32);
+    auto status = code.trap(trapNumber, flags);
+    TU_RAISE_IF_NOT_OK (status);
 }
 
 CoreExistential *
@@ -633,14 +643,16 @@ BuilderState::addGenericClass(
 }
 
 void
-BuilderState::setClassAllocator(const CoreClass *receiver, lyric_bootstrap::internal::BootstrapTrap allocatorTrap)
+BuilderState::setClassAllocator(const CoreClass *receiver, std::string_view trapName)
 {
     TU_ASSERT (receiver != nullptr);
     TU_ASSERT (classcache.contains(receiver->classPath));
 
     auto *ReceiverClass = classcache[receiver->classPath];
     TU_ASSERT (ReceiverClass->allocatorTrap == lyric_object::INVALID_ADDRESS_U32);
-    ReceiverClass->allocatorTrap = static_cast<tu_uint32>(allocatorTrap);
+    auto trapNumber = trapIndex->lookupTrap(trapName);
+    TU_ASSERT (trapNumber != lyric_runtime::INVALID_ADDRESS_U32);
+    ReceiverClass->allocatorTrap = trapNumber;
 }
 
 CoreCall *
@@ -824,14 +836,16 @@ BuilderState::addStruct(
 }
 
 void
-BuilderState::setStructAllocator(const CoreStruct *receiver, lyric_bootstrap::internal::BootstrapTrap allocatorTrap)
+BuilderState::setStructAllocator(const CoreStruct *receiver, std::string_view trapName)
 {
     TU_ASSERT (receiver != nullptr);
     TU_ASSERT (structcache.contains(receiver->structPath));
 
     auto *ReceiverStruct = structcache[receiver->structPath];
     TU_ASSERT (ReceiverStruct->allocatorTrap == lyric_object::INVALID_ADDRESS_U32);
-    ReceiverStruct->allocatorTrap = static_cast<tu_uint32>(allocatorTrap);
+    auto trapNumber = trapIndex->lookupTrap(trapName);
+    TU_ASSERT (trapNumber != lyric_runtime::INVALID_ADDRESS_U32);
+    ReceiverStruct->allocatorTrap = trapNumber;
 }
 
 CoreCall *
@@ -1014,14 +1028,16 @@ BuilderState::addInstance(
 }
 
 void
-BuilderState::setInstanceAllocator(const CoreInstance *receiver, lyric_bootstrap::internal::BootstrapTrap allocatorTrap)
+BuilderState::setInstanceAllocator(const CoreInstance *receiver, std::string_view trapName)
 {
     TU_ASSERT (receiver != nullptr);
     TU_ASSERT (instancecache.contains(receiver->instancePath));
 
     auto *ReceiverInstance = instancecache[receiver->instancePath];
     TU_ASSERT (ReceiverInstance->allocatorTrap == lyric_object::INVALID_ADDRESS_U32);
-    ReceiverInstance->allocatorTrap = static_cast<tu_uint32>(allocatorTrap);
+    auto trapNumber = trapIndex->lookupTrap(trapName);
+    TU_ASSERT (trapNumber != lyric_runtime::INVALID_ADDRESS_U32);
+    ReceiverInstance->allocatorTrap = trapNumber;
 }
 
 CoreCall *
@@ -1336,14 +1352,16 @@ BuilderState::addEnum(
 }
 
 void
-BuilderState::setEnumAllocator(const CoreEnum *receiver, lyric_bootstrap::internal::BootstrapTrap allocatorTrap)
+BuilderState::setEnumAllocator(const CoreEnum *receiver, std::string_view trapName)
 {
     TU_ASSERT (receiver != nullptr);
     TU_ASSERT (enumcache.contains(receiver->enumPath));
 
     auto *ReceiverEnum = enumcache[receiver->enumPath];
     TU_ASSERT (ReceiverEnum->allocatorTrap == lyric_object::INVALID_ADDRESS_U32);
-    ReceiverEnum->allocatorTrap = static_cast<tu_uint32>(allocatorTrap);
+    auto trapNumber = trapIndex->lookupTrap(trapName);
+    TU_ASSERT (trapNumber != lyric_runtime::INVALID_ADDRESS_U32);
+    ReceiverEnum->allocatorTrap = trapNumber;
 }
 
 CoreCall *

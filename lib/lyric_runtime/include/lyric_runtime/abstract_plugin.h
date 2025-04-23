@@ -14,7 +14,7 @@ namespace lyric_runtime {
 
         virtual void unload(BytecodeSegment *segment) const = 0;
 
-        virtual NativeFunc getTrap(tu_uint32 index) const = 0;
+        virtual const NativeTrap *getTrap(tu_uint32 index) const = 0;
 
         virtual tu_uint32 numTraps() const = 0;
     };

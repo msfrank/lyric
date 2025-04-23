@@ -9,8 +9,7 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-TEST(SymbolizeNamespace, DeclareNamespace)
-{
+TEST(SymbolizeNamespace, DeclareNamespace) {
     lyric_test::TesterOptions testerOptions;
     testerOptions.buildConfig = tempo_config::ConfigMap{
         {"global", tempo_config::ConfigMap{
@@ -23,7 +22,7 @@ TEST(SymbolizeNamespace, DeclareNamespace)
 
     auto symbolizeModuleResult = tester.symbolizeModule(R"(
         namespace Namespace {
-            1
+            global val FortyTwo: Int = 42
         }
     )");
     ASSERT_THAT (symbolizeModuleResult,
@@ -32,11 +31,12 @@ TEST(SymbolizeNamespace, DeclareNamespace)
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
     auto root = object.getObject();
+    ASSERT_EQ (3, root.numSymbols());
     ASSERT_EQ (1, root.numImports());
-    ASSERT_EQ (1, root.numSymbols());
 
-    auto symbol1 = root.getSymbol(0);
-    ASSERT_EQ (lyric_common::SymbolPath::fromString("Namespace"), symbol1.getSymbolPath());
+    TU_LOG_INFO << object.dumpJson();
+
+    auto symbol1 = root.findSymbol(lyric_common::SymbolPath::fromString("Namespace"));
     ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Namespace);
-    ASSERT_EQ (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
+    ASSERT_NE (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
 }

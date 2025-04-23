@@ -21,18 +21,18 @@ build_core_Seq(
 
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_CTOR));
+        state.writeTrap(code, "SeqCtor");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructCtor(SeqStruct,
             {
                 make_rest_param(DataType),
             },
             code);
-        state.setStructAllocator(SeqStruct, lyric_bootstrap::internal::BootstrapTrap::SEQ_ALLOC);
+        state.setStructAllocator(SeqStruct, "SeqAlloc");
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_SIZE));
+        state.writeTrap(code, "SeqSize");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Size",
             SeqStruct,
@@ -43,7 +43,7 @@ build_core_Seq(
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_GET));
+        state.writeTrap(code, "SeqGet");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("GetOrElse",
             SeqStruct,
@@ -57,7 +57,7 @@ build_core_Seq(
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_APPEND));
+        state.writeTrap(code, "SeqAppend");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Append",
             SeqStruct,
@@ -71,7 +71,7 @@ build_core_Seq(
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_EXTEND));
+        state.writeTrap(code, "SeqExtend");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Extend",
             SeqStruct,
@@ -84,7 +84,7 @@ build_core_Seq(
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_SLICE));
+        state.writeTrap(code, "SeqSlice");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Slice",
             SeqStruct,
@@ -102,7 +102,7 @@ build_core_Seq(
     {
         lyric_object::BytecodeBuilder code;
         code.loadClass(SeqIteratorClass->class_index);
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATE));
+        state.writeTrap(code, "SeqIterate");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addImplExtension("Iterate", IterableImpl, {}, code, DataIteratorType);
     }
@@ -129,20 +129,20 @@ build_core_SeqIterator(
         state.addClassCtor(SeqIteratorClass,
             {},
             code);
-        state.setClassAllocator(SeqIteratorClass, lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_ALLOC);
+        state.setClassAllocator(SeqIteratorClass, "SeqIteratorAlloc");
     }
 
     auto *IteratorImpl = state.addImpl(classPath, DataIteratorType, IteratorConcept);
 
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_VALID));
+        state.writeTrap(code, "SeqIteratorValid");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addImplExtension("Valid", IteratorImpl, {}, code, BoolType);
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_NEXT));
+        state.writeTrap(code, "SeqIteratorNext");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addImplExtension("Next", IteratorImpl, {}, code, DataType);
     }

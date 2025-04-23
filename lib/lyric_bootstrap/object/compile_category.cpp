@@ -46,6 +46,6 @@ build_core_Category(BuilderState &state, const CoreEnum *CategoryEnum)
         lyric_object::BytecodeBuilder code;
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addEnumCtor(CategoryEnum, {}, code);
-        state.setEnumAllocator(CategoryEnum, lyric_bootstrap::internal::BootstrapTrap::CATEGORY_ALLOC);
+        state.setEnumAllocator(CategoryEnum, "CategoryAlloc");
     }
 }

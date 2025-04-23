@@ -23,7 +23,7 @@ lyric_runtime::LibraryPlugin::unload(BytecodeSegment *segment) const
     m_iface->unload(segment);
 }
 
-lyric_runtime::NativeFunc
+const lyric_runtime::NativeTrap *
 lyric_runtime::LibraryPlugin::getTrap(tu_uint32 index) const
 {
     return m_iface->getTrap(index);

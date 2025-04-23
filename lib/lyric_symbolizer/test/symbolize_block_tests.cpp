@@ -41,7 +41,7 @@ TEST(SymbolizeBlock, NoDefinitionsOrImports)
     TU_ASSIGN_OR_RAISE (object, symbolizer.symbolizeModule(location, archetype, objectStateOptions, recorder));
 
     auto root = object.getObject();
-    ASSERT_EQ (0, root.numSymbols());
+    ASSERT_EQ (2, root.numSymbols());
     ASSERT_EQ (1, root.numImports());
 }
 
@@ -67,7 +67,7 @@ TEST(SymbolizeBlock, DeclareImport)
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
     auto root = object.getObject();
-    ASSERT_EQ (0, root.numSymbols());
+    ASSERT_EQ (2, root.numSymbols());
     ASSERT_EQ (2, root.numImports());
 
     auto import0 = root.getImport(0);

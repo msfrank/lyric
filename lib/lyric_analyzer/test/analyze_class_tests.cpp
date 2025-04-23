@@ -33,6 +33,7 @@ TEST(AnalyzeClass, DeclareClass)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
+    TU_LOG_INFO << object.dumpJson();
     auto root = object.getObject();
     ASSERT_EQ (4, root.numSymbols());
     ASSERT_EQ (1, root.numClasses());

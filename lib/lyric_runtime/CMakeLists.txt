@@ -44,6 +44,7 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/subroutine_manager.h
     include/lyric_runtime/system_scheduler.h
     include/lyric_runtime/task.h
+    include/lyric_runtime/trap_index.h
     include/lyric_runtime/type_entry.h
     include/lyric_runtime/type_manager.h
     include/lyric_runtime/url_ref.h
@@ -81,6 +82,7 @@ target_sources(lyric_runtime PRIVATE
     src/subroutine_manager.cpp
     src/system_scheduler.cpp
     src/task.cpp
+    src/trap_index.cpp
     src/type_entry.cpp
     src/type_manager.cpp
     src/url_ref.cpp

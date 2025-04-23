@@ -30,6 +30,8 @@ namespace lyric_object {
         std::shared_ptr<const internal::ObjectReader> getReader() const;
         std::span<const tu_uint8> bytesView() const;
 
+        std::string dumpJson() const;
+
         static bool verify(std::span<const tu_uint8> bytes);
 
     private:

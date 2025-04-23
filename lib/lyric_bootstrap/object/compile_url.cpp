@@ -36,7 +36,7 @@ build_core_UrlInstance(
 
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::URL_EQUALS)));
+        state.writeTrap(code, "UrlEquals");
         state.addImplExtension("equals", UrlEqualityImpl,
             {
                 make_list_param("lhs", UrlType),
@@ -48,7 +48,7 @@ build_core_UrlInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addInstanceCtor(UrlInstance, {}, code);
-        state.setInstanceAllocator(UrlInstance, lyric_bootstrap::internal::BootstrapTrap::SINGLETON_ALLOC);
+        state.setInstanceAllocator(UrlInstance, "SingletonAlloc");
     }
 
     return UrlInstance;

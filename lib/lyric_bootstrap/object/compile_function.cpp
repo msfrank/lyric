@@ -44,21 +44,21 @@ build_core_FunctionN(BuilderState &state, int arity, const CoreClass *FunctionNC
 
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::CLOSURE_CTOR));
+        state.writeTrap(code, "ClosureCtor");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addClassCtor(FunctionNClass,
             {
                 make_list_param("$call", CallType),
             },
             code);
-        state.setClassAllocator(FunctionNClass, lyric_bootstrap::internal::BootstrapTrap::CLOSURE_ALLOC);
+        state.setClassAllocator(FunctionNClass, "ClosureAlloc");
     }
     {
         lyric_object::BytecodeBuilder code;
         for (tu_uint32 i = 0; i < applyParams.size(); i++) {
             code.loadArgument(i);
         }
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::CLOSURE_APPLY));
+        state.writeTrap(code, "ClosureApply");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
 
         state.addClassMethod("apply", FunctionNClass,

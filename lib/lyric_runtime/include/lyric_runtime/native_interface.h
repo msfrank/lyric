@@ -20,7 +20,13 @@ namespace lyric_runtime {
     /**
      *
      */
-    typedef tempo_utils::Status (*NativeFunc)(BytecodeInterpreter *, lyric_runtime::InterpreterState *);
+    typedef tempo_utils::Status (*NativeFunc)(BytecodeInterpreter *, InterpreterState *);
+
+    struct NativeTrap {
+        NativeFunc func;
+        const char *name;
+        tu_uint8 flags;
+    };
 
     /**
      * Abstract class describing the interface to a native plugin.
@@ -50,16 +56,16 @@ namespace lyric_runtime {
          * Returns the function pointer to the trap at the specified `index`.
          *
          * @param index The trap index.
-         * @return The function pointer for the trap, or nullptr if the index is out of range.
+         * @return The descriptor for the trap, or nullptr if the index is out of range.
          */
-        virtual NativeFunc getTrap(uint32_t index) const = 0;
+        virtual const NativeTrap *getTrap(tu_uint32 index) const = 0;
 
         /**
          * Returns the number of traps contained in the native plugin.
          *
          * @return The number of traps.
          */
-        virtual uint32_t numTraps() const = 0;
+        virtual tu_uint32 numTraps() const = 0;
     };
 }
 

@@ -56,7 +56,6 @@ namespace lyric_compiler {
         lyric_assembler::ObjectState *m_state;
         lyric_typing::TypeSystem *m_typeSystem;
         std::stack<lyric_common::TypeDef> m_results;
-        std::stack<lyric_assembler::NamespaceSymbol *> m_namespaces;
 
         struct GroupingData {
             std::unique_ptr<BaseGrouping> grouping;

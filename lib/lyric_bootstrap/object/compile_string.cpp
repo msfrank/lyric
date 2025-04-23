@@ -20,7 +20,7 @@ build_core_String(
 {
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_LENGTH)));
+        state.writeTrap(code, "StringLength");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Length",
             StringExistential,
@@ -30,7 +30,7 @@ build_core_String(
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_AT)));
+        state.writeTrap(code, "StringAt");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("At",
             StringExistential,
@@ -42,7 +42,7 @@ build_core_String(
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_TO_BYTES)));
+        state.writeTrap(code, "StringToBytes");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("ToBytes",
             StringExistential,
@@ -88,7 +88,7 @@ build_core_StringInstance(
 
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_COMPARE)));
+        state.writeTrap(code, "StringCompare");
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfZero(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -108,7 +108,7 @@ build_core_StringInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_COMPARE)));
+        state.writeTrap(code, "StringCompare");
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfLessThan(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -128,7 +128,7 @@ build_core_StringInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_COMPARE)));
+        state.writeTrap(code, "StringCompare");
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfGreaterThan(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -149,7 +149,7 @@ build_core_StringInstance(
     {
         lyric_object::BytecodeBuilder code;
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_COMPARE)));
+        state.writeTrap(code, "StringCompare");
         TU_RAISE_IF_NOT_OK(code.jumpIfLessOrEqual(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
         TU_RAISE_IF_NOT_OK(code.jump(joinDst));
@@ -168,7 +168,7 @@ build_core_StringInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_COMPARE)));
+        state.writeTrap(code, "StringCompare");
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfGreaterOrEqual(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -188,7 +188,7 @@ build_core_StringInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::STRING_COMPARE)));
+        state.writeTrap(code, "StringCompare");
         state.addImplExtension("compare", StringOrderedImpl,
             {
                 make_list_param("lhs", StringType),
@@ -200,7 +200,7 @@ build_core_StringInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addInstanceCtor(StringInstance, {}, code);
-        state.setInstanceAllocator(StringInstance, lyric_bootstrap::internal::BootstrapTrap::SINGLETON_ALLOC);
+        state.setInstanceAllocator(StringInstance, "SingletonAlloc");
     }
 
     return StringInstance;

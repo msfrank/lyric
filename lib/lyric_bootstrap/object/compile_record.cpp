@@ -44,6 +44,6 @@ build_core_Record(BuilderState &state, const CoreStruct *RecordStruct)
         lyric_object::BytecodeBuilder code;
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructCtor(RecordStruct, {}, code);
-        state.setStructAllocator(RecordStruct, lyric_bootstrap::internal::BootstrapTrap::RECORD_ALLOC);
+        state.setStructAllocator(RecordStruct, "RecordAlloc");
     }
 }

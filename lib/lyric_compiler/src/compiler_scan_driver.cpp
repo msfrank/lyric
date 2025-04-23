@@ -28,7 +28,6 @@ lyric_compiler::CompilerScanDriver::CompilerScanDriver(
 {
     TU_ASSERT (m_root != nullptr);
     TU_ASSERT (m_state != nullptr);
-    m_namespaces.push(m_root->globalNamespace());
 }
 
 lyric_compiler::CompilerScanDriver::~CompilerScanDriver()

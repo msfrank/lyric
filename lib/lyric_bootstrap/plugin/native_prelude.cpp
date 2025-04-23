@@ -16,108 +16,55 @@
 #include "string_traps.h"
 #include "url_traps.h"
 
-lyric_runtime::NativeFunc
-NativeCore::getTrap(uint32_t index) const
-{
-    auto trapFunction = static_cast<lyric_bootstrap::internal::BootstrapTrap>(index);
-    switch (trapFunction) {
-        case lyric_bootstrap::internal::BootstrapTrap::BYTES_AT:
-            return bytes_at;
-        case lyric_bootstrap::internal::BootstrapTrap::BYTES_COMPARE:
-            return bytes_compare;
-        case lyric_bootstrap::internal::BootstrapTrap::BYTES_LENGTH:
-            return bytes_length;
-        case lyric_bootstrap::internal::BootstrapTrap::CATEGORY_ALLOC:
-            return category_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::CLOSURE_ALLOC:
-            return closure_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::CLOSURE_APPLY:
-            return closure_apply;
-        case lyric_bootstrap::internal::BootstrapTrap::CLOSURE_CTOR:
-            return closure_ctor;
-        case lyric_bootstrap::internal::BootstrapTrap::FLOAT_CEIL:
-            return float_ceil;
-        case lyric_bootstrap::internal::BootstrapTrap::FLOAT_FLOOR:
-            return float_floor;
-        case lyric_bootstrap::internal::BootstrapTrap::FLOAT_TRUNC:
-            return float_trunc;
-        case lyric_bootstrap::internal::BootstrapTrap::MAP_ALLOC:
-            return map_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::MAP_CTOR:
-            return map_ctor;
-        case lyric_bootstrap::internal::BootstrapTrap::MAP_CONTAINS:
-            return map_contains;
-        case lyric_bootstrap::internal::BootstrapTrap::MAP_GET:
-            return map_get;
-        case lyric_bootstrap::internal::BootstrapTrap::MAP_SIZE:
-            return map_size;
-        case lyric_bootstrap::internal::BootstrapTrap::MAP_UPDATE:
-            return map_update;
-        case lyric_bootstrap::internal::BootstrapTrap::MAP_REMOVE:
-            return map_remove;
-        case lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATE:
-            return map_iterate;
-        case lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_ALLOC:
-            return map_iterator_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_NEXT:
-            return map_iterator_next;
-        case lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_VALID:
-            return map_iterator_valid;
-        case lyric_bootstrap::internal::BootstrapTrap::OBJECT_ALLOC:
-            return object_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::PAIR_ALLOC:
-            return pair_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::PAIR_CTOR:
-            return pair_ctor;
-        case lyric_bootstrap::internal::BootstrapTrap::PAIR_FIRST:
-            return pair_first;
-        case lyric_bootstrap::internal::BootstrapTrap::PAIR_SECOND:
-            return pair_second;
-        case lyric_bootstrap::internal::BootstrapTrap::RECORD_ALLOC:
-            return record_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::SEQ_ALLOC:
-            return seq_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::SEQ_CTOR:
-            return seq_ctor;
-        case lyric_bootstrap::internal::BootstrapTrap::SEQ_SIZE:
-            return seq_size;
-        case lyric_bootstrap::internal::BootstrapTrap::SEQ_GET:
-            return seq_get;
-        case lyric_bootstrap::internal::BootstrapTrap::SEQ_APPEND:
-            return seq_append;
-        case lyric_bootstrap::internal::BootstrapTrap::SEQ_EXTEND:
-            return seq_extend;
-        case lyric_bootstrap::internal::BootstrapTrap::SEQ_SLICE:
-            return seq_slice;
-        case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATE:
-            return seq_iterate;
-        case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_ALLOC:
-            return seq_iterator_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_NEXT:
-            return seq_iterator_next;
-        case lyric_bootstrap::internal::BootstrapTrap::SEQ_ITERATOR_VALID:
-            return seq_iterator_valid;
-        case lyric_bootstrap::internal::BootstrapTrap::SINGLETON_ALLOC:
-            return singleton_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::STATUS_ALLOC:
-            return status_alloc;
-        case lyric_bootstrap::internal::BootstrapTrap::STATUS_CTOR:
-            return status_ctor;
-        case lyric_bootstrap::internal::BootstrapTrap::STRING_AT:
-            return string_at;
-        case lyric_bootstrap::internal::BootstrapTrap::STRING_COMPARE:
-            return string_compare;
-        case lyric_bootstrap::internal::BootstrapTrap::STRING_LENGTH:
-            return string_length;
-        case lyric_bootstrap::internal::BootstrapTrap::STRING_TO_BYTES:
-            return string_to_bytes;
-        case lyric_bootstrap::internal::BootstrapTrap::URL_EQUALS:
-            return url_equals;
-        case lyric_bootstrap::internal::BootstrapTrap::LAST_:
-        default:
-            return nullptr;
-    }
-}
+//const lyric_runtime::NativeTrap kPreludeTraps[] = {
+std::array<lyric_runtime::NativeTrap,46> kPreludeTraps = {{
+    {bytes_at, "BytesAt", 0},
+    { bytes_compare, "BytesCompare", 0 },
+    { bytes_length, "BytesLength", 0 },
+    { category_alloc, "CategoryAlloc", 0 },
+    { closure_alloc, "ClosureAlloc", 0 },
+    { closure_apply, "ClosureApply", 0 },
+    { closure_ctor, "ClosureCtor", 0 },
+    { float_ceil, "FloatCeil", 0 },
+    { float_floor, "FloatFloor", 0 },
+    { float_trunc, "FloatTrunc", 0 },
+    { map_alloc, "MapAlloc", 0 },
+    { map_ctor, "MapCtor", 0 },
+    { map_contains, "MapContains", 0 },
+    { map_get, "MapGet", 0 },
+    { map_size, "MapSize", 0 },
+    { map_update, "MapUpdate", 0 },
+    { map_remove, "MapRemove", 0 },
+    { map_iterate, "MapIterate", 0 },
+    { map_iterator_alloc, "MapIteratorAlloc", 0 },
+    { map_iterator_next, "MapIteratorNext", 0 },
+    { map_iterator_valid, "MapIteratorValid", 0 },
+    { object_alloc, "ObjectAlloc", 0 },
+    { pair_alloc, "PairAlloc", 0 },
+    { pair_ctor, "PairCtor", 0 },
+    { pair_first, "PairFirst", 0 },
+    { pair_second, "PairSecond", 0 },
+    { record_alloc, "RecordAlloc", 0 },
+    { seq_alloc, "SeqAlloc", },
+    { seq_ctor, "SeqCtor", 0 },
+    { seq_size, "SeqSize", 0 },
+    { seq_get, "SeqGet", 0 },
+    { seq_append, "SeqAppend", 0 },
+    { seq_extend, "SeqExtend", 0 },
+    { seq_slice, "SeqSlice", 0 },
+    { seq_iterate, "SeqIterate", 0 },
+    { seq_iterator_alloc, "SeqIteratorAlloc", 0 },
+    { seq_iterator_next, "SeqIteratorNext", 0 },
+    { seq_iterator_valid, "SeqIteratorValid", 0 },
+    { singleton_alloc, "SingletonAlloc", 0 },
+    { status_alloc, "StatusAlloc", 0 },
+    { status_ctor, "StatusCtor", 0 },
+    { string_at, "StringAt", 0 },
+    { string_compare, "StringCompare", 0 },
+    { string_length, "StringLength", 0 },
+    { string_to_bytes, "StringToBytes", 0 },
+    { url_equals, "UrlEquals", 0 },
+}};
 
 bool
 NativeCore::load(lyric_runtime::BytecodeSegment *segment) const
@@ -130,10 +77,18 @@ NativeCore::unload(lyric_runtime::BytecodeSegment *segment) const
 {
 }
 
+const lyric_runtime::NativeTrap *
+NativeCore::getTrap(tu_uint32 index) const
+{
+    if (kPreludeTraps.size() <= index)
+        return nullptr;
+    return &kPreludeTraps.at(index);
+}
+
 uint32_t
 NativeCore::numTraps() const
 {
-    return static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::LAST_);
+    return kPreludeTraps.size();
 }
 
 static const NativeCore iface;

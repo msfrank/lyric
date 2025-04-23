@@ -18,7 +18,7 @@ build_core_Bytes(
 {
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::BYTES_LENGTH)));
+        state.writeTrap(code, "BytesLength");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Length",
             BytesExistential,
@@ -28,7 +28,7 @@ build_core_Bytes(
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::BYTES_AT)));
+        state.writeTrap(code, "BytesAt");
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("At",
             BytesExistential,
@@ -75,7 +75,7 @@ build_core_BytesInstance(
 
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::BYTES_COMPARE)));
+        state.writeTrap(code, "BytesCompare");
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfZero(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -95,7 +95,7 @@ build_core_BytesInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::BYTES_COMPARE)));
+        state.writeTrap(code, "BytesCompare");
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfLessThan(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -115,7 +115,7 @@ build_core_BytesInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::BYTES_COMPARE)));
+        state.writeTrap(code, "BytesCompare");
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfGreaterThan(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -136,7 +136,7 @@ build_core_BytesInstance(
     {
         lyric_object::BytecodeBuilder code;
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::BYTES_COMPARE)));
+        state.writeTrap(code, "BytesCompare");
         TU_RAISE_IF_NOT_OK(code.jumpIfLessOrEqual(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
         TU_RAISE_IF_NOT_OK(code.jump(joinDst));
@@ -155,7 +155,7 @@ build_core_BytesInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::BYTES_COMPARE)));
+        state.writeTrap(code, "BytesCompare");
         tu_uint16 matchDst, joinDst, matchSrc, nomatchSrc;
         TU_RAISE_IF_NOT_OK(code.jumpIfGreaterOrEqual(matchDst));
         TU_RAISE_IF_NOT_OK(code.loadBool(false));
@@ -175,7 +175,7 @@ build_core_BytesInstance(
     }
     {
         lyric_object::BytecodeBuilder code;
-        TU_RAISE_IF_NOT_OK(code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::BYTES_COMPARE)));
+        state.writeTrap(code, "BytesCompare");
         state.addImplExtension("compare", BytesOrderedImpl,
             {
                 make_list_param("lhs", BytesType),
@@ -187,7 +187,7 @@ build_core_BytesInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addInstanceCtor(BytesInstance, {}, code);
-        state.setInstanceAllocator(BytesInstance, lyric_bootstrap::internal::BootstrapTrap::SINGLETON_ALLOC);
+        state.setInstanceAllocator(BytesInstance, "SingletonAlloc");
     }
 
     return BytesInstance;

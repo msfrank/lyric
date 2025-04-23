@@ -21,18 +21,18 @@ build_core_Map(
 
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_CTOR));
+        state.writeTrap(code, "MapCtor");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructCtor(MapStruct,
             {
                 make_rest_param(DataType),
             },
             code);
-        state.setStructAllocator(MapStruct, lyric_bootstrap::internal::BootstrapTrap::MAP_ALLOC);
+        state.setStructAllocator(MapStruct, "MapAlloc");
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_SIZE));
+        state.writeTrap(code, "MapSize");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Size",
             MapStruct,
@@ -43,7 +43,7 @@ build_core_Map(
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_CONTAINS));
+        state.writeTrap(code, "MapContains");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Contains",
             MapStruct,
@@ -56,7 +56,7 @@ build_core_Map(
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_GET));
+        state.writeTrap(code, "MapGet");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("GetOrElse",
             MapStruct,
@@ -70,7 +70,7 @@ build_core_Map(
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_UPDATE));
+        state.writeTrap(code, "MapUpdate");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Update",
             MapStruct,
@@ -84,7 +84,7 @@ build_core_Map(
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_REMOVE));
+        state.writeTrap(code, "MapRemove");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Remove",
             MapStruct,
@@ -101,7 +101,7 @@ build_core_Map(
     {
         lyric_object::BytecodeBuilder code;
         code.loadClass(MapIteratorClass->class_index);
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATE));
+        state.writeTrap(code, "MapIterate");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addImplExtension("Iterate", IterableImpl, {}, code, DataIteratorType);
     }
@@ -128,20 +128,20 @@ build_core_MapIterator(
         state.addClassCtor(MapIteratorClass,
             {},
             code);
-        state.setClassAllocator(MapIteratorClass, lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_ALLOC);
+        state.setClassAllocator(MapIteratorClass, "MapIteratorAlloc");
     }
 
     auto *IteratorImpl = state.addImpl(classPath, DataIteratorType, IteratorConcept);
 
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_VALID));
+        state.writeTrap(code, "MapIteratorValid");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addImplExtension("Valid", IteratorImpl, {}, code, BoolType);
     }
     {
         lyric_object::BytecodeBuilder code;
-        code.trap(static_cast<uint32_t>(lyric_bootstrap::internal::BootstrapTrap::MAP_ITERATOR_NEXT));
+        state.writeTrap(code, "MapIteratorNext");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addImplExtension("Next", IteratorImpl, {}, code, DataType);
     }

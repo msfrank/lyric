@@ -195,7 +195,10 @@ lyric_runtime::BytecodeSegment::getTrap(tu_uint32 address) const
 {
     if (m_plugin == nullptr)
         return nullptr;
-    return m_plugin->getTrap(address);
+    auto *trap = m_plugin->getTrap(address);
+    if (trap == nullptr)
+        return nullptr;
+    return trap->func;
 }
 
 void *

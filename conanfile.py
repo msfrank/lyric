@@ -27,13 +27,13 @@ class Lyric(ConanFile):
     requires = (
         'tempo/0.0.1',
         # requirements from timbre
-        'absl/20230802.1@timbre',
+        'absl/20250127.1@timbre',
         'antlr/4.9.3@timbre',
-        'boost/1.84.0@timbre',
+        'boost/1.88.0@timbre',
         'fmt/9.1.0@timbre',
         'flatbuffers/23.5.26@timbre',
         'gtest/1.14.0@timbre',
-        'icu/74.1@timbre',
+        'icu/77.1@timbre',
         'openssl/3.2.0@timbre',
         'rocksdb/8.5.3@timbre',
         'uv/1.44.1@timbre',

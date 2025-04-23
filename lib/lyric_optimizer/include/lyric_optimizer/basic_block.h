@@ -105,6 +105,8 @@ namespace lyric_optimizer {
             std::shared_ptr<internal::GraphPriv> graph);
 
         friend class ControlFlowGraph;
+        template<class T>
+        friend class DataFlowAnalysis;
     };
 }
 

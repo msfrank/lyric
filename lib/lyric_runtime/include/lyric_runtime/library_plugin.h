@@ -13,7 +13,7 @@ namespace lyric_runtime {
 
         bool load(BytecodeSegment *segment) const override;
         void unload(BytecodeSegment *segment) const override;
-        NativeFunc getTrap(tu_uint32 index) const override;
+        const NativeTrap *getTrap(tu_uint32 index) const override;
         tu_uint32 numTraps() const override;
 
     private:

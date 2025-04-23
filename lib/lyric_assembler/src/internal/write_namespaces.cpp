@@ -16,14 +16,12 @@
 inline bool
 is_in_scope(lyric_object::AccessType access, bool includeUnusedPrivateSymbols)
 {
-    if (includeUnusedPrivateSymbols)
-        return true;
     switch (access) {
         case lyric_object::AccessType::Public:
         case lyric_object::AccessType::Protected:
             return true;
         default:
-            return false;
+            return includeUnusedPrivateSymbols;
     }
 }
 

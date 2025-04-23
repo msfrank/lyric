@@ -141,6 +141,11 @@ lyric_analyzer::AnalyzerScanDriver::declareStatic(
     TU_ASSIGN_OR_RETURN (ref, block->declareStatic(
         identifier, internal::convert_access_type(access), staticType, isVariable, /* declOnly= */ true));
 
+    // add class to the current namespace if specified
+    auto *currentNamespace = m_namespaces.top();
+    TU_ASSERT (currentNamespace != nullptr);
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(ref.symbolUrl));
+
     TU_LOG_INFO << "declared static " << ref.symbolUrl;
 
     return {};
@@ -170,6 +175,10 @@ lyric_analyzer::AnalyzerScanDriver::pushFunction(
     lyric_assembler::CallSymbol *callSymbol;
     TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(
         identifier, internal::convert_access_type(access), spec.templateParameters, /* declOnly= */ true));
+
+    auto *currentNamespace = m_namespaces.top();
+    TU_ASSERT (currentNamespace != nullptr);
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(callSymbol->getSymbolUrl()));
 
     auto *resolver = callSymbol->callResolver();
 
@@ -263,6 +272,10 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
         identifier, superClass, internal::convert_access_type(access), templateSpec.templateParameters,
         internal::convert_derive_type(derive), isAbstract, /* declOnly= */ true));
 
+    auto *currentNamespace = m_namespaces.top();
+    TU_ASSERT (currentNamespace != nullptr);
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(classSymbol->getSymbolUrl()));
+
     TU_LOG_INFO << "declared class " << classSymbol->getSymbolUrl() << " from " << superClass->getSymbolUrl();
 
     // push the class context
@@ -305,6 +318,10 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
     TU_ASSIGN_OR_RETURN (conceptSymbol, block->declareConcept(
         identifier, superConcept, internal::convert_access_type(access), templateSpec.templateParameters,
         internal::convert_derive_type(derive), /* declOnly= */ true));
+
+    auto *currentNamespace = m_namespaces.top();
+    TU_ASSERT (currentNamespace != nullptr);
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(conceptSymbol->getSymbolUrl()));
 
     TU_LOG_INFO << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConcept->getSymbolUrl();
 
@@ -352,6 +369,10 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
         identifier, superEnum, internal::convert_access_type(access),
         derive, isAbstract, /* declOnly= */ true));
 
+    auto *currentNamespace = m_namespaces.top();
+    TU_ASSERT (currentNamespace != nullptr);
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(enumSymbol->getSymbolUrl()));
+
     TU_LOG_INFO << "declared enum " << enumSymbol->getSymbolUrl() << " from " << superEnum->getSymbolUrl();
 
     // push the enum context
@@ -397,6 +418,10 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
     TU_ASSIGN_OR_RETURN (instanceSymbol, block->declareInstance(
         identifier, superInstance, internal::convert_access_type(access),
         derive, isAbstract, /* declOnly= */ true));
+
+    auto *currentNamespace = m_namespaces.top();
+    TU_ASSERT (currentNamespace != nullptr);
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(instanceSymbol->getSymbolUrl()));
 
     TU_LOG_INFO << "declared instance " << instanceSymbol->getSymbolUrl() << " from " << superInstance->getSymbolUrl();
 
@@ -457,15 +482,19 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
     // resolve the superstruct
     TU_ASSIGN_OR_RETURN (superStruct, block->resolveStruct(superStructType));
 
-    lyric_assembler::StructSymbol *classSymbol;
-    TU_ASSIGN_OR_RETURN (classSymbol, block->declareStruct(
+    lyric_assembler::StructSymbol *structSymbol;
+    TU_ASSIGN_OR_RETURN (structSymbol, block->declareStruct(
         identifier, superStruct, internal::convert_access_type(access),
         internal::convert_derive_type(derive), isAbstract, /* declOnly= */ true));
 
-    TU_LOG_INFO << "declared struct " << classSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
+    auto *currentNamespace = m_namespaces.top();
+    TU_ASSERT (currentNamespace != nullptr);
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(structSymbol->getSymbolUrl()));
+
+    TU_LOG_INFO << "declared struct " << structSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
 
     // push the struct context
-    auto ctx = std::make_unique<StructAnalyzerContext>(this, classSymbol, initNode);
+    auto ctx = std::make_unique<StructAnalyzerContext>(this, structSymbol, initNode);
     return pushContext(std::move(ctx));
 }
 

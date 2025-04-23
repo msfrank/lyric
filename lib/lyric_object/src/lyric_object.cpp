@@ -90,6 +90,12 @@ lyric_object::LyricObject::bytesView() const
     return m_reader->bytesView();
 }
 
+std::string
+lyric_object::LyricObject::dumpJson() const
+{
+    return m_reader->dumpJson();
+}
+
 bool
 lyric_object::LyricObject::verify(std::span<const tu_uint8> bytes)
 {
