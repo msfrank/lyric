@@ -34,20 +34,29 @@ lyric_runtime::internal::get_or_load_segment(
         TU_LOG_V << "failed to load " << location << ": object not found";
         return nullptr;                                 // failed to load assembly from location
     }
-    auto object = objectOption.getValue();
 
-    // attempt to load the plugin for the assembly
-    // FIXME: its not currently considered an error if the plugin is missing.
-    auto loadPluginResult = segmentManagerData->loader->loadPlugin(
-        location, lyric_object::PluginSpecifier::systemDefault());
-    if (loadPluginResult.isStatus())
-        return nullptr;
-    auto pluginOption = loadPluginResult.getResult();
-    auto plugin = pluginOption.getOrDefault({});
+    auto object = objectOption.getValue();
+    auto root = object.getObject();
+    if (!root.isValid()) {
+        TU_LOG_V << "failed to load " << location << ": object is invalid";
+        return nullptr;                                 // failed to load assembly from location
+    }
+
+    // if module has a plugin then load it
+    std::shared_ptr<const AbstractPlugin> plugin;
+    if (root.hasPlugin()) {
+        auto walker = root.getPlugin();
+        auto loadPluginResult = segmentManagerData->loader->loadPlugin(
+            walker.getPluginLocation(), lyric_object::PluginSpecifier::systemDefault());
+        if (loadPluginResult.isStatus())
+            return nullptr;
+        auto pluginOption = loadPluginResult.getResult();
+        plugin = pluginOption.getOrDefault({});
+    }
 
     // allocate the segment
     auto segmentIndex = segmentManagerData->segments.size();
-    auto *segment = new lyric_runtime::BytecodeSegment(segmentIndex, location, object, plugin);
+    auto *segment = new BytecodeSegment(segmentIndex, location, object, plugin);
 
     // if there is a plugin then load it
     if (plugin != nullptr) {

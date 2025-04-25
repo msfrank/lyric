@@ -17,6 +17,7 @@
 #include <lyric_assembler/internal/load_object.h>
 #include <lyric_assembler/literal_cache.h>
 #include <lyric_assembler/namespace_symbol.h>
+#include <lyric_assembler/object_plugin.h>
 #include <lyric_assembler/object_root.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
@@ -26,6 +27,9 @@
 #include <tempo_utils/big_endian.h>
 #include <tempo_utils/bytes_appender.h>
 #include <tempo_utils/log_stream.h>
+
+#include "lyric_assembler/object_plugin.h"
+#include "lyric_runtime/trap_index.h"
 
 lyric_assembler::ObjectState::ObjectState(
     const lyric_common::ModuleLocation &location,
@@ -109,7 +113,27 @@ lyric_assembler::ObjectState::createRoot(const lyric_common::ModuleLocation &pre
         preludeLocation, ImportFlags::SystemBootstrap));
 
     // initialize the root
-    return m_root->initialize(preludeImport);
+    TU_RETURN_IF_NOT_OK (m_root->initialize(preludeImport));
+
+    // if specified then find the plugin associated with the module
+    if (m_options.pluginLocation.isValid()) {
+        const auto &pluginLocation = m_options.pluginLocation;
+        auto localLoader = m_localModuleCache->getLoader();
+        auto pluginSpecifier = lyric_object::PluginSpecifier::systemDefault();
+        Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>> pluginOption;
+        TU_ASSIGN_OR_RETURN (pluginOption, localLoader->loadPlugin(pluginLocation, pluginSpecifier));
+
+        if (pluginOption.isEmpty())
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "missing plugin {}", pluginLocation.toString());
+
+        auto trapIndex = std::make_unique<lyric_runtime::TrapIndex>(pluginOption.getValue());
+        TU_RETURN_IF_NOT_OK (trapIndex->initialize());
+
+        m_plugin = std::make_unique<ObjectPlugin>(pluginLocation, std::move(trapIndex));
+    }
+
+    return {};
 }
 
 tempo_utils::Status
@@ -160,6 +184,12 @@ lyric_assembler::ObjectRoot *
 lyric_assembler::ObjectState::objectRoot() const
 {
     return m_root;
+}
+
+lyric_assembler::ObjectPlugin *
+lyric_assembler::ObjectState::objectPlugin() const
+{
+    return m_plugin.get();
 }
 
 lyric_assembler::FundamentalCache *

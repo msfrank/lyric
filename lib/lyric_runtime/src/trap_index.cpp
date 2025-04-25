@@ -4,7 +4,7 @@
 #include "lyric_object/lyric_object.h"
 #include "lyric_runtime/interpreter_result.h"
 
-lyric_runtime::TrapIndex::TrapIndex(std::shared_ptr<AbstractPlugin> plugin)
+lyric_runtime::TrapIndex::TrapIndex(std::shared_ptr<const AbstractPlugin> plugin)
     : m_plugin(std::move(plugin))
 {
     TU_ASSERT (m_plugin != nullptr);

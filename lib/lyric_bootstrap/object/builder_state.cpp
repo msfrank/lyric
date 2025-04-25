@@ -117,9 +117,13 @@ CoreParam make_rest_param(const CoreType *type)
     return {{}, lyric_object::PlacementType::Rest, type, nullptr, false, false};
 }
 
-BuilderState::BuilderState(std::shared_ptr<const lyric_runtime::TrapIndex> trapIndex)
-    : trapIndex(std::move(trapIndex))
+BuilderState::BuilderState(
+    const lyric_common::ModuleLocation &location,
+    std::shared_ptr<const lyric_runtime::TrapIndex> trapIndex)
+    : location(location),
+      trapIndex(std::move(trapIndex))
 {
+    TU_ASSERT (this->location.isValid());
     TU_ASSERT (this->trapIndex != nullptr);
 }
 
@@ -1575,7 +1579,6 @@ BuilderState::toBytes() const
     std::vector<flatbuffers::Offset<lyo1::EnumDescriptor>> enums_vector;
     std::vector<flatbuffers::Offset<lyo1::StaticDescriptor>> statics_vector;
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> symbols_vector;
-    std::vector<flatbuffers::Offset<lyo1::PluginDescriptor>> plugins_vector;
     std::vector<flatbuffers::Offset<lyo1::SortedSymbolIdentifier>> sorted_symbol_identifiers_vector;
     std::vector<uint8_t> bytecode;
 
@@ -1829,13 +1832,6 @@ BuilderState::toBytes() const
             fb_members, fb_methods, fb_impls, Enum->allocatorTrap, enumCtor, fb_sealedSubtypes));
     }
 
-    // write the plugin descriptors
-    for (auto iterator = plugins.cbegin(); iterator != plugins.cend(); iterator++) {
-        auto fb_pluginPlatform = buffer.CreateSharedString(iterator->first);
-        auto fb_pluginPath = buffer.CreateSharedString(iterator->second);
-        plugins_vector.push_back(lyo1::CreatePluginDescriptor(buffer, fb_pluginPath, fb_pluginPlatform));
-    }
-
     // write the symbol descriptors
     for (auto iterator = symbols.cbegin(); iterator != symbols.cend(); iterator++) {
         const auto *symbol = *iterator;
@@ -1849,29 +1845,35 @@ BuilderState::toBytes() const
             buffer, fb_fullyQualifiedName, iterator->second));
     }
 
+    // write the plugin descriptor if plugin exists
+    flatbuffers::Offset<lyo1::PluginDescriptor> optionalPluginOffset = 0;
+    if (trapIndex != nullptr) {
+        auto fb_pluginLocation = buffer.CreateSharedString(location.toString());
+        optionalPluginOffset = lyo1::CreatePluginDescriptor(buffer, fb_pluginLocation);
+    }
+
     // serialize vectors
-    auto fb_types = buffer.CreateVector(types_vector);
-    auto fb_templates = buffer.CreateVector(templates_vector);
-    auto fb_existentials = buffer.CreateVector(existentials_vector);
-    auto fb_statics = buffer.CreateVector(statics_vector);
-    auto fb_fields = buffer.CreateVector(fields_vector);
-    auto fb_calls = buffer.CreateVector(calls_vector);
-    auto fb_impls = buffer.CreateVector(impls_vector);
-    auto fb_actions = buffer.CreateVector(actions_vector);
-    auto fb_concepts = buffer.CreateVector(concepts_vector);
-    auto fb_classes = buffer.CreateVector(classes_vector);
-    auto fb_structs = buffer.CreateVector(structs_vector);
-    auto fb_instances = buffer.CreateVector(instances_vector);
-    auto fb_enums = buffer.CreateVector(enums_vector);
-    auto fb_symbols = buffer.CreateVector(symbols_vector);
-    auto fb_plugins = buffer.CreateVector(plugins_vector);
-    auto fb_bytecode = buffer.CreateVector(bytecode);
+    auto typesOffset = buffer.CreateVector(types_vector);
+    auto templatesOffset = buffer.CreateVector(templates_vector);
+    auto existentialsOffset = buffer.CreateVector(existentials_vector);
+    auto staticsOffset = buffer.CreateVector(statics_vector);
+    auto fieldsOffset = buffer.CreateVector(fields_vector);
+    auto callsOffset = buffer.CreateVector(calls_vector);
+    auto implsOffset = buffer.CreateVector(impls_vector);
+    auto actionsOffset = buffer.CreateVector(actions_vector);
+    auto conceptsOffset = buffer.CreateVector(concepts_vector);
+    auto classesOffset = buffer.CreateVector(classes_vector);
+    auto structsOffset = buffer.CreateVector(structs_vector);
+    auto instancesOffset = buffer.CreateVector(instances_vector);
+    auto enumsOffset = buffer.CreateVector(enums_vector);
+    auto symbolsOffset = buffer.CreateVector(symbols_vector);
+    auto bytecodeOffset = buffer.CreateVector(bytecode);
 
     // serialize the symbol table
-    auto fb_sorted_symbol_identifiers = buffer.CreateVectorOfSortedTables(&sorted_symbol_identifiers_vector);
+    auto sortedSymbolIdentifiersOffset = buffer.CreateVectorOfSortedTables(&sorted_symbol_identifiers_vector);
     lyo1::SortedSymbolTableBuilder sorted_symbol_table(buffer);
-    sorted_symbol_table.add_identifiers(fb_sorted_symbol_identifiers);
-    auto fb_symbol_table = sorted_symbol_table.Finish();
+    sorted_symbol_table.add_identifiers(sortedSymbolIdentifiersOffset);
+    auto symbolTableOffset = sorted_symbol_table.Finish();
 
     // serialize object and mark the buffer as finished
     lyo1::ObjectBuilder objectBuilder(buffer);
@@ -1879,24 +1881,24 @@ BuilderState::toBytes() const
     objectBuilder.add_version_major(1);
     objectBuilder.add_version_minor(0);
     objectBuilder.add_version_patch(0);
-    objectBuilder.add_types(fb_types);
-    objectBuilder.add_templates(fb_templates);
-    objectBuilder.add_existentials(fb_existentials);
-    objectBuilder.add_statics(fb_statics);
-    objectBuilder.add_fields(fb_fields);
-    objectBuilder.add_calls(fb_calls);
-    objectBuilder.add_impls(fb_impls);
-    objectBuilder.add_actions(fb_actions);
-    objectBuilder.add_concepts(fb_concepts);
-    objectBuilder.add_classes(fb_classes);
-    objectBuilder.add_structs(fb_structs);
-    objectBuilder.add_instances(fb_instances);
-    objectBuilder.add_enums(fb_enums);
-    objectBuilder.add_symbols(fb_symbols);
-    objectBuilder.add_plugins(fb_plugins);
-    objectBuilder.add_symboltable_type(lyo1::SymbolTable::SortedSymbolTable);
-    objectBuilder.add_symboltable(fb_symbol_table.Union());
-    objectBuilder.add_bytecode(fb_bytecode);
+    objectBuilder.add_types(typesOffset);
+    objectBuilder.add_templates(templatesOffset);
+    objectBuilder.add_existentials(existentialsOffset);
+    objectBuilder.add_statics(staticsOffset);
+    objectBuilder.add_fields(fieldsOffset);
+    objectBuilder.add_calls(callsOffset);
+    objectBuilder.add_impls(implsOffset);
+    objectBuilder.add_actions(actionsOffset);
+    objectBuilder.add_concepts(conceptsOffset);
+    objectBuilder.add_classes(classesOffset);
+    objectBuilder.add_structs(structsOffset);
+    objectBuilder.add_instances(instancesOffset);
+    objectBuilder.add_enums(enumsOffset);
+    objectBuilder.add_symbols(symbolsOffset);
+    objectBuilder.add_plugin(optionalPluginOffset);
+    objectBuilder.add_symbol_table_type(lyo1::SymbolTable::SortedSymbolTable);
+    objectBuilder.add_symbol_table(symbolTableOffset.Union());
+    objectBuilder.add_bytecode(bytecodeOffset);
     auto object = objectBuilder.Finish();
     buffer.Finish(object, lyo1::ObjectIdentifier());
 

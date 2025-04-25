@@ -205,6 +205,8 @@ struct CoreStruct {
 
 struct BuilderState {
 
+    lyric_common::ModuleLocation location;
+
     std::vector<CoreType *> types;
     std::vector<CoreTemplate *> templates;
     std::vector<CoreExistential *> existentials;
@@ -231,11 +233,11 @@ struct BuilderState {
 
     absl::flat_hash_map<int, lyric_common::SymbolPath> functionclasspaths;
 
-    const absl::flat_hash_map<std::string,std::string> plugins;
-
     std::shared_ptr<const lyric_runtime::TrapIndex> trapIndex;
 
-    explicit BuilderState(std::shared_ptr<const lyric_runtime::TrapIndex> trapIndex);
+    BuilderState(
+        const lyric_common::ModuleLocation &location,
+        std::shared_ptr<const lyric_runtime::TrapIndex> trapIndex);
 
     /*
      * type definitions

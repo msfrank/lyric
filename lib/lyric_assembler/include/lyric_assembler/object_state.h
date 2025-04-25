@@ -12,6 +12,7 @@
 #include <lyric_importer/module_cache.h>
 #include <lyric_runtime/abstract_loader.h>
 #include <lyric_runtime/literal_cell.h>
+#include <lyric_runtime/trap_index.h>
 #include <tempo_tracing/scope_manager.h>
 
 #include "abstract_symbol.h"
@@ -39,6 +40,7 @@ namespace lyric_assembler {
     class LiteralCache;
     class LiteralHandle;
     class NamespaceSymbol;
+    class ObjectPlugin;
     class ObjectRoot;
     class ProcHandle;
     class StaticSymbol;
@@ -61,7 +63,7 @@ namespace lyric_assembler {
         tu_uint32 minorVersion = 0;
         tu_uint32 patchVersion = 0;
         lyric_common::ModuleLocation preludeLocation = {};
-        absl::flat_hash_map<std::string, std::string> pluginsMap = {};
+        lyric_common::ModuleLocation pluginLocation = {};
         ProcImportMode procImportMode = ProcImportMode::InlineableOnly;
     };
 
@@ -85,6 +87,7 @@ namespace lyric_assembler {
         tempo_utils::Result<ObjectRoot *> defineRoot();
 
         ObjectRoot *objectRoot() const;
+        ObjectPlugin *objectPlugin() const;
         FundamentalCache *fundamentalCache() const;
         ImportCache *importCache() const;
         SymbolCache *symbolCache() const;
@@ -174,6 +177,7 @@ namespace lyric_assembler {
         LiteralCache *m_literalcache = nullptr;
         TypeCache *m_typecache = nullptr;
         ImplCache *m_implcache = nullptr;
+        std::unique_ptr<ObjectPlugin> m_plugin;
 
         std::vector<BindingSymbol *> m_bindings;
         std::vector<NamespaceSymbol *> m_namespaces;

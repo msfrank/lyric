@@ -86,8 +86,8 @@ namespace lyric_object::internal {
         const lyo1::LinkDescriptor *getLink(tu_uint32 index) const;
         tu_uint32 numLinks() const;
 
-        const lyo1::PluginDescriptor *getPlugin(tu_uint32 index) const;
-        tu_uint32 numPlugins() const;
+        bool hasPlugin() const;
+        const lyo1::PluginDescriptor *getPlugin() const;
 
         const uint8_t *getBytecodeData() const;
         tu_uint32 getBytecodeSize() const;

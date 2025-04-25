@@ -23,6 +23,7 @@
 #include "object_types.h"
 #include "parameter_walker.h"
 #include "placeholder_type_walker.h"
+#include "plugin_walker.h"
 #include "static_walker.h"
 #include "struct_walker.h"
 #include "symbol_walker.h"
@@ -105,6 +106,9 @@ namespace lyric_object {
         int numSymbols() const;
 
         lyric_common::SymbolPath getSymbolPath(LinkageSection section, tu_uint32 index) const;
+
+        bool hasPlugin() const;
+        PluginWalker getPlugin() const;
 
     private:
         std::shared_ptr<const internal::ObjectReader> m_reader;

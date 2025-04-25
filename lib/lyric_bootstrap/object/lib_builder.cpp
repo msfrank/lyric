@@ -60,13 +60,14 @@ main(int argc, char *argv[])
         return -1;
     std::filesystem::path destinationPath(argv[1]);
 
+    auto location = lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
     auto preludeLib = std::make_shared<tempo_utils::LibraryLoader>(PRELUDE_PLUGIN_PATH, "native_init");
     auto native_init = (lyric_runtime::NativeInitFunc) preludeLib->symbolPointer();
     auto preludePlugin = std::make_shared<lyric_runtime::LibraryPlugin>(preludeLib, native_init());
     auto trapIndex = std::make_shared<lyric_runtime::TrapIndex>(preludePlugin);
     TU_RAISE_IF_NOT_OK (trapIndex->initialize());
 
-    BuilderState state(trapIndex);
+    BuilderState state(location, trapIndex);
 
     // define the Any type, which is the top of the type hierarchy
     auto *AnyExistential = build_core_Any(state);

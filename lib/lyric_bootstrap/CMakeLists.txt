@@ -105,6 +105,7 @@ add_executable(prelude-builder
 target_include_directories(prelude-builder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_compile_definitions(prelude-builder PRIVATE
+    "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "PRELUDE_PLUGIN_PATH=\"${PRELUDE_PLUGIN_PATH}\""
     )
 

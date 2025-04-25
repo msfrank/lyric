@@ -36,6 +36,8 @@
 #include <lyric_assembler/undeclared_symbol.h>
 #include <tempo_utils/memory_bytes.h>
 
+#include "lyric_assembler/object_plugin.h"
+
 lyric_assembler::ObjectWriter::ObjectWriter(const ObjectState *state)
     : m_state(state),
       m_includeUnusedPrivateSymbols(true),
@@ -824,16 +826,17 @@ lyric_assembler::ObjectWriter::toObject() const
     internal::SortedSymbolTableOffset sortedSymbolTableOffset;
     TU_RETURN_IF_NOT_OK (internal::write_sorted_symbol_table(*this, buffer, sortedSymbolTableOffset));
 
+    auto options = m_state->getOptions();
+
     // serialize array of plugin descriptors
-    auto *options = m_state->getOptions();
-    for (auto iterator = options->pluginsMap.cbegin(); iterator != options->pluginsMap.cend(); iterator++) {
-        auto fb_pluginPlatform = buffer.CreateSharedString(iterator->first);
-        auto fb_pluginPath = buffer.CreateSharedString(iterator->second);
-        plugins_vector.push_back(lyo1::CreatePluginDescriptor(buffer, fb_pluginPath, fb_pluginPlatform));
+    flatbuffers::Offset<lyo1::PluginDescriptor> optionalPluginOffset = 0;
+    auto *plugin = m_state->objectPlugin();
+    if (plugin != nullptr) {
+        auto plugin_location = buffer.CreateSharedString(plugin->getLocation().toString());
+        optionalPluginOffset = lyo1::CreatePluginDescriptor(buffer, plugin_location);
     }
 
     // serialize vectors
-    auto pluginsOffset = buffer.CreateVector(plugins_vector);
     auto bytecodeOffset = buffer.CreateVector(bytecode);
 
     // build assembly from buffer
@@ -858,15 +861,14 @@ lyric_assembler::ObjectWriter::toObject() const
     objectBuilder.add_links(linksOffset);
     objectBuilder.add_literals(literalsOffset);
     objectBuilder.add_namespaces(namespacesOffset);
-    objectBuilder.add_plugins(pluginsOffset);
     objectBuilder.add_statics(staticsOffset);
     objectBuilder.add_structs(structsOffset);
     objectBuilder.add_symbols(symbolsOffset);
     objectBuilder.add_templates(templatesOffset);
     objectBuilder.add_types(typesOffset);
-
-    objectBuilder.add_symboltable_type(lyo1::SymbolTable::SortedSymbolTable);
-    objectBuilder.add_symboltable(sortedSymbolTableOffset.Union());
+    objectBuilder.add_plugin(optionalPluginOffset);
+    objectBuilder.add_symbol_table_type(lyo1::SymbolTable::SortedSymbolTable);
+    objectBuilder.add_symbol_table(sortedSymbolTableOffset.Union());
 
     objectBuilder.add_bytecode(bytecodeOffset);
 

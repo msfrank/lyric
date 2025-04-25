@@ -9,14 +9,14 @@ namespace lyric_runtime {
 
     class TrapIndex {
     public:
-        TrapIndex(std::shared_ptr<AbstractPlugin> plugin);
+        TrapIndex(std::shared_ptr<const AbstractPlugin> plugin);
 
         tempo_utils::Status initialize();
 
         tu_uint32 lookupTrap(std::string_view name) const;
 
     private:
-        std::shared_ptr<AbstractPlugin> m_plugin;
+        std::shared_ptr<const AbstractPlugin> m_plugin;
         absl::flat_hash_map<std::string, tu_uint32> m_traps;
     };
 }

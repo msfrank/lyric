@@ -374,3 +374,22 @@ lyric_object::ObjectWalker::getSymbolPath(LinkageSection section, tu_uint32 inde
         return {};
     return m_reader->getSymbolPath(internal::linkage_to_descriptor_section(section), index);
 }
+
+bool
+lyric_object::ObjectWalker::hasPlugin() const
+{
+    if (!isValid())
+        return false;
+    return m_reader->hasPlugin();
+}
+
+lyric_object::PluginWalker
+lyric_object::ObjectWalker::getPlugin() const
+{
+    if (!isValid())
+        return {};
+    auto *pluginDescriptor = m_reader->getPlugin();
+    if (pluginDescriptor == nullptr)
+        return {};
+    return PluginWalker(m_reader, (void *) pluginDescriptor);
+}

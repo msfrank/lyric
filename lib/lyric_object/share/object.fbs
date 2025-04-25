@@ -504,7 +504,7 @@ enum HashType : uint8 {
     Sha256,                                     // SHA-256 algorithm
 }
 
-//
+// flags which apply to the ImportDescriptor
 
 enum ImportFlags : uint16 (bit_flags) {
     SystemBootstrap,                            // import is the system bootstrap object
@@ -556,37 +556,24 @@ table LinkDescriptor {
     link_import: uint32 = 0xFFFFFFFF;           // offset of the link import in the imports section
 }
 
-// an ExportDescriptor
+// flags which apply to the PluginDescriptor
 
-table ExportDescriptor {
-    export_path: string;                        // '/'-separated relative path to submodule. no '.' or '..' allowed
-    export_hash: [uint8];                       // content hash of exported module, or empty if hash type is NONE
-    hash_type: HashType = Invalid;              // hashing algorithm used for the export hash
+enum PluginFlags : uint16 (bit_flags) {
+    ExactLinkage,
 }
 
 // a PluginDescriptor describes a plugin (a dynamically linked library) which contains traps
-// referenced by the bytecode. each descriptor is associated with a platform indentifying the
-// combination of operating system name, OS version, architecture, and compiler which the
-// plugin was compiled for.
+// referenced by the bytecode.
 
 table PluginDescriptor {
-    plugin_path: string;                        // '/'-separated relative path to plugin. no '.' or '..' allowed
-    plugin_platform: string;                    // id of the platform the plugin was compiled for
+    plugin_location: string;                    // string containing the location of the plugin. if empty then the
+                                                // module location is used for plugin resolution.
+    hash_type: HashType = Invalid;              // hashing algorithm used for the plugin hash
+    plugin_hash: [uint8];                       // content hash of plugin, or empty if hash type is NONE
+    flags: PluginFlags;                         // bitfield containing plugin flags
 }
 
-//
-
-//enum TrapFlags : uint16 (bit_flags) {
-//}
-
-//
-//
-//
-
-table TrapDescriptor {
-    trap_index: uint32 = 0xFFFFFFFF;
-    //trap_flags: TrapFlags;
-}
+// Object is the root type that describes the Lyric object.
 
 table Object {
 
@@ -615,10 +602,10 @@ table Object {
     symbols: [SymbolDescriptor];                // sorted array mapping symbol name to location in object
     imports: [ImportDescriptor];                // array of import descriptors
     links: [LinkDescriptor];                    // array of external references needed by object
-    traps: [TrapDescriptor];                    // array of trap descriptors
-    plugins: [PluginDescriptor];                // array of plugin descriptors
 
-    symboltable: SymbolTable;                   // symbol table maps fully qualified symbol name to descriptor
+    plugin: PluginDescriptor;                   // describes the optional plugin associated with the module
+
+    symbol_table: SymbolTable;                  // symbol table maps fully qualified symbol name to descriptor
 
     bytecode: [uint8];                          // the bytecode for this object
 }

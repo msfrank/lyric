@@ -441,9 +441,9 @@ lyric_object::internal::ObjectReader::getSymbolIndex(const lyric_common::SymbolP
 {
     if (m_object == nullptr)
         return INVALID_ADDRESS_U32;
-    switch (m_object->symboltable_type()) {
+    switch (m_object->symbol_table_type()) {
         case lyo1::SymbolTable::SortedSymbolTable: {
-            auto *sortedSymbolTable = m_object->symboltable_as_SortedSymbolTable();
+            auto *sortedSymbolTable = m_object->symbol_table_as_SortedSymbolTable();
             if (sortedSymbolTable == nullptr)
                 return INVALID_ADDRESS_U32;
             auto fullyQualifiedName = symbolPath.toString();
@@ -538,22 +538,22 @@ lyric_object::internal::ObjectReader::numLinks() const
     return m_object->links() ? m_object->links()->size() : 0;
 }
 
+bool
+lyric_object::internal::ObjectReader::hasPlugin() const
+{
+    if (m_object == nullptr)
+        return false;
+    return m_object->plugin() != nullptr;
+}
+
 const lyo1::PluginDescriptor *
-lyric_object::internal::ObjectReader::getPlugin(tu_uint32 index) const
+lyric_object::internal::ObjectReader::getPlugin() const
 {
     if (m_object == nullptr)
         return nullptr;
-    if (m_object->plugins() && index < m_object->plugins()->size())
-        return m_object->plugins()->Get(index);
-    return nullptr;
-}
-
-tu_uint32
-lyric_object::internal::ObjectReader::numPlugins() const
-{
-    if (m_object == nullptr)
-        return 0;
-    return m_object->plugins() ? m_object->plugins()->size() : 0;
+    if (m_object->plugin() == nullptr)
+        return nullptr;
+    return m_object->plugin();
 }
 
 const uint8_t *
