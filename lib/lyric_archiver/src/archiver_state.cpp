@@ -259,12 +259,14 @@ tempo_utils::Status
 lyric_archiver::ArchiverState::putPendingProc(
     const lyric_common::SymbolUrl &importUrl,
     const lyric_object::LyricObject &object,
+    std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin,
     const lyric_object::ProcHeader &header,
     const lyric_object::BytecodeIterator &code,
     lyric_assembler::ProcHandle *procHandle)
 {
     auto pendingProc = std::make_unique<PendingProc>();
     pendingProc->object = object;
+    pendingProc->plugin = plugin;
     pendingProc->header = header;
     pendingProc->code = code;
     pendingProc->procHandle = procHandle;
@@ -279,9 +281,11 @@ lyric_archiver::ArchiverState::copyPendingProcs()
     for (auto it = m_pendingProcs.begin(); it != m_pendingProcs.end(); it++) {
         const auto &importUrl = it->first;
         auto &pendingProc = it->second;
-        auto importLocation = importUrl.getModuleLocation();
-        TU_RETURN_IF_NOT_OK (copy_proc(importLocation, pendingProc->object, pendingProc->header,
-            &m_copiedSymbols, pendingProc->code, pendingProc->procHandle, m_objectState.get()));
+        auto objectLocation = importUrl.getModuleLocation();
+        auto pluginLocation = pendingProc->object.getObject().getPlugin().getPluginLocation();
+        TU_RETURN_IF_NOT_OK (copy_proc(objectLocation, pendingProc->object, pluginLocation,
+            pendingProc->plugin, pendingProc->header, &m_copiedSymbols, pendingProc->code,
+            pendingProc->procHandle, m_objectState.get()));
     }
     m_pendingProcs.clear();
 

@@ -20,9 +20,11 @@
 
 lyric_importer::ModuleImport::ModuleImport(
     const lyric_common::ModuleLocation &importLocation,
-    const lyric_object::LyricObject &importObject)
+    const lyric_object::LyricObject &importObject,
+    std::shared_ptr<const lyric_runtime::AbstractPlugin> importPlugin)
     : m_location(importLocation),
-      m_object(importObject)
+      m_object(importObject),
+      m_plugin(std::move(importPlugin))
 {
     TU_ASSERT (m_location.isValid());
     TU_ASSERT (m_object.isValid());
@@ -31,9 +33,10 @@ lyric_importer::ModuleImport::ModuleImport(
 tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
 lyric_importer::ModuleImport::create(
     const lyric_common::ModuleLocation &importLocation,
-    const lyric_object::LyricObject &importObject)
+    const lyric_object::LyricObject &importObject,
+    std::shared_ptr<const lyric_runtime::AbstractPlugin> importPlugin)
 {
-    auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(importLocation, importObject));
+    auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(importLocation, importObject, importPlugin));
     TU_RETURN_IF_NOT_OK (moduleImport->initialize());
     return moduleImport;
 }
@@ -131,6 +134,12 @@ lyric_object::LyricObject
 lyric_importer::ModuleImport::getObject() const
 {
     return m_object;
+}
+
+std::shared_ptr<const lyric_runtime::AbstractPlugin>
+lyric_importer::ModuleImport::getPlugin() const
+{
+    return m_plugin;
 }
 
 lyric_importer::ActionImport *

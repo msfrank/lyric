@@ -42,7 +42,6 @@ lyric_assembler::InstanceSymbol::InstanceSymbol(
     priv->isDeclOnly = isDeclOnly;
     priv->instanceType = instanceType;
     priv->superInstance = superInstance;
-    priv->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
     priv->instanceBlock = std::make_unique<BlockHandle>(instanceUrl, parentBlock);
 
     TU_ASSERT (priv->instanceType != nullptr);
@@ -362,7 +361,7 @@ lyric_assembler::InstanceSymbol::getCtor() const
     return lyric_common::SymbolUrl(location, lyric_common::SymbolPath(path.getPath(), "$ctor"));
 }
 
-tu_uint32
+std::string
 lyric_assembler::InstanceSymbol::getAllocatorTrap() const
 {
     auto *priv = getPriv();
@@ -372,7 +371,7 @@ lyric_assembler::InstanceSymbol::getAllocatorTrap() const
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::InstanceSymbol::declareCtor(
     lyric_object::AccessType access,
-    tu_uint32 allocatorTrap)
+    std::string allocatorTrap)
 {
     if (isImported())
         m_state->throwAssemblerInvariant(
@@ -381,7 +380,7 @@ lyric_assembler::InstanceSymbol::declareCtor(
     auto *priv = getPriv();
 
     auto path = m_instanceUrl.getSymbolPath().getPath();
-    path.push_back("$ctor");
+    path.emplace_back("$ctor");
     auto ctorUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(path));
 
     if (m_state->symbolCache()->hasSymbol(ctorUrl))
@@ -407,7 +406,7 @@ lyric_assembler::InstanceSymbol::declareCtor(
     priv->methods["$ctor"] = method;
 
     // set allocator trap
-    priv->allocatorTrap = allocatorTrap;
+    priv->allocatorTrap = std::move(allocatorTrap);
 
     return ctorSymbol;
 }

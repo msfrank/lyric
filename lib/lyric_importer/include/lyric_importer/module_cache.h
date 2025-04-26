@@ -33,9 +33,9 @@ namespace lyric_importer {
         bool hasModule(const lyric_common::ModuleLocation &location) const;
         std::shared_ptr<ModuleImport> getModule(const lyric_common::ModuleLocation &location) const;
 
-        tempo_utils::Result<std::shared_ptr<ModuleImport>> insertModule(
-            const lyric_common::ModuleLocation &location,
-            const lyric_object::LyricObject &object);
+        // tempo_utils::Result<std::shared_ptr<ModuleImport>> insertModule(
+        //     const lyric_common::ModuleLocation &location,
+        //     const lyric_object::LyricObject &object);
 
         tempo_utils::Result<std::shared_ptr<ModuleImport>> importModule(
             const lyric_common::ModuleLocation &location);

@@ -20,8 +20,10 @@
 #include "../../../lyric_bootstrap/plugin/string_traps.h"
 
 struct ImportProcData {
-    lyric_common::ModuleLocation location;
+    lyric_common::ModuleLocation objectLocation;
     lyric_object::LyricObject object;
+    lyric_common::ModuleLocation pluginLocation;
+    std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin;
     lyric_common::SymbolUrl activation;
     lyric_assembler::CodeFragment *fragment;
     lyric_assembler::ObjectState *state;
@@ -136,7 +138,7 @@ lookup_symbol(
         auto symbolPath = root.getSymbolPath(section, address);
         if (!symbolPath.isValid())
             return {};
-        return {data.location, symbolPath};
+        return {data.objectLocation, symbolPath};
     } else {
         auto link = root.getLink(address);
         if (link.getLinkageSection() != section)
@@ -435,7 +437,7 @@ apply_call(const lyric_object::OpCell &op, ImportProcData &data)
     auto call = root.getCall(operands.address);
 
     auto *importCache = data.state->importCache();
-    lyric_common::SymbolUrl callUrl(data.location, call.getSymbolPath());
+    lyric_common::SymbolUrl callUrl(data.objectLocation, call.getSymbolPath());
 
     lyric_assembler::CallSymbol *callSymbol;
     TU_ASSIGN_OR_RETURN (callSymbol, importCache->importCall(callUrl));
@@ -465,7 +467,7 @@ apply_action(const lyric_object::OpCell &op, ImportProcData &data)
     auto action = root.getAction(operands.address);
 
     auto *importCache = data.state->importCache();
-    lyric_common::SymbolUrl actionUrl(data.location, action.getSymbolPath());
+    lyric_common::SymbolUrl actionUrl(data.objectLocation, action.getSymbolPath());
 
     lyric_assembler::ActionSymbol *actionSymbol;
     TU_ASSIGN_OR_RETURN (actionSymbol, importCache->importAction(actionUrl));
@@ -488,22 +490,22 @@ apply_new(const lyric_object::OpCell &op, ImportProcData &data)
     switch (lyric_object::GET_NEW_TYPE(operands.flags)) {
         case lyric_object::NEW_CLASS: {
             auto walker = root.getClass(operands.address);
-            newUrl = lyric_common::SymbolUrl(data.location, walker.getSymbolPath());
+            newUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
             break;
         }
         case lyric_object::NEW_ENUM: {
             auto walker = root.getEnum(operands.address);
-            newUrl = lyric_common::SymbolUrl(data.location, walker.getSymbolPath());
+            newUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
             break;
         }
         case lyric_object::NEW_INSTANCE: {
             auto walker = root.getInstance(operands.address);
-            newUrl = lyric_common::SymbolUrl(data.location, walker.getSymbolPath());
+            newUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
             break;
         }
         case lyric_object::NEW_STRUCT: {
             auto walker = root.getStruct(operands.address);
-            newUrl = lyric_common::SymbolUrl(data.location, walker.getSymbolPath());
+            newUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
             break;
         }
         default:
@@ -517,10 +519,28 @@ apply_new(const lyric_object::OpCell &op, ImportProcData &data)
     return data.fragment->constructNew(newSymbol, operands.placement, operands.flags);
 }
 
+static tempo_utils::Status
+apply_trap(const lyric_object::OpCell &op, ImportProcData &data)
+{
+    if (op.opcode != lyric_object::Opcode::OP_TRAP)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    if (data.plugin == nullptr)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid trap");
+
+    const auto &operands = op.operands.flags_u8_address_u32;
+    const auto *trap = data.plugin->getTrap(operands.address);
+    if (trap == nullptr)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid trap");
+
+    return data.fragment->trap(data.pluginLocation, trap->name, operands.flags);
+}
+
 tempo_utils::Status
 lyric_assembler::internal::import_proc(
-    const lyric_common::ModuleLocation &location,
-    const lyric_object::LyricObject &object,
+    std::shared_ptr<lyric_importer::ModuleImport> moduleImport,
     const lyric_common::SymbolUrl &activation,
     lyric_object::BytecodeIterator it,
     std::unique_ptr<lyric_assembler::ProcHandle> &procHandle,
@@ -530,8 +550,10 @@ lyric_assembler::internal::import_proc(
     auto *procCode = importedProc->procCode();
 
     ImportProcData data;
-    data.location = location;
-    data.object = object;
+    data.objectLocation = moduleImport->getLocation();
+    data.object = moduleImport->getObject();
+    data.pluginLocation = data.object.getObject().getPlugin().getPluginLocation();
+    data.plugin = moduleImport->getPlugin();
     data.activation = activation;
     data.state = state;
     data.fragment = procCode->rootFragment();
@@ -694,10 +716,10 @@ lyric_assembler::internal::import_proc(
                 TU_RETURN_IF_NOT_OK (data.fragment->returnToCaller());
                 break;
 
-            case lyric_object::Opcode::OP_TRAP:
-                TU_RETURN_IF_NOT_OK (data.fragment->trap(
-                    op.operands.flags_u8_address_u32.address, op.operands.flags_u8_address_u32.flags));
+            case lyric_object::Opcode::OP_TRAP: {
+                TU_RETURN_IF_NOT_OK (apply_trap(op, data));
                 break;
+            }
 
             case lyric_object::Opcode::OP_TYPE_OF:
                 TU_RETURN_IF_NOT_OK (data.fragment->invokeTypeOf());

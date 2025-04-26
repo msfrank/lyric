@@ -18,8 +18,10 @@
 #include <lyric_assembler/struct_symbol.h>
 
 struct CopyProcData {
-    lyric_common::ModuleLocation location;
+    lyric_common::ModuleLocation objectLocation;
     lyric_object::LyricObject object;
+    lyric_common::ModuleLocation pluginLocation;
+    std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin;
     lyric_common::SymbolUrl activation;
     lyric_assembler::CodeFragment *fragment;
     lyric_assembler::ObjectState *state;
@@ -54,7 +56,7 @@ resolve_symbol(lyric_object::LinkageSection section, tu_uint32 address, CopyProc
     auto root = data.object.getObject();
     if (lyric_object::IS_NEAR(address)) {
         auto symbolPath = root.getSymbolPath(section, lyric_object::GET_DESCRIPTOR_OFFSET(address));
-        lyric_common::SymbolUrl symbolUrl(data.location, symbolPath);
+        lyric_common::SymbolUrl symbolUrl(data.objectLocation, symbolPath);
         auto entry = data.copiedSymbols->find(symbolUrl);
         if (entry == data.copiedSymbols->cend())
             return lyric_archiver::ArchiverStatus::forCondition(
@@ -493,10 +495,31 @@ apply_new(const lyric_object::OpCell &op, CopyProcData &data)
     return data.fragment->constructNew(newSymbol, operands.placement, operands.flags);
 }
 
+static tempo_utils::Status
+apply_trap(const lyric_object::OpCell &op, CopyProcData &data)
+{
+    if (op.opcode != lyric_object::Opcode::OP_TRAP)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    if (data.plugin == nullptr)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid trap");
+
+    const auto &operands = op.operands.flags_u8_address_u32;
+    const auto *trap = data.plugin->getTrap(operands.address);
+    if (trap == nullptr)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid trap");
+
+    return data.fragment->trap(data.pluginLocation, trap->name, operands.flags);
+}
+
 tempo_utils::Status
 lyric_archiver::copy_proc(
-    const lyric_common::ModuleLocation &location,
+    const lyric_common::ModuleLocation &objectLocation,
     const lyric_object::LyricObject &object,
+    const lyric_common::ModuleLocation &pluginLocation,
+    std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin,
     const lyric_object::ProcHeader &header,
     const absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::AbstractSymbol *> *copiedSymbols,
     lyric_object::BytecodeIterator it,
@@ -506,8 +529,10 @@ lyric_archiver::copy_proc(
     auto *procCode = procHandle->procCode();
 
     CopyProcData data;
-    data.location = location;
+    data.objectLocation = objectLocation;
     data.object = object;
+    data.pluginLocation = pluginLocation;
+    data.plugin = plugin;
     data.activation = procHandle->getActivation();
     data.state = state;
     data.fragment = procCode->rootFragment();
@@ -665,8 +690,7 @@ lyric_archiver::copy_proc(
                 break;
 
             case lyric_object::Opcode::OP_TRAP:
-                TU_RETURN_IF_NOT_OK (data.fragment->trap(
-                    op.operands.flags_u8_address_u32.address, op.operands.flags_u8_address_u32.flags));
+                TU_RETURN_IF_NOT_OK (apply_trap(op, data));
                 break;
 
             case lyric_object::Opcode::OP_TYPE_OF:

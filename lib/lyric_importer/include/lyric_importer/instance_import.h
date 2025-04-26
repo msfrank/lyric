@@ -43,7 +43,7 @@ namespace lyric_importer {
         int numSealedTypes();
 
         bool hasAllocator();
-        tu_uint32 getAllocator();
+        std::string getAllocator();
 
     private:
         tu_uint32 m_instanceOffset;

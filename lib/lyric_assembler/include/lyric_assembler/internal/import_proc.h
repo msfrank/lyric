@@ -8,8 +8,7 @@
 namespace lyric_assembler::internal {
 
     tempo_utils::Status import_proc(
-        const lyric_common::ModuleLocation &location,
-        const lyric_object::LyricObject &object,
+        std::shared_ptr<lyric_importer::ModuleImport> moduleImport,
         const lyric_common::SymbolUrl &activation,
         lyric_object::BytecodeIterator it,
         std::unique_ptr<ProcHandle> &procHandle,

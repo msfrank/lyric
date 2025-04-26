@@ -72,10 +72,10 @@ lyric_compiler::DefClassHandler::before(
     }
 
     // get allocator trap
-    tu_uint32 allocatorTrapNumber = lyric_object::INVALID_ADDRESS_U32;
-    if (node->hasAttr(lyric_rewriter::kLyricAssemblerAllocatorTrapNumber)) {
+    std::string allocatorTrap;
+    if (node->hasAttr(lyric_rewriter::kLyricAssemblerTrapName)) {
         TU_RETURN_IF_NOT_OK (node->parseAttr(
-            lyric_rewriter::kLyricAssemblerAllocatorTrapNumber, allocatorTrapNumber));
+            lyric_rewriter::kLyricAssemblerTrapName, allocatorTrap));
     }
 
     // FIXME: get abstract flag from node
@@ -173,10 +173,10 @@ lyric_compiler::DefClassHandler::before(
     // declare class init
     if (initNode != nullptr) {
         TU_ASSIGN_OR_RETURN (m_defclass.initCall, declare_class_init(
-            initNode, m_defclass.classSymbol, allocatorTrapNumber, typeSystem));
+            initNode, m_defclass.classSymbol, allocatorTrap, typeSystem));
     } else {
         TU_ASSIGN_OR_RETURN (m_defclass.initCall, declare_class_default_init(
-            &m_defclass, m_defclass.classSymbol, allocatorTrapNumber, symbolCache, typeSystem));
+            &m_defclass, m_defclass.classSymbol, allocatorTrap, symbolCache, typeSystem));
     }
 
     // declare methods

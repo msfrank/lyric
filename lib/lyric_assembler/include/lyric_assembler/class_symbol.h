@@ -24,7 +24,7 @@ namespace lyric_assembler {
         TypeHandle *classType = nullptr;
         TemplateHandle *classTemplate = nullptr;
         ClassSymbol *superClass = nullptr;
-        tu_uint32 allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
+        std::string allocatorTrap;
         absl::flat_hash_map<std::string, DataReference> members;
         absl::flat_hash_set<std::string> initializedMembers;
         absl::flat_hash_map<std::string, BoundMethod> methods;
@@ -109,10 +109,10 @@ namespace lyric_assembler {
          * class constructor management
          */
         lyric_common::SymbolUrl getCtor() const;
-        tu_uint32 getAllocatorTrap() const;
+        std::string getAllocatorTrap() const;
         tempo_utils::Result<CallSymbol *> declareCtor(
             lyric_object::AccessType access,
-            tu_uint32 allocatorTrap = lyric_object::INVALID_ADDRESS_U32);
+            std::string allocatorTrap = {});
         tempo_utils::Status prepareCtor(ConstructableInvoker &invoker);
 
         /*

@@ -151,11 +151,17 @@ write_class(
         sealedSubtypes.push_back(sealedSubtype);
     }
 
+    tu_uint32 allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
+    auto trapName = classSymbol->getAllocatorTrap();
+    if (!trapName.empty()) {
+        TU_ASSIGN_OR_RETURN (allocatorTrap, writer.getTrapNumber(trapName));
+    }
+
     // add class descriptor
     classes_vector.push_back(lyo1::CreateClassDescriptor(buffer, fullyQualifiedName,
         superclassIndex, classTemplate, classType, classFlags,
         buffer.CreateVector(members), buffer.CreateVector(methods), buffer.CreateVector(impls),
-        classSymbol->getAllocatorTrap(), ctorCall, buffer.CreateVector(sealedSubtypes)));
+        allocatorTrap, ctorCall, buffer.CreateVector(sealedSubtypes)));
 
     return {};
 }

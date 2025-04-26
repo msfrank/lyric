@@ -61,6 +61,7 @@ namespace lyric_archiver {
         tempo_utils::Status putPendingProc(
             const lyric_common::SymbolUrl &importUrl,
             const lyric_object::LyricObject &object,
+            std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin,
             const lyric_object::ProcHeader &header,
             const lyric_object::BytecodeIterator &code,
             lyric_assembler::ProcHandle *procHandle);
@@ -91,6 +92,7 @@ namespace lyric_archiver {
 
         struct PendingProc {
             lyric_object::LyricObject object;
+            std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin;
             lyric_object::ProcHeader header;
             lyric_object::BytecodeIterator code;
             lyric_assembler::ProcHandle *procHandle;

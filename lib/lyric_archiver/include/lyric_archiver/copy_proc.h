@@ -7,8 +7,10 @@
 namespace lyric_archiver {
 
     tempo_utils::Status copy_proc(
-        const lyric_common::ModuleLocation &location,
+        const lyric_common::ModuleLocation &objectLocation,
         const lyric_object::LyricObject &object,
+        const lyric_common::ModuleLocation &pluginLocation,
+        std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin,
         const lyric_object::ProcHeader &header,
         const absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::AbstractSymbol *> *copiedSymbols,
         lyric_object::BytecodeIterator it,

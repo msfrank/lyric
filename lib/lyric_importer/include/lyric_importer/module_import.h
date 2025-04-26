@@ -5,6 +5,9 @@
 #include <lyric_object/lyric_object.h>
 #include <tempo_utils/result.h>
 
+#include <lyric_runtime/abstract_plugin.h>
+#include <lyric_runtime/runtime_types.h>
+
 namespace lyric_importer {
 
     // forward declarations
@@ -33,10 +36,12 @@ namespace lyric_importer {
 
         static tempo_utils::Result<std::shared_ptr<ModuleImport>> create(
             const lyric_common::ModuleLocation &importLocation,
-            const lyric_object::LyricObject &importObject);
+            const lyric_object::LyricObject &importObject,
+            std::shared_ptr<const lyric_runtime::AbstractPlugin> importPlugin = {});
 
         lyric_common::ModuleLocation getLocation() const;
         lyric_object::LyricObject getObject() const;
+        std::shared_ptr<const lyric_runtime::AbstractPlugin> getPlugin() const;
 
         ActionImport *getAction(tu_uint32 offset) const;
         BindingImport *getBinding(tu_uint32 offset) const;
@@ -57,6 +62,8 @@ namespace lyric_importer {
     private:
         lyric_common::ModuleLocation m_location;
         lyric_object::LyricObject m_object;
+        std::shared_ptr<const lyric_runtime::AbstractPlugin> m_plugin;
+
         std::vector<ActionImport *> m_importedActions;
         std::vector<BindingImport *> m_importedBindings;
         std::vector<CallImport *> m_importedCalls;
@@ -75,7 +82,8 @@ namespace lyric_importer {
 
         ModuleImport(
             const lyric_common::ModuleLocation &importLocation,
-            const lyric_object::LyricObject &importObject);
+            const lyric_object::LyricObject &importObject,
+            std::shared_ptr<const lyric_runtime::AbstractPlugin> importPlugin);
         tempo_utils::Status initialize();
 
         friend class ModuleCache;

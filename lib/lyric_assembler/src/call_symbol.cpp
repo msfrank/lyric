@@ -291,8 +291,7 @@ lyric_assembler::CallSymbol::load()
         auto moduleImport = m_callImport->getModuleImport();
         auto bytecode = m_callImport->getInlineBytecode();
         lyric_object::BytecodeIterator it(bytecode.data(), bytecode.size());
-        TU_RAISE_IF_NOT_OK (internal::import_proc(
-            moduleImport->getLocation(), moduleImport->getObject(), m_callUrl, it, priv->proc, m_state));
+        TU_RAISE_IF_NOT_OK (internal::import_proc(moduleImport, m_callUrl, it, priv->proc, m_state));
     }
 
     return priv.release();

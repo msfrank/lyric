@@ -11,7 +11,7 @@ tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_compiler::declare_instance_default_init(
     const DefInstance *definstance,
     lyric_assembler::InstanceSymbol *instanceSymbol,
-    tu_uint32 allocatorTrap,
+    const std::string &allocatorTrap,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_typing::TypeSystem *typeSystem)
 {

@@ -11,7 +11,7 @@ tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_compiler::declare_class_init(
     const lyric_parser::ArchetypeNode *initNode,
     lyric_assembler::ClassSymbol *classSymbol,
-    tu_uint32 allocatorTrap,
+    const std::string &allocatorTrap,
     lyric_typing::TypeSystem *typeSystem)
 {
     TU_ASSERT (initNode != nullptr);
@@ -42,7 +42,7 @@ tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_compiler::declare_class_default_init(
     const DefClass *defclass,
     lyric_assembler::ClassSymbol *classSymbol,
-    tu_uint32 allocatorTrap,
+    const std::string &allocatorTrap,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_typing::TypeSystem *typeSystem)
 {

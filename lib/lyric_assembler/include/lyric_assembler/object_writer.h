@@ -85,6 +85,10 @@ namespace lyric_assembler {
         tempo_utils::Result<tu_uint32> getImplOffset(const ImplRef &implRef) const;
         tempo_utils::Result<tu_uint32> getTemplateOffset(const lyric_common::SymbolUrl &templateUrl) const;
         tempo_utils::Result<tu_uint32> getTypeOffset(const lyric_common::TypeDef &typeDef) const;
+        tempo_utils::Result<tu_uint32> getTrapNumber(
+            const lyric_common::ModuleLocation &pluginLocation,
+            std::string_view trapName) const;
+        tempo_utils::Result<tu_uint32> getTrapNumber(std::string_view trapName) const;
 
         std::vector<SymbolDefinition>::const_iterator symbolDefinitionsBegin() const;
         std::vector<SymbolDefinition>::const_iterator symbolDefinitionsEnd() const;

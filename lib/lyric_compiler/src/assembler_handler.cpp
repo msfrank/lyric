@@ -4,6 +4,8 @@
 #include <lyric_rewriter/assembler_attrs.h>
 #include <lyric_schema/assembler_schema.h>
 
+#include "lyric_assembler/object_plugin.h"
+
 lyric_compiler::AssemblerChoice::AssemblerChoice(
     lyric_assembler::CodeFragment *fragment,
     lyric_assembler::BlockHandle *block,
@@ -31,9 +33,14 @@ lyric_compiler::AssemblerChoice::decide(
     switch (astId) {
 
         case lyric_schema::LyricAssemblerId::Trap: {
-            tu_uint32 trapNumber;
-            TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_rewriter::kLyricAssemblerTrapNumber, trapNumber));
-            TU_RETURN_IF_NOT_OK (m_fragment->trap(trapNumber, /* flags= */ 0));
+            auto *objectPlugin = getDriver()->getState()->objectPlugin();
+            if (objectPlugin == nullptr)
+                return CompilerStatus::forCondition(
+                    CompilerCondition::kCompilerInvariant, "invalid object plugin");
+            auto pluginLocation = objectPlugin->getLocation();
+            std::string trapName;
+            TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_rewriter::kLyricAssemblerTrapName, trapName));
+            TU_RETURN_IF_NOT_OK (m_fragment->trap(pluginLocation, trapName, /* flags= */ 0));
             return {};
         }
 

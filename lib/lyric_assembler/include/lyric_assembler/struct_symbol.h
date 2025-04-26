@@ -15,13 +15,13 @@
 namespace lyric_assembler {
 
     struct StructSymbolPriv {
-        lyric_object::AccessType access;
-        lyric_object::DeriveType derive;
-        bool isAbstract;
-        bool isDeclOnly;
-        TypeHandle *structType;
-        StructSymbol *superStruct;
-        tu_uint32 allocatorTrap;
+        lyric_object::AccessType access = lyric_object::AccessType::Invalid;
+        lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
+        bool isAbstract = false;
+        bool isDeclOnly = false;
+        TypeHandle *structType = nullptr;
+        StructSymbol *superStruct = nullptr;
+        std::string allocatorTrap;
         absl::flat_hash_map<std::string, DataReference> members;
         absl::flat_hash_set<std::string> initializedMembers;
         absl::flat_hash_map<std::string, BoundMethod> methods;
@@ -92,10 +92,10 @@ namespace lyric_assembler {
          * struct constructor management
          */
         lyric_common::SymbolUrl getCtor() const;
-        tu_uint32 getAllocatorTrap() const;
-        tempo_utils::Result<lyric_assembler::CallSymbol *> declareCtor(
+        std::string getAllocatorTrap() const;
+        tempo_utils::Result<CallSymbol *> declareCtor(
             lyric_object::AccessType access,
-            tu_uint32 allocatorTrap = lyric_runtime::INVALID_ADDRESS_U32);
+            std::string allocatorTrap = {});
         tempo_utils::Status prepareCtor(ConstructableInvoker &invoker);
 
         /*
@@ -107,7 +107,7 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string, BoundMethod>::const_iterator methodsEnd() const;
         tu_uint32 numMethods() const;
 
-        tempo_utils::Result<lyric_assembler::CallSymbol *> declareMethod(
+        tempo_utils::Result<CallSymbol *> declareMethod(
             const std::string &name,
             lyric_object::AccessType access);
         tempo_utils::Status prepareMethod(

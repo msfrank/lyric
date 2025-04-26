@@ -62,29 +62,29 @@ lyric_importer::ModuleCache::getModule(const lyric_common::ModuleLocation &locat
     return {};
 }
 
-/**
- *
- * @param location
- * @param object
- * @param mode
- * @return
- */
-tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
-lyric_importer::ModuleCache::insertModule(
-    const lyric_common::ModuleLocation &location,
-    const lyric_object::LyricObject &object)
-{
-    absl::MutexLock locker(m_lock);
-
-    if (m_moduleImports.contains(location))
-        return m_moduleImports.at(location);
-
-    auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(location, object));
-    TU_RETURN_IF_NOT_OK(moduleImport->initialize());
-
-    m_moduleImports[location] = moduleImport;
-    return moduleImport;
-}
+// /**
+//  *
+//  * @param location
+//  * @param object
+//  * @param mode
+//  * @return
+//  */
+// tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
+// lyric_importer::ModuleCache::insertModule(
+//     const lyric_common::ModuleLocation &location,
+//     const lyric_object::LyricObject &object)
+// {
+//     absl::MutexLock locker(m_lock);
+//
+//     if (m_moduleImports.contains(location))
+//         return m_moduleImports.at(location);
+//
+//     auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(location, object));
+//     TU_RETURN_IF_NOT_OK(moduleImport->initialize());
+//
+//     m_moduleImports[location] = moduleImport;
+//     return moduleImport;
+// }
 
 tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
 lyric_importer::ModuleCache::importModule(const lyric_common::ModuleLocation &location)
@@ -115,8 +115,22 @@ lyric_importer::ModuleCache::importModule(const lyric_common::ModuleLocation &lo
         return ImporterStatus::forCondition(
             ImporterCondition::kModuleNotFound, "module {} not found",
             absoluteLocation.toString());
+    auto object = objectOption.getValue();
 
-    auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(absoluteLocation, objectOption.getValue()));
+    auto root = object.getObject();
+    std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin;
+    if (root.hasPlugin()) {
+        auto pluginLocation = root.getPlugin().getPluginLocation();
+        Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>> pluginOption;
+        TU_ASSIGN_OR_RETURN (pluginOption,
+            m_loader->loadPlugin(pluginLocation, lyric_object::PluginSpecifier::systemDefault()));
+        if (pluginOption.isEmpty())
+            return ImporterStatus::forCondition(ImporterCondition::kModuleNotFound,
+                "plugin {} not found", pluginLocation.toString());
+        plugin = pluginOption.getValue();
+    }
+
+    auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(absoluteLocation, object, plugin));
     TU_RETURN_IF_NOT_OK(moduleImport->initialize());
 
     m_moduleImports[absoluteLocation] = moduleImport;

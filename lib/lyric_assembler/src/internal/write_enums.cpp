@@ -139,11 +139,17 @@ write_enum(
         sealedSubtypes.push_back(sealedSubtype);
     }
 
+    tu_uint32 allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
+    auto trapName = enumSymbol->getAllocatorTrap();
+    if (!trapName.empty()) {
+        TU_ASSIGN_OR_RETURN (allocatorTrap, writer.getTrapNumber(trapName));
+    }
+
     // add enum descriptor
     enums_vector.push_back(lyo1::CreateEnumDescriptor(buffer, fullyQualifiedName,
         superenumIndex, enumType, enumFlags,
         buffer.CreateVector(members), buffer.CreateVector(methods), buffer.CreateVector(impls),
-        enumSymbol->getAllocatorTrap(), ctorCall, buffer.CreateVector(sealedSubtypes)));
+        allocatorTrap, ctorCall, buffer.CreateVector(sealedSubtypes)));
 
     return {};
 }

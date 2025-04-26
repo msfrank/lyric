@@ -800,10 +800,13 @@ lyric_assembler::CodeFragment::constructNew(AbstractSymbol *newSymbol, tu_uint16
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::trap(tu_uint32 trapNumber, tu_uint8 flags)
+lyric_assembler::CodeFragment::trap(
+    const lyric_common::ModuleLocation &pluginLocation,
+    std::string_view trapName,
+    tu_uint8 flags)
 {
     Statement statement;
-    statement.instruction = std::make_shared<TrapInstruction>(trapNumber, flags);
+    statement.instruction = std::make_shared<TrapInstruction>(pluginLocation, trapName, flags);
     m_statements.push_back(std::move(statement));
     return {};
 }

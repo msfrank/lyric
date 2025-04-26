@@ -23,19 +23,10 @@ lyric_rewriter::AllocatorTrapMacro::rewriteDefinition(
             "expected 1 argument for AllocatorTrap macro");
     auto *arg0 = macroCallNode->getChild(0);
 
-    std::string literalValue;
-    TU_RETURN_IF_NOT_OK (arg0->parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue));
-    lyric_parser::BaseType base;
-    TU_RETURN_IF_NOT_OK (arg0->parseAttr(lyric_parser::kLyricAstBaseType, base));
+    std::string trapName;
+    TU_RETURN_IF_NOT_OK (arg0->parseAttr(lyric_parser::kLyricAstLiteralValue, trapName));
 
-    tu_int64 i64;
-    TU_ASSIGN_OR_RETURN (i64, lyric_parser::parse_integer_literal(literalValue, base));
-    if (i64 < 0 || i64 > std::numeric_limits<tu_uint32>::max())
-        return RewriterStatus::forCondition(RewriterCondition::kSyntaxError,
-            "trap number is out of range");
-    auto allocatorTrapNumber = static_cast<tu_uint32>(i64);
-
-    TU_RETURN_IF_NOT_OK (definitionNode->putAttr(kLyricAssemblerAllocatorTrapNumber, allocatorTrapNumber));
+    TU_RETURN_IF_NOT_OK (definitionNode->putAttr(kLyricAssemblerTrapName, trapName));
 
     return {};
 }

@@ -118,7 +118,10 @@ namespace lyric_assembler {
         tempo_utils::Status constructNew(AbstractSymbol *newSymbol, tu_uint16 placement, tu_uint8 flags);
 
         // trap instruction
-        tempo_utils::Status trap(tu_uint32 trapNumber, tu_uint8 flags);
+        tempo_utils::Status trap(
+            const lyric_common::ModuleLocation &pluginLocation,
+            std::string_view trapName,
+            tu_uint8 flags);
 
         // return instruction
         tempo_utils::Status returnToCaller();

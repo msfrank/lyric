@@ -17,7 +17,7 @@ namespace lyric_compiler {
     declare_enum_default_init(
         const DefEnum *defenum,
         lyric_assembler::EnumSymbol *enumSymbol,
-        tu_uint32 allocatorTrap,
+        const std::string &allocatorTrap,
         lyric_assembler::SymbolCache *symbolCache,
         lyric_typing::TypeSystem *typeSystem);
 
@@ -25,7 +25,7 @@ namespace lyric_compiler {
     declare_enum_init(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::EnumSymbol *enumSymbol,
-        tu_uint32 allocatorTrap,
+        const std::string &allocatorTrap,
         lyric_typing::TypeSystem *typeSystem);
 
     tempo_utils::Result<Member>

@@ -5,8 +5,7 @@
 
 namespace lyric_rewriter {
 
-    extern const tempo_utils::UInt32Attr kLyricAssemblerTrapNumber;
-    extern const tempo_utils::UInt32Attr kLyricAssemblerAllocatorTrapNumber;
+    extern const tempo_utils::StringAttr kLyricAssemblerTrapName;
 }
 
 #endif // LYRIC_REWRITER_ASSEMBLER_ATTRS_H

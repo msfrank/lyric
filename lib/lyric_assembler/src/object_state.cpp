@@ -137,7 +137,7 @@ lyric_assembler::ObjectState::createRoot(const lyric_common::ModuleLocation &pre
 }
 
 tempo_utils::Status
-lyric_assembler::ObjectState::load(const lyric_object::LyricObject &object)
+lyric_assembler::ObjectState::load()
 {
     if (m_root != nullptr)
         return logAndContinue(AssemblerCondition::kAssemblerInvariant,
@@ -146,12 +146,8 @@ lyric_assembler::ObjectState::load(const lyric_object::LyricObject &object)
 
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
 
-    // if object is specified then insert it into local cache, otherwise import module from location
-    if (!object.isValid()) {
-        TU_ASSIGN_OR_RETURN (moduleImport, m_localModuleCache->importModule(m_location));
-    } else {
-        TU_ASSIGN_OR_RETURN (moduleImport, m_localModuleCache->insertModule(m_location, object));
-    }
+    // import module from the location specified in the object state
+    TU_ASSIGN_OR_RETURN (moduleImport, m_localModuleCache->importModule(m_location));
     auto root = moduleImport->getObject().getObject();
 
     // determine the prelude location from the object

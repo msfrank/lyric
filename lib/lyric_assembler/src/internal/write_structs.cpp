@@ -141,11 +141,17 @@ write_struct(
         sealedSubtypes.push_back(sealedSubtype);
     }
 
+    tu_uint32 allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
+    auto trapName = structSymbol->getAllocatorTrap();
+    if (!trapName.empty()) {
+        TU_ASSIGN_OR_RETURN (allocatorTrap, writer.getTrapNumber(trapName));
+    }
+
     // add struct descriptor
     structs_vector.push_back(lyo1::CreateStructDescriptor(buffer, fullyQualifiedName,
         superstructIndex, structType, structFlags,
         buffer.CreateVector(members), buffer.CreateVector(methods), buffer.CreateVector(impls),
-        structSymbol->getAllocatorTrap(), ctorCall, buffer.CreateVector(sealedSubtypes)));
+        allocatorTrap, ctorCall, buffer.CreateVector(sealedSubtypes)));
 
     return {};
 }

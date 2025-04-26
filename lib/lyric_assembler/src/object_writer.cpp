@@ -305,6 +305,40 @@ lyric_assembler::ObjectWriter::getTypeOffset(const lyric_common::TypeDef &typeDe
     return entry->second;
 }
 
+tempo_utils::Result<tu_uint32>
+lyric_assembler::ObjectWriter::getTrapNumber(
+    const lyric_common::ModuleLocation &pluginLocation,
+    std::string_view trapName) const
+{
+    auto *plugin = m_state->objectPlugin();
+    if (plugin == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid object plugin");
+    if (pluginLocation != plugin->getLocation())
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "unexpected plugin location {} for trap {}",
+            pluginLocation.toString(), trapName);
+    auto trapNumber = plugin->lookupTrap(trapName);
+    if (trapNumber == lyric_object::INVALID_ADDRESS_U32)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid trap {}", trapName);
+    return trapNumber;
+}
+
+tempo_utils::Result<tu_uint32>
+lyric_assembler::ObjectWriter::getTrapNumber(std::string_view trapName) const
+{
+    auto *plugin = m_state->objectPlugin();
+    if (plugin == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid object plugin");
+    auto trapNumber = plugin->lookupTrap(trapName);
+    if (trapNumber == lyric_object::INVALID_ADDRESS_U32)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid trap {}", trapName);
+    return trapNumber;
+}
+
 std::vector<lyric_assembler::SymbolDefinition>::const_iterator
 lyric_assembler::ObjectWriter::symbolDefinitionsBegin() const
 {

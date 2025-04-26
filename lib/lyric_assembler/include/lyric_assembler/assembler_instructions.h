@@ -479,7 +479,7 @@ namespace lyric_assembler {
 
     class TrapInstruction: public AbstractInstruction {
     public:
-        TrapInstruction(tu_uint32 trapNumber, tu_uint8 flags);
+        TrapInstruction(const lyric_common::ModuleLocation &pluginLocation, std::string_view trapName, tu_uint8 flags);
         InstructionType getType() const override;
         tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
@@ -491,7 +491,8 @@ namespace lyric_assembler {
             tu_uint16 &patchOffset) const override;
         std::string toString() const override;
     private:
-        tu_uint32 m_trapNumber;
+        lyric_common::ModuleLocation m_pluginLocation;
+        std::string m_trapName;
         tu_uint8 m_flags;
     };
 

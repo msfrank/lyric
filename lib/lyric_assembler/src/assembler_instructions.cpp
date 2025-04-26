@@ -1456,10 +1456,16 @@ lyric_assembler::NewInstruction::toString() const
         " flags=", m_flags);
 }
 
-lyric_assembler::TrapInstruction::TrapInstruction(tu_uint32 trapNumber, tu_uint8 flags)
-    : m_trapNumber(trapNumber),
+lyric_assembler::TrapInstruction::TrapInstruction(
+    const lyric_common::ModuleLocation &pluginLocation,
+    std::string_view trapName,
+    tu_uint8 flags)
+    : m_pluginLocation(pluginLocation),
+      m_trapName(trapName),
       m_flags(flags)
 {
+    TU_ASSERT (m_pluginLocation.isValid());
+    TU_ASSERT (!m_trapName.empty());
 }
 
 lyric_assembler::InstructionType
@@ -1483,13 +1489,15 @@ lyric_assembler::TrapInstruction::apply(
     tu_uint32 &targetId,
     tu_uint16 &patchOffset) const
 {
-    return bytecodeBuilder.trap(m_trapNumber, m_flags);
+    tu_uint32 trapNumber;
+    TU_ASSIGN_OR_RETURN (trapNumber, writer.getTrapNumber(m_pluginLocation, m_trapName));
+    return bytecodeBuilder.trap(trapNumber, m_flags);
 }
 
 std::string
 lyric_assembler::TrapInstruction::toString() const
 {
-    return absl::StrCat("Trap: trapNumber=", m_trapNumber, " flags=", m_flags);
+    return absl::StrCat("Trap: trapName=", m_trapName, " flags=", m_flags);
 }
 
 lyric_assembler::InstructionType

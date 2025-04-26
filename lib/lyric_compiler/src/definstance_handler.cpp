@@ -66,10 +66,10 @@ lyric_compiler::DefInstanceHandler::before(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
 
     // get allocator trap
-    tu_uint32 allocatorTrapNumber = lyric_object::INVALID_ADDRESS_U32;
-    if (node->hasAttr(lyric_rewriter::kLyricAssemblerAllocatorTrapNumber)) {
+    std::string allocatorTrap;
+    if (node->hasAttr(lyric_rewriter::kLyricAssemblerTrapName)) {
         TU_RETURN_IF_NOT_OK (node->parseAttr(
-            lyric_rewriter::kLyricAssemblerAllocatorTrapNumber, allocatorTrapNumber));
+            lyric_rewriter::kLyricAssemblerTrapName, allocatorTrap));
     }
 
     // FIXME: get abstract flag from node
@@ -146,7 +146,7 @@ lyric_compiler::DefInstanceHandler::before(
 
     // declare instance init
     TU_ASSIGN_OR_RETURN (m_definstance.initCall, declare_instance_default_init(
-        &m_definstance, m_definstance.instanceSymbol, allocatorTrapNumber, symbolCache, typeSystem));
+        &m_definstance, m_definstance.instanceSymbol, allocatorTrap, symbolCache, typeSystem));
 
     // declare methods
     for (auto &defNode : defNodes) {

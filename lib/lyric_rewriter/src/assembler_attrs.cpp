@@ -2,8 +2,5 @@
 #include <lyric_rewriter/assembler_attrs.h>
 #include <lyric_schema/assembler_schema.h>
 
-const tempo_utils::UInt32Attr lyric_rewriter::kLyricAssemblerTrapNumber(
-    &lyric_schema::kLyricAssemblerTrapNumberProperty);
-
-const tempo_utils::UInt32Attr lyric_rewriter::kLyricAssemblerAllocatorTrapNumber(
-    &lyric_schema::kLyricAssemblerAllocatorTrapNumberProperty);
+const tempo_utils::StringAttr lyric_rewriter::kLyricAssemblerTrapName(
+    &lyric_schema::kLyricAssemblerTrapNameProperty);

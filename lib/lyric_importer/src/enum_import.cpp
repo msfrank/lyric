@@ -17,7 +17,7 @@ namespace lyric_importer {
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
         absl::flat_hash_map<lyric_common::TypeDef,ImplImport *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
-        tu_uint32 allocator;
+        std::string allocator;
     };
 }
 
@@ -184,10 +184,10 @@ lyric_importer::EnumImport::numSealedTypes()
 bool
 lyric_importer::EnumImport::hasAllocator()
 {
-    return m_priv->allocator != lyric_object::INVALID_ADDRESS_U32;
+    return !m_priv->allocator.empty();
 }
 
-tu_uint32
+std::string
 lyric_importer::EnumImport::getAllocator()
 {
     return m_priv->allocator;
@@ -304,7 +304,24 @@ lyric_importer::EnumImport::load()
         priv->sealedTypes.insert(sealedType->getTypeDef());
     }
 
-    priv->allocator = enumWalker.getAllocator();
+    auto trapNumber = enumWalker.getAllocator();
+    if (trapNumber != lyric_object::INVALID_ADDRESS_U32) {
+        auto plugin = moduleImport->getPlugin();
+        if (plugin == nullptr)
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import enum at index {} in module {}; invalid allocator trap",
+                    m_enumOffset, location.toString()));
+        auto *trap = plugin->getTrap(trapNumber);
+        if (trap == nullptr)
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import enum at index {} in module {}; invalid allocator trap",
+                    m_enumOffset, location.toString()));
+        priv->allocator = trap->name;
+    }
 
     m_priv = std::move(priv);
 }
