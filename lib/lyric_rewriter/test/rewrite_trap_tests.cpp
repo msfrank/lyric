@@ -19,7 +19,7 @@ TEST(RewriteTrap, TrapInBlock)
 
     auto parseResult = parser.parseModule(R"(
         @{
-            Trap(0)
+            Trap("FOO_TRAP")
         }
     )", {}, recorder);
 
@@ -41,11 +41,11 @@ TEST(RewriteTrap, TrapInBlock)
     ASSERT_EQ (1, macroCallNode.numChildren());
 
     auto arg0Node = macroCallNode.getChild(0);
-    ASSERT_TRUE (arg0Node.isClass(lyric_schema::kLyricAstIntegerClass));
+    ASSERT_TRUE (arg0Node.isClass(lyric_schema::kLyricAstStringClass));
 
     std::string literalValue;
     ASSERT_THAT (arg0Node.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
-    ASSERT_EQ ("0", literalValue);
+    ASSERT_EQ ("FOO_TRAP", literalValue);
 
     lyric_rewriter::RewriterOptions options;
     auto loader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
@@ -73,7 +73,7 @@ TEST(RewriteTrap, TrapInBlock)
     ASSERT_EQ (1, trapNode.numAttrs());
     ASSERT_EQ (0, trapNode.numChildren());
 
-    tu_uint32 trapNumber;
-    ASSERT_THAT (trapNode.parseAttr(lyric_rewriter::kLyricAssemblerTrapNumber, trapNumber), tempo_test::IsOk());
-    ASSERT_EQ (0, trapNumber);
+    std::string trapName;
+    ASSERT_THAT (trapNode.parseAttr(lyric_rewriter::kLyricAssemblerTrapName, trapName), tempo_test::IsOk());
+    ASSERT_EQ ("FOO_TRAP", trapName);
 }

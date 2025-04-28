@@ -75,7 +75,7 @@ lyric_build::internal::SymbolizeModuleTask::configure(const ConfigStore *config)
     // add dependency on parse_module
     m_parseTarget = TaskKey("parse_module", taskId.getId());
 
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<std::string>
@@ -85,16 +85,11 @@ lyric_build::internal::SymbolizeModuleTask::configureTask(
 {
     auto key = getKey();
     auto merged = config->merge({}, {}, {{getId(), getParams()}});
-
-    auto status = configure(&merged);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (configure(&merged));
 
     // try to fetch the content at the specified url
-    auto fetchResourceResult = virtualFilesystem->fetchResource(m_sourceUrl);
-    if (fetchResourceResult.isStatus())
-        return fetchResourceResult.getStatus();
-    auto resourceOption = fetchResourceResult.getResult();
+    Option<Resource> resourceOption;
+    TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(m_sourceUrl));
 
     // fail the task if the resource was not found
     if (resourceOption.isEmpty())
@@ -133,10 +128,10 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
     auto generation = cache->loadTrace(parseTrace);
     ArtifactId parseArtifact(generation, parseHash, m_sourceUrl);
-    auto loadContentResult = cache->loadContentFollowingLinks(parseArtifact);
-    if (loadContentResult.isStatus())
-        return loadContentResult.getStatus();
-    lyric_parser::LyricArchetype archetype(loadContentResult.getResult());
+
+    std::shared_ptr<const tempo_utils::ImmutableBytes> content;
+    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(parseArtifact));
+    lyric_parser::LyricArchetype archetype(content);
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
@@ -197,7 +192,7 @@ lyric_build::internal::SymbolizeModuleTask::runTask(
     BuildState *buildState)
 {
     auto status = symbolizeModule(taskHash, depStates, buildState);
-    return Option<tempo_utils::Status>(status);
+    return Option(status);
 }
 
 lyric_build::BaseTask *

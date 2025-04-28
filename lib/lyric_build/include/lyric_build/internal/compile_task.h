@@ -36,6 +36,10 @@ namespace lyric_build::internal {
         tempo_utils::Status configure(
             const ConfigStore *config,
             AbstractFilesystem *virtualFilesystem);
+        tempo_utils::Status compile(
+            const std::string &taskHash,
+            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+            BuildState *generation);
     };
 
     BaseTask *new_compile_task(

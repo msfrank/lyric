@@ -85,7 +85,7 @@ lyric_build::internal::AnalyzeModuleTask::configure(const ConfigStore *config)
         m_symbolizeTarget,
     };
 
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<std::string>
@@ -95,15 +95,11 @@ lyric_build::internal::AnalyzeModuleTask::configureTask(
 {
     auto merged = config->merge({}, {}, {{getId(), getParams()}});
 
-    auto status = configure(&merged);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (configure(&merged));
 
     // try to fetch the content at the specified url
-    auto fetchResourceResult = virtualFilesystem->fetchResource(m_sourceUrl);
-    if (fetchResourceResult.isStatus())
-        return fetchResourceResult.getStatus();
-    auto resourceOption = fetchResourceResult.getResult();
+    Option<Resource> resourceOption;
+    TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(m_sourceUrl));
 
     // fail the task if the resource was not found
     if (resourceOption.isEmpty())
@@ -141,14 +137,14 @@ lyric_build::internal::AnalyzeModuleTask::symbolizeImports(
     TraceId symbolizeTrace(symbolizeHash, m_symbolizeTarget.getDomain(), m_symbolizeTarget.getId());
     auto generation = cache->loadTrace(symbolizeTrace);
     ArtifactId symbolizeArtifact(generation, symbolizeHash, m_sourceUrl);
-    auto loadContentResult = cache->loadContentFollowingLinks(symbolizeArtifact);
-    if (loadContentResult.isStatus())
-        return loadContentResult.getStatus();
-    lyric_object::LyricObject module(loadContentResult.getResult());
-    auto object = module.getObject();
+
+    std::shared_ptr<const tempo_utils::ImmutableBytes> content;
+    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(symbolizeArtifact));
+    lyric_object::LyricObject module(content);
 
     // check for any imports from modules in the src directory
     absl::flat_hash_set<TaskKey> symbolizeTargets;
+    auto object = module.getObject();
     for (int i = 0; i < object.numImports(); i++) {
         auto import_ = object.getImport(i);
         auto location = import_.getImportLocation();
@@ -167,7 +163,7 @@ lyric_build::internal::AnalyzeModuleTask::symbolizeImports(
 
     m_analyzeTargets.insert(symbolizeTargets.cbegin(), symbolizeTargets.cend());
 
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -186,10 +182,10 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
     auto generation = cache->loadTrace(parseTrace);
     ArtifactId parseArtifact(generation, parseHash, m_sourceUrl);
-    auto loadContentResult = cache->loadContentFollowingLinks(parseArtifact);
-    if (loadContentResult.isStatus())
-        return loadContentResult.getStatus();
-    lyric_parser::LyricArchetype archetype(loadContentResult.getResult());
+
+    std::shared_ptr<const tempo_utils::ImmutableBytes> content;
+    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(parseArtifact));
+    lyric_parser::LyricArchetype archetype(content);
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
@@ -212,14 +208,10 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     }
     auto object = scanResult.getResult();
 
-    tempo_utils::Status status;
-
     // store the outline object content in the cache
     ArtifactId outlineArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourceUrl);
     auto outlineBytes = object.bytesView();
-    status = cache->storeContent(outlineArtifact, outlineBytes);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (cache->storeContent(outlineArtifact, outlineBytes));
 
     // generate the install path
     std::filesystem::path outlineInstallPath = generate_install_path(
@@ -239,13 +231,11 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,
             "failed to store metadata for {}", outlineArtifact.toString());
     }
-    status = cache->storeMetadata(outlineArtifact, toMetadataResult.getResult());
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(outlineArtifact, toMetadataResult.getResult()));
 
     TU_LOG_INFO << "stored outline at " << outlineArtifact;
 
-    return BuildStatus::ok();
+    return {};
 }
 
 Option<tempo_utils::Status>

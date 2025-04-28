@@ -33,6 +33,10 @@ namespace lyric_build::internal {
         absl::flat_hash_set<TaskKey> m_buildTargets;
 
         tempo_utils::Status configure(const ConfigStore *config);
+        tempo_utils::Status build(
+            const std::string &taskHash,
+            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+            BuildState *buildState);
     };
 
     BaseTask *new_build_task(

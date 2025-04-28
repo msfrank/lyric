@@ -75,7 +75,7 @@ lyric_build::internal::RewriteModuleTask::configure(const ConfigStore *config)
     // add dependency on parse_module
     m_parseTarget = TaskKey("parse_module", taskId.getId());
 
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<std::string>
@@ -85,16 +85,11 @@ lyric_build::internal::RewriteModuleTask::configureTask(
 {
     auto key = getKey();
     auto merged = config->merge({}, {}, {{getId(), getParams()}});
-
-    auto status = configure(&merged);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (configure(&merged));
 
     // try to fetch the content at the specified url
-    auto fetchResourceResult = virtualFilesystem->fetchResource(m_sourceUrl);
-    if (fetchResourceResult.isStatus())
-        return fetchResourceResult.getStatus();
-    auto resourceOption = fetchResourceResult.getResult();
+    Option<Resource> resourceOption;
+    TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(m_sourceUrl));
 
     // fail the task if the resource was not found
     if (resourceOption.isEmpty())
@@ -117,16 +112,15 @@ lyric_build::internal::RewriteModuleTask::checkDependencies()
     return absl::flat_hash_set<TaskKey>({m_parseTarget});
 }
 
-Option<tempo_utils::Status>
-lyric_build::internal::RewriteModuleTask::runTask(
+tempo_utils::Status
+lyric_build::internal::RewriteModuleTask::rewriteModule(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
 {
     if (!depStates.contains(m_parseTarget))
-        return Option<tempo_utils::Status>(
-            BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                "missing state for dependent task {}", m_parseTarget.toString()));
+        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+            "missing state for dependent task {}", m_parseTarget.toString());
 
     // get the archetype artifact from the cache
     auto cache = buildState->getCache();
@@ -134,10 +128,10 @@ lyric_build::internal::RewriteModuleTask::runTask(
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
     auto generation = cache->loadTrace(parseTrace);
     ArtifactId parseArtifact(generation, parseHash, m_sourceUrl);
-    auto loadContentResult = cache->loadContentFollowingLinks(parseArtifact);
-    if (loadContentResult.isStatus())
-        return Option<tempo_utils::Status>(loadContentResult.getStatus());
-    lyric_parser::LyricArchetype archetype(loadContentResult.getResult());
+
+    std::shared_ptr<const tempo_utils::ImmutableBytes> content;
+    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(parseArtifact));
+    lyric_parser::LyricArchetype archetype(content);
 
     auto span = getSpan();
 
@@ -145,11 +139,11 @@ lyric_build::internal::RewriteModuleTask::runTask(
     lyric_rewriter::LyricRewriter rewriter(m_rewriterOptions);
 
     // configure loader
-    auto createDependencyLoaderResult = DependencyLoader::create(depStates, cache);
-    if (createDependencyLoaderResult.isStatus())
-        return Option(createDependencyLoaderResult.getStatus());
+    std::shared_ptr<DependencyLoader> dependencyLoader;
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache));
+
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
-    loaderChain.push_back(createDependencyLoaderResult.getResult());
+    loaderChain.push_back(dependencyLoader);
     loaderChain.push_back(buildState->getLoaderChain());
     auto loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
 
@@ -162,20 +156,15 @@ lyric_build::internal::RewriteModuleTask::runTask(
         archetype, m_sourceUrl, macroDriver, traceDiagnostics());
     if (rewriteModuleResult.isStatus()) {
         span->logStatus(rewriteModuleResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
-        return Option<tempo_utils::Status>(
-            BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                "failed to rewrite source {}", m_sourceUrl.toString()));
+        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+            "failed to rewrite source {}", m_sourceUrl.toString());
     }
     auto rewritten = rewriteModuleResult.getResult();
-
-    tempo_utils::Status status;
 
     // store the rewritten archetype content in the build cache
     ArtifactId rewrittenArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourceUrl);
     auto rewrittenBytes = rewritten.bytesView();
-    status = cache->storeContent(rewrittenArtifact, rewrittenBytes);
-    if (!status.isOk())
-        return Option<tempo_utils::Status>(status);
+    TU_RETURN_IF_NOT_OK (cache->storeContent(rewrittenArtifact, rewrittenBytes));
 
     // generate the install path
     std::filesystem::path rewrittenInstallPath = generate_install_path(
@@ -191,17 +180,24 @@ lyric_build::internal::RewriteModuleTask::runTask(
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
         span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
-        return Option<tempo_utils::Status>(
-            BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                "failed to store metadata for {}", rewrittenArtifact.toString()));
+        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+            "failed to store metadata for {}", rewrittenArtifact.toString());
     }
-    status = cache->storeMetadata(rewrittenArtifact, toMetadataResult.getResult());
-    if (!status.isOk())
-        return Option<tempo_utils::Status>(status);
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(rewrittenArtifact, toMetadataResult.getResult()));
 
     TU_LOG_V << "stored rewritten archetype at " << rewrittenArtifact;
 
-    return Option<tempo_utils::Status>(BuildStatus::ok());
+    return {};
+}
+
+Option<tempo_utils::Status>
+lyric_build::internal::RewriteModuleTask::runTask(
+    const std::string &taskHash,
+    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+    BuildState *buildState)
+{
+    auto status = rewriteModule(taskHash, depStates, buildState);
+    return Option(status);
 }
 
 lyric_build::BaseTask *

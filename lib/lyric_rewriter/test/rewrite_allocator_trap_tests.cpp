@@ -19,7 +19,7 @@ TEST(RewriteAllocatorTrap, AllocatorTrapOnClass)
     auto recorder = tempo_tracing::TraceRecorder::create();
 
     auto parseResult = parser.parseModule(R"(
-        @AllocatorTrap(0)
+        @AllocatorTrap("FOO_ALLOC")
         defclass Foo {
         }
     )", {}, recorder);
@@ -47,11 +47,11 @@ TEST(RewriteAllocatorTrap, AllocatorTrapOnClass)
     ASSERT_EQ (1, macroCallNode.numChildren());
 
     auto arg0Node = macroCallNode.getChild(0);
-    ASSERT_TRUE (arg0Node.isClass(lyric_schema::kLyricAstIntegerClass));
+    ASSERT_TRUE (arg0Node.isClass(lyric_schema::kLyricAstStringClass));
 
     std::string literalValue;
     ASSERT_THAT (arg0Node.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
-    ASSERT_EQ ("0", literalValue);
+    ASSERT_EQ ("FOO_ALLOC", literalValue);
 
     lyric_rewriter::RewriterOptions options;
     auto loader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
@@ -78,7 +78,7 @@ TEST(RewriteAllocatorTrap, AllocatorTrapOnClass)
     ASSERT_TRUE (defclassNode.isClass(lyric_schema::kLyricAstDefClassClass));
     ASSERT_EQ (0, defclassNode.numChildren());
 
-    tu_uint32 allocatorTrapNumber;
-    ASSERT_THAT (defclassNode.parseAttr(lyric_rewriter::kLyricAssemblerAllocatorTrapNumber, allocatorTrapNumber), tempo_test::IsOk());
-    ASSERT_EQ (0, allocatorTrapNumber);
+    std::string trapName;
+    ASSERT_THAT (defclassNode.parseAttr(lyric_rewriter::kLyricAssemblerTrapName, trapName), tempo_test::IsOk());
+    ASSERT_EQ ("FOO_ALLOC", trapName);
 }

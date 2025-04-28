@@ -44,14 +44,12 @@ lyric_build::internal::CompileTask::configure(
     //
 
     // determine the set of compile targets
-    auto listResourcesResult = virtualFilesystem->listResourcesRecursively(m_baseUrl,
+    ResourceList resourceList;
+    TU_ASSIGN_OR_RETURN (resourceList, virtualFilesystem->listResourcesRecursively(m_baseUrl,
         [](const std::filesystem::path &p) {
             return p.extension() == lyric_common::kSourceFileDotSuffix;
         },
-        {});
-    if (listResourcesResult.isStatus())
-        return listResourcesResult.getStatus();
-    auto resourceList = listResourcesResult.getResult();
+        {}));
     for (auto &sourceUrl : resourceList.resources) {
         m_compileTargets.insert(TaskKey("compile_module", sourceUrl.toString()));
     }
@@ -62,7 +60,7 @@ lyric_build::internal::CompileTask::configure(
 
     TU_LOG_INFO << "compile targets:" << m_compileTargets;
 
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<std::string>
@@ -71,10 +69,7 @@ lyric_build::internal::CompileTask::configureTask(
     AbstractFilesystem *virtualFilesystem)
 {
     auto merged = config->merge({}, {}, {{getId(), getParams()}});
-
-    auto status = configure(&merged, virtualFilesystem);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (configure(&merged, virtualFilesystem));
     return TaskHasher::uniqueHash();
 }
 
@@ -84,8 +79,8 @@ lyric_build::internal::CompileTask::checkDependencies()
     return m_compileTargets;
 }
 
-Option<tempo_utils::Status>
-lyric_build::internal::CompileTask::runTask(
+tempo_utils::Status
+lyric_build::internal::CompileTask::compile(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -98,32 +93,37 @@ lyric_build::internal::CompileTask::runTask(
 
         // if the target state is not completed, then fail the task
         if (taskState.getStatus() != TaskState::Status::COMPLETED)
-            return Option<tempo_utils::Status>(
-                BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                    "dependent task {} did not complete", taskKey.toString()));
+            return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+                "dependent task {} did not complete", taskKey.toString());
 
         auto hash = taskState.getHash();
         if (hash.empty())
-            return Option<tempo_utils::Status>(
-                BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                    "dependent task {} has invalid hash", taskKey.toString()));
+            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "dependent task {} has invalid hash", taskKey.toString());
 
         TraceId artifactTrace(hash, taskKey.getDomain(), taskKey.getId());
         auto generation = cache->loadTrace(artifactTrace);
-        auto findTargetArtifactsResult = cache->findArtifacts(generation, hash, {}, {});
-        if (findTargetArtifactsResult.isStatus())
-            return Option<tempo_utils::Status>(findTargetArtifactsResult.getStatus());
-        auto targetArtifacts = findTargetArtifactsResult.getResult();
+
+        std::vector<ArtifactId> targetArtifacts;
+        TU_ASSIGN_OR_RETURN (targetArtifacts, cache->findArtifacts(generation, hash, {}, {}));
 
         for (const auto &srcId : targetArtifacts) {
             ArtifactId dstId(getGeneration(), taskHash, srcId.getLocation());
-            auto status = cache->linkArtifact(dstId, srcId);
-            if (status.notOk())
-                return Option<tempo_utils::Status>(status);
+            TU_RETURN_IF_NOT_OK (cache->linkArtifact(dstId, srcId));
         }
     }
 
-    return Option<tempo_utils::Status>(BuildStatus::ok());
+    return {};
+}
+
+Option<tempo_utils::Status>
+lyric_build::internal::CompileTask::runTask(
+    const std::string &taskHash,
+    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+    BuildState *buildState)
+{
+    auto status = compile(taskHash, depStates, buildState);
+    return Option(status);
 }
 
 lyric_build::BaseTask *

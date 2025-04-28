@@ -55,10 +55,7 @@ lyric_build::internal::OrchestrateTask::configureTask(
     AbstractFilesystem *virtualFilesystem)
 {
     auto merged = config->merge({}, {}, {{getId(), getParams()}});
-
-    auto status = configure(&merged);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (configure(&merged));
     return TaskHasher::uniqueHash();
 }
 
@@ -68,8 +65,8 @@ lyric_build::internal::OrchestrateTask::checkDependencies()
     return m_orchestrateTargets;
 }
 
-Option<tempo_utils::Status>
-lyric_build::internal::OrchestrateTask::runTask(
+tempo_utils::Status
+lyric_build::internal::OrchestrateTask::orchestrate(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -82,33 +79,37 @@ lyric_build::internal::OrchestrateTask::runTask(
 
         // if the target state is not completed, then fail the task
         if (taskState.getStatus() != TaskState::Status::COMPLETED)
-            return Option<tempo_utils::Status>(
-                BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                    "dependent task {} did not complete", taskKey.toString()));
+            return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+                "dependent task {} did not complete", taskKey.toString());
 
         auto hash = taskState.getHash();
         if (hash.empty())
-            return Option<tempo_utils::Status>(
-                BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                    "dependent task {} has invalid hash", taskKey.toString()));
+            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "dependent task {} has invalid hash", taskKey.toString());
 
         TraceId artifactTrace(hash, taskKey.getDomain(), taskKey.getId());
         auto generation = cache->loadTrace(artifactTrace);
-        auto findTargetArtifactsResult = cache->findArtifacts(generation, hash, {}, {});
-        if (findTargetArtifactsResult.isStatus())
-            return Option<tempo_utils::Status>(
-                findTargetArtifactsResult.getStatus());
-        auto targetArtifacts = findTargetArtifactsResult.getResult();
+
+        std::vector<ArtifactId> targetArtifacts;
+        TU_ASSIGN_OR_RETURN (targetArtifacts, cache->findArtifacts(generation, hash, {}, {}));
 
         for (const auto &srcId : targetArtifacts) {
             ArtifactId dstId(getGeneration(), taskHash, srcId.getLocation());
-            auto status = cache->linkArtifact(dstId, srcId);
-            if (status.notOk())
-                return Option<tempo_utils::Status>(status);
+            TU_RETURN_IF_NOT_OK (cache->linkArtifact(dstId, srcId));
         }
     }
 
-    return Option<tempo_utils::Status>(BuildStatus::ok());
+    return {};
+}
+
+Option<tempo_utils::Status>
+lyric_build::internal::OrchestrateTask::runTask(
+    const std::string &taskHash,
+    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+    BuildState *buildState)
+{
+    auto status = orchestrate(taskHash, depStates, buildState);
+    return Option(status);
 }
 
 lyric_build::BaseTask *

@@ -39,6 +39,10 @@ namespace lyric_build::internal {
         lyric_common::ModuleLocation m_mainLocation;
 
         tempo_utils::Status configure(const ConfigStore *config);
+        tempo_utils::Status package(
+            const std::string &taskHash,
+            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+            BuildState *generation);
     };
 
     BaseTask *new_package_task(

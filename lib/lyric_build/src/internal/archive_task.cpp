@@ -86,10 +86,7 @@ lyric_build::internal::ArchiveTask::configureTask(
     AbstractFilesystem *virtualFilesystem)
 {
     auto merged = config->merge({}, {}, {{getId(), getParams()}});
-
-    auto status = configure(&merged);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (configure(&merged));
     return TaskHasher::uniqueHash();
 }
 

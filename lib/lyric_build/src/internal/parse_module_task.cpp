@@ -48,7 +48,7 @@ lyric_build::internal::ParseModuleTask::configure(const ConfigStore *config)
     // config below comes only from the task section, it is not resolved from domain or global sections
     //
 
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<std::string>
@@ -57,16 +57,11 @@ lyric_build::internal::ParseModuleTask::configureTask(
     AbstractFilesystem *virtualFilesystem)
 {
     auto merged = config->merge({}, {}, {{getId(), getParams()}});
-
-    auto status = configure(&merged);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (configure(&merged));
 
     // try to fetch the content at the specified url
-    auto fetchResourceResult = virtualFilesystem->fetchResource(m_sourceUrl);
-    if (fetchResourceResult.isStatus())
-        return fetchResourceResult.getStatus();
-    auto resourceOption = fetchResourceResult.getResult();
+    Option<Resource> resourceOption;
+    TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(m_sourceUrl));
 
     // fail the task if the resource was not found
     if (resourceOption.isEmpty())
@@ -92,9 +87,8 @@ lyric_build::internal::ParseModuleTask::checkDependencies()
     return absl::flat_hash_set<TaskKey>();
 }
 
-
-Option<tempo_utils::Status>
-lyric_build::internal::ParseModuleTask::runTask(
+tempo_utils::Status
+lyric_build::internal::ParseModuleTask::parseModule(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -102,10 +96,8 @@ lyric_build::internal::ParseModuleTask::runTask(
     auto cache = buildState->getCache();
     auto virtualFilesystem = buildState->getVirtualFilesystem();
 
-    auto loadResourceResult = virtualFilesystem->loadResource(m_resourceId);
-    if (loadResourceResult.isStatus())
-        return Option(loadResourceResult.getStatus());
-    auto bytes = loadResourceResult.getResult();
+    std::shared_ptr<const tempo_utils::ImmutableBytes> bytes;
+    TU_ASSIGN_OR_RETURN (bytes, virtualFilesystem->loadResource(m_resourceId));
 
     auto span = getSpan();
 
@@ -118,9 +110,8 @@ lyric_build::internal::ParseModuleTask::runTask(
 
     if (parseResult.isStatus()) {
         span->logStatus(parseResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
-        return Option<tempo_utils::Status>(
-            BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                "failed to parse source from {}", m_sourceUrl.toString()));
+        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+            "failed to parse source from {}", m_sourceUrl.toString());
     }
     auto archetype = parseResult.getResult();
 
@@ -140,18 +131,15 @@ lyric_build::internal::ParseModuleTask::runTask(
 
     if (rewriteResult.isStatus()) {
         span->logStatus(parseResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
-        return Option<tempo_utils::Status>(
-            BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                "failed to rewrite source from {}", m_sourceUrl.toString()));
+        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+            "failed to rewrite source from {}", m_sourceUrl.toString());
     }
     archetype = rewriteResult.getResult();
 
     // store the archetype content in the build cache
     ArtifactId archetypeArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourceUrl);
     auto archetypeBytes = archetype.bytesView();
-    auto storeContentStatus = cache->storeContent(archetypeArtifact, archetypeBytes);
-    if (!storeContentStatus.isOk())
-        return Option<tempo_utils::Status>(storeContentStatus);
+    TU_RETURN_IF_NOT_OK (cache->storeContent(archetypeArtifact, archetypeBytes));
 
     // generate the install path
     std::filesystem::path archetypeInstallPath = generate_install_path(
@@ -167,17 +155,24 @@ lyric_build::internal::ParseModuleTask::runTask(
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
         span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
-        return Option<tempo_utils::Status>(
-            BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                "failed to store metadata for {}", archetypeArtifact.toString()));
+        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+            "failed to store metadata for {}", archetypeArtifact.toString());
     }
-    auto storeMetadataStatus = cache->storeMetadata(archetypeArtifact, toMetadataResult.getResult());
-    if (!storeMetadataStatus.isOk())
-        return Option<tempo_utils::Status>(storeMetadataStatus);
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(archetypeArtifact, toMetadataResult.getResult()));
 
     TU_LOG_V << "stored archetype at " << archetypeArtifact;
 
-    return Option<tempo_utils::Status>(BuildStatus::ok());
+    return {};
+}
+
+Option<tempo_utils::Status>
+lyric_build::internal::ParseModuleTask::runTask(
+    const std::string &taskHash,
+    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+    BuildState *buildState)
+{
+    auto status = parseModule(taskHash, depStates, buildState);
+    return Option(status);
 }
 
 lyric_build::BaseTask *

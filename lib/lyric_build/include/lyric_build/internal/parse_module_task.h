@@ -35,6 +35,10 @@ namespace lyric_build::internal {
         std::string m_resourceId;
 
         tempo_utils::Status configure(const ConfigStore *config);
+        tempo_utils::Status parseModule(
+            const std::string &taskHash,
+            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+            BuildState *generation);
     };
 
     BaseTask *new_parse_module_task(

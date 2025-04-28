@@ -39,6 +39,10 @@ namespace lyric_build::internal {
         TaskKey m_parseTarget;
 
         tempo_utils::Status configure(const ConfigStore *config);
+        tempo_utils::Status rewriteModule(
+            const std::string &taskHash,
+            const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+            BuildState *generation);
     };
 
     BaseTask *new_rewrite_module_task(

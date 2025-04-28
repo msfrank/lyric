@@ -16,7 +16,6 @@
 #include "string_traps.h"
 #include "url_traps.h"
 
-//const lyric_runtime::NativeTrap kPreludeTraps[] = {
 std::array<lyric_runtime::NativeTrap,46> kPreludeTraps = {{
     {bytes_at, "BytesAt", 0},
     { bytes_compare, "BytesCompare", 0 },

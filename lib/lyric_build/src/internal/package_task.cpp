@@ -93,7 +93,7 @@ lyric_build::internal::PackageTask::configure(const ConfigStore *config)
     TU_RETURN_IF_NOT_OK(parse_config(m_mainLocation, mainLocationParser,
         config->getTaskNode(taskId, "mainLocation")));
 
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<std::string>
@@ -102,10 +102,7 @@ lyric_build::internal::PackageTask::configureTask(
     AbstractFilesystem *virtualFilesystem)
 {
     auto merged = config->merge({}, {}, {{getId(), getParams()}});
-
-    auto status = configure(&merged);
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (configure(&merged));
 
     TaskHasher configHasher(getKey());
     std::vector<TaskId> packageTargets(m_packageTargets.cbegin(), m_packageTargets.cend());
@@ -187,29 +184,24 @@ write_module_artifacts(
 
         // make intermediate directories if necessary
         lyric_packaging::EntryPath directoryPath = entryPath.getInit();
-        auto makeDirectoryResult = packageWriter.makeDirectory(directoryPath, true);
-        if (makeDirectoryResult.isStatus())
-            return makeDirectoryResult.getStatus();
-        auto directoryAddress = makeDirectoryResult.getResult();
+        lyric_packaging::EntryAddress directoryAddress;
+        TU_ASSIGN_OR_RETURN (directoryAddress, packageWriter.makeDirectory(directoryPath, true));
+
+        // load the object content
+        std::shared_ptr<const tempo_utils::ImmutableBytes> content;
+        TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(artifactId));
 
         // write the object content to the package
-        auto loadContentResult = cache->loadContentFollowingLinks(artifactId);
-        if (loadContentResult.isStatus())
-            return loadContentResult.getStatus();
-        auto content = loadContentResult.getResult();
-
         std::filesystem::path filename(entryPath.getFilename());
         filename.replace_extension(lyric_common::kObjectFileDotSuffix);
-        auto putFileResult = packageWriter.putFile(directoryAddress, filename.string(), content);
-        if (putFileResult.isStatus())
-            return putFileResult.getStatus();
+        TU_RETURN_IF_STATUS (packageWriter.putFile(directoryAddress, filename.string(), content));
     }
 
-    return tempo_utils::Status();
+    return {};
 }
 
-Option<tempo_utils::Status>
-lyric_build::internal::PackageTask::runTask(
+tempo_utils::Status
+lyric_build::internal::PackageTask::package(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
@@ -229,33 +221,28 @@ lyric_build::internal::PackageTask::runTask(
 
         // if the target state is not completed, then fail the task
         if (taskState.getStatus() != TaskState::Status::COMPLETED)
-            return Option<tempo_utils::Status>(
-                BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                    "dependent task {} did not complete", taskKey.toString()));
+            return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+                "dependent task {} did not complete", taskKey.toString());
 
         auto hash = taskState.getHash();
         if (hash.empty())
-            return Option<tempo_utils::Status>(
-                BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                    "dependent task {} has invalid hash", taskKey.toString()));
+            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "dependent task {} has invalid hash", taskKey.toString());
 
         TraceId artifactTrace(hash, taskKey.getDomain(), taskKey.getId());
         auto generation = cache->loadTrace(artifactTrace);
-        auto findTargetArtifactsResult = cache->findArtifacts(generation, hash, {}, {});
-        if (findTargetArtifactsResult.isStatus())
-            return Option<tempo_utils::Status>(findTargetArtifactsResult.getStatus());
-        auto targetArtifacts = findTargetArtifactsResult.getResult();
+
+        std::vector<ArtifactId> targetArtifacts;
+        TU_ASSIGN_OR_RETURN (targetArtifacts, cache->findArtifacts(generation, hash, {}, {}));
 
         for (const auto &artifactId : targetArtifacts) {
             if (packageArtifacts.contains(artifactId))
-                return Option<tempo_utils::Status>(
-                    BuildStatus::forCondition(BuildCondition::kTaskFailure,
-                        "duplicate artifact for {}", artifactId.toString()));
+                return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+                    "duplicate artifact for {}", artifactId.toString());
 
-            auto loadMetadataResult = cache->loadMetadataFollowingLinks(artifactId);
-            if (loadMetadataResult.isStatus())
-                return Option<tempo_utils::Status>(loadMetadataResult.getStatus());
-            packageArtifacts[artifactId] = loadMetadataResult.getResult();
+            LyricMetadata metadata;
+            TU_ASSIGN_OR_RETURN (metadata, cache->loadMetadataFollowingLinks(artifactId));
+            packageArtifacts[artifactId] = metadata;
         }
     }
 
@@ -263,28 +250,20 @@ lyric_build::internal::PackageTask::runTask(
     lyric_packaging::PackageWriter packageWriter(options);
     tempo_utils::Status status;
 
-    status = packageWriter.configure();
-    if (status.notOk())
-        return Option<tempo_utils::Status>(status);
+    TU_RETURN_IF_NOT_OK (packageWriter.configure());
 
     // construct the package
-    status = write_module_artifacts(cache, m_baseUrl, packageArtifacts, packageWriter);
-    if (status.notOk())
-        return Option<tempo_utils::Status>(status);
+    TU_RETURN_IF_NOT_OK (write_module_artifacts(cache, m_baseUrl, packageArtifacts, packageWriter));
 
     // if specified, set main location attr on package entry
     if (m_mainLocation.isValid()) {
-        status = packageWriter.putPackageAttr(
-            lyric_packaging::kLyricPackagingMainLocation, m_mainLocation);
-        if (status.notOk())
-            return Option<tempo_utils::Status>(status);
+        TU_RETURN_IF_NOT_OK (packageWriter.putPackageAttr(
+            lyric_packaging::kLyricPackagingMainLocation, m_mainLocation));
     }
 
     // serialize the package
-    auto toBytesResult = packageWriter.toBytes();
-    if (toBytesResult.isStatus())
-        return Option<tempo_utils::Status>(toBytesResult.getStatus());
-    auto packageBytes = toBytesResult.getResult();
+    std::shared_ptr<const tempo_utils::ImmutableBytes> packageBytes;
+    TU_ASSIGN_OR_RETURN (packageBytes, packageWriter.toBytes());
 
     lyric_packaging::PackageSpecifier specifier(m_packageName, m_packageDomain,
         m_versionMajor, m_versionMinor, m_versionPatch);
@@ -293,27 +272,32 @@ lyric_build::internal::PackageTask::runTask(
 
     // store the object content in the build cache
     ArtifactId packageArtifact(buildState->getGeneration().getUuid(), taskHash, packageUrl);
-    status = cache->storeContent(packageArtifact, packageBytes);
-    if (status.notOk())
-        return Option(status);
+    TU_RETURN_IF_NOT_OK (cache->storeContent(packageArtifact, packageBytes));
 
     // serialize the object metadata
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kPackageContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
-    auto toMetadataResult = writer.toMetadata();
-    if (toMetadataResult.isStatus())
-        return Option(toMetadataResult.getStatus());
+    LyricMetadata metadata;
+    TU_ASSIGN_OR_RETURN (metadata, writer.toMetadata());
 
     // store the object metadata in the build cache
-    status = cache->storeMetadata(packageArtifact, toMetadataResult.getResult());
-    if (status.notOk())
-        return Option(status);
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(packageArtifact, metadata));
 
     TU_LOG_V << "stored package " << packagePath << " at " << packageArtifact;
 
-    return Option<tempo_utils::Status>(BuildStatus::ok());
+    return {};
+}
+
+Option<tempo_utils::Status>
+lyric_build::internal::PackageTask::runTask(
+    const std::string &taskHash,
+    const absl::flat_hash_map<TaskKey,TaskState> &depStates,
+    BuildState *buildState)
+{
+    auto status = package(taskHash, depStates, buildState);
+    return Option(status);
 }
 
 lyric_build::BaseTask *
