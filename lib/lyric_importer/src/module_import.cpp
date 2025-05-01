@@ -19,24 +19,28 @@
 
 
 lyric_importer::ModuleImport::ModuleImport(
-    const lyric_common::ModuleLocation &importLocation,
-    const lyric_object::LyricObject &importObject,
+    const lyric_common::ModuleLocation &objectLocation,
+    const lyric_object::LyricObject &object,
+    const lyric_common::ModuleLocation &pluginLocation,
     std::shared_ptr<const lyric_runtime::AbstractPlugin> importPlugin)
-    : m_location(importLocation),
-      m_object(importObject),
+    : m_objectLocation(objectLocation),
+      m_object(object),
+      m_pluginLocation(pluginLocation),
       m_plugin(std::move(importPlugin))
 {
-    TU_ASSERT (m_location.isValid());
+    TU_ASSERT (m_objectLocation.isValid());
     TU_ASSERT (m_object.isValid());
 }
 
 tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
 lyric_importer::ModuleImport::create(
-    const lyric_common::ModuleLocation &importLocation,
-    const lyric_object::LyricObject &importObject,
-    std::shared_ptr<const lyric_runtime::AbstractPlugin> importPlugin)
+    const lyric_common::ModuleLocation &objectLocation,
+    const lyric_object::LyricObject &object,
+    const lyric_common::ModuleLocation &pluginLocation,
+    std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin)
 {
-    auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(importLocation, importObject, importPlugin));
+    auto moduleImport = std::shared_ptr<ModuleImport>(
+        new ModuleImport(objectLocation, object, pluginLocation, plugin));
     TU_RETURN_IF_NOT_OK (moduleImport->initialize());
     return moduleImport;
 }
@@ -125,15 +129,21 @@ lyric_importer::ModuleImport::initialize()
 }
 
 lyric_common::ModuleLocation
-lyric_importer::ModuleImport::getLocation() const
+lyric_importer::ModuleImport::getObjectLocation() const
 {
-    return m_location;
+    return m_objectLocation;
 }
 
 lyric_object::LyricObject
 lyric_importer::ModuleImport::getObject() const
 {
     return m_object;
+}
+
+lyric_common::ModuleLocation
+lyric_importer::ModuleImport::getPluginLocation() const
+{
+    return m_pluginLocation;
 }
 
 std::shared_ptr<const lyric_runtime::AbstractPlugin>

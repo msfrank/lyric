@@ -57,7 +57,7 @@ lyric_assembler::ObjectRoot::initialize(std::shared_ptr<lyric_importer::ModuleIm
     m_entryCall = entryCall.release();
 
     auto preludeObject = preludeImport->getObject().getObject();
-    auto preludeLocation = preludeImport->getLocation();
+    auto preludeLocation = preludeImport->getObjectLocation();
 
     // import all prelude symbols into the root block
     for (int i = 0; i < preludeObject.numSymbols(); i++) {

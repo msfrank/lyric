@@ -4,12 +4,14 @@
 
 lyric_runtime::BytecodeSegment::BytecodeSegment(
     uint32_t segmentIndex,
-    const lyric_common::ModuleLocation &location,
+    const lyric_common::ModuleLocation &objectLocation,
     const lyric_object::LyricObject &object,
+    const lyric_common::ModuleLocation &pluginLocation,
     std::shared_ptr<const AbstractPlugin> plugin)
     : m_segmentIndex(segmentIndex),
-      m_location(location),
+      m_objectLocation(objectLocation),
       m_object(object),
+      m_pluginLocation(pluginLocation),
       m_plugin(plugin),
       m_data(nullptr),
       m_actionDescriptors(this, lyric_object::LinkageSection::Action),
@@ -25,6 +27,7 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
       m_structDescriptors(this, lyric_object::LinkageSection::Struct),
       m_types(this)
 {
+    TU_ASSERT (m_objectLocation.isValid());
     TU_ASSERT (m_object.isValid());
     m_bytecodeSize = m_object.getBytecodeSize();
     m_bytecode = m_object.getBytecodeData();
@@ -56,15 +59,27 @@ lyric_runtime::BytecodeSegment::~BytecodeSegment()
 }
 
 lyric_common::ModuleLocation
-lyric_runtime::BytecodeSegment::getLocation() const
+lyric_runtime::BytecodeSegment::getObjectLocation() const
 {
-    return m_location;
+    return m_objectLocation;
 }
 
 lyric_object::LyricObject
 lyric_runtime::BytecodeSegment::getObject() const
 {
     return m_object;
+}
+
+lyric_common::ModuleLocation
+lyric_runtime::BytecodeSegment::getPluginLocation() const
+{
+    return m_pluginLocation;
+}
+
+std::shared_ptr<const lyric_runtime::AbstractPlugin>
+lyric_runtime::BytecodeSegment::getPlugin() const
+{
+    return m_plugin;
 }
 
 uint32_t

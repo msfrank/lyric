@@ -66,9 +66,9 @@ lyric_importer::BindingImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
     auto bindingWalker = moduleImport->getObject().getObject().getBinding(m_bindingOffset);
-    priv->symbolUrl = lyric_common::SymbolUrl(location, bindingWalker.getSymbolPath());
+    priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, bindingWalker.getSymbolPath());
 
     priv->access = bindingWalker.getAccess();
     if (priv->access == lyric_object::AccessType::Invalid)
@@ -76,7 +76,7 @@ lyric_importer::BindingImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import binding at index {} in module {}; invalid access type",
-                m_bindingOffset, location.toString()));
+                m_bindingOffset, objectLocation.toString()));
 
     priv->bindingType = moduleImport->getType(
         bindingWalker.getBindingType().getDescriptorOffset());

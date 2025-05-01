@@ -20,14 +20,18 @@ namespace lyric_runtime {
     public:
         BytecodeSegment(
             tu_uint32 segmentIndex,
-            const lyric_common::ModuleLocation &location,
+            const lyric_common::ModuleLocation &objectLocation,
             const lyric_object::LyricObject &object,
+            const lyric_common::ModuleLocation &pluginLocation,
             std::shared_ptr<const AbstractPlugin> plugin);
         ~BytecodeSegment();
 
         tu_uint32 getSegmentIndex() const;
-        lyric_common::ModuleLocation getLocation() const;
+        lyric_common::ModuleLocation getObjectLocation() const;
         lyric_object::LyricObject getObject() const;
+        lyric_common::ModuleLocation getPluginLocation() const;
+        std::shared_ptr<const AbstractPlugin> getPlugin() const;
+
         const tu_uint8 *getBytecodeData() const;
         tu_uint32 getBytecodeSize() const;
 
@@ -53,8 +57,9 @@ namespace lyric_runtime {
 
     private:
         tu_uint32 m_segmentIndex;
-        lyric_common::ModuleLocation m_location;
+        lyric_common::ModuleLocation m_objectLocation;
         lyric_object::LyricObject m_object;
+        lyric_common::ModuleLocation m_pluginLocation;
         std::shared_ptr<const AbstractPlugin> m_plugin;
         void *m_data;
 

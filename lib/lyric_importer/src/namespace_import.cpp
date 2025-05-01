@@ -81,9 +81,9 @@ lyric_importer::NamespaceImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
     auto namespaceWalker = moduleImport->getObject().getObject().getNamespace(m_namespaceOffset);
-    priv->symbolUrl = lyric_common::SymbolUrl(location, namespaceWalker.getSymbolPath());
+    priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, namespaceWalker.getSymbolPath());
 
     priv->isDeclOnly = namespaceWalker.isDeclOnly();
 
@@ -93,13 +93,13 @@ lyric_importer::NamespaceImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import namespace at index {} in module {}; invalid access type",
-                m_namespaceOffset, location.toString()));
+                m_namespaceOffset, objectLocation.toString()));
 
     if (namespaceWalker.hasSuperNamespace()) {
         switch (namespaceWalker.superNamespaceAddressType()) {
             case lyric_object::AddressType::Near:
                 priv->superNamespace = lyric_common::SymbolUrl(
-                    location, namespaceWalker.getNearSuperNamespace().getSymbolPath());
+                    objectLocation, namespaceWalker.getNearSuperNamespace().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 priv->superNamespace = namespaceWalker.getFarSuperNamespace().getLinkUrl();
@@ -109,7 +109,7 @@ lyric_importer::NamespaceImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import namespace at index {} in module {}; invalid super namespace",
-                        m_namespaceOffset, location.toString()));
+                        m_namespaceOffset, objectLocation.toString()));
         }
     }
 
@@ -118,7 +118,7 @@ lyric_importer::NamespaceImport::load()
 
     for (tu_uint32 i = 0; i < namespaceWalker.numSymbols(); i++) {
         auto symbol = namespaceWalker.getSymbol(i);
-        lyric_common::SymbolUrl symbolUrl(location, symbol.getSymbolPath());
+        lyric_common::SymbolUrl symbolUrl(objectLocation, symbol.getSymbolPath());
         priv->symbols.insert(std::move(symbolUrl));
     }
 

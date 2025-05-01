@@ -204,9 +204,9 @@ lyric_importer::StructImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
     auto structWalker = moduleImport->getObject().getObject().getStruct(m_structOffset);
-    priv->symbolUrl = lyric_common::SymbolUrl(location, structWalker.getSymbolPath());
+    priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, structWalker.getSymbolPath());
 
     priv->isAbstract = structWalker.isAbstract();
     priv->isDeclOnly = structWalker.isDeclOnly();
@@ -217,7 +217,7 @@ lyric_importer::StructImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import struct at index {} in module {}; invalid derive type",
-                m_structOffset, location.toString()));
+                m_structOffset, objectLocation.toString()));
 
     priv->access = structWalker.getAccess();
     if (priv->access == lyric_object::AccessType::Invalid)
@@ -225,7 +225,7 @@ lyric_importer::StructImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import struct at index {} in module {}; invalid access type",
-                m_structOffset, location.toString()));
+                m_structOffset, objectLocation.toString()));
 
     priv->structType = moduleImport->getType(
         structWalker.getStructType().getDescriptorOffset());
@@ -234,7 +234,7 @@ lyric_importer::StructImport::load()
         switch (structWalker.superStructAddressType()) {
             case lyric_object::AddressType::Near:
                 priv->superStruct = lyric_common::SymbolUrl(
-                    location, structWalker.getNearSuperStruct().getSymbolPath());
+                    objectLocation, structWalker.getNearSuperStruct().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 priv->superStruct = structWalker.getFarSuperStruct().getLinkUrl();
@@ -244,7 +244,7 @@ lyric_importer::StructImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import struct at index {} in module {}; invalid super struct",
-                        m_structOffset, location.toString()));
+                        m_structOffset, objectLocation.toString()));
         }
     }
 
@@ -253,7 +253,7 @@ lyric_importer::StructImport::load()
         lyric_common::SymbolUrl fieldUrl;
         switch (member.memberAddressType()) {
             case lyric_object::AddressType::Near:
-                fieldUrl = lyric_common::SymbolUrl(location, member.getNearField().getSymbolPath());
+                fieldUrl = lyric_common::SymbolUrl(objectLocation, member.getNearField().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 fieldUrl = member.getFarField().getLinkUrl();
@@ -263,7 +263,7 @@ lyric_importer::StructImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import struct at index {} in module {}; invalid member at index {}",
-                        m_structOffset, location.toString(), i));
+                        m_structOffset, objectLocation.toString(), i));
         }
         auto name = fieldUrl.getSymbolName();
         priv->members[name] = fieldUrl;
@@ -274,7 +274,7 @@ lyric_importer::StructImport::load()
         lyric_common::SymbolUrl callUrl;
         switch (method.methodAddressType()) {
             case lyric_object::AddressType::Near:
-                callUrl = lyric_common::SymbolUrl(location, method.getNearCall().getSymbolPath());
+                callUrl = lyric_common::SymbolUrl(objectLocation, method.getNearCall().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 callUrl = method.getFarCall().getLinkUrl();
@@ -284,7 +284,7 @@ lyric_importer::StructImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import struct at index {} in module {}; invalid method at index {}",
-                        m_structOffset, location.toString(), i));
+                        m_structOffset, objectLocation.toString(), i));
         }
         auto name = callUrl.getSymbolName();
         priv->methods[name] = callUrl;
@@ -312,14 +312,14 @@ lyric_importer::StructImport::load()
                 ImporterStatus::forCondition(
                     ImporterCondition::kImportError,
                     "cannot import struct at index {} in module {}; invalid allocator trap",
-                    m_structOffset, location.toString()));
+                    m_structOffset, objectLocation.toString()));
         auto *trap = plugin->getTrap(trapNumber);
         if (trap == nullptr)
             throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(
                     ImporterCondition::kImportError,
                     "cannot import struct at index {} in module {}; invalid allocator trap",
-                    m_structOffset, location.toString()));
+                    m_structOffset, objectLocation.toString()));
         priv->allocator = trap->name;
     }
 

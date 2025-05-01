@@ -204,9 +204,9 @@ lyric_importer::InstanceImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
     auto instanceWalker = moduleImport->getObject().getObject().getInstance(m_instanceOffset);
-    priv->symbolUrl = lyric_common::SymbolUrl(location, instanceWalker.getSymbolPath());
+    priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, instanceWalker.getSymbolPath());
 
     priv->isAbstract = instanceWalker.isAbstract();
     priv->isDeclOnly = instanceWalker.isDeclOnly();
@@ -217,7 +217,7 @@ lyric_importer::InstanceImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import instance at index {} in module {}; invalid derive type",
-                m_instanceOffset, location.toString()));
+                m_instanceOffset, objectLocation.toString()));
 
     priv->access = instanceWalker.getAccess();
     if (priv->access == lyric_object::AccessType::Invalid)
@@ -225,7 +225,7 @@ lyric_importer::InstanceImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import instance at index {} in module {}; invalid access type",
-                m_instanceOffset, location.toString()));
+                m_instanceOffset, objectLocation.toString()));
 
     priv->instanceType = moduleImport->getType(
         instanceWalker.getInstanceType().getDescriptorOffset());
@@ -234,7 +234,7 @@ lyric_importer::InstanceImport::load()
         switch (instanceWalker.superInstanceAddressType()) {
             case lyric_object::AddressType::Near:
                 priv->superInstance = lyric_common::SymbolUrl(
-                    location, instanceWalker.getNearSuperInstance().getSymbolPath());
+                    objectLocation, instanceWalker.getNearSuperInstance().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 priv->superInstance = instanceWalker.getFarSuperInstance().getLinkUrl();
@@ -244,7 +244,7 @@ lyric_importer::InstanceImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import instance at index {} in module {}; invalid super instance",
-                        m_instanceOffset, location.toString()));
+                        m_instanceOffset, objectLocation.toString()));
         }
     }
 
@@ -253,7 +253,7 @@ lyric_importer::InstanceImport::load()
         lyric_common::SymbolUrl fieldUrl;
         switch (member.memberAddressType()) {
             case lyric_object::AddressType::Near:
-                fieldUrl = lyric_common::SymbolUrl(location, member.getNearField().getSymbolPath());
+                fieldUrl = lyric_common::SymbolUrl(objectLocation, member.getNearField().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 fieldUrl = member.getFarField().getLinkUrl();
@@ -263,7 +263,7 @@ lyric_importer::InstanceImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import instance at index {} in module {}; invalid member at index {}",
-                        m_instanceOffset, location.toString(), i));
+                        m_instanceOffset, objectLocation.toString(), i));
         }
         auto name = fieldUrl.getSymbolName();
         priv->members[name] = fieldUrl;
@@ -274,7 +274,7 @@ lyric_importer::InstanceImport::load()
         lyric_common::SymbolUrl callUrl;
         switch (method.methodAddressType()) {
             case lyric_object::AddressType::Near:
-                callUrl = lyric_common::SymbolUrl(location, method.getNearCall().getSymbolPath());
+                callUrl = lyric_common::SymbolUrl(objectLocation, method.getNearCall().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 callUrl = method.getFarCall().getLinkUrl();
@@ -284,7 +284,7 @@ lyric_importer::InstanceImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import instance at index {} in module {}; invalid method at index {}",
-                        m_instanceOffset, location.toString(), i));
+                        m_instanceOffset, objectLocation.toString(), i));
         }
         auto name = callUrl.getSymbolName();
         priv->methods[name] = callUrl;
@@ -312,14 +312,14 @@ lyric_importer::InstanceImport::load()
                 ImporterStatus::forCondition(
                     ImporterCondition::kImportError,
                     "cannot import instance at index {} in module {}; invalid allocator trap",
-                    m_instanceOffset, location.toString()));
+                    m_instanceOffset, objectLocation.toString()));
         auto *trap = plugin->getTrap(trapNumber);
         if (trap == nullptr)
             throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(
                     ImporterCondition::kImportError,
                     "cannot import instance at index {} in module {}; invalid allocator trap",
-                    m_instanceOffset, location.toString()));
+                    m_instanceOffset, objectLocation.toString()));
         priv->allocator = trap->name;
     }
 

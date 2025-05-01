@@ -187,7 +187,7 @@ lyric_archiver::put_pending_proc(
     auto importUrl = callImport->getSymbolUrl();
 
     auto moduleImport = callImport->getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto location = moduleImport->getObjectLocation();
     auto object = moduleImport->getObject();
     auto plugin = moduleImport->getPlugin();
     auto call = object.getObject().getCall(callImport->getCallOffset());

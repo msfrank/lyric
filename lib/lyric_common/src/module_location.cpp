@@ -57,6 +57,18 @@ lyric_common::ModuleLocation::isValid() const
 }
 
 bool
+lyric_common::ModuleLocation::isAbsolute() const
+{
+    return m_location->isAbsolute();
+}
+
+bool
+lyric_common::ModuleLocation::isRelative() const
+{
+    return m_location->isRelative();
+}
+
+bool
 lyric_common::ModuleLocation::hasScheme() const
 {
     return m_location->hasScheme();
@@ -110,11 +122,28 @@ lyric_common::ModuleLocation::getModuleName() const
     return m_location->toPath().getLast().getPart();
 }
 
+lyric_common::ModuleLocation
+lyric_common::ModuleLocation::resolve(const ModuleLocation &rel) const
+{
+    auto &base = m_location;
+    auto &ref = rel.m_location;
+
+    if (!base->isAbsolute())
+        return {};
+    if (!ref->isRelative())
+        return {};
+
+    auto resolved = base->resolve(*ref);
+    if (!resolved.isValid())
+        return {};
+    return ModuleLocation(resolved);
+}
+
 std::string
 lyric_common::ModuleLocation::toString() const
 {
     if (!isValid())
-        return std::string();
+        return {};
     return m_location->toString();
 }
 

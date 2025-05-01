@@ -5,6 +5,7 @@ include(GoogleTest)
 # define unit tests
 
 set(LYRIC_COMMON_TEST_CASES
+    module_location_tests.cpp
     symbol_url_tests.cpp
     )
 

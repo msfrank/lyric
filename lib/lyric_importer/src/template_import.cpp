@@ -74,9 +74,9 @@ lyric_importer::TemplateImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
     auto templateWalker = moduleImport->getObject().getObject().getTemplate(m_templateOffset);
-    priv->templateUrl = lyric_common::SymbolUrl(location, templateWalker.getSymbolPath());
+    priv->templateUrl = lyric_common::SymbolUrl(objectLocation, templateWalker.getSymbolPath());
 
     if (templateWalker.hasSuperTemplate()) {
         priv->superTemplate = moduleImport->getTemplate(

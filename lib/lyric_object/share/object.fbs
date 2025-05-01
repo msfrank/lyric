@@ -516,7 +516,7 @@ enum ImportFlags : uint16 (bit_flags) {
 // object.
 
 table ImportDescriptor {
-    import_location: string;                    // string containing the location of the module
+    import_location: string;                    // string containing the location of the module (can be absolute or relative)
     hash_type: HashType = Invalid;              // hashing algorithm used for the import hash
     import_hash: [uint8];                       // content hash of imported module, or empty if hash type is NONE
     flags: ImportFlags;                         // bitfield containing import flags
@@ -566,8 +566,9 @@ enum PluginFlags : uint16 (bit_flags) {
 // referenced by the bytecode.
 
 table PluginDescriptor {
-    plugin_location: string;                    // string containing the location of the plugin. if empty then the
-                                                // module location is used for plugin resolution.
+    plugin_location: string;                    // string containing the location of the plugin relative to the
+                                                // location of the module. if empty then the module location is
+                                                // used for plugin resolution.
     hash_type: HashType = Invalid;              // hashing algorithm used for the plugin hash
     plugin_hash: [uint8];                       // content hash of plugin, or empty if hash type is NONE
     flags: PluginFlags;                         // bitfield containing plugin flags

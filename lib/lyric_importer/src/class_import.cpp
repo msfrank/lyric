@@ -213,9 +213,9 @@ lyric_importer::ClassImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
     auto classWalker = moduleImport->getObject().getObject().getClass(m_classOffset);
-    priv->symbolUrl = lyric_common::SymbolUrl(location, classWalker.getSymbolPath());
+    priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, classWalker.getSymbolPath());
 
     priv->isAbstract = classWalker.isAbstract();
     priv->isDeclOnly = classWalker.isDeclOnly();
@@ -226,7 +226,7 @@ lyric_importer::ClassImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import class at index {} in module {}; invalid derive type",
-                m_classOffset, location.toString()));
+                m_classOffset, objectLocation.toString()));
 
     priv->access = classWalker.getAccess();
     if (priv->access == lyric_object::AccessType::Invalid)
@@ -234,7 +234,7 @@ lyric_importer::ClassImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import class at index {} in module {}; invalid access type",
-                m_classOffset, location.toString()));
+                m_classOffset, objectLocation.toString()));
 
     priv->classType = moduleImport->getType(
         classWalker.getClassType().getDescriptorOffset());
@@ -250,7 +250,7 @@ lyric_importer::ClassImport::load()
         switch (classWalker.superClassAddressType()) {
             case lyric_object::AddressType::Near:
                 priv->superClass = lyric_common::SymbolUrl(
-                    location, classWalker.getNearSuperClass().getSymbolPath());
+                    objectLocation, classWalker.getNearSuperClass().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 priv->superClass = classWalker.getFarSuperClass().getLinkUrl();
@@ -260,7 +260,7 @@ lyric_importer::ClassImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import class at index {} in module {}; invalid super class",
-                        m_classOffset, location.toString()));
+                        m_classOffset, objectLocation.toString()));
         }
     }
 
@@ -269,7 +269,7 @@ lyric_importer::ClassImport::load()
         lyric_common::SymbolUrl fieldUrl;
         switch (member.memberAddressType()) {
             case lyric_object::AddressType::Near:
-                fieldUrl = lyric_common::SymbolUrl(location, member.getNearField().getSymbolPath());
+                fieldUrl = lyric_common::SymbolUrl(objectLocation, member.getNearField().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 fieldUrl = member.getFarField().getLinkUrl();
@@ -279,7 +279,7 @@ lyric_importer::ClassImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import class at index {} in module {}; invalid member at index {}",
-                        m_classOffset, location.toString(), i));
+                        m_classOffset, objectLocation.toString(), i));
         }
         auto name = fieldUrl.getSymbolName();
         priv->members[name] = fieldUrl;
@@ -290,7 +290,7 @@ lyric_importer::ClassImport::load()
         lyric_common::SymbolUrl callUrl;
         switch (method.methodAddressType()) {
             case lyric_object::AddressType::Near:
-                callUrl = lyric_common::SymbolUrl(location, method.getNearCall().getSymbolPath());
+                callUrl = lyric_common::SymbolUrl(objectLocation, method.getNearCall().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 callUrl = method.getFarCall().getLinkUrl();
@@ -300,7 +300,7 @@ lyric_importer::ClassImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import class at index {} in module {}; invalid method at index {}",
-                        m_classOffset, location.toString(), i));
+                        m_classOffset, objectLocation.toString(), i));
         }
         auto name = callUrl.getSymbolName();
         priv->methods[name] = callUrl;
@@ -328,14 +328,14 @@ lyric_importer::ClassImport::load()
                 ImporterStatus::forCondition(
                     ImporterCondition::kImportError,
                     "cannot import class at index {} in module {}; invalid allocator trap",
-                    m_classOffset, location.toString()));
+                    m_classOffset, objectLocation.toString()));
         auto *trap = plugin->getTrap(trapNumber);
         if (trap == nullptr)
             throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(
                     ImporterCondition::kImportError,
                     "cannot import class at index {} in module {}; invalid allocator trap",
-                    m_classOffset, location.toString()));
+                    m_classOffset, objectLocation.toString()));
         priv->allocator = trap->name;
     }
 

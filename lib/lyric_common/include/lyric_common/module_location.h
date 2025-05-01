@@ -22,6 +22,8 @@ namespace lyric_common {
         ModuleLocation &operator=(ModuleLocation &&other) noexcept;
 
         bool isValid() const;
+        bool isAbsolute() const;
+        bool isRelative() const;
 
         bool hasScheme() const;
         bool hasOrigin() const;
@@ -32,8 +34,9 @@ namespace lyric_common {
         tempo_utils::UrlOrigin getOrigin() const;
         tempo_utils::UrlAuthority getAuthority() const;
         tempo_utils::UrlPath getPath() const;
-
         std::string getModuleName() const;
+
+        ModuleLocation resolve(const ModuleLocation &rel) const;
 
         std::string toString() const;
         tempo_utils::Url toUrl() const;

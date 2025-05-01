@@ -161,9 +161,9 @@ lyric_importer::ExistentialImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
     auto existentialWalker = moduleImport->getObject().getObject().getExistential(m_existentialOffset);
-    priv->symbolUrl = lyric_common::SymbolUrl(location, existentialWalker.getSymbolPath());
+    priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, existentialWalker.getSymbolPath());
 
     priv->isDeclOnly = existentialWalker.isDeclOnly();
 
@@ -173,7 +173,7 @@ lyric_importer::ExistentialImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import existential at index {} in module {}; invalid derive type",
-                m_existentialOffset, location.toString()));
+                m_existentialOffset, objectLocation.toString()));
 
     priv->access = existentialWalker.getAccess();
     if (priv->access == lyric_object::AccessType::Invalid)
@@ -181,7 +181,7 @@ lyric_importer::ExistentialImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import existential at index {} in module {}; invalid access type",
-                m_existentialOffset, location.toString()));
+                m_existentialOffset, objectLocation.toString()));
 
     priv->existentialType = moduleImport->getType(
         existentialWalker.getExistentialType().getDescriptorOffset());
@@ -196,7 +196,7 @@ lyric_importer::ExistentialImport::load()
     if (existentialWalker.hasSuperExistential()) {
         switch (existentialWalker.superExistentialAddressType()) {
             case lyric_object::AddressType::Near:
-                priv->superExistential = lyric_common::SymbolUrl(location,
+                priv->superExistential = lyric_common::SymbolUrl(objectLocation,
                     existentialWalker.getNearSuperExistential().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
@@ -207,7 +207,7 @@ lyric_importer::ExistentialImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import existential at index {} in module {}; invalid super existential",
-                        m_existentialOffset, location.toString()));
+                        m_existentialOffset, objectLocation.toString()));
         }
     }
 
@@ -216,7 +216,7 @@ lyric_importer::ExistentialImport::load()
         lyric_common::SymbolUrl callUrl;
         switch (method.methodAddressType()) {
             case lyric_object::AddressType::Near:
-                callUrl = lyric_common::SymbolUrl(location, method.getNearCall().getSymbolPath());
+                callUrl = lyric_common::SymbolUrl(objectLocation, method.getNearCall().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 callUrl = method.getFarCall().getLinkUrl();
@@ -226,7 +226,7 @@ lyric_importer::ExistentialImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import existential at index {} in module {}; invalid method at index {}",
-                        m_existentialOffset, location.toString(), i));
+                        m_existentialOffset, objectLocation.toString(), i));
         }
         auto name = callUrl.getSymbolName();
         priv->methods[name] = callUrl;

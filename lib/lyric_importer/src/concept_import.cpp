@@ -160,9 +160,9 @@ lyric_importer::ConceptImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
     auto conceptWalker = moduleImport->getObject().getObject().getConcept(m_conceptOffset);
-    priv->symbolUrl = lyric_common::SymbolUrl(location, conceptWalker.getSymbolPath());
+    priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, conceptWalker.getSymbolPath());
 
     priv->isDeclOnly = conceptWalker.isDeclOnly();
 
@@ -172,7 +172,7 @@ lyric_importer::ConceptImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import concept at index {} in module {}; invalid derive type",
-                m_conceptOffset, location.toString()));
+                m_conceptOffset, objectLocation.toString()));
 
     priv->access = conceptWalker.getAccess();
     if (priv->access == lyric_object::AccessType::Invalid)
@@ -180,7 +180,7 @@ lyric_importer::ConceptImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import concept at index {} in module {}; invalid access type",
-                m_conceptOffset, location.toString()));
+                m_conceptOffset, objectLocation.toString()));
 
     priv->conceptType = moduleImport->getType(
         conceptWalker.getConceptType().getDescriptorOffset());
@@ -196,7 +196,7 @@ lyric_importer::ConceptImport::load()
         switch (conceptWalker.superConceptAddressType()) {
             case lyric_object::AddressType::Near:
                 priv->superConcept = lyric_common::SymbolUrl(
-                    location, conceptWalker.getNearSuperConcept().getSymbolPath());
+                    objectLocation, conceptWalker.getNearSuperConcept().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 priv->superConcept = conceptWalker.getFarSuperConcept().getLinkUrl();
@@ -206,7 +206,7 @@ lyric_importer::ConceptImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import concept at index {} in module {}; invalid super concept",
-                        m_conceptOffset, location.toString()));
+                        m_conceptOffset, objectLocation.toString()));
         }
     }
 
@@ -215,7 +215,7 @@ lyric_importer::ConceptImport::load()
         lyric_common::SymbolUrl actionUrl;
         switch (action.actionAddressType()) {
             case lyric_object::AddressType::Near:
-                actionUrl = lyric_common::SymbolUrl(location, action.getNearAction().getSymbolPath());
+                actionUrl = lyric_common::SymbolUrl(objectLocation, action.getNearAction().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 actionUrl = action.getFarAction().getLinkUrl();
@@ -225,7 +225,7 @@ lyric_importer::ConceptImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import concept at index {} in module {}; invalid action at index {}",
-                        m_conceptOffset, location.toString(), i));
+                        m_conceptOffset, objectLocation.toString(), i));
         }
         auto name = actionUrl.getSymbolName();
         priv->actions[name] = actionUrl;

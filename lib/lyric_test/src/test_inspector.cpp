@@ -83,13 +83,13 @@ frame_to_symbol_url(const lyric_runtime::CallCell &frame, lyric_runtime::Interpr
     auto *segment = state->segmentManager()->getSegment(frame.getCallSegment());
     if (segment == nullptr)
         return lyric_common::SymbolUrl();
-    auto location = segment->getLocation();
+    auto objectLocation = segment->getObjectLocation();
     auto object = segment->getObject().getObject();
     auto call = object.getCall(frame.getCallIndex());
     if (!call.isValid())
         return lyric_common::SymbolUrl();
-    auto path = call.getSymbolPath();
-    return lyric_common::SymbolUrl(location, path);
+    auto symbolPath = call.getSymbolPath();
+    return lyric_common::SymbolUrl(objectLocation, symbolPath);
 }
 
 std::string

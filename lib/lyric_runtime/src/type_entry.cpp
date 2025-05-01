@@ -34,7 +34,6 @@ lyric_common::TypeDef
 lyric_runtime::TypeEntry::getTypeDef() const
 {
     auto *segment = m_typeTable->getSegment();
-    auto location = segment->getLocation();
     auto object = segment->getObject().getObject();
     auto type = object.getType(m_index);
     return type.getTypeDef();

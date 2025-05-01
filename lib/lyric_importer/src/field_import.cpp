@@ -76,16 +76,16 @@ lyric_importer::FieldImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
     auto fieldWalker = moduleImport->getObject().getObject().getField(m_fieldOffset);
-    priv->symbolUrl = lyric_common::SymbolUrl(location, fieldWalker.getSymbolPath());
+    priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, fieldWalker.getSymbolPath());
 
     if (fieldWalker.getAccess() == lyric_object::AccessType::Invalid)
         throw tempo_utils::StatusException(
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import field at index {} in module {}; invalid access type",
-                m_fieldOffset, location.toString()));
+                m_fieldOffset, objectLocation.toString()));
     priv->access = fieldWalker.getAccess();
 
     priv->isVariable = fieldWalker.isVariable();
@@ -98,7 +98,7 @@ lyric_importer::FieldImport::load()
         switch (fieldWalker.initializerAddressType()) {
             case lyric_object::AddressType::Near: {
                 priv->initializer = lyric_common::SymbolUrl(
-                    location, fieldWalker.getNearInitializer().getSymbolPath());
+                    objectLocation, fieldWalker.getNearInitializer().getSymbolPath());
                 break;
             }
             case lyric_object::AddressType::Far: {
@@ -109,7 +109,7 @@ lyric_importer::FieldImport::load()
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
                         "cannot import field at index {} in module {}; invalid initializer",
-                        fieldWalker.getDescriptorOffset(), location.toString()));
+                        fieldWalker.getDescriptorOffset(), objectLocation.toString()));
         }
     }
 

@@ -91,7 +91,7 @@ lyric_importer::ModuleCache::importModule(const lyric_common::ModuleLocation &lo
 {
     absl::MutexLock locker(m_lock);
 
-    lyric_common::ModuleLocation absoluteLocation;
+    lyric_common::ModuleLocation objectLocation;
     if (!location.hasScheme()) {
         Option<lyric_common::ModuleLocation> resolvedOption;
         TU_ASSIGN_OR_RETURN (resolvedOption, m_loader->resolveModule(location));
@@ -99,28 +99,36 @@ lyric_importer::ModuleCache::importModule(const lyric_common::ModuleLocation &lo
             return ImporterStatus::forCondition(
                 ImporterCondition::kModuleNotFound, "{} could not be resolved to an absolute location",
                 location.toString());
-        absoluteLocation = resolvedOption.getValue();
+        objectLocation = resolvedOption.getValue();
     } else {
-        absoluteLocation = location;
+        objectLocation = location;
     }
 
-    auto entry = m_moduleImports.find(absoluteLocation);
+    auto entry = m_moduleImports.find(objectLocation);
     if (entry != m_moduleImports.cend())
         return entry->second;
 
-    auto loadModuleResult = m_loader->loadModule(absoluteLocation);
+    auto loadModuleResult = m_loader->loadModule(objectLocation);
     TU_RETURN_IF_STATUS(loadModuleResult);
     auto objectOption = loadModuleResult.getResult();
     if (objectOption.isEmpty())
         return ImporterStatus::forCondition(
             ImporterCondition::kModuleNotFound, "module {} not found",
-            absoluteLocation.toString());
+            objectLocation.toString());
     auto object = objectOption.getValue();
-
     auto root = object.getObject();
+
+    lyric_common::ModuleLocation pluginLocation;
     std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin;
     if (root.hasPlugin()) {
-        auto pluginLocation = root.getPlugin().getPluginLocation();
+        auto walker = root.getPlugin();
+
+        pluginLocation = walker.getPluginLocation();
+        if (pluginLocation.isValid()) {
+            pluginLocation = objectLocation.resolve(pluginLocation);
+        } else {
+            pluginLocation = objectLocation;
+        }
         Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>> pluginOption;
         TU_ASSIGN_OR_RETURN (pluginOption,
             m_loader->loadPlugin(pluginLocation, lyric_object::PluginSpecifier::systemDefault()));
@@ -130,10 +138,11 @@ lyric_importer::ModuleCache::importModule(const lyric_common::ModuleLocation &lo
         plugin = pluginOption.getValue();
     }
 
-    auto moduleImport = std::shared_ptr<ModuleImport>(new ModuleImport(absoluteLocation, object, plugin));
+    auto moduleImport = std::shared_ptr<ModuleImport>(
+        new ModuleImport(objectLocation, object, pluginLocation, plugin));
     TU_RETURN_IF_NOT_OK(moduleImport->initialize());
 
-    m_moduleImports[absoluteLocation] = moduleImport;
+    m_moduleImports[objectLocation] = moduleImport;
     return moduleImport;
 }
 

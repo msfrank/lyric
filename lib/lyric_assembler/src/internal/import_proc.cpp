@@ -550,9 +550,9 @@ lyric_assembler::internal::import_proc(
     auto *procCode = importedProc->procCode();
 
     ImportProcData data;
-    data.objectLocation = moduleImport->getLocation();
+    data.objectLocation = moduleImport->getObjectLocation();
     data.object = moduleImport->getObject();
-    data.pluginLocation = data.object.getObject().getPlugin().getPluginLocation();
+    data.pluginLocation = moduleImport->getPluginLocation();
     data.plugin = moduleImport->getPlugin();
     data.activation = activation;
     data.state = state;

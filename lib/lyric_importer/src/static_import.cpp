@@ -73,9 +73,9 @@ lyric_importer::StaticImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
     auto staticWalker = moduleImport->getObject().getObject().getStatic(m_staticOffset);
-    priv->symbolUrl = lyric_common::SymbolUrl(location, staticWalker.getSymbolPath());
+    priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, staticWalker.getSymbolPath());
 
     priv->isVariable = staticWalker.isVariable();
     priv->isDeclOnly = staticWalker.isDeclOnly();
@@ -86,14 +86,14 @@ lyric_importer::StaticImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import static at index {} in module {}; invalid access type",
-                m_staticOffset, location.toString()));
+                m_staticOffset, objectLocation.toString()));
 
     priv->staticType = moduleImport->getType(staticWalker.getStaticType().getDescriptorOffset());
 
     switch (staticWalker.initializerAddressType()) {
         case lyric_object::AddressType::Near: {
             priv->initializer = lyric_common::SymbolUrl(
-                location, staticWalker.getNearInitializer().getSymbolPath());
+                objectLocation, staticWalker.getNearInitializer().getSymbolPath());
             break;
         }
         case lyric_object::AddressType::Far: {
@@ -104,7 +104,7 @@ lyric_importer::StaticImport::load()
             throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
                     "cannot import static at index {} in module {}; invalid initializer",
-                    staticWalker.getDescriptorOffset(), location.toString()));
+                    staticWalker.getDescriptorOffset(), objectLocation.toString()));
     }
 
     m_priv = std::move(priv);

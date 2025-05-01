@@ -105,7 +105,7 @@ lyric_archiver::copy_type(
     auto moduleImport = typeImport->getModuleImport();
 
     CopyTypeData data;
-    data.location = moduleImport->getLocation();
+    data.location = moduleImport->getObjectLocation();
     data.targetNamespace = targetNamespace;
     data.importHash = importHash;
     data.symbolReferenceSet = &symbolReferenceSet;

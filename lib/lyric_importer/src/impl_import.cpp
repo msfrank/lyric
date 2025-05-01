@@ -79,11 +79,11 @@ lyric_importer::ImplImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
     auto implWalker = moduleImport->getObject().getObject().getImpl(m_implOffset);
 
     priv->isDeclOnly = implWalker.isDeclOnly();
-    priv->receiverUrl = lyric_common::SymbolUrl(location, implWalker.getReceiver().getSymbolPath());
+    priv->receiverUrl = lyric_common::SymbolUrl(objectLocation, implWalker.getReceiver().getSymbolPath());
 
     priv->implType = moduleImport->getType(
         implWalker.getImplType().getDescriptorOffset());
@@ -91,7 +91,7 @@ lyric_importer::ImplImport::load()
     switch (implWalker.implConceptAddressType()) {
         case lyric_object::AddressType::Near:
             priv->implConcept = lyric_common::SymbolUrl(
-                location, implWalker.getNearImplConcept().getSymbolPath());
+                objectLocation, implWalker.getNearImplConcept().getSymbolPath());
             break;
         case lyric_object::AddressType::Far:
             priv->implConcept = implWalker.getFarImplConcept().getLinkUrl();
@@ -101,7 +101,7 @@ lyric_importer::ImplImport::load()
                 ImporterStatus::forCondition(
                     ImporterCondition::kImportError,
                     "cannot import impl at index {} in module {}; invalid impl concept",
-                    m_implOffset, location.toString()));
+                    m_implOffset, objectLocation.toString()));
     }
 
     for (tu_uint8 i = 0; i < implWalker.numExtensions(); i++) {
@@ -112,7 +112,7 @@ lyric_importer::ImplImport::load()
         switch (extensionWalker.actionAddressType()) {
             case lyric_object::AddressType::Near:
                 extension.actionUrl = lyric_common::SymbolUrl(
-                    location, extensionWalker.getNearAction().getSymbolPath());
+                    objectLocation, extensionWalker.getNearAction().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 extension.actionUrl = extensionWalker.getFarAction().getLinkUrl();
@@ -122,13 +122,13 @@ lyric_importer::ImplImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import impl at index {} in module {}; invalid extension at index {}",
-                        m_implOffset, location.toString(), i));
+                        m_implOffset, objectLocation.toString(), i));
         }
 
         switch (extensionWalker.callAddressType()) {
             case lyric_object::AddressType::Near:
                 extension.callUrl = lyric_common::SymbolUrl(
-                    location, extensionWalker.getNearCall().getSymbolPath());
+                    objectLocation, extensionWalker.getNearCall().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 extension.callUrl = extensionWalker.getFarCall().getLinkUrl();
@@ -138,7 +138,7 @@ lyric_importer::ImplImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import impl at index {} in module {}; invalid extension at index {}",
-                        m_implOffset, location.toString(), i));
+                        m_implOffset, objectLocation.toString(), i));
         }
 
         auto name = extension.actionUrl.getSymbolName();

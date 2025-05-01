@@ -40,10 +40,10 @@ lyric_common::SymbolUrl
 lyric_runtime::DescriptorEntry::getSymbolUrl() const
 {
     auto *segment = m_descriptorTable->getSegment();
-    auto location = segment->getLocation();
+    auto objectLocation = segment->getObjectLocation();
     auto object = segment->getObject().getObject();
     auto symbolPath = object.getSymbolPath(m_descriptorTable->getLinkageSection(), m_index);
-    return lyric_common::SymbolUrl(location, symbolPath);
+    return lyric_common::SymbolUrl(objectLocation, symbolPath);
 }
 
 lyric_runtime::DescriptorTable::DescriptorTable(BytecodeSegment *segment, lyric_object::LinkageSection section)

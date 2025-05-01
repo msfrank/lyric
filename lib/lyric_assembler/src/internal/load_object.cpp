@@ -32,7 +32,7 @@ lyric_assembler::internal::find_system_bootstrap(
     return state->logAndContinue(AssemblerCondition::kAssemblerInvariant,
         tempo_tracing::LogSeverity::kError,
         "object {} is missing system bootstrap",
-        moduleImport->getLocation().toString());
+        moduleImport->getObjectLocation().toString());
 }
 
 tempo_utils::Status

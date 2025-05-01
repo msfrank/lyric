@@ -111,7 +111,7 @@ lyric_runtime::ImplTable::getType() const
 lyric_common::SymbolUrl
 lyric_runtime::ImplTable::getSymbolUrl() const
 {
-    auto location = m_segment->getLocation();
+    auto objectLocation = m_segment->getObjectLocation();
     auto object = m_segment->getObject().getObject();
 
     lyric_object::LinkageSection section;
@@ -136,7 +136,7 @@ lyric_runtime::ImplTable::getSymbolUrl() const
     }
 
     auto symbolPath = object.getSymbolPath(section, getDescriptorIndex());
-    return lyric_common::SymbolUrl(location, symbolPath);
+    return lyric_common::SymbolUrl(objectLocation, symbolPath);
 }
 
 lyric_object::LinkageSection
@@ -220,7 +220,7 @@ lyric_runtime::ExistentialTable::getParent() const
 lyric_common::SymbolUrl
 lyric_runtime::ExistentialTable::getSymbolUrl() const
 {
-    auto location = m_segment->getLocation();
+    auto objectLocation = m_segment->getObjectLocation();
     auto object = m_segment->getObject().getObject();
 
     lyric_object::LinkageSection section;
@@ -233,7 +233,7 @@ lyric_runtime::ExistentialTable::getSymbolUrl() const
     }
 
     auto symbolPath = object.getSymbolPath(section, getDescriptorIndex());
-    return lyric_common::SymbolUrl(location, symbolPath);
+    return lyric_common::SymbolUrl(objectLocation, symbolPath);
 }
 
 lyric_object::LinkageSection
@@ -319,7 +319,7 @@ lyric_runtime::ConceptTable::getParent() const
 lyric_common::SymbolUrl
 lyric_runtime::ConceptTable::getSymbolUrl() const
 {
-    auto location = m_segment->getLocation();
+    auto objectLocation = m_segment->getObjectLocation();
     auto object = m_segment->getObject().getObject();
 
     lyric_object::LinkageSection section;
@@ -332,7 +332,7 @@ lyric_runtime::ConceptTable::getSymbolUrl() const
     }
 
     auto symbolPath = object.getSymbolPath(section, getDescriptorIndex());
-    return lyric_common::SymbolUrl(location, symbolPath);
+    return lyric_common::SymbolUrl(objectLocation, symbolPath);
 }
 
 lyric_object::LinkageSection
@@ -396,7 +396,7 @@ lyric_runtime::VirtualTable::getSegment() const
 lyric_common::SymbolUrl
 lyric_runtime::VirtualTable::getSymbolUrl() const
 {
-    auto location = m_segment->getLocation();
+    auto objectLocation = m_segment->getObjectLocation();
     auto object = m_segment->getObject().getObject();
 
     lyric_object::LinkageSection section;
@@ -418,7 +418,7 @@ lyric_runtime::VirtualTable::getSymbolUrl() const
     }
 
     auto symbolPath = object.getSymbolPath(section, getDescriptorIndex());
-    return lyric_common::SymbolUrl(location, symbolPath);
+    return lyric_common::SymbolUrl(objectLocation, symbolPath);
 }
 
 lyric_runtime::DataCell

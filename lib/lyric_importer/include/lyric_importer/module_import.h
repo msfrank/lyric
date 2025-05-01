@@ -35,12 +35,14 @@ namespace lyric_importer {
         ModuleImport() = delete;
 
         static tempo_utils::Result<std::shared_ptr<ModuleImport>> create(
-            const lyric_common::ModuleLocation &importLocation,
-            const lyric_object::LyricObject &importObject,
-            std::shared_ptr<const lyric_runtime::AbstractPlugin> importPlugin = {});
+            const lyric_common::ModuleLocation &objectLocation,
+            const lyric_object::LyricObject &object,
+            const lyric_common::ModuleLocation &pluginLocation = {},
+            std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin = {});
 
-        lyric_common::ModuleLocation getLocation() const;
+        lyric_common::ModuleLocation getObjectLocation() const;
         lyric_object::LyricObject getObject() const;
+        lyric_common::ModuleLocation getPluginLocation() const;
         std::shared_ptr<const lyric_runtime::AbstractPlugin> getPlugin() const;
 
         ActionImport *getAction(tu_uint32 offset) const;
@@ -60,8 +62,9 @@ namespace lyric_importer {
         TemplateImport *getTemplate(tu_uint32 offset) const;
 
     private:
-        lyric_common::ModuleLocation m_location;
+        lyric_common::ModuleLocation m_objectLocation;
         lyric_object::LyricObject m_object;
+        lyric_common::ModuleLocation m_pluginLocation;
         std::shared_ptr<const lyric_runtime::AbstractPlugin> m_plugin;
 
         std::vector<ActionImport *> m_importedActions;
@@ -81,9 +84,10 @@ namespace lyric_importer {
         std::vector<TypeImport *> m_importedTypes;
 
         ModuleImport(
-            const lyric_common::ModuleLocation &importLocation,
-            const lyric_object::LyricObject &importObject,
-            std::shared_ptr<const lyric_runtime::AbstractPlugin> importPlugin);
+            const lyric_common::ModuleLocation &objectLocation,
+            const lyric_object::LyricObject &object,
+            const lyric_common::ModuleLocation &pluginLocation,
+            std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin);
         tempo_utils::Status initialize();
 
         friend class ModuleCache;

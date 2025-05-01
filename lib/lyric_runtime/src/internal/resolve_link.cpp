@@ -6,57 +6,72 @@
  * succeeds then the segment is inserted into the segment cache. If the segment could not be loaded then
  * return nullptr to signal failure.
  *
- * @param location The location of the object
+ * @param objectLocation The location of the object
  * @param segmentManagerData Segment manager data
  * @return A pointer to the segment, otherwise nullptr if the segment could not be loaded.
  */
 lyric_runtime::BytecodeSegment *
 lyric_runtime::internal::get_or_load_segment(
-    const lyric_common::ModuleLocation &location,
+    const lyric_common::ModuleLocation &objectLocation,
     SegmentManagerData *segmentManagerData)
 {
     // return null if assembly location is invalid
-    if (!location.isValid())
+    if (!objectLocation.isValid())
         return nullptr;
 
     // if segment is already loaded then return it
-    auto entry = segmentManagerData->segmentcache.find(location);
+    auto entry = segmentManagerData->segmentcache.find(objectLocation);
     if (entry != segmentManagerData->segmentcache.cend())
         return segmentManagerData->segments[entry->second];
 
-    auto loadModuleResult = segmentManagerData->loader->loadModule(location);
+    auto loadModuleResult = segmentManagerData->loader->loadModule(objectLocation);
     if (loadModuleResult.isStatus()) {
-        TU_LOG_V << "failed to load " << location << ": " << loadModuleResult.getStatus();
+        TU_LOG_V << "failed to load " << objectLocation << ": " << loadModuleResult.getStatus();
         return nullptr;                                 // failed to load assembly from location
     }
     auto objectOption = loadModuleResult.getResult();
     if (objectOption.isEmpty()) {
-        TU_LOG_V << "failed to load " << location << ": object not found";
+        TU_LOG_V << "failed to load " << objectLocation << ": object not found";
         return nullptr;                                 // failed to load assembly from location
     }
 
     auto object = objectOption.getValue();
     auto root = object.getObject();
     if (!root.isValid()) {
-        TU_LOG_V << "failed to load " << location << ": object is invalid";
+        TU_LOG_V << "failed to load " << objectLocation << ": object is invalid";
         return nullptr;                                 // failed to load assembly from location
     }
 
     // if module has a plugin then load it
+    lyric_common::ModuleLocation pluginLocation;
     std::shared_ptr<const AbstractPlugin> plugin;
     if (root.hasPlugin()) {
         auto walker = root.getPlugin();
+
+        pluginLocation = walker.getPluginLocation();
+        if (pluginLocation.isValid()) {
+            pluginLocation = objectLocation.resolve(pluginLocation);
+        } else {
+            pluginLocation = objectLocation;
+        }
+
         auto loadPluginResult = segmentManagerData->loader->loadPlugin(
-            walker.getPluginLocation(), lyric_object::PluginSpecifier::systemDefault());
-        if (loadPluginResult.isStatus())
+            pluginLocation, lyric_object::PluginSpecifier::systemDefault());
+        if (loadPluginResult.isStatus()) {
+            TU_LOG_V << "failed to load " << pluginLocation << ": " << loadPluginResult.getStatus();
             return nullptr;
+        }
         auto pluginOption = loadPluginResult.getResult();
-        plugin = pluginOption.getOrDefault({});
+        if (pluginOption.isEmpty()) {
+            TU_LOG_V << "failed to load " << pluginLocation << ": missing plugin";
+            return nullptr;
+        }
+        plugin = pluginOption.getValue();
     }
 
     // allocate the segment
     auto segmentIndex = segmentManagerData->segments.size();
-    auto *segment = new BytecodeSegment(segmentIndex, location, object, plugin);
+    auto *segment = new BytecodeSegment(segmentIndex, objectLocation, object, pluginLocation, plugin);
 
     // if there is a plugin then load it
     if (plugin != nullptr) {
@@ -68,7 +83,7 @@ lyric_runtime::internal::get_or_load_segment(
 
     // add the segment to the segment cache and return it
     segmentManagerData->segments.push_back(segment);
-    segmentManagerData->segmentcache[location] = segmentIndex;
+    segmentManagerData->segmentcache[objectLocation] = segmentIndex;
     return segment;
 }
 

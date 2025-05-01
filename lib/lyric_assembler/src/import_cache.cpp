@@ -216,7 +216,7 @@ import_module(
             return lyric_assembler::AssemblerStatus::forCondition(
                 lyric_assembler::AssemblerCondition::kImportError,
                 "error importing symbol {} from {}; block already contains binding {}",
-                symbolPath.toString(), moduleImport->getLocation().toString(), symbolName);
+                symbolPath.toString(), moduleImport->getObjectLocation().toString(), symbolName);
 
         // load the symbol into the symbol cache immediately if preload is specified
         if (preload) {
@@ -245,11 +245,11 @@ lyric_assembler::ImportCache::importModule(
         TU_ASSIGN_OR_RETURN (moduleImport, m_systemModuleCache->importModule(importLocation));
     }
 
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
 
     // insert import handle into the cache if one doesn't exist
-    if (!m_importcache.contains(location)) {
-        TU_RETURN_IF_NOT_OK (insertImport(location, importFlags));
+    if (!m_importcache.contains(objectLocation)) {
+        TU_RETURN_IF_NOT_OK (insertImport(objectLocation, importFlags));
     }
 
     return moduleImport;
@@ -277,20 +277,20 @@ lyric_assembler::ImportCache::importModule(
     } else {
         TU_ASSIGN_OR_RETURN (moduleImport, m_systemModuleCache->importModule(importLocation));
     }
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
 
     if (!importSymbols.empty()) {
         // if import symbols is not empty, then import only the specified symbols
         TU_RETURN_IF_NOT_OK (import_module_symbols(
-            moduleImport, location, importSymbols, m_symbolCache, block, preload));
+            moduleImport, objectLocation, importSymbols, m_symbolCache, block, preload));
     } else {
         // otherwise import all symbols which are not inside a namespace
-        TU_RETURN_IF_NOT_OK (import_module(moduleImport, location, m_symbolCache, block, preload));
+        TU_RETURN_IF_NOT_OK (import_module(moduleImport, objectLocation, m_symbolCache, block, preload));
     }
 
     // insert import handle into the cache if one doesn't exist
-    if (!m_importcache.contains(location)) {
-        TU_RETURN_IF_NOT_OK (insertImport(location, ImportFlags::ApiLinkage));
+    if (!m_importcache.contains(objectLocation)) {
+        TU_RETURN_IF_NOT_OK (insertImport(objectLocation, ImportFlags::ApiLinkage));
     }
 
     return AssemblerStatus::ok();
@@ -322,7 +322,7 @@ lyric_assembler::ImportCache::importSymbol(const lyric_common::SymbolUrl &symbol
     } else {
         TU_ASSIGN_OR_RETURN (moduleImport, m_systemModuleCache->importModule(importLocation));
     }
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
 
     auto object = moduleImport->getObject().getObject();
     auto symbolPath = symbolUrl.getSymbolPath();
@@ -331,14 +331,14 @@ lyric_assembler::ImportCache::importSymbol(const lyric_common::SymbolUrl &symbol
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kImportError,
             "error importing symbol {}; missing symbol {}",
-            location.toString(), symbolPath.toString());
+            objectLocation.toString(), symbolPath.toString());
 
     // load the symbol into the symbol cache
     TU_RETURN_IF_NOT_OK(insert_symbol_into_cache(moduleImport, symbolUrl, symbolWalker, m_symbolCache, m_state));
 
     // insert import handle into the cache if one doesn't exist
-    if (!m_importcache.contains(location)) {
-        TU_RETURN_IF_NOT_OK (insertImport(location, ImportFlags::ApiLinkage));
+    if (!m_importcache.contains(objectLocation)) {
+        TU_RETURN_IF_NOT_OK (insertImport(objectLocation, ImportFlags::ApiLinkage));
     }
 
     // return the symbol

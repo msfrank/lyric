@@ -204,9 +204,9 @@ lyric_importer::EnumImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto location = moduleImport->getLocation();
+    auto objectLocation = moduleImport->getObjectLocation();
     auto enumWalker = moduleImport->getObject().getObject().getEnum(m_enumOffset);
-    priv->symbolUrl = lyric_common::SymbolUrl(location, enumWalker.getSymbolPath());
+    priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, enumWalker.getSymbolPath());
 
     priv->isAbstract = enumWalker.isAbstract();
     priv->isDeclOnly = enumWalker.isDeclOnly();
@@ -217,7 +217,7 @@ lyric_importer::EnumImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import enum at index {} in module {}; invalid derive type",
-                m_enumOffset, location.toString()));
+                m_enumOffset, objectLocation.toString()));
 
     priv->access = enumWalker.getAccess();
     if (priv->access == lyric_object::AccessType::Invalid)
@@ -225,7 +225,7 @@ lyric_importer::EnumImport::load()
             ImporterStatus::forCondition(
                 ImporterCondition::kImportError,
                 "cannot import enum at index {} in module {}; invalid access type",
-                m_enumOffset, location.toString()));
+                m_enumOffset, objectLocation.toString()));
 
     priv->enumType = moduleImport->getType(
         enumWalker.getEnumType().getDescriptorOffset());
@@ -234,7 +234,7 @@ lyric_importer::EnumImport::load()
         switch (enumWalker.superEnumAddressType()) {
             case lyric_object::AddressType::Near:
                 priv->superEnum = lyric_common::SymbolUrl(
-                    location, enumWalker.getNearSuperEnum().getSymbolPath());
+                    objectLocation, enumWalker.getNearSuperEnum().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 priv->superEnum = enumWalker.getFarSuperEnum().getLinkUrl();
@@ -244,7 +244,7 @@ lyric_importer::EnumImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import enum at index {} in module {}; invalid super enum",
-                        m_enumOffset, location.toString()));
+                        m_enumOffset, objectLocation.toString()));
         }
     }
 
@@ -253,7 +253,7 @@ lyric_importer::EnumImport::load()
         lyric_common::SymbolUrl fieldUrl;
         switch (member.memberAddressType()) {
             case lyric_object::AddressType::Near:
-                fieldUrl = lyric_common::SymbolUrl(location, member.getNearField().getSymbolPath());
+                fieldUrl = lyric_common::SymbolUrl(objectLocation, member.getNearField().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 fieldUrl = member.getFarField().getLinkUrl();
@@ -263,7 +263,7 @@ lyric_importer::EnumImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import enum at index {} in module {}; invalid member at index {}",
-                        m_enumOffset, location.toString(), i));
+                        m_enumOffset, objectLocation.toString(), i));
         }
         auto name = fieldUrl.getSymbolName();
         priv->members[name] = fieldUrl;
@@ -274,7 +274,7 @@ lyric_importer::EnumImport::load()
         lyric_common::SymbolUrl callUrl;
         switch (method.methodAddressType()) {
             case lyric_object::AddressType::Near:
-                callUrl = lyric_common::SymbolUrl(location, method.getNearCall().getSymbolPath());
+                callUrl = lyric_common::SymbolUrl(objectLocation, method.getNearCall().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
                 callUrl = method.getFarCall().getLinkUrl();
@@ -284,7 +284,7 @@ lyric_importer::EnumImport::load()
                     ImporterStatus::forCondition(
                         ImporterCondition::kImportError,
                         "cannot import enum at index {} in module {}; invalid method at index {}",
-                        m_enumOffset, location.toString(), i));
+                        m_enumOffset, objectLocation.toString(), i));
         }
         auto name = callUrl.getSymbolName();
         priv->methods[name] = callUrl;
@@ -312,14 +312,14 @@ lyric_importer::EnumImport::load()
                 ImporterStatus::forCondition(
                     ImporterCondition::kImportError,
                     "cannot import enum at index {} in module {}; invalid allocator trap",
-                    m_enumOffset, location.toString()));
+                    m_enumOffset, objectLocation.toString()));
         auto *trap = plugin->getTrap(trapNumber);
         if (trap == nullptr)
             throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(
                     ImporterCondition::kImportError,
                     "cannot import enum at index {} in module {}; invalid allocator trap",
-                    m_enumOffset, location.toString()));
+                    m_enumOffset, objectLocation.toString()));
         priv->allocator = trap->name;
     }
 
