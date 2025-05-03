@@ -31,17 +31,6 @@ namespace lyric_runtime {
             const lyric_common::ModuleLocation &location) const = 0;
 
         /**
-         * Returns a Result containing a fully qualified location for the specified location, a Result containing
-         * an invalid location if the loader cannot fully qualify the location, or a Status if there was an error.
-         *
-         * @param location The location.
-         * @return A Result containing the fully qualified location if resolution was successful, or an invalid
-         *     location if the loader is not capable of resolving the location.
-         */
-        virtual tempo_utils::Result<Option<lyric_common::ModuleLocation>> resolveModule(
-            const lyric_common::ModuleLocation &location) const = 0;
-
-        /**
          * Loads the module at the specified location. A Result containing and Option containing the object is
          * returned if the load was successful. If the loader is not capable of loading the module then a Result
          * containing an empty Option is returned. If there was an error during loading then a Status is returned.

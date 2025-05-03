@@ -64,12 +64,6 @@ lyric_build::ArtifactLoader::hasModule(const lyric_common::ModuleLocation &locat
     return entryType == EntryType::File;
 }
 
-tempo_utils::Result<Option<lyric_common::ModuleLocation>>
-lyric_build::ArtifactLoader::resolveModule(const lyric_common::ModuleLocation &location) const
-{
-    return Option(location);
-}
-
 tempo_utils::Result<Option<lyric_object::LyricObject>>
 lyric_build::ArtifactLoader::loadModule(const lyric_common::ModuleLocation &location)
 {

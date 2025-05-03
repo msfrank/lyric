@@ -82,14 +82,6 @@ lyric_bootstrap::BootstrapLoader::hasModule(const lyric_common::ModuleLocation &
     return !findModule(location).empty();
 }
 
-tempo_utils::Result<Option<lyric_common::ModuleLocation>>
-lyric_bootstrap::BootstrapLoader::resolveModule(const lyric_common::ModuleLocation &location) const
-{
-    if (location.getScheme() != "dev.zuri.bootstrap")
-        return Option<lyric_common::ModuleLocation>();
-    return Option(location);
-}
-
 tempo_utils::Result<Option<lyric_object::LyricObject>>
 lyric_bootstrap::BootstrapLoader::loadModule(const lyric_common::ModuleLocation &location)
 {

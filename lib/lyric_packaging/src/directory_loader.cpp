@@ -74,12 +74,6 @@ lyric_packaging::DirectoryLoader::hasModule(const lyric_common::ModuleLocation &
     return !findModule(location).empty();
 }
 
-tempo_utils::Result<Option<lyric_common::ModuleLocation>>
-lyric_packaging::DirectoryLoader::resolveModule(const lyric_common::ModuleLocation &location) const
-{
-    return Option<lyric_common::ModuleLocation>(location);
-}
-
 tempo_utils::Result<Option<lyric_object::LyricObject>>
 lyric_packaging::DirectoryLoader::loadModule(const lyric_common::ModuleLocation &location)
 {

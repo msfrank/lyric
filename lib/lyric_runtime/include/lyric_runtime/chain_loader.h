@@ -16,8 +16,6 @@ namespace lyric_runtime {
 
         tempo_utils::Result<bool> hasModule(
             const lyric_common::ModuleLocation &location) const override;
-        tempo_utils::Result<Option<lyric_common::ModuleLocation>> resolveModule(
-            const lyric_common::ModuleLocation &location) const override;
         tempo_utils::Result<Option<lyric_object::LyricObject>> loadModule(
             const lyric_common::ModuleLocation &location) override;
         tempo_utils::Result<Option<std::shared_ptr<const AbstractPlugin>>> loadPlugin(

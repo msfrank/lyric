@@ -171,34 +171,6 @@ lyric_packaging::PackageLoader::hasModule(const lyric_common::ModuleLocation &lo
     return !findModuleResult.getResult().empty();
 }
 
-tempo_utils::Result<Option<lyric_common::ModuleLocation>>
-lyric_packaging::PackageLoader::resolveModule(const lyric_common::ModuleLocation &location) const
-{
-    auto authority = location.getAuthority();
-
-    // if scheme is file or dev.zuri.pkg then location is already fully qualified
-    if (location.getScheme() == "file")
-        return Option(location);
-    if (location.getScheme() == "dev.zuri.pkg")
-        return Option(location);
-
-    // if location has any other scheme then we can't qualify the location
-    if (location.hasScheme())
-        return Option<lyric_common::ModuleLocation>();
-
-    // if there is no authority then we can't qualify the location
-    if (!authority.isValid())
-        return Option<lyric_common::ModuleLocation>();
-
-    auto authorityString = authority.toString();
-    if (!m_packageMap.contains(authorityString))
-        return PackageStatus::forCondition(PackageCondition::kPackageInvariant,
-            "missing package specifier for '{}'", authorityString);
-    auto origin = absl::StrCat("dev.zuri.pkg://", m_packageMap.at(authorityString));
-    auto path = location.getPath().toString();
-    return Option(lyric_common::ModuleLocation(origin, path));
-}
-
 static lyric_packaging::EntryPath
 module_location_path_to_entry_path(const tempo_utils::UrlPath &locationPath)
 {

@@ -8,12 +8,6 @@ lyric_runtime::StaticLoader::hasModule(const lyric_common::ModuleLocation &locat
     return m_objects.contains(location);
 }
 
-tempo_utils::Result<Option<lyric_common::ModuleLocation>>
-lyric_runtime::StaticLoader::resolveModule(const lyric_common::ModuleLocation &location) const
-{
-    return Option<lyric_common::ModuleLocation>(location);
-}
-
 tempo_utils::Result<Option<lyric_object::LyricObject>>
 lyric_runtime::StaticLoader::loadModule(const lyric_common::ModuleLocation &location)
 {

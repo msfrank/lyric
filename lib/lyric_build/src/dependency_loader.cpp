@@ -24,12 +24,6 @@ lyric_build::DependencyLoader::hasModule(const lyric_common::ModuleLocation &loc
     return m_objects.contains(location);
 }
 
-tempo_utils::Result<Option<lyric_common::ModuleLocation>>
-lyric_build::DependencyLoader::resolveModule(const lyric_common::ModuleLocation &location) const
-{
-    return Option(location);
-}
-
 tempo_utils::Result<Option<lyric_object::LyricObject>>
 lyric_build::DependencyLoader::loadModule(const lyric_common::ModuleLocation &location)
 {

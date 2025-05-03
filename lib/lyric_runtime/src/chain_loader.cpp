@@ -29,20 +29,6 @@ lyric_runtime::ChainLoader::hasModule(const lyric_common::ModuleLocation &locati
     return false;
 }
 
-tempo_utils::Result<Option<lyric_common::ModuleLocation>>
-lyric_runtime::ChainLoader::resolveModule(const lyric_common::ModuleLocation &location) const
-{
-    for (const auto &loader : m_chain) {
-        auto resolveModuleResult = loader->resolveModule(location);
-        if (resolveModuleResult.isStatus())
-            return resolveModuleResult;
-        auto resolvedLocationOption = resolveModuleResult.getResult();
-        if (!resolvedLocationOption.isEmpty())
-            return resolveModuleResult;
-    }
-    return Option<lyric_common::ModuleLocation>();
-}
-
 tempo_utils::Result<Option<lyric_object::LyricObject>>
 lyric_runtime::ChainLoader::loadModule(const lyric_common::ModuleLocation &location)
 {
