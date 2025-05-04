@@ -20,3 +20,16 @@ TEST(ParseMacro, ParseMacro)
 
     ASSERT_TRUE(parseResult.isResult());
 }
+
+TEST(ParseMacro, ParsePragma)
+{
+    lyric_parser::LyricParser parser({});
+
+    auto recorder = tempo_tracing::TraceRecorder::create();
+
+    auto parseResult = parser.parseModule(R"(
+        @@Plugin("/plugin")
+    )", {}, recorder);
+
+    ASSERT_TRUE(parseResult.isResult());
+}

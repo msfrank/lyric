@@ -3,10 +3,10 @@ parser grammar ModuleParser;
 options { tokenVocab = ModuleLexer; }
 
 
-root                : block ;
+root                : pragma* block ;
 
 block               : form+ ;
-form                : statement | expression | macro ;
+form                : statement | expression | macroList ;
 
 expression          : basicExpression
                     | lambdaFromExpression
@@ -434,14 +434,16 @@ nilLiteral          : NilKeyword ;
 keywordLiteral      : trueLiteral | falseLiteral | undefLiteral | nilLiteral ;
 
 
-// macros and annotations
+// rewriter forms
 
-macroCall           : Identifier ( ParenOpen argList? ParenClose )? ;
-macro               : AtOperator CurlyOpen macroCall+ CurlyClose ;
+rewriteArgs         : ParenOpen argList? ParenClose ;
 
-annotation          : AtOperator macroCall ;
+pragma              : DoubleAtOperator Identifier rewriteArgs? ;
+macro               : Identifier rewriteArgs? ;
+annotation          : AtOperator Identifier rewriteArgs? ;
+
+macroList           : AtOperator CurlyOpen macro+ CurlyClose ;
 annotationList      : annotation+ ;
-
 
 // comment
 

@@ -54,10 +54,11 @@ table NodeDescriptor {
 
 table Archetype {
     abi: ArchetypeVersion;                      // target ABI the archetype was generated for
-    root: uint32;                               // index of the root node
     namespaces: [NamespaceDescriptor];          // array of namespace descriptors
     attrs: [AttrDescriptor];                    // array of attribute descriptors
     nodes: [NodeDescriptor];                    // array of node descriptors
+    pragmas: [uint32];                          // array of offsets to nodes representing pragmas
+    root: uint32;                               // offset of the root node
 }
 
 root_type Archetype;

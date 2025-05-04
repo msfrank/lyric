@@ -267,11 +267,18 @@ namespace lyric_parser::internal {
         void exitParamSpec(ModuleParser::ParamSpecContext *ctx) override;
 
         // implemented by ModuleMacroOps
+        void exitRewriteArgs(ModuleParser::RewriteArgsContext *ctx) override;
+        void enterPragma(ModuleParser::PragmaContext *ctx) override;
+        void exitPragma(ModuleParser::PragmaContext *ctx) override;
+        void enterAnnotation(ModuleParser::AnnotationContext *ctx) override;
+        void exitAnnotation(ModuleParser::AnnotationContext *ctx) override;
         void enterMacro(ModuleParser::MacroContext *ctx) override;
-        void enterAnnotationList(ModuleParser::AnnotationListContext *ctx) override;
-        void exitMacroCall(ModuleParser::MacroCallContext *ctx) override;
-        void exitAnnotationList(ModuleParser::AnnotationListContext *ctx) override;
         void exitMacro(ModuleParser::MacroContext *ctx) override;
+        void enterAnnotationList(ModuleParser::AnnotationListContext *ctx) override;
+        void exitAnnotationList(ModuleParser::AnnotationListContext *ctx) override;
+        void enterMacroList(ModuleParser::MacroListContext *ctx) override;
+        void exitMacroList(ModuleParser::MacroListContext *ctx) override;
+
     private:
         ArchetypeState *m_state;
     };

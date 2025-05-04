@@ -69,6 +69,8 @@ lyric_parser::LyricParser::parseModule(
         return ex.getStatus();
     } catch (antlr4::ParseCancellationException &ex) {
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
+    } catch (std::exception &ex) {
+        return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
     }
 
     auto toArchetypeResult = state.toArchetype();

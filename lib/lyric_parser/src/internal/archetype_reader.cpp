@@ -5,6 +5,8 @@
 #include <lyric_parser/internal/archetype_reader.h>
 #include <tempo_utils/log_stream.h>
 
+#include "lyric_parser/parser_types.h"
+
 lyric_parser::internal::ArchetypeReader::ArchetypeReader(std::span<const tu_uint8> bytes)
     : m_bytes(bytes)
 {
@@ -77,6 +79,24 @@ lyric_parser::internal::ArchetypeReader::numAttrs() const
     if (m_archetype == nullptr)
         return 0;
     return m_archetype->attrs()? m_archetype->attrs()->size() : 0;
+}
+
+tu_uint32
+lyric_parser::internal::ArchetypeReader::getPragma(tu_uint32 index) const
+{
+    if (m_archetype == nullptr)
+        return INVALID_ADDRESS_U32;
+    if (m_archetype->pragmas() && index < m_archetype->pragmas()->size())
+        return m_archetype->pragmas()->Get(index);
+    return INVALID_ADDRESS_U32;
+}
+
+tu_uint32
+lyric_parser::internal::ArchetypeReader::numPragmas() const
+{
+    if (m_archetype == nullptr)
+        return 0;
+    return m_archetype->pragmas()? m_archetype->pragmas()->size() : 0;
 }
 
 tu_uint32

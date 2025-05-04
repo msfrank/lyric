@@ -58,6 +58,12 @@ namespace lyric_parser {
         std::vector<ArchetypeNode *>::const_iterator nodesEnd() const;
         int numNodes() const;
 
+        ArchetypeNode *getPragma(int index) const;
+        void addPragma(ArchetypeNode *pragmaNode);
+        std::vector<ArchetypeNode *>::const_iterator pragmasBegin() const;
+        std::vector<ArchetypeNode *>::const_iterator pragmasEnd() const;
+        int numPragmas() const;
+
         bool hasRoot() const;
         ArchetypeNode *getRoot() const;
         void setRoot(ArchetypeNode *node);
@@ -88,6 +94,7 @@ namespace lyric_parser {
         absl::flat_hash_map<tempo_utils::Url,tu_uint32> m_namespaceIndex;
         std::stack<ArchetypeNode *> m_nodeStack;
         std::vector<std::string> m_symbolStack;
+        std::vector<ArchetypeNode *> m_pragmaNodes;
         ArchetypeNode *m_rootNode;
 
         ArchetypeId *makeId(ArchetypeDescriptorType type, tu_uint32 offset);

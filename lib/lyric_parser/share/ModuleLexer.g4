@@ -123,6 +123,7 @@ DotOperator                 : '.' ;
 PipeOperator                : '|' ;
 AmpersandOperator           : '&' ;
 HashOperator                : '#' ;
+DoubleAtOperator            : '@@' ;
 AtOperator                  : '@' ;
 
 

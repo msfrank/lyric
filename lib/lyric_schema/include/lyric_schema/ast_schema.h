@@ -117,6 +117,7 @@ namespace lyric_schema {
 
         MacroCall,                 // macro invocation
         MacroList,                 // sequence of macro invocations
+        Pragma,                    // compiler pragma
 
         // AST properties
 
@@ -334,6 +335,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::MacroCall, "MacroCall");
     constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMacroListClass(
         &kLyricAstNs, LyricAstId::MacroList, "MacroList");
+    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPragmaClass(
+        &kLyricAstNs, LyricAstId::Pragma, "Pragma");
 
     constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstLiteralValueProperty(
@@ -520,6 +523,7 @@ namespace lyric_schema {
 
         &kLyricAstMacroCallClass,
         &kLyricAstMacroListClass,
+        &kLyricAstPragmaClass,
 
         &kLyricAstLiteralValueProperty,
 

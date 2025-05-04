@@ -17,6 +17,10 @@ lyric_parser::internal::ArchetypeWriter::createArchetype(const ArchetypeState *s
 {
     ArchetypeWriter writer(state);
 
+    for (auto it = state->pragmasBegin(); it != state->pragmasEnd(); it++) {
+        TU_RETURN_IF_STATUS (writer.writePragma(*it));
+    }
+
     auto *root = state->getRoot();
     if (root == nullptr)
         return lyric_parser::ParseStatus::forCondition(
@@ -189,12 +193,22 @@ lyric_parser::internal::ArchetypeWriter::writeNode(const ArchetypeNode *node)
     return NodeAddress(address);
 }
 
+tempo_utils::Result<lyric_parser::NodeAddress>
+lyric_parser::internal::ArchetypeWriter::writePragma(const ArchetypeNode *pragma)
+{
+    NodeAddress address;
+    TU_ASSIGN_OR_RETURN (address, writeNode(pragma));
+    m_pragmasVector.push_back(address.getAddress());
+    return address;
+}
+
 tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_parser::internal::ArchetypeWriter::writeArchetype()
 {
     auto fb_namespaces = m_buffer.CreateVector(m_namespacesVector);
     auto fb_attrs = m_buffer.CreateVector(m_attrsVector);
     auto fb_nodes = m_buffer.CreateVector(m_nodesVector);
+    auto fb_pragmas = m_buffer.CreateVector(m_pragmasVector);
 
     // build archetype from buffer
     lyi1::ArchetypeBuilder archetypeBuilder(m_buffer);
@@ -203,6 +217,7 @@ lyric_parser::internal::ArchetypeWriter::writeArchetype()
     archetypeBuilder.add_namespaces(fb_namespaces);
     archetypeBuilder.add_attrs(fb_attrs);
     archetypeBuilder.add_nodes(fb_nodes);
+    archetypeBuilder.add_pragmas(fb_pragmas);
 
     // serialize archetype and mark the buffer as finished
     auto archetype = archetypeBuilder.Finish();

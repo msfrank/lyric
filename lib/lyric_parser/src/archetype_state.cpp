@@ -103,9 +103,17 @@ lyric_parser::ArchetypeState::load(const LyricArchetype &archetype)
     if (!archetype.isValid())
         return ParseStatus::forCondition(
             ParseCondition::kParseInvariant, "failed to load archetype state: invalid archetype");
+
     std::vector<ArchetypeNode *> nodeTable(archetype.numNodes(), nullptr);
-    auto rootNode = archetype.getRoot();
-    return loadNode(archetype, rootNode, this, nodeTable);
+
+    for (tu_uint32 i = 0; i < archetype.numPragmas(); i++) {
+        auto pragma = archetype.getPragma(i);
+        ArchetypeNode *pragmaNode;
+        TU_ASSIGN_OR_RETURN (pragmaNode, loadNode(archetype, pragma, this, nodeTable));
+        addPragma(pragmaNode);
+    }
+
+    return loadNode(archetype, archetype.getRoot(), this, nodeTable);
 }
 
 bool
@@ -313,6 +321,38 @@ lyric_parser::ArchetypeState::numNodes() const
     return m_archetypeNodes.size();
 }
 
+lyric_parser::ArchetypeNode *
+lyric_parser::ArchetypeState::getPragma(int index) const
+{
+    if (0 <= index && std::cmp_less(index, m_pragmaNodes.size()))
+        return m_pragmaNodes.at(index);
+    return nullptr;
+}
+
+void
+lyric_parser::ArchetypeState::addPragma(ArchetypeNode *pragmaNode)
+{
+    m_pragmaNodes.push_back(pragmaNode);
+}
+
+std::vector<lyric_parser::ArchetypeNode *>::const_iterator
+lyric_parser::ArchetypeState::pragmasBegin() const
+{
+    return m_pragmaNodes.cbegin();
+}
+
+std::vector<lyric_parser::ArchetypeNode *>::const_iterator
+lyric_parser::ArchetypeState::pragmasEnd() const
+{
+    return m_pragmaNodes.cend();
+}
+
+int
+lyric_parser::ArchetypeState::numPragmas() const
+{
+    return m_pragmaNodes.size();
+}
+
 bool
 lyric_parser::ArchetypeState::hasRoot() const
 {
@@ -398,68 +438,4 @@ tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_parser::ArchetypeState::toArchetype() const
 {
     return internal::ArchetypeWriter::createArchetype(this);
-
-//    flatbuffers::FlatBufferBuilder buffer;
-//
-//    std::vector<flatbuffers::Offset<lyi1::NamespaceDescriptor>> namespaces_vector;
-//    std::vector<flatbuffers::Offset<lyi1::AttributeDescriptor>> attributes_vector;
-//    std::vector<flatbuffers::Offset<lyi1::NodeDescriptor>> nodes_vector;
-//
-//    // serialize namespaces
-//    for (const auto *ns : m_archetypeNamespaces) {
-//        auto fb_nsUrl = buffer.CreateString(ns->getNsUrl().toString());
-//        namespaces_vector.push_back(lyi1::CreateNamespaceDescriptor(buffer, fb_nsUrl));
-//    }
-//    auto fb_namespaces = buffer.CreateVector(namespaces_vector);
-//
-//    // serialize attributes
-//    for (const auto *attr : m_archetypeAttrs) {
-//        auto id = attr->getAttrId();
-//        auto value = attr->getAttrValue();
-//        auto p = serialize_value(buffer, value);
-//
-//        attributes_vector.push_back(lyi1::CreateAttributeDescriptor(buffer,
-//            id.getAddress().getAddress(), id.getType(), p.first, p.second));
-//    }
-//    auto fb_attributes = buffer.CreateVector(attributes_vector);
-//
-//    // serialize nodes
-//    for (const auto *node : m_archetypeNodes) {
-//
-//        // serialize entry attrs
-//        std::vector<tu_uint32> node_attrs;
-//        for (auto iterator = node->attrsBegin(); iterator != node->attrsEnd(); iterator++) {
-//            node_attrs.push_back(iterator->second.getAddress());
-//        }
-//        auto fb_node_attrs = buffer.CreateVector(node_attrs);
-//
-//        // serialize entry children
-//        std::vector<tu_uint32> node_children;
-//        for (auto iterator = node->childrenBegin(); iterator != node->childrenEnd(); iterator++) {
-//            node_children.push_back(iterator->getAddress());
-//        }
-//        auto fb_node_children = buffer.CreateVector(node_children);
-//
-//        nodes_vector.push_back(lyi1::CreateNodeDescriptor(buffer,
-//            node->getNsOffset(), node->getTypeOffset(),
-//            fb_node_attrs, fb_node_children,
-//            node->getFileOffset(), node->getLineNumber(), node->getColumnNumber(), node->getTextSpan()));
-//    }
-//    auto fb_nodes = buffer.CreateVector(nodes_vector);
-//
-//    // build archetype from buffer
-//    lyi1::ArchetypeBuilder archetypeBuilder(buffer);
-//
-//    archetypeBuilder.add_abi(lyi1::ArchetypeVersion::Version1);
-//    archetypeBuilder.add_namespaces(fb_namespaces);
-//    archetypeBuilder.add_attributes(fb_attributes);
-//    archetypeBuilder.add_nodes(fb_nodes);
-//
-//    // serialize archetype and mark the buffer as finished
-//    auto archetype = archetypeBuilder.Finish();
-//    buffer.Finish(archetype, lyi1::ArchetypeIdentifier());
-//
-//    // copy the flatbuffer into our own byte array and instantiate archetype
-//    auto bytes = tempo_utils::MemoryBytes::copy(buffer.GetBufferSpan());
-//    return lyric_parser::LyricArchetype(bytes);
 }

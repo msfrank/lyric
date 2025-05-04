@@ -62,6 +62,25 @@ lyric_parser::LyricArchetype::numNodes() const
 }
 
 lyric_parser::NodeWalker
+lyric_parser::LyricArchetype::getPragma(tu_uint32 index) const
+{
+    if (!isValid())
+        return {};
+    auto pragma = m_reader->getPragma(index);
+    if (pragma == INVALID_ADDRESS_U32)
+        return {};
+    return NodeWalker(m_reader, pragma);
+}
+
+uint32_t
+lyric_parser::LyricArchetype::numPragmas() const
+{
+    if (!isValid())
+        return 0;
+    return m_reader->numPragmas();
+}
+
+lyric_parser::NodeWalker
 lyric_parser::LyricArchetype::getRoot() const
 {
     if (!isValid())

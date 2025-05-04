@@ -1003,12 +1003,42 @@ void lyric_parser::internal::ModuleArchetype::exitParamSpec(ModuleParser::ParamS
 }
 
 /*
- * macro ops
+ * rewrite ops
  */
+
+void lyric_parser::internal::ModuleArchetype::exitRewriteArgs(ModuleParser::RewriteArgsContext *ctx)
+{
+    return ModuleMacroOps::exitRewriteArgs(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::enterPragma(ModuleParser::PragmaContext *ctx)
+{
+    return ModuleMacroOps::enterPragma(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitPragma(ModuleParser::PragmaContext *ctx)
+{
+    return ModuleMacroOps::exitPragma(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::enterAnnotation(ModuleParser::AnnotationContext *ctx)
+{
+    return ModuleMacroOps::enterAnnotation(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitAnnotation(ModuleParser::AnnotationContext *ctx)
+{
+    return ModuleMacroOps::exitAnnotation(ctx);
+}
 
 void lyric_parser::internal::ModuleArchetype::enterMacro(ModuleParser::MacroContext *ctx)
 {
     return ModuleMacroOps::enterMacro(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitMacro(ModuleParser::MacroContext *ctx)
+{
+    return ModuleMacroOps::exitMacro(ctx);
 }
 
 void lyric_parser::internal::ModuleArchetype::enterAnnotationList(ModuleParser::AnnotationListContext *ctx)
@@ -1016,17 +1046,17 @@ void lyric_parser::internal::ModuleArchetype::enterAnnotationList(ModuleParser::
     return ModuleMacroOps::enterAnnotationList(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitMacroCall(ModuleParser::MacroCallContext *ctx)
-{
-    return ModuleMacroOps::exitMacroCall(ctx);
-}
-
 void lyric_parser::internal::ModuleArchetype::exitAnnotationList(ModuleParser::AnnotationListContext *ctx)
 {
     return ModuleMacroOps::exitAnnotationList(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitMacro(ModuleParser::MacroContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterMacroList(ModuleParser::MacroListContext *ctx)
 {
-    return ModuleMacroOps::exitMacro(ctx);
+    return ModuleMacroOps::enterMacroList(ctx);
+}
+
+void lyric_parser::internal::ModuleArchetype::exitMacroList(ModuleParser::MacroListContext *ctx)
+{
+    return ModuleMacroOps::exitMacroList(ctx);
 }
