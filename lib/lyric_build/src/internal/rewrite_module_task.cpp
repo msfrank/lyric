@@ -148,12 +148,12 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     auto loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
 
     //
-    auto macroDriver = std::make_shared<lyric_rewriter::MacroRewriteDriver>(&m_registry);
+    auto macroRewriteDriverBuilder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(&m_registry);
 
     // generate the rewritten archetype by applying all macros
     TU_LOG_V << "rewriting source from " << m_sourceUrl;
     auto rewriteModuleResult = rewriter.rewriteArchetype(
-        archetype, m_sourceUrl, macroDriver, traceDiagnostics());
+        archetype, m_sourceUrl, macroRewriteDriverBuilder, traceDiagnostics());
     if (rewriteModuleResult.isStatus()) {
         span->logStatus(rewriteModuleResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,

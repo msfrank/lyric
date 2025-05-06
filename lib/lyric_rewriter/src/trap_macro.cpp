@@ -11,6 +11,16 @@ lyric_rewriter::TrapMacro::TrapMacro()
 }
 
 tempo_utils::Status
+lyric_rewriter::TrapMacro::rewritePragma(
+    const lyric_parser::ArchetypeNode *pragmaNode,
+    PragmaContext &ctx,
+    lyric_parser::ArchetypeState *state)
+{
+    return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant,
+        "Trap macro is not valid in pragma context");
+}
+
+tempo_utils::Status
 lyric_rewriter::TrapMacro::rewriteDefinition(
     const lyric_parser::ArchetypeNode *macroCallNode,
     lyric_parser::ArchetypeNode *definitionNode,

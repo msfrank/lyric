@@ -67,6 +67,32 @@ namespace lyric_compiler {
         friend class EnterContext;
         friend class ExitContext;
     };
+
+    class CompilerScanDriverBuilder : public lyric_rewriter::AbstractScanDriverBuilder {
+    public:
+        CompilerScanDriverBuilder(
+            const lyric_common::ModuleLocation &location,
+            std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
+            std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+            tempo_tracing::ScopeManager *scopeManager,
+            const lyric_assembler::ObjectStateOptions &objectStateOptions);
+
+        tempo_utils::Status applyPragma(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node) override;
+
+        tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractScanDriver>> makeScanDriver() override;
+
+        tempo_utils::Result<lyric_object::LyricObject> toObject() const;
+
+    private:
+        lyric_common::ModuleLocation m_location;
+        std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
+        std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
+        tempo_tracing::ScopeManager *m_scopeManager;
+        lyric_assembler::ObjectStateOptions m_objectStateOptions;
+        std::unique_ptr<lyric_assembler::ObjectState> m_state;
+    };
 }
 
 #endif // LYRIC_COMPILER_COMPILER_SCAN_DRIVER_H

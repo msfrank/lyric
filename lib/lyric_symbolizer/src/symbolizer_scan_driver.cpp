@@ -196,19 +196,6 @@ lyric_symbolizer::SymbolizerScanDriver::putNamespaceTarget(const lyric_common::S
     return currentNamespace->putTarget(symbolUrl);
 }
 
-// tempo_utils::Status
-// lyric_symbolizer::SymbolizerScanDriver::putNamespaceBinding(
-//     const std::string &name,
-//     const lyric_common::SymbolUrl &symbolUrl,
-//     lyric_object::AccessType access)
-// {
-//     if (m_namespaces.empty())
-//         return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
-//             "namespace stack is empty");
-//     auto *currentNamespace = m_namespaces.top();
-//     return currentNamespace->putBinding(name, symbolUrl, access);
-// }
-
 tempo_utils::Status
 lyric_symbolizer::SymbolizerScanDriver::popNamespace()
 {
@@ -217,4 +204,48 @@ lyric_symbolizer::SymbolizerScanDriver::popNamespace()
         return SymbolizerStatus::forCondition(SymbolizerCondition::kSymbolizerInvariant,
             "namespace stack is empty");
     return {};
+}
+
+lyric_symbolizer::SymbolizerScanDriverBuilder::SymbolizerScanDriverBuilder(
+    const lyric_common::ModuleLocation &location,
+    std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
+    std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+    tempo_tracing::ScopeManager *scopeManager,
+    const lyric_assembler::ObjectStateOptions &objectStateOptions)
+    : m_location(location),
+      m_localModuleCache(std::move(localModuleCache)),
+      m_systemModuleCache(std::move(systemModuleCache)),
+      m_scopeManager(scopeManager),
+      m_objectStateOptions(objectStateOptions)
+{
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriverBuilder::applyPragma(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node)
+{
+    return {};
+}
+
+tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractScanDriver>>
+lyric_symbolizer::SymbolizerScanDriverBuilder::makeScanDriver()
+{
+    // construct the object state
+    m_state = std::make_unique<lyric_assembler::ObjectState>(
+        m_location, m_localModuleCache, m_systemModuleCache, m_scopeManager, m_objectStateOptions);
+
+    // define the object root
+    lyric_assembler::ObjectRoot *root;
+    TU_ASSIGN_OR_RETURN (root, m_state->defineRoot());
+
+    auto driver = std::make_shared<SymbolizerScanDriver>(root, m_state.get());
+
+    return std::static_pointer_cast<lyric_rewriter::AbstractScanDriver>(driver);
+}
+
+tempo_utils::Result<lyric_object::LyricObject>
+lyric_symbolizer::SymbolizerScanDriverBuilder::toObject() const
+{
+    return m_state->toObject();
 }

@@ -48,23 +48,15 @@ lyric_analyzer::LyricAnalyzer::analyzeModule(
         span->setOperationName("analyzeModule");
 
         // construct the analyzer state
-        lyric_assembler::ObjectState objectState(
+        auto builder = std::make_shared<AnalyzerScanDriverBuilder>(
             location, m_localModuleCache, m_systemModuleCache, &scopeManager, objectStateOptions);
-        lyric_typing::TypeSystem typeSystem(&objectState);
-
-        // initialize the assembler
-        lyric_assembler::ObjectRoot *root;
-        TU_ASSIGN_OR_RETURN (root, objectState.defineRoot());
-
-        auto analyzerDriver = std::make_shared<AnalyzerScanDriver>(root, &objectState);
-        TU_RETURN_IF_NOT_OK (analyzerDriver->initialize());
 
         lyric_rewriter::RewriterOptions rewriterOptions;
         lyric_rewriter::LyricRewriter rewriter(rewriterOptions);
-        TU_RETURN_IF_NOT_OK (rewriter.scanArchetype(archetype, location.toUrl(), analyzerDriver, recorder));
+        TU_RETURN_IF_NOT_OK (rewriter.scanArchetype(archetype, location.toUrl(), builder, recorder));
 
         // construct object from object state and return it
-        return objectState.toObject();
+        return builder->toObject();
 
     } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();

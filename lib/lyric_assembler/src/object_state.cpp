@@ -41,8 +41,7 @@ lyric_assembler::ObjectState::ObjectState(
       m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_scopeManager(scopeManager),
-      m_options(options),
-      m_root(nullptr)
+      m_options(options)
 {
     TU_ASSERT (m_location.isValid());
     TU_ASSERT (m_systemModuleCache != nullptr);
@@ -51,6 +50,18 @@ lyric_assembler::ObjectState::ObjectState(
     if (!m_options.preludeLocation.isValid()) {
         m_options.preludeLocation = lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
     }
+}
+
+lyric_assembler::ObjectState::ObjectState(
+    const lyric_common::ModuleLocation &location,
+    std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
+    std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+    tempo_tracing::ScopeManager *scopeManager,
+    const lyric_common::ModuleLocation &pluginLocation,
+    const ObjectStateOptions &options)
+    : ObjectState(location, std::move(localModuleCache), std::move(systemModuleCache), scopeManager, options)
+{
+    m_pluginLocation = pluginLocation;
 }
 
 lyric_assembler::ObjectState::~ObjectState()
@@ -116,21 +127,20 @@ lyric_assembler::ObjectState::createRoot(const lyric_common::ModuleLocation &pre
     TU_RETURN_IF_NOT_OK (m_root->initialize(preludeImport));
 
     // if specified then find the plugin associated with the module
-    if (m_options.pluginLocation.isValid()) {
-        const auto &pluginLocation = m_options.pluginLocation;
+    if (m_pluginLocation.isValid()) {
         auto localLoader = m_localModuleCache->getLoader();
         auto pluginSpecifier = lyric_object::PluginSpecifier::systemDefault();
         Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>> pluginOption;
-        TU_ASSIGN_OR_RETURN (pluginOption, localLoader->loadPlugin(pluginLocation, pluginSpecifier));
+        TU_ASSIGN_OR_RETURN (pluginOption, localLoader->loadPlugin(m_pluginLocation, pluginSpecifier));
 
         if (pluginOption.isEmpty())
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "missing plugin {}", pluginLocation.toString());
+                "missing plugin {}", m_pluginLocation.toString());
 
         auto trapIndex = std::make_unique<lyric_runtime::TrapIndex>(pluginOption.getValue());
         TU_RETURN_IF_NOT_OK (trapIndex->initialize());
 
-        m_plugin = std::make_unique<ObjectPlugin>(pluginLocation, std::move(trapIndex));
+        m_plugin = std::make_unique<ObjectPlugin>(m_pluginLocation, std::move(trapIndex));
     }
 
     return {};

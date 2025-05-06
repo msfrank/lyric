@@ -63,7 +63,6 @@ namespace lyric_assembler {
         tu_uint32 minorVersion = 0;
         tu_uint32 patchVersion = 0;
         lyric_common::ModuleLocation preludeLocation = {};
-        lyric_common::ModuleLocation pluginLocation = {};
         ProcImportMode procImportMode = ProcImportMode::InlineableOnly;
     };
 
@@ -75,6 +74,13 @@ namespace lyric_assembler {
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             tempo_tracing::ScopeManager *scopeManager,
+            const ObjectStateOptions &options = {});
+        ObjectState(
+            const lyric_common::ModuleLocation &location,
+            std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
+            std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+            tempo_tracing::ScopeManager *scopeManager,
+            const lyric_common::ModuleLocation &pluginLocation,
             const ObjectStateOptions &options = {});
         ~ObjectState();
 
@@ -167,6 +173,7 @@ namespace lyric_assembler {
         std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         tempo_tracing::ScopeManager *m_scopeManager;
+        lyric_common::ModuleLocation m_pluginLocation;
         ObjectStateOptions m_options;
 
         ObjectRoot *m_root = nullptr;

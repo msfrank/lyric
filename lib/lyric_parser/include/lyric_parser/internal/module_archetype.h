@@ -267,17 +267,17 @@ namespace lyric_parser::internal {
         void exitParamSpec(ModuleParser::ParamSpecContext *ctx) override;
 
         // implemented by ModuleMacroOps
-        void exitRewriteArgs(ModuleParser::RewriteArgsContext *ctx) override;
-        void enterPragma(ModuleParser::PragmaContext *ctx) override;
-        void exitPragma(ModuleParser::PragmaContext *ctx) override;
-        void enterAnnotation(ModuleParser::AnnotationContext *ctx) override;
-        void exitAnnotation(ModuleParser::AnnotationContext *ctx) override;
-        void enterMacro(ModuleParser::MacroContext *ctx) override;
-        void exitMacro(ModuleParser::MacroContext *ctx) override;
-        void enterAnnotationList(ModuleParser::AnnotationListContext *ctx) override;
-        void exitAnnotationList(ModuleParser::AnnotationListContext *ctx) override;
-        void enterMacroList(ModuleParser::MacroListContext *ctx) override;
-        void exitMacroList(ModuleParser::MacroListContext *ctx) override;
+        void exitMacroArgs(ModuleParser::MacroArgsContext *ctx) override;
+        void enterMacroCall(ModuleParser::MacroCallContext *ctx) override;
+        void exitMacroCall(ModuleParser::MacroCallContext *ctx) override;
+        void enterMacroAnnotation(ModuleParser::MacroAnnotationContext *ctx) override;
+        void exitMacroAnnotation(ModuleParser::MacroAnnotationContext *ctx) override;
+        void enterPragmaMacro(ModuleParser::PragmaMacroContext *ctx) override;
+        void exitPragmaMacro(ModuleParser::PragmaMacroContext *ctx) override;
+        void enterDefinitionMacro(ModuleParser::DefinitionMacroContext *ctx) override;
+        void exitDefinitionMacro(ModuleParser::DefinitionMacroContext *ctx) override;
+        void enterBlockMacro(ModuleParser::BlockMacroContext *ctx) override;
+        void exitBlockMacro(ModuleParser::BlockMacroContext *ctx) override;
 
     private:
         ArchetypeState *m_state;

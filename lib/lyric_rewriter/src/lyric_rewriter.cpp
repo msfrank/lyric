@@ -8,6 +8,8 @@
 #include <lyric_rewriter/rewrite_processor.h>
 #include <tempo_utils/log_stream.h>
 
+#include "lyric_rewriter/pragma_rewriter.h"
+
 lyric_rewriter::LyricRewriter::LyricRewriter(const RewriterOptions &options)
     : m_options(options)
 {
@@ -58,7 +60,7 @@ tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_rewriter::LyricRewriter::rewriteArchetype(
     const lyric_parser::LyricArchetype &archetype,
     const tempo_utils::Url &sourceUrl,
-    std::shared_ptr<AbstractRewriteDriver> rewriteDriver,
+    std::shared_ptr<AbstractRewriteDriverBuilder> rewriteDriverBuilder,
     std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
     if (!sourceUrl.isValid())
@@ -70,6 +72,7 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
             RewriterCondition::kRewriterInvariant, "invalid archetype");
 
     try {
+        RewriteProcessor processor;
 
         // create a new span
         tempo_tracing::ScopeManager scopeManager(recorder);
@@ -78,20 +81,28 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
 
         lyric_parser::ArchetypeState archetypeState(sourceUrl, &scopeManager);
 
+        // load the archetype state
         lyric_parser::ArchetypeNode *root;
         TU_ASSIGN_OR_RETURN (root, archetypeState.load(archetype));
         archetypeState.setRoot(root);
+
+        // preprocess the archetype
+        PragmaRewriter pragmaRewriter(rewriteDriverBuilder, &archetypeState);
+        TU_RETURN_IF_NOT_OK (pragmaRewriter.rewritePragmas());
+
+        // construct the driver
+        std::shared_ptr<AbstractRewriteDriver> rewriteDriver;
+        TU_ASSIGN_OR_RETURN (rewriteDriver, rewriteDriverBuilder->makeRewriteDriver());
 
         // define the driver state
         RewriteProcessorState processorState(&m_options, rewriteDriver, &archetypeState);
 
         // construct the root visitor
-        auto visitor = std::make_shared<AstSequenceVisitor>(
+        auto rootVisitor = std::make_shared<AstSequenceVisitor>(
             lyric_schema::LyricAstId::Block, &processorState);
 
         // rewrite archetype
-        RewriteProcessor processor;
-        TU_RETURN_IF_NOT_OK (processor.process(&archetypeState, visitor));
+        TU_RETURN_IF_NOT_OK (processor.process(&archetypeState, rootVisitor));
         TU_RETURN_IF_NOT_OK (rewriteDriver->finish());
 
         // serialize state
@@ -145,7 +156,7 @@ tempo_utils::Status
 lyric_rewriter::LyricRewriter::scanArchetype(
     const lyric_parser::LyricArchetype &archetype,
     const tempo_utils::Url &sourceUrl,
-    std::shared_ptr<AbstractScanDriver> scanDriver,
+    std::shared_ptr<AbstractScanDriverBuilder> scanDriverBuilder,
     std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
     if (!sourceUrl.isValid())
@@ -157,6 +168,7 @@ lyric_rewriter::LyricRewriter::scanArchetype(
             RewriterCondition::kRewriterInvariant, "invalid archetype");
 
     try {
+        RewriteProcessor processor;
 
         // create a new span
         tempo_tracing::ScopeManager scopeManager(recorder);
@@ -165,20 +177,29 @@ lyric_rewriter::LyricRewriter::scanArchetype(
 
         lyric_parser::ArchetypeState archetypeState(sourceUrl, &scopeManager);
 
+        // load the archetype state
         lyric_parser::ArchetypeNode *root;
         TU_ASSIGN_OR_RETURN (root, archetypeState.load(archetype));
         archetypeState.setRoot(root);
+
+        // preprocess the archetype
+        for (auto it = archetypeState.pragmasBegin(); it != archetypeState.pragmasEnd(); it++) {
+            TU_RETURN_IF_NOT_OK (scanDriverBuilder->applyPragma(&archetypeState, *it));
+        }
+
+        // construct the driver
+        std::shared_ptr<AbstractScanDriver> scanDriver;
+        TU_ASSIGN_OR_RETURN (scanDriver, scanDriverBuilder->makeScanDriver());
 
         // define the driver state
         ScanProcessorState processorState(&m_options, scanDriver, &archetypeState);
 
         // construct the root visitor
-        auto visitor = std::make_shared<AstSequenceVisitor>(
+        auto rootVisitor = std::make_shared<AstSequenceVisitor>(
             lyric_schema::LyricAstId::Block, &processorState);
 
         // scan archetype
-        RewriteProcessor processor;
-        TU_RETURN_IF_NOT_OK (processor.process(&archetypeState, visitor));
+        TU_RETURN_IF_NOT_OK (processor.process(&archetypeState, rootVisitor));
         return scanDriver->finish();
 
     } catch (tempo_utils::StatusException &ex) {

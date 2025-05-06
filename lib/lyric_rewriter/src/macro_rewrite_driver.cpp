@@ -120,3 +120,39 @@ lyric_rewriter::MacroRewriteDriver::exit(
 
     return {};
 }
+
+lyric_rewriter::MacroRewriteDriverBuilder::MacroRewriteDriverBuilder(MacroRegistry *registry)
+    : m_registry(registry)
+{
+    TU_ASSERT (m_registry != nullptr);
+}
+
+tempo_utils::Status
+lyric_rewriter::MacroRewriteDriverBuilder::rewritePragma(
+    lyric_parser::ArchetypeState *state,
+    lyric_parser::ArchetypeNode *node,
+    PragmaContext &ctx)
+{
+    lyric_schema::LyricAstId nodeId{};
+    TU_RETURN_IF_NOT_OK (node->parseId(lyric_schema::kLyricAstVocabulary, nodeId));
+    if (nodeId != lyric_schema::LyricAstId::Pragma)
+        return RewriterStatus::forCondition(
+            RewriterCondition::kRewriterInvariant, "expected Pragma");
+
+    std::string id;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, id));
+
+    auto macro = m_registry->getMacro(id);
+    if (macro == nullptr)
+        return RewriterStatus::forCondition(
+            RewriterCondition::kRewriterInvariant, "unknown pragma '{}'", id);
+
+    return macro->rewritePragma(node, ctx, state);
+}
+
+tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractRewriteDriver>>
+lyric_rewriter::MacroRewriteDriverBuilder::makeRewriteDriver()
+{
+    auto driver = std::make_shared<MacroRewriteDriver>(m_registry);
+    return std::static_pointer_cast<AbstractRewriteDriver>(driver);
+}

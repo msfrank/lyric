@@ -46,22 +46,16 @@ lyric_symbolizer::LyricSymbolizer::symbolizeModule(
         auto span = scopeManager.makeSpan();
         span->setOperationName("symbolizeModule");
 
-        // construct the assembler state
-        lyric_assembler::ObjectState objectState(
+        // construct the symbolizer state
+        auto builder = std::make_shared<SymbolizerScanDriverBuilder>(
             location, m_localModuleCache, m_systemModuleCache, &scopeManager, objectStateOptions);
-
-        // initialize the assembler
-        lyric_assembler::ObjectRoot *root;
-        TU_ASSIGN_OR_RETURN (root, objectState.defineRoot());
-
-        auto symbolizerDriver = std::make_shared<SymbolizerScanDriver>(root, &objectState);
 
         lyric_rewriter::RewriterOptions rewriterOptions;
         lyric_rewriter::LyricRewriter rewriter(rewriterOptions);
-        TU_RETURN_IF_NOT_OK (rewriter.scanArchetype(archetype, location.toUrl(), symbolizerDriver, recorder));
+        TU_RETURN_IF_NOT_OK (rewriter.scanArchetype(archetype, location.toUrl(), builder, recorder));
 
         // construct object from assembly state and return it
-        return objectState.toObject();
+        return builder->toObject();
 
     } catch (tempo_utils::StatusException &ex) {
         return ex.getStatus();

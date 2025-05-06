@@ -40,13 +40,13 @@ namespace lyric_rewriter {
         tempo_utils::Result<lyric_parser::LyricArchetype> rewriteArchetype(
             const lyric_parser::LyricArchetype &archetype,
             const tempo_utils::Url &sourceUrl,
-            std::shared_ptr<AbstractRewriteDriver> rewriteDriver,
+            std::shared_ptr<AbstractRewriteDriverBuilder> rewriteDriverBuilder,
             std::shared_ptr<tempo_tracing::TraceRecorder> recorder);
 
         tempo_utils::Status scanArchetype(
             const lyric_parser::LyricArchetype &archetype,
             const tempo_utils::Url &sourceUrl,
-            std::shared_ptr<AbstractScanDriver> scanDriver,
+            std::shared_ptr<AbstractScanDriverBuilder> scanDriverBuilder,
             std::shared_ptr<tempo_tracing::TraceRecorder> recorder);
 
     private:

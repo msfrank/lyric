@@ -11,6 +11,16 @@ lyric_rewriter::AllocatorTrapMacro::AllocatorTrapMacro()
 }
 
 tempo_utils::Status
+lyric_rewriter::AllocatorTrapMacro::rewritePragma(
+    const lyric_parser::ArchetypeNode *pragmaNode,
+    PragmaContext &ctx,
+    lyric_parser::ArchetypeState *state)
+{
+    return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant,
+        "AllocatorTrap macro is not valid in pragma context");
+}
+
+tempo_utils::Status
 lyric_rewriter::AllocatorTrapMacro::rewriteDefinition(
     const lyric_parser::ArchetypeNode *macroCallNode,
     lyric_parser::ArchetypeNode *definitionNode,

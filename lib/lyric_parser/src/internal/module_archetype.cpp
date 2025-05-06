@@ -1003,60 +1003,60 @@ void lyric_parser::internal::ModuleArchetype::exitParamSpec(ModuleParser::ParamS
 }
 
 /*
- * rewrite ops
+ * macro ops
  */
 
-void lyric_parser::internal::ModuleArchetype::exitRewriteArgs(ModuleParser::RewriteArgsContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitMacroArgs(ModuleParser::MacroArgsContext *ctx)
 {
-    return ModuleMacroOps::exitRewriteArgs(ctx);
+    return ModuleMacroOps::exitMacroArgs(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::enterPragma(ModuleParser::PragmaContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterMacroCall(ModuleParser::MacroCallContext *ctx)
 {
-    return ModuleMacroOps::enterPragma(ctx);
+    return ModuleMacroOps::enterMacroCall(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitPragma(ModuleParser::PragmaContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitMacroCall(ModuleParser::MacroCallContext *ctx)
 {
-    return ModuleMacroOps::exitPragma(ctx);
+    return ModuleMacroOps::exitMacroCall(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::enterAnnotation(ModuleParser::AnnotationContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterMacroAnnotation(ModuleParser::MacroAnnotationContext *ctx)
 {
-    return ModuleMacroOps::enterAnnotation(ctx);
+    return ModuleMacroOps::enterMacroAnnotation(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitAnnotation(ModuleParser::AnnotationContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitMacroAnnotation(ModuleParser::MacroAnnotationContext *ctx)
 {
-    return ModuleMacroOps::exitAnnotation(ctx);
+    return ModuleMacroOps::exitMacroAnnotation(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::enterMacro(ModuleParser::MacroContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterPragmaMacro(ModuleParser::PragmaMacroContext *ctx)
 {
-    return ModuleMacroOps::enterMacro(ctx);
+    return ModuleMacroOps::enterPragmaMacro(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitMacro(ModuleParser::MacroContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitPragmaMacro(ModuleParser::PragmaMacroContext *ctx)
 {
-    return ModuleMacroOps::exitMacro(ctx);
+    return ModuleMacroOps::exitPragmaMacro(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::enterAnnotationList(ModuleParser::AnnotationListContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterDefinitionMacro(ModuleParser::DefinitionMacroContext *ctx)
 {
-    return ModuleMacroOps::enterAnnotationList(ctx);
+    return ModuleMacroOps::enterDefinitionMacro(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitAnnotationList(ModuleParser::AnnotationListContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitDefinitionMacro(ModuleParser::DefinitionMacroContext *ctx)
 {
-    return ModuleMacroOps::exitAnnotationList(ctx);
+    return ModuleMacroOps::exitDefinitionMacro(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::enterMacroList(ModuleParser::MacroListContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterBlockMacro(ModuleParser::BlockMacroContext *ctx)
 {
-    return ModuleMacroOps::enterMacroList(ctx);
+    return ModuleMacroOps::enterBlockMacro(ctx);
 }
 
-void lyric_parser::internal::ModuleArchetype::exitMacroList(ModuleParser::MacroListContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitBlockMacro(ModuleParser::BlockMacroContext *ctx)
 {
-    return ModuleMacroOps::exitMacroList(ctx);
+    return ModuleMacroOps::exitBlockMacro(ctx);
 }

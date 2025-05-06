@@ -3,10 +3,10 @@ parser grammar ModuleParser;
 options { tokenVocab = ModuleLexer; }
 
 
-root                : pragma* block ;
+root                : pragmaMacro* block ;
 
 block               : form+ ;
-form                : statement | expression | macroList ;
+form                : statement | expression | blockMacro ;
 
 expression          : basicExpression
                     | lambdaFromExpression
@@ -141,7 +141,7 @@ setStatement        : SetKeyword assignmentSpec assignmentOp expression ;
 
 // def statement
 
-defStatement        : annotationList? DefKeyword
+defStatement        : definitionMacro? DefKeyword
                         symbolIdentifier placeholderSpec? paramSpec returnSpec constraintSpec?
                         CurlyOpen block CurlyClose ;
 
@@ -164,7 +164,7 @@ classInit           : InitKeyword paramSpec classSuper? CurlyOpen block? CurlyCl
 genericClass        : placeholderSpec constraintSpec? ;
 classDerives        : ( SealedKeyword | FinalKeyword ) ;
 classSpec           : classInit | classVal | classVar | classDef | classImpl ;
-defclassStatement   : annotationList? DefClassKeyword
+defclassStatement   : definitionMacro? DefClassKeyword
                         symbolIdentifier genericClass? classDerives?
                         CurlyOpen classSpec*  CurlyClose ;
 
@@ -176,7 +176,7 @@ conceptImpl         : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose 
 genericConcept      : placeholderSpec constraintSpec? ;
 conceptDerives      : ( SealedKeyword | FinalKeyword ) ;
 conceptSpec         : conceptDecl | conceptImpl ;
-defconceptStatement : annotationList? DefConceptKeyword
+defconceptStatement : definitionMacro? DefConceptKeyword
                         symbolIdentifier genericConcept? conceptDerives?
                         CurlyOpen conceptSpec* CurlyClose ;
 
@@ -189,7 +189,7 @@ instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen
 instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 instanceDerives     : ( SealedKeyword | FinalKeyword ) ;
 instanceSpec        : instanceVal | instanceVar | instanceDef | instanceImpl ;
-definstanceStatement: annotationList? DefInstanceKeyword
+definstanceStatement: definitionMacro? DefInstanceKeyword
                         symbolIdentifier instanceDerives?
                         CurlyOpen instanceSpec* CurlyClose ;
 
@@ -202,7 +202,7 @@ enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen
 enumCase            : CaseKeyword symbolIdentifier ( ParenOpen argList? ParenClose )? ;
 enumImpl            : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 enumSpec            : enumInit | enumVal | enumDef | enumCase | enumImpl ;
-defenumStatement    : annotationList? DefEnumKeyword
+defenumStatement    : definitionMacro? DefEnumKeyword
                         symbolIdentifier
                         CurlyOpen enumSpec* CurlyClose ;
 
@@ -216,20 +216,20 @@ structDef           : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen
 structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 structDerives       : ( SealedKeyword | FinalKeyword ) ;
 structSpec          : structInit | structVal | structDef | structImpl ;
-defstructStatement  : annotationList? DefStructKeyword
+defstructStatement  : definitionMacro? DefStructKeyword
                         symbolIdentifier structDerives?
                         CurlyOpen structSpec* CurlyClose ;
 
 
 // global statement
 
-globalStatement     : annotationList? GlobalKeyword ( ValKeyword | VarKeyword )
+globalStatement     : definitionMacro? GlobalKeyword ( ValKeyword | VarKeyword )
                         symbolIdentifier ColonOperator assignableType AssignOperator defaultInitializer ;
 
 
 // defalias statement
 
-defaliasStatement   : annotationList? DefAliasKeyword symbolIdentifier placeholderSpec? FromKeyword assignableType ;
+defaliasStatement   : definitionMacro? DefAliasKeyword symbolIdentifier placeholderSpec? FromKeyword assignableType ;
 
 
 // namespace statement
@@ -242,7 +242,7 @@ namespaceSpec       : globalStatement
                     | definstanceStatement
                     | defstructStatement
                     ;
-namespaceStatement  : annotationList? NamespaceKeyword
+namespaceStatement  : definitionMacro? NamespaceKeyword
                         symbolIdentifier
                         CurlyOpen namespaceSpec* CurlyClose ;
 
@@ -407,43 +407,43 @@ derefSpec           : DotOperator
 
 literal             : numberLiteral | textLiteral | keywordLiteral ;
 
-decimalInteger      : DecimalInteger ;
-hexInteger          : HexInteger ;
-octalInteger        : OctalInteger ;
-decimalFixedFloat   : DecimalFixedFloat ;
-decimalScientificFloat:  DecimalScientificFloat ;
-hexFloat            : HexFloat ;
-numberLiteral       : decimalInteger
-                    | hexInteger
-                    | octalInteger
-                    | decimalFixedFloat
-                    | decimalScientificFloat
-                    | hexFloat
-                    ;
+decimalInteger          : DecimalInteger ;
+hexInteger              : HexInteger ;
+octalInteger            : OctalInteger ;
+decimalFixedFloat       : DecimalFixedFloat ;
+decimalScientificFloat  :  DecimalScientificFloat ;
+hexFloat                : HexFloat ;
+numberLiteral           : decimalInteger
+                        | hexInteger
+                        | octalInteger
+                        | decimalFixedFloat
+                        | decimalScientificFloat
+                        | hexFloat
+                        ;
 
-charLiteral         : CharLiteral ;
-stringLiteral       : StringLiteral ;
-urlLiteral          : UrlLiteral ;
-textLiteral         : charLiteral | stringLiteral | urlLiteral ;
-
-
-trueLiteral         : TrueKeyword ;
-falseLiteral        : FalseKeyword ;
-undefLiteral        : UndefKeyword ;
-nilLiteral          : NilKeyword ;
-keywordLiteral      : trueLiteral | falseLiteral | undefLiteral | nilLiteral ;
+charLiteral             : CharLiteral ;
+stringLiteral           : StringLiteral ;
+urlLiteral              : UrlLiteral ;
+textLiteral             : charLiteral | stringLiteral | urlLiteral ;
 
 
-// rewriter forms
+trueLiteral             : TrueKeyword ;
+falseLiteral            : FalseKeyword ;
+undefLiteral            : UndefKeyword ;
+nilLiteral              : NilKeyword ;
+keywordLiteral          : trueLiteral | falseLiteral | undefLiteral | nilLiteral ;
 
-rewriteArgs         : ParenOpen argList? ParenClose ;
 
-pragma              : DoubleAtOperator Identifier rewriteArgs? ;
-macro               : Identifier rewriteArgs? ;
-annotation          : AtOperator Identifier rewriteArgs? ;
+// macro forms
 
-macroList           : AtOperator CurlyOpen macro+ CurlyClose ;
-annotationList      : annotation+ ;
+macroArgs           : ParenOpen argList? ParenClose ;
+macroCall           : Identifier macroArgs? ;
+macroAnnotation     : AtOperator Identifier macroArgs? ;
+
+pragmaMacro         : DoubleAtOperator Identifier macroArgs? ;
+blockMacro          : AtOperator CurlyOpen macroCall+ CurlyClose ;
+definitionMacro     : macroAnnotation+ ;
+
 
 // comment
 

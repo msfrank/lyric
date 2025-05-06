@@ -9,6 +9,11 @@ namespace lyric_rewriter {
     public:
         TrapMacro();
 
+        tempo_utils::Status rewritePragma(
+            const lyric_parser::ArchetypeNode *pragmaNode,
+            PragmaContext &ctx,
+            lyric_parser::ArchetypeState *state) override;
+
         tempo_utils::Status rewriteDefinition(
             const lyric_parser::ArchetypeNode *macroCallNode,
             lyric_parser::ArchetypeNode *definitionNode,

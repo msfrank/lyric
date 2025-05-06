@@ -8,7 +8,6 @@
 #include "abstract_analyzer_context.h"
 
 namespace lyric_analyzer {
-
     class AnalyzerScanDriver : public lyric_rewriter::AbstractScanDriver {
     public:
         AnalyzerScanDriver(lyric_assembler::ObjectRoot *root, lyric_assembler::ObjectState *state);
@@ -49,6 +48,32 @@ namespace lyric_analyzer {
         lyric_typing::TypeSystem *m_typeSystem;
         std::vector<std::unique_ptr<AbstractAnalyzerContext>> m_handlers;
         std::stack<lyric_assembler::NamespaceSymbol *> m_namespaces;
+    };
+
+    class AnalyzerScanDriverBuilder : public lyric_rewriter::AbstractScanDriverBuilder {
+    public:
+        AnalyzerScanDriverBuilder(
+            const lyric_common::ModuleLocation &location,
+            std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
+            std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+            tempo_tracing::ScopeManager *scopeManager,
+            const lyric_assembler::ObjectStateOptions &objectStateOptions);
+
+        tempo_utils::Status applyPragma(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node) override;
+
+        tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractScanDriver>> makeScanDriver() override;
+
+        tempo_utils::Result<lyric_object::LyricObject> toObject() const;
+
+    private:
+        lyric_common::ModuleLocation m_location;
+        std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
+        std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
+        tempo_tracing::ScopeManager *m_scopeManager;
+        lyric_assembler::ObjectStateOptions m_objectStateOptions;
+        std::unique_ptr<lyric_assembler::ObjectState> m_state;
     };
 }
 

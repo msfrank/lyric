@@ -125,9 +125,9 @@ lyric_build::internal::ParseModuleTask::parseModule(
     lyric_rewriter::MacroRegistry macroRegistry(macros);
 
     TU_LOG_V << "rewriting source from " << m_sourceUrl;
-    auto macroRewriteDriver = std::make_shared<lyric_rewriter::MacroRewriteDriver>(&macroRegistry);
+    auto macroRewriteDriverBuilder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(&macroRegistry);
     auto rewriteResult = rewriter.rewriteArchetype(
-        archetype, m_sourceUrl, macroRewriteDriver, traceDiagnostics());
+        archetype, m_sourceUrl, macroRewriteDriverBuilder, traceDiagnostics());
 
     if (rewriteResult.isStatus()) {
         span->logStatus(parseResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);

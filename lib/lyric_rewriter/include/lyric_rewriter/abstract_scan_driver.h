@@ -23,6 +23,17 @@ namespace lyric_rewriter {
 
         virtual tempo_utils::Status finish() = 0;
     };
+
+    class AbstractScanDriverBuilder {
+    public:
+        virtual ~AbstractScanDriverBuilder() = default;
+
+        virtual tempo_utils::Status applyPragma(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node) = 0;
+
+        virtual tempo_utils::Result<std::shared_ptr<AbstractScanDriver>> makeScanDriver() = 0;
+    };
 }
 
 #endif // LYRIC_REWRITER_ABSTRACT_SCAN_DRIVER_H
