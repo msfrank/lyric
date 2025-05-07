@@ -69,6 +69,14 @@ lyric_build::LyricMetadata::bytesView() const
     return m_reader->bytesView();
 }
 
+std::string
+lyric_build::LyricMetadata::dumpJson() const
+{
+    if (m_reader == nullptr)
+        return {};
+    return m_reader->dumpJson();
+}
+
 bool
 lyric_build::LyricMetadata::verify(std::span<const tu_uint8> bytes)
 {

@@ -338,6 +338,18 @@ lyric_compiler::CompilerScanDriverBuilder::applyPragma(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node)
 {
+    if (node->isNamespace(lyric_schema::kLyricAssemblerNs)) {
+        lyric_schema::LyricAssemblerId assemblerId;
+        TU_RETURN_IF_NOT_OK (node->parseId(lyric_schema::kLyricAssemblerVocabulary, assemblerId));
+        switch (assemblerId) {
+            case lyric_schema::LyricAssemblerId::Plugin: {
+                TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstModuleLocation, m_pluginLocation));
+                break;
+            }
+            default:
+                break;
+        }
+    }
     return {};
 }
 
@@ -345,8 +357,13 @@ tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractScanDriver>>
 lyric_compiler::CompilerScanDriverBuilder::makeScanDriver()
 {
     // construct the object state
-    m_state = std::make_unique<lyric_assembler::ObjectState>(
-        m_location, m_localModuleCache, m_systemModuleCache, m_scopeManager, m_objectStateOptions);
+    if (m_pluginLocation.isValid()) {
+        m_state = std::make_unique<lyric_assembler::ObjectState>(m_location, m_localModuleCache,
+            m_systemModuleCache, m_scopeManager, m_pluginLocation, m_objectStateOptions);
+    } else {
+        m_state = std::make_unique<lyric_assembler::ObjectState>(m_location, m_localModuleCache,
+            m_systemModuleCache, m_scopeManager, m_objectStateOptions);
+    }
 
     // define the object root
     lyric_assembler::ObjectRoot *root;

@@ -335,6 +335,36 @@ lyric_parser::ArchetypeState::addPragma(ArchetypeNode *pragmaNode)
     m_pragmaNodes.push_back(pragmaNode);
 }
 
+lyric_parser::ArchetypeNode *
+lyric_parser::ArchetypeState::replacePragma(int index, ArchetypeNode *pragma)
+{
+    TU_ASSERT (pragma != nullptr);
+    if (0 <= index && std::cmp_less(index, m_pragmaNodes.size())) {
+        auto *prev = m_pragmaNodes.at(index);
+        m_pragmaNodes[index] = pragma;
+        return prev;
+    }
+    return nullptr;
+}
+
+lyric_parser::ArchetypeNode *
+lyric_parser::ArchetypeState::removePragma(int index)
+{
+    if (0 <= index && std::cmp_less(index, m_pragmaNodes.size())) {
+        auto iterator = m_pragmaNodes.begin();
+        std::advance(iterator, index);
+        auto *pragma = *iterator;
+        m_pragmaNodes.erase(iterator);
+        return pragma;
+    }
+    return nullptr;
+}
+
+void lyric_parser::ArchetypeState::clearPragmas()
+{
+    m_pragmaNodes.clear();
+}
+
 std::vector<lyric_parser::ArchetypeNode *>::const_iterator
 lyric_parser::ArchetypeState::pragmasBegin() const
 {
@@ -369,6 +399,12 @@ void
 lyric_parser::ArchetypeState::setRoot(ArchetypeNode *node)
 {
     m_rootNode = node;
+}
+
+void
+lyric_parser::ArchetypeState::clearRoot()
+{
+    m_rootNode = nullptr;
 }
 
 void

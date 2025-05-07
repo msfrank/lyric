@@ -31,6 +31,7 @@ set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/macro_block.h
     include/lyric_rewriter/macro_registry.h
     include/lyric_rewriter/macro_rewrite_driver.h
+    include/lyric_rewriter/plugin_macro.h
     include/lyric_rewriter/pragma_context.h
     include/lyric_rewriter/pragma_rewriter.h
     include/lyric_rewriter/push_result_macro.h
@@ -60,6 +61,7 @@ target_sources(lyric_rewriter PRIVATE
     src/ast_if_visitor.cpp
     src/ast_match_visitor.cpp
     src/ast_param_visitor.cpp
+    src/plugin_macro.cpp
     src/pragma_context.cpp
     src/pragma_rewriter.cpp
     src/ast_sequence_visitor.cpp

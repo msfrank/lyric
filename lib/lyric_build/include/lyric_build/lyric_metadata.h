@@ -25,6 +25,8 @@ namespace lyric_build {
         std::shared_ptr<const internal::MetadataReader> getReader() const;
         std::span<const tu_uint8> bytesView() const;
 
+        std::string dumpJson() const;
+
         static bool verify(std::span<const tu_uint8> bytes);
 
     private:

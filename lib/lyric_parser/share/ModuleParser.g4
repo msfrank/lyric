@@ -437,10 +437,10 @@ keywordLiteral          : trueLiteral | falseLiteral | undefLiteral | nilLiteral
 // macro forms
 
 macroArgs           : ParenOpen argList? ParenClose ;
-macroCall           : Identifier macroArgs? ;
-macroAnnotation     : AtOperator Identifier macroArgs? ;
+macroCall           : Identifier macroArgs ;
+macroAnnotation     : AtOperator Identifier macroArgs ;
 
-pragmaMacro         : DoubleAtOperator Identifier macroArgs? ;
+pragmaMacro         : DoubleAtOperator Identifier macroArgs ;
 blockMacro          : AtOperator CurlyOpen macroCall+ CurlyClose ;
 definitionMacro     : macroAnnotation+ ;
 

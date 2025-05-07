@@ -27,6 +27,8 @@ namespace lyric_serde {
         std::shared_ptr<const internal::PatchsetReader> getReader() const;
         std::span<const tu_uint8> bytesView() const;
 
+        std::string dumpJson() const;
+
         static bool verify(std::span<const tu_uint8> bytes);
 
     private:

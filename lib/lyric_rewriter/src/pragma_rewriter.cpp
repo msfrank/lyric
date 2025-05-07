@@ -39,8 +39,9 @@ lyric_rewriter::PragmaRewriter::rewritePragmas()
     }
 
     // rewrite the pragmas section with the nodes from the context
+    m_state->clearPragmas();
     for (auto it = ctx.pragmasBegin(); it != ctx.pragmasEnd(); it++) {
-
+        m_state->addPragma(*it);
     }
 
     return {};

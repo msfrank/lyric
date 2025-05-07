@@ -70,6 +70,15 @@ lyric_packaging::LyricManifest::bytesView() const
     return m_reader->bytesView();
 }
 
+std::string
+lyric_packaging::LyricManifest::dumpJson() const
+{
+    if (!isValid())
+        return {};
+    return m_reader->dumpJson();
+}
+
+
 bool
 lyric_packaging::LyricManifest::verify(std::span<const tu_uint8> bytes)
 {

@@ -19,6 +19,7 @@ namespace lyric_schema {
 
         Trap,                       // invoke trap with the given trap number
         AllocatorTrap,              // use the given trap as allocator
+        Plugin,                     // the plugin used to provide traps invoked by the module
 
         // Assembler properties
 
@@ -34,6 +35,9 @@ namespace lyric_schema {
     constexpr tempo_utils::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerAllocatorTrapClass(
         &kLyricAssemblerNs, LyricAssemblerId::AllocatorTrap, "AllocatorTrap");
 
+    constexpr tempo_utils::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerPluginClass(
+        &kLyricAssemblerNs, LyricAssemblerId::Plugin, "Plugin");
+
     constexpr tempo_utils::SchemaProperty<LyricAssemblerNs,LyricAssemblerId>
         kLyricAssemblerTrapNameProperty(
         &kLyricAssemblerNs, LyricAssemblerId::TrapName, "TrapName", tempo_utils::PropertyType::kString);
@@ -48,6 +52,7 @@ namespace lyric_schema {
     kLyricAssemblerResources = {
         &kLyricAssemblerTrapClass,
         &kLyricAssemblerAllocatorTrapClass,
+        &kLyricAssemblerPluginClass,
         &kLyricAssemblerTrapNameProperty,
         &kLyricAssemblerDefinitionSymbolPathProperty,
     };

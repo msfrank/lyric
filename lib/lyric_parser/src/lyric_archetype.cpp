@@ -102,6 +102,14 @@ lyric_parser::LyricArchetype::bytesView() const
     return m_reader->bytesView();
 }
 
+std::string
+lyric_parser::LyricArchetype::dumpJson() const
+{
+    if (!isValid())
+        return {};
+    return m_reader->dumpJson();
+}
+
 bool
 lyric_parser::LyricArchetype::verify(std::span<const tu_uint8> bytes)
 {

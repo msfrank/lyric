@@ -91,6 +91,9 @@ namespace lyric_compiler {
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         tempo_tracing::ScopeManager *m_scopeManager;
         lyric_assembler::ObjectStateOptions m_objectStateOptions;
+
+        lyric_common::ModuleLocation m_pluginLocation;
+
         std::unique_ptr<lyric_assembler::ObjectState> m_state;
     };
 }

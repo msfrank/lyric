@@ -23,6 +23,9 @@
 #include <tempo_utils/date_time.h>
 #include <tempo_utils/log_message.h>
 
+#include "lyric_parser/ast_attrs.h"
+#include "lyric_schema/assembler_schema.h"
+
 lyric_build::internal::CompileModuleTask::CompileModuleTask(
     const tempo_utils::UUID &generation,
     const TaskKey &key,
@@ -156,25 +159,54 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
 {
+    auto cache = buildState->getCache();
+
+    if (!depStates.contains(m_parseTarget))
+        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+            "missing state for dependent task {}", m_parseTarget.toString());
+
+    const auto &parseHash = depStates.at(m_parseTarget).getHash();
+    TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
+    auto parseGeneration = cache->loadTrace(parseTrace);
+    ArtifactId parseArtifact(parseGeneration, parseHash, m_sourceUrl);
+
+    std::shared_ptr<const tempo_utils::ImmutableBytes> parseContent;
+    TU_ASSIGN_OR_RETURN (parseContent, cache->loadContentFollowingLinks(parseArtifact));
+    lyric_parser::LyricArchetype archetype(parseContent);
+
+    // check for a plugin pragma
+    lyric_common::ModuleLocation pluginLocation;
+    for (int i = 0; i < archetype.numPragmas(); i++) {
+        auto pragma = archetype.getPragma(i);
+        if (pragma.isClass(lyric_schema::kLyricAssemblerPluginClass)) {
+            TU_RETURN_IF_NOT_OK (pragma.parseAttr(lyric_parser::kLyricAstModuleLocation, pluginLocation));
+        }
+    }
+
+    if (pluginLocation.isValid()) {
+        TaskKey compilePlugin("compile_plugin", pluginLocation.getPath().toString());
+        m_compileTargets.insert(compilePlugin);
+    }
+
     if (!depStates.contains(m_symbolizeTarget))
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,
             "missing state for dependent task {}", m_symbolizeTarget.toString());
 
-    auto cache = buildState->getCache();
     const auto &symbolizeHash = depStates.at(m_symbolizeTarget).getHash();
     TraceId symbolizeTrace(symbolizeHash, m_symbolizeTarget.getDomain(), m_symbolizeTarget.getId());
-    auto generation = cache->loadTrace(symbolizeTrace);
-    ArtifactId symbolizeArtifact(generation, symbolizeHash, m_sourceUrl);
+    auto symbolizeGeneration = cache->loadTrace(symbolizeTrace);
+    ArtifactId symbolizeArtifact(symbolizeGeneration, symbolizeHash, m_sourceUrl);
 
-    std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(symbolizeArtifact));
-    lyric_object::LyricObject module(content);
+    std::shared_ptr<const tempo_utils::ImmutableBytes> symbolizeContent;
+    TU_ASSIGN_OR_RETURN (symbolizeContent, cache->loadContentFollowingLinks(symbolizeArtifact));
+    lyric_object::LyricObject object(symbolizeContent);
+
+    auto root = object.getObject();
 
     // check for any imports from modules in the src directory
     absl::flat_hash_set<TaskKey> analyzeTargets;
-    auto object = module.getObject();
-    for (int i = 0; i < object.numImports(); i++) {
-        auto import_ = object.getImport(i);
+    for (int i = 0; i < root.numImports(); i++) {
+        auto import_ = root.getImport(i);
         auto location = import_.getImportLocation();
         if (!location.isValid())
             return BuildStatus::forCondition(BuildCondition::kTaskFailure,

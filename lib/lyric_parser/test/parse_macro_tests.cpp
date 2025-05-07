@@ -6,7 +6,7 @@
 #include <tempo_utils/logging.h>
 
 
-TEST(ParseMacro, ParseMacro)
+TEST(ParseMacro, ParseBlockMacro)
 {
     lyric_parser::LyricParser parser({});
 
@@ -21,7 +21,7 @@ TEST(ParseMacro, ParseMacro)
     ASSERT_TRUE(parseResult.isResult());
 }
 
-TEST(ParseMacro, ParsePragma)
+TEST(ParseMacro, ParsePragmaMacro)
 {
     lyric_parser::LyricParser parser({});
 
@@ -29,6 +29,7 @@ TEST(ParseMacro, ParsePragma)
 
     auto parseResult = parser.parseModule(R"(
         @@Plugin("/plugin")
+        nil
     )", {}, recorder);
 
     ASSERT_TRUE(parseResult.isResult());

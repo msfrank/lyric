@@ -62,10 +62,10 @@ TEST(RewriteAllocatorTrap, AllocatorTrapOnClass)
     lyric_rewriter::MacroRegistry registry({
         {"AllocatorTrap", std::make_shared<lyric_rewriter::AllocatorTrapMacro>()}
     });
-    auto driver = std::make_shared<lyric_rewriter::MacroRewriteDriver>(&registry);
+    auto builder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(&registry);
 
     auto sourceUrl = tempo_utils::Url::fromString("/test");
-    auto rewriteArchetypeResult = rewriter.rewriteArchetype(archetype, sourceUrl, driver, recorder);
+    auto rewriteArchetypeResult = rewriter.rewriteArchetype(archetype, sourceUrl, builder, recorder);
     ASSERT_TRUE (rewriteArchetypeResult.isResult());
     auto rewritten = rewriteArchetypeResult.getResult();
 

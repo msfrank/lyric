@@ -60,6 +60,9 @@ namespace lyric_parser {
 
         ArchetypeNode *getPragma(int index) const;
         void addPragma(ArchetypeNode *pragmaNode);
+        ArchetypeNode *replacePragma(int index, ArchetypeNode *pragma);
+        ArchetypeNode *removePragma(int index);
+        void clearPragmas();
         std::vector<ArchetypeNode *>::const_iterator pragmasBegin() const;
         std::vector<ArchetypeNode *>::const_iterator pragmasEnd() const;
         int numPragmas() const;
@@ -67,6 +70,7 @@ namespace lyric_parser {
         bool hasRoot() const;
         ArchetypeNode *getRoot() const;
         void setRoot(ArchetypeNode *node);
+        void clearRoot();
 
         bool isEmpty();
         void pushNode(ArchetypeNode *node);

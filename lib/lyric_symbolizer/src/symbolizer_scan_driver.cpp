@@ -232,8 +232,8 @@ tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractScanDriver>>
 lyric_symbolizer::SymbolizerScanDriverBuilder::makeScanDriver()
 {
     // construct the object state
-    m_state = std::make_unique<lyric_assembler::ObjectState>(
-        m_location, m_localModuleCache, m_systemModuleCache, m_scopeManager, m_objectStateOptions);
+    m_state = std::make_unique<lyric_assembler::ObjectState>(m_location, m_localModuleCache,
+        m_systemModuleCache, m_scopeManager, m_objectStateOptions);
 
     // define the object root
     lyric_assembler::ObjectRoot *root;

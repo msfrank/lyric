@@ -66,6 +66,7 @@ namespace lyric_symbolizer {
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         tempo_tracing::ScopeManager *m_scopeManager;
         lyric_assembler::ObjectStateOptions m_objectStateOptions;
+
         std::unique_ptr<lyric_assembler::ObjectState> m_state;
     };
 }

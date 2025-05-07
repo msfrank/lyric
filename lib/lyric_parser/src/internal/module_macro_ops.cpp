@@ -19,10 +19,11 @@ lyric_parser::internal::ModuleMacroOps::exitMacroArgs(ModuleParser::MacroArgsCon
 {
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *ruleNode = m_state->peekNode();
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
+
+        std::deque<ArchetypeNode *> argNodes;
         for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
             auto *argSpec = argList->argSpec(i);
             if (argSpec == nullptr)
@@ -44,7 +45,12 @@ lyric_parser::internal::ModuleMacroOps::exitMacroArgs(ModuleParser::MacroArgsCon
                 argNode = keywordNode;
             }
 
-            ruleNode->prependChild(argNode);
+            argNodes.push_front(argNode);
+        }
+
+        auto *macroNode = m_state->peekNode();
+        for (auto *argNode : argNodes) {
+            macroNode->appendChild(argNode);
         }
     }
 }

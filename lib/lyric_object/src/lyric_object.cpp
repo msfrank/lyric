@@ -93,6 +93,8 @@ lyric_object::LyricObject::bytesView() const
 std::string
 lyric_object::LyricObject::dumpJson() const
 {
+    if (m_reader == nullptr)
+        return {};
     return m_reader->dumpJson();
 }
 
