@@ -37,18 +37,18 @@ namespace lyric_build {
 
     public:
         BuildGeneration();
-        BuildGeneration(
-            const tempo_utils::UUID &uuid,
-            const std::chrono::time_point<std::chrono::system_clock> &createTime);
+        BuildGeneration(const tempo_utils::UUID &uuid, tu_int64 createTime);
         BuildGeneration(const BuildGeneration &other);
 
         bool isValid() const;
         tempo_utils::UUID getUuid() const;
-        std::chrono::time_point<std::chrono::system_clock> getCreateTime();
+        tu_int64 getCreateTime() const;
+
+        static BuildGeneration create();
 
     private:
         tempo_utils::UUID m_uuid;
-        std::chrono::time_point<std::chrono::system_clock> m_createTime;
+        tu_int64 m_createTime;
     };
 
     /**

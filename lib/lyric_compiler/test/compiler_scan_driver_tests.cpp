@@ -14,48 +14,64 @@
 
 #include "compiler_mocks.h"
 
-TEST(CompilerScanDriver, InitializeDriver)
-{
-    auto location = lyric_common::ModuleLocation::fromString("/test");
-    auto staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
-    auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
-    auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
-    auto systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
-    auto recorder = tempo_tracing::TraceRecorder::create();
-    tempo_tracing::ScopeManager scopeManager(recorder);
-    lyric_assembler::ObjectState objectState(location, localModuleCache, systemModuleCache, &scopeManager);
-
+class CompilerScanDriver : public ::testing::Test {
+protected:
+    lyric_common::ModuleLocation location;
+    std::shared_ptr<lyric_runtime::StaticLoader> staticLoader;
+    std::shared_ptr<lyric_bootstrap::BootstrapLoader> bootstrapLoader;
+    std::shared_ptr<lyric_importer::ModuleCache> localModuleCache;
+    std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache;
+    std::shared_ptr<tempo_tracing::TraceRecorder> recorder;
+    std::unique_ptr<tempo_tracing::ScopeManager> scopeManager;
+    std::unique_ptr<lyric_assembler::ObjectState> objectState;
     lyric_assembler::ObjectRoot *objectRoot;
-    TU_ASSIGN_OR_RAISE (objectRoot, objectState.defineRoot());
 
-    lyric_compiler::CompilerScanDriver driver(objectRoot, &objectState);
+    void SetUp() override {
+        location = lyric_common::ModuleLocation::fromString("/test");
+        staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
+        bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
+        localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
+        systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
+        recorder = tempo_tracing::TraceRecorder::create();
+        scopeManager = std::make_unique<tempo_tracing::ScopeManager>(recorder);
+        objectState = std::make_unique<lyric_assembler::ObjectState>(location, localModuleCache, systemModuleCache, scopeManager.get());
+        TU_ASSIGN_OR_RAISE (objectRoot, objectState->defineRoot());
+    }
+};
 
+class TestCompilerScanDriverBuilder : public lyric_rewriter::AbstractScanDriverBuilder {
+public:
+    std::shared_ptr<lyric_compiler::CompilerScanDriver> driver;
+
+    TestCompilerScanDriverBuilder(lyric_assembler::ObjectRoot *root, lyric_assembler::ObjectState *state) {
+        driver = std::make_shared<lyric_compiler::CompilerScanDriver>(root, state);
+    }
+    tempo_utils::Status applyPragma(const lyric_parser::ArchetypeState *state, const lyric_parser::ArchetypeNode *node) override {
+        return {};
+    }
+    tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractScanDriver>> makeScanDriver() override {
+        return std::static_pointer_cast<lyric_rewriter::AbstractScanDriver>(driver);
+    }
+};
+
+TEST_F(CompilerScanDriver, InitializeDriver)
+{
+    lyric_compiler::CompilerScanDriver driver(objectRoot, objectState.get());
     auto rootHandler = std::make_unique<MockGrouping>(&driver);
     ASSERT_THAT (driver.initialize(std::move(rootHandler)), tempo_test::IsOk());
 }
 
-TEST(CompilerScanDriver, HandleRootNode)
+TEST_F(CompilerScanDriver, HandleRootNode)
 {
-    auto location = lyric_common::ModuleLocation::fromString("/test");
-    auto staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
-    auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
-    auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
-    auto systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
-    auto recorder = tempo_tracing::TraceRecorder::create();
-    tempo_tracing::ScopeManager scopeManager(recorder);
-    lyric_assembler::ObjectState objectState(location, localModuleCache, systemModuleCache, &scopeManager);
-
-    lyric_assembler::ObjectRoot *objectRoot;
-    TU_ASSIGN_OR_RAISE (objectRoot, objectState.defineRoot());
-
-    lyric_parser::ArchetypeState archetypeState(location.toUrl(), &scopeManager);
+    lyric_parser::ArchetypeState archetypeState(location.toUrl(), scopeManager.get());
     lyric_parser::ArchetypeNode *blockNode;
     TU_ASSIGN_OR_RAISE (blockNode, archetypeState.appendNode(lyric_schema::kLyricAstBlockClass, {}));
     archetypeState.setRoot(blockNode);
     lyric_parser::LyricArchetype archetype;
     TU_ASSIGN_OR_RAISE (archetype, archetypeState.toArchetype());
 
-    auto driver = std::make_shared<lyric_compiler::CompilerScanDriver>(objectRoot, &objectState);
+    auto builder = std::make_shared<TestCompilerScanDriverBuilder>(objectRoot, objectState.get());
+    auto driver = builder->driver;
 
     auto rootHandler = std::make_unique<MockGrouping>(driver.get());
     EXPECT_CALL (*rootHandler, before)
@@ -69,24 +85,12 @@ TEST(CompilerScanDriver, HandleRootNode)
 
     lyric_rewriter::RewriterOptions options;
     lyric_rewriter::LyricRewriter rewriter(options);
-    ASSERT_THAT (rewriter.scanArchetype(archetype, location.toUrl(), driver, recorder), tempo_test::IsOk());
+    ASSERT_THAT (rewriter.scanArchetype(archetype, location.toUrl(), builder, recorder), tempo_test::IsOk());
 }
 
-TEST(CompilerScanDriver, HandleRootAndSingleChild)
+TEST_F(CompilerScanDriver, HandleRootAndSingleChild)
 {
-    auto location = lyric_common::ModuleLocation::fromString("/test");
-    auto staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
-    auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
-    auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
-    auto systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
-    auto recorder = tempo_tracing::TraceRecorder::create();
-    tempo_tracing::ScopeManager scopeManager(recorder);
-    lyric_assembler::ObjectState objectState(location, localModuleCache, systemModuleCache, &scopeManager);
-
-    lyric_assembler::ObjectRoot *objectRoot;
-    TU_ASSIGN_OR_RAISE (objectRoot, objectState.defineRoot());
-
-    lyric_parser::ArchetypeState archetypeState(location.toUrl(), &scopeManager);
+    lyric_parser::ArchetypeState archetypeState(location.toUrl(), scopeManager.get());
     lyric_parser::ArchetypeNode *blockNode;
     TU_ASSIGN_OR_RAISE (blockNode, archetypeState.appendNode(lyric_schema::kLyricAstBlockClass, {}));
     archetypeState.setRoot(blockNode);
@@ -98,7 +102,8 @@ TEST(CompilerScanDriver, HandleRootAndSingleChild)
     lyric_parser::LyricArchetype archetype;
     TU_ASSIGN_OR_RAISE (archetype, archetypeState.toArchetype());
 
-    auto driver = std::make_shared<lyric_compiler::CompilerScanDriver>(objectRoot, &objectState);
+    auto builder = std::make_shared<TestCompilerScanDriverBuilder>(objectRoot, objectState.get());
+    auto driver = builder->driver;
 
     auto rootHandler = std::make_unique<MockGrouping>(driver.get());
     EXPECT_CALL (*rootHandler, before)
@@ -125,24 +130,12 @@ TEST(CompilerScanDriver, HandleRootAndSingleChild)
 
     lyric_rewriter::RewriterOptions options;
     lyric_rewriter::LyricRewriter rewriter(options);
-    ASSERT_THAT (rewriter.scanArchetype(archetype, location.toUrl(), driver, recorder), tempo_test::IsOk());
+    ASSERT_THAT (rewriter.scanArchetype(archetype, location.toUrl(), builder, recorder), tempo_test::IsOk());
 }
 
-TEST(CompilerScanDriver, HandleRootAndMultipleChildren)
+TEST_F(CompilerScanDriver, HandleRootAndMultipleChildren)
 {
-    auto location = lyric_common::ModuleLocation::fromString("/test");
-    auto staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
-    auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
-    auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
-    auto systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
-    auto recorder = tempo_tracing::TraceRecorder::create();
-    tempo_tracing::ScopeManager scopeManager(recorder);
-    lyric_assembler::ObjectState objectState(location, localModuleCache, systemModuleCache, &scopeManager);
-
-    lyric_assembler::ObjectRoot *objectRoot;
-    TU_ASSIGN_OR_RAISE (objectRoot, objectState.defineRoot());
-
-    lyric_parser::ArchetypeState archetypeState(location.toUrl(), &scopeManager);
+    lyric_parser::ArchetypeState archetypeState(location.toUrl(), scopeManager.get());
     lyric_parser::ArchetypeNode *blockNode;
     TU_ASSIGN_OR_RAISE (blockNode, archetypeState.appendNode(lyric_schema::kLyricAstBlockClass, {}));
     archetypeState.setRoot(blockNode);
@@ -162,7 +155,8 @@ TEST(CompilerScanDriver, HandleRootAndMultipleChildren)
     lyric_parser::LyricArchetype archetype;
     TU_ASSIGN_OR_RAISE (archetype, archetypeState.toArchetype());
 
-    auto driver = std::make_shared<lyric_compiler::CompilerScanDriver>(objectRoot, &objectState);
+    auto builder = std::make_shared<TestCompilerScanDriverBuilder>(objectRoot, objectState.get());
+    auto driver = builder->driver;
 
     auto rootHandler = std::make_unique<MockGrouping>(driver.get());
     EXPECT_CALL (*rootHandler, before)
@@ -206,5 +200,5 @@ TEST(CompilerScanDriver, HandleRootAndMultipleChildren)
 
     lyric_rewriter::RewriterOptions options;
     lyric_rewriter::LyricRewriter rewriter(options);
-    ASSERT_THAT (rewriter.scanArchetype(archetype, location.toUrl(), driver, recorder), tempo_test::IsOk());
+    ASSERT_THAT (rewriter.scanArchetype(archetype, location.toUrl(), builder, recorder), tempo_test::IsOk());
 }

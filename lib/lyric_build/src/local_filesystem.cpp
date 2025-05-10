@@ -3,6 +3,8 @@
 #include <tempo_security/sha256_hash.h>
 #include <tempo_utils/file_reader.h>
 
+#include "lyric_build/build_result.h"
+
 lyric_build::LocalFilesystem::LocalFilesystem()
     : m_baseDirectory()
 {
@@ -33,6 +35,8 @@ lyric_build::LocalFilesystem::supportsScheme(const tempo_utils::Url &url)
 Option<bool>
 lyric_build::LocalFilesystem::containsResource(const tempo_utils::Url &url)
 {
+    if (!url.isValid())
+        return {};
     if (!supportsScheme(url))
         return {};
     auto path = url.toFilesystemPath(m_baseDirectory);
@@ -42,10 +46,17 @@ lyric_build::LocalFilesystem::containsResource(const tempo_utils::Url &url)
 tempo_utils::Result<Option<lyric_build::Resource>>
 lyric_build::LocalFilesystem::fetchResource(const tempo_utils::Url &url)
 {
+    if (!url.isValid())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "invalid local filesystem resource url '{}'", url.toString());
+
     if (!supportsScheme(url))
         return Option<Resource>();
 
     auto path = url.toFilesystemPath(m_baseDirectory);
+    if (!exists(path))
+        return Option<lyric_build::Resource>();
+
     tempo_utils::FileReader resourceReader(path);
     if (!resourceReader.isValid())
         return resourceReader.getStatus();
@@ -77,6 +88,9 @@ lyric_build::LocalFilesystem::listResources(
     ResourceMatcherFunc matcherFunc,
     const std::string &token)
 {
+    if (!resourceRoot.isValid())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "invalid local filesystem resource root '{}'", resourceRoot.toString());
     if (!supportsScheme(resourceRoot))
         return tempo_utils::GenericStatus::forCondition(tempo_utils::GenericCondition::kUnimplemented,
             "listResources is unimplemented");
@@ -113,6 +127,9 @@ lyric_build::LocalFilesystem::listResourcesRecursively(
     ResourceMatcherFunc matcherFunc,
     const std::string &token)
 {
+    if (!resourceRoot.isValid())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "invalid local filesystem resource root '{}'", resourceRoot.toString());
     if (!supportsScheme(resourceRoot))
         return tempo_utils::GenericStatus::forCondition(tempo_utils::GenericCondition::kUnimplemented,
             "listResourcesRecursively is unimplemented");

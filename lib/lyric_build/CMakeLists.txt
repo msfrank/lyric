@@ -108,6 +108,8 @@ target_sources(lyric_build PRIVATE
     src/internal/build_task.cpp
     include/lyric_build/internal/compile_module_task.h
     src/internal/compile_module_task.cpp
+    include/lyric_build/internal/compile_plugin_task.h
+    src/internal/compile_plugin_task.cpp
     include/lyric_build/internal/compile_task.h
     src/internal/compile_task.cpp
     include/lyric_build/internal/metadata_reader.h

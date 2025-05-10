@@ -296,7 +296,7 @@ lyric_build::LyricBuilder::computeTargets(
     auto config = m_config.merge(globalOverrides, domainOverrides, taskOverrides);
 
     // wrap the build cache and loader chain in a unique generation
-    BuildGeneration buildGen(tempo_utils::UUID::randomUUID(), std::chrono::system_clock::now());
+    auto buildGen = BuildGeneration::create();
     auto state = std::make_shared<BuildState>(buildGen, m_cache, m_bootstrapLoader, m_packageLoader,
         m_fallbackLoader, m_sharedModuleCache, m_virtualFilesystem);
 

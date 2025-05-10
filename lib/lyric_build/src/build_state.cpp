@@ -6,7 +6,7 @@
 
 lyric_build::BuildState::BuildState(
     const BuildGeneration &buildGen,
-    std::shared_ptr<lyric_build::AbstractCache> cache,
+    std::shared_ptr<AbstractCache> cache,
     std::shared_ptr<lyric_bootstrap::BootstrapLoader> bootstrapLoader,
     std::shared_ptr<lyric_packaging::PackageLoader> packageLoader,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,

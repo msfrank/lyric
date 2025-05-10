@@ -4,19 +4,19 @@
 #include <absl/strings/substitute.h>
 
 #include <lyric_build/build_types.h>
+#include <tempo_utils/date_time.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_build::BuildGeneration::BuildGeneration()
 {
 }
 
-lyric_build::BuildGeneration::BuildGeneration(
-    const tempo_utils::UUID &uuid,
-    const std::chrono::time_point<std::chrono::system_clock> &createTime)
+lyric_build::BuildGeneration::BuildGeneration(const tempo_utils::UUID &uuid, tu_int64 createTime)
     : m_uuid(uuid),
       m_createTime(createTime)
 {
     TU_ASSERT (m_uuid.isValid());
+    TU_ASSERT (m_createTime > 0);
 }
 
 lyric_build::BuildGeneration::BuildGeneration(const lyric_build::BuildGeneration &other)
@@ -37,10 +37,18 @@ lyric_build::BuildGeneration::getUuid() const
     return m_uuid;
 }
 
-std::chrono::time_point<std::chrono::system_clock>
-lyric_build::BuildGeneration::getCreateTime()
+tu_int64
+lyric_build::BuildGeneration::getCreateTime() const
 {
     return m_createTime;
+}
+
+lyric_build::BuildGeneration
+lyric_build::BuildGeneration::create()
+{
+    auto uuid = tempo_utils::UUID::randomUUID();
+    auto createTime = tempo_utils::millis_since_epoch();
+    return BuildGeneration(uuid, createTime);
 }
 
 lyric_build::TaskKey::TaskKey()

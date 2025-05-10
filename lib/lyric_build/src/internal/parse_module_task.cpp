@@ -66,7 +66,7 @@ lyric_build::internal::ParseModuleTask::configureTask(
 
     // fail the task if the resource was not found
     if (resourceOption.isEmpty())
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+        return BuildStatus::forCondition(BuildCondition::kMissingInput,
             "resource {} not found", m_sourceUrl.toString());
     auto resource = resourceOption.getValue();
 

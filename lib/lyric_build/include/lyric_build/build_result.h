@@ -16,6 +16,7 @@ namespace lyric_build {
         kArtifactNotFound,
         kDependencyFailure,
         kInvalidConfiguration,
+        kMissingInput,
         kHashMismatch,
         kMissingHash,
         kTaskExists,
@@ -95,6 +96,7 @@ namespace tempo_utils {
                 case lyric_build::BuildCondition::kArtifactNotFound:
                 case lyric_build::BuildCondition::kDependencyFailure:
                 case lyric_build::BuildCondition::kInvalidConfiguration:
+                case lyric_build::BuildCondition::kMissingInput:
                 case lyric_build::BuildCondition::kHashMismatch:
                 case lyric_build::BuildCondition::kMissingHash:
                 case lyric_build::BuildCondition::kTaskExists:
@@ -116,6 +118,8 @@ namespace tempo_utils {
                     return "Dependency failure";
                 case lyric_build::BuildCondition::kInvalidConfiguration:
                     return "Invalid configuration";
+                case lyric_build::BuildCondition::kMissingInput:
+                    return "Missing input";
                 case lyric_build::BuildCondition::kHashMismatch:
                     return "Hash mismatch";
                 case lyric_build::BuildCondition::kMissingHash:
