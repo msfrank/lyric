@@ -20,7 +20,7 @@ BaseBuildFixture::SetUp()
 
     TU_LOG_INFO << "created tester directory " << m_testerDirectory;
 
-    m_vfs = std::make_shared<lyric_build::LocalFilesystem>(m_testerDirectory);
+    TU_ASSIGN_OR_RAISE (m_vfs, lyric_build::LocalFilesystem::create(m_testerDirectory));
 
     auto buildgen = lyric_build::BuildGeneration::create();
     auto cache = std::make_shared<lyric_build::MemoryCache>();

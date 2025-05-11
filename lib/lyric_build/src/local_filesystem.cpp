@@ -5,65 +5,69 @@
 
 #include "lyric_build/build_result.h"
 
-lyric_build::LocalFilesystem::LocalFilesystem()
-    : m_baseDirectory()
-{
-}
-
 lyric_build::LocalFilesystem::LocalFilesystem(const std::filesystem::path &baseDirectory)
     : m_baseDirectory(baseDirectory)
 {
-    TU_ASSERT (!m_baseDirectory.empty());
+    TU_ASSERT (m_baseDirectory.is_absolute());
+}
+
+tempo_utils::Result<std::shared_ptr<lyric_build::LocalFilesystem>>
+lyric_build::LocalFilesystem::create(const std::filesystem::path &baseDirectory)
+{
+    if (!baseDirectory.is_absolute())
+        return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
+            "{} is not an absolute path", baseDirectory.string());
+    if (!std::filesystem::is_directory(baseDirectory))
+        return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
+            "{} is not a directory", baseDirectory.string());
+    auto absolutePath = std::filesystem::absolute(baseDirectory.lexically_normal());
+    return std::shared_ptr<LocalFilesystem>(new LocalFilesystem(absolutePath));
+}
+
+static tempo_utils::Result<std::filesystem::path>
+to_absolute_path(const std::filesystem::path &baseDirectory, const tempo_utils::UrlPath &path)
+{
+    auto absolutePath = baseDirectory;
+    for (int i = 0; i < path.numParts(); i++) {
+        absolutePath /= path.getPart(i).partView();
+    }
+    absolutePath = absolutePath.lexically_normal();
+    if (std::filesystem::relative(absolutePath, baseDirectory).string().starts_with(".."))
+        return lyric_build::BuildStatus::forCondition(lyric_build::BuildCondition::kInvalidConfiguration,
+            "path {} is outside of the base directory {}", path.toString(), baseDirectory.string());
+    return absolutePath;
 }
 
 bool
-lyric_build::LocalFilesystem::supportsScheme(std::string_view scheme)
+lyric_build::LocalFilesystem::containsResource(const tempo_utils::UrlPath &path)
 {
-    if (scheme == "file")
-        return true;
-    if (scheme.empty() && !m_baseDirectory.empty())
-        return true;
-    return false;
-}
-
-bool
-lyric_build::LocalFilesystem::supportsScheme(const tempo_utils::Url &url)
-{
-    return supportsScheme(url.schemeView());
-}
-
-Option<bool>
-lyric_build::LocalFilesystem::containsResource(const tempo_utils::Url &url)
-{
-    if (!url.isValid())
-        return {};
-    if (!supportsScheme(url))
-        return {};
-    auto path = url.toFilesystemPath(m_baseDirectory);
-    return Option<bool>(exists(path));
+    if (!path.isValid())
+        return false;
+    auto toAbsoluteResult = to_absolute_path(m_baseDirectory, path);
+    if (toAbsoluteResult.isStatus())
+        return false;
+    auto resourcePath = toAbsoluteResult.getResult();
+    return std::filesystem::is_regular_file(resourcePath);
 }
 
 tempo_utils::Result<Option<lyric_build::Resource>>
-lyric_build::LocalFilesystem::fetchResource(const tempo_utils::Url &url)
+lyric_build::LocalFilesystem::fetchResource(const tempo_utils::UrlPath &path)
 {
-    if (!url.isValid())
+    if (!path.isValid())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "invalid local filesystem resource url '{}'", url.toString());
+            "invalid local filesystem resource path '{}'", path.toString());
 
-    if (!supportsScheme(url))
+    std::filesystem::path resourcePath;
+    TU_ASSIGN_OR_RETURN (resourcePath, to_absolute_path(m_baseDirectory, path));
+    if (!std::filesystem::is_regular_file(resourcePath))
         return Option<Resource>();
 
-    auto path = url.toFilesystemPath(m_baseDirectory);
-    if (!exists(path))
-        return Option<lyric_build::Resource>();
-
-    tempo_utils::FileReader resourceReader(path);
-    if (!resourceReader.isValid())
-        return resourceReader.getStatus();
+    tempo_utils::FileReader resourceReader(resourcePath);
+    TU_RETURN_IF_NOT_OK (resourceReader.getStatus());
     auto bytes = resourceReader.getBytes();
 
     Resource resource;
-    resource.id = path.string();
+    resource.id = resourcePath.string();
     resource.entityTag = tempo_security::Sha256Hash::hash(
         std::string_view((const char *) bytes->getData(), bytes->getSize()));
     resource.lastModifiedMillis = 0;
@@ -84,38 +88,32 @@ lyric_build::LocalFilesystem::loadResource(std::string_view resourceId)
 
 tempo_utils::Result<lyric_build::ResourceList>
 lyric_build::LocalFilesystem::listResources(
-    const tempo_utils::Url &resourceRoot,
+    const tempo_utils::UrlPath &root,
     ResourceMatcherFunc matcherFunc,
     const std::string &token)
 {
-    if (!resourceRoot.isValid())
+    if (!root.isValid())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "invalid local filesystem resource root '{}'", resourceRoot.toString());
-    if (!supportsScheme(resourceRoot))
-        return tempo_utils::GenericStatus::forCondition(tempo_utils::GenericCondition::kUnimplemented,
-            "listResources is unimplemented");
+            "invalid local filesystem resource root '{}'", root.toString());
 
-    auto path = resourceRoot.toFilesystemPath(m_baseDirectory);
-    if (!exists(path))
+    std::filesystem::path rootPath;
+    TU_ASSIGN_OR_RETURN (rootPath, to_absolute_path(m_baseDirectory, root));
+    if (!std::filesystem::is_directory(rootPath))
         return tempo_utils::GenericStatus::forCondition(tempo_utils::GenericCondition::kInternalViolation,
-            "resource root {} does not exist", path.string());
-    std::filesystem::directory_iterator directoryIterator(path);
+            "resource root {} is not a valid directory", rootPath.string());
 
-    bool isRelativeUrl = resourceRoot.isRelative();
+    std::filesystem::directory_iterator directoryIterator(rootPath);
 
     ResourceList resourceList;
     for (auto &dirEntry : directoryIterator) {
         if (!dirEntry.is_regular_file())
             continue;
         auto &filePath = dirEntry.path();
-        if (!matcherFunc(filePath))
+        auto relativePath = std::filesystem::relative(filePath, m_baseDirectory);
+        auto matchPath = tempo_utils::UrlPath::fromString(absl::StrCat("/", relativePath.string()));
+        if (!matcherFunc(matchPath))
             continue;
-        if (isRelativeUrl) {
-            auto relativePath = filePath.lexically_relative(m_baseDirectory);
-            resourceList.resources.push_back(tempo_utils::Url::fromRelative(relativePath.string()));
-        } else {
-            resourceList.resources.push_back(tempo_utils::Url::fromFilesystemPath(filePath));
-        }
+        resourceList.resources.push_back(matchPath);
     }
 
     return resourceList;
@@ -123,38 +121,32 @@ lyric_build::LocalFilesystem::listResources(
 
 tempo_utils::Result<lyric_build::ResourceList>
 lyric_build::LocalFilesystem::listResourcesRecursively(
-    const tempo_utils::Url &resourceRoot,
+    const tempo_utils::UrlPath &root,
     ResourceMatcherFunc matcherFunc,
     const std::string &token)
 {
-    if (!resourceRoot.isValid())
+    if (!root.isValid())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "invalid local filesystem resource root '{}'", resourceRoot.toString());
-    if (!supportsScheme(resourceRoot))
-        return tempo_utils::GenericStatus::forCondition(tempo_utils::GenericCondition::kUnimplemented,
-            "listResourcesRecursively is unimplemented");
+            "invalid local filesystem resource root '{}'", root.toString());
 
-    auto path = resourceRoot.toFilesystemPath(m_baseDirectory);
-    if (!exists(path))
+    std::filesystem::path rootPath;
+    TU_ASSIGN_OR_RETURN (rootPath, to_absolute_path(m_baseDirectory, root));
+    if (!std::filesystem::is_directory(rootPath))
         return tempo_utils::GenericStatus::forCondition(tempo_utils::GenericCondition::kInternalViolation,
-            "resource root {} does not exist", path.string());
-    std::filesystem::recursive_directory_iterator directoryIterator(path);
+            "resource root {} is not a valid directory", rootPath.string());
 
-    bool isRelativeUrl = resourceRoot.isRelative();
+    std::filesystem::recursive_directory_iterator directoryIterator(rootPath);
 
     ResourceList resourceList;
     for (auto &dirEntry : directoryIterator) {
         if (!dirEntry.is_regular_file())
             continue;
         auto &filePath = dirEntry.path();
-        if (!matcherFunc(filePath))
+        auto relativePath = std::filesystem::relative(filePath, m_baseDirectory);
+        auto matchPath = tempo_utils::UrlPath::fromString(absl::StrCat("/", relativePath.string()));
+        if (!matcherFunc(matchPath))
             continue;
-        if (isRelativeUrl) {
-            auto relativePath = filePath.lexically_relative(m_baseDirectory);
-            resourceList.resources.push_back(tempo_utils::Url::fromRelative(relativePath.string()));
-        } else {
-            resourceList.resources.push_back(tempo_utils::Url::fromFilesystemPath(filePath));
-        }
+        resourceList.resources.push_back(matchPath);
     }
 
     return resourceList;

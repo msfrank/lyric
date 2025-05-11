@@ -317,40 +317,20 @@ lyric_build::ArtifactId::ArtifactId()
 lyric_build::ArtifactId::ArtifactId(
     const tempo_utils::UUID &generation,
     const std::string &hash,
-    const tempo_utils::Url &location)
+    const tempo_utils::Url &url)
     : m_generation(generation),
       m_hash(hash),
-      m_location(location)
+      m_location(url)
 {
 }
 
-// lyric_build::ArtifactId::ArtifactId(
-//     const boost::uuids::uuid &generation,
-//     const std::string &hash,
-//     const std::vector<std::string> &path)
-//     : m_generation(generation),
-//       m_hash(hash)
-// {
-//     std::string p("/");
-//     absl::StrAppend(&p, absl::StrJoin(path, "/"));
-//     m_location = tempo_utils::Url::fromRelative(p);
-// }
-//
-// lyric_build::ArtifactId::ArtifactId(
-//     const boost::uuids::uuid &generation,
-//     const std::string &hash,
-//     const std::string &path)
-//     : ArtifactId(generation, hash, absl::StrSplit(path, "/"))
-// {
-// }
-//
-// lyric_build::ArtifactId::ArtifactId(
-//     const boost::uuids::uuid &generation,
-//     const std::string &hash,
-//     const std::filesystem::path &path)
-//     : ArtifactId(generation, hash, path.string())
-// {
-// }
+lyric_build::ArtifactId::ArtifactId(
+    const tempo_utils::UUID &generation,
+    const std::string &hash,
+    const tempo_utils::UrlPath &path)
+    : ArtifactId(generation, hash, tempo_utils::Url::fromRelative(path.toString()))
+{
+}
 
 lyric_build::ArtifactId::ArtifactId(const lyric_build::ArtifactId &other)
     : m_generation(other.m_generation),

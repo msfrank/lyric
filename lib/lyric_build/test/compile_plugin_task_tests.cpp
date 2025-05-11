@@ -31,7 +31,7 @@ TEST_F(CompilePluginTask, ConfigureTask)
     lyric_build::TaskKey key(std::string("compile_plugin"), std::string("foo"),
         tempo_config::ConfigMap{{
             {
-                "pluginSourceBaseUrl", tempo_config::ConfigValue{"/plugin"}
+                "pluginSourceBasePath", tempo_config::ConfigValue{"/plugin"}
             },
         {
             "pluginSources", tempo_config::ConfigSeq{{

@@ -204,12 +204,10 @@ lyric_build::LyricBuilder::configure()
 
     // configure the virtual filesystem
     if (m_options.virtualFilesystem == nullptr) {
-        // if workspaceRoot was specified then use it as the baseDirectory
-        if (!m_workspaceRoot.empty()) {
-            m_virtualFilesystem = std::make_shared<LocalFilesystem>(m_workspaceRoot);
-        } else {
-            m_virtualFilesystem = std::make_shared<LocalFilesystem>();
-        }
+        if (m_workspaceRoot.empty())
+            return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
+                "workspace root must be defined if virtual filesystem is not specified");
+        TU_ASSIGN_OR_RETURN (m_virtualFilesystem, LocalFilesystem::create(m_workspaceRoot));
     } else {
         m_virtualFilesystem = m_options.virtualFilesystem;
     }

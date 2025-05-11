@@ -160,10 +160,8 @@ namespace lyric_build {
 
     public:
         ArtifactId();
-        ArtifactId(const tempo_utils::UUID &generation, const std::string &hash, const tempo_utils::Url &location);
-        // ArtifactId(const boost::uuids::uuid &generation, const std::string &hash, const std::string &path);
-        // ArtifactId(const boost::uuids::uuid &generation, const std::string &hash, const std::vector<std::string> &path);
-        // ArtifactId(const boost::uuids::uuid &generation, const std::string &hash, const std::filesystem::path &path);
+        ArtifactId(const tempo_utils::UUID &generation, const std::string &hash, const tempo_utils::Url &url);
+        ArtifactId(const tempo_utils::UUID &generation, const std::string &hash, const tempo_utils::UrlPath &path);
         ArtifactId(const ArtifactId &other);
 
         bool isValid() const;

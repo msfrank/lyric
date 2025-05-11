@@ -7,6 +7,7 @@
 #include <lyric_build/internal/build_task.h>
 #include <lyric_build/internal/compile_task.h>
 #include <lyric_build/internal/compile_module_task.h>
+#include <lyric_build/internal/compile_plugin_task.h>
 #include <lyric_build/internal/orchestrate_task.h>
 #include <lyric_build/internal/package_task.h>
 #include <lyric_build/internal/parse_module_task.h>
@@ -29,6 +30,7 @@ static const Task tasks[] = {
     {"build",               lyric_build::internal::new_build_task},
     {"compile",             lyric_build::internal::new_compile_task},
     {"compile_module",      lyric_build::internal::new_compile_module_task},
+    {"compile_plugin",      lyric_build::internal::new_compile_plugin_task},
     {"orchestrate",         lyric_build::internal::new_orchestrate_task},
     {"package",             lyric_build::internal::new_package_task},
     {"parse_module",        lyric_build::internal::new_parse_module_task},

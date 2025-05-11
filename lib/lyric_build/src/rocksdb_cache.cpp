@@ -470,7 +470,7 @@ lyric_build::RocksdbCache::findArtifacts(
 
     std::vector<ArtifactId> matches;
 
-    std::string base = write_artifact_id(ArtifactId(generation, hash, {}));
+    std::string base = write_artifact_id(ArtifactId(generation, hash, tempo_utils::Url{}));
     bool applyFilters = filters.isValid();
 
     rocksdb::ReadOptions options;

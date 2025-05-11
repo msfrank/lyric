@@ -9,13 +9,14 @@
 
 namespace lyric_build::internal {
 
-    tempo_utils::Result<lyric_common::ModuleLocation> convert_source_url_to_module_location(
-        const tempo_utils::Url &sourceUrl,
-        const tempo_utils::Url &baseUrl);
+    tempo_utils::UrlPath build_full_path(const tempo_utils::UrlPath &path, const tempo_utils::UrlPath &base);
+
+    tempo_utils::Result<lyric_common::ModuleLocation> convert_source_path_to_module_location(
+        const tempo_utils::UrlPath &path);
 
     std::filesystem::path generate_install_path(
         std::string_view taskDomain,
-        const tempo_utils::Url &url,
+        const tempo_utils::UrlPath &path,
         const char *dotSuffix = nullptr);
 
 }

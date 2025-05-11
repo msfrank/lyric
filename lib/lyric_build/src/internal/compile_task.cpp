@@ -27,16 +27,16 @@ lyric_build::internal::CompileTask::configure(
     auto taskId = getId();
 
     // determine the base url containing source files
-    tempo_config::UrlParser sourceBaseUrlParser;
-    TU_RETURN_IF_NOT_OK(parse_config(m_baseUrl, sourceBaseUrlParser,
-        config, taskId, "sourceBaseUrl"));
+    tempo_config::UrlPathParser sourceBasePathParser;
+    TU_RETURN_IF_NOT_OK(parse_config(m_sourceBasePath, sourceBasePathParser,
+        config, taskId, "sourceBasePath"));
 
     // if the task id is not empty then it overrides the source base url
     if (!taskId.getId().empty()) {
-        m_baseUrl = tempo_utils::Url::fromString(taskId.getId());
-        if (!m_baseUrl.isValid())
+        m_sourceBasePath = tempo_utils::UrlPath::fromString(taskId.getId());
+        if (!m_sourceBasePath.isValid())
             return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
-                "task key id {} is not a valid url", taskId.getId());
+                "task key id {} is not a valid path", taskId.getId());
     }
 
     //
@@ -45,9 +45,9 @@ lyric_build::internal::CompileTask::configure(
 
     // determine the set of compile targets
     ResourceList resourceList;
-    TU_ASSIGN_OR_RETURN (resourceList, virtualFilesystem->listResourcesRecursively(m_baseUrl,
-        [](const std::filesystem::path &p) {
-            return p.extension() == lyric_common::kSourceFileDotSuffix;
+    TU_ASSIGN_OR_RETURN (resourceList, virtualFilesystem->listResourcesRecursively(m_sourceBasePath,
+        [](const tempo_utils::UrlPath &p) {
+            return p.getLast().partView().ends_with(lyric_common::kSourceFileDotSuffix);
         },
         {}));
     for (auto &sourceUrl : resourceList.resources) {

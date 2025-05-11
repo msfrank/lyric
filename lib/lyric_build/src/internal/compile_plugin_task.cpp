@@ -37,10 +37,10 @@ lyric_build::internal::CompilePluginTask::configure(const ConfigStore *config)
 {
     auto taskId = getId();
 
-    // determine the base url containing plugin source files
-    tempo_config::UrlParser pluginSourceBaseUrlParser(tempo_utils::Url{});
-    TU_RETURN_IF_NOT_OK(parse_config(m_pluginSourceBaseUrl, pluginSourceBaseUrlParser,
-        config, taskId, "pluginSourceBaseUrl"));
+    // determine the base path containing plugin source files
+    tempo_config::UrlPathParser pluginSourceBasePathParser(tempo_utils::UrlPath{});
+    TU_RETURN_IF_NOT_OK(parse_config(m_pluginSourceBasePath, pluginSourceBasePathParser,
+        config, taskId, "pluginSourceBasePath"));
 
     //
     // config below comes only from the task section, it is not resolved from domain or global sections
@@ -49,27 +49,28 @@ lyric_build::internal::CompilePluginTask::configure(const ConfigStore *config)
     auto taskSection = config->getTaskSection(taskId);
 
     // parse plugin sources
-    tempo_config::UrlParser pluginSourceUrlParser;
-    tempo_config::SeqTParser<tempo_utils::Url> pluginSourceUrlListParser(&pluginSourceUrlParser, {});
-    std::vector<tempo_utils::Url> pluginSourceUrls;
-    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(pluginSourceUrls, pluginSourceUrlListParser,
+    tempo_config::UrlPathParser pluginSourcePathParser;
+    tempo_config::SeqTParser pluginSourcePathListParser(&pluginSourcePathParser, {});
+    std::vector<tempo_utils::UrlPath> pluginSourcePaths;
+    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(pluginSourcePaths, pluginSourcePathListParser,
         taskSection, "pluginSources"));
-    if (pluginSourceUrls.empty())
+    if (pluginSourcePaths.empty())
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "no plugin sources specified");
 
     // if base url is specified then resolve each plugin source url
-    if (m_pluginSourceBaseUrl.isValid()) {
-        for (const auto &sourceUrl : pluginSourceUrls) {
-            m_pluginSourceUrls.push_back(m_pluginSourceBaseUrl.resolve(sourceUrl));
+    if (m_pluginSourceBasePath.isValid()) {
+        for (const auto &sourcePath : pluginSourcePaths) {
+            auto fullPath = build_full_path(sourcePath, m_pluginSourceBasePath);
+            m_pluginSourcePaths.push_back(fullPath);
         }
     } else {
-        m_pluginSourceUrls = std::move(pluginSourceUrls);
+        m_pluginSourcePaths = std::move(pluginSourcePaths);
     }
 
     // parse plugin library names
     tempo_config::StringParser pluginLibraryNameParser;
-    tempo_config::SeqTParser<std::string> pluginLibraryNamesListParser(&pluginLibraryNameParser, {});
+    tempo_config::SeqTParser pluginLibraryNamesListParser(&pluginLibraryNameParser, {});
     TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_pluginLibraryNames, pluginLibraryNamesListParser,
         taskSection, "pluginLibraries"));
 
@@ -88,17 +89,17 @@ lyric_build::internal::CompilePluginTask::configureTask(
 
     TaskHasher taskHasher(getKey());
 
-    std::vector sortedPluginSourceUrls(m_pluginSourceUrls.cbegin(), m_pluginSourceUrls.cend());
-    std::sort(sortedPluginSourceUrls.begin(), sortedPluginSourceUrls.end(), [](auto &a, auto &b) -> bool {
+    std::vector sortedPluginSourcePaths(m_pluginSourcePaths.cbegin(), m_pluginSourcePaths.cend());
+    std::sort(sortedPluginSourcePaths.begin(), sortedPluginSourcePaths.end(), [](auto &a, auto &b) -> bool {
         return a.toString() < b.toString();
     });
-    for (const auto &pluginSourceUrl : sortedPluginSourceUrls) {
+    for (const auto &pluginSourcePath : sortedPluginSourcePaths) {
         Option<Resource> resourceOption;
-        TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(pluginSourceUrl));
+        TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(pluginSourcePath));
         // fail the task if the resource was not found
         if (resourceOption.isEmpty())
             return BuildStatus::forCondition(BuildCondition::kMissingInput,
-                "plugin source file {} not found", pluginSourceUrl.toString());
+                "plugin source file {} not found", pluginSourcePath.toString());
         auto resource = resourceOption.getValue();
         taskHasher.hashValue(resource.entityTag);
     }
@@ -136,8 +137,8 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     for (const auto &libraryName : m_pluginLibraryNames) {
         processBuilder.appendArg(absl::StrCat("-l", libraryName));
     }
-    for (const auto &sourceUrl : m_pluginSourceUrls) {
-        processBuilder.appendArg(sourceUrl.toString());
+    for (const auto &sourcePath : m_pluginSourcePaths) {
+        processBuilder.appendArg(sourcePath.toString());
     }
 
     // compile the plugin

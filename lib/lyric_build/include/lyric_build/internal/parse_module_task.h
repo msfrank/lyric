@@ -29,7 +29,7 @@ namespace lyric_build::internal {
             BuildState *generation) override;
 
     private:
-        tempo_utils::Url m_sourceUrl;
+        tempo_utils::UrlPath m_sourcePath;
         //lyric_common::ModuleLocation m_archetypeLocation;
         lyric_parser::ParserOptions m_parserOptions;
         std::string m_resourceId;

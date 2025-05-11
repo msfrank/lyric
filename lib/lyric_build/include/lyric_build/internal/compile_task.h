@@ -30,7 +30,7 @@ namespace lyric_build::internal {
             BuildState *generation) override;
 
     private:
-        tempo_utils::Url m_baseUrl;
+        tempo_utils::UrlPath m_sourceBasePath;
         absl::flat_hash_set<TaskKey> m_compileTargets;
 
         tempo_utils::Status configure(

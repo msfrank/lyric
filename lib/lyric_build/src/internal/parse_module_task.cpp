@@ -40,10 +40,19 @@ lyric_build::internal::ParseModuleTask::configure(const ConfigStore *config)
 {
     auto taskId = getId();
 
-    m_sourceUrl = tempo_utils::Url::fromString(taskId.getId());
-    if (!m_sourceUrl.isValid())
+    m_sourcePath = tempo_utils::UrlPath::fromString(taskId.getId());
+    if (!m_sourcePath.isValid())
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "task key id {} is not a valid url", taskId.getId());
+
+    tempo_config::UrlPathParser sourceBasePathParser(tempo_utils::UrlPath{});
+
+    // determine the base path containing source files
+    tempo_utils::UrlPath sourceBasePath;
+    TU_RETURN_IF_NOT_OK(parse_config(sourceBasePath, sourceBasePathParser,
+        config, taskId, "sourceBasePath"));
+
+    m_sourcePath = build_full_path(m_sourcePath, sourceBasePath);
 
     //
     // config below comes only from the task section, it is not resolved from domain or global sections
@@ -62,12 +71,12 @@ lyric_build::internal::ParseModuleTask::configureTask(
 
     // try to fetch the content at the specified url
     Option<Resource> resourceOption;
-    TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(m_sourceUrl));
+    TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(m_sourcePath));
 
     // fail the task if the resource was not found
     if (resourceOption.isEmpty())
         return BuildStatus::forCondition(BuildCondition::kMissingInput,
-            "resource {} not found", m_sourceUrl.toString());
+            "resource {} not found", m_sourcePath.toString());
     auto resource = resourceOption.getValue();
 
     // store the resource id so we can load it when running the task
@@ -104,15 +113,16 @@ lyric_build::internal::ParseModuleTask::parseModule(
 
     // parse the source file
     lyric_parser::LyricParser parser(m_parserOptions);
+    auto sourceUrl = tempo_utils::Url::fromRelative(m_sourcePath.toString());
 
-    TU_LOG_V << "parsing source from " << m_sourceUrl;
+    TU_LOG_V << "parsing source from " << m_sourcePath;
     auto parseResult = parser.parseModule(std::string_view((const char *) bytes->getData(), bytes->getSize()),
-        m_sourceUrl, traceDiagnostics());
+        sourceUrl, traceDiagnostics());
 
     if (parseResult.isStatus()) {
         span->logStatus(parseResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to parse source from {}", m_sourceUrl.toString());
+            "failed to parse source from {}", m_sourcePath.toString());
     }
     auto archetype = parseResult.getResult();
 
@@ -126,31 +136,31 @@ lyric_build::internal::ParseModuleTask::parseModule(
     macros["Trap"] = std::make_shared<lyric_rewriter::TrapMacro>();
     lyric_rewriter::MacroRegistry macroRegistry(macros);
 
-    TU_LOG_V << "rewriting source from " << m_sourceUrl;
+    TU_LOG_V << "rewriting source from " << m_sourcePath;
     auto macroRewriteDriverBuilder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(&macroRegistry);
     auto rewriteResult = rewriter.rewriteArchetype(
-        archetype, m_sourceUrl, macroRewriteDriverBuilder, traceDiagnostics());
+        archetype, sourceUrl, macroRewriteDriverBuilder, traceDiagnostics());
 
     if (rewriteResult.isStatus()) {
         span->logStatus(parseResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to rewrite source from {}", m_sourceUrl.toString());
+            "failed to rewrite source from {}", m_sourcePath.toString());
     }
     archetype = rewriteResult.getResult();
 
     // store the archetype content in the build cache
-    ArtifactId archetypeArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourceUrl);
+    ArtifactId archetypeArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourcePath);
     auto archetypeBytes = archetype.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(archetypeArtifact, archetypeBytes));
 
     // generate the install path
     std::filesystem::path archetypeInstallPath = generate_install_path(
-        getId().getDomain(), m_sourceUrl, lyric_common::kIntermezzoFileDotSuffix);
+        getId().getDomain(), m_sourcePath, lyric_common::kIntermezzoFileDotSuffix);
 
     // store the archetype metadata in the build cache
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
-    writer.putAttr(kLyricBuildContentUrl, m_sourceUrl);
+    writer.putAttr(kLyricBuildContentUrl, sourceUrl);
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kIntermezzoContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
     writer.putAttr(kLyricBuildInstallPath, archetypeInstallPath.string());

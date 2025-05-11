@@ -38,20 +38,23 @@ lyric_build::internal::RewriteModuleTask::configure(const ConfigStore *config)
 {
     auto taskId = getId();
 
-    m_sourceUrl = tempo_utils::Url::fromString(taskId.getId());
-    if (!m_sourceUrl.isValid())
+    m_sourcePath = tempo_utils::UrlPath::fromString(taskId.getId());
+    if (!m_sourcePath.isValid())
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "task key id {} is not a valid url", taskId.getId());
 
-    tempo_config::UrlParser sourceBaseUrlParser(tempo_utils::Url{});
+    tempo_config::UrlPathParser sourceBasePathParser(tempo_utils::UrlPath{});
 
-    // determine the base url containing source files
-    tempo_utils::Url baseUrl;
-    TU_RETURN_IF_NOT_OK(parse_config(baseUrl, sourceBaseUrlParser, config, taskId, "sourceBaseUrl"));
+    // determine the base path containing source files
+    tempo_utils::UrlPath sourceBasePath;
+    TU_RETURN_IF_NOT_OK(parse_config(sourceBasePath, sourceBasePathParser,
+        config, taskId, "sourceBaseUrl"));
+
+    m_sourcePath = build_full_path(m_sourcePath, sourceBasePath);
 
     // determine the module location based on the source url
     lyric_common::ModuleLocation moduleLocation;
-    TU_ASSIGN_OR_RETURN(moduleLocation, convert_source_url_to_module_location(m_sourceUrl, baseUrl));
+    TU_ASSIGN_OR_RETURN(moduleLocation, convert_source_path_to_module_location(m_sourcePath));
 
     lyric_common::ModuleLocationParser preludeLocationParser(
         lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION));
@@ -89,12 +92,12 @@ lyric_build::internal::RewriteModuleTask::configureTask(
 
     // try to fetch the content at the specified url
     Option<Resource> resourceOption;
-    TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(m_sourceUrl));
+    TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(m_sourcePath));
 
     // fail the task if the resource was not found
     if (resourceOption.isEmpty())
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "resource {} not found", m_sourceUrl.toString());
+            "resource {} not found", m_sourcePath.toString());
     auto resource = resourceOption.getValue();
 
     TaskHasher taskHasher(getKey());
@@ -127,7 +130,7 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     auto parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
     auto generation = cache->loadTrace(parseTrace);
-    ArtifactId parseArtifact(generation, parseHash, m_sourceUrl);
+    ArtifactId parseArtifact(generation, parseHash, m_sourcePath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
     TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(parseArtifact));
@@ -151,29 +154,30 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     auto macroRewriteDriverBuilder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(&m_registry);
 
     // generate the rewritten archetype by applying all macros
-    TU_LOG_V << "rewriting source from " << m_sourceUrl;
-    auto rewriteModuleResult = rewriter.rewriteArchetype(
-        archetype, m_sourceUrl, macroRewriteDriverBuilder, traceDiagnostics());
+    TU_LOG_V << "rewriting source from " << m_sourcePath;
+    auto rewriteModuleResult = rewriter.rewriteArchetype(archetype,
+        tempo_utils::Url::fromRelative(m_sourcePath.toString()),
+        macroRewriteDriverBuilder, traceDiagnostics());
     if (rewriteModuleResult.isStatus()) {
         span->logStatus(rewriteModuleResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to rewrite source {}", m_sourceUrl.toString());
+            "failed to rewrite source {}", m_sourcePath.toString());
     }
     auto rewritten = rewriteModuleResult.getResult();
 
     // store the rewritten archetype content in the build cache
-    ArtifactId rewrittenArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourceUrl);
+    ArtifactId rewrittenArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourcePath);
     auto rewrittenBytes = rewritten.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(rewrittenArtifact, rewrittenBytes));
 
     // generate the install path
     std::filesystem::path rewrittenInstallPath = generate_install_path(
-        getId().getDomain(), m_sourceUrl, lyric_common::kObjectFileDotSuffix);
+        getId().getDomain(), m_sourcePath, lyric_common::kObjectFileDotSuffix);
 
     // store the archetype metadata in the build cache
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
-    writer.putAttr(kLyricBuildContentUrl, m_sourceUrl);
+    writer.putAttr(kLyricBuildContentUrl, tempo_utils::Url::fromRelative(m_sourcePath.toString()));
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kIntermezzoContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
     writer.putAttr(kLyricBuildInstallPath, rewrittenInstallPath.string());
