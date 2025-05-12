@@ -4,6 +4,7 @@
 #include <tempo_utils/file_reader.h>
 
 #include "lyric_build/build_result.h"
+#include "lyric_build/internal/task_utils.h"
 
 lyric_build::LocalFilesystem::LocalFilesystem(const std::filesystem::path &baseDirectory)
     : m_baseDirectory(baseDirectory)
@@ -24,29 +25,14 @@ lyric_build::LocalFilesystem::create(const std::filesystem::path &baseDirectory)
     return std::shared_ptr<LocalFilesystem>(new LocalFilesystem(absolutePath));
 }
 
-static tempo_utils::Result<std::filesystem::path>
-to_absolute_path(const std::filesystem::path &baseDirectory, const tempo_utils::UrlPath &path)
-{
-    auto absolutePath = baseDirectory;
-    for (int i = 0; i < path.numParts(); i++) {
-        absolutePath /= path.getPart(i).partView();
-    }
-    absolutePath = absolutePath.lexically_normal();
-    if (std::filesystem::relative(absolutePath, baseDirectory).string().starts_with(".."))
-        return lyric_build::BuildStatus::forCondition(lyric_build::BuildCondition::kInvalidConfiguration,
-            "path {} is outside of the base directory {}", path.toString(), baseDirectory.string());
-    return absolutePath;
-}
-
 bool
 lyric_build::LocalFilesystem::containsResource(const tempo_utils::UrlPath &path)
 {
     if (!path.isValid())
         return false;
-    auto toAbsoluteResult = to_absolute_path(m_baseDirectory, path);
-    if (toAbsoluteResult.isStatus())
+    auto resourcePath = internal::to_absolute_path_within_base(m_baseDirectory, path);
+    if (resourcePath.empty())
         return false;
-    auto resourcePath = toAbsoluteResult.getResult();
     return std::filesystem::is_regular_file(resourcePath);
 }
 
@@ -57,8 +43,12 @@ lyric_build::LocalFilesystem::fetchResource(const tempo_utils::UrlPath &path)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "invalid local filesystem resource path '{}'", path.toString());
 
-    std::filesystem::path resourcePath;
-    TU_ASSIGN_OR_RETURN (resourcePath, to_absolute_path(m_baseDirectory, path));
+    auto resourcePath = internal::to_absolute_path_within_base(m_baseDirectory, path);
+    if (resourcePath.empty())
+        return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
+            "path {} is outside of the base directory {}",
+            path.toString(), m_baseDirectory.string());
+
     if (!std::filesystem::is_regular_file(resourcePath))
         return Option<Resource>();
 
@@ -96,8 +86,12 @@ lyric_build::LocalFilesystem::listResources(
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "invalid local filesystem resource root '{}'", root.toString());
 
-    std::filesystem::path rootPath;
-    TU_ASSIGN_OR_RETURN (rootPath, to_absolute_path(m_baseDirectory, root));
+    auto rootPath = internal::to_absolute_path_within_base(m_baseDirectory, root);
+    if (rootPath.empty())
+        return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
+            "resource root {} is outside of the base directory {}",
+            root.toString(), m_baseDirectory.string());
+
     if (!std::filesystem::is_directory(rootPath))
         return tempo_utils::GenericStatus::forCondition(tempo_utils::GenericCondition::kInternalViolation,
             "resource root {} is not a valid directory", rootPath.string());
@@ -129,8 +123,12 @@ lyric_build::LocalFilesystem::listResourcesRecursively(
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "invalid local filesystem resource root '{}'", root.toString());
 
-    std::filesystem::path rootPath;
-    TU_ASSIGN_OR_RETURN (rootPath, to_absolute_path(m_baseDirectory, root));
+    auto rootPath = internal::to_absolute_path_within_base(m_baseDirectory, root);
+    if (rootPath.empty())
+        return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
+            "resource root {} is outside of the base directory {}",
+            root.toString(), m_baseDirectory.string());
+
     if (!std::filesystem::is_directory(rootPath))
         return tempo_utils::GenericStatus::forCondition(tempo_utils::GenericCondition::kInternalViolation,
             "resource root {} is not a valid directory", rootPath.string());

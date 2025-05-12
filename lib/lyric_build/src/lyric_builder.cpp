@@ -232,6 +232,19 @@ lyric_build::LyricBuilder::configure()
             "invalid global configuration for cache mode");
     }
 
+    // create the temp root
+    if (!m_buildRoot.empty()) {
+        std::filesystem::path tempRootPath = m_buildRoot / "tmp";
+        if (!std::filesystem::exists(tempRootPath)) {
+            if (!std::filesystem::create_directories(tempRootPath))
+                return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                    "failed to create temp root {}", tempRootPath.string());
+        }
+        m_tempRoot = std::move(tempRootPath);
+    } else {
+        m_tempRoot = std::filesystem::temp_directory_path();
+    }
+
     m_configured = true;
 
     return BuildStatus::ok();
@@ -296,7 +309,7 @@ lyric_build::LyricBuilder::computeTargets(
     // wrap the build cache and loader chain in a unique generation
     auto buildGen = BuildGeneration::create();
     auto state = std::make_shared<BuildState>(buildGen, m_cache, m_bootstrapLoader, m_packageLoader,
-        m_fallbackLoader, m_sharedModuleCache, m_virtualFilesystem);
+        m_fallbackLoader, m_sharedModuleCache, m_virtualFilesystem, m_tempRoot);
 
     // construct a new task manager for managing parallel tasks
     BuildRunner runner(&config, state, m_cache, m_taskRegistry.get(),

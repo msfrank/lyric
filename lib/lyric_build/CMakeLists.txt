@@ -66,6 +66,7 @@ set(LYRIC_BUILD_INCLUDES
     include/lyric_build/task_hasher.h
     include/lyric_build/task_notification.h
     include/lyric_build/task_registry.h
+    include/lyric_build/temp_directory.h
     )
 set_target_properties(lyric_build PROPERTIES PUBLIC_HEADER "${LYRIC_BUILD_INCLUDES}")
 
@@ -99,6 +100,7 @@ target_sources(lyric_build PRIVATE
     src/task_hasher.cpp
     src/task_notification.cpp
     src/task_registry.cpp
+    src/temp_directory.cpp
 
     include/lyric_build/internal/analyze_module_task.h
     src/internal/analyze_module_task.cpp

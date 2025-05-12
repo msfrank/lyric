@@ -4,14 +4,14 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 
-#include <lyric_build/build_state.h>
-#include <lyric_build/build_result.h>
-#include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
 #include <tempo_tracing/trace_span.h>
 #include <tempo_utils/attr.h>
-#include <tempo_utils/result.h>
-#include <tempo_utils/status.h>
+
+#include "build_state.h"
+#include "build_result.h"
+#include "build_types.h"
+#include "config_store.h"
+#include "temp_directory.h"
 
 namespace lyric_build {
 
@@ -31,12 +31,7 @@ namespace lyric_build {
 
         std::shared_ptr<tempo_tracing::TraceSpan> getSpan() const;
         std::shared_ptr<tempo_tracing::TraceRecorder> traceDiagnostics();
-        //void setSpan(std::shared_ptr<tempo_tracing::TraceSpan> span);
-
-//        void putTag(const tempo_utils::Attr &tag);
-//        void putTags(std::initializer_list<tempo_utils::Attr> tags);
-//        void putLog(std::initializer_list<tempo_utils::Attr> fields);
-//        void putError(std::error_code ec, std::string_view message);
+        TempDirectory *tempDirectory();
 
         virtual tempo_utils::Result<std::string> configureTask(
             const ConfigStore *configStore,
@@ -57,6 +52,7 @@ namespace lyric_build {
         TaskKey m_key;
         std::shared_ptr<tempo_tracing::TraceSpan> m_span;
         std::shared_ptr<tempo_tracing::TraceRecorder> m_diagnostics;
+        std::unique_ptr<TempDirectory> m_tempDirectory;
 
         enum class State {
             READY,

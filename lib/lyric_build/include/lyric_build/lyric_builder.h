@@ -127,6 +127,7 @@ namespace lyric_build {
         std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;
         std::shared_ptr<AbstractFilesystem> m_virtualFilesystem;
         std::shared_ptr<AbstractCache> m_cache;
+        std::filesystem::path m_tempRoot;
 
         // updated during each invocation of computeTargets
         absl::flat_hash_set<TaskKey> m_targets;

@@ -25,8 +25,9 @@ protected:
 
 TEST_F(CompilePluginTask, ConfigureTask)
 {
-    writeNamedFile("plugin", "foo_plugin.cpp", "");
-    writeNamedFile("plugin", "foo_plugin.h", "");
+    writeNamedFile("plugin", "foo_plugin.cpp", R"(
+        int forty_two() { return 42; }
+    )");
 
     lyric_build::TaskKey key(std::string("compile_plugin"), std::string("foo"),
         tempo_config::ConfigMap{{
@@ -36,7 +37,6 @@ TEST_F(CompilePluginTask, ConfigureTask)
         {
             "pluginSources", tempo_config::ConfigSeq{{
                tempo_config::ConfigValue{"foo_plugin.cpp"},
-               tempo_config::ConfigValue{"foo_plugin.h"},
             }},
         }
     }});
@@ -45,7 +45,7 @@ TEST_F(CompilePluginTask, ConfigureTask)
     ASSERT_THAT (configureTaskResult, tempo_test::IsResult());
     auto taskHash = configureTaskResult.getResult();
 
-    auto runTaskStatusOption = task->runTask(configureTaskResult.getResult(), {}, m_state.get());
+    auto runTaskStatusOption = task->run(configureTaskResult.getResult(), {}, m_state.get());
     ASSERT_TRUE (runTaskStatusOption.hasValue());
     ASSERT_THAT (runTaskStatusOption.getValue(), tempo_test::IsOk());
 }

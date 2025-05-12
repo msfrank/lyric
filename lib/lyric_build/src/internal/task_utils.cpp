@@ -5,7 +5,9 @@
 #include <lyric_common/common_types.h>
 
 tempo_utils::UrlPath
-lyric_build::internal::build_full_path(const tempo_utils::UrlPath &path, const tempo_utils::UrlPath &base)
+lyric_build::internal::build_full_path(
+    const tempo_utils::UrlPath &path,
+    const tempo_utils::UrlPath &base)
 {
     if (!path.isValid())
         return {};
@@ -15,6 +17,17 @@ lyric_build::internal::build_full_path(const tempo_utils::UrlPath &path, const t
         return base.traverse(path);
     auto absoluteBase = tempo_utils::UrlPath::fromString(absl::StrCat("/", base.toString()));
     return absoluteBase.traverse(path);
+}
+
+std::filesystem::path
+lyric_build::internal::to_absolute_path_within_base(
+    const std::filesystem::path &baseDirectory,
+    const tempo_utils::UrlPath &path)
+{
+    auto absolutePath = path.toFilesystemPath(baseDirectory);
+    if (std::filesystem::relative(absolutePath, baseDirectory).string().starts_with(".."))
+        return {};
+    return absolutePath;
 }
 
 tempo_utils::Result<lyric_common::ModuleLocation>

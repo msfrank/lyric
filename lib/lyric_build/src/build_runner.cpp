@@ -741,33 +741,6 @@ inline tempo_utils::Status worker_loop(const lyric_build::TaskThread *thread)
             continue;       // return to top of loop, fetch next task
         }
 
-//        switch (taskStatus.getType()) {
-//
-//            // if the result is OK, then the task completed successfully, store the result
-//            case BuildCondition::OK:
-//                currState = lyric_build::TaskState(lyric_build::TaskState::Status::COMPLETED, generation, taskHash);
-//                cache->storeTrace(traceId, generation);
-//                TU_LOG_VV << "task " << key << " completed with new trace " << absl::BytesToHexString(taskHash);
-//                state->storeState(key, currState);
-//                runner->enqueueNotification(new lyric_build::NotifyStateChanged(key, currState));
-//                break;
-//
-//            // if task did not complete, then mark the task blocked so we rescan dependencies
-//            case BuildCondition::TASK_INCOMPLETE:
-//                currState = lyric_build::TaskState(lyric_build::TaskState::Status::BLOCKED, generation, configHash);
-//                state->storeState(key, currState);
-//                runner->enqueueNotification(new lyric_build::NotifyStateChanged(key, currState));
-//                break;
-//
-//            // otherwise the result is an error, mark the task failed
-//            default:
-//                currState = lyric_build::TaskState(lyric_build::TaskState::Status::FAILED, generation, {});
-//                TU_LOG_VV << "task " << key << " failed: " << taskStatus;
-//                state->storeState(key, currState);
-//                runner->enqueueNotification(new lyric_build::NotifyStateChanged(key, currState));
-//                break;
-//        }
-
         auto taskStatus = statusOption.getValue();
         if (taskStatus.isOk()) {
             // if the result is OK, then the task completed successfully, store the result

@@ -9,7 +9,13 @@
 
 namespace lyric_build::internal {
 
-    tempo_utils::UrlPath build_full_path(const tempo_utils::UrlPath &path, const tempo_utils::UrlPath &base);
+    tempo_utils::UrlPath build_full_path(
+        const tempo_utils::UrlPath &path,
+        const tempo_utils::UrlPath &base);
+
+    std::filesystem::path to_absolute_path_within_base(
+        const std::filesystem::path &baseDirectory,
+        const tempo_utils::UrlPath &path);
 
     tempo_utils::Result<lyric_common::ModuleLocation> convert_source_path_to_module_location(
         const tempo_utils::UrlPath &path);

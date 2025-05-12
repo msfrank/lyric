@@ -69,6 +69,12 @@ lyric_build::BaseTask::traceDiagnostics()
     return m_diagnostics;
 }
 
+lyric_build::TempDirectory *
+lyric_build::BaseTask::tempDirectory()
+{
+    return m_tempDirectory.get();
+}
+
 Option<tempo_utils::Status>
 lyric_build::BaseTask::run(
     const std::string &taskHash,
@@ -79,6 +85,12 @@ lyric_build::BaseTask::run(
         return Option<tempo_utils::Status>(
             BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                 "task {} is already complete", m_key.toString()));
+
+    // if the temp directory doesn't exist then create it but don't initialize until needed
+    if (m_tempDirectory == nullptr) {
+        m_tempDirectory = std::make_unique<TempDirectory>(
+            buildState->getTempRoot(), buildState->getGeneration(), taskHash);
+    }
 
     // if this is the first iteration of the task then set the hash
     if (m_state == State::READY) {
@@ -121,6 +133,13 @@ lyric_build::BaseTask::run(
         m_span->logStatus(status, tempo_tracing::LogSeverity::kError);
     }
     m_span->close();
+
+    // clean up the temp directory
+    if (m_tempDirectory) {
+        status = m_tempDirectory->cleanup();
+        if (status.notOk())
+            return Option(status);
+    }
 
     return statusOption;
 }

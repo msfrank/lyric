@@ -32,7 +32,8 @@ BaseBuildFixture::SetUp()
         packageLoader,
         std::shared_ptr<lyric_runtime::AbstractLoader>{},
         std::shared_ptr<lyric_importer::ModuleCache>{},
-        m_vfs);
+        m_vfs,
+        m_testerDirectory);
 
     TU_RAISE_IF_NOT_OK (configure());
 }

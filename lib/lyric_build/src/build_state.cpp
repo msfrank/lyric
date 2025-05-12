@@ -11,20 +11,23 @@ lyric_build::BuildState::BuildState(
     std::shared_ptr<lyric_packaging::PackageLoader> packageLoader,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
     std::shared_ptr<lyric_importer::ModuleCache> sharedModuleCache,
-    std::shared_ptr<AbstractFilesystem> virtualFilesystem)
+    std::shared_ptr<AbstractFilesystem> virtualFilesystem,
+    const std::filesystem::path &tempRoot)
     : m_buildGen(buildGen),
       m_cache(std::move(cache)),
       m_bootstrapLoader(std::move(bootstrapLoader)),
       m_packageLoader(std::move(packageLoader)),
       m_fallbackLoader(std::move(fallbackLoader)),
       m_sharedModuleCache(std::move(sharedModuleCache)),
-      m_virtualFilesystem(std::move(virtualFilesystem))
+      m_virtualFilesystem(std::move(virtualFilesystem)),
+      m_tempRoot(tempRoot)
 {
     TU_ASSERT (m_buildGen.isValid());
     TU_ASSERT (m_cache != nullptr);
     TU_ASSERT (m_bootstrapLoader != nullptr);
     TU_ASSERT (m_packageLoader != nullptr);
     TU_ASSERT (m_virtualFilesystem != nullptr);
+    TU_ASSERT (!m_tempRoot.empty());
 
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaders;
     loaders.push_back(m_bootstrapLoader);
@@ -81,6 +84,12 @@ std::shared_ptr<lyric_build::AbstractFilesystem>
 lyric_build::BuildState::getVirtualFilesystem() const
 {
     return m_virtualFilesystem;
+}
+
+std::filesystem::path
+lyric_build::BuildState::getTempRoot() const
+{
+    return m_tempRoot;
 }
 
 lyric_build::TaskState

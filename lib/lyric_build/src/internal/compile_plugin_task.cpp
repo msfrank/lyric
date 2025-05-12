@@ -128,30 +128,49 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     BuildState *buildState)
 {
     auto span = getSpan();
+    auto vfs = buildState->getVirtualFilesystem();
+    auto *tmp = tempDirectory();
+
+    // copy sources to temp directory
+    std::vector<std::filesystem::path> pluginSources;
+    for (const auto &pluginSourcePath : m_pluginSourcePaths) {
+        Option<Resource> resourceOption;
+        TU_ASSIGN_OR_RETURN (resourceOption, vfs->fetchResource(pluginSourcePath));
+        if (resourceOption.isEmpty())
+            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "missing resource {}", pluginSourcePath.toString());
+        auto resource = resourceOption.getValue();
+        std::shared_ptr<const tempo_utils::ImmutableBytes> content;
+        TU_ASSIGN_OR_RETURN (content, vfs->loadResource(resource.id));
+        std::filesystem::path pluginSource;
+        TU_ASSIGN_OR_RETURN (pluginSource, tmp->putContent(pluginSourcePath, content));
+        pluginSources.push_back(std::move(pluginSource));
+    }
 
     // construct the compiler command line
     tempo_utils::ProcessBuilder processBuilder("/usr/bin/cc");
+    processBuilder.appendArg("-shared");
     processBuilder.appendArg("-Wall");
     processBuilder.appendArg("-fPIC");
     processBuilder.appendArg("-o", "plugin.so");
     for (const auto &libraryName : m_pluginLibraryNames) {
         processBuilder.appendArg(absl::StrCat("-l", libraryName));
     }
-    for (const auto &sourcePath : m_pluginSourcePaths) {
-        processBuilder.appendArg(sourcePath.toString());
+    for (const auto &sourcePath : pluginSources) {
+        processBuilder.appendArg(sourcePath.string());
     }
 
     // compile the plugin
-    tempo_utils::ProcessRunner compilerProcess(processBuilder.toInvoker());
+    tempo_utils::ProcessRunner compilerProcess(processBuilder.toInvoker(), tmp->getRoot());
     TU_RETURN_IF_NOT_OK (compilerProcess.getStatus());
-    TU_LOG_INFO << "compiler output:";
-    TU_LOG_INFO << "----------------";
-    TU_LOG_INFO << compilerProcess.getChildOutput();
-    TU_LOG_INFO << "----------------";
-    TU_LOG_INFO << "compiler error:";
-    TU_LOG_INFO << "----------------";
-    TU_LOG_INFO << compilerProcess.getChildError();
-    TU_LOG_INFO << "----------------";
+    TU_LOG_V << "compiler output:";
+    TU_LOG_V << "----------------";
+    TU_LOG_V << compilerProcess.getChildOutput();
+    TU_LOG_V << "----------------";
+    TU_LOG_V << "compiler error:";
+    TU_LOG_V << "----------------";
+    TU_LOG_V << compilerProcess.getChildError();
+    TU_LOG_V << "----------------";
 
     // store the object content in the build cache
 

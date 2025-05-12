@@ -26,7 +26,8 @@ namespace lyric_build {
             std::shared_ptr<lyric_packaging::PackageLoader> packageLoader,
             std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
             std::shared_ptr<lyric_importer::ModuleCache> sharedModuleCache,
-            std::shared_ptr<AbstractFilesystem> virtualFilesystem);
+            std::shared_ptr<AbstractFilesystem> virtualFilesystem,
+            const std::filesystem::path &tempRoot);
 
         BuildGeneration getGeneration() const;
         std::shared_ptr<AbstractCache> getCache() const;
@@ -36,6 +37,7 @@ namespace lyric_build {
         std::shared_ptr<lyric_runtime::ChainLoader> getLoaderChain() const;
         std::shared_ptr<lyric_importer::ModuleCache> getSharedModuleCache() const;
         std::shared_ptr<AbstractFilesystem> getVirtualFilesystem() const;
+        std::filesystem::path getTempRoot() const;
 
         TaskState loadState(const TaskKey &key);
         absl::flat_hash_map<TaskKey,TaskState> loadStates(const absl::flat_hash_set<TaskKey> &keys);
@@ -50,6 +52,8 @@ namespace lyric_build {
         std::shared_ptr<lyric_runtime::ChainLoader> m_loaderChain;
         std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;
         std::shared_ptr<AbstractFilesystem> m_virtualFilesystem;
+        std::filesystem::path m_tempRoot;
+
         absl::flat_hash_map<TaskKey,TaskState> m_states;
         std::shared_mutex m_mutex;
     };
