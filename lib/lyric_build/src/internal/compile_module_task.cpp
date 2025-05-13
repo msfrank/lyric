@@ -40,26 +40,14 @@ lyric_build::internal::CompileModuleTask::configure(const ConfigStore *config)
 {
     auto taskId = getId();
 
-    m_sourcePath = tempo_utils::UrlPath::fromString(taskId.getId());
-    if (!m_sourcePath.isValid())
+    auto modulePath = tempo_utils::UrlPath::fromString(taskId.getId());
+    if (!modulePath.isValid())
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
-            "task key id {} is not a valid url", taskId.getId());
+            "task key id {} is not a valid relative module location", taskId.getId());
 
-    tempo_config::UrlPathParser sourceBasePathParser(tempo_utils::UrlPath{});
+    m_moduleLocation = lyric_common::ModuleLocation::fromString(modulePath.toString());
 
-    // determine the base path containing source files
-    tempo_utils::UrlPath sourceBasePath;
-    TU_RETURN_IF_NOT_OK(parse_config(sourceBasePath, sourceBasePathParser,
-        config, taskId, "sourceBasePath"));
-
-    m_sourcePath = build_full_path(m_sourcePath, sourceBasePath);
-
-    // determine the module location based on the source url
-    lyric_common::ModuleLocation moduleLocation;
-    TU_ASSIGN_OR_RETURN(moduleLocation, convert_source_path_to_module_location(m_sourcePath));
-
-    lyric_common::ModuleLocationParser preludeLocationParser(
-        lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION));
+    lyric_common::ModuleLocationParser preludeLocationParser;
     tempo_config::PathParser envSymbolsPathParser(std::filesystem::path{});
     tempo_config::OptionTParser<std::filesystem::path> optEnvSymbolsPathParser(&envSymbolsPathParser);
     tempo_config::BooleanParser touchExternalSymbolsParser(false);
@@ -90,25 +78,12 @@ lyric_build::internal::CompileModuleTask::configure(const ConfigStore *config)
     TU_RETURN_IF_NOT_OK(parse_config(m_compilerOptions.touchExternalSymbols, touchExternalSymbolsParser,
         config, taskId, "touchExternalSymbols"));
 
-    //
-    // config below comes only from the task section, it is not resolved from domain or global sections
-    //
-
-    auto taskSection = config->getTaskSection(taskId);
-
-    lyric_common::ModuleLocationParser moduleLocationParser(moduleLocation);
-
-    // override the module location if specified
-    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_moduleLocation, moduleLocationParser,
-        taskSection, "moduleLocation"));
-
     // configure the parse_module dependency
     m_parseTarget = TaskKey("parse_module", taskId.getId());
 
     // configure the symbolize_module dependency
     m_symbolizeTarget = TaskKey("symbolize_module", taskId.getId(), tempo_config::ConfigMap({
         {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
-        {"moduleLocation", tempo_config::ConfigValue(m_moduleLocation.toString())},
     }));
 
     // set initial dependencies for task
@@ -130,20 +105,9 @@ lyric_build::internal::CompileModuleTask::configureTask(
 
     TU_RETURN_IF_NOT_OK (configure(&merged));
 
-    // try to fetch the content at the specified url
-    Option<Resource> resourceOption;
-    TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(m_sourcePath));
-
-    // fail the task if the resource was not found
-    if (resourceOption.isEmpty())
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "resource {} not found", m_sourcePath.toString());
-    auto resource = resourceOption.getValue();
-
     TaskHasher taskHasher(getKey());
     taskHasher.hashValue(m_objectStateOptions.preludeLocation.toString());
     taskHasher.hashValue(m_moduleLocation.toString());
-    taskHasher.hashValue(resource.entityTag);
     auto hash = taskHasher.finish();
 
     return hash;
@@ -170,7 +134,7 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
     const auto &parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
     auto parseGeneration = cache->loadTrace(parseTrace);
-    ArtifactId parseArtifact(parseGeneration, parseHash, m_sourcePath);
+    ArtifactId parseArtifact(parseGeneration, parseHash, m_moduleLocation.toUrl());
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> parseContent;
     TU_ASSIGN_OR_RETURN (parseContent, cache->loadContentFollowingLinks(parseArtifact));
@@ -197,7 +161,7 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
     const auto &symbolizeHash = depStates.at(m_symbolizeTarget).getHash();
     TraceId symbolizeTrace(symbolizeHash, m_symbolizeTarget.getDomain(), m_symbolizeTarget.getId());
     auto symbolizeGeneration = cache->loadTrace(symbolizeTrace);
-    ArtifactId symbolizeArtifact(symbolizeGeneration, symbolizeHash, m_sourcePath);
+    ArtifactId symbolizeArtifact(symbolizeGeneration, symbolizeHash, m_moduleLocation.toUrl());
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> symbolizeContent;
     TU_ASSIGN_OR_RETURN (symbolizeContent, cache->loadContentFollowingLinks(symbolizeArtifact));
@@ -220,7 +184,6 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
         analyzeTargets.insert(
             TaskKey("analyze_module", importSourcePath, tempo_config::ConfigMap({
                 {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
-                {"moduleLocation", tempo_config::ConfigValue(m_moduleLocation.toString())},
             })
         ));
     }
@@ -245,7 +208,7 @@ lyric_build::internal::CompileModuleTask::compileModule(
     const auto &parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
     auto generation = cache->loadTrace(parseTrace);
-    ArtifactId parseArtifact(generation, parseHash, m_sourcePath);
+    ArtifactId parseArtifact(generation, parseHash, m_moduleLocation.toUrl());
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
     TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(parseArtifact));
@@ -262,7 +225,7 @@ lyric_build::internal::CompileModuleTask::compileModule(
     auto span = getSpan();
 
     // compile the module
-    TU_LOG_V << "compiling module from " << m_sourcePath;
+    TU_LOG_V << "compiling module " << m_moduleLocation;
     auto compileResult = compiler.compileModule(m_moduleLocation,
         archetype, m_objectStateOptions, traceDiagnostics());
     if (compileResult.isStatus()) {
@@ -273,18 +236,17 @@ lyric_build::internal::CompileModuleTask::compileModule(
     auto object = compileResult.getResult();
 
     // store the object content in the build cache
-    ArtifactId moduleArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourcePath);
+    ArtifactId moduleArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
     auto moduleBytes = object.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(moduleArtifact, moduleBytes));
 
     // generate the install path
     std::filesystem::path moduleInstallPath = generate_install_path(
-        getId().getDomain(), m_sourcePath, lyric_common::kObjectFileDotSuffix);
+        getId().getDomain(), m_moduleLocation.getPath(), lyric_common::kObjectFileDotSuffix);
 
     // serialize the object metadata
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
-    writer.putAttr(kLyricBuildContentUrl, tempo_utils::Url::fromRelative(m_sourcePath.toString()));
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);

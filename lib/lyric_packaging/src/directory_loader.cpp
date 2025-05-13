@@ -3,6 +3,7 @@
 #include <absl/strings/str_split.h>
 
 #include <lyric_common/common_types.h>
+#include <lyric_common/plugin.h>
 #include <lyric_packaging/directory_loader.h>
 #include <lyric_packaging/package_result.h>
 #include <lyric_runtime/library_plugin.h>
@@ -104,8 +105,7 @@ lyric_packaging::DirectoryLoader::loadPlugin(
     if (absolutePath.empty())
         return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>();
 
-    auto platformId = absl::StrCat(PLUGIN_SYSTEM_NAME, "-", PLUGIN_ARCHITECTURE);
-    auto pluginName = absl::StrCat(absolutePath.stem().string(), ".", platformId, PLUGIN_SUFFIX);
+    auto pluginName = lyric_common::pluginFilename(absolutePath.stem().string());
     absolutePath.replace_filename(pluginName);
 
     // attempt to load the plugin

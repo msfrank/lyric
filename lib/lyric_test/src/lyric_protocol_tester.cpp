@@ -47,25 +47,18 @@ lyric_test::LyricProtocolTester::runModuleInMockSandbox(
             "tester is unconfigured");
 
     // write the code to a module file in the src directory
-    auto writeSourceResult = m_runner->writeModuleInternal(code, path);
-    if (writeSourceResult.isStatus())
-        return writeSourceResult.getStatus();
-    auto sourcePath = writeSourceResult.getResult();
-    lyric_build::TaskId target("compile_module", sourcePath);
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN (moduleLocation, m_runner->writeModuleInternal(code, path));
+
+    lyric_build::TaskId target("compile_module", moduleLocation.toString());
 
     // compile the module file
-    auto buildResult = m_runner->computeTargetInternal(target, {}, {}, {});
-    if (buildResult.isStatus())
-        return buildResult.getStatus();
-    auto targetComputationSet = buildResult.getResult();
+    lyric_build::TargetComputationSet targetComputationSet;
+    TU_ASSIGN_OR_RETURN (targetComputationSet, m_runner->computeTargetInternal(
+        target, {}, {}, {}));
+
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
-
-    // construct module location based on the source path
-    std::filesystem::path modulePath = "/";
-    modulePath /= sourcePath;
-    modulePath.replace_extension();
-    lyric_common::ModuleLocation moduleLocation(modulePath.string());
 
     TU_CONSOLE_OUT << "";
     TU_CONSOLE_OUT << "======== RUN: " << moduleLocation << " ========";
@@ -77,37 +70,31 @@ lyric_test::LyricProtocolTester::runModuleInMockSandbox(
     // construct the loader
     auto targetId = targetComputation.getId();
     auto targetState = targetComputation.getState();
-    auto createDependencyLoaderResult = lyric_build::DependencyLoader::create({
-        {lyric_build::TaskKey(targetId.getDomain(), targetId.getId()), targetState}},
-        cache);
-    if (createDependencyLoaderResult.isStatus())
-        return createDependencyLoaderResult.getStatus();
+    std::shared_ptr<lyric_build::DependencyLoader> dependencyLoader;
+    TU_ASSIGN_OR_RETURN (dependencyLoader, lyric_build::DependencyLoader::create(
+        {{lyric_build::TaskKey(targetId.getDomain(), targetId.getId()), targetState}}, cache));
 
     lyric_runtime::InterpreterStateOptions options;
 
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
     loaderChain.push_back(builder->getBootstrapLoader());
-    loaderChain.push_back(createDependencyLoaderResult.getResult());
+    loaderChain.push_back(dependencyLoader);
     loaderChain.push_back(builder->getPackageLoader());
     options.loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
 
     // construct the interpreter state
-    auto createInterpreterStateResult = lyric_runtime::InterpreterState::create(options, moduleLocation);
-    if (createInterpreterStateResult.isStatus())
-        return createInterpreterStateResult.getStatus();
-    auto state = createInterpreterStateResult.getResult();
+    std::shared_ptr<lyric_runtime::InterpreterState> state;
+    TU_ASSIGN_OR_RETURN (state, lyric_runtime::InterpreterState::create(options, moduleLocation));
 
     // run the module in the interpreter
     TestInspector inspector;
     lyric_runtime::BytecodeInterpreter interp(state, &inspector);
     MockBinder mockBinder(m_options.protocolMocks);
-    auto binderRunResult = mockBinder.run(&interp);
+    lyric_runtime::InterpreterExit exit;
+    TU_ASSIGN_OR_RETURN (exit, mockBinder.run(&interp));
 
     // return the interpreter result
-    if (binderRunResult.isStatus())
-        return binderRunResult.getStatus();
-    return RunModule(m_runner, targetComputation,
-        targetComputationSet.getDiagnostics(), state, binderRunResult.getResult());
+    return RunModule(m_runner, targetComputation, targetComputationSet.getDiagnostics(), state, exit);
 }
 
 tempo_utils::Result<lyric_test::RunModule>

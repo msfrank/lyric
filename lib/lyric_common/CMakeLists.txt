@@ -11,6 +11,7 @@ set(LYRIC_COMMON_INCLUDES
     include/lyric_common/common_conversions.h
     include/lyric_common/common_serde.h
     include/lyric_common/common_types.h
+    include/lyric_common/plugin.h
     include/lyric_common/runtime_policy.h
     include/lyric_common/symbol_path.h
     include/lyric_common/symbol_url.h
@@ -24,6 +25,7 @@ target_sources(lyric_common
     src/common_conversions.cpp
     src/common_serde.cpp
     src/common_types.cpp
+    src/plugin.cpp
     src/runtime_policy.cpp
     src/symbol_path.cpp
     src/symbol_url.cpp
@@ -48,6 +50,12 @@ set_target_properties(lyric_common PROPERTIES
 target_include_directories(lyric_common PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
+
+target_compile_definitions(lyric_common PRIVATE
+    "PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""
+    "PLUGIN_ARCHITECTURE=\"${CMAKE_SYSTEM_PROCESSOR}\""
+    "PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
     )
 
 target_link_libraries(lyric_common

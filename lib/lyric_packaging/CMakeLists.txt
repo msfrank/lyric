@@ -103,12 +103,6 @@ target_include_directories(lyric_packaging PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
-
-target_compile_definitions(lyric_packaging PRIVATE
-    "PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""
-    "PLUGIN_ARCHITECTURE=\"${CMAKE_SYSTEM_PROCESSOR}\""
-    "PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
     )
 
 # make private headers visible internally

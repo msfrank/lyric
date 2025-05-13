@@ -31,7 +31,6 @@ namespace lyric_build::internal {
             BuildState *buildState) override;
 
     private:
-        tempo_utils::UrlPath m_sourcePath;
         lyric_common::ModuleLocation m_moduleLocation;
         lyric_parser::ParserOptions m_parserOptions;
         lyric_assembler::ObjectStateOptions m_objectStateOptions;

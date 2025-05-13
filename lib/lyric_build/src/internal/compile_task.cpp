@@ -27,7 +27,7 @@ lyric_build::internal::CompileTask::configure(
     auto taskId = getId();
 
     // determine the base url containing source files
-    tempo_config::UrlPathParser sourceBasePathParser;
+    tempo_config::UrlPathParser sourceBasePathParser(tempo_utils::UrlPath{});
     TU_RETURN_IF_NOT_OK(parse_config(m_sourceBasePath, sourceBasePathParser,
         config, taskId, "sourceBasePath"));
 
@@ -50,8 +50,15 @@ lyric_build::internal::CompileTask::configure(
             return p.getLast().partView().ends_with(lyric_common::kSourceFileDotSuffix);
         },
         {}));
-    for (auto &sourceUrl : resourceList.resources) {
-        m_compileTargets.insert(TaskKey("compile_module", sourceUrl.toString()));
+
+    std::filesystem::path basePath(m_sourceBasePath.toString());
+    for (auto &resourcePath : resourceList.resources) {
+        std::filesystem::path path(resourcePath.toString());
+        auto sourcePath = std::filesystem::relative(path, basePath);
+        std::filesystem::path modulePath = "/";
+        modulePath /= sourcePath;
+        modulePath.replace_extension();
+        m_compileTargets.insert(TaskKey("compile_module", modulePath.string()));
     }
 
     if (m_compileTargets.empty())

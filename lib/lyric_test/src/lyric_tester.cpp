@@ -36,7 +36,7 @@ lyric_test::LyricTester::getRunner() const
     return m_runner.get();
 }
 
-tempo_utils::Result<std::filesystem::path>
+tempo_utils::Result<lyric_common::ModuleLocation>
 lyric_test::LyricTester::writeModule(
     const std::string &code,
     const std::filesystem::path &path)

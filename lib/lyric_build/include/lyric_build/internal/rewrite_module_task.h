@@ -32,7 +32,6 @@ namespace lyric_build::internal {
             BuildState *generation) override;
 
     private:
-        tempo_utils::UrlPath m_sourcePath;
         lyric_common::ModuleLocation m_moduleLocation;
         lyric_rewriter::RewriterOptions m_rewriterOptions;
         lyric_rewriter::MacroRegistry m_registry;

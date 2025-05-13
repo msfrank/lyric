@@ -17,10 +17,14 @@
 #include <tempo_config/container_conversions.h>
 #include <tempo_config/parse_config.h>
 #include <tempo_tracing/tracing_schema.h>
+#include <tempo_utils/date_time.h>
+#include <tempo_utils/file_reader.h>
 #include <tempo_utils/log_message.h>
 #include <tempo_utils/process_builder.h>
 #include <tempo_utils/process_runner.h>
 
+#include "lyric_common/plugin.h"
+#include "lyric_packaging/package_attrs.h"
 #include "lyric_parser/ast_attrs.h"
 #include "lyric_schema/assembler_schema.h"
 
@@ -36,6 +40,13 @@ tempo_utils::Status
 lyric_build::internal::CompilePluginTask::configure(const ConfigStore *config)
 {
     auto taskId = getId();
+
+    auto modulePath = tempo_utils::UrlPath::fromString(taskId.getId());
+    if (!modulePath.isValid())
+        return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
+            "task key id {} is not a valid relative module location", taskId.getId());
+
+    m_moduleLocation = lyric_common::ModuleLocation::fromString(modulePath.toString());
 
     // determine the base path containing plugin source files
     tempo_config::UrlPathParser pluginSourceBasePathParser(tempo_utils::UrlPath{});
@@ -147,12 +158,24 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
         pluginSources.push_back(std::move(pluginSource));
     }
 
+    // create the parent directories for the plugin in the temp directory
+    auto modulePath = m_moduleLocation.getPath();
+    std::filesystem::path pluginDirectory;
+    TU_ASSIGN_OR_RETURN (pluginDirectory, tmp->makeDirectory(modulePath.getInit()));
+
+    // generate the plugin filename
+    auto pluginFilename = absl::StrCat(
+        modulePath.getLast().partView(),
+        ".",
+        lyric_common::pluginPlatformId(),
+        lyric_common::pluginFileDotSuffix());
+
     // construct the compiler command line
     tempo_utils::ProcessBuilder processBuilder("/usr/bin/cc");
     processBuilder.appendArg("-shared");
     processBuilder.appendArg("-Wall");
     processBuilder.appendArg("-fPIC");
-    processBuilder.appendArg("-o", "plugin.so");
+    processBuilder.appendArg("-o", pluginFilename);
     for (const auto &libraryName : m_pluginLibraryNames) {
         processBuilder.appendArg(absl::StrCat("-l", libraryName));
     }
@@ -161,7 +184,7 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     }
 
     // compile the plugin
-    tempo_utils::ProcessRunner compilerProcess(processBuilder.toInvoker(), tmp->getRoot());
+    tempo_utils::ProcessRunner compilerProcess(processBuilder.toInvoker(), pluginDirectory);
     TU_RETURN_IF_NOT_OK (compilerProcess.getStatus());
     TU_LOG_V << "compiler output:";
     TU_LOG_V << "----------------";
@@ -172,13 +195,29 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     TU_LOG_V << compilerProcess.getChildError();
     TU_LOG_V << "----------------";
 
-    // store the object content in the build cache
+    auto cache = buildState->getCache();
 
-    // generate the install path
+    // store the plugin content in the cache
+    ArtifactId pluginArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
+    tempo_utils::FileReader reader(pluginDirectory / pluginFilename);
+    TU_RETURN_IF_NOT_OK (reader.getStatus());
+    TU_RETURN_IF_NOT_OK (cache->storeContent(pluginArtifact, reader.getBytes()));
 
-    // serialize the object metadata
+    // store the outline object metadata in the cache
+    MetadataWriter writer;
+    writer.putAttr(kLyricBuildEntryType, EntryType::File);
+    writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
+    writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
+    writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
+    auto toMetadataResult = writer.toMetadata();
+    if (toMetadataResult.isStatus()) {
+        span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
+        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+            "failed to store metadata for {}", pluginArtifact.toString());
+    }
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(pluginArtifact, toMetadataResult.getResult()));
 
-    // store the object metadata in the build cache
+    TU_LOG_INFO << "stored plugin at " << pluginArtifact;
 
     return {};
 }

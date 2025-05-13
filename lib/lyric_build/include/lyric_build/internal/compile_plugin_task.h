@@ -27,8 +27,8 @@ namespace lyric_build::internal {
             lyric_build::BuildState *generation) override;
 
     private:
+        lyric_common::ModuleLocation m_moduleLocation;
         tempo_utils::UrlPath m_pluginSourceBasePath;
-        lyric_common::ModuleLocation m_pluginLocation;
         std::vector<tempo_utils::UrlPath> m_pluginSourcePaths;
         std::vector<std::string> m_pluginLibraryNames;
 

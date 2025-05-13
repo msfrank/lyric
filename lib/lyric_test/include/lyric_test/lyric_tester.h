@@ -34,7 +34,7 @@ namespace lyric_test {
 
         const TestRunner *getRunner() const;
 
-        tempo_utils::Result<std::filesystem::path> writeModule(
+        tempo_utils::Result<lyric_common::ModuleLocation> writeModule(
             const std::string &code,
             const std::filesystem::path &path = {});
 

@@ -51,7 +51,7 @@ namespace lyric_test {
             const std::filesystem::path &baseDir,
             const std::filesystem::path &templatePath,
             const std::string &code);
-        tempo_utils::Result<std::filesystem::path> writeModuleInternal(
+        tempo_utils::Result<lyric_common::ModuleLocation> writeModuleInternal(
             const std::string &code,
             const std::filesystem::path &path = {});
 

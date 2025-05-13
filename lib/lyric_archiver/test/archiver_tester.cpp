@@ -12,16 +12,13 @@ ArchiverTester::ArchiverTester(lyric_test::LyricTester *tester)
 tempo_utils::Result<lyric_common::ModuleLocation>
 ArchiverTester::writeModule(const std::string &code, const std::filesystem::path &path)
 {
-    std::filesystem::path sourcePath;
-    TU_ASSIGN_OR_RETURN (sourcePath, m_tester->writeModule(code, path));
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN (moduleLocation, m_tester->writeModule(code, path));
 
-    lyric_build::TaskId target("compile_module", sourcePath);
+    lyric_build::TaskId target("compile_module", moduleLocation.toString());
     m_taskIds.insert(std::move(target));
 
-    std::filesystem::path modulePath = "/";
-    modulePath /= sourcePath;
-    modulePath.replace_extension();
-    return lyric_common::ModuleLocation(modulePath.string());
+    return moduleLocation;
 }
 
 tempo_utils::Result<std::shared_ptr<lyric_runtime::AbstractLoader>>
@@ -31,7 +28,8 @@ ArchiverTester::build()
     auto cache = builder->getCache();
 
     lyric_build::TargetComputationSet targetComputationSet;
-    TU_ASSIGN_OR_RETURN (targetComputationSet, builder->computeTargets(m_taskIds, {}, {}, {}));
+    TU_ASSIGN_OR_RETURN (targetComputationSet, builder->computeTargets(
+        m_taskIds, {}, {}, {}));
 
     std::shared_ptr<lyric_runtime::AbstractLoader> loader;
     TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputationSet, cache));

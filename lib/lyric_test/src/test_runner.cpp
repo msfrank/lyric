@@ -12,6 +12,8 @@
 #include <tempo_utils/tempdir_maker.h>
 #include <tempo_utils/tempfile_maker.h>
 
+#include "lyric_bootstrap/bootstrap_helpers.h"
+
 std::shared_ptr<lyric_test::TestRunner>
 lyric_test::TestRunner::create(
     const std::filesystem::path &testRootDirectory,
@@ -131,6 +133,8 @@ lyric_test::TestRunner::configureBaseTester()
     // if preludeLocation option is specified, then add it to global overrides
     if (!m_preludeLocation.empty()) {
         globalOverrides["preludeLocation"] = tempo_config::ConfigValue(m_preludeLocation);
+    } else {
+        globalOverrides["preludeLocation"] = tempo_config::ConfigValue(lyric_bootstrap::preludeLocation().toString());
     }
 
     // if packageMap option is specified, then add it to global overrides
@@ -162,22 +166,28 @@ lyric_test::TestRunner::configureBaseTester()
     return status;
 }
 
-tempo_utils::Result<std::filesystem::path>
+tempo_utils::Result<lyric_common::ModuleLocation>
 lyric_test::TestRunner::writeModuleInternal(const std::string &code, const std::filesystem::path &path)
 {
     if (!m_configured)
         return TestStatus::forCondition(TestCondition::kTestInvariant,
             "tester is unconfigured");
 
+    std::filesystem::path sourcePath;
     if (!path.empty()) {
         auto relativePath = path;
         relativePath.replace_extension(lyric_common::kSourceFileSuffix);
-        return writeNamedFileInternal("src", relativePath, code);
+        TU_ASSIGN_OR_RETURN (sourcePath, writeNamedFileInternal("src", relativePath, code));
     } else {
         std::filesystem::path templatePath("XXXXXXXX");
         templatePath.replace_extension(lyric_common::kSourceFileSuffix);
-        return writeTempFileInternal("src", templatePath, code);
+        TU_ASSIGN_OR_RETURN (sourcePath, writeTempFileInternal("src", templatePath, code));
     }
+
+    std::filesystem::path modulePath = "/";
+    modulePath /= sourcePath;
+    modulePath.replace_extension();
+    return lyric_common::ModuleLocation(modulePath.string());
 }
 
 tempo_utils::Result<std::filesystem::path>
@@ -240,10 +250,9 @@ lyric_test::TestRunner::computeTargetInternal(
     TU_CONSOLE_OUT << "======== BUILD: " << target << " ========";
     TU_CONSOLE_OUT << "";
 
-    auto buildResult = m_builder->computeTargets({target}, globalOverrides, domainOverrides, taskOverrides);
-    if (buildResult.isStatus())
-        return buildResult.getStatus();
-    auto targetComputationSet = buildResult.getResult();
+    lyric_build::TargetComputationSet targetComputationSet;
+    TU_ASSIGN_OR_RETURN (targetComputationSet, m_builder->computeTargets(
+        {target}, globalOverrides, domainOverrides, taskOverrides));
 
     auto diagnostics = targetComputationSet.getDiagnostics();
 
@@ -252,7 +261,7 @@ lyric_test::TestRunner::computeTargetInternal(
     auto taskState = targetComputation.getState();
     diagnostics->printDiagnostics();
 
-    return buildResult;
+    return targetComputationSet;
 }
 
 tempo_utils::Result<lyric_test::BuildModule>
@@ -264,27 +273,21 @@ lyric_test::TestRunner::buildModuleInternal(
         return TestStatus::forCondition(TestCondition::kTestInvariant,
             "tester is unconfigured");
 
-    auto writeSourceResult = writeModuleInternal(code, path);
-    if (writeSourceResult.isStatus())
-        return writeSourceResult.getStatus();
-    auto sourcePath = writeSourceResult.getResult();
-    lyric_build::TaskId target("compile_module", sourcePath);
+    // write the source
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, path));
 
-    auto buildResult = computeTargetInternal(target, {}, {}, {});
-    if (buildResult.isStatus())
-        return buildResult.getStatus();
-    auto targetComputationSet = buildResult.getResult();
+    lyric_build::TaskId target("compile_module", moduleLocation.toString());
+
+    lyric_build::TargetComputationSet targetComputationSet;
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(
+        target, {}, {}, {}));
+
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return BuildModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
-
-    // construct module location based on the source path
-    std::filesystem::path modulePath = "/";
-    modulePath /= sourcePath;
-    modulePath.replace_extension();
-    lyric_common::ModuleLocation moduleLocation(modulePath.string());
 
     return BuildModule(shared_from_this(), targetComputation,
         targetComputationSet.getDiagnostics(), moduleLocation);
@@ -299,27 +302,21 @@ lyric_test::TestRunner::compileModuleInternal(
         return TestStatus::forCondition(TestCondition::kTestInvariant,
             "tester is unconfigured");
 
-    auto writeSourceResult = writeModuleInternal(code, path);
-    if (writeSourceResult.isStatus())
-        return writeSourceResult.getStatus();
-    auto sourcePath = writeSourceResult.getResult();
-    lyric_build::TaskId target("compile_module", sourcePath);
+    // write the source
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, path));
 
-    auto buildResult = computeTargetInternal(target, {}, {}, {});
-    if (buildResult.isStatus())
-        return buildResult.getStatus();
-    auto targetComputationSet = buildResult.getResult();
+    lyric_build::TaskId target("compile_module", moduleLocation.toString());
+
+    lyric_build::TargetComputationSet targetComputationSet;
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(
+        target, {}, {}, {}));
+
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return CompileModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
-
-    // change the file extension
-    std::filesystem::path modulePath = "/";
-    modulePath /= sourcePath;
-    modulePath.replace_extension();
-    lyric_common::ModuleLocation moduleLocation(modulePath.string());
 
     std::shared_ptr<lyric_build::DependencyLoader> loader;
     TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, m_builder->getCache()));
@@ -342,27 +339,21 @@ lyric_test::TestRunner::analyzeModuleInternal(
         return TestStatus::forCondition(TestCondition::kTestInvariant,
             "tester is unconfigured");
 
-    auto writeSourceResult = writeModuleInternal(code, path);
-    if (writeSourceResult.isStatus())
-        return writeSourceResult.getStatus();
-    auto sourcePath = writeSourceResult.getResult();
-    lyric_build::TaskId target("analyze_module", sourcePath);
+    // write the source
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, path));
 
-    auto buildResult = computeTargetInternal(target, {}, {}, {});
-    if (buildResult.isStatus())
-        return buildResult.getStatus();
-    auto targetComputationSet = buildResult.getResult();
+    lyric_build::TaskId target("analyze_module", moduleLocation.toString());
+
+    lyric_build::TargetComputationSet targetComputationSet;
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(
+        target, {}, {}, {}));
+
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return AnalyzeModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
-
-    // change the file extension
-    std::filesystem::path modulePath = "/";
-    modulePath /= sourcePath;
-    modulePath.replace_extension();
-    lyric_common::ModuleLocation moduleLocation(modulePath.string());
 
     std::shared_ptr<lyric_build::DependencyLoader> loader;
     TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, m_builder->getCache()));
@@ -385,27 +376,21 @@ lyric_test::TestRunner::symbolizeModuleInternal(
         return TestStatus::forCondition(TestCondition::kTestInvariant,
             "tester is unconfigured");
 
-    auto writeSourceResult = writeModuleInternal(code, path);
-    if (writeSourceResult.isStatus())
-        return writeSourceResult.getStatus();
-    auto sourcePath = writeSourceResult.getResult();
-    lyric_build::TaskId target("symbolize_module", sourcePath);
+    // write the source
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, path));
 
-    auto buildResult = computeTargetInternal(target, {}, {}, {});
-    if (buildResult.isStatus())
-        return buildResult.getStatus();
-    auto targetComputationSet = buildResult.getResult();
+    lyric_build::TaskId target("symbolize_module", moduleLocation.toString());
+
+    lyric_build::TargetComputationSet targetComputationSet;
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(
+        target, {}, {}, {}));
+
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return SymbolizeModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
-
-    // change the file extension
-    std::filesystem::path modulePath = "/";
-    modulePath /= sourcePath;
-    modulePath.replace_extension();
-    lyric_common::ModuleLocation moduleLocation(modulePath.string());
 
     std::shared_ptr<lyric_build::DependencyLoader> loader;
     TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, m_builder->getCache()));
@@ -429,15 +414,11 @@ lyric_test::TestRunner::packageModuleInternal(
         return TestStatus::forCondition(TestCondition::kTestInvariant,
             "tester is unconfigured");
 
-    auto writeSourceResult = writeModuleInternal(code, path);
-    if (writeSourceResult.isStatus())
-        return writeSourceResult.getStatus();
-    auto sourcePath = writeSourceResult.getResult();
-    lyric_build::TaskId target("package");
+    // write the source
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, path));
 
-    std::filesystem::path modulePath = "/";
-    modulePath /= sourcePath;
-    modulePath.replace_extension();
+    lyric_build::TaskId target("package");
 
     absl::flat_hash_map<lyric_build::TaskId,tempo_config::ConfigMap> taskOverrides;
     taskOverrides[target] = tempo_config::ConfigMap({
@@ -447,13 +428,13 @@ lyric_test::TestRunner::packageModuleInternal(
         {"majorVersion", tempo_config::ConfigValue(absl::StrCat(specifier.getMajorVersion()))},
         {"minorVersion", tempo_config::ConfigValue(absl::StrCat(specifier.getMinorVersion()))},
         {"patchVersion", tempo_config::ConfigValue(absl::StrCat(specifier.getPatchVersion()))},
-        {"mainLocation", tempo_config::ConfigValue(modulePath)},
+        {"mainLocation", tempo_config::ConfigValue(moduleLocation.getPath().toString())},
     });
 
-    auto buildResult = computeTargetInternal(target, {}, {}, taskOverrides);
-    if (buildResult.isStatus())
-        return buildResult.getStatus();
-    auto targetComputationSet = buildResult.getResult();
+    lyric_build::TargetComputationSet targetComputationSet;
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(
+        target, {}, {}, taskOverrides));
+
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
@@ -493,10 +474,10 @@ lyric_test::TestRunner::packageTargetsInternal(
         {"mainLocation", tempo_config::ConfigValue(mainLocation.getPath().toString())},
     });
 
-    auto buildResult = computeTargetInternal(target, {}, {}, taskOverrides);
-    if (buildResult.isStatus())
-        return buildResult.getStatus();
-    auto targetComputationSet = buildResult.getResult();
+    lyric_build::TargetComputationSet targetComputationSet;
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(
+        target, {}, {}, taskOverrides));
+
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();
@@ -529,10 +510,9 @@ lyric_test::TestRunner::packageWorkspaceInternal(
         {"mainLocation", tempo_config::ConfigValue(mainLocation.getPath().toString())},
     });
 
-    auto buildResult = computeTargetInternal(target, {}, {}, taskOverrides);
-    if (buildResult.isStatus())
-        return buildResult.getStatus();
-    auto targetComputationSet = buildResult.getResult();
+    lyric_build::TargetComputationSet targetComputationSet;
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target, {}, {}, taskOverrides));
+
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
     auto targetState = targetComputation.getState();

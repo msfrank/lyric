@@ -5,6 +5,7 @@
 #include <absl/strings/str_split.h>
 
 #include <lyric_common/common_types.h>
+#include <lyric_common/plugin.h>
 #include <lyric_packaging/package_attrs.h>
 #include <lyric_packaging/package_loader.h>
 #include <lyric_packaging/package_reader.h>
@@ -310,8 +311,7 @@ lyric_packaging::PackageLoader::loadPlugin(
     }
     else if (absolutePath.extension() == std::string_view(lyric_common::kObjectFileDotSuffix)) {
 
-        auto platformId = absl::StrCat(PLUGIN_SYSTEM_NAME, "-", PLUGIN_ARCHITECTURE);
-        auto pluginName = absl::StrCat(absolutePath.stem().string(), ".", platformId, PLUGIN_SUFFIX);
+        auto pluginName = lyric_common::pluginFilename(absolutePath.stem().string());
         absolutePath.replace_filename(pluginName);
 
         // attempt to load the plugin

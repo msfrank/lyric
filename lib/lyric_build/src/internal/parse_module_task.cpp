@@ -40,23 +40,27 @@ lyric_build::internal::ParseModuleTask::configure(const ConfigStore *config)
 {
     auto taskId = getId();
 
-    m_sourcePath = tempo_utils::UrlPath::fromString(taskId.getId());
-    if (!m_sourcePath.isValid())
+    auto modulePath = tempo_utils::UrlPath::fromString(taskId.getId());
+    if (!modulePath.isValid())
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
-            "task key id {} is not a valid url", taskId.getId());
+            "task key id {} is not a valid relative module location", taskId.getId());
 
-    tempo_config::UrlPathParser sourceBasePathParser(tempo_utils::UrlPath{});
+    m_moduleLocation = lyric_common::ModuleLocation::fromString(modulePath.toString());
+
+    // determine the source path based on the module path
+    auto sourcePath = std::filesystem::path(modulePath.toString(), std::filesystem::path::generic_format);
+    sourcePath.replace_extension(lyric_common::kSourceFileDotSuffix);
+    tempo_config::UrlPathParser sourcePathParser(tempo_utils::UrlPath::fromString(sourcePath.string()));
+    TU_RETURN_IF_NOT_OK(parse_config(m_sourcePath, sourcePathParser,
+        config, taskId, "sourcePath"));
 
     // determine the base path containing source files
+    tempo_config::UrlPathParser sourceBasePathParser(tempo_utils::UrlPath{});
     tempo_utils::UrlPath sourceBasePath;
     TU_RETURN_IF_NOT_OK(parse_config(sourceBasePath, sourceBasePathParser,
         config, taskId, "sourceBasePath"));
 
     m_sourcePath = build_full_path(m_sourcePath, sourceBasePath);
-
-    //
-    // config below comes only from the task section, it is not resolved from domain or global sections
-    //
 
     return {};
 }
@@ -149,7 +153,7 @@ lyric_build::internal::ParseModuleTask::parseModule(
     archetype = rewriteResult.getResult();
 
     // store the archetype content in the build cache
-    ArtifactId archetypeArtifact(buildState->getGeneration().getUuid(), taskHash, m_sourcePath);
+    ArtifactId archetypeArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
     auto archetypeBytes = archetype.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(archetypeArtifact, archetypeBytes));
 
@@ -163,6 +167,7 @@ lyric_build::internal::ParseModuleTask::parseModule(
     writer.putAttr(kLyricBuildContentUrl, sourceUrl);
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kIntermezzoContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
+    writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     writer.putAttr(kLyricBuildInstallPath, archetypeInstallPath.string());
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {

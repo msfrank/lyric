@@ -25,9 +25,9 @@ lyric_common::ModuleLocationParser::parseValue(
         return tempo_config::ConfigStatus::forCondition(tempo_config::ConfigCondition::kWrongType);
 
     auto value = node.toValue().getValue();
-    auto moduleLocation__ = lyric_common::ModuleLocation::fromString(value);
-    if (moduleLocation__.isValid()) {
-        moduleLocation = std::move(moduleLocation__);
+    auto convertedLocation = lyric_common::ModuleLocation::fromString(value);
+    if (convertedLocation.isValid()) {
+        moduleLocation = std::move(convertedLocation);
         return tempo_config::ConfigStatus::ok();
     }
 
@@ -58,9 +58,9 @@ lyric_common::SymbolPathParser::parseValue(
         return tempo_config::ConfigStatus::forCondition(tempo_config::ConfigCondition::kWrongType);
 
     auto value = node.toValue().getValue();
-    auto symbolPath__ = SymbolPath::fromString(value);
-    if (symbolPath__.isValid()) {
-        symbolPath = std::move(symbolPath__);
+    auto convertedPath = SymbolPath::fromString(value);
+    if (convertedPath.isValid()) {
+        symbolPath = std::move(convertedPath);
         return tempo_config::ConfigStatus::ok();
     }
 
@@ -91,9 +91,9 @@ lyric_common::SymbolUrlParser::parseValue(
         return tempo_config::ConfigStatus::forCondition(tempo_config::ConfigCondition::kWrongType);
 
     auto value = node.toValue().getValue();
-    auto symbolUrl__ = SymbolUrl::fromString(value);
-    if (symbolUrl__.isValid()) {
-        symbolUrl = std::move(symbolUrl__);
+    auto convertedUrl = SymbolUrl::fromString(value);
+    if (convertedUrl.isValid()) {
+        symbolUrl = std::move(convertedUrl);
         return tempo_config::ConfigStatus::ok();
     }
 
