@@ -50,15 +50,14 @@ lyric_build::TaskHasher::hashValue(const std::vector<std::string> &sl)
     }
 }
 
-bool
+tempo_utils::Status
 lyric_build::TaskHasher::hashFile(const std::filesystem::path &path)
 {
     tempo_utils::FileReader reader(path.string());
-    if (!reader.isValid())
-        return false;
+    TU_RETURN_IF_NOT_OK (reader.getStatus());
     auto bytes = reader.getBytes();
     m_hasher.addData(std::string_view((const char *) bytes->getData(), bytes->getSize()));
-    return true;
+    return {};
 }
 
 std::string

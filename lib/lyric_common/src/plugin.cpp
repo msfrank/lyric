@@ -2,30 +2,16 @@
 #include <absl/strings/str_cat.h>
 
 #include <lyric_common/plugin.h>
+#include <tempo_utils/platform.h>
 
 std::string
 lyric_common::pluginFilename(std::string_view pluginName)
 {
-    return absl::StrCat(pluginName, ".", pluginPlatformId(), pluginFileDotSuffix());
-}
-
-const char *
-lyric_common::pluginFileSuffix()
-{
-    auto *dotSuffix = pluginFileDotSuffix();
-    return ++dotSuffix;
-}
-
-const char *
-lyric_common::pluginFileDotSuffix()
-{
-    return PLUGIN_SUFFIX;
-}
-
-const char *
-lyric_common::pluginPlatformId()
-{
-    return PLUGIN_SYSTEM_NAME "-" PLUGIN_ARCHITECTURE;
+    return absl::StrCat(
+        pluginName,
+        ".",
+        tempo_utils::sharedLibraryPlatformId(),
+        tempo_utils::sharedLibraryFileDotSuffix());
 }
 
 const char *

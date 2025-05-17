@@ -114,6 +114,8 @@ target_sources(lyric_build PRIVATE
     src/internal/compile_plugin_task.cpp
     include/lyric_build/internal/compile_task.h
     src/internal/compile_task.cpp
+    include/lyric_build/internal/fetch_external_file_task.h
+    src/internal/fetch_external_file_task.cpp
     include/lyric_build/internal/metadata_reader.h
     src/internal/metadata_reader.cpp
     include/lyric_build/internal/orchestrate_task.h
@@ -122,6 +124,8 @@ target_sources(lyric_build PRIVATE
     src/internal/package_task.cpp
     include/lyric_build/internal/parse_module_task.h
     src/internal/parse_module_task.cpp
+    include/lyric_build/internal/provide_plugin_task.h
+    src/internal/provide_plugin_task.cpp
     include/lyric_build/internal/rewrite_module_task.h
     src/internal/rewrite_module_task.cpp
     include/lyric_build/internal/symbolize_module_task.h

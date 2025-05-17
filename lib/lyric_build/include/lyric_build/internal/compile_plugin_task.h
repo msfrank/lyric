@@ -30,7 +30,9 @@ namespace lyric_build::internal {
         lyric_common::ModuleLocation m_moduleLocation;
         tempo_utils::UrlPath m_pluginSourceBasePath;
         std::vector<tempo_utils::UrlPath> m_pluginSourcePaths;
-        std::vector<std::string> m_pluginLibraryNames;
+        std::vector<std::string> m_libraryNames;
+        std::vector<std::filesystem::path> m_includeDirectories;
+        std::vector<std::filesystem::path> m_libraryDirectories;
 
         tempo_utils::Status configure(const lyric_build::ConfigStore *config);
         tempo_utils::Status compilePlugin(

@@ -7,9 +7,6 @@ namespace lyric_common {
 
     std::string pluginFilename(std::string_view pluginName);
 
-    const char *pluginFileSuffix();
-    const char *pluginFileDotSuffix();
-    const char *pluginPlatformId();
     const char *pluginInitFunction();
 
 }

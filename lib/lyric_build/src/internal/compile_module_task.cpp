@@ -150,8 +150,8 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
     }
 
     if (pluginLocation.isValid()) {
-        TaskKey compilePlugin("compile_plugin", pluginLocation.getPath().toString());
-        m_compileTargets.insert(compilePlugin);
+        m_pluginTarget = TaskKey("provide_plugin", pluginLocation.getPath().toString());
+        m_compileTargets.insert(m_pluginTarget);
     }
 
     if (!depStates.contains(m_symbolizeTarget))
@@ -236,12 +236,12 @@ lyric_build::internal::CompileModuleTask::compileModule(
     auto object = compileResult.getResult();
 
     // store the object content in the build cache
-    ArtifactId moduleArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
-    auto moduleBytes = object.bytesView();
-    TU_RETURN_IF_NOT_OK (cache->storeContent(moduleArtifact, moduleBytes));
+    ArtifactId objectArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
+    auto objectBytes = object.bytesView();
+    TU_RETURN_IF_NOT_OK (cache->storeContent(objectArtifact, objectBytes));
 
     // generate the install path
-    std::filesystem::path moduleInstallPath = generate_install_path(
+    std::filesystem::path objectInstallPath = generate_install_path(
         getId().getDomain(), m_moduleLocation.getPath(), lyric_common::kObjectFileDotSuffix);
 
     // serialize the object metadata
@@ -250,18 +250,45 @@ lyric_build::internal::CompileModuleTask::compileModule(
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
-    writer.putAttr(kLyricBuildInstallPath, moduleInstallPath.string());
+    writer.putAttr(kLyricBuildInstallPath, objectInstallPath.string());
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
         span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to store metadata for {}", moduleArtifact.toString());
+            "failed to store metadata for {}", objectArtifact.toString());
     }
 
     // store the object metadata in the build cache
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(moduleArtifact, toMetadataResult.getResult()));
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(objectArtifact, toMetadataResult.getResult()));
 
-    TU_LOG_V << "stored module at " << moduleArtifact;
+    TU_LOG_V << "stored object at " << objectArtifact;
+
+    // if a plugin was provided then pull the plugin artifacts forward
+    if (m_pluginTarget.isValid()) {
+        TU_ASSERT (depStates.contains(m_pluginTarget));
+        const auto &taskState = depStates.at(m_pluginTarget);
+
+        // if the target state is not completed, then fail the task
+        if (taskState.getStatus() != TaskState::Status::COMPLETED)
+            return BuildStatus::forCondition(BuildCondition::kTaskFailure,
+                "dependent task {} did not complete", m_pluginTarget.toString());
+
+        auto hash = taskState.getHash();
+        if (hash.empty())
+            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "dependent task {} has invalid hash", m_pluginTarget.toString());
+
+        TraceId pluginTrace(hash, m_pluginTarget.getDomain(), m_pluginTarget.getId());
+        generation = cache->loadTrace(pluginTrace);
+
+        std::vector<ArtifactId> pluginArtifacts;
+        TU_ASSIGN_OR_RETURN (pluginArtifacts, cache->findArtifacts(generation, hash, {}, {}));
+
+        for (const auto &srcId : pluginArtifacts) {
+            ArtifactId dstId(getGeneration(), taskHash, srcId.getLocation());
+            TU_RETURN_IF_NOT_OK (cache->linkArtifact(dstId, srcId));
+        }
+    }
 
     return {};
 }
@@ -272,21 +299,25 @@ lyric_build::internal::CompileModuleTask::runTask(
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
 {
+    auto numDependencies = m_compileTargets.size();
     tempo_utils::Status status;
     switch (m_phase) {
         case CompileModulePhase::ANALYZE_IMPORTS:
             status = analyzeImports(taskHash, depStates, buildState);
-            m_phase = CompileModulePhase::COMPILE_MODULE;
             if (!status.isOk())
-                return Option<tempo_utils::Status>(status);
+                return Option(status);
+            m_phase = CompileModulePhase::COMPILE_MODULE;
+            if (m_compileTargets.size() > numDependencies)
+                return {};
+            [[fallthrough]];
         case CompileModulePhase::COMPILE_MODULE:
             status =  compileModule(taskHash, depStates, buildState);
             m_phase = CompileModulePhase::COMPLETE;
-            return Option<tempo_utils::Status>(status);
+            return Option(status);
         case CompileModulePhase::COMPLETE:
             status = BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                 "invalid task phase");
-            return Option<tempo_utils::Status>(status);
+            return Option(status);
         default:
             TU_UNREACHABLE();
     }

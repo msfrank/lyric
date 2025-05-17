@@ -1,4 +1,5 @@
 
+#include <absl/strings/str_join.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_attrs.h>
 #include <lyric_build/build_state.h>
@@ -11,7 +12,11 @@
 #include <lyric_build/task_hasher.h>
 #include <lyric_common/common_types.h>
 #include <lyric_common/common_conversions.h>
+#include <lyric_common/plugin.h>
 #include <lyric_compiler/lyric_compiler.h>
+#include <lyric_packaging/package_attrs.h>
+#include <lyric_parser/ast_attrs.h>
+#include <lyric_schema/assembler_schema.h>
 #include <tempo_config/base_conversions.h>
 #include <tempo_config/config_serde.h>
 #include <tempo_config/container_conversions.h>
@@ -22,11 +27,6 @@
 #include <tempo_utils/log_message.h>
 #include <tempo_utils/process_builder.h>
 #include <tempo_utils/process_runner.h>
-
-#include "lyric_common/plugin.h"
-#include "lyric_packaging/package_attrs.h"
-#include "lyric_parser/ast_attrs.h"
-#include "lyric_schema/assembler_schema.h"
 
 lyric_build::internal::CompilePluginTask::CompilePluginTask(
     const tempo_utils::UUID &generation,
@@ -79,11 +79,23 @@ lyric_build::internal::CompilePluginTask::configure(const ConfigStore *config)
         m_pluginSourcePaths = std::move(pluginSourcePaths);
     }
 
-    // parse plugin library names
-    tempo_config::StringParser pluginLibraryNameParser;
-    tempo_config::SeqTParser pluginLibraryNamesListParser(&pluginLibraryNameParser, {});
-    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_pluginLibraryNames, pluginLibraryNamesListParser,
-        taskSection, "pluginLibraries"));
+    // parse library names
+    tempo_config::StringParser libraryNamesParser;
+    tempo_config::SeqTParser libraryNamesListParser(&libraryNamesParser, {});
+    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_libraryNames, libraryNamesListParser,
+        taskSection, "libraryNames"));
+
+    tempo_config::PathParser pathParser;
+
+    // parse include directories
+    tempo_config::SeqTParser includeDirectoriesListParser(&pathParser, {});
+    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_includeDirectories, includeDirectoriesListParser,
+        taskSection, "includeDirectories"));
+
+    // parse library directories
+    tempo_config::SeqTParser libraryDirectoriesListParser(&pathParser, {});
+    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_libraryDirectories, libraryDirectoriesListParser,
+        taskSection, "libraryDirectories"));
 
     return {};
 }
@@ -115,10 +127,22 @@ lyric_build::internal::CompilePluginTask::configureTask(
         taskHasher.hashValue(resource.entityTag);
     }
 
-    std::vector sortedPluginLibraryNames(m_pluginLibraryNames.cbegin(), m_pluginLibraryNames.cend());
-    std::sort(sortedPluginLibraryNames.begin(), sortedPluginLibraryNames.end());
-    for (const auto &pluginLibraryName: sortedPluginLibraryNames) {
-        taskHasher.hashValue(pluginLibraryName);
+    std::vector sortedLibraryNames(m_libraryNames.cbegin(), m_libraryNames.cend());
+    std::sort(sortedLibraryNames.begin(), sortedLibraryNames.end());
+    for (const auto &libraryName: sortedLibraryNames) {
+        taskHasher.hashValue(libraryName);
+    }
+
+    std::vector sortedIncludeDirectories(m_includeDirectories.cbegin(), m_includeDirectories.cend());
+    std::sort(sortedIncludeDirectories.begin(), sortedIncludeDirectories.end());
+    for (const auto &includeDirectory: sortedIncludeDirectories) {
+        taskHasher.hashValue(includeDirectory.string());
+    }
+
+    std::vector sortedLibraryDirectories(m_libraryDirectories.cbegin(), m_libraryDirectories.cend());
+    std::sort(sortedLibraryDirectories.begin(), sortedLibraryDirectories.end());
+    for (const auto &libraryDirectory: sortedLibraryDirectories) {
+        taskHasher.hashValue(libraryDirectory.string());
     }
 
     auto hash = taskHasher.finish();
@@ -164,11 +188,7 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     TU_ASSIGN_OR_RETURN (pluginDirectory, tmp->makeDirectory(modulePath.getInit()));
 
     // generate the plugin filename
-    auto pluginFilename = absl::StrCat(
-        modulePath.getLast().partView(),
-        ".",
-        lyric_common::pluginPlatformId(),
-        lyric_common::pluginFileDotSuffix());
+    auto pluginFilename = lyric_common::pluginFilename(modulePath.getLast().partView());
 
     // construct the compiler command line
     tempo_utils::ProcessBuilder processBuilder("/usr/bin/cc");
@@ -176,15 +196,29 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     processBuilder.appendArg("-Wall");
     processBuilder.appendArg("-fPIC");
     processBuilder.appendArg("-o", pluginFilename);
-    for (const auto &libraryName : m_pluginLibraryNames) {
+    for (const auto &includeDirectory : m_includeDirectories) {
+        processBuilder.appendArg(absl::StrCat("-I", includeDirectory.string()));
+    }
+    for (const auto &libraryDirectory : m_libraryDirectories) {
+        processBuilder.appendArg(absl::StrCat("-L", libraryDirectory.string()));
+    }
+    for (const auto &libraryName : m_libraryNames) {
         processBuilder.appendArg(absl::StrCat("-l", libraryName));
     }
     for (const auto &sourcePath : pluginSources) {
         processBuilder.appendArg(sourcePath.string());
     }
 
+    auto processInvoker = processBuilder.toInvoker();
+    std::vector<std::string> processArgs;
+    for (int i = 0; i < processInvoker.getArgc(); i++) {
+        processArgs.emplace_back(processInvoker.getArg(i));
+    }
+    auto processCommandline = absl::StrJoin(processArgs, " ");
+    TU_LOG_V << "compiler command line: " << processCommandline;
+
     // compile the plugin
-    tempo_utils::ProcessRunner compilerProcess(processBuilder.toInvoker(), pluginDirectory);
+    tempo_utils::ProcessRunner compilerProcess(processInvoker, pluginDirectory);
     TU_RETURN_IF_NOT_OK (compilerProcess.getStatus());
     TU_LOG_V << "compiler output:";
     TU_LOG_V << "----------------";
@@ -206,7 +240,7 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     // store the outline object metadata in the cache
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
-    writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
+    writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string("application/octet-stream"));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     auto toMetadataResult = writer.toMetadata();

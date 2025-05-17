@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-#include <absl/strings/string_view.h>
-
 #include <tempo_security/sha256_hash.h>
 
 #include "build_types.h"
@@ -16,7 +14,7 @@ namespace lyric_build {
     class TaskHasher {
 
     public:
-        TaskHasher(const TaskKey &key);
+        explicit TaskHasher(const TaskKey &key);
 
         void hashValue(const TaskKey &key);
         void hashValue(bool b);
@@ -24,7 +22,7 @@ namespace lyric_build {
         void hashValue(double dbl);
         void hashValue(const std::string_view &s);
         void hashValue(const std::vector<std::string> &sl);
-        bool hashFile(const std::filesystem::path &path);
+        tempo_utils::Status hashFile(const std::filesystem::path &path);
         std::string finish();
 
         static std::string uniqueHash();

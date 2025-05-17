@@ -23,7 +23,7 @@ protected:
     }
 };
 
-TEST_F(CompilePluginTask, ConfigureTask)
+TEST_F(CompilePluginTask, RunSucceeds)
 {
     writeNamedFile("plugin", "foo_plugin.cpp", R"(
         int forty_two() { return 42; }
@@ -45,7 +45,7 @@ TEST_F(CompilePluginTask, ConfigureTask)
     ASSERT_THAT (configureTaskResult, tempo_test::IsResult());
     auto taskHash = configureTaskResult.getResult();
 
-    auto runTaskStatusOption = task->run(configureTaskResult.getResult(), {}, m_state.get());
+    auto runTaskStatusOption = task->run(taskHash, {}, m_state.get());
     ASSERT_TRUE (runTaskStatusOption.hasValue());
     ASSERT_THAT (runTaskStatusOption.getValue(), tempo_test::IsOk());
 }

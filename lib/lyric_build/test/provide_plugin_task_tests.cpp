@@ -1,17 +1,16 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <lyric_build/internal/parse_module_task.h>
+#include <lyric_build/internal/provide_plugin_task.h>
 #include <lyric_build/local_filesystem.h>
 #include <lyric_build/lyric_builder.h>
 #include <tempo_config/parse_config.h>
 #include <tempo_test/result_matchers.h>
 
 #include "base_build_fixture.h"
-#include "lyric_common/common_types.h"
 #include "lyric_packaging/package_attrs.h"
 
-class ParseModuleTask : public BaseBuildFixture {
+class ProvidePluginTask : public BaseBuildFixture {
 protected:
     tempo_utils::Status configure() override {
         tempo_config::ConfigNode rootNode;
@@ -25,23 +24,29 @@ protected:
     }
 };
 
-TEST_F(ParseModuleTask, ConfigureTask)
+TEST_F(ProvidePluginTask, RunSucceedsWhenProvidedExternalPluginFile)
 {
-    writeNamedFile({}, "mod.ly", "nil");
+    writeNamedFile("external", "plugin.lib", "binary data");
 
-    lyric_build::TaskKey key(std::string("parse_module"), std::string("/mod"));
-    auto *task = lyric_build::internal::new_parse_module_task(m_generation, key, m_span);
+    lyric_build::TaskKey key(std::string("provide_plugin"), std::string("/foo"),
+        tempo_config::ConfigMap{{
+            {
+            "externalPluginPath", tempo_config::ConfigValue{"/external/plugin.lib"},
+            }
+        }}
+    );
+    auto *task = lyric_build::internal::new_provide_plugin_task(m_generation, key, m_span);
     auto configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
     ASSERT_THAT (configureTaskResult, tempo_test::IsResult());
     auto taskHash = configureTaskResult.getResult();
 
-    auto runTaskStatusOption = task->runTask(taskHash, {}, m_state.get());
+    auto runTaskStatusOption = task->run(taskHash, {}, m_state.get());
     ASSERT_TRUE (runTaskStatusOption.hasValue());
     ASSERT_THAT (runTaskStatusOption.getValue(), tempo_test::IsOk());
 
     auto cache = m_state->getCache();
     lyric_build::ArtifactId artifactId(
-        m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/mod"));
+        m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/foo"));
 
     auto loadMetadataResult = cache->loadMetadata(artifactId);
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
@@ -50,20 +55,26 @@ TEST_F(ParseModuleTask, ConfigureTask)
     auto walker = metadata.getMetadata();
     std::string contentType;
     walker.parseAttr(lyric_packaging::kLyricPackagingContentType, contentType);
-    ASSERT_EQ (lyric_common::kIntermezzoContentType, contentType);
+    ASSERT_EQ ("application/octet-stream", contentType);
 
     auto loadContentResult = cache->loadContent(artifactId);
     ASSERT_THAT (loadContentResult, tempo_test::IsResult());
     auto content = loadContentResult.getResult();
+    std::string_view contentView((const char *) content->getData(), content->getSize());
 
-    lyric_parser::LyricArchetype archetype(content);
-    ASSERT_TRUE (archetype.isValid());
+    ASSERT_EQ ("binary data", contentView);
 }
 
-TEST_F(ParseModuleTask, ConfigureTaskFailsWhenSourceFileIsMissing)
+TEST_F(ProvidePluginTask, ConfigureTaskFailsWhenExternalPluginIsMissing)
 {
-    lyric_build::TaskKey key(std::string("parse_module"), std::string("/mod"));
-    auto *task = lyric_build::internal::new_parse_module_task(m_generation, key, m_span);
+    lyric_build::TaskKey key(std::string("provide_plugin"), std::string("/foo"),
+        tempo_config::ConfigMap{{
+            {
+                "externalPluginPath", tempo_config::ConfigValue{"/external/plugin.lib"},
+            }
+        }}
+    );
+    auto *task = lyric_build::internal::new_provide_plugin_task(m_generation, key, m_span);
     tempo_utils::Result<std::string> configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
     ASSERT_THAT (configureTaskResult, tempo_test::ContainsStatus(lyric_build::BuildCondition::kMissingInput));
 }

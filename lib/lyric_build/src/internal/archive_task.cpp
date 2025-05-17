@@ -257,7 +257,7 @@ lyric_build::internal::ArchiveTask::runTask(
     BuildState *buildState)
 {
     auto status = buildArchive(taskHash, depStates, buildState);
-    return Option<tempo_utils::Status>(status);
+    return Option(status);
 }
 
 lyric_build::BaseTask *

@@ -210,22 +210,25 @@ lyric_build::internal::AnalyzeModuleTask::runTask(
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
 {
+    auto numDependencies = m_analyzeTargets.size();
     tempo_utils::Status status;
     switch (m_phase) {
         case AnalyzeModulePhase::SYMBOLIZE_IMPORTS:
             status = symbolizeImports(taskHash, depStates, buildState);
-            m_phase = AnalyzeModulePhase::ANALYZE_MODULE;
             if (!status.isOk())
-                return Option<tempo_utils::Status>(status);
+                return Option(status);
+            m_phase = AnalyzeModulePhase::ANALYZE_MODULE;
+            if (m_analyzeTargets.size() > numDependencies)
+                return {};
             [[fallthrough]];
         case AnalyzeModulePhase::ANALYZE_MODULE:
             status =  analyzeModule(taskHash, depStates, buildState);
             m_phase = AnalyzeModulePhase::COMPLETE;
-            return Option<tempo_utils::Status>(status);
+            return Option(status);
         case AnalyzeModulePhase::COMPLETE:
             status = BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                 "invalid task phase");
-            return Option<tempo_utils::Status>(status);
+            return Option(status);
         default:
             TU_UNREACHABLE();
     }

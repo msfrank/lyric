@@ -1,26 +1,18 @@
-#ifndef LYRIC_BUILD_INTERNAL_COMPILE_MODULE_TASK_H
-#define LYRIC_BUILD_INTERNAL_COMPILE_MODULE_TASK_H
+#ifndef LYRIC_BUILD_INTERNAL_FETCH_EXTERNAL_FILE_TASK_H
+#define LYRIC_BUILD_INTERNAL_FETCH_EXTERNAL_FILE_TASK_H
 
 #include <lyric_assembler/object_state.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/config_store.h>
-#include <lyric_compiler/lyric_compiler.h>
-#include <lyric_parser/lyric_parser.h>
 
 namespace lyric_build::internal {
 
-    class CompileModuleTask : public BaseTask {
-
-        enum class CompileModulePhase {
-            ANALYZE_IMPORTS,
-            COMPILE_MODULE,
-            COMPLETE,
-        };
+    class FetchExternalFileTask : public BaseTask {
 
     public:
-        CompileModuleTask(
+        FetchExternalFileTask(
             const tempo_utils::UUID &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
@@ -35,30 +27,21 @@ namespace lyric_build::internal {
             lyric_build::BuildState *generation) override;
 
     private:
-        lyric_common::ModuleLocation m_moduleLocation;
-        lyric_assembler::ObjectStateOptions m_objectStateOptions;
-        lyric_compiler::CompilerOptions m_compilerOptions;
-        TaskKey m_parseTarget;
-        TaskKey m_symbolizeTarget;
-        TaskKey m_pluginTarget;
-        absl::flat_hash_set<TaskKey> m_compileTargets;
-        CompileModulePhase m_phase;
+        std::filesystem::path m_filePath;
+        tempo_utils::UrlPath m_artifactPath;
+        std::string m_contentType;
 
         tempo_utils::Status configure(const lyric_build::ConfigStore *config);
-        tempo_utils::Status analyzeImports(
-            const std::string &taskHash,
-            const absl::flat_hash_map<TaskKey, TaskState> &depStates,
-            lyric_build::BuildState *buildState);
-        tempo_utils::Status compileModule(
+        tempo_utils::Status fetchExternalFile(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey, TaskState> &depStates,
             lyric_build::BuildState *buildState);
     };
 
-    BaseTask *new_compile_module_task(
+    BaseTask *new_fetch_external_file_task(
         const tempo_utils::UUID &generation,
         const TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }
 
-#endif // LYRIC_BUILD_INTERNAL_COMPILE_MODULE_TASK_H
+#endif // LYRIC_BUILD_INTERNAL_FETCH_EXTERNAL_FILE_TASK_H
