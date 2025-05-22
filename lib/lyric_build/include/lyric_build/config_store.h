@@ -17,11 +17,15 @@ namespace lyric_build {
     class ConfigStore {
 
     public:
-        ConfigStore();
+        ConfigStore() = default;
+        explicit ConfigStore(const tempo_config::ConfigMap &config);
         ConfigStore(
-            const tempo_config::ConfigMap &config,
-            const tempo_config::ConfigMap &vendorConfig);
+            const absl::flat_hash_map<std::string,tempo_config::ConfigNode> &globalSettings,
+            const absl::flat_hash_map<std::string,tempo_config::ConfigMap> &domainSettings,
+            const absl::flat_hash_map<TaskId,tempo_config::ConfigMap> &taskSettings);
         ConfigStore(const ConfigStore &other);
+
+        tempo_config::ConfigMap getConfig() const;
 
         tempo_config::ConfigMap getGlobalSection() const;
         tempo_config::ConfigNode getGlobalNode(std::string_view key) const;
@@ -44,16 +48,10 @@ namespace lyric_build {
             NodeResolutionMode includeDomain = NodeResolutionMode::INCLUDE,
             NodeResolutionMode includeGlobal = NodeResolutionMode::INCLUDE) const;
 
-        ConfigStore merge(
-            const tempo_config::ConfigMap &globalOverrides,
-            const absl::flat_hash_map<std::string,tempo_config::ConfigMap> &domainOverrides,
-            const absl::flat_hash_map<TaskId,tempo_config::ConfigMap> &taskOverrides) const;
+        ConfigStore merge(const ConfigStore &overrides) const;
 
     private:
-        struct Priv;
-        std::shared_ptr<Priv> m_priv;
-
-        explicit ConfigStore(std::shared_ptr<Priv> priv);
+        tempo_config::ConfigMap m_config;
     };
 
     template <class T>

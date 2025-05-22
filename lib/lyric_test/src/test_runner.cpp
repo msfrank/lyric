@@ -162,8 +162,8 @@ lyric_test::TestRunner::configureBaseTester()
         builderOptions.cacheMode = lyric_build::CacheMode::Persistent;
     }
 
-    lyric_build::ConfigStore baseConfigStore = lyric_build::ConfigStore(m_buildConfig, m_buildVendorConfig);
-    m_config = baseConfigStore.merge(tempo_config::ConfigMap(globalOverrides), {}, {});
+    lyric_build::ConfigStore baseConfigStore = lyric_build::ConfigStore(m_buildConfig);
+    m_config = baseConfigStore.merge(lyric_build::ConfigStore(globalOverrides, {}, {}));
 
     auto builder = new lyric_build::LyricBuilder(m_config, builderOptions);
     auto status = builder->configure();
@@ -251,17 +251,14 @@ lyric_test::TestRunner::writeTempFileInternal(
 tempo_utils::Result<lyric_build::TargetComputationSet>
 lyric_test::TestRunner::computeTargetInternal(
     const lyric_build::TaskId &target,
-    const tempo_config::ConfigMap &globalOverrides,
-    const absl::flat_hash_map<std::string,tempo_config::ConfigMap> &domainOverrides,
-    const absl::flat_hash_map<lyric_build::TaskId,tempo_config::ConfigMap> &taskOverrides)
+    const lyric_build::ConfigStore &overrides)
 {
     TU_CONSOLE_OUT << "";
     TU_CONSOLE_OUT << "======== BUILD: " << target << " ========";
     TU_CONSOLE_OUT << "";
 
     lyric_build::TargetComputationSet targetComputationSet;
-    TU_ASSIGN_OR_RETURN (targetComputationSet, m_builder->computeTargets(
-        {target}, globalOverrides, domainOverrides, taskOverrides));
+    TU_ASSIGN_OR_RETURN (targetComputationSet, m_builder->computeTargets({target}, overrides));
 
     auto diagnostics = targetComputationSet.getDiagnostics();
 
@@ -289,8 +286,7 @@ lyric_test::TestRunner::buildModuleInternal(
     lyric_build::TaskId target("compile_module", moduleLocation.toString());
 
     lyric_build::TargetComputationSet targetComputationSet;
-    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(
-        target, {}, {}, {}));
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target));
 
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
@@ -318,8 +314,7 @@ lyric_test::TestRunner::compileModuleInternal(
     lyric_build::TaskId target("compile_module", moduleLocation.toString());
 
     lyric_build::TargetComputationSet targetComputationSet;
-    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(
-        target, {}, {}, {}));
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target));
 
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
@@ -355,8 +350,7 @@ lyric_test::TestRunner::analyzeModuleInternal(
     lyric_build::TaskId target("analyze_module", moduleLocation.toString());
 
     lyric_build::TargetComputationSet targetComputationSet;
-    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(
-        target, {}, {}, {}));
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target));
 
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
@@ -392,8 +386,7 @@ lyric_test::TestRunner::symbolizeModuleInternal(
     lyric_build::TaskId target("symbolize_module", moduleLocation.toString());
 
     lyric_build::TargetComputationSet targetComputationSet;
-    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(
-        target, {}, {}, {}));
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target));
 
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
@@ -441,8 +434,8 @@ lyric_test::TestRunner::packageModuleInternal(
     });
 
     lyric_build::TargetComputationSet targetComputationSet;
-    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(
-        target, {}, {}, taskOverrides));
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target,
+        lyric_build::ConfigStore({}, {}, taskOverrides)));
 
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
@@ -484,8 +477,8 @@ lyric_test::TestRunner::packageTargetsInternal(
     });
 
     lyric_build::TargetComputationSet targetComputationSet;
-    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(
-        target, {}, {}, taskOverrides));
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target,
+        lyric_build::ConfigStore({}, {}, taskOverrides)));
 
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
@@ -520,7 +513,8 @@ lyric_test::TestRunner::packageWorkspaceInternal(
     });
 
     lyric_build::TargetComputationSet targetComputationSet;
-    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target, {}, {}, taskOverrides));
+    TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target,
+        lyric_build::ConfigStore({}, {}, taskOverrides)));
 
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());

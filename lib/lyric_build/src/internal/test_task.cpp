@@ -50,7 +50,7 @@ lyric_build::internal::TestTask::configureTask(
     AbstractFilesystem *virtualFilesystem)
 {
     auto key = getKey();
-    auto merged = config->merge({}, {}, {{getId(), getParams()}});
+    auto merged = config->merge(ConfigStore({}, {}, {{getId(), getParams()}}));
 
     auto status = configure(&merged);
     if (!status.isOk())

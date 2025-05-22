@@ -55,8 +55,7 @@ lyric_test::LyricProtocolTester::runModuleInMockSandbox(
 
     // compile the module file
     lyric_build::TargetComputationSet targetComputationSet;
-    TU_ASSIGN_OR_RETURN (targetComputationSet, m_runner->computeTargetInternal(
-        target, {}, {}, {}));
+    TU_ASSIGN_OR_RETURN (targetComputationSet, m_runner->computeTargetInternal(target));
 
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());

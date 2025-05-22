@@ -85,7 +85,7 @@ lyric_build::internal::ArchiveTask::configureTask(
     const ConfigStore *config,
     AbstractFilesystem *virtualFilesystem)
 {
-    auto merged = config->merge({}, {}, {{getId(), getParams()}});
+    auto merged = config->merge(ConfigStore({}, {}, {{getId(), getParams()}}));
     TU_RETURN_IF_NOT_OK (configure(&merged));
     return TaskHasher::uniqueHash();
 }

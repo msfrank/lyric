@@ -95,12 +95,9 @@ namespace lyric_build {
 
         tempo_utils::Status configure();
 
-        tempo_utils::Result<TargetComputationSet>
-        computeTargets(
+        tempo_utils::Result<TargetComputationSet> computeTargets(
             const absl::flat_hash_set<TaskId> &targets,
-            const tempo_config::ConfigMap &globalOverrides,
-            const absl::flat_hash_map<std::string,tempo_config::ConfigMap> &domainOverrides,
-            const absl::flat_hash_map<TaskId,tempo_config::ConfigMap> &taskOverrides);
+            const ConfigStore &overrides = {});
 
         std::shared_ptr<AbstractCache> getCache() const;
         std::shared_ptr<lyric_bootstrap::BootstrapLoader> getBootstrapLoader() const;

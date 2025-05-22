@@ -70,7 +70,7 @@ lyric_build::internal::ParseModuleTask::configureTask(
     const ConfigStore *config,
     AbstractFilesystem *virtualFilesystem)
 {
-    auto merged = config->merge({}, {}, {{getId(), getParams()}});
+    auto merged = config->merge(ConfigStore({}, {}, {{getId(), getParams()}}));
     TU_RETURN_IF_NOT_OK (configure(&merged));
 
     // try to fetch the content at the specified url

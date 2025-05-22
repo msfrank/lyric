@@ -3,21 +3,42 @@
 #include <lyric_build/build_types.h>
 #include <tempo_config/merge_map.h>
 
-struct lyric_build::ConfigStore::Priv {
-    tempo_config::ConfigMap config;
-    tempo_config::ConfigMap vendorConfig;
-    Priv() {};
-    Priv(const tempo_config::ConfigMap &config, const tempo_config::ConfigMap &vendorConfig)
-        : config(config),
-          vendorConfig(vendorConfig) {}
-};
+static tempo_config::ConfigMap
+generate_config(
+    const absl::flat_hash_map<std::string,tempo_config::ConfigNode> &global,
+    const absl::flat_hash_map<std::string,tempo_config::ConfigMap> &domains,
+    const absl::flat_hash_map<lyric_build::TaskId,tempo_config::ConfigMap> &tasks)
+{
+    tempo_config::ConfigMap globalMap(global);
+
+    absl::flat_hash_map<std::string,tempo_config::ConfigNode> domainNodes;
+    for (const auto &entry : domains) {
+        domainNodes[entry.first] = entry.second;
+    }
+    tempo_config::ConfigMap domainsMap(std::move(domainNodes));
+
+    absl::flat_hash_map<std::string,tempo_config::ConfigNode> tasksNodes;
+    for (const auto &entry : tasks) {
+        tasksNodes[entry.first.toString()] = entry.second;
+    }
+    tempo_config::ConfigMap tasksMap(std::move(tasksNodes));
+
+    return tempo_config::ConfigMap{
+        {"global", globalMap},
+       {"domains", domainsMap},
+       {"tasks", tasksMap},
+    };
+}
 
 /**
  * Construct an empty ConfigStore.
  */
-lyric_build::ConfigStore::ConfigStore()
-    : m_priv(std::make_shared<Priv>())
+lyric_build::ConfigStore::ConfigStore(
+    const absl::flat_hash_map<std::string,tempo_config::ConfigNode> &globalSettings,
+    const absl::flat_hash_map<std::string,tempo_config::ConfigMap> &domainSettings,
+    const absl::flat_hash_map<TaskId,tempo_config::ConfigMap> &taskSettings)
 {
+    m_config = generate_config(globalSettings, domainSettings, taskSettings);
 }
 
 /**
@@ -26,17 +47,9 @@ lyric_build::ConfigStore::ConfigStore()
  * @param config The build config.
  * @param vendorConfig The vendor config.
  */
-lyric_build::ConfigStore::ConfigStore(
-    const tempo_config::ConfigMap &config,
-    const tempo_config::ConfigMap &vendorConfig)
+lyric_build::ConfigStore::ConfigStore(const tempo_config::ConfigMap &config)
+    : m_config(config)
 {
-    m_priv = std::make_shared<Priv>(config, vendorConfig);
-}
-
-lyric_build::ConfigStore::ConfigStore(std::shared_ptr<Priv> priv)
-    : m_priv(priv)
-{
-    TU_ASSERT (m_priv != nullptr);
 }
 
 /**
@@ -44,9 +57,20 @@ lyric_build::ConfigStore::ConfigStore(std::shared_ptr<Priv> priv)
  *
  * @param other ConfigStore.
  */
-lyric_build::ConfigStore::ConfigStore(const lyric_build::ConfigStore &other)
-    : m_priv(other.m_priv)
+lyric_build::ConfigStore::ConfigStore(const ConfigStore &other)
+    : m_config(other.m_config)
 {
+}
+
+/**
+ * Return the config.
+ *
+ * @return The config.
+ */
+tempo_config::ConfigMap
+lyric_build::ConfigStore::getConfig() const
+{
+    return m_config;
 }
 
 /**
@@ -57,7 +81,7 @@ lyric_build::ConfigStore::ConfigStore(const lyric_build::ConfigStore &other)
 tempo_config::ConfigMap
 lyric_build::ConfigStore::getGlobalSection() const
 {
-    return m_priv->config.mapAt("global").toMap();
+    return m_config.mapAt("global").toMap();
 }
 
 /**
@@ -80,7 +104,7 @@ lyric_build::ConfigStore::getGlobalNode(std::string_view key) const
 tempo_config::ConfigMap
 lyric_build::ConfigStore::getDomainSection(std::string_view domain) const
 {
-    return m_priv->config
+    return m_config
         .mapAt("domains").toMap()
         .mapAt(domain).toMap();
 }
@@ -106,7 +130,7 @@ lyric_build::ConfigStore::getDomainNode(std::string_view domain, std::string_vie
 std::vector<std::string>
 lyric_build::ConfigStore::listDomainSections() const
 {
-    auto domainsMap = m_priv->config.mapAt("domains").toMap();
+    auto domainsMap = m_config.mapAt("domains").toMap();
     std::vector<std::string> sections;
     for (auto iterator = domainsMap.mapBegin(); iterator != domainsMap.mapEnd(); iterator++) {
         sections.push_back(iterator->first);
@@ -123,7 +147,7 @@ lyric_build::ConfigStore::listDomainSections() const
 tempo_config::ConfigMap
 lyric_build::ConfigStore::getTaskSection(const TaskId &key) const
 {
-    return m_priv->config
+    return m_config
         .mapAt("tasks").toMap()
         .mapAt(key.toString()).toMap();
 }
@@ -148,7 +172,7 @@ lyric_build::ConfigStore::getTaskNode(const TaskId &task, std::string_view key) 
 std::vector<lyric_build::TaskId>
 lyric_build::ConfigStore::listTaskSections() const
 {
-    auto tasksMap = m_priv->config.mapAt("tasks").toMap();
+    auto tasksMap = m_config.mapAt("tasks").toMap();
     std::vector<TaskId> sections;
     for (auto iterator = tasksMap.mapBegin(); iterator != tasksMap.mapEnd(); iterator++) {
         sections.push_back(TaskId::fromString(iterator->first));
@@ -207,30 +231,6 @@ lyric_build::ConfigStore::resolveTaskNode(
     return {};
 }
 
-static tempo_config::ConfigMap
-generate_overrides(
-    const tempo_config::ConfigMap &global,
-    const absl::flat_hash_map<std::string,tempo_config::ConfigMap> &domains,
-    const absl::flat_hash_map<lyric_build::TaskId,tempo_config::ConfigMap> &tasks)
-{
-    absl::flat_hash_map<std::string,tempo_config::ConfigNode> domainNodes;
-    for (auto iterator : domains) {
-        domainNodes[iterator.first] = iterator.second;
-    }
-    tempo_config::ConfigMap domainsMap(std::move(domainNodes));
-
-    absl::flat_hash_map<std::string,tempo_config::ConfigNode> tasksNodes;
-    for (auto iterator : tasks) {
-        tasksNodes[iterator.first.toString()] = iterator.second;
-    }
-    tempo_config::ConfigMap tasksMap(std::move(tasksNodes));
-
-    return tempo_config::ConfigMap{
-        {"global", global},
-        {"domains", domainsMap},
-        {"tasks", tasksMap},
-    };
-}
 
 /**
  * Merge the ConfigStore with the specified config overrides and return a new ConfigStore.
@@ -241,14 +241,8 @@ generate_overrides(
  * @return The config store.
  */
 lyric_build::ConfigStore
-lyric_build::ConfigStore::merge(
-    const tempo_config::ConfigMap &globalOverrides,
-    const absl::flat_hash_map<std::string,tempo_config::ConfigMap> &domainOverrides,
-    const absl::flat_hash_map<TaskId,tempo_config::ConfigMap> &taskOverrides) const
+lyric_build::ConfigStore::merge(const ConfigStore &overrides) const
 {
-    auto overrides = generate_overrides(globalOverrides, domainOverrides, taskOverrides);
-    auto priv = std::make_shared<Priv>(
-        tempo_config::merge_map(m_priv->config, overrides),
-        m_priv->vendorConfig);
-    return ConfigStore(priv);
+    auto merged = tempo_config::merge_map(m_config, overrides.getConfig());
+    return ConfigStore(merged);
 }

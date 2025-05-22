@@ -298,14 +298,12 @@ lyric_build::LyricBuilder::onTaskNotification(
 tempo_utils::Result<lyric_build::TargetComputationSet>
 lyric_build::LyricBuilder::computeTargets(
     const absl::flat_hash_set<TaskId> &targets,
-    const tempo_config::ConfigMap &globalOverrides,
-    const absl::flat_hash_map<std::string,tempo_config::ConfigMap> &domainOverrides,
-    const absl::flat_hash_map<TaskId,tempo_config::ConfigMap> &taskOverrides)
+    const ConfigStore &overrides)
 {
     tempo_utils::Status status;
 
     // construct a new Config with overrides merged in
-    auto config = m_config.merge(globalOverrides, domainOverrides, taskOverrides);
+    auto config = m_config.merge(overrides);
 
     // wrap the build cache and loader chain in a unique generation
     auto buildGen = BuildGeneration::create();

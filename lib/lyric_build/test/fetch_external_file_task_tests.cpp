@@ -20,7 +20,7 @@ protected:
             "domain": {},
             "tasks": {}
         })"));
-        m_config = std::make_unique<lyric_build::ConfigStore>(rootNode.toMap(), tempo_config::ConfigMap{});
+        m_config = std::make_unique<lyric_build::ConfigStore>(rootNode.toMap());
         return {};
 
     }
