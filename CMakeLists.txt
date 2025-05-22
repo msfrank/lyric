@@ -243,10 +243,12 @@ target_link_libraries(lyric_testsuite
     PUBLIC gtest::gtest
     PRIVATE
     LyricAnalyzerTestSuite
+    LyricArchiverTestSuite
     LyricBootstrapTestSuite
     LyricBuildTestSuite
     LyricCommonTestSuite
     LyricObjectTestSuite
+    LyricOptimizerTestSuite
     LyricPackagingTestSuite
     LyricParserTestSuite
     LyricRewriterTestSuite

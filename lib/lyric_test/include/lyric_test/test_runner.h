@@ -27,8 +27,7 @@ namespace lyric_test {
             bool keepBuildOnUnexpectedResult,
             std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
             std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
-            const absl::flat_hash_map<std::string,std::string> &packageMap,
-            const lyric_build::TaskSettings &overrides);
+            const lyric_build::TaskSettings &taskSettings);
         ~TestRunner() override;
 
         std::filesystem::path getTesterDirectory() const override;
@@ -93,13 +92,11 @@ namespace lyric_test {
         bool m_keepBuildOnUnexpectedResult;
         std::shared_ptr<lyric_build::TaskRegistry> m_taskRegistry;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_fallbackLoader;
-        absl::flat_hash_map<std::string,std::string> m_packageMap;
-        lyric_build::TaskSettings m_overrides;
+        lyric_build::TaskSettings m_taskSettings;
 
         bool m_configured;
         std::filesystem::path m_testerDirectory;
         std::filesystem::path m_installDirectory;
-        lyric_build::TaskSettings m_taskSettings;
         lyric_build::LyricBuilder *m_builder;
         bool m_unexpectedResult;
 
@@ -110,7 +107,6 @@ namespace lyric_test {
             bool keepBuildOnUnexpectedResult,
             std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
             std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
-            const absl::flat_hash_map<std::string,std::string> &packageMap,
             const lyric_build::TaskSettings &overrides);
     };
 }

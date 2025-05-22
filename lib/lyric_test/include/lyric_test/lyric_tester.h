@@ -20,7 +20,6 @@ namespace lyric_test {
         bool keepBuildOnUnexpectedResult = true;
         std::shared_ptr<lyric_build::TaskRegistry> taskRegistry;
         std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader;
-        absl::flat_hash_map<std::string,std::string> packageMap;
         lyric_build::TaskSettings overrides;
     };
 

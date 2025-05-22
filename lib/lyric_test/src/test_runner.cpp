@@ -22,8 +22,7 @@ lyric_test::TestRunner::create(
     bool keepBuildOnUnexpectedResult,
     std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
-    const absl::flat_hash_map<std::string, std::string> &packageMap,
-    const lyric_build::TaskSettings &overrides)
+    const lyric_build::TaskSettings &taskSettings)
 {
     return std::shared_ptr<TestRunner>(new TestRunner(
         testRootDirectory,
@@ -32,8 +31,7 @@ lyric_test::TestRunner::create(
         keepBuildOnUnexpectedResult,
         taskRegistry,
         fallbackLoader,
-        packageMap,
-        overrides));
+        taskSettings));
 }
 
 lyric_test::TestRunner::TestRunner(
@@ -43,8 +41,7 @@ lyric_test::TestRunner::TestRunner(
     bool keepBuildOnUnexpectedResult,
     std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
-    const absl::flat_hash_map<std::string, std::string> &packageMap,
-    const lyric_build::TaskSettings &overrides)
+    const lyric_build::TaskSettings &taskSettings)
     : std::enable_shared_from_this<TestRunner>(),
       m_testRootDirectory(testRootDirectory),
       m_useInMemoryCache(useInMemoryCache),
@@ -52,8 +49,7 @@ lyric_test::TestRunner::TestRunner(
       m_keepBuildOnUnexpectedResult(keepBuildOnUnexpectedResult),
       m_taskRegistry(std::move(taskRegistry)),
       m_fallbackLoader(std::move(fallbackLoader)),
-      m_packageMap(packageMap),
-      m_overrides(overrides),
+      m_taskSettings(taskSettings),
       m_configured(false),
       m_builder(nullptr),
       m_unexpectedResult(false)
@@ -92,9 +88,6 @@ lyric_test::TestRunner::configureBaseTester()
         return TestStatus::forCondition(TestCondition::kTestInvariant,
             "tester was already configured");
 
-    absl::flat_hash_map<std::string,tempo_config::ConfigNode> globalOverrides;
-    globalOverrides["sourceBaseUrl"] = tempo_config::ConfigValue("/");
-
     // create a temporary directory for the test build
     std::filesystem::path testRootDirectory;
     if (!m_testRootDirectory.empty()) {
@@ -131,24 +124,12 @@ lyric_test::TestRunner::configureBaseTester()
         builderOptions.taskRegistry = m_taskRegistry;
     }
 
-    // if packageMap option is specified, then add it to global overrides
-    if (!m_packageMap.empty()) {
-        absl::flat_hash_map<std::string,tempo_config::ConfigNode> packageMap;
-        for (const auto &pair : m_packageMap) {
-            packageMap[pair.first] = tempo_config::ConfigValue(pair.second);
-        }
-        globalOverrides["packageMap"] = tempo_config::ConfigMap(packageMap);
-    }
-
     // if useInMemoryCache or isTemporary is true, then use in memory build cache
     if (m_useInMemoryCache || m_isTemporary) {
         builderOptions.cacheMode = lyric_build::CacheMode::InMemory;
     } else {
         builderOptions.cacheMode = lyric_build::CacheMode::Persistent;
     }
-
-    lyric_build::TaskSettings baseSettings = lyric_build::TaskSettings(globalOverrides, {}, {});
-    m_taskSettings = baseSettings.merge(m_overrides);
 
     auto builder = new lyric_build::LyricBuilder(m_taskSettings, builderOptions);
     auto status = builder->configure();

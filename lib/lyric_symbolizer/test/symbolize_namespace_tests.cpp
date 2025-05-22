@@ -9,18 +9,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-TEST(SymbolizeNamespace, DeclareNamespace) {
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.overrides = lyric_build::TaskSettings(tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    });
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
+#include "base_symbolizer_fixture.h"
 
-    auto symbolizeModuleResult = tester.symbolizeModule(R"(
+class SymbolizeNamespace : public BaseSymbolizerFixture {};
+
+TEST_F(SymbolizeNamespace, DeclareNamespace)
+{
+    auto symbolizeModuleResult = m_tester->symbolizeModule(R"(
         namespace Namespace {
             global val FortyTwo: Int = 42
         }

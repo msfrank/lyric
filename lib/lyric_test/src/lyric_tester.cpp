@@ -19,7 +19,6 @@ lyric_test::LyricTester::LyricTester(const TesterOptions &options)
         options.keepBuildOnUnexpectedResult,
         options.taskRegistry,
         options.fallbackLoader,
-        options.packageMap,
         options.overrides);
 }
 

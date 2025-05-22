@@ -15,37 +15,26 @@
 #include <tempo_test/status_matchers.h>
 #include <tempo_test/result_matchers.h>
 
-TEST(SymbolizeBlock, NoDefinitionsOrImports)
+#include "base_symbolizer_fixture.h"
+
+class SymbolizeBlock : public BaseSymbolizerFixture {};
+
+TEST_F(SymbolizeBlock, NoDefinitionsOrImports)
 {
-    lyric_parser::LyricParser parser({});
-    auto recorder = tempo_tracing::TraceRecorder::create();
-
-    auto parseResult = parser.parseModule(R"(
+    auto symbolizeModuleResult = m_tester->symbolizeModule(R"(
         1 + 1
-    )", {}, recorder);
+    )");
+    ASSERT_THAT (symbolizeModuleResult,
+        tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
 
-    ASSERT_TRUE(parseResult.isResult());
-    auto archetype = parseResult.getResult();
-
-    auto location = lyric_common::ModuleLocation::fromString("/test");
-    auto staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
-    auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
-    auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
-    auto systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
-
-    lyric_symbolizer::SymbolizerOptions options;
-    lyric_symbolizer::LyricSymbolizer symbolizer(localModuleCache, systemModuleCache, options);
-
-    lyric_assembler::ObjectStateOptions objectStateOptions;
-    lyric_object::LyricObject object;
-    TU_ASSIGN_OR_RAISE (object, symbolizer.symbolizeModule(location, archetype, objectStateOptions, recorder));
-
+    auto symbolizeModule = symbolizeModuleResult.getResult();
+    auto object = symbolizeModule.getModule();
     auto root = object.getObject();
     ASSERT_EQ (2, root.numSymbols());
     ASSERT_EQ (1, root.numImports());
 }
 
-TEST(SymbolizeBlock, DeclareImport)
+TEST_F(SymbolizeBlock, DeclareImport)
 {
     lyric_test::TesterOptions testerOptions;
     testerOptions.overrides = lyric_build::TaskSettings(tempo_config::ConfigMap{

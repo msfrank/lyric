@@ -7,11 +7,12 @@ BaseArchiverFixture::BaseArchiverFixture()
 {
     m_staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
     m_testerOptions.fallbackLoader = m_staticLoader;
-    m_testerOptions.buildConfig = tempo_config::ConfigMap{
+    m_testerOptions.overrides = lyric_build::TaskSettings(tempo_config::ConfigMap{
         {"global", tempo_config::ConfigMap{
             {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
+            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
         }},
-    };
+    });
 }
 
 tempo_utils::Status

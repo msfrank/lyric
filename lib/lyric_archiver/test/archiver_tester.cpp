@@ -28,8 +28,7 @@ ArchiverTester::build()
     auto cache = builder->getCache();
 
     lyric_build::TargetComputationSet targetComputationSet;
-    TU_ASSIGN_OR_RETURN (targetComputationSet, builder->computeTargets(
-        m_taskIds, {}, {}, {}));
+    TU_ASSIGN_OR_RETURN (targetComputationSet, builder->computeTargets(m_taskIds));
 
     std::shared_ptr<lyric_runtime::AbstractLoader> loader;
     TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputationSet, cache));

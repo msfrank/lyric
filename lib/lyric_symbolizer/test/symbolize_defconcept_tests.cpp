@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <lyric_bootstrap/bootstrap_loader.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
@@ -9,19 +8,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-TEST(SymbolizeDefconcept, DeclareDefconcept)
-{
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.overrides = lyric_build::TaskSettings(tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    });
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
+#include "base_symbolizer_fixture.h"
 
-    auto symbolizeModuleResult = tester.symbolizeModule(R"(
+class SymbolizeDefconcept : public BaseSymbolizerFixture {};
+
+TEST_F(SymbolizeDefconcept, DeclareDefconcept)
+{
+    auto symbolizeModuleResult = m_tester->symbolizeModule(R"(
         defconcept Concept {
         }
     )");

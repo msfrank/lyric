@@ -20,7 +20,6 @@ lyric_test::LyricProtocolTester::LyricProtocolTester(const ProtocolTesterOptions
         options.keepBuildOnUnexpectedResult,
         options.taskRegistry,
         options.fallbackLoader,
-        options.packageMap,
         options.overrides);
 }
 
