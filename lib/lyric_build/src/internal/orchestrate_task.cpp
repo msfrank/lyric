@@ -18,7 +18,7 @@ lyric_build::internal::OrchestrateTask::OrchestrateTask(
 }
 
 tempo_utils::Status
-lyric_build::internal::OrchestrateTask::configure(const ConfigStore *config)
+lyric_build::internal::OrchestrateTask::configure(const TaskSettings *config)
 {
     auto taskId = getId();
 
@@ -51,10 +51,10 @@ lyric_build::internal::OrchestrateTask::configure(const ConfigStore *config)
 
 tempo_utils::Result<std::string>
 lyric_build::internal::OrchestrateTask::configureTask(
-    const ConfigStore *config,
+    const TaskSettings *config,
     AbstractFilesystem *virtualFilesystem)
 {
-    auto merged = config->merge(ConfigStore({}, {}, {{getId(), getParams()}}));
+    auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
     TU_RETURN_IF_NOT_OK (configure(&merged));
     return TaskHasher::uniqueHash();
 }

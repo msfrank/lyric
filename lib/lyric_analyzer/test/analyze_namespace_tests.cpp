@@ -9,26 +9,19 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-TEST(AnalyzeNamespace, DeclareNamespace)
-{
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
+#include "base_analyzer_fixture.h"
 
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+class AnalyzeNamespace : public BaseAnalyzerFixture {};
+
+TEST_F(AnalyzeNamespace, DeclareNamespace)
+{
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         namespace Foo {
             global val FortyTwo: Int = 42
         }
     )");
     ASSERT_THAT (analyzeModuleResult,
-                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+        tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();

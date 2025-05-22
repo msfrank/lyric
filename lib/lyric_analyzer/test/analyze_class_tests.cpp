@@ -11,20 +11,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-TEST(AnalyzeClass, DeclareClass)
-{
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
+#include "base_analyzer_fixture.h"
 
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+class AnalyzeClass : public BaseAnalyzerFixture {};
+
+TEST_F(AnalyzeClass, DeclareClass)
+{
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defclass Foo {
         }
     )");
@@ -48,20 +41,9 @@ TEST(AnalyzeClass, DeclareClass)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "$ctor"}), ctor.getSymbolPath());
 }
 
-TEST(AnalyzeClass, DeclareClassMemberVal)
+TEST_F(AnalyzeClass, DeclareClassMemberVal)
 {
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
-
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defclass Foo {
             val answer: Int
         }
@@ -88,20 +70,9 @@ TEST(AnalyzeClass, DeclareClassMemberVal)
     ASSERT_FALSE (field0.isVariable());
 }
 
-TEST(AnalyzeClass, DeclareClassMemberVar)
+TEST_F(AnalyzeClass, DeclareClassMemberVar)
 {
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
-
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defclass Foo {
             var answer: Int
         }
@@ -128,20 +99,9 @@ TEST(AnalyzeClass, DeclareClassMemberVar)
     ASSERT_TRUE (field0.isVariable());
 }
 
-TEST(AnalyzeClass, DeclareClassMethod)
+TEST_F(AnalyzeClass, DeclareClassMethod)
 {
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
-
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defclass Foo {
             def Identity(x: Int): Int { return x }
         }
@@ -187,20 +147,9 @@ TEST(AnalyzeClass, DeclareClassMethod)
     ASSERT_TRUE (ctor.isConstructor());
 }
 
-TEST(AnalyzeClass, DeclareClassImplMethod)
+TEST_F(AnalyzeClass, DeclareClassImplMethod)
 {
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
-
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defclass Foo {
             impl Equality[Foo,Foo] {
                 def equals(lhs: Foo, rhs: Foo): Bool { false }

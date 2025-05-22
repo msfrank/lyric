@@ -7,7 +7,7 @@
 #include <lyric_build/build_conversions.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_build/metadata_matcher.h>
 #include <lyric_build/internal/package_task.h>
 #include <lyric_build/metadata_writer.h>
@@ -31,7 +31,7 @@ lyric_build::internal::PackageTask::PackageTask(
 }
 
 tempo_utils::Status
-lyric_build::internal::PackageTask::configure(const ConfigStore *config)
+lyric_build::internal::PackageTask::configure(const TaskSettings *config)
 {
     auto taskId = getId();
 
@@ -98,10 +98,10 @@ lyric_build::internal::PackageTask::configure(const ConfigStore *config)
 
 tempo_utils::Result<std::string>
 lyric_build::internal::PackageTask::configureTask(
-    const ConfigStore *config,
+    const TaskSettings *config,
     AbstractFilesystem *virtualFilesystem)
 {
-    auto merged = config->merge(ConfigStore({}, {}, {{getId(), getParams()}}));
+    auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
     TU_RETURN_IF_NOT_OK (configure(&merged));
 
     TaskHasher configHasher(getKey());

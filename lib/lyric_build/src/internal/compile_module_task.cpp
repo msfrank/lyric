@@ -1,10 +1,10 @@
 
-#include <lyric_build/artifact_loader.h>
+#include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_attrs.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_build/dependency_loader.h>
 #include <lyric_build/internal/compile_module_task.h>
 #include <lyric_build/internal/task_utils.h>
@@ -14,17 +14,14 @@
 #include <lyric_common/common_conversions.h>
 #include <lyric_compiler/lyric_compiler.h>
 #include <lyric_packaging/package_attrs.h>
-#include <lyric_runtime/chain_loader.h>
+#include <lyric_parser/ast_attrs.h>
+#include <lyric_schema/assembler_schema.h>
 #include <tempo_config/base_conversions.h>
-#include <tempo_config/config_serde.h>
 #include <tempo_config/container_conversions.h>
 #include <tempo_config/parse_config.h>
 #include <tempo_tracing/tracing_schema.h>
 #include <tempo_utils/date_time.h>
 #include <tempo_utils/log_message.h>
-
-#include "lyric_parser/ast_attrs.h"
-#include "lyric_schema/assembler_schema.h"
 
 lyric_build::internal::CompileModuleTask::CompileModuleTask(
     const tempo_utils::UUID &generation,
@@ -36,7 +33,7 @@ lyric_build::internal::CompileModuleTask::CompileModuleTask(
 }
 
 tempo_utils::Status
-lyric_build::internal::CompileModuleTask::configure(const ConfigStore *config)
+lyric_build::internal::CompileModuleTask::configure(const TaskSettings *config)
 {
     auto taskId = getId();
 
@@ -47,7 +44,7 @@ lyric_build::internal::CompileModuleTask::configure(const ConfigStore *config)
 
     m_moduleLocation = lyric_common::ModuleLocation::fromString(modulePath.toString());
 
-    lyric_common::ModuleLocationParser preludeLocationParser;
+    lyric_common::ModuleLocationParser preludeLocationParser(lyric_bootstrap::preludeLocation());
     tempo_config::PathParser envSymbolsPathParser(std::filesystem::path{});
     tempo_config::OptionTParser<std::filesystem::path> optEnvSymbolsPathParser(&envSymbolsPathParser);
     tempo_config::BooleanParser touchExternalSymbolsParser(false);
@@ -97,11 +94,11 @@ lyric_build::internal::CompileModuleTask::configure(const ConfigStore *config)
 
 tempo_utils::Result<std::string>
 lyric_build::internal::CompileModuleTask::configureTask(
-    const ConfigStore *config,
+    const TaskSettings *config,
     AbstractFilesystem *virtualFilesystem)
 {
     auto key = getKey();
-    auto merged = config->merge(ConfigStore({}, {}, {{getId(), getParams()}}));
+    auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
 
     TU_RETURN_IF_NOT_OK (configure(&merged));
 

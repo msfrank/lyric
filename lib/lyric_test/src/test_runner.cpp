@@ -20,24 +20,20 @@ lyric_test::TestRunner::create(
     bool useInMemoryCache,
     bool isTemporary,
     bool keepBuildOnUnexpectedResult,
-    const std::string &preludeLocation,
     std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
     const absl::flat_hash_map<std::string, std::string> &packageMap,
-    const tempo_config::ConfigMap &buildConfig,
-    const tempo_config::ConfigMap &buildVendorConfig)
+    const lyric_build::TaskSettings &overrides)
 {
     return std::shared_ptr<TestRunner>(new TestRunner(
         testRootDirectory,
         useInMemoryCache,
         isTemporary,
         keepBuildOnUnexpectedResult,
-        preludeLocation,
         taskRegistry,
         fallbackLoader,
         packageMap,
-        buildConfig,
-        buildVendorConfig));
+        overrides));
 }
 
 lyric_test::TestRunner::TestRunner(
@@ -45,23 +41,19 @@ lyric_test::TestRunner::TestRunner(
     bool useInMemoryCache,
     bool isTemporary,
     bool keepBuildOnUnexpectedResult,
-    const std::string &preludeLocation,
     std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
     const absl::flat_hash_map<std::string, std::string> &packageMap,
-    const tempo_config::ConfigMap &buildConfig,
-    const tempo_config::ConfigMap &buildVendorConfig)
+    const lyric_build::TaskSettings &overrides)
     : std::enable_shared_from_this<TestRunner>(),
       m_testRootDirectory(testRootDirectory),
       m_useInMemoryCache(useInMemoryCache),
       m_isTemporary(isTemporary),
       m_keepBuildOnUnexpectedResult(keepBuildOnUnexpectedResult),
-      m_preludeLocation(preludeLocation),
       m_taskRegistry(std::move(taskRegistry)),
       m_fallbackLoader(std::move(fallbackLoader)),
       m_packageMap(packageMap),
-      m_buildConfig(buildConfig),
-      m_buildVendorConfig(buildVendorConfig),
+      m_overrides(overrides),
       m_configured(false),
       m_builder(nullptr),
       m_unexpectedResult(false)
@@ -134,13 +126,6 @@ lyric_test::TestRunner::configureBaseTester()
     m_installDirectory = installdirMaker.getAbsolutePath();
     builderOptions.installRoot = m_installDirectory;
 
-    // if preludeLocation option is specified, then add it to global overrides
-    if (!m_preludeLocation.empty()) {
-        globalOverrides["preludeLocation"] = tempo_config::ConfigValue(m_preludeLocation);
-    } else {
-        globalOverrides["preludeLocation"] = tempo_config::ConfigValue(lyric_bootstrap::preludeLocation().toString());
-    }
-
     // if taskRegistry option is specified, then pass it as a builder option
     if (m_taskRegistry != nullptr) {
         builderOptions.taskRegistry = m_taskRegistry;
@@ -162,10 +147,10 @@ lyric_test::TestRunner::configureBaseTester()
         builderOptions.cacheMode = lyric_build::CacheMode::Persistent;
     }
 
-    lyric_build::ConfigStore baseConfigStore = lyric_build::ConfigStore(m_buildConfig);
-    m_config = baseConfigStore.merge(lyric_build::ConfigStore(globalOverrides, {}, {}));
+    lyric_build::TaskSettings baseSettings = lyric_build::TaskSettings(globalOverrides, {}, {});
+    m_taskSettings = baseSettings.merge(m_overrides);
 
-    auto builder = new lyric_build::LyricBuilder(m_config, builderOptions);
+    auto builder = new lyric_build::LyricBuilder(m_taskSettings, builderOptions);
     auto status = builder->configure();
     if (status.notOk())
         return status;
@@ -251,7 +236,7 @@ lyric_test::TestRunner::writeTempFileInternal(
 tempo_utils::Result<lyric_build::TargetComputationSet>
 lyric_test::TestRunner::computeTargetInternal(
     const lyric_build::TaskId &target,
-    const lyric_build::ConfigStore &overrides)
+    const lyric_build::TaskSettings &overrides)
 {
     TU_CONSOLE_OUT << "";
     TU_CONSOLE_OUT << "======== BUILD: " << target << " ========";
@@ -435,7 +420,7 @@ lyric_test::TestRunner::packageModuleInternal(
 
     lyric_build::TargetComputationSet targetComputationSet;
     TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target,
-        lyric_build::ConfigStore({}, {}, taskOverrides)));
+        lyric_build::TaskSettings({}, {}, taskOverrides)));
 
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
@@ -478,7 +463,7 @@ lyric_test::TestRunner::packageTargetsInternal(
 
     lyric_build::TargetComputationSet targetComputationSet;
     TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target,
-        lyric_build::ConfigStore({}, {}, taskOverrides)));
+        lyric_build::TaskSettings({}, {}, taskOverrides)));
 
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());
@@ -514,7 +499,7 @@ lyric_test::TestRunner::packageWorkspaceInternal(
 
     lyric_build::TargetComputationSet targetComputationSet;
     TU_ASSIGN_OR_RETURN (targetComputationSet, computeTargetInternal(target,
-        lyric_build::ConfigStore({}, {}, taskOverrides)));
+        lyric_build::TaskSettings({}, {}, taskOverrides)));
 
     auto targetComputation = targetComputationSet.getTarget(target);
     TU_ASSERT (targetComputation.isValid());

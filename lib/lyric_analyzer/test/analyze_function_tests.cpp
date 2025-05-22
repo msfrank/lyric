@@ -10,20 +10,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-TEST(AnalyzeFunction, DeclareFunction)
-{
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
+#include "base_analyzer_fixture.h"
 
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+class AnalyzeFunction : public BaseAnalyzerFixture {};
+
+TEST_F(AnalyzeFunction, DeclareFunction)
+{
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         def Identity(x: Int): Int { return x }
     )");
     ASSERT_THAT (analyzeModuleResult,
@@ -48,20 +41,9 @@ TEST(AnalyzeFunction, DeclareFunction)
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), param0.getParameterType().getTypeDef());
 }
 
-TEST(AnalyzeFunction, DeclareGenericFunction)
+TEST_F(AnalyzeFunction, DeclareGenericFunction)
 {
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
-
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         def Identity[T](x: T): T { return x }
     )");
     ASSERT_THAT (analyzeModuleResult,

@@ -10,7 +10,7 @@
 #include "build_state.h"
 #include "build_result.h"
 #include "build_types.h"
-#include "config_store.h"
+#include "task_settings.h"
 #include "temp_directory.h"
 
 namespace lyric_build {
@@ -34,7 +34,7 @@ namespace lyric_build {
         TempDirectory *tempDirectory();
 
         virtual tempo_utils::Result<std::string> configureTask(
-            const ConfigStore *configStore,
+            const TaskSettings *configStore,
             AbstractFilesystem *virtualFilesystem) = 0;
         virtual tempo_utils::Result<absl::flat_hash_set<TaskKey>> checkDependencies() = 0;
         virtual Option<tempo_utils::Status> runTask(

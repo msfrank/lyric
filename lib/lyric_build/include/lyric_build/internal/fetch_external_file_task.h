@@ -5,7 +5,7 @@
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 
 namespace lyric_build::internal {
 
@@ -18,7 +18,7 @@ namespace lyric_build::internal {
             std::shared_ptr<tempo_tracing::TraceSpan> span);
 
         tempo_utils::Result<std::string> configureTask(
-            const lyric_build::ConfigStore *config,
+            const lyric_build::TaskSettings *config,
             AbstractFilesystem *virtualFilesystem) override;
         tempo_utils::Result<absl::flat_hash_set<TaskKey>> checkDependencies() override;
         Option<tempo_utils::Status> runTask(
@@ -31,7 +31,7 @@ namespace lyric_build::internal {
         tempo_utils::UrlPath m_artifactPath;
         std::string m_contentType;
 
-        tempo_utils::Status configure(const lyric_build::ConfigStore *config);
+        tempo_utils::Status configure(const lyric_build::TaskSettings *config);
         tempo_utils::Status fetchExternalFile(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey, TaskState> &depStates,

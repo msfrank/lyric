@@ -45,7 +45,7 @@ set(LYRIC_BUILD_INCLUDES
     include/lyric_build/build_runner.h
     include/lyric_build/build_state.h
     include/lyric_build/build_types.h
-    include/lyric_build/config_store.h
+    include/lyric_build/task_settings.h
     include/lyric_build/dependency_loader.h
     include/lyric_build/local_filesystem.h
     include/lyric_build/lyric_build.h
@@ -80,7 +80,7 @@ target_sources(lyric_build PRIVATE
     src/build_runner.cpp
     src/build_state.cpp
     src/build_types.cpp
-    src/config_store.cpp
+    src/task_settings.cpp
     src/dependency_loader.cpp
     src/local_filesystem.cpp
     src/lyric_builder.cpp

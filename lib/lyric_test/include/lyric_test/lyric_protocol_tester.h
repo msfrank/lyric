@@ -5,7 +5,7 @@
 
 #include <absl/container/flat_hash_map.h>
 
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_runtime/bytecode_interpreter.h>
 #include <lyric_test/base_protocol_mock.h>
@@ -18,12 +18,10 @@ namespace lyric_test {
         bool useInMemoryCache = true;
         bool isTemporary = true;
         bool keepBuildOnUnexpectedResult = true;
-        std::string preludeLocation;
         std::shared_ptr<lyric_build::TaskRegistry> taskRegistry;
         std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader;
         absl::flat_hash_map<std::string,std::string> packageMap;
-        tempo_config::ConfigMap buildConfig;
-        tempo_config::ConfigMap buildVendorConfig;
+        lyric_build::TaskSettings overrides;
         absl::flat_hash_map<
             tempo_utils::Url,
             std::shared_ptr<BaseProtocolMock>> protocolMocks;

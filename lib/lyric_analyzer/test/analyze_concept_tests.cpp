@@ -10,20 +10,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-TEST(AnalyzeConcept, DeclareConcept)
-{
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
+#include "base_analyzer_fixture.h"
 
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+class AnalyzeConcept : public BaseAnalyzerFixture {};
+
+TEST_F(AnalyzeConcept, DeclareConcept)
+{
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defconcept Foo {
         }
     )");
@@ -42,20 +35,9 @@ TEST(AnalyzeConcept, DeclareConcept)
     ASSERT_EQ (lyric_object::AccessType::Public, concept0.getAccess());
 }
 
-TEST(AnalyzeConcept, DeclareConceptAction)
+TEST_F(AnalyzeConcept, DeclareConceptAction)
 {
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
-
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defconcept Foo {
             decl Identity(x: Int): Int
         }
@@ -87,20 +69,9 @@ TEST(AnalyzeConcept, DeclareConceptAction)
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), param0.getParameterType().getTypeDef());
 }
 
-TEST(AnalyzeConcept, DeclareConceptImplMethod)
+TEST_F(AnalyzeConcept, DeclareConceptImplMethod)
 {
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
-
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defconcept Foo {
             impl Equality[Foo,Foo] {
                 def equals(lhs: Foo, rhs: Foo): Bool { false }

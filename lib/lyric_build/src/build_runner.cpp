@@ -8,7 +8,7 @@
 #include <lyric_build/build_runner.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_build/rocksdb_cache.h>
 #include <lyric_build/task_notification.h>
 #include <lyric_build/task_registry.h>
@@ -20,7 +20,7 @@ static void on_async_close(uv_handle_t *handle);
 static void on_async_notify(uv_async_t *async);
 
 lyric_build::BuildRunner::BuildRunner(
-    const ConfigStore *configStore,
+    const TaskSettings *configStore,
     std::shared_ptr<BuildState> buildState,
     std::shared_ptr<AbstractCache> buildCache,
     TaskRegistry *taskRegistry,
@@ -66,7 +66,7 @@ lyric_build::BuildRunner::~BuildRunner()
     }
 }
 
-const lyric_build::ConfigStore *
+const lyric_build::TaskSettings *
 lyric_build::BuildRunner::getConfig() const
 {
     return m_config;

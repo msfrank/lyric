@@ -10,20 +10,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-TEST(AnalyzeStatic, DeclareStaticVal)
-{
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
+#include "base_analyzer_fixture.h"
 
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+class AnalyzeStatic : public BaseAnalyzerFixture {};
+
+TEST_F(AnalyzeStatic, DeclareStaticVal)
+{
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         global val Static: Int = 0
     )");
     ASSERT_THAT (analyzeModuleResult,
@@ -41,20 +34,9 @@ TEST(AnalyzeStatic, DeclareStaticVal)
     ASSERT_FALSE (static0.isVariable());
 }
 
-TEST(AnalyzeStatic, DeclareStaticVar)
+TEST_F(AnalyzeStatic, DeclareStaticVar)
 {
-    lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"preludeLocation", tempo_config::ConfigValue(BOOTSTRAP_PRELUDE_LOCATION)},
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    };
-    lyric_test::LyricTester tester(testerOptions);
-    ASSERT_TRUE (tester.configure().isOk());
-
-    auto analyzeModuleResult = tester.analyzeModule(R"(
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
         global var Static: Int = 0
     )");
     ASSERT_THAT (analyzeModuleResult,

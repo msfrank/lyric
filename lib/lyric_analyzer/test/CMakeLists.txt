@@ -18,7 +18,7 @@ set(TEST_CASES
 
 # define test suite driver
 
-add_executable(lyric_analyzer_testsuite ${TEST_CASES})
+add_executable(lyric_analyzer_testsuite ${TEST_CASES} base_analyzer_fixture.cpp base_analyzer_fixture.h)
 target_compile_definitions(lyric_analyzer_testsuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
@@ -36,7 +36,7 @@ gtest_discover_tests(lyric_analyzer_testsuite DISCOVERY_TIMEOUT 30)
 
 # define test suite static library
 
-add_library(LyricAnalyzerTestSuite OBJECT ${TEST_CASES})
+add_library(LyricAnalyzerTestSuite OBJECT ${TEST_CASES} base_analyzer_fixture.cpp base_analyzer_fixture.h)
 target_compile_definitions(LyricAnalyzerTestSuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""

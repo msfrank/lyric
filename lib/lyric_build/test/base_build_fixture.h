@@ -5,7 +5,7 @@
 
 #include <lyric_assembler/object_state.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_build/local_filesystem.h>
 #include <tempo_tracing/scope_manager.h>
 #include <tempo_utils/uuid.h>
@@ -18,7 +18,7 @@ protected:
     std::shared_ptr<tempo_tracing::TraceRecorder> m_recorder;
     std::shared_ptr<tempo_tracing::TraceSpan> m_span;
     std::filesystem::path m_testerDirectory;
-    std::unique_ptr<lyric_build::ConfigStore> m_config;
+    std::unique_ptr<lyric_build::TaskSettings> m_config;
     std::shared_ptr<lyric_build::LocalFilesystem> m_vfs;
     std::unique_ptr<lyric_build::BuildState> m_state;
 

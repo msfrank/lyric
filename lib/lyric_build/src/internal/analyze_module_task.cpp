@@ -1,10 +1,10 @@
 
-#include <lyric_build/artifact_loader.h>
+#include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_attrs.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_build/dependency_loader.h>
 #include <lyric_build/internal/analyze_module_task.h>
 #include <lyric_build/internal/task_utils.h>
@@ -32,7 +32,7 @@ lyric_build::internal::AnalyzeModuleTask::AnalyzeModuleTask(
 }
 
 tempo_utils::Status
-lyric_build::internal::AnalyzeModuleTask::configure(const ConfigStore *config)
+lyric_build::internal::AnalyzeModuleTask::configure(const TaskSettings *config)
 {
     auto taskId = getId();
 
@@ -43,7 +43,7 @@ lyric_build::internal::AnalyzeModuleTask::configure(const ConfigStore *config)
 
     m_moduleLocation = lyric_common::ModuleLocation::fromString(modulePath.toString());
 
-    lyric_common::ModuleLocationParser preludeLocationParser;
+    lyric_common::ModuleLocationParser preludeLocationParser(lyric_bootstrap::preludeLocation());
 
     // determine the analyzer prelude location
     TU_RETURN_IF_NOT_OK(parse_config(m_objectStateOptions.preludeLocation, preludeLocationParser,
@@ -68,10 +68,10 @@ lyric_build::internal::AnalyzeModuleTask::configure(const ConfigStore *config)
 
 tempo_utils::Result<std::string>
 lyric_build::internal::AnalyzeModuleTask::configureTask(
-    const ConfigStore *config,
+    const TaskSettings *config,
     AbstractFilesystem *virtualFilesystem)
 {
-    auto merged = config->merge(ConfigStore({}, {}, {{getId(), getParams()}}));
+    auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
 
     TU_RETURN_IF_NOT_OK (configure(&merged));
 

@@ -5,7 +5,7 @@
 #include <lyric_build/build_runner.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_build/local_filesystem.h>
 #include <lyric_build/lyric_builder.h>
 #include <lyric_build/memory_cache.h>
@@ -25,7 +25,7 @@ static void on_notification(
     const lyric_build::TaskNotification *notification,
     void *data);
 
-lyric_build::LyricBuilder::LyricBuilder(const ConfigStore &config, const BuilderOptions &options)
+lyric_build::LyricBuilder::LyricBuilder(const TaskSettings &config, const BuilderOptions &options)
     : m_config(config),
       m_options(options),
       m_configured(false),
@@ -298,7 +298,7 @@ lyric_build::LyricBuilder::onTaskNotification(
 tempo_utils::Result<lyric_build::TargetComputationSet>
 lyric_build::LyricBuilder::computeTargets(
     const absl::flat_hash_set<TaskId> &targets,
-    const ConfigStore &overrides)
+    const TaskSettings &overrides)
 {
     tempo_utils::Status status;
 

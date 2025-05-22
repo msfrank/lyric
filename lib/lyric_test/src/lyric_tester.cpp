@@ -17,12 +17,10 @@ lyric_test::LyricTester::LyricTester(const TesterOptions &options)
         options.useInMemoryCache,
         options.isTemporary,
         options.keepBuildOnUnexpectedResult,
-        options.preludeLocation,
         options.taskRegistry,
         options.fallbackLoader,
         options.packageMap,
-        options.buildConfig,
-        options.buildVendorConfig);
+        options.overrides);
 }
 
 tempo_utils::Status

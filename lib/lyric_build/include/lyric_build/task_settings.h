@@ -1,5 +1,5 @@
-#ifndef LYRIC_BUILD_CONFIG_STORE_H
-#define LYRIC_BUILD_CONFIG_STORE_H
+#ifndef LYRIC_BUILD_TASK_SETTINGS_H
+#define LYRIC_BUILD_TASK_SETTINGS_H
 
 #include <filesystem>
 
@@ -14,16 +14,16 @@ namespace lyric_build {
         INCLUDE,
     };
 
-    class ConfigStore {
+    class TaskSettings {
 
     public:
-        ConfigStore() = default;
-        explicit ConfigStore(const tempo_config::ConfigMap &config);
-        ConfigStore(
+        TaskSettings() = default;
+        explicit TaskSettings(const tempo_config::ConfigMap &config);
+        TaskSettings(
             const absl::flat_hash_map<std::string,tempo_config::ConfigNode> &globalSettings,
             const absl::flat_hash_map<std::string,tempo_config::ConfigMap> &domainSettings,
             const absl::flat_hash_map<TaskId,tempo_config::ConfigMap> &taskSettings);
-        ConfigStore(const ConfigStore &other);
+        TaskSettings(const TaskSettings &other);
 
         tempo_config::ConfigMap getConfig() const;
 
@@ -48,7 +48,7 @@ namespace lyric_build {
             NodeResolutionMode includeDomain = NodeResolutionMode::INCLUDE,
             NodeResolutionMode includeGlobal = NodeResolutionMode::INCLUDE) const;
 
-        ConfigStore merge(const ConfigStore &overrides) const;
+        TaskSettings merge(const TaskSettings &overrides) const;
 
     private:
         tempo_config::ConfigMap m_config;
@@ -58,12 +58,12 @@ namespace lyric_build {
     tempo_utils::Status parse_config(
         T &dst,
         const tempo_config::AbstractConfigParser<T> &parser,
-        const ConfigStore *store,
+        const TaskSettings *settings,
         std::string_view domain,
         std::string_view key)
     {
-        TU_ASSERT (store != nullptr);
-        auto node = store->resolveDomainNode(domain, key);
+        TU_ASSERT (settings != nullptr);
+        auto node = settings->resolveDomainNode(domain, key);
         return parser.parseValue(node, dst);
     }
 
@@ -71,14 +71,14 @@ namespace lyric_build {
     tempo_utils::Status parse_config(
         T &dst,
         const tempo_config::AbstractConfigParser<T> &parser,
-        const ConfigStore *store,
+        const TaskSettings *settings,
         const TaskId &task,
         std::string_view key)
     {
-        TU_ASSERT (store != nullptr);
-        auto node = store->resolveTaskNode(task, key);
+        TU_ASSERT (settings != nullptr);
+        auto node = settings->resolveTaskNode(task, key);
         return parser.parseValue(node, dst);
     }
 }
 
-#endif // LYRIC_BUILD_CONFIG_STORE_H
+#endif // LYRIC_BUILD_TASK_SETTINGS_H

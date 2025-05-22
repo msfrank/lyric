@@ -1,11 +1,11 @@
 #include <filesystem>
 
-#include <lyric_build/artifact_loader.h>
+#include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_attrs.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_build/dependency_loader.h>
 #include <lyric_build/internal/symbolize_module_task.h>
 #include <lyric_build/internal/task_utils.h>
@@ -16,7 +16,6 @@
 #include <lyric_common/common_types.h>
 #include <lyric_compiler/lyric_compiler.h>
 #include <lyric_packaging/package_attrs.h>
-#include <lyric_runtime/chain_loader.h>
 #include <tempo_config/base_conversions.h>
 #include <tempo_config/container_conversions.h>
 #include <tempo_config/parse_config.h>
@@ -33,7 +32,7 @@ lyric_build::internal::SymbolizeModuleTask::SymbolizeModuleTask(
 }
 
 tempo_utils::Status
-lyric_build::internal::SymbolizeModuleTask::configure(const ConfigStore *config)
+lyric_build::internal::SymbolizeModuleTask::configure(const TaskSettings *config)
 {
     auto taskId = getId();
 
@@ -44,7 +43,7 @@ lyric_build::internal::SymbolizeModuleTask::configure(const ConfigStore *config)
 
     m_moduleLocation = lyric_common::ModuleLocation::fromString(modulePath.toString());
 
-    lyric_common::ModuleLocationParser preludeLocationParser;
+    lyric_common::ModuleLocationParser preludeLocationParser(lyric_bootstrap::preludeLocation());
 
     // set the symbolizer prelude location
     TU_RETURN_IF_NOT_OK(parse_config(m_objectStateOptions.preludeLocation, preludeLocationParser,
@@ -58,11 +57,11 @@ lyric_build::internal::SymbolizeModuleTask::configure(const ConfigStore *config)
 
 tempo_utils::Result<std::string>
 lyric_build::internal::SymbolizeModuleTask::configureTask(
-    const ConfigStore *config,
+    const TaskSettings *config,
     AbstractFilesystem *virtualFilesystem)
 {
     auto key = getKey();
-    auto merged = config->merge(ConfigStore({}, {}, {{getId(), getParams()}}));
+    auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
     TU_RETURN_IF_NOT_OK (configure(&merged));
 
     TaskHasher taskHasher(getKey());

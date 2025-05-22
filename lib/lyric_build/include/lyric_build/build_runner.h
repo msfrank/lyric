@@ -13,7 +13,7 @@
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_build/task_notification.h>
 #include <lyric_build/task_registry.h>
 #include <tempo_tracing/trace_recorder.h>
@@ -44,7 +44,7 @@ namespace lyric_build {
 
     public:
         BuildRunner(
-            const ConfigStore *configStore,
+            const TaskSettings *configStore,
             std::shared_ptr<BuildState> buildState,
             std::shared_ptr<AbstractCache> buildCache,
             TaskRegistry *taskRegistry,
@@ -54,7 +54,7 @@ namespace lyric_build {
             void *onNotificationData);
         ~BuildRunner();
 
-        const ConfigStore *getConfig() const;
+        const TaskSettings *getConfig() const;
         std::shared_ptr<BuildState> getState() const;
         std::shared_ptr<AbstractCache> getCache() const;
         TaskRegistry *getRegistry() const;
@@ -83,7 +83,7 @@ namespace lyric_build {
 
     private:
 
-        const ConfigStore *m_config;
+        const TaskSettings *m_config;
         std::shared_ptr<BuildState> m_state;
         std::shared_ptr<AbstractCache> m_cache;
         TaskRegistry *m_registry;

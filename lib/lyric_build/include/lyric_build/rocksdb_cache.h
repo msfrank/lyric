@@ -8,7 +8,7 @@
 #include "abstract_cache.h"
 #include "build_result.h"
 #include "build_types.h"
-#include "config_store.h"
+#include "task_settings.h"
 #include "lyric_metadata.h"
 
 namespace lyric_build {

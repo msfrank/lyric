@@ -3,7 +3,7 @@
 #include <lyric_build/build_attrs.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_build/internal/parse_module_task.h>
 #include <lyric_build/internal/task_utils.h>
 #include <lyric_build/metadata_state.h>
@@ -36,7 +36,7 @@ lyric_build::internal::ParseModuleTask::ParseModuleTask(
 }
 
 tempo_utils::Status
-lyric_build::internal::ParseModuleTask::configure(const ConfigStore *config)
+lyric_build::internal::ParseModuleTask::configure(const TaskSettings *config)
 {
     auto taskId = getId();
 
@@ -67,10 +67,10 @@ lyric_build::internal::ParseModuleTask::configure(const ConfigStore *config)
 
 tempo_utils::Result<std::string>
 lyric_build::internal::ParseModuleTask::configureTask(
-    const ConfigStore *config,
+    const TaskSettings *config,
     AbstractFilesystem *virtualFilesystem)
 {
-    auto merged = config->merge(ConfigStore({}, {}, {{getId(), getParams()}}));
+    auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
     TU_RETURN_IF_NOT_OK (configure(&merged));
 
     // try to fetch the content at the specified url

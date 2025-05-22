@@ -1,5 +1,5 @@
 
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_build/build_types.h>
 #include <tempo_config/merge_map.h>
 
@@ -31,9 +31,9 @@ generate_config(
 }
 
 /**
- * Construct an empty ConfigStore.
+ * Construct an empty TaskSettings.
  */
-lyric_build::ConfigStore::ConfigStore(
+lyric_build::TaskSettings::TaskSettings(
     const absl::flat_hash_map<std::string,tempo_config::ConfigNode> &globalSettings,
     const absl::flat_hash_map<std::string,tempo_config::ConfigMap> &domainSettings,
     const absl::flat_hash_map<TaskId,tempo_config::ConfigMap> &taskSettings)
@@ -42,22 +42,22 @@ lyric_build::ConfigStore::ConfigStore(
 }
 
 /**
- * Construct a ConfigStore using the specified config and vendor config.
+ * Construct a TaskSettings using the specified config and vendor config.
  *
  * @param config The build config.
  * @param vendorConfig The vendor config.
  */
-lyric_build::ConfigStore::ConfigStore(const tempo_config::ConfigMap &config)
+lyric_build::TaskSettings::TaskSettings(const tempo_config::ConfigMap &config)
     : m_config(config)
 {
 }
 
 /**
- * Copy construct a ConfigStore from the given ConfigStore.
+ * Copy construct a TaskSettings from the given TaskSettings.
  *
  * @param other ConfigStore.
  */
-lyric_build::ConfigStore::ConfigStore(const ConfigStore &other)
+lyric_build::TaskSettings::TaskSettings(const TaskSettings &other)
     : m_config(other.m_config)
 {
 }
@@ -68,7 +68,7 @@ lyric_build::ConfigStore::ConfigStore(const ConfigStore &other)
  * @return The config.
  */
 tempo_config::ConfigMap
-lyric_build::ConfigStore::getConfig() const
+lyric_build::TaskSettings::getConfig() const
 {
     return m_config;
 }
@@ -79,7 +79,7 @@ lyric_build::ConfigStore::getConfig() const
  * @return The config map.
  */
 tempo_config::ConfigMap
-lyric_build::ConfigStore::getGlobalSection() const
+lyric_build::TaskSettings::getGlobalSection() const
 {
     return m_config.mapAt("global").toMap();
 }
@@ -91,7 +91,7 @@ lyric_build::ConfigStore::getGlobalSection() const
  * @return The config node.
  */
 tempo_config::ConfigNode
-lyric_build::ConfigStore::getGlobalNode(std::string_view key) const
+lyric_build::TaskSettings::getGlobalNode(std::string_view key) const
 {
     return getGlobalSection().mapAt(key);
 }
@@ -102,7 +102,7 @@ lyric_build::ConfigStore::getGlobalNode(std::string_view key) const
  * @return The config map.
  */
 tempo_config::ConfigMap
-lyric_build::ConfigStore::getDomainSection(std::string_view domain) const
+lyric_build::TaskSettings::getDomainSection(std::string_view domain) const
 {
     return m_config
         .mapAt("domains").toMap()
@@ -117,7 +117,7 @@ lyric_build::ConfigStore::getDomainSection(std::string_view domain) const
  * @return The config node.
  */
 tempo_config::ConfigNode
-lyric_build::ConfigStore::getDomainNode(std::string_view domain, std::string_view key) const
+lyric_build::TaskSettings::getDomainNode(std::string_view domain, std::string_view key) const
 {
     return getDomainSection(domain).mapAt(key);
 }
@@ -128,7 +128,7 @@ lyric_build::ConfigStore::getDomainNode(std::string_view domain, std::string_vie
  * @return The list of keys.
  */
 std::vector<std::string>
-lyric_build::ConfigStore::listDomainSections() const
+lyric_build::TaskSettings::listDomainSections() const
 {
     auto domainsMap = m_config.mapAt("domains").toMap();
     std::vector<std::string> sections;
@@ -145,7 +145,7 @@ lyric_build::ConfigStore::listDomainSections() const
  * @return The config map.
  */
 tempo_config::ConfigMap
-lyric_build::ConfigStore::getTaskSection(const TaskId &key) const
+lyric_build::TaskSettings::getTaskSection(const TaskId &key) const
 {
     return m_config
         .mapAt("tasks").toMap()
@@ -160,7 +160,7 @@ lyric_build::ConfigStore::getTaskSection(const TaskId &key) const
  * @return The config node.
  */
 tempo_config::ConfigNode
-lyric_build::ConfigStore::getTaskNode(const TaskId &task, std::string_view key) const
+lyric_build::TaskSettings::getTaskNode(const TaskId &task, std::string_view key) const
 {
     return getTaskSection(task).mapAt(key);
 }
@@ -170,7 +170,7 @@ lyric_build::ConfigStore::getTaskNode(const TaskId &task, std::string_view key) 
  * @return
  */
 std::vector<lyric_build::TaskId>
-lyric_build::ConfigStore::listTaskSections() const
+lyric_build::TaskSettings::listTaskSections() const
 {
     auto tasksMap = m_config.mapAt("tasks").toMap();
     std::vector<TaskId> sections;
@@ -189,7 +189,7 @@ lyric_build::ConfigStore::listTaskSections() const
  * @return The matching ConfigNode if present, otherwise an empty ConfigNode
  */
 tempo_config::ConfigNode
-lyric_build::ConfigStore::resolveDomainNode(
+lyric_build::TaskSettings::resolveDomainNode(
     std::string_view domain,
     std::string_view key,
     NodeResolutionMode includeGlobal) const
@@ -212,7 +212,7 @@ lyric_build::ConfigStore::resolveDomainNode(
  * @return The matching ConfigNode if present, otherwise an empty ConfigNode
  */
 tempo_config::ConfigNode
-lyric_build::ConfigStore::resolveTaskNode(
+lyric_build::TaskSettings::resolveTaskNode(
     const TaskId &task,
     std::string_view key,
     NodeResolutionMode includeDomain,
@@ -233,16 +233,16 @@ lyric_build::ConfigStore::resolveTaskNode(
 
 
 /**
- * Merge the ConfigStore with the specified config overrides and return a new ConfigStore.
+ * Merge the TaskSettings with the specified config overrides and return a new TaskSettings.
  *
  * @param globalOverrides The config map containing global overrides.
  * @param domainOverrides The config map containing domain overrides.
  * @param taskOverrides The config map containing task overrides.
  * @return The config store.
  */
-lyric_build::ConfigStore
-lyric_build::ConfigStore::merge(const ConfigStore &overrides) const
+lyric_build::TaskSettings
+lyric_build::TaskSettings::merge(const TaskSettings &overrides) const
 {
     auto merged = tempo_config::merge_map(m_config, overrides.getConfig());
-    return ConfigStore(merged);
+    return TaskSettings(merged);
 }

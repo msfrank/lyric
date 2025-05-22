@@ -93,6 +93,6 @@ BaseBuildFixture::writeTempFile(
 tempo_utils::Status
 BaseBuildFixture::configure()
 {
-    m_config = std::make_unique<lyric_build::ConfigStore>();
+    m_config = std::make_unique<lyric_build::TaskSettings>();
     return {};
 }

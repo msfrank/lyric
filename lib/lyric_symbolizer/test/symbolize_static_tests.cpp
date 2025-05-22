@@ -12,12 +12,12 @@
 TEST(SymbolizeStatic, DeclareStaticVal)
 {
     lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
+    testerOptions.overrides = lyric_build::TaskSettings(tempo_config::ConfigMap{
         {"global", tempo_config::ConfigMap{
             {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
             {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
         }},
-    };
+    });
     lyric_test::LyricTester tester(testerOptions);
     ASSERT_TRUE (tester.configure().isOk());
 
@@ -41,12 +41,12 @@ TEST(SymbolizeStatic, DeclareStaticVal)
 TEST(SymbolizeStatic, DeclareStaticVar)
 {
     lyric_test::TesterOptions testerOptions;
-    testerOptions.buildConfig = tempo_config::ConfigMap{
+    testerOptions.overrides = lyric_build::TaskSettings(tempo_config::ConfigMap{
         {"global", tempo_config::ConfigMap{
             {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
             {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
         }},
-    };
+    });
     lyric_test::LyricTester tester(testerOptions);
     ASSERT_TRUE (tester.configure().isOk());
 

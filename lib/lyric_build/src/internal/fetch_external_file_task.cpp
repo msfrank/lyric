@@ -4,7 +4,7 @@
 #include <lyric_build/build_conversions.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_build/internal/fetch_external_file_task.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
@@ -25,7 +25,7 @@ lyric_build::internal::FetchExternalFileTask::FetchExternalFileTask(
 }
 
 tempo_utils::Status
-lyric_build::internal::FetchExternalFileTask::configure(const ConfigStore *config)
+lyric_build::internal::FetchExternalFileTask::configure(const TaskSettings *config)
 {
     auto taskId = getId();
 
@@ -70,11 +70,11 @@ lyric_build::internal::FetchExternalFileTask::configure(const ConfigStore *confi
 
 tempo_utils::Result<std::string>
 lyric_build::internal::FetchExternalFileTask::configureTask(
-    const ConfigStore *config,
+    const TaskSettings *config,
     AbstractFilesystem *virtualFilesystem)
 {
     auto key = getKey();
-    auto merged = config->merge(ConfigStore({}, {}, {{getId(), getParams()}}));
+    auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
 
     TU_RETURN_IF_NOT_OK (configure(&merged));
 

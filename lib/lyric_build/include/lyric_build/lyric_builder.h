@@ -8,7 +8,7 @@
 #include <lyric_build/abstract_cache.h>
 #include <lyric_build/build_runner.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 #include <lyric_build/target_computation.h>
 #include <lyric_build/task_notification.h>
 #include <lyric_build/task_registry.h>
@@ -90,14 +90,14 @@ namespace lyric_build {
     class LyricBuilder {
 
     public:
-        explicit LyricBuilder(const ConfigStore &config, const BuilderOptions &options = {});
+        explicit LyricBuilder(const TaskSettings &config, const BuilderOptions &options = {});
         ~LyricBuilder();
 
         tempo_utils::Status configure();
 
         tempo_utils::Result<TargetComputationSet> computeTargets(
             const absl::flat_hash_set<TaskId> &targets,
-            const ConfigStore &overrides = {});
+            const TaskSettings &overrides = {});
 
         std::shared_ptr<AbstractCache> getCache() const;
         std::shared_ptr<lyric_bootstrap::BootstrapLoader> getBootstrapLoader() const;
@@ -107,7 +107,7 @@ namespace lyric_build {
         void onTaskNotification(BuildRunner *runner, const TaskNotification *notification);
 
     private:
-        ConfigStore m_config;
+        TaskSettings m_config;
         BuilderOptions m_options;
 
         // set during configure and then immutable

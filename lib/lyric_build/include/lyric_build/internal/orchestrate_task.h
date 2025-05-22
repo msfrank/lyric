@@ -6,7 +6,7 @@
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
-#include <lyric_build/config_store.h>
+#include <lyric_build/task_settings.h>
 
 namespace lyric_build::internal {
 
@@ -19,7 +19,7 @@ namespace lyric_build::internal {
             std::shared_ptr<tempo_tracing::TraceSpan> span);
 
         tempo_utils::Result<std::string> configureTask(
-            const ConfigStore *config,
+            const TaskSettings *config,
             AbstractFilesystem *virtualFilesystem) override;
         tempo_utils::Result<absl::flat_hash_set<TaskKey>> checkDependencies() override;
         Option<tempo_utils::Status> runTask(
@@ -30,7 +30,7 @@ namespace lyric_build::internal {
     private:
         absl::flat_hash_set<TaskKey> m_orchestrateTargets;
 
-        tempo_utils::Status configure(const ConfigStore *config);
+        tempo_utils::Status configure(const TaskSettings *config);
         tempo_utils::Status orchestrate(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,

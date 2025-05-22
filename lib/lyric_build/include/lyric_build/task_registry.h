@@ -3,7 +3,7 @@
 
 #include "base_task.h"
 #include "build_types.h"
-#include "config_store.h"
+#include "task_settings.h"
 
 namespace lyric_build {
 
@@ -31,7 +31,7 @@ namespace lyric_build {
             std::shared_ptr<tempo_tracing::TraceSpan> span) const;
 
     private:
-        ConfigStore m_config;
+        TaskSettings m_config;
         absl::flat_hash_map<std::string,MakeTaskFunc> m_makeTaskFuncs;
         bool m_isSealed;
     };
