@@ -187,6 +187,7 @@ lyric_build::LyricBuilder::configure()
     } else {
         m_taskRegistry = m_options.taskRegistry;
     }
+    m_taskRegistry->sealRegistry();
 
     // configure the shared module cache
     if (m_options.sharedModuleCache == nullptr) {
@@ -318,7 +319,7 @@ lyric_build::LyricBuilder::computeTargets(
     // enqueue all tasks in parallel, and let the manager sequence them appropriately
     for (const auto &target : targets) {
         TaskKey key(target.getDomain(), target.getId());
-        runner.enqueueTask(key);
+        TU_RETURN_IF_NOT_OK (runner.enqueueTask(key));
         m_targets.insert(key);
     }
 
@@ -330,20 +331,17 @@ lyric_build::LyricBuilder::computeTargets(
     m_running = false;
     m_targets.clear();
 
-    if (!status.isOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (status);
 
     // retrieve tracing spans from the build
-    auto getSpansetResult = runner.getSpanset();
-    if (getSpansetResult.isStatus())
-        return getSpansetResult.getStatus();
-    auto spanset = getSpansetResult.getResult();
+    tempo_tracing::TempoSpanset spanset;
+    TU_ASSIGN_OR_RETURN (spanset, runner.getSpanset());
 
     BuildDiagnosticsOptions options;
     options.targets = targets;
-    auto createDiagnosticsResult = BuildDiagnostics::create(spanset, options);
+
     std::shared_ptr<BuildDiagnostics> diagnostics;
-    TU_ASSIGN_OR_RETURN (diagnostics, createDiagnosticsResult);
+    TU_ASSIGN_OR_RETURN (diagnostics, BuildDiagnostics::create(spanset, options));
 
     // calculate build statistics
     int numTasksCreated = runner.getTotalTasksCreated();

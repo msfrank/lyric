@@ -124,6 +124,8 @@ target_sources(lyric_build PRIVATE
     src/internal/package_task.cpp
     include/lyric_build/internal/parse_module_task.h
     src/internal/parse_module_task.cpp
+    include/lyric_build/internal/provide_module_task.h
+    src/internal/provide_module_task.cpp
     include/lyric_build/internal/provide_plugin_task.h
     src/internal/provide_plugin_task.cpp
     include/lyric_build/internal/rewrite_module_task.h

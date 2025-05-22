@@ -41,10 +41,10 @@ lyric_build::internal::ProvidePluginTask::configure(const ConfigStore *config)
 
     auto taskSection = config->getTaskSection(taskId);
 
-    // parse external plugin path
-    tempo_config::UrlPathParser externalPluginPathParser;
-    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_externalPluginPath, externalPluginPathParser,
-        taskSection, "externalPluginPath"));
+    // parse existing plugin path
+    tempo_config::UrlPathParser existingPluginPathParser(tempo_utils::UrlPath{});
+    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_existingPluginPath, existingPluginPathParser,
+        taskSection, "existingPluginPath"));
 
     // parse build target
     TaskIdParser buildTargetParser(TaskId{});
@@ -53,17 +53,17 @@ lyric_build::internal::ProvidePluginTask::configure(const ConfigStore *config)
         taskSection, "buildTarget"));
 
     // verify that config matches one of three possibilities:
-    //   1. externalPluginPath is specified and buildTarget is not specified
-    //   2. buildTarget is specified and externalPluginPath is not specified
-    //   3. neither externalPluginPath nor buildTarget is specified, so use the default buildTarget
-    if (m_externalPluginPath.isValid()) {
+    //   1. existingPluginPath is specified and buildTarget is not specified
+    //   2. buildTarget is specified and existingPluginPath is not specified
+    //   3. neither existingPluginPath nor buildTarget is specified, so use the default buildTarget
+    if (m_existingPluginPath.isValid()) {
         if (buildTarget.isValid())
             return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
-                "externalPluginPath and buildTarget are mutually exclusive");
+                "existingPluginPath and buildTarget are mutually exclusive");
     } else if (buildTarget.isValid()) {
         m_buildTarget = TaskKey(buildTarget.getDomain(), buildTarget.getId());
     } else {
-        m_buildTarget = TaskKey("build_plugin", buildTarget.getId());
+        m_buildTarget = TaskKey("compile_plugin", taskId.getId());
     }
 
     return {};
@@ -81,15 +81,15 @@ lyric_build::internal::ProvidePluginTask::configureTask(
 
     TaskHasher taskHasher(getKey());
 
-    if (m_externalPluginPath.isValid()) {
+    if (m_existingPluginPath.isValid()) {
         Option<Resource> resourceOption;
-        TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(m_externalPluginPath));
+        TU_ASSIGN_OR_RETURN (resourceOption, virtualFilesystem->fetchResource(m_existingPluginPath));
         // fail the task if the resource was not found
         if (resourceOption.isEmpty())
             return BuildStatus::forCondition(BuildCondition::kMissingInput,
-                "external plugin file {} not found", m_externalPluginPath.toString());
+                "existing plugin file {} not found", m_existingPluginPath.toString());
         auto &resource = resourceOption.peekValue();
-        taskHasher.hashValue("externalPluginPath");
+        taskHasher.hashValue("existingPluginPath");
         taskHasher.hashValue(resource.entityTag);
     } else {
         taskHasher.hashValue("buildTarget");
@@ -117,7 +117,7 @@ lyric_build::internal::ProvidePluginTask::providePlugin(
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
 {
-    TU_ASSERT (!(m_buildTarget.isValid() && m_externalPluginPath.isValid()));
+    TU_ASSERT (!(m_buildTarget.isValid() && m_existingPluginPath.isValid()));
     auto span = getSpan();
 
     auto cache = buildState->getCache();
@@ -150,14 +150,14 @@ lyric_build::internal::ProvidePluginTask::providePlugin(
         return {};
     }
 
-    // otherwise if there was no build target we copy the plugin from an external location
+    // otherwise if there was no build target we copy the plugin from an existing location
     auto vfs = buildState->getVirtualFilesystem();
 
     Option<Resource> resourceOption;
-    TU_ASSIGN_OR_RETURN (resourceOption, vfs->fetchResource(m_externalPluginPath));
+    TU_ASSIGN_OR_RETURN (resourceOption, vfs->fetchResource(m_existingPluginPath));
     if (resourceOption.isEmpty())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "missing external plugin file {}", m_externalPluginPath.toString());
+            "missing existing plugin file {}", m_existingPluginPath.toString());
 
     auto &resource = resourceOption.peekValue();
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;

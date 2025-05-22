@@ -7,7 +7,6 @@
 
 #include <lyric_build/config_store.h>
 #include <lyric_build/lyric_builder.h>
-#include <lyric_compiler/compiler_result.h>
 #include <lyric_packaging/package_specifier.h>
 #include <lyric_runtime/bytecode_interpreter.h>
 #include <lyric_runtime/gc_heap.h>
@@ -27,6 +26,7 @@ namespace lyric_test {
             bool isTemporary,
             bool keepBuildOnUnexpectedResult,
             const std::string &preludeLocation,
+            std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
             std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
             const absl::flat_hash_map<std::string,std::string> &packageMap,
             const tempo_config::ConfigMap &buildConfig,
@@ -96,6 +96,7 @@ namespace lyric_test {
         bool m_isTemporary;
         bool m_keepBuildOnUnexpectedResult;
         std::string m_preludeLocation;
+        std::shared_ptr<lyric_build::TaskRegistry> m_taskRegistry;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_fallbackLoader;
         absl::flat_hash_map<std::string,std::string> m_packageMap;
         const tempo_config::ConfigMap m_buildConfig;
@@ -114,6 +115,7 @@ namespace lyric_test {
             bool isTemporary,
             bool keepBuildOnUnexpectedResult,
             const std::string &preludeLocation,
+            std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
             std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
             const absl::flat_hash_map<std::string,std::string> &packageMap,
             const tempo_config::ConfigMap &buildConfig,

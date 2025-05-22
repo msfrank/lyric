@@ -1,5 +1,5 @@
-#ifndef LYRIC_BUILD_INTERNAL_PROVIDE_PLUGIN_TASK_H
-#define LYRIC_BUILD_INTERNAL_PROVIDE_PLUGIN_TASK_H
+#ifndef LYRIC_BUILD_INTERNAL_PROVIDE_MODULE_TASK_H
+#define LYRIC_BUILD_INTERNAL_PROVIDE_MODULE_TASK_H
 
 #include <lyric_assembler/object_state.h>
 #include <lyric_build/base_task.h>
@@ -9,10 +9,10 @@
 
 namespace lyric_build::internal {
 
-    class ProvidePluginTask : public BaseTask {
+    class ProvideModuleTask : public BaseTask {
 
     public:
-        ProvidePluginTask(
+        ProvideModuleTask(
             const tempo_utils::UUID &generation,
             const TaskKey &key,
             std::shared_ptr<tempo_tracing::TraceSpan> span);
@@ -29,19 +29,20 @@ namespace lyric_build::internal {
     private:
         lyric_common::ModuleLocation m_moduleLocation;
         TaskKey m_buildTarget;
+        tempo_utils::UrlPath m_existingObjectPath;
         tempo_utils::UrlPath m_existingPluginPath;
 
         tempo_utils::Status configure(const lyric_build::ConfigStore *config);
-        tempo_utils::Status providePlugin(
+        tempo_utils::Status provideModule(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey, TaskState> &depStates,
             lyric_build::BuildState *buildState);
     };
 
-    BaseTask *new_provide_plugin_task(
+    BaseTask *new_provide_module_task(
         const tempo_utils::UUID &generation,
         const TaskKey &key,
         std::shared_ptr<tempo_tracing::TraceSpan> span);
 }
 
-#endif // LYRIC_BUILD_INTERNAL_PROVIDE_PLUGIN_TASK_H
+#endif // LYRIC_BUILD_INTERNAL_PROVIDE_MODULE_TASK_H

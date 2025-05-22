@@ -21,6 +21,7 @@ lyric_test::TestRunner::create(
     bool isTemporary,
     bool keepBuildOnUnexpectedResult,
     const std::string &preludeLocation,
+    std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
     const absl::flat_hash_map<std::string, std::string> &packageMap,
     const tempo_config::ConfigMap &buildConfig,
@@ -32,6 +33,7 @@ lyric_test::TestRunner::create(
         isTemporary,
         keepBuildOnUnexpectedResult,
         preludeLocation,
+        taskRegistry,
         fallbackLoader,
         packageMap,
         buildConfig,
@@ -44,6 +46,7 @@ lyric_test::TestRunner::TestRunner(
     bool isTemporary,
     bool keepBuildOnUnexpectedResult,
     const std::string &preludeLocation,
+    std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
     const absl::flat_hash_map<std::string, std::string> &packageMap,
     const tempo_config::ConfigMap &buildConfig,
@@ -54,6 +57,7 @@ lyric_test::TestRunner::TestRunner(
       m_isTemporary(isTemporary),
       m_keepBuildOnUnexpectedResult(keepBuildOnUnexpectedResult),
       m_preludeLocation(preludeLocation),
+      m_taskRegistry(std::move(taskRegistry)),
       m_fallbackLoader(std::move(fallbackLoader)),
       m_packageMap(packageMap),
       m_buildConfig(buildConfig),
@@ -135,6 +139,11 @@ lyric_test::TestRunner::configureBaseTester()
         globalOverrides["preludeLocation"] = tempo_config::ConfigValue(m_preludeLocation);
     } else {
         globalOverrides["preludeLocation"] = tempo_config::ConfigValue(lyric_bootstrap::preludeLocation().toString());
+    }
+
+    // if taskRegistry option is specified, then pass it as a builder option
+    if (m_taskRegistry != nullptr) {
+        builderOptions.taskRegistry = m_taskRegistry;
     }
 
     // if packageMap option is specified, then add it to global overrides

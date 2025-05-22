@@ -18,6 +18,7 @@ lyric_test::LyricTester::LyricTester(const TesterOptions &options)
         options.isTemporary,
         options.keepBuildOnUnexpectedResult,
         options.preludeLocation,
+        options.taskRegistry,
         options.fallbackLoader,
         options.packageMap,
         options.buildConfig,

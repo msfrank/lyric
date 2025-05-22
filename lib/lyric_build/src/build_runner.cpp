@@ -189,11 +189,8 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key, const TaskKey &depende
             span = m_recorder->makeSpan();
         }
 
-        auto makeTaskResult = m_registry->makeTask(
-            m_state->getGeneration().getUuid(), key, span);
-        if (makeTaskResult.isStatus())
-            return makeTaskResult.getStatus();
-        task = makeTaskResult.getResult();
+        TU_ASSIGN_OR_RETURN (task, m_registry->makeTask(
+            m_state->getGeneration().getUuid(), key, span));
 
         m_tasks[key] = task;                            // task was created, add to tasks table
         TU_LOG_VV << "constructed new task " << key;

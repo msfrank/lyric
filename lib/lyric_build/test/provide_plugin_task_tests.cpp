@@ -31,7 +31,7 @@ TEST_F(ProvidePluginTask, RunSucceedsWhenProvidedExternalPluginFile)
     lyric_build::TaskKey key(std::string("provide_plugin"), std::string("/foo"),
         tempo_config::ConfigMap{{
             {
-            "externalPluginPath", tempo_config::ConfigValue{"/external/plugin.lib"},
+            "existingPluginPath", tempo_config::ConfigValue{"/external/plugin.lib"},
             }
         }}
     );
@@ -70,7 +70,7 @@ TEST_F(ProvidePluginTask, ConfigureTaskFailsWhenExternalPluginIsMissing)
     lyric_build::TaskKey key(std::string("provide_plugin"), std::string("/foo"),
         tempo_config::ConfigMap{{
             {
-                "externalPluginPath", tempo_config::ConfigValue{"/external/plugin.lib"},
+                "existingPluginPath", tempo_config::ConfigValue{"/external/plugin.lib"},
             }
         }}
     );
