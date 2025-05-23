@@ -20,7 +20,7 @@ namespace lyric_test {
         bool keepBuildOnUnexpectedResult = true;
         std::shared_ptr<lyric_build::TaskRegistry> taskRegistry;
         std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader;
-        lyric_build::TaskSettings overrides;
+        lyric_build::TaskSettings taskSettings;
     };
 
     class LyricTester {
@@ -34,33 +34,40 @@ namespace lyric_test {
 
         tempo_utils::Result<lyric_common::ModuleLocation> writeModule(
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
 
         tempo_utils::Result<SymbolizeModule> symbolizeModule(
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
 
         tempo_utils::Result<AnalyzeModule> analyzeModule(
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
 
         tempo_utils::Result<CompileModule> compileModule(
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
 
         tempo_utils::Result<PackageModule> packageModule(
             const lyric_packaging::PackageSpecifier &specifier,
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
 
         tempo_utils::Result<RunModule> runModule(
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
 
         tempo_utils::Result<RunModule> runModule(
             const lyric_packaging::PackageSpecifier &specifier,
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
 
         static tempo_utils::Result<CompileModule> compileSingleModule(
             const std::string &code,

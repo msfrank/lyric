@@ -19,7 +19,7 @@ lyric_test::LyricTester::LyricTester(const TesterOptions &options)
         options.keepBuildOnUnexpectedResult,
         options.taskRegistry,
         options.fallbackLoader,
-        options.overrides);
+        options.taskSettings);
 }
 
 tempo_utils::Status
@@ -37,61 +37,69 @@ lyric_test::LyricTester::getRunner() const
 tempo_utils::Result<lyric_common::ModuleLocation>
 lyric_test::LyricTester::writeModule(
     const std::string &code,
-    const std::filesystem::path &path)
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
     if (!m_runner->isConfigured())
         return TestStatus::forCondition(TestCondition::kTestInvariant, "tester is unconfigured");
-    return m_runner->writeModuleInternal(code, path);
+    return m_runner->writeModuleInternal(code, modulePath, baseDir);
 }
 
 tempo_utils::Result<lyric_test::SymbolizeModule>
 lyric_test::LyricTester::symbolizeModule(
     const std::string &code,
-    const std::filesystem::path &path)
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
     if (!m_runner->isConfigured())
         return TestStatus::forCondition(TestCondition::kTestInvariant, "tester is unconfigured");
-    return m_runner->symbolizeModuleInternal(code, path);
+    return m_runner->symbolizeModuleInternal(code, modulePath, baseDir);
 }
 
 tempo_utils::Result<lyric_test::AnalyzeModule>
 lyric_test::LyricTester::analyzeModule(
     const std::string &code,
-    const std::filesystem::path &path)
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
     if (!m_runner->isConfigured())
         return TestStatus::forCondition(TestCondition::kTestInvariant, "tester is unconfigured");
-    return m_runner->analyzeModuleInternal(code, path);
+    return m_runner->analyzeModuleInternal(code, modulePath, baseDir);
 }
 
 tempo_utils::Result<lyric_test::CompileModule>
 lyric_test::LyricTester::compileModule(
     const std::string &code,
-    const std::filesystem::path &path)
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
     if (!m_runner->isConfigured())
         return TestStatus::forCondition(TestCondition::kTestInvariant, "tester is unconfigured");
-    return m_runner->compileModuleInternal(code, path);
+    return m_runner->compileModuleInternal(code, modulePath, baseDir);
 }
 
 tempo_utils::Result<lyric_test::PackageModule>
 lyric_test::LyricTester::packageModule(
     const lyric_packaging::PackageSpecifier &specifier,
     const std::string &code,
-    const std::filesystem::path &path)
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
-    return m_runner->packageModuleInternal(specifier, code, path);
+    return m_runner->packageModuleInternal(specifier, code, modulePath, baseDir);
 }
 
 tempo_utils::Result<lyric_test::RunModule>
-lyric_test::LyricTester::runModule(const std::string &code, const std::filesystem::path &path)
+lyric_test::LyricTester::runModule(
+    const std::string &code,
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
    if (!m_runner->isConfigured())
        return TestStatus::forCondition(TestCondition::kTestInvariant,
            "tester is unconfigured");
 
     // compile the module file
-    auto buildResult = m_runner->buildModuleInternal(code, path);
+    auto buildResult = m_runner->buildModuleInternal(code, modulePath, baseDir);
     if (buildResult.isStatus())
         return buildResult.getStatus();
     auto testRun = buildResult.getResult();
@@ -149,14 +157,15 @@ tempo_utils::Result<lyric_test::RunModule>
 lyric_test::LyricTester::runModule(
     const lyric_packaging::PackageSpecifier &specifier,
     const std::string &code,
-    const std::filesystem::path &path)
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
     if (!m_runner->isConfigured())
         return TestStatus::forCondition(TestCondition::kTestInvariant,
             "tester is unconfigured");
 
     // compile the code and package it
-    auto packageModuleResult = m_runner->packageModuleInternal(specifier, code, path);
+    auto packageModuleResult = m_runner->packageModuleInternal(specifier, code, modulePath, baseDir);
     if (packageModuleResult.isStatus())
         return packageModuleResult.getStatus();
     auto testRun = packageModuleResult.getResult();

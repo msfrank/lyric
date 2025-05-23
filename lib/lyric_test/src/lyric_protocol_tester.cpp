@@ -20,7 +20,7 @@ lyric_test::LyricProtocolTester::LyricProtocolTester(const ProtocolTesterOptions
         options.keepBuildOnUnexpectedResult,
         options.taskRegistry,
         options.fallbackLoader,
-        options.overrides);
+        options.taskSettings);
 }
 
 tempo_utils::Status
@@ -38,7 +38,8 @@ lyric_test::LyricProtocolTester::getRunner() const
 tempo_utils::Result<lyric_test::RunModule>
 lyric_test::LyricProtocolTester::runModuleInMockSandbox(
     const std::string &code,
-    const std::filesystem::path &path)
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
     if (!m_runner->isConfigured())
         return TestStatus::forCondition(TestCondition::kTestInvariant,
@@ -46,7 +47,7 @@ lyric_test::LyricProtocolTester::runModuleInMockSandbox(
 
     // write the code to a module file in the src directory
     lyric_common::ModuleLocation moduleLocation;
-    TU_ASSIGN_OR_RETURN (moduleLocation, m_runner->writeModuleInternal(code, path));
+    TU_ASSIGN_OR_RETURN (moduleLocation, m_runner->writeModuleInternal(code, modulePath, baseDir));
 
     lyric_build::TaskId target("compile_module", moduleLocation.toString());
 

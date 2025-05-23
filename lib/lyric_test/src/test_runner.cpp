@@ -12,8 +12,6 @@
 #include <tempo_utils/tempdir_maker.h>
 #include <tempo_utils/tempfile_maker.h>
 
-#include "lyric_bootstrap/bootstrap_helpers.h"
-
 std::shared_ptr<lyric_test::TestRunner>
 lyric_test::TestRunner::create(
     const std::filesystem::path &testRootDirectory,
@@ -141,37 +139,13 @@ lyric_test::TestRunner::configureBaseTester()
     return status;
 }
 
-tempo_utils::Result<lyric_common::ModuleLocation>
-lyric_test::TestRunner::writeModuleInternal(const std::string &code, const std::filesystem::path &path)
-{
-    if (!m_configured)
-        return TestStatus::forCondition(TestCondition::kTestInvariant,
-            "tester is unconfigured");
-
-    std::filesystem::path sourcePath;
-    if (!path.empty()) {
-        auto relativePath = path;
-        relativePath.replace_extension(lyric_common::kSourceFileSuffix);
-        TU_ASSIGN_OR_RETURN (sourcePath, writeNamedFileInternal("src", relativePath, code));
-    } else {
-        std::filesystem::path templatePath("XXXXXXXX");
-        templatePath.replace_extension(lyric_common::kSourceFileSuffix);
-        TU_ASSIGN_OR_RETURN (sourcePath, writeTempFileInternal("src", templatePath, code));
-    }
-
-    std::filesystem::path modulePath = "/";
-    modulePath /= sourcePath;
-    modulePath.replace_extension();
-    return lyric_common::ModuleLocation(modulePath.string());
-}
-
 tempo_utils::Result<std::filesystem::path>
 lyric_test::TestRunner::writeNamedFileInternal(
-    const std::filesystem::path &baseDir,
-    const std::filesystem::path &path,
-    const std::string &code)
+    const std::string &code,
+    const std::filesystem::path &filePath,
+    const std::filesystem::path &baseDir)
 {
-    auto relativePath = baseDir / path;
+    auto relativePath = baseDir.empty()? filePath : baseDir / filePath;
     auto absolutePath = m_testerDirectory / relativePath;
     auto parentPath = absolutePath.parent_path();
     std::error_code ec;
@@ -191,11 +165,12 @@ lyric_test::TestRunner::writeNamedFileInternal(
 
 tempo_utils::Result<std::filesystem::path>
 lyric_test::TestRunner::writeTempFileInternal(
-    const std::filesystem::path &baseDir,
+    const std::string &code,
     const std::filesystem::path &templatePath,
-    const std::string &code)
+    const std::filesystem::path &baseDir)
 {
-    auto absolutePath = m_testerDirectory / baseDir / templatePath;
+    auto relativePath = baseDir.empty()? templatePath : baseDir / templatePath;
+    auto absolutePath = m_testerDirectory / relativePath;
     auto parentPath = absolutePath.parent_path();
     std::error_code ec;
     if (!std::filesystem::create_directories(parentPath, ec)) {
@@ -210,8 +185,34 @@ lyric_test::TestRunner::writeTempFileInternal(
         return TestStatus::forCondition(TestCondition::kTestInvariant,
             "failed to create temp file {}", absolutePath.string());
 
-    auto relativePath = std::filesystem::relative(tempfileMaker.getTempfile(), m_testerDirectory);
-    return relativePath;
+    return std::filesystem::relative(tempfileMaker.getTempfile(), m_testerDirectory);
+}
+
+tempo_utils::Result<lyric_common::ModuleLocation>
+lyric_test::TestRunner::writeModuleInternal(
+    const std::string &code,
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
+{
+    if (!m_configured)
+        return TestStatus::forCondition(TestCondition::kTestInvariant,
+            "tester is unconfigured");
+
+    std::filesystem::path sourcePath;
+    if (!modulePath.empty()) {
+        auto relativePath = modulePath;
+        relativePath.replace_extension(lyric_common::kSourceFileSuffix);
+        TU_ASSIGN_OR_RETURN (sourcePath, writeNamedFileInternal(code, relativePath, baseDir));
+    } else {
+        std::filesystem::path templatePath("XXXXXXXX");
+        templatePath.replace_extension(lyric_common::kSourceFileSuffix);
+        TU_ASSIGN_OR_RETURN (sourcePath, writeTempFileInternal(code, templatePath, baseDir));
+    }
+
+    std::filesystem::path locationPath = "/";
+    locationPath /= sourcePath;
+    locationPath.replace_extension();
+    return lyric_common::ModuleLocation(locationPath.string());
 }
 
 tempo_utils::Result<lyric_build::TargetComputationSet>
@@ -239,7 +240,8 @@ lyric_test::TestRunner::computeTargetInternal(
 tempo_utils::Result<lyric_test::BuildModule>
 lyric_test::TestRunner::buildModuleInternal(
     const std::string &code,
-    const std::filesystem::path &path)
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
     if (!m_configured)
         return TestStatus::forCondition(TestCondition::kTestInvariant,
@@ -247,7 +249,7 @@ lyric_test::TestRunner::buildModuleInternal(
 
     // write the source
     lyric_common::ModuleLocation moduleLocation;
-    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, path));
+    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, modulePath, baseDir));
 
     lyric_build::TaskId target("compile_module", moduleLocation.toString());
 
@@ -267,7 +269,8 @@ lyric_test::TestRunner::buildModuleInternal(
 tempo_utils::Result<lyric_test::CompileModule>
 lyric_test::TestRunner::compileModuleInternal(
     const std::string &code,
-    const std::filesystem::path &path)
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
     if (!m_configured)
         return TestStatus::forCondition(TestCondition::kTestInvariant,
@@ -275,7 +278,7 @@ lyric_test::TestRunner::compileModuleInternal(
 
     // write the source
     lyric_common::ModuleLocation moduleLocation;
-    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, path));
+    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, modulePath, baseDir));
 
     lyric_build::TaskId target("compile_module", moduleLocation.toString());
 
@@ -303,7 +306,8 @@ lyric_test::TestRunner::compileModuleInternal(
 tempo_utils::Result<lyric_test::AnalyzeModule>
 lyric_test::TestRunner::analyzeModuleInternal(
     const std::string &code,
-    const std::filesystem::path &path)
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
     if (!m_configured)
         return TestStatus::forCondition(TestCondition::kTestInvariant,
@@ -311,7 +315,7 @@ lyric_test::TestRunner::analyzeModuleInternal(
 
     // write the source
     lyric_common::ModuleLocation moduleLocation;
-    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, path));
+    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, modulePath, baseDir));
 
     lyric_build::TaskId target("analyze_module", moduleLocation.toString());
 
@@ -339,7 +343,8 @@ lyric_test::TestRunner::analyzeModuleInternal(
 tempo_utils::Result<lyric_test::SymbolizeModule>
 lyric_test::TestRunner::symbolizeModuleInternal(
     const std::string &code,
-    const std::filesystem::path &path)
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
     if (!m_configured)
         return TestStatus::forCondition(TestCondition::kTestInvariant,
@@ -347,7 +352,7 @@ lyric_test::TestRunner::symbolizeModuleInternal(
 
     // write the source
     lyric_common::ModuleLocation moduleLocation;
-    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, path));
+    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, modulePath, baseDir));
 
     lyric_build::TaskId target("symbolize_module", moduleLocation.toString());
 
@@ -376,7 +381,8 @@ tempo_utils::Result<lyric_test::PackageModule>
 lyric_test::TestRunner::packageModuleInternal(
     const lyric_packaging::PackageSpecifier &specifier,
     const std::string &code,
-    const std::filesystem::path &path)
+    const std::filesystem::path &modulePath,
+    const std::filesystem::path &baseDir)
 {
     if (!m_configured)
         return TestStatus::forCondition(TestCondition::kTestInvariant,
@@ -384,7 +390,7 @@ lyric_test::TestRunner::packageModuleInternal(
 
     // write the source
     lyric_common::ModuleLocation moduleLocation;
-    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, path));
+    TU_ASSIGN_OR_RETURN (moduleLocation, writeModuleInternal(code, modulePath, baseDir));
 
     lyric_build::TaskId target("package");
 

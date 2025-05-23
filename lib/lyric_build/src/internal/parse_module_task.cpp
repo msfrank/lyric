@@ -153,13 +153,12 @@ lyric_build::internal::ParseModuleTask::parseModule(
     archetype = rewriteResult.getResult();
 
     // store the archetype content in the build cache
-    ArtifactId archetypeArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
+    tempo_utils::UrlPath archetypeArtifactPath;
+    TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
+        m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
+    ArtifactId archetypeArtifact(buildState->getGeneration().getUuid(), taskHash, archetypeArtifactPath);
     auto archetypeBytes = archetype.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(archetypeArtifact, archetypeBytes));
-
-    // generate the install path
-    std::filesystem::path archetypeInstallPath = generate_install_path(
-        getId().getDomain(), m_sourcePath, lyric_common::kIntermezzoFileDotSuffix);
 
     // store the archetype metadata in the build cache
     MetadataWriter writer;
@@ -168,7 +167,6 @@ lyric_build::internal::ParseModuleTask::parseModule(
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kIntermezzoContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
-    writer.putAttr(kLyricBuildInstallPath, archetypeInstallPath.string());
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
         span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);

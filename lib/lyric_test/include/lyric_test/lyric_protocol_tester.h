@@ -20,7 +20,7 @@ namespace lyric_test {
         bool keepBuildOnUnexpectedResult = true;
         std::shared_ptr<lyric_build::TaskRegistry> taskRegistry;
         std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader;
-        lyric_build::TaskSettings overrides;
+        lyric_build::TaskSettings taskSettings;
         absl::flat_hash_map<
             tempo_utils::Url,
             std::shared_ptr<BaseProtocolMock>> protocolMocks;
@@ -37,7 +37,8 @@ namespace lyric_test {
 
         tempo_utils::Result<RunModule> runModuleInMockSandbox(
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
 
         static tempo_utils::Result<RunModule> runSingleModuleInMockSandbox(
             const std::string &code,

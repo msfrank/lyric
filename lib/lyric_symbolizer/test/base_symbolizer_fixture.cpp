@@ -5,7 +5,7 @@ void
 BaseSymbolizerFixture::SetUp()
 {
     lyric_test::TesterOptions testerOptions;
-    testerOptions.overrides = lyric_build::TaskSettings(tempo_config::ConfigMap{
+    testerOptions.taskSettings = lyric_build::TaskSettings(tempo_config::ConfigMap{
         {"global", tempo_config::ConfigMap{
             {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
             {"sourceBaseUrl", tempo_config::ConfigValue("/src")},

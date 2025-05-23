@@ -103,7 +103,11 @@ lyric_build::internal::AnalyzeModuleTask::symbolizeImports(
     const auto &symbolizeHash = depStates.at(m_symbolizeTarget).getHash();
     TraceId symbolizeTrace(symbolizeHash, m_symbolizeTarget.getDomain(), m_symbolizeTarget.getId());
     auto generation = cache->loadTrace(symbolizeTrace);
-    ArtifactId symbolizeArtifact(generation, symbolizeHash, m_moduleLocation.toUrl());
+
+    tempo_utils::UrlPath linkageArtifactPath;
+    TU_ASSIGN_OR_RETURN (linkageArtifactPath, convert_module_location_to_artifact_path(
+        m_moduleLocation, lyric_common::kObjectFileDotSuffix));
+    ArtifactId symbolizeArtifact(generation, symbolizeHash, linkageArtifactPath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
     TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(symbolizeArtifact));
@@ -120,9 +124,8 @@ lyric_build::internal::AnalyzeModuleTask::symbolizeImports(
                 "invalid module import {}", location.toString());
         if (location.hasScheme() || location.hasAuthority())    // ignore imports that aren't in the workspace
             continue;
-        std::filesystem::path importSourcePath = location.getPath().toString();
-        importSourcePath.replace_extension(lyric_common::kSourceFileSuffix);
-        symbolizeTargets.insert(TaskKey("symbolize_module", importSourcePath, tempo_config::ConfigMap({
+        auto importPath = location.getPath().toString();
+        symbolizeTargets.insert(TaskKey("symbolize_module", importPath, tempo_config::ConfigMap({
                 {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
                 {"moduleLocation", tempo_config::ConfigValue(m_moduleLocation.toString())},
             })));
@@ -148,10 +151,14 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     auto parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
     auto generation = cache->loadTrace(parseTrace);
-    ArtifactId parseArtifact(generation, parseHash, m_moduleLocation.toUrl());
+
+    tempo_utils::UrlPath archetypeArtifactPath;
+    TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
+        m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
+    ArtifactId archetypeArtifact(generation, parseHash, archetypeArtifactPath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(parseArtifact));
+    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(archetypeArtifact));
     lyric_parser::LyricArchetype archetype(content);
 
     // construct the local module cache
@@ -176,13 +183,12 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     auto object = scanResult.getResult();
 
     // store the outline object content in the cache
-    ArtifactId outlineArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
+    tempo_utils::UrlPath outlineArtifactPath;
+    TU_ASSIGN_OR_RETURN (outlineArtifactPath, convert_module_location_to_artifact_path(
+        m_moduleLocation, lyric_common::kObjectFileDotSuffix));
+    ArtifactId outlineArtifact(buildState->getGeneration().getUuid(), taskHash, outlineArtifactPath);
     auto outlineBytes = object.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(outlineArtifact, outlineBytes));
-
-    // generate the install path
-    std::filesystem::path outlineInstallPath = generate_install_path(
-        getId().getDomain(), m_moduleLocation.getPath(), lyric_common::kObjectFileDotSuffix);
 
     // store the outline object metadata in the cache
     MetadataWriter writer;
@@ -190,7 +196,6 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
-    writer.putAttr(kLyricBuildInstallPath, outlineInstallPath.string());
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
         span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);

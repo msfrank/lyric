@@ -93,10 +93,14 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     auto parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
     auto generation = cache->loadTrace(parseTrace);
-    ArtifactId parseArtifact(generation, parseHash, m_moduleLocation.toUrl());
+
+    tempo_utils::UrlPath archetypeArtifactPath;
+    TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
+        m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
+    ArtifactId archetypeArtifact(generation, parseHash, archetypeArtifactPath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(parseArtifact));
+    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(archetypeArtifact));
     lyric_parser::LyricArchetype archetype(content);
 
     // construct the local module cache
@@ -122,13 +126,12 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     auto object = symbolizeModuleResult.getResult();
 
     // store the linkage object content in the build cache
-    ArtifactId linkageArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
+    tempo_utils::UrlPath linkageArtifactPath;
+    TU_ASSIGN_OR_RETURN (linkageArtifactPath, convert_module_location_to_artifact_path(
+        m_moduleLocation, lyric_common::kObjectFileDotSuffix));
+    ArtifactId linkageArtifact(buildState->getGeneration().getUuid(), taskHash, linkageArtifactPath);
     auto linkageBytes = object.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(linkageArtifact, linkageBytes));
-
-    // generate the install path
-    std::filesystem::path linkageInstallPath = generate_install_path(
-        getId().getDomain(), m_moduleLocation.getPath(), lyric_common::kObjectFileDotSuffix);
 
     // store the object metadata in the build cache
     MetadataWriter writer;
@@ -136,7 +139,6 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
-    writer.putAttr(kLyricBuildInstallPath, linkageInstallPath.string());
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
         span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);

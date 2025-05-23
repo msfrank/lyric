@@ -41,16 +41,17 @@ namespace lyric_test {
         bool isConfigured() const;
 
         tempo_utils::Result<std::filesystem::path> writeNamedFileInternal(
-            const std::filesystem::path &baseDir,
-            const std::filesystem::path &path,
-            const std::string &code);
+            const std::string &code,
+            const std::filesystem::path &filePath,
+            const std::filesystem::path &baseDir = {});
         tempo_utils::Result<std::filesystem::path> writeTempFileInternal(
-            const std::filesystem::path &baseDir,
+            const std::string &code,
             const std::filesystem::path &templatePath,
-            const std::string &code);
+            const std::filesystem::path &baseDir = {});
         tempo_utils::Result<lyric_common::ModuleLocation> writeModuleInternal(
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
 
         tempo_utils::Result<lyric_build::TargetComputationSet>
         computeTargetInternal(
@@ -59,20 +60,25 @@ namespace lyric_test {
 
         tempo_utils::Result<BuildModule> buildModuleInternal(
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
         tempo_utils::Result<CompileModule> compileModuleInternal(
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
         tempo_utils::Result<AnalyzeModule> analyzeModuleInternal(
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
         tempo_utils::Result<SymbolizeModule> symbolizeModuleInternal(
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
         tempo_utils::Result<PackageModule> packageModuleInternal(
             const lyric_packaging::PackageSpecifier &specifier,
             const std::string &code,
-            const std::filesystem::path &path = {});
+            const std::filesystem::path &modulePath = {},
+            const std::filesystem::path &baseDir = {});
 
         tempo_utils::Result<PackageModule> packageTargetsInternal(
             const absl::flat_hash_set<lyric_build::TaskId> &targets,

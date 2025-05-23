@@ -41,6 +41,19 @@ lyric_build::internal::convert_source_path_to_module_location(const tempo_utils:
     return lyric_common::ModuleLocation(p.string());
 }
 
+tempo_utils::Result<tempo_utils::UrlPath>
+lyric_build::internal::convert_module_location_to_artifact_path(
+    const lyric_common::ModuleLocation &location,
+    std::string_view dotSuffix)
+{
+    if (dotSuffix.empty())
+        return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
+            "missing file suffix");
+    auto p = location.getPath().toFilesystemPath("/");
+    p.replace_extension(dotSuffix);
+    return tempo_utils::UrlPath::fromString(p.string());
+}
+
 std::filesystem::path
 lyric_build::internal::generate_install_path(
     std::string_view taskDomain,

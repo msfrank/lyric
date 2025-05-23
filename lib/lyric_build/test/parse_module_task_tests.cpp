@@ -41,7 +41,7 @@ TEST_F(ParseModuleTask, ConfigureTask)
 
     auto cache = m_state->getCache();
     lyric_build::ArtifactId artifactId(
-        m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/mod"));
+        m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/mod.lyi"));
 
     auto loadMetadataResult = cache->loadMetadata(artifactId);
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());

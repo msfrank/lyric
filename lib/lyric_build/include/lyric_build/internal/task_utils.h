@@ -20,6 +20,10 @@ namespace lyric_build::internal {
     tempo_utils::Result<lyric_common::ModuleLocation> convert_source_path_to_module_location(
         const tempo_utils::UrlPath &path);
 
+    tempo_utils::Result<tempo_utils::UrlPath> convert_module_location_to_artifact_path(
+        const lyric_common::ModuleLocation &location,
+        std::string_view dotSuffix);
+
     std::filesystem::path generate_install_path(
         std::string_view taskDomain,
         const tempo_utils::UrlPath &path,

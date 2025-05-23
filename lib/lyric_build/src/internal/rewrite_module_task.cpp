@@ -96,10 +96,14 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     auto parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
     auto generation = cache->loadTrace(parseTrace);
-    ArtifactId parseArtifact(generation, parseHash, m_moduleLocation.toUrl());
+
+    tempo_utils::UrlPath archetypeArtifactPath;
+    TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
+        m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
+    ArtifactId archetypeArtifact(generation, parseHash, archetypeArtifactPath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(parseArtifact));
+    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(archetypeArtifact));
     lyric_parser::LyricArchetype archetype(content);
 
     auto span = getSpan();
@@ -132,20 +136,18 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     auto rewritten = rewriteModuleResult.getResult();
 
     // store the rewritten archetype content in the build cache
-    ArtifactId rewrittenArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
+    tempo_utils::UrlPath rewrittenArtifactPath;
+    TU_ASSIGN_OR_RETURN (rewrittenArtifactPath, convert_module_location_to_artifact_path(
+        m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
+    ArtifactId rewrittenArtifact(buildState->getGeneration().getUuid(), taskHash, rewrittenArtifactPath);
     auto rewrittenBytes = rewritten.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(rewrittenArtifact, rewrittenBytes));
-
-    // generate the install path
-    std::filesystem::path rewrittenInstallPath = generate_install_path(
-        getId().getDomain(), m_moduleLocation.getPath(), lyric_common::kObjectFileDotSuffix);
 
     // store the archetype metadata in the build cache
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
     writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kIntermezzoContentType));
     writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
-    writer.putAttr(kLyricBuildInstallPath, rewrittenInstallPath.string());
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
         span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
