@@ -13,7 +13,6 @@ set(LYRIC_SCHEMA_INCLUDES
     include/lyric_schema/compiler_schema.h
     include/lyric_schema/dcmi_elements_schema.h
     include/lyric_schema/literal_schema.h
-    include/lyric_schema/packaging_schema.h
     include/lyric_schema/parser_schema.h
     include/lyric_schema/posix_stat_schema.h
     )
