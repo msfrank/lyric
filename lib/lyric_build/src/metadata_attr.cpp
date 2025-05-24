@@ -3,7 +3,7 @@
 
 lyric_build::MetadataAttr::MetadataAttr(
     AttrId id,
-    tempo_utils::AttrValue value,
+    tempo_schema::AttrValue value,
     AttrAddress address,
     MetadataState *state)
     : m_id(id),
@@ -21,7 +21,7 @@ lyric_build::MetadataAttr::getAttrId() const
     return m_id;
 }
 
-tempo_utils::AttrValue
+tempo_schema::AttrValue
 lyric_build::MetadataAttr::getAttrValue() const
 {
     return m_value;

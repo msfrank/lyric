@@ -6,12 +6,10 @@
 #include <lyric_build/task_settings.h>
 #include <lyric_build/internal/parse_module_task.h>
 #include <lyric_build/internal/task_utils.h>
-#include <lyric_build/metadata_state.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
 #include <lyric_common/common_conversions.h>
 #include <lyric_common/common_types.h>
-#include <lyric_packaging/package_attrs.h>
 #include <lyric_rewriter/allocator_trap_macro.h>
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_rewriter/macro_registry.h>
@@ -164,8 +162,7 @@ lyric_build::internal::ParseModuleTask::parseModule(
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
     writer.putAttr(kLyricBuildContentUrl, sourceUrl);
-    writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kIntermezzoContentType));
-    writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
+    writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kIntermezzoContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {

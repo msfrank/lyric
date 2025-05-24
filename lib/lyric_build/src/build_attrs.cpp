@@ -1,39 +1,40 @@
 
 #include <lyric_build/build_attrs.h>
+#include <tempo_schema/schema_result.h>
 
-lyric_build::EntryTypeAttr::EntryTypeAttr(const tempo_utils::ComparableResource *resource)
-    : tempo_utils::AttrSerde<EntryType>(resource)
+lyric_build::EntryTypeAttr::EntryTypeAttr(const tempo_schema::ComparableResource *resource)
+    : tempo_schema::AttrSerde<EntryType>(resource)
 {
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_build::EntryTypeAttr::writeAttr(tempo_utils::AbstractAttrWriter *writer, const EntryType &entryType) const
+lyric_build::EntryTypeAttr::writeAttr(tempo_schema::AbstractAttrWriter *writer, const EntryType &entryType) const
 {
     TU_ASSERT (writer != nullptr);
     return writer->putUInt32(static_cast<tu_uint32>(entryType));
 }
 
-static tempo_utils::AttrStatus
+static tempo_schema::SchemaStatus
 value_to_base_type(tu_uint32 value, lyric_build::EntryType &entryType)
 {
     switch (static_cast<lyric_build::EntryType>(value)) {
         case lyric_build::EntryType::File:
             entryType = lyric_build::EntryType::File;
-            return tempo_utils::AttrStatus::ok();
+            return {};
         case lyric_build::EntryType::Link:
             entryType = lyric_build::EntryType::Link;
-            return tempo_utils::AttrStatus::ok();
+            return {};
         case lyric_build::EntryType::Directory:
             entryType = lyric_build::EntryType::Directory;
-            return tempo_utils::AttrStatus::ok();
+            return {};
         default:
-            return tempo_utils::AttrStatus::forCondition(
-                tempo_utils::AttrCondition::kConversionError, "invalid entry type");
+            return tempo_schema::SchemaStatus::forCondition(
+                tempo_schema::SchemaCondition::kConversionError, "invalid entry type");
     }
 }
 
 tempo_utils::Status
-lyric_build::EntryTypeAttr::parseAttr(tu_uint32 index, tempo_utils::AbstractAttrParser *parser, EntryType &binding) const
+lyric_build::EntryTypeAttr::parseAttr(tu_uint32 index, tempo_schema::AbstractAttrParser *parser, EntryType &binding) const
 {
     tu_uint32 value;
     auto status = parser->getUInt32(index, value);
@@ -45,20 +46,23 @@ lyric_build::EntryTypeAttr::parseAttr(tu_uint32 index, tempo_utils::AbstractAttr
 const lyric_common::ModuleLocationAttr lyric_build::kLyricBuildModuleLocation(
     &lyric_schema::kLyricBuildModuleLocationProperty);
 
-const tempo_utils::UrlAttr lyric_build::kLyricBuildContentUrl(
+const tempo_schema::UrlAttr lyric_build::kLyricBuildContentUrl(
     &lyric_schema::kLyricBuildContentUrlProperty);
+
+const tempo_schema::StringAttr lyric_build::kLyricBuildContentType(
+    &lyric_schema::kLyricBuildContentTypeProperty);
 
 const lyric_build::EntryTypeAttr lyric_build::kLyricBuildEntryType(
     &lyric_schema::kLyricBuildEntryEnumProperty);
 
-const tempo_utils::StringAttr lyric_build::kLyricBuildGeneration(
+const tempo_schema::StringAttr lyric_build::kLyricBuildGeneration(
     &lyric_schema::kLyricBuildGenerationProperty);
 
-const tempo_utils::StringAttr lyric_build::kLyricBuildInstallPath(
+const tempo_schema::StringAttr lyric_build::kLyricBuildInstallPath(
     &lyric_schema::kLyricBuildInstallPathProperty);
 
-const tempo_utils::StringAttr lyric_build::kLyricBuildTaskHash(
+const tempo_schema::StringAttr lyric_build::kLyricBuildTaskHash(
     &lyric_schema::kLyricBuildTaskHashProperty);
 
-const tempo_utils::StringAttr lyric_build::kLyricBuildTaskParams(
+const tempo_schema::StringAttr lyric_build::kLyricBuildTaskParams(
     &lyric_schema::kLyricBuildTaskParamsProperty);

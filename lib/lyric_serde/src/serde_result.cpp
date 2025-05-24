@@ -20,7 +20,7 @@ bool
 lyric_serde::SerdeStatus::convert(SerdeStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {
     std::string_view srcNs = srcStatus.getErrorCategory();
-    std::string_view dstNs = kLyricSerdeStatusNs.getNs();
+    std::string_view dstNs = kLyricSerdeStatusNs;
     if (srcNs != dstNs)
         return false;
     dstStatus = SerdeStatus(srcStatus.getStatusCode(), srcStatus.getDetail());

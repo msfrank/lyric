@@ -19,7 +19,7 @@ bool
 lyric_compiler::CompilerStatus::convert(CompilerStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {
     std::string_view srcNs = srcStatus.getErrorCategory();
-    std::string_view dstNs = kLyricCompilerStatusNs.getNs();
+    std::string_view dstNs = kLyricCompilerStatusNs;
     if (srcNs != dstNs)
         return false;
     dstStatus = CompilerStatus(srcStatus.getStatusCode(), srcStatus.getDetail());

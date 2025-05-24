@@ -12,7 +12,6 @@
 #include <lyric_build/target_computation.h>
 #include <lyric_build/task_notification.h>
 #include <lyric_build/task_registry.h>
-#include <lyric_packaging/package_loader.h>
 
 namespace lyric_build {
 
@@ -101,7 +100,7 @@ namespace lyric_build {
 
         std::shared_ptr<AbstractCache> getCache() const;
         std::shared_ptr<lyric_bootstrap::BootstrapLoader> getBootstrapLoader() const;
-        std::shared_ptr<lyric_packaging::PackageLoader> getPackageLoader() const;
+        std::shared_ptr<lyric_runtime::AbstractLoader> getFallbackLoader() const;
         std::shared_ptr<lyric_importer::ModuleCache> getSharedModuleCache() const;
 
         void onTaskNotification(BuildRunner *runner, const TaskNotification *notification);
@@ -118,7 +117,6 @@ namespace lyric_build {
         int m_numThreads;
         int m_waitTimeoutInMs;
         std::shared_ptr<lyric_bootstrap::BootstrapLoader> m_bootstrapLoader;
-        std::shared_ptr<lyric_packaging::PackageLoader> m_packageLoader;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_fallbackLoader;
         std::shared_ptr<TaskRegistry> m_taskRegistry;
         std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;

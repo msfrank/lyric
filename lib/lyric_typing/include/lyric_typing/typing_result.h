@@ -11,7 +11,7 @@
 
 namespace lyric_typing {
 
-    constexpr tempo_utils::SchemaNs kLyricTypingStatusNs("dev.zuri.ns:lyric-typing-status-1");
+    constexpr const char *kLyricTypingStatusNs = "dev.zuri.ns:lyric-typing-status-1";
 
     enum class TypingCondition {
         kIncompatibleType,
@@ -85,7 +85,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_typing::TypingCondition> {
         using StatusType = lyric_typing::TypingStatus;
-        static constexpr const char *condition_namespace() { return lyric_typing::kLyricTypingStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_typing::kLyricTypingStatusNs; }
         static constexpr StatusCode make_status_code(lyric_typing::TypingCondition condition)
         {
             switch (condition) {

@@ -78,16 +78,6 @@ lyric_test::LyricTester::compileModule(
     return m_runner->compileModuleInternal(code, modulePath, baseDir);
 }
 
-tempo_utils::Result<lyric_test::PackageModule>
-lyric_test::LyricTester::packageModule(
-    const lyric_packaging::PackageSpecifier &specifier,
-    const std::string &code,
-    const std::filesystem::path &modulePath,
-    const std::filesystem::path &baseDir)
-{
-    return m_runner->packageModuleInternal(specifier, code, modulePath, baseDir);
-}
-
 tempo_utils::Result<lyric_test::RunModule>
 lyric_test::LyricTester::runModule(
     const std::string &code,
@@ -130,7 +120,6 @@ lyric_test::LyricTester::runModule(
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
     loaderChain.push_back(builder->getBootstrapLoader());
     loaderChain.push_back(createDependencyLoaderResult.getResult());
-    loaderChain.push_back(builder->getPackageLoader());
     if (m_options.fallbackLoader) {
         loaderChain.push_back(m_options.fallbackLoader);
     }
@@ -151,62 +140,6 @@ lyric_test::LyricTester::runModule(
     if (execResult.isStatus())
         return execResult.getStatus();
     return RunModule(m_runner, targetComputation, testRun.getDiagnostics(), state, execResult.getResult());
-}
-
-tempo_utils::Result<lyric_test::RunModule>
-lyric_test::LyricTester::runModule(
-    const lyric_packaging::PackageSpecifier &specifier,
-    const std::string &code,
-    const std::filesystem::path &modulePath,
-    const std::filesystem::path &baseDir)
-{
-    if (!m_runner->isConfigured())
-        return TestStatus::forCondition(TestCondition::kTestInvariant,
-            "tester is unconfigured");
-
-    // compile the code and package it
-    auto packageModuleResult = m_runner->packageModuleInternal(specifier, code, modulePath, baseDir);
-    if (packageModuleResult.isStatus())
-        return packageModuleResult.getStatus();
-    auto testRun = packageModuleResult.getResult();
-    if (!testRun.hasURI())
-        return RunModule(m_runner, testRun.getComputation(), testRun.getDiagnostics());
-    auto packageUrl = testRun.getURI();
-
-    TU_CONSOLE_OUT << "";
-    TU_CONSOLE_OUT << "======== RUN: " << specifier.toString() << " ========";
-    TU_CONSOLE_OUT << "";
-
-    lyric_runtime::InterpreterStateOptions options;
-
-    // construct the loader
-    auto *builder = m_runner->getBuilder();
-    std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
-    loaderChain.push_back(builder->getBootstrapLoader());
-    loaderChain.push_back(std::make_shared<lyric_packaging::PackageLoader>(std::vector{m_runner->getInstallDirectory()}));
-    loaderChain.push_back(builder->getPackageLoader());
-    if (m_options.fallbackLoader) {
-        loaderChain.push_back(m_options.fallbackLoader);
-    }
-    options.loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
-
-    auto mainLocation = lyric_common::ModuleLocation::fromUrl(packageUrl);
-
-    // construct the interpreter state
-    auto createInterpreterStateResult = lyric_runtime::InterpreterState::create(options, mainLocation);
-    if (createInterpreterStateResult.isStatus())
-        return createInterpreterStateResult.getStatus();
-    auto state = createInterpreterStateResult.getResult();
-
-    // run the module in the interpreter
-    lyric_test::TestInspector inspector;
-    lyric_runtime::BytecodeInterpreter interp(state, &inspector);
-    auto execResult = interp.run();
-
-    // return the interpreter result
-    if (execResult.isStatus())
-        return execResult.getStatus();
-    return RunModule(m_runner, testRun.getComputation(), testRun.getDiagnostics(), state, execResult.getResult());
 }
 
 tempo_utils::Result<lyric_test::CompileModule>
@@ -248,19 +181,6 @@ lyric_test::LyricTester::symbolizeSingleModule(
     return runner->symbolizeModuleInternal(code);
 }
 
-tempo_utils::Result<lyric_test::PackageModule>
-lyric_test::LyricTester::packageSingleModule(
-    const lyric_packaging::PackageSpecifier &specifier,
-    const std::string &code,
-    const TesterOptions &options)
-{
-    lyric_test::LyricTester tester(options);
-    auto status = tester.configure();
-    if (!status.isOk())
-        return status;
-    return tester.packageModule(specifier, code);
-}
-
 tempo_utils::Result<lyric_test::RunModule>
 lyric_test::LyricTester::runSingleModule(
     const std::string &code,
@@ -271,17 +191,4 @@ lyric_test::LyricTester::runSingleModule(
     if (!status.isOk())
         return status;
     return tester.runModule(code);
-}
-
-tempo_utils::Result<lyric_test::RunModule>
-lyric_test::LyricTester::runSingleModule(
-    const lyric_packaging::PackageSpecifier &specifier,
-    const std::string &code,
-    const TesterOptions &options)
-{
-    lyric_test::LyricTester tester(options);
-    auto status = tester.configure();
-    if (!status.isOk())
-        return status;
-    return tester.runModule(specifier, code);
 }

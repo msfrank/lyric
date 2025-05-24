@@ -70,7 +70,7 @@ lyric_build::MetadataState::numNamespaces() const
 }
 
 tempo_utils::Result<lyric_build::MetadataAttr *>
-lyric_build::MetadataState::appendAttr(AttrId id, const tempo_utils::AttrValue &value)
+lyric_build::MetadataState::appendAttr(AttrId id, const tempo_schema::AttrValue &value)
 {
     AttrAddress address(m_metadataAttrs.size());
     auto *attr = new MetadataAttr(id, value, address, this);
@@ -105,51 +105,51 @@ lyric_build::MetadataState::numAttrs() const
 }
 
 static std::pair<lbm1::Value,flatbuffers::Offset<void>>
-serialize_value(flatbuffers::FlatBufferBuilder &buffer, const tempo_utils::AttrValue &value)
+serialize_value(flatbuffers::FlatBufferBuilder &buffer, const tempo_schema::AttrValue &value)
 {
     switch (value.getType()) {
-        case tempo_utils::ValueType::Nil: {
+        case tempo_schema::ValueType::Nil: {
             auto type = lbm1::Value::TrueFalseNilValue;
             auto offset = lbm1::CreateTrueFalseNilValue(buffer, lbm1::TrueFalseNil::Nil).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::Bool: {
+        case tempo_schema::ValueType::Bool: {
             auto type = lbm1::Value::TrueFalseNilValue;
             auto tfn = value.getBool()? lbm1::TrueFalseNil::True : lbm1::TrueFalseNil::False;
             auto offset = lbm1::CreateTrueFalseNilValue(buffer, tfn).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::Int64: {
+        case tempo_schema::ValueType::Int64: {
             auto type = lbm1::Value::Int64Value;
             auto offset = lbm1::CreateInt64Value(buffer, value.getInt64()).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::Float64: {
+        case tempo_schema::ValueType::Float64: {
             auto type = lbm1::Value::Float64Value;
             auto offset = lbm1::CreateFloat64Value(buffer, value.getFloat64()).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::UInt64: {
+        case tempo_schema::ValueType::UInt64: {
             auto type = lbm1::Value::UInt64Value;
             auto offset = lbm1::CreateUInt64Value(buffer, value.getUInt64()).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::UInt32: {
+        case tempo_schema::ValueType::UInt32: {
             auto type = lbm1::Value::UInt32Value;
             auto offset = lbm1::CreateUInt32Value(buffer, value.getUInt32()).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::UInt16: {
+        case tempo_schema::ValueType::UInt16: {
             auto type = lbm1::Value::UInt16Value;
             auto offset = lbm1::CreateUInt16Value(buffer, value.getUInt16()).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::UInt8: {
+        case tempo_schema::ValueType::UInt8: {
             auto type = lbm1::Value::UInt8Value;
             auto offset = lbm1::CreateUInt8Value(buffer, value.getUInt8()).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::String: {
+        case tempo_schema::ValueType::String: {
             auto type = lbm1::Value::StringValue;
             auto offset = lbm1::CreateStringValue(buffer, buffer.CreateSharedString(value.stringView())).Union();
             return {type, offset};

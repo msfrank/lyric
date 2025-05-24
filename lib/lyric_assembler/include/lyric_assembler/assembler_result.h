@@ -11,7 +11,7 @@
 
 namespace lyric_assembler {
 
-    constexpr tempo_utils::SchemaNs kLyricAssemblerStatusNs("dev.zuri.ns:lyric-assembler-status-1");
+    constexpr const char *kLyricAssemblerStatusNs = "dev.zuri.ns:lyric-assembler-status-1";
 
     enum class AssemblerCondition {
         kTypeError,
@@ -102,7 +102,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_assembler::AssemblerCondition> {
         using StatusType = lyric_assembler::AssemblerStatus;
-        static constexpr const char *condition_namespace() { return lyric_assembler::kLyricAssemblerStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_assembler::kLyricAssemblerStatusNs; }
         static constexpr StatusCode make_status_code(lyric_assembler::AssemblerCondition condition)
         {
             switch (condition) {

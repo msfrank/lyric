@@ -9,7 +9,7 @@
 
 namespace lyric_serde {
 
-    constexpr tempo_utils::SchemaNs kLyricSerdeStatusNs("dev.zuri.ns:lyric-serde-status-1");
+    constexpr const char *kLyricSerdeStatusNs = "dev.zuri.ns:lyric-serde-status-1";
 
     enum class SerdeCondition {
         kInvalidPatchset,
@@ -81,7 +81,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_serde::SerdeCondition> {
         using StatusType = lyric_serde::SerdeStatus;
-        static constexpr const char *condition_namespace() { return lyric_serde::kLyricSerdeStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_serde::kLyricSerdeStatusNs; }
         static constexpr StatusCode make_status_code(lyric_serde::SerdeCondition condition)
         {
             switch (condition) {

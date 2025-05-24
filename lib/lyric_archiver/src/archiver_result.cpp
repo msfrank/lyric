@@ -20,7 +20,7 @@ bool
 lyric_archiver::ArchiverStatus::convert(ArchiverStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {
     std::string_view srcNs = srcStatus.getErrorCategory();
-    std::string_view dstNs = kLyricArchiverStatusNs.getNs();
+    std::string_view dstNs = kLyricArchiverStatusNs;
     if (srcNs != dstNs)
         return false;
     dstStatus = ArchiverStatus(srcStatus.getStatusCode(), srcStatus.getDetail());

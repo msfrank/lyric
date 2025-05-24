@@ -38,10 +38,10 @@ namespace lyric_parser {
         ArchetypeId *getArchetypeId() const;
 
         std::string_view namespaceView() const;
-        bool isNamespace(const tempo_utils::SchemaNs &schemaNs) const;
+        bool isNamespace(const tempo_schema::SchemaNs &schemaNs) const;
 
         bool hasAttr(const AttrId &attrId) const;
-        bool hasAttr(const tempo_utils::AttrValidator &validator) const;
+        bool hasAttr(const tempo_schema::AttrValidator &validator) const;
         ArchetypeAttr *getAttr(const AttrId &attrId) const;
         void putAttr(ArchetypeAttr *attr);
         absl::flat_hash_map<AttrId,ArchetypeAttr *>::const_iterator attrsBegin() const;
@@ -93,7 +93,7 @@ namespace lyric_parser {
          */
         template<class NsType, class IdType>
         bool
-        isClass(const tempo_utils::SchemaClass<NsType,IdType> &schemaClass) const
+        isClass(const tempo_schema::SchemaClass<NsType,IdType> &schemaClass) const
         {
             auto *nsUrl = schemaClass.getNsUrl();
             auto idValue = schemaClass.getIdValue();
@@ -103,7 +103,7 @@ namespace lyric_parser {
         template<class NsType, class IdType>
         tempo_utils::Status
         parseId(
-            const tempo_utils::SchemaVocabulary<NsType,IdType> &vocabulary,
+            const tempo_schema::SchemaVocabulary<NsType,IdType> &vocabulary,
             IdType &id) const
         {
             auto *schemaNs = vocabulary.getNs();
@@ -120,14 +120,14 @@ namespace lyric_parser {
 
         template<class NsType, class IdType>
         ArchetypeAttr *
-        getAttr(const tempo_utils::SchemaProperty<NsType,IdType> &schemaProperty) const
+        getAttr(const tempo_schema::SchemaProperty<NsType,IdType> &schemaProperty) const
         {
             return findAttr(schemaProperty.getNsUrl(), schemaProperty.getIdValue());
         }
 
         template<class NsType, class IdType>
         AttrValue
-        getAttrValue(const tempo_utils::SchemaProperty<NsType,IdType> &schemaProperty) const
+        getAttrValue(const tempo_schema::SchemaProperty<NsType,IdType> &schemaProperty) const
         {
             return getAttrValue(schemaProperty.getNsUrl(), schemaProperty.getIdValue());
         }
@@ -155,7 +155,7 @@ namespace lyric_parser {
 
         template <typename T>
         tempo_utils::Status
-        putAttr(const tempo_utils::AttrSerde<T> &serde, const T &value)
+        putAttr(const tempo_schema::AttrSerde<T> &serde, const T &value)
         {
             ArchetypeAttr *archetypeAttr;
             TU_ASSIGN_OR_RETURN (archetypeAttr, ArchetypeStateAttrWriter::createAttr(m_state, serde, value));
@@ -176,7 +176,7 @@ namespace lyric_parser {
 
         template <typename T>
         void
-        putAttrOrThrow(const tempo_utils::AttrSerde<T> &serde, const T &value)
+        putAttrOrThrow(const tempo_schema::AttrSerde<T> &serde, const T &value)
         {
             TU_RAISE_IF_NOT_OK(putAttr(serde, value));
         };

@@ -2,13 +2,13 @@
 #define LYRIC_BUILD_METADATA_ATTR_WRITER_H
 
 #include <lyric_build/metadata_state.h>
-#include <tempo_utils/attr.h>
+#include <tempo_schema/abstract_attr_writer.h>
 
 namespace lyric_build {
 
-    class MetadataAttrWriter : public tempo_utils::AbstractAttrWriter {
+    class MetadataAttrWriter : public tempo_schema::AbstractAttrWriter {
     public:
-        MetadataAttrWriter(const tempo_utils::AttrKey &key, MetadataState *state);
+        MetadataAttrWriter(const tempo_schema::AttrKey &key, MetadataState *state);
         tempo_utils::Result<tu_uint32> putNamespace(const tempo_utils::Url &nsUrl) override;
         tempo_utils::Result<tu_uint32> putNil() override;
         tempo_utils::Result<tu_uint32> putBool(bool b) override;
@@ -21,7 +21,7 @@ namespace lyric_build {
         tempo_utils::Result<tu_uint32> putString(std::string_view str) override;
 
     private:
-        tempo_utils::AttrKey m_key;
+        tempo_schema::AttrKey m_key;
         MetadataState *m_state;
     };
 }

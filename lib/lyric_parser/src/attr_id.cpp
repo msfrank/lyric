@@ -41,7 +41,7 @@ lyric_parser::AttrId::namespaceView() const
 }
 
 bool
-lyric_parser::AttrId::isNamespace(const tempo_utils::SchemaNs &schemaNs) const
+lyric_parser::AttrId::isNamespace(const tempo_schema::SchemaNs &schemaNs) const
 {
     return std::string_view(schemaNs.getNs()) == namespaceView();
 }

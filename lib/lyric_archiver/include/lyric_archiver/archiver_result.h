@@ -11,7 +11,7 @@
 
 namespace lyric_archiver {
 
-    constexpr tempo_utils::SchemaNs kLyricArchiverStatusNs("dev.zuri.ns:lyric-archiver-status-1");
+    constexpr const char *kLyricArchiverStatusNs = "dev.zuri.ns:lyric-archiver-status-1";
 
     enum class ArchiverCondition {
         kArchiverInvariant,
@@ -80,7 +80,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_archiver::ArchiverCondition> {
         using StatusType = lyric_archiver::ArchiverStatus;
-        static constexpr const char *condition_namespace() { return lyric_archiver::kLyricArchiverStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_archiver::kLyricArchiverStatusNs; }
         static constexpr StatusCode make_status_code(lyric_archiver::ArchiverCondition condition)
         {
             switch (condition) {

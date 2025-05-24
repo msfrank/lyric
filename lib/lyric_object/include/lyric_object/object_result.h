@@ -8,7 +8,7 @@
 
 namespace lyric_object {
 
-    constexpr tempo_utils::SchemaNs kLyricObjectStatusNs("dev.zuri.ns:lyric-object-status-1");
+    constexpr const char *kLyricObjectStatusNs = "dev.zuri.ns:lyric-object-status-1";
 
     enum class ObjectCondition {
         kObjectInvariant,
@@ -77,7 +77,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_object::ObjectCondition> {
         using StatusType = lyric_object::ObjectStatus;
-        static constexpr const char *condition_namespace() { return lyric_object::kLyricObjectStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_object::kLyricObjectStatusNs; }
         static constexpr StatusCode make_status_code(lyric_object::ObjectCondition condition)
         {
             switch (condition) {

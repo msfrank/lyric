@@ -2,7 +2,6 @@
 #define LYRIC_PARSER_ARCHETYPE_ATTR_H
 
 #include <lyric_parser/parser_types.h>
-#include <tempo_utils/attr.h>
 
 #include "attr_id.h"
 #include "attr_value.h"

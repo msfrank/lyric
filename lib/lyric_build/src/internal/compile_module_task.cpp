@@ -13,7 +13,6 @@
 #include <lyric_common/common_types.h>
 #include <lyric_common/common_conversions.h>
 #include <lyric_compiler/lyric_compiler.h>
-#include <lyric_packaging/package_attrs.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
 #include <tempo_config/base_conversions.h>
@@ -252,8 +251,7 @@ lyric_build::internal::CompileModuleTask::compileModule(
     // serialize the object metadata
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
-    writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
-    writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
+    writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {

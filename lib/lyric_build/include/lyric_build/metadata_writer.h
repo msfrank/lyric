@@ -8,7 +8,6 @@
 #include <lyric_build/metadata_attr_writer.h>
 #include <lyric_build/metadata_result.h>
 #include <lyric_build/metadata_state.h>
-#include <tempo_utils/attr.h>
 
 namespace lyric_build {
 
@@ -37,13 +36,13 @@ namespace lyric_build {
          * @return
          */
         template <typename T>
-        tempo_utils::Status putAttr(const tempo_utils::AttrSerde<T> &serde, const T &value)
+        tempo_utils::Status putAttr(const tempo_schema::AttrSerde<T> &serde, const T &value)
         {
             MetadataAttrWriter writer(serde.getKey(), &m_state);
             auto result = serde.writeAttr(&writer, value);
             if (result.isStatus())
                 return result.getStatus();
-            return tempo_utils::AttrStatus::ok();
+            return {};
         }
     };
 }

@@ -19,7 +19,7 @@ bool
 lyric_importer::ImporterStatus::convert(ImporterStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {
     std::string_view srcNs = srcStatus.getErrorCategory();
-    std::string_view dstNs = kLyricImporterStatusNs.getNs();
+    std::string_view dstNs = kLyricImporterStatusNs;
     if (srcNs != dstNs)
         return false;
     dstStatus = ImporterStatus(srcStatus.getStatusCode(), srcStatus.getDetail());

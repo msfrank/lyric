@@ -1,19 +1,20 @@
 #ifndef LYRIC_PARSER_ARCHETYPE_STATE_ATTR_WRITER_H
 #define LYRIC_PARSER_ARCHETYPE_STATE_ATTR_WRITER_H
 
-#include <tempo_utils/attr.h>
+#include <tempo_schema/attr_serde.h>
+#include <tempo_schema/stateful_serde.h>
 
 namespace lyric_parser {
 
     class ArchetypeAttr;
     class ArchetypeState;
 
-    class ArchetypeStateAttrWriter : private tempo_utils::AbstractAttrWriterWithState<ArchetypeState> {
+    class ArchetypeStateAttrWriter : private tempo_schema::AbstractAttrWriterWithState<ArchetypeState> {
     public:
         template<class T>
         static tempo_utils::Result<ArchetypeAttr *> createAttr(
             ArchetypeState *state,
-            const tempo_utils::AttrSerde<T> &serde,
+            const tempo_schema::AttrSerde<T> &serde,
             const T &value)
         {
             auto key = serde.getKey();
@@ -25,8 +26,8 @@ namespace lyric_parser {
         template<class W, class S>
         static tempo_utils::Result<ArchetypeAttr *> createAttr(
             ArchetypeState *state,
-            tempo_utils::AttrKey key,
-            const tempo_utils::StatefulWritingSerde<W,S> &serde,
+            tempo_schema::AttrKey key,
+            const tempo_schema::StatefulWritingSerde<W,S> &serde,
             const W &value)
         {
             ArchetypeStateAttrWriter writer(key, state);
@@ -35,11 +36,11 @@ namespace lyric_parser {
         }
 
     private:
-        tempo_utils::AttrKey m_key;
+        tempo_schema::AttrKey m_key;
         ArchetypeState *m_state;
         ArchetypeAttr *m_attr;
 
-        ArchetypeStateAttrWriter(const tempo_utils::AttrKey &key, ArchetypeState *state);
+        ArchetypeStateAttrWriter(const tempo_schema::AttrKey &key, ArchetypeState *state);
         ArchetypeAttr *getAttr();
         ArchetypeState *getWriterState() override;
         tempo_utils::Result<tu_uint32> putNamespace(const tempo_utils::Url &nsUrl) override;
@@ -52,7 +53,7 @@ namespace lyric_parser {
         tempo_utils::Result<tu_uint32> putUInt16(tu_uint16 u16) override;
         tempo_utils::Result<tu_uint32> putUInt8(tu_uint8 u8) override;
         tempo_utils::Result<tu_uint32> putString(std::string_view str) override;
-        tempo_utils::Result<tu_uint32> putHandle(tempo_utils::AttrHandle handle) override;
+        tempo_utils::Result<tu_uint32> putHandle(tempo_schema::AttrHandle handle) override;
     };
 }
 

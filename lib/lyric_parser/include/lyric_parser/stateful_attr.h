@@ -1,7 +1,8 @@
 #ifndef LYRIC_PARSER_STATEFUL_ATTR_H
 #define LYRIC_PARSER_STATEFUL_ATTR_H
 
-#include <tempo_utils/attr.h>
+#include <tempo_schema/attr_serde.h>
+#include <tempo_schema/stateful_serde.h>
 
 namespace lyric_parser {
 
@@ -11,14 +12,14 @@ namespace lyric_parser {
     class NodeWalker;
 
     class StatefulAttr :
-        public tempo_utils::AttrValidator,
-        public tempo_utils::StatefulParsingSerde<NodeWalker, std::shared_ptr<const internal::ArchetypeReader>>,
-        public tempo_utils::StatefulParsingSerde<ArchetypeNode *, ArchetypeState>,
-        public tempo_utils::StatefulWritingSerde<ArchetypeNode *, ArchetypeState>
+        public tempo_schema::AttrValidator,
+        public tempo_schema::StatefulParsingSerde<NodeWalker, std::shared_ptr<const internal::ArchetypeReader>>,
+        public tempo_schema::StatefulParsingSerde<ArchetypeNode *, ArchetypeState>,
+        public tempo_schema::StatefulWritingSerde<ArchetypeNode *, ArchetypeState>
     {
     public:
-        explicit StatefulAttr(const tempo_utils::ComparableResource *resource)
-            : tempo_utils::AttrValidator(resource) {};
+        explicit StatefulAttr(const tempo_schema::ComparableResource *resource)
+            : tempo_schema::AttrValidator(resource) {};
     };
 }
 

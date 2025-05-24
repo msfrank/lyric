@@ -2,14 +2,15 @@
 #define LYRIC_SCHEMA_AST_SCHEMA_H
 
 #include <array>
+#include <tempo_schema/schema.h>
 
-#include <tempo_utils/schema.h>
+#include <tempo_schema/schema_namespace.h>
 
 namespace lyric_schema {
 
-    class LyricAstNs : public tempo_utils::SchemaNs {
+    class LyricAstNs : public tempo_schema::SchemaNs {
     public:
-        constexpr LyricAstNs() : tempo_utils::SchemaNs("dev.zuri.ns:ast-1") {};
+        constexpr LyricAstNs() : tempo_schema::SchemaNs("dev.zuri.ns:ast-1") {};
     };
     constexpr LyricAstNs kLyricAstNs;
 
@@ -148,278 +149,278 @@ namespace lyric_schema {
         NUM_IDS,                    // must be last
     };
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNilClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNilClass(
         &kLyricAstNs, LyricAstId::Nil, "Nil");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUndefClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUndefClass(
         &kLyricAstNs, LyricAstId::Undef, "Undef");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstFalseClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstFalseClass(
         &kLyricAstNs, LyricAstId::False, "False");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTrueClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTrueClass(
         &kLyricAstNs, LyricAstId::True, "True");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIntegerClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIntegerClass(
         &kLyricAstNs, LyricAstId::Integer, "Integer");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstFloatClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstFloatClass(
         &kLyricAstNs, LyricAstId::Float, "Float");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCharClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCharClass(
         &kLyricAstNs, LyricAstId::Char, "Char");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstStringClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstStringClass(
         &kLyricAstNs, LyricAstId::String, "String");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUrlClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUrlClass(
         &kLyricAstNs, LyricAstId::Url, "Url");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPairClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPairClass(
         &kLyricAstNs, LyricAstId::Pair, "Pair");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstAddClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstAddClass(
         &kLyricAstNs, LyricAstId::Add, "Add");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSubClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSubClass(
         &kLyricAstNs, LyricAstId::Sub, "Sub");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMulClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMulClass(
         &kLyricAstNs, LyricAstId::Mul, "Mul");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDivClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDivClass(
         &kLyricAstNs, LyricAstId::Div, "Div");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNegClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNegClass(
         &kLyricAstNs, LyricAstId::Neg, "Neg");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIsEqClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIsEqClass(
         &kLyricAstNs, LyricAstId::IsEq, "IsEq");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIsLtClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIsLtClass(
         &kLyricAstNs, LyricAstId::IsLt, "IsLt");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIsLeClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIsLeClass(
         &kLyricAstNs, LyricAstId::IsLe, "IsLe");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIsGtClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIsGtClass(
         &kLyricAstNs, LyricAstId::IsGt, "IsGt");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIsGeClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIsGeClass(
         &kLyricAstNs, LyricAstId::IsGe, "IsGe");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstAndClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstAndClass(
         &kLyricAstNs, LyricAstId::And, "And");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstOrClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstOrClass(
         &kLyricAstNs, LyricAstId::Or, "Or");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNotClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNotClass(
         &kLyricAstNs, LyricAstId::Not, "Not");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSTypeClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSTypeClass(
         &kLyricAstNs, LyricAstId::SType, "SType");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPTypeClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPTypeClass(
         &kLyricAstNs, LyricAstId::PType, "PType");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstITypeClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstITypeClass(
         &kLyricAstNs, LyricAstId::IType, "IType");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUTypeClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUTypeClass(
         &kLyricAstNs, LyricAstId::UType, "UType");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTypeArgumentsClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTypeArgumentsClass(
         &kLyricAstNs, LyricAstId::TypeArguments, "TypeArguments");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTypeOfClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTypeOfClass(
         &kLyricAstNs, LyricAstId::TypeOf, "TypeOf");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSetClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSetClass(
         &kLyricAstNs, LyricAstId::Set, "Set");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTargetClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTargetClass(
         &kLyricAstNs, LyricAstId::Target, "Target");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInplaceAddClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInplaceAddClass(
         &kLyricAstNs, LyricAstId::InplaceAdd, "InplaceAdd");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInplaceSubClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInplaceSubClass(
         &kLyricAstNs, LyricAstId::InplaceSub, "InplaceSub");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInplaceMulClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInplaceMulClass(
         &kLyricAstNs, LyricAstId::InplaceMul, "InplaceMul");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInplaceDivClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInplaceDivClass(
         &kLyricAstNs, LyricAstId::InplaceDiv, "InplaceDiv");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDataDerefClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDataDerefClass(
         &kLyricAstNs, LyricAstId::DataDeref, "DataDeref");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSymbolDerefClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSymbolDerefClass(
         &kLyricAstNs, LyricAstId::SymbolDeref, "SymbolDeref");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstThisClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstThisClass(
         &kLyricAstNs, LyricAstId::This, "This");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNameClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNameClass(
         &kLyricAstNs, LyricAstId::Name, "Name");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCallClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCallClass(
         &kLyricAstNs, LyricAstId::Call, "Call");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstKeywordClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstKeywordClass(
         &kLyricAstNs, LyricAstId::Keyword, "Keyword");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNewClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNewClass(
         &kLyricAstNs, LyricAstId::New, "New");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstLambdaClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstLambdaClass(
         &kLyricAstNs, LyricAstId::Lambda, "Lambda");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstLambdaFromClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstLambdaFromClass(
         &kLyricAstNs, LyricAstId::LambdaFrom, "LambdaFrom");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstBlockClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstBlockClass(
         &kLyricAstNs, LyricAstId::Block, "Block");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIfClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstIfClass(
         &kLyricAstNs, LyricAstId::If, "If");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCondClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCondClass(
         &kLyricAstNs, LyricAstId::Cond, "Cond");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMatchClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMatchClass(
         &kLyricAstNs, LyricAstId::Match, "Match");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstWhenClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstWhenClass(
         &kLyricAstNs, LyricAstId::When, "When");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstWhileClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstWhileClass(
         &kLyricAstNs, LyricAstId::While, "While");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstForClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstForClass(
         &kLyricAstNs, LyricAstId::For, "For");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTryClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTryClass(
         &kLyricAstNs, LyricAstId::Try, "Try");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstReturnClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstReturnClass(
         &kLyricAstNs, LyricAstId::Return, "Return");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstValClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstValClass(
         &kLyricAstNs, LyricAstId::Val, "Val");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstVarClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstVarClass(
         &kLyricAstNs, LyricAstId::Var, "Var");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCaseClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCaseClass(
         &kLyricAstNs, LyricAstId::Case, "Case");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUnpackClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUnpackClass(
         &kLyricAstNs, LyricAstId::Unpack, "Unpack");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPackClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPackClass(
         &kLyricAstNs, LyricAstId::Pack, "Pack");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstParamClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstParamClass(
         &kLyricAstNs, LyricAstId::Param, "Param");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstRestClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstRestClass(
         &kLyricAstNs, LyricAstId::Rest, "Rest");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCtxClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCtxClass(
         &kLyricAstNs, LyricAstId::Ctx, "Ctx");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstGenericClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstGenericClass(
         &kLyricAstNs, LyricAstId::Generic, "Generic");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPlaceholderClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPlaceholderClass(
         &kLyricAstNs, LyricAstId::Placeholder, "Placeholder");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstConstraintClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstConstraintClass(
         &kLyricAstNs, LyricAstId::Constraint, "Constraint");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDeclClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDeclClass(
         &kLyricAstNs, LyricAstId::Decl, "Decl");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefClass(
         &kLyricAstNs, LyricAstId::Def, "Def");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefAliasClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefAliasClass(
         &kLyricAstNs, LyricAstId::DefAlias, "DefAlias");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefClassClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefClassClass(
         &kLyricAstNs, LyricAstId::DefClass, "DefClass");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefConceptClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefConceptClass(
         &kLyricAstNs, LyricAstId::DefConcept, "DefConcept");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefEnumClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefEnumClass(
         &kLyricAstNs, LyricAstId::DefEnum, "DefEnum");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefInstanceClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefInstanceClass(
         &kLyricAstNs, LyricAstId::DefInstance, "DefInstance");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefStructClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefStructClass(
         &kLyricAstNs, LyricAstId::DefStruct, "DefStruct");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefStaticClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstDefStaticClass(
         &kLyricAstNs, LyricAstId::DefStatic, "DefStatic");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNamespaceClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNamespaceClass(
         &kLyricAstNs, LyricAstId::Namespace, "Namespace");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSuperClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSuperClass(
         &kLyricAstNs, LyricAstId::Super, "Super");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInitClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInitClass(
         &kLyricAstNs, LyricAstId::Init, "Init");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstImplClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstImplClass(
         &kLyricAstNs, LyricAstId::Impl, "Impl");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstImportAllClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstImportAllClass(
         &kLyricAstNs, LyricAstId::ImportAll, "ImportAll");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstImportSymbolsClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstImportSymbolsClass(
         &kLyricAstNs, LyricAstId::ImportSymbols, "ImportSymbols");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstImportModuleClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstImportModuleClass(
         &kLyricAstNs, LyricAstId::ImportModule, "ImportModule");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstExportAllClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstExportAllClass(
         &kLyricAstNs, LyricAstId::ExportAll, "ExportAll");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstExportSymbolsClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstExportSymbolsClass(
         &kLyricAstNs, LyricAstId::ExportSymbols, "ExportSymbols");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstExportModuleClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstExportModuleClass(
         &kLyricAstNs, LyricAstId::ExportModule, "ExportModule");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUsingClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUsingClass(
         &kLyricAstNs, LyricAstId::Using, "Using");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSymbolRefClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSymbolRefClass(
         &kLyricAstNs, LyricAstId::SymbolRef, "SymbolRef");
 
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMacroCallClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMacroCallClass(
         &kLyricAstNs, LyricAstId::MacroCall, "MacroCall");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMacroListClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstMacroListClass(
         &kLyricAstNs, LyricAstId::MacroList, "MacroList");
-    constexpr tempo_utils::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPragmaClass(
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstPragmaClass(
         &kLyricAstNs, LyricAstId::Pragma, "Pragma");
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstLiteralValueProperty(
-        &kLyricAstNs, LyricAstId::LiteralValue, "LiteralValue", tempo_utils::PropertyType::kString);
+        &kLyricAstNs, LyricAstId::LiteralValue, "LiteralValue", tempo_schema::PropertyType::kString);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstBaseEnumProperty(
-        &kLyricAstNs, LyricAstId::BaseEnum, "BaseEnum", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::BaseEnum, "BaseEnum", tempo_schema::PropertyType::kUInt32);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstNotationEnumProperty(
-        &kLyricAstNs, LyricAstId::NotationEnum, "NotationEnum", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::NotationEnum, "NotationEnum", tempo_schema::PropertyType::kUInt32);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstAccessEnumProperty(
-        &kLyricAstNs, LyricAstId::AccessEnum, "AccessEnum", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::AccessEnum, "AccessEnum", tempo_schema::PropertyType::kUInt32);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstBoundEnumProperty(
-        &kLyricAstNs, LyricAstId::BoundEnum, "BoundEnum", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::BoundEnum, "BoundEnum", tempo_schema::PropertyType::kUInt32);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstVarianceEnumProperty(
-        &kLyricAstNs, LyricAstId::VarianceEnum, "VarianceEnum", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::VarianceEnum, "VarianceEnum", tempo_schema::PropertyType::kUInt32);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
         kLyricAstDeriveEnumProperty(
-        &kLyricAstNs, LyricAstId::DeriveEnum, "DeriveEnum", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::DeriveEnum, "DeriveEnum", tempo_schema::PropertyType::kUInt32);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstModuleLocationProperty(
-        &kLyricAstNs, LyricAstId::ModuleLocation, "ModuleLocation", tempo_utils::PropertyType::kString);
+        &kLyricAstNs, LyricAstId::ModuleLocation, "ModuleLocation", tempo_schema::PropertyType::kString);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstSymbolPathProperty(
-        &kLyricAstNs, LyricAstId::SymbolPath, "SymbolPath", tempo_utils::PropertyType::kString);
+        &kLyricAstNs, LyricAstId::SymbolPath, "SymbolPath", tempo_schema::PropertyType::kString);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstSymbolUrlProperty(
-        &kLyricAstNs, LyricAstId::SymbolUrl, "SymbolUrl", tempo_utils::PropertyType::kString);
+        &kLyricAstNs, LyricAstId::SymbolUrl, "SymbolUrl", tempo_schema::PropertyType::kString);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstIdentifierProperty(
-        &kLyricAstNs, LyricAstId::Identifier, "Identifier", tempo_utils::PropertyType::kString);
+        &kLyricAstNs, LyricAstId::Identifier, "Identifier", tempo_schema::PropertyType::kString);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstLabelProperty(
-        &kLyricAstNs, LyricAstId::Label, "Label", tempo_utils::PropertyType::kString);
+        &kLyricAstNs, LyricAstId::Label, "Label", tempo_schema::PropertyType::kString);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
         kLyricAstIsVariableProperty(
-        &kLyricAstNs, LyricAstId::IsVariable, "IsVariable", tempo_utils::PropertyType::kBool);
+        &kLyricAstNs, LyricAstId::IsVariable, "IsVariable", tempo_schema::PropertyType::kBool);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstTypeOffsetProperty(
-        &kLyricAstNs, LyricAstId::TypeOffset, "TypeOffset", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::TypeOffset, "TypeOffset", tempo_schema::PropertyType::kUInt32);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstDefaultOffsetProperty(
-        &kLyricAstNs, LyricAstId::DefaultOffset, "DefaultOffset", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::DefaultOffset, "DefaultOffset", tempo_schema::PropertyType::kUInt32);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstFinallyOffsetProperty(
-        &kLyricAstNs, LyricAstId::FinallyOffset, "FinallyOffset", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::FinallyOffset, "FinallyOffset", tempo_schema::PropertyType::kUInt32);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstRestOffsetProperty(
-        &kLyricAstNs, LyricAstId::RestOffset, "RestOffset", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::RestOffset, "RestOffset", tempo_schema::PropertyType::kUInt32);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstGenericOffsetProperty(
-        &kLyricAstNs, LyricAstId::GenericOffset, "GenericOffset", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::GenericOffset, "GenericOffset", tempo_schema::PropertyType::kUInt32);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstTypeArgumentsOffsetProperty(
-        &kLyricAstNs, LyricAstId::TypeArgumentsOffset, "TypeArgumentsOffset", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::TypeArgumentsOffset, "TypeArgumentsOffset", tempo_schema::PropertyType::kUInt32);
 
-    constexpr tempo_utils::SchemaProperty<LyricAstNs,LyricAstId>
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstMacroListOffsetProperty(
-        &kLyricAstNs, LyricAstId::MacroListOffset, "MacroListOffset", tempo_utils::PropertyType::kUInt32);
+        &kLyricAstNs, LyricAstId::MacroListOffset, "MacroListOffset", tempo_schema::PropertyType::kUInt32);
 
     constexpr std::array<
-        const tempo_utils::SchemaResource<LyricAstNs,LyricAstId> *,
+        const tempo_schema::SchemaResource<LyricAstNs,LyricAstId> *,
         static_cast<std::size_t>(LyricAstId::NUM_IDS)>
     kLyricAstResources = {
 
@@ -550,7 +551,7 @@ namespace lyric_schema {
         &kLyricAstMacroListOffsetProperty,
     };
 
-    constexpr tempo_utils::SchemaVocabulary<LyricAstNs, LyricAstId>
+    constexpr tempo_schema::SchemaVocabulary<LyricAstNs, LyricAstId>
     kLyricAstVocabulary(&kLyricAstNs, &kLyricAstResources);
 }
 

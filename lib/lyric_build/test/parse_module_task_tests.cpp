@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <lyric_build/build_attrs.h>
 #include <lyric_build/internal/parse_module_task.h>
 #include <lyric_build/local_filesystem.h>
 #include <lyric_build/lyric_builder.h>
+#include <lyric_common/common_types.h>
 #include <tempo_config/parse_config.h>
 #include <tempo_test/result_matchers.h>
 
 #include "base_build_fixture.h"
-#include "lyric_common/common_types.h"
-#include "lyric_packaging/package_attrs.h"
 
 class ParseModuleTask : public BaseBuildFixture {
 protected:
@@ -49,7 +49,7 @@ TEST_F(ParseModuleTask, ConfigureTask)
 
     auto walker = metadata.getMetadata();
     std::string contentType;
-    walker.parseAttr(lyric_packaging::kLyricPackagingContentType, contentType);
+    walker.parseAttr(lyric_build::kLyricBuildContentType, contentType);
     ASSERT_EQ (lyric_common::kIntermezzoContentType, contentType);
 
     auto loadContentResult = cache->loadContent(artifactId);

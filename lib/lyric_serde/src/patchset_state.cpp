@@ -71,7 +71,7 @@ lyric_serde::PatchsetState::numNamespaces() const
 }
 
 tempo_utils::Result<lyric_serde::PatchsetValue *>
-lyric_serde::PatchsetState::appendValue(const tempo_utils::AttrValue &intrinsicValue)
+lyric_serde::PatchsetState::appendValue(const tempo_schema::AttrValue &intrinsicValue)
 {
     ValueAddress address(m_patchsetValues.size());
     auto variant = std::make_unique<ValueVariant>();
@@ -217,51 +217,51 @@ lyric_serde::PatchsetState::numChanges() const
 }
 
 static std::pair<lps1::Value,flatbuffers::Offset<void>>
-serialize_value(flatbuffers::FlatBufferBuilder &buffer, const tempo_utils::AttrValue &value)
+serialize_value(flatbuffers::FlatBufferBuilder &buffer, const tempo_schema::AttrValue &value)
 {
     switch (value.getType()) {
-        case tempo_utils::ValueType::Nil: {
+        case tempo_schema::ValueType::Nil: {
             auto type = lps1::Value::TrueFalseNilValue;
             auto offset = lps1::CreateTrueFalseNilValue(buffer, lps1::TrueFalseNil::Nil).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::Bool: {
+        case tempo_schema::ValueType::Bool: {
             auto type = lps1::Value::TrueFalseNilValue;
             auto tfn = value.getBool()? lps1::TrueFalseNil::True : lps1::TrueFalseNil::False;
             auto offset = lps1::CreateTrueFalseNilValue(buffer, tfn).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::Int64: {
+        case tempo_schema::ValueType::Int64: {
             auto type = lps1::Value::Int64Value;
             auto offset = lps1::CreateInt64Value(buffer, value.getInt64()).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::Float64: {
+        case tempo_schema::ValueType::Float64: {
             auto type = lps1::Value::Float64Value;
             auto offset = lps1::CreateFloat64Value(buffer, value.getFloat64()).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::UInt64: {
+        case tempo_schema::ValueType::UInt64: {
             auto type = lps1::Value::UInt64Value;
             auto offset = lps1::CreateUInt64Value(buffer, value.getUInt64()).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::UInt32: {
+        case tempo_schema::ValueType::UInt32: {
             auto type = lps1::Value::UInt32Value;
             auto offset = lps1::CreateUInt32Value(buffer, value.getUInt32()).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::UInt16: {
+        case tempo_schema::ValueType::UInt16: {
             auto type = lps1::Value::UInt16Value;
             auto offset = lps1::CreateUInt16Value(buffer, value.getUInt16()).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::UInt8: {
+        case tempo_schema::ValueType::UInt8: {
             auto type = lps1::Value::UInt8Value;
             auto offset = lps1::CreateUInt8Value(buffer, value.getUInt8()).Union();
             return {type, offset};
         }
-        case tempo_utils::ValueType::String: {
+        case tempo_schema::ValueType::String: {
             auto type = lps1::Value::StringValue;
             auto offset = lps1::CreateStringValue(buffer, buffer.CreateSharedString(value.stringView())).Union();
             return {type, offset};

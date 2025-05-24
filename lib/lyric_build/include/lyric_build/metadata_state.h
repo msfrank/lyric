@@ -1,10 +1,9 @@
 #ifndef LYRIC_BUILD_METADATA_STATE_H
 #define LYRIC_BUILD_METADATA_STATE_H
 
-#include <lyric_build/build_result.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/lyric_metadata.h>
-#include <tempo_utils/attr.h>
+#include <tempo_schema/attr.h>
 #include <tempo_utils/url.h>
 
 namespace lyric_build {
@@ -26,7 +25,7 @@ namespace lyric_build {
         std::vector<MetadataNamespace *>::const_iterator namespacesEnd() const;
         int numNamespaces() const;
 
-        tempo_utils::Result<MetadataAttr *> appendAttr(AttrId id, const tempo_utils::AttrValue &value);
+        tempo_utils::Result<MetadataAttr *> appendAttr(AttrId id, const tempo_schema::AttrValue &value);
         MetadataAttr *getAttr(int index) const;
         std::vector<MetadataAttr *>::const_iterator attrsBegin() const;
         std::vector<MetadataAttr *>::const_iterator attrsEnd() const;

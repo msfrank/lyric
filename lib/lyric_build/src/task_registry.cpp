@@ -9,7 +9,6 @@
 #include <lyric_build/internal/compile_plugin_task.h>
 #include <lyric_build/internal/fetch_external_file_task.h>
 #include <lyric_build/internal/orchestrate_task.h>
-#include <lyric_build/internal/package_task.h>
 #include <lyric_build/internal/parse_module_task.h>
 #include <lyric_build/internal/provide_module_task.h>
 #include <lyric_build/internal/provide_plugin_task.h>
@@ -35,7 +34,6 @@ static const TaskDomain predefinedTaskDomains[] = {
     {"compile_plugin",      lyric_build::internal::new_compile_plugin_task},
     {"fetch_external_file", lyric_build::internal::new_fetch_external_file_task},
     {"orchestrate",         lyric_build::internal::new_orchestrate_task},
-    {"package",             lyric_build::internal::new_package_task},
     {"parse_module",        lyric_build::internal::new_parse_module_task},
     {"provide_module",      lyric_build::internal::new_provide_module_task},
     {"provide_plugin",      lyric_build::internal::new_provide_plugin_task},

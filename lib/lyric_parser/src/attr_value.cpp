@@ -8,7 +8,7 @@ lyric_parser::AttrValue::AttrValue()
 {
 }
 
-lyric_parser::AttrValue::AttrValue(tempo_utils::AttrValue literal)
+lyric_parser::AttrValue::AttrValue(tempo_schema::AttrValue literal)
     : m_literal(literal),
       m_node(nullptr)
 {
@@ -40,7 +40,7 @@ lyric_parser::AttrValue::isNode() const
     return m_node != nullptr;
 }
 
-tempo_utils::AttrValue
+tempo_schema::AttrValue
 lyric_parser::AttrValue::getLiteral() const
 {
     return m_literal;

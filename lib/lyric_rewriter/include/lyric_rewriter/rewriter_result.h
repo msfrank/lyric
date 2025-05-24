@@ -11,7 +11,7 @@
 
 namespace lyric_rewriter {
 
-    constexpr tempo_utils::SchemaNs kLyricRewriterStatusNs("dev.zuri.ns:lyric-rewriter-status-1");
+    constexpr const char *kLyricRewriterStatusNs = "dev.zuri.ns:lyric-rewriter-status-1";
 
     enum class RewriterCondition {
         kSyntaxError,
@@ -81,7 +81,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_rewriter::RewriterCondition> {
         using StatusType = lyric_rewriter::RewriterStatus;
-        static constexpr const char *condition_namespace() { return lyric_rewriter::kLyricRewriterStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_rewriter::kLyricRewriterStatusNs; }
         static constexpr StatusCode make_status_code(lyric_rewriter::RewriterCondition condition)
         {
             switch (condition) {

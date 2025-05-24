@@ -5,7 +5,8 @@
 
 #include <lyric_build/build_types.h>
 #include <lyric_build/metadata_attr_parser.h>
-#include <tempo_utils/attr.h>
+#include <tempo_schema/attr_serde.h>
+#include <tempo_schema/schema_result.h>
 #include <tempo_utils/integer_types.h>
 
 namespace lyric_build {
@@ -18,8 +19,8 @@ namespace lyric_build {
 
         bool isValid() const;
 
-        bool hasAttr(const tempo_utils::AttrKey &key) const;
-        bool hasAttr(const tempo_utils::AttrValidator &validator) const;
+        bool hasAttr(const tempo_schema::AttrKey &key) const;
+        bool hasAttr(const tempo_schema::AttrValidator &validator) const;
         int numAttrs() const;
 
     private:
@@ -28,7 +29,7 @@ namespace lyric_build {
         MetadataWalker(std::shared_ptr<const internal::MetadataReader> reader);
         friend class LyricMetadata;
 
-        tu_uint32 findIndexForAttr(const tempo_utils::AttrKey &key) const;
+        tu_uint32 findIndexForAttr(const tempo_schema::AttrKey &key) const;
 
     public:
         /**
@@ -45,8 +46,8 @@ namespace lyric_build {
         parseAttr(const AttrType &attr, SerdeType &value) const {
             auto index = findIndexForAttr(attr.getKey());
             if (index == METADATA_INVALID_OFFSET_U32)
-                return tempo_utils::AttrStatus::forCondition(
-                    tempo_utils::AttrCondition::kMissingValue, "missing attr in metadata");
+                return tempo_schema::SchemaStatus::forCondition(
+                    tempo_schema::SchemaCondition::kMissingValue, "missing attr in metadata");
             MetadataAttrParser parser(m_reader);
             return attr.parseAttr(index, &parser, value);
         }

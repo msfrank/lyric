@@ -70,7 +70,7 @@ bool
 lyric_runtime::UrlRef::serializeValue(lyric_serde::PatchsetState &state, tu_uint32 &index)
 {
     std::string s = m_url.toString();
-    auto appendValueResult = state.appendValue(tempo_utils::AttrValue(s));
+    auto appendValueResult = state.appendValue(tempo_schema::AttrValue(s));
     if (appendValueResult.isStatus()) {
         index = lyric_runtime::INVALID_ADDRESS_U32;
         return false;

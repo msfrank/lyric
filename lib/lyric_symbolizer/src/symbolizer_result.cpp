@@ -19,7 +19,7 @@ bool
 lyric_symbolizer::SymbolizerStatus::convert(SymbolizerStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {
     std::string_view srcNs = srcStatus.getErrorCategory();
-    std::string_view dstNs = kLyricSymbolizerStatusNs.getNs();
+    std::string_view dstNs = kLyricSymbolizerStatusNs;
     if (srcNs != dstNs)
         return false;
     dstStatus = SymbolizerStatus(srcStatus.getStatusCode(), srcStatus.getDetail());

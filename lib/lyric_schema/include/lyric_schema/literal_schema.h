@@ -3,13 +3,14 @@
 
 #include <array>
 
-#include <tempo_utils/schema.h>
+#include <tempo_schema/schema.h>
+#include <tempo_schema/schema_namespace.h>
 
 namespace lyric_schema {
 
-    class LyricLiteralNs : public tempo_utils::SchemaNs {
+    class LyricLiteralNs : public tempo_schema::SchemaNs {
     public:
-        constexpr LyricLiteralNs() : tempo_utils::SchemaNs("io.fathomdata:ns:literals-1") {};
+        constexpr LyricLiteralNs() : tempo_schema::SchemaNs("io.fathomdata:ns:literals-1") {};
     };
     constexpr LyricLiteralNs kLyricLiteralNs;
 
@@ -24,36 +25,36 @@ namespace lyric_schema {
         NUM_IDS,
     };
 
-    constexpr tempo_utils::SchemaProperty<LyricLiteralNs,LyricLiteralId>
+    constexpr tempo_schema::SchemaProperty<LyricLiteralNs,LyricLiteralId>
     kLyricLiteralNilProperty(
-        &kLyricLiteralNs, LyricLiteralId::Nil, "Nil", tempo_utils::PropertyType::kNil);
+        &kLyricLiteralNs, LyricLiteralId::Nil, "Nil", tempo_schema::PropertyType::kNil);
 
-    constexpr tempo_utils::SchemaProperty<LyricLiteralNs,LyricLiteralId>
+    constexpr tempo_schema::SchemaProperty<LyricLiteralNs,LyricLiteralId>
     kLyricLiteralBoolProperty(
-        &kLyricLiteralNs, LyricLiteralId::Bool, "Bool", tempo_utils::PropertyType::kBool);
+        &kLyricLiteralNs, LyricLiteralId::Bool, "Bool", tempo_schema::PropertyType::kBool);
 
-    constexpr tempo_utils::SchemaProperty<LyricLiteralNs,LyricLiteralId>
+    constexpr tempo_schema::SchemaProperty<LyricLiteralNs,LyricLiteralId>
     kLyricLiteralLongProperty(
-        &kLyricLiteralNs, LyricLiteralId::Long, "Long", tempo_utils::PropertyType::kInt64);
+        &kLyricLiteralNs, LyricLiteralId::Long, "Long", tempo_schema::PropertyType::kInt64);
 
-    constexpr tempo_utils::SchemaProperty<LyricLiteralNs,LyricLiteralId>
+    constexpr tempo_schema::SchemaProperty<LyricLiteralNs,LyricLiteralId>
     kLyricLiteralDoubleProperty(
-        &kLyricLiteralNs, LyricLiteralId::Double, "Double", tempo_utils::PropertyType::kFloat64);
+        &kLyricLiteralNs, LyricLiteralId::Double, "Double", tempo_schema::PropertyType::kFloat64);
 
-    constexpr tempo_utils::SchemaProperty<LyricLiteralNs,LyricLiteralId>
+    constexpr tempo_schema::SchemaProperty<LyricLiteralNs,LyricLiteralId>
     kLyricLiteralStringProperty(
-        &kLyricLiteralNs, LyricLiteralId::String, "String", tempo_utils::PropertyType::kString);
+        &kLyricLiteralNs, LyricLiteralId::String, "String", tempo_schema::PropertyType::kString);
 
-    constexpr tempo_utils::SchemaClass<LyricLiteralNs,LyricLiteralId>
+    constexpr tempo_schema::SchemaClass<LyricLiteralNs,LyricLiteralId>
     kLyricLiteralSeqClass(
         &kLyricLiteralNs, LyricLiteralId::Seq, "Seq");
 
-    constexpr tempo_utils::SchemaClass<LyricLiteralNs,LyricLiteralId>
+    constexpr tempo_schema::SchemaClass<LyricLiteralNs,LyricLiteralId>
     kLyricLiteralMapClass(
         &kLyricLiteralNs, LyricLiteralId::Map, "Map");
 
     constexpr std::array<
-        const tempo_utils::SchemaResource<LyricLiteralNs,LyricLiteralId> *,
+        const tempo_schema::SchemaResource<LyricLiteralNs,LyricLiteralId> *,
         static_cast<std::size_t>(LyricLiteralId::NUM_IDS)>
     kLyricLiteralResources = {
         &kLyricLiteralNilProperty,
@@ -65,7 +66,7 @@ namespace lyric_schema {
         &kLyricLiteralMapClass,
     };
 
-    constexpr tempo_utils::SchemaVocabulary<LyricLiteralNs, LyricLiteralId>
+    constexpr tempo_schema::SchemaVocabulary<LyricLiteralNs, LyricLiteralId>
     kLyricLiteralVocabulary(&kLyricLiteralNs, &kLyricLiteralResources);
 };
 

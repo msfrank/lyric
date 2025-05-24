@@ -10,7 +10,7 @@
 
 namespace lyric_runtime {
 
-    constexpr tempo_utils::SchemaNs kLyricRuntimeInterpreterStatusNs("dev.zuri.ns:lyric-runtime-interpreter-status-1");
+    constexpr const char *kLyricRuntimeInterpreterStatusNs = "dev.zuri.ns:lyric-runtime-interpreter-status-1";
 
     enum class InterpreterCondition {
         kInvalidOperandAddressV1,
@@ -102,7 +102,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_runtime::InterpreterCondition> {
         using StatusType = lyric_runtime::InterpreterStatus;
-        static constexpr const char *condition_namespace() { return lyric_runtime::kLyricRuntimeInterpreterStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_runtime::kLyricRuntimeInterpreterStatusNs; }
         static constexpr StatusCode make_status_code(lyric_runtime::InterpreterCondition condition)
         {
             switch (condition) {

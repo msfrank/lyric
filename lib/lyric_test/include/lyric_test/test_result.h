@@ -10,7 +10,7 @@
 
 namespace lyric_test {
 
-    constexpr tempo_utils::SchemaNs kLyricTestStatusNs("dev.zuri.ns:lyric-test-status-1");
+    constexpr const char *kLyricTestStatusNs = "dev.zuri.ns:lyric-test-status-1";
 
     enum class TestCondition {
         kInvalidConfiguration,
@@ -81,7 +81,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_test::TestCondition> {
         using StatusType = lyric_test::TestStatus;
-        static constexpr const char *condition_namespace() { return lyric_test::kLyricTestStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_test::kLyricTestStatusNs; }
         static constexpr StatusCode make_status_code(lyric_test::TestCondition condition)
         {
             switch (condition) {

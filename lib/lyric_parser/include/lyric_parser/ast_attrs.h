@@ -5,7 +5,7 @@
 #include <lyric_common/common_serde.h>
 #include <lyric_common/symbol_url.h>
 #include <lyric_schema/ast_schema.h>
-#include <tempo_utils/attr.h>
+#include <tempo_schema/attr_serde.h>
 
 #include "archetype_node.h"
 #include "archetype_state.h"
@@ -14,113 +14,113 @@
 
 namespace lyric_parser {
 
-    class BaseTypeAttr : public tempo_utils::AttrSerde<BaseType> {
+    class BaseTypeAttr : public tempo_schema::AttrSerde<BaseType> {
 
         using SerdeType = BaseType;
 
     public:
-        explicit BaseTypeAttr(const tempo_utils::ComparableResource *resource);
+        explicit BaseTypeAttr(const tempo_schema::ComparableResource *resource);
         tempo_utils::Result<tu_uint32> writeAttr(
-            tempo_utils::AbstractAttrWriter *writer,
+            tempo_schema::AbstractAttrWriter *writer,
             const BaseType &value) const override;
         tempo_utils::Status parseAttr(
             tu_uint32 index,
-            tempo_utils::AbstractAttrParser *parser,
+            tempo_schema::AbstractAttrParser *parser,
             BaseType &value) const override;
     };
 
-    class NotationTypeAttr : public tempo_utils::AttrSerde<NotationType> {
+    class NotationTypeAttr : public tempo_schema::AttrSerde<NotationType> {
 
         using SerdeType = NotationType;
 
     public:
-        explicit NotationTypeAttr(const tempo_utils::ComparableResource *resource);
+        explicit NotationTypeAttr(const tempo_schema::ComparableResource *resource);
         tempo_utils::Result<tu_uint32> writeAttr(
-            tempo_utils::AbstractAttrWriter *writer,
+            tempo_schema::AbstractAttrWriter *writer,
             const NotationType &value) const override;
         tempo_utils::Status parseAttr(
             tu_uint32 index,
-            tempo_utils::AbstractAttrParser *parser,
+            tempo_schema::AbstractAttrParser *parser,
             NotationType &value) const override;
     };
 
-    class AccessTypeAttr : public tempo_utils::AttrSerde<AccessType> {
+    class AccessTypeAttr : public tempo_schema::AttrSerde<AccessType> {
 
         using SerdeType = AccessType;
 
     public:
-        explicit AccessTypeAttr(const tempo_utils::ComparableResource *resource);
+        explicit AccessTypeAttr(const tempo_schema::ComparableResource *resource);
         tempo_utils::Result<tu_uint32> writeAttr(
-            tempo_utils::AbstractAttrWriter *writer,
+            tempo_schema::AbstractAttrWriter *writer,
             const AccessType &value) const override;
         tempo_utils::Status parseAttr(
             tu_uint32 index,
-            tempo_utils::AbstractAttrParser *parser,
+            tempo_schema::AbstractAttrParser *parser,
             AccessType &value) const override;
     };
 
-    class BoundTypeAttr : public tempo_utils::AttrSerde<BoundType> {
+    class BoundTypeAttr : public tempo_schema::AttrSerde<BoundType> {
 
         using SerdeType = BoundType;
 
     public:
-        explicit BoundTypeAttr(const tempo_utils::ComparableResource *resource);
+        explicit BoundTypeAttr(const tempo_schema::ComparableResource *resource);
         tempo_utils::Result<tu_uint32> writeAttr(
-            tempo_utils::AbstractAttrWriter *writer,
+            tempo_schema::AbstractAttrWriter *writer,
             const BoundType &value) const override;
         tempo_utils::Status parseAttr(
             tu_uint32 index,
-            tempo_utils::AbstractAttrParser *parser,
+            tempo_schema::AbstractAttrParser *parser,
             BoundType &value) const override;
     };
 
-    class VarianceTypeAttr : public tempo_utils::AttrSerde<VarianceType> {
+    class VarianceTypeAttr : public tempo_schema::AttrSerde<VarianceType> {
 
         using SerdeType = VarianceType;
 
     public:
-        explicit VarianceTypeAttr(const tempo_utils::ComparableResource *resource);
+        explicit VarianceTypeAttr(const tempo_schema::ComparableResource *resource);
         tempo_utils::Result<tu_uint32> writeAttr(
-            tempo_utils::AbstractAttrWriter *writer,
+            tempo_schema::AbstractAttrWriter *writer,
             const VarianceType &value) const override;
         tempo_utils::Status parseAttr(
             tu_uint32 index,
-            tempo_utils::AbstractAttrParser *parser,
+            tempo_schema::AbstractAttrParser *parser,
             VarianceType &value) const override;
     };
 
-    class DeriveTypeAttr : public tempo_utils::AttrSerde<DeriveType> {
+    class DeriveTypeAttr : public tempo_schema::AttrSerde<DeriveType> {
 
         using SerdeType = DeriveType;
 
     public:
-        explicit DeriveTypeAttr(const tempo_utils::ComparableResource *resource);
+        explicit DeriveTypeAttr(const tempo_schema::ComparableResource *resource);
         tempo_utils::Result<tu_uint32> writeAttr(
-            tempo_utils::AbstractAttrWriter *writer,
+            tempo_schema::AbstractAttrWriter *writer,
             const DeriveType &value) const override;
         tempo_utils::Status parseAttr(
             tu_uint32 index,
-            tempo_utils::AbstractAttrParser *parser,
+            tempo_schema::AbstractAttrParser *parser,
             DeriveType &value) const override;
     };
 
     class NodeAttr : public StatefulAttr {
     public:
-        explicit NodeAttr(const tempo_utils::ComparableResource *resource);
+        explicit NodeAttr(const tempo_schema::ComparableResource *resource);
         tempo_utils::Result<tu_uint32> writeAttr(
-            tempo_utils::AbstractAttrWriterWithState<ArchetypeState> *writer,
+            tempo_schema::AbstractAttrWriterWithState<ArchetypeState> *writer,
             ArchetypeNode * const &value) const override;
         tempo_utils::Status parseAttr(
             tu_uint32 index,
-            tempo_utils::AbstractAttrParserWithState<ArchetypeState> *parser,
+            tempo_schema::AbstractAttrParserWithState<ArchetypeState> *parser,
             ArchetypeNode * &value) const override;
         tempo_utils::Status parseAttr(
             tu_uint32 index,
-            tempo_utils::AbstractAttrParserWithState<std::shared_ptr<const internal::ArchetypeReader>> *parser,
+            tempo_schema::AbstractAttrParserWithState<std::shared_ptr<const internal::ArchetypeReader>> *parser,
             NodeWalker &value) const override;
     };
 
-    extern const tempo_utils::StringAttr kLyricAstLiteralValue;
+    extern const tempo_schema::StringAttr kLyricAstLiteralValue;
 
     extern const BaseTypeAttr kLyricAstBaseType;
     extern const NotationTypeAttr kLyricAstNotationType;
@@ -131,9 +131,9 @@ namespace lyric_parser {
 
     extern const lyric_common::ModuleLocationAttr kLyricAstModuleLocation;
     extern const lyric_common::SymbolPathAttr kLyricAstSymbolPath;
-    extern const tempo_utils::StringAttr kLyricAstIdentifier;
-    extern const tempo_utils::StringAttr kLyricAstLabel;
-    extern const tempo_utils::BoolAttr kLyricAstIsVariable;
+    extern const tempo_schema::StringAttr kLyricAstIdentifier;
+    extern const tempo_schema::StringAttr kLyricAstLabel;
+    extern const tempo_schema::BoolAttr kLyricAstIsVariable;
 
     extern const NodeAttr kLyricAstTypeOffset;
     extern const NodeAttr kLyricAstDefaultOffset;

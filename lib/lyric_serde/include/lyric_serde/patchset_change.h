@@ -1,9 +1,7 @@
 #ifndef LYRIC_SERDE_PATCHSET_CHANGE_H
 #define LYRIC_SERDE_PATCHSET_CHANGE_H
 
-#include <filesystem>
-
-#include <tempo_utils/attr.h>
+#include <tempo_schema/attr.h>
 
 #include "operation_path.h"
 #include "patchset_state.h"
@@ -62,7 +60,7 @@ namespace lyric_serde {
         template <class NsType, class IdType>
         void setUpdateOperation(
             const OperationPath &path,
-            const tempo_utils::SchemaProperty<NsType,IdType> &property,
+            const tempo_schema::SchemaProperty<NsType,IdType> &property,
             ValueAddress value);
     };
 }

@@ -109,8 +109,8 @@ namespace lyric_parser {
         tempo_utils::Result<lyric_parser::ArchetypeAttr *>
         loadAttr(
             const lyric_parser::LyricArchetype &archetype,
-            const tempo_utils::AttrKey &key,
-            const tempo_utils::AttrValue &value,
+            const tempo_schema::AttrKey &key,
+            const tempo_schema::AttrValue &value,
             lyric_parser::ArchetypeState *state,
             std::vector<lyric_parser::ArchetypeNode *> &nodeTable);
 
@@ -133,7 +133,7 @@ namespace lyric_parser {
         template <class NsType, class IdType>
         tempo_utils::Result<ArchetypeNode *>
         appendNode(
-            tempo_utils::SchemaClass<NsType,IdType> nodeClass,
+            tempo_schema::SchemaClass<NsType,IdType> nodeClass,
             const ParseLocation &location)
         {
             auto putNamespaceResult = putNamespace(nodeClass.getNsUrl());
@@ -149,7 +149,7 @@ namespace lyric_parser {
         template<class NsType, class IdType>
         void checkNodeOrThrow(
             const ArchetypeNode *node,
-            const tempo_utils::SchemaClass<NsType,IdType> &schemaClass)
+            const tempo_schema::SchemaClass<NsType,IdType> &schemaClass)
         {
             if (!node->isClass(schemaClass)) {
                 auto status = logAndContinue(ParseCondition::kParseInvariant,
@@ -170,7 +170,7 @@ namespace lyric_parser {
         template <class NsType, class IdType>
         ArchetypeNode *
         appendNodeOrThrow(
-            tempo_utils::SchemaClass<NsType,IdType> nodeClass,
+            tempo_schema::SchemaClass<NsType,IdType> nodeClass,
             const ParseLocation &location)
         {
             auto appendNodeResult = appendNode(nodeClass, location);

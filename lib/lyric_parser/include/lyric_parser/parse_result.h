@@ -9,7 +9,7 @@
 
 namespace lyric_parser {
 
-    constexpr tempo_utils::SchemaNs kLyricParserStatusNs("dev.zuri.ns:lyric-parser-status-1");
+    constexpr const char *kLyricParserStatusNs = "dev.zuri.ns:lyric-parser-status-1";
 
     enum class ParseCondition {
         kMissingModule,
@@ -82,7 +82,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_parser::ParseCondition> {
         using StatusType = lyric_parser::ParseStatus;
-        static constexpr const char *condition_namespace() { return lyric_parser::kLyricParserStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_parser::kLyricParserStatusNs; }
         static constexpr StatusCode make_status_code(lyric_parser::ParseCondition condition)
         {
             switch (condition) {

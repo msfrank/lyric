@@ -11,7 +11,7 @@
 
 namespace lyric_optimizer {
 
-    constexpr tempo_utils::SchemaNs kLyricOptimizerStatusNs("dev.zuri.ns:lyric-optimizer-status-1");
+    constexpr const char *kLyricOptimizerStatusNs = "dev.zuri.ns:lyric-optimizer-status-1";
 
     enum class OptimizerCondition {
         kOptimizerInvariant,
@@ -80,7 +80,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_optimizer::OptimizerCondition> {
         using StatusType = lyric_optimizer::OptimizerStatus;
-        static constexpr const char *condition_namespace() { return lyric_optimizer::kLyricOptimizerStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_optimizer::kLyricOptimizerStatusNs; }
         static constexpr StatusCode make_status_code(lyric_optimizer::OptimizerCondition condition)
         {
             switch (condition) {

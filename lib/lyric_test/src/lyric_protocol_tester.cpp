@@ -77,7 +77,6 @@ lyric_test::LyricProtocolTester::runModuleInMockSandbox(
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
     loaderChain.push_back(builder->getBootstrapLoader());
     loaderChain.push_back(dependencyLoader);
-    loaderChain.push_back(builder->getPackageLoader());
     options.loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
 
     // construct the interpreter state

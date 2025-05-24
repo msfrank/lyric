@@ -8,7 +8,6 @@ lyric_build::BuildState::BuildState(
     const BuildGeneration &buildGen,
     std::shared_ptr<AbstractCache> cache,
     std::shared_ptr<lyric_bootstrap::BootstrapLoader> bootstrapLoader,
-    std::shared_ptr<lyric_packaging::PackageLoader> packageLoader,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
     std::shared_ptr<lyric_importer::ModuleCache> sharedModuleCache,
     std::shared_ptr<AbstractFilesystem> virtualFilesystem,
@@ -16,7 +15,6 @@ lyric_build::BuildState::BuildState(
     : m_buildGen(buildGen),
       m_cache(std::move(cache)),
       m_bootstrapLoader(std::move(bootstrapLoader)),
-      m_packageLoader(std::move(packageLoader)),
       m_fallbackLoader(std::move(fallbackLoader)),
       m_sharedModuleCache(std::move(sharedModuleCache)),
       m_virtualFilesystem(std::move(virtualFilesystem)),
@@ -25,13 +23,11 @@ lyric_build::BuildState::BuildState(
     TU_ASSERT (m_buildGen.isValid());
     TU_ASSERT (m_cache != nullptr);
     TU_ASSERT (m_bootstrapLoader != nullptr);
-    TU_ASSERT (m_packageLoader != nullptr);
     TU_ASSERT (m_virtualFilesystem != nullptr);
     TU_ASSERT (!m_tempRoot.empty());
 
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaders;
     loaders.push_back(m_bootstrapLoader);
-    loaders.push_back(m_packageLoader);
     if (m_fallbackLoader != nullptr) {
         loaders.push_back(m_fallbackLoader);
     }
@@ -54,12 +50,6 @@ std::shared_ptr<lyric_bootstrap::BootstrapLoader>
 lyric_build::BuildState::getBootstrapLoader() const
 {
     return m_bootstrapLoader;
-}
-
-std::shared_ptr<lyric_packaging::PackageLoader>
-lyric_build::BuildState::getPackageLoader() const
-{
-    return m_packageLoader;
 }
 
 std::shared_ptr<lyric_runtime::AbstractLoader>

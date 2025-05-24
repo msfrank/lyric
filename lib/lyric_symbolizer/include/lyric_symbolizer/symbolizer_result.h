@@ -11,7 +11,7 @@
 
 namespace lyric_symbolizer {
 
-    constexpr tempo_utils::SchemaNs kLyricSymbolizerStatusNs("dev.zuri.ns:lyric-symbolizer-status-1");
+    constexpr const char *kLyricSymbolizerStatusNs = "dev.zuri.ns:lyric-symbolizer-status-1";
 
     enum class SymbolizerCondition {
         kSyntaxError,
@@ -81,7 +81,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_symbolizer::SymbolizerCondition> {
         using StatusType = lyric_symbolizer::SymbolizerStatus;
-        static constexpr const char *condition_namespace() { return lyric_symbolizer::kLyricSymbolizerStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_symbolizer::kLyricSymbolizerStatusNs; }
         static constexpr StatusCode make_status_code(lyric_symbolizer::SymbolizerCondition condition)
         {
             switch (condition) {

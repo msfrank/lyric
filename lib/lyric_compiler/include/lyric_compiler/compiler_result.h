@@ -10,7 +10,7 @@
 
 namespace lyric_compiler {
 
-    constexpr tempo_utils::SchemaNs kLyricCompilerStatusNs("dev.zuri.ns:lyric-compiler-status-1");
+    constexpr const char *kLyricCompilerStatusNs = "dev.zuri.ns:lyric-compiler-status-1";
 
     enum class CompilerCondition {
         kTypeError,
@@ -101,7 +101,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_compiler::CompilerCondition> {
         using StatusType = lyric_compiler::CompilerStatus;
-        static constexpr const char *condition_namespace() { return lyric_compiler::kLyricCompilerStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_compiler::kLyricCompilerStatusNs; }
         static constexpr StatusCode make_status_code(lyric_compiler::CompilerCondition condition)
         {
             switch (condition) {

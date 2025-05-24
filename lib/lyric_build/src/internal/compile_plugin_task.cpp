@@ -14,7 +14,6 @@
 #include <lyric_common/common_conversions.h>
 #include <lyric_common/plugin.h>
 #include <lyric_compiler/lyric_compiler.h>
-#include <lyric_packaging/package_attrs.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
 #include <tempo_config/base_conversions.h>
@@ -240,8 +239,7 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     // store the outline object metadata in the cache
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
-    writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string("application/octet-stream"));
-    writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
+    writer.putAttr(kLyricBuildContentType, std::string("application/octet-stream"));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {

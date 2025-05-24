@@ -1,7 +1,8 @@
 #ifndef LYRIC_PARSER_ARCHETYPE_READER_ATTR_PARSER_H
 #define LYRIC_PARSER_ARCHETYPE_READER_ATTR_PARSER_H
 
-#include <tempo_utils/attr.h>
+#include <tempo_schema/stateful_serde.h>
+#include <tempo_utils/status.h>
 
 #include "parser_types.h"
 
@@ -9,7 +10,7 @@ namespace lyric_parser {
 
     class LyricArchetype;
 
-    class ArchetypeReaderAttrParser : public tempo_utils::AbstractAttrParserWithState<
+    class ArchetypeReaderAttrParser : public tempo_schema::AbstractAttrParserWithState<
         std::shared_ptr<const internal::ArchetypeReader>> {
 
     public:
@@ -24,7 +25,7 @@ namespace lyric_parser {
         tempo_utils::Status getUInt16(tu_uint32 index, tu_uint16 &u16) override;
         tempo_utils::Status getUInt8(tu_uint32 index, tu_uint8 &u8) override;
         tempo_utils::Status getString(tu_uint32 index, std::string &str) override;
-        tempo_utils::Status getHandle(tu_uint32 index, tempo_utils::AttrHandle &handle) override;
+        tempo_utils::Status getHandle(tu_uint32 index, tempo_schema::AttrHandle &handle) override;
 
     private:
         std::shared_ptr<const internal::ArchetypeReader> m_reader;

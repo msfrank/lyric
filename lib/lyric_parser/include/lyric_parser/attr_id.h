@@ -1,6 +1,8 @@
 #ifndef LYRIC_PARSER_ATTR_ID_H
 #define LYRIC_PARSER_ATTR_ID_H
 
+#include <tempo_schema/schema_namespace.h>
+
 #include "parser_types.h"
 
 namespace lyric_parser {
@@ -18,7 +20,7 @@ namespace lyric_parser {
         bool isValid() const;
         ArchetypeNamespace *getNamespace() const;
         std::string_view namespaceView() const;
-        bool isNamespace(const tempo_utils::SchemaNs &schemaNs) const;
+        bool isNamespace(const tempo_schema::SchemaNs &schemaNs) const;
         tu_uint32 getType() const;
 
         bool operator==(const AttrId &other) const;

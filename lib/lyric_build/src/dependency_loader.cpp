@@ -5,7 +5,6 @@
 #include <lyric_build/dependency_loader.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_common/common_types.h>
-#include <lyric_packaging/package_attrs.h>
 
 /**
  * Private constructor.
@@ -65,7 +64,7 @@ lyric_build::DependencyLoader::create(
         auto generation = cache->loadTrace(traceId);
 
         MetadataWriter writer;
-        writer.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
+        writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
         LyricMetadata filter;
         TU_ASSIGN_OR_RETURN(filter, writer.toMetadata());
 

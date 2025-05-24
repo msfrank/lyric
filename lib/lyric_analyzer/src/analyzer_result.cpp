@@ -18,7 +18,7 @@ bool
 lyric_analyzer::AnalyzerStatus::convert(AnalyzerStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {
     std::string_view srcNs = srcStatus.getErrorCategory();
-    std::string_view dstNs = kLyricAnalyzerStatusNs.getNs();
+    std::string_view dstNs = kLyricAnalyzerStatusNs;
     if (srcNs != dstNs)
         return false;
     dstStatus = AnalyzerStatus(srcStatus.getStatusCode(), srcStatus.getDetail());

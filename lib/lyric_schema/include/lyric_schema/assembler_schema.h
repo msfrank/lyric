@@ -3,13 +3,14 @@
 
 #include <array>
 
-#include <tempo_utils/schema.h>
+#include <tempo_schema/schema.h>
+#include <tempo_schema/schema_namespace.h>
 
 namespace lyric_schema {
 
-    class LyricAssemblerNs : public tempo_utils::SchemaNs {
+    class LyricAssemblerNs : public tempo_schema::SchemaNs {
     public:
-        constexpr LyricAssemblerNs() : tempo_utils::SchemaNs("dev.zuri.ns:lyric_assembler") {};
+        constexpr LyricAssemblerNs() : tempo_schema::SchemaNs("dev.zuri.ns:lyric_assembler") {};
     };
     constexpr LyricAssemblerNs kLyricAssemblerNs;
 
@@ -29,25 +30,25 @@ namespace lyric_schema {
         NUM_IDS,                    // must be last
     };
 
-    constexpr tempo_utils::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerTrapClass(
+    constexpr tempo_schema::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerTrapClass(
         &kLyricAssemblerNs, LyricAssemblerId::Trap, "Trap");
 
-    constexpr tempo_utils::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerAllocatorTrapClass(
+    constexpr tempo_schema::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerAllocatorTrapClass(
         &kLyricAssemblerNs, LyricAssemblerId::AllocatorTrap, "AllocatorTrap");
 
-    constexpr tempo_utils::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerPluginClass(
+    constexpr tempo_schema::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerPluginClass(
         &kLyricAssemblerNs, LyricAssemblerId::Plugin, "Plugin");
 
-    constexpr tempo_utils::SchemaProperty<LyricAssemblerNs,LyricAssemblerId>
+    constexpr tempo_schema::SchemaProperty<LyricAssemblerNs,LyricAssemblerId>
         kLyricAssemblerTrapNameProperty(
-        &kLyricAssemblerNs, LyricAssemblerId::TrapName, "TrapName", tempo_utils::PropertyType::kString);
+        &kLyricAssemblerNs, LyricAssemblerId::TrapName, "TrapName", tempo_schema::PropertyType::kString);
 
-    constexpr tempo_utils::SchemaProperty<LyricAssemblerNs,LyricAssemblerId>
+    constexpr tempo_schema::SchemaProperty<LyricAssemblerNs,LyricAssemblerId>
         kLyricAssemblerDefinitionSymbolPathProperty(
-        &kLyricAssemblerNs, LyricAssemblerId::DefinitionSymbolPath, "DefinitionSymbolPath", tempo_utils::PropertyType::kString);
+        &kLyricAssemblerNs, LyricAssemblerId::DefinitionSymbolPath, "DefinitionSymbolPath", tempo_schema::PropertyType::kString);
 
     constexpr std::array<
-        const tempo_utils::SchemaResource<LyricAssemblerNs,LyricAssemblerId> *,
+        const tempo_schema::SchemaResource<LyricAssemblerNs,LyricAssemblerId> *,
         static_cast<std::size_t>(LyricAssemblerId::NUM_IDS)>
     kLyricAssemblerResources = {
         &kLyricAssemblerTrapClass,
@@ -57,7 +58,7 @@ namespace lyric_schema {
         &kLyricAssemblerDefinitionSymbolPathProperty,
     };
 
-    constexpr tempo_utils::SchemaVocabulary<LyricAssemblerNs, LyricAssemblerId>
+    constexpr tempo_schema::SchemaVocabulary<LyricAssemblerNs, LyricAssemblerId>
     kLyricAssemblerVocabulary(&kLyricAssemblerNs, &kLyricAssemblerResources);
 };
 

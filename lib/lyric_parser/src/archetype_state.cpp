@@ -27,8 +27,8 @@ lyric_parser::ArchetypeState::ArchetypeState(
 tempo_utils::Result<lyric_parser::ArchetypeAttr *>
 lyric_parser::ArchetypeState::loadAttr(
     const lyric_parser::LyricArchetype &archetype,
-    const tempo_utils::AttrKey &key,
-    const tempo_utils::AttrValue &value,
+    const tempo_schema::AttrKey &key,
+    const tempo_schema::AttrValue &value,
     lyric_parser::ArchetypeState *state,
     std::vector<lyric_parser::ArchetypeNode *> &nodeTable)
 {
@@ -36,7 +36,7 @@ lyric_parser::ArchetypeState::loadAttr(
     TU_ASSIGN_OR_RETURN (attrNamespace, state->putNamespace(key.ns));
     lyric_parser::AttrId attrId(attrNamespace, key.id);
 
-    if (value.getType() == tempo_utils::ValueType::Handle) {
+    if (value.getType() == tempo_schema::ValueType::Handle) {
         auto handleNode = archetype.getNode(value.getHandle().handle);
         TU_ASSERT (handleNode.isValid());
         lyric_parser::ArchetypeNode *attrNode;

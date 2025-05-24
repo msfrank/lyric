@@ -11,7 +11,7 @@
 
 namespace lyric_analyzer {
 
-    constexpr tempo_utils::SchemaNs kLyricAnalyzerStatusNs("dev.zuri.ns:lyric-analyzer-status-1");
+    constexpr const char *kLyricAnalyzerStatusNs = "dev.zuri.ns:lyric-analyzer-status-1";
 
     enum class AnalyzerCondition {
         kSyntaxError,
@@ -81,7 +81,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_analyzer::AnalyzerCondition> {
         using StatusType = lyric_analyzer::AnalyzerStatus;
-        static constexpr const char *condition_namespace() { return lyric_analyzer::kLyricAnalyzerStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_analyzer::kLyricAnalyzerStatusNs; }
         static constexpr StatusCode make_status_code(lyric_analyzer::AnalyzerCondition condition)
         {
             switch (condition) {

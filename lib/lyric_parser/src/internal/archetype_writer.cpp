@@ -62,48 +62,48 @@ lyric_parser::internal::ArchetypeWriter::writeValue(const lyric_parser::AttrValu
 
     auto literal = value.getLiteral();
     switch (literal.getType()) {
-        case tempo_utils::ValueType::Nil: {
+        case tempo_schema::ValueType::Nil: {
             auto type = lyi1::Value::TrueFalseNilValue;
             auto offset = lyi1::CreateTrueFalseNilValue(m_buffer, lyi1::TrueFalseNil::Nil).Union();
             return std::pair{type, offset};
         }
-        case tempo_utils::ValueType::Bool: {
+        case tempo_schema::ValueType::Bool: {
             auto type = lyi1::Value::TrueFalseNilValue;
             auto tfn = literal.getBool()? lyi1::TrueFalseNil::True : lyi1::TrueFalseNil::False;
             auto offset = lyi1::CreateTrueFalseNilValue(m_buffer, tfn).Union();
             return std::pair{type, offset};
         }
-        case tempo_utils::ValueType::Int64: {
+        case tempo_schema::ValueType::Int64: {
             auto type = lyi1::Value::Int64Value;
             auto offset = lyi1::CreateInt64Value(m_buffer, literal.getInt64()).Union();
             return std::pair{type, offset};
         }
-        case tempo_utils::ValueType::Float64: {
+        case tempo_schema::ValueType::Float64: {
             auto type = lyi1::Value::Float64Value;
             auto offset = lyi1::CreateFloat64Value(m_buffer, literal.getFloat64()).Union();
             return std::pair{type, offset};
         }
-        case tempo_utils::ValueType::UInt64: {
+        case tempo_schema::ValueType::UInt64: {
             auto type = lyi1::Value::UInt64Value;
             auto offset = lyi1::CreateUInt64Value(m_buffer, literal.getUInt64()).Union();
             return std::pair{type, offset};
         }
-        case tempo_utils::ValueType::UInt32: {
+        case tempo_schema::ValueType::UInt32: {
             auto type = lyi1::Value::UInt32Value;
             auto offset = lyi1::CreateUInt32Value(m_buffer, literal.getUInt32()).Union();
             return std::pair{type, offset};
         }
-        case tempo_utils::ValueType::UInt16: {
+        case tempo_schema::ValueType::UInt16: {
             auto type = lyi1::Value::UInt16Value;
             auto offset = lyi1::CreateUInt16Value(m_buffer, literal.getUInt16()).Union();
             return std::pair{type, offset};
         }
-        case tempo_utils::ValueType::UInt8: {
+        case tempo_schema::ValueType::UInt8: {
             auto type = lyi1::Value::UInt8Value;
             auto offset = lyi1::CreateUInt8Value(m_buffer, literal.getUInt8()).Union();
             return std::pair{type, offset};
         }
-        case tempo_utils::ValueType::String: {
+        case tempo_schema::ValueType::String: {
             auto type = lyi1::Value::StringValue;
             auto str = m_buffer.CreateSharedString(literal.stringView());
             auto offset = lyi1::CreateStringValue(m_buffer, str).Union();

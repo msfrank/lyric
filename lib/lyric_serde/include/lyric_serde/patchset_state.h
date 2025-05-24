@@ -1,9 +1,8 @@
 #ifndef LYRIC_SERDE_PATCHSET_STATE_H
 #define LYRIC_SERDE_PATCHSET_STATE_H
 
-#include <absl/strings/string_view.h>
-
-#include <tempo_utils/attr.h>
+#include <tempo_schema/attr.h>
+#include <tempo_schema/schema_resource.h>
 #include <tempo_utils/url.h>
 
 #include "lyric_patchset.h"
@@ -31,7 +30,7 @@ namespace lyric_serde {
         std::vector<PatchsetNamespace *>::const_iterator namespacesEnd() const;
         int numNamespaces() const;
 
-        tempo_utils::Result<PatchsetValue *> appendValue(const tempo_utils::AttrValue &value);
+        tempo_utils::Result<PatchsetValue *> appendValue(const tempo_schema::AttrValue &value);
         tempo_utils::Result<PatchsetValue *> appendValue(
             const char *nsUrl,
             tu_uint32 idValue,
@@ -73,7 +72,7 @@ namespace lyric_serde {
          */
         template<class NsType, class IdType>
         tempo_utils::Result<PatchsetValue *> appendValue(
-            const tempo_utils::SchemaProperty<NsType, IdType> &attrProperty,
+            const tempo_schema::SchemaProperty<NsType, IdType> &attrProperty,
             ValueAddress value)
         {
             return appendValue(attrProperty.getNsUrl(), attrProperty.getIdValue(), value);
@@ -89,7 +88,7 @@ namespace lyric_serde {
          */
         template<class NsType, class IdType>
         tempo_utils::Result<PatchsetValue *> appendValue(
-            const tempo_utils::SchemaClass<NsType, IdType> &elementClass,
+            const tempo_schema::SchemaClass<NsType, IdType> &elementClass,
             const std::vector<ValueAddress> &children)
         {
             return appendValue(elementClass.getNsUrl(), elementClass.getIdValue(), children);

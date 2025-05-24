@@ -52,19 +52,7 @@ namespace lyric_test {
             const std::filesystem::path &modulePath = {},
             const std::filesystem::path &baseDir = {});
 
-        tempo_utils::Result<PackageModule> packageModule(
-            const lyric_packaging::PackageSpecifier &specifier,
-            const std::string &code,
-            const std::filesystem::path &modulePath = {},
-            const std::filesystem::path &baseDir = {});
-
         tempo_utils::Result<RunModule> runModule(
-            const std::string &code,
-            const std::filesystem::path &modulePath = {},
-            const std::filesystem::path &baseDir = {});
-
-        tempo_utils::Result<RunModule> runModule(
-            const lyric_packaging::PackageSpecifier &specifier,
             const std::string &code,
             const std::filesystem::path &modulePath = {},
             const std::filesystem::path &baseDir = {});
@@ -81,17 +69,7 @@ namespace lyric_test {
             const std::string &code,
             const TesterOptions &options = {});
 
-        static tempo_utils::Result<PackageModule> packageSingleModule(
-            const lyric_packaging::PackageSpecifier &specifier,
-            const std::string &code,
-            const TesterOptions &options = {});
-
         static tempo_utils::Result<RunModule> runSingleModule(
-            const std::string &code,
-            const TesterOptions &options = {});
-
-        static tempo_utils::Result<RunModule> runSingleModule(
-            const lyric_packaging::PackageSpecifier &specifier,
             const std::string &code,
             const TesterOptions &options = {});
 

@@ -5,7 +5,6 @@
 #include <absl/container/flat_hash_set.h>
 
 #include <tempo_tracing/trace_span.h>
-#include <tempo_utils/attr.h>
 
 #include "build_state.h"
 #include "build_result.h"
@@ -71,7 +70,7 @@ namespace lyric_build {
          */
         template <typename T>
         void
-        putTag(const tempo_utils::AttrSerde<T> &serde, const T &value)
+        putTag(const tempo_schema::AttrSerde<T> &serde, const T &value)
         {
             if (m_span == nullptr)
                 return;

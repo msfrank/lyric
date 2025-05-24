@@ -20,7 +20,7 @@ bool
 lyric_bootstrap::BootstrapStatus::convert(BootstrapStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {
     std::string_view srcNs = srcStatus.getErrorCategory();
-    std::string_view dstNs = kLyricBootstrapStatusNs.getNs();
+    std::string_view dstNs = kLyricBootstrapStatusNs;
     if (srcNs != dstNs)
         return false;
     dstStatus = BootstrapStatus(srcStatus.getStatusCode(), srcStatus.getDetail());

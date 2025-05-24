@@ -2,7 +2,7 @@
 #define LYRIC_SERDE_PATCHSET_VALUE_H
 
 #include <lyric_serde/serde_types.h>
-#include <tempo_utils/attr.h>
+#include <tempo_schema/attr.h>
 
 #include "patchset_state.h"
 
@@ -29,7 +29,7 @@ namespace lyric_serde {
 
     struct ValueVariant {
         VariantType type;
-        tempo_utils::AttrValue intrinsic;
+        tempo_schema::AttrValue intrinsic;
         AttrValue attr;
         ElementValue element;
     };

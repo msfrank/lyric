@@ -97,7 +97,7 @@ lyric_parser::NodeWalker::namespaceView() const
 }
 
 bool
-lyric_parser::NodeWalker::isNamespace(const tempo_utils::SchemaNs &schemaNs) const
+lyric_parser::NodeWalker::isNamespace(const tempo_schema::SchemaNs &schemaNs) const
 {
     if (!isValid())
         return false;
@@ -147,20 +147,20 @@ lyric_parser::NodeWalker::getIdValue() const
 }
 
 bool
-lyric_parser::NodeWalker::hasAttr(const tempo_utils::AttrKey &key) const
+lyric_parser::NodeWalker::hasAttr(const tempo_schema::AttrKey &key) const
 {
     auto index = findIndexForAttr(key);
     return index != INVALID_ADDRESS_U32;
 }
 
 bool
-lyric_parser::NodeWalker::hasAttr(const tempo_utils::AttrValidator &validator) const
+lyric_parser::NodeWalker::hasAttr(const tempo_schema::AttrValidator &validator) const
 {
     return hasAttr(validator.getKey());
 }
 
 tu_uint32
-lyric_parser::NodeWalker::findIndexForAttr(const tempo_utils::AttrKey &key) const
+lyric_parser::NodeWalker::findIndexForAttr(const tempo_schema::AttrKey &key) const
 {
     if (!isValid())
         return INVALID_ADDRESS_U32;
@@ -183,37 +183,37 @@ lyric_parser::NodeWalker::findIndexForAttr(const tempo_utils::AttrKey &key) cons
     return INVALID_ADDRESS_U32;
 }
 
-tempo_utils::AttrValue parse_attr_value(const lyi1::AttrDescriptor *attr)
+tempo_schema::AttrValue parse_attr_value(const lyi1::AttrDescriptor *attr)
 {
     switch (attr->attr_value_type()) {
         case lyi1::Value::TrueFalseNilValue: {
             auto tfn = attr->attr_value_as_TrueFalseNilValue()->tfn();
             if (tfn == lyi1::TrueFalseNil::Nil)
-                return tempo_utils::AttrValue(nullptr);
-            return tempo_utils::AttrValue(tfn == lyi1::TrueFalseNil::True);
+                return tempo_schema::AttrValue(nullptr);
+            return tempo_schema::AttrValue(tfn == lyi1::TrueFalseNil::True);
         }
         case lyi1::Value::Int64Value:
-            return tempo_utils::AttrValue(attr->attr_value_as_Int64Value()->i64());
+            return tempo_schema::AttrValue(attr->attr_value_as_Int64Value()->i64());
         case lyi1::Value::Float64Value:
-            return tempo_utils::AttrValue(attr->attr_value_as_Float64Value()->f64());
+            return tempo_schema::AttrValue(attr->attr_value_as_Float64Value()->f64());
         case lyi1::Value::UInt64Value:
-            return tempo_utils::AttrValue(attr->attr_value_as_UInt64Value()->u64());
+            return tempo_schema::AttrValue(attr->attr_value_as_UInt64Value()->u64());
         case lyi1::Value::UInt32Value:
-            return tempo_utils::AttrValue(attr->attr_value_as_UInt32Value()->u32());
+            return tempo_schema::AttrValue(attr->attr_value_as_UInt32Value()->u32());
         case lyi1::Value::UInt16Value:
-            return tempo_utils::AttrValue(attr->attr_value_as_UInt16Value()->u16());
+            return tempo_schema::AttrValue(attr->attr_value_as_UInt16Value()->u16());
         case lyi1::Value::UInt8Value:
-            return tempo_utils::AttrValue(attr->attr_value_as_UInt8Value()->u8());
+            return tempo_schema::AttrValue(attr->attr_value_as_UInt8Value()->u8());
         case lyi1::Value::StringValue:
-            return tempo_utils::AttrValue(attr->attr_value_as_StringValue()->utf8()->c_str());
+            return tempo_schema::AttrValue(attr->attr_value_as_StringValue()->utf8()->c_str());
         case lyi1::Value::NodeValue:
-            return tempo_utils::AttrValue(tempo_utils::AttrHandle{attr->attr_value_as_NodeValue()->node()});
+            return tempo_schema::AttrValue(tempo_schema::AttrHandle{attr->attr_value_as_NodeValue()->node()});
         default:
             return {};
     }
 }
 
-std::pair<tempo_utils::AttrKey,tempo_utils::AttrValue>
+std::pair<tempo_schema::AttrKey,tempo_schema::AttrValue>
 lyric_parser::NodeWalker::getAttr(int index) const
 {
     if (!isValid())
@@ -233,7 +233,7 @@ lyric_parser::NodeWalker::getAttr(int index) const
     auto *nsUrl = ns->ns_url();
     if (nsUrl == nullptr)
         return {};
-    tempo_utils::AttrKey key{nsUrl->c_str(), attr->attr_id()};
+    tempo_schema::AttrKey key{nsUrl->c_str(), attr->attr_id()};
     auto value = parse_attr_value(attr);
     return {key,value};
 }

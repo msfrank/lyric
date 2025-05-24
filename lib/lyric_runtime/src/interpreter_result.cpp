@@ -19,7 +19,7 @@ bool
 lyric_runtime::InterpreterStatus::convert(InterpreterStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {
     std::string_view srcNs = srcStatus.getErrorCategory();
-    std::string_view dstNs = kLyricRuntimeInterpreterStatusNs.getNs();
+    std::string_view dstNs = kLyricRuntimeInterpreterStatusNs;
     if (srcNs != dstNs)
         return false;
     dstStatus = InterpreterStatus(srcStatus.getStatusCode(), srcStatus.getDetail());

@@ -1,7 +1,7 @@
 #ifndef LYRIC_PARSER_ATTR_VALUE_H
 #define LYRIC_PARSER_ATTR_VALUE_H
 
-#include <tempo_utils/attr.h>
+#include <tempo_schema/attr.h>
 
 namespace lyric_parser {
 
@@ -11,17 +11,17 @@ namespace lyric_parser {
     class AttrValue {
     public:
         AttrValue();
-        explicit AttrValue(tempo_utils::AttrValue literal);
+        explicit AttrValue(tempo_schema::AttrValue literal);
         explicit AttrValue(ArchetypeNode *node);
 
         bool isValid() const;
         bool isLiteral() const;
         bool isNode() const;
-        tempo_utils::AttrValue getLiteral() const;
+        tempo_schema::AttrValue getLiteral() const;
         ArchetypeNode *getNode() const;
 
     private:
-        tempo_utils::AttrValue m_literal;
+        tempo_schema::AttrValue m_literal;
         ArchetypeNode *m_node;
     };
 }

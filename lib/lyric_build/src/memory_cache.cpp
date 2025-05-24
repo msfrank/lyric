@@ -1,8 +1,6 @@
 
-#include <absl/strings/str_join.h>
-#include <absl/strings/match.h>
-
 #include <lyric_build/build_attrs.h>
+#include <lyric_build/build_result.h>
 #include <lyric_build/lyric_metadata.h>
 #include <lyric_build/memory_cache.h>
 #include <lyric_build/metadata_matcher.h>

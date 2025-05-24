@@ -5,7 +5,6 @@
 
 #include <lyric_parser/archetype_node.h>
 #include <lyric_parser/archetype_state.h>
-#include <tempo_utils/schema.h>
 
 namespace lyric_rewriter {
 

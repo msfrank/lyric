@@ -9,7 +9,6 @@
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
 #include <lyric_common/common_types.h>
-#include <lyric_packaging/package_attrs.h>
 #include <tempo_config/base_conversions.h>
 #include <tempo_config/parse_config.h>
 #include <tempo_utils/date_time.h>
@@ -186,8 +185,7 @@ lyric_build::internal::ProvideModuleTask::provideModule(
     // serialize the object metadata
     MetadataWriter objectMetadataWriter;
     objectMetadataWriter.putAttr(kLyricBuildEntryType, EntryType::File);
-    objectMetadataWriter.putAttr(lyric_packaging::kLyricPackagingContentType, std::string(lyric_common::kObjectContentType));
-    objectMetadataWriter.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
+    objectMetadataWriter.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
     objectMetadataWriter.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     LyricMetadata objectMetadata;
     TU_ASSIGN_OR_RETURN (objectMetadata, objectMetadataWriter.toMetadata());
@@ -220,8 +218,7 @@ lyric_build::internal::ProvideModuleTask::provideModule(
         // serialize the plugin metadata
         MetadataWriter pluginMetadataWriter;
         pluginMetadataWriter.putAttr(kLyricBuildEntryType, EntryType::File);
-        pluginMetadataWriter.putAttr(lyric_packaging::kLyricPackagingContentType, std::string("application/octet-stream"));
-        pluginMetadataWriter.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
+        pluginMetadataWriter.putAttr(kLyricBuildContentType, std::string("application/octet-stream"));
         pluginMetadataWriter.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
         LyricMetadata pluginMetadata;
         TU_ASSIGN_OR_RETURN (pluginMetadata, pluginMetadataWriter.toMetadata());

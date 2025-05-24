@@ -94,7 +94,7 @@ lyric_runtime::StringRef::serializeValue(lyric_serde::PatchsetState &state, tu_u
     if (m_data) {
         s = std::string(m_data, m_size);
     }
-    auto appendValueResult = state.appendValue(tempo_utils::AttrValue(s));
+    auto appendValueResult = state.appendValue(tempo_schema::AttrValue(s));
     if (appendValueResult.isStatus()) {
         index = INVALID_ADDRESS_U32;
         return false;

@@ -71,7 +71,7 @@ lyric_parser::ArchetypeNode::namespaceView() const
 }
 
 bool
-lyric_parser::ArchetypeNode::isNamespace(const tempo_utils::SchemaNs &schemaNs) const
+lyric_parser::ArchetypeNode::isNamespace(const tempo_schema::SchemaNs &schemaNs) const
 {
     return std::string_view(schemaNs.getNs()) == namespaceView();
 }
@@ -83,7 +83,7 @@ lyric_parser::ArchetypeNode::hasAttr(const AttrId &attrId) const
 }
 
 bool
-lyric_parser::ArchetypeNode::hasAttr(const tempo_utils::AttrValidator &validator) const
+lyric_parser::ArchetypeNode::hasAttr(const tempo_schema::AttrValidator &validator) const
 {
     auto key = validator.getKey();
     return findAttr(key.ns, key.id) != nullptr;

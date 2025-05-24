@@ -10,7 +10,7 @@
 
 namespace lyric_build {
 
-    constexpr tempo_utils::SchemaNs kLyricBuildStatusNs("dev.zuri.ns:lyric-build-status-1");
+    constexpr const char *kLyricBuildStatusNs = "dev.zuri.ns:lyric-build-status-1";
 
     enum class BuildCondition {
         kArtifactNotFound,
@@ -89,7 +89,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_build::BuildCondition> {
         using StatusType = lyric_build::BuildStatus;
-        static constexpr const char *condition_namespace() { return lyric_build::kLyricBuildStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_build::kLyricBuildStatusNs; }
         static constexpr StatusCode make_status_code(lyric_build::BuildCondition condition)
         {
             switch (condition) {

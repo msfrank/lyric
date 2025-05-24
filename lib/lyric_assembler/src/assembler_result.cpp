@@ -19,7 +19,7 @@ bool
 lyric_assembler::AssemblerStatus::convert(AssemblerStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {
     std::string_view srcNs = srcStatus.getErrorCategory();
-    std::string_view dstNs = kLyricAssemblerStatusNs.getNs();
+    std::string_view dstNs = kLyricAssemblerStatusNs;
     if (srcNs != dstNs)
         return false;
     dstStatus = AssemblerStatus(srcStatus.getStatusCode(), srcStatus.getDetail());

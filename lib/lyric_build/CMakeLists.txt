@@ -120,8 +120,6 @@ target_sources(lyric_build PRIVATE
     src/internal/metadata_reader.cpp
     include/lyric_build/internal/orchestrate_task.h
     src/internal/orchestrate_task.cpp
-    include/lyric_build/internal/package_task.h
-    src/internal/package_task.cpp
     include/lyric_build/internal/parse_module_task.h
     src/internal/parse_module_task.cpp
     include/lyric_build/internal/provide_module_task.h
@@ -172,11 +170,11 @@ target_link_libraries(lyric_build
     lyric::lyric_archiver
     lyric::lyric_bootstrap
     lyric::lyric_compiler
-    lyric::lyric_packaging
     lyric::lyric_parser
     lyric::lyric_rewriter
     lyric::lyric_runtime
     lyric::lyric_symbolizer
+    tempo::tempo_schema
     tempo::tempo_security
     tempo::tempo_tracing
     tempo::tempo_utils

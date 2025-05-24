@@ -1,7 +1,7 @@
 #ifndef LYRIC_SERDE_VALUE_WALKER_H
 #define LYRIC_SERDE_VALUE_WALKER_H
 
-#include <tempo_utils/attr.h>
+#include <tempo_schema/attr.h>
 
 #include "namespace_walker.h"
 #include "serde_types.h"

@@ -2,11 +2,11 @@
 #define LYRIC_BUILD_METADATA_ATTR_PARSER_H
 
 #include <lyric_build/build_types.h>
-#include <tempo_utils/attr.h>
+#include <tempo_schema/abstract_attr_parser.h>
 
 namespace lyric_build {
 
-    class MetadataAttrParser : public tempo_utils::AbstractAttrParser {
+    class MetadataAttrParser : public tempo_schema::AbstractAttrParser {
     public:
         explicit MetadataAttrParser(std::shared_ptr<const internal::MetadataReader> reader);
         tempo_utils::Status getNil(tu_uint32 index, std::nullptr_t &nil) override;

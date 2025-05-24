@@ -16,6 +16,7 @@
 #include <tempo_config/container_conversions.h>
 #include <tempo_config/enum_conversions.h>
 #include <tempo_config/parse_config.h>
+#include <tempo_schema/schema_result.h>
 #include <tempo_utils/directory_maker.h>
 #include <tempo_utils/log_message.h>
 #include <tempo_utils/file_writer.h>
@@ -140,41 +141,12 @@ lyric_build::LyricBuilder::configure()
     TU_RETURN_IF_NOT_OK(tempo_config::parse_config(bootstrapDirectoryPath, bootstrapDirectoryPathParser,
         globalConfig, "bootstrapDirectoryPath"));
 
-    // determine the distribution package directory
-    std::vector<std::filesystem::path> pkgDirectoryPathList;
-    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(pkgDirectoryPathList, pkgDirectoryPathListParser,
-        globalConfig, "packageDirectoryPathList"));
-
-    // load the package map, which maps package short name to package absolute url
-    absl::flat_hash_map<std::string,std::string> packageMap;
-    if (globalConfig.mapContains("packageMap")) {
-        const auto node = globalConfig.mapAt("packageMap");
-        if (node.getNodeType() != tempo_config::ConfigNodeType::kMap)
-            return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
-                "invalid global configuration for packageMap");
-        const auto packageMapNode = node.toMap();
-        tempo_config::StringParser packageAuthorityParser;
-        for (auto iterator = packageMapNode.mapBegin(); iterator != packageMapNode.mapEnd(); iterator++) {
-            std::string authority;
-            TU_RETURN_IF_NOT_OK(tempo_config::parse_config(authority, packageAuthorityParser,
-                iterator->second.toValue()));
-            packageMap[iterator->first] = authority;
-        }
-    }
-
     // if there is a bootstrap directory override specified then use it, otherwise use the default path
     if (!bootstrapDirectoryPath.empty()) {
         m_bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(bootstrapDirectoryPath);
     } else {
         m_bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
     }
-
-    // configure the package loader to search the workspace lib dir first, then dist lib dir for packages
-    if (!m_workspaceRoot.empty()) {
-        std::filesystem::path wsPackagesPath = m_workspaceRoot / "lib";
-        pkgDirectoryPathList.insert(pkgDirectoryPathList.begin(), wsPackagesPath);
-    }
-    m_packageLoader = std::make_shared<lyric_packaging::PackageLoader>(pkgDirectoryPathList, packageMap);
 
     // set the fallback loader if one is specified
     if (m_options.fallbackLoader != nullptr) {
@@ -193,7 +165,6 @@ lyric_build::LyricBuilder::configure()
     if (m_options.sharedModuleCache == nullptr) {
         std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
         loaderChain.push_back(m_bootstrapLoader);
-        loaderChain.push_back(m_packageLoader);
         if (m_fallbackLoader != nullptr) {
             loaderChain.push_back(m_fallbackLoader);
         }
@@ -307,7 +278,7 @@ lyric_build::LyricBuilder::computeTargets(
 
     // wrap the build cache and loader chain in a unique generation
     auto buildGen = BuildGeneration::create();
-    auto state = std::make_shared<BuildState>(buildGen, m_cache, m_bootstrapLoader, m_packageLoader,
+    auto state = std::make_shared<BuildState>(buildGen, m_cache, m_bootstrapLoader,
         m_fallbackLoader, m_sharedModuleCache, m_virtualFilesystem, m_tempRoot);
 
     // construct a new task manager for managing parallel tasks
@@ -445,7 +416,7 @@ lyric_build::LyricBuilder::computeTargets(
             if (parseAttrStatus.isOk()) {
                 artifactPath = installDirectoryPath / installPathString;
             } else {
-                if (!parseAttrStatus.matchesCondition(tempo_utils::AttrCondition::kMissingValue))
+                if (!parseAttrStatus.matchesCondition(tempo_schema::SchemaCondition::kMissingValue))
                     return parseAttrStatus;
                 // otherwise if installPath attribute was not present then build the
                 // artifact path based on the location url
@@ -497,16 +468,28 @@ lyric_build::LyricBuilder::getCache() const
     return m_cache;
 }
 
+/**
+ * Returns the bootstrap loader. If the `LyricBuilder` has not been configured yet then returns
+ * an empty shared_ptr.
+ *
+ * @return The bootstrap loader, or an empty shared_ptr.
+ */
 std::shared_ptr<lyric_bootstrap::BootstrapLoader>
 lyric_build::LyricBuilder::getBootstrapLoader() const
 {
     return m_bootstrapLoader;
 }
 
-std::shared_ptr<lyric_packaging::PackageLoader>
-lyric_build::LyricBuilder::getPackageLoader() const
+/**
+ * Returns the fallback loader. If the `LyricBuilder` has not been configured yet, or if no fallback
+ * loader was specified in `BuilderOptions`, then returns an empty shared_ptr.
+ *
+ * @return The fallback loader, or an empty shared_ptr.
+ */
+std::shared_ptr<lyric_runtime::AbstractLoader>
+lyric_build::LyricBuilder::getFallbackLoader() const
 {
-    return m_packageLoader;
+    return m_fallbackLoader;
 }
 
 std::shared_ptr<lyric_importer::ModuleCache>

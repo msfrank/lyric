@@ -9,7 +9,7 @@
 
 namespace lyric_bootstrap {
 
-    constexpr tempo_utils::SchemaNs kLyricBootstrapStatusNs("dev.zuri.ns:lyric-bootstrap-status-1");
+    constexpr const char *kLyricBootstrapStatusNs = "dev.zuri.ns:lyric-bootstrap-status-1";
 
     enum class BootstrapCondition {
         kBootstrapInvariant,
@@ -86,7 +86,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_bootstrap::BootstrapCondition> {
         using StatusType = lyric_bootstrap::BootstrapStatus;
-        static constexpr const char *condition_namespace() { return lyric_bootstrap::kLyricBootstrapStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_bootstrap::kLyricBootstrapStatusNs; }
         static constexpr StatusCode make_status_code(lyric_bootstrap::BootstrapCondition condition)
         {
             switch (condition) {

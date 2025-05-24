@@ -24,20 +24,20 @@ lyric_build::MetadataWalker::isValid() const
 }
 
 bool
-lyric_build::MetadataWalker::hasAttr(const tempo_utils::AttrKey &key) const
+lyric_build::MetadataWalker::hasAttr(const tempo_schema::AttrKey &key) const
 {
     auto index = findIndexForAttr(key);
     return index != METADATA_INVALID_OFFSET_U32;
 }
 
 bool
-lyric_build::MetadataWalker::hasAttr(const tempo_utils::AttrValidator &validator) const
+lyric_build::MetadataWalker::hasAttr(const tempo_schema::AttrValidator &validator) const
 {
     return hasAttr(validator.getKey());
 }
 
 tu_uint32
-lyric_build::MetadataWalker::findIndexForAttr(const tempo_utils::AttrKey &key) const
+lyric_build::MetadataWalker::findIndexForAttr(const tempo_schema::AttrKey &key) const
 {
     if (!isValid())
         return METADATA_INVALID_OFFSET_U32;

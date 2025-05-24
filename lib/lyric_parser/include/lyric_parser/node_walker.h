@@ -1,7 +1,9 @@
 #ifndef LYRIC_PARSER_NODE_WALKER_H
 #define LYRIC_PARSER_NODE_WALKER_H
 
-#include <tempo_utils/attr.h>
+#include <tempo_schema/schema_namespace.h>
+#include <tempo_schema/attr_serde.h>
+#include <tempo_schema/schema.h>
 #include <tempo_utils/integer_types.h>
 
 #include "archetype_reader_attr_parser.h"
@@ -26,13 +28,13 @@ namespace lyric_parser {
         tu_uint32 getTextSpan() const;
 
         std::string_view namespaceView() const;
-        bool isNamespace(const tempo_utils::SchemaNs &schemaNs) const;
+        bool isNamespace(const tempo_schema::SchemaNs &schemaNs) const;
 
         tu_uint32 getIdValue() const;
 
-        bool hasAttr(const tempo_utils::AttrKey &key) const;
-        bool hasAttr(const tempo_utils::AttrValidator &validator) const;
-        std::pair<tempo_utils::AttrKey,tempo_utils::AttrValue> getAttr(int index) const;
+        bool hasAttr(const tempo_schema::AttrKey &key) const;
+        bool hasAttr(const tempo_schema::AttrValidator &validator) const;
+        std::pair<tempo_schema::AttrKey,tempo_schema::AttrValue> getAttr(int index) const;
         int numAttrs() const;
 
         NodeWalker getChild(tu_uint32 index) const;
@@ -48,7 +50,7 @@ namespace lyric_parser {
         friend class NodeAttr;
 
         bool matchesNsAndId(const char *nsUrl, tu_uint32 idValue) const;
-        tu_uint32 findIndexForAttr(const tempo_utils::AttrKey &key) const;
+        tu_uint32 findIndexForAttr(const tempo_schema::AttrKey &key) const;
         const char *getNsUrl() const;
 
     public:
@@ -60,7 +62,7 @@ namespace lyric_parser {
          * @return
          */
         template<class NsType, class IdType>
-        bool isClass(const tempo_utils::SchemaClass<NsType,IdType> &schemaClass) const
+        bool isClass(const tempo_schema::SchemaClass<NsType,IdType> &schemaClass) const
         {
             auto *nsUrl = schemaClass.getNsUrl();
             auto idValue = schemaClass.getIdValue();
@@ -70,7 +72,7 @@ namespace lyric_parser {
         template<class NsType, class IdType>
         tempo_utils::Status
         parseId(
-            const tempo_utils::SchemaVocabulary<NsType,IdType> &vocabulary,
+            const tempo_schema::SchemaVocabulary<NsType,IdType> &vocabulary,
             IdType &id) const
         {
             auto *schemaNs = vocabulary.getNs();

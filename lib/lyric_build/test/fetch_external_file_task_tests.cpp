@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <lyric_build/build_attrs.h>
 #include <lyric_build/internal/fetch_external_file_task.h>
 #include <lyric_build/local_filesystem.h>
 #include <lyric_build/lyric_builder.h>
-#include <lyric_packaging/package_attrs.h>
 #include <tempo_config/parse_config.h>
 #include <tempo_test/result_matchers.h>
 #include <tempo_utils/file_writer.h>
@@ -72,7 +72,7 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalPluginFile)
 
     auto walker = metadata.getMetadata();
     std::string contentType;
-    walker.parseAttr(lyric_packaging::kLyricPackagingContentType, contentType);
+    walker.parseAttr(lyric_build::kLyricBuildContentType, contentType);
     ASSERT_EQ ("application/octet-stream", contentType);
 
     auto loadContentResult = cache->loadContent(artifactId);

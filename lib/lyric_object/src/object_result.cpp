@@ -19,7 +19,7 @@ bool
 lyric_object::ObjectStatus::convert(ObjectStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {
     std::string_view srcNs = srcStatus.getErrorCategory();
-    std::string_view dstNs = kLyricObjectStatusNs.getNs();
+    std::string_view dstNs = kLyricObjectStatusNs;
     if (srcNs != dstNs)
         return false;
     dstStatus = ObjectStatus(srcStatus.getStatusCode(), srcStatus.getDetail());

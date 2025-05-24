@@ -11,7 +11,7 @@
 
 namespace lyric_importer {
 
-    constexpr tempo_utils::SchemaNs kLyricImporterStatusNs("dev.zuri.ns:lyric-importer-status-1");
+    constexpr const char *kLyricImporterStatusNs = "dev.zuri.ns:lyric-importer-status-1";
 
     enum class ImporterCondition {
         kTypeError,
@@ -91,7 +91,7 @@ namespace tempo_utils {
     template<>
     struct ConditionTraits<lyric_importer::ImporterCondition> {
         using StatusType = lyric_importer::ImporterStatus;
-        static constexpr const char *condition_namespace() { return lyric_importer::kLyricImporterStatusNs.getNs(); }
+        static constexpr const char *condition_namespace() { return lyric_importer::kLyricImporterStatusNs; }
         static constexpr StatusCode make_status_code(lyric_importer::ImporterCondition condition)
         {
             switch (condition) {

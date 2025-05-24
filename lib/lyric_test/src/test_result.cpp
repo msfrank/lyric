@@ -18,7 +18,7 @@ bool
 lyric_test::TestStatus::convert(TestStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {
     std::string_view srcNs = srcStatus.getErrorCategory();
-    std::string_view dstNs = kLyricTestStatusNs.getNs();
+    std::string_view dstNs = kLyricTestStatusNs;
     if (srcNs != dstNs)
         return false;
     dstStatus = TestStatus(srcStatus.getStatusCode(), srcStatus.getDetail());

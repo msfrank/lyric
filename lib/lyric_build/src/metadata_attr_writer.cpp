@@ -2,8 +2,9 @@
 #include <lyric_build/metadata_attr.h>
 #include <lyric_build/metadata_attr_writer.h>
 #include <lyric_build/metadata_namespace.h>
+#include <tempo_schema/schema_result.h>
 
-lyric_build::MetadataAttrWriter::MetadataAttrWriter(const tempo_utils::AttrKey &key, MetadataState *state)
+lyric_build::MetadataAttrWriter::MetadataAttrWriter(const tempo_schema::AttrKey &key, MetadataState *state)
     : m_key(key),
       m_state(state)
 {
@@ -15,8 +16,8 @@ lyric_build::MetadataAttrWriter::putNamespace(const tempo_utils::Url &nsUrl)
 {
     auto putNamespaceResult = m_state->putNamespace(nsUrl);
     if (putNamespaceResult.isStatus())
-        return tempo_utils::AttrStatus::forCondition(
-            tempo_utils::AttrCondition::kConversionError,"failed to create namespace");
+        return tempo_schema::SchemaStatus::forCondition(
+            tempo_schema::SchemaCondition::kConversionError,"failed to create namespace");
     auto *ns = putNamespaceResult.getResult();
     return ns->getAddress().getAddress();
 }
@@ -30,10 +31,10 @@ lyric_build::MetadataAttrWriter::putNil()
         return putNamespaceResult.getStatus();
     auto nsAddress = putNamespaceResult.getResult();
     auto appendAttrResult = m_state->appendAttr(AttrId(NamespaceAddress(nsAddress), m_key.id),
-        tempo_utils::AttrValue(nullptr));
+        tempo_schema::AttrValue(nullptr));
     if (appendAttrResult.isStatus())
-        return tempo_utils::AttrStatus::forCondition(
-            tempo_utils::AttrCondition::kConversionError, "failed to append attr");
+        return tempo_schema::SchemaStatus::forCondition(
+            tempo_schema::SchemaCondition::kConversionError, "failed to append attr");
     auto *attr = appendAttrResult.getResult();
     return attr->getAddress().getAddress();
 }
@@ -47,10 +48,10 @@ lyric_build::MetadataAttrWriter::putBool(bool b)
         return putNamespaceResult.getStatus();
     auto nsAddress = putNamespaceResult.getResult();
     auto appendAttrResult = m_state->appendAttr(AttrId(NamespaceAddress(nsAddress), m_key.id),
-        tempo_utils::AttrValue(b));
+        tempo_schema::AttrValue(b));
     if (appendAttrResult.isStatus())
-        return tempo_utils::AttrStatus::forCondition(
-            tempo_utils::AttrCondition::kConversionError, "failed to append attr");
+        return tempo_schema::SchemaStatus::forCondition(
+            tempo_schema::SchemaCondition::kConversionError, "failed to append attr");
     auto *attr = appendAttrResult.getResult();
     return attr->getAddress().getAddress();
 }
@@ -64,10 +65,10 @@ lyric_build::MetadataAttrWriter::putInt64(tu_int64 i64)
         return putNamespaceResult.getStatus();
     auto nsAddress = putNamespaceResult.getResult();
     auto appendAttrResult = m_state->appendAttr(AttrId(NamespaceAddress(nsAddress), m_key.id),
-        tempo_utils::AttrValue(i64));
+        tempo_schema::AttrValue(i64));
     if (appendAttrResult.isStatus())
-        return tempo_utils::AttrStatus::forCondition(
-            tempo_utils::AttrCondition::kConversionError, "failed to append attr");
+        return tempo_schema::SchemaStatus::forCondition(
+            tempo_schema::SchemaCondition::kConversionError, "failed to append attr");
     auto *attr = appendAttrResult.getResult();
     return attr->getAddress().getAddress();
 }
@@ -81,10 +82,10 @@ lyric_build::MetadataAttrWriter::putFloat64(double dbl)
         return putNamespaceResult.getStatus();
     auto nsAddress = putNamespaceResult.getResult();
     auto appendAttrResult = m_state->appendAttr(AttrId(NamespaceAddress(nsAddress), m_key.id),
-        tempo_utils::AttrValue(dbl));
+        tempo_schema::AttrValue(dbl));
     if (appendAttrResult.isStatus())
-        return tempo_utils::AttrStatus::forCondition(
-            tempo_utils::AttrCondition::kConversionError, "failed to append attr");
+        return tempo_schema::SchemaStatus::forCondition(
+            tempo_schema::SchemaCondition::kConversionError, "failed to append attr");
     auto *attr = appendAttrResult.getResult();
     return attr->getAddress().getAddress();
 }
@@ -98,10 +99,10 @@ lyric_build::MetadataAttrWriter::putUInt64(tu_uint64 u64)
         return putNamespaceResult.getStatus();
     auto nsAddress = putNamespaceResult.getResult();
     auto appendAttrResult = m_state->appendAttr(AttrId(NamespaceAddress(nsAddress), m_key.id),
-        tempo_utils::AttrValue(u64));
+        tempo_schema::AttrValue(u64));
     if (appendAttrResult.isStatus())
-        return tempo_utils::AttrStatus::forCondition(
-            tempo_utils::AttrCondition::kConversionError, "failed to append attr");
+        return tempo_schema::SchemaStatus::forCondition(
+            tempo_schema::SchemaCondition::kConversionError, "failed to append attr");
     auto *attr = appendAttrResult.getResult();
     return attr->getAddress().getAddress();
 }
@@ -115,10 +116,10 @@ lyric_build::MetadataAttrWriter::putUInt32(tu_uint32 u32)
         return putNamespaceResult.getStatus();
     auto nsAddress = putNamespaceResult.getResult();
     auto appendAttrResult = m_state->appendAttr(AttrId(NamespaceAddress(nsAddress), m_key.id),
-        tempo_utils::AttrValue(u32));
+        tempo_schema::AttrValue(u32));
     if (appendAttrResult.isStatus())
-        return tempo_utils::AttrStatus::forCondition(
-            tempo_utils::AttrCondition::kConversionError, "failed to append attr");
+        return tempo_schema::SchemaStatus::forCondition(
+            tempo_schema::SchemaCondition::kConversionError, "failed to append attr");
     auto *attr = appendAttrResult.getResult();
     return attr->getAddress().getAddress();
 }
@@ -132,10 +133,10 @@ lyric_build::MetadataAttrWriter::putUInt16(tu_uint16 u16)
         return putNamespaceResult.getStatus();
     auto nsAddress = putNamespaceResult.getResult();
     auto appendAttrResult = m_state->appendAttr(AttrId(NamespaceAddress(nsAddress), m_key.id),
-        tempo_utils::AttrValue(u16));
+        tempo_schema::AttrValue(u16));
     if (appendAttrResult.isStatus())
-        return tempo_utils::AttrStatus::forCondition(
-            tempo_utils::AttrCondition::kConversionError, "failed to append attr");
+        return tempo_schema::SchemaStatus::forCondition(
+            tempo_schema::SchemaCondition::kConversionError, "failed to append attr");
     auto *attr = appendAttrResult.getResult();
     return attr->getAddress().getAddress();
 }
@@ -149,10 +150,10 @@ lyric_build::MetadataAttrWriter::putUInt8(tu_uint8 u8)
         return putNamespaceResult.getStatus();
     auto nsAddress = putNamespaceResult.getResult();
     auto appendAttrResult = m_state->appendAttr(AttrId(NamespaceAddress(nsAddress), m_key.id),
-        tempo_utils::AttrValue(u8));
+        tempo_schema::AttrValue(u8));
     if (appendAttrResult.isStatus())
-        return tempo_utils::AttrStatus::forCondition(
-            tempo_utils::AttrCondition::kConversionError, "failed to append attr");
+        return tempo_schema::SchemaStatus::forCondition(
+            tempo_schema::SchemaCondition::kConversionError, "failed to append attr");
     auto *attr = appendAttrResult.getResult();
     return attr->getAddress().getAddress();
 }
@@ -166,10 +167,10 @@ lyric_build::MetadataAttrWriter::putString(std::string_view str)
         return putNamespaceResult.getStatus();
     auto nsAddress = putNamespaceResult.getResult();
     auto appendAttrResult = m_state->appendAttr(AttrId(NamespaceAddress(nsAddress), m_key.id),
-        tempo_utils::AttrValue(str));
+        tempo_schema::AttrValue(str));
     if (appendAttrResult.isStatus())
-        return tempo_utils::AttrStatus::forCondition(
-            tempo_utils::AttrCondition::kConversionError, "failed to append attr");
+        return tempo_schema::SchemaStatus::forCondition(
+            tempo_schema::SchemaCondition::kConversionError, "failed to append attr");
     auto *attr = appendAttrResult.getResult();
     return attr->getAddress().getAddress();
 }

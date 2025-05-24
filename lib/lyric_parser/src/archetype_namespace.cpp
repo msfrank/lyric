@@ -27,7 +27,7 @@ lyric_parser::ArchetypeNamespace::namespaceView() const
 }
 
 bool
-lyric_parser::ArchetypeNamespace::isNamespace(const tempo_utils::SchemaNs &schemaNs) const
+lyric_parser::ArchetypeNamespace::isNamespace(const tempo_schema::SchemaNs &schemaNs) const
 {
     return std::string_view(schemaNs.getNs()) == namespaceView();
 }

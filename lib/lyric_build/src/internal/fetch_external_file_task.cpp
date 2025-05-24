@@ -8,8 +8,6 @@
 #include <lyric_build/internal/fetch_external_file_task.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
-#include <lyric_common/common_types.h>
-#include <lyric_packaging/package_attrs.h>
 #include <tempo_config/base_conversions.h>
 #include <tempo_config/parse_config.h>
 #include <tempo_utils/date_time.h>
@@ -112,8 +110,7 @@ lyric_build::internal::FetchExternalFileTask::fetchExternalFile(
     // serialize the file metadata
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
-    writer.putAttr(lyric_packaging::kLyricPackagingContentType, m_contentType);
-    writer.putAttr(lyric_packaging::kLyricPackagingCreateTime, tempo_utils::millis_since_epoch());
+    writer.putAttr(kLyricBuildContentType, m_contentType);
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
         span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);

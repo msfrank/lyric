@@ -3,13 +3,9 @@
 
 #include <filesystem>
 
-#include <absl/container/flat_hash_map.h>
-
 #include <lyric_build/task_settings.h>
 #include <lyric_build/lyric_builder.h>
-#include <lyric_packaging/package_specifier.h>
 #include <lyric_runtime/bytecode_interpreter.h>
-#include <lyric_runtime/gc_heap.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <lyric_test/abstract_tester.h>
 #include <lyric_test/test_result.h>
@@ -74,19 +70,6 @@ namespace lyric_test {
             const std::string &code,
             const std::filesystem::path &modulePath = {},
             const std::filesystem::path &baseDir = {});
-        tempo_utils::Result<PackageModule> packageModuleInternal(
-            const lyric_packaging::PackageSpecifier &specifier,
-            const std::string &code,
-            const std::filesystem::path &modulePath = {},
-            const std::filesystem::path &baseDir = {});
-
-        tempo_utils::Result<PackageModule> packageTargetsInternal(
-            const absl::flat_hash_set<lyric_build::TaskId> &targets,
-            const lyric_common::ModuleLocation &mainLocation,
-            const lyric_packaging::PackageSpecifier &specifier);
-        tempo_utils::Result<PackageModule> packageWorkspaceInternal(
-            const lyric_common::ModuleLocation &mainLocation,
-            const lyric_packaging::PackageSpecifier &specifier);
 
         bool containsUnexpectedResult() const;
         void setUnexpectedResult(bool unexpectedResult);
