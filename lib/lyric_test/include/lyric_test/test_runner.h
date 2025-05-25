@@ -22,12 +22,12 @@ namespace lyric_test {
             bool isTemporary,
             bool keepBuildOnUnexpectedResult,
             std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
+            std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader,
             std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
             const lyric_build::TaskSettings &taskSettings);
         ~TestRunner() override;
 
         std::filesystem::path getTesterDirectory() const override;
-        std::filesystem::path getInstallDirectory() const override;
         lyric_build::LyricBuilder *getBuilder() const override;
         tempo_tracing::TempoSpanset getDiagnostics(
             const lyric_build::TargetComputation &computation) const override;
@@ -80,12 +80,12 @@ namespace lyric_test {
         bool m_isTemporary;
         bool m_keepBuildOnUnexpectedResult;
         std::shared_ptr<lyric_build::TaskRegistry> m_taskRegistry;
+        std::shared_ptr<lyric_runtime::AbstractLoader> m_bootstrapLoader;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_fallbackLoader;
         lyric_build::TaskSettings m_taskSettings;
 
         bool m_configured;
         std::filesystem::path m_testerDirectory;
-        std::filesystem::path m_installDirectory;
         lyric_build::LyricBuilder *m_builder;
         bool m_unexpectedResult;
 
@@ -95,6 +95,7 @@ namespace lyric_test {
             bool isTemporary,
             bool keepBuildOnUnexpectedResult,
             std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
+            std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader,
             std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
             const lyric_build::TaskSettings &overrides);
     };

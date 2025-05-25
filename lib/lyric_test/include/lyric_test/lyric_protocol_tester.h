@@ -14,16 +14,17 @@
 namespace lyric_test {
 
     struct ProtocolTesterOptions {
-        std::filesystem::path testRootDirectory;
+        std::filesystem::path testRootDirectory = {};
         bool useInMemoryCache = true;
         bool isTemporary = true;
         bool keepBuildOnUnexpectedResult = true;
-        std::shared_ptr<lyric_build::TaskRegistry> taskRegistry;
-        std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader;
-        lyric_build::TaskSettings taskSettings;
+        std::shared_ptr<lyric_build::TaskRegistry> taskRegistry = {};
+        std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader = {};
+        std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader = {};
+        lyric_build::TaskSettings taskSettings = {};
         absl::flat_hash_map<
             tempo_utils::Url,
-            std::shared_ptr<BaseProtocolMock>> protocolMocks;
+            std::shared_ptr<BaseProtocolMock>> protocolMocks = {};
     };
 
     class LyricProtocolTester {

@@ -17,6 +17,8 @@
 #include <tempo_utils/date_time.h>
 #include <tempo_utils/log_message.h>
 
+#include "lyric_runtime/chain_loader.h"
+
 lyric_build::internal::ArchiveTask::ArchiveTask(
     const tempo_utils::UUID &generation,
     const TaskKey &key,

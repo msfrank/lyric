@@ -157,7 +157,7 @@ lyric_build::BuildRunner::run()
         }
     }
 
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -222,7 +222,7 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key, const TaskKey &depende
     m_readyWaiter.notify_one();                         // signal a waiting task worker
 
     TU_LOG_VV << "enqueued task " << task->getKey();
-    return BuildStatus::ok();                           // return true, ready lock is released implicitly on return
+    return {};                           // return true, ready lock is released implicitly on return
 }
 
 std::shared_ptr<tempo_tracing::TraceSpan>
@@ -289,7 +289,7 @@ lyric_build::BuildRunner::enqueueNotification(TaskNotification *notification)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "uv_async_send failed: {}", uv_err_name(result));
 
-    return BuildStatus::ok();
+    return {};
 }
 
 std::queue<lyric_build::TaskNotification *>
@@ -515,7 +515,7 @@ link_dependencies(
             }
         }
     }
-    return lyric_build::BuildStatus::ok();
+    return {};
 }
 
 inline tempo_utils::Status worker_loop(const lyric_build::TaskThread *thread)
@@ -755,7 +755,7 @@ inline tempo_utils::Status worker_loop(const lyric_build::TaskThread *thread)
         }
     }
 
-    return lyric_build::BuildStatus::ok();
+    return {};
 }
 
 static void worker_thread(void *arg)

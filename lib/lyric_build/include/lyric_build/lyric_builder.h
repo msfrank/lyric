@@ -15,7 +15,7 @@
 
 namespace lyric_build {
 
-    constexpr const char *kBuildRootDirectoryName = ".build";
+    constexpr const char *kBuildRootDirectoryName = ".zuribuildroot";
 
     /**
      * The build artifact caching mode.
@@ -31,26 +31,15 @@ namespace lyric_build {
      */
     struct BuilderOptions {
         /**
-         * The workspace root directory. If workspaceRoot is specified and virtualFilesystem is not specified
-         * then the value will be used by the internal LocalFilesystem instance as the base directory when
-         * resolving relative paths. If not specified
-         */
-        std::filesystem::path workspaceRoot;
-        /**
          * The cache mode. Defaults to the cache mode specified in config.
          */
         CacheMode cacheMode = CacheMode::Default;
         /**
          * The directory used to store build data. If cache mode is set to InMemory, then this option is
          * ignored. If empty and the cache mode is set to Persistent, then this option defaults to the
-         * directory .zuri in the workspace root.
+         * directory .zuribuildroot in the workspace root.
          */
         std::filesystem::path buildRoot;
-        /**
-         * The directory used to store installation artifacts. If this option is empty then artifacts
-         * will not be installed.
-         */
-        std::filesystem::path installRoot;
         /**
          * The number of build runner threads. If < 0 then the number of threads will be calculated based
          * on the available parallelism of the host. If 0 then this option defaults to the value specified
@@ -73,9 +62,14 @@ namespace lyric_build {
         std::shared_ptr<lyric_importer::ModuleCache> sharedModuleCache = {};
         /**
          * The virtual filesystem. If not specified then this option defaults to an internally allocated
-         * LocalFilesystem instance.
+         * LocalFilesystem instance rooted at the workspace root.
          */
         std::shared_ptr<AbstractFilesystem> virtualFilesystem = {};
+        /**
+         * Loader which is used to resolve system modules. If not specified then an internally allocated
+         * BootstrapLoader is used.
+         */
+        std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader = {};
         /**
          * Loader which is added to the end of the loader chain. If not specified then no fallback loader
          * is appended to the loader chain.
@@ -89,7 +83,10 @@ namespace lyric_build {
     class LyricBuilder {
 
     public:
-        explicit LyricBuilder(const TaskSettings &config, const BuilderOptions &options = {});
+        LyricBuilder(
+            const std::filesystem::path &workspaceRoot,
+            const TaskSettings &taskSettings,
+            const BuilderOptions &options = {});
         ~LyricBuilder();
 
         tempo_utils::Status configure();
@@ -99,24 +96,23 @@ namespace lyric_build {
             const TaskSettings &overrides = {});
 
         std::shared_ptr<AbstractCache> getCache() const;
-        std::shared_ptr<lyric_bootstrap::BootstrapLoader> getBootstrapLoader() const;
+        std::shared_ptr<lyric_runtime::AbstractLoader> getBootstrapLoader() const;
         std::shared_ptr<lyric_runtime::AbstractLoader> getFallbackLoader() const;
         std::shared_ptr<lyric_importer::ModuleCache> getSharedModuleCache() const;
 
         void onTaskNotification(BuildRunner *runner, const TaskNotification *notification);
 
     private:
-        TaskSettings m_config;
+        std::filesystem::path m_workspaceRoot;
+        TaskSettings m_taskSettings;
         BuilderOptions m_options;
 
         // set during configure and then immutable
         bool m_configured;
-        std::filesystem::path m_workspaceRoot;
         std::filesystem::path m_buildRoot;
-        std::filesystem::path m_installRoot;
         int m_numThreads;
         int m_waitTimeoutInMs;
-        std::shared_ptr<lyric_bootstrap::BootstrapLoader> m_bootstrapLoader;
+        std::shared_ptr<lyric_runtime::AbstractLoader> m_bootstrapLoader;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_fallbackLoader;
         std::shared_ptr<TaskRegistry> m_taskRegistry;
         std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;

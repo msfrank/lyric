@@ -116,7 +116,7 @@ lyric_build::RocksdbCache::initializeCache()
     m_traces = handles[3];
     m_diagnostics = handles[4];
 
-    return BuildStatus::ok();
+    return {};
 }
 
 // trace id has the following format:
@@ -319,7 +319,7 @@ lyric_build::RocksdbCache::storeContent(
     if (!status.ok())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "Put failed: {}", status.ToString());
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -338,7 +338,7 @@ lyric_build::RocksdbCache::storeContent(const ArtifactId &artifactId, std::span<
     if (!status.ok())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "Put failed: {}", status.ToString());
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<lyric_build::LyricMetadata>
@@ -438,7 +438,7 @@ lyric_build::RocksdbCache::storeMetadata(const ArtifactId &artifactId, const Lyr
     if (!status.ok())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "Put failed: {}", status.ToString());
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Status

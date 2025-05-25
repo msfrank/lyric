@@ -19,6 +19,7 @@ lyric_test::TestRunner::create(
     bool isTemporary,
     bool keepBuildOnUnexpectedResult,
     std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
+    std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
     const lyric_build::TaskSettings &taskSettings)
 {
@@ -28,6 +29,7 @@ lyric_test::TestRunner::create(
         isTemporary,
         keepBuildOnUnexpectedResult,
         taskRegistry,
+        bootstrapLoader,
         fallbackLoader,
         taskSettings));
 }
@@ -38,6 +40,7 @@ lyric_test::TestRunner::TestRunner(
     bool isTemporary,
     bool keepBuildOnUnexpectedResult,
     std::shared_ptr<lyric_build::TaskRegistry> taskRegistry,
+    std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
     const lyric_build::TaskSettings &taskSettings)
     : std::enable_shared_from_this<TestRunner>(),
@@ -46,6 +49,7 @@ lyric_test::TestRunner::TestRunner(
       m_isTemporary(isTemporary),
       m_keepBuildOnUnexpectedResult(keepBuildOnUnexpectedResult),
       m_taskRegistry(std::move(taskRegistry)),
+      m_bootstrapLoader(std::move(bootstrapLoader)),
       m_fallbackLoader(std::move(fallbackLoader)),
       m_taskSettings(taskSettings),
       m_configured(false),
@@ -104,18 +108,10 @@ lyric_test::TestRunner::configureBaseTester()
 
     // default to a single builder thread, 1s lock wait timeout
     lyric_build::BuilderOptions builderOptions;
-    builderOptions.workspaceRoot = m_testerDirectory;
     builderOptions.numThreads = 1;
     builderOptions.waitTimeoutInMs = 1000;
+    builderOptions.bootstrapLoader = m_bootstrapLoader;
     builderOptions.fallbackLoader = m_fallbackLoader;
-
-    // create the install directory and configure assembly to user it
-    tempo_utils::DirectoryMaker installdirMaker(m_testerDirectory, "install");
-    if (!installdirMaker.isValid())
-        return TestStatus::forCondition(TestCondition::kTestInvariant,
-            "failed to create install directory");
-    m_installDirectory = installdirMaker.getAbsolutePath();
-    builderOptions.installRoot = m_installDirectory;
 
     // if taskRegistry option is specified, then pass it as a builder option
     if (m_taskRegistry != nullptr) {
@@ -129,7 +125,7 @@ lyric_test::TestRunner::configureBaseTester()
         builderOptions.cacheMode = lyric_build::CacheMode::Persistent;
     }
 
-    auto builder = new lyric_build::LyricBuilder(m_taskSettings, builderOptions);
+    auto builder = new lyric_build::LyricBuilder(m_testerDirectory, m_taskSettings, builderOptions);
     auto status = builder->configure();
     if (status.notOk())
         return status;
@@ -381,12 +377,6 @@ std::filesystem::path
 lyric_test::TestRunner::getTesterDirectory() const
 {
     return m_testerDirectory;
-}
-
-std::filesystem::path
-lyric_test::TestRunner::getInstallDirectory() const
-{
-    return m_installDirectory;
 }
 
 lyric_build::LyricBuilder *

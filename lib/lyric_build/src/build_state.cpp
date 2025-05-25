@@ -2,12 +2,13 @@
 #include <lyric_build/build_state.h>
 #include <lyric_build/rocksdb_cache.h>
 #include <lyric_build/build_types.h>
+#include <lyric_runtime/chain_loader.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_build::BuildState::BuildState(
     const BuildGeneration &buildGen,
     std::shared_ptr<AbstractCache> cache,
-    std::shared_ptr<lyric_bootstrap::BootstrapLoader> bootstrapLoader,
+    std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
     std::shared_ptr<lyric_importer::ModuleCache> sharedModuleCache,
     std::shared_ptr<AbstractFilesystem> virtualFilesystem,
@@ -46,7 +47,7 @@ lyric_build::BuildState::getCache() const
     return m_cache;
 }
 
-std::shared_ptr<lyric_bootstrap::BootstrapLoader>
+std::shared_ptr<lyric_runtime::AbstractLoader>
 lyric_build::BuildState::getBootstrapLoader() const
 {
     return m_bootstrapLoader;
@@ -58,7 +59,7 @@ lyric_build::BuildState::getFallbackLoader() const
     return m_fallbackLoader;
 }
 
-std::shared_ptr<lyric_runtime::ChainLoader>
+std::shared_ptr<lyric_runtime::AbstractLoader>
 lyric_build::BuildState::getLoaderChain() const
 {
     return m_loaderChain;

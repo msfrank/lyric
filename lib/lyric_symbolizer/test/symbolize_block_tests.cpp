@@ -37,12 +37,7 @@ TEST_F(SymbolizeBlock, NoDefinitionsOrImports)
 TEST_F(SymbolizeBlock, DeclareImport)
 {
     lyric_test::TesterOptions testerOptions;
-    testerOptions.taskSettings = lyric_build::TaskSettings(tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    });
+    testerOptions.bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
     lyric_test::LyricTester tester(testerOptions);
     ASSERT_TRUE (tester.configure().isOk());
 

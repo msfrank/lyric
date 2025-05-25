@@ -8,12 +8,6 @@ lyric_build::BuildStatus::BuildStatus(
 {
 }
 
-lyric_build::BuildStatus
-lyric_build::BuildStatus::ok()
-{
-    return BuildStatus();
-}
-
 bool
 lyric_build::BuildStatus::convert(BuildStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {

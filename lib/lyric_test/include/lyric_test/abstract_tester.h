@@ -13,8 +13,6 @@ namespace lyric_test {
 
         virtual std::filesystem::path getTesterDirectory() const = 0;
 
-        virtual std::filesystem::path getInstallDirectory() const = 0;
-
         virtual lyric_build::LyricBuilder *getBuilder() const = 0;
 
         virtual tempo_tracing::TempoSpanset getDiagnostics(

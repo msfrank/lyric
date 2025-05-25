@@ -14,13 +14,14 @@
 namespace lyric_test {
 
     struct TesterOptions {
-        std::filesystem::path testRootDirectory;
+        std::filesystem::path testRootDirectory = {};
         bool useInMemoryCache = true;
         bool isTemporary = true;
         bool keepBuildOnUnexpectedResult = true;
-        std::shared_ptr<lyric_build::TaskRegistry> taskRegistry;
-        std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader;
-        lyric_build::TaskSettings taskSettings;
+        std::shared_ptr<lyric_build::TaskRegistry> taskRegistry = {};
+        std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader = {};
+        std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader = {};
+        lyric_build::TaskSettings taskSettings = {};
     };
 
     class LyricTester {

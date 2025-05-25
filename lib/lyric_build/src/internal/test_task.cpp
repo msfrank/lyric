@@ -41,7 +41,7 @@ lyric_build::internal::TestTask::configure(const lyric_build::TaskSettings *conf
         m_dependencies.insert(TaskKey(dep.getDomain(), dep.getId()));
     }
 
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<std::string>
@@ -90,7 +90,7 @@ lyric_build::internal::TestTask::runTask(
             BuildStatus::forCondition(BuildCondition::kTaskFailure, "task should fail"));
     }
 
-    return Option<tempo_utils::Status>(BuildStatus::ok());
+    return Option(tempo_utils::Status{});
 }
 
 lyric_build::BaseTask *

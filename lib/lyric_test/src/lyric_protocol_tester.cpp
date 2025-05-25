@@ -19,6 +19,7 @@ lyric_test::LyricProtocolTester::LyricProtocolTester(const ProtocolTesterOptions
         options.isTemporary,
         options.keepBuildOnUnexpectedResult,
         options.taskRegistry,
+        options.bootstrapLoader,
         options.fallbackLoader,
         options.taskSettings);
 }

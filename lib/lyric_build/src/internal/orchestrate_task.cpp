@@ -46,7 +46,7 @@ lyric_build::internal::OrchestrateTask::configure(const TaskSettings *config)
 
     TU_LOG_INFO << "orchestrate targets:" << m_orchestrateTargets;
 
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<std::string>

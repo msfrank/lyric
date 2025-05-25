@@ -33,7 +33,7 @@ lyric_build::internal::BuildTask::configure(const TaskSettings *config)
 
     TU_LOG_INFO << "build targets:" << m_buildTargets;
 
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<std::string>

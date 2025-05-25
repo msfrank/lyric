@@ -12,28 +12,37 @@
 #include <lyric_build/rocksdb_cache.h>
 #include <lyric_build/task_notification.h>
 #include <lyric_build/task_registry.h>
+#include <lyric_runtime/chain_loader.h>
 #include <tempo_config/base_conversions.h>
 #include <tempo_config/container_conversions.h>
-#include <tempo_config/enum_conversions.h>
-#include <tempo_config/parse_config.h>
-#include <tempo_schema/schema_result.h>
 #include <tempo_utils/directory_maker.h>
 #include <tempo_utils/log_message.h>
-#include <tempo_utils/file_writer.h>
 
 static void on_notification(
     lyric_build::BuildRunner *runner,
     const lyric_build::TaskNotification *notification,
     void *data);
 
-lyric_build::LyricBuilder::LyricBuilder(const TaskSettings &config, const BuilderOptions &options)
-    : m_config(config),
+/**
+ * Construct a LyricBuilder.
+ *
+ * @param workspaceRoot The root of the workspace.
+ * @param taskSettings Task settings.
+ * @param options Options to override the builder defaults.
+ */
+lyric_build::LyricBuilder::LyricBuilder(
+    const std::filesystem::path &workspaceRoot,
+    const TaskSettings &taskSettings,
+    const BuilderOptions &options)
+    : m_workspaceRoot(workspaceRoot),
+      m_taskSettings(taskSettings),
       m_options(options),
       m_configured(false),
       m_numThreads(0),
       m_waitTimeoutInMs(0),
       m_running(false)
 {
+    TU_ASSERT (!m_workspaceRoot.empty());
 }
 
 lyric_build::LyricBuilder::~LyricBuilder()
@@ -48,32 +57,28 @@ lyric_build::LyricBuilder::configure()
             "builder was already configured");
 
     // set the workspace root unconditionally
-    m_workspaceRoot = m_options.workspaceRoot;
-
-    tempo_config::EnumTParser<CacheMode> cacheModeParser({
-        {"Default", CacheMode::Default},
-        {"Persistent", CacheMode::Persistent},
-        {"InMemory", CacheMode::InMemory},
-    });
-
-    auto globalConfig = m_config.getGlobalSection();
+    if (!std::filesystem::is_directory(m_workspaceRoot))
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "missing workspace root directory");
 
     // determine the cache mode from config, and apply override if specified
     CacheMode cacheMode;
-    if (m_options.cacheMode == CacheMode::Default) {
-        TU_RETURN_IF_NOT_OK(tempo_config::parse_config(cacheMode, cacheModeParser,
-            globalConfig, "cacheMode"));
-        if (cacheMode == CacheMode::Default)
+    switch (m_options.cacheMode) {
+        case CacheMode::Persistent:
+            cacheMode = CacheMode::Persistent;
+            break;
+        case CacheMode::InMemory:
+        case CacheMode::Default:
+            cacheMode = CacheMode::InMemory;
+            break;
+        default:
             return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
                 "failed to determine the cache mode");
-    } else {
-        cacheMode = m_options.cacheMode;
     }
 
     // if cache mode is Persistent then set the build root, creating it if needed
     if (cacheMode == CacheMode::Persistent) {
         if (m_options.buildRoot.empty()) {
-
             auto buildRoot = m_workspaceRoot / kBuildRootDirectoryName;
             if (!std::filesystem::exists(buildRoot)) {
                 if (!std::filesystem::create_directories(buildRoot))
@@ -89,61 +94,23 @@ lyric_build::LyricBuilder::configure()
         }
     }
 
-    // if the install root is specified then verify that it exists
-    if (!m_options.installRoot.empty()) {
-        if (!std::filesystem::exists(m_options.installRoot))
-            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                "build root {} doesn't exist", m_options.installRoot.string());
-        m_installRoot = m_options.installRoot;
-    }
-
-    tempo_config::PathParser bootstrapDirectoryPathParser(std::filesystem::path{});
-    tempo_config::PathParser pkgDirectoryPathParser;
-    tempo_config::SeqTParser pkgDirectoryPathListParser(&pkgDirectoryPathParser, {});
-    tempo_config::IntegerParser jobParallelismParser;
-    tempo_config::IntegerParser waitTimeoutInMillisParser;
-
-    // determine the job parallelism from config, and apply override if specified
-    if (m_options.numThreads == 0) {
-        TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_numThreads, jobParallelismParser,
-            globalConfig, "jobParallelism"));
-    } else {
+    // if numThreads <= 0 then call libuv to perform some reasonable heuristics to determine numThreads
+    if (m_options.numThreads > 0) {
         m_numThreads = m_options.numThreads;
-    }
-
-    // if numThreads < 0 then call libuv to perform some reasonable heuristics to determine numThreads
-    if (m_numThreads < 0) {
+    } else {
         m_numThreads = static_cast<int>(uv_available_parallelism());
     }
 
-    // if we failed to determine numThreads then default to single threaded mode
-    if (m_numThreads == 0) {
-        TU_LOG_WARN << "unable to determine jobParallelism, using fallback value: 1";
-        m_numThreads = 1;
-    }
-
-    // determine the wait timeout from config, and apply override if specified
+    // if waitTimeoutInMs <= 0 then default to 1 second
     if (m_options.waitTimeoutInMs == 0) {
-        TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_waitTimeoutInMs, waitTimeoutInMillisParser,
-            globalConfig, "builderWaitTimeoutInMillis"));
-    } else {
         m_waitTimeoutInMs = m_options.waitTimeoutInMs;
-    }
-
-    //
-    if (m_waitTimeoutInMs <= 0) {
-        TU_LOG_WARN << "unable to determine builderWaitTimeoutInMillis, using fallback value: 1000ms";
+    } else {
         m_waitTimeoutInMs = 1000;
     }
 
-    // determine the distribution package directory
-    std::filesystem::path bootstrapDirectoryPath;
-    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(bootstrapDirectoryPath, bootstrapDirectoryPathParser,
-        globalConfig, "bootstrapDirectoryPath"));
-
-    // if there is a bootstrap directory override specified then use it, otherwise use the default path
-    if (!bootstrapDirectoryPath.empty()) {
-        m_bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(bootstrapDirectoryPath);
+    // if there is a bootstrap loader specified then use it, otherwise construct a default one
+    if (m_options.bootstrapLoader != nullptr) {
+        m_bootstrapLoader = m_options.bootstrapLoader;
     } else {
         m_bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
     }
@@ -153,12 +120,14 @@ lyric_build::LyricBuilder::configure()
         m_fallbackLoader = m_options.fallbackLoader;
     }
 
-    // configure the task registry
+    // if no task registry is specified then construct a default task registry
     if (m_options.taskRegistry == nullptr) {
         m_taskRegistry = std::make_shared<TaskRegistry>();
     } else {
         m_taskRegistry = m_options.taskRegistry;
     }
+
+    // seal the registry so no task domains can be added or removed
     m_taskRegistry->sealRegistry();
 
     // configure the shared module cache
@@ -219,7 +188,7 @@ lyric_build::LyricBuilder::configure()
 
     m_configured = true;
 
-    return BuildStatus::ok();
+    return {};
 }
 
 void
@@ -274,7 +243,7 @@ lyric_build::LyricBuilder::computeTargets(
     tempo_utils::Status status;
 
     // construct a new Config with overrides merged in
-    auto config = m_config.merge(overrides);
+    auto taskSettings = m_taskSettings.merge(overrides);
 
     // wrap the build cache and loader chain in a unique generation
     auto buildGen = BuildGeneration::create();
@@ -282,7 +251,7 @@ lyric_build::LyricBuilder::computeTargets(
         m_fallbackLoader, m_sharedModuleCache, m_virtualFilesystem, m_tempRoot);
 
     // construct a new task manager for managing parallel tasks
-    BuildRunner runner(&config, state, m_cache, m_taskRegistry.get(),
+    BuildRunner runner(&taskSettings, state, m_cache, m_taskRegistry.get(),
         m_numThreads, m_waitTimeoutInMs, on_notification, this);
 
     // enqueue all tasks in parallel, and let the manager sequence them appropriately
@@ -347,118 +316,6 @@ lyric_build::LyricBuilder::computeTargets(
     TargetComputationSet targetComputationSet(targetComputations, numTasksCreated,
         numTasksCached, elapsedTime, diagnostics);
 
-    // if install root is not defined, then we are done
-    if (m_installRoot.empty()) {
-        TU_LOG_V << "skipping installation of artifacts because no install root was specified";
-        return targetComputationSet;
-    }
-
-    // ensure installDirectoryPath is an absolute path
-    auto installDirectoryPath = absolute(std::filesystem::current_path() / m_installRoot);
-
-    // create any needed intermediate directories
-    if (!std::filesystem::exists(installDirectoryPath)) {
-        if (!std::filesystem::create_directories(installDirectoryPath))
-            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                "failed to create install root {}", installDirectoryPath.string());
-    }
-
-    // write target artifacts to the install directory
-    for (auto entry : targetComputations) {
-        const auto &targetId = entry.first;
-        const auto &targetComputation = entry.second;
-
-        tempo_config::BooleanParser skipInstallParser(false);
-
-        bool taskSkipInstall;
-        TU_RETURN_IF_NOT_OK(parse_config(taskSkipInstall, skipInstallParser,
-            &config, targetId, "skipInstall"));
-
-        // if skipInstall is true at the task or domain level, then don't install task artifacts
-        if (taskSkipInstall) {
-            TU_LOG_V << "skipping installation of " << targetId << " artifact because skipInstall is true";
-            continue;
-        }
-
-        // if the target state is not completed, then don't attempt to install artifacts
-        if (targetComputation.getState().getStatus() != TaskState::Status::COMPLETED)
-            continue;
-
-        auto hash = targetComputation.getState().getHash();
-        if (hash.empty())
-            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                "invalid state for task {}", targetId.toString());
-
-        TraceId artifactTrace(hash, targetId.getDomain(), targetId.getId());
-        auto generation = m_cache->loadTrace(artifactTrace);
-        auto findTargetArtifactsResult = m_cache->findArtifacts(generation, hash, {}, {});
-        if (findTargetArtifactsResult.isStatus())
-            return findTargetArtifactsResult.getStatus();
-        auto targetArtifacts = findTargetArtifactsResult.getResult();
-
-        for (const auto &artifactId : targetArtifacts) {
-            const auto artifactLocation = artifactId.getLocation();
-            if (!artifactLocation.isValid())    // if location is invalid then there is nothing to install
-                continue;
-
-            // get the metadata for the target artifact
-            auto loadMetadataResult = m_cache->loadMetadataFollowingLinks(artifactId);
-            if (loadMetadataResult.isStatus())
-                return loadMetadataResult.getStatus();
-            auto artifactMetadata = loadMetadataResult.getResult().getMetadata();
-
-            std::filesystem::path artifactPath;
-            std::string installPathString;
-
-            // if artifact metadata has an installPath attribute, then use it to build the artifact path
-            auto parseAttrStatus = artifactMetadata.parseAttr(
-                kLyricBuildInstallPath, installPathString);
-            if (parseAttrStatus.isOk()) {
-                artifactPath = installDirectoryPath / installPathString;
-            } else {
-                if (!parseAttrStatus.matchesCondition(tempo_schema::SchemaCondition::kMissingValue))
-                    return parseAttrStatus;
-                // otherwise if installPath attribute was not present then build the
-                // artifact path based on the location url
-                if (artifactLocation.isRelative()) {
-                    artifactPath = artifactLocation.toFilesystemPath(installDirectoryPath);
-                } else {
-                    TU_LOG_V << "skipping installation of artifact " << artifactId.toString()
-                             << " because location is not a relative url and installPath was not specified";
-                    continue;
-                }
-            }
-
-            auto artifactAlreadyExists = std::filesystem::exists(artifactPath);
-            auto artifactDir = artifactPath.parent_path();
-
-            tempo_utils::DirectoryMaker directoryMaker(artifactDir.string());
-            if (!directoryMaker.isValid())
-                return BuildStatus::forCondition(BuildCondition::kInstallError,
-                    "failed to make intermediate directories for {}", artifactDir.string());
-
-            //
-            auto loadContentResult = m_cache->loadContentFollowingLinks(artifactId);
-            if (loadContentResult.isStatus())
-                return loadContentResult.getStatus();
-            auto content = loadContentResult.getResult();
-            tempo_utils::FileWriter artifactWriter(artifactPath,
-                std::span<const tu_uint8>(content->getData(), content->getSize()),
-                tempo_utils::FileWriterMode::CREATE_OR_OVERWRITE);
-
-            // if we failed to write the artifact, then fail the task
-            if (!artifactWriter.isValid())
-                return BuildStatus::forCondition(BuildCondition::kInstallError,
-                    "failed to install file {}", artifactPath.string());
-
-            if (artifactAlreadyExists) {
-                TU_LOG_V << "overwriting install file " << artifactPath;
-            } else {
-                TU_LOG_V << "writing install file " << artifactPath;
-            }
-        }
-    }
-
     return targetComputationSet;
 }
 
@@ -474,7 +331,7 @@ lyric_build::LyricBuilder::getCache() const
  *
  * @return The bootstrap loader, or an empty shared_ptr.
  */
-std::shared_ptr<lyric_bootstrap::BootstrapLoader>
+std::shared_ptr<lyric_runtime::AbstractLoader>
 lyric_build::LyricBuilder::getBootstrapLoader() const
 {
     return m_bootstrapLoader;

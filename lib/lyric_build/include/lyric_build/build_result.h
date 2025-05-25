@@ -29,7 +29,6 @@ namespace lyric_build {
     class BuildStatus : public tempo_utils::TypedStatus<BuildCondition> {
     public:
         using TypedStatus::TypedStatus;
-        static BuildStatus ok();
         static bool convert(BuildStatus &dstStatus, const tempo_utils::Status &srcStatus);
 
     private:

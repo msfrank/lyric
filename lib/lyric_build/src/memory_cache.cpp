@@ -60,7 +60,7 @@ lyric_build::MemoryCache::storeContent(
     absl::MutexLock locker(&m_lock);
 
     m_content.insert_or_assign(artifactId, bytes);
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -69,7 +69,7 @@ lyric_build::MemoryCache::storeContent(const ArtifactId &artifactId, std::span<c
     absl::MutexLock locker(&m_lock);
 
     m_content.insert_or_assign(artifactId, tempo_utils::MemoryBytes::copy(bytes));
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<lyric_build::LyricMetadata>
@@ -118,7 +118,7 @@ lyric_build::MemoryCache::storeMetadata(const ArtifactId &artifactId, const Lyri
 
     MetadataEntry entry{metadata, ArtifactId()};
     m_metadata.insert_or_assign(artifactId, entry);
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -134,7 +134,7 @@ lyric_build::MemoryCache::linkArtifact(const ArtifactId &dstId, const ArtifactId
 
     MetadataEntry entry{toMetadataResult.getResult(), srcId};
     m_metadata.insert_or_assign(dstId, entry);
-    return BuildStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<std::vector<lyric_build::ArtifactId>>
