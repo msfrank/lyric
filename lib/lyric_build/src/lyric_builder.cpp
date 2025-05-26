@@ -102,7 +102,7 @@ lyric_build::LyricBuilder::configure()
     }
 
     // if waitTimeoutInMs <= 0 then default to 1 second
-    if (m_options.waitTimeoutInMs == 0) {
+    if (m_options.waitTimeoutInMs > 0) {
         m_waitTimeoutInMs = m_options.waitTimeoutInMs;
     } else {
         m_waitTimeoutInMs = 1000;
