@@ -87,7 +87,9 @@ namespace lyric_build {
             const std::filesystem::path &workspaceRoot,
             const TaskSettings &taskSettings,
             const BuilderOptions &options = {});
-        ~LyricBuilder();
+
+        std::filesystem::path getWorkspaceRoot() const;
+        TaskSettings getTasksettings() const;
 
         tempo_utils::Status configure();
 
@@ -95,10 +97,14 @@ namespace lyric_build {
             const absl::flat_hash_set<TaskId> &targets,
             const TaskSettings &overrides = {});
 
+        std::filesystem::path getBuildRoot() const;
+        std::filesystem::path getTempRoot() const;
         std::shared_ptr<AbstractCache> getCache() const;
         std::shared_ptr<lyric_runtime::AbstractLoader> getBootstrapLoader() const;
         std::shared_ptr<lyric_runtime::AbstractLoader> getFallbackLoader() const;
         std::shared_ptr<lyric_importer::ModuleCache> getSharedModuleCache() const;
+        std::shared_ptr<TaskRegistry> getTaskRegistry() const;
+        std::shared_ptr<AbstractFilesystem> getVirtualFilesystem() const;
 
         void onTaskNotification(BuildRunner *runner, const TaskNotification *notification);
 
@@ -110,15 +116,15 @@ namespace lyric_build {
         // set during configure and then immutable
         bool m_configured;
         std::filesystem::path m_buildRoot;
+        std::filesystem::path m_tempRoot;
         int m_numThreads;
         int m_waitTimeoutInMs;
+        std::shared_ptr<AbstractCache> m_cache;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_bootstrapLoader;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_fallbackLoader;
-        std::shared_ptr<TaskRegistry> m_taskRegistry;
         std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;
+        std::shared_ptr<TaskRegistry> m_taskRegistry;
         std::shared_ptr<AbstractFilesystem> m_virtualFilesystem;
-        std::shared_ptr<AbstractCache> m_cache;
-        std::filesystem::path m_tempRoot;
 
         // updated during each invocation of computeTargets
         absl::flat_hash_set<TaskKey> m_targets;

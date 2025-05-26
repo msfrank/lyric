@@ -218,7 +218,7 @@ lyric_build::internal::ProvideModuleTask::provideModule(
         // serialize the plugin metadata
         MetadataWriter pluginMetadataWriter;
         pluginMetadataWriter.putAttr(kLyricBuildEntryType, EntryType::File);
-        pluginMetadataWriter.putAttr(kLyricBuildContentType, std::string("application/octet-stream"));
+        pluginMetadataWriter.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
         pluginMetadataWriter.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
         LyricMetadata pluginMetadata;
         TU_ASSIGN_OR_RETURN (pluginMetadata, pluginMetadataWriter.toMetadata());

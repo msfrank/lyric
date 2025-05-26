@@ -530,8 +530,6 @@ inline tempo_utils::Status worker_loop(const lyric_build::TaskThread *thread)
     // loop forever until cancelled
     for (;;) {
 
-        //TU_LOG_VV << "waiting for next task";
-
         // fetch next task from the ready queue
         auto item = runner->waitForNextReady();
 

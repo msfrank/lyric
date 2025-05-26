@@ -26,6 +26,7 @@ namespace lyric_build {
     public:
         TargetComputationSet();
         TargetComputationSet(
+            const BuildGeneration &buildGen,
             const absl::flat_hash_map<TaskId, TargetComputation> &targetComputations,
             int totalTasksCreated,
             int totalTasksCached,
@@ -35,6 +36,7 @@ namespace lyric_build {
 
         bool isValid() const;
 
+        BuildGeneration getBuildGeneration() const;
         int getTotalTasksCreated() const;
         int getTotalTasksCached() const;
         std::chrono::milliseconds getElapsedTime() const;
@@ -48,6 +50,7 @@ namespace lyric_build {
         std::shared_ptr<BuildDiagnostics> getDiagnostics() const;
 
     private:
+        BuildGeneration m_buildGen;
         absl::flat_hash_map<TaskId, TargetComputation> m_targetComputations;
         int m_totalTasksCreated = 0;
         int m_totalTasksCached = 0;

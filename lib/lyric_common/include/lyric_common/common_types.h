@@ -4,15 +4,16 @@
 #define LYRIC_COMMON_SOURCE_FILE_SUFFIX                 "ly"
 #define LYRIC_COMMON_SOURCE_FILE_DOT_SUFFIX             ".ly"
 #define LYRIC_COMMON_SOURCE_CONTENT_TYPE                "application/vnd.lyric.source"
+
 #define LYRIC_COMMON_INTERMEZZO_FILE_SUFFIX             "lyi"
 #define LYRIC_COMMON_INTERMEZZO_FILE_DOT_SUFFIX         ".lyi"
 #define LYRIC_COMMON_INTERMEZZO_CONTENT_TYPE            "application/vnd.lyric.intermezzo"
+
 #define LYRIC_COMMON_OBJECT_FILE_SUFFIX                 "lyo"
 #define LYRIC_COMMON_OBJECT_FILE_DOT_SUFFIX             ".lyo"
 #define LYRIC_COMMON_OBJECT_CONTENT_TYPE                "application/vnd.lyric.object"
-#define LYRIC_COMMON_PACKAGE_FILE_SUFFIX                "zpk"
-#define LYRIC_COMMON_PACKAGE_FILE_DOT_SUFFIX            ".zpk"
-#define LYRIC_COMMON_PACKAGE_CONTENT_TYPE               "application/vnd.zuri.package"
+
+#define LYRIC_COMMON_PLUGIN_CONTENT_TYPE                "application/vnd.lyric.plugin"
 
 namespace lyric_common {
 
@@ -28,9 +29,7 @@ namespace lyric_common {
     constexpr const char *kObjectFileDotSuffix = LYRIC_COMMON_OBJECT_FILE_DOT_SUFFIX;
     constexpr const char *kObjectContentType = LYRIC_COMMON_OBJECT_CONTENT_TYPE;
 
-    constexpr const char *kPackageFileSuffix = LYRIC_COMMON_PACKAGE_FILE_SUFFIX;
-    constexpr const char *kPackageFileDotSuffix = LYRIC_COMMON_PACKAGE_FILE_DOT_SUFFIX;
-    constexpr const char *kPackageContentType = LYRIC_COMMON_PACKAGE_CONTENT_TYPE;
+    constexpr const char *kPluginContentType = LYRIC_COMMON_PLUGIN_CONTENT_TYPE;
 }
 
 #endif // LYRIC_COMMON_COMMON_TYPES_H

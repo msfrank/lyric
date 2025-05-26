@@ -9,6 +9,7 @@
 #include <tempo_test/result_matchers.h>
 
 #include "base_build_fixture.h"
+#include "lyric_common/common_types.h"
 
 class ProvidePluginTask : public BaseBuildFixture {
 protected:
@@ -55,7 +56,7 @@ TEST_F(ProvidePluginTask, RunSucceedsWhenProvidedExternalPluginFile)
     auto walker = metadata.getMetadata();
     std::string contentType;
     walker.parseAttr(lyric_build::kLyricBuildContentType, contentType);
-    ASSERT_EQ ("application/octet-stream", contentType);
+    ASSERT_EQ (lyric_common::kPluginContentType, contentType);
 
     auto loadContentResult = cache->loadContent(artifactId);
     ASSERT_THAT (loadContentResult, tempo_test::IsResult());

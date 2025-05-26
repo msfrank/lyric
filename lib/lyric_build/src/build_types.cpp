@@ -11,17 +11,14 @@ lyric_build::BuildGeneration::BuildGeneration()
 {
 }
 
-lyric_build::BuildGeneration::BuildGeneration(const tempo_utils::UUID &uuid, tu_int64 createTime)
-    : m_uuid(uuid),
-      m_createTime(createTime)
+lyric_build::BuildGeneration::BuildGeneration(const tempo_utils::UUID &uuid)
+    : m_uuid(uuid)
 {
     TU_ASSERT (m_uuid.isValid());
-    TU_ASSERT (m_createTime > 0);
 }
 
 lyric_build::BuildGeneration::BuildGeneration(const lyric_build::BuildGeneration &other)
-    : m_uuid(other.m_uuid),
-      m_createTime(other.m_createTime)
+    : m_uuid(other.m_uuid)
 {
 }
 
@@ -37,22 +34,14 @@ lyric_build::BuildGeneration::getUuid() const
     return m_uuid;
 }
 
-tu_int64
-lyric_build::BuildGeneration::getCreateTime() const
-{
-    return m_createTime;
-}
-
 lyric_build::BuildGeneration
 lyric_build::BuildGeneration::create()
 {
     auto uuid = tempo_utils::UUID::randomUUID();
-    auto createTime = tempo_utils::millis_since_epoch();
-    return BuildGeneration(uuid, createTime);
+    return BuildGeneration(uuid);
 }
 
 lyric_build::TaskKey::TaskKey()
-    : m_domain(), m_id()
 {
 }
 

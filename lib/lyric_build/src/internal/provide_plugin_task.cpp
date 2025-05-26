@@ -13,6 +13,8 @@
 #include <tempo_utils/date_time.h>
 #include <tempo_utils/log_message.h>
 
+#include "lyric_common/common_types.h"
+
 lyric_build::internal::ProvidePluginTask::ProvidePluginTask(
     const tempo_utils::UUID &generation,
     const TaskKey &key,
@@ -168,7 +170,7 @@ lyric_build::internal::ProvidePluginTask::providePlugin(
     // serialize the plugin metadata
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
-    writer.putAttr(kLyricBuildContentType, std::string("application/octet-stream"));
+    writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {

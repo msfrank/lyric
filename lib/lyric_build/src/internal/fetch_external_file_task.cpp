@@ -51,10 +51,10 @@ lyric_build::internal::FetchExternalFileTask::configure(const TaskSettings *conf
             "task key id must be a valid file path");
     if (!filePath.is_absolute())
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
-            "invalid external file path '{}'; path must be absolute", m_filePath.string());
+            "invalid external file path '{}'; path must be absolute", filePath.string());
     if (!std::filesystem::exists(filePath))
         return BuildStatus::forCondition(BuildCondition::kMissingInput,
-            "external file path '{}' not found", m_filePath.string());
+            "external file path '{}' not found", filePath.string());
 
     m_filePath = std::move(filePath);
 

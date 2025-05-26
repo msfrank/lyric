@@ -287,8 +287,13 @@ lyric_test::TestRunner::compileModuleInternal(
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return CompileModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
+    auto cache = m_builder->getCache();
+    auto tempRoot = m_builder->getTempRoot();
+
+    lyric_build::BuildGeneration targetGen(targetState.getGeneration());
+    lyric_build::TempDirectory tempDirectory(tempRoot, targetGen);
     std::shared_ptr<lyric_build::DependencyLoader> loader;
-    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, m_builder->getCache()));
+    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, cache, &tempDirectory));
     Option<lyric_object::LyricObject> moduleOption;
     TU_ASSIGN_OR_RETURN (moduleOption, loader->loadModule(moduleLocation));
     if (moduleOption.isEmpty())
@@ -324,8 +329,13 @@ lyric_test::TestRunner::analyzeModuleInternal(
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return AnalyzeModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
+    auto cache = m_builder->getCache();
+    auto tempRoot = m_builder->getTempRoot();
+
+    lyric_build::BuildGeneration targetGen(targetState.getGeneration());
+    lyric_build::TempDirectory tempDirectory(tempRoot, targetGen, targetState.getHash());
     std::shared_ptr<lyric_build::DependencyLoader> loader;
-    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, m_builder->getCache()));
+    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, cache, &tempDirectory));
     Option<lyric_object::LyricObject> moduleOption;
     TU_ASSIGN_OR_RETURN (moduleOption, loader->loadModule(moduleLocation));
     if (moduleOption.isEmpty())
@@ -361,8 +371,13 @@ lyric_test::TestRunner::symbolizeModuleInternal(
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return SymbolizeModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
+    auto cache = m_builder->getCache();
+    auto tempRoot = m_builder->getTempRoot();
+
+    lyric_build::BuildGeneration targetGen(targetState.getGeneration());
+    lyric_build::TempDirectory tempDirectory(tempRoot, targetGen, targetState.getHash());
     std::shared_ptr<lyric_build::DependencyLoader> loader;
-    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, m_builder->getCache()));
+    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, cache, &tempDirectory));
     Option<lyric_object::LyricObject> moduleOption;
     TU_ASSIGN_OR_RETURN (moduleOption, loader->loadModule(moduleLocation));
     if (moduleOption.isEmpty())

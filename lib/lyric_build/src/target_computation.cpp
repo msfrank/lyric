@@ -45,12 +45,14 @@ lyric_build::TargetComputationSet::TargetComputationSet()
 }
 
 lyric_build::TargetComputationSet::TargetComputationSet(
+    const BuildGeneration &buildGen,
     const absl::flat_hash_map<TaskId, TargetComputation> &targetComputations,
     int totalTasksCreated,
     int totalTasksCached,
     std::chrono::milliseconds elapsedTime,
     std::shared_ptr<BuildDiagnostics> diagnostics)
-    : m_targetComputations(targetComputations),
+    : m_buildGen(buildGen),
+      m_targetComputations(targetComputations),
       m_totalTasksCreated(totalTasksCreated),
       m_totalTasksCached(totalTasksCached),
       m_elapsedTime(elapsedTime),
@@ -59,7 +61,8 @@ lyric_build::TargetComputationSet::TargetComputationSet(
 }
 
 lyric_build::TargetComputationSet::TargetComputationSet(const TargetComputationSet &other)
-    : m_targetComputations(other.m_targetComputations),
+    : m_buildGen(other.m_buildGen),
+      m_targetComputations(other.m_targetComputations),
       m_totalTasksCreated(other.m_totalTasksCreated),
       m_totalTasksCached(other.m_totalTasksCached),
       m_elapsedTime(other.m_elapsedTime),
@@ -71,6 +74,12 @@ bool
 lyric_build::TargetComputationSet::isValid() const
 {
     return !m_targetComputations.empty();
+}
+
+lyric_build::BuildGeneration
+lyric_build::TargetComputationSet::getBuildGeneration() const
+{
+    return m_buildGen;
 }
 
 int

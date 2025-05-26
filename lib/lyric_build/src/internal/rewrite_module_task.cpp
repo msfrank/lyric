@@ -110,7 +110,7 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
 
     // configure loader
     std::shared_ptr<DependencyLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache, tempDirectory()));
 
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
     loaderChain.push_back(dependencyLoader);

@@ -35,18 +35,16 @@ namespace lyric_build {
 
     public:
         BuildGeneration();
-        BuildGeneration(const tempo_utils::UUID &uuid, tu_int64 createTime);
+        explicit BuildGeneration(const tempo_utils::UUID &uuid);
         BuildGeneration(const BuildGeneration &other);
 
         bool isValid() const;
         tempo_utils::UUID getUuid() const;
-        tu_int64 getCreateTime() const;
 
         static BuildGeneration create();
 
     private:
         tempo_utils::UUID m_uuid;
-        tu_int64 m_createTime;
     };
 
     /**

@@ -52,9 +52,16 @@ TEST_F(ArchiveCallTests, ArchiveCall)
 
     lyric_common::SymbolUrl call1symbol(mod1location, lyric_common::SymbolPath({"call1"}));
 
+    auto cache = builder->getCache();
+    auto tempRoot = builder->getTempRoot();
+
+    auto targetComputation = compileMod1.getComputation();
+    auto targetState = targetComputation.getState();
+    lyric_build::BuildGeneration targetGen(targetState.getGeneration());
+    lyric_build::TempDirectory tempDirectory(tempRoot, targetGen);
+
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
-    TU_ASSIGN_OR_RAISE (dependencyLoader, lyric_build::DependencyLoader::create(
-        compileMod1.getComputation(), builder->getCache()));
+    TU_ASSIGN_OR_RAISE (dependencyLoader, lyric_build::DependencyLoader::create(targetComputation, cache, &tempDirectory));
     auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     lyric_archiver::ArchiverOptions options;

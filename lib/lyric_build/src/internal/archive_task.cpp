@@ -202,7 +202,7 @@ lyric_build::internal::ArchiveTask::buildArchive(
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache, tempDirectory()));
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
     loaderChain.push_back(dependencyLoader);
     loaderChain.push_back(buildState->getLoaderChain());

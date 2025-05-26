@@ -65,13 +65,15 @@ lyric_test::LyricProtocolTester::runModuleInMockSandbox(
 
     auto *builder = m_runner->getBuilder();
     auto cache = builder->getCache();
+    auto tempRoot = builder->getTempRoot();
 
     // construct the loader
-    auto targetId = targetComputation.getId();
     auto targetState = targetComputation.getState();
+    lyric_build::BuildGeneration targetGen(targetState.getGeneration());
+    lyric_build::TempDirectory tempDirectory(tempRoot, targetGen);
     std::shared_ptr<lyric_build::DependencyLoader> dependencyLoader;
     TU_ASSIGN_OR_RETURN (dependencyLoader, lyric_build::DependencyLoader::create(
-        {{lyric_build::TaskKey(targetId.getDomain(), targetId.getId()), targetState}}, cache));
+        targetComputation, cache, &tempDirectory));
 
     lyric_runtime::InterpreterStateOptions options;
 

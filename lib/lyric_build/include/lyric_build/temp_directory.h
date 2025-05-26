@@ -8,6 +8,8 @@ namespace lyric_build {
 
     class TempDirectory {
     public:
+        TempDirectory(const std::filesystem::path &tempRoot, const std::string &baseName);
+        TempDirectory(const std::filesystem::path &tempRoot, const BuildGeneration &buildGen);
         TempDirectory(
             const std::filesystem::path &tempRoot,
             const BuildGeneration &buildGen,
@@ -27,7 +29,7 @@ namespace lyric_build {
 
     private:
         std::filesystem::path m_tempRoot;
-        std::string m_genAndHash;
+        std::string m_baseName;
         std::filesystem::path m_baseDirectory;
     };
 }

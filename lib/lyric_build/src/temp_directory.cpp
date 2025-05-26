@@ -9,18 +9,37 @@
 
 lyric_build::TempDirectory::TempDirectory(
     const std::filesystem::path &tempRoot,
+    const std::string &baseName)
+    : m_tempRoot(tempRoot),
+      m_baseName(baseName)
+{
+    TU_ASSERT (!m_tempRoot.empty());
+    TU_ASSERT (!m_baseName.empty());
+}
+
+lyric_build::TempDirectory::TempDirectory(
+    const std::filesystem::path &tempRoot,
+    const BuildGeneration &buildGen)
+    : m_tempRoot(tempRoot)
+{
+    TU_ASSERT (buildGen.isValid());
+    m_baseName = buildGen.getUuid().toString();
+    TU_ASSERT (!m_tempRoot.empty());
+}
+
+lyric_build::TempDirectory::TempDirectory(
+    const std::filesystem::path &tempRoot,
     const BuildGeneration &buildGen,
     const std::string &taskHash)
+    : m_tempRoot(tempRoot)
 {
-    TU_ASSERT (!tempRoot.empty());
     TU_ASSERT (buildGen.isValid());
     TU_ASSERT (!taskHash.empty());
-
-    m_tempRoot = tempRoot;
-    m_genAndHash = absl::StrCat(
+    m_baseName = absl::StrCat(
         buildGen.getUuid().toString(),
         "_",
         absl::BytesToHexString(taskHash));
+    TU_ASSERT (!m_tempRoot.empty());
 }
 
 std::filesystem::path
@@ -39,7 +58,7 @@ lyric_build::TempDirectory::initialize()
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "invalid temp root {}", m_tempRoot.string());
 
-    auto baseDirectory = m_tempRoot / m_genAndHash;
+    auto baseDirectory = m_tempRoot / m_baseName;
 
     // create the temp directory
     std::error_code ec;

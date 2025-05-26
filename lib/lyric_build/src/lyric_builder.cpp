@@ -45,8 +45,16 @@ lyric_build::LyricBuilder::LyricBuilder(
     TU_ASSERT (!m_workspaceRoot.empty());
 }
 
-lyric_build::LyricBuilder::~LyricBuilder()
+std::filesystem::path
+lyric_build::LyricBuilder::getWorkspaceRoot() const
 {
+    return m_workspaceRoot;
+}
+
+lyric_build::TaskSettings
+lyric_build::LyricBuilder::getTasksettings() const
+{
+    return m_taskSettings;
 }
 
 tempo_utils::Status
@@ -191,50 +199,6 @@ lyric_build::LyricBuilder::configure()
     return {};
 }
 
-void
-lyric_build::LyricBuilder::onTaskNotification(
-    lyric_build::BuildRunner *runner,
-    const TaskNotification *notification)
-{
-    TU_ASSERT (notification != nullptr);
-
-    switch (notification->getType()) {
-
-        case NotificationType::STATE_CHANGED: {
-
-            const auto *stateChanged = static_cast<const NotifyStateChanged *>(notification);
-            auto key = stateChanged->getKey();
-            auto state = stateChanged->getState();
-            TU_LOG_VV << "task " << key << " state changed: " << state;
-
-            //emit taskStatusChanged(key, state.getStatus());
-
-            if (m_targets.contains(key)) {
-                switch (state.getStatus()) {
-                    case TaskState::Status::COMPLETED:
-                    case TaskState::Status::FAILED:
-                        m_targets.erase(key);
-                        //emit targetComputed(key, state);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            break;
-        }
-
-        default:
-            break;
-    }
-
-    delete notification;
-
-    if (m_targets.empty() && m_running) {
-        m_running = false;
-        runner->shutdown();
-    }
-}
-
 tempo_utils::Result<lyric_build::TargetComputationSet>
 lyric_build::LyricBuilder::computeTargets(
     const absl::flat_hash_set<TaskId> &targets,
@@ -313,10 +277,22 @@ lyric_build::LyricBuilder::computeTargets(
     }
 
     // capture the set of target computations
-    TargetComputationSet targetComputationSet(targetComputations, numTasksCreated,
+    TargetComputationSet targetComputationSet(buildGen, targetComputations, numTasksCreated,
         numTasksCached, elapsedTime, diagnostics);
 
     return targetComputationSet;
+}
+
+std::filesystem::path
+lyric_build::LyricBuilder::getBuildRoot() const
+{
+    return m_buildRoot;
+}
+
+std::filesystem::path
+lyric_build::LyricBuilder::getTempRoot() const
+{
+    return m_tempRoot;
 }
 
 std::shared_ptr<lyric_build::AbstractCache>
@@ -353,6 +329,62 @@ std::shared_ptr<lyric_importer::ModuleCache>
 lyric_build::LyricBuilder::getSharedModuleCache() const
 {
     return m_sharedModuleCache;
+}
+
+std::shared_ptr<lyric_build::TaskRegistry>
+lyric_build::LyricBuilder::getTaskRegistry() const
+{
+    return m_taskRegistry;
+}
+
+std::shared_ptr<lyric_build::AbstractFilesystem>
+lyric_build::LyricBuilder::getVirtualFilesystem() const
+{
+    return m_virtualFilesystem;
+}
+
+void
+lyric_build::LyricBuilder::onTaskNotification(
+    BuildRunner *runner,
+    const TaskNotification *notification)
+{
+    TU_ASSERT (notification != nullptr);
+
+    switch (notification->getType()) {
+
+        case NotificationType::STATE_CHANGED: {
+
+            const auto *stateChanged = static_cast<const NotifyStateChanged *>(notification);
+            auto key = stateChanged->getKey();
+            auto state = stateChanged->getState();
+            TU_LOG_VV << "task " << key << " state changed: " << state;
+
+            //emit taskStatusChanged(key, state.getStatus());
+
+            if (m_targets.contains(key)) {
+                switch (state.getStatus()) {
+                    case TaskState::Status::COMPLETED:
+                    case TaskState::Status::FAILED:
+                        m_targets.erase(key);
+                        //emit targetComputed(key, state);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+
+    delete notification;
+
+    if (m_targets.empty() && m_running) {
+        m_running = false;
+        runner->shutdown();
+    }
 }
 
 static void

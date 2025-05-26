@@ -10,6 +10,7 @@
 #include <tempo_utils/file_writer.h>
 
 #include "base_build_fixture.h"
+#include "lyric_common/common_types.h"
 
 class FetchExternalFileTask : public BaseBuildFixture {
 protected:

@@ -7,6 +7,10 @@ ArchiverTester::ArchiverTester(lyric_test::LyricTester *tester)
     : m_tester(tester)
 {
     TU_ASSERT (m_tester != nullptr);
+    auto *runner = m_tester->getRunner();
+    auto *builder = runner->getBuilder();
+    auto tempRoot = builder->getTempRoot();
+    m_tempDirectory = std::make_unique<lyric_build::TempDirectory>(tempRoot, "dependency-loader");
 }
 
 tempo_utils::Result<lyric_common::ModuleLocation>
@@ -31,7 +35,8 @@ ArchiverTester::build()
     TU_ASSIGN_OR_RETURN (targetComputationSet, builder->computeTargets(m_taskIds));
 
     std::shared_ptr<lyric_runtime::AbstractLoader> loader;
-    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputationSet, cache));
+    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(
+        targetComputationSet, cache, m_tempDirectory.get()));
 
     return loader;
 }

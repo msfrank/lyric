@@ -39,7 +39,7 @@ lyric_build::internal::ParseModuleTask::configure(const TaskSettings *config)
     auto taskId = getId();
 
     auto modulePath = tempo_utils::UrlPath::fromString(taskId.getId());
-    if (!modulePath.isValid())
+    if (!modulePath.isValid() || !modulePath.isAbsolute())
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "task key id {} is not a valid relative module location", taskId.getId());
 
@@ -58,7 +58,10 @@ lyric_build::internal::ParseModuleTask::configure(const TaskSettings *config)
     TU_RETURN_IF_NOT_OK(parse_config(sourceBasePath, sourceBasePathParser,
         config, taskId, "sourceBasePath"));
 
-    m_sourcePath = build_full_path(m_sourcePath, sourceBasePath);
+    // if the source base path was specified then augment the source path
+    if (sourceBasePath.isValid()) {
+        m_sourcePath = sourceBasePath.toAbsolute().traverse(m_sourcePath.toRelative());
+    }
 
     return {};
 }

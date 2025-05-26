@@ -102,7 +102,7 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache, tempDirectory()));
     auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     // configure symbolizer

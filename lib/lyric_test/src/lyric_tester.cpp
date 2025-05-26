@@ -105,22 +105,22 @@ lyric_test::LyricTester::runModule(
 
     auto *builder = m_runner->getBuilder();
     auto cache = builder->getCache();
+    auto tempRoot = builder->getTempRoot();
 
     // construct the loader
     auto targetComputation = testRun.getComputation();
-    auto targetId = targetComputation.getId();
     auto targetState = targetComputation.getState();
-    auto createDependencyLoaderResult = lyric_build::DependencyLoader::create({
-        {lyric_build::TaskKey(targetId.getDomain(), targetId.getId()), targetState}},
-        cache);
-    if (createDependencyLoaderResult.isStatus())
-        return createDependencyLoaderResult.getStatus();
+    lyric_build::BuildGeneration targetGen(targetState.getGeneration());
+    lyric_build::TempDirectory tempDirectory(tempRoot, targetGen);
+    std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
+    TU_ASSIGN_OR_RETURN (dependencyLoader, lyric_build::DependencyLoader::create(
+        targetComputation, cache, &tempDirectory));
 
     lyric_runtime::InterpreterStateOptions options;
 
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
     loaderChain.push_back(builder->getBootstrapLoader());
-    loaderChain.push_back(createDependencyLoaderResult.getResult());
+    loaderChain.push_back(dependencyLoader);
     if (m_options.fallbackLoader) {
         loaderChain.push_back(m_options.fallbackLoader);
     }

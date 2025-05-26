@@ -15,6 +15,7 @@ public:
     tempo_utils::Result<std::shared_ptr<lyric_runtime::AbstractLoader>> build();
 private:
     lyric_test::LyricTester *m_tester;
+    std::unique_ptr<lyric_build::TempDirectory> m_tempDirectory;
     absl::flat_hash_set<lyric_build::TaskId> m_taskIds;
 };
 

@@ -239,7 +239,7 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     // store the outline object metadata in the cache
     MetadataWriter writer;
     writer.putAttr(kLyricBuildEntryType, EntryType::File);
-    writer.putAttr(kLyricBuildContentType, std::string("application/octet-stream"));
+    writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
