@@ -112,6 +112,7 @@ lyric_build::internal::CompileModuleTask::configureTask(
 tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>>
 lyric_build::internal::CompileModuleTask::checkDependencies()
 {
+    TU_LOG_VV << "task " << getKey() << " needs dependencies: " << m_compileTargets;
     return m_compileTargets;
 }
 

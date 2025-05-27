@@ -68,21 +68,22 @@ namespace lyric_build {
 
         bool operator==(const TaskKey &other) const;
         bool operator!=(const TaskKey &other) const;
+        bool operator<(const TaskKey &other) const;
+
+        int compare(const TaskKey &other) const;
 
         template <typename H>
         friend H AbslHashValue(H h, const TaskKey &taskKey) {
-            std::vector<std::pair<std::string,tempo_config::ConfigNode>> nodes(
-                taskKey.m_params.mapBegin(), taskKey.m_params.mapEnd());
-            std::sort(nodes.begin(), nodes.end(), [](auto &a, auto &b) -> bool {
-                return a.first < b.first;
-            });
-            return H::combine(std::move(h), taskKey.m_domain, taskKey.m_id, taskKey.m_params);
+            return H::combine(std::move(h), taskKey.m_priv->domain, taskKey.m_priv->id, taskKey.m_priv->params);
         }
 
     private:
-        std::string m_domain;
-        std::string m_id;
-        tempo_config::ConfigMap m_params;
+        struct Priv {
+            std::string domain;
+            std::string id;
+            tempo_config::ConfigMap params;
+        };
+        std::shared_ptr<Priv> m_priv;
     };
 
     /**
@@ -105,17 +106,23 @@ namespace lyric_build {
 
         bool operator==(const TaskId &other) const;
         bool operator!=(const TaskId &other) const;
+        bool operator<(const TaskId &other) const;
 
         static TaskId fromString(const std::string &s);
 
+        int compare(const TaskId &other) const;
+
         template <typename H>
         friend H AbslHashValue(H h, const TaskId &taskId) {
-            return H::combine(std::move(h), taskId.m_domain, taskId.m_id);
+            return H::combine(std::move(h), taskId.m_priv->domain, taskId.m_priv->id);
         }
 
     private:
-        std::string m_domain;
-        std::string m_id;
+        struct Priv {
+            std::string domain;
+            std::string id;
+        };
+        std::shared_ptr<Priv> m_priv;
     };
 
     /**
@@ -213,8 +220,6 @@ namespace lyric_build {
         std::string m_id;
     };
 
-    bool operator<(const TaskKey &lhs, const TaskKey &rhs);
-    bool operator<(const TaskId &lhs, const TaskId &rhs);
     bool operator<(const ArtifactId &lhs, const ArtifactId &rhs);
 
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const TaskId &taskId);

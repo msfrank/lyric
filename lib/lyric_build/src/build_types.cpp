@@ -49,9 +49,7 @@ lyric_build::TaskKey::TaskKey(
     const std::string &domain,
     const std::string &id,
     const tempo_config::ConfigMap &params)
-    : m_domain(domain),
-      m_id(id),
-      m_params(params)
+    : m_priv(std::make_shared<Priv>(domain, id, params))
 {
 }
 
@@ -72,58 +70,79 @@ lyric_build::TaskKey::TaskKey(
 }
 
 lyric_build::TaskKey::TaskKey(const lyric_build::TaskKey &other)
-    : m_domain(other.m_domain),
-      m_id(other.m_id),
-      m_params(other.m_params)
+    : m_priv(other.m_priv)
 {
 }
 
 bool
 lyric_build::TaskKey::isValid() const
 {
-    return !m_domain.empty();
+    return m_priv != nullptr;
 }
 
 std::string
 lyric_build::TaskKey::getDomain() const
 {
-    return m_domain;
+    return m_priv? m_priv->domain : "";
 }
 
 std::string
 lyric_build::TaskKey::getId() const
 {
-    return m_id;
+    return m_priv? m_priv->id : "";
 }
 
 tempo_config::ConfigMap
 lyric_build::TaskKey::getParams() const
 {
-    return m_params;
+    return m_priv? m_priv->params : tempo_config::ConfigMap{};
 }
 
 std::string
 lyric_build::TaskKey::toString() const
 {
-    return absl::StrCat(m_domain, ":", m_id, ":", m_params.toString());
+    if (m_priv != nullptr)
+        return absl::StrCat(m_priv->domain, ":", m_priv->id, ":", m_priv->params.toString());
+    return {};
+}
+
+int
+lyric_build::TaskKey::compare(const TaskKey &other) const
+{
+    if (m_priv) {
+        if (other.m_priv == nullptr)
+            return 1;
+        auto domaincmp = m_priv->domain.compare(other.m_priv->domain);
+        if (domaincmp != 0)
+            return domaincmp;
+        auto idcmp = m_priv->id.compare(other.m_priv->id);
+        if (idcmp != 0)
+            return idcmp;
+        return m_priv->params.compare(other.m_priv->params);
+    }
+    return other.m_priv? -1 : 0;
 }
 
 bool
-lyric_build::TaskKey::operator==(const lyric_build::TaskKey &other) const
+lyric_build::TaskKey::operator==(const TaskKey &other) const
 {
-    return m_domain == other.m_domain
-        && m_id == other.m_id
-        && m_params == other.m_params;
+    return compare(other) == 0;
 }
 
 bool
-lyric_build::TaskKey::operator!=(const lyric_build::TaskKey &other) const
+lyric_build::TaskKey::operator!=(const TaskKey &other) const
 {
-    return !(*this == other);
+    return compare(other) != 0;
+}
+
+bool
+lyric_build::TaskKey::operator<(const TaskKey &other) const
+{
+    return compare(other) < 0;
 }
 
 tempo_utils::LogMessage&&
-lyric_build::operator<<(tempo_utils::LogMessage &&message, const lyric_build::TaskKey &taskKey)
+lyric_build::operator<<(tempo_utils::LogMessage &&message, const TaskKey &taskKey)
 {
     std::forward<tempo_utils::LogMessage>(message)
         << "TaskKey(domain=" << taskKey.getDomain()
@@ -133,72 +152,87 @@ lyric_build::operator<<(tempo_utils::LogMessage &&message, const lyric_build::Ta
     return std::move(message);
 }
 
-bool
-lyric_build::operator<(const lyric_build::TaskKey &lhs, const lyric_build::TaskKey &rhs)
-{
-    return lhs.toString() < rhs.toString();
-}
 
 lyric_build::TaskId::TaskId()
-    : m_domain(), m_id()
 {
 }
 
 lyric_build::TaskId::TaskId(const std::string &domain, const std::string &id)
-    : m_domain(domain), m_id(id)
+    : m_priv(std::make_shared<Priv>(domain, id))
 {
 }
 
 lyric_build::TaskId::TaskId(const std::string &domain, const std::vector<std::string> &parts)
-    : lyric_build::TaskId(domain, absl::StrJoin(parts, "/"))
+    : m_priv(std::make_shared<Priv>(domain, absl::StrJoin(parts, "/")))
 {
 }
 
 lyric_build::TaskId::TaskId(const std::string &domain, const std::filesystem::path &path)
-    : lyric_build::TaskId(domain, path.string())
+    : m_priv(std::make_shared<Priv>(domain, path.string()))
 {
 }
 
 lyric_build::TaskId::TaskId(const lyric_build::TaskId &other)
-    : m_domain(other.m_domain),
-      m_id(other.m_id)
+    : m_priv(other.m_priv)
 {
 }
 
 bool
 lyric_build::TaskId::isValid() const
 {
-    return !m_domain.empty();
+    return m_priv != nullptr;
 }
 
 std::string
 lyric_build::TaskId::getDomain() const
 {
-    return m_domain;
+    return m_priv? m_priv->domain : "";
 }
 
 std::string
 lyric_build::TaskId::getId() const
 {
-    return m_id;
+    return m_priv? m_priv->id : "";
 }
 
 std::string
 lyric_build::TaskId::toString() const
 {
-    return absl::StrCat(m_domain, ":", m_id);
+    if (m_priv != nullptr)
+        return absl::StrCat(m_priv->domain, ":", m_priv->id);
+    return {};
+}
+
+int
+lyric_build::TaskId::compare(const TaskId &other) const
+{
+    if (m_priv) {
+        if (other.m_priv == nullptr)
+            return 1;
+        auto domaincmp = m_priv->domain.compare(other.m_priv->domain);
+        if (domaincmp != 0)
+            return domaincmp;
+        return m_priv->id.compare(other.m_priv->id);
+    }
+    return other.m_priv? -1 : 0;
 }
 
 bool
-lyric_build::TaskId::operator==(const lyric_build::TaskId &other) const
+lyric_build::TaskId::operator==(const TaskId &other) const
 {
-    return m_domain == other.m_domain && m_id == other.m_id;
+    return compare(other) == 0;
 }
 
 bool
-lyric_build::TaskId::operator!=(const lyric_build::TaskId &other) const
+lyric_build::TaskId::operator!=(const TaskId &other) const
 {
-    return !(*this == other);
+    return compare(other) != 0;
+}
+
+bool
+lyric_build::TaskId::operator<(const TaskId &other) const
+{
+    return compare(other) < 0;
 }
 
 lyric_build::TaskId
@@ -209,11 +243,11 @@ lyric_build::TaskId::fromString(const std::string &s)
         return lyric_build::TaskId(s, std::string(""));
     auto domain = s.substr(0, split);
     auto id = s.substr(split + 1);
-    return lyric_build::TaskId(domain, id);
+    return TaskId(domain, id);
 }
 
 tempo_utils::LogMessage&&
-lyric_build::operator<<(tempo_utils::LogMessage &&message, const lyric_build::TaskId &taskId)
+lyric_build::operator<<(tempo_utils::LogMessage &&message, const TaskId &taskId)
 {
     std::forward<tempo_utils::LogMessage>(message)
         << "TaskId(domain=" << taskId.getDomain()
@@ -222,14 +256,8 @@ lyric_build::operator<<(tempo_utils::LogMessage &&message, const lyric_build::Ta
     return std::move(message);
 }
 
-bool
-lyric_build::operator<(const lyric_build::TaskId &lhs, const lyric_build::TaskId &rhs)
-{
-    return lhs.toString() < rhs.toString();
-}
-
 lyric_build::TaskState::TaskState()
-    : m_status(lyric_build::TaskState::Status::INVALID)
+    : m_status(Status::INVALID)
 {
 }
 

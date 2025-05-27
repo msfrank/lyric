@@ -357,16 +357,12 @@ lyric_build::LyricBuilder::onTaskNotification(
             const auto *stateChanged = static_cast<const NotifyStateChanged *>(notification);
             auto key = stateChanged->getKey();
             auto state = stateChanged->getState();
-            TU_LOG_VV << "task " << key << " state changed: " << state;
-
-            //emit taskStatusChanged(key, state.getStatus());
 
             if (m_targets.contains(key)) {
                 switch (state.getStatus()) {
                     case TaskState::Status::COMPLETED:
                     case TaskState::Status::FAILED:
                         m_targets.erase(key);
-                        //emit targetComputed(key, state);
                         break;
                     default:
                         break;

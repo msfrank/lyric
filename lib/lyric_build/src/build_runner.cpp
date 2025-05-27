@@ -331,12 +331,13 @@ lyric_build::BuildRunner::restartDeps(const TaskKey &key)
     std::vector<TaskKey> unblockedSet;
 
     // remove dependency from deps map if the key is present
-    const auto node = m_deps.extract(key);
-    if (node.empty())
+    const auto taskDeps = m_deps.extract(key);
+    if (taskDeps.empty()) {
         return;
+    }
 
     // remove dependency from each blocked set
-    for (const auto &blockedKey : node.mapped()) {
+    for (const auto &blockedKey : taskDeps.mapped()) {
         auto &blockedSet = m_blocked[blockedKey];
         blockedSet.erase(key);
         if (blockedSet.empty()) {
@@ -624,6 +625,8 @@ inline tempo_utils::Status worker_loop(const lyric_build::TaskThread *thread)
             absl::flat_hash_set<lyric_build::TaskKey> pendingDeps;
             depStates = state->loadStates(taskDeps);
 
+            TU_LOG_VV << "task " << key << " requests dependencies: " << taskDeps;
+
             for (const auto &depKey : taskDeps) {
                 lyric_build::TaskState depState;
 
@@ -663,7 +666,8 @@ inline tempo_utils::Status worker_loop(const lyric_build::TaskThread *thread)
 
             // if any deps are failed, then transitively fail this task
             if (!failedDeps.empty()) {
-                TU_LOG_VV << "task " << key << " failed due to " << (tu_uint32) failedDeps.size() << " failed dependencies";
+                TU_LOG_VV << "task " << key << " failed due to " << (tu_uint32) failedDeps.size()
+                    << " failed dependencies: " << failedDeps;
                 auto taskState = lyric_build::TaskState(lyric_build::TaskState::Status::FAILED, generation, {});
                 state->storeState(key, taskState);
                 // emit notifyStateChanged notification
@@ -673,10 +677,12 @@ inline tempo_utils::Status worker_loop(const lyric_build::TaskThread *thread)
 
             // if any dependencies are not complete, then mark the task blocked
             if (!pendingDeps.empty()) {
+                TU_LOG_VV << "task " << key << " blocked due to " << (tu_uint32) pendingDeps.size()
+                    << " pending dependencies: " << pendingDeps;
                 auto taskState = lyric_build::TaskState(lyric_build::TaskState::Status::BLOCKED, generation, configHash);
                 state->storeState(key, taskState);
                 runner->enqueueNotification(new lyric_build::NotifyStateChanged(key, taskState));
-                runner->enqueueNotification(new lyric_build::NotifyTaskBlocked(key, pendingDeps));
+                runner->enqueueNotification(new lyric_build::NotifyTaskBlocked(key, taskDeps));
                 continue;       // return to top of loop, fetch next task
             }
         }
@@ -686,9 +692,14 @@ inline tempo_utils::Status worker_loop(const lyric_build::TaskThread *thread)
         if (!depStates.empty()) {
             tempo_security::Sha256Hash hasher;
             hasher.addData(configHash);
-            // FIXME: this is wrong, order of hashing is non-deterministic!
-            for (const auto &depState : depStates) {
-                hasher.addData(depState.second.getHash());
+            // sort deps by task key then add the hash of each dep sequentially
+            std::vector<std::pair<lyric_build::TaskKey,lyric_build::TaskState>> depsVector(
+                depStates.cbegin(), depStates.cend());
+            std::sort(depsVector.begin(), depsVector.end(), [](const auto &a, const auto &b) {
+                return a.first < b.first;
+            });
+            for (const auto &dep : depsVector) {
+                hasher.addData(dep.second.getHash());
             }
             taskHash = hasher.getResult();
         } else {
@@ -732,6 +743,7 @@ inline tempo_utils::Status worker_loop(const lyric_build::TaskThread *thread)
             // enqueue the blocked task again so dependencies are re-scanned
             auto checkIncompleteDepsResult = task->checkDependencies();
             auto incompleteDeps = checkIncompleteDepsResult.getResult();
+            TU_LOG_VV << "task " << key << " did not complete, requests dependencies: " << taskDeps;
             runner->enqueueNotification(new lyric_build::NotifyTaskBlocked(key, incompleteDeps));
             continue;       // return to top of loop, fetch next task
         }
