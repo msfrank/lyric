@@ -20,15 +20,6 @@
 
 namespace lyric_build {
 
-    class BuildRunner;
-
-    struct TaskThread {
-        BuildRunner *runner;
-        int index;
-        uv_thread_t tid;
-        bool running;
-    };
-
     struct ReadyItem {
         enum class Type {
             TASK,
@@ -40,11 +31,35 @@ namespace lyric_build {
         TaskKey dependent;
     };
 
-    class BuildRunner {
+    /**
+     *
+     */
+    class AbstractBuildRunner {
+    public:
+        virtual ~AbstractBuildRunner() = default;
+
+        virtual tempo_utils::Status enqueueTask(const TaskKey &key, const TaskKey &dependent) = 0;
+
+        virtual ReadyItem waitForNextReady(int timeout) = 0;
+
+        virtual tempo_utils::Status enqueueNotification(TaskNotification *notification) = 0;
+    };
+
+    struct TaskThread {
+        AbstractBuildRunner *runner;
+        const TaskSettings *taskSettings;
+        std::shared_ptr<BuildState> buildState;
+        std::shared_ptr<AbstractCache> buildCache;
+        int index;
+        uv_thread_t tid;
+        bool running;
+    };
+
+    class BuildRunner : public AbstractBuildRunner {
 
     public:
         BuildRunner(
-            const TaskSettings *configStore,
+            const TaskSettings *taskSettings,
             std::shared_ptr<BuildState> buildState,
             std::shared_ptr<AbstractCache> buildCache,
             TaskRegistry *taskRegistry,
@@ -52,22 +67,22 @@ namespace lyric_build {
             int waitTimeoutInMs,
             TaskNotificationFunc onNotificationFunc,
             void *onNotificationData);
-        ~BuildRunner();
+        ~BuildRunner() override;
 
         const TaskSettings *getConfig() const;
         std::shared_ptr<BuildState> getState() const;
         std::shared_ptr<AbstractCache> getCache() const;
         TaskRegistry *getRegistry() const;
 
-        tempo_utils::Status enqueueTask(const TaskKey &key, const TaskKey &dependent = {});
-        ReadyItem waitForNextReady(int timeout = -1);
+        tempo_utils::Status enqueueTask(const TaskKey &key, const TaskKey &dependent) override;
+        ReadyItem waitForNextReady(int timeout) override;
 
-        std::shared_ptr<tempo_tracing::TraceSpan> makeSpan();
-
-        tempo_utils::Status enqueueNotification(TaskNotification *notification);
+        tempo_utils::Status enqueueNotification(TaskNotification *notification) override;
         std::queue<TaskNotification *> takeNotifications();
 
         tempo_utils::Status run();
+
+        std::shared_ptr<tempo_tracing::TraceSpan> makeSpan();
 
         void parkDeps(const TaskKey &key, const absl::flat_hash_set<TaskKey> &dependencies);
         void restartDeps(const TaskKey &key);

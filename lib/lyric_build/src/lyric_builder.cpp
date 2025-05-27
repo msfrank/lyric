@@ -221,7 +221,7 @@ lyric_build::LyricBuilder::computeTargets(
     // enqueue all tasks in parallel, and let the manager sequence them appropriately
     for (const auto &target : targets) {
         TaskKey key(target.getDomain(), target.getId());
-        TU_RETURN_IF_NOT_OK (runner.enqueueTask(key));
+        TU_RETURN_IF_NOT_OK (runner.enqueueTask(key, {}));
         m_targets.insert(key);
     }
 

@@ -128,6 +128,8 @@ target_sources(lyric_build PRIVATE
     src/internal/provide_plugin_task.cpp
     include/lyric_build/internal/rewrite_module_task.h
     src/internal/rewrite_module_task.cpp
+    include/lyric_build/internal/runner_worker_thread.h
+    src/internal/runner_worker_thread.cpp
     include/lyric_build/internal/symbolize_module_task.h
     src/internal/symbolize_module_task.cpp
     include/lyric_build/internal/task_utils.h
