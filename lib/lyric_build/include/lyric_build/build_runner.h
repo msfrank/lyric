@@ -86,7 +86,10 @@ namespace lyric_build {
 
         void parkDeps(const TaskKey &key, const absl::flat_hash_set<TaskKey> &dependencies);
         void restartDeps(const TaskKey &key);
-        void markTaskFailed(const TaskKey &key, BuildStatus status, const tempo_utils::UUID &generation);
+        absl::flat_hash_set<TaskKey> getWaiting(const TaskKey &key);
+        absl::flat_hash_set<TaskKey> getBlocked(const TaskKey &key);
+
+        //void markTaskFailed(const TaskKey &key, BuildStatus status, const tempo_utils::UUID &generation);
         void joinThread(int index);
         void invokeNotificationCallback(const TaskNotification *notification);
 
@@ -129,6 +132,7 @@ namespace lyric_build {
 
         std::timed_mutex m_readyLock;                       // lock around the ready queue
         std::queue<ReadyItem> m_ready;                      // queue of ready items in FIFO order
+        absl::flat_hash_set<TaskKey> m_queued;              // set of ready tasks which are in the queue
 
         std::mutex m_waitLock;                              // lock around the readyWaiter
         std::condition_variable m_readyWaiter;              // condition variable which signals when there is a ready task
@@ -148,7 +152,7 @@ namespace lyric_build {
         absl::flat_hash_map<
             TaskKey,
             absl::flat_hash_set<TaskKey>>
-            m_deps;                                         // key is dependency, value is set of blocked tasks
+            m_waiting;                                      // key is dependency, value is set of waiting tasks
         TaskNotificationFunc m_onNotificationFunc;          // called in main loop when a notification is received
         void *m_onNotificationData;                         // data pointer passed to onNotificationFunc
     };

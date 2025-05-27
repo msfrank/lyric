@@ -207,19 +207,15 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key, const TaskKey &depende
 
     locker.unlock();                                    // unlock tasks rwlock before enqueuing task
 
-    TaskState state;
+    // look up the prior task state, which may not exist
     auto prevState = m_state->loadState(key);
 
-    if (prevState.getStatus() == TaskState::Status::INVALID) {
-        // case 1: task has never been executed before.
-        state = TaskState(TaskState::Status::QUEUED, prevState.getGeneration(), prevState.getHash());
-    } else {
-        // otherwise set status to QUEUED and use existing values for generation and hash
-        state = TaskState(TaskState::Status::QUEUED, prevState.getGeneration(), prevState.getHash());
-    }
+    // create the new task state
+    auto state = TaskState(TaskState::Status::QUEUED, prevState.getGeneration(), prevState.getHash());
 
+    // store the new task state
     m_state->storeState(key, state);
-    ReadyItem item = {lyric_build::ReadyItem::Type::TASK, task, dependent};
+    ReadyItem item = {ReadyItem::Type::TASK, task, dependent};
 
     m_readyLock.lock();                                 // acquire ready lock before modifying ready queue
     m_ready.push(item);                                 // enqueue new ready task item
@@ -306,6 +302,20 @@ lyric_build::BuildRunner::makeSpan()
     return m_recorder->makeSpan();
 }
 
+/**
+ * This is intended to be invoked when the task referred to by `key` is blocked on one or more
+ * dependency specified in `deps`. We call such a task a *blocked task*.
+ *
+ * The blocked set for the specified blocked task is updated contain the key for each dependency.
+ * One or more of the dependencies may be completed, but its assumed that at least one dependency
+ * is not; however, if all dependencies are in fact completed we will still make forward progress.
+ *
+ * The waiting set for each dependency is updated to contain the blocked key. If the blocked task
+ * is the first task to wait on the dependent task then the dependent task is enqueued.
+ *
+ * @param key The blocked task key.
+ * @param deps The dependencies of the blocked task.
+ */
 void
 lyric_build::BuildRunner::parkDeps(const TaskKey &key, const absl::flat_hash_set<TaskKey> &deps)
 {
@@ -314,35 +324,50 @@ lyric_build::BuildRunner::parkDeps(const TaskKey &key, const absl::flat_hash_set
     blockedSet.insert(deps.cbegin(), deps.cend());
     TU_LOG_VV << "task " << key << " is blocked on " << blockedSet;
 
-    // add task to the dependent set for each dependency
+    // add task to the waiting set for each dependency
     for (const auto &dep : deps) {
 
         // if task has never been executed, then signal the request to compute the value
-        if (!m_deps.contains(dep)) {
+        if (!m_waiting.contains(dep)) {
             auto status = enqueueTask(dep, {});
             if (status.isOk())
                 TU_LOG_VV << "computing task " << dep;
             else
                 TU_LOG_VV << "task " << dep << " failed to compute: " << status.toString();
         }
-        auto &dependentSet = m_deps[dep];
-        dependentSet.insert(key);
+        auto &waitingSet = m_waiting[dep];
+        waitingSet.insert(key);
     }
 }
 
+/**
+ * This is intended to be invoked when the state of the task referred to by `key` has
+ * changed and the new state type is not a terminal state (COMPLETED or FAILED). We call
+ * such a task a *restarted task*.
+ *
+ * The waiting set for the restarted task is extracted. for each blocked task in the
+ * waiting set we remove the restarted task from the block set. if the blocked set for
+ * a task is now empty then the task is unblocked so the task is added to the unblocked
+ * set.
+ *
+ * After all blocked sets are updated, each unblocked task is enqueued.
+ *
+ * @param key The restarted task key.
+ */
 void
 lyric_build::BuildRunner::restartDeps(const TaskKey &key)
 {
     std::vector<TaskKey> unblockedSet;
 
-    // remove dependency from deps map if the key is present
-    const auto taskDeps = m_deps.extract(key);
-    if (taskDeps.empty()) {
+    // remove dependency from waiting map if the key is present
+    const auto waitingSet = m_waiting.extract(key);
+    if (waitingSet.empty()) {
+        TU_LOG_VV << "restarted task " << key << " unexpectedly has no waiting tasks";
         return;
     }
 
     // remove dependency from each blocked set
-    for (const auto &blockedKey : taskDeps.mapped()) {
+    for (const auto &blockedKey : waitingSet.mapped()) {
         auto &blockedSet = m_blocked[blockedKey];
         blockedSet.erase(key);
         if (blockedSet.empty()) {
@@ -360,22 +385,52 @@ lyric_build::BuildRunner::restartDeps(const TaskKey &key)
     }
 }
 
-void
-lyric_build::BuildRunner::markTaskFailed(const TaskKey &key, BuildStatus status, const tempo_utils::UUID &generation)
+/**
+ * Get the waiting set for the specified task.
+ *
+ * @param key The task.
+ * @return The waiting set.
+ */
+absl::flat_hash_set<lyric_build::TaskKey>
+lyric_build::BuildRunner::getWaiting(const TaskKey &key)
 {
-    std::shared_lock<std::shared_mutex> locker(m_tasksRWlock);
-    TU_ASSERT (m_tasks.contains(key));
-    auto *task = m_tasks.at(key);
-    auto span = task->getSpan();
-    locker.unlock();
-
-    TU_LOG_VV << "task " << key << " failed: " << status;
-    TaskState state(TaskState::Status::FAILED, generation, {});
-    m_state->storeState(key, state);
-    // TODO: add log
-
-    enqueueNotification(new lyric_build::NotifyStateChanged(key, state));
+    auto entry = m_waiting.find(key);
+    if (entry != m_waiting.cend())
+        return entry->second;
+    return {};
 }
+
+/**
+ * Get the blocked set for the specified task.
+ *
+ * @param key The task.
+ * @return The blocked set.
+ */
+absl::flat_hash_set<lyric_build::TaskKey>
+lyric_build::BuildRunner::getBlocked(const TaskKey &key)
+{
+    auto entry = m_blocked.find(key);
+    if (entry != m_blocked.cend())
+        return entry->second;
+    return {};
+}
+
+// void
+// lyric_build::BuildRunner::markTaskFailed(const TaskKey &key, BuildStatus status, const tempo_utils::UUID &generation)
+// {
+//     std::shared_lock<std::shared_mutex> locker(m_tasksRWlock);
+//     TU_ASSERT (m_tasks.contains(key));
+//     auto *task = m_tasks.at(key);
+//     auto span = task->getSpan();
+//     locker.unlock();
+//
+//     TU_LOG_VV << "task " << key << " failed: " << status;
+//     TaskState state(TaskState::Status::FAILED, generation, {});
+//     m_state->storeState(key, state);
+//     // TODO: add log
+//
+//     enqueueNotification(new lyric_build::NotifyStateChanged(key, state));
+// }
 
 void
 lyric_build::BuildRunner::joinThread(int index)

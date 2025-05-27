@@ -134,8 +134,6 @@ target_sources(lyric_build PRIVATE
     src/internal/symbolize_module_task.cpp
     include/lyric_build/internal/task_utils.h
     src/internal/task_utils.cpp
-    include/lyric_build/internal/test_task.h
-    src/internal/test_task.cpp
 
     ${CMAKE_CURRENT_BINARY_DIR}/include/lyric_build/generated/metadata.h
     ${CMAKE_CURRENT_BINARY_DIR}/include/lyric_build/generated/metadata_schema.h

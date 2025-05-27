@@ -14,7 +14,6 @@
 #include <lyric_build/internal/provide_plugin_task.h>
 #include <lyric_build/internal/rewrite_module_task.h>
 #include <lyric_build/internal/symbolize_module_task.h>
-#include <lyric_build/internal/test_task.h>
 #include <lyric_build/task_registry.h>
 
 struct TaskDomain {
