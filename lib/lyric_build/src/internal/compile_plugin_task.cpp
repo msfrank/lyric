@@ -230,15 +230,13 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
 
     auto cache = buildState->getCache();
 
-    // store the plugin content in the cache
+    // declare the artifact
     ArtifactId pluginArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
-    tempo_utils::FileReader reader(pluginDirectory / pluginFilename);
-    TU_RETURN_IF_NOT_OK (reader.getStatus());
-    TU_RETURN_IF_NOT_OK (cache->storeContent(pluginArtifact, reader.getBytes()));
+    TU_RETURN_IF_NOT_OK (cache->declareArtifact(pluginArtifact));
 
-    // store the outline object metadata in the cache
+    // store the plugin object metadata in the cache
     MetadataWriter writer;
-    writer.putAttr(kLyricBuildEntryType, EntryType::File);
+    TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     auto toMetadataResult = writer.toMetadata();
@@ -248,6 +246,11 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
             "failed to store metadata for {}", pluginArtifact.toString());
     }
     TU_RETURN_IF_NOT_OK (cache->storeMetadata(pluginArtifact, toMetadataResult.getResult()));
+
+    // store the plugin content in the cache
+    tempo_utils::FileReader reader(pluginDirectory / pluginFilename);
+    TU_RETURN_IF_NOT_OK (reader.getStatus());
+    TU_RETURN_IF_NOT_OK (cache->storeContent(pluginArtifact, reader.getBytes()));
 
     TU_LOG_INFO << "stored plugin at " << pluginArtifact;
 

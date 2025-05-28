@@ -260,7 +260,7 @@ lyric_build::internal::runner_worker_loop(const TaskThread *thread)
             // enqueue the blocked task again so dependencies are re-scanned
             auto checkIncompleteDepsResult = task->checkDependencies();
             auto incompleteDeps = checkIncompleteDepsResult.getResult();
-            TU_LOG_VV << "task " << key << " did not complete, requests dependencies: " << taskDeps;
+            TU_LOG_VV << "task " << key << " did not complete, requests dependencies: " << incompleteDeps;
             runner->enqueueNotification(new lyric_build::NotifyTaskBlocked(key, incompleteDeps));
             continue;       // return to top of loop, fetch next task
         }

@@ -181,17 +181,16 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     }
     auto object = scanResult.getResult();
 
-    // store the outline object content in the cache
+    // declare the artifact
     tempo_utils::UrlPath outlineArtifactPath;
     TU_ASSIGN_OR_RETURN (outlineArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kObjectFileDotSuffix));
     ArtifactId outlineArtifact(buildState->getGeneration().getUuid(), taskHash, outlineArtifactPath);
-    auto outlineBytes = object.bytesView();
-    TU_RETURN_IF_NOT_OK (cache->storeContent(outlineArtifact, outlineBytes));
+    TU_RETURN_IF_NOT_OK (cache->declareArtifact(outlineArtifact));
 
     // store the outline object metadata in the cache
     MetadataWriter writer;
-    writer.putAttr(kLyricBuildEntryType, EntryType::File);
+    TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     auto toMetadataResult = writer.toMetadata();
@@ -201,6 +200,10 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
             "failed to store metadata for {}", outlineArtifact.toString());
     }
     TU_RETURN_IF_NOT_OK (cache->storeMetadata(outlineArtifact, toMetadataResult.getResult()));
+
+    // store the outline object content in the cache
+    auto outlineBytes = object.bytesView();
+    TU_RETURN_IF_NOT_OK (cache->storeContent(outlineArtifact, outlineBytes));
 
     TU_LOG_INFO << "stored outline at " << outlineArtifact;
 

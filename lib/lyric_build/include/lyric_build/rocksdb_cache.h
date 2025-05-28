@@ -31,6 +31,10 @@ namespace lyric_build {
 
         tempo_utils::Status initializeCache();
 
+        tempo_utils::Status declareArtifact(const ArtifactId &artifactId) override;
+
+        bool hasArtifact(const ArtifactId &artifactId);
+
         tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>> loadContent(
             const ArtifactId &artifactId) override;
         tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>> loadContentFollowingLinks(
@@ -47,6 +51,10 @@ namespace lyric_build {
         tempo_utils::Status storeMetadata(const ArtifactId &artifactId, const LyricMetadata &metadata) override;
 
         tempo_utils::Status linkArtifact(const ArtifactId &dstId, const ArtifactId &srcId) override;
+        tempo_utils::Status linkArtifactOverridingMetadata(
+            const ArtifactId &dstId,
+            const LyricMetadata &metadata,
+            const ArtifactId &srcId) override;
 
         tempo_utils::Result<std::vector<ArtifactId>> findArtifacts(
             const tempo_utils::UUID &generation,

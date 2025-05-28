@@ -1,9 +1,7 @@
 #ifndef LYRIC_BUILD_METADATA_WRITER_H
 #define LYRIC_BUILD_METADATA_WRITER_H
 
-#include <filesystem>
-#include <string>
-
+#include <lyric_build/build_result.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/metadata_attr_writer.h>
 #include <lyric_build/metadata_result.h>
@@ -13,19 +11,24 @@ namespace lyric_build {
 
     struct MetadataWriterOptions {
         MetadataVersion version = MetadataVersion::Version1;
+        /**
+         *
+         */
+        LyricMetadata metadata = {};
     };
 
     class MetadataWriter {
 
     public:
-        MetadataWriter();
-        MetadataWriter(const MetadataWriterOptions &options);
+        explicit MetadataWriter(const MetadataWriterOptions &options = {});
+
+        tempo_utils::Status configure();
 
         tempo_utils::Result<LyricMetadata> toMetadata();
 
     private:
         MetadataWriterOptions m_options;
-        MetadataState m_state;
+        std::unique_ptr<MetadataState> m_state;
 
     public:
         /**
@@ -38,7 +41,10 @@ namespace lyric_build {
         template <typename T>
         tempo_utils::Status putAttr(const tempo_schema::AttrSerde<T> &serde, const T &value)
         {
-            MetadataAttrWriter writer(serde.getKey(), &m_state);
+            if (m_state == nullptr)
+                return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                    "metadata writer is not configured");
+            MetadataAttrWriter writer(serde.getKey(), m_state.get());
             auto result = serde.writeAttr(&writer, value);
             if (result.isStatus())
                 return result.getStatus();

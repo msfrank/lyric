@@ -15,6 +15,8 @@ namespace lyric_build {
     public:
         virtual ~AbstractCache() = default;
 
+        virtual tempo_utils::Status declareArtifact(const ArtifactId &artifactId) = 0;
+
         /**
          *
          * @param artifactId
@@ -58,6 +60,11 @@ namespace lyric_build {
         virtual tempo_utils::Status storeMetadata(const ArtifactId &artifactId, const LyricMetadata &metadata) = 0;
 
         virtual tempo_utils::Status linkArtifact(const ArtifactId &dstId, const ArtifactId &srcId) = 0;
+
+        virtual tempo_utils::Status linkArtifactOverridingMetadata(
+            const ArtifactId &dstId,
+            const LyricMetadata &metadata,
+            const ArtifactId &srcId) = 0;
 
         virtual tempo_utils::Result<std::vector<ArtifactId>> findArtifacts(
             const tempo_utils::UUID &generation,

@@ -1,19 +1,34 @@
 
 #include <lyric_build/metadata_writer.h>
 
-lyric_build::MetadataWriter::MetadataWriter()
-    : MetadataWriter(MetadataWriterOptions{})
+#include "lyric_build/build_result.h"
+
+lyric_build::MetadataWriter::MetadataWriter(const MetadataWriterOptions &options)
+    : m_options(options)
 {
 }
 
-lyric_build::MetadataWriter::MetadataWriter(const MetadataWriterOptions &options)
-    : m_options(options),
-      m_state()
+tempo_utils::Status
+lyric_build::MetadataWriter::configure()
 {
+    if (m_state != nullptr)
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "metadata writer is already configured");
+    auto state = std::make_unique<MetadataState>();
+
+    if (m_options.metadata.isValid()) {
+        TU_RETURN_IF_NOT_OK (state->load(m_options.metadata));
+    }
+
+    m_state = std::move(state);
+    return {};
 }
 
 tempo_utils::Result<lyric_build::LyricMetadata>
 lyric_build::MetadataWriter::toMetadata()
 {
-    return m_state.toMetadata();
+    if (m_state == nullptr)
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "metadata writer is not configured");
+    return m_state->toMetadata();
 }

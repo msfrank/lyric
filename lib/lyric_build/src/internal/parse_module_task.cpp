@@ -153,17 +153,16 @@ lyric_build::internal::ParseModuleTask::parseModule(
     }
     archetype = rewriteResult.getResult();
 
-    // store the archetype content in the build cache
+    // declare the artifact
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
     ArtifactId archetypeArtifact(buildState->getGeneration().getUuid(), taskHash, archetypeArtifactPath);
-    auto archetypeBytes = archetype.bytesView();
-    TU_RETURN_IF_NOT_OK (cache->storeContent(archetypeArtifact, archetypeBytes));
+    TU_RETURN_IF_NOT_OK (cache->declareArtifact(archetypeArtifact));
 
     // store the archetype metadata in the build cache
     MetadataWriter writer;
-    writer.putAttr(kLyricBuildEntryType, EntryType::File);
+    TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentUrl, sourceUrl);
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kIntermezzoContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
@@ -174,6 +173,10 @@ lyric_build::internal::ParseModuleTask::parseModule(
             "failed to store metadata for {}", archetypeArtifact.toString());
     }
     TU_RETURN_IF_NOT_OK (cache->storeMetadata(archetypeArtifact, toMetadataResult.getResult()));
+
+    // store the archetype content in the build cache
+    auto archetypeBytes = archetype.bytesView();
+    TU_RETURN_IF_NOT_OK (cache->storeContent(archetypeArtifact, archetypeBytes));
 
     TU_LOG_V << "stored archetype at " << archetypeArtifact;
 

@@ -83,10 +83,8 @@ lyric_build::internal::CompileModuleTask::configure(const TaskSettings *config)
     }));
 
     // set initial dependencies for task
-    m_compileTargets = {
-        m_parseTarget,
-        m_symbolizeTarget,
-    };
+    m_compileTargets.insert(m_parseTarget);
+    m_compileTargets.insert(m_symbolizeTarget);
 
     return {};
 }
@@ -241,17 +239,16 @@ lyric_build::internal::CompileModuleTask::compileModule(
     }
     auto object = compileResult.getResult();
 
-    // store the object content in the build cache
+    // declare the artifact
     tempo_utils::UrlPath objectArtifactPath;
     TU_ASSIGN_OR_RETURN (objectArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kObjectFileDotSuffix));
     ArtifactId objectArtifact(buildState->getGeneration().getUuid(), taskHash, objectArtifactPath);
-    auto objectBytes = object.bytesView();
-    TU_RETURN_IF_NOT_OK (cache->storeContent(objectArtifact, objectBytes));
+    TU_RETURN_IF_NOT_OK (cache->declareArtifact(objectArtifact));
 
     // serialize the object metadata
     MetadataWriter writer;
-    writer.putAttr(kLyricBuildEntryType, EntryType::File);
+    TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     auto toMetadataResult = writer.toMetadata();
@@ -263,6 +260,10 @@ lyric_build::internal::CompileModuleTask::compileModule(
 
     // store the object metadata in the build cache
     TU_RETURN_IF_NOT_OK (cache->storeMetadata(objectArtifact, toMetadataResult.getResult()));
+
+    // store the object content in the build cache
+    auto objectBytes = object.bytesView();
+    TU_RETURN_IF_NOT_OK (cache->storeContent(objectArtifact, objectBytes));
 
     TU_LOG_V << "stored object at " << objectArtifact;
 

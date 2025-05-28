@@ -127,6 +127,7 @@ lyric_build::DependencyLoader::create(
         std::vector<ArtifactId> artifactsFound;
 
         MetadataWriter objectFilterWriter;
+        TU_RETURN_IF_NOT_OK (objectFilterWriter.configure());
         objectFilterWriter.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
         LyricMetadata objectFilter;
         TU_ASSIGN_OR_RETURN(objectFilter, objectFilterWriter.toMetadata());
@@ -163,6 +164,7 @@ lyric_build::DependencyLoader::create(
         }
 
         MetadataWriter pluginFilterWriter;
+        TU_RETURN_IF_NOT_OK (pluginFilterWriter.configure());
         pluginFilterWriter.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
         LyricMetadata pluginFilter;
         TU_ASSIGN_OR_RETURN(pluginFilter, pluginFilterWriter.toMetadata());

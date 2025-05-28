@@ -6,6 +6,8 @@
 #include <lyric_build/lyric_builder.h>
 #include <lyric_build/rocksdb_cache.h>
 
+#include "lyric_common/common_types.h"
+
 lyric_build::ArtifactLoader::ArtifactLoader()
 {
 }
@@ -59,9 +61,9 @@ lyric_build::ArtifactLoader::hasModule(const lyric_common::ModuleLocation &locat
 
     auto metadata = loadMetadataResult.getResult();
     auto walker = metadata.getMetadata();
-    EntryType entryType;
-    TU_RETURN_IF_NOT_OK (walker.parseAttr(kLyricBuildEntryType, entryType));
-    return entryType == EntryType::File;
+    std::string contentType;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(kLyricBuildContentType, contentType));
+    return contentType == lyric_common::kObjectContentType;
 }
 
 tempo_utils::Result<Option<lyric_object::LyricObject>>

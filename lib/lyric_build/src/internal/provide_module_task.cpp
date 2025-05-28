@@ -178,13 +178,13 @@ lyric_build::internal::ProvideModuleTask::provideModule(
     TU_ASSIGN_OR_RETURN (content, vfs->loadResource(objectResource.id));
     lyric_object::LyricObject object(content);
 
-    // store the object content in the build cache
+    // declare the artifact
     ArtifactId objectArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
-    TU_RETURN_IF_NOT_OK (cache->storeContent(objectArtifact, content));
+    TU_RETURN_IF_NOT_OK (cache->declareArtifact(objectArtifact));
 
     // serialize the object metadata
     MetadataWriter objectMetadataWriter;
-    objectMetadataWriter.putAttr(kLyricBuildEntryType, EntryType::File);
+    TU_RETURN_IF_NOT_OK (objectMetadataWriter.configure());
     objectMetadataWriter.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
     objectMetadataWriter.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     LyricMetadata objectMetadata;
@@ -192,6 +192,9 @@ lyric_build::internal::ProvideModuleTask::provideModule(
 
     // store the object metadata in the build cache
     TU_RETURN_IF_NOT_OK (cache->storeMetadata(objectArtifact, objectMetadata));
+
+    // store the object content in the build cache
+    TU_RETURN_IF_NOT_OK (cache->storeContent(objectArtifact, content));
 
     TU_LOG_V << "stored object at " << objectArtifact;
 
@@ -211,13 +214,13 @@ lyric_build::internal::ProvideModuleTask::provideModule(
         auto &pluginResource = resourceOption.peekValue();
         TU_ASSIGN_OR_RETURN (content, vfs->loadResource(pluginResource.id));
 
-        // store the plugin content in the build cache
+        // declare the artifact
         ArtifactId pluginArtifact(buildState->getGeneration().getUuid(), taskHash, pluginLocation.toUrl());
-        TU_RETURN_IF_NOT_OK (cache->storeContent(pluginArtifact, content));
+        TU_RETURN_IF_NOT_OK (cache->declareArtifact(pluginArtifact));
 
         // serialize the plugin metadata
         MetadataWriter pluginMetadataWriter;
-        pluginMetadataWriter.putAttr(kLyricBuildEntryType, EntryType::File);
+        TU_RETURN_IF_NOT_OK (pluginMetadataWriter.configure());
         pluginMetadataWriter.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
         pluginMetadataWriter.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
         LyricMetadata pluginMetadata;
@@ -225,6 +228,9 @@ lyric_build::internal::ProvideModuleTask::provideModule(
 
         // store the plugin metadata in the build cache
         TU_RETURN_IF_NOT_OK (cache->storeMetadata(pluginArtifact, pluginMetadata));
+
+        // store the plugin content in the build cache
+        TU_RETURN_IF_NOT_OK (cache->storeContent(pluginArtifact, content));
 
         TU_LOG_V << "stored plugin at " << pluginArtifact;
     }

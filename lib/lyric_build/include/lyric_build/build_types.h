@@ -20,11 +20,12 @@ namespace lyric_build {
         Version1,
     };
 
-    enum EntryType {
+    enum class EntryType {
         Unknown,
         File,
         Directory,
         Link,
+        LinkOverride,
     };
 
     /**

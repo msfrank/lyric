@@ -21,6 +21,7 @@ namespace lyric_build {
 
         bool hasAttr(const tempo_schema::AttrKey &key) const;
         bool hasAttr(const tempo_schema::AttrValidator &validator) const;
+        tempo_schema::Attr getAttr(tu_uint32 index) const;
         int numAttrs() const;
 
     private:

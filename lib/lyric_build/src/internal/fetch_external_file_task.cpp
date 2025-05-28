@@ -103,13 +103,13 @@ lyric_build::internal::FetchExternalFileTask::fetchExternalFile(
     TU_RETURN_IF_NOT_OK (reader.getStatus());
     auto content = reader.getBytes();
 
-    // store the file content in the build cache
+    // declare the artifact
     ArtifactId externalArtifact(buildState->getGeneration().getUuid(), taskHash, m_artifactPath);
-    TU_RETURN_IF_NOT_OK (cache->storeContent(externalArtifact, content));
+    TU_RETURN_IF_NOT_OK (cache->declareArtifact(externalArtifact));
 
     // serialize the file metadata
     MetadataWriter writer;
-    writer.putAttr(kLyricBuildEntryType, EntryType::File);
+    TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, m_contentType);
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
@@ -120,6 +120,9 @@ lyric_build::internal::FetchExternalFileTask::fetchExternalFile(
 
     // store the file metadata in the build cache
     TU_RETURN_IF_NOT_OK (cache->storeMetadata(externalArtifact, toMetadataResult.getResult()));
+
+    // store the file content in the build cache
+    TU_RETURN_IF_NOT_OK (cache->storeContent(externalArtifact, content));
 
     TU_LOG_V << "stored external content at " << externalArtifact;
 

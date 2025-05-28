@@ -8,25 +8,25 @@
 
 namespace lyric_build {
 
-    class EntryTypeAttr : public tempo_schema::AttrSerde<EntryType> {
-
-        using SerdeType = EntryType;
-
-    public:
-        explicit EntryTypeAttr(const tempo_schema::ComparableResource *resource);
-        tempo_utils::Result<tu_uint32> writeAttr(
-            tempo_schema::AbstractAttrWriter *writer,
-            const EntryType &value) const override;
-        tempo_utils::Status parseAttr(
-            tu_uint32 index,
-            tempo_schema::AbstractAttrParser *parser,
-            EntryType &value) const override;
-    };
+    // class EntryTypeAttr : public tempo_schema::AttrSerde<EntryType> {
+    //
+    //     using SerdeType = EntryType;
+    //
+    // public:
+    //     explicit EntryTypeAttr(const tempo_schema::ComparableResource *resource);
+    //     tempo_utils::Result<tu_uint32> writeAttr(
+    //         tempo_schema::AbstractAttrWriter *writer,
+    //         const EntryType &value) const override;
+    //     tempo_utils::Status parseAttr(
+    //         tu_uint32 index,
+    //         tempo_schema::AbstractAttrParser *parser,
+    //         EntryType &value) const override;
+    // };
+    //extern const EntryTypeAttr kLyricBuildEntryType;
 
     extern const lyric_common::ModuleLocationAttr kLyricBuildModuleLocation;
     extern const tempo_schema::UrlAttr kLyricBuildContentUrl;
     extern const tempo_schema::StringAttr kLyricBuildContentType;
-    extern const EntryTypeAttr kLyricBuildEntryType;
     extern const tempo_schema::StringAttr kLyricBuildGeneration;
     extern const tempo_schema::StringAttr kLyricBuildInstallPath;
     extern const tempo_schema::StringAttr kLyricBuildTaskHash;

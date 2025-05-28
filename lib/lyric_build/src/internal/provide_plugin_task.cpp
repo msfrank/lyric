@@ -163,13 +163,13 @@ lyric_build::internal::ProvidePluginTask::providePlugin(
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
     TU_ASSIGN_OR_RETURN (content, vfs->loadResource(resource.id));
 
-    // store the plugin content in the build cache
+    // declare the artifact
     ArtifactId pluginArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
-    TU_RETURN_IF_NOT_OK (cache->storeContent(pluginArtifact, content));
+    TU_RETURN_IF_NOT_OK (cache->declareArtifact(pluginArtifact));
 
     // serialize the plugin metadata
     MetadataWriter writer;
-    writer.putAttr(kLyricBuildEntryType, EntryType::File);
+    TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     auto toMetadataResult = writer.toMetadata();
@@ -181,6 +181,9 @@ lyric_build::internal::ProvidePluginTask::providePlugin(
 
     // store the plugin metadata in the build cache
     TU_RETURN_IF_NOT_OK (cache->storeMetadata(pluginArtifact, toMetadataResult.getResult()));
+
+    // store the plugin content in the build cache
+    TU_RETURN_IF_NOT_OK (cache->storeContent(pluginArtifact, content));
 
     TU_LOG_V << "stored plugin at " << pluginArtifact;
 

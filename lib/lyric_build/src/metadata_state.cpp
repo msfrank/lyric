@@ -3,6 +3,7 @@
 #include <unicode/umachine.h>
 #include <unicode/ustring.h>
 
+#include <lyric_build/build_result.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/generated/metadata.h>
 #include <lyric_build/metadata_attr.h>
@@ -12,6 +13,30 @@
 
 lyric_build::MetadataState::MetadataState()
 {
+}
+
+tempo_utils::Status
+lyric_build::MetadataState::load(const LyricMetadata &metadata)
+{
+    if (!m_metadataAttrs.empty() || !m_metadataNamespaces.empty())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "metadata state is already initialized");
+
+    auto root = metadata.getMetadata();
+    for (tu_uint32 i = 0; i < root.numAttrs(); i++) {
+        auto attr = root.getAttr(i);
+        if (!attr.second.isValid())
+            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "invalid metadata attr");
+        const auto &key = attr.first;
+        const auto &value = attr.second;
+        auto nsUrl = tempo_utils::Url::fromString(attr.first.ns);
+        MetadataNamespace *ns;
+        TU_ASSIGN_OR_RETURN (ns, putNamespace(nsUrl));
+        AttrId id(ns->getAddress(), key.id);
+        TU_RETURN_IF_STATUS (appendAttr(id, value));
+    }
+    return {};
 }
 
 bool

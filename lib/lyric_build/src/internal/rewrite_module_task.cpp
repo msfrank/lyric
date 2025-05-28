@@ -132,17 +132,16 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     }
     auto rewritten = rewriteModuleResult.getResult();
 
-    // store the rewritten archetype content in the build cache
+    // declare the artifact
     tempo_utils::UrlPath rewrittenArtifactPath;
     TU_ASSIGN_OR_RETURN (rewrittenArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
     ArtifactId rewrittenArtifact(buildState->getGeneration().getUuid(), taskHash, rewrittenArtifactPath);
-    auto rewrittenBytes = rewritten.bytesView();
-    TU_RETURN_IF_NOT_OK (cache->storeContent(rewrittenArtifact, rewrittenBytes));
+    TU_RETURN_IF_NOT_OK (cache->declareArtifact(rewrittenArtifact));
 
     // store the archetype metadata in the build cache
     MetadataWriter writer;
-    writer.putAttr(kLyricBuildEntryType, EntryType::File);
+    TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kIntermezzoContentType));
     auto toMetadataResult = writer.toMetadata();
     if (toMetadataResult.isStatus()) {
@@ -151,6 +150,10 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
             "failed to store metadata for {}", rewrittenArtifact.toString());
     }
     TU_RETURN_IF_NOT_OK (cache->storeMetadata(rewrittenArtifact, toMetadataResult.getResult()));
+
+    // store the rewritten archetype content in the build cache
+    auto rewrittenBytes = rewritten.bytesView();
+    TU_RETURN_IF_NOT_OK (cache->storeContent(rewrittenArtifact, rewrittenBytes));
 
     TU_LOG_V << "stored rewritten archetype at " << rewrittenArtifact;
 

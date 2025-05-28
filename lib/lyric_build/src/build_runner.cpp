@@ -178,8 +178,7 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key, const TaskKey &depende
     //      {QUEUED, prev generation, prev hash}.
     //   3. the task was completed during the current run. if so, then enqueue new task and set
     //      state to: {QUEUED, current generation, current hash}
-    //   4. the task is already queued. if so, then requeue the existing task and set state to:
-    //      {QUEUED, existing generation, existing hash}
+    //   4. the task is already queued. if so, then do nothing.
 
     std::unique_lock<std::shared_mutex> locker(m_tasksRWlock);
 
@@ -207,6 +206,13 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key, const TaskKey &depende
 
     locker.unlock();                                    // unlock tasks rwlock before enqueuing task
 
+    m_readyLock.lock();                                 // acquire ready lock before modifying ready queue
+
+    if (m_queued.contains(key)) {
+        TU_LOG_VV << "task " << key << " is already enqueued, ignoring";
+        return {};
+    }
+
     // look up the prior task state, which may not exist
     auto prevState = m_state->loadState(key);
 
@@ -217,8 +223,8 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key, const TaskKey &depende
     m_state->storeState(key, state);
     ReadyItem item = {ReadyItem::Type::TASK, task, dependent};
 
-    m_readyLock.lock();                                 // acquire ready lock before modifying ready queue
     m_ready.push(item);                                 // enqueue new ready task item
+    m_queued.insert(key);                               // add task key to the queued set
     m_readyLock.unlock();                               // explicitly release ready lock before signaling waiter
     m_readyWaiter.notify_one();                         // signal a waiting task worker
 
@@ -231,9 +237,12 @@ lyric_build::BuildRunner::waitForNextReady(int timeout)
 {
     // first try to acquire ready lock and check if ready queue is not empty
     if (m_readyLock.try_lock()) {
-        if (!m_ready.empty()) {                       // if queue is not empty, then pop next task
+        if (!m_ready.empty()) {                         // if queue is not empty, then pop next task
             auto item = m_ready.front();
             m_ready.pop();
+            if (item.type == ReadyItem::Type::TASK) {   // if item is task then remove key from queued set
+                m_queued.erase(item.task->getKey());
+            }
             m_readyLock.unlock();                       // explicitly unlock ready lock after modifying queue
             TU_LOG_VV << "optimistic pop";
             return item;                                // return next item, which may be nullptr
@@ -265,6 +274,9 @@ lyric_build::BuildRunner::waitForNextReady(int timeout)
 
     auto item = m_ready.front();                        // otherwise queue is not empty, so pop next item
     m_ready.pop();
+    if (item.type == ReadyItem::Type::TASK) {               // if item is task then remove key from queued set
+        m_queued.erase(item.task->getKey());
+    }
     TU_LOG_VV << "dequeued next ready item";
     return item;
 };

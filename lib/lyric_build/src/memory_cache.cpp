@@ -15,6 +15,25 @@ lyric_build::MemoryCache::MemoryCache()
 {
 }
 
+tempo_utils::Status
+lyric_build::MemoryCache::declareArtifact(const ArtifactId &artifactId)
+{
+    absl::MutexLock locker(&m_lock);
+
+    if (m_metadata.contains(artifactId))
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "failed to declare artifact; artifact {} already exists", artifactId.toString());
+
+    MetadataEntry metadataEntry;
+    metadataEntry.type = EntryType::File;
+    MetadataWriter writer;
+    TU_RETURN_IF_NOT_OK (writer.configure());
+    TU_ASSIGN_OR_RETURN (metadataEntry.metadata, writer.toMetadata());
+    m_metadata[artifactId] = std::move(metadataEntry);
+
+    return {};
+}
+
 tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>>
 lyric_build::MemoryCache::loadContent(const ArtifactId &artifactId)
 {
@@ -32,22 +51,24 @@ lyric_build::MemoryCache::loadContentFollowingLinks(const ArtifactId &artifactId
 tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>>
 lyric_build::MemoryCache::doLoadContent(const ArtifactId &artifactId)
 {
-    if (m_content.contains(artifactId))
-        return m_content.at(artifactId);
-    return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
+    auto entry = m_content.find(artifactId);
+    if (entry == m_content.cend())
+        return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
             "missing artifact {}", artifactId.toString());
+    return entry->second;
 }
 
 tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>>
 lyric_build::MemoryCache::doLoadContentFollowingLinks(const ArtifactId &artifactId)
 {
-    if (!m_metadata.contains(artifactId))
+    auto entry = m_metadata.find(artifactId);
+    if (entry == m_metadata.cend())
         return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
             "missing artifact {}", artifactId.toString());
 
-    auto entry = m_metadata.at(artifactId);
-    if (entry.link.isValid())
-        return doLoadContentFollowingLinks(entry.link);
+    const auto &metadataEntry = entry->second;
+    if (metadataEntry.type == EntryType::Link || metadataEntry.type == EntryType::LinkOverride)
+        return doLoadContentFollowingLinks(metadataEntry.link);
 
     return doLoadContent(artifactId);
 }
@@ -89,26 +110,26 @@ tempo_utils::Result<lyric_build::LyricMetadata>
 tempo_utils::Result<lyric_build::LyricMetadata>
 lyric_build::MemoryCache::doLoadMetadata(const ArtifactId &artifactId)
 {
-    if (m_metadata.contains(artifactId)) {
-        auto entry = m_metadata.at(artifactId);
-        return tempo_utils::Result<LyricMetadata>(entry.metadata);
-    }
-    return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
-        "missing artifact {}", artifactId.toString());
+    auto entry = m_metadata.find(artifactId);
+    if (entry == m_metadata.cend())
+        return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
+            "missing artifact {}", artifactId.toString());
+    return entry->second.metadata;
 }
 
 tempo_utils::Result<lyric_build::LyricMetadata>
 lyric_build::MemoryCache::doLoadMetadataFollowingLinks(const ArtifactId &artifactId)
 {
-    if (!m_metadata.contains(artifactId))
+    auto entry = m_metadata.find(artifactId);
+    if (entry == m_metadata.cend())
         return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
             "missing artifact {}", artifactId.toString());
 
-    auto entry = m_metadata.at(artifactId);
-    if (!entry.link.isValid())
-        return entry.metadata;
+    auto &metadataEntry = entry->second;
+    if (metadataEntry.type != EntryType::Link)
+        return metadataEntry.metadata;
 
-    return doLoadMetadataFollowingLinks(entry.link);
+    return doLoadMetadataFollowingLinks(metadataEntry.link);
 }
 
 tempo_utils::Status
@@ -116,8 +137,13 @@ lyric_build::MemoryCache::storeMetadata(const ArtifactId &artifactId, const Lyri
 {
     absl::MutexLock locker(&m_lock);
 
-    MetadataEntry entry{metadata, ArtifactId()};
-    m_metadata.insert_or_assign(artifactId, entry);
+    auto entry = m_metadata.find(artifactId);
+    if (entry == m_metadata.cend())
+        return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
+            "failed to store metadata; missing artifact {}", artifactId.toString());
+    auto &metadataEntry = entry->second;
+
+    metadataEntry.metadata = metadata;
     return {};
 }
 
@@ -126,14 +152,45 @@ lyric_build::MemoryCache::linkArtifact(const ArtifactId &dstId, const ArtifactId
 {
     absl::MutexLock locker(&m_lock);
 
-    MetadataWriter writer;
-    writer.putAttr(kLyricBuildEntryType, EntryType::Link);
-    auto toMetadataResult = writer.toMetadata();
-    if (toMetadataResult.isStatus())
-        return toMetadataResult.getStatus();
+    if (!m_metadata.contains(srcId))
+        return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
+            "failed to link artifact; missing source artifact {}", srcId.toString());
+    if (m_metadata.contains(dstId))
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "failed to link artifact; destination artifact {} already exists", dstId.toString());
 
-    MetadataEntry entry{toMetadataResult.getResult(), srcId};
-    m_metadata.insert_or_assign(dstId, entry);
+    MetadataEntry metadataEntry;
+    metadataEntry.type = EntryType::Link;
+    metadataEntry.link = srcId;
+    MetadataWriter writer;
+    TU_RETURN_IF_NOT_OK (writer.configure());
+    TU_ASSIGN_OR_RETURN (metadataEntry.metadata, writer.toMetadata());
+    m_metadata[dstId] = std::move(metadataEntry);
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_build::MemoryCache::linkArtifactOverridingMetadata(
+    const ArtifactId &dstId,
+    const LyricMetadata &metadata,
+    const ArtifactId &srcId)
+{
+    absl::MutexLock locker(&m_lock);
+
+    if (!m_metadata.contains(srcId))
+        return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
+            "failed to link artifact; missing source artifact {}", srcId.toString());
+    if (m_metadata.contains(dstId))
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "failed to link artifact; destination artifact {} already exists", dstId.toString());
+
+    MetadataEntry metadataEntry;
+    metadataEntry.type = EntryType::LinkOverride;
+    metadataEntry.link = srcId;
+    metadataEntry.metadata = metadata;
+    m_metadata[dstId] = std::move(metadataEntry);
+
     return {};
 }
 

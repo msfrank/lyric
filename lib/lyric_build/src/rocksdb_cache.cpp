@@ -8,8 +8,11 @@
 #include <lyric_build/metadata_matcher.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/rocksdb_cache.h>
+#include <tempo_utils/bytes_appender.h>
+#include <tempo_utils/bytes_iterator.h>
 #include <tempo_utils/log_message.h>
 #include <tempo_utils/memory_bytes.h>
+#include <tempo_utils/slice.h>
 #include <tempo_utils/unicode.h>
 
 lyric_build::RocksdbCache::RocksdbCache(const std::filesystem::path &dbPath)
@@ -219,10 +222,78 @@ write_artifact_id(const lyric_build::ArtifactId &artifactId)
     return bytes;
 }
 
-inline lyric_build::LyricMetadata
+struct MetadataEntry {
+    lyric_build::EntryType type = lyric_build::EntryType::Unknown;
+    lyric_build::LyricMetadata metadata;
+};
+
+inline MetadataEntry
 read_artifact_meta(std::shared_ptr<const tempo_utils::ImmutableBytes> bytes)
 {
-    return lyric_build::LyricMetadata(bytes);
+    MetadataEntry metadataEntry;
+    tempo_utils::BytesIterator it(bytes);
+    tu_uint8 u8;
+    if (!it.nextU8(u8))
+        return {};
+    metadataEntry.type = static_cast<lyric_build::EntryType>(u8);
+    tempo_utils::Slice slice(bytes, 1);
+    metadataEntry.metadata = lyric_build::LyricMetadata(slice.toImmutableBytes());
+    return metadataEntry;
+}
+
+inline std::string
+write_artifact_meta(const MetadataEntry &metadataEntry)
+{
+    if (metadataEntry.type == lyric_build::EntryType::Unknown)
+        return {};
+    if (metadataEntry.metadata.isValid())
+        return {};
+
+    tempo_utils::BytesAppender appender;
+    appender.appendU8(static_cast<tu_uint8>(metadataEntry.type));
+    appender.appendBytes(metadataEntry.metadata.bytesView());
+    std::string bytes((const char *) appender.getData(), appender.getSize());
+    return bytes;
+}
+
+tempo_utils::Status
+lyric_build::RocksdbCache::declareArtifact(const ArtifactId &artifactId)
+{
+    rocksdb::WriteOptions options;
+    rocksdb::Status status;
+
+    std::string id = write_artifact_id(artifactId);
+    rocksdb::Slice k(id);
+
+    MetadataEntry metadataEntry;
+    metadataEntry.type = EntryType::File;
+    MetadataWriter writer;
+    TU_RETURN_IF_NOT_OK (writer.configure());
+    TU_ASSIGN_OR_RETURN (metadataEntry.metadata, writer.toMetadata());
+    auto metaBytes = write_artifact_meta(metadataEntry);
+    rocksdb::Slice v(metaBytes);
+
+    status = m_db->Put(options, m_metadata, k, v);
+    if (!status.ok())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "Put failed: {}", status.ToString());
+    return {};
+}
+
+bool
+lyric_build::RocksdbCache::hasArtifact(const ArtifactId &artifactId)
+{
+    TU_ASSERT (m_db != nullptr);
+
+    rocksdb::ReadOptions options;
+    rocksdb::Status status;
+
+    std::string id = write_artifact_id(artifactId);
+    rocksdb::Slice k(id);
+
+    auto metaBytes = std::make_unique<rocksdb::PinnableSlice>();
+    status = m_db->Get(options, m_metadata, k, metaBytes.get());
+    return status.IsNotFound();
 }
 
 tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>>
@@ -270,14 +341,10 @@ lyric_build::RocksdbCache::loadContentFollowingLinks(const ArtifactId &artifactI
             "Get failed: {}", status.ToString());
     auto meta = std::make_shared<const RocksdbContent>(metaSlice.release());
 
-    auto metadata = read_artifact_meta(meta);
-    if (!metadata.isValid())
+    auto metadataEntry = read_artifact_meta(meta);
+    if (metadataEntry.type == EntryType::Unknown)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "invalid metadata for artifact {}", artifactId.toString());
-
-    auto walker = metadata.getMetadata();
-    EntryType entryType;
-    TU_RETURN_IF_NOT_OK(walker.parseAttr(lyric_build::kLyricBuildEntryType, entryType));
 
     auto contentSlice = std::make_unique<rocksdb::PinnableSlice>();
     status = m_db->Get(options, m_content, k, contentSlice.get());
@@ -289,7 +356,7 @@ lyric_build::RocksdbCache::loadContentFollowingLinks(const ArtifactId &artifactI
             "Get failed: {}", status.ToString());
 
     // if metadata entry type is Link then follow the link
-    if (entryType == EntryType::Link) {
+    if (metadataEntry.type == EntryType::Link) {
         auto linkId = read_artifact_id(contentSlice->ToString());
         if (linkId.isValid())
             return loadContentFollowingLinks(linkId);
@@ -362,12 +429,12 @@ lyric_build::RocksdbCache::loadMetadata(const ArtifactId &artifactId)
             "Get failed: {}",status.ToString());
     auto meta = std::make_shared<const RocksdbContent>(metaBytes.release());
 
-    auto metadata = read_artifact_meta(meta);
-    if (!metadata.isValid())
+    auto metadataEntry = read_artifact_meta(meta);
+    if (metadataEntry.type == EntryType::Unknown)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "invalid metadata for artifact {}", artifactId.toString());
 
-    return metadata;
+    return metadataEntry.metadata;
 }
 
 tempo_utils::Result<lyric_build::LyricMetadata>
@@ -391,17 +458,13 @@ lyric_build::RocksdbCache::loadMetadataFollowingLinks(const ArtifactId &artifact
             "Get failed: {}", status.ToString());
     auto meta = std::make_shared<const RocksdbContent>(metaBytes.release());
 
-    auto metadata = read_artifact_meta(meta);
-    if (!metadata.isValid())
+    auto metadataEntry = read_artifact_meta(meta);
+    if (metadataEntry.type == EntryType::Unknown)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "invalid metadata for artifact {}", artifactId.toString());
 
-    auto walker = metadata.getMetadata();
-    EntryType entryType;
-    TU_RETURN_IF_NOT_OK (walker.parseAttr(kLyricBuildEntryType, entryType));
-
-    if (entryType != EntryType::Link)
-        return metadata;
+    if (metadataEntry.type != EntryType::Link)
+        return metadataEntry.metadata;
 
     // if metadata entry type is LINK_ENTRY, then follow the link
     std::string contentString;
@@ -431,8 +494,11 @@ lyric_build::RocksdbCache::storeMetadata(const ArtifactId &artifactId, const Lyr
     std::string id = write_artifact_id(artifactId);
     rocksdb::Slice k(id);
 
-    auto metaBytes = metadata.bytesView();
-    rocksdb::Slice v((const char *) metaBytes.data(), metaBytes.size());
+    MetadataEntry metadataEntry;
+    metadataEntry.type = EntryType::File;
+    metadataEntry.metadata = metadata;
+    auto metaBytes = write_artifact_meta(metadataEntry);
+    rocksdb::Slice v(metaBytes);
 
     status = m_db->Put(options, m_metadata, k, v);
     if (!status.ok())
@@ -444,16 +510,67 @@ lyric_build::RocksdbCache::storeMetadata(const ArtifactId &artifactId, const Lyr
 tempo_utils::Status
 lyric_build::RocksdbCache::linkArtifact(const ArtifactId &dstId, const ArtifactId &srcId)
 {
-    MetadataWriter writer;
-    writer.putAttr(kLyricBuildEntryType, EntryType::Link);
-    auto toMetadataResult = writer.toMetadata();
-    if (toMetadataResult.isStatus())
-        return toMetadataResult.getStatus();
+    if (!hasArtifact(srcId))
+        return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
+            "failed to link artifact; missing source artifact {}", srcId.toString());
+    if (hasArtifact(dstId))
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "failed to link artifact; destination artifact {} already exists", dstId.toString());
 
-    auto metadata = toMetadataResult.getResult();
-    auto status = storeMetadata(dstId, metadata);
-    if (!status.isOk())
-        return status;
+    rocksdb::WriteOptions options;
+    rocksdb::Status status;
+
+    std::string id = write_artifact_id(dstId);
+    rocksdb::Slice k(id);
+
+    MetadataEntry metadataEntry;
+    metadataEntry.type = EntryType::Link;
+    MetadataWriter writer;
+    TU_RETURN_IF_NOT_OK (writer.configure());
+    TU_ASSIGN_OR_RETURN (metadataEntry.metadata, writer.toMetadata());
+    auto metaBytes = write_artifact_meta(metadataEntry);
+    rocksdb::Slice v(metaBytes);
+
+    status = m_db->Put(options, m_metadata, k, v);
+    if (!status.ok())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "Put failed: {}", status.ToString());
+
+    auto bytes = tempo_utils::MemoryBytes::copy(write_artifact_id(srcId));
+    return storeContent(dstId, bytes);
+}
+
+tempo_utils::Status
+lyric_build::RocksdbCache::linkArtifactOverridingMetadata(
+    const ArtifactId &dstId,
+    const LyricMetadata &metadata,
+    const ArtifactId &srcId)
+{
+    if (!hasArtifact(srcId))
+        return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
+            "failed to link artifact; missing source artifact {}", srcId.toString());
+    if (hasArtifact(dstId))
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "failed to link artifact; destination artifact {} already exists", dstId.toString());
+
+    rocksdb::WriteOptions options;
+    rocksdb::Status status;
+
+    std::string id = write_artifact_id(dstId);
+    rocksdb::Slice k(id);
+
+    MetadataEntry metadataEntry;
+    metadataEntry.type = EntryType::LinkOverride;
+    MetadataWriter writer;
+    TU_RETURN_IF_NOT_OK (writer.configure());
+    TU_ASSIGN_OR_RETURN (metadataEntry.metadata, writer.toMetadata());
+    auto metaBytes = write_artifact_meta(metadataEntry);
+    rocksdb::Slice v(metaBytes);
+
+    status = m_db->Put(options, m_metadata, k, v);
+    if (!status.ok())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "Put failed: {}", status.ToString());
 
     auto bytes = tempo_utils::MemoryBytes::copy(write_artifact_id(srcId));
     return storeContent(dstId, bytes);
@@ -490,8 +607,8 @@ lyric_build::RocksdbCache::findArtifacts(
         }
         if (applyFilters) {
             auto meta = tempo_utils::MemoryBytes::copy(it->value().ToStringView());
-            auto metadata = read_artifact_meta(meta);
-            if (!metadata_matches_all_filters(metadata, filters))
+            auto metadataEntry = read_artifact_meta(meta);
+            if (!metadata_matches_all_filters(metadataEntry.metadata, filters))
                 continue;
         }
         matches.push_back(artifactId);

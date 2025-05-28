@@ -222,28 +222,25 @@ lyric_build::internal::ArchiveTask::buildArchive(
     lyric_object::LyricObject object;
     TU_ASSIGN_OR_RETURN (object, span->checkResult(archiver.toObject()));
 
-    // store the object content in the build cache
+    // declare the artifact
     ArtifactId moduleArtifact(buildState->getGeneration().getUuid(), taskHash,
         tempo_utils::Url::fromString(m_archiveName));
-    auto moduleBytes = object.bytesView();
-    TU_RETURN_IF_NOT_OK (cache->storeContent(moduleArtifact, moduleBytes));
-
-    // generate the install path
-    m_archiveName.append(lyric_common::kObjectFileDotSuffix);
-    std::filesystem::path moduleInstallPath(m_archiveName);
-    moduleInstallPath.replace_extension(lyric_common::kObjectFileDotSuffix);
+    TU_RETURN_IF_NOT_OK (cache->declareArtifact(moduleArtifact));
 
     // serialize the object metadata
     MetadataWriter writer;
-    writer.putAttr(kLyricBuildEntryType, EntryType::File);
+    TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
-    writer.putAttr(kLyricBuildInstallPath, moduleInstallPath.string());
     lyric_build::LyricMetadata metadata;
     TU_ASSIGN_OR_RETURN (metadata, writer.toMetadata());
 
     // store the object metadata in the build cache
     TU_RETURN_IF_NOT_OK (cache->storeMetadata(moduleArtifact, metadata));
+
+    // store the object content in the build cache
+    auto moduleBytes = object.bytesView();
+    TU_RETURN_IF_NOT_OK (cache->storeContent(moduleArtifact, moduleBytes));
 
     TU_LOG_V << "stored module at " << moduleArtifact;
 

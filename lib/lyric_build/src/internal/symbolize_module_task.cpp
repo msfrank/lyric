@@ -122,17 +122,16 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     }
     auto object = symbolizeModuleResult.getResult();
 
-    // store the linkage object content in the build cache
+    // declare the artifact
     tempo_utils::UrlPath linkageArtifactPath;
     TU_ASSIGN_OR_RETURN (linkageArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kObjectFileDotSuffix));
     ArtifactId linkageArtifact(buildState->getGeneration().getUuid(), taskHash, linkageArtifactPath);
-    auto linkageBytes = object.bytesView();
-    TU_RETURN_IF_NOT_OK (cache->storeContent(linkageArtifact, linkageBytes));
+    TU_RETURN_IF_NOT_OK (cache->declareArtifact(linkageArtifact));
 
     // store the object metadata in the build cache
     MetadataWriter writer;
-    writer.putAttr(kLyricBuildEntryType, EntryType::File);
+    TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
     auto toMetadataResult = writer.toMetadata();
@@ -142,6 +141,10 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
             "failed to store metadata for {}", linkageArtifact.toString());
     }
     TU_RETURN_IF_NOT_OK (cache->storeMetadata(linkageArtifact, toMetadataResult.getResult()));
+
+    // store the linkage object content in the build cache
+    auto linkageBytes = object.bytesView();
+    TU_RETURN_IF_NOT_OK (cache->storeContent(linkageArtifact, linkageBytes));
 
     TU_LOG_V << "stored linkage at " << linkageArtifact;
 

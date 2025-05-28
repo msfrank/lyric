@@ -17,6 +17,8 @@ namespace lyric_build {
     public:
         MetadataState();
 
+        tempo_utils::Status load(const LyricMetadata &metadata);
+
         bool hasNamespace(const tempo_utils::Url &nsUrl) const;
         MetadataNamespace *getNamespace(int index) const;
         MetadataNamespace *getNamespace(const tempo_utils::Url &nsUrl) const;
