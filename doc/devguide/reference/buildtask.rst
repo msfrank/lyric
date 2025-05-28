@@ -124,8 +124,8 @@ Task Artifacts
       ===============  ==============  =====
       Vocabulary       Id              Value
       ===============  ==============  =====
-      lyric_packaging  ContentType     "application/vnd.zuri.object"
-      lyric_packaging  CreateTime      timestamp when file was created, expressed in millis since the epoch
+      lyric_build      ContentType     "application/vnd.lyric.object"
+      lyric_build      CreateTime      timestamp when file was created, expressed in millis since the epoch
       lyric_build      ModuleLocation  url path specifying the relative module location
       lyric_build      InstallPath     unused
       ===============  ==============  =====

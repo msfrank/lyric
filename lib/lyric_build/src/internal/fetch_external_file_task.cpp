@@ -30,7 +30,7 @@ lyric_build::internal::FetchExternalFileTask::configure(const TaskSettings *conf
     auto artifactPath = tempo_utils::UrlPath::fromString(taskId.getId());
     if (!artifactPath.isValid())
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
-            "task key id must be a valid artifact path");
+            "task key id must be a valid url path");
 
     m_artifactPath = std::move(artifactPath);
 
@@ -62,6 +62,11 @@ lyric_build::internal::FetchExternalFileTask::configure(const TaskSettings *conf
     tempo_config::StringParser contentTypeParser("application/octet-stream");
     TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_contentType, contentTypeParser,
         taskSection, "contentType"));
+
+    // parse the artifact path
+    tempo_config::UrlPathParser artifactPathParser(m_artifactPath);
+    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_artifactPath, artifactPathParser,
+        taskSection, "artifactPath"));
 
     return {};
 }

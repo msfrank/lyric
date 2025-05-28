@@ -6,14 +6,14 @@
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
 #include <lyric_build/internal/provide_plugin_task.h>
+#include <lyric_build/internal/task_utils.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
+#include <lyric_common/common_types.h>
 #include <tempo_config/base_conversions.h>
 #include <tempo_config/parse_config.h>
-#include <tempo_utils/date_time.h>
 #include <tempo_utils/log_message.h>
-
-#include "lyric_common/common_types.h"
+#include <tempo_utils/platform.h>
 
 lyric_build::internal::ProvidePluginTask::ProvidePluginTask(
     const tempo_utils::UUID &generation,
@@ -120,6 +120,11 @@ lyric_build::internal::ProvidePluginTask::providePlugin(
     TU_ASSERT (!(m_buildTarget.isValid() && m_existingPluginPath.isValid()));
     auto span = getSpan();
 
+    tempo_utils::UrlPath pluginArtifactPath;
+    TU_ASSIGN_OR_RETURN (pluginArtifactPath, convert_module_location_to_artifact_path(
+        m_moduleLocation, absl::StrCat(
+            ".", tempo_utils::sharedLibraryPlatformId(), tempo_utils::sharedLibraryFileDotSuffix())));
+
     auto cache = buildState->getCache();
 
     // if build target was specified then pull forward the artifacts from the completed target
@@ -136,18 +141,21 @@ lyric_build::internal::ProvidePluginTask::providePlugin(
         if (hash.empty())
             return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                 "dependent task {} has invalid hash", m_buildTarget.toString());
-
         TraceId artifactTrace(hash, m_buildTarget.getDomain(), m_buildTarget.getId());
         auto generation = cache->loadTrace(artifactTrace);
 
-        std::vector<ArtifactId> targetArtifacts;
-        TU_ASSIGN_OR_RETURN (targetArtifacts, cache->findArtifacts(generation, hash, {}, {}));
+        // TODO: support task setting to specify the source artifact path explicitly
+        ArtifactId srcId(generation, hash, pluginArtifactPath);
+        ArtifactId dstId(getGeneration(), taskHash, pluginArtifactPath);
 
-        for (const auto &srcId : targetArtifacts) {
-            ArtifactId dstId(getGeneration(), taskHash, srcId.getLocation());
-            TU_RETURN_IF_NOT_OK (cache->linkArtifact(dstId, srcId));
-        }
-        return {};
+        MetadataWriter writer;
+        TU_RETURN_IF_NOT_OK (writer.configure());
+        writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
+        writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
+        LyricMetadata metadata;
+        TU_ASSIGN_OR_RETURN (metadata, writer.toMetadata());
+
+        return cache->linkArtifactOverridingMetadata(dstId, metadata, srcId);
     }
 
     // otherwise if there was no build target we copy the plugin from an existing location
@@ -164,7 +172,7 @@ lyric_build::internal::ProvidePluginTask::providePlugin(
     TU_ASSIGN_OR_RETURN (content, vfs->loadResource(resource.id));
 
     // declare the artifact
-    ArtifactId pluginArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
+    ArtifactId pluginArtifact(buildState->getGeneration().getUuid(), taskHash, pluginArtifactPath);
     TU_RETURN_IF_NOT_OK (cache->declareArtifact(pluginArtifact));
 
     // serialize the plugin metadata

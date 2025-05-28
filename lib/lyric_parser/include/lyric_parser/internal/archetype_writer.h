@@ -24,6 +24,7 @@ namespace lyric_parser::internal {
         std::vector<flatbuffers::Offset<lyi1::AttrDescriptor>> m_attrsVector;
         std::vector<flatbuffers::Offset<lyi1::NodeDescriptor>> m_nodesVector;
         std::vector<tu_uint32> m_pragmasVector;
+        NodeAddress m_rootAddress;
 
         explicit ArchetypeWriter(const ArchetypeState *state);
         tempo_utils::Result<NamespaceAddress> writeNamespace(const ArchetypeNamespace *ns);
@@ -32,6 +33,7 @@ namespace lyric_parser::internal {
         tempo_utils::Result<AttrAddress> writeAttr(const ArchetypeAttr *attr);
         tempo_utils::Result<NodeAddress> writeNode(const ArchetypeNode *node);
         tempo_utils::Result<NodeAddress> writePragma(const ArchetypeNode *pragma);
+        tempo_utils::Status setRoot(const NodeAddress &address);
         tempo_utils::Result<LyricArchetype> writeArchetype();
     };
 }

@@ -24,6 +24,9 @@ TEST_F (MemoryCache, StoreNewContentAndMetadata)
     auto hash = "foo";
     lyric_build::ArtifactId id(generation, hash, tempo_utils::UrlPath::fromString("/file"));
 
+    auto declareArtifactStatus = cache->declareArtifact(id);
+    ASSERT_THAT (declareArtifactStatus, tempo_test::IsOk());
+
     auto content = tempo_utils::MemoryBytes::copy("hello world");
     auto storeContentStatus = cache->storeContent(id, content);
     ASSERT_THAT (storeContentStatus, tempo_test::IsOk());

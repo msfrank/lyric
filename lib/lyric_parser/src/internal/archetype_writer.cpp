@@ -26,7 +26,10 @@ lyric_parser::internal::ArchetypeWriter::createArchetype(const ArchetypeState *s
         return lyric_parser::ParseStatus::forCondition(
             ParseCondition::kParseInvariant, "missing root node");
 
-    TU_RETURN_IF_STATUS (writer.writeNode(root));
+    NodeAddress rootAddress;
+    TU_ASSIGN_OR_RETURN (rootAddress, writer.writeNode(root));
+    writer.setRoot(rootAddress);
+
     return writer.writeArchetype();
 }
 
@@ -202,6 +205,19 @@ lyric_parser::internal::ArchetypeWriter::writePragma(const ArchetypeNode *pragma
     return address;
 }
 
+tempo_utils::Status
+lyric_parser::internal::ArchetypeWriter::setRoot(const NodeAddress &address)
+{
+    if (!address.isValid())
+        return ParseStatus::forCondition(
+            ParseCondition::kParseInvariant, "invalid root address");
+    if (m_rootAddress.isValid())
+        return ParseStatus::forCondition(
+            ParseCondition::kParseInvariant, "root address already set");
+    m_rootAddress = address;
+    return {};
+}
+
 tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_parser::internal::ArchetypeWriter::writeArchetype()
 {
@@ -218,6 +234,7 @@ lyric_parser::internal::ArchetypeWriter::writeArchetype()
     archetypeBuilder.add_attrs(fb_attrs);
     archetypeBuilder.add_nodes(fb_nodes);
     archetypeBuilder.add_pragmas(fb_pragmas);
+    archetypeBuilder.add_root(m_rootAddress.getAddress());
 
     // serialize archetype and mark the buffer as finished
     auto archetype = archetypeBuilder.Finish();

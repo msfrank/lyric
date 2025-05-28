@@ -7,6 +7,7 @@
 #include <lyric_build/lyric_builder.h>
 #include <tempo_config/parse_config.h>
 #include <tempo_test/result_matchers.h>
+#include <tempo_utils/platform.h>
 
 #include "base_build_fixture.h"
 #include "lyric_common/common_types.h"
@@ -47,7 +48,8 @@ TEST_F(ProvidePluginTask, RunSucceedsWhenProvidedExternalPluginFile)
 
     auto cache = m_state->getCache();
     lyric_build::ArtifactId artifactId(
-        m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/foo"));
+        m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString(
+            absl::StrCat("/foo.", tempo_utils::sharedLibraryPlatformId(), tempo_utils::sharedLibraryFileDotSuffix())));
 
     auto loadMetadataResult = cache->loadMetadata(artifactId);
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());

@@ -43,15 +43,95 @@ protected:
     }
 };
 
-TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalPluginFile)
+TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFile)
 {
     auto externalFilePath = writeExternalFile("external.txt", "text data");
 
     lyric_build::TaskKey key(std::string("fetch_external_file"), std::string("/external.txt"),
         tempo_config::ConfigMap{{
-            {
-            "filePath", tempo_config::ConfigValue{externalFilePath.string()},
-            }
+            {"filePath", tempo_config::ConfigValue{externalFilePath.string()}},
+        }}
+    );
+    auto *task = lyric_build::internal::new_fetch_external_file_task(m_generation, key, m_span);
+    auto configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
+    ASSERT_THAT (configureTaskResult, tempo_test::IsResult());
+    auto taskHash = configureTaskResult.getResult();
+
+    auto runTaskStatusOption = task->run(taskHash, {}, m_state.get());
+    ASSERT_TRUE (runTaskStatusOption.hasValue());
+    ASSERT_THAT (runTaskStatusOption.getValue(), tempo_test::IsOk());
+
+    auto cache = m_state->getCache();
+    lyric_build::ArtifactId artifactId(
+        m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/external.txt"));
+
+    auto loadMetadataResult = cache->loadMetadata(artifactId);
+    ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
+    auto metadata = loadMetadataResult.getResult();
+
+    // if contentType is not specified then it should default to application/octet-stream
+    auto walker = metadata.getMetadata();
+    std::string contentType;
+    walker.parseAttr(lyric_build::kLyricBuildContentType, contentType);
+    ASSERT_EQ ("application/octet-stream", contentType);
+
+    auto loadContentResult = cache->loadContent(artifactId);
+    ASSERT_THAT (loadContentResult, tempo_test::IsResult());
+    auto content = loadContentResult.getResult();
+    std::string_view contentView((const char *) content->getData(), content->getSize());
+
+    ASSERT_EQ ("text data", contentView);
+}
+
+TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFileAndArtifactPath)
+{
+    auto externalFilePath = writeExternalFile("external.txt", "text data");
+
+    lyric_build::TaskKey key(std::string("fetch_external_file"), std::string("/external.txt"),
+        tempo_config::ConfigMap{{
+            {"filePath", tempo_config::ConfigValue{externalFilePath.string()}},
+            {"artifactPath", tempo_config::ConfigValue{"/artifact.txt"}},
+        }}
+    );
+    auto *task = lyric_build::internal::new_fetch_external_file_task(m_generation, key, m_span);
+    auto configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
+    ASSERT_THAT (configureTaskResult, tempo_test::IsResult());
+    auto taskHash = configureTaskResult.getResult();
+
+    auto runTaskStatusOption = task->run(taskHash, {}, m_state.get());
+    ASSERT_TRUE (runTaskStatusOption.hasValue());
+    ASSERT_THAT (runTaskStatusOption.getValue(), tempo_test::IsOk());
+
+    auto cache = m_state->getCache();
+    lyric_build::ArtifactId artifactId(
+        m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/artifact.txt"));
+
+    auto loadMetadataResult = cache->loadMetadata(artifactId);
+    ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
+    auto metadata = loadMetadataResult.getResult();
+
+    // if contentType is not specified then it should default to application/octet-stream
+    auto walker = metadata.getMetadata();
+    std::string contentType;
+    walker.parseAttr(lyric_build::kLyricBuildContentType, contentType);
+    ASSERT_EQ ("application/octet-stream", contentType);
+
+    auto loadContentResult = cache->loadContent(artifactId);
+    ASSERT_THAT (loadContentResult, tempo_test::IsResult());
+    auto content = loadContentResult.getResult();
+    std::string_view contentView((const char *) content->getData(), content->getSize());
+
+    ASSERT_EQ ("text data", contentView);
+}
+
+TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFileAndContentType)
+{
+    auto externalFilePath = writeExternalFile("external.txt", "text data");
+
+    lyric_build::TaskKey key(std::string("fetch_external_file"), std::string("/external.txt"),
+        tempo_config::ConfigMap{{
+            {"filePath", tempo_config::ConfigValue{externalFilePath.string()}},
+            {"contentType", tempo_config::ConfigValue{"foo/bar"}},
         }}
     );
     auto *task = lyric_build::internal::new_fetch_external_file_task(m_generation, key, m_span);
@@ -74,7 +154,7 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalPluginFile)
     auto walker = metadata.getMetadata();
     std::string contentType;
     walker.parseAttr(lyric_build::kLyricBuildContentType, contentType);
-    ASSERT_EQ ("application/octet-stream", contentType);
+    ASSERT_EQ ("foo/bar", contentType);
 
     auto loadContentResult = cache->loadContent(artifactId);
     ASSERT_THAT (loadContentResult, tempo_test::IsResult());
@@ -84,13 +164,35 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalPluginFile)
     ASSERT_EQ ("text data", contentView);
 }
 
-TEST_F(FetchExternalFileTask, ConfigureTaskFailsWhenExternalPluginIsMissing)
+// TEST_F(FetchExternalFileTask, ConfigureTaskFailsWhenExternalFileIsNotSpecified)
+// {
+//     lyric_build::TaskKey key(std::string("fetch_external_file"), std::string("/external.txt"),
+//         tempo_config::ConfigMap{{
+//             {"filePath", tempo_config::ConfigValue{""}},
+//         }}
+//     );
+//     auto *task = lyric_build::internal::new_fetch_external_file_task(m_generation, key, m_span);
+//     tempo_utils::Result<std::string> configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
+//     ASSERT_THAT (configureTaskResult, tempo_test::ContainsStatus(lyric_build::BuildCondition::kInvalidConfiguration));
+// }
+
+TEST_F(FetchExternalFileTask, ConfigureTaskFailsWhenExternalFileIsNotAnAbsolutePath)
 {
     lyric_build::TaskKey key(std::string("fetch_external_file"), std::string("/external.txt"),
         tempo_config::ConfigMap{{
-            {
-                "filePath", tempo_config::ConfigValue{"/file/missing.txt"},
-            }
+            {"filePath", tempo_config::ConfigValue{"missing.txt"}},
+        }}
+    );
+    auto *task = lyric_build::internal::new_fetch_external_file_task(m_generation, key, m_span);
+    tempo_utils::Result<std::string> configureTaskResult = task->configureTask(m_config.get(), m_vfs.get());
+    ASSERT_THAT (configureTaskResult, tempo_test::ContainsStatus(lyric_build::BuildCondition::kInvalidConfiguration));
+}
+
+TEST_F(FetchExternalFileTask, ConfigureTaskFailsWhenExternalFileIsMissing)
+{
+    lyric_build::TaskKey key(std::string("fetch_external_file"), std::string("/external.txt"),
+        tempo_config::ConfigMap{{
+            {"filePath", tempo_config::ConfigValue{"/file/missing.txt"}},
         }}
     );
     auto *task = lyric_build::internal::new_fetch_external_file_task(m_generation, key, m_span);
