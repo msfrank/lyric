@@ -11,6 +11,7 @@ lyric_build::BuildState::BuildState(
     std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader,
     std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
     std::shared_ptr<lyric_importer::ModuleCache> sharedModuleCache,
+    std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
     std::shared_ptr<AbstractFilesystem> virtualFilesystem,
     const std::filesystem::path &tempRoot)
     : m_buildGen(buildGen),
@@ -18,12 +19,15 @@ lyric_build::BuildState::BuildState(
       m_bootstrapLoader(std::move(bootstrapLoader)),
       m_fallbackLoader(std::move(fallbackLoader)),
       m_sharedModuleCache(std::move(sharedModuleCache)),
+      m_shortcutResolver(std::move(shortcutResolver)),
       m_virtualFilesystem(std::move(virtualFilesystem)),
       m_tempRoot(tempRoot)
 {
     TU_ASSERT (m_buildGen.isValid());
     TU_ASSERT (m_cache != nullptr);
     TU_ASSERT (m_bootstrapLoader != nullptr);
+    TU_ASSERT (m_sharedModuleCache != nullptr);
+    TU_ASSERT (m_shortcutResolver != nullptr);
     TU_ASSERT (m_virtualFilesystem != nullptr);
     TU_ASSERT (!m_tempRoot.empty());
 
@@ -69,6 +73,12 @@ std::shared_ptr<lyric_importer::ModuleCache>
 lyric_build::BuildState::getSharedModuleCache() const
 {
     return m_sharedModuleCache;
+}
+
+std::shared_ptr<lyric_importer::ShortcutResolver>
+lyric_build::BuildState::getShortcutResolver() const
+{
+    return m_shortcutResolver;
 }
 
 std::shared_ptr<lyric_build::AbstractFilesystem>

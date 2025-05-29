@@ -151,6 +151,13 @@ lyric_build::LyricBuilder::configure()
         m_sharedModuleCache = m_options.sharedModuleCache;
     }
 
+    // if no shortcut resolver is specified then construct an empty resolver
+    if (m_options.shortcutResolver == nullptr) {
+        m_shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
+    } else {
+        m_shortcutResolver = m_options.shortcutResolver;
+    }
+
     // configure the virtual filesystem
     if (m_options.virtualFilesystem == nullptr) {
         if (m_workspaceRoot.empty())
@@ -211,8 +218,9 @@ lyric_build::LyricBuilder::computeTargets(
 
     // wrap the build cache and loader chain in a unique generation
     auto buildGen = BuildGeneration::create();
-    auto state = std::make_shared<BuildState>(buildGen, m_cache, m_bootstrapLoader,
-        m_fallbackLoader, m_sharedModuleCache, m_virtualFilesystem, m_tempRoot);
+    auto state = std::make_shared<BuildState>(buildGen, m_cache,
+        m_bootstrapLoader, m_fallbackLoader, m_sharedModuleCache, m_shortcutResolver,
+        m_virtualFilesystem, m_tempRoot);
 
     // construct a new task manager for managing parallel tasks
     BuildRunner runner(&taskSettings, state, m_cache, m_taskRegistry.get(),
@@ -329,6 +337,12 @@ std::shared_ptr<lyric_importer::ModuleCache>
 lyric_build::LyricBuilder::getSharedModuleCache() const
 {
     return m_sharedModuleCache;
+}
+
+std::shared_ptr<lyric_importer::ShortcutResolver>
+lyric_build::LyricBuilder::getShortcutResolver() const
+{
+    return m_shortcutResolver;
 }
 
 std::shared_ptr<lyric_build::TaskRegistry>

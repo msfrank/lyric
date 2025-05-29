@@ -10,6 +10,7 @@
 
 #include <lyric_common/symbol_url.h>
 #include <lyric_importer/module_cache.h>
+#include <lyric_importer/shortcut_resolver.h>
 #include <lyric_runtime/abstract_loader.h>
 #include <lyric_runtime/literal_cell.h>
 #include <lyric_runtime/trap_index.h>
@@ -73,12 +74,14 @@ namespace lyric_assembler {
             const lyric_common::ModuleLocation &location,
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+            std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
             tempo_tracing::ScopeManager *scopeManager,
             const ObjectStateOptions &options = {});
         ObjectState(
             const lyric_common::ModuleLocation &location,
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+            std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
             tempo_tracing::ScopeManager *scopeManager,
             const lyric_common::ModuleLocation &pluginLocation,
             const ObjectStateOptions &options = {});
@@ -172,6 +175,7 @@ namespace lyric_assembler {
         lyric_common::ModuleLocation m_location;
         std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
+        std::shared_ptr<lyric_importer::ShortcutResolver> m_shortcutResolver;
         tempo_tracing::ScopeManager *m_scopeManager;
         lyric_common::ModuleLocation m_pluginLocation;
         ObjectStateOptions m_options;

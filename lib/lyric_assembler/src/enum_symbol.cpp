@@ -335,7 +335,7 @@ lyric_assembler::EnumSymbol::setMemberInitialized(const std::string &name)
         return AssemblerStatus::forCondition(AssemblerCondition::kInvalidBinding,
             "member {} is already initialized", name);
     priv->initializedMembers.insert(name);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 bool

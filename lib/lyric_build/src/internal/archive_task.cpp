@@ -211,7 +211,8 @@ lyric_build::internal::ArchiveTask::buildArchive(
 
     // configure archiver
     lyric_archiver::LyricArchiver archiver(
-        m_moduleLocation, localModuleCache, buildState->getSharedModuleCache(), recorder, m_archiverOptions);
+        m_moduleLocation, localModuleCache, buildState->getSharedModuleCache(),
+        buildState->getShortcutResolver(), recorder, m_archiverOptions);
     TU_RETURN_IF_NOT_OK (archiver.initialize());
 
     // archive symbols

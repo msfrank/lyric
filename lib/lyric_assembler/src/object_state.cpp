@@ -35,16 +35,20 @@ lyric_assembler::ObjectState::ObjectState(
     const lyric_common::ModuleLocation &location,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+    std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
     tempo_tracing::ScopeManager *scopeManager,
     const ObjectStateOptions &options)
     : m_location(location),
       m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
+      m_shortcutResolver(std::move(shortcutResolver)),
       m_scopeManager(scopeManager),
       m_options(options)
 {
     TU_ASSERT (m_location.isValid());
+    TU_ASSERT (m_localModuleCache != nullptr);
     TU_ASSERT (m_systemModuleCache != nullptr);
+    TU_ASSERT (m_shortcutResolver != nullptr);
     TU_ASSERT (m_scopeManager != nullptr);
 
     if (!m_options.preludeLocation.isValid()) {
@@ -56,10 +60,17 @@ lyric_assembler::ObjectState::ObjectState(
     const lyric_common::ModuleLocation &location,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+    std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
     tempo_tracing::ScopeManager *scopeManager,
     const lyric_common::ModuleLocation &pluginLocation,
     const ObjectStateOptions &options)
-    : ObjectState(location, std::move(localModuleCache), std::move(systemModuleCache), scopeManager, options)
+    : ObjectState(
+        location,
+        std::move(localModuleCache),
+        std::move(systemModuleCache),
+        std::move(shortcutResolver),
+        scopeManager,
+        options)
 {
     m_pluginLocation = pluginLocation;
 }
@@ -116,7 +127,8 @@ lyric_assembler::ObjectState::createRoot(const lyric_common::ModuleLocation &pre
     m_symbolcache = new SymbolCache(this, m_tracer);
     m_typecache = new TypeCache(this, m_tracer);
     m_implcache = new ImplCache(this, m_tracer);
-    m_importcache = new ImportCache(this, m_localModuleCache, m_systemModuleCache, m_symbolcache, m_tracer);
+    m_importcache = new ImportCache(this, m_localModuleCache, m_systemModuleCache,
+        m_shortcutResolver, m_symbolcache, m_tracer);
 
     // load the prelude object
     std::shared_ptr<lyric_importer::ModuleImport> preludeImport;

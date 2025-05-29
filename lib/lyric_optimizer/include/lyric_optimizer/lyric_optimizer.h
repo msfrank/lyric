@@ -33,6 +33,7 @@ namespace lyric_optimizer {
             const lyric_common::ModuleLocation &location,
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+            std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
             std::shared_ptr<tempo_tracing::TraceRecorder> recorder,
             const OptimizerOptions &options);
 

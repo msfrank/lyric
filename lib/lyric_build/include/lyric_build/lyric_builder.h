@@ -61,6 +61,10 @@ namespace lyric_build {
          */
         std::shared_ptr<lyric_importer::ModuleCache> sharedModuleCache = {};
         /**
+         * The shortcut resolver. If not specified then an empty resolver is allocated internally.
+         */
+        std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver = {};
+        /**
          * The virtual filesystem. If not specified then this option defaults to an internally allocated
          * LocalFilesystem instance rooted at the workspace root.
          */
@@ -103,6 +107,7 @@ namespace lyric_build {
         std::shared_ptr<lyric_runtime::AbstractLoader> getBootstrapLoader() const;
         std::shared_ptr<lyric_runtime::AbstractLoader> getFallbackLoader() const;
         std::shared_ptr<lyric_importer::ModuleCache> getSharedModuleCache() const;
+        std::shared_ptr<lyric_importer::ShortcutResolver> getShortcutResolver() const;
         std::shared_ptr<TaskRegistry> getTaskRegistry() const;
         std::shared_ptr<AbstractFilesystem> getVirtualFilesystem() const;
 
@@ -123,6 +128,7 @@ namespace lyric_build {
         std::shared_ptr<lyric_runtime::AbstractLoader> m_bootstrapLoader;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_fallbackLoader;
         std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;
+        std::shared_ptr<lyric_importer::ShortcutResolver> m_shortcutResolver;
         std::shared_ptr<TaskRegistry> m_taskRegistry;
         std::shared_ptr<AbstractFilesystem> m_virtualFilesystem;
 

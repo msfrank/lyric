@@ -105,5 +105,5 @@ lyric_assembler::ImplCache::insertEnvImpl(
             tempo_tracing::LogSeverity::kError,
             "env impl {} is already set", type.toString());
     m_envImpls[type] = url;
-    return AssemblerStatus::ok();
+    return {};
 }

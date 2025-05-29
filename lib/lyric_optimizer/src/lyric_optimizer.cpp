@@ -17,6 +17,7 @@ lyric_optimizer::LyricOptimizer::LyricOptimizer(
     const lyric_common::ModuleLocation &location,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+    std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
     std::shared_ptr<tempo_tracing::TraceRecorder> recorder,
     const OptimizerOptions &options)
     : m_recorder(std::move(recorder)),
@@ -27,6 +28,7 @@ lyric_optimizer::LyricOptimizer::LyricOptimizer(
         location,
         localModuleCache,
         systemModuleCache,
+        shortcutResolver,
         m_scopeManager.get());
 }
 

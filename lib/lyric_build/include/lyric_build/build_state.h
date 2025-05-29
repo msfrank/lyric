@@ -12,6 +12,8 @@
 #include <lyric_importer/module_cache.h>
 #include <lyric_runtime/abstract_loader.h>
 
+#include "lyric_importer/shortcut_resolver.h"
+
 namespace lyric_build {
 
     class BuildState {
@@ -23,6 +25,7 @@ namespace lyric_build {
             std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader,
             std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader,
             std::shared_ptr<lyric_importer::ModuleCache> sharedModuleCache,
+            std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
             std::shared_ptr<AbstractFilesystem> virtualFilesystem,
             const std::filesystem::path &tempRoot);
 
@@ -32,6 +35,7 @@ namespace lyric_build {
         std::shared_ptr<lyric_runtime::AbstractLoader> getFallbackLoader() const;
         std::shared_ptr<lyric_runtime::AbstractLoader> getLoaderChain() const;
         std::shared_ptr<lyric_importer::ModuleCache> getSharedModuleCache() const;
+        std::shared_ptr<lyric_importer::ShortcutResolver> getShortcutResolver() const;
         std::shared_ptr<AbstractFilesystem> getVirtualFilesystem() const;
         std::filesystem::path getTempRoot() const;
 
@@ -46,6 +50,7 @@ namespace lyric_build {
         std::shared_ptr<lyric_runtime::AbstractLoader> m_fallbackLoader;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_loaderChain;
         std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;
+        std::shared_ptr<lyric_importer::ShortcutResolver> m_shortcutResolver;
         std::shared_ptr<AbstractFilesystem> m_virtualFilesystem;
         std::filesystem::path m_tempRoot;
 

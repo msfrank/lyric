@@ -9,12 +9,6 @@ lyric_assembler::AssemblerStatus::AssemblerStatus(
 {
 }
 
-lyric_assembler::AssemblerStatus
-lyric_assembler::AssemblerStatus::ok()
-{
-    return AssemblerStatus();
-}
-
 bool
 lyric_assembler::AssemblerStatus::convert(AssemblerStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {

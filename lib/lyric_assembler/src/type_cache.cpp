@@ -637,7 +637,7 @@ lyric_assembler::TypeCache::touchTemplateParameters(const std::vector<lyric_obje
             TU_RETURN_IF_STATUS (getOrMakeType(tp.typeDef));
         }
     }
-    return AssemblerStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<lyric_common::TypeDef>

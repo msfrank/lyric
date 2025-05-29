@@ -1,11 +1,11 @@
 
 #include "base_build_fixture.h"
 
+#include <lyric_build/memory_cache.h>
+#include <lyric_runtime/static_loader.h>
 #include <tempo_utils/file_writer.h>
 #include <tempo_utils/tempdir_maker.h>
 #include <tempo_utils/tempfile_maker.h>
-
-#include "lyric_build/memory_cache.h"
 
 void
 BaseBuildFixture::SetUp()
@@ -25,11 +25,13 @@ BaseBuildFixture::SetUp()
     auto buildgen = lyric_build::BuildGeneration::create();
     auto cache = std::make_shared<lyric_build::MemoryCache>();
     auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
+    auto emptyLoader = std::make_shared<lyric_runtime::StaticLoader>();
     m_state = std::make_unique<lyric_build::BuildState>(buildgen,
         std::static_pointer_cast<lyric_build::AbstractCache>(cache),
         bootstrapLoader,
         std::shared_ptr<lyric_runtime::AbstractLoader>{},
-        std::shared_ptr<lyric_importer::ModuleCache>{},
+        lyric_importer::ModuleCache::create(emptyLoader),
+        std::make_shared<lyric_importer::ShortcutResolver>(),
         m_vfs,
         m_testerDirectory);
 

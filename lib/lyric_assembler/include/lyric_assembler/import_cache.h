@@ -3,6 +3,7 @@
 
 #include <lyric_common/module_location.h>
 #include <lyric_importer/module_cache.h>
+#include <lyric_importer/shortcut_resolver.h>
 
 #include "assembler_tracer.h"
 #include "assembler_types.h"
@@ -17,10 +18,11 @@ namespace lyric_assembler {
      */
     class ImportCache {
     public:
-        explicit ImportCache(
+        ImportCache(
             ObjectState *state,
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+            std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
             SymbolCache *symbolCache,
             AssemblerTracer *tracer);
         ~ImportCache();
@@ -66,6 +68,7 @@ namespace lyric_assembler {
         std::shared_ptr<lyric_runtime::AbstractLoader> m_loader;
         std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
+        std::shared_ptr<lyric_importer::ShortcutResolver> m_shortcutResolver;
         SymbolCache *m_symbolCache;
         AssemblerTracer *m_tracer;
         absl::flat_hash_map<lyric_common::ModuleLocation, ImportHandle *> m_importcache;

@@ -244,6 +244,7 @@ target_link_libraries(lyric_testsuite
     PRIVATE
     LyricAnalyzerTestSuite
     LyricArchiverTestSuite
+    LyricAssemblerTestSuite
     LyricBootstrapTestSuite
     LyricBuildTestSuite
     LyricCommonTestSuite

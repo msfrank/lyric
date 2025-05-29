@@ -36,7 +36,9 @@ BaseArchiverFixture::writeModule(
 tempo_utils::Status
 BaseArchiverFixture::prepare()
 {
-    auto sharedModuleCache = m_tester->getRunner()->getBuilder()->getSharedModuleCache();
+    auto *builder = m_tester->getRunner()->getBuilder();
+    auto sharedModuleCache = builder->getSharedModuleCache();
+    auto shortcutResolver = builder->getShortcutResolver();
 
     std::shared_ptr<lyric_runtime::AbstractLoader> archiverLoader;
     TU_ASSIGN_OR_RETURN (archiverLoader, m_archiverTester->build());
@@ -47,7 +49,8 @@ BaseArchiverFixture::prepare()
 
     auto recorder = tempo_tracing::TraceRecorder::create();
     m_archiver = std::make_unique<lyric_archiver::LyricArchiver>(
-        m_archiveLocation, localModuleCache, sharedModuleCache, recorder, options);
+        m_archiveLocation, localModuleCache, sharedModuleCache,
+        shortcutResolver, recorder, options);
 
     return m_archiver->initialize();
 }

@@ -47,9 +47,17 @@ lyric_analyzer::LyricAnalyzer::analyzeModule(
         auto span = scopeManager.makeSpan();
         span->setOperationName("analyzeModule");
 
+        std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver;
+        if (m_options.shortcutResolver != nullptr) {
+            shortcutResolver = m_options.shortcutResolver;
+        } else {
+            shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
+        }
+
         // construct the analyzer state
         auto builder = std::make_shared<AnalyzerScanDriverBuilder>(
-            location, m_localModuleCache, m_systemModuleCache, &scopeManager, objectStateOptions);
+            location, m_localModuleCache, m_systemModuleCache, shortcutResolver,
+            &scopeManager, objectStateOptions);
 
         lyric_rewriter::RewriterOptions rewriterOptions;
         lyric_rewriter::LyricRewriter rewriter(rewriterOptions);

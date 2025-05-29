@@ -17,9 +17,10 @@ TEST(CodeFragment, ImmediateNil)
     auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
     auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
     auto systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
+    auto shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
     auto recorder = tempo_tracing::TraceRecorder::create();
     tempo_tracing::ScopeManager scopeManager(recorder);
-    lyric_assembler::ObjectState objectState(location, localModuleCache, systemModuleCache, &scopeManager);
+    lyric_assembler::ObjectState objectState(location, localModuleCache, systemModuleCache, shortcutResolver, &scopeManager);
 
     lyric_assembler::ObjectRoot *root;
     TU_ASSIGN_OR_RAISE (root, objectState.defineRoot());
@@ -52,9 +53,10 @@ TEST(CodeFragment, UnconditionalJump)
     auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
     auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
     auto systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
+    auto shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
     auto recorder = tempo_tracing::TraceRecorder::create();
     tempo_tracing::ScopeManager scopeManager(recorder);
-    lyric_assembler::ObjectState objectState(location, localModuleCache, systemModuleCache, &scopeManager);
+    lyric_assembler::ObjectState objectState(location, localModuleCache, systemModuleCache, shortcutResolver, &scopeManager);
 
     lyric_assembler::ObjectRoot *root;
     TU_ASSIGN_OR_RAISE (root, objectState.defineRoot());

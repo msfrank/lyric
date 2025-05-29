@@ -120,7 +120,7 @@ lyric_typing::MemberReifier::checkPlaceholder(
     auto *state = m_typeSystem->getState();
 
     if (tp.bound == lyric_object::BoundType::None)
-        return lyric_assembler::AssemblerStatus::ok();
+        return {};
 
     auto compareAssignableResult = m_typeSystem->compareAssignable(tp.typeDef, arg);
     if (compareAssignableResult.isStatus())
@@ -129,11 +129,11 @@ lyric_typing::MemberReifier::checkPlaceholder(
 
     if (tp.bound == lyric_object::BoundType::Extends) {
         if (comparison == lyric_runtime::TypeComparison::EQUAL || comparison == lyric_runtime::TypeComparison::EXTENDS)
-            return lyric_assembler::AssemblerStatus::ok();
+            return {};
     }
     if (tp.bound == lyric_object::BoundType::Super) {
         if (comparison == lyric_runtime::TypeComparison::EQUAL || comparison == lyric_runtime::TypeComparison::SUPER)
-            return lyric_assembler::AssemblerStatus::ok();
+            return {};
     }
 
     return state->logAndContinue(lyric_assembler::AssemblerCondition::kIncompatibleType,

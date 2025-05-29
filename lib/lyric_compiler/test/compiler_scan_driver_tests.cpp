@@ -21,6 +21,7 @@ protected:
     std::shared_ptr<lyric_bootstrap::BootstrapLoader> bootstrapLoader;
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache;
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache;
+    std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver;
     std::shared_ptr<tempo_tracing::TraceRecorder> recorder;
     std::unique_ptr<tempo_tracing::ScopeManager> scopeManager;
     std::unique_ptr<lyric_assembler::ObjectState> objectState;
@@ -32,9 +33,11 @@ protected:
         bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
         localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
         systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
+        shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
         recorder = tempo_tracing::TraceRecorder::create();
         scopeManager = std::make_unique<tempo_tracing::ScopeManager>(recorder);
-        objectState = std::make_unique<lyric_assembler::ObjectState>(location, localModuleCache, systemModuleCache, scopeManager.get());
+        objectState = std::make_unique<lyric_assembler::ObjectState>(
+            location, localModuleCache, systemModuleCache, shortcutResolver, scopeManager.get());
         TU_ASSIGN_OR_RAISE (objectRoot, objectState->defineRoot());
     }
 };

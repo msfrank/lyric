@@ -42,7 +42,6 @@ namespace lyric_assembler {
     class AssemblerStatus : public tempo_utils::TypedStatus<AssemblerCondition> {
     public:
         using TypedStatus::TypedStatus;
-        static AssemblerStatus ok();
         static bool convert(AssemblerStatus &dstStatus, const tempo_utils::Status &srcStatus);
 
     private:

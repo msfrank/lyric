@@ -1,11 +1,13 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+
+#include <lyric_build/local_filesystem.h>
+#include <lyric_build/lyric_builder.h>
+#include <lyric_build/memory_cache.h>
+#include <lyric_runtime/static_loader.h>
 #include <tempo_test/result_matchers.h>
 
 #include "test_task.h"
-#include "lyric_build/local_filesystem.h"
-#include "lyric_build/lyric_builder.h"
-#include "lyric_build/memory_cache.h"
 
 
 void on_notification(
@@ -31,11 +33,13 @@ protected:
 
         buildgen = lyric_build::BuildGeneration::create();
         cache = std::make_shared<lyric_build::MemoryCache>();
+        auto emptyLoader = std::make_shared<lyric_runtime::StaticLoader>();
         state = std::make_shared<lyric_build::BuildState>(buildgen,
             std::static_pointer_cast<lyric_build::AbstractCache>(cache),
             std::make_shared<lyric_bootstrap::BootstrapLoader>(),
             std::shared_ptr<lyric_runtime::AbstractLoader>{},
-            std::shared_ptr<lyric_importer::ModuleCache>{},
+            lyric_importer::ModuleCache::create(emptyLoader),
+            std::make_shared<lyric_importer::ShortcutResolver>(),
             vfs,
             std::filesystem::current_path());
 

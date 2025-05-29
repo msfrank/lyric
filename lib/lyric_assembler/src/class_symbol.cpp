@@ -389,7 +389,7 @@ lyric_assembler::ClassSymbol::setMemberInitialized(const std::string &name)
     if (isMemberInitialized(name))
         m_state->throwAssemblerInvariant("member {} was already initialized", name);
     priv->initializedMembers.insert(name);
-    return AssemblerStatus::ok();
+    return {};
 }
 
 bool

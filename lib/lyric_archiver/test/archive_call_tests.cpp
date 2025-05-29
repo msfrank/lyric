@@ -37,6 +37,7 @@ TEST_F(ArchiveCallTests, ArchiveCall)
     auto *runner = tester.getRunner();
     auto *builder = runner->getBuilder();
     auto sharedModuleCache = builder->getSharedModuleCache();
+    auto shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
 
     auto mod1location = lyric_common::ModuleLocation::fromString("/mod1");
 
@@ -69,7 +70,8 @@ TEST_F(ArchiveCallTests, ArchiveCall)
 
     auto location = lyric_common::ModuleLocation::fromString("/archive");
     auto recorder = tempo_tracing::TraceRecorder::create();
-    lyric_archiver::LyricArchiver archiver(location, localModuleCache, sharedModuleCache, recorder, options);
+    lyric_archiver::LyricArchiver archiver(location, localModuleCache, sharedModuleCache,
+        shortcutResolver, recorder, options);
     ASSERT_THAT (archiver.initialize(), tempo_test::IsOk());
 
     ASSERT_THAT (archiver.insertModule(mod1location, mod1object), tempo_test::IsOk());

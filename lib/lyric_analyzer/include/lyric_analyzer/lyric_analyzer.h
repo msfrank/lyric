@@ -14,13 +14,20 @@
 namespace lyric_analyzer {
 
     struct AnalyzerOptions {
-        /** */
+        /**
+         *
+         */
+        std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver = {};
+        /**
+         *
+         */
         absl::flat_hash_map<
             lyric_common::ModuleLocation,
-            absl::flat_hash_set<lyric_common::SymbolPath>> envSymbols;
-
-        /** */
-        bool touchExternalSymbols;
+            absl::flat_hash_set<lyric_common::SymbolPath>> envSymbols = {};
+        /**
+         *
+         */
+        bool touchExternalSymbols = false;
     };
 
     class LyricAnalyzer {

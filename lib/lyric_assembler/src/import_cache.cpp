@@ -17,20 +17,23 @@
 #include <lyric_assembler/struct_symbol.h>
 
 lyric_assembler::ImportCache::ImportCache(
-    lyric_assembler::ObjectState *state,
+    ObjectState *state,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
+    std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
     SymbolCache *symbolCache,
     AssemblerTracer *tracer)
     : m_state(state),
       m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
+      m_shortcutResolver(std::move(shortcutResolver)),
       m_symbolCache(symbolCache),
       m_tracer(tracer)
 {
     TU_ASSERT (m_state != nullptr);
     TU_ASSERT (m_localModuleCache != nullptr);
     TU_ASSERT (m_systemModuleCache != nullptr);
+    TU_ASSERT (m_shortcutResolver != nullptr);
     TU_ASSERT (m_symbolCache != nullptr);
     TU_ASSERT (m_tracer != nullptr);
 }
@@ -182,7 +185,7 @@ import_module_symbols(
         TU_RETURN_IF_STATUS (block->declareAlias(symbolName, symbolUrl));
     }
 
-    return lyric_assembler::AssemblerStatus::ok();
+    return {};
 }
 
 static tempo_utils::Status
@@ -228,7 +231,7 @@ import_module(
         TU_RETURN_IF_STATUS (block->declareAlias(symbolName, symbolUrl));
     }
 
-    return lyric_assembler::AssemblerStatus::ok();
+    return {};
 }
 
 inline tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
@@ -244,6 +247,29 @@ import_module_for_location(
         return localModuleCache->importModule(resolvedLocation);
     }
     return systemModuleCache->importModule(importLocation);
+}
+
+
+inline tempo_utils::Status
+insert_import_into_cache(
+    const lyric_common::ModuleLocation &importLocation,
+    lyric_assembler::ImportFlags importFlags,
+    absl::flat_hash_map<lyric_common::ModuleLocation, lyric_assembler::ImportHandle *> &importcache)
+{
+    bool isPrivate;
+    if (!importLocation.hasScheme()) {
+        if (importLocation.hasAuthority())
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                "invalid import location {}; missing scheme", importLocation.toString());
+        isPrivate = true;
+    } else {
+        isPrivate = false;
+    }
+
+    auto *importHandle = new lyric_assembler::ImportHandle(importLocation, importFlags, !isPrivate);
+    importcache[importLocation] = importHandle;
+    return {};
 }
 
 tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
@@ -299,7 +325,7 @@ lyric_assembler::ImportCache::importModule(
         TU_RETURN_IF_NOT_OK (insertImport(objectLocation, ImportFlags::ApiLinkage));
     }
 
-    return AssemblerStatus::ok();
+    return {};
 }
 
 std::shared_ptr<lyric_importer::ModuleImport>
@@ -332,8 +358,8 @@ lyric_assembler::ImportCache::importSymbol(const lyric_common::SymbolUrl &symbol
     auto symbolPath = symbolUrl.getSymbolPath();
     auto symbolWalker = object.findSymbol(symbolPath);
     if (!symbolWalker.isValid())
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kImportError,
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
             "error importing symbol {}; missing symbol {}",
             objectLocation.toString(), symbolPath.toString());
 
@@ -357,8 +383,8 @@ lyric_assembler::ImportCache::importAction(const lyric_common::SymbolUrl &action
     AbstractSymbol *symbol = nullptr;
     TU_ASSIGN_OR_RETURN (symbol, importSymbol(actionUrl));
     if (symbol->getSymbolType() != SymbolType::ACTION)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kImportError,
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
             "error importing symbol {}; symbol is not an action", actionUrl.toString());
     return cast_symbol_to_action(symbol);
 }
@@ -369,8 +395,8 @@ lyric_assembler::ImportCache::importCall(const lyric_common::SymbolUrl &callUrl)
     AbstractSymbol *symbol = nullptr;
     TU_ASSIGN_OR_RETURN (symbol, importSymbol(callUrl));
     if (symbol->getSymbolType() != SymbolType::CALL)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kImportError,
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
             "error importing symbol {}; symbol is not a call", callUrl.toString());
     return cast_symbol_to_call(symbol);
 }
@@ -381,8 +407,8 @@ lyric_assembler::ImportCache::importClass(const lyric_common::SymbolUrl &classUr
     AbstractSymbol *symbol = nullptr;
     TU_ASSIGN_OR_RETURN (symbol, importSymbol(classUrl));
     if (symbol->getSymbolType() != SymbolType::CLASS)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kImportError,
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
             "error importing symbol {}; symbol is not a class", classUrl.toString());
     return cast_symbol_to_class(symbol);
 }
@@ -393,8 +419,8 @@ lyric_assembler::ImportCache::importConcept(const lyric_common::SymbolUrl &conce
     AbstractSymbol *symbol = nullptr;
     TU_ASSIGN_OR_RETURN (symbol, importSymbol(conceptUrl));
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kImportError,
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
             "error importing symbol {}; symbol is not a concept", conceptUrl.toString());
     return cast_symbol_to_concept(symbol);
 }
@@ -405,8 +431,8 @@ lyric_assembler::ImportCache::importEnum(const lyric_common::SymbolUrl &enumUrl)
     AbstractSymbol *symbol = nullptr;
     TU_ASSIGN_OR_RETURN (symbol, importSymbol(enumUrl));
     if (symbol->getSymbolType() != SymbolType::ENUM)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kImportError,
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
             "error importing symbol {}; symbol is not an enum", enumUrl.toString());
     return cast_symbol_to_enum(symbol);
 }
@@ -417,8 +443,8 @@ lyric_assembler::ImportCache::importExistential(const lyric_common::SymbolUrl &e
     AbstractSymbol *symbol = nullptr;
     TU_ASSIGN_OR_RETURN (symbol, importSymbol(existentialUrl));
     if (symbol->getSymbolType() != SymbolType::EXISTENTIAL)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kImportError,
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
             "error importing symbol {}; symbol is not an existential", existentialUrl.toString());
     return cast_symbol_to_existential(symbol);
 }
@@ -429,8 +455,8 @@ lyric_assembler::ImportCache::importField(const lyric_common::SymbolUrl &fieldUr
     AbstractSymbol *symbol = nullptr;
     TU_ASSIGN_OR_RETURN (symbol, importSymbol(fieldUrl));
     if (symbol->getSymbolType() != SymbolType::FIELD)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kImportError,
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
             "error importing symbol {}; symbol is not a field", fieldUrl.toString());
     return cast_symbol_to_field(symbol);
 }
@@ -441,8 +467,8 @@ lyric_assembler::ImportCache::importInstance(const lyric_common::SymbolUrl &inst
     AbstractSymbol *symbol = nullptr;
     TU_ASSIGN_OR_RETURN (symbol, importSymbol(instanceUrl));
     if (symbol->getSymbolType() != SymbolType::INSTANCE)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kImportError,
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
             "error importing symbol {}; symbol is not an instance", instanceUrl.toString());
     return cast_symbol_to_instance(symbol);
 }
@@ -453,8 +479,8 @@ lyric_assembler::ImportCache::importNamespace(const lyric_common::SymbolUrl &nam
     AbstractSymbol *symbol = nullptr;
     TU_ASSIGN_OR_RETURN (symbol, importSymbol(namespaceUrl));
     if (symbol->getSymbolType() != SymbolType::NAMESPACE)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kImportError,
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
             "error importing symbol {}; symbol is not a namespace", namespaceUrl.toString());
     return cast_symbol_to_namespace(symbol);
 }
@@ -465,8 +491,8 @@ lyric_assembler::ImportCache::importStatic(const lyric_common::SymbolUrl &static
     AbstractSymbol *symbol = nullptr;
     TU_ASSIGN_OR_RETURN (symbol, importSymbol(staticUrl));
     if (symbol->getSymbolType() != SymbolType::STATIC)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kImportError,
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
             "error importing symbol {}; symbol is not a static", staticUrl.toString());
     return cast_symbol_to_static(symbol);
 }
@@ -477,8 +503,8 @@ lyric_assembler::ImportCache::importStruct(const lyric_common::SymbolUrl &struct
     AbstractSymbol *symbol = nullptr;
     TU_ASSIGN_OR_RETURN (symbol, importSymbol(structUrl));
     if (symbol->getSymbolType() != SymbolType::STRUCT)
-        return lyric_assembler::AssemblerStatus::forCondition(
-            lyric_assembler::AssemblerCondition::kImportError,
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kImportError,
             "error importing symbol {}; symbol is not a struct", structUrl.toString());
     return cast_symbol_to_struct(symbol);
 }
@@ -506,10 +532,7 @@ lyric_assembler::ImportCache::insertImport(
         return m_tracer->logAndContinue(AssemblerCondition::kImportError,
             tempo_tracing::LogSeverity::kError,
             "module {} is already imported", importLocation.toString());
-    bool isPrivate = !importLocation.hasScheme() && !importLocation.hasAuthority();
-    auto *importHandle = new ImportHandle{importLocation, importFlags, !isPrivate};
-    m_importcache[importLocation] = importHandle;
-    return AssemblerStatus::ok();
+    return insert_import_into_cache(importLocation, importFlags, m_importcache);
 }
 
 absl::flat_hash_map<lyric_common::ModuleLocation,lyric_assembler::ImportHandle *>::const_iterator

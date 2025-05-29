@@ -24,11 +24,13 @@ BaseOptimizerFixture::configure()
     auto location = lyric_common::ModuleLocation::fromString("/test");
     auto staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
     auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
-    auto sharedModuleCache = m_tester->getRunner()->getBuilder()->getSharedModuleCache();
+    auto *builder = m_tester->getRunner()->getBuilder();
+    auto sharedModuleCache = builder->getSharedModuleCache();
+    auto shortcutResolver = builder->getShortcutResolver();
     auto recorder = tempo_tracing::TraceRecorder::create();
     tempo_tracing::ScopeManager scopeManager(recorder);
     m_objectState = std::make_unique<lyric_assembler::ObjectState>(
-        location, localModuleCache, sharedModuleCache, &scopeManager);
+        location, localModuleCache, sharedModuleCache, shortcutResolver, &scopeManager);
 
     TU_ASSIGN_OR_RAISE (m_objectRoot, m_objectState->defineRoot());
 

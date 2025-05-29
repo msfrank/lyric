@@ -13,14 +13,17 @@
 
 namespace lyric_symbolizer {
 
-    /**
-     *
-     */
     struct SymbolizerOptions {
-        /** */
+        /**
+         *
+         */
+        std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver = {};
+        /**
+         *
+         */
         absl::flat_hash_map<
             lyric_common::ModuleLocation,
-            absl::flat_hash_set<lyric_common::SymbolPath>> envSymbols;
+            absl::flat_hash_set<lyric_common::SymbolPath>> envSymbols = {};
     };
 
     class LyricSymbolizer {

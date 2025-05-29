@@ -46,9 +46,17 @@ lyric_symbolizer::LyricSymbolizer::symbolizeModule(
         auto span = scopeManager.makeSpan();
         span->setOperationName("symbolizeModule");
 
+        std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver;
+        if (m_options.shortcutResolver != nullptr) {
+            shortcutResolver = m_options.shortcutResolver;
+        } else {
+            shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
+        }
+
         // construct the symbolizer state
         auto builder = std::make_shared<SymbolizerScanDriverBuilder>(
-            location, m_localModuleCache, m_systemModuleCache, &scopeManager, objectStateOptions);
+            location, m_localModuleCache, m_systemModuleCache, shortcutResolver,
+            &scopeManager, objectStateOptions);
 
         lyric_rewriter::RewriterOptions rewriterOptions;
         lyric_rewriter::LyricRewriter rewriter(rewriterOptions);
