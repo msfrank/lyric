@@ -6,6 +6,7 @@
 #include <lyric_common/symbol_url.h>
 #include <lyric_schema/ast_schema.h>
 #include <tempo_schema/attr_serde.h>
+#include <tempo_schema/url_serde.h>
 
 #include "archetype_node.h"
 #include "archetype_state.h"
@@ -129,6 +130,7 @@ namespace lyric_parser {
     extern const VarianceTypeAttr kLyricAstVarianceType;
     extern const DeriveTypeAttr kLyricAstDeriveType;
 
+    extern const tempo_schema::UrlAttr kLyricAstImportLocation;
     extern const lyric_common::ModuleLocationAttr kLyricAstModuleLocation;
     extern const lyric_common::SymbolPathAttr kLyricAstSymbolPath;
     extern const tempo_schema::StringAttr kLyricAstIdentifier;

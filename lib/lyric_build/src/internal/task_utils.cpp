@@ -38,7 +38,8 @@ lyric_build::internal::convert_source_path_to_module_location(const tempo_utils:
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "{} is not a valid lyric source file", p.string());
     p.replace_extension();
-    return lyric_common::ModuleLocation(p.string());
+    auto modulePath = tempo_utils::UrlPath::fromString(p.string());
+    return lyric_common::ModuleLocation::fromUrlPath(modulePath);
 }
 
 tempo_utils::Result<tempo_utils::UrlPath>

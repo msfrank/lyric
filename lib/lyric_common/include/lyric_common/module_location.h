@@ -13,8 +13,6 @@ namespace lyric_common {
     class ModuleLocation {
     public:
         ModuleLocation();
-        ModuleLocation(std::string_view path);
-        ModuleLocation(std::string_view origin, std::string_view path);
         ModuleLocation(const ModuleLocation &other);
         ModuleLocation(ModuleLocation &&other) noexcept;
 
@@ -45,7 +43,8 @@ namespace lyric_common {
         bool operator!=(const ModuleLocation &other) const;
 
         static ModuleLocation fromString(std::string_view s);
-        static ModuleLocation fromUrl(const tempo_utils::Url &uri);
+        static ModuleLocation fromUrl(const tempo_utils::Url &url);
+        static ModuleLocation fromUrlPath(const tempo_utils::UrlPath &urlPath);
 
         template<typename H>
         friend H AbslHashValue(H h, const ModuleLocation &location) {
@@ -55,7 +54,9 @@ namespace lyric_common {
     private:
         tempo_utils::PrehashedValue<tempo_utils::Url> m_location;
 
-        ModuleLocation(const tempo_utils::Url &location);
+        explicit ModuleLocation(const tempo_utils::Url &location);
+        explicit ModuleLocation(std::string_view path);
+        ModuleLocation(std::string_view origin, std::string_view path);
     };
 
     tempo_utils::LogMessage &&operator<<(tempo_utils::LogMessage &&message, const ModuleLocation &location);

@@ -160,7 +160,7 @@ lyric_parser::internal::ModuleSymbolOps::exitImportModuleStatement(ModuleParser:
 {
     auto locationLiteral = ctx->moduleLocation()->StringLiteral()->getText();
     std::string locationString(locationLiteral.cbegin() + 1, locationLiteral.cend() - 1);
-    auto moduleLocation = lyric_common::ModuleLocation::fromString(locationString);
+    auto importLocation = tempo_utils::Url::fromString(locationString);
 
     auto id = ctx->Identifier()->getText();
 
@@ -168,7 +168,7 @@ lyric_parser::internal::ModuleSymbolOps::exitImportModuleStatement(ModuleParser:
     auto location = get_token_location(token);
 
     auto *importModuleNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImportModuleClass, location);
-    importModuleNode->putAttr(kLyricAstModuleLocation, moduleLocation);
+    importModuleNode->putAttr(kLyricAstImportLocation, importLocation);
     importModuleNode->putAttr(kLyricAstIdentifier, id);
     m_state->pushNode(importModuleNode);
 }
@@ -178,13 +178,13 @@ lyric_parser::internal::ModuleSymbolOps::exitImportAllStatement(ModuleParser::Im
 {
     auto locationLiteral = ctx->moduleLocation()->StringLiteral()->getText();
     std::string locationString(locationLiteral.cbegin() + 1, locationLiteral.cend() - 1);
-    auto moduleLocation = lyric_common::ModuleLocation::fromString(locationString);
+    auto importLocation = tempo_utils::Url::fromString(locationString);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *importAllNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImportAllClass, location);
-    importAllNode->putAttr(kLyricAstModuleLocation, moduleLocation);
+    importAllNode->putAttr(kLyricAstImportLocation, importLocation);
     m_state->pushNode(importAllNode);
 }
 
@@ -202,7 +202,7 @@ lyric_parser::internal::ModuleSymbolOps::exitImportSymbolsStatement(ModuleParser
 {
     auto locationLiteral = ctx->moduleLocation()->StringLiteral()->getText();
     std::string locationString(locationLiteral.cbegin() + 1, locationLiteral.cend() - 1);
-    auto moduleLocation = lyric_common::ModuleLocation::fromString(locationString);
+    auto importLocation = tempo_utils::Url::fromString(locationString);
 
     // if ancestor node is not a kImportFrom, then report internal violation
     if (m_state->isEmpty())
@@ -211,5 +211,5 @@ lyric_parser::internal::ModuleSymbolOps::exitImportSymbolsStatement(ModuleParser
     m_state->checkNodeOrThrow(importSymbolsNode, lyric_schema::kLyricAstImportSymbolsClass);
 
     // otherwise add assembly location attr to the node
-    importSymbolsNode->putAttr(kLyricAstModuleLocation, moduleLocation);
+    importSymbolsNode->putAttr(kLyricAstImportLocation, importLocation);
 }

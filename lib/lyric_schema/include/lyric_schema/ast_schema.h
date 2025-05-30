@@ -131,6 +131,7 @@ namespace lyric_schema {
         VarianceEnum,
         DeriveEnum,
 
+        ImportLocation,
         ModuleLocation,
         SymbolPath,
         SymbolUrl,
@@ -368,6 +369,10 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::DeriveEnum, "DeriveEnum", tempo_schema::PropertyType::kUInt32);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
+    kLyricAstImportLocationProperty(
+        &kLyricAstNs, LyricAstId::ImportLocation, "ImportLocation", tempo_schema::PropertyType::kString);
+
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstModuleLocationProperty(
         &kLyricAstNs, LyricAstId::ModuleLocation, "ModuleLocation", tempo_schema::PropertyType::kString);
 
@@ -535,6 +540,7 @@ namespace lyric_schema {
         &kLyricAstVarianceEnumProperty,
         &kLyricAstDeriveEnumProperty,
 
+        &kLyricAstImportLocationProperty,
         &kLyricAstModuleLocationProperty,
         &kLyricAstSymbolPathProperty,
         &kLyricAstSymbolUrlProperty,

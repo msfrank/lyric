@@ -175,7 +175,18 @@ lyric_common::ModuleLocation::fromString(std::string_view s)
 lyric_common::ModuleLocation
 lyric_common::ModuleLocation::fromUrl(const tempo_utils::Url &url)
 {
-    return ModuleLocation(url);
+    if (url.isAbsolute() || url.isRelative()) {
+        if (url.hasQuery() || url.hasFragment())
+            return {};
+        return ModuleLocation(url);
+    }
+    return {};
+}
+
+lyric_common::ModuleLocation
+lyric_common::ModuleLocation::fromUrlPath(const tempo_utils::UrlPath &urlPath)
+{
+    return ModuleLocation(tempo_utils::Url::fromRelative(urlPath.toString()));
 }
 
 tempo_utils::LogMessage&&

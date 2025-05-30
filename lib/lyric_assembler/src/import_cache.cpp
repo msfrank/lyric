@@ -45,6 +45,32 @@ lyric_assembler::ImportCache::~ImportCache()
     }
 }
 
+tempo_utils::Result<lyric_common::ModuleLocation>
+lyric_assembler::ImportCache::resolveImportLocation(const tempo_utils::Url &importLocation) const
+{
+    if (!importLocation.isValid())
+        return AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "empty import location");
+
+    // absolute url and relative ref can pass through unmodified
+    if (importLocation.isAbsolute())
+        return lyric_common::ModuleLocation::fromUrl(importLocation);
+    if (importLocation.isRelative())
+        return lyric_common::ModuleLocation::fromUrl(importLocation);
+
+    // any fields in the authority other than host are invalid
+    auto authority = importLocation.toAuthority();
+    if (authority.hasCredentials() || authority.hasPort())
+        return AssemblerStatus::forCondition(AssemblerCondition::kImportError,
+            "invalid shortcut for import location '{}'", importLocation.toString());
+    auto shortcut = authority.getHost();
+
+    tempo_utils::UrlOrigin origin;
+    TU_ASSIGN_OR_RETURN (origin, m_shortcutResolver->resolveShortcut(shortcut));
+    auto resolvedLocation = tempo_utils::Url::fromOrigin(origin, importLocation.getPath());
+    return lyric_common::ModuleLocation::fromUrl(resolvedLocation);
+}
+
 inline tempo_utils::Status
 insert_symbol_into_cache(
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport,

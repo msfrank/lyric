@@ -55,7 +55,7 @@ lyric_compiler::ImportHandler::before(
     }
 
     // resolve module to absolute location
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstModuleLocation, m_import.importLocation));
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstImportLocation, m_import.importLocation));
 
     auto numChildren = node->numChildren();
     for (int i = 0; i < numChildren; i++) {
@@ -74,8 +74,10 @@ lyric_compiler::ImportHandler::after(
 {
     auto *driver = getDriver();
     auto *importCache = driver->getImportCache();
-    TU_RETURN_IF_NOT_OK (importCache->importModule(
-        m_import.importLocation, m_import.importBlock, m_import.importRefs));
+
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN (moduleLocation, importCache->resolveImportLocation(m_import.importLocation));
+    TU_RETURN_IF_NOT_OK (importCache->importModule(moduleLocation, m_import.importBlock, m_import.importRefs));
 
     if (!m_isSideEffect) {
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));

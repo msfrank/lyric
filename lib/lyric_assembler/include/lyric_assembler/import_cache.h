@@ -27,6 +27,9 @@ namespace lyric_assembler {
             AssemblerTracer *tracer);
         ~ImportCache();
 
+        tempo_utils::Result<lyric_common::ModuleLocation> resolveImportLocation(
+            const tempo_utils::Url &importLocation) const;
+
         tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>> importModule(
             const lyric_common::ModuleLocation &importLocation,
             ImportFlags importFlags);

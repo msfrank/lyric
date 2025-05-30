@@ -152,16 +152,19 @@ lyric_symbolizer::SymbolizerScanDriver::popDefinition()
 tempo_utils::Status
 lyric_symbolizer::SymbolizerScanDriver::declareImport(const lyric_parser::ArchetypeNode *node)
 {
-    lyric_common::ModuleLocation importLocation;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstModuleLocation, importLocation));
+    tempo_utils::Url importLocation;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstImportLocation, importLocation));
 
     auto *importCache = m_state->importCache();
-    if (importCache->hasImport(importLocation))
+
+    lyric_common::ModuleLocation moduleLocation;
+    TU_ASSIGN_OR_RETURN (moduleLocation, importCache->resolveImportLocation(importLocation));
+    if (importCache->hasImport(moduleLocation))
         return {};
 
-    TU_RETURN_IF_NOT_OK (importCache->insertImport(importLocation, lyric_assembler::ImportFlags::ApiLinkage));
+    TU_RETURN_IF_NOT_OK (importCache->insertImport(moduleLocation, lyric_assembler::ImportFlags::ApiLinkage));
 
-    TU_LOG_INFO << "imported module " << importLocation;
+    TU_LOG_INFO << "imported module " << moduleLocation;
     return {};
 }
 

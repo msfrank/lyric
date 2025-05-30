@@ -10,7 +10,7 @@
 namespace lyric_compiler {
 
     struct Import {
-        lyric_common::ModuleLocation importLocation;
+        tempo_utils::Url importLocation;
         lyric_assembler::BlockHandle *importBlock;
         absl::flat_hash_set<lyric_assembler::ImportRef> importRefs;
     };

@@ -208,7 +208,7 @@ lyric_test::TestRunner::writeModuleInternal(
     std::filesystem::path locationPath = "/";
     locationPath /= sourcePath;
     locationPath.replace_extension();
-    return lyric_common::ModuleLocation(locationPath.string());
+    return lyric_common::ModuleLocation::fromString(locationPath.string());
 }
 
 tempo_utils::Result<lyric_build::TargetComputationSet>
