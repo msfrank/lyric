@@ -1,15 +1,13 @@
-#ifndef LYRIC_ASSEMBLER_MACRO_VISITOR_H
-#define LYRIC_ASSEMBLER_MACRO_VISITOR_H
-
-#include <lyric_schema/assembler_schema.h>
+#ifndef LYRIC_REWRITER_SKIP_UNKNOWN_VISITOR_H
+#define LYRIC_REWRITER_SKIP_UNKNOWN_VISITOR_H
 
 #include "rewrite_processor.h"
 
 namespace lyric_rewriter {
 
-    class AssemblerMacroVisitor : public AbstractNodeVisitor {
+    class SkipUnknownVisitor : public AbstractNodeVisitor {
     public:
-        explicit AssemblerMacroVisitor(AbstractProcessorState *state);
+        explicit SkipUnknownVisitor(AbstractProcessorState *state);
 
         tempo_utils::Status enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx) override;
         tempo_utils::Status exit(lyric_parser::ArchetypeNode *node, const VisitorContext &ctx) override;
@@ -19,4 +17,4 @@ namespace lyric_rewriter {
     };
 }
 
-#endif //LYRIC_ASSEMBLER_MACRO_VISITOR_H
+#endif // LYRIC_REWRITER_SKIP_UNKNOWN_VISITOR_H

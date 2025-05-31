@@ -23,35 +23,35 @@ lyric_rewriter::LyricRewriter::LyricRewriter(const LyricRewriter &other)
 class RewriteProcessorState : public lyric_rewriter::AbstractProcessorState {
 public:
     RewriteProcessorState(
-        const lyric_rewriter::RewriterOptions *options,
+        std::shared_ptr<lyric_rewriter::VisitorRegistry> registry,
         std::shared_ptr<lyric_rewriter::AbstractRewriteDriver> driver,
         lyric_parser::ArchetypeState *state)
-        : m_options(options),
+        : m_registry(std::move(registry)),
           m_driver(driver),
           m_state(state)
     {
-    };
+        TU_ASSERT (m_registry != nullptr);
+        TU_ASSERT (m_driver != nullptr);
+        TU_ASSERT (m_state != nullptr);
+    }
     tempo_utils::Status
     enterNode(lyric_parser::ArchetypeNode *node, lyric_rewriter::VisitorContext &ctx) override
     {
         return m_driver->enter(m_state, node, ctx);
-    };
+    }
     tempo_utils::Status
     exitNode(lyric_parser::ArchetypeNode *node, const lyric_rewriter::VisitorContext &ctx) override
     {
         return m_driver->exit(m_state, node, ctx);
-    };
+    }
     tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractNodeVisitor>>
-    makeUnknownVisitor(const lyric_parser::ArchetypeNode *node) override
+    makeVisitor(const lyric_parser::ArchetypeNode *node) override
     {
-        if (m_options->makeUnknownVisitor != nullptr)
-            return m_options->makeUnknownVisitor(node);
-        return lyric_rewriter::RewriterStatus::forCondition(
-            lyric_rewriter::RewriterCondition::kRewriterInvariant, "unknown node");
+        return m_registry->makeVisitor(node, this);
     };
 
 private:
-    const lyric_rewriter::RewriterOptions *m_options;
+    std::shared_ptr<lyric_rewriter::VisitorRegistry> m_registry;
     std::shared_ptr<lyric_rewriter::AbstractRewriteDriver> m_driver;
     lyric_parser::ArchetypeState *m_state;
 };
@@ -86,6 +86,15 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
         TU_ASSIGN_OR_RETURN (root, archetypeState.load(archetype));
         archetypeState.setRoot(root);
 
+        // construct the visitor registry if one was not specified
+        std::shared_ptr<VisitorRegistry> visitorRegistry;
+        if (m_options.visitorRegistry != nullptr) {
+            visitorRegistry = m_options.visitorRegistry;
+        } else {
+            visitorRegistry = std::make_shared<VisitorRegistry>();
+        }
+        visitorRegistry->sealRegistry();
+
         // preprocess the archetype
         PragmaRewriter pragmaRewriter(rewriteDriverBuilder, &archetypeState);
         TU_RETURN_IF_NOT_OK (pragmaRewriter.rewritePragmas());
@@ -95,7 +104,7 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
         TU_ASSIGN_OR_RETURN (rewriteDriver, rewriteDriverBuilder->makeRewriteDriver());
 
         // define the driver state
-        RewriteProcessorState processorState(&m_options, rewriteDriver, &archetypeState);
+        RewriteProcessorState processorState(visitorRegistry, rewriteDriver, &archetypeState);
 
         // construct the root visitor
         auto rootVisitor = std::make_shared<AstSequenceVisitor>(
@@ -120,34 +129,34 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
 class ScanProcessorState : public lyric_rewriter::AbstractProcessorState {
 public:
     ScanProcessorState(
-        const lyric_rewriter::RewriterOptions *options,
+        std::shared_ptr<lyric_rewriter::VisitorRegistry> registry,
         std::shared_ptr<lyric_rewriter::AbstractScanDriver> driver,
         lyric_parser::ArchetypeState *state)
-        : m_options(options),
+        : m_registry(registry),
           m_driver(driver),
           m_state(state)
     {
-    };
+        TU_ASSERT (m_registry != nullptr);
+        TU_ASSERT (m_driver != nullptr);
+        TU_ASSERT (m_state != nullptr);
+    }
     tempo_utils::Status
     enterNode(lyric_parser::ArchetypeNode *node, lyric_rewriter::VisitorContext &ctx) override
     {
         return m_driver->enter(m_state, node, ctx);
-    };
+    }
     tempo_utils::Status
     exitNode(lyric_parser::ArchetypeNode *node, const lyric_rewriter::VisitorContext &ctx) override
     {
         return m_driver->exit(m_state, node, ctx);
-    };
+    }
     tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractNodeVisitor>>
-    makeUnknownVisitor(const lyric_parser::ArchetypeNode *node) override
+    makeVisitor(const lyric_parser::ArchetypeNode *node) override
     {
-        if (m_options->makeUnknownVisitor != nullptr)
-            return m_options->makeUnknownVisitor(node);
-        return lyric_rewriter::RewriterStatus::forCondition(
-            lyric_rewriter::RewriterCondition::kRewriterInvariant, "unknown node");
-    };
+        return m_registry->makeVisitor(node, this);
+    }
 private:
-    const lyric_rewriter::RewriterOptions *m_options;
+    std::shared_ptr<lyric_rewriter::VisitorRegistry> m_registry;
     std::shared_ptr<lyric_rewriter::AbstractScanDriver> m_driver;
     lyric_parser::ArchetypeState *m_state;
 };
@@ -182,6 +191,15 @@ lyric_rewriter::LyricRewriter::scanArchetype(
         TU_ASSIGN_OR_RETURN (root, archetypeState.load(archetype));
         archetypeState.setRoot(root);
 
+        // construct the visitor registry if one was not specified
+        std::shared_ptr<VisitorRegistry> visitorRegistry;
+        if (m_options.visitorRegistry != nullptr) {
+            visitorRegistry = m_options.visitorRegistry;
+        } else {
+            visitorRegistry = std::make_shared<VisitorRegistry>();
+        }
+        visitorRegistry->sealRegistry();
+
         // preprocess the archetype
         for (auto it = archetypeState.pragmasBegin(); it != archetypeState.pragmasEnd(); it++) {
             TU_RETURN_IF_NOT_OK (scanDriverBuilder->applyPragma(&archetypeState, *it));
@@ -192,7 +210,7 @@ lyric_rewriter::LyricRewriter::scanArchetype(
         TU_ASSIGN_OR_RETURN (scanDriver, scanDriverBuilder->makeScanDriver());
 
         // define the driver state
-        ScanProcessorState processorState(&m_options, scanDriver, &archetypeState);
+        ScanProcessorState processorState(visitorRegistry, scanDriver, &archetypeState);
 
         // construct the root visitor
         auto rootVisitor = std::make_shared<AstSequenceVisitor>(

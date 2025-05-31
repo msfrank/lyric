@@ -1,18 +1,16 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <lyric_bootstrap/bootstrap_loader.h>
+#include <lyric_assembler/internal/plugin_macro.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_rewriter/macro_rewrite_driver.h>
-#include <lyric_rewriter/plugin_macro.h>
 #include <lyric_schema/assembler_schema.h>
+#include <tempo_test/result_matchers.h>
 #include <tempo_test/status_matchers.h>
-#include <tempo_utils/logging.h>
 
-TEST(RewritePlugin, PluginPragma)
-{
+TEST(PluginMacro, PluginPragma) {
     lyric_parser::LyricParser parser({});
     auto recorder = tempo_tracing::TraceRecorder::create();
 
@@ -36,20 +34,19 @@ TEST(RewritePlugin, PluginPragma)
     ASSERT_THAT (arg0Node.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
     ASSERT_EQ ("/plugin", literalValue);
 
-    lyric_rewriter::RewriterOptions options;
-    auto loader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
-    options.systemModuleCache = lyric_importer::ModuleCache::create(loader);
 
-    lyric_rewriter::LyricRewriter rewriter(options);
-
-    lyric_rewriter::MacroRegistry registry({
-        {"Plugin", std::make_shared<lyric_rewriter::PluginMacro>()}
+    auto registry = std::make_shared<lyric_rewriter::MacroRegistry>();
+    registry->registerMacroName("Plugin", []() {
+        return std::make_shared<lyric_assembler::internal::PluginMacro>();
     });
-    auto builder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(&registry);
+    registry->sealRegistry();
+    auto builder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(registry);
 
+    lyric_rewriter::RewriterOptions options;
+    lyric_rewriter::LyricRewriter rewriter(options);
     auto sourceUrl = tempo_utils::Url::fromString("/test");
     auto rewriteArchetypeResult = rewriter.rewriteArchetype(archetype, sourceUrl, builder, recorder);
-    ASSERT_TRUE (rewriteArchetypeResult.isResult());
+    ASSERT_THAT (rewriteArchetypeResult, tempo_test::IsResult());
     auto rewritten = rewriteArchetypeResult.getResult();
 
     ASSERT_EQ (1, rewritten.numPragmas());

@@ -6,9 +6,6 @@ add_library(lyric::lyric_rewriter ALIAS lyric_rewriter)
 set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/abstract_macro.h
     include/lyric_rewriter/abstract_rewrite_driver.h
-    include/lyric_rewriter/allocator_trap_macro.h
-    include/lyric_rewriter/assembler_attrs.h
-    include/lyric_rewriter/assembler_macro_visitor.h
     include/lyric_rewriter/ast_base_visitor.h
     include/lyric_rewriter/ast_binary_visitor.h
     include/lyric_rewriter/ast_cond_visitor.h
@@ -26,28 +23,23 @@ set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/ast_terminal_visitor.h
     include/lyric_rewriter/ast_unary_visitor.h
     include/lyric_rewriter/ast_while_visitor.h
-    include/lyric_rewriter/compiler_macro_visitor.h
+    include/lyric_rewriter/fail_unknown_visitor.h
     include/lyric_rewriter/lyric_rewriter.h
     include/lyric_rewriter/macro_block.h
     include/lyric_rewriter/macro_registry.h
     include/lyric_rewriter/macro_rewrite_driver.h
-    include/lyric_rewriter/plugin_macro.h
     include/lyric_rewriter/pragma_context.h
     include/lyric_rewriter/pragma_rewriter.h
-    include/lyric_rewriter/push_result_macro.h
     include/lyric_rewriter/rewrite_processor.h
     include/lyric_rewriter/rewriter_result.h
     include/lyric_rewriter/schema_class_node_visitor.h
     include/lyric_rewriter/schema_vocabulary_node_visitor.h
-    include/lyric_rewriter/trap_macro.h
+    include/lyric_rewriter/skip_unknown_visitor.h
+    include/lyric_rewriter/visitor_registry.h
     )
 set_target_properties(lyric_rewriter PROPERTIES PUBLIC_HEADER "${LYRIC_REWRITER_INCLUDES}")
 
 target_sources(lyric_rewriter PRIVATE
-    src/allocator_trap_macro.cpp
-    src/assembler_attrs.cpp
-    src/assembler_macro_visitor.cpp
-    src/compiler_macro_visitor.cpp
     src/ast_base_visitor.cpp
     src/ast_binary_visitor.cpp
     src/ast_cond_visitor.cpp
@@ -61,21 +53,21 @@ target_sources(lyric_rewriter PRIVATE
     src/ast_if_visitor.cpp
     src/ast_match_visitor.cpp
     src/ast_param_visitor.cpp
-    src/plugin_macro.cpp
-    src/pragma_context.cpp
-    src/pragma_rewriter.cpp
     src/ast_sequence_visitor.cpp
     src/ast_terminal_visitor.cpp
     src/ast_unary_visitor.cpp
     src/ast_while_visitor.cpp
+    src/fail_unknown_visitor.cpp
     src/lyric_rewriter.cpp
     src/macro_block.cpp
     src/macro_registry.cpp
     src/macro_rewrite_driver.cpp
-    src/push_result_macro.cpp
+    src/pragma_context.cpp
+    src/pragma_rewriter.cpp
     src/rewrite_processor.cpp
     src/rewriter_result.cpp
-    src/trap_macro.cpp
+    src/skip_unknown_visitor.cpp
+    src/visitor_registry.cpp
     )
 
 # set the library version
@@ -100,12 +92,9 @@ target_include_directories(lyric_rewriter PUBLIC
 
 target_link_libraries(lyric_rewriter
     PUBLIC
-    lyric::lyric_assembler
-    lyric::lyric_importer
     lyric::lyric_parser
     lyric::lyric_runtime
     lyric::lyric_schema
-    lyric::lyric_typing
     tempo::tempo_utils
     absl::flat_hash_map
     absl::flat_hash_set

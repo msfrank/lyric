@@ -1,27 +1,27 @@
 
+#include <lyric_assembler/assembler_attrs.h>
+#include <lyric_assembler/internal/allocator_trap_macro.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/parse_literal.h>
-#include <lyric_rewriter/assembler_attrs.h>
-#include <lyric_rewriter/allocator_trap_macro.h>
 #include <lyric_rewriter/rewriter_result.h>
-#include <lyric_schema/compiler_schema.h>
 
-lyric_rewriter::AllocatorTrapMacro::AllocatorTrapMacro()
+lyric_assembler::internal::AllocatorTrapMacro::AllocatorTrapMacro()
 {
 }
 
 tempo_utils::Status
-lyric_rewriter::AllocatorTrapMacro::rewritePragma(
+lyric_assembler::internal::AllocatorTrapMacro::rewritePragma(
     const lyric_parser::ArchetypeNode *pragmaNode,
-    PragmaContext &ctx,
+    lyric_rewriter::PragmaContext &ctx,
     lyric_parser::ArchetypeState *state)
 {
-    return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant,
+    return lyric_rewriter::RewriterStatus::forCondition(
+        lyric_rewriter::RewriterCondition::kRewriterInvariant,
         "AllocatorTrap macro is not valid in pragma context");
 }
 
 tempo_utils::Status
-lyric_rewriter::AllocatorTrapMacro::rewriteDefinition(
+lyric_assembler::internal::AllocatorTrapMacro::rewriteDefinition(
     const lyric_parser::ArchetypeNode *macroCallNode,
     lyric_parser::ArchetypeNode *definitionNode,
     lyric_parser::ArchetypeState *state)
@@ -29,7 +29,8 @@ lyric_rewriter::AllocatorTrapMacro::rewriteDefinition(
     TU_LOG_INFO << "rewrite AllocatorTrap macro";
 
     if (macroCallNode->numChildren() != 1)
-        return RewriterStatus::forCondition(RewriterCondition::kSyntaxError,
+        return lyric_rewriter::RewriterStatus::forCondition(
+            lyric_rewriter::RewriterCondition::kSyntaxError,
             "expected 1 argument for AllocatorTrap macro");
     auto *arg0 = macroCallNode->getChild(0);
 
@@ -42,11 +43,12 @@ lyric_rewriter::AllocatorTrapMacro::rewriteDefinition(
 }
 
 tempo_utils::Status
-lyric_rewriter::AllocatorTrapMacro::rewriteBlock(
+lyric_assembler::internal::AllocatorTrapMacro::rewriteBlock(
     const lyric_parser::ArchetypeNode *macroCallNode,
-    MacroBlock &macroBlock,
+    lyric_rewriter::MacroBlock &macroBlock,
     lyric_parser::ArchetypeState *state)
 {
-    return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant,
+    return lyric_rewriter::RewriterStatus::forCondition(
+        lyric_rewriter::RewriterCondition::kRewriterInvariant,
         "AllocatorTrap macro is not valid in block context");
 }

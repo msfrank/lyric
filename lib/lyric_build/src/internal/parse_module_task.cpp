@@ -4,24 +4,19 @@
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
+#include <lyric_build/internal/build_macros.h>
 #include <lyric_build/internal/parse_module_task.h>
 #include <lyric_build/internal/task_utils.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
 #include <lyric_common/common_conversions.h>
 #include <lyric_common/common_types.h>
-#include <lyric_rewriter/allocator_trap_macro.h>
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_rewriter/macro_registry.h>
 #include <lyric_rewriter/macro_rewrite_driver.h>
-#include <lyric_rewriter/plugin_macro.h>
-#include <lyric_rewriter/push_result_macro.h>
-#include <lyric_rewriter/trap_macro.h>
 #include <tempo_config/base_conversions.h>
 #include <tempo_config/container_conversions.h>
-#include <tempo_config/parse_config.h>
 #include <tempo_tracing/tracing_schema.h>
-#include <tempo_utils/date_time.h>
 #include <tempo_utils/file_reader.h>
 #include <tempo_utils/log_message.h>
 
@@ -134,15 +129,12 @@ lyric_build::internal::ParseModuleTask::parseModule(
     // rewrite macros
     lyric_rewriter::RewriterOptions rewriterOptions;
     lyric_rewriter::LyricRewriter rewriter(rewriterOptions);
-    absl::flat_hash_map<std::string,std::shared_ptr<lyric_rewriter::AbstractMacro>> macros;
-    macros["AllocatorTrap"] = std::make_shared<lyric_rewriter::AllocatorTrapMacro>();
-    macros["Plugin"] = std::make_shared<lyric_rewriter::PluginMacro>();
-    macros["PushResult"] = std::make_shared<lyric_rewriter::PushResultMacro>();
-    macros["Trap"] = std::make_shared<lyric_rewriter::TrapMacro>();
-    lyric_rewriter::MacroRegistry macroRegistry(macros);
+
+    std::shared_ptr<lyric_rewriter::MacroRegistry> macroRegistry;
+    TU_ASSIGN_OR_RETURN (macroRegistry, internal::make_build_macros());
 
     TU_LOG_V << "rewriting source from " << m_sourcePath;
-    auto macroRewriteDriverBuilder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(&macroRegistry);
+    auto macroRewriteDriverBuilder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(macroRegistry);
     auto rewriteResult = rewriter.rewriteArchetype(
         archetype, sourceUrl, macroRewriteDriverBuilder, traceDiagnostics());
 

@@ -8,7 +8,6 @@
 #include <lyric_compiler/method_handler.h>
 #include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
-#include <lyric_rewriter/assembler_attrs.h>
 
 lyric_compiler::DefEnumHandler::DefEnumHandler(
     bool isSideEffect,
@@ -61,9 +60,9 @@ lyric_compiler::DefEnumHandler::before(
 
     // get allocator trap
     std::string allocatorTrap;
-    if (node->hasAttr(lyric_rewriter::kLyricAssemblerTrapName)) {
+    if (node->hasAttr(lyric_assembler::kLyricAssemblerTrapName)) {
         TU_RETURN_IF_NOT_OK (node->parseAttr(
-            lyric_rewriter::kLyricAssemblerTrapName, allocatorTrap));
+            lyric_assembler::kLyricAssemblerTrapName, allocatorTrap));
     }
 
     // FIXME: get abstract flag from node

@@ -32,6 +32,12 @@ lyric_compiler::BeforeContext::childIndex() const
     return m_visitorContext.childIndex();
 }
 
+void
+lyric_compiler::BeforeContext::setSkipChildren(bool skip)
+{
+    m_visitorContext.setSkipChildren(skip);
+}
+
 /**
  * Appends the specified `behavior` to the behaviors list of the current handler.
  *

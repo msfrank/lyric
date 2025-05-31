@@ -21,11 +21,12 @@ namespace lyric_schema {
         Trap,                       // invoke trap with the given trap number
         AllocatorTrap,              // use the given trap as allocator
         Plugin,                     // the plugin used to provide traps invoked by the module
+        PushData,                   // push data onto the data stack
 
         // Assembler properties
 
         TrapName,                   // string identifying the trap in the plugin
-        DefinitionSymbolPath,       //
+        DefinitionSymbolPath,       // symbol path identifying the symbol path of the current definition
 
         NUM_IDS,                    // must be last
     };
@@ -38,6 +39,9 @@ namespace lyric_schema {
 
     constexpr tempo_schema::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerPluginClass(
         &kLyricAssemblerNs, LyricAssemblerId::Plugin, "Plugin");
+
+    constexpr tempo_schema::SchemaClass<LyricAssemblerNs,LyricAssemblerId> kLyricAssemblerPushDataClass(
+        &kLyricAssemblerNs, LyricAssemblerId::PushData, "PushData");
 
     constexpr tempo_schema::SchemaProperty<LyricAssemblerNs,LyricAssemblerId>
         kLyricAssemblerTrapNameProperty(
@@ -54,6 +58,7 @@ namespace lyric_schema {
         &kLyricAssemblerTrapClass,
         &kLyricAssemblerAllocatorTrapClass,
         &kLyricAssemblerPluginClass,
+        &kLyricAssemblerPushDataClass,
         &kLyricAssemblerTrapNameProperty,
         &kLyricAssemblerDefinitionSymbolPathProperty,
     };

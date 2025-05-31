@@ -23,6 +23,8 @@
 #include <tempo_utils/date_time.h>
 #include <tempo_utils/log_message.h>
 
+#include "lyric_build/internal/build_macros.h"
+
 lyric_build::internal::RewriteModuleTask::RewriteModuleTask(
     const tempo_utils::UUID &generation,
     const TaskKey &key,
@@ -45,10 +47,6 @@ lyric_build::internal::RewriteModuleTask::configure(const TaskSettings *config)
 
     lyric_common::ModuleLocationParser preludeLocationParser(lyric_bootstrap::preludeLocation());
 
-    // set the symbolizer prelude location
-    TU_RETURN_IF_NOT_OK(parse_config(m_rewriterOptions.preludeLocation, preludeLocationParser,
-        config, taskId, "preludeLocation"));
-
     // add dependency on parse_module
     m_parseTarget = TaskKey("parse_module", taskId.getId());
 
@@ -65,7 +63,6 @@ lyric_build::internal::RewriteModuleTask::configureTask(
     TU_RETURN_IF_NOT_OK (configure(&merged));
 
     TaskHasher taskHasher(getKey());
-    taskHasher.hashValue(m_rewriterOptions.preludeLocation.toString());
     taskHasher.hashValue(m_moduleLocation.toString());
     auto hash = taskHasher.finish();
 
@@ -117,8 +114,11 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     loaderChain.push_back(buildState->getLoaderChain());
     auto loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
 
+    std::shared_ptr<lyric_rewriter::MacroRegistry> macroRegistry;
+    TU_ASSIGN_OR_RETURN (macroRegistry, internal::make_build_macros());
+
     //
-    auto macroRewriteDriverBuilder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(&m_registry);
+    auto macroRewriteDriverBuilder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(macroRegistry);
 
     // generate the rewritten archetype by applying all macros
     TU_LOG_V << "rewriting archetype " << m_moduleLocation;

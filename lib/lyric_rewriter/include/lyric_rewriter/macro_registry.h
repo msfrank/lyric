@@ -7,12 +7,21 @@ namespace lyric_rewriter {
 
     class MacroRegistry {
     public:
-        explicit MacroRegistry(const absl::flat_hash_map<std::string,std::shared_ptr<AbstractMacro>> &macros = {});
+        explicit MacroRegistry(bool excludePredefinedNames = false);
 
-        std::shared_ptr<AbstractMacro> getMacro(std::string_view macroName);
+        using MakeMacroFunc = std::function<std::shared_ptr<AbstractMacro>()>;
+
+        tempo_utils::Status registerMacroName(const std::string &macroName, MakeMacroFunc func);
+        tempo_utils::Status replaceMacroName(const std::string &macroName, MakeMacroFunc func);
+        tempo_utils::Status deregisterMacroName(const std::string &macroName);
+
+        void sealRegistry();
+
+        tempo_utils::Result<std::shared_ptr<AbstractMacro>> makeMacro(std::string_view macroName) const;
 
     private:
-        absl::flat_hash_map<std::string,std::shared_ptr<AbstractMacro>> m_macros;
+        absl::flat_hash_map<std::string, MakeMacroFunc> m_makeMacroFuncs;
+        bool m_isSealed;
     };
 }
 

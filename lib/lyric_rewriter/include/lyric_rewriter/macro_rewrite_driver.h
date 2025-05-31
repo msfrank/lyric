@@ -8,7 +8,7 @@ namespace lyric_rewriter {
 
     class MacroRewriteDriver : public AbstractRewriteDriver {
     public:
-        explicit MacroRewriteDriver(MacroRegistry *registry);
+        explicit MacroRewriteDriver(std::shared_ptr<MacroRegistry> registry);
 
         tempo_utils::Status enter(
             lyric_parser::ArchetypeState *state,
@@ -32,13 +32,13 @@ namespace lyric_rewriter {
             MacroBlock &macroBlock);
 
     private:
-        MacroRegistry *m_registry;
+        std::shared_ptr<MacroRegistry> m_registry;
         lyric_parser::ArchetypeNode *m_macroList;
     };
 
     class MacroRewriteDriverBuilder : public AbstractRewriteDriverBuilder {
     public:
-        explicit MacroRewriteDriverBuilder(MacroRegistry *registry);
+        explicit MacroRewriteDriverBuilder(std::shared_ptr<MacroRegistry> registry);
 
         tempo_utils::Status rewritePragma(
             lyric_parser::ArchetypeState *state,
@@ -48,7 +48,7 @@ namespace lyric_rewriter {
         tempo_utils::Result<std::shared_ptr<AbstractRewriteDriver>> makeRewriteDriver() override;
 
     private:
-        MacroRegistry *m_registry;
+        std::shared_ptr<MacroRegistry> m_registry;
     };
 }
 

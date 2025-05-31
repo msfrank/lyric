@@ -15,11 +15,11 @@
 #include <lyric_compiler/base_grouping.h>
 #include <lyric_compiler/compiler_scan_driver.h>
 #include <lyric_compiler/compiler_result.h>
+#include <lyric_compiler/entry_handler.h>
 #include <lyric_compiler/visitor_context.h>
 #include <lyric_parser/ast_attrs.h>
+#include <lyric_schema/assembler_schema.h>
 #include <lyric_schema/ast_schema.h>
-
-#include "lyric_compiler/entry_handler.h"
 
 lyric_compiler::CompilerScanDriver::CompilerScanDriver(
     lyric_assembler::ObjectRoot *root,

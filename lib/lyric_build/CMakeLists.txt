@@ -106,6 +106,8 @@ target_sources(lyric_build PRIVATE
     src/internal/analyze_module_task.cpp
     include/lyric_build/internal/archive_task.h
     src/internal/archive_task.cpp
+    include/lyric_build/internal/build_macros.h
+    src/internal/build_macros.cpp
     include/lyric_build/internal/build_task.h
     src/internal/build_task.cpp
     include/lyric_build/internal/compile_module_task.h

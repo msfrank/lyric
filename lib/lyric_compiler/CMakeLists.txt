@@ -17,6 +17,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/binary_operation_handler.h
     include/lyric_compiler/block_handler.h
     include/lyric_compiler/compiler_handler.h
+    include/lyric_compiler/compiler_macro_visitor.h
     include/lyric_compiler/compiler_result.h
     include/lyric_compiler/compiler_scan_driver.h
     include/lyric_compiler/compiler_utils.h
@@ -64,7 +65,7 @@ set(LYRIC_COMPILER_INCLUDES
     include/lyric_compiler/using_handler.h
     include/lyric_compiler/variable_handler.h
     include/lyric_compiler/visitor_context.h
-)
+    )
 set_target_properties(lyric_compiler PROPERTIES PUBLIC_HEADER "${LYRIC_COMPILER_INCLUDES}")
 
 target_sources(lyric_compiler PRIVATE
@@ -77,6 +78,7 @@ target_sources(lyric_compiler PRIVATE
     src/binary_operation_handler.cpp
     src/block_handler.cpp
     src/compiler_handler.cpp
+    src/compiler_macro_visitor.cpp
     src/compiler_result.cpp
     src/compiler_scan_driver.cpp
     src/compiler_utils.cpp
@@ -124,6 +126,9 @@ target_sources(lyric_compiler PRIVATE
     src/using_handler.cpp
     src/variable_handler.cpp
     src/visitor_context.cpp
+
+    include/lyric_compiler/internal/push_result_macro.h
+    src/internal/push_result_macro.cpp
     )
 
 # set the library version

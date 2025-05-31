@@ -1,17 +1,17 @@
-#ifndef LYRIC_REWRITER_PUSH_RESULT_MACRO_H
-#define LYRIC_REWRITER_PUSH_RESULT_MACRO_H
+#ifndef LYRIC_COMPILER_INTERNAL_PUSH_RESULT_MACRO_H
+#define LYRIC_COMPILER_INTERNAL_PUSH_RESULT_MACRO_H
 
-#include "abstract_macro.h"
+#include <lyric_rewriter/abstract_macro.h>
 
-namespace lyric_rewriter {
+namespace lyric_compiler::internal {
 
-    class PushResultMacro : public AbstractMacro {
+    class PushResultMacro : public lyric_rewriter::AbstractMacro {
     public:
         PushResultMacro();
 
         tempo_utils::Status rewritePragma(
             const lyric_parser::ArchetypeNode *pragmaNode,
-            PragmaContext &ctx,
+            lyric_rewriter::PragmaContext &ctx,
             lyric_parser::ArchetypeState *state) override;
 
         tempo_utils::Status rewriteDefinition(
@@ -21,9 +21,9 @@ namespace lyric_rewriter {
 
         tempo_utils::Status rewriteBlock(
             const lyric_parser::ArchetypeNode *macroCallNode,
-            MacroBlock &macroBlock,
+            lyric_rewriter::MacroBlock &macroBlock,
             lyric_parser::ArchetypeState *state) override;
     };
 }
 
-#endif // LYRIC_REWRITER_PUSH_RESULT_MACRO_H
+#endif // LYRIC_COMPILER_INTERNAL_PUSH_RESULT_MACRO_H

@@ -4,8 +4,8 @@
 #include <lyric_rewriter/rewriter_result.h>
 #include <lyric_schema/ast_schema.h>
 
-lyric_rewriter::MacroRewriteDriver::MacroRewriteDriver(MacroRegistry *registry)
-    : m_registry(registry),
+lyric_rewriter::MacroRewriteDriver::MacroRewriteDriver(std::shared_ptr<MacroRegistry> registry)
+    : m_registry(std::move(registry)),
       m_macroList(nullptr)
 {
     TU_ASSERT (m_registry != nullptr);
@@ -60,10 +60,8 @@ lyric_rewriter::MacroRewriteDriver::rewriteMacroDefinition(
         std::string id;
         TU_RETURN_IF_NOT_OK (macroCallNode->parseAttr(lyric_parser::kLyricAstIdentifier, id));
 
-        auto macro = m_registry->getMacro(id);
-        if (macro == nullptr)
-            return RewriterStatus::forCondition(
-                RewriterCondition::kRewriterInvariant, "unknown macro '{}'", id);
+        std::shared_ptr<AbstractMacro> macro;
+        TU_ASSIGN_OR_RETURN (macro, m_registry->makeMacro(id));
 
         TU_RETURN_IF_NOT_OK (macro->rewriteDefinition(macroCallNode, definitionNode, state));
     }
@@ -87,10 +85,8 @@ lyric_rewriter::MacroRewriteDriver::rewriteMacroBlock(
         std::string id;
         TU_RETURN_IF_NOT_OK (macroCallNode->parseAttr(lyric_parser::kLyricAstIdentifier, id));
 
-        auto macro = m_registry->getMacro(id);
-        if (macro == nullptr)
-            return RewriterStatus::forCondition(
-                RewriterCondition::kRewriterInvariant, "unknown macro '{}'", id);
+        std::shared_ptr<AbstractMacro> macro;
+        TU_ASSIGN_OR_RETURN (macro, m_registry->makeMacro(id));
 
         TU_RETURN_IF_NOT_OK (macro->rewriteBlock(macroCallNode, macroBlock, macroBlock.archetypeState()));
     }
@@ -121,8 +117,8 @@ lyric_rewriter::MacroRewriteDriver::exit(
     return {};
 }
 
-lyric_rewriter::MacroRewriteDriverBuilder::MacroRewriteDriverBuilder(MacroRegistry *registry)
-    : m_registry(registry)
+lyric_rewriter::MacroRewriteDriverBuilder::MacroRewriteDriverBuilder(std::shared_ptr<MacroRegistry> registry)
+    : m_registry(std::move(registry))
 {
     TU_ASSERT (m_registry != nullptr);
 }
@@ -142,10 +138,8 @@ lyric_rewriter::MacroRewriteDriverBuilder::rewritePragma(
     std::string id;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, id));
 
-    auto macro = m_registry->getMacro(id);
-    if (macro == nullptr)
-        return RewriterStatus::forCondition(
-            RewriterCondition::kRewriterInvariant, "unknown pragma '{}'", id);
+    std::shared_ptr<AbstractMacro> macro;
+    TU_ASSIGN_OR_RETURN (macro, m_registry->makeMacro(id));
 
     return macro->rewritePragma(node, ctx, state);
 }

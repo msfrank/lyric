@@ -1,26 +1,23 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <lyric_bootstrap/bootstrap_loader.h>
+#include <lyric_assembler/assembler_attrs.h>
+#include <lyric_assembler/internal/trap_macro.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
-#include <lyric_rewriter/allocator_trap_macro.h>
-#include <lyric_rewriter/assembler_attrs.h>
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_rewriter/macro_rewrite_driver.h>
-#include <lyric_rewriter/trap_macro.h>
 #include <lyric_schema/assembler_schema.h>
+#include <tempo_test/result_matchers.h>
 #include <tempo_test/status_matchers.h>
-#include <tempo_utils/logging.h>
 
-TEST(RewriteAllocatorTrap, AllocatorTrapOnClass)
-{
+TEST(TrapMacro, TrapInBlock) {
     lyric_parser::LyricParser parser({});
     auto recorder = tempo_tracing::TraceRecorder::create();
 
     auto parseResult = parser.parseModule(R"(
-        @AllocatorTrap("FOO_ALLOC")
-        defclass Foo {
+        @{
+            Trap("FOO_TRAP")
         }
     )", {}, recorder);
 
@@ -32,12 +29,7 @@ TEST(RewriteAllocatorTrap, AllocatorTrapOnClass)
     ASSERT_EQ (0, blockNode.numAttrs());
     ASSERT_EQ (1, blockNode.numChildren());
 
-    auto defclassNode = blockNode.getChild(0);
-    ASSERT_TRUE (defclassNode.isClass(lyric_schema::kLyricAstDefClassClass));
-    ASSERT_EQ (0, defclassNode.numChildren());
-
-    lyric_parser::NodeWalker macroListNode;
-    defclassNode.parseAttr(lyric_parser::kLyricAstMacroListOffset, macroListNode);
+    auto macroListNode = blockNode.getChild(0);
     ASSERT_TRUE (macroListNode.isClass(lyric_schema::kLyricAstMacroListClass));
     ASSERT_EQ (0, macroListNode.numAttrs());
     ASSERT_EQ (1, macroListNode.numChildren());
@@ -51,22 +43,20 @@ TEST(RewriteAllocatorTrap, AllocatorTrapOnClass)
 
     std::string literalValue;
     ASSERT_THAT (arg0Node.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
-    ASSERT_EQ ("FOO_ALLOC", literalValue);
+    ASSERT_EQ ("FOO_TRAP", literalValue);
+
+    auto registry = std::make_shared<lyric_rewriter::MacroRegistry>();
+    registry->registerMacroName("Trap", []() {
+        return std::make_shared<lyric_assembler::internal::TrapMacro>();
+    });
+    registry->sealRegistry();
+    auto builder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(registry);
 
     lyric_rewriter::RewriterOptions options;
-    auto loader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
-    options.systemModuleCache = lyric_importer::ModuleCache::create(loader);
-
     lyric_rewriter::LyricRewriter rewriter(options);
-
-    lyric_rewriter::MacroRegistry registry({
-        {"AllocatorTrap", std::make_shared<lyric_rewriter::AllocatorTrapMacro>()}
-    });
-    auto builder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(&registry);
-
     auto sourceUrl = tempo_utils::Url::fromString("/test");
     auto rewriteArchetypeResult = rewriter.rewriteArchetype(archetype, sourceUrl, builder, recorder);
-    ASSERT_TRUE (rewriteArchetypeResult.isResult());
+    ASSERT_THAT (rewriteArchetypeResult, tempo_test::IsResult());
     auto rewritten = rewriteArchetypeResult.getResult();
 
     blockNode = rewritten.getRoot();
@@ -74,11 +64,12 @@ TEST(RewriteAllocatorTrap, AllocatorTrapOnClass)
     ASSERT_EQ (0, blockNode.numAttrs());
     ASSERT_EQ (1, blockNode.numChildren());
 
-    defclassNode = blockNode.getChild(0);
-    ASSERT_TRUE (defclassNode.isClass(lyric_schema::kLyricAstDefClassClass));
-    ASSERT_EQ (0, defclassNode.numChildren());
+    auto trapNode = blockNode.getChild(0);
+    ASSERT_TRUE (trapNode.isClass(lyric_schema::kLyricAssemblerTrapClass));
+    ASSERT_EQ (1, trapNode.numAttrs());
+    ASSERT_EQ (0, trapNode.numChildren());
 
     std::string trapName;
-    ASSERT_THAT (defclassNode.parseAttr(lyric_rewriter::kLyricAssemblerTrapName, trapName), tempo_test::IsOk());
-    ASSERT_EQ ("FOO_ALLOC", trapName);
+    ASSERT_THAT (trapNode.parseAttr(lyric_assembler::kLyricAssemblerTrapName, trapName), tempo_test::IsOk());
+    ASSERT_EQ ("FOO_TRAP", trapName);
 }

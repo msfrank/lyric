@@ -617,9 +617,8 @@ lyric_assembler::StackOperationInstruction::apply(
 {
     switch (m_opcode) {
         case lyric_object::Opcode::OP_POP:
-            return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_POP);
         case lyric_object::Opcode::OP_DUP:
-            return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_DUP);
+            return bytecodeBuilder.writeOpcode(m_opcode);
         case lyric_object::Opcode::OP_PICK:
         case lyric_object::Opcode::OP_DROP:
         case lyric_object::Opcode::OP_RPICK:

@@ -1,48 +1,52 @@
 
-#include <lyric_rewriter/push_result_macro.h>
-#include <lyric_rewriter/rewriter_result.h>
+#include <lyric_compiler/internal/push_result_macro.h>
 #include <lyric_parser/ast_attrs.h>
+#include <lyric_rewriter/rewriter_result.h>
 #include <lyric_schema/compiler_schema.h>
 
-lyric_rewriter::PushResultMacro::PushResultMacro()
+lyric_compiler::internal::PushResultMacro::PushResultMacro()
 {
 }
 
 tempo_utils::Status
-lyric_rewriter::PushResultMacro::rewritePragma(
+lyric_compiler::internal::PushResultMacro::rewritePragma(
     const lyric_parser::ArchetypeNode *pragmaNode,
-    PragmaContext &ctx,
+    lyric_rewriter::PragmaContext &ctx,
     lyric_parser::ArchetypeState *state)
 {
-    return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant,
+    return lyric_rewriter::RewriterStatus::forCondition(
+        lyric_rewriter::RewriterCondition::kRewriterInvariant,
         "PushResult macro is not valid in pragma context");
 }
 
 tempo_utils::Status
-lyric_rewriter::PushResultMacro::rewriteDefinition(
+lyric_compiler::internal::PushResultMacro::rewriteDefinition(
     const lyric_parser::ArchetypeNode *macroCallNode,
     lyric_parser::ArchetypeNode *definitionNode,
     lyric_parser::ArchetypeState *state)
 {
-    return RewriterStatus::forCondition(RewriterCondition::kRewriterInvariant,
+    return lyric_rewriter::RewriterStatus::forCondition(
+        lyric_rewriter::RewriterCondition::kRewriterInvariant,
         "PushResult macro is not valid in definition context");
 }
 
 tempo_utils::Status
-lyric_rewriter::PushResultMacro::rewriteBlock(
+lyric_compiler::internal::PushResultMacro::rewriteBlock(
     const lyric_parser::ArchetypeNode *macroCallNode,
-    MacroBlock &macroBlock,
+    lyric_rewriter::MacroBlock &macroBlock,
     lyric_parser::ArchetypeState *state)
 {
     TU_LOG_INFO << "rewrite PushResult macro";
 
     if (macroCallNode->numChildren() != 1)
-        return RewriterStatus::forCondition(RewriterCondition::kSyntaxError,
+        return lyric_rewriter::RewriterStatus::forCondition(
+            lyric_rewriter::RewriterCondition::kSyntaxError,
             "expected 1 argument for PushResult macro");
     auto *arg0 = macroCallNode->getChild(0);
 
     if (!arg0->isClass(lyric_schema::kLyricAstTypeOfClass))
-        return RewriterStatus::forCondition(RewriterCondition::kSyntaxError,
+        return lyric_rewriter::RewriterStatus::forCondition(
+            lyric_rewriter::RewriterCondition::kSyntaxError,
             "expected typeof argument for PushResult macro");
 
     lyric_parser::ArchetypeNode *typeNode;

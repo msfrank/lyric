@@ -33,6 +33,8 @@ namespace lyric_compiler {
         const lyric_parser::ArchetypeNode *parentNode() const;
         int childIndex() const;
 
+        void setSkipChildren(bool skip);
+
         void appendBehavior(std::unique_ptr<AbstractBehavior> &&behavior);
         void appendChoice(std::unique_ptr<BaseChoice> &&choice);
         void appendGrouping(std::unique_ptr<BaseGrouping> &&grouping);

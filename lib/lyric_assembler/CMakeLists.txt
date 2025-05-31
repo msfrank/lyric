@@ -20,6 +20,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/argument_variable.h
     include/lyric_assembler/assembler_attrs.h
     include/lyric_assembler/assembler_instructions.h
+    include/lyric_assembler/assembler_macro_visitor.h
     include/lyric_assembler/assembler_result.h
     include/lyric_assembler/assembler_tracer.h
     include/lyric_assembler/assembler_types.h
@@ -76,6 +77,7 @@ target_sources(lyric_assembler PRIVATE
     src/argument_variable.cpp
     src/assembler_attrs.cpp
     src/assembler_instructions.cpp
+    src/assembler_macro_visitor.cpp
     src/assembler_result.cpp
     src/assembler_tracer.cpp
     src/assembler_types.cpp
@@ -121,6 +123,15 @@ target_sources(lyric_assembler PRIVATE
     src/type_handle.cpp
     src/type_set.cpp
     src/undeclared_symbol.cpp
+
+    include/lyric_assembler/internal/allocator_trap_macro.h
+    src/internal/allocator_trap_macro.cpp
+    include/lyric_assembler/internal/plugin_macro.h
+    src/internal/plugin_macro.cpp
+    include/lyric_assembler/internal/push_data_macro.h
+    src/internal/push_data_macro.cpp
+    include/lyric_assembler/internal/trap_macro.h
+    src/internal/trap_macro.cpp
 
     include/lyric_assembler/internal/call_inline.h
     src/internal/call_inline.cpp
@@ -198,6 +209,7 @@ target_link_libraries(lyric_assembler
     PUBLIC
     lyric::lyric_bootstrap
     lyric::lyric_importer
+    lyric::lyric_rewriter
     lyric::lyric_runtime
     tempo::tempo_tracing
     tempo::tempo_utils
