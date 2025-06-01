@@ -132,6 +132,7 @@ lyric_build::internal::ParseModuleTask::parseModule(
 
     std::shared_ptr<lyric_rewriter::MacroRegistry> macroRegistry;
     TU_ASSIGN_OR_RETURN (macroRegistry, internal::make_build_macros());
+    macroRegistry->sealRegistry();
 
     TU_LOG_V << "rewriting source from " << m_sourcePath;
     auto macroRewriteDriverBuilder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(macroRegistry);

@@ -116,6 +116,7 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
 
     std::shared_ptr<lyric_rewriter::MacroRegistry> macroRegistry;
     TU_ASSIGN_OR_RETURN (macroRegistry, internal::make_build_macros());
+    macroRegistry->sealRegistry();
 
     //
     auto macroRewriteDriverBuilder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(macroRegistry);
