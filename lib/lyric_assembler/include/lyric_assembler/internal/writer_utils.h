@@ -36,6 +36,8 @@ namespace lyric_assembler::internal {
                 return lyo1::DescriptorSection::Static;
             case lyric_object::LinkageSection::Struct:
                 return lyo1::DescriptorSection::Struct;
+            case lyric_object::LinkageSection::Type:
+                return lyo1::DescriptorSection::Type;
             default:
                 return lyo1::DescriptorSection::Invalid;
         }

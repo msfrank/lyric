@@ -16,6 +16,35 @@ lyric_parser::internal::ModuleDefineOps::ModuleDefineOps(ArchetypeState *state)
 }
 
 void
+lyric_parser::internal::ModuleDefineOps::exitTypenameStatement(ModuleParser::TypenameStatementContext *ctx)
+{
+    auto *scopeManager = m_state->scopeManager();
+    auto span = scopeManager->peekSpan();
+    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+
+    // if stack is empty, then mark source as incomplete
+    if (m_state->isEmpty())
+        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
+
+    auto id = ctx->symbolIdentifier()->getText();
+    auto access = parse_access_type(id);
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    auto *typenameNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstTypeNameClass, location);
+    m_state->pushNode(typenameNode);
+
+    typenameNode->putAttr(kLyricAstIdentifier, id);
+    typenameNode->putAttrOrThrow(kLyricAstAccessType, access);
+
+    scopeManager->popSpan();
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    m_state->popSymbolAndCheck(id);
+}
+
+void
 lyric_parser::internal::ModuleDefineOps::enterDefStatement(ModuleParser::DefStatementContext *ctx)
 {
     auto *scopeManager = m_state->scopeManager();

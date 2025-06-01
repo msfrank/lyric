@@ -10,7 +10,7 @@
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
-#include <lyric_assembler/undeclared_symbol.h>
+#include <lyric_assembler/linkage_symbol.h>
 #include <lyric_compiler/base_choice.h>
 #include <lyric_compiler/base_grouping.h>
 #include <lyric_compiler/compiler_scan_driver.h>

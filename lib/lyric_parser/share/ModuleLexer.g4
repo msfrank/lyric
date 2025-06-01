@@ -179,6 +179,7 @@ FalseKeyword            : 'false' ;
 UndefKeyword            : 'undef' ;
 NilKeyword              : 'nil' ;
 TypeOfKeyword           : 'typeof' ;
+TypeNameKeyword         : 'typename' ;
 
 // an identifier is can be a variable, function, or state symbol
 

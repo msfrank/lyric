@@ -13,6 +13,8 @@ namespace lyric_parser::internal {
         explicit ModuleDefineOps(ArchetypeState *state);
         virtual ~ModuleDefineOps() = default;
 
+        void exitTypenameStatement(ModuleParser::TypenameStatementContext *ctx);
+
         void enterDefStatement(ModuleParser::DefStatementContext *ctx);
         void exitDefStatement(ModuleParser::DefStatementContext *ctx);
 

@@ -50,6 +50,7 @@ namespace lyric_schema {
         UType,                     // union type
         TypeArguments,             // type arguments
         TypeOf,                    // typeof expression
+        TypeName,                  // declare type
 
         Set,                       // value assignment
         Target,                    // assignment target
@@ -211,6 +212,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::TypeArguments, "TypeArguments");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTypeOfClass(
         &kLyricAstNs, LyricAstId::TypeOf, "TypeOf");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTypeNameClass(
+        &kLyricAstNs, LyricAstId::TypeName, "TypeName");
 
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSetClass(
         &kLyricAstNs, LyricAstId::Set, "Set");
@@ -461,6 +464,7 @@ namespace lyric_schema {
         &kLyricAstUTypeClass,
         &kLyricAstTypeArgumentsClass,
         &kLyricAstTypeOfClass,
+        &kLyricAstTypeNameClass,
 
         &kLyricAstSetClass,
         &kLyricAstTargetClass,

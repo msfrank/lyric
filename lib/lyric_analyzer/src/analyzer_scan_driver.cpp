@@ -20,7 +20,7 @@
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
-#include <lyric_assembler/undeclared_symbol.h>
+#include <lyric_assembler/linkage_symbol.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 

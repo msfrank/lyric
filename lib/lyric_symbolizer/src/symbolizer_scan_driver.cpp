@@ -1,6 +1,6 @@
 
 #include <lyric_assembler/import_cache.h>
-#include <lyric_assembler/undeclared_symbol.h>
+#include <lyric_assembler/linkage_symbol.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 #include <lyric_symbolizer/symbolizer_scan_driver.h>
@@ -66,6 +66,8 @@ lyric_symbolizer::SymbolizerScanDriver::exit(
 
     auto astId = resource->getId();
     switch (astId) {
+        case lyric_schema::LyricAstId::TypeName:
+            return declareTypename(node);
         case lyric_schema::LyricAstId::DefStatic:
             return declareStatic(node);
         case lyric_schema::LyricAstId::Decl:
@@ -96,6 +98,27 @@ lyric_symbolizer::SymbolizerScanDriver::finish()
 }
 
 tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::declareTypename(const lyric_parser::ArchetypeNode *node)
+{
+    if (!m_symbolPath.empty())
+        return {};
+
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_common::SymbolPath symbolPath({identifier});
+    lyric_common::SymbolUrl symbolUrl(symbolPath);
+    auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(
+        symbolUrl, lyric_object::LinkageSection::Type);
+
+    TU_RETURN_IF_NOT_OK (m_state->appendLinkage(linkage.get()));
+    linkage.release();
+    TU_LOG_INFO << "declared typename " << symbolUrl;
+
+    return putNamespaceTarget(symbolUrl);
+}
+
+tempo_utils::Status
 lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::ArchetypeNode *node)
 {
     if (!m_symbolPath.empty())
@@ -106,11 +129,11 @@ lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::Archet
 
     lyric_common::SymbolPath symbolPath({identifier});
     lyric_common::SymbolUrl symbolUrl(symbolPath);
-    auto undecl = std::make_unique<lyric_assembler::UndeclaredSymbol>(
+    auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(
         symbolUrl, lyric_object::LinkageSection::Static);
 
-    TU_RETURN_IF_NOT_OK (m_state->appendUndeclared(undecl.get()));
-    undecl.release();
+    TU_RETURN_IF_NOT_OK (m_state->appendLinkage(linkage.get()));
+    linkage.release();
     TU_LOG_INFO << "declared static " << symbolUrl;
 
     return putNamespaceTarget(symbolUrl);
@@ -127,10 +150,10 @@ lyric_symbolizer::SymbolizerScanDriver::pushDefinition(
 
     lyric_common::SymbolPath symbolPath(m_symbolPath);
     lyric_common::SymbolUrl symbolUrl(symbolPath);
-    auto undecl = std::make_unique<lyric_assembler::UndeclaredSymbol>(symbolUrl, section);
+    auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(symbolUrl, section);
 
-    TU_RETURN_IF_NOT_OK (m_state->appendUndeclared(undecl.get()));
-    undecl.release();
+    TU_RETURN_IF_NOT_OK (m_state->appendLinkage(linkage.get()));
+    linkage.release();
     TU_LOG_INFO << "declared definition " << symbolUrl;
 
     auto *currentNamespace = m_namespaces.top();

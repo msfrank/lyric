@@ -23,13 +23,11 @@
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
-#include <lyric_assembler/undeclared_symbol.h>
+#include <lyric_assembler/linkage_symbol.h>
+#include <lyric_runtime/trap_index.h>
 #include <tempo_utils/big_endian.h>
 #include <tempo_utils/bytes_appender.h>
 #include <tempo_utils/log_stream.h>
-
-#include "lyric_assembler/object_plugin.h"
-#include "lyric_runtime/trap_index.h"
 
 lyric_assembler::ObjectState::ObjectState(
     const lyric_common::ModuleLocation &location,
@@ -606,33 +604,33 @@ lyric_assembler::ObjectState::numBindings() const
 }
 
 tempo_utils::Status
-lyric_assembler::ObjectState::appendUndeclared(UndeclaredSymbol *undeclaredSymbol)
+lyric_assembler::ObjectState::appendLinkage(LinkageSymbol *linkageSymbol)
 {
-    TU_ASSERT (undeclaredSymbol != nullptr);
-    auto symbolUrl = undeclaredSymbol->getSymbolUrl();
+    TU_ASSERT (linkageSymbol != nullptr);
+    auto symbolUrl = linkageSymbol->getSymbolUrl();
     if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append undeclared; symbol {} already exists", symbolUrl.toString());
-    m_undecls.push_back(undeclaredSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, undeclaredSymbol);
+        throwAssemblerInvariant("failed to append linkage; symbol {} already exists", symbolUrl.toString());
+    m_linkages.push_back(linkageSymbol);
+    m_symbolcache->insertSymbol(symbolUrl, linkageSymbol);
     return {};
 }
 
-std::vector<lyric_assembler::UndeclaredSymbol *>::const_iterator
-lyric_assembler::ObjectState::undeclaredBegin() const
+std::vector<lyric_assembler::LinkageSymbol *>::const_iterator
+lyric_assembler::ObjectState::linkagesBegin() const
 {
-    return m_undecls.cbegin();
+    return m_linkages.cbegin();
 }
 
-std::vector<lyric_assembler::UndeclaredSymbol *>::const_iterator
-lyric_assembler::ObjectState::undeclaredEnd() const
+std::vector<lyric_assembler::LinkageSymbol *>::const_iterator
+lyric_assembler::ObjectState::linkagesEnd() const
 {
-    return m_undecls.cend();
+    return m_linkages.cend();
 }
 
 int
-lyric_assembler::ObjectState::numUndeclared() const
+lyric_assembler::ObjectState::numLinkages() const
 {
-    return m_undecls.size();
+    return m_linkages.size();
 }
 
 tempo_utils::Result<lyric_object::LyricObject>

@@ -155,6 +155,7 @@ make_ast_visitor(
         case lyric_schema::LyricAstId::Name:
         case lyric_schema::LyricAstId::Ctx:
         case lyric_schema::LyricAstId::TypeOf:
+        case lyric_schema::LyricAstId::TypeName:
         case lyric_schema::LyricAstId::DefAlias:
         case lyric_schema::LyricAstId::LambdaFrom:
             return std::make_shared<lyric_rewriter::AstTerminalVisitor>(astId, state);

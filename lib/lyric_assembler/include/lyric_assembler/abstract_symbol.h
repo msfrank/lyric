@@ -25,7 +25,7 @@ namespace lyric_assembler {
         ENUM,
         NAMESPACE,
         BINDING,
-        UNDECLARED,
+        LINKAGE,
     };
 
     class AbstractSymbol {

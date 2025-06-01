@@ -67,7 +67,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/type_cache.h
     include/lyric_assembler/type_handle.h
     include/lyric_assembler/type_set.h
-    include/lyric_assembler/undeclared_symbol.h
+    include/lyric_assembler/linkage_symbol.h
     )
 set_target_properties(lyric_assembler PROPERTIES PUBLIC_HEADER "${LYRIC_ASSEMBLER_INCLUDES}")
 
@@ -122,7 +122,7 @@ target_sources(lyric_assembler PRIVATE
     src/type_cache.cpp
     src/type_handle.cpp
     src/type_set.cpp
-    src/undeclared_symbol.cpp
+    src/linkage_symbol.cpp
 
     include/lyric_assembler/internal/allocator_trap_macro.h
     src/internal/allocator_trap_macro.cpp

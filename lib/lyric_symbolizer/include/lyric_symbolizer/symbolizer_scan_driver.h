@@ -31,6 +31,7 @@ namespace lyric_symbolizer {
         std::vector<std::string> m_symbolPath;
         std::stack<lyric_assembler::NamespaceSymbol *> m_namespaces;
 
+        tempo_utils::Status declareTypename(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareStatic(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareImport(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status pushDefinition(

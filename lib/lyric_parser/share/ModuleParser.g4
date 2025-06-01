@@ -16,7 +16,8 @@ expression          : basicExpression
                     | condExpression
                     ;
 
-statement           : valStatement
+statement           : typenameStatement
+                    | valStatement
                     | varStatement
                     | defStatement
                     | defaliasStatement
@@ -106,6 +107,11 @@ rest                : EllipsisOperator restParam? ;
 paramList           : rest | param ( CommaOperator param )* ( CommaOperator rest )? ;
 paramSpec           : ParenOpen paramList? ParenClose ;
 returnSpec          : ColonOperator assignableType ;
+
+
+// typename statement
+
+typenameStatement   : TypeNameKeyword symbolIdentifier ;
 
 
 // val statement

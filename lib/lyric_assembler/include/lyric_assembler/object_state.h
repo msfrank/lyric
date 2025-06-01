@@ -38,6 +38,7 @@ namespace lyric_assembler {
     class ImplHandle;
     class ImportCache;
     class InstanceSymbol;
+    class LinkageSymbol;
     class LiteralCache;
     class LiteralHandle;
     class NamespaceSymbol;
@@ -50,7 +51,6 @@ namespace lyric_assembler {
     class TemplateHandle;
     class TypeCache;
     class TypeHandle;
-    class UndeclaredSymbol;
 
     enum class ProcImportMode {
         Invalid,
@@ -164,10 +164,10 @@ namespace lyric_assembler {
         std::vector<BindingSymbol *>::const_iterator bindingsEnd() const;
         int numBindings() const;
 
-        tempo_utils::Status appendUndeclared(UndeclaredSymbol *undeclaredSymbol);
-        std::vector<UndeclaredSymbol *>::const_iterator undeclaredBegin() const;
-        std::vector<UndeclaredSymbol *>::const_iterator undeclaredEnd() const;
-        int numUndeclared() const;
+        tempo_utils::Status appendLinkage(LinkageSymbol *linkageSymbol);
+        std::vector<LinkageSymbol *>::const_iterator linkagesBegin() const;
+        std::vector<LinkageSymbol *>::const_iterator linkagesEnd() const;
+        int numLinkages() const;
 
         tempo_utils::Result<lyric_object::LyricObject> toObject() const;
 
@@ -202,7 +202,7 @@ namespace lyric_assembler {
         std::vector<StructSymbol *> m_structs;
         std::vector<InstanceSymbol *> m_instances;
         std::vector<EnumSymbol *> m_enums;
-        std::vector<UndeclaredSymbol *> m_undecls;
+        std::vector<LinkageSymbol *> m_linkages;
 
         tempo_utils::Status createRoot(const lyric_common::ModuleLocation &preludeLocation);
 

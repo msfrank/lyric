@@ -64,3 +64,56 @@ TEST(CoreDefalias, EvaluateStructAlias)
         RunModule(
             DataCellInt(42))));
 }
+
+TEST(CoreDefalias, EvaluateUnionAlias)
+{
+    auto result = runModule(R"(
+        defalias Fooalias from Int | Bool
+        val fooalias: Fooalias = 42
+        fooalias
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(42))));
+}
+
+TEST(CoreDefalias, EvaluateParameterizedAlias)
+{
+    auto result = runModule(R"(
+        defclass Foo[T] {
+            val Value: T
+            init(value: T) {
+                set this.Value = value
+            }
+        }
+        defalias Fooalias from Foo[Int]
+        val fooalias: Fooalias = Fooalias{42}
+        fooalias.Value
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(42))));
+}
+
+TEST(CoreDefalias, EvaluatePartiallyParameterizedAlias)
+{
+    auto result = runModule(R"(
+        defclass Foo[T, U] {
+            val TValue: T
+            val UValue: U
+            init(t: T, u: U) {
+                set this.TValue = t
+                set this.UValue = u
+            }
+        }
+        defalias Fooalias[U] from Foo[Int,U]
+        val fooalias: Fooalias[Bool] = Fooalias[Bool]{42, true}
+        fooalias.UValue
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellBool(true))));
+}

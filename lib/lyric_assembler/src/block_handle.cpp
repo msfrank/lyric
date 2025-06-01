@@ -23,7 +23,7 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/template_handle.h>
 #include <lyric_assembler/type_cache.h>
-#include <lyric_assembler/undeclared_symbol.h>
+#include <lyric_assembler/linkage_symbol.h>
 #include <tempo_utils/log_stream.h>
 
 /**
@@ -1495,10 +1495,10 @@ lyric_assembler::BlockHandle::declareAlias(
 
     SymbolBinding binding;
 
-    // if the symbol is undeclared, then determine the type from the linkage
+    // if the symbol is linkage, then determine the type from the linkage
     auto symbolType = symbol->getSymbolType();
-    if (symbolType == SymbolType::UNDECLARED) {
-        switch (cast_symbol_to_undeclared(symbol)->getLinkage()) {
+    if (symbolType == SymbolType::LINKAGE) {
+        switch (cast_symbol_to_linkage(symbol)->getLinkage()) {
             case lyric_object::LinkageSection::Action:
             case lyric_object::LinkageSection::Binding:
             case lyric_object::LinkageSection::Call:
@@ -1522,7 +1522,7 @@ lyric_assembler::BlockHandle::declareAlias(
             default:
                 return logAndContinue(AssemblerCondition::kMissingSymbol,
                     tempo_tracing::LogSeverity::kError,
-                    "cannot declare alias {}; {} undeclared symbol is not a valid target",
+                    "cannot declare alias {}; {} linkage symbol section is not a valid target",
                     alias, targetUrl.toString());
         }
         m_bindings[alias] = binding;

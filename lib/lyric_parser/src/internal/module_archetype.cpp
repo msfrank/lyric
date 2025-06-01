@@ -656,6 +656,11 @@ void lyric_parser::internal::ModuleArchetype::exitDefaultInitializerNew(ModulePa
 /*
  * define ops
  */
+void lyric_parser::internal::ModuleArchetype::exitTypenameStatement(ModuleParser::TypenameStatementContext *ctx)
+{
+    return ModuleDefineOps::exitTypenameStatement(ctx);
+}
+
 void lyric_parser::internal::ModuleArchetype::enterDefStatement(ModuleParser::DefStatementContext *ctx)
 {
     return ModuleDefineOps::enterDefStatement(ctx);

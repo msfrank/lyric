@@ -11,6 +11,7 @@ set(TEST_CASES
     symbolize_defconcept_tests.cpp
     symbolize_namespace_tests.cpp
     symbolize_static_tests.cpp
+    symbolize_typename_tests.cpp
     )
 
 # define test suite driver

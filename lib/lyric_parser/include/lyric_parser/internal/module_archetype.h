@@ -188,6 +188,7 @@ namespace lyric_parser::internal {
         void exitDefaultInitializerNew(ModuleParser::DefaultInitializerNewContext *ctx) override;
 
         // implemented by ModuleDefineOps
+        void exitTypenameStatement(ModuleParser::TypenameStatementContext *ctx) override;
         void enterDefStatement(ModuleParser::DefStatementContext *ctx) override;
         void exitDefStatement(ModuleParser::DefStatementContext *ctx) override;
         void enterImplDef(ModuleParser::ImplDefContext *ctx) override;

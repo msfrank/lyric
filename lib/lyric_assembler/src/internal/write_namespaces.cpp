@@ -11,7 +11,7 @@
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
-#include <lyric_assembler/undeclared_symbol.h>
+#include <lyric_assembler/linkage_symbol.h>
 
 inline bool
 is_in_scope(lyric_object::AccessType access, bool includeUnusedPrivateSymbols)
@@ -123,7 +123,7 @@ lyric_assembler::internal::touch_namespace(
                 }
                 break;
             }
-            case SymbolType::UNDECLARED: {
+            case SymbolType::LINKAGE: {
                 break;
             }
             default:

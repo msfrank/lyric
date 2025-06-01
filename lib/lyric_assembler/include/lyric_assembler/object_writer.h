@@ -118,7 +118,7 @@ namespace lyric_assembler {
         std::vector<const StructSymbol *> m_structs;
         std::vector<const TemplateHandle *> m_templates;
         std::vector<const TypeHandle *> m_types;
-        std::vector<const UndeclaredSymbol *> m_undecls;
+        std::vector<const LinkageSymbol *> m_linkages;
 
         std::vector<const ImportHandle *> m_imports;
         std::vector<SymbolDefinition> m_symbols;

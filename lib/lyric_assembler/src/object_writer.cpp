@@ -33,7 +33,7 @@
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/type_cache.h>
-#include <lyric_assembler/undeclared_symbol.h>
+#include <lyric_assembler/linkage_symbol.h>
 #include <tempo_utils/memory_bytes.h>
 
 #include "lyric_assembler/object_plugin.h"
@@ -72,23 +72,23 @@ lyric_assembler::ObjectWriter::initialize()
     }
 
     // touch undecls
-    for (auto iterator = m_state->undeclaredBegin(); iterator != m_state->undeclaredEnd(); iterator++) {
-        auto &undeclSymbol = *iterator;
-        auto undeclUrl = undeclSymbol->getSymbolUrl();
+    for (auto iterator = m_state->linkagesBegin(); iterator != m_state->linkagesEnd(); iterator++) {
+        auto &linkageSymbol = *iterator;
+        auto linkageUrl = linkageSymbol->getSymbolUrl();
 
-        auto section = internal::linkage_to_descriptor(undeclSymbol->getLinkage());
+        auto section = internal::linkage_to_descriptor(linkageSymbol->getLinkage());
         if (section == lyo1::DescriptorSection::Invalid)
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "invalid undeclared symbol {}: could not parse linkage", undeclUrl.toString());
+                "invalid linkage symbol {}: could not parse linkage section", linkageUrl.toString());
 
         SymbolEntry symbolEntry;
         symbolEntry.type = SymbolEntry::EntryType::Descriptor;
         symbolEntry.index = static_cast<tu_uint32>(m_symbols.size());
         SymbolDefinition symbolDefinition;
-        symbolDefinition.section = undeclSymbol->getLinkage();
+        symbolDefinition.section = linkageSymbol->getLinkage();
         symbolDefinition.index = lyric_object::INVALID_ADDRESS_U32;
         m_symbols.push_back(symbolDefinition);
-        m_symbolEntries[undeclUrl] = symbolEntry;
+        m_symbolEntries[linkageUrl] = symbolEntry;
     }
 
     // if we are including all symbols then insert all imports
