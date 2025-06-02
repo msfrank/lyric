@@ -247,13 +247,15 @@ lyric_assembler::NamespaceSymbol::declareSubspace(
     lyric_common::SymbolUrl namespaceUrl(m_namespaceUrl.getModuleLocation(), namespacePath);
 
     auto namespaceSymbol = std::make_unique<NamespaceSymbol>(
-        namespaceUrl, access, priv->namespaceType, this, priv->isDeclOnly, priv->namespaceBlock.get(), m_state);
-    TU_RETURN_IF_NOT_OK (m_state->appendNamespace(namespaceSymbol.get()));
-    auto *namespacePtr = namespaceSymbol.release();
+        namespaceUrl, access, priv->namespaceType, this, priv->isDeclOnly,
+        priv->namespaceBlock.get(), m_state);
+
+    NamespaceSymbol *nsPtr;
+    TU_ASSIGN_OR_RETURN (nsPtr, m_state->appendNamespace(std::move(namespaceSymbol)));
 
     TU_RETURN_IF_STATUS (priv->namespaceBlock->declareAlias(name, namespaceUrl));
 
     priv->symbols[name] = namespaceUrl;
 
-    return namespacePtr;
+    return nsPtr;
 }

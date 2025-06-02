@@ -567,6 +567,10 @@ lyric_assembler::BlockHandle::declareStatic(
 {
      auto *typeCache = m_state->typeCache();
 
+    auto staticUrl = makeSymbolUrl(name);
+    LinkageSymbol *existingLinkage;
+    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, staticUrl));
+
     if (m_bindings.contains(name))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
@@ -576,15 +580,13 @@ lyric_assembler::BlockHandle::declareStatic(
     ReferenceType referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
 
     // make type handle if it doesn't exist already (for example union or intersection types)
-    lyric_assembler::TypeHandle *staticType;
+    TypeHandle *staticType;
     TU_ASSIGN_OR_RETURN (staticType, typeCache->getOrMakeType(assignableType));
-
-    auto staticUrl = makeSymbolUrl(name);
 
     auto staticSymbol = std::make_unique<StaticSymbol>(
         staticUrl, access, isVariable, staticType, declOnly, this, m_state);
-    TU_RETURN_IF_NOT_OK (m_state->appendStatic(staticSymbol.get()));
-    staticSymbol.release();
+
+    TU_RETURN_IF_STATUS (m_state->appendStatic(std::move(staticSymbol), existingLinkage));
 
     SymbolBinding binding;
     binding.bindingType = bindingType;
@@ -819,12 +821,9 @@ lyric_assembler::BlockHandle::declareFunction(
     auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
 
-    if (m_bindings.contains(name))
-        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
-            "cannot declare function {}; symbol is already defined", name);
-
     auto functionUrl = makeSymbolUrl(name);
+    LinkageSymbol *existingLinkage;
+    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, functionUrl));
 
     // create the template if there are any template parameters
     TemplateHandle *functionTemplate = nullptr;
@@ -842,8 +841,8 @@ lyric_assembler::BlockHandle::declareFunction(
             declOnly, this, m_state);
     }
 
-    TU_RETURN_IF_NOT_OK (m_state->appendCall(callSymbol.get()));
-    auto *callPtr = callSymbol.release();
+    CallSymbol *callPtr;
+    TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol), existingLinkage));
 
     SymbolBinding binding;
     binding.symbolUrl = functionUrl;
@@ -883,10 +882,9 @@ lyric_assembler::BlockHandle::declareClass(
     auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
 
-    if (m_bindings.contains(name))
-        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
-            "cannot declare class {}; symbol is already defined", name);
+    auto classUrl = makeSymbolUrl(name);
+    LinkageSymbol *existingLinkage;
+    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, classUrl));
 
     auto superDerive = superClass->getDeriveType();
     if (superDerive == lyric_object::DeriveType::Final)
@@ -899,8 +897,6 @@ lyric_assembler::BlockHandle::declareClass(
             tempo_tracing::LogSeverity::kError,
             "cannot derive class {} from {}; sealed base class must be located in the same module",
             name, superClass->getSymbolUrl().toString());
-
-    auto classUrl = makeSymbolUrl(name);
 
     // create the template if there are any template parameters
     TemplateHandle *classTemplate = nullptr;
@@ -928,8 +924,8 @@ lyric_assembler::BlockHandle::declareClass(
             typeHandle, superClass, declOnly, this, m_state);
     }
 
-    TU_RETURN_IF_NOT_OK (m_state->appendClass(classSymbol.get()));
-    auto *classPtr = classSymbol.release();
+    ClassSymbol *classPtr;
+    TU_ASSIGN_OR_RETURN (classPtr, m_state->appendClass(std::move(classSymbol), existingLinkage));
 
     SymbolBinding binding;
     binding.symbolUrl = classUrl;
@@ -974,12 +970,9 @@ lyric_assembler::BlockHandle::declareConcept(
     auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
 
-    if (m_bindings.contains(name))
-        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
-            "cannot declare concept {}; symbol is already defined", name);
-
     auto conceptUrl = makeSymbolUrl(name);
+    LinkageSymbol *existingLinkage;
+    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, conceptUrl));
 
     // create the template if there are any template parameters
     TemplateHandle *conceptTemplate = nullptr;
@@ -1007,8 +1000,8 @@ lyric_assembler::BlockHandle::declareConcept(
             superConcept, declOnly, this, m_state);
     }
 
-    TU_RETURN_IF_NOT_OK (m_state->appendConcept(conceptSymbol.get()));
-    auto *conceptPtr = conceptSymbol.release();
+    ConceptSymbol *conceptPtr;
+    TU_ASSIGN_OR_RETURN (conceptPtr, m_state->appendConcept(std::move(conceptSymbol), existingLinkage));
 
     SymbolBinding binding;
     binding.bindingType = BindingType::Descriptor;
@@ -1053,10 +1046,9 @@ lyric_assembler::BlockHandle::declareEnum(
     auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
 
-    if (m_bindings.contains(name))
-        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
-            "cannot declare enum {}; symbol is already defined", name);
+    auto enumUrl = makeSymbolUrl(name);
+    LinkageSymbol *existingLinkage;
+    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, enumUrl));
 
     auto superDerive = superEnum->getDeriveType();
     if (superDerive == lyric_object::DeriveType::Final)
@@ -1070,8 +1062,6 @@ lyric_assembler::BlockHandle::declareEnum(
             "cannot derive enum {} from {}; sealed base enum must be located in the same module",
             name, superEnum->getSymbolUrl().toString());
 
-    auto enumUrl = makeSymbolUrl(name);
-
     // create the type
     TypeHandle *typeHandle;
     TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
@@ -1081,8 +1071,8 @@ lyric_assembler::BlockHandle::declareEnum(
     auto enumSymbol = std::make_unique<EnumSymbol>(enumUrl, access, derive,
         isAbstract, typeHandle, superEnum, declOnly, this, m_state);
 
-    TU_RETURN_IF_NOT_OK (m_state->appendEnum(enumSymbol.get()));
-    auto *enumPtr = enumSymbol.release();
+    EnumSymbol *enumPtr;
+    TU_ASSIGN_OR_RETURN (enumPtr, m_state->appendEnum(std::move(enumSymbol), existingLinkage));
 
     SymbolBinding binding;
     binding.bindingType = BindingType::Descriptor;
@@ -1127,10 +1117,9 @@ lyric_assembler::BlockHandle::declareInstance(
     auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
 
-    if (m_bindings.contains(name))
-        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
-            "cannot declare instance {}; symbol is already defined", name);
+    auto instanceUrl = makeSymbolUrl(name);
+    LinkageSymbol *existingLinkage;
+    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, instanceUrl));
 
     auto superDerive = superInstance->getDeriveType();
     if (superDerive == lyric_object::DeriveType::Final)
@@ -1144,8 +1133,6 @@ lyric_assembler::BlockHandle::declareInstance(
             "cannot derive instance {} from {}; sealed base instance must be located in the same module",
             name, superInstance->getSymbolUrl().toString());
 
-    auto instanceUrl = makeSymbolUrl(name);
-
     // create the type
     TypeHandle *typeHandle;
     TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
@@ -1155,8 +1142,8 @@ lyric_assembler::BlockHandle::declareInstance(
     auto instanceSymbol = std::make_unique<InstanceSymbol>(instanceUrl, access, derive,
         isAbstract, typeHandle, superInstance, declOnly, this, m_state);
 
-    TU_RETURN_IF_NOT_OK (m_state->appendInstance(instanceSymbol.get()));
-    auto *instancePtr = instanceSymbol.release();
+    InstanceSymbol *instancePtr;
+    TU_ASSIGN_OR_RETURN (instancePtr, m_state->appendInstance(std::move(instanceSymbol), existingLinkage));
 
     SymbolBinding binding;
     binding.bindingType = BindingType::Descriptor;
@@ -1201,10 +1188,9 @@ lyric_assembler::BlockHandle::declareStruct(
     auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
 
-    if (m_bindings.contains(name))
-        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
-            "cannot declare struct {}; symbol is already defined", name);
+    auto structUrl = makeSymbolUrl(name);
+    LinkageSymbol *existingLinkage;
+    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, structUrl));
 
     auto superDerive = superStruct->getDeriveType();
     if (superDerive == lyric_object::DeriveType::Final)
@@ -1218,8 +1204,6 @@ lyric_assembler::BlockHandle::declareStruct(
             "cannot derive struct {} from {}; sealed base struct must be located in the same module",
             name, superStruct->getSymbolUrl().toString());
 
-    auto structUrl = makeSymbolUrl(name);
-
     // create the type
     TypeHandle *typeHandle;
     TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
@@ -1229,8 +1213,8 @@ lyric_assembler::BlockHandle::declareStruct(
     auto structSymbol = std::make_unique<StructSymbol>(structUrl, access, derive,
         isAbstract, typeHandle, superStruct, declOnly, this, m_state);
 
-    TU_RETURN_IF_NOT_OK (m_state->appendStruct(structSymbol.get()));
-    auto *structPtr = structSymbol.release();
+    StructSymbol *structPtr;
+    TU_ASSIGN_OR_RETURN (structPtr, m_state->appendStruct(std::move(structSymbol), existingLinkage));
 
     SymbolBinding binding;
     binding.bindingType = BindingType::Descriptor;
@@ -1429,12 +1413,9 @@ lyric_assembler::BlockHandle::declareBinding(
     auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
 
-    if (m_bindings.contains(name))
-        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
-            "cannot declare binding {}; symbol is already defined", name);
-
     auto bindingUrl = makeSymbolUrl(name);
+    LinkageSymbol *existingLinkage;
+    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, bindingUrl));
 
     // create the template if there are any template parameters
     TemplateHandle *bindingTemplate = nullptr;
@@ -1465,8 +1446,8 @@ lyric_assembler::BlockHandle::declareBinding(
             this, m_state);
     }
 
-    TU_RETURN_IF_NOT_OK (m_state->appendBinding(bindingSymbol.get()));
-    auto *bindingPtr = bindingSymbol.release();
+    BindingSymbol *bindingPtr;
+    TU_ASSIGN_OR_RETURN (bindingPtr, m_state->appendBinding(std::move(bindingSymbol), existingLinkage));
 
     SymbolBinding binding;
     binding.bindingType = BindingType::Descriptor;
@@ -1475,6 +1456,33 @@ lyric_assembler::BlockHandle::declareBinding(
     m_bindings[name] = binding;
 
     return bindingPtr;
+}
+
+tempo_utils::Result<lyric_assembler::LinkageSymbol *>
+lyric_assembler::BlockHandle::declareTypename(
+    const std::string &name,
+    lyric_object::AccessType access)
+{
+    auto *fundamentalCache = m_state->fundamentalCache();
+
+    auto linkageUrl = makeSymbolUrl(name);
+    LinkageSymbol *existingLinkage;
+    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, linkageUrl));
+
+    // create the linkage symbol
+    std::unique_ptr<LinkageSymbol> linkageSymbol;
+    linkageSymbol = std::make_unique<LinkageSymbol>(linkageUrl, lyric_object::LinkageSection::Type);
+
+    LinkageSymbol *linkagePtr;
+    TU_ASSIGN_OR_RETURN (linkagePtr, m_state->appendLinkage(std::move(linkageSymbol), existingLinkage));
+
+    SymbolBinding binding;
+    binding.bindingType = BindingType::Descriptor;
+    binding.symbolUrl = linkageUrl;
+    binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
+    m_bindings[name] = binding;
+
+    return linkagePtr;
 }
 
 tempo_utils::Result<lyric_assembler::SymbolBinding>
@@ -1710,8 +1718,33 @@ lyric_assembler::BlockHandle::makeSymbolUrl(const std::string &name) const
     auto path = enclosingDefinition.getSymbolPath().getPath();
     path.push_back(name);
     auto symbolUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(path));
-    TU_LOG_INFO << "symbol url for " << name << " is " << symbolUrl.toString();
     return symbolUrl;
+}
+
+tempo_utils::Result<lyric_assembler::LinkageSymbol *>
+lyric_assembler::BlockHandle::checkForLinkageOrNull(
+    std::string_view name,
+    const lyric_common::SymbolUrl &symbolUrl)
+{
+    auto entry = m_bindings.find(name);
+    if (entry == m_bindings.cend())
+        return nullptr;
+
+    const auto &binding = entry->second;
+    if (binding.symbolUrl != symbolUrl)
+        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+            tempo_tracing::LogSeverity::kError,
+            "cannot declare {}; name is already bound to {}",
+            name, binding.symbolUrl.toString());
+
+    auto *symbolCache = m_state->symbolCache();
+    auto *sym = symbolCache->getSymbolOrNull(symbolUrl);
+    if (sym->getSymbolType() != SymbolType::LINKAGE)
+        return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+            tempo_tracing::LogSeverity::kError,
+            "cannot declare {}; symbol is already defined", name);
+
+    return cast_symbol_to_linkage(sym);
 }
 
 void

@@ -257,19 +257,16 @@ lyric_assembler::ExistentialSymbol::declareMethod(
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
 
     // construct call symbol
-    auto *callSymbol = new CallSymbol(methodUrl, m_existentialUrl, access,
+    auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_existentialUrl, access,
         lyric_object::CallMode::Normal, priv->isDeclOnly, priv->existentialBlock.get(), m_state);
 
-    auto status = m_state->appendCall(callSymbol);
-    if (status.notOk()) {
-        delete callSymbol;
-        return status;
-    }
+    CallSymbol *callPtr;
+    TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
 
     // add bound method
     priv->methods[name] = { methodUrl, lyric_object::AccessType::Public, false /* final */ };
 
-    return callSymbol;
+    return callPtr;
 }
 
 tempo_utils::Status

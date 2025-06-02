@@ -70,8 +70,8 @@ lyric_archiver::copy_action(
         actionImport, actionSymbol.get(), importHash, targetNamespace, symbolReferenceSet, archiverState));
 
     // append the action to the object
-    TU_RETURN_IF_NOT_OK (objectState->appendAction(actionSymbol.get()));
-    auto *actionSymbolPtr = actionSymbol.release();
+    lyric_assembler::ActionSymbol *actionSymbolPtr;
+    TU_ASSIGN_OR_RETURN (actionSymbolPtr, objectState->appendAction(std::move(actionSymbol)));
 
     // add the action to the copied symbols map
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(importUrl, actionSymbolPtr));

@@ -46,15 +46,13 @@ lyric_assembler::ObjectRoot::initialize(std::shared_ptr<lyric_importer::ModuleIm
     lyric_common::SymbolUrl globalUrl(location, lyric_common::SymbolPath({"$global"}));
     auto globalNamespace = std::make_unique<lyric_assembler::NamespaceSymbol>(
         globalUrl, namespaceTypeHandle, m_rootBlock.get(), m_state);
-    TU_RETURN_IF_NOT_OK (m_state->appendNamespace(globalNamespace.get()));
-    m_globalNamespace = globalNamespace.release();
+    TU_ASSIGN_OR_RETURN (m_globalNamespace, m_state->appendNamespace(std::move(globalNamespace)));
 
     // create the $entry call
     lyric_common::SymbolUrl entryUrl(location, lyric_common::SymbolPath({"$entry"}));
     auto entryCall = std::make_unique<lyric_assembler::CallSymbol>(
         entryUrl, m_rootBlock.get(), m_state);
-    TU_RETURN_IF_NOT_OK (m_state->appendCall(entryCall.get()));
-    m_entryCall = entryCall.release();
+    TU_ASSIGN_OR_RETURN (m_entryCall, m_state->appendCall(std::move(entryCall)));
 
     auto preludeObject = preludeImport->getObject().getObject();
     auto preludeLocation = preludeImport->getObjectLocation();

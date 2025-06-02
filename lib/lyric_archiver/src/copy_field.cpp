@@ -41,13 +41,12 @@ lyric_archiver::copy_field(
         fieldImport->getFieldType(), importHash, targetNamespace, symbolReferenceSet, archiverState));
 
     // declare the field
-    std::unique_ptr<lyric_assembler::FieldSymbol> fieldSymbol;
-    fieldSymbol = std::make_unique<lyric_assembler::FieldSymbol>(
+    auto fieldSymbol = std::make_unique<lyric_assembler::FieldSymbol>(
         fieldUrl, access, isVariable, fieldType, /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     // append the field to the object
-    TU_RETURN_IF_NOT_OK (objectState->appendField(fieldSymbol.get()));
-    auto *fieldSymbolPtr = fieldSymbol.release();
+    lyric_assembler::FieldSymbol *fieldSymbolPtr;
+    TU_ASSIGN_OR_RETURN (fieldSymbolPtr, objectState->appendField(std::move(fieldSymbol)));
 
     // add the field to the copied symbols map
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(fieldUrl, fieldSymbolPtr));

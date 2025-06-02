@@ -38,8 +38,6 @@ lyric_parser::internal::ModuleDefineOps::exitTypenameStatement(ModuleParser::Typ
     typenameNode->putAttr(kLyricAstIdentifier, id);
     typenameNode->putAttrOrThrow(kLyricAstAccessType, access);
 
-    scopeManager->popSpan();
-
     // pop the top of the symbol stack and verify that the identifier matches
     m_state->popSymbolAndCheck(id);
 }

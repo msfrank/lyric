@@ -270,24 +270,22 @@ lyric_assembler::ConceptSymbol::declareAction(
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
 
     // construct action symbol
-    ActionSymbol *actionSymbol;
+    std::unique_ptr<ActionSymbol> actionSymbol;
     if (priv->conceptTemplate != nullptr) {
-        actionSymbol = new ActionSymbol(methodUrl, m_conceptUrl, access, priv->conceptTemplate,
-            priv->isDeclOnly, priv->conceptBlock.get(), m_state);
+        actionSymbol = std::make_unique<ActionSymbol>(methodUrl, m_conceptUrl,
+            access, priv->conceptTemplate, priv->isDeclOnly, priv->conceptBlock.get(), m_state);
     } else {
-        actionSymbol = new ActionSymbol(methodUrl, m_conceptUrl, access, priv->isDeclOnly,
-            priv->conceptBlock.get(), m_state);
+        actionSymbol = std::make_unique<ActionSymbol>(methodUrl, m_conceptUrl, access,
+            priv->isDeclOnly, priv->conceptBlock.get(), m_state);
     }
 
-    auto status = m_state->appendAction(actionSymbol);
-    if (status.notOk()) {
-        delete actionSymbol;
-        return status;
-    }
+    ActionSymbol *actionPtr;
+    TU_ASSIGN_OR_RETURN (actionPtr, m_state->appendAction(std::move(actionSymbol)));
 
     // add bound method
     priv->actions[name] = { methodUrl };
-    return actionSymbol;
+
+    return actionPtr;
 }
 
 tempo_utils::Status

@@ -194,27 +194,26 @@ lyric_assembler::ImplHandle::defineExtension(
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
     auto access = lyric_object::AccessType::Public;
 
-    // construct call symbol
-    CallSymbol *callSymbol;
     TemplateHandle *conceptTemplate = priv->implConcept->conceptTemplate();
+
+    // construct call symbol
+    std::unique_ptr<CallSymbol> callSymbol;
     if (conceptTemplate != nullptr) {
-        callSymbol = new CallSymbol(methodUrl, priv->receiverUrl, access,
-            lyric_object::CallMode::Normal, conceptTemplate, priv->isDeclOnly, priv->implBlock.get(), m_state);
+        callSymbol = std::make_unique<CallSymbol>(methodUrl, priv->receiverUrl, access,
+            lyric_object::CallMode::Normal, conceptTemplate, priv->isDeclOnly,
+            priv->implBlock.get(), m_state);
     } else {
-        callSymbol = new CallSymbol(methodUrl, priv->receiverUrl, access,
+        callSymbol = std::make_unique<CallSymbol>(methodUrl, priv->receiverUrl, access,
             lyric_object::CallMode::Normal, priv->isDeclOnly, priv->implBlock.get(), m_state);
     }
 
-    auto status = m_state->appendCall(callSymbol);
-    if (status.notOk()) {
-        delete callSymbol;
-        return status;
-    }
+    CallSymbol *callPtr;
+    TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
 
     // TODO: validate that the parameter types and return type match the action
 
     ProcHandle *extensionProc;
-    TU_ASSIGN_OR_RETURN (extensionProc, callSymbol->defineCall(parameterPack, returnType));
+    TU_ASSIGN_OR_RETURN (extensionProc, callPtr->defineCall(parameterPack, returnType));
 
     // add extension method
     ExtensionMethod extension;

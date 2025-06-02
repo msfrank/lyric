@@ -82,8 +82,8 @@ lyric_archiver::copy_concept(
     }
 
     // append the concept to the object
-    TU_RETURN_IF_NOT_OK (objectState->appendConcept(conceptSymbol.get()));
-    auto *conceptSymbolPtr = conceptSymbol.release();
+    lyric_assembler::ConceptSymbol *conceptSymbolPtr;
+    TU_ASSIGN_OR_RETURN (conceptSymbolPtr, objectState->appendConcept(std::move(conceptSymbol)));
 
     // add the concept to the copied symbols map
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(importUrl, conceptSymbolPtr));

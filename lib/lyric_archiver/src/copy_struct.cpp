@@ -62,8 +62,8 @@ lyric_archiver::copy_struct(
             /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     // append the struct to the object
-    TU_RETURN_IF_NOT_OK (objectState->appendStruct(structSymbol.get()));
-    auto *structSymbolPtr = structSymbol.release();
+    lyric_assembler::StructSymbol *structSymbolPtr;
+    TU_ASSIGN_OR_RETURN (structSymbolPtr, objectState->appendStruct(std::move(structSymbol)));
 
     // add the struct to the copied symbols map
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(importUrl, structSymbolPtr));

@@ -300,14 +300,11 @@ lyric_assembler::ClassSymbol::declareMember(
     auto memberUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(memberPath));
 
     // construct the field symbol
-    auto *fieldSymbol = new FieldSymbol(memberUrl, access, isVariable,
+    auto fieldSymbol = std::make_unique<FieldSymbol>(memberUrl, access, isVariable,
         fieldType, priv->isDeclOnly, priv->classBlock.get(), m_state);
 
-    auto status = m_state->appendField(fieldSymbol);
-    if (status.notOk()) {
-        delete fieldSymbol;
-        return status;
-    }
+    FieldSymbol *fieldPtr;
+    TU_ASSIGN_OR_RETURN (fieldPtr, m_state->appendField(std::move(fieldSymbol)));
 
     DataReference ref;
     ref.symbolUrl = memberUrl;
@@ -315,7 +312,7 @@ lyric_assembler::ClassSymbol::declareMember(
     ref.referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
     priv->members[name] = ref;
 
-    return fieldSymbol;
+    return fieldPtr;
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>
@@ -439,20 +436,18 @@ lyric_assembler::ClassSymbol::declareCtor(
             "ctor already defined for class {}", m_classUrl.toString());
 
     // construct call symbol
-    CallSymbol *ctorSymbol;
+    std::unique_ptr<CallSymbol> ctorSymbol;
     if (priv->classTemplate != nullptr) {
-        ctorSymbol = new CallSymbol(ctorUrl, m_classUrl, access, lyric_object::CallMode::Constructor,
-            priv->classTemplate, priv->isDeclOnly, priv->classBlock.get(), m_state);
+        ctorSymbol = std::make_unique<CallSymbol>(ctorUrl, m_classUrl, access,
+            lyric_object::CallMode::Constructor, priv->classTemplate, priv->isDeclOnly,
+            priv->classBlock.get(), m_state);
     } else {
-        ctorSymbol = new CallSymbol(ctorUrl, m_classUrl, access, lyric_object::CallMode::Constructor,
-            priv->isDeclOnly, priv->classBlock.get(), m_state);
+        ctorSymbol = std::make_unique<CallSymbol>(ctorUrl, m_classUrl, access,
+            lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->classBlock.get(), m_state);
     }
 
-    auto status = m_state->appendCall(ctorSymbol);
-    if (status.notOk()) {
-        delete ctorSymbol;
-        return status;
-    }
+    CallSymbol *ctorPtr;
+    TU_ASSIGN_OR_RETURN (ctorPtr, m_state->appendCall(std::move(ctorSymbol)));
 
     // add bound method
     BoundMethod method;
@@ -464,7 +459,7 @@ lyric_assembler::ClassSymbol::declareCtor(
     // set allocator trap
     priv->allocatorTrap = std::move(allocatorTrap);
 
-    return ctorSymbol;
+    return ctorPtr;
 }
 
 tempo_utils::Status
@@ -559,20 +554,18 @@ lyric_assembler::ClassSymbol::declareMethod(
     }
 
     // construct call symbol
-    CallSymbol *callSymbol;
+    std::unique_ptr<CallSymbol> callSymbol;
     if (methodTemplate != nullptr) {
-        callSymbol = new CallSymbol(methodUrl, m_classUrl, access, lyric_object::CallMode::Normal,
-            methodTemplate, priv->isDeclOnly, priv->classBlock.get(), m_state);
+        callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, access,
+            lyric_object::CallMode::Normal, methodTemplate, priv->isDeclOnly,
+            priv->classBlock.get(), m_state);
     } else {
-        callSymbol = new CallSymbol(methodUrl, m_classUrl, access, lyric_object::CallMode::Normal,
-            priv->isDeclOnly, priv->classBlock.get(), m_state);
+        callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, access,
+            lyric_object::CallMode::Normal, priv->isDeclOnly, priv->classBlock.get(), m_state);
     }
 
-    auto status = m_state->appendCall(callSymbol);
-    if (status.notOk()) {
-        delete callSymbol;
-        return status;
-    }
+    CallSymbol *callPtr;
+    TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
 
     // add bound method
     BoundMethod method;
@@ -581,7 +574,7 @@ lyric_assembler::ClassSymbol::declareMethod(
     method.final = false;
     priv->methods[name] = method;
 
-    return callSymbol;
+    return callPtr;
 }
 
 tempo_utils::Status

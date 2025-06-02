@@ -62,8 +62,8 @@ lyric_archiver::copy_enum(
             /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     // append the enum to the object
-    TU_RETURN_IF_NOT_OK (objectState->appendEnum(enumSymbol.get()));
-    auto *enumSymbolPtr = enumSymbol.release();
+    lyric_assembler::EnumSymbol *enumSymbolPtr;
+    TU_ASSIGN_OR_RETURN (enumSymbolPtr, objectState->appendEnum(std::move(enumSymbol)));
 
     // add the enum to the copied symbols map
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(importUrl, enumSymbolPtr));

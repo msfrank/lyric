@@ -172,6 +172,10 @@ namespace lyric_assembler {
             lyric_object::AccessType access,
             const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
+        tempo_utils::Result<LinkageSymbol *> declareTypename(
+            const std::string &name,
+            lyric_object::AccessType access);
+
         tempo_utils::Result<SymbolBinding> declareAlias(
             const std::string &alias,
             const lyric_common::SymbolUrl &targetUrl);
@@ -206,6 +210,10 @@ namespace lyric_assembler {
         ObjectState *m_state;
         absl::flat_hash_map<std::string, SymbolBinding> m_bindings;
         absl::flat_hash_map<lyric_common::TypeDef, ImplReference> m_impls;
+
+        tempo_utils::Result<LinkageSymbol *> checkForLinkageOrNull(
+            std::string_view name,
+            const lyric_common::SymbolUrl &symbolUrl);
 
     public:
         /**

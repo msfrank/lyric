@@ -244,136 +244,19 @@ lyric_assembler::ObjectState::implCache() const
     return m_implcache;
 }
 
-tempo_utils::Status
-lyric_assembler::ObjectState::appendNamespace(NamespaceSymbol *namespaceSymbol)
+tempo_utils::Result<lyric_assembler::ActionSymbol *>
+lyric_assembler::ObjectState::appendAction(
+    std::unique_ptr<ActionSymbol> &&actionSymbol,
+    LinkageSymbol *existingLinkage)
 {
-    TU_ASSERT (namespaceSymbol != nullptr);
-    auto symbolUrl = namespaceSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append namespace; symbol {} already exists", symbolUrl.toString());
-    m_namespaces.push_back(namespaceSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, namespaceSymbol);
-    return {};
-}
-
-std::vector<lyric_assembler::NamespaceSymbol *>::const_iterator
-lyric_assembler::ObjectState::namespacesBegin() const
-{
-    return m_namespaces.cbegin();
-}
-
-std::vector<lyric_assembler::NamespaceSymbol *>::const_iterator
-lyric_assembler::ObjectState::namespacesEnd() const
-{
-    return m_namespaces.cend();
-}
-
-int
-lyric_assembler::ObjectState::numNamespaces() const
-{
-    return m_namespaces.size();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::appendExistential(ExistentialSymbol *existentialSymbol)
-{
-    TU_ASSERT (existentialSymbol != nullptr);
-    auto symbolUrl = existentialSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append existential; symbol {} already exists", symbolUrl.toString());
-    m_existentials.push_back(existentialSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, existentialSymbol);
-    return {};
-}
-
-std::vector<lyric_assembler::ExistentialSymbol *>::const_iterator
-lyric_assembler::ObjectState::existentialsBegin() const
-{
-    return m_existentials.cbegin();
-}
-
-std::vector<lyric_assembler::ExistentialSymbol *>::const_iterator
-lyric_assembler::ObjectState::existentialsEnd() const
-{
-    return m_existentials.cend();
-}
-
-int
-lyric_assembler::ObjectState::numExistentials() const
-{
-    return m_existentials.size();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::appendStatic(StaticSymbol *staticSymbol)
-{
-    TU_ASSERT (staticSymbol != nullptr);
-    auto symbolUrl = staticSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append static; symbol {} already exists", symbolUrl.toString());
-    m_statics.push_back(staticSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, staticSymbol);
-    return {};
-}
-
-std::vector<lyric_assembler::StaticSymbol *>::const_iterator
-lyric_assembler::ObjectState::staticsBegin() const
-{
-    return m_statics.cbegin();
-}
-
-std::vector<lyric_assembler::StaticSymbol *>::const_iterator
-lyric_assembler::ObjectState::staticsEnd() const
-{
-    return m_statics.cend();
-}
-
-int
-lyric_assembler::ObjectState::numStatics() const
-{
-    return m_statics.size();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::appendField(FieldSymbol *fieldSymbol)
-{
-    TU_ASSERT (fieldSymbol != nullptr);
-    auto symbolUrl = fieldSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append field; symbol {} already exists", symbolUrl.toString());
-    m_fields.push_back(fieldSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, fieldSymbol);
-    return {};
-}
-
-std::vector<lyric_assembler::FieldSymbol *>::const_iterator
-lyric_assembler::ObjectState::fieldsBegin() const
-{
-    return m_fields.cbegin();
-}
-
-std::vector<lyric_assembler::FieldSymbol *>::const_iterator
-lyric_assembler::ObjectState::fieldsEnd() const
-{
-    return m_fields.cend();
-}
-
-int
-lyric_assembler::ObjectState::numFields() const
-{
-    return m_fields.size();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::appendAction(ActionSymbol *actionSymbol)
-{
-    TU_ASSERT (actionSymbol != nullptr);
+    if (actionSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid action symbol");
     auto symbolUrl = actionSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append action; symbol {} already exists", symbolUrl.toString());
-    m_actions.push_back(actionSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, actionSymbol);
-    return {};
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, actionSymbol.get(), existingLinkage));
+    auto *actionPtr = actionSymbol.release();
+    m_actions.push_back(actionPtr);
+    return actionPtr;
 }
 
 std::vector<lyric_assembler::ActionSymbol *>::const_iterator
@@ -394,195 +277,19 @@ lyric_assembler::ObjectState::numActions() const
     return m_actions.size();
 }
 
-tempo_utils::Status
-lyric_assembler::ObjectState::appendCall(CallSymbol *callSymbol)
+tempo_utils::Result<lyric_assembler::BindingSymbol *>
+lyric_assembler::ObjectState::appendBinding(
+        std::unique_ptr<BindingSymbol> &&bindingSymbol,
+        LinkageSymbol *existingLinkage)
 {
-    TU_ASSERT (callSymbol != nullptr);
-    auto symbolUrl = callSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append call; symbol {} already exists", symbolUrl.toString());
-    m_calls.push_back(callSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, callSymbol);
-    return {};
-}
-
-std::vector<lyric_assembler::CallSymbol *>::const_iterator
-lyric_assembler::ObjectState::callsBegin() const
-{
-    return m_calls.cbegin();
-}
-
-std::vector<lyric_assembler::CallSymbol *>::const_iterator
-lyric_assembler::ObjectState::callsEnd() const
-{
-    return m_calls.cend();
-}
-
-int
-lyric_assembler::ObjectState::numCalls() const
-{
-    return m_calls.size();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::appendConcept(ConceptSymbol *conceptSymbol)
-{
-    TU_ASSERT (conceptSymbol != nullptr);
-    auto symbolUrl = conceptSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append concept; symbol {} already exists", symbolUrl.toString());
-    m_concepts.push_back(conceptSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, conceptSymbol);
-    return {};
-}
-
-std::vector<lyric_assembler::ConceptSymbol *>::const_iterator
-lyric_assembler::ObjectState::conceptsBegin() const
-{
-    return m_concepts.cbegin();
-}
-
-std::vector<lyric_assembler::ConceptSymbol *>::const_iterator
-lyric_assembler::ObjectState::conceptsEnd() const
-{
-    return m_concepts.cend();
-}
-
-int
-lyric_assembler::ObjectState::numConcepts() const
-{
-    return m_concepts.size();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::appendClass(ClassSymbol *classSymbol)
-{
-    TU_ASSERT (classSymbol != nullptr);
-    auto symbolUrl = classSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append class; symbol {} already exists", symbolUrl.toString());
-    m_classes.push_back(classSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, classSymbol);
-    return {};
-}
-
-std::vector<lyric_assembler::ClassSymbol *>::const_iterator
-lyric_assembler::ObjectState::classesBegin() const
-{
-    return m_classes.cbegin();
-}
-
-std::vector<lyric_assembler::ClassSymbol *>::const_iterator
-lyric_assembler::ObjectState::classesEnd() const
-{
-    return m_classes.cend();
-}
-
-int
-lyric_assembler::ObjectState::numClasses() const
-{
-    return m_classes.size();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::appendStruct(StructSymbol *structSymbol)
-{
-    TU_ASSERT (structSymbol != nullptr);
-    auto symbolUrl = structSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append struct; symbol {} already exists", symbolUrl.toString());
-    m_structs.push_back(structSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, structSymbol);
-    return {};
-}
-
-std::vector<lyric_assembler::StructSymbol *>::const_iterator
-lyric_assembler::ObjectState::structsBegin() const
-{
-    return m_structs.cbegin();
-}
-
-std::vector<lyric_assembler::StructSymbol *>::const_iterator
-lyric_assembler::ObjectState::structsEnd() const
-{
-    return m_structs.cend();
-}
-
-int
-lyric_assembler::ObjectState::numStructs() const
-{
-    return m_structs.size();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::appendInstance(InstanceSymbol *instanceSymbol)
-{
-    TU_ASSERT (instanceSymbol != nullptr);
-    auto symbolUrl = instanceSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append instance; symbol {} already exists", symbolUrl.toString());
-    m_instances.push_back(instanceSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, instanceSymbol);
-    return {};
-}
-
-std::vector<lyric_assembler::InstanceSymbol *>::const_iterator
-lyric_assembler::ObjectState::instancesBegin() const
-{
-    return m_instances.cbegin();
-}
-
-std::vector<lyric_assembler::InstanceSymbol *>::const_iterator
-lyric_assembler::ObjectState::instancesEnd() const
-{
-    return m_instances.cend();
-}
-
-int
-lyric_assembler::ObjectState::numInstances() const
-{
-    return m_instances.size();
-}
-
-tempo_utils::Status
-lyric_assembler::ObjectState::appendEnum(EnumSymbol *enumSymbol)
-{
-    TU_ASSERT (enumSymbol != nullptr);
-    auto symbolUrl = enumSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append enum; symbol {} already exists", symbolUrl.toString());
-    m_enums.push_back(enumSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, enumSymbol);
-    return {};
-}
-
-std::vector<lyric_assembler::EnumSymbol *>::const_iterator
-lyric_assembler::ObjectState::enumsBegin() const
-{
-    return m_enums.cbegin();
-}
-
-std::vector<lyric_assembler::EnumSymbol *>::const_iterator
-lyric_assembler::ObjectState::enumsEnd() const
-{
-    return m_enums.cend();
-}
-
-int
-lyric_assembler::ObjectState::numEnums() const
-{
-    return m_enums.size();
-}
-
-tempo_utils::Status lyric_assembler::ObjectState::appendBinding(BindingSymbol *bindingSymbol)
-{
-    TU_ASSERT (bindingSymbol != nullptr);
+    if (bindingSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid binding symbol");
     auto symbolUrl = bindingSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append binding; symbol {} already exists", symbolUrl.toString());
-    m_bindings.push_back(bindingSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, bindingSymbol);
-    return {};
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, bindingSymbol.get(), existingLinkage));
+    auto *bindingPtr = bindingSymbol.release();
+    m_bindings.push_back(bindingPtr);
+    return bindingPtr;
 }
 
 std::vector<lyric_assembler::BindingSymbol *>::const_iterator
@@ -603,16 +310,250 @@ lyric_assembler::ObjectState::numBindings() const
     return m_bindings.size();
 }
 
-tempo_utils::Status
-lyric_assembler::ObjectState::appendLinkage(LinkageSymbol *linkageSymbol)
+tempo_utils::Result<lyric_assembler::CallSymbol *>
+lyric_assembler::ObjectState::appendCall(
+    std::unique_ptr<CallSymbol> &&callSymbol,
+    LinkageSymbol *existingLinkage)
 {
-    TU_ASSERT (linkageSymbol != nullptr);
+    if (callSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid call symbol");
+    auto symbolUrl = callSymbol->getSymbolUrl();
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, callSymbol.get(), existingLinkage));
+    auto *callPtr = callSymbol.release();
+    m_calls.push_back(callPtr);
+    return callPtr;
+}
+
+std::vector<lyric_assembler::CallSymbol *>::const_iterator
+lyric_assembler::ObjectState::callsBegin() const
+{
+    return m_calls.cbegin();
+}
+
+std::vector<lyric_assembler::CallSymbol *>::const_iterator
+lyric_assembler::ObjectState::callsEnd() const
+{
+    return m_calls.cend();
+}
+
+int
+lyric_assembler::ObjectState::numCalls() const
+{
+    return m_calls.size();
+}
+
+tempo_utils::Result<lyric_assembler::ClassSymbol *>
+lyric_assembler::ObjectState::appendClass(
+    std::unique_ptr<ClassSymbol> &&classSymbol,
+    LinkageSymbol *existingLinkage)
+{
+    if (classSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid class symbol");
+    auto symbolUrl = classSymbol->getSymbolUrl();
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, classSymbol.get(), existingLinkage));
+    auto *classPtr = classSymbol.release();
+    m_classes.push_back(classPtr);
+    return classPtr;
+}
+
+std::vector<lyric_assembler::ClassSymbol *>::const_iterator
+lyric_assembler::ObjectState::classesBegin() const
+{
+    return m_classes.cbegin();
+}
+
+std::vector<lyric_assembler::ClassSymbol *>::const_iterator
+lyric_assembler::ObjectState::classesEnd() const
+{
+    return m_classes.cend();
+}
+
+int
+lyric_assembler::ObjectState::numClasses() const
+{
+    return m_classes.size();
+}
+
+tempo_utils::Result<lyric_assembler::ConceptSymbol *>
+lyric_assembler::ObjectState::appendConcept(
+    std::unique_ptr<ConceptSymbol> &&conceptSymbol,
+    LinkageSymbol *existingLinkage)
+{
+    if (conceptSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid concept symbol");
+    auto symbolUrl = conceptSymbol->getSymbolUrl();
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, conceptSymbol.get(), existingLinkage));
+    auto *conceptPtr = conceptSymbol.release();
+    m_concepts.push_back(conceptPtr);
+    return conceptPtr;
+}
+
+std::vector<lyric_assembler::ConceptSymbol *>::const_iterator
+lyric_assembler::ObjectState::conceptsBegin() const
+{
+    return m_concepts.cbegin();
+}
+
+std::vector<lyric_assembler::ConceptSymbol *>::const_iterator
+lyric_assembler::ObjectState::conceptsEnd() const
+{
+    return m_concepts.cend();
+}
+
+int
+lyric_assembler::ObjectState::numConcepts() const
+{
+    return m_concepts.size();
+}
+
+tempo_utils::Result<lyric_assembler::EnumSymbol *>
+lyric_assembler::ObjectState::appendEnum(
+    std::unique_ptr<EnumSymbol> &&enumSymbol,
+    LinkageSymbol *existingLinkage)
+{
+    if (enumSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid enum symbol");
+    auto symbolUrl = enumSymbol->getSymbolUrl();
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, enumSymbol.get(), existingLinkage));
+    auto *enumPtr = enumSymbol.release();
+    m_enums.push_back(enumPtr);
+    return enumPtr;
+}
+
+std::vector<lyric_assembler::EnumSymbol *>::const_iterator
+lyric_assembler::ObjectState::enumsBegin() const
+{
+    return m_enums.cbegin();
+}
+
+std::vector<lyric_assembler::EnumSymbol *>::const_iterator
+lyric_assembler::ObjectState::enumsEnd() const
+{
+    return m_enums.cend();
+}
+
+int
+lyric_assembler::ObjectState::numEnums() const
+{
+    return m_enums.size();
+}
+
+tempo_utils::Result<lyric_assembler::ExistentialSymbol *>
+lyric_assembler::ObjectState::appendExistential(
+    std::unique_ptr<ExistentialSymbol> &&existentialSymbol,
+    LinkageSymbol *existingLinkage)
+{
+    if (existentialSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid existential symbol");
+    auto symbolUrl = existentialSymbol->getSymbolUrl();
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, existentialSymbol.get(), existingLinkage));
+    auto *existentialPtr = existentialSymbol.release();
+    m_existentials.push_back(existentialPtr);
+    return existentialPtr;
+}
+
+std::vector<lyric_assembler::ExistentialSymbol *>::const_iterator
+lyric_assembler::ObjectState::existentialsBegin() const
+{
+    return m_existentials.cbegin();
+}
+
+std::vector<lyric_assembler::ExistentialSymbol *>::const_iterator
+lyric_assembler::ObjectState::existentialsEnd() const
+{
+    return m_existentials.cend();
+}
+
+int
+lyric_assembler::ObjectState::numExistentials() const
+{
+    return m_existentials.size();
+}
+
+tempo_utils::Result<lyric_assembler::FieldSymbol *>
+lyric_assembler::ObjectState::appendField(
+    std::unique_ptr<FieldSymbol> &&fieldSymbol,
+    LinkageSymbol *existingLinkage)
+{
+    if (fieldSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid field symbol");
+    auto symbolUrl = fieldSymbol->getSymbolUrl();
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, fieldSymbol.get(), existingLinkage));
+    auto *fieldPtr = fieldSymbol.release();
+    m_fields.push_back(fieldPtr);
+    return fieldPtr;
+}
+
+std::vector<lyric_assembler::FieldSymbol *>::const_iterator
+lyric_assembler::ObjectState::fieldsBegin() const
+{
+    return m_fields.cbegin();
+}
+
+std::vector<lyric_assembler::FieldSymbol *>::const_iterator
+lyric_assembler::ObjectState::fieldsEnd() const
+{
+    return m_fields.cend();
+}
+
+int
+lyric_assembler::ObjectState::numFields() const
+{
+    return m_fields.size();
+}
+
+tempo_utils::Result<lyric_assembler::InstanceSymbol *>
+lyric_assembler::ObjectState::appendInstance(
+    std::unique_ptr<InstanceSymbol> &&instanceSymbol,
+    LinkageSymbol *existingLinkage)
+{
+    if (instanceSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid instance symbol");
+    auto symbolUrl = instanceSymbol->getSymbolUrl();
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, instanceSymbol.get(), existingLinkage));
+    auto *instancePtr = instanceSymbol.release();
+    m_instances.push_back(instancePtr);
+    return instancePtr;
+}
+
+std::vector<lyric_assembler::InstanceSymbol *>::const_iterator
+lyric_assembler::ObjectState::instancesBegin() const
+{
+    return m_instances.cbegin();
+}
+
+std::vector<lyric_assembler::InstanceSymbol *>::const_iterator
+lyric_assembler::ObjectState::instancesEnd() const
+{
+    return m_instances.cend();
+}
+
+int
+lyric_assembler::ObjectState::numInstances() const
+{
+    return m_instances.size();
+}
+
+tempo_utils::Result<lyric_assembler::LinkageSymbol *>
+lyric_assembler::ObjectState::appendLinkage(
+    std::unique_ptr<LinkageSymbol> &&linkageSymbol,
+    LinkageSymbol *existingLinkage)
+{
+    if (linkageSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid linkage symbol");
     auto symbolUrl = linkageSymbol->getSymbolUrl();
-    if (m_symbolcache->hasSymbol(symbolUrl))
-        throwAssemblerInvariant("failed to append linkage; symbol {} already exists", symbolUrl.toString());
-    m_linkages.push_back(linkageSymbol);
-    m_symbolcache->insertSymbol(symbolUrl, linkageSymbol);
-    return {};
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, linkageSymbol.get(), existingLinkage));
+    auto *linkagePtr = linkageSymbol.release();
+    m_linkages.push_back(linkagePtr);
+    return linkagePtr;
 }
 
 std::vector<lyric_assembler::LinkageSymbol *>::const_iterator
@@ -631,6 +572,105 @@ int
 lyric_assembler::ObjectState::numLinkages() const
 {
     return m_linkages.size();
+}
+
+tempo_utils::Result<lyric_assembler::NamespaceSymbol *>
+lyric_assembler::ObjectState::appendNamespace(
+    std::unique_ptr<NamespaceSymbol> &&namespaceSymbol,
+    LinkageSymbol *existingLinkage)
+{
+    if (namespaceSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid namespace symbol");
+    auto symbolUrl = namespaceSymbol->getSymbolUrl();
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, namespaceSymbol.get(), existingLinkage));
+    auto *namespacePtr = namespaceSymbol.release();
+    m_namespaces.push_back(namespacePtr);
+    return namespacePtr;
+}
+
+std::vector<lyric_assembler::NamespaceSymbol *>::const_iterator
+lyric_assembler::ObjectState::namespacesBegin() const
+{
+    return m_namespaces.cbegin();
+}
+
+std::vector<lyric_assembler::NamespaceSymbol *>::const_iterator
+lyric_assembler::ObjectState::namespacesEnd() const
+{
+    return m_namespaces.cend();
+}
+
+int
+lyric_assembler::ObjectState::numNamespaces() const
+{
+    return m_namespaces.size();
+}
+
+tempo_utils::Result<lyric_assembler::StaticSymbol *>
+lyric_assembler::ObjectState::appendStatic(
+    std::unique_ptr<StaticSymbol> &&staticSymbol,
+    LinkageSymbol *existingLinkage)
+{
+    if (staticSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid static symbol");
+    auto symbolUrl = staticSymbol->getSymbolUrl();
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, staticSymbol.get(), existingLinkage));
+    auto *staticPtr = staticSymbol.release();
+    m_statics.push_back(staticPtr);
+    return staticPtr;
+}
+
+std::vector<lyric_assembler::StaticSymbol *>::const_iterator
+lyric_assembler::ObjectState::staticsBegin() const
+{
+    return m_statics.cbegin();
+}
+
+std::vector<lyric_assembler::StaticSymbol *>::const_iterator
+lyric_assembler::ObjectState::staticsEnd() const
+{
+    return m_statics.cend();
+}
+
+int
+lyric_assembler::ObjectState::numStatics() const
+{
+    return m_statics.size();
+}
+
+tempo_utils::Result<lyric_assembler::StructSymbol *>
+lyric_assembler::ObjectState::appendStruct(
+    std::unique_ptr<StructSymbol> &&structSymbol,
+    LinkageSymbol *existingLinkage)
+{
+    if (structSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid struct symbol");
+    auto symbolUrl = structSymbol->getSymbolUrl();
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, structSymbol.get(), existingLinkage));
+    auto *structPtr = structSymbol.release();
+    m_structs.push_back(structPtr);
+    return structPtr;
+}
+
+std::vector<lyric_assembler::StructSymbol *>::const_iterator
+lyric_assembler::ObjectState::structsBegin() const
+{
+    return m_structs.cbegin();
+}
+
+std::vector<lyric_assembler::StructSymbol *>::const_iterator
+lyric_assembler::ObjectState::structsEnd() const
+{
+    return m_structs.cend();
+}
+
+int
+lyric_assembler::ObjectState::numStructs() const
+{
+    return m_structs.size();
 }
 
 tempo_utils::Result<lyric_object::LyricObject>

@@ -3,6 +3,8 @@
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/symbol_cache.h>
 
+#include "lyric_assembler/linkage_symbol.h"
+
 lyric_assembler::SymbolCache::SymbolCache(ObjectState *state, AssemblerTracer *tracer)
     : m_state(state),
       m_tracer(tracer)
@@ -15,6 +17,10 @@ lyric_assembler::SymbolCache::~SymbolCache()
 {
     for (auto &ptr : m_symcache) {
         delete ptr.second;
+    }
+    while (!m_removed.empty()) {
+        delete m_removed.front();
+        m_removed.pop();
     }
 }
 
@@ -71,13 +77,76 @@ lyric_assembler::SymbolCache::getOrImportSymbol(const lyric_common::SymbolUrl &s
     return sym;
 }
 
-tempo_utils::Status
-lyric_assembler::SymbolCache::insertSymbol(const lyric_common::SymbolUrl &symbolUrl, AbstractSymbol *abstractSymbol)
+inline lyric_object::LinkageSection
+symbol_type_to_linkage_section(lyric_assembler::AbstractSymbol *sym)
 {
-    if (m_symcache.contains(symbolUrl))
-        return m_tracer->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
-            "symbol {} is already defined", symbolUrl.toString());
+    if (sym == nullptr)
+        return lyric_object::LinkageSection::Invalid;
+    switch (sym->getSymbolType()) {
+        case lyric_assembler::SymbolType::ACTION:
+            return lyric_object::LinkageSection::Action;
+        case lyric_assembler::SymbolType::BINDING:
+            return lyric_object::LinkageSection::Binding;
+        case lyric_assembler::SymbolType::CALL:
+            return lyric_object::LinkageSection::Call;
+        case lyric_assembler::SymbolType::CLASS:
+            return lyric_object::LinkageSection::Class;
+        case lyric_assembler::SymbolType::CONCEPT:
+            return lyric_object::LinkageSection::Concept;
+        case lyric_assembler::SymbolType::ENUM:
+            return lyric_object::LinkageSection::Enum;
+        case lyric_assembler::SymbolType::EXISTENTIAL:
+            return lyric_object::LinkageSection::Existential;
+        case lyric_assembler::SymbolType::FIELD:
+            return lyric_object::LinkageSection::Field;
+        case lyric_assembler::SymbolType::INSTANCE:
+            return lyric_object::LinkageSection::Instance;
+        case lyric_assembler::SymbolType::NAMESPACE:
+            return lyric_object::LinkageSection::Namespace;
+        case lyric_assembler::SymbolType::STATIC:
+            return lyric_object::LinkageSection::Static;
+        case lyric_assembler::SymbolType::STRUCT:
+            return lyric_object::LinkageSection::Struct;
+        default:
+            return lyric_object::LinkageSection::Invalid;
+    }
+}
+
+tempo_utils::Status
+lyric_assembler::SymbolCache::insertSymbol(
+    const lyric_common::SymbolUrl &symbolUrl,
+    AbstractSymbol *abstractSymbol,
+    LinkageSymbol *existingLinkage)
+{
+    auto entry = m_symcache.find(symbolUrl);
+
+    // if symbol is in the cache then check whether it's appropriate to replace it
+    if (entry != m_symcache.cend()) {
+        auto *previousSymbol = entry->second;
+        if (previousSymbol->getSymbolType() != SymbolType::LINKAGE)
+            return m_tracer->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+                tempo_tracing::LogSeverity::kError,
+                "symbol {} is already defined", symbolUrl.toString());
+        if (previousSymbol != existingLinkage)
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "existing linkage doesn't match symbol in cache");
+
+        auto *linkageSymbol = cast_symbol_to_linkage(previousSymbol);
+        auto linkageSection = linkageSymbol->getLinkage();
+
+        // it is allowable to replace an existing symbol in the cache if the new symbol is not a LinkageSymbol,
+        // the previous symbol is a LinkageSymbol, and its linkage section is either Type (indicating a typename
+        // declaration) or matches the linkage section of the new symbol
+        if (linkageSection != lyric_object::LinkageSection::Type
+            && linkageSection != symbol_type_to_linkage_section(abstractSymbol))
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "failed to replace existing linkage symbol {}; section does not match",
+                symbolUrl.toString());
+
+        // add previous symbol to the free list
+        m_removed.push(previousSymbol);
+    }
+
     m_symcache[symbolUrl] = abstractSymbol;
     return {};
 }

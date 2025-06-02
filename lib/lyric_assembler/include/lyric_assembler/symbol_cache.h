@@ -13,10 +13,14 @@ namespace lyric_assembler {
         SymbolCache(ObjectState *state, AssemblerTracer *tracer);
         ~SymbolCache();
 
+        tempo_utils::Status insertSymbol(
+            const lyric_common::SymbolUrl &symbolUrl,
+            AbstractSymbol *abstractSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
+
         bool hasSymbol(const lyric_common::SymbolUrl &symbolUrl) const;
         AbstractSymbol *getSymbolOrNull(const lyric_common::SymbolUrl &symbolUrl) const;
         tempo_utils::Result<AbstractSymbol *> getOrImportSymbol(const lyric_common::SymbolUrl &symbolUrl) const;
-        tempo_utils::Status insertSymbol(const lyric_common::SymbolUrl &symbolUrl, AbstractSymbol *abstractSymbol);
         absl::flat_hash_map<lyric_common::SymbolUrl, AbstractSymbol *>::const_iterator symbolsBegin() const;
         absl::flat_hash_map<lyric_common::SymbolUrl, AbstractSymbol *>::const_iterator symbolsEnd() const;
         int numSymbols() const;
@@ -33,6 +37,7 @@ namespace lyric_assembler {
         ObjectState *m_state;
         AssemblerTracer *m_tracer;
         absl::flat_hash_map<lyric_common::SymbolUrl, AbstractSymbol *> m_symcache;
+        std::queue<AbstractSymbol *> m_removed;
 //        absl::flat_hash_map<std::string, SymbolBinding> m_envBindings;
 //        absl::flat_hash_map<lyric_common::TypeDef, lyric_common::SymbolUrl> m_envInstances;
     };

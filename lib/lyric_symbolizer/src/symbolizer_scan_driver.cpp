@@ -111,8 +111,7 @@ lyric_symbolizer::SymbolizerScanDriver::declareTypename(const lyric_parser::Arch
     auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(
         symbolUrl, lyric_object::LinkageSection::Type);
 
-    TU_RETURN_IF_NOT_OK (m_state->appendLinkage(linkage.get()));
-    linkage.release();
+    TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
     TU_LOG_INFO << "declared typename " << symbolUrl;
 
     return putNamespaceTarget(symbolUrl);
@@ -132,8 +131,7 @@ lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::Archet
     auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(
         symbolUrl, lyric_object::LinkageSection::Static);
 
-    TU_RETURN_IF_NOT_OK (m_state->appendLinkage(linkage.get()));
-    linkage.release();
+    TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
     TU_LOG_INFO << "declared static " << symbolUrl;
 
     return putNamespaceTarget(symbolUrl);
@@ -152,8 +150,7 @@ lyric_symbolizer::SymbolizerScanDriver::pushDefinition(
     lyric_common::SymbolUrl symbolUrl(symbolPath);
     auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(symbolUrl, section);
 
-    TU_RETURN_IF_NOT_OK (m_state->appendLinkage(linkage.get()));
-    linkage.release();
+    TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
     TU_LOG_INFO << "declared definition " << symbolUrl;
 
     auto *currentNamespace = m_namespaces.top();

@@ -155,16 +155,10 @@ lyric_assembler::StaticSymbol::defineInitializer()
     std::vector<lyric_object::Parameter> parameters;
 
     // construct call symbol
-    auto *initSymbol = new CallSymbol(initializerUrl, lyric_object::AccessType::Public,
+    auto initSymbol = std::make_unique<CallSymbol>(initializerUrl, lyric_object::AccessType::Public,
         lyric_object::CallMode::Normal, priv->isDeclOnly, priv->staticBlock.get(), m_state);
 
-    auto status = m_state->appendCall(initSymbol);
-    if (status.notOk()) {
-        delete initSymbol;
-        return status;
-    }
-
-    priv->initCall = initSymbol;
+    TU_ASSIGN_OR_RETURN (priv->initCall, m_state->appendCall(std::move(initSymbol)));
 
     return priv->initCall->defineCall({}, returnType);
 }

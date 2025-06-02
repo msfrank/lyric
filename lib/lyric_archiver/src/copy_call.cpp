@@ -82,8 +82,8 @@ lyric_archiver::copy_call(
         callImport, callSymbol.get(), importHash, targetNamespace, symbolReferenceSet, archiverState));
 
     // append the call to the object
-    TU_RETURN_IF_NOT_OK (objectState->appendCall(callSymbol.get()));
-    auto *callSymbolPtr = callSymbol.release();
+    lyric_assembler::CallSymbol *callSymbolPtr;
+    TU_ASSIGN_OR_RETURN (callSymbolPtr, objectState->appendCall(std::move(callSymbol)));
 
     // add the call to the copied symbols map
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(importUrl, callSymbolPtr));

@@ -81,8 +81,8 @@ lyric_archiver::copy_class(
     }
 
     // append the class to the object
-    TU_RETURN_IF_NOT_OK (objectState->appendClass(classSymbol.get()));
-    auto *classSymbolPtr = classSymbol.release();
+    lyric_assembler::ClassSymbol *classSymbolPtr;
+    TU_ASSIGN_OR_RETURN (classSymbolPtr, objectState->appendClass(std::move(classSymbol)));
 
     // add the class to the copied symbols map
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(importUrl, classSymbolPtr));

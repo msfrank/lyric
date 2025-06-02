@@ -33,6 +33,8 @@ namespace lyric_analyzer {
         tempo_utils::Status pushContext(std::unique_ptr<AbstractAnalyzerContext> ctx);
         tempo_utils::Status popContext();
 
+        tempo_utils::Status declareTypename(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
+        tempo_utils::Status declareBinding(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
         tempo_utils::Status declareStatic(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
         tempo_utils::Status pushFunction(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
         tempo_utils::Status pushNamespace(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);

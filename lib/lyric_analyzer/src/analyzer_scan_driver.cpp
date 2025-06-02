@@ -10,12 +10,14 @@
 #include <lyric_analyzer/namespace_analyzer_context.h>
 #include <lyric_analyzer/proc_analyzer_context.h>
 #include <lyric_analyzer/struct_analyzer_context.h>
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/linkage_symbol.h>
 #include <lyric_assembler/object_root.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -109,6 +111,61 @@ lyric_analyzer::AnalyzerScanDriver::popContext()
         return AnalyzerStatus::forCondition(
             AnalyzerCondition::kAnalyzerInvariant, "handler stack is empty");
     m_handlers.pop_back();
+    return {};
+}
+
+tempo_utils::Status
+lyric_analyzer::AnalyzerScanDriver::declareTypename(
+    const lyric_parser::ArchetypeNode *node,
+    lyric_assembler::BlockHandle *block)
+{
+    std::string identifier;
+    lyric_parser::AccessType access;
+
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+
+    lyric_assembler::LinkageSymbol *linkageSymbol;
+    TU_ASSIGN_OR_RETURN (linkageSymbol, block->declareTypename(
+        identifier, internal::convert_access_type(access)));
+
+    auto *currentNamespace = m_namespaces.top();
+    TU_ASSERT (currentNamespace != nullptr);
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(linkageSymbol->getSymbolUrl()));
+
+    TU_LOG_INFO << "declared typename " << linkageSymbol->getSymbolUrl();
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_analyzer::AnalyzerScanDriver::declareBinding(
+    const lyric_parser::ArchetypeNode *node,
+    lyric_assembler::BlockHandle *block)
+{
+    std::string identifier;
+    lyric_parser::AccessType access;
+    lyric_typing::TemplateSpec templateSpec;
+
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+
+    if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
+        lyric_parser::ArchetypeNode *genericNode = nullptr;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
+        TU_ASSIGN_OR_RETURN (templateSpec, m_typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
+    }
+
+    lyric_assembler::BindingSymbol *bindingSymbol;
+    TU_ASSIGN_OR_RETURN (bindingSymbol, block->declareBinding(
+        identifier, internal::convert_access_type(access), templateSpec.templateParameters));
+
+    auto *currentNamespace = m_namespaces.top();
+    TU_ASSERT (currentNamespace != nullptr);
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(bindingSymbol->getSymbolUrl()));
+
+    TU_LOG_INFO << "declared binding " << bindingSymbol->getSymbolUrl();
+
     return {};
 }
 

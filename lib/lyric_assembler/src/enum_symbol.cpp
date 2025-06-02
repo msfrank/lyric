@@ -257,14 +257,11 @@ lyric_assembler::EnumSymbol::declareMember(
     auto memberUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(memberPath));
 
     // construct the field symbol
-    auto *fieldSymbol = new FieldSymbol(memberUrl, access, isVariable,
+    auto fieldSymbol = std::make_unique<FieldSymbol>(memberUrl, access, isVariable,
         fieldType, priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
-    auto status = m_state->appendField(fieldSymbol);
-    if (status.notOk()) {
-        delete fieldSymbol;
-        return status;
-    }
+    FieldSymbol *fieldPtr;
+    TU_ASSIGN_OR_RETURN (fieldPtr, m_state->appendField(std::move(fieldSymbol)));
 
     DataReference ref;
     ref.symbolUrl = memberUrl;
@@ -272,7 +269,7 @@ lyric_assembler::EnumSymbol::declareMember(
     ref.referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
     priv->members[name] = ref;
 
-    return fieldSymbol;
+    return fieldPtr;
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>
@@ -385,14 +382,11 @@ lyric_assembler::EnumSymbol::declareCtor(
             "ctor already defined for enum {}", m_enumUrl.toString());
 
     // construct call symbol
-    auto *ctorSymbol = new CallSymbol(ctorUrl, m_enumUrl, access, lyric_object::CallMode::Constructor,
-        priv->isDeclOnly, priv->enumBlock.get(), m_state);
+    auto ctorSymbol = std::make_unique<CallSymbol>(ctorUrl, m_enumUrl, access,
+        lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
-    auto status = m_state->appendCall(ctorSymbol);
-    if (status.notOk()) {
-        delete ctorSymbol;
-        return status;
-    }
+    CallSymbol *ctorPtr;
+    TU_ASSIGN_OR_RETURN (ctorPtr, m_state->appendCall(std::move(ctorSymbol)));
 
     // add bound method
     BoundMethod method;
@@ -404,7 +398,7 @@ lyric_assembler::EnumSymbol::declareCtor(
     // set allocator trap
     priv->allocatorTrap = std::move(allocatorTrap);
 
-    return ctorSymbol;
+    return ctorPtr;
 }
 
 tempo_utils::Status
@@ -482,19 +476,16 @@ lyric_assembler::EnumSymbol::declareMethod(
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
 
     // construct call symbol
-    auto *callSymbol = new CallSymbol(methodUrl, m_enumUrl, access, lyric_object::CallMode::Normal,
-        priv->isDeclOnly, priv->enumBlock.get(), m_state);
+    auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_enumUrl, access,
+        lyric_object::CallMode::Normal, priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
-    auto status = m_state->appendCall(callSymbol);
-    if (status.notOk()) {
-        delete callSymbol;
-        return status;
-    }
+    CallSymbol *callPtr;
+    TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
 
     // add bound method
     priv->methods[name] = { methodUrl, access, true /* final */ };
 
-    return callSymbol;
+    return callPtr;
 }
 
 tempo_utils::Status

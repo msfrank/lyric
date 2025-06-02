@@ -62,8 +62,8 @@ lyric_archiver::copy_instance(
             /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     // append the instance to the object
-    TU_RETURN_IF_NOT_OK (objectState->appendInstance(instanceSymbol.get()));
-    auto *instanceSymbolPtr = instanceSymbol.release();
+    lyric_assembler::InstanceSymbol *instanceSymbolPtr;
+    TU_ASSIGN_OR_RETURN (instanceSymbolPtr, objectState->appendInstance(std::move(instanceSymbol)));
 
     // add the instance to the copied symbols map
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(importUrl, instanceSymbolPtr));

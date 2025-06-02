@@ -104,70 +104,96 @@ namespace lyric_assembler {
         TypeCache *typeCache() const;
         ImplCache *implCache() const;
 
-        tempo_utils::Status appendNamespace(NamespaceSymbol *namespaceSymbol);
-        std::vector<NamespaceSymbol *>::const_iterator namespacesBegin() const;
-        std::vector<NamespaceSymbol *>::const_iterator namespacesEnd() const;
-        int numNamespaces() const;
-
-        tempo_utils::Status appendExistential(ExistentialSymbol *existentialSymbol);
-        std::vector<ExistentialSymbol *>::const_iterator existentialsBegin() const;
-        std::vector<ExistentialSymbol *>::const_iterator existentialsEnd() const;
-        int numExistentials() const;
-
-        tempo_utils::Status appendStatic(StaticSymbol *staticSymbol);
-        std::vector<StaticSymbol *>::const_iterator staticsBegin() const;
-        std::vector<StaticSymbol *>::const_iterator staticsEnd() const;
-        int numStatics() const;
-
-        tempo_utils::Status appendField(FieldSymbol *fieldSymbol);
-        std::vector<FieldSymbol *>::const_iterator fieldsBegin() const;
-        std::vector<FieldSymbol *>::const_iterator fieldsEnd() const;
-        int numFields() const;
-
-        tempo_utils::Status appendAction(ActionSymbol *actionSymbol);
+        tempo_utils::Result<ActionSymbol *> appendAction(
+            std::unique_ptr<ActionSymbol> &&actionSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
         std::vector<ActionSymbol *>::const_iterator actionsBegin() const;
         std::vector<ActionSymbol *>::const_iterator actionsEnd() const;
         int numActions() const;
 
-        tempo_utils::Status appendCall(CallSymbol *callSymbol);
-        std::vector<CallSymbol *>::const_iterator callsBegin() const;
-        std::vector<CallSymbol *>::const_iterator callsEnd() const;
-        int numCalls() const;
-
-        tempo_utils::Status appendConcept(ConceptSymbol *conceptSymbol);
-        std::vector<ConceptSymbol *>::const_iterator conceptsBegin() const;
-        std::vector<ConceptSymbol *>::const_iterator conceptsEnd() const;
-        int numConcepts() const;
-
-        tempo_utils::Status appendClass(ClassSymbol *classSymbol);
-        std::vector<ClassSymbol *>::const_iterator classesBegin() const;
-        std::vector<ClassSymbol *>::const_iterator classesEnd() const;
-        int numClasses() const;
-
-        tempo_utils::Status appendStruct(StructSymbol *structSymbol);
-        std::vector<StructSymbol *>::const_iterator structsBegin() const;
-        std::vector<StructSymbol *>::const_iterator structsEnd() const;
-        int numStructs() const;
-
-        tempo_utils::Status appendInstance(InstanceSymbol *instanceSymbol);
-        std::vector<InstanceSymbol *>::const_iterator instancesBegin() const;
-        std::vector<InstanceSymbol *>::const_iterator instancesEnd() const;
-        int numInstances() const;
-
-        tempo_utils::Status appendEnum(EnumSymbol *enumSymbol);
-        std::vector<EnumSymbol *>::const_iterator enumsBegin() const;
-        std::vector<EnumSymbol *>::const_iterator enumsEnd() const;
-        int numEnums() const;
-
-        tempo_utils::Status appendBinding(BindingSymbol *bindingSymbol);
+        tempo_utils::Result<BindingSymbol *> appendBinding(
+            std::unique_ptr<BindingSymbol> &&bindingSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
         std::vector<BindingSymbol *>::const_iterator bindingsBegin() const;
         std::vector<BindingSymbol *>::const_iterator bindingsEnd() const;
         int numBindings() const;
 
-        tempo_utils::Status appendLinkage(LinkageSymbol *linkageSymbol);
+        tempo_utils::Result<CallSymbol *> appendCall(
+            std::unique_ptr<CallSymbol> &&callSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
+        std::vector<CallSymbol *>::const_iterator callsBegin() const;
+        std::vector<CallSymbol *>::const_iterator callsEnd() const;
+        int numCalls() const;
+
+        tempo_utils::Result<ClassSymbol *> appendClass(
+            std::unique_ptr<ClassSymbol> &&classSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
+        std::vector<ClassSymbol *>::const_iterator classesBegin() const;
+        std::vector<ClassSymbol *>::const_iterator classesEnd() const;
+        int numClasses() const;
+
+        tempo_utils::Result<ConceptSymbol *> appendConcept(
+            std::unique_ptr<ConceptSymbol> &&conceptSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
+        std::vector<ConceptSymbol *>::const_iterator conceptsBegin() const;
+        std::vector<ConceptSymbol *>::const_iterator conceptsEnd() const;
+        int numConcepts() const;
+
+        tempo_utils::Result<EnumSymbol *> appendEnum(
+            std::unique_ptr<EnumSymbol> &&enumSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
+        std::vector<EnumSymbol *>::const_iterator enumsBegin() const;
+        std::vector<EnumSymbol *>::const_iterator enumsEnd() const;
+        int numEnums() const;
+
+        tempo_utils::Result<ExistentialSymbol *> appendExistential(
+            std::unique_ptr<ExistentialSymbol> &&existentialSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
+        std::vector<ExistentialSymbol *>::const_iterator existentialsBegin() const;
+        std::vector<ExistentialSymbol *>::const_iterator existentialsEnd() const;
+        int numExistentials() const;
+
+        tempo_utils::Result<FieldSymbol *> appendField(
+            std::unique_ptr<FieldSymbol> &&fieldSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
+        std::vector<FieldSymbol *>::const_iterator fieldsBegin() const;
+        std::vector<FieldSymbol *>::const_iterator fieldsEnd() const;
+        int numFields() const;
+
+        tempo_utils::Result<InstanceSymbol *> appendInstance(
+            std::unique_ptr<InstanceSymbol> &&instanceSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
+        std::vector<InstanceSymbol *>::const_iterator instancesBegin() const;
+        std::vector<InstanceSymbol *>::const_iterator instancesEnd() const;
+        int numInstances() const;
+
+        tempo_utils::Result<LinkageSymbol *> appendLinkage(
+            std::unique_ptr<LinkageSymbol> &&linkageSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
         std::vector<LinkageSymbol *>::const_iterator linkagesBegin() const;
         std::vector<LinkageSymbol *>::const_iterator linkagesEnd() const;
         int numLinkages() const;
+
+        tempo_utils::Result<NamespaceSymbol *> appendNamespace(
+            std::unique_ptr<NamespaceSymbol> &&namespaceSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
+        std::vector<NamespaceSymbol *>::const_iterator namespacesBegin() const;
+        std::vector<NamespaceSymbol *>::const_iterator namespacesEnd() const;
+        int numNamespaces() const;
+
+        tempo_utils::Result<StaticSymbol *> appendStatic(
+            std::unique_ptr<StaticSymbol> &&staticSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
+        std::vector<StaticSymbol *>::const_iterator staticsBegin() const;
+        std::vector<StaticSymbol *>::const_iterator staticsEnd() const;
+        int numStatics() const;
+
+        tempo_utils::Result<StructSymbol *> appendStruct(
+            std::unique_ptr<StructSymbol> &&structSymbol,
+            LinkageSymbol *existingLinkage = nullptr);
+        std::vector<StructSymbol *>::const_iterator structsBegin() const;
+        std::vector<StructSymbol *>::const_iterator structsEnd() const;
+        int numStructs() const;
 
         tempo_utils::Result<lyric_object::LyricObject> toObject() const;
 
@@ -190,19 +216,19 @@ namespace lyric_assembler {
         ImplCache *m_implcache = nullptr;
         std::unique_ptr<ObjectPlugin> m_plugin;
 
-        std::vector<BindingSymbol *> m_bindings;
-        std::vector<NamespaceSymbol *> m_namespaces;
-        std::vector<ExistentialSymbol *> m_existentials;
-        std::vector<StaticSymbol *> m_statics;
         std::vector<ActionSymbol *> m_actions;
+        std::vector<BindingSymbol *> m_bindings;
         std::vector<CallSymbol *> m_calls;
-        std::vector<FieldSymbol *> m_fields;
-        std::vector<ConceptSymbol *> m_concepts;
         std::vector<ClassSymbol *> m_classes;
-        std::vector<StructSymbol *> m_structs;
-        std::vector<InstanceSymbol *> m_instances;
+        std::vector<ConceptSymbol *> m_concepts;
         std::vector<EnumSymbol *> m_enums;
+        std::vector<ExistentialSymbol *> m_existentials;
+        std::vector<FieldSymbol *> m_fields;
+        std::vector<InstanceSymbol *> m_instances;
         std::vector<LinkageSymbol *> m_linkages;
+        std::vector<NamespaceSymbol *> m_namespaces;
+        std::vector<StaticSymbol *> m_statics;
+        std::vector<StructSymbol *> m_structs;
 
         tempo_utils::Status createRoot(const lyric_common::ModuleLocation &preludeLocation);
 
