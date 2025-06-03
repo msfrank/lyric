@@ -60,6 +60,9 @@ lyric_assembler::internal::touch_type(
             case SymbolType::STRUCT:
                 TU_RETURN_IF_NOT_OK (writer.touchStruct(cast_symbol_to_struct(symbol)));
                 break;
+            case SymbolType::TYPENAME:
+                return AssemblerStatus::forCondition(AssemblerCondition::kTypeError,
+                    "typename '{}' was declared but not defined", typeDef.toString());
             default:
                 return AssemblerStatus::forCondition(
                     AssemblerCondition::kAssemblerInvariant, "invalid symbol for type");

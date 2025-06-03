@@ -17,12 +17,11 @@
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/instance_symbol.h>
-#include <lyric_assembler/linkage_symbol.h>
 #include <lyric_assembler/object_root.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
+#include <lyric_assembler/typename_symbol.h>
 #include <lyric_assembler/type_cache.h>
-#include <lyric_assembler/linkage_symbol.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 
@@ -125,15 +124,15 @@ lyric_analyzer::AnalyzerScanDriver::declareTypename(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
-    lyric_assembler::LinkageSymbol *linkageSymbol;
-    TU_ASSIGN_OR_RETURN (linkageSymbol, block->declareTypename(
+    lyric_assembler::TypenameSymbol *typenameSymbol;
+    TU_ASSIGN_OR_RETURN (typenameSymbol, block->declareTypename(
         identifier, internal::convert_access_type(access)));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
-    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(linkageSymbol->getSymbolUrl()));
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(typenameSymbol->getSymbolUrl()));
 
-    TU_LOG_INFO << "declared typename " << linkageSymbol->getSymbolUrl();
+    TU_LOG_INFO << "declared typename " << typenameSymbol->getSymbolUrl();
 
     return {};
 }
@@ -156,9 +155,22 @@ lyric_analyzer::AnalyzerScanDriver::declareBinding(
         TU_ASSIGN_OR_RETURN (templateSpec, m_typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
     }
 
+    // parse the target spec
+    lyric_parser::ArchetypeNode *typeNode;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+    lyric_typing::TypeSpec targetSpec;
+    TU_ASSIGN_OR_RETURN (targetSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+
     lyric_assembler::BindingSymbol *bindingSymbol;
     TU_ASSIGN_OR_RETURN (bindingSymbol, block->declareBinding(
         identifier, internal::convert_access_type(access), templateSpec.templateParameters));
+
+    auto *resolver = bindingSymbol->bindingResolver();
+
+    // define the target type
+    lyric_common::TypeDef targetType;
+    TU_ASSIGN_OR_RETURN (targetType, m_typeSystem->resolveAssignable(resolver, targetSpec));
+    TU_RETURN_IF_NOT_OK (bindingSymbol->defineTarget(targetType));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);

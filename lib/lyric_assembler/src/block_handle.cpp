@@ -22,6 +22,7 @@
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/template_handle.h>
+#include <lyric_assembler/typename_symbol.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_assembler/linkage_symbol.h>
 #include <tempo_utils/log_stream.h>
@@ -290,13 +291,13 @@ resolve_binding_tail_recursive(
     std::vector<std::string>::const_iterator curr,
     std::vector<std::string>::const_iterator end)   // NOLINT(misc-no-recursion)
 {
-    if (curr == end || !targetNs->hasSymbol(*curr))
+    if (curr == end || !targetNs->hasTarget(*curr))
         return resolveBlock->logAndContinue(
             lyric_assembler::AssemblerCondition::kMissingSymbol,
             tempo_tracing::LogSeverity::kError,
             "missing symbol {}", lyric_common::SymbolPath(path).toString());
 
-    auto symbolUrl = targetNs->getSymbol(*curr);
+    auto symbolUrl = targetNs->getTarget(*curr);
 
     auto *state = resolveBlock->blockState();
     lyric_assembler::AbstractSymbol *symbol;
@@ -568,8 +569,8 @@ lyric_assembler::BlockHandle::declareStatic(
      auto *typeCache = m_state->typeCache();
 
     auto staticUrl = makeSymbolUrl(name);
-    LinkageSymbol *existingLinkage;
-    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, staticUrl));
+    TypenameSymbol *existingTypename;
+    TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, staticUrl));
 
     if (m_bindings.contains(name))
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
@@ -586,7 +587,7 @@ lyric_assembler::BlockHandle::declareStatic(
     auto staticSymbol = std::make_unique<StaticSymbol>(
         staticUrl, access, isVariable, staticType, declOnly, this, m_state);
 
-    TU_RETURN_IF_STATUS (m_state->appendStatic(std::move(staticSymbol), existingLinkage));
+    TU_RETURN_IF_STATUS (m_state->appendStatic(std::move(staticSymbol), existingTypename));
 
     SymbolBinding binding;
     binding.bindingType = bindingType;
@@ -822,8 +823,8 @@ lyric_assembler::BlockHandle::declareFunction(
     auto *typeCache = m_state->typeCache();
 
     auto functionUrl = makeSymbolUrl(name);
-    LinkageSymbol *existingLinkage;
-    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, functionUrl));
+    TypenameSymbol *existingTypename;
+    TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, functionUrl));
 
     // create the template if there are any template parameters
     TemplateHandle *functionTemplate = nullptr;
@@ -842,7 +843,7 @@ lyric_assembler::BlockHandle::declareFunction(
     }
 
     CallSymbol *callPtr;
-    TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol), existingLinkage));
+    TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol), existingTypename));
 
     SymbolBinding binding;
     binding.symbolUrl = functionUrl;
@@ -883,8 +884,8 @@ lyric_assembler::BlockHandle::declareClass(
     auto *typeCache = m_state->typeCache();
 
     auto classUrl = makeSymbolUrl(name);
-    LinkageSymbol *existingLinkage;
-    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, classUrl));
+    TypenameSymbol *existingTypename;
+    TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, classUrl));
 
     auto superDerive = superClass->getDeriveType();
     if (superDerive == lyric_object::DeriveType::Final)
@@ -925,7 +926,7 @@ lyric_assembler::BlockHandle::declareClass(
     }
 
     ClassSymbol *classPtr;
-    TU_ASSIGN_OR_RETURN (classPtr, m_state->appendClass(std::move(classSymbol), existingLinkage));
+    TU_ASSIGN_OR_RETURN (classPtr, m_state->appendClass(std::move(classSymbol), existingTypename));
 
     SymbolBinding binding;
     binding.symbolUrl = classUrl;
@@ -971,8 +972,8 @@ lyric_assembler::BlockHandle::declareConcept(
     auto *typeCache = m_state->typeCache();
 
     auto conceptUrl = makeSymbolUrl(name);
-    LinkageSymbol *existingLinkage;
-    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, conceptUrl));
+    TypenameSymbol *existingTypename;
+    TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, conceptUrl));
 
     // create the template if there are any template parameters
     TemplateHandle *conceptTemplate = nullptr;
@@ -1001,7 +1002,7 @@ lyric_assembler::BlockHandle::declareConcept(
     }
 
     ConceptSymbol *conceptPtr;
-    TU_ASSIGN_OR_RETURN (conceptPtr, m_state->appendConcept(std::move(conceptSymbol), existingLinkage));
+    TU_ASSIGN_OR_RETURN (conceptPtr, m_state->appendConcept(std::move(conceptSymbol), existingTypename));
 
     SymbolBinding binding;
     binding.bindingType = BindingType::Descriptor;
@@ -1047,8 +1048,8 @@ lyric_assembler::BlockHandle::declareEnum(
     auto *typeCache = m_state->typeCache();
 
     auto enumUrl = makeSymbolUrl(name);
-    LinkageSymbol *existingLinkage;
-    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, enumUrl));
+    TypenameSymbol *existingTypename;
+    TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, enumUrl));
 
     auto superDerive = superEnum->getDeriveType();
     if (superDerive == lyric_object::DeriveType::Final)
@@ -1067,12 +1068,12 @@ lyric_assembler::BlockHandle::declareEnum(
     TU_ASSIGN_OR_RETURN (typeHandle, typeCache->declareSubType(
         enumUrl, {}, superEnum->getTypeDef()));
 
-    // create the instance
+    // create the enum
     auto enumSymbol = std::make_unique<EnumSymbol>(enumUrl, access, derive,
         isAbstract, typeHandle, superEnum, declOnly, this, m_state);
 
     EnumSymbol *enumPtr;
-    TU_ASSIGN_OR_RETURN (enumPtr, m_state->appendEnum(std::move(enumSymbol), existingLinkage));
+    TU_ASSIGN_OR_RETURN (enumPtr, m_state->appendEnum(std::move(enumSymbol), existingTypename));
 
     SymbolBinding binding;
     binding.bindingType = BindingType::Descriptor;
@@ -1118,8 +1119,8 @@ lyric_assembler::BlockHandle::declareInstance(
     auto *typeCache = m_state->typeCache();
 
     auto instanceUrl = makeSymbolUrl(name);
-    LinkageSymbol *existingLinkage;
-    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, instanceUrl));
+    TypenameSymbol *existingTypename;
+    TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, instanceUrl));
 
     auto superDerive = superInstance->getDeriveType();
     if (superDerive == lyric_object::DeriveType::Final)
@@ -1143,7 +1144,7 @@ lyric_assembler::BlockHandle::declareInstance(
         isAbstract, typeHandle, superInstance, declOnly, this, m_state);
 
     InstanceSymbol *instancePtr;
-    TU_ASSIGN_OR_RETURN (instancePtr, m_state->appendInstance(std::move(instanceSymbol), existingLinkage));
+    TU_ASSIGN_OR_RETURN (instancePtr, m_state->appendInstance(std::move(instanceSymbol), existingTypename));
 
     SymbolBinding binding;
     binding.bindingType = BindingType::Descriptor;
@@ -1189,8 +1190,8 @@ lyric_assembler::BlockHandle::declareStruct(
     auto *typeCache = m_state->typeCache();
 
     auto structUrl = makeSymbolUrl(name);
-    LinkageSymbol *existingLinkage;
-    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, structUrl));
+    TypenameSymbol *existingTypename;
+    TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, structUrl));
 
     auto superDerive = superStruct->getDeriveType();
     if (superDerive == lyric_object::DeriveType::Final)
@@ -1214,7 +1215,7 @@ lyric_assembler::BlockHandle::declareStruct(
         isAbstract, typeHandle, superStruct, declOnly, this, m_state);
 
     StructSymbol *structPtr;
-    TU_ASSIGN_OR_RETURN (structPtr, m_state->appendStruct(std::move(structSymbol), existingLinkage));
+    TU_ASSIGN_OR_RETURN (structPtr, m_state->appendStruct(std::move(structSymbol), existingTypename));
 
     SymbolBinding binding;
     binding.bindingType = BindingType::Descriptor;
@@ -1414,8 +1415,8 @@ lyric_assembler::BlockHandle::declareBinding(
     auto *typeCache = m_state->typeCache();
 
     auto bindingUrl = makeSymbolUrl(name);
-    LinkageSymbol *existingLinkage;
-    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, bindingUrl));
+    TypenameSymbol *existingTypename;
+    TU_ASSIGN_OR_RETURN (existingTypename, checkForTypenameOrNull(name, bindingUrl));
 
     // create the template if there are any template parameters
     TemplateHandle *bindingTemplate = nullptr;
@@ -1447,7 +1448,7 @@ lyric_assembler::BlockHandle::declareBinding(
     }
 
     BindingSymbol *bindingPtr;
-    TU_ASSIGN_OR_RETURN (bindingPtr, m_state->appendBinding(std::move(bindingSymbol), existingLinkage));
+    TU_ASSIGN_OR_RETURN (bindingPtr, m_state->appendBinding(std::move(bindingSymbol), existingTypename));
 
     SymbolBinding binding;
     binding.bindingType = BindingType::Descriptor;
@@ -1458,31 +1459,25 @@ lyric_assembler::BlockHandle::declareBinding(
     return bindingPtr;
 }
 
-tempo_utils::Result<lyric_assembler::LinkageSymbol *>
+tempo_utils::Result<lyric_assembler::TypenameSymbol *>
 lyric_assembler::BlockHandle::declareTypename(
     const std::string &name,
     lyric_object::AccessType access)
 {
     auto *fundamentalCache = m_state->fundamentalCache();
+    auto *symbolCache = m_state->symbolCache();
 
-    auto linkageUrl = makeSymbolUrl(name);
-    LinkageSymbol *existingLinkage;
-    TU_ASSIGN_OR_RETURN (existingLinkage, checkForLinkageOrNull(name, linkageUrl));
-
-    // create the linkage symbol
-    std::unique_ptr<LinkageSymbol> linkageSymbol;
-    linkageSymbol = std::make_unique<LinkageSymbol>(linkageUrl, lyric_object::LinkageSection::Type);
-
-    LinkageSymbol *linkagePtr;
-    TU_ASSIGN_OR_RETURN (linkagePtr, m_state->appendLinkage(std::move(linkageSymbol), existingLinkage));
+    auto typenameUrl = makeSymbolUrl(name);
+    TypenameSymbol *typenameSymbol;
+    TU_ASSIGN_OR_RETURN (typenameSymbol, symbolCache->putTypename(typenameUrl));
 
     SymbolBinding binding;
     binding.bindingType = BindingType::Descriptor;
-    binding.symbolUrl = linkageUrl;
+    binding.symbolUrl = typenameUrl;
     binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
     m_bindings[name] = binding;
 
-    return linkagePtr;
+    return typenameSymbol;
 }
 
 tempo_utils::Result<lyric_assembler::SymbolBinding>
@@ -1721,8 +1716,8 @@ lyric_assembler::BlockHandle::makeSymbolUrl(const std::string &name) const
     return symbolUrl;
 }
 
-tempo_utils::Result<lyric_assembler::LinkageSymbol *>
-lyric_assembler::BlockHandle::checkForLinkageOrNull(
+tempo_utils::Result<lyric_assembler::TypenameSymbol *>
+lyric_assembler::BlockHandle::checkForTypenameOrNull(
     std::string_view name,
     const lyric_common::SymbolUrl &symbolUrl)
 {
@@ -1739,12 +1734,12 @@ lyric_assembler::BlockHandle::checkForLinkageOrNull(
 
     auto *symbolCache = m_state->symbolCache();
     auto *sym = symbolCache->getSymbolOrNull(symbolUrl);
-    if (sym->getSymbolType() != SymbolType::LINKAGE)
+    if (sym->getSymbolType() != SymbolType::TYPENAME)
         return logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
             tempo_tracing::LogSeverity::kError,
             "cannot declare {}; symbol is already defined", name);
 
-    return cast_symbol_to_linkage(sym);
+    return cast_symbol_to_typename(sym);
 }
 
 void

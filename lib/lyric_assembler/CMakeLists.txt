@@ -66,6 +66,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/template_handle.h
     include/lyric_assembler/type_cache.h
     include/lyric_assembler/type_handle.h
+    include/lyric_assembler/typename_symbol.h
     include/lyric_assembler/type_set.h
     include/lyric_assembler/linkage_symbol.h
     )
@@ -121,6 +122,7 @@ target_sources(lyric_assembler PRIVATE
     src/template_handle.cpp
     src/type_cache.cpp
     src/type_handle.cpp
+    src/typename_symbol.cpp
     src/type_set.cpp
     src/linkage_symbol.cpp
 

@@ -45,8 +45,8 @@ lyric_assembler::internal::touch_namespace(
 
     auto *symbolCache = objectState->symbolCache();
 
-    for (auto symbolIterator = namespaceSymbol->symbolsBegin();
-        symbolIterator != namespaceSymbol->symbolsEnd();
+    for (auto symbolIterator = namespaceSymbol->targetsBegin();
+        symbolIterator != namespaceSymbol->targetsEnd();
         symbolIterator++) {
         const auto &symbolUrl = symbolIterator->second;
 
@@ -174,8 +174,8 @@ write_namespace(
 
     // serialize array of symbols
     std::vector<tu_uint32> bindings;
-    for (auto symbolIterator = namespaceSymbol->symbolsBegin();
-         symbolIterator != namespaceSymbol->symbolsEnd();
+    for (auto symbolIterator = namespaceSymbol->targetsBegin();
+         symbolIterator != namespaceSymbol->targetsEnd();
          symbolIterator++) {
         const auto &symbolUrl = symbolIterator->second;
 

@@ -1,6 +1,8 @@
 #ifndef LYRIC_ASSEMBLER_BASE_SYMBOL_H
 #define LYRIC_ASSEMBLER_BASE_SYMBOL_H
 
+#include <lyric_object//object_types.h>
+
 #include "abstract_symbol.h"
 #include "base_handle.h"
 #include "assembler_result.h"

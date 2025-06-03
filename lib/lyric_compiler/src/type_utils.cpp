@@ -2,6 +2,7 @@
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/type_set.h>
 #include <lyric_compiler/compiler_result.h>
+#include <lyric_compiler/compiler_utils.h>
 #include <lyric_compiler/type_utils.h>
 #include <lyric_parser/ast_attrs.h>
 

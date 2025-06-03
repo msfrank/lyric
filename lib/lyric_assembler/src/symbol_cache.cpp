@@ -2,8 +2,7 @@
 #include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/symbol_cache.h>
-
-#include "lyric_assembler/linkage_symbol.h"
+#include <lyric_assembler/typename_symbol.h>
 
 lyric_assembler::SymbolCache::SymbolCache(ObjectState *state, AssemblerTracer *tracer)
     : m_state(state),
@@ -18,9 +17,9 @@ lyric_assembler::SymbolCache::~SymbolCache()
     for (auto &ptr : m_symcache) {
         delete ptr.second;
     }
-    while (!m_removed.empty()) {
-        delete m_removed.front();
-        m_removed.pop();
+    while (!m_typenames.empty()) {
+        delete m_typenames.front();
+        m_typenames.pop();
     }
 }
 
@@ -116,39 +115,37 @@ tempo_utils::Status
 lyric_assembler::SymbolCache::insertSymbol(
     const lyric_common::SymbolUrl &symbolUrl,
     AbstractSymbol *abstractSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     auto entry = m_symcache.find(symbolUrl);
 
     // if symbol is in the cache then check whether it's appropriate to replace it
     if (entry != m_symcache.cend()) {
         auto *previousSymbol = entry->second;
-        if (previousSymbol->getSymbolType() != SymbolType::LINKAGE)
+        if (previousSymbol->getSymbolType() != SymbolType::TYPENAME)
             return m_tracer->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
                 tempo_tracing::LogSeverity::kError,
                 "symbol {} is already defined", symbolUrl.toString());
-        if (previousSymbol != existingLinkage)
+        if (existingTypename && previousSymbol != existingTypename)
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "existing linkage doesn't match symbol in cache");
-
-        auto *linkageSymbol = cast_symbol_to_linkage(previousSymbol);
-        auto linkageSection = linkageSymbol->getLinkage();
-
-        // it is allowable to replace an existing symbol in the cache if the new symbol is not a LinkageSymbol,
-        // the previous symbol is a LinkageSymbol, and its linkage section is either Type (indicating a typename
-        // declaration) or matches the linkage section of the new symbol
-        if (linkageSection != lyric_object::LinkageSection::Type
-            && linkageSection != symbol_type_to_linkage_section(abstractSymbol))
-            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                "failed to replace existing linkage symbol {}; section does not match",
-                symbolUrl.toString());
-
-        // add previous symbol to the free list
-        m_removed.push(previousSymbol);
+                "existing typename doesn't match symbol in cache");
+        m_typenames.push(cast_symbol_to_typename(previousSymbol));
     }
 
     m_symcache[symbolUrl] = abstractSymbol;
     return {};
+}
+
+tempo_utils::Result<lyric_assembler::TypenameSymbol *>
+lyric_assembler::SymbolCache::putTypename(const lyric_common::SymbolUrl &typenameUrl)
+{
+    if (m_symcache.contains(typenameUrl))
+        return m_tracer->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
+            tempo_tracing::LogSeverity::kError,
+            "symbol {} is already defined", typenameUrl.toString());
+    auto *typenameSymbol = new TypenameSymbol(typenameUrl);
+    m_symcache[typenameUrl] = typenameSymbol;
+    return typenameSymbol;
 }
 
 absl::flat_hash_map<lyric_common::SymbolUrl, lyric_assembler::AbstractSymbol *>::const_iterator
@@ -168,54 +165,3 @@ lyric_assembler::SymbolCache::numSymbols() const
 {
     return m_symcache.size();
 }
-
-//bool
-//lyric_assembler::SymbolCache::hasEnvBinding(const std::string &name) const
-//{
-//    return m_envBindings.contains(name);
-//}
-//
-//lyric_assembler::SymbolBinding
-//lyric_assembler::SymbolCache::getEnvBinding(const std::string &name) const
-//{
-//    auto iterator = m_envBindings.find(name);
-//    if (iterator == m_envBindings.cend())
-//        return {};
-//    return iterator->second;
-//}
-//
-//tempo_utils::Status
-//lyric_assembler::SymbolCache::insertEnvBinding(const std::string &name, const SymbolBinding &binding)
-//{
-//    if (m_envBindings.contains(name))
-//        return m_tracer->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-//            tempo_tracing::LogSeverity::kError,
-//            "env binding {} is already set", name);
-//    m_envBindings[name] = binding;
-//    return {};
-//}
-//
-//bool
-//lyric_assembler::SymbolCache::hasEnvInstance(const lyric_common::TypeDef &type) const
-//{
-//    return m_envInstances.contains(type);
-//}
-//
-//lyric_common::SymbolUrl
-//lyric_assembler::SymbolCache::getEnvInstance(const lyric_common::TypeDef &type) const
-//{
-//    if (m_envInstances.contains(type))
-//        return m_envInstances.at(type);
-//    return {};
-//}
-//
-//tempo_utils::Status
-//lyric_assembler::SymbolCache::insertEnvInstance(const lyric_common::TypeDef &type, const lyric_common::SymbolUrl &url)
-//{
-//    if (m_envInstances.contains(type))
-//        return m_tracer->logAndContinue(AssemblerCondition::kImplConflict,
-//            tempo_tracing::LogSeverity::kError,
-//            "env instance {} is already set", type.toString());
-//    m_envInstances[type] = url;
-//    return {};
-//}

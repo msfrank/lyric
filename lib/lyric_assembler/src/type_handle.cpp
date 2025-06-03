@@ -2,60 +2,55 @@
 #include <lyric_assembler/type_cache.h>
 #include <lyric_assembler/type_handle.h>
 
+#include "lyric_assembler/linkage_symbol.h"
+
+lyric_assembler::TypeHandle::TypeHandle(const lyric_common::TypeDef &typeDef)
+    : m_typeDef(typeDef),
+      m_superType(nullptr),
+      m_specificSymbol(nullptr)
+{
+    TU_ASSERT (m_typeDef.isValid());
+}
+
+lyric_assembler::TypeHandle::TypeHandle(const lyric_common::TypeDef &typeDef, TypeHandle *superType)
+    : m_typeDef(typeDef),
+      m_superType(superType),
+      m_specificSymbol(nullptr)
+{
+    TU_ASSERT (m_typeDef.isValid());
+    TU_ASSERT (m_superType != nullptr);
+}
+
 lyric_assembler::TypeHandle::TypeHandle(
     const lyric_common::SymbolUrl &concreteUrl,
     const std::vector<lyric_common::TypeDef> &typeArguments,
-    TypeHandle *superType,
-    ObjectState *state)
+    TypeHandle *superType)
     : m_superType(superType),
-      m_signature()
+      m_specificSymbol(nullptr)
 {
     m_typeDef = lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments);
-
-//    if (m_address.isValid()) {
-//        std::vector<TypeAddress> signature;
-//        signature.insert(signature.cbegin(), address);
-//        for (auto *super = m_superType; super != nullptr; super = super->m_superType) {
-//            auto superAddress = super->getAddress();
-//            TU_ASSERT (superAddress.isValid());
-//            signature.insert(signature.cbegin(), superAddress);
-//        }
-//        m_signature = TypeSignature(signature);
-//    }
+    TU_ASSERT (m_superType != nullptr);
 }
 
 lyric_assembler::TypeHandle::TypeHandle(
     int placeholderIndex,
     const lyric_common::SymbolUrl &templateUrl,
-    const std::vector<lyric_common::TypeDef> &typeArguments,
-    ObjectState *state)
+    const std::vector<lyric_common::TypeDef> &typeArguments)
     : m_superType(nullptr),
-      m_signature()
+      m_specificSymbol(nullptr)
 {
     m_typeDef = lyric_common::TypeDef::forPlaceholder(placeholderIndex, templateUrl, typeArguments);
-
-//    if (m_address.isValid()) {
-//        std::vector<TypeAddress> signature;
-//        signature.insert(signature.cbegin(), address);
-//        // FIXME
-//        for (auto *superType = m_superType; superType != nullptr; superType = superType->m_superType) {
-//            auto superAddress = superType->getAddress();
-//            TU_ASSERT (superAddress.isValid());
-//            signature.insert(signature.cbegin(), superAddress);
-//        }
-//        m_signature = TypeSignature(signature);
-//    }
 }
 
 lyric_assembler::TypeHandle::TypeHandle(
-    const lyric_common::TypeDef &typeDef,
-    TypeHandle *superType,
-    ObjectState *state)
-    : m_typeDef(typeDef),
-      m_superType(superType),
-      m_signature()
+    const lyric_common::SymbolUrl &specificUrl,
+    const std::vector<lyric_common::TypeDef> &typeArguments,
+    AbstractSymbol *specificSymbol)
+    : m_superType(nullptr),
+      m_specificSymbol(specificSymbol)
 {
-    TU_ASSERT (state != nullptr);
+    m_typeDef = lyric_common::TypeDef::forConcrete(specificUrl, typeArguments);
+    TU_ASSERT (m_specificSymbol != nullptr);
 }
 
 lyric_common::TypeDef
@@ -108,4 +103,20 @@ lyric_assembler::TypeHandle *
 lyric_assembler::TypeHandle::getSuperType() const
 {
     return m_superType;
+}
+
+tempo_utils::Status
+lyric_assembler::TypeHandle::defineType(
+    const std::vector<lyric_common::TypeDef> &typeArguments,
+    TypeHandle *superType)
+{
+    if (m_specificSymbol == nullptr || m_specificSymbol->getSymbolType() != SymbolType::TYPENAME)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "type {} is already defined", m_typeDef.toString());
+
+    auto concreteUrl = m_typeDef.getConcreteUrl();
+    m_typeDef = lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments);
+    m_superType = superType;
+    m_specificSymbol = nullptr;
+    return {};
 }

@@ -14,6 +14,7 @@ set(TEST_CASES
     analyze_namespace_tests.cpp
     analyze_static_tests.cpp
     analyze_struct_tests.cpp
+    analyze_typename_tests.cpp
     )
 
 # define test suite driver

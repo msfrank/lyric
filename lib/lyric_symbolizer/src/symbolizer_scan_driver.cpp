@@ -106,12 +106,12 @@ lyric_symbolizer::SymbolizerScanDriver::declareTypename(const lyric_parser::Arch
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
+    auto *symbolCache = m_state->symbolCache();
+
     lyric_common::SymbolPath symbolPath({identifier});
     lyric_common::SymbolUrl symbolUrl(symbolPath);
-    auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(
-        symbolUrl, lyric_object::LinkageSection::Type);
+    TU_RETURN_IF_STATUS (symbolCache->putTypename(symbolUrl));
 
-    TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
     TU_LOG_INFO << "declared typename " << symbolUrl;
 
     return putNamespaceTarget(symbolUrl);

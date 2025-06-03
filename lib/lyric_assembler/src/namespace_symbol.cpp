@@ -94,7 +94,7 @@ lyric_assembler::NamespaceSymbol::load()
         const auto &symbolUrl = *it;
         auto identifier = symbolUrl.getSymbolName();
         TU_RAISE_IF_STATUS (importCache->importSymbol(symbolUrl));
-        priv->symbols[identifier] = symbolUrl;
+        priv->targets[identifier] = symbolUrl;
     }
 
     return priv.release();
@@ -161,54 +161,55 @@ lyric_assembler::NamespaceSymbol::namespaceBlock() const
 }
 
 bool
-lyric_assembler::NamespaceSymbol::hasSymbol(const std::string &name) const
+lyric_assembler::NamespaceSymbol::hasTarget(const std::string &name) const
 {
     auto *priv = getPriv();
-    return priv->symbols.contains(name);
+    return priv->targets.contains(name);
 }
 
 lyric_common::SymbolUrl
-lyric_assembler::NamespaceSymbol::getSymbol(const std::string &name) const
+lyric_assembler::NamespaceSymbol::getTarget(const std::string &name) const
 {
     auto *priv = getPriv();
-    auto entry = priv->symbols.find(name);
-    if (entry != priv->symbols.cend())
+    auto entry = priv->targets.find(name);
+    if (entry != priv->targets.cend())
         return entry->second;
     return {};
 }
 
 absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator
-lyric_assembler::NamespaceSymbol::symbolsBegin() const
+lyric_assembler::NamespaceSymbol::targetsBegin() const
 {
     auto *priv = getPriv();
-    return priv->symbols.cbegin();
+    return priv->targets.cbegin();
 }
 
 absl::flat_hash_map<std::string,lyric_common::SymbolUrl>::const_iterator
-lyric_assembler::NamespaceSymbol::symbolsEnd() const
+lyric_assembler::NamespaceSymbol::targetsEnd() const
 {
     auto *priv = getPriv();
-    return priv->symbols.cend();
+    return priv->targets.cend();
 }
 
 tu_uint32
-lyric_assembler::NamespaceSymbol::numSymbols() const
+lyric_assembler::NamespaceSymbol::numTargets() const
 {
     auto *priv = getPriv();
-    return priv->symbols.size();
+    return priv->targets.size();
 }
 
 tempo_utils::Status
-lyric_assembler::NamespaceSymbol::putTarget(const lyric_common::SymbolUrl &symbolUrl)
+lyric_assembler::NamespaceSymbol::putTarget(const lyric_common::SymbolUrl &targetUrl)
 {
-    auto name = symbolUrl.getSymbolName();
+    auto name = targetUrl.getSymbolName();
     auto *priv = getPriv();
-    if (priv->symbols.contains(name))
+
+    auto entry = priv->targets.find(name);
+    if (entry != priv->targets.cend() && entry->second != targetUrl)
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-            "cannot put namespace target {}; symbol is already defined", symbolUrl.toString());
+            "cannot put namespace target {}; target is already defined", targetUrl.toString());
 
-    priv->symbols[name] = symbolUrl;
-
+    priv->targets[name] = targetUrl;
     return {};
 }
 
@@ -219,14 +220,14 @@ lyric_assembler::NamespaceSymbol::declareBinding(
     const std::vector<lyric_object::TemplateParameter> &templateParameters)
 {
     auto *priv = getPriv();
-    if (priv->symbols.contains(name))
+    if (priv->targets.contains(name))
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "cannot put namespace binding {}; symbol is already defined", name);
 
     BindingSymbol *bindingSymbol;
     TU_ASSIGN_OR_RETURN (bindingSymbol, priv->namespaceBlock->declareBinding(name, access, templateParameters));
 
-    priv->symbols[name] = bindingSymbol->getSymbolUrl();
+    priv->targets[name] = bindingSymbol->getSymbolUrl();
 
     return bindingSymbol;
 }
@@ -237,7 +238,7 @@ lyric_assembler::NamespaceSymbol::declareSubspace(
     lyric_object::AccessType access)
 {
     auto *priv = getPriv();
-    if (priv->symbols.contains(name))
+    if (priv->targets.contains(name))
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "cannot declare namespace {}; symbol is already defined", name);
 
@@ -255,7 +256,7 @@ lyric_assembler::NamespaceSymbol::declareSubspace(
 
     TU_RETURN_IF_STATUS (priv->namespaceBlock->declareAlias(name, namespaceUrl));
 
-    priv->symbols[name] = namespaceUrl;
+    priv->targets[name] = namespaceUrl;
 
     return nsPtr;
 }

@@ -247,13 +247,13 @@ lyric_assembler::ObjectState::implCache() const
 tempo_utils::Result<lyric_assembler::ActionSymbol *>
 lyric_assembler::ObjectState::appendAction(
     std::unique_ptr<ActionSymbol> &&actionSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     if (actionSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid action symbol");
     auto symbolUrl = actionSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, actionSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, actionSymbol.get(), existingTypename));
     auto *actionPtr = actionSymbol.release();
     m_actions.push_back(actionPtr);
     return actionPtr;
@@ -280,13 +280,13 @@ lyric_assembler::ObjectState::numActions() const
 tempo_utils::Result<lyric_assembler::BindingSymbol *>
 lyric_assembler::ObjectState::appendBinding(
         std::unique_ptr<BindingSymbol> &&bindingSymbol,
-        LinkageSymbol *existingLinkage)
+        TypenameSymbol *existingTypename)
 {
     if (bindingSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid binding symbol");
     auto symbolUrl = bindingSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, bindingSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, bindingSymbol.get(), existingTypename));
     auto *bindingPtr = bindingSymbol.release();
     m_bindings.push_back(bindingPtr);
     return bindingPtr;
@@ -313,13 +313,13 @@ lyric_assembler::ObjectState::numBindings() const
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::ObjectState::appendCall(
     std::unique_ptr<CallSymbol> &&callSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     if (callSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid call symbol");
     auto symbolUrl = callSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, callSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, callSymbol.get(), existingTypename));
     auto *callPtr = callSymbol.release();
     m_calls.push_back(callPtr);
     return callPtr;
@@ -346,13 +346,13 @@ lyric_assembler::ObjectState::numCalls() const
 tempo_utils::Result<lyric_assembler::ClassSymbol *>
 lyric_assembler::ObjectState::appendClass(
     std::unique_ptr<ClassSymbol> &&classSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     if (classSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid class symbol");
     auto symbolUrl = classSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, classSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, classSymbol.get(), existingTypename));
     auto *classPtr = classSymbol.release();
     m_classes.push_back(classPtr);
     return classPtr;
@@ -379,13 +379,13 @@ lyric_assembler::ObjectState::numClasses() const
 tempo_utils::Result<lyric_assembler::ConceptSymbol *>
 lyric_assembler::ObjectState::appendConcept(
     std::unique_ptr<ConceptSymbol> &&conceptSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     if (conceptSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid concept symbol");
     auto symbolUrl = conceptSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, conceptSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, conceptSymbol.get(), existingTypename));
     auto *conceptPtr = conceptSymbol.release();
     m_concepts.push_back(conceptPtr);
     return conceptPtr;
@@ -412,13 +412,13 @@ lyric_assembler::ObjectState::numConcepts() const
 tempo_utils::Result<lyric_assembler::EnumSymbol *>
 lyric_assembler::ObjectState::appendEnum(
     std::unique_ptr<EnumSymbol> &&enumSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     if (enumSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid enum symbol");
     auto symbolUrl = enumSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, enumSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, enumSymbol.get(), existingTypename));
     auto *enumPtr = enumSymbol.release();
     m_enums.push_back(enumPtr);
     return enumPtr;
@@ -445,13 +445,13 @@ lyric_assembler::ObjectState::numEnums() const
 tempo_utils::Result<lyric_assembler::ExistentialSymbol *>
 lyric_assembler::ObjectState::appendExistential(
     std::unique_ptr<ExistentialSymbol> &&existentialSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     if (existentialSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid existential symbol");
     auto symbolUrl = existentialSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, existentialSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, existentialSymbol.get(), existingTypename));
     auto *existentialPtr = existentialSymbol.release();
     m_existentials.push_back(existentialPtr);
     return existentialPtr;
@@ -478,13 +478,13 @@ lyric_assembler::ObjectState::numExistentials() const
 tempo_utils::Result<lyric_assembler::FieldSymbol *>
 lyric_assembler::ObjectState::appendField(
     std::unique_ptr<FieldSymbol> &&fieldSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     if (fieldSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid field symbol");
     auto symbolUrl = fieldSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, fieldSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, fieldSymbol.get(), existingTypename));
     auto *fieldPtr = fieldSymbol.release();
     m_fields.push_back(fieldPtr);
     return fieldPtr;
@@ -511,13 +511,13 @@ lyric_assembler::ObjectState::numFields() const
 tempo_utils::Result<lyric_assembler::InstanceSymbol *>
 lyric_assembler::ObjectState::appendInstance(
     std::unique_ptr<InstanceSymbol> &&instanceSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     if (instanceSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid instance symbol");
     auto symbolUrl = instanceSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, instanceSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, instanceSymbol.get(), existingTypename));
     auto *instancePtr = instanceSymbol.release();
     m_instances.push_back(instancePtr);
     return instancePtr;
@@ -544,13 +544,13 @@ lyric_assembler::ObjectState::numInstances() const
 tempo_utils::Result<lyric_assembler::LinkageSymbol *>
 lyric_assembler::ObjectState::appendLinkage(
     std::unique_ptr<LinkageSymbol> &&linkageSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     if (linkageSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid linkage symbol");
     auto symbolUrl = linkageSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, linkageSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, linkageSymbol.get(), existingTypename));
     auto *linkagePtr = linkageSymbol.release();
     m_linkages.push_back(linkagePtr);
     return linkagePtr;
@@ -577,13 +577,13 @@ lyric_assembler::ObjectState::numLinkages() const
 tempo_utils::Result<lyric_assembler::NamespaceSymbol *>
 lyric_assembler::ObjectState::appendNamespace(
     std::unique_ptr<NamespaceSymbol> &&namespaceSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     if (namespaceSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid namespace symbol");
     auto symbolUrl = namespaceSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, namespaceSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, namespaceSymbol.get(), existingTypename));
     auto *namespacePtr = namespaceSymbol.release();
     m_namespaces.push_back(namespacePtr);
     return namespacePtr;
@@ -610,13 +610,13 @@ lyric_assembler::ObjectState::numNamespaces() const
 tempo_utils::Result<lyric_assembler::StaticSymbol *>
 lyric_assembler::ObjectState::appendStatic(
     std::unique_ptr<StaticSymbol> &&staticSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     if (staticSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid static symbol");
     auto symbolUrl = staticSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, staticSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, staticSymbol.get(), existingTypename));
     auto *staticPtr = staticSymbol.release();
     m_statics.push_back(staticPtr);
     return staticPtr;
@@ -643,13 +643,13 @@ lyric_assembler::ObjectState::numStatics() const
 tempo_utils::Result<lyric_assembler::StructSymbol *>
 lyric_assembler::ObjectState::appendStruct(
     std::unique_ptr<StructSymbol> &&structSymbol,
-    LinkageSymbol *existingLinkage)
+    TypenameSymbol *existingTypename)
 {
     if (structSymbol == nullptr)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid struct symbol");
     auto symbolUrl = structSymbol->getSymbolUrl();
-    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, structSymbol.get(), existingLinkage));
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, structSymbol.get(), existingTypename));
     auto *structPtr = structSymbol.release();
     m_structs.push_back(structPtr);
     return structPtr;

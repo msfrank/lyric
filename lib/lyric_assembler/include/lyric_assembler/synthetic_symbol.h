@@ -2,6 +2,7 @@
 #define LYRIC_ASSEMBLER_SYNTHETIC_SYMBOL_H
 
 #include "abstract_symbol.h"
+#include "assembler_types.h"
 
 namespace lyric_assembler {
 

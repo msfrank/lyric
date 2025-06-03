@@ -1,6 +1,8 @@
 #ifndef LYRIC_ASSEMBLER_LINKAGE_SYMBOL_H
 #define LYRIC_ASSEMBLER_LINKAGE_SYMBOL_H
 
+#include <lyric_object/object_types.h>
+
 #include "abstract_symbol.h"
 
 namespace lyric_assembler {

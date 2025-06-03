@@ -24,6 +24,7 @@
 #include <lyric_compiler/match_handler.h>
 #include <lyric_compiler/new_handler.h>
 #include <lyric_compiler/symbol_deref_handler.h>
+#include <lyric_compiler/typename_handler.h>
 #include <lyric_compiler/type_utils.h>
 #include <lyric_compiler/unary_operation_handler.h>
 #include <lyric_compiler/using_handler.h>
@@ -181,6 +182,7 @@ node_is_valid_for_phrase(
         }
 
         // statement phrase
+        case lyric_schema::LyricAstId::TypeName:
         case lyric_schema::LyricAstId::Val:
         case lyric_schema::LyricAstId::Var:
         case lyric_schema::LyricAstId::Def:
@@ -486,6 +488,13 @@ lyric_compiler::FormChoice::decide(
         case lyric_schema::LyricAstId::DefAlias: {
             auto def = std::make_unique<DefAliasHandler>(isSideEffect, block, driver);
             ctx.setGrouping(std::move(def));
+            break;
+        }
+
+        // alias definition form
+        case lyric_schema::LyricAstId::TypeName: {
+            auto def = std::make_unique<TypenameHandler>(isSideEffect, block, driver);
+            ctx.setChoice(std::move(def));
             break;
         }
 

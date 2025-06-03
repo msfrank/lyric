@@ -11,6 +11,7 @@
 #include <lyric_compiler/entry_handler.h>
 #include <lyric_compiler/import_handler.h>
 #include <lyric_compiler/namespace_handler.h>
+#include <lyric_compiler/typename_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
 lyric_compiler::EntryHandler::EntryHandler(CompilerScanDriver *driver)
@@ -100,6 +101,12 @@ lyric_compiler::EntryHandler::before(
                 auto handler = std::make_unique<DefStructHandler>(
                     /* isSideEffect= */ true, globalNamespace, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
+                break;
+            }
+            case lyric_schema::LyricAstId::TypeName: {
+                auto handler = std::make_unique<TypenameHandler>(
+                    /* isSideEffect= */ true, globalNamespace, globalNamespace->namespaceBlock(), driver);
+                ctx.appendChoice(std::move(handler));
                 break;
             }
             case lyric_schema::LyricAstId::ImportAll:

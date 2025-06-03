@@ -2,8 +2,7 @@
 #define LYRIC_ASSEMBLER_ABSTRACT_SYMBOL_H
 
 #include <lyric_common/symbol_url.h>
-
-#include "assembler_types.h"
+#include <lyric_common/type_def.h>
 
 namespace lyric_assembler {
 
@@ -26,6 +25,7 @@ namespace lyric_assembler {
         NAMESPACE,
         BINDING,
         LINKAGE,
+        TYPENAME,
     };
 
     class AbstractSymbol {

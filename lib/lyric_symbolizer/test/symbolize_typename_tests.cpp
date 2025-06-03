@@ -16,6 +16,7 @@ TEST_F(SymbolizeTypename, DeclareTypename)
 {
     auto symbolizeModuleResult = m_tester->symbolizeModule(R"(
         typename Foo
+        defstruct Foo{}
     )");
     ASSERT_THAT (symbolizeModuleResult,
         tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
@@ -28,7 +29,7 @@ TEST_F(SymbolizeTypename, DeclareTypename)
 
     auto symbol1 = root.findSymbol(lyric_common::SymbolPath::fromString("Foo"));
     ASSERT_TRUE (symbol1.isValid());
-    ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Type);
+    ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Struct);
     ASSERT_EQ (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
 }
 

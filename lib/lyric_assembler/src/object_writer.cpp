@@ -71,7 +71,7 @@ lyric_assembler::ObjectWriter::initialize()
         TU_RETURN_IF_NOT_OK (touchNamespace(cast_symbol_to_namespace(globalSymbol)));
     }
 
-    // touch undecls
+    // touch linkages
     for (auto iterator = m_state->linkagesBegin(); iterator != m_state->linkagesEnd(); iterator++) {
         auto &linkageSymbol = *iterator;
         auto linkageUrl = linkageSymbol->getSymbolUrl();
