@@ -6,11 +6,13 @@
 #include <tempo_test/result_matchers.h>
 #include <tempo_test/spanset_matchers.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreAssignment, EvaluateValAssignmentFails)
+class CompileAssignment : public BaseCompilerFixture {};
+
+TEST_F(CompileAssignment, CompileValAssignmentFails)
 {
-    auto result = compileModule(R"(
+    auto result = m_tester->compileModule(R"(
         val foo: Int = 100
         set foo = 1
     )");
@@ -20,9 +22,9 @@ TEST(CoreAssignment, EvaluateValAssignmentFails)
             tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidBinding))));
 }
 
-TEST(CoreAssignment, EvaluateVarAssignment)
+TEST_F(CompileAssignment, EvaluateVarAssignment)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         var mutablefoo: Int = 100
         set mutablefoo = 1
         mutablefoo
@@ -33,9 +35,9 @@ TEST(CoreAssignment, EvaluateVarAssignment)
                      RunModule(DataCellInt(1))));
 }
 
-TEST(CoreAssignment, EvaluateVarInplaceAdd)
+TEST_F(CompileAssignment, EvaluateVarInplaceAdd)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         var mutablefoo: Int = 100
         set mutablefoo += 10
         mutablefoo
@@ -46,9 +48,9 @@ TEST(CoreAssignment, EvaluateVarInplaceAdd)
                      RunModule(DataCellInt(110))));
 }
 
-TEST(CoreAssignment, EvaluateVarInplaceSubtract)
+TEST_F(CompileAssignment, EvaluateVarInplaceSubtract)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         var mutablefoo: Int = 100
         set mutablefoo -= 10
         mutablefoo
@@ -59,9 +61,9 @@ TEST(CoreAssignment, EvaluateVarInplaceSubtract)
                      RunModule(DataCellInt(90))));
 }
 
-TEST(CoreAssignment, EvaluateVarInplaceMultiply)
+TEST_F(CompileAssignment, EvaluateVarInplaceMultiply)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         var mutablefoo: Int = 100
         set mutablefoo *= 5
         mutablefoo
@@ -72,9 +74,9 @@ TEST(CoreAssignment, EvaluateVarInplaceMultiply)
                      RunModule(DataCellInt(500))));
 }
 
-TEST(CoreAssignment, EvaluateVarInplaceDivide)
+TEST_F(CompileAssignment, EvaluateVarInplaceDivide)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         var mutablefoo: Int = 100
         set mutablefoo /= 50
         mutablefoo
@@ -85,9 +87,9 @@ TEST(CoreAssignment, EvaluateVarInplaceDivide)
                      RunModule(DataCellInt(2))));
 }
 
-TEST(CoreAssignment, EvaluateMemberInplaceAdd)
+TEST_F(CompileAssignment, EvaluateMemberInplaceAdd)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Test {
             var Count: Int
             init(count: Int) {
@@ -105,9 +107,9 @@ TEST(CoreAssignment, EvaluateMemberInplaceAdd)
             DataCellInt(11))));
 }
 
-TEST(CoreAssignment, EvaluateMemberInplaceSubtract)
+TEST_F(CompileAssignment, EvaluateMemberInplaceSubtract)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Test {
             var Count: Int
             init(count: Int) {
@@ -125,9 +127,9 @@ TEST(CoreAssignment, EvaluateMemberInplaceSubtract)
             DataCellInt(9))));
 }
 
-TEST(CoreAssignment, EvaluateMemberInplaceMultiply)
+TEST_F(CompileAssignment, EvaluateMemberInplaceMultiply)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Test {
             var Count: Int
             init(count: Int) {
@@ -145,9 +147,9 @@ TEST(CoreAssignment, EvaluateMemberInplaceMultiply)
             DataCellInt(20))));
 }
 
-TEST(CoreAssignment, EvaluateMemberInplaceDivide)
+TEST_F(CompileAssignment, EvaluateMemberInplaceDivide)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
 
         defclass Test {
             var Count: Int
@@ -166,9 +168,9 @@ TEST(CoreAssignment, EvaluateMemberInplaceDivide)
             DataCellInt(5))));
 }
 
-TEST(CoreAssignment, EvaluateGlobalVarAssignment)
+TEST_F(CompileAssignment, EvaluateGlobalVarAssignment)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         global var mutablefoo: Int = 100
         set mutablefoo = 1
         mutablefoo

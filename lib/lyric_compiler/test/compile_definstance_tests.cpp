@@ -3,11 +3,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreDefinstance, EvaluateInstanceValMember)
+class CompileDefinstance : public BaseCompilerFixture {};
+
+TEST_F(CompileDefinstance, EvaluateInstanceValMember)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         definstance Foo {
             val Index: Int = 100
         }
@@ -17,9 +19,9 @@ TEST(CoreDefinstance, EvaluateInstanceValMember)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }
 
-TEST(CoreDefinstance, EvaluateInstanceVarMember)
+TEST_F(CompileDefinstance, EvaluateInstanceVarMember)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         definstance Foo {
             var Index: Int = 100
         }
@@ -29,9 +31,9 @@ TEST(CoreDefinstance, EvaluateInstanceVarMember)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }
 
-TEST(CoreDefinstance, EvaluateInstanceMethod)
+TEST_F(CompileDefinstance, EvaluateInstanceMethod)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         definstance Foo {
             def Identity(x: Int): Int {
                 x
@@ -43,9 +45,9 @@ TEST(CoreDefinstance, EvaluateInstanceMethod)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
 }
 
-TEST(CoreDefinstance, EvaluateInstanceApplication)
+TEST_F(CompileDefinstance, EvaluateInstanceApplication)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         definstance IntReverseOrdering {
             impl Ordered[Int] {
                 def compare(lhs: Int, rhs: Int): Int {
@@ -68,9 +70,9 @@ TEST(CoreDefinstance, EvaluateInstanceApplication)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
-TEST(CoreDefinstance, EvaluateUsingInstanceApplication)
+TEST_F(CompileDefinstance, EvaluateUsingInstanceApplication)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         definstance IntReverseOrdering {
             impl Ordered[Int] {
                 def compare(lhs: Int, rhs: Int): Int {

@@ -5,11 +5,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreMatch, TestMatchTypeEquals)
+class CompileMatch : public BaseCompilerFixture {};
+
+TEST_F(CompileMatch, EvaluateMatchTypeEquals)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         match Object{} {
             when x: Object          true
             else                    false
@@ -19,9 +21,9 @@ TEST(CoreMatch, TestMatchTypeEquals)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreMatch, TestMatchSubtype)
+TEST_F(CompileMatch, EvaluateMatchSubtype)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         match Object{} {
             when x: Any             true
             else                    false
@@ -31,9 +33,9 @@ TEST(CoreMatch, TestMatchSubtype)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreMatch, TestNoMatchDisjointType)
+TEST_F(CompileMatch, EvaluateNoMatchDisjointType)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Test {
             init() from Object() {}
         }
@@ -46,9 +48,9 @@ TEST(CoreMatch, TestNoMatchDisjointType)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreMatch, TestIsABoundedPlaceholderTypeDisjoint)
+TEST_F(CompileMatch, CompileIsABoundedPlaceholderTypeDisjointFails)
 {
-    auto result = compileModule(R"(
+    auto result = m_tester->compileModule(R"(
         def generic[T](t: T): Bool where T < Int {
             match t {
                 when x: Float       true
@@ -63,9 +65,9 @@ TEST(CoreMatch, TestIsABoundedPlaceholderTypeDisjoint)
             tempo_test::SpansetContainsError(lyric_compiler::CompilerCondition::kSyntaxError))));
 }
 
-TEST(CoreMatch, TestMatchIntrinsic)
+TEST_F(CompileMatch, EvaluateMatchIntrinsic)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         val x: Any = 42
         match x {
             when t0: Bool       0
@@ -79,9 +81,9 @@ TEST(CoreMatch, TestMatchIntrinsic)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
 }
 
-TEST(CoreMatch, TestMatchPlaceholderType)
+TEST_F(CompileMatch, EvaluateMatchPlaceholderType)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def generic[T](t: T): Any {
             match t {
                 when i: Int     true
@@ -94,9 +96,9 @@ TEST(CoreMatch, TestMatchPlaceholderType)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreMatch, TestNoMatchPlaceholderType)
+TEST_F(CompileMatch, EvaluateNoMatchPlaceholderType)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def generic[T](t: T): Any {
             match t {
                 when f: Float   true
@@ -109,9 +111,9 @@ TEST(CoreMatch, TestNoMatchPlaceholderType)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreMatch, TestMatchBoundedPlaceholderType)
+TEST_F(CompileMatch, EvaluateMatchBoundedPlaceholderType)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def generic[T](t: T): Any where T < Intrinsic {
             match t {
                 when i: Int     true
@@ -124,9 +126,9 @@ TEST(CoreMatch, TestMatchBoundedPlaceholderType)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreMatch, TestNoMatchBoundedPlaceholderType)
+TEST_F(CompileMatch, EvaluateNoMatchBoundedPlaceholderType)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def generic[T](t: T): Any where T < Intrinsic {
             match t {
                 when f: Float   true
@@ -139,9 +141,9 @@ TEST(CoreMatch, TestNoMatchBoundedPlaceholderType)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreMatch, TestMatchBoundedPlaceholderTypeDisjoint)
+TEST_F(CompileMatch, CompileMatchBoundedPlaceholderTypeDisjointFails)
 {
-    auto result = compileModule(R"(
+    auto result = m_tester->compileModule(R"(
         def generic[T](t: T): Any where T < Int {
             match t {
                 when f: Float   true
@@ -156,9 +158,9 @@ TEST(CoreMatch, TestMatchBoundedPlaceholderTypeDisjoint)
             tempo_test::SpansetContainsError(lyric_compiler::CompilerCondition::kSyntaxError))));
 }
 
-TEST(CoreMatch, TestMatchClass)
+TEST_F(CompileMatch, EvaluateMatchClass)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Test1 {
             init() from Object() {}
         }
@@ -181,9 +183,9 @@ TEST(CoreMatch, TestMatchClass)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
-TEST(CoreMatch, TestMatchEnum)
+TEST_F(CompileMatch, EvaluateMatchEnum)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defenum Direction {
             case North
             case South
@@ -204,9 +206,9 @@ TEST(CoreMatch, TestMatchEnum)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(4))));
 }
 
-TEST(CoreMatch, TestMatchDerefAlias)
+TEST_F(CompileMatch, EvaluateMatchDerefAlias)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Test1 {
             val x: Int
             init(x: Int) from Object() {
@@ -227,9 +229,9 @@ TEST(CoreMatch, TestMatchDerefAlias)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
 }
 
-TEST(CoreMatch, TestMatchUnwrapGenericClass)
+TEST_F(CompileMatch, EvaluateMatchUnwrapGenericClass)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         val x: Tuple3[Int,Int,Int] = Tuple3[Int,Int,Int]{1, 2, 3}
         match x {
             when Tuple3[Int, Int, Int](t1: Int, t2: Int, t3: Int)

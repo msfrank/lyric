@@ -3,11 +3,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreWhile, EvaluateWhile)
+class CompileWhile : public BaseCompilerFixture {};
+
+TEST_F(CompileWhile, EvaluateWhile)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         var count: Int = 0
         var sum: Int = 0
         while count < 5 {

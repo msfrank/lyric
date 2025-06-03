@@ -11,7 +11,7 @@
 
 class CompileTypename : public BaseCompilerFixture {};
 
-TEST_F(CompileTypename, DeclareTypename)
+TEST_F(CompileTypename, CompileTypenameResolvedToStruct)
 {
     auto compileModuleResult = m_tester->compileModule(R"(
         typename Foo

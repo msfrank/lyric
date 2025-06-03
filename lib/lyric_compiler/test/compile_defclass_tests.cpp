@@ -4,11 +4,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreDefclass, EvaluateNewInstanceWithDefaultConstructor)
+class CompileDefclass : public BaseCompilerFixture {};
+
+TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultConstructor)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo {
             val value: Int = 42
         }
@@ -20,9 +22,9 @@ TEST(CoreDefclass, EvaluateNewInstanceWithDefaultConstructor)
                      DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
-TEST(CoreDefclass, EvaluateNewInstanceFromDefaultSuperclass)
+TEST_F(CompileDefclass, EvaluateNewInstanceFromDefaultSuperclass)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo {
             init() {}
         }
@@ -34,9 +36,9 @@ TEST(CoreDefclass, EvaluateNewInstanceFromDefaultSuperclass)
                      DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
-TEST(CoreDefclass, EvaluateNewInstanceFromSuperclass)
+TEST_F(CompileDefclass, EvaluateNewInstanceFromSuperclass)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo {
             init() from Object() {}
         }
@@ -48,9 +50,9 @@ TEST(CoreDefclass, EvaluateNewInstanceFromSuperclass)
                      DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
-TEST(CoreDefclass, EvaluateNewInstanceWithDefaultInitializedMember)
+TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultInitializedMember)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo {
             val i: Int = 100
             init() {}
@@ -63,9 +65,9 @@ TEST(CoreDefclass, EvaluateNewInstanceWithDefaultInitializedMember)
                      DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
-TEST(CoreDefclass, EvaluateNewInstanceWithDefaultConstructorAndDefaultInitializedMember)
+TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultConstructorAndDefaultInitializedMember)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo {
             val i: Int = 100
         }
@@ -77,9 +79,9 @@ TEST(CoreDefclass, EvaluateNewInstanceWithDefaultConstructorAndDefaultInitialize
                      DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
-TEST(CoreDefclass, EvaluateDerefPublicVarMember)
+TEST_F(CompileDefclass, EvaluateDerefPublicVarMember)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo {
             var Index: Int
             init(i: Int) from Object() {
@@ -95,9 +97,9 @@ TEST(CoreDefclass, EvaluateDerefPublicVarMember)
                      RunModule(DataCellInt(100))));
 }
 
-TEST(CoreDefclass, EvaluateDerefPublicVarDefaultInitializedMember)
+TEST_F(CompileDefclass, EvaluateDerefPublicVarDefaultInitializedMember)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo {
             var Index: Int = 100
         }
@@ -110,9 +112,9 @@ TEST(CoreDefclass, EvaluateDerefPublicVarDefaultInitializedMember)
                      DataCellInt(100))));
 }
 
-TEST(CoreDefclass, EvaluateDerefThisProtectedVarMember)
+TEST_F(CompileDefclass, EvaluateDerefThisProtectedVarMember)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo {
             var index: Int
             init(i: Int) from Object() {
@@ -134,9 +136,9 @@ TEST(CoreDefclass, EvaluateDerefThisProtectedVarMember)
                      DataCellInt(200))));
 }
 
-TEST(CoreDefclass, EvaluateDerefProtectedVarMemberFails)
+TEST_F(CompileDefclass, CompileDerefProtectedVarMemberFails)
 {
-    auto result = compileModule(R"(
+    auto result = m_tester->compileModule(R"(
         defclass Foo {
             var index: Int
             init(i: Int) from Object() {
@@ -152,9 +154,9 @@ TEST(CoreDefclass, EvaluateDerefProtectedVarMemberFails)
             tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidAccess))));
 }
 
-TEST(CoreDefclass, EvaluateDerefThisPrivateVarMember)
+TEST_F(CompileDefclass, EvaluateDerefThisPrivateVarMember)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo {
             var _index: Int
             init(i: Int) from Object() {
@@ -177,9 +179,9 @@ TEST(CoreDefclass, EvaluateDerefThisPrivateVarMember)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(200))));
 }
 
-TEST(CoreDefclass, EvaluateDerefPrivateVarMemberFails)
+TEST_F(CompileDefclass, CompileDerefPrivateVarMemberFails)
 {
-    auto result = compileModule(R"(
+    auto result = m_tester->compileModule(R"(
         defclass Foo {
             var _index: Int
             init(i: Int) from Object() {
@@ -195,9 +197,9 @@ TEST(CoreDefclass, EvaluateDerefPrivateVarMemberFails)
             tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidAccess))));
 }
 
-TEST(CoreDefclass, EvaluateInvokeMethod)
+TEST_F(CompileDefclass, EvaluateInvokeMethod)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo {
             var _index: Int
             init(i: Int) from Object() {
@@ -215,9 +217,9 @@ TEST(CoreDefclass, EvaluateInvokeMethod)
                  tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }
 
-TEST(CoreDefclass, EvaluateDefGenericClass)
+TEST_F(CompileDefclass, EvaluateDefGenericClass)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo[A] {
             var _index: A
             init(i: A) from Object() {
@@ -237,9 +239,9 @@ TEST(CoreDefclass, EvaluateDefGenericClass)
                      DataCellInt(100))));
 }
 
-TEST(CoreDefclass, EvaluateInvokeGenericMethod)
+TEST_F(CompileDefclass, EvaluateInvokeGenericMethod)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo {
             var _index: Int
             init(i: Int) from Object() {
@@ -258,9 +260,9 @@ TEST(CoreDefclass, EvaluateInvokeGenericMethod)
                  tempo_test::ContainsResult(RunModule(DataCellInt(142))));
 }
 
-TEST(CoreDefclass, EvaluateInvokeGenericMethodForGenericClass)
+TEST_F(CompileDefclass, EvaluateInvokeGenericMethodForGenericClass)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo[S] {
             var _s: S
             init(s: S) from Object() {
@@ -279,9 +281,9 @@ TEST(CoreDefclass, EvaluateInvokeGenericMethodForGenericClass)
                  tempo_test::ContainsResult(RunModule(DataCellInt(142))));
 }
 
-TEST(CoreDefclass, EvaluateNewInstanceOfSealedClass)
+TEST_F(CompileDefclass, EvaluateNewInstanceOfSealedClass)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo sealed {
             val value: Int = 42
         }
@@ -293,9 +295,9 @@ TEST(CoreDefclass, EvaluateNewInstanceOfSealedClass)
                      DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
-TEST(CoreDefclass, EvaluateDefineSubclassOfFinalClassFails)
+TEST_F(CompileDefclass, CompileDefineSubclassOfFinalClassFails)
 {
-    auto result = compileModule(R"(
+    auto result = m_tester->compileModule(R"(
         defclass Foo final {
         }
         defclass Bar {
@@ -308,9 +310,9 @@ TEST(CoreDefclass, EvaluateDefineSubclassOfFinalClassFails)
             tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidAccess))));
 }
 
-TEST(CoreDefclass, EvaluateNewInstanceOfFinalClass)
+TEST_F(CompileDefclass, EvaluateNewInstanceOfFinalClass)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo final {
             val value: Int = 42
         }

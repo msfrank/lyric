@@ -3,11 +3,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreDefenum, EvaluateEnum)
+class CompileDefenum : public BaseCompilerFixture {};
+
+TEST_F(CompileDefenum, EvaluateEnum)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defenum Direction {
             case North
             case South
@@ -22,9 +24,9 @@ TEST(CoreDefenum, EvaluateEnum)
                      RunModule(DataCellRef(lyric_common::SymbolPath({"Direction"})))));
 }
 
-TEST(CoreDefenum, EvaluateEnumCase)
+TEST_F(CompileDefenum, EvaluateEnumCase)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defenum Direction {
             case North
             case South
@@ -39,9 +41,9 @@ TEST(CoreDefenum, EvaluateEnumCase)
                      RunModule(DataCellRef(lyric_common::SymbolPath({"North"})))));
 }
 
-TEST(CoreDefenum, EvaluateEnumCaseVal)
+TEST_F(CompileDefenum, EvaluateEnumCaseVal)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defenum Direction {
             val Index: Int
             init(index: Int) {
@@ -58,9 +60,9 @@ TEST(CoreDefenum, EvaluateEnumCaseVal)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
-TEST(CoreDefenum, EvaluateEnumCaseDef)
+TEST_F(CompileDefenum, EvaluateEnumCaseDef)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defenum Direction {
             val abbreviation: String
             init(abbreviation: String) {

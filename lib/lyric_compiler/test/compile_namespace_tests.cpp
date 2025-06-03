@@ -4,11 +4,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreNamespace, EvaluateDeclareNamespace)
+class CompileNamespace : public BaseCompilerFixture {};
+
+TEST_F(CompileNamespace, EvaluateDeclareNamespace)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         namespace foo {
         }
         #foo
@@ -20,9 +22,9 @@ TEST(CoreNamespace, EvaluateDeclareNamespace)
         MatchesDescriptorSection(lyric_object::LinkageSection::Namespace))));
 }
 
-TEST(CoreNamespace, EvaluateDereferenceNamespacedGlobal)
+TEST_F(CompileNamespace, EvaluateDereferenceNamespacedGlobal)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         namespace foo {
             global val qux: Int = 42
         }
@@ -32,9 +34,9 @@ TEST(CoreNamespace, EvaluateDereferenceNamespacedGlobal)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
 }
 
-TEST(CoreNamespace, EvaluateInvokeNamespacedFunction)
+TEST_F(CompileNamespace, EvaluateInvokeNamespacedFunction)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         namespace foo {
             def bar(): Int { 42 }
         }

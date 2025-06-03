@@ -5,26 +5,13 @@ include(GoogleTest)
 # define unit tests
 
 set(TEST_CASES
-    assignment_tests.cpp
     Bool_tests.cpp
     Bytes_tests.cpp
     Char_tests.cpp
-    conditional_tests.cpp
-    def_tests.cpp
-    defalias_tests.cpp
-    defclass_tests.cpp
-    defconcept_tests.cpp
-    defenum_tests.cpp
-    definstance_tests.cpp
-    defstruct_tests.cpp
     Float_tests.cpp
     Int_tests.cpp
     Iterator_tests.cpp
-    lambda_tests.cpp
     Map_tests.cpp
-    match_tests.cpp
-    namespace_tests.cpp
-    new_tests.cpp
     Nil_tests.cpp
     Option_tests.cpp
     Pair_tests.cpp
@@ -36,9 +23,6 @@ set(TEST_CASES
     Undef_tests.cpp
     Url_tests.cpp
     Utf16_tests.cpp
-    val_tests.cpp
-    var_tests.cpp
-    while_tests.cpp
     )
 
 # define test suite driver

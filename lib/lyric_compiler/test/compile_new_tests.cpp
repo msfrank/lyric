@@ -4,11 +4,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreNew, TestNewObject)
+class CompileNew : public BaseCompilerFixture {};
+
+TEST_F(CompileNew, EvaluateNewObject)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         Object{}
     )");
 

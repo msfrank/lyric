@@ -3,11 +3,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreDefalias, EvaluateGlobalAlias)
+class CompileDefalias : public BaseCompilerFixture {};
+
+TEST_F(CompileDefalias, EvaluateGlobalAlias)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         global val Fortytwo: Int = 42
         defalias Fortytwoalias from Fortytwo
         Fortytwoalias
@@ -18,9 +20,9 @@ TEST(CoreDefalias, EvaluateGlobalAlias)
             DataCellInt(42))));
 }
 
-TEST(CoreDefalias, EvaluateFunctionAlias)
+TEST_F(CompileDefalias, EvaluateFunctionAlias)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def Add10(x: Int): Int {
             x + 10
         }
@@ -33,9 +35,9 @@ TEST(CoreDefalias, EvaluateFunctionAlias)
             DataCellInt(15))));
 }
 
-TEST(CoreDefalias, EvaluateClassAlias)
+TEST_F(CompileDefalias, EvaluateClassAlias)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Fooclass {
             val Value: Int = 42
         }
@@ -49,9 +51,9 @@ TEST(CoreDefalias, EvaluateClassAlias)
             DataCellInt(42))));
 }
 
-TEST(CoreDefalias, EvaluateStructAlias)
+TEST_F(CompileDefalias, EvaluateStructAlias)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defstruct Foostruct {
             val Value: Int = 42
         }
@@ -65,9 +67,9 @@ TEST(CoreDefalias, EvaluateStructAlias)
             DataCellInt(42))));
 }
 
-TEST(CoreDefalias, EvaluateUnionAlias)
+TEST_F(CompileDefalias, EvaluateUnionAlias)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defalias Fooalias from Int | Bool
         val fooalias: Fooalias = 42
         fooalias
@@ -78,9 +80,9 @@ TEST(CoreDefalias, EvaluateUnionAlias)
             DataCellInt(42))));
 }
 
-TEST(CoreDefalias, EvaluateParameterizedAlias)
+TEST_F(CompileDefalias, EvaluateParameterizedAlias)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo[T] {
             val Value: T
             init(value: T) {
@@ -97,9 +99,9 @@ TEST(CoreDefalias, EvaluateParameterizedAlias)
             DataCellInt(42))));
 }
 
-TEST(CoreDefalias, EvaluatePartiallyParameterizedAlias)
+TEST_F(CompileDefalias, EvaluatePartiallyParameterizedAlias)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defclass Foo[T, U] {
             val TValue: T
             val UValue: U

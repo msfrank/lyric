@@ -5,11 +5,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreLambda, TestEvaluatePureLambda)
+class CompileLambda : public BaseCompilerFixture {};
+
+TEST_F(CompileLambda, EvaluatePureLambda)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + 1
         }
@@ -21,9 +23,9 @@ TEST(CoreLambda, TestEvaluatePureLambda)
                      RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Function1")))));
 }
 
-TEST(CoreLambda, TestEvaluatePureLambdaFrom)
+TEST_F(CompileLambda, EvaluatePureLambdaFrom)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def fn(n: Int): Int {
           n + 1
         }
@@ -35,9 +37,9 @@ TEST(CoreLambda, TestEvaluatePureLambdaFrom)
                      RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Function1")))));
 }
 
-TEST(CoreLambda, TestEvaluateInvokePureLambda)
+TEST_F(CompileLambda, EvaluateInvokePureLambda)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + 1
         }
@@ -47,9 +49,9 @@ TEST(CoreLambda, TestEvaluateInvokePureLambda)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
-TEST(CoreLambda, TestEvaluateInvokePureLambdaFrom)
+TEST_F(CompileLambda, EvaluateInvokePureLambdaFrom)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def fn(n: Int): Int {
           n + 1
         }
@@ -60,9 +62,9 @@ TEST(CoreLambda, TestEvaluateInvokePureLambdaFrom)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
-TEST(CoreLambda, TestEvaluateLambdaClosure)
+TEST_F(CompileLambda, EvaluateLambdaClosure)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         val x: Int = 1
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + x
@@ -75,9 +77,9 @@ TEST(CoreLambda, TestEvaluateLambdaClosure)
                      RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Function1")))));
 }
 
-TEST(CoreLambda, TestEvaluateInvokeLambdaClosureOverGlobalVariable)
+TEST_F(CompileLambda, EvaluateInvokeLambdaClosureOverGlobalVariable)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         global val x: Int = 1
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + x
@@ -88,9 +90,9 @@ TEST(CoreLambda, TestEvaluateInvokeLambdaClosureOverGlobalVariable)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
-TEST(CoreLambda, TestEvaluateInvokeLambdaClosureOverLexicalVariable)
+TEST_F(CompileLambda, EvaluateInvokeLambdaClosureOverLexicalVariable)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         val x: Int = 1
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + x
@@ -101,9 +103,9 @@ TEST(CoreLambda, TestEvaluateInvokeLambdaClosureOverLexicalVariable)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
-TEST(CoreLambda, TestEvaluateInvokeLambdaClosureOverPrivateVariableFails)
+TEST_F(CompileLambda, CompileInvokeLambdaClosureOverPrivateVariableFails)
 {
-    auto result = compileModule(R"(
+    auto result = m_tester->compileModule(R"(
         val _x: Int = 1
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + _x

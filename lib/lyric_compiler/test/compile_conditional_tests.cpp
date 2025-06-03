@@ -3,11 +3,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreConditional, EvaluateIf)
+class CompileConditional : public BaseCompilerFixture {};
+
+TEST_F(CompileConditional, EvaluateIf)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         var x: Int = 0
         if true { set x = 1 }
         x
@@ -16,9 +18,9 @@ TEST(CoreConditional, EvaluateIf)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
-TEST(CoreConditional, EvaluateCondIf)
+TEST_F(CompileConditional, EvaluateCondIf)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         var x: String = "two"
         var y: Int = 0
         cond if {
@@ -35,18 +37,18 @@ TEST(CoreConditional, EvaluateCondIf)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
 }
 
-TEST(CoreConditional, EvaluateIfThenElse)
+TEST_F(CompileConditional, EvaluateIfThenElse)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         if false then 1 else 0
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(0))));
 }
 
-TEST(CoreConditional, EvaluateCond)
+TEST_F(CompileConditional, EvaluateCond)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         var x: String = "three"
         cond {
           when x == "one"       1
@@ -59,9 +61,9 @@ TEST(CoreConditional, EvaluateCond)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
-TEST(CoreConditional, EvaluateCondElse)
+TEST_F(CompileConditional, EvaluateCondElse)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         var x: String = "four"
         cond {
           when x == "one"       1

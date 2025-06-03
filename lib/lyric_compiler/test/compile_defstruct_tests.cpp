@@ -4,11 +4,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreDefstruct, EvaluateNewInstanceWithDefaultConstructor)
+class CompileDefstruct : public BaseCompilerFixture {};
+
+TEST_F(CompileDefstruct, EvaluateNewInstanceWithDefaultConstructor)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defstruct Foo {
             val value: Int = 42
         }
@@ -20,9 +22,9 @@ TEST(CoreDefstruct, EvaluateNewInstanceWithDefaultConstructor)
                      RunModule(DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
-TEST(CoreDefstruct, EvaluateNewInstanceWithConstructor)
+TEST_F(CompileDefstruct, EvaluateNewInstanceWithConstructor)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defstruct Foo {
             val Value: Int
             init(i: Int, j: Int) {
@@ -36,9 +38,9 @@ TEST(CoreDefstruct, EvaluateNewInstanceWithConstructor)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }
 
-TEST(CoreDefstruct, EvaluateDerefPublicVarMember)
+TEST_F(CompileDefstruct, EvaluateDerefPublicVarMember)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defstruct Foo {
             val Value: Int
         }
@@ -49,9 +51,9 @@ TEST(CoreDefstruct, EvaluateDerefPublicVarMember)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }
 
-TEST(CoreDefstruct, EvaluateInvokeMethod)
+TEST_F(CompileDefstruct, EvaluateInvokeMethod)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defstruct Foo {
             val value: Int
             def plus10(): Int {
@@ -65,9 +67,9 @@ TEST(CoreDefstruct, EvaluateInvokeMethod)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(110))));
 }
 
-TEST(CoreDefstruct, EvaluateNewInstanceOfSealedStruct)
+TEST_F(CompileDefstruct, EvaluateNewInstanceOfSealedStruct)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defstruct Foo sealed {
             val value: Int = 42
         }
@@ -79,9 +81,9 @@ TEST(CoreDefstruct, EvaluateNewInstanceOfSealedStruct)
                      DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
-TEST(CoreDefstruct, EvaluateDefineSubstructOfFinalStructFails)
+TEST_F(CompileDefstruct, CompileDefineSubstructOfFinalStructFails)
 {
-    auto result = compileModule(R"(
+    auto result = m_tester->compileModule(R"(
         defstruct Foo final {
         }
         defstruct Bar {
@@ -94,9 +96,9 @@ TEST(CoreDefstruct, EvaluateDefineSubstructOfFinalStructFails)
             tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidAccess))));
 }
 
-TEST(CoreDefstruct, EvaluateNewInstanceOfFinalStruct)
+TEST_F(CompileDefstruct, EvaluateNewInstanceOfFinalStruct)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defstruct Foo final {
             val value: Int = 42
         }

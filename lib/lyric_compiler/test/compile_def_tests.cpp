@@ -3,11 +3,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreDef, EvaluateDefUnaryFunction)
+class CompileDef : public BaseCompilerFixture {};
+
+TEST_F(CompileDef, EvaluateDefUnaryFunction)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def add10(x: Int): Int {
             x + 10
         }
@@ -19,9 +21,9 @@ TEST(CoreDef, EvaluateDefUnaryFunction)
             DataCellInt(15))));
 }
 
-TEST(CoreDef, EvaluateDefBinaryFunction)
+TEST_F(CompileDef, EvaluateDefBinaryFunction)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def subtractInts(x: Int, y: Int): Int {
             x - y
         }
@@ -33,9 +35,9 @@ TEST(CoreDef, EvaluateDefBinaryFunction)
             DataCellInt(1))));
 }
 
-TEST(CoreDef, EvaluateDefFunctionWithNamedParams)
+TEST_F(CompileDef, EvaluateDefFunctionWithNamedParams)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def subtractInts(x: Int, named y: Int): Int {
             x - y
         }
@@ -47,9 +49,9 @@ TEST(CoreDef, EvaluateDefFunctionWithNamedParams)
             DataCellInt(1))));
 }
 
-TEST(CoreDef, EvaluateDefFunctionWithDefaultInitializer)
+TEST_F(CompileDef, EvaluateDefFunctionWithDefaultInitializer)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def subtractInts(x: Int, named y: Int = 1): Int {
             x - y
         }
@@ -61,9 +63,9 @@ TEST(CoreDef, EvaluateDefFunctionWithDefaultInitializer)
             DataCellInt(4))));
 }
 
-TEST(CoreDef, EvaluateDefGenericFunction)
+TEST_F(CompileDef, EvaluateDefGenericFunction)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def identity[A](x: A): A {
             x
         }
@@ -76,9 +78,9 @@ TEST(CoreDef, EvaluateDefGenericFunction)
             DataCellInt(10))));
 }
 
-TEST(CoreDef, EvaluateDefGenericFunctionWithUpperBound)
+TEST_F(CompileDef, EvaluateDefGenericFunctionWithUpperBound)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def identity[A](x: A): A where A < Int {
             x
         }
@@ -90,9 +92,9 @@ TEST(CoreDef, EvaluateDefGenericFunctionWithUpperBound)
             DataCellInt(5))));
 }
 
-TEST(CoreDef, EvaluateDefGenericFunctionWithCtxParameter)
+TEST_F(CompileDef, EvaluateDefGenericFunctionWithCtxParameter)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def sum[A](x1: A, x2: A, using math: Arithmetic[A, A]): A {
             math.add(x1, x2)
         }
@@ -104,9 +106,9 @@ TEST(CoreDef, EvaluateDefGenericFunctionWithCtxParameter)
             DataCellInt(10))));
 }
 
-TEST(CoreDef, EvaluateDefGenericFunctionWithCallsiteArgument)
+TEST_F(CompileDef, EvaluateDefGenericFunctionWithCallsiteArgument)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         def identity[A](x: A): A {
             x
         }

@@ -4,11 +4,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreDefconcept, EvaluateDefconcept)
+class CompileDefconcept : public BaseCompilerFixture {};
+
+TEST_F(CompileDefconcept, EvaluateDefconcept)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defconcept Sum[T] {
             decl sum(x1: T, x2: T): T
         }
@@ -20,9 +22,9 @@ TEST(CoreDefconcept, EvaluateDefconcept)
                      MatchesDescriptorSection(lyric_object::LinkageSection::Concept))));
 }
 
-TEST(CoreDefconcept, EvaluateDefconceptImplementation)
+TEST_F(CompileDefconcept, EvaluateDefconceptImplementation)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defconcept Sum[T] {
             decl sum(x1: T, x2: T): T
         }
@@ -46,9 +48,9 @@ TEST(CoreDefconcept, EvaluateDefconceptImplementation)
                      RunModule(DataCellInt(5))));
 }
 
-TEST(CoreDefconcept, EvaluateDefconceptAction)
+TEST_F(CompileDefconcept, EvaluateDefconceptAction)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defconcept Sum[T] {
             decl sum(x1: T, x2: T): T
         }
@@ -70,9 +72,9 @@ TEST(CoreDefconcept, EvaluateDefconceptAction)
                      RunModule(DataCellInt(5))));
 }
 
-TEST(CoreDefconcept, EvaluateImplementationOfSealedConcept)
+TEST_F(CompileDefconcept, EvaluateImplementationOfSealedConcept)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defconcept Sum[T] sealed {
             decl sum(x1: T, x2: T): T
         }
@@ -94,9 +96,9 @@ TEST(CoreDefconcept, EvaluateImplementationOfSealedConcept)
                      RunModule(DataCellInt(5))));
 }
 
-TEST(CoreDefconcept, EvaluateImplementationOfFinalConcept)
+TEST_F(CompileDefconcept, EvaluateImplementationOfFinalConcept)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         defconcept Sum[T] final {
             decl sum(x1: T, x2: T): T
         }

@@ -3,11 +3,13 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_compiler_fixture.h"
 
-TEST(CoreVal, EvaluateVal)
+class CompileVal : public BaseCompilerFixture {};
+
+TEST_F(CompileVal, EvaluateVal)
 {
-    auto result = runModule(R"(
+    auto result = m_tester->runModule(R"(
         val foo: Int = 100
         foo
     )");

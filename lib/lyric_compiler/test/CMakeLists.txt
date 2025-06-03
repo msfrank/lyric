@@ -5,8 +5,24 @@ include(GoogleTest)
 # define unit tests
 
 set(TEST_CASES
-    compile_typename_tests.cpp
     compiler_scan_driver_tests.cpp
+    compile_assignment_tests.cpp
+    compile_conditional_tests.cpp
+    compile_def_tests.cpp
+    compile_defalias_tests.cpp
+    compile_defclass_tests.cpp
+    compile_defconcept_tests.cpp
+    compile_defenum_tests.cpp
+    compile_definstance_tests.cpp
+    compile_defstruct_tests.cpp
+    compile_lambda_tests.cpp
+    compile_match_tests.cpp
+    compile_namespace_tests.cpp
+    compile_new_tests.cpp
+    compile_typename_tests.cpp
+    compile_val_tests.cpp
+    compile_var_tests.cpp
+    compile_while_tests.cpp
     visitor_context_tests.cpp
     )
 
