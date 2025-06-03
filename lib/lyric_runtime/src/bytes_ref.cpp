@@ -108,9 +108,9 @@ lyric_runtime::DataCell
 lyric_runtime::BytesRef::byteAt(int index) const
 {
     if (m_data == nullptr)
-        return lyric_runtime::DataCell::nil();
+        return lyric_runtime::DataCell::undef();
     if (m_size <= index)
-        return lyric_runtime::DataCell::nil();
+        return lyric_runtime::DataCell::undef();
     auto byte = m_data[index];
     return lyric_runtime::DataCell(static_cast<tu_int64>(byte));
 }

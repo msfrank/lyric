@@ -10,13 +10,14 @@
 #include "object_ref.h"
 #include "pair_ref.h"
 #include "record_ref.h"
+#include "rest_traps.h"
 #include "seq_ref.h"
 #include "singleton_ref.h"
 #include "status_ref.h"
 #include "string_traps.h"
 #include "url_traps.h"
 
-std::array<lyric_runtime::NativeTrap,46> kPreludeTraps = {{
+std::array<lyric_runtime::NativeTrap,48> kPreludeTraps = {{
     {bytes_at, "BytesAt", 0},
     { bytes_compare, "BytesCompare", 0 },
     { bytes_length, "BytesLength", 0 },
@@ -44,6 +45,8 @@ std::array<lyric_runtime::NativeTrap,46> kPreludeTraps = {{
     { pair_first, "PairFirst", 0 },
     { pair_second, "PairSecond", 0 },
     { record_alloc, "RecordAlloc", 0 },
+    { rest_num_args, "RestNumArgs", 0 },
+    { rest_get_arg, "RestGetArg", 0 },
     { seq_alloc, "SeqAlloc", },
     { seq_ctor, "SeqCtor", 0 },
     { seq_size, "SeqSize", 0 },

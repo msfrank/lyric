@@ -48,6 +48,7 @@ namespace lyric_assembler {
         Pair,
         Proposition,
         Record,
+        Rest,
         Seq,
         Singleton,
         Status,

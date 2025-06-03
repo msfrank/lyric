@@ -248,6 +248,7 @@ target_link_libraries(lyric_testsuite
     LyricBootstrapTestSuite
     LyricBuildTestSuite
     LyricCommonTestSuite
+    LyricCompilerTestSuite
     LyricObjectTestSuite
     LyricOptimizerTestSuite
     LyricParserTestSuite

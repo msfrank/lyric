@@ -69,6 +69,8 @@ lyric_assembler::FundamentalCache::FundamentalCache(
         fundamentalTypeToSymbolPath(FundamentalSymbol::Proposition));
     m_fundamentalRecord = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Record));
+    m_fundamentalRest = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::Rest));
     m_fundamentalSeq = lyric_common::SymbolUrl(preludeLocation,
         fundamentalTypeToSymbolPath(FundamentalSymbol::Seq));
     m_fundamentalSingleton = lyric_common::SymbolUrl(preludeLocation,
@@ -271,6 +273,8 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalProposition;
         case FundamentalSymbol::Record:
             return m_fundamentalRecord;
+        case FundamentalSymbol::Rest:
+            return m_fundamentalRest;
         case FundamentalSymbol::Seq:
             return m_fundamentalSeq;
         case FundamentalSymbol::Singleton:

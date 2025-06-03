@@ -5,6 +5,7 @@
 #include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/descriptor_entry.h>
 #include <lyric_runtime/literal_cell.h>
+#include <lyric_runtime/rest_ref.h>
 #include <lyric_runtime/string_ref.h>
 #include <lyric_runtime/url_ref.h>
 #include <tempo_utils/log_stream.h>
@@ -75,6 +76,10 @@ lyric_runtime::DataCell::DataCell(const DataCell &other) : DataCell()
             type = other.type;
             data.url = other.data.url;
             break;
+        case DataCellType::REST:
+            type = other.type;
+            data.rest = other.data.rest;
+            break;
         case DataCellType::REF:
             type = other.type;
             data.ref = other.data.ref;
@@ -128,6 +133,9 @@ lyric_runtime::DataCell::DataCell(DataCell &&other) noexcept : DataCell()
             break;
         case DataCellType::URL:
             data.url = other.data.url;
+            break;
+        case DataCellType::REST:
+            data.rest = other.data.rest;
             break;
         case DataCellType::REF:
             data.ref = other.data.ref;
@@ -306,6 +314,16 @@ lyric_runtime::DataCell::forUrl(UrlRef *url)
     return cell;
 }
 
+lyric_runtime::DataCell
+lyric_runtime::DataCell::forRest(RestRef *rest)
+{
+    TU_ASSERT (rest != nullptr);
+    DataCell cell;
+    cell.type = DataCellType::REST;
+    cell.data.rest = rest;
+    return cell;
+}
+
 lyric_runtime::DataCell&
 lyric_runtime::DataCell::operator=(const DataCell &other)
 {
@@ -342,6 +360,10 @@ lyric_runtime::DataCell::operator=(const DataCell &other)
         case DataCellType::URL:
             type = other.type;
             data.url = other.data.url;
+            break;
+        case DataCellType::REST:
+            type = other.type;
+            data.rest = other.data.rest;
             break;
         case DataCellType::REF:
             type = other.type;
@@ -400,6 +422,9 @@ lyric_runtime::DataCell::operator=(DataCell &&other) noexcept
             case DataCellType::URL:
                 data.url = other.data.url;
                 break;
+            case DataCellType::REST:
+                data.rest = other.data.rest;
+                break;
             case DataCellType::REF:
                 data.ref = other.data.ref;
                 break;
@@ -442,6 +467,7 @@ lyric_runtime::DataCell::isValid() const
         case DataCellType::BYTES:
         case DataCellType::STRING:
         case DataCellType::URL:
+        case DataCellType::REST:
         case DataCellType::REF:
         case DataCellType::TYPE:
         case DataCellType::CLASS:
@@ -485,6 +511,8 @@ lyric_runtime::DataCell::toString() const
             return data.str->toString();
         case DataCellType::URL:
             return data.url->toString();
+        case DataCellType::REST:
+            return data.rest->toString();
         case DataCellType::REF:
             return data.ref->toString();
         case DataCellType::CLASS:
@@ -558,6 +586,8 @@ lyric_runtime::operator==(const DataCell &lhs, const DataCell &rhs)
             return lhs.data.str == rhs.data.str;
         case DataCellType::URL:
             return lhs.data.url == rhs.data.url;
+        case DataCellType::REST:
+            return lhs.data.rest == rhs.data.rest;
         case DataCellType::REF:
             return lhs.data.ref == rhs.data.ref;
         case DataCellType::CLASS:
@@ -620,6 +650,10 @@ lyric_runtime::operator<<(tempo_utils::LogMessage &&message, const DataCell &cel
         case DataCellType::URL:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(url=$0)", cell.data.url->toString());
+            break;
+        case DataCellType::REST:
+            std::forward<tempo_utils::LogMessage>(message)
+                << absl::Substitute("DataCell(rest=$0)", cell.data.rest->toString());
             break;
         case DataCellType::REF:
             std::forward<tempo_utils::LogMessage>(message)

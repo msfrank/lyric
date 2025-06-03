@@ -124,11 +124,11 @@ lyric_runtime::DataCell
 lyric_runtime::StringRef::stringAt(int index) const
 {
     if (m_data == nullptr)
-        return DataCell::nil();
+        return DataCell::undef();
     UChar32 char32;
     U8_GET((const tu_uint8 *) m_data, 0, index, m_size, char32);
     if (char32 < 0)
-        return DataCell::nil();
+        return DataCell::undef();
     return DataCell(char32);
 }
 

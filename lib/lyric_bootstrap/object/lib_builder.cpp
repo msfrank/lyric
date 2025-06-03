@@ -79,7 +79,7 @@ main(int argc, char *argv[])
     auto *IntrinsicExistential = build_core_Intrinsic(state, AnyExistential);
 
     // declare intrinsic subtypes
-    build_core_Undef(state, IntrinsicExistential);
+    auto *UndefExistential = build_core_Undef(state, IntrinsicExistential);
     auto *BoolExistential = declare_core_Bool(state, IntrinsicExistential);
     auto *CharExistential = declare_core_Char(state, IntrinsicExistential);
     auto *IntExistential = declare_core_Int(state, IntrinsicExistential);
@@ -87,6 +87,9 @@ main(int argc, char *argv[])
     auto *BytesExistential = declare_core_Bytes(state, IntrinsicExistential);
     auto *StringExistential = declare_core_String(state, IntrinsicExistential);
     auto *UrlExistential = declare_core_Url(state, IntrinsicExistential);
+
+    // declare Rest type
+    auto *RestExistential = declare_core_Rest(state, AnyExistential);
 
     // declare Descriptor type
     auto *DescriptorExistential = declare_core_Descriptor(state, AnyExistential);
@@ -123,12 +126,15 @@ main(int argc, char *argv[])
     build_core_Char(state, CharExistential);
     build_core_Int(state, IntExistential);
     build_core_Float(state, FloatExistential);
+    build_core_Descriptor(state, DescriptorExistential);
     build_core_Bytes(state, BytesExistential, IntExistential->existentialType);
     build_core_String(state, StringExistential, IntExistential->existentialType,
         CharExistential->existentialType, BytesExistential->existentialType);
     build_core_Url(state, UrlExistential);
-    build_core_Descriptor(state, DescriptorExistential);
-    build_core_Type(state, TypeExistential, IntExistential->existentialType, BoolExistential->existentialType);
+    build_core_Rest(state, RestExistential, IntExistential->existentialType,
+        UndefExistential->existentialType);
+    build_core_Type(state, TypeExistential, IntExistential->existentialType,
+        BoolExistential->existentialType);
 
     // define Function classes
     for (int i = 0; i <= NUM_FUNCTION_CLASSES; i++) {

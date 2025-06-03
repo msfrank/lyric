@@ -36,6 +36,10 @@ namespace lyric_runtime {
                 // NOTE: we hash the pointer value in this case, not the url content
                 return H::combine(std::move(h), cell.type, cell.data.url);
 
+            case DataCellType::REST:
+                // NOTE: we hash the pointer value in this case, not the url content
+                return H::combine(std::move(h), cell.type, cell.data.rest);
+
             case DataCellType::REF:
                 // NOTE: we hash the pointer value in this case, not the ref content
                 return H::combine(std::move(h), cell.type, cell.data.ref);

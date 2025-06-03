@@ -64,6 +64,8 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
             return "Proposition";
         case FundamentalSymbol::Record:
             return "Record";
+        case FundamentalSymbol::Rest:
+            return "Rest";
         case FundamentalSymbol::Seq:
             return "Seq";
         case FundamentalSymbol::Singleton:
