@@ -18,7 +18,7 @@ CoreConcept *build_core_Ordered(BuilderState &state, const CoreConcept *IdeaConc
     auto *OrderedConcept = state.addGenericConcept(conceptPath, OrderedTemplate,
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
-    state.addConceptAction("compare", OrderedConcept,
+    state.addConceptAction("Compare", OrderedConcept,
         {
             make_list_param("lhs", TType),
             make_list_param("rhs", TType),

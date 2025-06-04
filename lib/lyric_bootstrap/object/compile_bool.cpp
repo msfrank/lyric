@@ -65,7 +65,7 @@ build_core_BoolInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("equals", BoolEqualityImpl,
+        state.addImplExtension("Equals", BoolEqualityImpl,
             {
                 make_list_param("lhs", BoolType),
                 make_list_param("rhs", BoolType),
@@ -77,7 +77,7 @@ build_core_BoolInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_BOOL_CMP));
-        state.addImplExtension("compare", BoolOrderedImpl,
+        state.addImplExtension("Compare", BoolOrderedImpl,
             {
                 make_list_param("lhs", BoolType),
                 make_list_param("rhs", BoolType),
@@ -89,7 +89,7 @@ build_core_BoolInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_LOGICAL_AND));
-        state.addImplExtension("conjunct", BoolPropositionImpl,
+        state.addImplExtension("Conjunct", BoolPropositionImpl,
             {
                 make_list_param("lhs", BoolType),
                 make_list_param("rhs", BoolType),
@@ -101,7 +101,7 @@ build_core_BoolInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_LOGICAL_OR));
-        state.addImplExtension("disjunct", BoolPropositionImpl,
+        state.addImplExtension("Disjunct", BoolPropositionImpl,
             {
                 make_list_param("lhs", BoolType),
                 make_list_param("rhs", BoolType),
@@ -112,7 +112,7 @@ build_core_BoolInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_LOGICAL_NOT));
-        state.addImplExtension("complement", BoolPropositionImpl,
+        state.addImplExtension("Complement", BoolPropositionImpl,
             {
                 make_list_param("lhs", BoolType),
             },

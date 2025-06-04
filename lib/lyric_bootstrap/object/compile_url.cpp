@@ -37,7 +37,7 @@ build_core_UrlInstance(
     {
         lyric_object::BytecodeBuilder code;
         state.writeTrap(code, "UrlEquals");
-        state.addImplExtension("equals", UrlEqualityImpl,
+        state.addImplExtension("Equals", UrlEqualityImpl,
             {
                 make_list_param("lhs", UrlType),
                 make_list_param("rhs", UrlType),

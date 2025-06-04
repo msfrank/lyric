@@ -20,7 +20,7 @@ CoreConcept *build_core_Equality(BuilderState &state, const CoreConcept *IdeaCon
     auto *EqualityConcept = state.addGenericConcept(conceptPath, EqualityTemplate,
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
-    state.addConceptAction("equals", EqualityConcept,
+    state.addConceptAction("Equals", EqualityConcept,
         {
             make_list_param("lhs", LType),
             make_list_param("rhs", RType),

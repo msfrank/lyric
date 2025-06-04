@@ -20,25 +20,25 @@ CoreConcept *build_core_Comparison(BuilderState &state, const CoreConcept *IdeaC
     auto *ComparisonConcept = state.addGenericConcept(conceptPath, ComparisonTemplate,
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
-    state.addConceptAction("lessthan", ComparisonConcept,
+    state.addConceptAction("LessThan", ComparisonConcept,
         {
             make_list_param("lhs", LType),
             make_list_param("rhs", RType),
         },
         BoolType);
-    state.addConceptAction("greaterthan", ComparisonConcept,
+    state.addConceptAction("GreaterThan", ComparisonConcept,
         {
             make_list_param("lhs", LType),
             make_list_param("rhs", RType),
         },
         BoolType);
-    state.addConceptAction("lessequals", ComparisonConcept,
+    state.addConceptAction("LessEquals", ComparisonConcept,
         {
             make_list_param("lhs", LType),
             make_list_param("rhs", RType),
         },
         BoolType);
-    state.addConceptAction("greaterequals", ComparisonConcept,
+    state.addConceptAction("GreaterEquals", ComparisonConcept,
         {
             make_list_param("lhs", LType),
             make_list_param("rhs", RType),

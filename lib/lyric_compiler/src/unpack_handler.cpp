@@ -145,7 +145,7 @@ lyric_compiler::UnpackHandler::after(
 
     // store each tuple element in a local variable
     for (tu_uint32 i = 0; i < m_unpack.tupleTypeArguments.size(); i++) {
-        auto tupleMember = absl::StrCat("t", i);
+        auto tupleMember = absl::StrCat("Element", i);
 
         lyric_assembler::AbstractSymbol *receiver;
         TU_ASSIGN_OR_RETURN (receiver, symbolCache->getOrImportSymbol(tupleUrl));

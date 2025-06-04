@@ -37,31 +37,31 @@ lyric_compiler::resolve_operator_action_name(lyric_schema::LyricAstId operatorCl
 {
     switch (operatorClass) {
         case lyric_schema::LyricAstId::Add:
-            return {"add"};
+            return {"Add"};
         case lyric_schema::LyricAstId::Sub:
-            return {"subtract"};
+            return {"Subtract"};
         case lyric_schema::LyricAstId::Mul:
-            return {"multiply"};
+            return {"Multiply"};
         case lyric_schema::LyricAstId::Div:
-            return {"divide"};
+            return {"Divide"};
         case lyric_schema::LyricAstId::Neg:
-            return {"negate"};
+            return {"Negate"};
         case lyric_schema::LyricAstId::And:
-            return {"conjunct"};
+            return {"Conjunct"};
         case lyric_schema::LyricAstId::Or:
-            return {"disjunct"};
+            return {"Disjunct"};
         case lyric_schema::LyricAstId::Not:
-            return {"complement"};
+            return {"Complement"};
         case lyric_schema::LyricAstId::IsEq:
-            return {"equals"};
+            return {"Equals"};
         case lyric_schema::LyricAstId::IsLt:
-            return {"lessthan"};
+            return {"LessThan"};
         case lyric_schema::LyricAstId::IsLe:
-            return {"lessequals"};
+            return {"LessEquals"};
         case lyric_schema::LyricAstId::IsGt:
-            return {"greaterthan"};
+            return {"GreaterThan"};
         case lyric_schema::LyricAstId::IsGe:
-            return {"greaterequals"};
+            return {"GreaterEquals"};
         default:
             return CompilerStatus::forCondition(
                 CompilerCondition::kCompilerInvariant, "failed to resolve operator action; invalid operator class");

@@ -50,7 +50,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceApplication)
     auto result = m_tester->runModule(R"(
         definstance IntReverseOrdering {
             impl Ordered[Int] {
-                def compare(lhs: Int, rhs: Int): Int {
+                def Compare(lhs: Int, rhs: Int): Int {
                     cond {
                         when lhs > rhs     -1
                         when lhs < rhs      1
@@ -61,7 +61,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceApplication)
         }
 
         def max[T](x1: T, x2: T, using ord: Ordered[T]): T {
-            if ord.compare(x1, x2) >= 0 then x1 else x2
+            if ord.Compare(x1, x2) >= 0 then x1 else x2
         }
 
         max(1, 2, ord = IntReverseOrdering)
@@ -75,7 +75,7 @@ TEST_F(CompileDefinstance, EvaluateUsingInstanceApplication)
     auto result = m_tester->runModule(R"(
         definstance IntReverseOrdering {
             impl Ordered[Int] {
-                def compare(lhs: Int, rhs: Int): Int {
+                def Compare(lhs: Int, rhs: Int): Int {
                     cond {
                         when lhs > rhs     -1
                         when lhs < rhs      1
@@ -86,7 +86,7 @@ TEST_F(CompileDefinstance, EvaluateUsingInstanceApplication)
         }
 
         def max[T](x1: T, x2: T, using ord: Ordered[T]): T {
-            if ord.compare(x1, x2) >= 0 then x1 else x2
+            if ord.Compare(x1, x2) >= 0 then x1 else x2
         }
 
         using IntReverseOrdering

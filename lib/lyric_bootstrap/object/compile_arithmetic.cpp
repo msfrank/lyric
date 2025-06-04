@@ -20,31 +20,31 @@ CoreConcept *build_core_Arithmetic(BuilderState &state, const CoreConcept *IdeaC
     auto *ArithmeticConcept = state.addGenericConcept(conceptPath, ArithmeticTemplate,
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
-    state.addConceptAction("add", ArithmeticConcept,
+    state.addConceptAction("Add", ArithmeticConcept,
         {
             make_list_param("lhs", LType),
             make_list_param("rhs", RType),
         },
         LType);
-    state.addConceptAction("subtract", ArithmeticConcept,
+    state.addConceptAction("Subtract", ArithmeticConcept,
         {
             make_list_param("lhs", LType),
             make_list_param("rhs", RType),
         },
         LType);
-    state.addConceptAction("multiply", ArithmeticConcept,
+    state.addConceptAction("Multiply", ArithmeticConcept,
         {
             make_list_param("lhs", LType),
             make_list_param("rhs", RType),
         },
         LType);
-    state.addConceptAction("divide", ArithmeticConcept,
+    state.addConceptAction("Divide", ArithmeticConcept,
         {
             make_list_param("lhs", LType),
             make_list_param("rhs", RType),
         },
         LType);
-    state.addConceptAction("negate", ArithmeticConcept,
+    state.addConceptAction("Negate", ArithmeticConcept,
         {
             make_list_param("lhs", LType)
         },

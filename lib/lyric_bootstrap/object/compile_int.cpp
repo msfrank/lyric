@@ -60,7 +60,7 @@ build_core_IntInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_ADD));
-        state.addImplExtension("add", IntArithmeticImpl,
+        state.addImplExtension("Add", IntArithmeticImpl,
             {
                 make_list_param("lhs", IntType),
                 make_list_param("rhs", IntType),
@@ -72,7 +72,7 @@ build_core_IntInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_SUB));
-        state.addImplExtension("subtract", IntArithmeticImpl,
+        state.addImplExtension("Subtract", IntArithmeticImpl,
             {
                 make_list_param("lhs", IntType),
                 make_list_param("rhs", IntType),
@@ -84,7 +84,7 @@ build_core_IntInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_MUL));
-        state.addImplExtension("multiply", IntArithmeticImpl,
+        state.addImplExtension("Multiply", IntArithmeticImpl,
             {
                 make_list_param("lhs", IntType),
                 make_list_param("rhs", IntType),
@@ -96,7 +96,7 @@ build_core_IntInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_DIV));
-        state.addImplExtension("divide", IntArithmeticImpl,
+        state.addImplExtension("Divide", IntArithmeticImpl,
             {
                 make_list_param("lhs", IntType),
                 make_list_param("rhs", IntType),
@@ -107,7 +107,7 @@ build_core_IntInstance(
         lyric_object::BytecodeBuilder code;
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_NEG));
-        state.addImplExtension("negate", IntArithmeticImpl,
+        state.addImplExtension("Negate", IntArithmeticImpl,
             {
                 make_list_param("lhs", IntType),
             },
@@ -128,7 +128,7 @@ build_core_IntInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("equals", IntEqualityImpl,
+        state.addImplExtension("Equals", IntEqualityImpl,
             {
                 make_list_param("lhs", IntType),
                 make_list_param("rhs", IntType),
@@ -150,7 +150,7 @@ build_core_IntInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("lessthan", IntComparisonImpl,
+        state.addImplExtension("LessThan", IntComparisonImpl,
             {
                 make_list_param("lhs", IntType),
                 make_list_param("rhs", IntType),
@@ -172,7 +172,7 @@ build_core_IntInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("greaterthan", IntComparisonImpl,
+        state.addImplExtension("GreaterThan", IntComparisonImpl,
             {
                 make_list_param("lhs", IntType),
                 make_list_param("rhs", IntType),
@@ -194,7 +194,7 @@ build_core_IntInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("lessequals", IntComparisonImpl,
+        state.addImplExtension("LessEquals", IntComparisonImpl,
             {
                 make_list_param("lhs", IntType),
                 make_list_param("rhs", IntType),
@@ -216,7 +216,7 @@ build_core_IntInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("greaterequals", IntComparisonImpl,
+        state.addImplExtension("GreaterEquals", IntComparisonImpl,
             {
                 make_list_param("lhs", IntType),
                 make_list_param("rhs", IntType),
@@ -228,7 +228,7 @@ build_core_IntInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_I64_CMP));
-        state.addImplExtension("compare", IntOrderedImpl,
+        state.addImplExtension("Compare", IntOrderedImpl,
             {
                 make_list_param("lhs", IntType),
                 make_list_param("rhs", IntType),

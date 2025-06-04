@@ -99,7 +99,7 @@ build_core_StringInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("equals", StringEqualityImpl,
+        state.addImplExtension("Equals", StringEqualityImpl,
             {
                 make_list_param("lhs", StringType),
                 make_list_param("rhs", StringType),
@@ -119,7 +119,7 @@ build_core_StringInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("lessthan", StringComparisonImpl,
+        state.addImplExtension("LessThan", StringComparisonImpl,
             {
                 make_list_param("lhs", StringType),
                 make_list_param("rhs", StringType),
@@ -139,7 +139,7 @@ build_core_StringInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("greaterthan", StringComparisonImpl,
+        state.addImplExtension("GreaterThan", StringComparisonImpl,
             {
                 make_list_param("lhs", StringType),
                 make_list_param("rhs", StringType),
@@ -159,7 +159,7 @@ build_core_StringInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("lessequals", StringComparisonImpl,
+        state.addImplExtension("LessEquals", StringComparisonImpl,
             {
                 make_list_param("lhs", StringType),
                 make_list_param("rhs", StringType),
@@ -179,7 +179,7 @@ build_core_StringInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("greaterequals", StringComparisonImpl,
+        state.addImplExtension("GreaterEquals", StringComparisonImpl,
             {
                 make_list_param("lhs", StringType),
                 make_list_param("rhs", StringType),
@@ -189,7 +189,7 @@ build_core_StringInstance(
     {
         lyric_object::BytecodeBuilder code;
         state.writeTrap(code, "StringCompare");
-        state.addImplExtension("compare", StringOrderedImpl,
+        state.addImplExtension("Compare", StringOrderedImpl,
             {
                 make_list_param("lhs", StringType),
                 make_list_param("rhs", StringType),

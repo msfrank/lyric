@@ -9,7 +9,7 @@
 
 namespace lyric_compiler {
 
-    constexpr char const *kUnwrapExtensionName = "unwrap";
+    constexpr char const *kUnwrapExtensionName = "Unwrap";
 
     struct Unpack {
         lyric_common::TypeDef unwrapType;

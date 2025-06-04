@@ -18,7 +18,7 @@ CoreConcept *build_core_Unwrap(BuilderState &state, const CoreConcept *IdeaConce
     auto *UnwrapConcept = state.addGenericConcept(conceptPath, UnwrapTemplate,
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
-    state.addConceptAction("unwrap", UnwrapConcept,
+    state.addConceptAction("Unwrap", UnwrapConcept,
         {
             make_list_param("wrapped", WType),
         },

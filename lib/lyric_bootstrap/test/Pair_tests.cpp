@@ -22,7 +22,7 @@ TEST(CorePair, TestEvaluatePairFirst)
 {
     auto result = runModule(R"(
         val pair: Pair = Pair{first = 1, second = 2}
-        pair.first()
+        pair.First()
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
@@ -32,7 +32,7 @@ TEST(CorePair, TestEvaluatePairSecond)
 {
     auto result = runModule(R"(
         val pair: Pair = Pair{first = 1, second = 2}
-        pair.second()
+        pair.Second()
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));

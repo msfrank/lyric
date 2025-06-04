@@ -27,9 +27,9 @@ build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *
     TU_ASSERT (!state.symboltable.contains(StatusStruct->structPath));
     state.symboltable[StatusStruct->structPath] = symbol_index;
 
-    auto *CodeField = state.addStructMember("code", StatusStruct,
+    auto *CodeField = state.addStructMember("Code", StatusStruct,
         lyo1::FieldFlags::GlobalVisibility, IntType);
-    auto *MessageField = state.addStructMember("message", StatusStruct,
+    auto *MessageField = state.addStructMember("Message", StatusStruct,
         lyo1::FieldFlags::GlobalVisibility, StringType);
 
     {

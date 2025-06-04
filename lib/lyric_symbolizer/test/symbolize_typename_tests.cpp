@@ -39,6 +39,8 @@ TEST_F(SymbolizeTypename, DeclareAliasWithTypenames)
         typename Foo
         typename Bar
         defalias FooOrBar from Foo | Bar
+        defstruct Foo {}
+        defstruct Bar {}
     )");
     ASSERT_THAT (symbolizeModuleResult,
         tempo_test::ContainsResult(SymbolizeModule(lyric_build::TaskState::Status::COMPLETED)));
@@ -51,12 +53,12 @@ TEST_F(SymbolizeTypename, DeclareAliasWithTypenames)
 
     auto symbol1 = root.findSymbol(lyric_common::SymbolPath::fromString("Foo"));
     ASSERT_TRUE (symbol1.isValid());
-    ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Type);
+    ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Struct);
     ASSERT_EQ (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
 
     auto symbol2 = root.findSymbol(lyric_common::SymbolPath::fromString("Bar"));
     ASSERT_TRUE (symbol2.isValid());
-    ASSERT_EQ (symbol2.getLinkageSection(), lyric_object::LinkageSection::Type);
+    ASSERT_EQ (symbol2.getLinkageSection(), lyric_object::LinkageSection::Struct);
     ASSERT_EQ (symbol2.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
 
     auto symbol3 = root.findSymbol(lyric_common::SymbolPath::fromString("FooOrBar"));

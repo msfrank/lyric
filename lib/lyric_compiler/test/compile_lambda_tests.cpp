@@ -43,7 +43,7 @@ TEST_F(CompileLambda, EvaluateInvokePureLambda)
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + 1
         }
-        f.apply(2)
+        f.Apply(2)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
@@ -56,7 +56,7 @@ TEST_F(CompileLambda, EvaluateInvokePureLambdaFrom)
           n + 1
         }
         val f: Function1[Int,Int] = lambda from fn
-        f.apply(2)
+        f.Apply(2)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
@@ -84,7 +84,7 @@ TEST_F(CompileLambda, EvaluateInvokeLambdaClosureOverGlobalVariable)
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + x
         }
-        f.apply(2)
+        f.Apply(2)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
@@ -97,7 +97,7 @@ TEST_F(CompileLambda, EvaluateInvokeLambdaClosureOverLexicalVariable)
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + x
         }
-        f.apply(2)
+        f.Apply(2)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
@@ -110,7 +110,7 @@ TEST_F(CompileLambda, CompileInvokeLambdaClosureOverPrivateVariableFails)
         val f: Function1[Int,Int] = lambda (n: Int): Int {
           n + _x
         }
-        f.apply(2)
+        f.Apply(2)
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(

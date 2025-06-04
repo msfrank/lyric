@@ -24,7 +24,7 @@ TEST(CoreStatus, TestEvaluateStatusCode)
         val status: Status = Cancelled{message = "operation was cancelled"}
         match status {
             when s: Status
-                s.code
+                s.Code
             else nil
         }
     )");
@@ -40,7 +40,7 @@ TEST(CoreStatus, TestEvaluateStatusMessage)
         val status: Status = Cancelled{message = "operation was cancelled"}
         match status {
             when s: Status
-                s.message
+                s.Message
             else nil
         }
     )");

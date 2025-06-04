@@ -28,8 +28,6 @@ add_executable(prelude-builder
     object/compile_char.h
     object/compile_class.cpp
     object/compile_class.h
-    object/compile_closure.cpp
-    object/compile_closure.h
     object/compile_comparison.cpp
     object/compile_comparison.h
     object/compile_concept.cpp
@@ -123,7 +121,7 @@ add_custom_command (
     OUTPUT ${PRELUDE_OBJECT_PATH}
     COMMAND prelude-builder ${PRELUDE_OBJECT_PATH}
     COMMENT "generating ${PRELUDE_OBJECT_NAME}"
-    DEPENDS prelude-builder
+    DEPENDS prelude-builder prelude-plugin
     )
 add_custom_target(prelude-object DEPENDS ${PRELUDE_OBJECT_PATH})
 

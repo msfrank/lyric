@@ -61,7 +61,7 @@ build_core_FunctionN(BuilderState &state, int arity, const CoreClass *FunctionNC
         state.writeTrap(code, "ClosureApply");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
 
-        state.addClassMethod("apply", FunctionNClass,
+        state.addClassMethod("Apply", FunctionNClass,
             lyo1::CallFlags::GlobalVisibility, applyParams,
             code, RType);
     }

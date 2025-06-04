@@ -253,7 +253,7 @@ TEST_F(CompileDefclass, EvaluateInvokeGenericMethod)
         }
         var foo: Foo = Foo{100}
         val tuple: Tuple2[Int,Int] = foo.Tuple[Int](42)
-        tuple.t0 + tuple.t1
+        tuple.Element0 + tuple.Element1
     )");
 
     ASSERT_THAT (result,
@@ -274,7 +274,7 @@ TEST_F(CompileDefclass, EvaluateInvokeGenericMethodForGenericClass)
         }
         var foo: Foo[Int] = Foo[Int]{100}
         val tuple: Tuple2[Int,Int] = foo.Tuple(42)
-        tuple.t0 + tuple.t1
+        tuple.Element0 + tuple.Element1
     )");
 
     ASSERT_THAT (result,

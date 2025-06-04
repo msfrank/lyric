@@ -58,7 +58,7 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.loadBool(true));
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
-        state.addImplExtension("lessthan", CharComparisonImpl,
+        state.addImplExtension("LessThan", CharComparisonImpl,
             {
                 make_list_param("lhs", CharType),
                 make_list_param("rhs", CharType),
@@ -79,7 +79,7 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.loadBool(true));
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
-        state.addImplExtension("greaterthan", CharComparisonImpl,
+        state.addImplExtension("GreaterThan", CharComparisonImpl,
             {
                 make_list_param("lhs", CharType),
                 make_list_param("rhs", CharType),
@@ -100,7 +100,7 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.loadBool(true));
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
-        state.addImplExtension("lessequals", CharComparisonImpl,
+        state.addImplExtension("LessEquals", CharComparisonImpl,
             {
                 make_list_param("lhs", CharType),
                 make_list_param("rhs", CharType),
@@ -121,7 +121,7 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.loadBool(true));
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
-        state.addImplExtension("greaterequals", CharComparisonImpl,
+        state.addImplExtension("GreaterEquals", CharComparisonImpl,
             {
                 make_list_param("lhs", CharType),
                 make_list_param("rhs", CharType),
@@ -142,7 +142,7 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.loadBool(true));
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
-        state.addImplExtension("equals", CharEqualityImpl,
+        state.addImplExtension("Equals", CharEqualityImpl,
             {
                 make_list_param("lhs", CharType),
                 make_list_param("rhs", CharType),
@@ -154,7 +154,7 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CHR_CMP));
-        state.addImplExtension("compare", CharOrderedImpl,
+        state.addImplExtension("Compare", CharOrderedImpl,
             {
                 make_list_param("lhs", CharType),
                 make_list_param("rhs", CharType),

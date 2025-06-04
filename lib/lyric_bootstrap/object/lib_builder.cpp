@@ -13,7 +13,6 @@
 #include "compile_category.h"
 #include "compile_char.h"
 #include "compile_class.h"
-#include "compile_closure.h"
 #include "compile_comparison.h"
 #include "compile_concept.h"
 #include "compile_descriptor.h"

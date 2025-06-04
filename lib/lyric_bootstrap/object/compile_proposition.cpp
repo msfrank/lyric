@@ -18,19 +18,19 @@ CoreConcept *build_core_Proposition(BuilderState &state, const CoreConcept *Idea
     auto *PropositionConcept = state.addGenericConcept(conceptPath, PropositionTemplate,
         lyo1::ConceptFlags::NONE, IdeaConcept);
 
-    state.addConceptAction("conjunct", PropositionConcept,
+    state.addConceptAction("Conjunct", PropositionConcept,
         {
             make_list_param("lhs", LType),
             make_list_param("rhs", RType),
         },
         BoolType);
-    state.addConceptAction("disjunct", PropositionConcept,
+    state.addConceptAction("Disjunct", PropositionConcept,
         {
             make_list_param("lhs", LType),
             make_list_param("rhs", RType),
         },
         BoolType);
-    state.addConceptAction("complement", PropositionConcept,
+    state.addConceptAction("Complement", PropositionConcept,
         {
             make_list_param("lhs", LType),
         },

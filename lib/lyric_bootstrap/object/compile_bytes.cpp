@@ -86,7 +86,7 @@ build_core_BytesInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("equals", BytesEqualityImpl,
+        state.addImplExtension("Equals", BytesEqualityImpl,
             {
                 make_list_param("lhs", BytesType),
                 make_list_param("rhs", BytesType),
@@ -106,7 +106,7 @@ build_core_BytesInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("lessthan", BytesComparisonImpl,
+        state.addImplExtension("LessThan", BytesComparisonImpl,
             {
                 make_list_param("lhs", BytesType),
                 make_list_param("rhs", BytesType),
@@ -126,7 +126,7 @@ build_core_BytesInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("greaterthan", BytesComparisonImpl,
+        state.addImplExtension("GreaterThan", BytesComparisonImpl,
             {
                 make_list_param("lhs", BytesType),
                 make_list_param("rhs", BytesType),
@@ -146,7 +146,7 @@ build_core_BytesInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("lessequals", BytesComparisonImpl,
+        state.addImplExtension("LessEquals", BytesComparisonImpl,
             {
                 make_list_param("lhs", BytesType),
                 make_list_param("rhs", BytesType),
@@ -166,7 +166,7 @@ build_core_BytesInstance(
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_NOOP));
-        state.addImplExtension("greaterequals", BytesComparisonImpl,
+        state.addImplExtension("GreaterEquals", BytesComparisonImpl,
             {
                 make_list_param("lhs", BytesType),
                 make_list_param("rhs", BytesType),
@@ -176,7 +176,7 @@ build_core_BytesInstance(
     {
         lyric_object::BytecodeBuilder code;
         state.writeTrap(code, "BytesCompare");
-        state.addImplExtension("compare", BytesOrderedImpl,
+        state.addImplExtension("Compare", BytesOrderedImpl,
             {
                 make_list_param("lhs", BytesType),
                 make_list_param("rhs", BytesType),

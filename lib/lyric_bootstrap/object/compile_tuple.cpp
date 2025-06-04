@@ -21,13 +21,13 @@ build_core_TupleN(BuilderState &state, int arity, const CoreClass *ObjectClass)
         lyo1::ClassFlags::NONE, ObjectClass);
 
     //
-    absl::flat_hash_map<std::string,tu_uint32> tupleFields;
+    std::vector<tu_uint32> tupleFields(arity);
     for (int i = 0; i < arity; i++) {
-        auto name = absl::StrCat("t", i);
+        auto name = absl::StrCat("Element", i);
         auto *TType = TupleTemplate->types[TupleTemplate->names[i]];
         auto *TupleField = state.addClassMember(name, TupleClass,
             lyo1::FieldFlags::GlobalVisibility, TType);
-        tupleFields[name] = TupleField->field_index;
+        tupleFields[i] = TupleField->field_index;
     }
 
     // TupleN ctor
@@ -49,7 +49,7 @@ build_core_TupleN(BuilderState &state, int arity, const CoreClass *ObjectClass)
         for (tu_uint32 i = 0; i < ctorParams.size(); i++) {
             code.loadReceiver();
             code.loadArgument(i);
-            code.storeField(tupleFields[ctorParams[i].paramName]);
+            code.storeField(tupleFields[i]);
         }
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addClassCtor(TupleClass, ctorParams, code);
@@ -79,7 +79,7 @@ build_core_TupleNInstance(
     {
         lyric_object::BytecodeBuilder code;
         code.loadArgument(0);
-        state.addImplExtension("unwrap", TupleUnwrapImpl,
+        state.addImplExtension("Unwrap", TupleUnwrapImpl,
             {
                 make_list_param("wrapped", TupleNClass->classType),
             },
