@@ -5,6 +5,8 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
 
+#include "lyric_assembler/symbol_cache.h"
+
 lyric_compiler::ProcHandler::ProcHandler(
     lyric_assembler::ProcHandle *procHandle,
     bool requiresResult,
@@ -15,14 +17,13 @@ lyric_compiler::ProcHandler::ProcHandler(
       m_requiresResult(requiresResult)
 {
     TU_ASSERT (m_procHandle != nullptr);
-
 }
 
 tempo_utils::Status
 lyric_compiler::ProcHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     auto *block = m_procHandle->procBlock();
     auto *driver = getDriver();
@@ -37,6 +38,16 @@ lyric_compiler::ProcHandler::before(
         return block->logAndContinue(CompilerCondition::kSyntaxError,
             tempo_tracing::LogSeverity::kError,
             "block requires a result");
+    }
+
+    //
+    auto *activationCall = m_procHandle->getActivationCall();
+    auto *restParameter = activationCall->restPlacement();
+    if (restParameter != nullptr && !restParameter->name.empty()) {
+        lyric_assembler::DataReference restVar;
+        TU_ASSIGN_OR_RETURN (restVar, block->resolveReference(restParameter->name));
+        TU_RETURN_IF_NOT_OK (fragment->loadRest());
+        TU_RETURN_IF_NOT_OK (fragment->storeRef(restVar, /* initialStore */ true));
     }
 
     if (numChildren > 1) {
@@ -64,7 +75,7 @@ tempo_utils::Status
 lyric_compiler::ProcHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     return {};
 }

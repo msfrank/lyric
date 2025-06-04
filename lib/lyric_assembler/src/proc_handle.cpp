@@ -2,14 +2,8 @@
 #include <lyric_assembler/proc_handle.h>
 #include <tempo_utils/log_stream.h>
 
-//lyric_assembler::ProcHandle::ProcHandle(const lyric_common::SymbolUrl &activation)
-//    : m_activation(activation),
-//      m_numListParameters(0),
-//      m_numNamedParameters(0),
-//      m_hasRestParameter(false),
-//      m_numLocals(0)
-//{
-//}
+#include "lyric_assembler/call_symbol.h"
+#include "lyric_assembler/symbol_cache.h"
 
 /**
  * Allocate a new empty ProcHandle.  This is used during compilation to create
@@ -22,7 +16,8 @@ lyric_assembler::ProcHandle::ProcHandle(
       m_numListParameters(0),
       m_numNamedParameters(0),
       m_hasRestParameter(false),
-      m_numLocals(0)
+      m_numLocals(0),
+      m_state(state)
 {
     TU_ASSERT (state != nullptr);
     m_code = std::make_unique<ProcBuilder>(this, state);
@@ -43,7 +38,8 @@ lyric_assembler::ProcHandle::ProcHandle(
       m_numListParameters(0),
       m_numNamedParameters(0),
       m_hasRestParameter(false),
-      m_numLocals(0)
+      m_numLocals(0),
+      m_state(state)
 {
     TU_ASSERT (state != nullptr);
     TU_ASSERT (parent != nullptr);
@@ -70,7 +66,8 @@ lyric_assembler::ProcHandle::ProcHandle(
       m_numListParameters(numListParameters),
       m_numNamedParameters(numNamedParameters),
       m_hasRestParameter(hasRestParameter),
-      m_numLocals(0)
+      m_numLocals(0),
+      m_state(state)
 {
     TU_ASSERT (state != nullptr);
     TU_ASSERT (parent != nullptr);
@@ -103,9 +100,19 @@ lyric_assembler::ProcHandle::procCode() const
 }
 
 lyric_common::SymbolUrl
-lyric_assembler::ProcHandle::getActivation() const
+lyric_assembler::ProcHandle::getActivationUrl() const
 {
     return m_activation;
+}
+
+const lyric_assembler::CallSymbol *
+lyric_assembler::ProcHandle::getActivationCall() const
+{
+    auto *symbolCache = m_state->symbolCache();
+    auto sym = symbolCache->getSymbolOrNull(m_activation);
+    if (sym == nullptr || sym->getSymbolType() != SymbolType::CALL)
+        return nullptr;
+    return cast_symbol_to_call(sym);
 }
 
 int

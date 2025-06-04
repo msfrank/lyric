@@ -49,6 +49,20 @@ TEST_F(CompileDef, EvaluateDefFunctionWithNamedParams)
             DataCellInt(1))));
 }
 
+TEST_F(CompileDef, EvaluateDefFunctionWithNamedRestParam)
+{
+    auto result = m_tester->runModule(R"(
+        def numInts(ints: ...Int): Int {
+            ints.NumArgs()
+        }
+        numInts(5, 4, 3, 2, 1)
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(5))));
+}
+
 TEST_F(CompileDef, EvaluateDefFunctionWithDefaultInitializer)
 {
     auto result = m_tester->runModule(R"(

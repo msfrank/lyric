@@ -7,7 +7,7 @@ namespace lyric_runtime {
 
     class RestRef final : public AbstractRef {
     public:
-        explicit RestRef(const std::vector<DataCell> &restArgs);
+        explicit RestRef(std::vector<DataCell> &&restArgs);
         ~RestRef() override;
 
         DataCell restAt(int index) const;

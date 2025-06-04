@@ -158,42 +158,42 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_NOOP:
                 break;
 
-            // push nil onto the stack
-            case lyric_object::Opcode::OP_NIL:
-                currentCoro->pushData(DataCell::nil());
-                break;
-
-            // push undef onto the stack
+            // push undef value onto the stack
             case lyric_object::Opcode::OP_UNDEF:
                 currentCoro->pushData(DataCell::undef());
                 break;
 
-            // push true onto the stack
+            // push nil value onto the stack
+            case lyric_object::Opcode::OP_NIL:
+                currentCoro->pushData(DataCell::nil());
+                break;
+
+            // push true value onto the stack
             case lyric_object::Opcode::OP_TRUE:
                 currentCoro->pushData(DataCell(true));
                 break;
 
-            // push false onto the stack
+            // push false value onto the stack
             case lyric_object::Opcode::OP_FALSE:
                 currentCoro->pushData(DataCell(false));
                 break;
 
-            // push i64 onto the stack
+            // push i64 value onto the stack
             case lyric_object::Opcode::OP_I64:
                 currentCoro->pushData(DataCell(op.operands.immediate_i64.i64));
                 break;
 
-            // push dbl onto the stack
+            // push dbl value onto the stack
             case lyric_object::Opcode::OP_DBL:
                 currentCoro->pushData(DataCell(op.operands.immediate_dbl.dbl));
                 break;
 
-            // push chr onto the stack
+            // push chr value onto the stack
             case lyric_object::Opcode::OP_CHR:
                 currentCoro->pushData(DataCell(op.operands.immediate_chr.chr));
                 break;
 
-            // push literal value onto the stack
+            // push literal onto the stack
             case lyric_object::Opcode::OP_LITERAL: {
                 auto status = segmentManager->pushLiteralOntoStack(
                     currentCoro->peekSP(), op.operands.address_u32.address, currentCoro);
@@ -202,7 +202,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 break;
             }
 
-            // push string onto the stack
+            // push string ref onto the stack
             case lyric_object::Opcode::OP_STRING: {
                 auto status = heapManager->loadLiteralStringOntoStack(op.operands.address_u32.address);
                 if (status.notOk())
@@ -210,7 +210,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 break;
             }
 
-            // push url onto the stack
+            // push url ref onto the stack
             case lyric_object::Opcode::OP_URL: {
                 auto status = heapManager->loadLiteralUrlOntoStack(op.operands.address_u32.address);
                 if (status.notOk())
@@ -227,6 +227,12 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         auto receiver = activation.getReceiver();
                         TU_LOG_V << "loaded receiver " << receiver.toString();
                         currentCoro->pushData(receiver);
+                        break;
+                    }
+                    case lyric_object::SYNTHETIC_REST: {
+                        auto status = heapManager->loadRestOntoStack(activation);
+                        if (status.notOk())
+                            return onError(op, status);
                         break;
                     }
                     default:

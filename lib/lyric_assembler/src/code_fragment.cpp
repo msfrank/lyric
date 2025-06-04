@@ -339,6 +339,15 @@ lyric_assembler::CodeFragment::loadThis()
 }
 
 tempo_utils::Status
+lyric_assembler::CodeFragment::loadRest()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<LoadSyntheticInstruction>(SyntheticType::Rest);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::CodeFragment::loadType(const lyric_common::TypeDef &loadType)
 {
     auto *state = m_procBuilder->objectState();

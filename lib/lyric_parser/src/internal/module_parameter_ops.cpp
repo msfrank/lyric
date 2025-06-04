@@ -171,22 +171,12 @@ lyric_parser::internal::ModuleParameterOps::exitRest(ModuleParser::RestContext *
 
     auto *restNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstRestClass, location);
 
-    //
-    if (ctx->restParam()) {
-        auto *restParam = ctx->restParam();
+    auto *typeNode = make_Type_node(m_state, ctx->assignableType());
+    restNode->putAttr(kLyricAstTypeOffset, typeNode);
 
-        auto id = restParam->Identifier()->getText();
-        auto *typeNode = make_Type_node(m_state, restParam->paramType()->assignableType());
-        bool isVariable = restParam->VarKeyword()? true : false;
-
-        token = restParam->getStart();
-        location = get_token_location(token);
-
-        auto *paramNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstParamClass, location);
-        paramNode->putAttr(kLyricAstIdentifier, id);
-        paramNode->putAttr(kLyricAstTypeOffset, typeNode);
-        paramNode->putAttr(kLyricAstIsVariable, isVariable);
-        restNode->appendChild(paramNode);
+    if (ctx->Identifier()) {
+        auto id = ctx->Identifier()->getText();
+        restNode->putAttr(kLyricAstIdentifier, id);
     }
 
     // if ancestor node is not a kPack, then report internal violation

@@ -953,6 +953,8 @@ lyric_assembler::LoadSyntheticInstruction::apply(
     switch (m_type) {
         case SyntheticType::This:
             return bytecodeBuilder.writeU8(lyric_object::SYNTHETIC_THIS);
+        case SyntheticType::Rest:
+            return bytecodeBuilder.writeU8(lyric_object::SYNTHETIC_REST);
         default:
             return AssemblerStatus::forCondition(
                 AssemblerCondition::kAssemblerInvariant, "invalid synthetic type");
@@ -962,7 +964,14 @@ lyric_assembler::LoadSyntheticInstruction::apply(
 std::string
 lyric_assembler::LoadSyntheticInstruction::toString() const
 {
-    return "Load Synthetic";
+    switch (m_type) {
+        case SyntheticType::This:
+            return "Load 'this' synthetic reference";
+        case SyntheticType::Rest:
+            return "Load 'rest' synthetic reference";
+        default:
+            return absl::StrCat("Load invalid synthentic reference of type ", (int) m_type);
+    }
 }
 
 lyric_assembler::LoadTypeInstruction::LoadTypeInstruction(TypeHandle *typeHandle)

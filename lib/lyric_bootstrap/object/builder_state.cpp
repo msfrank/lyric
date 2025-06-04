@@ -321,7 +321,7 @@ BuilderState::addExistentialMethod(
     auto *Call = new CoreCall();
     Call->call_index = calls.size();
     Call->callPath = callPath;
-    Call->callTemplate = nullptr;
+    Call->callTemplate = ReceiverExistential->existentialTemplate;
     Call->callType = FunctionClass->classType;
     Call->receiver_symbol_index = getSymbolIndex(receiver->existentialPath);
     Call->flags = callFlags;

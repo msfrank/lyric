@@ -533,7 +533,7 @@ lyric_archiver::copy_proc(
     data.object = object;
     data.pluginLocation = pluginLocation;
     data.plugin = plugin;
-    data.activation = procHandle->getActivation();
+    data.activation = procHandle->getActivationUrl();
     data.state = state;
     data.fragment = procCode->rootFragment();
     data.copiedSymbols = copiedSymbols;

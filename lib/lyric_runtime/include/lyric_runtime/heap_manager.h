@@ -27,6 +27,9 @@ namespace lyric_runtime {
         virtual tempo_utils::Status loadLiteralBytesOntoStack(tu_uint32 address);
         virtual tempo_utils::Status loadBytesOntoStack(std::span<const tu_uint8> bytes);
 
+        virtual DataCell allocateRest(const CallCell &frame);
+        virtual tempo_utils::Status loadRestOntoStack(const CallCell &frame);
+
         virtual NativeFunc prepareNew(tu_uint8 newType, tu_uint32 address, tempo_utils::Status &status);
         virtual bool constructNew(std::vector<DataCell> &args, tempo_utils::Status &status);
         virtual tempo_utils::Status collectGarbage();

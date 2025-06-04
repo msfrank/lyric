@@ -101,8 +101,10 @@ renamedParam        : VarKeyword? Identifier NamedKeyword Identifier paramType p
 namedCtx            : UsingKeyword Identifier paramType ;
 renamedCtx          : Identifier UsingKeyword Identifier paramType ;
 param               : positionalParam | namedParam | renamedParam | namedCtx | renamedCtx ;
-restParam           : VarKeyword? Identifier paramType ;
-rest                : EllipsisOperator restParam? ;
+
+rest                : Identifier ColonOperator EllipsisOperator assignableType
+                    | EllipsisOperator assignableType
+                    ;
 
 paramList           : rest | param ( CommaOperator param )* ( CommaOperator rest )? ;
 paramSpec           : ParenOpen paramList? ParenClose ;

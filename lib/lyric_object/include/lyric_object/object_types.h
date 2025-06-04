@@ -55,6 +55,7 @@ namespace lyric_object {
 
     // synthetic type enum
     constexpr tu_uint8 SYNTHETIC_THIS               = 0x01;
+    constexpr tu_uint8 SYNTHETIC_REST               = 0x02;
 
     // extract the CALL flags
     constexpr tu_uint8 GET_CALL_FLAGS(tu_uint8 flags) { return flags & 0x0F; }
@@ -230,8 +231,8 @@ namespace lyric_object {
         OP_NOOP,
 
         // load and store
-        OP_NIL,
         OP_UNDEF,
+        OP_NIL,
         OP_TRUE,
         OP_FALSE,
         OP_I64,

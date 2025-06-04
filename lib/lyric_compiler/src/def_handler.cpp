@@ -135,7 +135,7 @@ tempo_utils::Status
 lyric_compiler::DefProc::decide(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::DecideContext &ctx)
+    DecideContext &ctx)
 {
     auto handler = std::make_unique<ProcHandler>(
         m_function->procHandle, /* requiresResult= */ true, getBlock(), getDriver());

@@ -18,8 +18,8 @@ lyric_object::linkage_to_descriptor_section(lyric_object::LinkageSection section
 
 static const char *OP_UNKNOWN_name             = "???";
 static const char *OP_NOOP_name                = "OP_NOOP";
-static const char *OP_NIL_name                 = "OP_NIL";
 static const char *OP_UNDEF_name               = "OP_UNDEF";
+static const char *OP_NIL_name                 = "OP_NIL";
 static const char *OP_TRUE_name                = "OP_TRUE";
 static const char *OP_FALSE_name               = "OP_FALSE";
 static const char *OP_I64_name                 = "OP_I64";
@@ -88,10 +88,10 @@ const char *lyric_object::opcode_to_name(Opcode opcode)
     switch (opcode) {
         case Opcode::OP_NOOP:
             return OP_NOOP_name;
-        case Opcode::OP_NIL:
-            return OP_NIL_name;
         case Opcode::OP_UNDEF:
             return OP_UNDEF_name;
+        case Opcode::OP_NIL:
+            return OP_NIL_name;
         case Opcode::OP_TRUE:
             return OP_TRUE_name;
         case Opcode::OP_FALSE:

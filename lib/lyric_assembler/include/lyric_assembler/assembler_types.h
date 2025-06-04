@@ -146,6 +146,7 @@ namespace lyric_assembler {
 
     enum class SyntheticType {
         This,
+        Rest,
     };
 
     enum class ImportFlags {

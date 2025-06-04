@@ -11,6 +11,8 @@
 #include <lyric_assembler/type_cache.h>
 #include <lyric_assembler/type_set.h>
 
+#include "lyric_assembler/local_variable.h"
+
 /**
  * @brief Construct a call symbol for the $entry call.
  */
@@ -411,29 +413,49 @@ lyric_assembler::CallSymbol::defineCall(
         priv->parametersMap[param.name] = param;
     }
 
+    // if there is a rest param then ensure the rest param type exists in the type cache
+    std::string restParamName;
+    lyric_common::TypeDef restParamType;
     if (!priv->restParameter.isEmpty()) {
         auto &param = priv->restParameter.peekValue();
+        restParamName = param.name;
         TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
-        priv->parametersMap[param.name] = param;
+        restParamType = param.typeDef;
+        // add the rest param to the parameters map, even if the param name is empty
+        priv->parametersMap[restParamName] = param;
     }
-
-    // TODO: create binding for rest collector parameter if specified
 
     // if return type was explicitly declared then touch it
     if (priv->returnType.isValid()) {
         TU_RETURN_IF_STATUS (typeCache->getOrMakeType(priv->returnType));
     }
 
+    // construct the proc handle
     priv->proc = std::make_unique<ProcHandle>(m_callUrl, bindings, priv->listParameters.size(),
         priv->namedParameters.size(), !priv->restParameter.isEmpty(), m_state, priv->parentBlock);
 
+    // if call is generic then add the template parameters to the proc block
     if (priv->callTemplate != nullptr) {
         auto *callTemplate = priv->callTemplate;
-        auto *callBlock = priv->proc->procBlock();
+        auto *procBlock = priv->proc->procBlock();
         for (auto it = callTemplate->templateParametersBegin(); it != callTemplate->templateParametersEnd(); it++) {
             const auto &tp = *it;
-            TU_RAISE_IF_STATUS (callBlock->declareAlias(tp.name, callTemplate->getTemplateUrl(), tp.index));
+            TU_RAISE_IF_STATUS (procBlock->declareAlias(tp.name, callTemplate->getTemplateUrl(), tp.index));
         }
+    }
+
+    // if there is a named rest parameter then create a local for it
+    if (!restParamName.empty()) {
+        auto *fundamentalCache = m_state->fundamentalCache();
+        auto fundamentalRestUrl = fundamentalCache->getFundamentalUrl(FundamentalSymbol::Rest);
+        TypeHandle *restOfParamType;
+        TU_ASSIGN_OR_RETURN (restOfParamType, typeCache->declareParameterizedType(
+            fundamentalRestUrl, {restParamType}));
+
+        auto *procBlock = priv->proc->procBlock();
+        DataReference restVar;
+        TU_ASSIGN_OR_RETURN (restVar, procBlock->declareVariable(restParamName, lyric_object::AccessType::Public,
+            restOfParamType->getTypeDef(), /* isVariable= */ false));
     }
 
     return priv->proc.get();

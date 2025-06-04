@@ -100,7 +100,7 @@ lyric_assembler::BlockHandle::BlockHandle(
     TU_ASSERT (m_blockProc != nullptr);
     TU_ASSERT (m_parentBlock != nullptr);
     TU_ASSERT (m_state != nullptr);
-    m_definition = m_blockProc->getActivation();
+    m_definition = m_blockProc->getActivationUrl();
 }
 
 lyric_assembler::BlockHandle::BlockHandle(
@@ -117,7 +117,7 @@ lyric_assembler::BlockHandle::BlockHandle(
     TU_ASSERT (m_blockProc != nullptr);
     TU_ASSERT (m_parentBlock != nullptr);
     TU_ASSERT (m_state != nullptr);
-    m_definition = m_blockProc->getActivation();
+    m_definition = m_blockProc->getActivationUrl();
 }
 
 lyric_assembler::BlockHandle::BlockHandle(
@@ -752,7 +752,7 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
                         "variable {} is not visible from the current scope", name);
             }
 
-            auto activation = block->blockProc()->getActivation();
+            auto activation = block->blockProc()->getActivationUrl();
             TU_ASSERT (m_state->symbolCache()->hasSymbol(activation));
             lyric_assembler::AbstractSymbol *activationSymbol;
             TU_ASSIGN_OR_RETURN (activationSymbol, symbolCache->getOrImportSymbol(activation));

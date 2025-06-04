@@ -7,6 +7,8 @@
 #include <lyric_runtime/url_ref.h>
 #include <tempo_utils/big_endian.h>
 
+#include "lyric_runtime/rest_ref.h"
+
 lyric_runtime::HeapManager::HeapManager(
     SegmentManager *segmentManager,
     SystemScheduler *systemScheduler,
@@ -142,6 +144,30 @@ lyric_runtime::HeapManager::loadBytesOntoStack(std::span<const tu_uint8> bytes)
     auto *instance = new BytesRef(bytes.data(), bytes.size());
     m_heap->insertInstance(instance);
     auto cell = DataCell::forBytes(instance);
+    currentCoro->pushData(cell);
+
+    return {};
+}
+
+lyric_runtime::DataCell
+lyric_runtime::HeapManager::allocateRest(const CallCell &frame)
+{
+    std::vector<DataCell> restArgs;
+    for (int i = 0; i < frame.numRest(); i++) {
+        restArgs.push_back(frame.getRest(i));
+    }
+    auto *instance = new RestRef(std::move(restArgs));
+    m_heap->insertInstance(instance);
+    return DataCell::forRest(instance);
+}
+
+tempo_utils::Status
+lyric_runtime::HeapManager::loadRestOntoStack(const CallCell &frame)
+{
+    auto *currentCoro = m_systemScheduler->currentCoro();
+    TU_ASSERT(currentCoro != nullptr);
+
+    auto cell = allocateRest(frame);
     currentCoro->pushData(cell);
 
     return {};

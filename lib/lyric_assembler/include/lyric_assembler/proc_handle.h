@@ -45,7 +45,9 @@ namespace lyric_assembler {
         const ProcBuilder *procCode() const;
         ProcBuilder *procCode();
 
-        lyric_common::SymbolUrl getActivation() const;
+        lyric_common::SymbolUrl getActivationUrl() const;
+        const CallSymbol *getActivationCall() const;
+
         int getArity() const;
         LocalOffset allocateLocal();
         int numLocals() const;
@@ -75,6 +77,7 @@ namespace lyric_assembler {
         int m_numLocals;
         std::vector<ProcLexical> m_lexicals;
         absl::flat_hash_set<lyric_common::TypeDef> m_exitTypes;
+        ObjectState *m_state;
     };
 }
 

@@ -6,8 +6,8 @@
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
-lyric_runtime::RestRef::RestRef(const std::vector<DataCell> &restArgs)
-    : m_restArgs(restArgs),
+lyric_runtime::RestRef::RestRef(std::vector<DataCell> &&restArgs)
+    : m_restArgs(std::move(restArgs)),
       m_reachable(false)
 {
 }
