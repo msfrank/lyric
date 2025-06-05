@@ -121,7 +121,7 @@ TEST_F(AnalyzeStruct, DeclareStructImplMethod)
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
         defstruct Foo {
             impl Equality[Foo,Foo] {
-                def equals(lhs: Foo, rhs: Foo): Bool { false }
+                def Equals(lhs: Foo, rhs: Foo): Bool { false }
             }
         }
     )");
@@ -153,7 +153,7 @@ TEST_F(AnalyzeStruct, DeclareStructImplMethod)
     ASSERT_TRUE (extension0.isValid());
     ASSERT_EQ (lyric_object::AddressType::Far, extension0.actionAddressType());
     auto extensionAction = extension0.getFarAction();
-    ASSERT_EQ (lyric_bootstrap::preludeSymbol("Equality.equals"), extensionAction.getLinkUrl());
+    ASSERT_EQ (lyric_bootstrap::preludeSymbol("Equality.Equals"), extensionAction.getLinkUrl());
 
     auto equals = extension0.getNearCall();
     ASSERT_TRUE (equals.isDeclOnly());
