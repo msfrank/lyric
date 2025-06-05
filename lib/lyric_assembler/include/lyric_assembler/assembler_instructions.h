@@ -496,6 +496,34 @@ namespace lyric_assembler {
         tu_uint8 m_flags;
     };
 
+    class VaLoadInstruction: public AbstractInstruction {
+    public:
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+    };
+
+    class VaSizeInstruction: public AbstractInstruction {
+    public:
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+    };
+
     class InterruptInstruction: public AbstractInstruction {
     public:
         InstructionType getType() const override;

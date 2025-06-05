@@ -4,8 +4,8 @@
 CoreCall *
 build_core_prelude_trap(
     BuilderState &state,
-    const CoreExistential *IntegerExistential,
-    const CoreExistential *EmptyExistential)
+    const CoreType *IntegerType,
+    const CoreType *NoReturnType)
 {
     lyric_common::SymbolPath callPath({"Trap"});
 
@@ -15,11 +15,53 @@ build_core_prelude_trap(
     auto *TrapCall = state.addFunction(
         callPath,
         {
-            make_list_param("index", IntegerExistential->existentialType),
+            make_list_param("index", IntegerType),
         },
         code,
-        EmptyExistential->existentialType,
+        NoReturnType,
         true);
 
     return TrapCall;
+}
+
+CoreCall *
+build_core_prelude_va_size(
+    BuilderState &state,
+    const CoreType *IntegerType)
+{
+    lyric_common::SymbolPath callPath({"VaSize"});
+
+    lyric_object::BytecodeBuilder code;
+    code.writeOpcode(lyric_object::Opcode::OP_VA_SIZE);
+    auto *VaSizeCall = state.addFunction(
+        callPath,
+        {},
+        code,
+        IntegerType,
+        true);
+
+    return VaSizeCall;
+}
+
+CoreCall *
+build_core_prelude_va_load(
+    BuilderState &state,
+    const CoreType *IntegerType,
+    const CoreType *AnyType)
+{
+    lyric_common::SymbolPath callPath({"VaLoad"});
+
+    lyric_object::BytecodeBuilder code;
+    code.loadArgument(0);
+    code.writeOpcode(lyric_object::Opcode::OP_VA_LOAD);
+    auto *VaLoadCall = state.addFunction(
+        callPath,
+        {
+            make_list_param("index", IntegerType),
+        },
+        code,
+        AnyType,
+        true);
+
+    return VaLoadCall;
 }

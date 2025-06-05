@@ -866,7 +866,7 @@ lyric_assembler::BlockHandle::prepareFunction(const std::string &name, CallableI
         throwAssemblerInvariant("invalid call symbol {}", functionUrl.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
 
-    auto callable = std::make_unique<FunctionCallable>(callSymbol, /* isInlined= */ false);
+    auto callable = std::make_unique<FunctionCallable>(callSymbol, callSymbol->isInline());
     return invoker.initialize(std::move(callable));
 }
 

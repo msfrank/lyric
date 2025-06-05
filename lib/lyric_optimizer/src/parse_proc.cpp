@@ -115,6 +115,8 @@ scan_for_basic_blocks(
             case lyric_assembler::InstructionType::Call:
             case lyric_assembler::InstructionType::New:
             case lyric_assembler::InstructionType::Trap:
+            case lyric_assembler::InstructionType::VaLoad:
+            case lyric_assembler::InstructionType::VaSize:
             case lyric_assembler::InstructionType::Interrupt:
             case lyric_assembler::InstructionType::Halt:
             case lyric_assembler::InstructionType::Abort:

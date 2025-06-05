@@ -22,6 +22,7 @@ struct CoreTemplate;
 struct CoreType {
     tu_uint32 type_index;
     lyo1::Assignable typeAssignable;
+    lyo1::SpecialType specialType;
     lyo1::IntrinsicType intrinsicType;
     lyo1::TypeSection concreteSection;
     tu_uint32 concreteDescriptor;
@@ -223,6 +224,8 @@ struct BuilderState {
     std::vector<CoreSymbol *> symbols;
 
     absl::flat_hash_map<lyric_common::SymbolPath,tu_uint32> symboltable;
+
+    CoreType *noReturnType;
 
     absl::flat_hash_map<lyric_common::SymbolPath,CoreExistential *> existentialcache;
     absl::flat_hash_map<lyric_common::SymbolPath,CoreConcept *> conceptcache;

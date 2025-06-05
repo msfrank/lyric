@@ -128,6 +128,8 @@ namespace lyric_assembler {
         tempo_utils::Status returnToCaller();
 
         // interpreter services instructions
+        tempo_utils::Status invokeVaLoad();
+        tempo_utils::Status invokeVaSize();
         tempo_utils::Status invokeTypeOf();
         tempo_utils::Status invokeInterrupt();
         tempo_utils::Status invokeHalt();

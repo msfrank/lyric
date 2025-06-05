@@ -17,8 +17,6 @@
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 
-#include "../../../lyric_bootstrap/plugin/string_traps.h"
-
 struct ImportProcData {
     lyric_common::ModuleLocation objectLocation;
     lyric_object::LyricObject object;
@@ -721,6 +719,12 @@ lyric_assembler::internal::import_proc(
                 break;
             }
 
+            case lyric_object::Opcode::OP_VA_LOAD:
+                TU_RETURN_IF_NOT_OK (data.fragment->invokeVaLoad());
+                break;
+            case lyric_object::Opcode::OP_VA_SIZE:
+                TU_RETURN_IF_NOT_OK (data.fragment->invokeVaSize());
+                break;
             case lyric_object::Opcode::OP_TYPE_OF:
                 TU_RETURN_IF_NOT_OK (data.fragment->invokeTypeOf());
                 break;
@@ -735,8 +739,6 @@ lyric_assembler::internal::import_proc(
                 break;
 
             case lyric_object::Opcode::OP_STATIC:
-            case lyric_object::Opcode::OP_VA_LOAD:
-            case lyric_object::Opcode::OP_VA_SIZE:
             case lyric_object::Opcode::OP_IMPORT:
             default:
                 return AssemblerStatus::forCondition(

@@ -33,6 +33,7 @@
 #include "compile_object.h"
 #include "compile_ordered.h"
 #include "compile_pair.h"
+#include "compile_prelude.h"
 #include "compile_proposition.h"
 #include "compile_record.h"
 #include "compile_rest.h"
@@ -239,6 +240,11 @@ main(int argc, char *argv[])
         DataIteratorType, BoolExistential->existentialType);
     build_core_Seq(state, RecordStruct, IteratorConcept, IterableConcept, SeqIteratorClass, DataUnionType,
         DataIteratorType, DataIterableType, BoolExistential->existentialType, IntExistential->existentialType);
+
+    //
+    build_core_prelude_trap(state, IntExistential->existentialType, state.noReturnType);
+    build_core_prelude_va_load(state, IntExistential->existentialType, AnyExistential->existentialType);
+    build_core_prelude_va_size(state, IntExistential->existentialType);
 
     auto bytes = state.toBytes();
 

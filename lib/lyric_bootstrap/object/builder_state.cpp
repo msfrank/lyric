@@ -125,6 +125,14 @@ BuilderState::BuilderState(
 {
     TU_ASSERT (this->location.isValid());
     TU_ASSERT (this->trapIndex != nullptr);
+
+    noReturnType = new CoreType();
+    noReturnType->type_index = types.size();
+    noReturnType->superType = nullptr;
+    noReturnType->typeAssignable = lyo1::Assignable::SpecialAssignable;
+    noReturnType->specialType = lyo1::SpecialType::NoReturn;
+
+    types.push_back(noReturnType);
 }
 
 CoreType *
@@ -318,6 +326,13 @@ BuilderState::addExistentialMethod(
     // ensure Bound is set
     callFlags |= lyo1::CallFlags::Bound;
 
+    // FIXME: isInline is ignored
+
+    // if returnType is noReturnType then set NoReturn
+    if (returnType == noReturnType) {
+        callFlags |= lyo1::CallFlags::NoReturn;
+    }
+
     auto *Call = new CoreCall();
     Call->call_index = calls.size();
     Call->callPath = callPath;
@@ -373,8 +388,15 @@ BuilderState::addFunction(
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
 
     auto callFlags = lyo1::CallFlags::NONE;
-    if (isInline)
+
+    if (isInline) {
         callFlags |= lyo1::CallFlags::Inline;
+    }
+
+    // if returnType is noReturnType then set NoReturn
+    if (returnType == noReturnType) {
+        callFlags |= lyo1::CallFlags::NoReturn;
+    }
 
     auto *Call = new CoreCall();
     Call->call_index = calls.size();
@@ -417,6 +439,11 @@ BuilderState::addGenericFunction(
     auto callFlags = lyo1::CallFlags::NONE;
     if (isInline)
         callFlags |= lyo1::CallFlags::Inline;
+
+    // if returnType is noReturnType then set NoReturn
+    if (returnType == noReturnType) {
+        callFlags |= lyo1::CallFlags::NoReturn;
+    }
 
     auto *Call = new CoreCall();
     Call->call_index = calls.size();
@@ -764,6 +791,13 @@ BuilderState::addClassMethod(
     // ensure Bound is set
     callFlags |= lyo1::CallFlags::Bound;
 
+    // FIXME: isInline is ignored
+
+    // if returnType is noReturnType then set NoReturn
+    if (returnType == noReturnType) {
+        callFlags |= lyo1::CallFlags::NoReturn;
+    }
+
     auto *Call = new CoreCall();
     Call->call_index = calls.size();
     Call->callPath = callPath;
@@ -955,6 +989,13 @@ BuilderState::addStructMethod(
 
     // ensure Bound is set
     callFlags |= lyo1::CallFlags::Bound;
+
+    // FIXME: isInline is ignored
+
+    // if returnType is noReturnType then set NoReturn
+    if (returnType == noReturnType) {
+        callFlags |= lyo1::CallFlags::NoReturn;
+    }
 
     auto *Call = new CoreCall();
     Call->call_index = calls.size();
@@ -1150,6 +1191,13 @@ BuilderState::addInstanceMethod(
     // ensure Bound is set
     callFlags = lyo1::CallFlags::Bound;
 
+    // FIXME: isInline is ignored
+
+    // if returnType is noReturnType then set NoReturn
+    if (returnType == noReturnType) {
+        callFlags |= lyo1::CallFlags::NoReturn;
+    }
+
     auto *Call = new CoreCall();
     Call->call_index = calls.size();
     Call->callPath = callPath;
@@ -1293,8 +1341,15 @@ BuilderState::addImplExtension(
     auto *MutableImpl = impls.at(receiver->impl_index);
 
     auto callFlags = lyo1::CallFlags::Bound | lyo1::CallFlags::GlobalVisibility;
-    if (isInline)
+
+    if (isInline) {
         callFlags |= lyo1::CallFlags::Inline;
+    }
+
+    // if returnType is noReturnType then set NoReturn
+    if (returnType == noReturnType) {
+        callFlags |= lyo1::CallFlags::NoReturn;
+    }
 
     auto *Call = new CoreCall();
     Call->call_index = calls.size();
@@ -1472,6 +1527,13 @@ BuilderState::addEnumMethod(
     // ensure Bound is set
     callFlags = lyo1::CallFlags::Bound;
 
+    // FIXME: isInline is ignored
+
+    // if returnType is noReturnType then set NoReturn
+    if (returnType == noReturnType) {
+        callFlags |= lyo1::CallFlags::NoReturn;
+    }
+
     auto *Call = new CoreCall();
     Call->call_index = calls.size();
     Call->callPath = callPath;
@@ -1603,6 +1665,11 @@ BuilderState::toBytes() const
             }
             case lyo1::Assignable::UnionAssignable: {
                 auto assignable = lyo1::CreateUnionAssignable(buffer, buffer.CreateVector(Type->typeParameters));
+                typeUnion = assignable.Union();
+                break;
+            }
+            case lyo1::Assignable::SpecialAssignable: {
+                auto assignable = lyo1::CreateSpecialAssignable(buffer, Type->specialType);
                 typeUnion = assignable.Union();
                 break;
             }

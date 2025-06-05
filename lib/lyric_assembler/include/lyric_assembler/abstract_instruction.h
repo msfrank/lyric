@@ -36,6 +36,8 @@ namespace lyric_assembler {
         Return,
         New,
         Trap,
+        VaLoad,
+        VaSize,
         Interrupt,
         Halt,
         Abort,

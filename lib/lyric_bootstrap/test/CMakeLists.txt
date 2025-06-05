@@ -23,6 +23,7 @@ set(TEST_CASES
     Undef_tests.cpp
     Url_tests.cpp
     Utf16_tests.cpp
+    va_tests.cpp
     )
 
 # define test suite driver

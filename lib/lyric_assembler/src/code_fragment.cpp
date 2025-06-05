@@ -830,6 +830,24 @@ lyric_assembler::CodeFragment::returnToCaller()
 }
 
 tempo_utils::Status
+lyric_assembler::CodeFragment::invokeVaLoad()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<VaLoadInstruction>();
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::invokeVaSize()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<VaSizeInstruction>();
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::CodeFragment::invokeTypeOf()
 {
     Statement statement;

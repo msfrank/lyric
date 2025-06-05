@@ -1509,6 +1509,66 @@ lyric_assembler::TrapInstruction::toString() const
 }
 
 lyric_assembler::InstructionType
+lyric_assembler::VaLoadInstruction::getType() const
+{
+    return InstructionType::VaLoad;
+}
+
+tempo_utils::Status
+lyric_assembler::VaLoadInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::VaLoadInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_VA_LOAD);
+}
+
+std::string
+lyric_assembler::VaLoadInstruction::toString() const
+{
+    return "Opcode: OP_VA_LOAD";
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::VaSizeInstruction::getType() const
+{
+    return InstructionType::VaSize;
+}
+
+tempo_utils::Status
+lyric_assembler::VaSizeInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::VaSizeInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_VA_SIZE);
+}
+
+std::string
+lyric_assembler::VaSizeInstruction::toString() const
+{
+    return "Opcode: OP_VA_SIZE";
+}
+
+lyric_assembler::InstructionType
 lyric_assembler::InterruptInstruction::getType() const
 {
     return InstructionType::Interrupt;
