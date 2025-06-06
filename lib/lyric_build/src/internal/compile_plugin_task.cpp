@@ -17,11 +17,9 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
 #include <tempo_config/base_conversions.h>
-#include <tempo_config/config_serde.h>
 #include <tempo_config/container_conversions.h>
 #include <tempo_config/parse_config.h>
 #include <tempo_tracing/tracing_schema.h>
-#include <tempo_utils/date_time.h>
 #include <tempo_utils/file_reader.h>
 #include <tempo_utils/log_message.h>
 #include <tempo_utils/process_builder.h>

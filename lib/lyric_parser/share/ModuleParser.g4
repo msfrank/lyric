@@ -150,12 +150,12 @@ setStatement        : SetKeyword assignmentSpec assignmentOp expression ;
 // def statement
 
 defStatement        : definitionMacro? DefKeyword
-                        symbolIdentifier placeholderSpec? paramSpec returnSpec constraintSpec?
+                        symbolIdentifier placeholderSpec? paramSpec returnSpec? constraintSpec?
                         CurlyOpen block CurlyClose ;
 
 // impl statement
 
-implDef             : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen block CurlyClose ;
+implDef             : DefKeyword symbolIdentifier paramSpec returnSpec? CurlyOpen block CurlyClose ;
 implSpec            : implDef ;
 
 
@@ -166,7 +166,7 @@ classImpl           : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose 
 classVal            : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 classVar            : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 classDef            : DefKeyword symbolIdentifier
-                        placeholderSpec? paramSpec returnSpec constraintSpec?
+                        placeholderSpec? paramSpec returnSpec? constraintSpec?
                         CurlyOpen block CurlyClose ;
 classInit           : InitKeyword paramSpec classSuper? CurlyOpen block? CurlyClose ;
 genericClass        : placeholderSpec constraintSpec? ;
@@ -179,7 +179,7 @@ defclassStatement   : definitionMacro? DefClassKeyword
 
 // defconcept statement
 
-conceptDecl         : DeclKeyword symbolIdentifier paramSpec returnSpec ;
+conceptDecl         : DeclKeyword symbolIdentifier paramSpec returnSpec? ;
 conceptImpl         : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 genericConcept      : placeholderSpec constraintSpec? ;
 conceptDerives      : ( SealedKeyword | FinalKeyword ) ;
@@ -193,7 +193,7 @@ defconceptStatement : definitionMacro? DefConceptKeyword
 
 instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType AssignOperator defaultInitializer ;
 instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType AssignOperator defaultInitializer ;
-instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen block CurlyClose ;
+instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec? CurlyOpen block CurlyClose ;
 instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 instanceDerives     : ( SealedKeyword | FinalKeyword ) ;
 instanceSpec        : instanceVal | instanceVar | instanceDef | instanceImpl ;
@@ -206,7 +206,7 @@ definstanceStatement: definitionMacro? DefInstanceKeyword
 
 enumInit            : InitKeyword paramSpec CurlyOpen block? CurlyClose ;
 enumVal             : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
-enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen block CurlyClose ;
+enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec? CurlyOpen block CurlyClose ;
 enumCase            : CaseKeyword symbolIdentifier ( ParenOpen argList? ParenClose )? ;
 enumImpl            : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 enumSpec            : enumInit | enumVal | enumDef | enumCase | enumImpl ;
@@ -220,7 +220,7 @@ defenumStatement    : definitionMacro? DefEnumKeyword
 structSuper         : FromKeyword assignableType ParenOpen argList? ParenClose ;
 structInit          : InitKeyword paramSpec structSuper? CurlyOpen block? CurlyClose ;
 structVal           : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
-structDef           : DefKeyword symbolIdentifier paramSpec returnSpec CurlyOpen block CurlyClose ;
+structDef           : DefKeyword symbolIdentifier paramSpec returnSpec? CurlyOpen block CurlyClose ;
 structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 structDerives       : ( SealedKeyword | FinalKeyword ) ;
 structSpec          : structInit | structVal | structDef | structImpl ;
@@ -277,7 +277,7 @@ usingStatement      : usingAll | usingImpls ;
 
 // lambda expression
 
-lambdaExpression    : LambdaKeyword paramSpec returnSpec CurlyOpen block CurlyClose ;
+lambdaExpression    : LambdaKeyword paramSpec returnSpec? CurlyOpen block CurlyClose ;
 
 
 // lambda-from expression

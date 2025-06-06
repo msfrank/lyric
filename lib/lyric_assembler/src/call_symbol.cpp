@@ -428,6 +428,9 @@ lyric_assembler::CallSymbol::defineCall(
     // if return type was explicitly declared then touch it
     if (priv->returnType.isValid()) {
         TU_RETURN_IF_STATUS (typeCache->getOrMakeType(priv->returnType));
+        if (priv->returnType == lyric_common::TypeDef::noReturn()) {
+            priv->isNoReturn = true;
+        }
     }
 
     // construct the proc handle
@@ -514,6 +517,13 @@ lyric_assembler::CallSymbol::isCtor() const
 {
     auto *priv = getPriv();
     return priv->mode == lyric_object::CallMode::Constructor;
+}
+
+bool
+lyric_assembler::CallSymbol::isNoReturn() const
+{
+    auto *priv = getPriv();
+    return priv->isNoReturn;
 }
 
 bool
@@ -727,6 +737,9 @@ lyric_assembler::CallSymbol::finalizeCall()
             TU_RETURN_IF_NOT_OK (typeSet.putType(*it));
         }
         priv->returnType = typeSet.getUnifiedType();
+        if (priv->returnType == lyric_common::TypeDef::noReturn()) {
+            priv->isNoReturn = true;
+        }
     }
 
     auto *typeCache = m_state->typeCache();

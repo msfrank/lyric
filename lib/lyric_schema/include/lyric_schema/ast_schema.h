@@ -48,6 +48,7 @@ namespace lyric_schema {
         PType,                     // parameterized type
         IType,                     // intersection type
         UType,                     // union type
+        XType,                     // NoReturn type
         TypeArguments,             // type arguments
         TypeOf,                    // typeof expression
         TypeName,                  // declare type
@@ -208,6 +209,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::IType, "IType");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstUTypeClass(
         &kLyricAstNs, LyricAstId::UType, "UType");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstXTypeClass(
+        &kLyricAstNs, LyricAstId::XType, "XType");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTypeArgumentsClass(
         &kLyricAstNs, LyricAstId::TypeArguments, "TypeArguments");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTypeOfClass(
@@ -462,6 +465,7 @@ namespace lyric_schema {
         &kLyricAstPTypeClass,
         &kLyricAstITypeClass,
         &kLyricAstUTypeClass,
+        &kLyricAstXTypeClass,
         &kLyricAstTypeArgumentsClass,
         &kLyricAstTypeOfClass,
         &kLyricAstTypeNameClass,

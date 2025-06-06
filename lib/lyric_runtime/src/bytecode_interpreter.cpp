@@ -1320,7 +1320,7 @@ lyric_runtime::BytecodeInterpreter::onHalt(const lyric_object::OpCell &op)
     TU_LOG_VV << "halting interpreter";
 
     auto *currentCoro = m_state->currentCoro();
-    auto mainReturn = currentCoro->dataStackSize() > 0? currentCoro->popData() : DataCell::nil();
+    auto mainReturn = currentCoro->dataStackSize() > 0? currentCoro->popData() : DataCell{};
 
     if (m_state->isActive()) {
         m_state->halt(tempo_utils::StatusCode::kOk);

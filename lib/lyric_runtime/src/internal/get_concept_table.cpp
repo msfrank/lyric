@@ -125,9 +125,11 @@ lyric_runtime::internal::get_concept_table(
 
             auto *callSegment = implCall.data.descriptor->getSegment();
             auto callIndex = implCall.data.descriptor->getDescriptorIndex();
-            auto procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
+            auto call = callSegment->getObject().getObject().getCall(callIndex);
+            auto procOffset = call.getProcOffset();
+            auto returnsValue = !call.isNoReturn();
 
-            extensions.try_emplace(implAction, callSegment, callIndex, procOffset);
+            extensions.try_emplace(implAction, callSegment, callIndex, procOffset, returnsValue);
         }
 
         // resolve the concept for the impl

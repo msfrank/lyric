@@ -88,15 +88,21 @@ lyric_typing::TypeSpec::forUnion(const std::vector<TypeSpec> &members)
 }
 
 lyric_typing::TypeSpec
+lyric_typing::TypeSpec::noReturn()
+{
+    return TypeSpec(TypeSpecType::NoReturn, {}, {});
+}
+
+lyric_typing::TypeSpec
 lyric_typing::TypeSpec::fromTypeDef(const lyric_common::TypeDef &typeDef)
 {
     switch (typeDef.getType()) {
         case lyric_common::TypeDefType::Concrete: {
             std::vector<lyric_typing::TypeSpec> parameters;
             for (auto iterator = typeDef.concreteArgumentsBegin(); iterator != typeDef.concreteArgumentsEnd(); iterator++) {
-                parameters.push_back(TypeSpec::fromTypeDef(*iterator));
+                parameters.push_back(fromTypeDef(*iterator));
             }
-            return lyric_typing::TypeSpec::forSingular(typeDef.getConcreteUrl(), parameters);
+            return forSingular(typeDef.getConcreteUrl(), parameters);
         }
         case lyric_common::TypeDefType::Placeholder: {
             auto templateUrl = typeDef.getPlaceholderTemplateUrl();
@@ -104,25 +110,28 @@ lyric_typing::TypeSpec::fromTypeDef(const lyric_common::TypeDef &typeDef)
             auto path = templateUrl.getSymbolPath().getPath();
             auto placeholder = absl::StrCat(typeDef.getPlaceholderIndex());
             lyric_common::SymbolUrl placeholderUrl(location, lyric_common::SymbolPath(path, placeholder));
-            std::vector<lyric_typing::TypeSpec> parameters;
+            std::vector<TypeSpec> parameters;
             for (auto iterator = typeDef.placeholderArgumentsBegin(); iterator != typeDef.placeholderArgumentsEnd(); iterator++) {
-                parameters.push_back(TypeSpec::fromTypeDef(*iterator));
+                parameters.push_back(fromTypeDef(*iterator));
             }
-            return lyric_typing::TypeSpec::forSingular(placeholderUrl, parameters);
+            return forSingular(placeholderUrl, parameters);
         }
         case lyric_common::TypeDefType::Intersection: {
-            std::vector<lyric_typing::TypeSpec> members;
+            std::vector<TypeSpec> members;
             for (auto iterator = typeDef.intersectionMembersBegin(); iterator != typeDef.intersectionMembersEnd(); iterator++) {
-                members.push_back(TypeSpec::fromTypeDef(*iterator));
+                members.push_back(fromTypeDef(*iterator));
             }
-            return lyric_typing::TypeSpec::forIntersection(members);
+            return forIntersection(members);
         }
         case lyric_common::TypeDefType::Union: {
-            std::vector<lyric_typing::TypeSpec> members;
+            std::vector<TypeSpec> members;
             for (auto iterator = typeDef.unionMembersBegin(); iterator != typeDef.unionMembersEnd(); iterator++) {
-                members.push_back(TypeSpec::fromTypeDef(*iterator));
+                members.push_back(fromTypeDef(*iterator));
             }
-            return lyric_typing::TypeSpec::forUnion(members);
+            return forUnion(members);
+        }
+        case lyric_common::TypeDefType::NoReturn: {
+            return noReturn();
         }
         default:
             return {};
@@ -223,6 +232,9 @@ lyric_typing::TypeSpec::toString() const
                 string.append(iterator->toString());
             }
             return string;
+        }
+        case TypeSpecType::NoReturn: {
+            return "(No Return)";
         }
         case TypeSpecType::Invalid:
             break;

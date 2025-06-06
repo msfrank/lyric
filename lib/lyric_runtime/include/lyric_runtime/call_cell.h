@@ -20,6 +20,7 @@ namespace lyric_runtime {
             tu_uint32 procOffset,
             tu_uint32 returnSegment,
             lyric_object::BytecodeIterator returnIP,
+            bool returnsValue,
             int stackGuard,
             tu_uint16 numArguments,
             tu_uint16 numRest,
@@ -33,6 +34,7 @@ namespace lyric_runtime {
             tu_uint32 procOffset,
             tu_uint32 returnSegment,
             lyric_object::BytecodeIterator returnIP,
+            bool returnsValue,
             int stackGuard,
             tu_uint16 numArguments,
             tu_uint16 numRest,
@@ -46,6 +48,7 @@ namespace lyric_runtime {
             tu_uint32 procOffset,
             tu_uint32 returnSegment,
             lyric_object::BytecodeIterator returnIP,
+            bool returnsValue,
             int stackGuard,
             tu_uint16 numArguments,
             tu_uint16 numRest,
@@ -63,6 +66,7 @@ namespace lyric_runtime {
         tu_uint32 getProcOffset() const;
         tu_uint32 getReturnSegment() const;
         lyric_object::BytecodeIterator getReturnIP() const;
+        bool returnsValue() const;
         int getStackGuard() const;
         DataCell getReceiver() const;
         const VirtualTable *getVirtualTable() const;
@@ -91,6 +95,7 @@ namespace lyric_runtime {
         tu_uint32 m_procOffset;
         tu_uint32 m_returnSegment;
         lyric_object::BytecodeIterator m_returnIP;
+        bool m_returnsValue;
         int m_stackGuard;
         tu_uint16 m_numArguments;
         tu_uint16 m_numRest;

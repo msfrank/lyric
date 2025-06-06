@@ -2,15 +2,15 @@
 #define LYRIC_BUILD_BUILD_CONVERSIONS_H
 
 #include <lyric_build/build_types.h>
-#include <tempo_config/abstract_config_parser.h>
+#include <tempo_config/abstract_converter.h>
 
 namespace lyric_build {
 
-    class TaskIdParser : public tempo_config::AbstractConfigParser<TaskId> {
+    class TaskIdParser : public tempo_config::AbstractConverter<TaskId> {
     public:
         TaskIdParser();
         TaskIdParser(const TaskId &taskIdDefault);
-        tempo_utils::Status parseValue(
+        tempo_utils::Status convertValue(
             const tempo_config::ConfigNode &node,
             TaskId &taskId) const override;
 

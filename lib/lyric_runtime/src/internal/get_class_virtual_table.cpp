@@ -130,9 +130,11 @@ lyric_runtime::internal::get_class_virtual_table(
 
         auto *callSegment = classCall.data.descriptor->getSegment();
         auto callIndex = classCall.data.descriptor->getDescriptorIndex();
-        auto procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
+        auto call = callSegment->getObject().getObject().getCall(callIndex);
+        auto procOffset = call.getProcOffset();
+        auto returnsValue = !call.isNoReturn();
 
-        methods.try_emplace(classCall, callSegment, callIndex, procOffset);
+        methods.try_emplace(classCall, callSegment, callIndex, procOffset, returnsValue);
     }
 
     // resolve extensions for each impl
@@ -189,10 +191,12 @@ lyric_runtime::internal::get_class_virtual_table(
 
             auto *callSegment = implCall.data.descriptor->getSegment();
             auto callIndex = implCall.data.descriptor->getDescriptorIndex();
-            auto procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
+            auto call = callSegment->getObject().getObject().getCall(callIndex);
+            auto procOffset = call.getProcOffset();
+            auto returnsValue = !call.isNoReturn();
 
-            extensions.try_emplace(implAction, callSegment, callIndex, procOffset);
-            methods.try_emplace(implCall, callSegment, callIndex, procOffset);
+            extensions.try_emplace(implAction, callSegment, callIndex, procOffset, returnsValue);
+            methods.try_emplace(implCall, callSegment, callIndex, procOffset, returnsValue);
         }
 
         // resolve the concept for the impl
@@ -226,7 +230,7 @@ lyric_runtime::internal::get_class_virtual_table(
     // define the ctor virtual method
     tu_uint32 ctorIndex = constructor.getDescriptorOffset();
     tu_uint32 procOffset = constructor.getProcOffset();
-    VirtualMethod ctor(classSegment, ctorIndex, procOffset);
+    VirtualMethod ctor(classSegment, ctorIndex, procOffset, true);
 
     // get the function pointer for the allocator trap if specified
     NativeFunc allocator = nullptr;

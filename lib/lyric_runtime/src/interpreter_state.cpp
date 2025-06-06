@@ -389,8 +389,9 @@ lyric_runtime::InterpreterState::reload(const lyric_common::ModuleLocation &main
             InterpreterCondition::kRuntimeInvariant, "invalid proc header");
 
     // construct the entry activation call frame
-    CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, segment->getSegmentIndex(),
-        {}, stackGuard, 0, 0, numLocals, numLexicals, {});
+    CallCell frame(callIndex, segment->getSegmentIndex(),
+        procOffset, segment->getSegmentIndex(), {}, true,
+        stackGuard, 0, 0, numLocals, numLexicals, {});
 
     //lyric_object::BytecodeIterator ip(header, codeSize);
     auto ip = call.getBytecodeIterator();

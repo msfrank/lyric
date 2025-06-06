@@ -119,6 +119,8 @@ lyric_typing::parse_assignable(
             return parse_i_type(block, walker, tracer);
         case lyric_schema::LyricAstId::UType:
             return parse_u_type(block, walker, tracer);
+        case lyric_schema::LyricAstId::XType:
+            return TypeSpec::noReturn();
         default:
             break;
     }

@@ -15,7 +15,7 @@ lyric_build::TaskIdParser::TaskIdParser(const TaskId &taskIdDefault)
 }
 
 tempo_utils::Status
-lyric_build::TaskIdParser::parseValue(
+lyric_build::TaskIdParser::convertValue(
     const tempo_config::ConfigNode &node,
     TaskId &taskId) const
 {

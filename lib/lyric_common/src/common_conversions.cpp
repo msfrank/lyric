@@ -13,7 +13,7 @@ lyric_common::ModuleLocationParser::ModuleLocationParser(
 }
 
 tempo_utils::Status
-lyric_common::ModuleLocationParser::parseValue(
+lyric_common::ModuleLocationParser::convertValue(
     const tempo_config::ConfigNode &node,
     ModuleLocation &moduleLocation) const
 {
@@ -46,7 +46,7 @@ lyric_common::SymbolPathParser::SymbolPathParser(const SymbolPath &symbolPathDef
 }
 
 tempo_utils::Status
-lyric_common::SymbolPathParser::parseValue(
+lyric_common::SymbolPathParser::convertValue(
     const tempo_config::ConfigNode &node,
     SymbolPath &symbolPath) const
 {
@@ -79,7 +79,7 @@ lyric_common::SymbolUrlParser::SymbolUrlParser(const SymbolUrl &symbolUrlDefault
 }
 
 tempo_utils::Status
-lyric_common::SymbolUrlParser::parseValue(
+lyric_common::SymbolUrlParser::convertValue(
     const tempo_config::ConfigNode &node,
     SymbolUrl &symbolUrl) const
 {

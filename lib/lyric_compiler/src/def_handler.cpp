@@ -47,16 +47,20 @@ lyric_compiler::DefHandler::before(
     lyric_parser::AccessType access;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
+    lyric_typing::TemplateSpec templateSpec;
+    lyric_assembler::ParameterPack parameterPack;
+    lyric_typing::TypeSpec returnSpec;
+
     // if function is generic, then parse the template parameter list
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         lyric_parser::ArchetypeNode *genericNode;
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
-        TU_ASSIGN_OR_RETURN (m_function.templateSpec, typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
     }
 
     // declare the function call
     TU_ASSIGN_OR_RETURN (m_function.callSymbol, block->declareFunction(identifier,
-        lyric_compiler::convert_access_type(access), m_function.templateSpec.templateParameters));
+        lyric_compiler::convert_access_type(access), templateSpec.templateParameters));
 
     // add function to the current namespace if specified
     if (m_currentNamespace != nullptr) {
@@ -71,20 +75,20 @@ lyric_compiler::DefHandler::before(
     TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(block, packNode->getArchetypeNode()));
 
     // resolve the parameter pack
-    TU_ASSIGN_OR_RETURN (m_function.parameterPack, typeSystem->resolvePack(resolver, packSpec));
+    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
 
     // parse the return type
     lyric_parser::ArchetypeNode *typeNode;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
-    TU_ASSIGN_OR_RETURN (m_function.returnSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
 
     // resolve the return type
     lyric_common::TypeDef returnType;
-    TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, m_function.returnSpec));
+    TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, returnSpec));
 
     //
     TU_ASSIGN_OR_RETURN (m_function.procHandle,
-        m_function.callSymbol->defineCall(m_function.parameterPack, returnType));
+        m_function.callSymbol->defineCall(parameterPack, returnType));
 
     auto pack = std::make_unique<PackHandler>(m_function.callSymbol, block, driver);
     ctx.appendGrouping(std::move(pack));

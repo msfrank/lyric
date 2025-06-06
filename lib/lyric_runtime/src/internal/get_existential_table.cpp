@@ -97,9 +97,11 @@ lyric_runtime::internal::get_existential_table(
 
         auto *callSegment = existentialCall.data.descriptor->getSegment();
         auto callIndex = existentialCall.data.descriptor->getDescriptorIndex();
-        auto procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
+        auto call = callSegment->getObject().getObject().getCall(callIndex);
+        auto procOffset = call.getProcOffset();
+        auto returnsValue = !call.isNoReturn();
 
-        methods.try_emplace(existentialCall, callSegment, callIndex, procOffset);
+        methods.try_emplace(existentialCall, callSegment, callIndex, procOffset, returnsValue);
     }
 
     // resolve extensions for each impl
@@ -156,9 +158,11 @@ lyric_runtime::internal::get_existential_table(
 
             auto *callSegment = implCall.data.descriptor->getSegment();
             auto callIndex = implCall.data.descriptor->getDescriptorIndex();
-            auto procOffset = callSegment->getObject().getObject().getCall(callIndex).getProcOffset();
+            auto call = callSegment->getObject().getObject().getCall(callIndex);
+            auto procOffset = call.getProcOffset();
+            auto returnsValue = !call.isNoReturn();
 
-            extensions.try_emplace(implAction, callSegment, callIndex, procOffset);
+            extensions.try_emplace(implAction, callSegment, callIndex, procOffset, returnsValue);
         }
 
         // resolve the concept for the impl

@@ -16,6 +16,7 @@ namespace lyric_runtime {
             BytecodeSegment *segment,
             tu_uint32 procOffset,
             std::vector<DataCell> &args,
+            bool returnsValue,
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 

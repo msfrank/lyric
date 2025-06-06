@@ -30,6 +30,7 @@ lyric_runtime::SubroutineManager::callProc(
     BytecodeSegment *segment,
     tu_uint32 procOffset,
     std::vector<DataCell> &args,
+    bool returnsValue,
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
@@ -75,7 +76,7 @@ lyric_runtime::SubroutineManager::callProc(
 
     // construct the activation call frame
     CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
-        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args);
+        returnIP, returnsValue, stackGuard, numArguments, numRest, numLocals, numLexicals, args);
 
     // import each lexical from the latest activation and push it onto the stack
     for (uint16_t i = 0; i < numLexicals; i++) {
@@ -158,6 +159,7 @@ call_static(
     const uint8_t *header = bytecodeData + procOffset;
     const lyric_runtime::BytecodeSegment *returnSP = currentCoro->peekSP();
     const lyric_object::BytecodeIterator returnIP = currentCoro->peekIP();
+    bool returnsValue = !call.isNoReturn();
     auto stackGuard = currentCoro->dataStackSize();
 
     // read the call proc header
@@ -185,7 +187,7 @@ call_static(
 
     // construct the activation call frame
     lyric_runtime::CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
-        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args);
+        returnIP, returnsValue, stackGuard, numArguments, numRest, numLocals, numLexicals, args);
 
     // import each lexical from the latest activation and push it onto the stack
     for (uint16_t i = 0; i < numLexicals; i++) {
@@ -397,7 +399,7 @@ lyric_runtime::SubroutineManager::callVirtual(
 
     // construct the activation call frame
     CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
-        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, receiver);
+        returnIP, method->returnsValue(), stackGuard, numArguments, numRest, numLocals, numLexicals, args, receiver);
 
     // import each lexical from the latest activation and push it onto the stack
     for (uint16_t i = 0; i < numLexicals; i++) {
@@ -520,7 +522,7 @@ lyric_runtime::SubroutineManager::callConcept(
 
     // construct the activation call frame
     CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
-        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, receiver);
+        returnIP, method->returnsValue(), stackGuard, numArguments, numRest, numLocals, numLexicals, args, receiver);
 
     // import each lexical from the latest activation and push it onto the stack
     for (uint16_t i = 0; i < numLexicals; i++) {
@@ -644,7 +646,7 @@ lyric_runtime::SubroutineManager::callExistential(
 
     // construct the activation call frame
     CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
-        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, receiver);
+        returnIP, method->returnsValue(), stackGuard, numArguments, numRest, numLocals, numLexicals, args, receiver);
 
     // import each lexical from the latest activation and push it onto the stack
     for (uint16_t i = 0; i < numLexicals; i++) {
@@ -739,9 +741,10 @@ lyric_runtime::SubroutineManager::initStatic(
 
     auto callIndex = initializer.getDescriptorOffset();
     auto procOffset = initializer.getProcOffset();
+    auto returnsValue = !initializer.isNoReturn();
 
     std::vector<DataCell> args;
-    return callProc(callIndex, segment, procOffset, args, currentCoro, status);
+    return callProc(callIndex, segment, procOffset, args, returnsValue, currentCoro, status);
 }
 
 bool
@@ -764,11 +767,16 @@ lyric_runtime::SubroutineManager::returnToCaller(
     auto sp = m_segmentManager->getSegment(frame.getReturnSegment());
     currentCoro->transferControl(ip, sp);
 
-    // drop leftover temporaries from the stack, but preserve the top most item as the return value
+    // drop leftover temporaries from the stack
     if (currentCoro->dataStackSize() > frame.getStackGuard()) {
-        auto returnValue = currentCoro->popData();
-        currentCoro->resizeDataStack(frame.getStackGuard());
-        currentCoro->pushData(returnValue);
+        // preserve the top most item as the return value if call returns a value
+        if (frame.returnsValue()) {
+            auto returnValue = currentCoro->popData();
+            currentCoro->resizeDataStack(frame.getStackGuard());
+            currentCoro->pushData(returnValue);
+        } else {
+            currentCoro->resizeDataStack(frame.getStackGuard());
+        }
     }
 
     // return false if IP is not valid, which causes the program to halt

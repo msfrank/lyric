@@ -255,7 +255,7 @@ lyric_runtime::HeapManager::prepareNew(uint8_t newType, tu_uint32 address, tempo
 
     // construct a minimal activation frame just to pass the vtable to the allocator
     CallCell allocatorFrame(INVALID_ADDRESS_U32, callSegment,
-        INVALID_ADDRESS_U32, returnSegment, returnIP,
+        INVALID_ADDRESS_U32, returnSegment, returnIP, false,
         currentCoro->dataStackSize(), 0, 0, 0, 0, {}, vtable);
 
     // the stack is now prepared to invoke the allocator
@@ -329,8 +329,10 @@ lyric_runtime::HeapManager::constructNew(std::vector<DataCell> &args, tempo_util
     auto numRest = static_cast<uint16_t>(args.size()) - numArguments;
 
     // construct the activation call frame
-    CallCell frame(callIndex, segment->getSegmentIndex(), procOffset, returnSP->getSegmentIndex(),
-        returnIP, stackGuard, numArguments, numRest, numLocals, numLexicals, args, receiver);
+    CallCell frame(callIndex, segment->getSegmentIndex(),
+        procOffset, returnSP->getSegmentIndex(), returnIP, true,
+        stackGuard, numArguments, numRest, numLocals, numLexicals,
+        args, receiver);
 
     // import each lexical from the latest activation and push it onto the stack
     for (uint16_t i = 0; i < numLexicals; i++) {

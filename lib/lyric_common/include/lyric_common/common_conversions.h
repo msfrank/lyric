@@ -4,16 +4,16 @@
 #include <lyric_common/module_location.h>
 #include <lyric_common/symbol_path.h>
 #include <lyric_common/symbol_url.h>
-#include <tempo_config/abstract_config_parser.h>
+#include <tempo_config/abstract_converter.h>
 
 namespace lyric_common {
 
-    class ModuleLocationParser : public tempo_config::AbstractConfigParser<ModuleLocation> {
+    class ModuleLocationParser : public tempo_config::AbstractConverter<ModuleLocation> {
     public:
         ModuleLocationParser();
         ModuleLocationParser(const lyric_common::ModuleLocation &moduleLocationDefault);
 
-        tempo_utils::Status parseValue(
+        tempo_utils::Status convertValue(
             const tempo_config::ConfigNode &node,
             ModuleLocation &moduleLocation) const override;
 
@@ -21,11 +21,11 @@ namespace lyric_common {
         Option<lyric_common::ModuleLocation> m_default;
     };
 
-    class SymbolPathParser : public tempo_config::AbstractConfigParser<SymbolPath> {
+    class SymbolPathParser : public tempo_config::AbstractConverter<SymbolPath> {
     public:
         SymbolPathParser();
         SymbolPathParser(const SymbolPath &symbolPathDefault);
-        tempo_utils::Status parseValue(
+        tempo_utils::Status convertValue(
             const tempo_config::ConfigNode &node,
             SymbolPath &symbolPath) const override;
 
@@ -33,11 +33,11 @@ namespace lyric_common {
         Option<SymbolPath> m_default;
     };
 
-    class SymbolUrlParser : public tempo_config::AbstractConfigParser<SymbolUrl> {
+    class SymbolUrlParser : public tempo_config::AbstractConverter<SymbolUrl> {
     public:
         SymbolUrlParser();
         SymbolUrlParser(const SymbolUrl &symbolUrlDefault);
-        tempo_utils::Status parseValue(
+        tempo_utils::Status convertValue(
             const tempo_config::ConfigNode &node,
             SymbolUrl &symbolUrl) const override;
 

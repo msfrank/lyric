@@ -15,6 +15,7 @@ namespace lyric_typing {
         Singular,
         Intersection,
         Union,
+        NoReturn,
     };
 
     class TypeSpec {
@@ -56,18 +57,20 @@ namespace lyric_typing {
             const std::vector<TypeSpec> &parameters = {});
         static TypeSpec forIntersection(const std::vector<TypeSpec> &members);
         static TypeSpec forUnion(const std::vector<TypeSpec> &members);
+        static TypeSpec noReturn();
 
         static TypeSpec fromTypeDef(const lyric_common::TypeDef &typeDef);
 
         template<typename H>
         friend H AbslHashValue(H h, const TypeSpec &assignable) {
-            switch (assignable.getType()) {
+            switch (assignable.m_type) {
                 case TypeSpecType::Singular:
-                    return H::combine(std::move(h), assignable.m_symbolUrl, assignable.m_parameters);
+                    return H::combine(std::move(h), assignable.m_symbolUrl, assignable.m_parameters,
+                        assignable.m_type);
                 case TypeSpecType::Intersection:
-                    return H::combine(std::move(h), assignable.m_parameters);
                 case TypeSpecType::Union:
-                    return H::combine(std::move(h), assignable.m_parameters);
+                    return H::combine(std::move(h), assignable.m_parameters, assignable.m_type);
+                case TypeSpecType::NoReturn:
                 case TypeSpecType::Invalid:
                     return H::combine(std::move(h), assignable.m_type);
             }

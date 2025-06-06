@@ -10,6 +10,7 @@ lyric_runtime::CallCell::CallCell(
     tu_uint32 procOffset,
     tu_uint32 returnSegment,
     lyric_object::BytecodeIterator returnIP,
+    bool returnsValue,
     int stackGuard,
     tu_uint16 numArguments,
     tu_uint16 numRest,
@@ -22,6 +23,7 @@ lyric_runtime::CallCell::CallCell(
       m_procOffset(procOffset),
       m_returnSegment(returnSegment),
       m_returnIP(returnIP),
+      m_returnsValue(returnsValue),
       m_stackGuard(stackGuard),
       m_numArguments(numArguments),
       m_numRest(numRest),
@@ -40,6 +42,7 @@ lyric_runtime::CallCell::CallCell(
     tu_uint32 procOffset,
     tu_uint32 returnSegment,
     lyric_object::BytecodeIterator returnIP,
+    bool returnsValue,
     int stackGuard,
     tu_uint16 numArguments,
     tu_uint16 numRest,
@@ -52,13 +55,14 @@ lyric_runtime::CallCell::CallCell(
       m_procOffset(procOffset),
       m_returnSegment(returnSegment),
       m_returnIP(returnIP),
+      m_returnsValue(returnsValue),
       m_stackGuard(stackGuard),
       m_numArguments(numArguments),
       m_numRest(numRest),
       m_numLocals(numLocals),
       m_numLexicals(numLexicals),
       m_data(data),
-      m_receiver(receiver),
+      m_receiver(std::move(receiver)),
       m_vtable(nullptr)
 {
     TU_ASSERT (m_receiver.type != DataCellType::INVALID);
@@ -71,6 +75,7 @@ lyric_runtime::CallCell::CallCell(
     tu_uint32 procOffset,
     tu_uint32 returnSegment,
     lyric_object::BytecodeIterator returnIP,
+    bool returnsValue,
     int stackGuard,
     tu_uint16 numArguments,
     tu_uint16 numRest,
@@ -82,6 +87,7 @@ lyric_runtime::CallCell::CallCell(
       m_procOffset(procOffset),
       m_returnSegment(returnSegment),
       m_returnIP(returnIP),
+      m_returnsValue(returnsValue),
       m_stackGuard(stackGuard),
       m_numArguments(numArguments),
       m_numRest(numRest),
@@ -99,6 +105,7 @@ lyric_runtime::CallCell::CallCell(const CallCell &other)
       m_procOffset(other.m_procOffset),
       m_returnSegment(other.m_returnSegment),
       m_returnIP(other.m_returnIP),
+      m_returnsValue(other.m_returnsValue),
       m_stackGuard(other.m_stackGuard),
       m_numArguments(other.m_numArguments),
       m_numRest(other.m_numRest),
@@ -118,6 +125,7 @@ lyric_runtime::CallCell::CallCell(CallCell &&other) noexcept
     m_procOffset = other.m_procOffset;
     m_returnSegment = other.m_returnSegment;
     m_returnIP = other.m_returnIP;
+    m_returnsValue = other.m_returnsValue;
     m_stackGuard = other.m_stackGuard;
     m_numArguments = other.m_numArguments;
     m_numRest = other.m_numRest;
@@ -152,6 +160,7 @@ lyric_runtime::CallCell::operator=(const CallCell &other)
     m_procOffset = other.m_procOffset;
     m_returnSegment = other.m_returnSegment;
     m_returnIP = other.m_returnIP;
+    m_returnsValue = other.m_returnsValue;
     m_stackGuard = other.m_stackGuard;
     m_numArguments = other.m_numArguments;
     m_numRest = other.m_numRest;
@@ -174,6 +183,7 @@ lyric_runtime::CallCell::operator=(CallCell &&other) noexcept
         m_procOffset = other.m_procOffset;
         m_returnSegment = other.m_returnSegment;
         m_returnIP = other.m_returnIP;
+        m_returnsValue = other.m_returnsValue;
         m_stackGuard = other.m_stackGuard;
         m_numArguments = other.m_numArguments;
         m_numRest = other.m_numRest;
@@ -230,6 +240,12 @@ lyric_object::BytecodeIterator
 lyric_runtime::CallCell::getReturnIP() const
 {
     return m_returnIP;
+}
+
+bool
+lyric_runtime::CallCell::returnsValue() const
+{
+    return m_returnsValue;
 }
 
 int

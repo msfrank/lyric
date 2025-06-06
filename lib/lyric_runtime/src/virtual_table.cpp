@@ -42,17 +42,20 @@ lyric_runtime::VirtualMember::getLayoutOffset() const
 lyric_runtime::VirtualMethod::VirtualMethod()
     : m_segment(nullptr),
       m_callIndex(INVALID_ADDRESS_U32),
-      m_procOffset(INVALID_ADDRESS_U32)
+      m_procOffset(INVALID_ADDRESS_U32),
+      m_returnsValue(false)
 {
 }
 
 lyric_runtime::VirtualMethod::VirtualMethod(
     BytecodeSegment *segment,
     uint32_t callIndex,
-    uint32_t procOffset)
+    uint32_t procOffset,
+    bool returnsValue)
     : m_segment(segment),
       m_callIndex(callIndex),
-      m_procOffset(procOffset)
+      m_procOffset(procOffset),
+      m_returnsValue(returnsValue)
 {
     TU_ASSERT (m_segment != nullptr);
 }
@@ -73,6 +76,12 @@ uint32_t
 lyric_runtime::VirtualMethod::getProcOffset() const
 {
     return m_procOffset;
+}
+
+bool
+lyric_runtime::VirtualMethod::returnsValue() const
+{
+    return m_returnsValue;
 }
 
 lyric_runtime::ImplTable::ImplTable(

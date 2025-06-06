@@ -77,6 +77,20 @@ TEST_F(CompileDef, EvaluateDefFunctionWithDefaultInitializer)
             DataCellInt(4))));
 }
 
+TEST_F(CompileDef, EvaluateDefFunctionWithNoReturnType)
+{
+    auto result = m_tester->runModule(R"(
+        def noReturn(x: Int, y: Int) {
+            x - y
+        }
+        noReturn(5, 4)
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            MatchesDataCellType(lyric_runtime::DataCellType::INVALID))));
+}
+
 TEST_F(CompileDef, EvaluateDefGenericFunction)
 {
     auto result = m_tester->runModule(R"(

@@ -72,6 +72,10 @@ lyric_typing::resolve_assignable(
             return state->typeCache()->resolveUnion(unionMembers);
         }
 
+        case TypeSpecType::NoReturn: {
+            return lyric_common::TypeDef::noReturn();
+        }
+
         default:
             break;
     }

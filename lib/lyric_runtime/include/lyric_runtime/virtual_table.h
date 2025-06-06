@@ -31,16 +31,18 @@ namespace lyric_runtime {
     class VirtualMethod {
     public:
         VirtualMethod();
-        VirtualMethod(BytecodeSegment *segment, tu_uint32 callIndex, tu_uint32 procOffset);
+        VirtualMethod(BytecodeSegment *segment, tu_uint32 callIndex, tu_uint32 procOffset, bool returnsValue);
 
         BytecodeSegment *getSegment() const;
         tu_uint32 getCallIndex() const;
         tu_uint32 getProcOffset() const;
+        bool returnsValue() const;
 
     private:
         BytecodeSegment *m_segment;
         const tu_uint32 m_callIndex;
         const tu_uint32 m_procOffset;
+        bool m_returnsValue;
     };
 
     class ImplTable {

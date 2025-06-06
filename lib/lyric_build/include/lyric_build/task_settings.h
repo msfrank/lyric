@@ -4,7 +4,7 @@
 #include <filesystem>
 
 #include <lyric_build/build_types.h>
-#include <tempo_config/abstract_config_parser.h>
+#include <tempo_config/abstract_converter.h>
 #include <tempo_config/config_result.h>
 
 namespace lyric_build {
@@ -57,27 +57,27 @@ namespace lyric_build {
     template <class T>
     tempo_utils::Status parse_config(
         T &dst,
-        const tempo_config::AbstractConfigParser<T> &parser,
+        const tempo_config::AbstractConverter<T> &converter,
         const TaskSettings *settings,
         std::string_view domain,
         std::string_view key)
     {
         TU_ASSERT (settings != nullptr);
         auto node = settings->resolveDomainNode(domain, key);
-        return parser.parseValue(node, dst);
+        return converter.convertValue(node, dst);
     }
 
     template <class T>
     tempo_utils::Status parse_config(
         T &dst,
-        const tempo_config::AbstractConfigParser<T> &parser,
+        const tempo_config::AbstractConverter<T> &converter,
         const TaskSettings *settings,
         const TaskId &task,
         std::string_view key)
     {
         TU_ASSERT (settings != nullptr);
         auto node = settings->resolveTaskNode(task, key);
-        return parser.parseValue(node, dst);
+        return converter.convertValue(node, dst);
     }
 }
 

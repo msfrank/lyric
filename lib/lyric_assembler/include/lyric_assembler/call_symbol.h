@@ -108,6 +108,7 @@ namespace lyric_assembler {
         bool isBound() const;
         bool isInline() const;
         bool isCtor() const;
+        bool isNoReturn() const;
         bool isDeclOnly() const;
 
         AbstractResolver *callResolver() const;

@@ -57,6 +57,7 @@ ClosureRef::applyClosure(
     TU_ASSERT (segment != nullptr);
     auto address = getCallIndex();
     auto procOffset = getProcOffset();
+    auto returnsValue = this->returnsValue();
 
     // proc offset must be within the segment bytecode
     auto *bytecodeData = segment->getBytecodeData();
@@ -81,7 +82,7 @@ ClosureRef::applyClosure(
 
     // construct the task activation call frame
     lyric_runtime::CallCell frame(address, segment->getSegmentIndex(), procOffset, returnSegment,
-        returnIP, dataStackGuard, numArguments, /* numRest= */ 0, numLocals, numLexicals, args);
+        returnIP, returnsValue, dataStackGuard, numArguments, /* numRest= */ 0, numLocals, numLexicals, args);
 
     if (this->numLexicals() != numLexicals)
         throw tempo_utils::StatusException(
@@ -142,6 +143,18 @@ void
 ClosureRef::setProcOffset(tu_uint32 procOffset)
 {
     m_procOffset = procOffset;
+}
+
+bool
+ClosureRef::returnsValue() const
+{
+    return m_returnsValue;
+}
+
+void
+ClosureRef::setReturnsValue(bool returnsValue)
+{
+    m_returnsValue = returnsValue;
 }
 
 lyric_object::BytecodeIterator
@@ -244,6 +257,9 @@ closure_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
     instance->setProcOffset(procOffset);
 
+    // set returnsValue flag
+    instance->setReturnsValue(!descriptor.isNoReturn());
+
     // read the call proc header
     const tu_uint8 *header = bytecodeData + procOffset;
     auto procSize = tempo_utils::read_u32_and_advance(header);          // read procSize
@@ -314,6 +330,7 @@ closure_apply(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
     TU_ASSERT (segment != nullptr);
     auto address = instance->getCallIndex();
     auto procOffset = instance->getProcOffset();
+    auto returnsValue = instance->returnsValue();
 
     // proc offset must be within the segment bytecode
     auto *bytecodeData = segment->getBytecodeData();
@@ -353,7 +370,7 @@ closure_apply(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
 
     // construct the lambda activation call frame
     lyric_runtime::CallCell trampoline(address, segment->getSegmentIndex(),
-        procOffset, returnSP, returnIP, stackGuard, numArguments,
+        procOffset, returnSP, returnIP, returnsValue, stackGuard, numArguments,
         numRest, numLocals, numLexicals, args, receiver);
 
     if (instance->numLexicals() != numLexicals)

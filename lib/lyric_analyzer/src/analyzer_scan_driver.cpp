@@ -252,12 +252,16 @@ lyric_analyzer::AnalyzerScanDriver::pushFunction(
     auto *resolver = callSymbol->callResolver();
 
     // determine the return type
-    lyric_parser::ArchetypeNode *returnTypeNode;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, returnTypeNode));
-    lyric_typing::TypeSpec returnTypeSpec;
-    TU_ASSIGN_OR_RETURN (returnTypeSpec, m_typeSystem->parseAssignable(block, returnTypeNode->getArchetypeNode()));
     lyric_common::TypeDef returnType;
-    TU_ASSIGN_OR_RETURN (returnType, m_typeSystem->resolveAssignable(resolver, returnTypeSpec));
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        lyric_parser::ArchetypeNode *returnTypeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, returnTypeNode));
+        lyric_typing::TypeSpec returnTypeSpec;
+        TU_ASSIGN_OR_RETURN (returnTypeSpec, m_typeSystem->parseAssignable(block, returnTypeNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (returnType, m_typeSystem->resolveAssignable(resolver, returnTypeSpec));
+    } else {
+        returnType = lyric_common::TypeDef::noReturn();
+    }
 
     // determine the parameter list
     auto *packNode = node->getChild(0);

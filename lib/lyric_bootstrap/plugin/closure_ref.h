@@ -26,6 +26,8 @@ public:
     void setCallIndex(tu_uint32 callIndex);
     tu_uint32 getProcOffset() const;
     void setProcOffset(tu_uint32 procOffset);
+    bool returnsValue() const;
+    void setReturnsValue(bool returnsValue);
     lyric_object::BytecodeIterator getIP() const;
     void setIP(lyric_object::BytecodeIterator ip);
 
@@ -41,6 +43,7 @@ private:
     tu_uint32 m_segmentIndex;
     tu_uint32 m_callIndex;
     tu_uint32 m_procOffset;
+    bool m_returnsValue;
     lyric_object::BytecodeIterator m_IP;
     std::vector<lyric_runtime::DataCell> m_lexicals;
 };

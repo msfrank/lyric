@@ -11,9 +11,6 @@ namespace lyric_compiler {
 
     struct Function {
         lyric_assembler::CallSymbol *callSymbol = nullptr;
-        lyric_typing::TemplateSpec templateSpec;
-        lyric_assembler::ParameterPack parameterPack;
-        lyric_typing::TypeSpec returnSpec;
         lyric_assembler::ProcHandle *procHandle = nullptr;
     };
 

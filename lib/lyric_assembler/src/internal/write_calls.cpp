@@ -188,6 +188,10 @@ write_call(
             break;
     }
 
+    if (callSymbol->isNoReturn()) {
+        callFlags |= lyo1::CallFlags::NoReturn;
+    }
+
     std::vector<flatbuffers::Offset<lyo1::Parameter>> listParameters;
     for (auto it = callSymbol->listPlacementBegin(); it != callSymbol->listPlacementEnd(); it++) {
         const auto &param = *it;
