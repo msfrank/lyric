@@ -137,6 +137,9 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
     auto location = get_token_location(token);
 
     auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
+    span->putTag(kLyricParserLineNumber, location.lineNumber);
+    span->putTag(kLyricParserColumnNumber, location.columnNumber);
+    span->putTag(kLyricParserFileOffset, location.fileOffset);
 
     // the function name
     auto id = ctx->symbolIdentifier()->getText();

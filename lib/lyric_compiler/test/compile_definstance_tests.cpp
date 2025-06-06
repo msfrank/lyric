@@ -45,6 +45,22 @@ TEST_F(CompileDefinstance, EvaluateInstanceMethod)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(42))));
 }
 
+TEST_F(CompileDefinstance, EvaluateInstanceMethodWithNoReturnType)
+{
+    auto result = m_tester->runModule(R"(
+        definstance Foo {
+            def NoReturn() {
+                42
+            }
+        }
+        Foo.NoReturn()
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(RunModule(
+            MatchesDataCellType(lyric_runtime::DataCellType::INVALID))));
+}
+
 TEST_F(CompileDefinstance, EvaluateInstanceApplication)
 {
     auto result = m_tester->runModule(R"(

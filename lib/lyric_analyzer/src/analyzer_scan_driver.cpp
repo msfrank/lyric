@@ -259,8 +259,6 @@ lyric_analyzer::AnalyzerScanDriver::pushFunction(
         lyric_typing::TypeSpec returnTypeSpec;
         TU_ASSIGN_OR_RETURN (returnTypeSpec, m_typeSystem->parseAssignable(block, returnTypeNode->getArchetypeNode()));
         TU_ASSIGN_OR_RETURN (returnType, m_typeSystem->resolveAssignable(resolver, returnTypeSpec));
-    } else {
-        returnType = lyric_common::TypeDef::noReturn();
     }
 
     // determine the parameter list

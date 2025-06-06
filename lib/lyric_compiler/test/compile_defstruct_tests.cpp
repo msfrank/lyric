@@ -67,6 +67,24 @@ TEST_F(CompileDefstruct, EvaluateInvokeMethod)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(110))));
 }
 
+TEST_F(CompileDefstruct, EvaluateInvokeMethodWithNoReturnType)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            val value: Int
+            def NoReturn() {
+                this.value + 10
+            }
+        }
+        var foo: Foo = Foo{value = 100}
+        foo.NoReturn()
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(RunModule(
+            MatchesDataCellType(lyric_runtime::DataCellType::INVALID))));
+}
+
 TEST_F(CompileDefstruct, EvaluateNewInstanceOfSealedStruct)
 {
     auto result = m_tester->runModule(R"(

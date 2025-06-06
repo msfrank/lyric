@@ -87,3 +87,27 @@ TEST_F(CompileDefenum, EvaluateEnumCaseDef)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
+
+TEST_F(CompileDefenum, EvaluateEnumCaseDefWithNoReturnType)
+{
+    auto result = m_tester->runModule(R"(
+        defenum Direction {
+            val abbreviation: String
+            init(abbreviation: String) {
+                set this.abbreviation = abbreviation
+            }
+            def NoReturn() {
+                42
+            }
+            case North("N")
+            case South("S")
+            case East("E")
+            case West("W")
+        }
+        East.NoReturn()
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(RunModule(
+            MatchesDataCellType(lyric_runtime::DataCellType::INVALID))));
+}

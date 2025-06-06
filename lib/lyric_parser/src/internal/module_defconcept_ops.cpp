@@ -44,25 +44,36 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptDecl(ModuleParser::Conce
     auto span = scopeManager->peekSpan();
     span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
-    // if stack is empty, then mark source as incomplete
+    // the parameter list
     if (m_state->isEmpty())
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *packNode = m_state->popNode();
-
-    // the action name
-    auto id = ctx->symbolIdentifier()->getText();
-    auto access = parse_access_type(id);
-
-    // the action return type
-    auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *declNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDeclClass, location);
+    span->putTag(kLyricParserLineNumber, location.lineNumber);
+    span->putTag(kLyricParserColumnNumber, location.columnNumber);
+    span->putTag(kLyricParserFileOffset, location.fileOffset);
+
+    // the action name
+    auto id = ctx->symbolIdentifier()->getText();
     declNode->putAttr(kLyricAstIdentifier, id);
+
+    // the visibility
+    auto access = parse_access_type(id);
     declNode->putAttrOrThrow(kLyricAstAccessType, access);
-    declNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
+
+    // the return type
+    if (ctx->returnSpec()) {
+        auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
+        declNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
+    } else {
+        auto *returnTypeNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstXTypeClass, location);
+        declNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
+    }
+
     declNode->appendChild(packNode);
 
     // if ancestor node is not a kDefConcept, then report internal violation

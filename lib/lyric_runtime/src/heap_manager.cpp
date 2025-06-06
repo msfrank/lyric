@@ -255,7 +255,7 @@ lyric_runtime::HeapManager::prepareNew(uint8_t newType, tu_uint32 address, tempo
 
     // construct a minimal activation frame just to pass the vtable to the allocator
     CallCell allocatorFrame(INVALID_ADDRESS_U32, callSegment,
-        INVALID_ADDRESS_U32, returnSegment, returnIP, false,
+        INVALID_ADDRESS_U32, returnSegment, returnIP, true,
         currentCoro->dataStackSize(), 0, 0, 0, 0, {}, vtable);
 
     // the stack is now prepared to invoke the allocator

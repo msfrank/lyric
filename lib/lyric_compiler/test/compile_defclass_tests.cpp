@@ -217,6 +217,27 @@ TEST_F(CompileDefclass, EvaluateInvokeMethod)
                  tempo_test::ContainsResult(RunModule(DataCellInt(100))));
 }
 
+TEST_F(CompileDefclass, EvaluateInvokeMethodWithNoReturnType)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Foo {
+            var _index: Int
+            init(i: Int) from Object() {
+                set this._index = i
+            }
+            def NoReturn() {
+                this._index + 1
+            }
+        }
+        var foo: Foo = Foo{100}
+        foo.NoReturn()
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(RunModule(
+                     MatchesDataCellType(lyric_runtime::DataCellType::INVALID))));
+}
+
 TEST_F(CompileDefclass, EvaluateDefGenericClass)
 {
     auto result = m_tester->runModule(R"(

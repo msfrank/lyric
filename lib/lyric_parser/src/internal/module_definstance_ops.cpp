@@ -162,22 +162,31 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceDef(ModuleParser::Inst
         m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
     auto *packNode = m_state->popNode();
 
-    // the method name
-    auto id = ctx->symbolIdentifier()->getText();
-
-    // the method access level
-    auto access = parse_access_type(id);
-
-    // the method return type
-    auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
-
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
+    span->putTag(kLyricParserLineNumber, location.lineNumber);
+    span->putTag(kLyricParserColumnNumber, location.columnNumber);
+    span->putTag(kLyricParserFileOffset, location.fileOffset);
+
+    // the method name
+    auto id = ctx->symbolIdentifier()->getText();
     defNode->putAttr(kLyricAstIdentifier, id);
+
+    // the visibility
+    auto access = parse_access_type(id);
     defNode->putAttrOrThrow(kLyricAstAccessType, access);
-    defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
+
+    // the method return type
+    if (ctx->returnSpec()) {
+        auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
+        defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
+    } else {
+        auto *returnTypeNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstXTypeClass, location);
+        defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
+    }
+
     defNode->appendChild(packNode);
     defNode->appendChild(blockNode);
 
