@@ -20,13 +20,24 @@ namespace lyric_archiver {
     class ArchiverStatus : public tempo_utils::TypedStatus<ArchiverCondition> {
     public:
         using TypedStatus::TypedStatus;
-        static ArchiverStatus ok();
         static bool convert(ArchiverStatus &dstStatus, const tempo_utils::Status &srcStatus);
 
     private:
         ArchiverStatus(tempo_utils::StatusCode statusCode, std::shared_ptr<const tempo_utils::Detail> detail);
 
     public:
+        /**
+         *
+         * @param condition
+         * @param message
+         * @return
+         */
+        static ArchiverStatus forCondition(
+            ArchiverCondition condition,
+            std::string_view message)
+        {
+            return ArchiverStatus(condition, message);
+        }
         /**
          *
          * @tparam Args

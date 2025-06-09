@@ -50,6 +50,18 @@ namespace lyric_assembler {
     public:
         /**
          *
+         * @param condition
+         * @param message
+         * @return
+         */
+        static AssemblerStatus forCondition(
+            AssemblerCondition condition,
+            std::string_view message)
+        {
+            return AssemblerStatus(condition, message);
+        }
+        /**
+         *
          * @tparam Args
          * @param condition
          * @param messageFmt

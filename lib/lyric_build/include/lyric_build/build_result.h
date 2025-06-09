@@ -37,6 +37,18 @@ namespace lyric_build {
     public:
         /**
          *
+         * @param condition
+         * @param message
+         * @return
+         */
+        static BuildStatus forCondition(
+            BuildCondition condition,
+            std::string_view message)
+        {
+            return BuildStatus(condition, message);
+        }
+        /**
+         *
          * @tparam Args
          * @param condition
          * @param messageFmt

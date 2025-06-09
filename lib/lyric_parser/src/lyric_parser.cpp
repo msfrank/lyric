@@ -6,9 +6,8 @@
 #include <ModuleParser.h>
 
 #include <lyric_parser/archetype_state.h>
-#include <lyric_parser/internal/lexer_error_listener.h>
 #include <lyric_parser/internal/module_archetype.h>
-#include <lyric_parser/internal/parser_error_listener.h>
+#include <lyric_parser/internal/tracing_error_listener.h>
 #include <lyric_parser/lyric_archetype.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/parse_result.h>
@@ -49,18 +48,17 @@ lyric_parser::LyricParser::parseModule(
     auto span = scopeManager.makeSpan();
     span->setOperationName("parseModule");
 
+    // create the listener
     ArchetypeState state(sourceUrl, &scopeManager);
     internal::ModuleArchetype listener(&state);
 
-    internal::LexerErrorListener lexerErrorListener(&state);
-    lexer.removeErrorListeners();
-    lexer.addErrorListener(&lexerErrorListener);
+    // create the error listener
+    internal::TracingErrorListener tracingErrorListener(&listener);
 
-    internal::ParserErrorListener parserErrorListener(&state);
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
-    parser.addErrorListener(&parserErrorListener);
-    auto handler = std::make_shared<internal::ParserErrorStrategy>(&state);
-    parser.setErrorHandler(handler);
+    parser.addErrorListener(&tracingErrorListener);
 
     try {
         antlr4::tree::ParseTree *tree = parser.root();
@@ -73,10 +71,7 @@ lyric_parser::LyricParser::parseModule(
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
     }
 
-    auto toArchetypeResult = state.toArchetype();
-    if (toArchetypeResult.isStatus())
-        return toArchetypeResult.getStatus();
-    return toArchetypeResult.getResult();
+    return listener.toArchetype();
 }
 
 /**
@@ -104,18 +99,17 @@ lyric_parser::LyricParser::parseBlock(
     auto span = scopeManager->makeSpan();
     span->setOperationName("parseBlock");
 
+    // create the listener
     ArchetypeState state(sourceUrl, scopeManager);
     internal::ModuleArchetype listener(&state);
 
-    internal::LexerErrorListener lexerErrorListener(&state);
-    lexer.removeErrorListeners();
-    lexer.addErrorListener(&lexerErrorListener);
+    // create the error listener
+    internal::TracingErrorListener tracingErrorListener(&listener);
 
-    internal::ParserErrorListener parserErrorListener(&state);
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
-    parser.addErrorListener(&parserErrorListener);
-    auto handler = std::make_shared<internal::ParserErrorStrategy>(&state);
-    parser.setErrorHandler(handler);
+    parser.addErrorListener(&tracingErrorListener);
 
     try {
         antlr4::tree::ParseTree *tree = parser.block();
@@ -126,10 +120,7 @@ lyric_parser::LyricParser::parseBlock(
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
     }
 
-    auto toArchetypeResult = state.toArchetype();
-    if (toArchetypeResult.isStatus())
-        return toArchetypeResult.getStatus();
-    return toArchetypeResult.getResult();
+    return listener.toArchetype();
 }
 
 /**
@@ -157,18 +148,17 @@ lyric_parser::LyricParser::parseClass(
     auto span = scopeManager->makeSpan();
     span->setOperationName("parseClass");
 
+    // create the listener
     ArchetypeState state(sourceUrl, scopeManager);
     internal::ModuleArchetype listener(&state);
 
-    internal::LexerErrorListener lexerErrorListener(&state);
-    lexer.removeErrorListeners();
-    lexer.addErrorListener(&lexerErrorListener);
+    // create the error listener
+    internal::TracingErrorListener tracingErrorListener(&listener);
 
-    internal::ParserErrorListener parserErrorListener(&state);
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
-    parser.addErrorListener(&parserErrorListener);
-    auto handler = std::make_shared<internal::ParserErrorStrategy>(&state);
-    parser.setErrorHandler(handler);
+    parser.addErrorListener(&tracingErrorListener);
 
     try {
         antlr4::tree::ParseTree *tree = parser.defclassStatement();
@@ -179,10 +169,7 @@ lyric_parser::LyricParser::parseClass(
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
     }
 
-    auto toArchetypeResult = state.toArchetype();
-    if (toArchetypeResult.isStatus())
-        return toArchetypeResult.getStatus();
-    return toArchetypeResult.getResult();
+    return listener.toArchetype();
 }
 
 /**
@@ -210,18 +197,17 @@ lyric_parser::LyricParser::parseConcept(
     auto span = scopeManager->makeSpan();
     span->setOperationName("parseConcept");
 
+    // create the listener
     ArchetypeState state(sourceUrl, scopeManager);
     internal::ModuleArchetype listener(&state);
 
-    internal::LexerErrorListener lexerErrorListener(&state);
-    lexer.removeErrorListeners();
-    lexer.addErrorListener(&lexerErrorListener);
+    // create the error listener
+    internal::TracingErrorListener tracingErrorListener(&listener);
 
-    internal::ParserErrorListener parserErrorListener(&state);
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
-    parser.addErrorListener(&parserErrorListener);
-    auto handler = std::make_shared<internal::ParserErrorStrategy>(&state);
-    parser.setErrorHandler(handler);
+    parser.addErrorListener(&tracingErrorListener);
 
     try {
         antlr4::tree::ParseTree *tree = parser.defconceptStatement();
@@ -232,10 +218,7 @@ lyric_parser::LyricParser::parseConcept(
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
     }
 
-    auto toArchetypeResult = state.toArchetype();
-    if (toArchetypeResult.isStatus())
-        return toArchetypeResult.getStatus();
-    return toArchetypeResult.getResult();
+    return listener.toArchetype();
 }
 
 /**
@@ -263,18 +246,17 @@ lyric_parser::LyricParser::parseEnum(
     auto span = scopeManager->makeSpan();
     span->setOperationName("parseEnum");
 
+    // create the listener
     ArchetypeState state(sourceUrl, scopeManager);
     internal::ModuleArchetype listener(&state);
 
-    internal::LexerErrorListener lexerErrorListener(&state);
-    lexer.removeErrorListeners();
-    lexer.addErrorListener(&lexerErrorListener);
+    // create the error listener
+    internal::TracingErrorListener tracingErrorListener(&listener);
 
-    internal::ParserErrorListener parserErrorListener(&state);
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
-    parser.addErrorListener(&parserErrorListener);
-    auto handler = std::make_shared<internal::ParserErrorStrategy>(&state);
-    parser.setErrorHandler(handler);
+    parser.addErrorListener(&tracingErrorListener);
 
     try {
         antlr4::tree::ParseTree *tree = parser.defenumStatement();
@@ -285,10 +267,7 @@ lyric_parser::LyricParser::parseEnum(
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
     }
 
-    auto toArchetypeResult = state.toArchetype();
-    if (toArchetypeResult.isStatus())
-        return toArchetypeResult.getStatus();
-    return toArchetypeResult.getResult();
+    return listener.toArchetype();
 }
 
 /**
@@ -316,18 +295,17 @@ lyric_parser::LyricParser::parseFunction(
     auto span = scopeManager->makeSpan();
     span->setOperationName("parseFunction");
 
+    // create the listener
     ArchetypeState state(sourceUrl, scopeManager);
     internal::ModuleArchetype listener(&state);
 
-    internal::LexerErrorListener lexerErrorListener(&state);
-    lexer.removeErrorListeners();
-    lexer.addErrorListener(&lexerErrorListener);
+    // create the error listener
+    internal::TracingErrorListener tracingErrorListener(&listener);
 
-    internal::ParserErrorListener parserErrorListener(&state);
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
-    parser.addErrorListener(&parserErrorListener);
-    auto handler = std::make_shared<internal::ParserErrorStrategy>(&state);
-    parser.setErrorHandler(handler);
+    parser.addErrorListener(&tracingErrorListener);
 
     try {
         antlr4::tree::ParseTree *tree = parser.defStatement();
@@ -338,10 +316,7 @@ lyric_parser::LyricParser::parseFunction(
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
     }
 
-    auto toArchetypeResult = state.toArchetype();
-    if (toArchetypeResult.isStatus())
-        return toArchetypeResult.getStatus();
-    return toArchetypeResult.getResult();
+    return listener.toArchetype();
 }
 
 /**
@@ -369,18 +344,17 @@ lyric_parser::LyricParser::parseInstance(
     auto span = scopeManager->makeSpan();
     span->setOperationName("parseInstance");
 
+    // create the listener
     ArchetypeState state(sourceUrl, scopeManager);
     internal::ModuleArchetype listener(&state);
 
-    internal::LexerErrorListener lexerErrorListener(&state);
-    lexer.removeErrorListeners();
-    lexer.addErrorListener(&lexerErrorListener);
+    // create the error listener
+    internal::TracingErrorListener tracingErrorListener(&listener);
 
-    internal::ParserErrorListener parserErrorListener(&state);
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
-    parser.addErrorListener(&parserErrorListener);
-    auto handler = std::make_shared<internal::ParserErrorStrategy>(&state);
-    parser.setErrorHandler(handler);
+    parser.addErrorListener(&tracingErrorListener);
 
     try {
         antlr4::tree::ParseTree *tree = parser.definstanceStatement();
@@ -391,10 +365,7 @@ lyric_parser::LyricParser::parseInstance(
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
     }
 
-    auto toArchetypeResult = state.toArchetype();
-    if (toArchetypeResult.isStatus())
-        return toArchetypeResult.getStatus();
-    return toArchetypeResult.getResult();
+    return listener.toArchetype();
 }
 
 /**
@@ -422,18 +393,17 @@ lyric_parser::LyricParser::parseStruct(
     auto span = scopeManager->makeSpan();
     span->setOperationName("parseStruct");
 
+    // create the listener
     ArchetypeState state(sourceUrl, scopeManager);
     internal::ModuleArchetype listener(&state);
 
-    internal::LexerErrorListener lexerErrorListener(&state);
-    lexer.removeErrorListeners();
-    lexer.addErrorListener(&lexerErrorListener);
+    // create the error listener
+    internal::TracingErrorListener tracingErrorListener(&listener);
 
-    internal::ParserErrorListener parserErrorListener(&state);
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
-    parser.addErrorListener(&parserErrorListener);
-    auto handler = std::make_shared<internal::ParserErrorStrategy>(&state);
-    parser.setErrorHandler(handler);
+    parser.addErrorListener(&tracingErrorListener);
 
     try {
         antlr4::tree::ParseTree *tree = parser.defstructStatement();
@@ -444,8 +414,5 @@ lyric_parser::LyricParser::parseStruct(
         return ParseStatus::forCondition(ParseCondition::kParseInvariant, ex.what());
     }
 
-    auto toArchetypeResult = state.toArchetype();
-    if (toArchetypeResult.isStatus())
-        return toArchetypeResult.getStatus();
-    return toArchetypeResult.getResult();
+    return listener.toArchetype();
 }

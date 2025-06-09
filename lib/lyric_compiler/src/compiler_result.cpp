@@ -9,12 +9,6 @@ lyric_compiler::CompilerStatus::CompilerStatus(
 {
 }
 
-lyric_compiler::CompilerStatus
-lyric_compiler::CompilerStatus::ok()
-{
-    return CompilerStatus();
-}
-
 bool
 lyric_compiler::CompilerStatus::convert(CompilerStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {

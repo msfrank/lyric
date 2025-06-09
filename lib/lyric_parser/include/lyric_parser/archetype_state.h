@@ -179,40 +179,6 @@ namespace lyric_parser {
             throw tempo_utils::StatusException(appendNodeResult.getStatus());
         };
 
-//        template <typename T>
-//        tempo_utils::Result<ArchetypeAttr *>
-//        appendAttr(const tempo_utils::AttrSerde<T> &serde, const T &value)
-//        {
-//            return ArchetypeStateAttrWriter::createAttr(this, serde, value);
-//        };
-//
-//        template <class W, class S>
-//        tempo_utils::Result<ArchetypeAttr *>
-//        appendAttr(const tempo_utils::StatefulWritingSerde<W,S> &serde, const W &value)
-//        {
-//            return ArchetypeStateAttrWriter::createAttr(this, serde, value);
-//        };
-//
-//        template <typename T>
-//        ArchetypeAttr *
-//        appendAttrOrThrow(const tempo_utils::AttrSerde<T> &serde, const T &value)
-//        {
-//            auto appendAttrResult = appendAttr(serde, value);
-//            if (appendAttrResult.isResult())
-//                return appendAttrResult.getResult();
-//            throw tempo_utils::StatusException(appendAttrResult.getStatus());
-//        };
-//
-//        template <class W, class S>
-//        ArchetypeAttr *
-//        appendAttrOrThrow(const tempo_utils::StatefulWritingSerde<W,S> &serde, const W &value)
-//        {
-//            auto appendAttrResult = appendAttr(serde, value);
-//            if (appendAttrResult.isResult())
-//                return appendAttrResult.getResult();
-//            throw tempo_utils::StatusException(appendAttrResult.getStatus());
-//        };
-
         /**
          *
          * @tparam Args

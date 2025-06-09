@@ -57,7 +57,6 @@ set(LYRIC_BUILD_INCLUDES
     include/lyric_build/metadata_attr_writer.h
     include/lyric_build/metadata_matcher.h
     include/lyric_build/metadata_namespace.h
-    include/lyric_build/metadata_result.h
     include/lyric_build/metadata_state.h
     include/lyric_build/metadata_walker.h
     include/lyric_build/metadata_writer.h
@@ -91,7 +90,6 @@ target_sources(lyric_build PRIVATE
     src/metadata_attr_writer.cpp
     src/metadata_matcher.cpp
     src/metadata_namespace.cpp
-    src/metadata_result.cpp
     src/metadata_state.cpp
     src/metadata_walker.cpp
     src/metadata_writer.cpp

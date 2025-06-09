@@ -81,7 +81,7 @@ tempo_utils::Status
 lyric_object::BytecodeBuilder::writeU8(tu_uint8 u8)
 {
     m_code.push_back(u8);
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -91,7 +91,7 @@ lyric_object::BytecodeBuilder::writeU16(tu_uint16 u16)
     m_code.resize(offset + 2);
     auto *ptr = m_code.data() + offset;
     tempo_utils::write_u16(u16, ptr);
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -101,7 +101,7 @@ lyric_object::BytecodeBuilder::writeU32(tu_uint32 u32)
     m_code.resize(offset + 4);
     auto *ptr = m_code.data() + offset;
     tempo_utils::write_u32(u32, ptr);
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -111,7 +111,7 @@ lyric_object::BytecodeBuilder::writeU64(tu_uint64 u64)
     m_code.resize(offset + 8);
     auto *ptr = m_code.data() + offset;
     tempo_utils::write_u64(u64, ptr);
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -142,7 +142,7 @@ lyric_object::BytecodeBuilder::loadInt(tu_int64 i64)
     m_code.resize(offset + 8);
     auto *ptr = m_code.data() + offset;
     tempo_utils::write_i64(i64, ptr);
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -155,7 +155,7 @@ lyric_object::BytecodeBuilder::loadFloat(double dbl)
     m_code.resize(offset + 8);
     auto *ptr = m_code.data() + offset;
     tempo_utils::write_dbl(dbl, ptr);
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -168,7 +168,7 @@ lyric_object::BytecodeBuilder::loadChar(UChar32 chr)
     m_code.resize(offset + 4);
     auto *ptr = m_code.data() + offset;
     tempo_utils::write_i32(chr, ptr);
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -494,7 +494,7 @@ tempo_utils::Status
 lyric_object::BytecodeBuilder::makeLabel(tu_uint16 &jumpLabel)
 {
     jumpLabel = static_cast<uint16_t>(m_code.size());
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -517,7 +517,7 @@ lyric_object::BytecodeBuilder::patch(tu_uint16 patchOffset, tu_uint16 jumpLabel)
     auto *ptr = (const tu_uint8 *) &i16;
     m_code[patchOffset] = ptr[0];
     m_code[patchOffset + 1] = ptr[1];
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -540,7 +540,7 @@ lyric_object::BytecodeBuilder::pickValue(uint16_t pickOffset)
     if (!status.isOk())
         return status;
     writeU16(pickOffset);
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -551,7 +551,7 @@ lyric_object::BytecodeBuilder::dropValue(uint16_t dropOffset)
     if (!status.isOk())
         return status;
     writeU16(dropOffset);
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -562,7 +562,7 @@ lyric_object::BytecodeBuilder::rpickValue(uint16_t pickOffset)
     if (!status.isOk())
         return status;
     writeU16(pickOffset);
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -573,7 +573,7 @@ lyric_object::BytecodeBuilder::rdropValue(uint16_t dropOffset)
     if (!status.isOk())
         return status;
     writeU16(dropOffset);
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -722,7 +722,7 @@ lyric_object::BytecodeBuilder::callInline(
         m_code.push_back(code[i]);
     }
 
-    return ObjectStatus::ok();
+    return {};
 }
 
 tempo_utils::Status

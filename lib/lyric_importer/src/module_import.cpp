@@ -125,7 +125,7 @@ lyric_importer::ModuleImport::initialize()
         m_importedTypes[i] = new TypeImport(shared_from_this(), i);
     }
 
-    return ImporterStatus::ok();
+    return {};
 }
 
 lyric_common::ModuleLocation

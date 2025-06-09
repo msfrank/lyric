@@ -10,12 +10,6 @@ lyric_optimizer::OptimizerStatus::OptimizerStatus(
 {
 }
 
-lyric_optimizer::OptimizerStatus
-lyric_optimizer::OptimizerStatus::ok()
-{
-    return OptimizerStatus();
-}
-
 bool
 lyric_optimizer::OptimizerStatus::convert(OptimizerStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {

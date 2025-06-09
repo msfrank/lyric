@@ -20,13 +20,24 @@ namespace lyric_optimizer {
     class OptimizerStatus : public tempo_utils::TypedStatus<OptimizerCondition> {
     public:
         using TypedStatus::TypedStatus;
-        static OptimizerStatus ok();
         static bool convert(OptimizerStatus &dstStatus, const tempo_utils::Status &srcStatus);
 
     private:
         OptimizerStatus(tempo_utils::StatusCode statusCode, std::shared_ptr<const tempo_utils::Detail> detail);
 
     public:
+        /**
+         *
+         * @param condition
+         * @param message
+         * @return
+         */
+        static OptimizerStatus forCondition(
+            OptimizerCondition condition,
+            std::string_view message)
+        {
+            return OptimizerStatus(condition, message);
+        }
         /**
          *
          * @tparam Args

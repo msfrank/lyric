@@ -18,12 +18,23 @@ namespace lyric_object {
     class ObjectStatus : public tempo_utils::TypedStatus<ObjectCondition> {
     public:
         using TypedStatus::TypedStatus;
-        static ObjectStatus ok();
         static bool convert(ObjectStatus &dstStatus, const tempo_utils::Status &srcStatus);
     private:
         ObjectStatus(tempo_utils::StatusCode statusCode, std::shared_ptr<const tempo_utils::Detail> detail);
 
     public:
+        /**
+         *
+         * @param condition
+         * @param message
+         * @return
+         */
+        static ObjectStatus forCondition(
+            ObjectCondition condition,
+            std::string_view message)
+        {
+            return ObjectStatus(condition, message);
+        }
         /**
          *
          * @tparam Args

@@ -84,7 +84,7 @@ namespace lyric_parser {
                 return ParseStatus::forCondition(ParseCondition::kSyntaxError,
                     "unknown node type {}", getIdValue());
             id = resource->getId();
-            return ParseStatus::ok();
+            return {};
         }
 
         /**

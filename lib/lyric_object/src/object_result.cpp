@@ -9,12 +9,6 @@ lyric_object::ObjectStatus::ObjectStatus(
 {
 }
 
-lyric_object::ObjectStatus
-lyric_object::ObjectStatus::ok()
-{
-    return ObjectStatus();
-}
-
 bool
 lyric_object::ObjectStatus::convert(ObjectStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {

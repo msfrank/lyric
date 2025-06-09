@@ -21,7 +21,7 @@ lyric_build::TaskIdParser::convertValue(
 {
     if (node.isNil() && !m_default.isEmpty()) {
         taskId = m_default.getValue();
-        return tempo_config::ConfigStatus::ok();
+        return {};
     }
     if (node.getNodeType() != tempo_config::ConfigNodeType::kValue)
         return tempo_config::ConfigStatus::forCondition(tempo_config::ConfigCondition::kWrongType);
@@ -34,5 +34,5 @@ lyric_build::TaskIdParser::convertValue(
             "value '{}' cannot be converted to TaskId", value);
     taskId = TaskId(value.substr(0, index), value.substr(index + 1));
 
-    return tempo_config::ConfigStatus::ok();
+    return {};
 }

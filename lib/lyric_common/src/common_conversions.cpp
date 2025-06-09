@@ -19,7 +19,7 @@ lyric_common::ModuleLocationParser::convertValue(
 {
     if (node.isNil() && !m_default.isEmpty()) {
         moduleLocation = m_default.getValue();
-        return tempo_config::ConfigStatus::ok();
+        return {};
     }
     if (node.getNodeType() != tempo_config::ConfigNodeType::kValue)
         return tempo_config::ConfigStatus::forCondition(tempo_config::ConfigCondition::kWrongType);
@@ -28,7 +28,7 @@ lyric_common::ModuleLocationParser::convertValue(
     auto convertedLocation = lyric_common::ModuleLocation::fromString(value);
     if (convertedLocation.isValid()) {
         moduleLocation = std::move(convertedLocation);
-        return tempo_config::ConfigStatus::ok();
+        return {};
     }
 
     return tempo_config::ConfigStatus::forCondition(
@@ -52,7 +52,7 @@ lyric_common::SymbolPathParser::convertValue(
 {
     if (node.isNil() && !m_default.isEmpty()) {
         symbolPath = m_default.getValue();
-        return tempo_config::ConfigStatus::ok();
+        return {};
     }
     if (node.getNodeType() != tempo_config::ConfigNodeType::kValue)
         return tempo_config::ConfigStatus::forCondition(tempo_config::ConfigCondition::kWrongType);
@@ -61,7 +61,7 @@ lyric_common::SymbolPathParser::convertValue(
     auto convertedPath = SymbolPath::fromString(value);
     if (convertedPath.isValid()) {
         symbolPath = std::move(convertedPath);
-        return tempo_config::ConfigStatus::ok();
+        return {};
     }
 
     return tempo_config::ConfigStatus::forCondition(
@@ -85,7 +85,7 @@ lyric_common::SymbolUrlParser::convertValue(
 {
     if (node.isNil() && !m_default.isEmpty()) {
         symbolUrl = m_default.getValue();
-        return tempo_config::ConfigStatus::ok();
+        return {};
     }
     if (node.getNodeType() != tempo_config::ConfigNodeType::kValue)
         return tempo_config::ConfigStatus::forCondition(tempo_config::ConfigCondition::kWrongType);
@@ -94,7 +94,7 @@ lyric_common::SymbolUrlParser::convertValue(
     auto convertedUrl = SymbolUrl::fromString(value);
     if (convertedUrl.isValid()) {
         symbolUrl = std::move(convertedUrl);
-        return tempo_config::ConfigStatus::ok();
+        return {};
     }
 
     return tempo_config::ConfigStatus::forCondition(

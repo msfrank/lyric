@@ -149,9 +149,15 @@ setStatement        : SetKeyword assignmentSpec assignmentOp expression ;
 
 // def statement
 
+defBlock            : CurlyOpen block CurlyClose
+                    | CurlyOpen block CurlyClose CurlyClose
+                        { notifyErrorListeners("Extra '}' closing def"); }
+                    | CurlyOpen block
+                        { notifyErrorListeners("Missing '}' closing def"); }
+                    ;
 defStatement        : definitionMacro? DefKeyword
                         symbolIdentifier placeholderSpec? paramSpec returnSpec? constraintSpec?
-                        CurlyOpen block CurlyClose ;
+                        defBlock ;
 
 // impl statement
 
@@ -174,7 +180,7 @@ classDerives        : ( SealedKeyword | FinalKeyword ) ;
 classSpec           : classInit | classVal | classVar | classDef | classImpl ;
 defclassStatement   : definitionMacro? DefClassKeyword
                         symbolIdentifier genericClass? classDerives?
-                        CurlyOpen classSpec*  CurlyClose ;
+                        CurlyOpen classSpec* CurlyClose ;
 
 
 // defconcept statement

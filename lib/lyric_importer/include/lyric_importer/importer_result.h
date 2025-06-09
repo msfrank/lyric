@@ -29,15 +29,24 @@ namespace lyric_importer {
     class ImporterStatus : public tempo_utils::TypedStatus<ImporterCondition> {
     public:
         using TypedStatus::TypedStatus;
-
-        static ImporterStatus ok();
-
         static bool convert(ImporterStatus &dstStatus, const tempo_utils::Status &srcStatus);
 
     private:
         ImporterStatus(tempo_utils::StatusCode statusCode, std::shared_ptr<const tempo_utils::Detail> detail);
 
     public:
+        /**
+         *
+         * @param condition
+         * @param message
+         * @return
+         */
+        static ImporterStatus forCondition(
+            ImporterCondition condition,
+            std::string_view message)
+        {
+            return ImporterStatus(condition, message);
+        }
         /**
          *
          * @tparam Args

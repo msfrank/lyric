@@ -8,12 +8,6 @@ lyric_analyzer::AnalyzerStatus::AnalyzerStatus(
 {
 }
 
-lyric_analyzer::AnalyzerStatus
-lyric_analyzer::AnalyzerStatus::ok()
-{
-    return AnalyzerStatus();
-}
-
 bool
 lyric_analyzer::AnalyzerStatus::convert(AnalyzerStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {

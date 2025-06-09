@@ -21,13 +21,24 @@ namespace lyric_analyzer {
     class AnalyzerStatus : public tempo_utils::TypedStatus<AnalyzerCondition> {
     public:
         using TypedStatus::TypedStatus;
-        static AnalyzerStatus ok();
         static bool convert(AnalyzerStatus &dstStatus, const tempo_utils::Status &srcStatus);
 
     private:
         AnalyzerStatus(tempo_utils::StatusCode statusCode, std::shared_ptr<const tempo_utils::Detail> detail);
 
     public:
+        /**
+         *
+         * @param condition
+         * @param message
+         * @return
+         */
+        static AnalyzerStatus forCondition(
+            AnalyzerCondition condition,
+            std::string_view message)
+        {
+            return AnalyzerStatus(condition, message);
+        }
         /**
          *
          * @tparam Args

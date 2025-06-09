@@ -10,12 +10,6 @@ lyric_archiver::ArchiverStatus::ArchiverStatus(
 {
 }
 
-lyric_archiver::ArchiverStatus
-lyric_archiver::ArchiverStatus::ok()
-{
-    return ArchiverStatus();
-}
-
 bool
 lyric_archiver::ArchiverStatus::convert(ArchiverStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {

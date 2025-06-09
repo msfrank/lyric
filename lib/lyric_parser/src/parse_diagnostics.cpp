@@ -57,13 +57,13 @@ print_symbol_context(
     const lyric_parser::ParseDiagnosticsOptions &options)
 {
     if (!spanWalker.isValid())
-        return tempo_tracing::TracingStatus::ok();
+        return {};
 
     if (spanWalker.hasParent())
         print_symbol_context(spanWalker.getParent(), indent, options);
 
     if (spanWalker.hasTag(lyric_parser::kLyricParserIdentifier))
-        return tempo_tracing::TracingStatus::ok();
+        return {};
 
     std::string identifier;
     auto status = spanWalker.parseTag(lyric_parser::kLyricParserIdentifier, identifier);
@@ -71,7 +71,7 @@ print_symbol_context(
         return status;
 
     TU_CONSOLE_OUT << tempo_utils::Indent(indent) << "...in definition " << identifier;
-    return tempo_tracing::TracingStatus::ok();
+    return {};
 }
 
 static tempo_utils::Status
@@ -82,7 +82,7 @@ print_position_context(
 {
     // if walker is invalid, then don't print context
     if (!spanWalker.isValid())
-        return tempo_tracing::TracingStatus::ok();
+        return {};
 
     auto parsePositionResult = parse_position(spanWalker);
     if (parsePositionResult.isStatus())
@@ -97,7 +97,7 @@ print_position_context(
             << ":" << lineNumber << ":" << columnNumber;
     }
 
-    return tempo_tracing::TracingStatus::ok();
+    return {};
 }
 
 static tempo_utils::Status
@@ -136,7 +136,7 @@ print_error(
         TU_CONSOLE_OUT << tempo_utils::Indent(indent + 2) << message;
     }
 
-    return tempo_tracing::TracingStatus::ok();
+    return {};
 }
 
 void

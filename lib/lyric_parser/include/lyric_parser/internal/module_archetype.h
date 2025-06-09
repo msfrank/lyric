@@ -29,31 +29,39 @@
 namespace lyric_parser::internal {
 
     class ModuleArchetype
-        : private ModuleSymbolOps,
-          private ModuleConstantOps,
-          private ModuleLogicalOps,
-          private ModuleArithmeticOps,
-          private ModuleCompareOps,
-          private ModuleAssignOps,
-          private ModuleControlOps,
-          private ModuleMatchOps,
-          private ModuleDerefOps,
-          private ModuleConstructOps,
-          private ModuleDefclassOps,
-          private ModuleDefconceptOps,
-          private ModuleDefenumOps,
-          private ModuleDefinstanceOps,
-          private ModuleDefstructOps,
-          private ModuleDefineOps,
-          private ModuleParameterOps,
-          private ModuleExceptionOps,
-          private ModuleMacroOps,
+        : ModuleSymbolOps,
+          ModuleConstantOps,
+          ModuleLogicalOps,
+          ModuleArithmeticOps,
+          ModuleCompareOps,
+          ModuleAssignOps,
+          ModuleControlOps,
+          ModuleMatchOps,
+          ModuleDerefOps,
+          ModuleConstructOps,
+          ModuleDefclassOps,
+          ModuleDefconceptOps,
+          ModuleDefenumOps,
+          ModuleDefinstanceOps,
+          ModuleDefstructOps,
+          ModuleDefineOps,
+          ModuleParameterOps,
+          ModuleExceptionOps,
+          ModuleMacroOps,
           public ModuleParserBaseListener
     {
 
     public:
         explicit ModuleArchetype(ArchetypeState *state);
+        ModuleArchetype(ArchetypeState *state, std::shared_ptr<tempo_tracing::TraceSpan> span);
         virtual ~ModuleArchetype() = default;
+
+        void logErrorOrThrow(
+            size_t lineNr,
+            size_t columnNr,
+            const std::string &message);
+
+        bool hasError() const;
 
         void enterRoot(ModuleParser::RootContext *ctx) override;
         void enterBlock(ModuleParser::BlockContext *ctx) override;
@@ -280,8 +288,12 @@ namespace lyric_parser::internal {
         void enterBlockMacro(ModuleParser::BlockMacroContext *ctx) override;
         void exitBlockMacro(ModuleParser::BlockMacroContext *ctx) override;
 
+        tempo_utils::Result<LyricArchetype> toArchetype() const;
+
     private:
         ArchetypeState *m_state;
+        std::shared_ptr<tempo_tracing::TraceSpan> m_span;
+        tempo_utils::Status m_status;
     };
 }
 

@@ -8,12 +8,6 @@ lyric_parser::ParseStatus::ParseStatus(
 {
 }
 
-lyric_parser::ParseStatus
-lyric_parser::ParseStatus::ok()
-{
-    return ParseStatus();
-}
-
 bool
 lyric_parser::ParseStatus::convert(ParseStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {

@@ -22,13 +22,24 @@ namespace lyric_parser {
     class ParseStatus : public tempo_utils::TypedStatus<ParseCondition> {
     public:
         using TypedStatus::TypedStatus;
-        static ParseStatus ok();
         static bool convert(ParseStatus &dstStatus, const tempo_utils::Status &srcStatus);
 
     private:
         ParseStatus(tempo_utils::StatusCode statusCode, std::shared_ptr<const tempo_utils::Detail> detail);
 
     public:
+        /**
+         *
+         * @param condition
+         * @param message
+         * @return
+         */
+        static ParseStatus forCondition(
+            ParseCondition condition,
+            std::string_view message)
+        {
+            return ParseStatus(condition, message);
+        }
         /**
          *
          * @tparam Args

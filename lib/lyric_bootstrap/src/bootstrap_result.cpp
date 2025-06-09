@@ -10,12 +10,6 @@ lyric_bootstrap::BootstrapStatus::BootstrapStatus(
 {
 }
 
-lyric_bootstrap::BootstrapStatus
-lyric_bootstrap::BootstrapStatus::ok()
-{
-    return BootstrapStatus();
-}
-
 bool
 lyric_bootstrap::BootstrapStatus::convert(BootstrapStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {

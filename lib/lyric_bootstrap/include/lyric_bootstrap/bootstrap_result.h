@@ -18,13 +18,24 @@ namespace lyric_bootstrap {
     class BootstrapStatus : public tempo_utils::TypedStatus<BootstrapCondition> {
     public:
         using TypedStatus::TypedStatus;
-        static BootstrapStatus ok();
         static bool convert(BootstrapStatus &dstStatus, const tempo_utils::Status &srcStatus);
 
     private:
         BootstrapStatus(tempo_utils::StatusCode statusCode, std::shared_ptr<const tempo_utils::Detail> detail);
 
     public:
+        /**
+         *
+         * @param condition
+         * @param message
+         * @return
+         */
+        static BootstrapStatus forCondition(
+            BootstrapCondition condition,
+            std::string_view message)
+        {
+            return BootstrapStatus(condition, message);
+        }
         /**
          *
          * @tparam Args

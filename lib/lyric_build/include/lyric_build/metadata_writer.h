@@ -4,7 +4,6 @@
 #include <lyric_build/build_result.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/metadata_attr_writer.h>
-#include <lyric_build/metadata_result.h>
 #include <lyric_build/metadata_state.h>
 
 namespace lyric_build {

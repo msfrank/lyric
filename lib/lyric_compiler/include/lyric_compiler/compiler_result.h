@@ -41,13 +41,24 @@ namespace lyric_compiler {
     class CompilerStatus : public tempo_utils::TypedStatus<CompilerCondition> {
     public:
         using TypedStatus::TypedStatus;
-        static CompilerStatus ok();
         static bool convert(CompilerStatus &dstStatus, const tempo_utils::Status &srcStatus);
 
     private:
         CompilerStatus(tempo_utils::StatusCode statusCode, std::shared_ptr<const tempo_utils::Detail> detail);
 
     public:
+        /**
+         *
+         * @param condition
+         * @param message
+         * @return
+         */
+        static CompilerStatus forCondition(
+            CompilerCondition condition,
+            std::string_view message)
+        {
+            return CompilerStatus(condition, message);
+        }
         /**
          *
          * @tparam Args

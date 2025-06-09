@@ -148,7 +148,7 @@ dump_lyric_object(int argc, const char *argv[])
     std::string jsonData = reader->dumpJson();
     TU_CONSOLE_OUT << jsonData;
 
-    return tempo_command::CommandStatus::ok();
+    return {};
 }
 
 int

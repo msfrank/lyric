@@ -9,12 +9,6 @@ lyric_importer::ImporterStatus::ImporterStatus(
 {
 }
 
-lyric_importer::ImporterStatus
-lyric_importer::ImporterStatus::ok()
-{
-    return ImporterStatus();
-}
-
 bool
 lyric_importer::ImporterStatus::convert(ImporterStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {
