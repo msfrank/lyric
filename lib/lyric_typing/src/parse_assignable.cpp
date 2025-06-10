@@ -8,36 +8,31 @@
 static tempo_utils::Result<lyric_typing::TypeSpec>
 parse_s_or_p_type(
     lyric_assembler::BlockHandle *block,
-    const lyric_parser::NodeWalker &walker,
-    lyric_typing::TypingTracer *tracer)
+    const lyric_parser::NodeWalker &walker)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
 
     lyric_schema::LyricAstId typeId{};
-    auto status = walker.parseId(lyric_schema::kLyricAstVocabulary, typeId);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (walker.parseId(lyric_schema::kLyricAstVocabulary, typeId));
 
     switch (typeId) {
         case lyric_schema::LyricAstId::SType:
         case lyric_schema::LyricAstId::PType:
             break;
         default:
-            tracer->throwTypingInvariant("failed to parse type; unexpected parser node");
+            return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypingInvariant,
+                "failed to parse type; unexpected parser node");
     }
 
     lyric_common::SymbolPath symbolPath;
-    status = walker.parseAttr(lyric_parser::kLyricAstSymbolPath, symbolPath);
-    if (status.notOk())
-        return status;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstSymbolPath, symbolPath));
 
     std::vector<lyric_typing::TypeSpec> typeParameters;
     for (int i = 0; i < walker.numChildren(); i++) {
-        auto compileTypeParameterResult = lyric_typing::parse_assignable(block, walker.getChild(i), tracer);
-        if (compileTypeParameterResult.isStatus())
-            return compileTypeParameterResult;
-        typeParameters.push_back(compileTypeParameterResult.getResult());
+        lyric_typing::TypeSpec typeParameter;
+        TU_ASSIGN_OR_RETURN (typeParameter, lyric_typing::parse_assignable(block, walker.getChild(i)));
+        typeParameters.push_back(typeParameter);
     }
 
     return lyric_typing::TypeSpec::forSingular(symbolPath, typeParameters);
@@ -46,26 +41,24 @@ parse_s_or_p_type(
 static tempo_utils::Result<lyric_typing::TypeSpec>
 parse_i_type(
     lyric_assembler::BlockHandle *block,
-    const lyric_parser::NodeWalker &walker,
-    lyric_typing::TypingTracer *tracer)
+    const lyric_parser::NodeWalker &walker)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
 
     if (!walker.isClass(lyric_schema::kLyricAstITypeClass))
-        tracer->throwTypingInvariant("failed to parse type; unexpected parser node");
+        return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypingInvariant,
+            "failed to parse type; unexpected parser node");
     if (walker.numChildren() == 0)
-        return tracer->logAndContinue(walker.getLocation(),
+        return lyric_typing::TypingStatus::forCondition(
             lyric_typing::TypingCondition::kTypeError,
-            tempo_tracing::LogSeverity::kError,
             "error parsing type; intersection must contain at least one member");
 
     std::vector<lyric_typing::TypeSpec> intersectionMembers;
     for (int i = 0; i < walker.numChildren(); i++) {
-        auto compileTypeParameterResult = lyric_typing::parse_assignable(block, walker.getChild(i), tracer);
-        if (compileTypeParameterResult.isStatus())
-            return compileTypeParameterResult;
-        intersectionMembers.push_back(compileTypeParameterResult.getResult());
+        lyric_typing::TypeSpec intersectionMember;
+        TU_ASSIGN_OR_RETURN (intersectionMember, lyric_typing::parse_assignable(block, walker.getChild(i)));
+        intersectionMembers.push_back(intersectionMember);
     }
 
     return lyric_typing::TypeSpec::forIntersection(intersectionMembers);
@@ -74,26 +67,24 @@ parse_i_type(
 static tempo_utils::Result<lyric_typing::TypeSpec>
 parse_u_type(
     lyric_assembler::BlockHandle *block,
-    const lyric_parser::NodeWalker &walker,
-    lyric_typing::TypingTracer *tracer)
+    const lyric_parser::NodeWalker &walker)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
 
     if (!walker.isClass(lyric_schema::kLyricAstUTypeClass))
-        tracer->throwTypingInvariant("failed to parse type; unexpected parser node");
+        return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypingInvariant,
+            "failed to parse type; unexpected parser node");
     if (walker.numChildren() == 0)
-        return tracer->logAndContinue(walker.getLocation(),
+        return lyric_typing::TypingStatus::forCondition(
             lyric_typing::TypingCondition::kTypeError,
-            tempo_tracing::LogSeverity::kError,
             "error parsing type; union must contain at least one member");
 
     std::vector<lyric_typing::TypeSpec> unionMembers;
     for (int i = 0; i < walker.numChildren(); i++) {
-        auto compileTypeParameterResult = lyric_typing::parse_assignable(block, walker.getChild(i), tracer);
-        if (compileTypeParameterResult.isStatus())
-            return compileTypeParameterResult;
-        unionMembers.push_back(compileTypeParameterResult.getResult());
+        lyric_typing::TypeSpec unionMember;
+        TU_ASSIGN_OR_RETURN (unionMember, lyric_typing::parse_assignable(block, walker.getChild(i)));
+        unionMembers.push_back(unionMember);
     }
 
     return lyric_typing::TypeSpec::forUnion(unionMembers);
@@ -102,8 +93,7 @@ parse_u_type(
 tempo_utils::Result<lyric_typing::TypeSpec>
 lyric_typing::parse_assignable(
     lyric_assembler::BlockHandle *block,
-    const lyric_parser::NodeWalker &walker,
-    TypingTracer *tracer)
+    const lyric_parser::NodeWalker &walker)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
@@ -114,25 +104,25 @@ lyric_typing::parse_assignable(
     switch (typeId) {
         case lyric_schema::LyricAstId::SType:
         case lyric_schema::LyricAstId::PType:
-            return parse_s_or_p_type(block, walker, tracer);
+            return parse_s_or_p_type(block, walker);
         case lyric_schema::LyricAstId::IType:
-            return parse_i_type(block, walker, tracer);
+            return parse_i_type(block, walker);
         case lyric_schema::LyricAstId::UType:
-            return parse_u_type(block, walker, tracer);
+            return parse_u_type(block, walker);
         case lyric_schema::LyricAstId::XType:
             return TypeSpec::noReturn();
         default:
             break;
     }
 
-    tracer->throwTypingInvariant("failed to parse type; unexpected parser node");
+    return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+        "failed to parse type; unexpected parser node");
 }
 
 tempo_utils::Result<std::vector<lyric_typing::TypeSpec>>
 lyric_typing::parse_type_arguments(
     lyric_assembler::BlockHandle *block,
-    const lyric_parser::NodeWalker &walker,
-    TypingTracer *tracer)
+    const lyric_parser::NodeWalker &walker)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
@@ -141,13 +131,14 @@ lyric_typing::parse_type_arguments(
     TU_RETURN_IF_NOT_OK (walker.parseId(lyric_schema::kLyricAstVocabulary, typeId));
 
     if (typeId != lyric_schema::LyricAstId::TypeArguments)
-        tracer->throwTypingInvariant("failed to parse type arguments; unexpected parser node");
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "failed to parse type arguments; unexpected parser node");
 
     std::vector<TypeSpec> typeArgumentsSpec;
     for (tu_uint32 i = 0; i < walker.numChildren(); i++) {
         auto child = walker.getChild(i);
         TypeSpec argumentSpec;
-        TU_ASSIGN_OR_RETURN (argumentSpec, parse_assignable(block, child, tracer));
+        TU_ASSIGN_OR_RETURN (argumentSpec, parse_assignable(block, child));
         typeArgumentsSpec.push_back(argumentSpec);
     }
 

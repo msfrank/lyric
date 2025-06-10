@@ -12,8 +12,7 @@ namespace lyric_typing {
     tempo_utils::Result<PackSpec>
     parse_pack(
         lyric_assembler::BlockHandle *block,
-        const lyric_parser::NodeWalker &walker,
-        TypingTracer *tracer);
+        const lyric_parser::NodeWalker &walker);
 
 }
 

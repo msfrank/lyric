@@ -5,7 +5,6 @@
 #include <lyric_assembler/block_handle.h>
 #include <lyric_parser/node_walker.h>
 
-#include "typing_tracer.h"
 #include "typing_types.h"
 
 namespace lyric_typing {
@@ -73,7 +72,6 @@ namespace lyric_typing {
 
     private:
         lyric_assembler::ObjectState *m_state;
-        std::unique_ptr<TypingTracer> m_tracer;
     };
 }
 

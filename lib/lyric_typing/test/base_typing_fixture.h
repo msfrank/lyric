@@ -5,12 +5,10 @@
 
 #include <lyric_assembler/object_state.h>
 #include <lyric_typing/type_system.h>
-#include <tempo_tracing/scope_manager.h>
 
 class BaseTypingFixture : public ::testing::Test {
 protected:
     lyric_common::ModuleLocation m_location;
-    std::unique_ptr<tempo_tracing::ScopeManager> m_scopeManager;
     std::unique_ptr<lyric_assembler::ObjectState> m_objectState;
     std::unique_ptr<lyric_typing::TypeSystem> m_typeSystem;
 

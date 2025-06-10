@@ -80,7 +80,8 @@ lyric_typing::resolve_assignable(
             break;
     }
 
-    state->throwAssemblerInvariant("invalid type spec {}", assignable.toString());
+    return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+        "invalid type spec {}", assignable.toString());
 }
 
 tempo_utils::Result<std::vector<lyric_common::TypeDef>>

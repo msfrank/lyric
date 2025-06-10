@@ -128,7 +128,7 @@ compare_union_to_concrete(
             case lyric_common::TypeDefType::Placeholder: {
             }
             default:
-                state->throwAssemblerInvariant(
+                return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kInvalidType,
                     "union type {} has invalid member {}", fromUnion.toString(), memberType.toString());
         }
 
@@ -162,8 +162,7 @@ compare_concrete(
         case lyric_common::TypeDefType::Union:
             return compare_union_to_concrete(toConcrete, fromType, state);
         default:
-            return state->logAndContinue(lyric_typing::TypingCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
+            return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kIncompatibleType,
                 "{} is incompatible with concrete type {}", fromType.toString(), toConcrete.toString());
     }
 }
@@ -195,8 +194,7 @@ compare_placeholder(
         case lyric_common::TypeDefType::Placeholder:
             return compare_placeholder_to_placeholder(toPlaceholder, fromType, state);
         default:
-            return state->logAndContinue(lyric_typing::TypingCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
+            return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kIncompatibleType,
                 "{} is incompatible with placeholder type {}", fromType.toString(), toPlaceholder.toString());
     }
 }
@@ -228,8 +226,8 @@ compare_concrete_to_union(
                 break;
             }
             default:
-                state->throwAssemblerInvariant(
-                    "union type {} has invalid member {}", toUnion.toString(), memberType.toString());
+                return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kInvalidType,
+                    "union type {} contains invalid member {}", toUnion.toString(), memberType.toString());
         }
 
         auto comparison = fromSig.compare(toSig);
@@ -265,13 +263,11 @@ compare_union_to_union(
                 toBaseUrl = iterator->getPlaceholderTemplateUrl();
                 break;
             default:
-                return state->logAndContinue(lyric_typing::TypingCondition::kInvalidType,
-                    tempo_tracing::LogSeverity::kError,
+                return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kInvalidType,
                     "{} contains invalid union member {}", toUnion.toString(), iterator->toString());
         }
         if (toBaseMap.contains(toBaseUrl))
-            return state->logAndContinue(lyric_typing::TypingCondition::kInvalidType,
-                tempo_tracing::LogSeverity::kError,
+            return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kInvalidType,
                 "{} contains duplicate union member {}", toUnion.toString(), iterator->toString());
         toBaseMap[toBaseUrl] = *iterator;
     }
@@ -287,13 +283,11 @@ compare_union_to_union(
                 fromBaseUrl = iterator->getPlaceholderTemplateUrl();
                 break;
             default:
-                return state->logAndContinue(lyric_typing::TypingCondition::kInvalidType,
-                    tempo_tracing::LogSeverity::kError,
+                return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kInvalidType,
                     "{} contains invalid union member {}", fromUnion.toString(), iterator->toString());
         }
         if (fromBaseMap.contains(fromBaseUrl))
-            return state->logAndContinue(lyric_typing::TypingCondition::kInvalidType,
-                tempo_tracing::LogSeverity::kError,
+            return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kInvalidType,
                 "{} contains duplicate union member {}", fromUnion.toString(), iterator->toString());
         fromBaseMap[fromBaseUrl] = *iterator;
     }
@@ -345,13 +339,16 @@ compare_union_to_union(
                 fromTypeHandle = cast_symbol_to_struct(fromSym)->structType();
                 break;
             default:
-                state->throwAssemblerInvariant("invalid symbol type");
+                return lyric_typing::TypingStatus::forCondition(
+                    lyric_typing::TypingCondition::kInvalidType,"invalid symbol type");
         }
 
         // FIXME: check for sealed marker, return more appropriate status
         auto *fromSupertypeHandle = fromTypeHandle->getSuperType();
         if (fromSupertypeHandle == nullptr)
-            state->throwAssemblerInvariant("source type has unknown union member");
+            return lyric_typing::TypingStatus::forCondition(
+                lyric_typing::TypingCondition::kInvalidType,
+                "source type has unknown union member");
 
         auto fromSuperType = fromSupertypeHandle->getTypeDef();
         auto toBase = toBaseMap.extract(fromSuperType.getConcreteUrl());
@@ -390,8 +387,8 @@ compare_union(
         case lyric_common::TypeDefType::Union:
             return compare_union_to_union(toUnion, fromType, state);
         default:
-            return state->logAndContinue(lyric_typing::TypingCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
+            return lyric_typing::TypingStatus::forCondition(
+                lyric_typing::TypingCondition::kIncompatibleType,
                 "{} is incompatible with union type {}", fromType.toString(), toUnion.toString());
     }
 }
@@ -403,8 +400,8 @@ compare_intersection(
     lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (toIntersection.getType() == lyric_common::TypeDefType::Intersection);
-    return state->logAndContinue(lyric_typing::TypingCondition::kIncompatibleType,
-        tempo_tracing::LogSeverity::kError,
+    return lyric_typing::TypingStatus::forCondition(
+        lyric_typing::TypingCondition::kIncompatibleType,
         "{} is incompatible with intersection type {}", fromType.toString(), toIntersection.toString());
 }
 
@@ -435,8 +432,7 @@ lyric_typing::compare_assignable(
         case lyric_common::TypeDefType::Intersection:
             return compare_intersection(toRef, fromRef, state);
         default:
-            return state->logAndContinue(TypingCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
+            return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
                 "invalid assignable type {}", toRef.toString());
     }
 }
@@ -456,8 +452,7 @@ lyric_typing::is_implementable(
     lyric_assembler::AbstractSymbol *toSym;
     TU_ASSIGN_OR_RETURN (toSym, symbolCache->getOrImportSymbol(toConcept.getConcreteUrl()));
     if (toSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
-        return state->logAndContinue(TypingCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
+        return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
             "incompatible type {}; expected concept", toConcept.toString());
 
     lyric_assembler::AbstractSymbol *fromSym;
@@ -502,8 +497,7 @@ lyric_typing::is_implementable(
             break;
         }
         default:
-            return state->logAndContinue(TypingCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
+            return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
                 "type {} cannot implement {}", fromRef.toString(), toConcept.toString());
     }
 

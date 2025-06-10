@@ -19,8 +19,7 @@ unify_concrete_and_concrete(
         return resolveSignature1Result.getStatus();
     auto sig1 = resolveSignature1Result.getResult().getSignature();
     if (sig1.size() == 0)
-        return state->logAndContinue(lyric_typing::TypingCondition::kTypeError,
-            tempo_tracing::LogSeverity::kError,
+        return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypeError,
             "type {} has invalid type signature", ref1.toString());
 
     auto resolveSignature2Result = state->typeCache()->resolveSignature(ref2.getConcreteUrl());
@@ -28,14 +27,12 @@ unify_concrete_and_concrete(
         return resolveSignature2Result.getStatus();
     auto sig2 = resolveSignature2Result.getResult().getSignature();
     if (sig2.size() == 0)
-        return state->logAndContinue(lyric_typing::TypingCondition::kTypeError,
-            tempo_tracing::LogSeverity::kError,
+        return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypeError,
             "type {} has invalid type signature", ref2.toString());
 
     int minsize = std::min(sig1.size(), sig2.size());
     if (sig1[0] != sig2[0])
-        return state->logAndContinue(lyric_typing::TypingCondition::kTypeError,
-            tempo_tracing::LogSeverity::kError,
+        return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypeError,
             "type {} cannot be unified with type {}", ref1.toString(), ref2.toString());
 
     // find the address of the most specific common ancestor type
@@ -77,8 +74,7 @@ unify_concrete(
         case lyric_common::TypeDefType::Concrete:
             return unify_concrete_and_concrete(ref1, ref2, state);
         default:
-            return state->logAndContinue(lyric_typing::TypingCondition::kTypeError,
-                tempo_tracing::LogSeverity::kError,
+            return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypeError,
                 "type {} cannot be unified with type {}", ref1.toString(), ref2.toString());
     }
 }
@@ -94,13 +90,11 @@ unify_placeholder(
         case lyric_common::TypeDefType::Placeholder: {
             if (ref1 == ref2)
                 return ref1;
-            return state->logAndContinue(lyric_typing::TypingCondition::kTypeError,
-                tempo_tracing::LogSeverity::kError,
+            return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypeError,
                 "type {} cannot be unified with type {}", ref1.toString(), ref2.toString());
         }
         default:
-            return state->logAndContinue(lyric_typing::TypingCondition::kTypeError,
-                tempo_tracing::LogSeverity::kError,
+            return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypeError,
                 "type {} cannot be unified with type {}", ref1.toString(), ref2.toString());
     }
 }
@@ -127,8 +121,7 @@ lyric_typing::unify_assignable(
         case lyric_common::TypeDefType::Placeholder:
             return unify_placeholder(ref1, ref2, state);
         default:
-            return state->logAndContinue(TypingCondition::kTypeError,
-                tempo_tracing::LogSeverity::kError,
+            return TypingStatus::forCondition(TypingCondition::kTypeError,
                 "type {} cannot be unified with type {}", ref1.toString(), ref2.toString());
     }
 }

@@ -20,6 +20,8 @@ namespace lyric_typing {
     public:
         explicit CallsiteReifier(TypeSystem *typeSystem);
 
+        bool isValid() const;
+
         tempo_utils::Status initialize(
             const lyric_assembler::ConstructableInvoker &invoker,
             const std::vector<lyric_common::TypeDef> &callsiteArguments = {});
@@ -28,10 +30,6 @@ namespace lyric_typing {
             const std::vector<lyric_common::TypeDef> &callsiteArguments = {});
 
         std::vector<lyric_common::TypeDef> getCallsiteArguments() const;
-
-        //lyric_common::TypeDef getArgument(int index) const override;
-        //std::vector<lyric_common::TypeDef> getArguments() const override;
-        //int numArguments() const override;
 
         size_t numReifiedArguments() const override;
         tempo_utils::Status reifyNextArgument(const lyric_common::TypeDef &argumentType) override;

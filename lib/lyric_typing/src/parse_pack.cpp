@@ -5,17 +5,19 @@
 #include <lyric_typing/parse_assignable.h>
 #include <lyric_typing/parse_pack.h>
 
+#include "lyric_typing/typing_result.h"
+
 static tempo_utils::Result<lyric_typing::ParameterSpec>
 parse_param(
     lyric_assembler::BlockHandle *block,
-    const lyric_parser::NodeWalker &walker,
-    lyric_typing::TypingTracer *tracer)
+    const lyric_parser::NodeWalker &walker)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
 
     if (!walker.isClass(lyric_schema::kLyricAstParamClass))
-        tracer->throwTypingInvariant("failed to parse param; unexpected parser node");
+        return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypingInvariant,
+            "failed to parse param; unexpected parser node");
 
     std::string paramName;
     TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIdentifier, paramName));
@@ -23,7 +25,7 @@ parse_param(
     lyric_parser::NodeWalker type;
     TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstTypeOffset, type));
     lyric_typing::TypeSpec paramType;
-    TU_ASSIGN_OR_RETURN (paramType, lyric_typing::parse_assignable(block, type, tracer));
+    TU_ASSIGN_OR_RETURN (paramType, lyric_typing::parse_assignable(block, type));
 
     bool isVariable = false;
     if (walker.hasAttr(lyric_parser::kLyricAstIsVariable)) {
@@ -48,14 +50,14 @@ parse_param(
 static tempo_utils::Result<lyric_typing::ParameterSpec>
 parse_ctx(
     lyric_assembler::BlockHandle *block,
-    const lyric_parser::NodeWalker &walker,
-    lyric_typing::TypingTracer *tracer)
+    const lyric_parser::NodeWalker &walker)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
 
     if (!walker.isClass(lyric_schema::kLyricAstCtxClass))
-        tracer->throwTypingInvariant("failed to parse ctx; unexpected parser node");
+        return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypingInvariant,
+            "failed to parse ctx; unexpected parser node");
 
     std::string paramName;
     TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIdentifier, paramName));
@@ -63,7 +65,7 @@ parse_ctx(
     lyric_parser::NodeWalker type;
     TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstTypeOffset, type));
     lyric_typing::TypeSpec paramType;
-    TU_ASSIGN_OR_RETURN (paramType, lyric_typing::parse_assignable(block, type, tracer));
+    TU_ASSIGN_OR_RETURN (paramType, lyric_typing::parse_assignable(block, type));
 
     std::string paramLabel;
     if (walker.hasAttr(lyric_parser::kLyricAstLabel)) {
@@ -77,19 +79,19 @@ parse_ctx(
 static tempo_utils::Result<lyric_typing::ParameterSpec>
 parse_rest(
     lyric_assembler::BlockHandle *block,
-    const lyric_parser::NodeWalker &walker,
-    lyric_typing::TypingTracer *tracer)
+    const lyric_parser::NodeWalker &walker)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
 
     if (!walker.isClass(lyric_schema::kLyricAstRestClass))
-        tracer->throwTypingInvariant("failed to parse rest; unexpected parser node");
+        return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kTypingInvariant,
+            "failed to parse rest; unexpected parser node");
 
     lyric_parser::NodeWalker type;
     TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstTypeOffset, type));
     lyric_typing::TypeSpec paramType;
-    TU_ASSIGN_OR_RETURN (paramType, lyric_typing::parse_assignable(block, type, tracer));
+    TU_ASSIGN_OR_RETURN (paramType, lyric_typing::parse_assignable(block, type));
 
     std::string paramName;
     if (walker.hasAttr(lyric_parser::kLyricAstIdentifier)) {
@@ -103,14 +105,14 @@ parse_rest(
 tempo_utils::Result<lyric_typing::PackSpec>
 lyric_typing::parse_pack(
     lyric_assembler::BlockHandle *block,
-    const lyric_parser::NodeWalker &walker,
-    TypingTracer *tracer)
+    const lyric_parser::NodeWalker &walker)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
 
     if (!walker.isClass(lyric_schema::kLyricAstPackClass))
-        tracer->throwTypingInvariant("failed to parse pack; unexpected parser node");
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "failed to parse pack; unexpected parser node");
 
     std::vector<ParameterSpec> listParameterSpec;
     std::vector<ParameterSpec> namedParameterSpec;
@@ -127,7 +129,7 @@ lyric_typing::parse_pack(
         switch (childId) {
             case lyric_schema::LyricAstId::Param: {
                 ParameterSpec param;
-                TU_ASSIGN_OR_RETURN (param, parse_param(block, child, tracer));
+                TU_ASSIGN_OR_RETURN (param, parse_param(block, child));
                 if (!param.label.empty()) {
                     namedParameterSpec.push_back(param);
                 } else {
@@ -140,12 +142,13 @@ lyric_typing::parse_pack(
             }
             case lyric_schema::LyricAstId::Ctx: {
                 ParameterSpec ctx;
-                TU_ASSIGN_OR_RETURN (ctx, parse_ctx(block, child, tracer));
+                TU_ASSIGN_OR_RETURN (ctx, parse_ctx(block, child));
                 ctxParameterSpec.push_back(ctx);
                 break;
             }
             default:
-                tracer->throwTypingInvariant("failed to parse pack parameter; unexpected parser node");
+                return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                    "failed to parse pack parameter; unexpected parser node");
         }
     }
 
@@ -153,7 +156,7 @@ lyric_typing::parse_pack(
         lyric_parser::NodeWalker restNode;
         TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstRestOffset, restNode));
         ParameterSpec rest;
-        TU_ASSIGN_OR_RETURN (rest, parse_rest(block, restNode, tracer));
+        TU_ASSIGN_OR_RETURN (rest, parse_rest(block, restNode));
         restParameterSpec = Option(rest);
     }
 

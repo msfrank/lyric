@@ -20,29 +20,30 @@ namespace lyric_typing {
     class MemberReifier : public lyric_assembler::AbstractMemberReifier {
 
     public:
-        MemberReifier();
-        MemberReifier(
-            TypeSystem *typeSystem,
-            const lyric_common::TypeDef &receiverType,
-            const lyric_assembler::TemplateHandle *templateHandle = nullptr);
-        MemberReifier(
-            const lyric_common::SymbolUrl &templateUrl,
-            const std::vector<lyric_object::TemplateParameter> &templateParameters,
-            const std::vector<lyric_common::TypeDef> &templateArguments,
-            TypeSystem *typeSystem);
+        explicit MemberReifier(TypeSystem *typeSystem);
 
         bool isValid() const override;
+
+        tempo_utils::Status initialize(
+            const lyric_common::TypeDef &receiverType,
+            const lyric_assembler::TemplateHandle *templateHandle = nullptr);
+        tempo_utils::Status initialize(
+            const lyric_common::SymbolUrl &templateUrl,
+            const std::vector<lyric_object::TemplateParameter> &templateParameters,
+            const std::vector<lyric_common::TypeDef> &templateArguments);
 
         tempo_utils::Result<lyric_assembler::DataReference> reifyMember(
             const std::string &name,
             const lyric_assembler::FieldSymbol *fieldSymbol) override;
 
     private:
+        TypeSystem *m_typeSystem;
+
         lyric_common::SymbolUrl m_templateUrl;
         std::vector<lyric_object::TemplateParameter> m_templateParameters;
         std::vector<lyric_common::TypeDef> m_reifiedPlaceholders;
         absl::flat_hash_map<std::string, lyric_assembler::DataReference> m_memberCache;
-        TypeSystem *m_typeSystem;
+        bool m_initialized;
 
         tempo_utils::Status checkPlaceholder(
             const lyric_object::TemplateParameter &tp,

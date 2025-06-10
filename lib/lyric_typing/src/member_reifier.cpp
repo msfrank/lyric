@@ -8,19 +8,29 @@
 #include <lyric_assembler/type_cache.h>
 #include <lyric_typing/member_reifier.h>
 
-lyric_typing::MemberReifier::MemberReifier()
-    : m_typeSystem(nullptr)
-{
-}
+#include "lyric_typing/typing_result.h"
 
-lyric_typing::MemberReifier::MemberReifier(
-    TypeSystem *typeSystem,
-    const lyric_common::TypeDef &receiverType,
-    const lyric_assembler::TemplateHandle *templateHandle)
-    : m_typeSystem(typeSystem)
+lyric_typing::MemberReifier::MemberReifier(TypeSystem *typeSystem)
+    : m_typeSystem(typeSystem),
+      m_initialized(false)
 {
     TU_ASSERT (m_typeSystem != nullptr);
-    TU_ASSERT (receiverType.isValid());
+}
+
+bool
+lyric_typing::MemberReifier::isValid() const
+{
+    return m_initialized;
+}
+
+tempo_utils::Status
+lyric_typing::MemberReifier::initialize(
+    const lyric_common::TypeDef &receiverType,
+    const lyric_assembler::TemplateHandle *templateHandle)
+{
+    if (!receiverType.isValid())
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "invalid receiver type", receiverType.toString());
 
     if (templateHandle != nullptr) {
         m_templateUrl = templateHandle->getTemplateUrl();
@@ -43,29 +53,35 @@ lyric_typing::MemberReifier::MemberReifier(
                     receiverType.intersectionMembersBegin(), receiverType.intersectionMembersEnd());
                 break;
             default:
-                m_typeSystem->getState()->throwAssemblerInvariant("invalid receiver type", receiverType.toString());
+                return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                    "invalid receiver type", receiverType.toString());
         }
-        TU_ASSERT (!m_reifiedPlaceholders.empty());
+        if (m_reifiedPlaceholders.empty())
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "receiver {} has no placeholders", receiverType.toString());
     }
+
+    m_initialized = true;
+
+    return {};
 }
 
-lyric_typing::MemberReifier::MemberReifier(
+tempo_utils::Status
+lyric_typing::MemberReifier::initialize(
     const lyric_common::SymbolUrl &templateUrl,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
-    const std::vector<lyric_common::TypeDef> &templateArguments,
-    TypeSystem *typeSystem)
-    : m_templateUrl(templateUrl),
-      m_templateParameters(templateParameters),
-      m_reifiedPlaceholders(templateArguments),
-      m_typeSystem(typeSystem)
+    const std::vector<lyric_common::TypeDef> &templateArguments)
 {
-    TU_ASSERT (m_typeSystem != nullptr);
-}
+    if (m_initialized)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "member reifier is already initialized");
 
-bool
-lyric_typing::MemberReifier::isValid() const
-{
-    return m_typeSystem != nullptr;
+    m_templateUrl = templateUrl;
+    m_templateParameters = templateParameters;
+    m_reifiedPlaceholders = templateArguments;
+    m_initialized = true;
+
+    return {};
 }
 
 tempo_utils::Result<lyric_assembler::DataReference>
@@ -73,6 +89,10 @@ lyric_typing::MemberReifier::reifyMember(
     const std::string &name,
     const lyric_assembler::FieldSymbol *fieldSymbol)
 {
+    if (!m_initialized)
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "member reifier is not initialized");
+
     auto *state = m_typeSystem->getState();
 
     if (m_memberCache.contains(name))
@@ -97,7 +117,8 @@ lyric_typing::MemberReifier::reifyMember(
             break;
         }
         default:
-            state->throwAssemblerInvariant("invalid field type", fieldType.toString());
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "invalid field type", fieldType.toString());
     }
 
     lyric_assembler::DataReference ref;
@@ -117,8 +138,6 @@ lyric_typing::MemberReifier::checkPlaceholder(
     const lyric_object::TemplateParameter &tp,
     const lyric_common::TypeDef &arg) const
 {
-    auto *state = m_typeSystem->getState();
-
     if (tp.bound == lyric_object::BoundType::None)
         return {};
 
@@ -136,8 +155,7 @@ lyric_typing::MemberReifier::checkPlaceholder(
             return {};
     }
 
-    return state->logAndContinue(lyric_assembler::AssemblerCondition::kIncompatibleType,
-        tempo_tracing::LogSeverity::kError,
+    return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
         "argument type {} is not substitutable for constraint {}",
         arg.toString(), tp.typeDef.toString());
 }
@@ -147,8 +165,6 @@ lyric_typing::MemberReifier::reifySingular(
     const lyric_common::TypeDef &paramType)    // NOLINT(misc-no-recursion)
 {
     TU_ASSERT (paramType.isValid());
-
-    auto *state = m_typeSystem->getState();
 
     lyric_common::TypeDef baseType;
     std::vector<lyric_common::TypeDef> paramTypeParameters;
@@ -184,7 +200,8 @@ lyric_typing::MemberReifier::reifySingular(
         }
 
         default:
-            state->throwAssemblerInvariant("invalid member type", paramType.toString());
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "invalid member type", paramType.toString());
     }
 
     std::vector<lyric_common::TypeDef> reifiedParameters;
@@ -208,8 +225,7 @@ lyric_typing::MemberReifier::reifySingular(
                 break;
             }
             default:
-                return state->logAndContinue(lyric_assembler::AssemblerCondition::kIncompatibleType,
-                    tempo_tracing::LogSeverity::kError,
+                return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
                     "invalid type parameter {}", paramTypeParameter.toString());
         }
         reifiedParameters.push_back(reifiedType);
@@ -223,7 +239,8 @@ lyric_typing::MemberReifier::reifySingular(
             return lyric_common::TypeDef::forPlaceholder(baseType.getPlaceholderIndex(),
                 baseType.getPlaceholderTemplateUrl(), reifiedParameters);
         default:
-            state->throwAssemblerInvariant("invalid member type", paramType.toString());
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "invalid member type", paramType.toString());
     }
 }
 
@@ -236,9 +253,11 @@ lyric_typing::MemberReifier::reifyUnion(
     auto *state = m_typeSystem->getState();
 
     if (paramType.getType() != lyric_common::TypeDefType::Union)
-        state->throwAssemblerInvariant("invalid union type", paramType.toString());
+        return TypingStatus::forCondition(TypingCondition::kInvalidType,
+            "invalid union type", paramType.toString());
     if (paramType.numUnionMembers() == 0)
-        state->throwAssemblerInvariant("invalid union type", paramType.toString());
+        return TypingStatus::forCondition(TypingCondition::kInvalidType,
+            "invalid union type", paramType.toString());
 
     std::vector<lyric_common::TypeDef> unionMembers;
     for (auto iterator = paramType.unionMembersBegin(); iterator != paramType.unionMembersEnd(); iterator++) {

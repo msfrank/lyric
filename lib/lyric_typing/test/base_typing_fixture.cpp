@@ -19,12 +19,9 @@ BaseTypingFixture::SetUp()
     auto sharedModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
     auto shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
     auto recorder = tempo_tracing::TraceRecorder::create();
-    m_scopeManager = std::make_unique<tempo_tracing::ScopeManager>(recorder);
-    auto span = m_scopeManager->makeSpan();
-    span->setOperationName("BaseTypingFixture");
 
     m_objectState = std::make_unique<lyric_assembler::ObjectState>(
-        m_location, localModuleCache, sharedModuleCache, shortcutResolver, m_scopeManager.get());
+        m_location, localModuleCache, sharedModuleCache, shortcutResolver);
     TU_RAISE_IF_STATUS(m_objectState->defineRoot());
 
     m_typeSystem = std::make_unique<lyric_typing::TypeSystem>(m_objectState.get());

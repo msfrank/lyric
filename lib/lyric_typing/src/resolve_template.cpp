@@ -13,18 +13,16 @@ tempo_utils::Result<lyric_typing::TemplateSpec>
 lyric_typing::resolve_template(
     lyric_assembler::BlockHandle *block,
     const lyric_parser::NodeWalker &walker,
-    lyric_assembler::ObjectState *state,
-    TypingTracer *tracer)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (walker.isValid());
 
     if (!walker.isClass(lyric_schema::kLyricAstGenericClass))
-        tracer->throwTypingInvariant("failed to parse template; unexpected parser node");
+        return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+            "failed to parse template; unexpected parser node");
     if (walker.numChildren() == 0)
-        return tracer->logAndContinue(walker.getLocation(),
-            lyric_typing::TypingCondition::kTemplateError,
-            tempo_tracing::LogSeverity::kError,
+        return TypingStatus::forCondition(TypingCondition::kTemplateError,
             "error parsing template; template must contain at least one placeholder");
 
     TemplateSpec templateSpec;
@@ -35,7 +33,8 @@ lyric_typing::resolve_template(
     for (int i = 0; i < walker.numChildren(); i++) {
         auto placeholder = walker.getChild(i);
         if (!placeholder.isClass(lyric_schema::kLyricAstPlaceholderClass))
-            tracer->throwTypingInvariant("failed to parse template placeholder; unexpected parser node");
+            return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                "failed to parse template placeholder; unexpected parser node");
 
         // template parameter defaults
         lyric_object::TemplateParameter tp;
@@ -48,9 +47,7 @@ lyric_typing::resolve_template(
         if (status.notOk())
             return status;
         if (usedPlaceholderNames.contains(tp.name))
-            return tracer->logAndContinue(walker.getLocation(),
-                lyric_typing::TypingCondition::kTemplateError,
-                tempo_tracing::LogSeverity::kError,
+            return TypingStatus::forCondition(TypingCondition::kTemplateError,
                 "error parsing template; placeholder {} is already declared", tp.name);
 
         // get placeholder variance type
@@ -74,7 +71,8 @@ lyric_typing::resolve_template(
         if (placeholder.numChildren() > 0) {
             auto constraint = placeholder.getChild(0);
             if (!constraint.isClass(lyric_schema::kLyricAstConstraintClass))
-                tracer->throwTypingInvariant("failed to parse template constraint; unexpected parser node");
+                return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                    "failed to parse template constraint; unexpected parser node");
 
             // get constraint bound
             lyric_parser::BoundType bound;
@@ -98,7 +96,7 @@ lyric_typing::resolve_template(
             TU_RETURN_IF_NOT_OK (constraint.parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
 
             TypeSpec assignable;
-            TU_ASSIGN_OR_RETURN (assignable, parse_assignable(block, typeNode, tracer));
+            TU_ASSIGN_OR_RETURN (assignable, parse_assignable(block, typeNode));
             TU_ASSIGN_OR_RETURN (tp.typeDef, resolve_assignable(assignable, block, state));
         }
 
@@ -112,8 +110,7 @@ lyric_typing::resolve_template(
 tempo_utils::Result<std::pair<lyric_object::BoundType,lyric_common::TypeDef>>
 lyric_typing::resolve_bound(
     const lyric_common::TypeDef &placeholderType,
-    lyric_assembler::ObjectState *state,
-    TypingTracer *tracer)
+    lyric_assembler::ObjectState *state)
 {
     TU_ASSERT (placeholderType.getType() == lyric_common::TypeDefType::Placeholder);
     TU_ASSERT (state != nullptr);
