@@ -9,7 +9,6 @@
 #include <lyric_runtime/static_loader.h>
 #include <lyric_schema/ast_schema.h>
 #include <tempo_test/status_matchers.h>
-#include <tempo_tracing/scope_manager.h>
 #include <tempo_tracing/trace_recorder.h>
 
 #include "compiler_mocks.h"
@@ -23,7 +22,6 @@ protected:
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache;
     std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver;
     std::shared_ptr<tempo_tracing::TraceRecorder> recorder;
-    std::unique_ptr<tempo_tracing::ScopeManager> scopeManager;
     std::unique_ptr<lyric_assembler::ObjectState> objectState;
     lyric_assembler::ObjectRoot *objectRoot;
 
@@ -35,9 +33,8 @@ protected:
         systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
         shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
         recorder = tempo_tracing::TraceRecorder::create();
-        scopeManager = std::make_unique<tempo_tracing::ScopeManager>(recorder);
         objectState = std::make_unique<lyric_assembler::ObjectState>(
-            location, localModuleCache, systemModuleCache, shortcutResolver, scopeManager.get());
+            location, localModuleCache, systemModuleCache, shortcutResolver);
         TU_ASSIGN_OR_RAISE (objectRoot, objectState->defineRoot());
     }
 };
@@ -66,7 +63,7 @@ TEST_F(CompilerScanDriver, InitializeDriver)
 
 TEST_F(CompilerScanDriver, HandleRootNode)
 {
-    lyric_parser::ArchetypeState archetypeState(location.toUrl(), scopeManager.get());
+    lyric_parser::ArchetypeState archetypeState(location.toUrl());
     lyric_parser::ArchetypeNode *blockNode;
     TU_ASSIGN_OR_RAISE (blockNode, archetypeState.appendNode(lyric_schema::kLyricAstBlockClass, {}));
     archetypeState.setRoot(blockNode);
@@ -93,7 +90,7 @@ TEST_F(CompilerScanDriver, HandleRootNode)
 
 TEST_F(CompilerScanDriver, HandleRootAndSingleChild)
 {
-    lyric_parser::ArchetypeState archetypeState(location.toUrl(), scopeManager.get());
+    lyric_parser::ArchetypeState archetypeState(location.toUrl());
     lyric_parser::ArchetypeNode *blockNode;
     TU_ASSIGN_OR_RAISE (blockNode, archetypeState.appendNode(lyric_schema::kLyricAstBlockClass, {}));
     archetypeState.setRoot(blockNode);
@@ -138,7 +135,7 @@ TEST_F(CompilerScanDriver, HandleRootAndSingleChild)
 
 TEST_F(CompilerScanDriver, HandleRootAndMultipleChildren)
 {
-    lyric_parser::ArchetypeState archetypeState(location.toUrl(), scopeManager.get());
+    lyric_parser::ArchetypeState archetypeState(location.toUrl());
     lyric_parser::ArchetypeNode *blockNode;
     TU_ASSIGN_OR_RAISE (blockNode, archetypeState.appendNode(lyric_schema::kLyricAstBlockClass, {}));
     archetypeState.setRoot(blockNode);

@@ -28,9 +28,8 @@ BaseOptimizerFixture::configure()
     auto sharedModuleCache = builder->getSharedModuleCache();
     auto shortcutResolver = builder->getShortcutResolver();
     auto recorder = tempo_tracing::TraceRecorder::create();
-    tempo_tracing::ScopeManager scopeManager(recorder);
     m_objectState = std::make_unique<lyric_assembler::ObjectState>(
-        location, localModuleCache, sharedModuleCache, shortcutResolver, &scopeManager);
+        location, localModuleCache, sharedModuleCache, shortcutResolver);
 
     TU_ASSIGN_OR_RAISE (m_objectRoot, m_objectState->defineRoot());
 

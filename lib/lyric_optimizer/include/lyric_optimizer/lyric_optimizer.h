@@ -9,7 +9,7 @@
 #include <lyric_importer/module_cache.h>
 #include <lyric_object/lyric_object.h>
 #include <lyric_runtime/abstract_loader.h>
-#include <tempo_tracing/scope_manager.h>
+#include <tempo_tracing/trace_recorder.h>
 
 namespace lyric_optimizer {
 
@@ -46,7 +46,6 @@ namespace lyric_optimizer {
     private:
         std::unique_ptr<lyric_assembler::ObjectState> m_objectState;
         std::shared_ptr<tempo_tracing::TraceRecorder> m_recorder;
-        std::unique_ptr<tempo_tracing::ScopeManager> m_scopeManager;
         OptimizerOptions m_options;
     };
 }

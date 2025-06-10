@@ -15,11 +15,13 @@
 TEST(AnalyzeBlock, NoDefinitions)
 {
     lyric_parser::LyricParser parser({});
+
+    auto sourceUrl = tempo_utils::Url::fromString("/test");
     auto recorder = tempo_tracing::TraceRecorder::create();
 
     auto parseResult = parser.parseModule(R"(
         1 + 1
-    )", {}, recorder);
+    )", sourceUrl, recorder);
 
     ASSERT_TRUE(parseResult.isResult());
     auto archetype = parseResult.getResult();

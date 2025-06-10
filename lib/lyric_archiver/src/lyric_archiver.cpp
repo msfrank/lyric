@@ -15,7 +15,7 @@ lyric_archiver::LyricArchiver::LyricArchiver(
       m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_shortcutResolver(std::move(shortcutResolver)),
-      m_recorder(recorder),
+      m_recorder(std::move(recorder)),
       m_options(options)
 {
 }
@@ -27,13 +27,11 @@ lyric_archiver::LyricArchiver::initialize()
         return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
             "archiver is already initialized");
 
-    auto scopeManager = std::make_unique<tempo_tracing::ScopeManager>(m_recorder);
-
     lyric_assembler::ObjectStateOptions objectStateOptions;
 
     auto objectState = std::make_unique<lyric_assembler::ObjectState>(
         m_location, m_localModuleCache, m_systemModuleCache, m_shortcutResolver,
-        scopeManager.get(), objectStateOptions);
+        objectStateOptions);
 
     lyric_assembler::ObjectRoot *objectRoot;
     TU_ASSIGN_OR_RETURN (objectRoot, objectState->defineRoot());
@@ -41,7 +39,6 @@ lyric_archiver::LyricArchiver::initialize()
     auto archiverState = std::make_unique<ArchiverState>(
         std::move(objectState), m_systemModuleCache, objectRoot);
 
-    m_scopeManager = std::move(scopeManager);
     m_archiverState = std::move(archiverState);
 
     return {};

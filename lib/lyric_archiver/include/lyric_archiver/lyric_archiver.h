@@ -9,7 +9,7 @@
 #include <lyric_importer/module_cache.h>
 #include <lyric_object/lyric_object.h>
 #include <lyric_runtime/abstract_loader.h>
-#include <tempo_tracing/scope_manager.h>
+#include <tempo_tracing/trace_recorder.h>
 
 #include "archiver_state.h"
 
@@ -59,7 +59,6 @@ namespace lyric_archiver {
         std::shared_ptr<tempo_tracing::TraceRecorder> m_recorder;
         ArchiverOptions m_options;
 
-        std::unique_ptr<tempo_tracing::ScopeManager> m_scopeManager;
         std::unique_ptr<ArchiverState> m_archiverState;
     };
 }

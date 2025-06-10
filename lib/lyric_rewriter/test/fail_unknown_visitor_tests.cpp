@@ -39,11 +39,12 @@ public:
 TEST(FailUnknownVisitor, FailsWhenEncounteringUnhandledNode)
 {
     lyric_parser::LyricParser parser({});
+    auto sourceUrl = tempo_utils::Url::fromString("/test");
     auto recorder = tempo_tracing::TraceRecorder::create();
 
     auto parseResult = parser.parseModule(R"(
         42
-    )", {}, recorder);
+    )", sourceUrl, recorder);
 
     ASSERT_TRUE(parseResult.isResult());
     auto archetype = parseResult.getResult();
@@ -65,7 +66,6 @@ TEST(FailUnknownVisitor, FailsWhenEncounteringUnhandledNode)
     options.visitorRegistry->sealRegistry();
 
     lyric_rewriter::LyricRewriter rewriter(options);
-    auto sourceUrl = tempo_utils::Url::fromString("/test");
     auto builder = std::shared_ptr<lyric_rewriter::AbstractScanDriverBuilder>(new TestScanDriverBuilder());
     auto scanArchetypeResult = rewriter.scanArchetype(archetype, sourceUrl, builder, recorder);
 

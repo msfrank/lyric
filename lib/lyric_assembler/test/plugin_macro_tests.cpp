@@ -10,15 +10,17 @@
 #include <tempo_test/result_matchers.h>
 #include <tempo_test/status_matchers.h>
 
-TEST(PluginMacro, PluginPragma) {
+TEST(PluginMacro, PluginPragma)
+{
     lyric_parser::LyricParser parser({});
+    auto sourceUrl = tempo_utils::Url::fromString("/test");
     auto recorder = tempo_tracing::TraceRecorder::create();
 
     auto parseResult = parser.parseModule(R"(
         @@Plugin("/plugin")
 
         nil
-    )", {}, recorder);
+    )", sourceUrl, recorder);
 
     ASSERT_TRUE(parseResult.isResult());
     auto archetype = parseResult.getResult();
@@ -44,7 +46,6 @@ TEST(PluginMacro, PluginPragma) {
 
     lyric_rewriter::RewriterOptions options;
     lyric_rewriter::LyricRewriter rewriter(options);
-    auto sourceUrl = tempo_utils::Url::fromString("/test");
     auto rewriteArchetypeResult = rewriter.rewriteArchetype(archetype, sourceUrl, builder, recorder);
     ASSERT_THAT (rewriteArchetypeResult, tempo_test::IsResult());
     auto rewritten = rewriteArchetypeResult.getResult();

@@ -11,7 +11,6 @@
 #include <lyric_importer/field_import.h>
 #include <lyric_importer/module_cache.h>
 #include <lyric_object/lyric_object.h>
-#include <tempo_tracing/scope_manager.h>
 
 #include "symbol_reference_set.h"
 

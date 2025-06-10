@@ -8,7 +8,6 @@
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_schema/ast_schema.h>
 #include <tempo_test/status_matchers.h>
-#include <tempo_tracing/scope_manager.h>
 #include <tempo_tracing/trace_recorder.h>
 
 #include "compiler_mocks.h"

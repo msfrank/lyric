@@ -7,7 +7,7 @@
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
 #include <lyric_build/local_filesystem.h>
-#include <tempo_tracing/scope_manager.h>
+#include <tempo_tracing/trace_recorder.h>
 #include <tempo_utils/uuid.h>
 
 #include "lyric_build/build_state.h"

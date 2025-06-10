@@ -8,7 +8,6 @@ lyric_optimizer::LyricOptimizer::LyricOptimizer(
     const OptimizerOptions &options)
     : m_objectState(std::move(objectState)),
       m_recorder(recorder),
-      m_scopeManager(std::make_unique<tempo_tracing::ScopeManager>(m_recorder)),
       m_options(options)
 {
 }
@@ -21,15 +20,10 @@ lyric_optimizer::LyricOptimizer::LyricOptimizer(
     std::shared_ptr<tempo_tracing::TraceRecorder> recorder,
     const OptimizerOptions &options)
     : m_recorder(std::move(recorder)),
-      m_scopeManager(std::make_unique<tempo_tracing::ScopeManager>(m_recorder)),
       m_options(options)
 {
     m_objectState = std::make_unique<lyric_assembler::ObjectState>(
-        location,
-        localModuleCache,
-        systemModuleCache,
-        shortcutResolver,
-        m_scopeManager.get());
+        location, localModuleCache, systemModuleCache, shortcutResolver);
 }
 
 tempo_utils::Status
