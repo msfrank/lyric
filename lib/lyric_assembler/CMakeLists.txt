@@ -22,7 +22,6 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/assembler_instructions.h
     include/lyric_assembler/assembler_macro_visitor.h
     include/lyric_assembler/assembler_result.h
-    include/lyric_assembler/assembler_tracer.h
     include/lyric_assembler/assembler_types.h
     include/lyric_assembler/base_handle.h
     include/lyric_assembler/base_symbol.h
@@ -80,7 +79,6 @@ target_sources(lyric_assembler PRIVATE
     src/assembler_instructions.cpp
     src/assembler_macro_visitor.cpp
     src/assembler_result.cpp
-    src/assembler_tracer.cpp
     src/assembler_types.cpp
     src/binding_symbol.cpp
     src/block_handle.cpp

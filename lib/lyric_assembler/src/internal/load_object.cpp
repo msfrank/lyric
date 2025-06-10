@@ -29,8 +29,7 @@ lyric_assembler::internal::find_system_bootstrap(
             return importWalker.getImportLocation();
         }
     }
-    return state->logAndContinue(AssemblerCondition::kAssemblerInvariant,
-        tempo_tracing::LogSeverity::kError,
+    return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
         "object {} is missing system bootstrap",
         moduleImport->getObjectLocation().toString());
 }

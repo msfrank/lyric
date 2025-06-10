@@ -329,12 +329,13 @@ lyric_assembler::CallSymbol::defineCall(
     const lyric_common::TypeDef &returnType)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't put initializer on imported call {}", m_callUrl.toString());
     auto *priv = getPriv();
 
     if (priv->proc != nullptr)
-        m_state->throwAssemblerInvariant("cannot redefine call {}", m_callUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "cannot redefine call {}", m_callUrl.toString());
 
     auto *symbolCache = m_state->symbolCache();
     auto *typeCache = m_state->typeCache();
@@ -673,17 +674,16 @@ lyric_assembler::CallSymbol::putInitializer(
     const lyric_common::SymbolUrl &initializerUrl)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't put initializer on imported call {}", m_callUrl.toString());
     auto *priv = getPriv();
     if (priv->initializers.contains(name))
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "initializer already defined for param {}", name);
 
     auto entry = priv->parametersMap.find(name);
     if (entry == priv->parametersMap.cend())
-        return m_state->logAndContinue(AssemblerCondition::kInvalidBinding,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidBinding,
             "cannot put initializer for unknown param {}", name);
 
     priv->initializers[name] = initializerUrl;
@@ -695,17 +695,16 @@ tempo_utils::Result<lyric_assembler::ProcHandle *>
 lyric_assembler::CallSymbol::defineInitializer(const std::string &name)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't define initializer on imported call {}", m_callUrl.toString());
     auto *priv = getPriv();
     if (priv->initializers.contains(name))
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "initializer already defined for param {}", name);
 
     auto entry = priv->parametersMap.find(name);
     if (entry == priv->parametersMap.cend())
-        return m_state->logAndContinue(AssemblerCondition::kInvalidBinding,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidBinding,
             "cannot define initializer for unknown param {}", name);
     auto &param = entry->second;
 
@@ -726,7 +725,7 @@ tempo_utils::Status
 lyric_assembler::CallSymbol::finalizeCall()
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't put initializer on imported call {}", m_callUrl.toString());
     auto *priv = getPriv();
 

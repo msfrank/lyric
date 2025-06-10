@@ -101,8 +101,7 @@ lyric_assembler::ActionCallable::invoke(
 
     auto placementSize = reifier.numReifiedArguments();
     if (placementSize > std::numeric_limits<tu_uint8>::max())
-        return block->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "too many call arguments");
 
     TU_RETURN_IF_NOT_OK (fragment->loadDescriptor(m_conceptSymbol));

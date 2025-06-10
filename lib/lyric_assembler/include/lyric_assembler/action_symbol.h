@@ -73,7 +73,7 @@ namespace lyric_assembler {
 
         bool hasInitializer(const std::string &name) const;
         lyric_common::SymbolUrl getInitializer(const std::string &name) const;
-        void putInitializer(const std::string &name, const lyric_common::SymbolUrl &initializer);
+        tempo_utils::Status putInitializer(const std::string &name, const lyric_common::SymbolUrl &initializer);
 
     private:
         lyric_common::SymbolUrl m_actionUrl;

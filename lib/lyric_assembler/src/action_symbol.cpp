@@ -176,7 +176,8 @@ lyric_assembler::ActionSymbol::defineAction(
     auto *priv = getPriv();
 
     if (priv->returnType.isValid())
-        m_state->throwAssemblerInvariant("cannot redefine action {}", m_actionUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "cannot redefine action {}", m_actionUrl.toString());
 
     auto *typeCache = m_state->typeCache();
 
@@ -293,12 +294,13 @@ lyric_assembler::ActionSymbol::getInitializer(const std::string &name) const
     return {};
 }
 
-void
+tempo_utils::Status
 lyric_assembler::ActionSymbol::putInitializer(const std::string &name, const lyric_common::SymbolUrl &initializer)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't put initializer on imported action {}", m_actionUrl.toString());
     auto *priv = getPriv();
     priv->initializers[name] = initializer;
+    return {};
 }

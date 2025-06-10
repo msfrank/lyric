@@ -4,14 +4,13 @@
 #include <lyric_common/module_location.h>
 #include <lyric_common/symbol_url.h>
 
-#include "assembler_tracer.h"
 #include "assembler_types.h"
 
 namespace lyric_assembler {
 
     class FundamentalCache {
     public:
-        FundamentalCache(const lyric_common::ModuleLocation &preludeLocation, AssemblerTracer *tracer);
+        explicit FundamentalCache(const lyric_common::ModuleLocation &preludeLocation);
 
         lyric_common::ModuleLocation getPreludeLocation() const;
 
@@ -23,7 +22,6 @@ namespace lyric_assembler {
 
     private:
         lyric_common::ModuleLocation m_preludeLocation;
-        AssemblerTracer *m_tracer;
 
         lyric_common::SymbolUrl m_fundamentalAny;
         lyric_common::SymbolUrl m_fundamentalArithmetic;

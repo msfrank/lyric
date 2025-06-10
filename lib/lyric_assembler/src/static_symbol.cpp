@@ -136,7 +136,7 @@ tempo_utils::Result<lyric_assembler::ProcHandle *>
 lyric_assembler::StaticSymbol::defineInitializer()
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare init on imported static {}", m_staticUrl.toString());
 
     auto *priv = getPriv();
@@ -145,8 +145,7 @@ lyric_assembler::StaticSymbol::defineInitializer()
     lyric_common::SymbolUrl initializerUrl(path);
 
     if (priv->initCall != nullptr || m_state->symbolCache()->hasSymbol(initializerUrl))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "initializer already defined for static {}", m_staticUrl.toString());
 
     //
@@ -169,20 +168,19 @@ lyric_assembler::StaticSymbol::prepareInitializer(CallableInvoker &invoker)
     auto *priv = getPriv();
 
     if (priv->initCall == nullptr)
-        return m_state->logAndContinue(AssemblerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
             "missing initializer for static {}", m_staticUrl.toString());
 
     auto initializerUrl = priv->initCall->getSymbolUrl();
 
     if (!m_state->symbolCache()->hasSymbol(initializerUrl))
-        return m_state->logAndContinue(AssemblerCondition::kMissingSymbol,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
             "missing init for static {}", m_staticUrl.toString());
     AbstractSymbol *initSym;
     TU_ASSIGN_OR_RETURN (initSym, m_state->symbolCache()->getOrImportSymbol(initializerUrl));
     if (initSym->getSymbolType() != SymbolType::CALL)
-        m_state->throwAssemblerInvariant("invalid call symbol {}", initializerUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", initializerUrl.toString());
     auto *init = cast_symbol_to_call(initSym);
 
     auto callable = std::make_unique<FunctionCallable>(init, /* isInlined= */ false);

@@ -5,7 +5,6 @@
 #include <lyric_importer/module_cache.h>
 #include <lyric_importer/shortcut_resolver.h>
 
-#include "assembler_tracer.h"
 #include "assembler_types.h"
 #include "base_symbol.h"
 #include "block_handle.h"
@@ -23,8 +22,7 @@ namespace lyric_assembler {
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
-            SymbolCache *symbolCache,
-            AssemblerTracer *tracer);
+            SymbolCache *symbolCache);
         ~ImportCache();
 
         tempo_utils::Result<lyric_common::ModuleLocation> resolveImportLocation(
@@ -73,7 +71,6 @@ namespace lyric_assembler {
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         std::shared_ptr<lyric_importer::ShortcutResolver> m_shortcutResolver;
         SymbolCache *m_symbolCache;
-        AssemblerTracer *m_tracer;
         absl::flat_hash_map<lyric_common::ModuleLocation, ImportHandle *> m_importcache;
     };
 }

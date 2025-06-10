@@ -102,7 +102,8 @@ lyric_assembler::TemplateHandle::resolveSingular(
     const std::vector<lyric_common::TypeDef> &typeArguments)            // NOLINT(misc-no-recursion)
 {
     if (!typePath.isValid())
-        m_state->throwAssemblerInvariant("invalid type path {}", typePath.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid type path {}", typePath.toString());
 
     lyric_common::TypeDef assignableType;
 

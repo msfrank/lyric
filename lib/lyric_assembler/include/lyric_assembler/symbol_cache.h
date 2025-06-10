@@ -2,7 +2,6 @@
 #define LYRIC_ASSEMBLER_SYMBOL_CACHE_H
 
 #include "abstract_symbol.h"
-#include "assembler_tracer.h"
 #include "assembler_types.h"
 #include "object_state.h"
 
@@ -10,7 +9,7 @@ namespace lyric_assembler {
 
     class SymbolCache {
     public:
-        SymbolCache(ObjectState *state, AssemblerTracer *tracer);
+        explicit SymbolCache(ObjectState *state);
         ~SymbolCache();
 
         tempo_utils::Status insertSymbol(
@@ -37,7 +36,6 @@ namespace lyric_assembler {
 
     private:
         ObjectState *m_state;
-        AssemblerTracer *m_tracer;
         absl::flat_hash_map<lyric_common::SymbolUrl, AbstractSymbol *> m_symcache;
         std::queue<TypenameSymbol *> m_typenames;
     };

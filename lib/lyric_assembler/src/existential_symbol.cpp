@@ -241,14 +241,13 @@ lyric_assembler::ExistentialSymbol::declareMethod(
     lyric_object::AccessType access)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare method on imported existential {}", m_existentialUrl.toString());
 
     auto *priv = getPriv();
 
     if (priv->methods.contains(name))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "method {} already defined for existential {}", name, m_existentialUrl.toString());
 
     // build reference path to function
@@ -280,8 +279,7 @@ lyric_assembler::ExistentialSymbol::prepareMethod(
 
     if (!priv->methods.contains(name)) {
         if (priv->superExistential == nullptr)
-            return m_state->logAndContinue(AssemblerCondition::kMissingMethod,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
                 "missing method {}", name);
         return priv->superExistential->prepareMethod(name, receiverType, invoker, thisReceiver);
     }
@@ -290,7 +288,8 @@ lyric_assembler::ExistentialSymbol::prepareMethod(
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(method.methodCall));
     if (symbol->getSymbolType() != SymbolType::CALL)
-        m_state->throwAssemblerInvariant("invalid call symbol {}", method.methodCall.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", method.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
 
     if (callSymbol->isInline()) {
@@ -299,7 +298,8 @@ lyric_assembler::ExistentialSymbol::prepareMethod(
     }
 
     if (!callSymbol->isBound())
-        m_state->throwAssemblerInvariant("invalid call symbol {}", callSymbol->getSymbolUrl().toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
     auto callable = std::make_unique<ExistentialCallable>(this, callSymbol);
     return invoker.initialize(std::move(callable));
@@ -363,18 +363,18 @@ tempo_utils::Result<lyric_assembler::ImplHandle *>
 lyric_assembler::ExistentialSymbol::declareImpl(const lyric_common::TypeDef &implType)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare impl on imported existential {}", m_existentialUrl.toString());
 
     auto *priv = getPriv();
 
     if (implType.getType() != lyric_common::TypeDefType::Concrete)
-        m_state->throwAssemblerInvariant("invalid impl type {}", implType.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid impl type {}", implType.toString());
     auto implUrl = implType.getConcreteUrl();
 
     if (priv->impls.contains(implUrl))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "impl {} already defined for existential {}", implType.toString(), m_existentialUrl.toString());
 
     // touch the impl type
@@ -386,7 +386,8 @@ lyric_assembler::ExistentialSymbol::declareImpl(const lyric_common::TypeDef &imp
     AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(implConcept));
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
-        m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid concept symbol {}", implConcept.toString());
     auto *conceptSymbol = cast_symbol_to_concept(symbol);
 
     auto *implCache = m_state->implCache();
@@ -433,25 +434,24 @@ tempo_utils::Status
 lyric_assembler::ExistentialSymbol::putSealedType(const lyric_common::TypeDef &sealedType)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't put sealed type on imported existential {}", m_existentialUrl.toString());
 
     auto *priv = getPriv();
 
     if (priv->derive != lyric_object::DeriveType::Sealed)
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "existential {} is not sealed", m_existentialUrl.toString());
     if (sealedType.getType() != lyric_common::TypeDefType::Concrete)
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "invalid derived type {} for sealed existential {}",
             sealedType.toString(), m_existentialUrl.toString());
     auto sealedUrl = sealedType.getConcreteUrl();
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(sealedUrl));
     if (symbol->getSymbolType() != SymbolType::EXISTENTIAL)
-        m_state->throwAssemblerInvariant("invalid existential symbol {}", sealedUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid existential symbol {}", sealedUrl.toString());
 
     TypeHandle *derivedType = nullptr;
     switch (symbol->getSymbolType()) {
@@ -475,8 +475,7 @@ lyric_assembler::ExistentialSymbol::putSealedType(const lyric_common::TypeDef &s
     }
 
     if (derivedType == nullptr || derivedType->getSuperType() != priv->existentialType)
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "{} does not derive from sealed existential {}",
             sealedType.toString(), m_existentialUrl.toString());
 

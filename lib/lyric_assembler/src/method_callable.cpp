@@ -99,8 +99,7 @@ lyric_assembler::MethodCallable::invoke(
 
     auto numArguments = reifier.numReifiedArguments();
     if (numArguments > std::numeric_limits<tu_uint8>::max())
-        return block->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "too many call arguments");
     auto placementSize = static_cast<uint16_t>(numArguments);
 

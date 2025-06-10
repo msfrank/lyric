@@ -135,12 +135,13 @@ tempo_utils::Result<lyric_assembler::ProcHandle *>
 lyric_assembler::FieldSymbol::defineInitializer()
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't define initializer on imported field {}", m_fieldUrl.toString());
     auto *priv = getPriv();
 
     if (priv->init.isValid())
-        m_state->throwAssemblerInvariant("cannot redefine initializer for {}", m_fieldUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "cannot redefine initializer for {}", m_fieldUrl.toString());
 
     auto identifier = absl::StrCat("$init$", m_fieldUrl.getSymbolName());
 

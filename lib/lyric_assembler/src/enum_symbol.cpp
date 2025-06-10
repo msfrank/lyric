@@ -239,14 +239,13 @@ lyric_assembler::EnumSymbol::declareMember(
     lyric_object::AccessType access)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare member on imported enum {}", m_enumUrl.toString());
 
     auto *priv = getPriv();
 
     if (priv->members.contains(name))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "member {} already defined for enum {}", name, m_enumUrl.toString());
 
     lyric_assembler::TypeHandle *fieldType;
@@ -283,8 +282,7 @@ lyric_assembler::EnumSymbol::resolveMember(
 
     if (!priv->members.contains(name)) {
         if (priv->superEnum == nullptr)
-            return m_state->logAndContinue(AssemblerCondition::kMissingMember,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
                 "missing member {}", name);
         return priv->superEnum->resolveMember(name, reifier, receiverType, thisReceiver);
     }
@@ -292,7 +290,8 @@ lyric_assembler::EnumSymbol::resolveMember(
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(member.symbolUrl));
     if (symbol->getSymbolType() != SymbolType::FIELD)
-        m_state->throwAssemblerInvariant("invalid field symbol {}", member.symbolUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid field symbol {}", member.symbolUrl.toString());
     auto *fieldSymbol = cast_symbol_to_field(symbol);
     auto access = fieldSymbol->getAccessType();
 
@@ -300,13 +299,11 @@ lyric_assembler::EnumSymbol::resolveMember(
 
     if (thisReceiver) {
         if (access == lyric_object::AccessType::Private && !thisSymbol)
-            return m_state->logAndContinue(AssemblerCondition::kInvalidAccess,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                 "access to private member {} is not allowed", name);
     } else {
         if (access != lyric_object::AccessType::Public)
-            return m_state->logAndContinue(AssemblerCondition::kInvalidAccess,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                 "access to protected member {} is not allowed", name);
     }
 
@@ -324,7 +321,7 @@ tempo_utils::Status
 lyric_assembler::EnumSymbol::setMemberInitialized(const std::string &name)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't set member initialized on imported enum {}", m_enumUrl.toString());
 
     auto *priv = getPriv();
@@ -367,7 +364,7 @@ lyric_assembler::EnumSymbol::declareCtor(
     std::string allocatorTrap)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare ctor on imported enum {}", m_enumUrl.toString());
 
     auto *priv = getPriv();
@@ -377,8 +374,7 @@ lyric_assembler::EnumSymbol::declareCtor(
     auto ctorUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(path));
 
     if (m_state->symbolCache()->hasSymbol(ctorUrl))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "ctor already defined for enum {}", m_enumUrl.toString());
 
     // construct call symbol
@@ -410,7 +406,8 @@ lyric_assembler::EnumSymbol::prepareCtor(ConstructableInvoker &invoker)
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(ctorUrl));
     if (symbol->getSymbolType() != SymbolType::CALL)
-        m_state->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", ctorUrl.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
 
     auto constructable = std::make_unique<CtorConstructable>(callSymbol, this);
@@ -460,14 +457,13 @@ lyric_assembler::EnumSymbol::declareMethod(
     lyric_object::AccessType access)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare method on imported enum {}", m_enumUrl.toString());
 
     auto *priv = getPriv();
 
     if (priv->methods.contains(name))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "method {} already defined for enum {}", name, m_enumUrl.toString());
 
     // build reference path to function
@@ -499,8 +495,7 @@ lyric_assembler::EnumSymbol::prepareMethod(
 
     if (!priv->methods.contains(name)) {
         if (priv->superEnum == nullptr)
-            return m_state->logAndContinue(AssemblerCondition::kMissingMethod,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
                 "missing method {}", name);
         return priv->superEnum->prepareMethod(name, receiverType, invoker);
     }
@@ -509,7 +504,8 @@ lyric_assembler::EnumSymbol::prepareMethod(
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(method.methodCall));
     if (symbol->getSymbolType() != SymbolType::CALL)
-        m_state->throwAssemblerInvariant("invalid call symbol {}", method.methodCall.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", method.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
 
     auto access = callSymbol->getAccessType();
@@ -518,13 +514,11 @@ lyric_assembler::EnumSymbol::prepareMethod(
 
     if (thisReceiver) {
         if (access == lyric_object::AccessType::Private && !thisSymbol)
-            return m_state->logAndContinue(AssemblerCondition::kInvalidAccess,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                 "cannot access private method {} on {}", name, m_enumUrl.toString());
     } else {
         if (access != lyric_object::AccessType::Public)
-            return m_state->logAndContinue(AssemblerCondition::kInvalidAccess,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                 "cannot access protected method {} on {}", name, m_enumUrl.toString());
     }
 
@@ -534,7 +528,8 @@ lyric_assembler::EnumSymbol::prepareMethod(
     }
 
     if (!callSymbol->isBound())
-        m_state->throwAssemblerInvariant("invalid call symbol {}", callSymbol->getSymbolUrl().toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
     auto callable = std::make_unique<MethodCallable>(callSymbol, /* isInlined= */ false);
     return invoker.initialize(std::move(callable));
@@ -598,18 +593,18 @@ tempo_utils::Result<lyric_assembler::ImplHandle *>
 lyric_assembler::EnumSymbol::declareImpl(const lyric_common::TypeDef &implType)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare impl on imported enum {}", m_enumUrl.toString());
 
     auto *priv = getPriv();
 
     if (implType.getType() != lyric_common::TypeDefType::Concrete)
-        m_state->throwAssemblerInvariant("invalid impl type {}", implType.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid impl type {}", implType.toString());
     auto implUrl = implType.getConcreteUrl();
 
     if (priv->impls.contains(implUrl))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "impl {} already defined for enum {}", implType.toString(), m_enumUrl.toString());
 
     // touch the impl type
@@ -621,7 +616,8 @@ lyric_assembler::EnumSymbol::declareImpl(const lyric_common::TypeDef &implType)
     AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(implConcept));
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
-        m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid concept symbol {}", implConcept.toString());
     auto *conceptSymbol = cast_symbol_to_concept(symbol);
 
     auto *implCache = m_state->implCache();
@@ -662,28 +658,26 @@ tempo_utils::Status
 lyric_assembler::EnumSymbol::putSealedType(const lyric_common::TypeDef &sealedType)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't put sealed type on imported enum {}", m_enumUrl.toString());
 
     auto *priv = getPriv();
 
     if (priv->derive != lyric_object::DeriveType::Sealed)
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "enum {} is not sealed", m_enumUrl.toString());
     if (sealedType.getType() != lyric_common::TypeDefType::Concrete)
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "invalid derived type {} for sealed enum {}", sealedType.toString(), m_enumUrl.toString());
     auto sealedUrl = sealedType.getConcreteUrl();
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(sealedUrl));
     if (symbol->getSymbolType() != SymbolType::ENUM)
-        m_state->throwAssemblerInvariant("invalid enum symbol {}", sealedUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid enum symbol {}", sealedUrl.toString());
 
     if (cast_symbol_to_enum(symbol)->superEnum() != this)
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "{} does not derive from sealed enum {}", sealedType.toString(), m_enumUrl.toString());
 
     priv->sealedTypes.insert(sealedType);

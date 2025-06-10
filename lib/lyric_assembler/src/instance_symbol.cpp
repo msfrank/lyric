@@ -241,14 +241,13 @@ lyric_assembler::InstanceSymbol::declareMember(
     lyric_object::AccessType access)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare member on imported instance {}", m_instanceUrl.toString());
 
     auto *priv = getPriv();
 
     if (priv->members.contains(name))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "member {} already defined for instance {}", name, m_instanceUrl.toString());
 
     lyric_assembler::TypeHandle *fieldType;
@@ -285,8 +284,7 @@ lyric_assembler::InstanceSymbol::resolveMember(
 
     if (!priv->members.contains(name)) {
         if (priv->superInstance == nullptr)
-            return m_state->logAndContinue(AssemblerCondition::kMissingMember,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMember,
                 "missing member {}", name);
         return priv->superInstance->resolveMember(name, reifier, receiverType, thisReceiver);
     }
@@ -295,7 +293,8 @@ lyric_assembler::InstanceSymbol::resolveMember(
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(member.symbolUrl));
     if (symbol->getSymbolType() != SymbolType::FIELD)
-        m_state->throwAssemblerInvariant("invalid field symbol {}", member.symbolUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid field symbol {}", member.symbolUrl.toString());
     auto *fieldSymbol = cast_symbol_to_field(symbol);
     auto access = fieldSymbol->getAccessType();
 
@@ -303,13 +302,11 @@ lyric_assembler::InstanceSymbol::resolveMember(
 
     if (thisReceiver) {
         if (access == lyric_object::AccessType::Private && !thisSymbol)
-            return m_state->logAndContinue(AssemblerCondition::kInvalidAccess,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                 "access to private member {} is not allowed", name);
     } else {
         if (access != lyric_object::AccessType::Public)
-            return m_state->logAndContinue(AssemblerCondition::kInvalidAccess,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                 "access to protected member {} is not allowed", name);
     }
 
@@ -327,7 +324,7 @@ tempo_utils::Status
 lyric_assembler::InstanceSymbol::setMemberInitialized(const std::string &name)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't set member initialized on imported instance {}", m_instanceUrl.toString());
 
     auto *priv = getPriv();
@@ -371,7 +368,7 @@ lyric_assembler::InstanceSymbol::declareCtor(
     std::string allocatorTrap)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare ctor on imported instance {}", m_instanceUrl.toString());
 
     auto *priv = getPriv();
@@ -381,8 +378,7 @@ lyric_assembler::InstanceSymbol::declareCtor(
     auto ctorUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(path));
 
     if (m_state->symbolCache()->hasSymbol(ctorUrl))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "ctor already defined for instance {}", m_instanceUrl.toString());
 
     // construct call symbol
@@ -414,7 +410,8 @@ lyric_assembler::InstanceSymbol::prepareCtor(ConstructableInvoker &invoker)
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(ctorUrl));
     if (symbol->getSymbolType() != SymbolType::CALL)
-        m_state->throwAssemblerInvariant("invalid call symbol {}", ctorUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", ctorUrl.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
 
     auto constructable = std::make_unique<CtorConstructable>(callSymbol, this);
@@ -464,14 +461,13 @@ lyric_assembler::InstanceSymbol::declareMethod(
     lyric_object::AccessType access)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare method on imported instance {}", m_instanceUrl.toString());
 
     auto *priv = getPriv();
 
     if (priv->methods.contains(name))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "method {} already defined for instance {}", name, m_instanceUrl.toString());
 
     // build reference path to function
@@ -503,8 +499,7 @@ lyric_assembler::InstanceSymbol::prepareMethod(
 
     if (!priv->methods.contains(name)) {
         if (priv->superInstance == nullptr)
-            return m_state->logAndContinue(AssemblerCondition::kMissingMethod,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
                 "missing method {}", name);
         return priv->superInstance->prepareMethod(name, receiverType, invoker);
     }
@@ -513,7 +508,8 @@ lyric_assembler::InstanceSymbol::prepareMethod(
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(method.methodCall));
     if (symbol->getSymbolType() != SymbolType::CALL)
-        m_state->throwAssemblerInvariant("invalid call symbol {}", method.methodCall.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", method.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
 
     auto access = callSymbol->getAccessType();
@@ -522,13 +518,11 @@ lyric_assembler::InstanceSymbol::prepareMethod(
 
     if (thisReceiver) {
         if (access == lyric_object::AccessType::Private && !thisSymbol)
-            return m_state->logAndContinue(AssemblerCondition::kInvalidAccess,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                 "invocation of private method {} is not allowed", name);
     } else {
         if (access != lyric_object::AccessType::Public)
-            return m_state->logAndContinue(AssemblerCondition::kInvalidAccess,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
                 "invocation of protected method {} is not allowed", name);
     }
 
@@ -538,7 +532,8 @@ lyric_assembler::InstanceSymbol::prepareMethod(
     }
 
     if (!callSymbol->isBound())
-        m_state->throwAssemblerInvariant("invalid call symbol {}", callSymbol->getSymbolUrl().toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", callSymbol->getSymbolUrl().toString());
 
     auto callable = std::make_unique<MethodCallable>(callSymbol, /* isInlined= */ false);
     return invoker.initialize(std::move(callable));
@@ -602,18 +597,18 @@ tempo_utils::Result<lyric_assembler::ImplHandle *>
 lyric_assembler::InstanceSymbol::declareImpl(const lyric_common::TypeDef &implType)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare impl on imported instance {}", m_instanceUrl.toString());
 
     auto *priv = getPriv();
 
     if (implType.getType() != lyric_common::TypeDefType::Concrete)
-        m_state->throwAssemblerInvariant("invalid impl type {}", implType.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid impl type {}", implType.toString());
     auto implUrl = implType.getConcreteUrl();
 
     if (priv->impls.contains(implUrl))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "impl for concept {} already defined for instance {}", implUrl.toString(), m_instanceUrl.toString());
 
     // touch the impl type
@@ -625,7 +620,8 @@ lyric_assembler::InstanceSymbol::declareImpl(const lyric_common::TypeDef &implTy
     AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(implConcept));
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
-        m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid concept symbol {}", implConcept.toString());
     auto *conceptSymbol = cast_symbol_to_concept(symbol);
 
     auto *implCache = m_state->implCache();
@@ -666,28 +662,26 @@ tempo_utils::Status
 lyric_assembler::InstanceSymbol::putSealedType(const lyric_common::TypeDef &sealedType)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't put sealed type on imported instance {}", m_instanceUrl.toString());
 
     auto *priv = getPriv();
 
     if (priv->derive != lyric_object::DeriveType::Sealed)
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "instance {} is not sealed", m_instanceUrl.toString());
     if (sealedType.getType() != lyric_common::TypeDefType::Concrete)
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "invalid derived type {} for sealed instance {}", sealedType.toString(), m_instanceUrl.toString());
     auto sealedUrl = sealedType.getConcreteUrl();
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(sealedUrl));
     if (symbol->getSymbolType() != SymbolType::INSTANCE)
-        m_state->throwAssemblerInvariant("invalid instance symbol {}", sealedUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid instance symbol {}", sealedUrl.toString());
 
     if (cast_symbol_to_instance(symbol)->superInstance() != this)
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "{} does not derive from sealed instance {}", sealedType.toString(), m_instanceUrl.toString());
 
     priv->sealedTypes.insert(sealedType);

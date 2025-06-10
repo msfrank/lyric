@@ -6,6 +6,7 @@
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_rewriter/rewriter_result.h>
 #include <lyric_rewriter/rewrite_processor.h>
+#include <tempo_tracing/enter_scope.h>
 #include <tempo_utils/log_stream.h>
 
 #include "lyric_rewriter/pragma_rewriter.h"
@@ -74,12 +75,21 @@ lyric_rewriter::LyricRewriter::rewriteArchetype(
     try {
         RewriteProcessor processor;
 
-        // create a new span
-        tempo_tracing::ScopeManager scopeManager(recorder);
-        auto span = scopeManager.makeSpan();
-        span->setOperationName("rewriteArchetype");
+        // create the trace context
+        std::shared_ptr<tempo_tracing::TraceContext> context;
+        if (recorder != nullptr) {
+            TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeUnownedContextAndSwitch(recorder));
+        } else {
+            TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeContextAndSwitch());
+        }
 
-        lyric_parser::ArchetypeState archetypeState(sourceUrl, &scopeManager);
+        // ensure context is released
+        tempo_tracing::ReleaseContext releaser(context);
+
+        // create the root span
+        tempo_tracing::EnterScope scope("lyric_rewriter::LyricRewriter::rewriteArchetype");
+
+        lyric_parser::ArchetypeState archetypeState(sourceUrl);
 
         // load the archetype state
         lyric_parser::ArchetypeNode *root;
@@ -179,12 +189,21 @@ lyric_rewriter::LyricRewriter::scanArchetype(
     try {
         RewriteProcessor processor;
 
-        // create a new span
-        tempo_tracing::ScopeManager scopeManager(recorder);
-        auto span = scopeManager.makeSpan();
-        span->setOperationName("rewriteArchetype");
+        // create the trace context
+        std::shared_ptr<tempo_tracing::TraceContext> context;
+        if (recorder != nullptr) {
+            TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeUnownedContextAndSwitch(recorder));
+        } else {
+            TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeContextAndSwitch());
+        }
 
-        lyric_parser::ArchetypeState archetypeState(sourceUrl, &scopeManager);
+        // ensure context is released
+        tempo_tracing::ReleaseContext releaser(context);
+
+        // create the root span
+        tempo_tracing::EnterScope scope("lyric_rewriter::LyricRewriter::scanArchetype");
+
+        lyric_parser::ArchetypeState archetypeState(sourceUrl);
 
         // load the archetype state
         lyric_parser::ArchetypeNode *root;

@@ -108,8 +108,7 @@ lyric_assembler::ExtensionCallable::invoke(
 
     auto placementSize = reifier.numReifiedArguments();
     if (placementSize > std::numeric_limits<tu_uint8>::max())
-        return block->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "too many call arguments");
 
     switch (m_type) {

@@ -4,7 +4,6 @@
 #include <lyric_importer/template_import.h>
 #include <lyric_importer/type_import.h>
 
-#include "assembler_tracer.h"
 #include "assembler_types.h"
 #include "template_handle.h"
 #include "type_handle.h"
@@ -13,7 +12,7 @@ namespace lyric_assembler {
 
     class TypeCache {
     public:
-        TypeCache(ObjectState *objectState, AssemblerTracer *tracer);
+        explicit TypeCache(ObjectState *objectState);
         ~TypeCache();
 
         bool hasType(const lyric_common::TypeDef &typeDef) const;
@@ -72,7 +71,6 @@ namespace lyric_assembler {
 
     private:
         ObjectState *m_objectState;
-        AssemblerTracer *m_tracer;
         absl::flat_hash_map<lyric_common::TypeDef, TypeHandle *> m_typecache;
         absl::flat_hash_map<lyric_common::SymbolUrl, TemplateHandle *> m_templatecache;
         absl::flat_hash_map<lyric_common::TypeDef, TypeSignature> m_signaturecache;

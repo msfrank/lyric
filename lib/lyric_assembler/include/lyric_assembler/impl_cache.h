@@ -3,7 +3,6 @@
 
 #include <lyric_importer/impl_import.h>
 
-#include "assembler_tracer.h"
 #include "assembler_types.h"
 #include "object_state.h"
 
@@ -14,7 +13,7 @@ namespace lyric_assembler {
 
     class ImplCache {
     public:
-        ImplCache(ObjectState *objectState, AssemblerTracer *tracer);
+        explicit ImplCache(ObjectState *objectState);
         ~ImplCache();
 
         tempo_utils::Result<ImplHandle *> makeImpl(
@@ -45,7 +44,6 @@ namespace lyric_assembler {
 
     private:
         ObjectState *m_objectState;
-        AssemblerTracer *m_tracer;
         std::vector<ImplHandle *> m_importedImpls;
         std::vector<ImplHandle *> m_declaredImpls;
         absl::flat_hash_map<lyric_common::TypeDef, lyric_common::SymbolUrl> m_envImpls;

@@ -21,21 +21,18 @@ lyric_assembler::ImportCache::ImportCache(
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
-    SymbolCache *symbolCache,
-    AssemblerTracer *tracer)
+    SymbolCache *symbolCache)
     : m_state(state),
       m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_shortcutResolver(std::move(shortcutResolver)),
-      m_symbolCache(symbolCache),
-      m_tracer(tracer)
+      m_symbolCache(symbolCache)
 {
     TU_ASSERT (m_state != nullptr);
     TU_ASSERT (m_localModuleCache != nullptr);
     TU_ASSERT (m_systemModuleCache != nullptr);
     TU_ASSERT (m_shortcutResolver != nullptr);
     TU_ASSERT (m_symbolCache != nullptr);
-    TU_ASSERT (m_tracer != nullptr);
 }
 
 lyric_assembler::ImportCache::~ImportCache()
@@ -555,8 +552,7 @@ lyric_assembler::ImportCache::insertImport(
     ImportFlags importFlags)
 {
     if (m_importcache.contains(importLocation))
-        return m_tracer->logAndContinue(AssemblerCondition::kImportError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kImportError,
             "module {} is already imported", importLocation.toString());
     return insert_import_into_cache(importLocation, importFlags, m_importcache);
 }

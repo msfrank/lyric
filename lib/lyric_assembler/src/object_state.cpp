@@ -34,20 +34,17 @@ lyric_assembler::ObjectState::ObjectState(
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
-    tempo_tracing::ScopeManager *scopeManager,
     const ObjectStateOptions &options)
     : m_location(location),
       m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_shortcutResolver(std::move(shortcutResolver)),
-      m_scopeManager(scopeManager),
       m_options(options)
 {
     TU_ASSERT (m_location.isValid());
     TU_ASSERT (m_localModuleCache != nullptr);
     TU_ASSERT (m_systemModuleCache != nullptr);
     TU_ASSERT (m_shortcutResolver != nullptr);
-    TU_ASSERT (m_scopeManager != nullptr);
 
     if (!m_options.preludeLocation.isValid()) {
         m_options.preludeLocation = lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
@@ -59,7 +56,6 @@ lyric_assembler::ObjectState::ObjectState(
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
-    tempo_tracing::ScopeManager *scopeManager,
     const lyric_common::ModuleLocation &pluginLocation,
     const ObjectStateOptions &options)
     : ObjectState(
@@ -67,7 +63,6 @@ lyric_assembler::ObjectState::ObjectState(
         std::move(localModuleCache),
         std::move(systemModuleCache),
         std::move(shortcutResolver),
-        scopeManager,
         options)
 {
     m_pluginLocation = pluginLocation;
@@ -90,12 +85,6 @@ lyric_assembler::ObjectState::getLocation() const
     return m_location;
 }
 
-tempo_tracing::ScopeManager *
-lyric_assembler::ObjectState::scopeManager() const
-{
-    return m_scopeManager;
-}
-
 const lyric_assembler::ObjectStateOptions *
 lyric_assembler::ObjectState::getOptions() const
 {
@@ -112,21 +101,19 @@ tempo_utils::Status
 lyric_assembler::ObjectState::createRoot(const lyric_common::ModuleLocation &preludeLocation)
 {
     if (m_root != nullptr)
-        return logAndContinue(AssemblerCondition::kAssemblerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "object state is already initialized");
 
     m_root = new ObjectRoot(this);
 
     // construct the assembler component classes
-    m_tracer = new AssemblerTracer(m_scopeManager);
-    m_literalcache = new LiteralCache(m_tracer);
-    m_fundamentalcache = new FundamentalCache(preludeLocation, m_tracer);
-    m_symbolcache = new SymbolCache(this, m_tracer);
-    m_typecache = new TypeCache(this, m_tracer);
-    m_implcache = new ImplCache(this, m_tracer);
+    m_literalcache = new LiteralCache();
+    m_fundamentalcache = new FundamentalCache(preludeLocation);
+    m_symbolcache = new SymbolCache(this);
+    m_typecache = new TypeCache(this);
+    m_implcache = new ImplCache(this);
     m_importcache = new ImportCache(this, m_localModuleCache, m_systemModuleCache,
-        m_shortcutResolver, m_symbolcache, m_tracer);
+        m_shortcutResolver, m_symbolcache);
 
     // load the prelude object
     std::shared_ptr<lyric_importer::ModuleImport> preludeImport;
@@ -160,8 +147,7 @@ tempo_utils::Status
 lyric_assembler::ObjectState::load()
 {
     if (m_root != nullptr)
-        return logAndContinue(AssemblerCondition::kAssemblerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "object state is already initialized");
 
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;

@@ -14,12 +14,10 @@
 #include <lyric_runtime/abstract_loader.h>
 #include <lyric_runtime/literal_cell.h>
 #include <lyric_runtime/trap_index.h>
-#include <tempo_tracing/scope_manager.h>
 
 #include "abstract_symbol.h"
 #include "assembler_result.h"
 #include "assembler_types.h"
-#include "assembler_tracer.h"
 
 namespace lyric_assembler {
 
@@ -60,12 +58,16 @@ namespace lyric_assembler {
         All,
     };
 
+    struct ObjectStateLimits {
+    };
+
     struct ObjectStateOptions {
         tu_uint32 majorVersion = 0;
         tu_uint32 minorVersion = 0;
         tu_uint32 patchVersion = 0;
         lyric_common::ModuleLocation preludeLocation = {};
         ProcImportMode procImportMode = ProcImportMode::InlineableOnly;
+        ObjectStateLimits limits = {};
     };
 
     class ObjectState {
@@ -76,20 +78,17 @@ namespace lyric_assembler {
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
-            tempo_tracing::ScopeManager *scopeManager,
             const ObjectStateOptions &options = {});
         ObjectState(
             const lyric_common::ModuleLocation &location,
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
-            tempo_tracing::ScopeManager *scopeManager,
             const lyric_common::ModuleLocation &pluginLocation,
             const ObjectStateOptions &options = {});
         ~ObjectState();
 
         lyric_common::ModuleLocation getLocation() const;
-        tempo_tracing::ScopeManager *scopeManager() const;
         const ObjectStateOptions *getOptions() const;
 
         tempo_utils::Status load();
@@ -203,12 +202,10 @@ namespace lyric_assembler {
         std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         std::shared_ptr<lyric_importer::ShortcutResolver> m_shortcutResolver;
-        tempo_tracing::ScopeManager *m_scopeManager;
         lyric_common::ModuleLocation m_pluginLocation;
         ObjectStateOptions m_options;
 
         ObjectRoot *m_root = nullptr;
-        AssemblerTracer *m_tracer = nullptr;
         FundamentalCache *m_fundamentalcache = nullptr;
         ImportCache *m_importcache = nullptr;
         SymbolCache *m_symbolcache = nullptr;
@@ -232,48 +229,6 @@ namespace lyric_assembler {
         std::vector<StructSymbol *> m_structs;
 
         tempo_utils::Status createRoot(const lyric_common::ModuleLocation &preludeLocation);
-
-    public:
-        /**
-         *
-         * @tparam Args
-         * @param condition
-         * @param severity
-         * @param messageFmt
-         * @param messageArgs
-         * @return
-         */
-        template <typename ConditionType, typename... Args,
-            typename StatusType = typename tempo_utils::ConditionTraits<ConditionType>::StatusType>
-        StatusType logAndContinue(
-            ConditionType condition,
-            tempo_tracing::LogSeverity severity,
-            fmt::string_view messageFmt = {},
-            Args... messageArgs) const
-        {
-            auto span = m_scopeManager->peekSpan();
-            auto status = StatusType::forCondition(condition, span->traceId(), span->spanId(),
-                messageFmt, messageArgs...);
-            span->logStatus(status, absl::Now(), severity);
-            return status;
-        }
-
-        /**
-         *
-         * @tparam Args
-         * @param token
-         * @param messageFmt
-         * @param args
-         */
-        template <typename... Args>
-        void throwAssemblerInvariant [[noreturn]] (fmt::string_view messageFmt = {}, Args... messageArgs) const
-        {
-            auto span = m_scopeManager->peekSpan();
-            auto status = AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-                span->traceId(), span->spanId(), messageFmt, messageArgs...);
-            span->logStatus(status, absl::Now(), tempo_tracing::LogSeverity::kError);
-            throw tempo_utils::StatusException(status);
-        }
     };
 }
 

@@ -1,10 +1,9 @@
 
+#include <lyric_assembler/assembler_result.h>
 #include <lyric_assembler/literal_cache.h>
 
-lyric_assembler::LiteralCache::LiteralCache(AssemblerTracer *tracer)
-    : m_tracer(tracer)
+lyric_assembler::LiteralCache::LiteralCache()
 {
-    TU_ASSERT (m_tracer != nullptr);
 }
 
 lyric_assembler::LiteralCache::~LiteralCache()
@@ -25,7 +24,8 @@ lyric_assembler::LiteralCache::makeNil()
 
     auto offset = m_literals.size();
     if (offset == std::numeric_limits<int>::max())
-        m_tracer->throwAssemblerInvariant("overflowed max literals");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "overflowed max literals");
 
     auto *literalHandle = new LiteralHandle();
     m_literals.push_back(literalHandle);
@@ -45,7 +45,8 @@ lyric_assembler::LiteralCache::makeUndef()
 
     auto offset = m_literals.size();
     if (offset == std::numeric_limits<int>::max())
-        m_tracer->throwAssemblerInvariant("overflowed max literals");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "overflowed max literals");
 
     auto *literalHandle = new LiteralHandle();
     m_literals.push_back(literalHandle);
@@ -65,7 +66,8 @@ lyric_assembler::LiteralCache::makeBool(bool b)
 
     auto offset = m_literals.size();
     if (offset == std::numeric_limits<int>::max())
-        m_tracer->throwAssemblerInvariant("overflowed max literals");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "overflowed max literals");
 
     auto *literalHandle = new LiteralHandle(b);
     m_literals.push_back(literalHandle);
@@ -85,7 +87,8 @@ lyric_assembler::LiteralCache::makeInteger(tu_int64 i64)
 
     auto offset = m_literals.size();
     if (offset == std::numeric_limits<int>::max())
-        m_tracer->throwAssemblerInvariant("overflowed max literals");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "overflowed max literals");
 
     auto *literalHandle = new LiteralHandle(i64);
     m_literals.push_back(literalHandle);
@@ -105,7 +108,8 @@ lyric_assembler::LiteralCache::makeFloat(double dbl)
 
     auto offset = m_literals.size();
     if (offset == std::numeric_limits<int>::max())
-        m_tracer->throwAssemblerInvariant("overflowed max literals");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "overflowed max literals");
 
     auto *literalHandle = new LiteralHandle(dbl);
     m_literals.push_back(literalHandle);
@@ -125,7 +129,8 @@ lyric_assembler::LiteralCache::makeChar(UChar32 chr)
 
     auto offset = m_literals.size();
     if (offset == std::numeric_limits<int>::max())
-        m_tracer->throwAssemblerInvariant("overflowed max literals");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "overflowed max literals");
 
     auto *literalHandle = new LiteralHandle(chr);
     m_literals.push_back(literalHandle);
@@ -144,7 +149,8 @@ lyric_assembler::LiteralCache::makeUtf8(const std::string &utf8)
 
     auto offset = m_literals.size();
     if (offset == std::numeric_limits<int>::max())
-        m_tracer->throwAssemblerInvariant("overflowed max literals");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "overflowed max literals");
 
     auto *literalHandle = new LiteralHandle(std::make_shared<const std::string>(utf8));
     m_literals.push_back(literalHandle);

@@ -104,16 +104,17 @@ lyric_assembler::CtorConstructable::invoke(
     checkValid();
 
     if (!m_ctorSymbol->isCtor())
-        block->throwAssemblerInvariant("invalid ctor flags");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid ctor flags");
 
     auto callFlags = lyric_object::GET_CALL_FLAGS(flags);
     if (callFlags != flags)
-        block->throwAssemblerInvariant("invalid new flags");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid new flags");
 
     auto placementSize = reifier.numReifiedArguments();
     if (placementSize > std::numeric_limits<tu_uint8>::max())
-        return block->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "too many call arguments");
 
     TU_RETURN_IF_NOT_OK (fragment->callVirtual(m_ctorSymbol, placementSize, callFlags));
@@ -131,12 +132,12 @@ lyric_assembler::CtorConstructable::invokeNew(
 
     auto callFlags = lyric_object::GET_CALL_FLAGS(flags);
     if (callFlags != flags)
-        block->throwAssemblerInvariant("invalid new flags");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid new flags");
 
     auto placementSize = reifier.numReifiedArguments();
     if (placementSize > std::numeric_limits<tu_uint8>::max())
-        return block->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "too many call arguments");
 
     TU_RETURN_IF_NOT_OK (fragment->constructNew(m_newSymbol, placementSize, callFlags));

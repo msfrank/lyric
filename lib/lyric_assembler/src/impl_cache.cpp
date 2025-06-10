@@ -3,12 +3,10 @@
 #include <lyric_assembler/impl_cache.h>
 #include <lyric_assembler/impl_handle.h>
 
-lyric_assembler::ImplCache::ImplCache(ObjectState *objectState, AssemblerTracer *tracer)
-    : m_objectState(objectState),
-      m_tracer(tracer)
+lyric_assembler::ImplCache::ImplCache(ObjectState *objectState)
+    : m_objectState(objectState)
 {
     TU_ASSERT (m_objectState != nullptr);
-    TU_ASSERT (m_tracer != nullptr);
 }
 
 lyric_assembler::ImplCache::~ImplCache()
@@ -101,8 +99,7 @@ lyric_assembler::ImplCache::insertEnvImpl(
 {
     auto iterator = m_envImpls.find(type);
     if (iterator != m_envImpls.cend())
-        return m_tracer->logAndContinue(AssemblerCondition::kImplConflict,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kImplConflict,
             "env impl {} is already set", type.toString());
     m_envImpls[type] = url;
     return {};

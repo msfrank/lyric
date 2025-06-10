@@ -20,12 +20,10 @@
 #include <lyric_assembler/type_handle.h>
 #include <lyric_assembler/type_set.h>
 
-lyric_assembler::TypeCache::TypeCache(ObjectState *objectState, lyric_assembler::AssemblerTracer *tracer)
-    : m_objectState(objectState),
-      m_tracer(tracer)
+lyric_assembler::TypeCache::TypeCache(ObjectState *objectState)
+    : m_objectState(objectState)
 {
     TU_ASSERT (m_objectState != nullptr);
-    TU_ASSERT (m_tracer != nullptr);
 }
 
 lyric_assembler::TypeCache::~TypeCache()
@@ -179,7 +177,8 @@ tempo_utils::Result<lyric_assembler::TypeHandle *>
 lyric_assembler::TypeCache::getOrMakeType(const lyric_common::TypeDef &assignableType)
 {
     if (!assignableType.isValid())
-        m_tracer->throwAssemblerInvariant("failed to make type {}; invalid type", assignableType.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "failed to make type {}; invalid type", assignableType.toString());
 
     // if type exists in the cache already then return it
     auto entry = m_typecache.find(assignableType);
@@ -224,7 +223,8 @@ lyric_assembler::TypeCache::getOrMakeType(const lyric_common::TypeDef &assignabl
                     return make_typename_type(assignableType, cast_symbol_to_typename(sym), m_typecache);
 
                 default:
-                    m_tracer->throwAssemblerInvariant("failed to make type {}; invalid type", assignableType.toString());
+                    return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                        "failed to make type {}; invalid type", assignableType.toString());
             }
         }
 
@@ -264,7 +264,8 @@ lyric_assembler::TypeCache::getOrMakeType(const lyric_common::TypeDef &assignabl
         }
 
         default:
-            m_tracer->throwAssemblerInvariant("failed to make type {}; invalid type", assignableType.toString());
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "failed to make type {}; invalid type", assignableType.toString());
     }
 }
 
@@ -329,22 +330,21 @@ lyric_assembler::TypeCache::declareSubType(
     // verify the subtype symbol either does not exist, or exists as a typename
     auto *sym = symbolCache->getSymbolOrNull(subTypeUrl);
     if (sym != nullptr && sym->getSymbolType() != SymbolType::TYPENAME)
-        return m_tracer->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError, "symbol {} is already defined", subTypeUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "symbol {} is already defined", subTypeUrl.toString());
 
     // ensure supertype handle exists
     auto superEntry = m_typecache.find(superType);
     if (superEntry == m_typecache.cend())
-        return m_tracer->logAndContinue(AssemblerCondition::kMissingType,
-            tempo_tracing::LogSeverity::kError, "missing super type {}", superType.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingType,
+            "missing super type {}", superType.toString());
     auto *superTypeHandle = superEntry->second;
 
     // ensure all subtype placeholders are valid
     for (const auto &placeholderType : subTypePlaceholders) {
         if (placeholderType.getType() != lyric_common::TypeDefType::Placeholder)
-            return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
-                tempo_tracing::LogSeverity::kError, "invalid type placeholder {}",
-                placeholderType.toString());
+            return AssemblerStatus::forCondition(AssemblerCondition::kTypeError,
+                "invalid type placeholder {}", placeholderType.toString());
         TU_RETURN_IF_STATUS (getOrMakeType(placeholderType));
     }
 
@@ -388,26 +388,25 @@ lyric_assembler::TypeCache::declareParameterizedType(
 
     auto titerator = m_templatecache.find(baseUrl);
     if (titerator == m_templatecache.cend())
-        return m_tracer->logAndContinue(AssemblerCondition::kMissingTemplate,
-            tempo_tracing::LogSeverity::kError, "missing template {}", baseUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingTemplate,
+            "missing template {}", baseUrl.toString());
     auto *superTemplate = titerator->second;
     superTemplate->touch();
 
     if (std::cmp_less(typeArguments.size(), superTemplate->numPlaceholders())) {
         const auto firstMissing = superTemplate->getPlaceholder(typeArguments.size());
-        return m_tracer->logAndContinue(AssemblerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError, "missing type parameter {}", firstMissing.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kIncompatibleType,
+            "missing type parameter {}", firstMissing.toString());
     }
     if (std::cmp_greater(typeArguments.size(), superTemplate->numPlaceholders()))
-        return m_tracer->logAndContinue(AssemblerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kIncompatibleType,
             "wrong number of type parameters for {}; expected {} but found {}",
             baseUrl.toString(), superTemplate->numPlaceholders(), typeArguments.size());
 
     auto siterator = m_typecache.find(superType);
     if (siterator == m_typecache.cend())
-        return m_tracer->logAndContinue(AssemblerCondition::kMissingType,
-            tempo_tracing::LogSeverity::kError, "missing type {}", superType.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingType,
+            "missing type {}", superType.toString());
     auto *superTypeHandle = siterator->second;
 
     for (const auto &argType : typeArguments) {
@@ -430,7 +429,8 @@ lyric_assembler::TypeCache::declareFunctionType(
 
     // FIXME: if rest param exists then resolve RestFunction instead
     if (!functionRest.isEmpty())
-        m_objectState->throwAssemblerInvariant("variadic function not supported");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "variadic function not supported");
 
     auto arity = functionParameters.size();
     auto functionClassUrl = m_objectState->fundamentalCache()->getFunctionUrl(arity);
@@ -492,7 +492,8 @@ lyric_assembler::TypeCache::getOrImportTemplate(const lyric_common::SymbolUrl &t
             templateHandle = cast_symbol_to_existential(templateSymbol)->existentialTemplate();
             break;
         default:
-            m_objectState->throwAssemblerInvariant("invalid template {}", templateUrl.toString());
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "invalid template {}", templateUrl.toString());
     }
 
     m_templatecache[templateUrl] = templateHandle;
@@ -506,11 +507,14 @@ lyric_assembler::TypeCache::makeTemplate(
     BlockHandle *parentBlock)
 {
     if (!templateUrl.isValid())
-        m_tracer->throwAssemblerInvariant("invalid template {}", templateUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid template {}", templateUrl.toString());
     if (templateParameters.empty())
-        m_tracer->throwAssemblerInvariant("cannot make template {}; missing template parameters", templateUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "cannot make template {}; missing template parameters", templateUrl.toString());
     if (m_templatecache.contains(templateUrl))
-        m_tracer->throwAssemblerInvariant("template {} is already defined", templateUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "template {} is already defined", templateUrl.toString());
 
     // create the template handle
     auto *templateHandle = new TemplateHandle(templateUrl, templateParameters, parentBlock, m_objectState);
@@ -537,11 +541,14 @@ lyric_assembler::TypeCache::makeTemplate(
     TU_ASSERT (superTemplate != nullptr);
 
     if (!templateUrl.isValid())
-        m_tracer->throwAssemblerInvariant("invalid template {}", templateUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid template {}", templateUrl.toString());
     if (templateParameters.empty())
-        m_tracer->throwAssemblerInvariant("cannot make template {}; missing template parameters", templateUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "cannot make template {}; missing template parameters", templateUrl.toString());
     if (m_templatecache.contains(templateUrl))
-        m_tracer->throwAssemblerInvariant("template {} is already defined", templateUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "template {} is already defined", templateUrl.toString());
 
     // create the template handle
     auto *templateHandle = new TemplateHandle(templateUrl, templateParameters, superTemplate, parentBlock, m_objectState);
@@ -601,14 +608,14 @@ lyric_assembler::TypeCache::importTemplate(lyric_importer::TemplateImport *templ
             TU_ASSIGN_OR_RETURN (paramType, importType(it->type));
             tp.typeDef = paramType->getTypeDef();
             if (!tp.typeDef.isValid())
-                m_tracer->throwAssemblerInvariant(
+                return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                     "cannot import template {}; invalid constraint type for template parameter {}",
                     templateUrl.toString(), it->index);
         } else if (tp.bound == lyric_object::BoundType::None) {
             auto *fundamentalCache = m_objectState->fundamentalCache();
             tp.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Any);
         } else {
-            m_tracer->throwAssemblerInvariant(
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                 "cannot import template {}; missing constraint type for template parameter {}",
                 templateUrl.toString(), it->index);
         }
@@ -647,8 +654,7 @@ lyric_assembler::TypeCache::resolveConcrete(
 inline tempo_utils::Result<lyric_common::SymbolUrl>
 get_placeholder_bound(
     const lyric_common::TypeDef &placeholderType,
-    lyric_assembler::ObjectState *objectState,
-    lyric_assembler::AssemblerTracer *tracer)
+    lyric_assembler::ObjectState *objectState)
 {
     TU_ASSERT (placeholderType.getType() == lyric_common::TypeDefType::Placeholder);
     auto *typeCache = objectState->typeCache();
@@ -660,14 +666,15 @@ get_placeholder_bound(
 
     auto tp = templateHandle->getTemplateParameter(placeholderType.getPlaceholderIndex());
     if (tp.bound != lyric_object::BoundType::None && tp.bound != lyric_object::BoundType::Extends)
-        return tracer->logAndContinue(
+        return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
             "incompatible type bound for placeholder {}", placeholderType.toString());
 
     auto boundType = tp.typeDef;
     if (boundType.getType() != lyric_common::TypeDefType::Concrete)
-        tracer->throwAssemblerInvariant("invalid constraint for placeholder {}", placeholderType.toString());
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+            "invalid constraint for placeholder {}", placeholderType.toString());
 
     return boundType.getConcreteUrl();
 }
@@ -676,8 +683,7 @@ tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::TypeCache::resolveUnion(const std::vector<lyric_common::TypeDef> &unionMembers)
 {
     if (unionMembers.empty())
-        return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kTypeError,
             "invalid union set; set must be non-empty");
 
     DisjointTypeSet disjointTypeSet(m_objectState);
@@ -692,11 +698,10 @@ lyric_assembler::TypeCache::resolveUnion(const std::vector<lyric_common::TypeDef
                 memberBase = member.getConcreteUrl();
                 break;
             case lyric_common::TypeDefType::Placeholder:
-                TU_ASSIGN_OR_RETURN (memberBase, get_placeholder_bound(member, m_objectState, m_tracer));
+                TU_ASSIGN_OR_RETURN (memberBase, get_placeholder_bound(member, m_objectState));
                 break;
             default:
-                return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
-                    tempo_tracing::LogSeverity::kError,
+                return AssemblerStatus::forCondition(AssemblerCondition::kTypeError,
                     "invalid union member {}; type must be concrete or placeholder", member.toString());
         }
 
@@ -717,8 +722,7 @@ lyric_assembler::TypeCache::resolveUnion(const std::vector<lyric_common::TypeDef
             case SymbolType::TYPENAME:
                 break;
             default:
-                return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
-                    tempo_tracing::LogSeverity::kError,
+                return AssemblerStatus::forCondition(AssemblerCondition::kTypeError,
                     "invalid symbol {} for union member", memberBase.toString());
         }
     }
@@ -733,8 +737,7 @@ tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::TypeCache::resolveIntersection(const std::vector<lyric_common::TypeDef> &intersectionMembers)
 {
     if (intersectionMembers.empty())
-        return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kTypeError,
             "invalid intersection set; set must be non-empty");
 
     absl::flat_hash_set<lyric_common::SymbolUrl> memberSet;
@@ -744,15 +747,13 @@ lyric_assembler::TypeCache::resolveIntersection(const std::vector<lyric_common::
 
         // we don't allow placeholder, union, or intersection type as a union member
         if (member.getType() != lyric_common::TypeDefType::Concrete)
-            return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kTypeError,
                 "invalid intersection member {}; type must be concrete", member.toString());
         auto memberBase = member.getConcreteUrl();
 
         // concrete symbol cannot appear more than once (for example parameterized over different types)
         if (memberSet.contains(memberBase))
-            return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kTypeError,
                 "duplicate intersection member {}", member.toString());
         memberSet.insert(memberBase);
 
@@ -770,8 +771,7 @@ lyric_assembler::TypeCache::resolveIntersection(const std::vector<lyric_common::
                 break;
             }
             default:
-                return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
-                    tempo_tracing::LogSeverity::kError,
+                return AssemblerStatus::forCondition(AssemblerCondition::kTypeError,
                     "invalid symbol {} for intersection member", memberBase.toString());
         }
 
@@ -780,8 +780,7 @@ lyric_assembler::TypeCache::resolveIntersection(const std::vector<lyric_common::
             case DeriveType::Sealed:
                 break;
             default:
-                return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
-                    tempo_tracing::LogSeverity::kError,
+                return AssemblerStatus::forCondition(AssemblerCondition::kTypeError,
                     "invalid intersection member {}; must be sealed or final", member.toString());
         }
     }
@@ -854,8 +853,7 @@ lyric_assembler::TypeCache::resolveSignature(const lyric_common::SymbolUrl &symb
             typeHandle = cast_symbol_to_struct(symbol)->structType();
             break;
         default:
-            return m_tracer->logAndContinue(AssemblerCondition::kTypeError,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kTypeError,
                 "cannot resolve type signature for symbol {}", symbolUrl.toString());
     }
 

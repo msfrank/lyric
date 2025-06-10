@@ -1,7 +1,8 @@
 #ifndef LYRIC_ASSEMBLER_LITERAL_CACHE_H
 #define LYRIC_ASSEMBLER_LITERAL_CACHE_H
 
-#include "assembler_tracer.h"
+#include <tempo_utils/result.h>
+
 #include "assembler_types.h"
 #include "literal_handle.h"
 
@@ -9,7 +10,7 @@ namespace lyric_assembler {
 
     class LiteralCache {
     public:
-        explicit LiteralCache(AssemblerTracer *tracer);
+        LiteralCache();
         ~LiteralCache();
 
         tempo_utils::Result<LiteralHandle *> makeNil();
@@ -24,7 +25,6 @@ namespace lyric_assembler {
         std::vector<LiteralHandle *>::const_iterator literalsEnd() const;
 
     private:
-        AssemblerTracer *m_tracer;
         std::vector<LiteralHandle *> m_literals;
         absl::flat_hash_map<lyric_runtime::LiteralCell, tu_uint32> m_literalcache;
         absl::flat_hash_map<std::string, tu_uint32> m_stringcache;

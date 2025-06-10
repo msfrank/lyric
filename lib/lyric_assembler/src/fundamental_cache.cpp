@@ -1,14 +1,10 @@
 
 #include <lyric_assembler/fundamental_cache.h>
 
-lyric_assembler::FundamentalCache::FundamentalCache(
-    const lyric_common::ModuleLocation &preludeLocation,
-    lyric_assembler::AssemblerTracer *tracer)
-    : m_preludeLocation(preludeLocation),
-      m_tracer(tracer)
+lyric_assembler::FundamentalCache::FundamentalCache(const lyric_common::ModuleLocation &preludeLocation)
+    : m_preludeLocation(preludeLocation)
 {
     TU_ASSERT (m_preludeLocation.isValid());
-    TU_ASSERT (m_tracer != nullptr);
 
     // cache symbol urls for fundamentals
     m_fundamentalAny = lyric_common::SymbolUrl(preludeLocation,
@@ -399,8 +395,6 @@ lyric_common::SymbolUrl
 lyric_assembler::FundamentalCache::getFundamentalUrl(const lyric_runtime::LiteralCell &literalCell) const
 {
     switch (literalCell.type) {
-        case lyric_runtime::LiteralCellType::INVALID:
-            m_tracer->throwAssemblerInvariant("cannot resolve definition for invalid literal");
         case lyric_runtime::LiteralCellType::NIL:
             return getFundamentalUrl(FundamentalSymbol::Nil);
         case lyric_runtime::LiteralCellType::UNDEF:
@@ -413,8 +407,9 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(const lyric_runtime::Litera
             return getFundamentalUrl(FundamentalSymbol::Float);
         case lyric_runtime::LiteralCellType::CHAR32:
             return getFundamentalUrl(FundamentalSymbol::Char);
+        case lyric_runtime::LiteralCellType::INVALID:
         default:
-            m_tracer->throwAssemblerInvariant("cannot resolve definition for literal {}", literalCell.toString());
+            return {};
     }
 }
 

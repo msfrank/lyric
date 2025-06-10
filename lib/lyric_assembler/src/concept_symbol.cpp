@@ -254,14 +254,13 @@ lyric_assembler::ConceptSymbol::declareAction(
     lyric_object::AccessType access)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare action on imported concept {}", m_conceptUrl.toString());
 
     auto *priv = getPriv();
 
     if (priv->actions.contains(name))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "action {} already defined for concept {}", name, m_conceptUrl.toString());
 
     // build reference path to function
@@ -298,14 +297,14 @@ lyric_assembler::ConceptSymbol::prepareAction(
     auto *priv = getPriv();
 
     if (!priv->actions.contains(name))
-        return m_state->logAndContinue(AssemblerCondition::kMissingAction,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingAction,
             "missing action {}", name);
     const auto &actionMethod = priv->actions.at(name);
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(actionMethod.methodAction));
     if (symbol->getSymbolType() != SymbolType::ACTION)
-        m_state->throwAssemblerInvariant("invalid action symbol {}", actionMethod.methodAction.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid action symbol {}", actionMethod.methodAction.toString());
     auto *actionSymbol = cast_symbol_to_action(symbol);
 
     auto callable = std::make_unique<ActionCallable>(actionSymbol, this);
@@ -370,18 +369,18 @@ tempo_utils::Result<lyric_assembler::ImplHandle *>
 lyric_assembler::ConceptSymbol::declareImpl(const lyric_common::TypeDef &implType)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare impl on imported concept {}", m_conceptUrl.toString());
 
     auto *priv = getPriv();
 
     if (implType.getType() != lyric_common::TypeDefType::Concrete)
-        m_state->throwAssemblerInvariant("invalid impl type {}", implType.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid impl type {}", implType.toString());
     auto implUrl = implType.getConcreteUrl();
 
     if (priv->impls.contains(implUrl))
-        return m_state->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "impl {} already defined for concept {}", implType.toString(), m_conceptUrl.toString());
 
     // touch the impl type
@@ -393,7 +392,8 @@ lyric_assembler::ConceptSymbol::declareImpl(const lyric_common::TypeDef &implTyp
     AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(implConcept));
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
-        m_state->throwAssemblerInvariant("invalid concept symbol {}", implConcept.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid concept symbol {}", implConcept.toString());
     auto *conceptSymbol = cast_symbol_to_concept(symbol);
 
     auto *implCache = m_state->implCache();
@@ -440,28 +440,26 @@ tempo_utils::Status
 lyric_assembler::ConceptSymbol::putSealedType(const lyric_common::TypeDef &sealedType)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't put sealed type on imported concept {}", m_conceptUrl.toString());
 
     auto *priv = getPriv();
 
     if (priv->derive != lyric_object::DeriveType::Sealed)
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "concept {} is not sealed", m_conceptUrl.toString());
     if (sealedType.getType() != lyric_common::TypeDefType::Concrete)
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "invalid derived type {} for sealed concept {}", sealedType.toString(), m_conceptUrl.toString());
     auto sealedUrl = sealedType.getConcreteUrl();
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(sealedUrl));
     if (symbol->getSymbolType() != SymbolType::CONCEPT)
-        m_state->throwAssemblerInvariant("invalid concept symbol {}", sealedUrl.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid concept symbol {}", sealedUrl.toString());
 
     if (cast_symbol_to_concept(symbol)->superConcept() != this)
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "{} does not derive from sealed concept {}", sealedType.toString(), m_conceptUrl.toString());
 
     priv->sealedTypes.insert(sealedType);

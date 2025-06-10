@@ -4,12 +4,10 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/typename_symbol.h>
 
-lyric_assembler::SymbolCache::SymbolCache(ObjectState *state, AssemblerTracer *tracer)
-    : m_state(state),
-      m_tracer(tracer)
+lyric_assembler::SymbolCache::SymbolCache(ObjectState *state)
+    : m_state(state)
 {
     TU_ASSERT (m_state != nullptr);
-    TU_ASSERT (m_tracer != nullptr);
 }
 
 lyric_assembler::SymbolCache::~SymbolCache()
@@ -123,8 +121,7 @@ lyric_assembler::SymbolCache::insertSymbol(
     if (entry != m_symcache.cend()) {
         auto *previousSymbol = entry->second;
         if (previousSymbol->getSymbolType() != SymbolType::TYPENAME)
-            return m_tracer->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-                tempo_tracing::LogSeverity::kError,
+            return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
                 "symbol {} is already defined", symbolUrl.toString());
         if (existingTypename && previousSymbol != existingTypename)
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
@@ -140,8 +137,7 @@ tempo_utils::Result<lyric_assembler::TypenameSymbol *>
 lyric_assembler::SymbolCache::putTypename(const lyric_common::SymbolUrl &typenameUrl)
 {
     if (m_symcache.contains(typenameUrl))
-        return m_tracer->logAndContinue(AssemblerCondition::kSymbolAlreadyDefined,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "symbol {} is already defined", typenameUrl.toString());
     auto *typenameSymbol = new TypenameSymbol(typenameUrl);
     m_symcache[typenameUrl] = typenameSymbol;

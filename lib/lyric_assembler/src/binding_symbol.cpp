@@ -158,11 +158,12 @@ tempo_utils::Status
 lyric_assembler::BindingSymbol::defineTarget(const lyric_common::TypeDef &targetType)
 {
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't define target on imported binding {}", m_bindingUrl.toString());
     auto *priv = getPriv();
     if (priv->targetType != nullptr)
-        m_state->throwAssemblerInvariant("target is already defined");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "target is already defined");
     auto *typeCache = m_state->typeCache();
     TU_ASSIGN_OR_RETURN (priv->targetType, typeCache->getOrMakeType(targetType));
     return {};

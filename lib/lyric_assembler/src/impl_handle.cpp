@@ -170,20 +170,18 @@ lyric_assembler::ImplHandle::defineExtension(
     auto *priv = getPriv();
 
     if (isImported())
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "can't declare extension on impl {} from imported receiver {}",
             priv->implType->getTypeDef().toString(), priv->receiverUrl.toString());
 
     if (priv->extensions.contains(name))
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "extension {} already defined on impl {} in receiver {}",
             name, priv->implType->getTypeDef().toString(), priv->receiverUrl.toString());
 
     auto actionOption = priv->implConcept->getAction(name);
     if (actionOption.isEmpty())
-        return m_state->logAndContinue(AssemblerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "no such action {} for concept {}",
             name, priv->implConcept->getSymbolUrl().toString());
     auto actionUrl = actionOption.getValue().methodAction;
@@ -233,13 +231,12 @@ lyric_assembler::ImplHandle::prepareExtension(
     auto *priv = getPriv();
 
     if (!priv->extensions.contains(name))
-        return m_state->logAndContinue(AssemblerCondition::kMissingMethod,
-            tempo_tracing::LogSeverity::kError,
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingMethod,
             "missing extension {}", name);
 
     auto refUrl = ref.typeDef.getConcreteUrl();
     if (refUrl != priv->receiverUrl)
-        m_state->throwAssemblerInvariant(
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "ref {} is not an instance of impl receiver {}",
             ref.symbolUrl.toString(), priv->receiverUrl.toString());
 
@@ -247,13 +244,15 @@ lyric_assembler::ImplHandle::prepareExtension(
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(extension.methodCall));
     if (symbol->getSymbolType() != SymbolType::CALL)
-        m_state->throwAssemblerInvariant("invalid call symbol {}", extension.methodCall.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid call symbol {}", extension.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
 
     auto access = callSymbol->getAccessType();
 
     if (access != lyric_object::AccessType::Public)
-        m_state->throwAssemblerInvariant("extension method {} must be public", name);
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "extension method {} must be public", name);
 
     if (callSymbol->isInline()) {
         auto callable = std::make_unique<ExtensionCallable>(callSymbol);
@@ -261,7 +260,8 @@ lyric_assembler::ImplHandle::prepareExtension(
     }
 
     if (!callSymbol->isBound())
-        m_state->throwAssemblerInvariant("invalid extension call {}", extension.methodCall.toString());
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid extension call {}", extension.methodCall.toString());
 
     auto callable = std::make_unique<ExtensionCallable>(callSymbol, ref);
     return invoker.initialize(std::move(callable));

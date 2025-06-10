@@ -109,7 +109,8 @@ lyric_rewriter::MacroRewriteDriver::exit(
     if (m_macroList != nullptr) {
         m_macroList = nullptr;
         auto *parentNode = ctx.parentNode();
-        auto *macroListNode = parentNode->removeChild(ctx.childIndex());
+        lyric_parser::ArchetypeNode *macroListNode;
+        TU_ASSIGN_OR_RETURN (macroListNode, parentNode->removeChild(ctx.childIndex()));
         MacroBlock macroBlock(parentNode, ctx.childIndex(), state);
         TU_RETURN_IF_NOT_OK (rewriteMacroBlock(macroListNode, macroBlock));
     }
