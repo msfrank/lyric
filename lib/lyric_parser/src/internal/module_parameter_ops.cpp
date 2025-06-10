@@ -17,8 +17,9 @@ lyric_parser::internal::ModuleParameterOps::enterParamSpec(ModuleParser::ParamSp
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *packNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstPackClass, location);
-    m_state->pushNode(packNode);
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, m_state->appendNode(lyric_schema::kLyricAstPackClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(packNode));
 }
 
 void
@@ -31,24 +32,23 @@ lyric_parser::internal::ModuleParameterOps::exitPositionalParam(ModuleParser::Po
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *paramNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstParamClass, location);
-    paramNode->putAttr(kLyricAstIdentifier, id);
-    paramNode->putAttr(kLyricAstTypeOffset, typeNode);
-    paramNode->putAttr(kLyricAstIsVariable, isVariable);
+    ArchetypeNode *paramNode;
+    TU_ASSIGN_OR_RAISE (paramNode, m_state->appendNode(lyric_schema::kLyricAstParamClass, location));
+    TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstTypeOffset, typeNode));
+    TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstIsVariable, isVariable));
 
     if (ctx->paramDefault()) {
-        auto *defaultNode = m_state->popNode();
-        paramNode->putAttr(kLyricAstDefaultOffset, defaultNode);
+        ArchetypeNode *defaultNode;
+        TU_ASSIGN_OR_RAISE (defaultNode, m_state->popNode());
+        TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstDefaultOffset, defaultNode));
     }
 
-    // if ancestor node is not a kPack, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *packNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(packNode, lyric_schema::kLyricAstPackClass);
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, m_state->peekNode(lyric_schema::kLyricAstPackClass));
 
     // otherwise add param to the pack node
-    packNode->appendChild(paramNode);
+    TU_RAISE_IF_NOT_OK (packNode->appendChild(paramNode));
 }
 
 void
@@ -61,25 +61,24 @@ lyric_parser::internal::ModuleParameterOps::exitNamedParam(ModuleParser::NamedPa
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *paramNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstParamClass, location);
-    paramNode->putAttr(kLyricAstIdentifier, id);
-    paramNode->putAttr(kLyricAstLabel, id);
-    paramNode->putAttr(kLyricAstTypeOffset, typeNode);
-    paramNode->putAttr(kLyricAstIsVariable, isVariable);
+    ArchetypeNode *paramNode;
+    TU_ASSIGN_OR_RAISE (paramNode, m_state->appendNode(lyric_schema::kLyricAstParamClass, location));
+    TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstLabel, id));
+    TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstTypeOffset, typeNode));
+    TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstIsVariable, isVariable));
 
     if (ctx->paramDefault()) {
-        auto *defaultNode = m_state->popNode();
-        paramNode->putAttr(kLyricAstDefaultOffset, defaultNode);
+        ArchetypeNode *defaultNode;
+        TU_ASSIGN_OR_RAISE (defaultNode, m_state->popNode());
+        TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstDefaultOffset, defaultNode));
     }
 
-    // if ancestor node is not a kPack, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *packNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(packNode, lyric_schema::kLyricAstPackClass);
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, m_state->peekNode(lyric_schema::kLyricAstPackClass));
 
     // otherwise add param to the pack node
-    packNode->appendChild(paramNode);
+    TU_RAISE_IF_NOT_OK (packNode->appendChild(paramNode));
 }
 
 void
@@ -93,25 +92,24 @@ lyric_parser::internal::ModuleParameterOps::exitRenamedParam(ModuleParser::Renam
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *paramNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstParamClass, location);
-    paramNode->putAttr(kLyricAstIdentifier, id);
-    paramNode->putAttr(kLyricAstLabel, label);
-    paramNode->putAttr(kLyricAstTypeOffset, typeNode);
-    paramNode->putAttr(kLyricAstIsVariable, isVariable);
+    ArchetypeNode *paramNode;
+    TU_ASSIGN_OR_RAISE (paramNode, m_state->appendNode(lyric_schema::kLyricAstParamClass, location));
+    TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstLabel, label));
+    TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstTypeOffset, typeNode));
+    TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstIsVariable, isVariable));
 
     if (ctx->paramDefault()) {
-        auto *defaultNode = m_state->popNode();
-        paramNode->putAttr(kLyricAstDefaultOffset, defaultNode);
+        ArchetypeNode *defaultNode;
+        TU_ASSIGN_OR_RAISE (defaultNode, m_state->popNode());
+        TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstDefaultOffset, defaultNode));
     }
 
-    // if ancestor node is not a kPack, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *packNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(packNode, lyric_schema::kLyricAstPackClass);
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, m_state->peekNode(lyric_schema::kLyricAstPackClass));
 
     // otherwise add param to the pack node
-    packNode->appendChild(paramNode);
+    TU_RAISE_IF_NOT_OK (packNode->appendChild(paramNode));
 }
 
 void
@@ -123,19 +121,17 @@ lyric_parser::internal::ModuleParameterOps::exitNamedCtx(ModuleParser::NamedCtxC
     auto *ctxToken = ctx->getStart();
     auto ctxLocation = get_token_location(ctxToken);
 
-    auto *ctxNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCtxClass, ctxLocation);
-    ctxNode->putAttr(kLyricAstIdentifier, id);
-    ctxNode->putAttr(kLyricAstLabel, id);
-    ctxNode->putAttr(kLyricAstTypeOffset, typeNode);
+    ArchetypeNode *ctxNode;
+    TU_ASSIGN_OR_RAISE (ctxNode, m_state->appendNode(lyric_schema::kLyricAstCtxClass, ctxLocation));
+    TU_RAISE_IF_NOT_OK (ctxNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (ctxNode->putAttr(kLyricAstLabel, id));
+    TU_RAISE_IF_NOT_OK (ctxNode->putAttr(kLyricAstTypeOffset, typeNode));
 
-    // if ancestor node is not a kPack, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *packNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(packNode, lyric_schema::kLyricAstPackClass);
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, m_state->peekNode(lyric_schema::kLyricAstPackClass));
 
     // otherwise add param to the pack node
-    packNode->appendChild(ctxNode);
+    TU_RAISE_IF_NOT_OK (packNode->appendChild(ctxNode));
 }
 
 void
@@ -148,19 +144,17 @@ lyric_parser::internal::ModuleParameterOps::exitRenamedCtx(ModuleParser::Renamed
     auto *ctxToken = ctx->getStart();
     auto ctxLocation = get_token_location(ctxToken);
 
-    auto *ctxNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCtxClass, ctxLocation);
-    ctxNode->putAttr(kLyricAstIdentifier, id);
-    ctxNode->putAttr(kLyricAstLabel, label);
-    ctxNode->putAttr(kLyricAstTypeOffset, typeNode);
+    ArchetypeNode *ctxNode;
+    TU_ASSIGN_OR_RAISE (ctxNode, m_state->appendNode(lyric_schema::kLyricAstCtxClass, ctxLocation));
+    TU_RAISE_IF_NOT_OK (ctxNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (ctxNode->putAttr(kLyricAstLabel, label));
+    TU_RAISE_IF_NOT_OK (ctxNode->putAttr(kLyricAstTypeOffset, typeNode));
 
-    // if ancestor node is not a kPack, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *packNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(packNode, lyric_schema::kLyricAstPackClass);
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, m_state->peekNode(lyric_schema::kLyricAstPackClass));
 
     // otherwise add param to the pack node
-    packNode->appendChild(ctxNode);
+    TU_RAISE_IF_NOT_OK (packNode->appendChild(ctxNode));
 }
 
 void
@@ -169,23 +163,21 @@ lyric_parser::internal::ModuleParameterOps::exitRest(ModuleParser::RestContext *
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *restNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstRestClass, location);
+    ArchetypeNode *restNode;
+    TU_ASSIGN_OR_RAISE (restNode, m_state->appendNode(lyric_schema::kLyricAstRestClass, location));
 
     auto *typeNode = make_Type_node(m_state, ctx->assignableType());
-    restNode->putAttr(kLyricAstTypeOffset, typeNode);
+    TU_RAISE_IF_NOT_OK (restNode->putAttr(kLyricAstTypeOffset, typeNode));
 
     if (ctx->Identifier()) {
         auto id = ctx->Identifier()->getText();
-        restNode->putAttr(kLyricAstIdentifier, id);
+        TU_RAISE_IF_NOT_OK (restNode->putAttr(kLyricAstIdentifier, id));
     }
 
-    // if ancestor node is not a kPack, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *packNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(packNode, lyric_schema::kLyricAstPackClass);
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, m_state->peekNode(lyric_schema::kLyricAstPackClass));
 
-    packNode->putAttr(kLyricAstRestOffset, restNode);
+    TU_RAISE_IF_NOT_OK (packNode->putAttr(kLyricAstRestOffset, restNode));
 }
 
 void

@@ -17,57 +17,53 @@ lyric_parser::internal::ModuleControlOps::ModuleControlOps(ArchetypeState *state
 void
 lyric_parser::internal::ModuleControlOps::exitIfStatement(ModuleParser::IfStatementContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *consequentNode = m_state->popNode();
+    ArchetypeNode *consequentNode;
+    TU_ASSIGN_OR_RAISE (consequentNode, m_state->popNode());
 
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *conditionNode = m_state->popNode();
+    ArchetypeNode *conditionNode;
+    TU_ASSIGN_OR_RAISE (conditionNode, m_state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *whenNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstWhenClass, location);
-    whenNode->appendChild(conditionNode);
-    whenNode->appendChild(consequentNode);
+    ArchetypeNode *whenNode;
+    TU_ASSIGN_OR_RAISE (whenNode, m_state->appendNode(lyric_schema::kLyricAstWhenClass, location));
+    TU_RAISE_IF_NOT_OK (whenNode->appendChild(conditionNode));
+    TU_RAISE_IF_NOT_OK (whenNode->appendChild(consequentNode));
 
-    auto *ifNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIfClass, location);
-    ifNode->appendChild(whenNode);
-    m_state->pushNode(ifNode);
+    ArchetypeNode *ifNode;
+    TU_ASSIGN_OR_RAISE (ifNode, m_state->appendNode(lyric_schema::kLyricAstIfClass, location));
+    TU_RAISE_IF_NOT_OK (ifNode->appendChild(whenNode));
+
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(ifNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitIfThenElseExpression(ModuleParser::IfThenElseExpressionContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *alternativeNode = m_state->popNode();
+    ArchetypeNode *alternativeNode;
+    TU_ASSIGN_OR_RAISE (alternativeNode, m_state->popNode());
 
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *consequentNode = m_state->popNode();
+    ArchetypeNode *consequentNode;
+    TU_ASSIGN_OR_RAISE (consequentNode, m_state->popNode());
 
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *conditionNode = m_state->popNode();
+    ArchetypeNode *conditionNode;
+    TU_ASSIGN_OR_RAISE (conditionNode, m_state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *whenNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstWhenClass, location);
-    whenNode->appendChild(conditionNode);
-    whenNode->appendChild(consequentNode);
+    ArchetypeNode *whenNode;
+    TU_ASSIGN_OR_RAISE (whenNode, m_state->appendNode(lyric_schema::kLyricAstWhenClass, location));
+    TU_RAISE_IF_NOT_OK (whenNode->appendChild(conditionNode));
+    TU_RAISE_IF_NOT_OK (whenNode->appendChild(consequentNode));
 
-    auto *condNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCondClass, location);
-    condNode->putAttr(kLyricAstDefaultOffset, alternativeNode);
-    condNode->appendChild(whenNode);
-    m_state->pushNode(condNode);
+    ArchetypeNode *condNode;
+    TU_ASSIGN_OR_RAISE (condNode, m_state->appendNode(lyric_schema::kLyricAstCondClass, location));
+    TU_RAISE_IF_NOT_OK (condNode->putAttr(kLyricAstDefaultOffset, alternativeNode));
+    TU_RAISE_IF_NOT_OK (condNode->appendChild(whenNode));
+
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(condNode));
 }
 
 void
@@ -75,56 +71,46 @@ lyric_parser::internal::ModuleControlOps::enterCondExpression(ModuleParser::Cond
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *condNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCondClass, location);
-    m_state->pushNode(condNode);
+    ArchetypeNode *condNode;
+    TU_ASSIGN_OR_RAISE (condNode, m_state->appendNode(lyric_schema::kLyricAstCondClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(condNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitCondWhen(ModuleParser::CondWhenContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *consequentNode = m_state->popNode();
+    ArchetypeNode *consequentNode;
+    TU_ASSIGN_OR_RAISE (consequentNode, m_state->popNode());
 
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *conditionNode = m_state->popNode();
+    ArchetypeNode *conditionNode;
+    TU_ASSIGN_OR_RAISE (conditionNode, m_state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *whenNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstWhenClass, location);
-    whenNode->appendChild(conditionNode);
-    whenNode->appendChild(consequentNode);
+    ArchetypeNode *whenNode;
+    TU_ASSIGN_OR_RAISE (whenNode, m_state->appendNode(lyric_schema::kLyricAstWhenClass, location));
+    TU_RAISE_IF_NOT_OK (whenNode->appendChild(conditionNode));
+    TU_RAISE_IF_NOT_OK (whenNode->appendChild(consequentNode));
 
-    // if ancestor node is not a kCond, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *condNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(condNode, lyric_schema::kLyricAstCondClass);
+    ArchetypeNode *condNode;
+    TU_ASSIGN_OR_RAISE (condNode, m_state->peekNode(lyric_schema::kLyricAstCondClass));
 
-    // otherwise append when to the cond
-    condNode->appendChild(whenNode);
+    // append when to the cond
+    TU_RAISE_IF_NOT_OK (condNode->appendChild(whenNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitCondElse(ModuleParser::CondElseContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *alternativeNode = m_state->popNode();
+    ArchetypeNode *alternativeNode;
+    TU_ASSIGN_OR_RAISE (alternativeNode, m_state->popNode());
 
-    // if ancestor node is not a kCond, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *condNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(condNode, lyric_schema::kLyricAstCondClass);
+    ArchetypeNode *condNode;
+    TU_ASSIGN_OR_RAISE (condNode, m_state->peekNode(lyric_schema::kLyricAstCondClass));
 
-    // otherwise add defaultCase attribute to the cond
-    condNode->putAttr(kLyricAstDefaultOffset, alternativeNode);
+    // add defaultCase attribute to the cond
+    TU_RAISE_IF_NOT_OK (condNode->putAttr(kLyricAstDefaultOffset, alternativeNode));
 }
 
 void
@@ -132,56 +118,46 @@ lyric_parser::internal::ModuleControlOps::enterCondIfStatement(ModuleParser::Con
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *ifNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIfClass, location);
-    m_state->pushNode(ifNode);
+    ArchetypeNode *ifNode;
+    TU_ASSIGN_OR_RAISE (ifNode, m_state->appendNode(lyric_schema::kLyricAstIfClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(ifNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitCondIfWhen(ModuleParser::CondIfWhenContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *consequentNode = m_state->popNode();
+    ArchetypeNode *consequentNode;
+    TU_ASSIGN_OR_RAISE (consequentNode, m_state->popNode());
 
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *conditionNode = m_state->popNode();
+    ArchetypeNode *conditionNode;
+    TU_ASSIGN_OR_RAISE (conditionNode, m_state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *whenNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstWhenClass, location);
-    whenNode->appendChild(conditionNode);
-    whenNode->appendChild(consequentNode);
+    ArchetypeNode *whenNode;
+    TU_ASSIGN_OR_RAISE (whenNode, m_state->appendNode(lyric_schema::kLyricAstWhenClass, location));
+    TU_RAISE_IF_NOT_OK (whenNode->appendChild(conditionNode));
+    TU_RAISE_IF_NOT_OK (whenNode->appendChild(consequentNode));
 
-    // if ancestor node is not a kIf, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *ifNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(ifNode, lyric_schema::kLyricAstIfClass);
+    ArchetypeNode *ifNode;
+    TU_ASSIGN_OR_RAISE (ifNode, m_state->peekNode(lyric_schema::kLyricAstIfClass));
 
-    // otherwise append when to the cond
-    ifNode->appendChild(whenNode);
+    // append when to the if
+    TU_RAISE_IF_NOT_OK (ifNode->appendChild(whenNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitCondIfElse(ModuleParser::CondIfElseContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *alternativeNode = m_state->popNode();
+    ArchetypeNode *alternativeNode;
+    TU_ASSIGN_OR_RAISE (alternativeNode, m_state->popNode());
 
-    // if ancestor node is not a kIf, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *ifNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(ifNode, lyric_schema::kLyricAstIfClass);
+    ArchetypeNode *ifNode;
+    TU_ASSIGN_OR_RAISE (ifNode, m_state->peekNode(lyric_schema::kLyricAstIfClass));
 
-    // otherwise add defaultCase attribute to the cond
-    ifNode->putAttr(kLyricAstDefaultOffset, alternativeNode);
+    // add defaultCase attribute to the if
+    TU_RAISE_IF_NOT_OK (ifNode->putAttr(kLyricAstDefaultOffset, alternativeNode));
 }
 
 void
@@ -189,31 +165,25 @@ lyric_parser::internal::ModuleControlOps::enterWhileStatement(ModuleParser::Whil
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *whileNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstWhileClass, location);
-    m_state->pushNode(whileNode);
+    ArchetypeNode *whileNode;
+    TU_ASSIGN_OR_RAISE (whileNode, m_state->appendNode(lyric_schema::kLyricAstWhileClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(whileNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitWhileStatement(ModuleParser::WhileStatementContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *blockNode = m_state->popNode();
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode());
 
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *testNode = m_state->popNode();
+    ArchetypeNode *testNode;
+    TU_ASSIGN_OR_RAISE (testNode, m_state->popNode());
 
-    // if ancestor node is not a kWhile, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *whileNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(whileNode, lyric_schema::kLyricAstWhileClass);
+    ArchetypeNode *whileNode;
+    TU_ASSIGN_OR_RAISE (whileNode, m_state->peekNode(lyric_schema::kLyricAstWhileClass));
 
-    whileNode->appendChild(testNode);
-    whileNode->appendChild(blockNode);
+    TU_RAISE_IF_NOT_OK (whileNode->appendChild(testNode));
+    TU_RAISE_IF_NOT_OK (whileNode->appendChild(blockNode));
 }
 
 void
@@ -221,54 +191,48 @@ lyric_parser::internal::ModuleControlOps::enterForStatement(ModuleParser::ForSta
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *forNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstForClass, location);
-    m_state->pushNode(forNode);
+    ArchetypeNode *forNode;
+    TU_ASSIGN_OR_RAISE (forNode, m_state->appendNode(lyric_schema::kLyricAstForClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(forNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitForStatement(ModuleParser::ForStatementContext * ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *blockNode = m_state->popNode();
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode());
 
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *iteratorNode = m_state->popNode();
+    ArchetypeNode *iteratorNode;
+    TU_ASSIGN_OR_RAISE (iteratorNode, m_state->popNode());
 
     auto id = ctx->Identifier()->getText();
 
-    // if ancestor node is not a kFor, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *forNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(forNode, lyric_schema::kLyricAstForClass);
+    ArchetypeNode *forNode;
+    TU_ASSIGN_OR_RAISE (forNode, m_state->peekNode(lyric_schema::kLyricAstForClass));
 
-    forNode->putAttr(kLyricAstIdentifier, id);
+    TU_RAISE_IF_NOT_OK (forNode->putAttr(kLyricAstIdentifier, id));
 
     if (ctx->assignableType()) {
         auto *typeNode = make_Type_node(m_state, ctx->assignableType());
-        forNode->putAttr(kLyricAstTypeOffset, typeNode);
+        TU_RAISE_IF_NOT_OK (forNode->putAttr(kLyricAstTypeOffset, typeNode));
     }
 
-    forNode->appendChild(iteratorNode);
-    forNode->appendChild(blockNode);
+    TU_RAISE_IF_NOT_OK (forNode->appendChild(iteratorNode));
+    TU_RAISE_IF_NOT_OK (forNode->appendChild(blockNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitReturnStatement(ModuleParser::ReturnStatementContext * ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *p1 = m_state->popNode();
+    ArchetypeNode *p1;
+    TU_ASSIGN_OR_RAISE (p1, m_state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *returnNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstReturnClass, location);
-    returnNode->appendChild(p1);
-    m_state->pushNode(returnNode);
+    ArchetypeNode *returnNode;
+    TU_ASSIGN_OR_RAISE (returnNode, m_state->appendNode(lyric_schema::kLyricAstReturnClass, location));
+    TU_RAISE_IF_NOT_OK (returnNode->appendChild(p1));
+
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(returnNode));
 }

@@ -8,18 +8,17 @@
 TEST(LoadArchetype, LoadTypedVal)
 {
     lyric_parser::LyricParser parser({});
+    auto sourceUrl = tempo_utils::Url::fromString("/test");
     auto recorder = tempo_tracing::TraceRecorder::create();
 
     auto parseResult = parser.parseModule(R"(
         val x: Int = 1
-    )", {}, recorder);
+    )", sourceUrl, recorder);
 
     ASSERT_TRUE(parseResult.isResult());
     auto archetype = parseResult.getResult();
 
-    auto sourceUrl = tempo_utils::Url::fromString("/test");
-    tempo_tracing::ScopeManager scopeManager(recorder);
-    lyric_parser::ArchetypeState state(sourceUrl, &scopeManager);
+    lyric_parser::ArchetypeState state(sourceUrl);
 
     auto loadArchetypeResult = state.load(archetype);
     ASSERT_TRUE (loadArchetypeResult.isResult());

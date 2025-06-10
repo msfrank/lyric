@@ -19,8 +19,9 @@ lyric_parser::internal::ModuleDerefOps::enterLiteralExpression(ModuleParser::Lit
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDataDerefClass, location);
-    m_state->pushNode(derefNode);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->appendNode(lyric_schema::kLyricAstDataDerefClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(derefNode));
 }
 
 void
@@ -28,8 +29,9 @@ lyric_parser::internal::ModuleDerefOps::enterGroupingExpression(ModuleParser::Gr
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDataDerefClass, location);
-    m_state->pushNode(derefNode);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->appendNode(lyric_schema::kLyricAstDataDerefClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(derefNode));
 }
 
 void
@@ -37,8 +39,9 @@ lyric_parser::internal::ModuleDerefOps::enterThisExpression(ModuleParser::ThisEx
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDataDerefClass, location);
-    m_state->pushNode(derefNode);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->appendNode(lyric_schema::kLyricAstDataDerefClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(derefNode));
 }
 
 void
@@ -46,8 +49,9 @@ lyric_parser::internal::ModuleDerefOps::enterNameExpression(ModuleParser::NameEx
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDataDerefClass, location);
-    m_state->pushNode(derefNode);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->appendNode(lyric_schema::kLyricAstDataDerefClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(derefNode));
 }
 
 void
@@ -55,48 +59,41 @@ lyric_parser::internal::ModuleDerefOps::enterCallExpression(ModuleParser::CallEx
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDataDerefClass, location);
-    m_state->pushNode(derefNode);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->appendNode(lyric_schema::kLyricAstDataDerefClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(derefNode));
 }
 
 void
 lyric_parser::internal::ModuleDerefOps::exitDerefLiteral(ModuleParser::DerefLiteralContext *ctx)
 {
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *literalNode = m_state->popNode();
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->popNode());
 
-    // if ancestor node is not a kDeref, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
     // otherwise append literal to the deref
-    derefNode->appendChild(literalNode);
+    TU_RAISE_IF_NOT_OK (derefNode->appendChild(literalNode));
 }
 
 void
 lyric_parser::internal::ModuleDerefOps::exitDerefGrouping(ModuleParser::DerefGroupingContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *expressionNode = m_state->popNode();
+    ArchetypeNode *expressionNode;
+    TU_ASSIGN_OR_RAISE (expressionNode, m_state->popNode());
 
-    // if ancestor node is not a kDeref, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     // otherwise wrap expression in a block and append to the deref
-    auto *blockNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstBlockClass, location);
-    blockNode->appendChild(expressionNode);
-    derefNode->appendChild(blockNode);
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, m_state->appendNode(lyric_schema::kLyricAstBlockClass, location));
+    TU_RAISE_IF_NOT_OK (blockNode->appendChild(expressionNode));
+    TU_RAISE_IF_NOT_OK (derefNode->appendChild(blockNode));
 }
 
 void
@@ -105,16 +102,14 @@ lyric_parser::internal::ModuleDerefOps::exitThisSpec(ModuleParser::ThisSpecConte
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *thisNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstThisClass, location);
+    ArchetypeNode *thisNode;
+    TU_ASSIGN_OR_RAISE (thisNode, m_state->appendNode(lyric_schema::kLyricAstThisClass, location));
 
-    // if ancestor node is not a kDeref, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
     // otherwise append this to the deref
-    derefNode->appendChild(thisNode);
+    TU_RAISE_IF_NOT_OK (derefNode->appendChild(thisNode));
 }
 
 void
@@ -125,17 +120,15 @@ lyric_parser::internal::ModuleDerefOps::exitNameSpec(ModuleParser::NameSpecConte
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *nameNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNameClass, location);
-    nameNode->putAttr(kLyricAstIdentifier, id);
+    ArchetypeNode *nameNode;
+    TU_ASSIGN_OR_RAISE (nameNode, m_state->appendNode(lyric_schema::kLyricAstNameClass, location));
+    TU_RAISE_IF_NOT_OK (nameNode->putAttr(kLyricAstIdentifier, id));
 
-    // if ancestor node is not a kDeref, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
     // otherwise append name to the deref
-    derefNode->appendChild(nameNode);
+    TU_RAISE_IF_NOT_OK (derefNode->appendChild(nameNode));
 }
 
 void
@@ -144,11 +137,12 @@ lyric_parser::internal::ModuleDerefOps::exitCallSpec(ModuleParser::CallSpecConte
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *callNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCallClass, location);
+    ArchetypeNode *callNode;
+    TU_ASSIGN_OR_RAISE (callNode, m_state->appendNode(lyric_schema::kLyricAstCallClass, location));
 
     if (ctx->typeArguments()) {
         auto *typeArgsNode = make_TypeArguments_node(m_state, ctx->typeArguments());
-        callNode->putAttr(kLyricAstTypeArgumentsOffset, typeArgsNode);
+        TU_RAISE_IF_NOT_OK (callNode->putAttr(kLyricAstTypeArgumentsOffset, typeArgsNode));
     }
 
     if (ctx->argList()) {
@@ -158,9 +152,8 @@ lyric_parser::internal::ModuleDerefOps::exitCallSpec(ModuleParser::CallSpecConte
             if (argSpec == nullptr)
                 continue;
 
-            if (m_state->isEmpty())
-                m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-            auto *argNode = m_state->popNode();
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, m_state->popNode());
 
             if (argSpec->Identifier() != nullptr) {
                 // the keyword label
@@ -169,27 +162,25 @@ lyric_parser::internal::ModuleDerefOps::exitCallSpec(ModuleParser::CallSpecConte
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
-                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(kLyricAstIdentifier, label);
-                keywordNode->appendChild(argNode);
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, m_state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
                 argNode = keywordNode;
             }
 
-            callNode->prependChild(argNode);
+            TU_RAISE_IF_NOT_OK (callNode->prependChild(argNode));
         }
     }
 
     auto id = ctx->Identifier()->getText();
-    callNode->putAttr(kLyricAstIdentifier, id);
+    TU_RAISE_IF_NOT_OK (callNode->putAttr(kLyricAstIdentifier, id));
 
-    // if ancestor node is not a kDeref, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
     // otherwise append call to the deref
-    derefNode->appendChild(callNode);
+    TU_RAISE_IF_NOT_OK (derefNode->appendChild(callNode));
 }
 
 void
@@ -200,17 +191,15 @@ lyric_parser::internal::ModuleDerefOps::exitDerefMember(ModuleParser::DerefMembe
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *nameNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNameClass, location);
-    nameNode->putAttr(kLyricAstIdentifier, id);
+    ArchetypeNode *nameNode;
+    TU_ASSIGN_OR_RAISE (nameNode, m_state->appendNode(lyric_schema::kLyricAstNameClass, location));
+    TU_RAISE_IF_NOT_OK (nameNode->putAttr(kLyricAstIdentifier, id));
 
-    // if ancestor node is not a kDeref, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
     // otherwise append name to the deref
-    derefNode->appendChild(nameNode);
+    TU_RAISE_IF_NOT_OK (derefNode->appendChild(nameNode));
 }
 
 void
@@ -219,11 +208,12 @@ lyric_parser::internal::ModuleDerefOps::exitDerefMethod(ModuleParser::DerefMetho
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *callNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCallClass, location);
+    ArchetypeNode *callNode;
+    TU_ASSIGN_OR_RAISE (callNode, m_state->appendNode(lyric_schema::kLyricAstCallClass, location));
 
     if (ctx->typeArguments()) {
         auto *typeArgsNode = make_TypeArguments_node(m_state, ctx->typeArguments());
-        callNode->putAttr(kLyricAstTypeArgumentsOffset, typeArgsNode);
+        TU_RAISE_IF_NOT_OK (callNode->putAttr(kLyricAstTypeArgumentsOffset, typeArgsNode));
     }
 
     if (ctx->argList()) {
@@ -233,9 +223,8 @@ lyric_parser::internal::ModuleDerefOps::exitDerefMethod(ModuleParser::DerefMetho
             if (argSpec == nullptr)
                 continue;
 
-            if (m_state->isEmpty())
-                m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-            auto *argNode = m_state->popNode();
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, m_state->popNode());
 
             if (argSpec->Identifier() != nullptr) {
                 auto label = argSpec->Identifier()->getText();
@@ -243,60 +232,54 @@ lyric_parser::internal::ModuleDerefOps::exitDerefMethod(ModuleParser::DerefMetho
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
-                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(kLyricAstIdentifier, label);
-                keywordNode->appendChild(argNode);
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, m_state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
                 argNode = keywordNode;
             }
 
-            callNode->prependChild(argNode);
+            TU_RAISE_IF_NOT_OK (callNode->prependChild(argNode));
         }
     }
 
     auto id = ctx->Identifier()->getText();
-    callNode->putAttr(kLyricAstIdentifier, id);
+    TU_RAISE_IF_NOT_OK (callNode->putAttr(kLyricAstIdentifier, id));
 
-    // if ancestor node is not a kDeref, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
     // otherwise append call to the deref
-    derefNode->appendChild(callNode);
+    TU_RAISE_IF_NOT_OK (derefNode->appendChild(callNode));
 }
 
 void
 lyric_parser::internal::ModuleDerefOps::exitLiteralExpression(ModuleParser::LiteralExpressionContext *ctx)
 {
-    // if ancestor node is not a kDeref, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
     // if deref only contains one element, then simplify the expression
     if (derefNode->numChildren() == 1) {
-        auto *child = derefNode->removeChild(0);
-        m_state->popNode();
-        m_state->pushNode(child);
+        ArchetypeNode *child;
+        TU_ASSIGN_OR_RAISE (child, derefNode->removeChild(0));
+        TU_RAISE_IF_STATUS (m_state->popNode());
+        TU_RAISE_IF_NOT_OK (m_state->pushNode(child));
     }
 }
 
 void
 lyric_parser::internal::ModuleDerefOps::exitGroupingExpression(ModuleParser::GroupingExpressionContext *ctx)
 {
-    // if ancestor node is not a kDeref, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *derefNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(derefNode, lyric_schema::kLyricAstDataDerefClass);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
     // if deref only contains one element, then simplify the expression
     if (derefNode->numChildren() == 1) {
-        auto *child = derefNode->removeChild(0);
-        m_state->popNode();
-        m_state->pushNode(child);
+        ArchetypeNode *child;
+        TU_ASSIGN_OR_RAISE (child, derefNode->removeChild(0));
+        TU_RAISE_IF_STATUS (m_state->popNode());
+        TU_RAISE_IF_NOT_OK (m_state->pushNode(child));
     }
 }
 
@@ -321,7 +304,8 @@ lyric_parser::internal::ModuleDerefOps::exitSymbolExpression(ModuleParser::Symbo
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *derefNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSymbolDerefClass, location);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, m_state->appendNode(lyric_schema::kLyricAstSymbolDerefClass, location));
 
     for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
         if (ctx->Identifier(i) == nullptr)
@@ -329,17 +313,22 @@ lyric_parser::internal::ModuleDerefOps::exitSymbolExpression(ModuleParser::Symbo
         auto *id = ctx->Identifier(i);
         location = get_token_location(id->getSymbol());
         auto identifier = id->getText();
-        if (identifier.empty())
-            m_state->throwSyntaxError(location, "symbol expression identifier is empty");
-        auto *nameNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNameClass, location);
-        nameNode->putAttr(kLyricAstIdentifier, identifier);
-        derefNode->appendChild(nameNode);
+        if (identifier.empty()) {
+            throw_semantic_exception(ctx->getStart(), "symbol expression identifier is empty");
+            TU_UNREACHABLE();
+        }
+        ArchetypeNode *nameNode;
+        TU_ASSIGN_OR_RAISE (nameNode, m_state->appendNode(lyric_schema::kLyricAstNameClass, location));
+        TU_RAISE_IF_NOT_OK (nameNode->putAttr(kLyricAstIdentifier, identifier));
+        TU_RAISE_IF_NOT_OK (derefNode->appendChild(nameNode));
     }
 
-    if (derefNode->numChildren() == 0)
-        m_state->throwSyntaxError(location, "symbol expression is empty");
+    if (derefNode->numChildren() == 0) {
+        throw_semantic_exception(ctx->getStart(), "symbol expression is empty");
+        TU_UNREACHABLE();
+    }
 
-    m_state->pushNode(derefNode);
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(derefNode));
 }
 
 void
@@ -350,7 +339,8 @@ lyric_parser::internal::ModuleDerefOps::exitTypeofExpression(ModuleParser::Typeo
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *typeofNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstTypeOfClass, location);
+    ArchetypeNode *typeofNode;
+    TU_ASSIGN_OR_RAISE (typeofNode, m_state->appendNode(lyric_schema::kLyricAstTypeOfClass, location));
     TU_RAISE_IF_NOT_OK (typeofNode->putAttr(kLyricAstTypeOffset, typeNode));
-    m_state->pushNode(typeofNode);
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(typeofNode));
 }

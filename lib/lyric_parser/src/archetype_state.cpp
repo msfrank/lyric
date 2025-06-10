@@ -17,11 +17,24 @@
 
 lyric_parser::ArchetypeState::ArchetypeState(
     const tempo_utils::Url &sourceUrl,
-    tempo_tracing::ScopeManager *scopeManager)
+    const ArchetypeStateLimits &limits)
     : m_sourceUrl(sourceUrl),
-      m_scopeManager(scopeManager),
+      m_limits(limits),
       m_rootNode(nullptr)
 {
+    TU_ASSERT (m_sourceUrl.isValid());
+}
+
+tempo_utils::Url
+lyric_parser::ArchetypeState::getSourceUrl() const
+{
+    return m_sourceUrl;
+}
+
+lyric_parser::ArchetypeStateLimits
+lyric_parser::ArchetypeState::getLimits() const
+{
+    return m_limits;
 }
 
 tempo_utils::Result<lyric_parser::ArchetypeAttr *>
@@ -122,37 +135,34 @@ lyric_parser::ArchetypeState::isEmpty()
     return m_nodeStack.empty();
 }
 
-void
+tempo_utils::Status
 lyric_parser::ArchetypeState::pushNode(ArchetypeNode *node)
 {
+    if (m_nodeStack.size() >= m_limits.maxStackDepth)
+        return ParseStatus::forCondition(ParseCondition::kResourceExhausted,
+            "node stack depth exceeds {}", m_limits.maxStackDepth);
     m_nodeStack.push(node);
+    return {};
 }
 
-lyric_parser::ArchetypeNode *
+tempo_utils::Result<lyric_parser::ArchetypeNode *>
 lyric_parser::ArchetypeState::popNode()
 {
-    if (m_nodeStack.empty()) {
-        throw tempo_utils::StatusException(
-            ParseStatus::forCondition(ParseCondition::kParseInvariant,
-                "node stack is empty"));
-    }
+    if (m_nodeStack.empty())
+        return ParseStatus::forCondition(ParseCondition::kParseInvariant,
+            "node stack is empty");
     auto *top = m_nodeStack.top();
     m_nodeStack.pop();
     return top;
 }
 
-lyric_parser::ArchetypeNode *
+tempo_utils::Result<lyric_parser::ArchetypeNode *>
 lyric_parser::ArchetypeState::peekNode()
 {
     if (m_nodeStack.empty())
-        return nullptr;
+        return ParseStatus::forCondition(ParseCondition::kParseInvariant,
+            "node stack is empty");
     return m_nodeStack.top();
-}
-
-tempo_tracing::ScopeManager *
-lyric_parser::ArchetypeState::scopeManager() const
-{
-    return m_scopeManager;
 }
 
 lyric_parser::ArchetypeId *
@@ -329,13 +339,18 @@ lyric_parser::ArchetypeState::getPragma(int index) const
     return nullptr;
 }
 
-void
+tempo_utils::Status
 lyric_parser::ArchetypeState::addPragma(ArchetypeNode *pragmaNode)
 {
+    TU_ASSERT (pragmaNode != nullptr);
+    if (m_pragmaNodes.size() >= m_limits.maxPragmas)
+        return ParseStatus::forCondition(ParseCondition::kResourceExhausted,
+            "pragma count exceeds {}", m_limits.maxPragmas);
     m_pragmaNodes.push_back(pragmaNode);
+    return {};
 }
 
-lyric_parser::ArchetypeNode *
+tempo_utils::Result<lyric_parser::ArchetypeNode *>
 lyric_parser::ArchetypeState::replacePragma(int index, ArchetypeNode *pragma)
 {
     TU_ASSERT (pragma != nullptr);
@@ -344,10 +359,11 @@ lyric_parser::ArchetypeState::replacePragma(int index, ArchetypeNode *pragma)
         m_pragmaNodes[index] = pragma;
         return prev;
     }
-    return nullptr;
+    return ParseStatus::forCondition(ParseCondition::kParseInvariant,
+        "invalid pragma index {}", index);
 }
 
-lyric_parser::ArchetypeNode *
+tempo_utils::Result<lyric_parser::ArchetypeNode *>
 lyric_parser::ArchetypeState::removePragma(int index)
 {
     if (0 <= index && std::cmp_less(index, m_pragmaNodes.size())) {
@@ -357,7 +373,8 @@ lyric_parser::ArchetypeState::removePragma(int index)
         m_pragmaNodes.erase(iterator);
         return pragma;
     }
-    return nullptr;
+    return ParseStatus::forCondition(ParseCondition::kParseInvariant,
+        "invalid pragma index {}", index);
 }
 
 void lyric_parser::ArchetypeState::clearPragmas()
@@ -398,6 +415,7 @@ lyric_parser::ArchetypeState::getRoot() const
 void
 lyric_parser::ArchetypeState::setRoot(ArchetypeNode *node)
 {
+    TU_ASSERT (node != nullptr);
     m_rootNode = node;
 }
 

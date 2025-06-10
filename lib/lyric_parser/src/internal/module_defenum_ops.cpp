@@ -7,6 +7,8 @@
 #include <lyric_parser/parser_attrs.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
+#include <tempo_tracing/enter_scope.h>
+#include <tempo_tracing/exit_scope.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_parser::internal::ModuleDefenumOps::ModuleDefenumOps(ArchetypeState *state)
@@ -18,32 +20,33 @@ lyric_parser::internal::ModuleDefenumOps::ModuleDefenumOps(ArchetypeState *state
 void
 lyric_parser::internal::ModuleDefenumOps::enterDefenumStatement(ModuleParser::DefenumStatementContext *ctx)
 {
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefenumOps::enterDefenumStatement");
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *defenumNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefEnumClass, location);
-    m_state->pushNode(defenumNode);
+    ArchetypeNode *defenumNode;
+    TU_ASSIGN_OR_RAISE (defenumNode, m_state->appendNode(lyric_schema::kLyricAstDefEnumClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(defenumNode));
 
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
-    span->putTag(kLyricParserLineNumber, location.lineNumber);
-    span->putTag(kLyricParserColumnNumber, location.columnNumber);
-    span->putTag(kLyricParserFileOffset, location.fileOffset);
+    scope.putTag(kLyricParserLineNumber, location.lineNumber);
+    scope.putTag(kLyricParserColumnNumber, location.columnNumber);
+    scope.putTag(kLyricParserFileOffset, location.fileOffset);
 }
 
 void
 lyric_parser::internal::ModuleDefenumOps::enterEnumInit(ModuleParser::EnumInitContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefenumOps::enterEnumInit");
+
     m_state->pushSymbol("$ctor");
 }
 
 void
 lyric_parser::internal::ModuleDefenumOps::exitEnumInit(ModuleParser::EnumInitContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
-    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    tempo_tracing::ExitScope scope;
+
+    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -51,41 +54,33 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumInit(ModuleParser::EnumInitCon
     // if init statement has a block, then block is top of the stack
     ArchetypeNode *blockNode = nullptr;
     if (ctx->block()) {
-        // if stack is empty, then mark source as incomplete
-        if (m_state->isEmpty())
-            m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-        blockNode = m_state->popNode();
-        m_state->checkNodeOrThrow(blockNode, lyric_schema::kLyricAstBlockClass);
+        TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode(lyric_schema::kLyricAstBlockClass));
     }
 
     // the parameter list
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *packNode = m_state->popNode();
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, m_state->popNode());
 
     // create the init node
-    auto *initNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstInitClass, location);
-    initNode->appendChild(packNode);
+    ArchetypeNode *initNode;
+    TU_ASSIGN_OR_RAISE (initNode, m_state->appendNode(lyric_schema::kLyricAstInitClass, location));
+    TU_RAISE_IF_NOT_OK (initNode->appendChild(packNode));
 
     // synthesize an empty super node
-    auto *superNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSuperClass, {});
-    initNode->appendChild(superNode);
+    ArchetypeNode *superNode;
+    TU_ASSIGN_OR_RAISE (superNode, m_state->appendNode(lyric_schema::kLyricAstSuperClass, {}));
+    TU_RAISE_IF_NOT_OK (initNode->appendChild(superNode));
 
     // if block node is not specified then synthesize an empty node
     if (blockNode == nullptr) {
-        blockNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstBlockClass, {});
+        TU_ASSIGN_OR_RAISE (blockNode, m_state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
     }
-    initNode->appendChild(blockNode);
+    TU_RAISE_IF_NOT_OK (initNode->appendChild(blockNode));
 
-    // if ancestor node is not a kDefEnum, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *defenumNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(defenumNode, lyric_schema::kLyricAstDefEnumClass);
+    ArchetypeNode *defenumNode;
+    TU_ASSIGN_OR_RAISE (defenumNode, m_state->peekNode(lyric_schema::kLyricAstDefEnumClass));
 
-    defenumNode->appendChild(initNode);
-
-    scopeManager->popSpan();
+    TU_RAISE_IF_NOT_OK (defenumNode->appendChild(initNode));
 
     // pop the top of the symbol stack and verify that the identifier matches
     m_state->popSymbolAndCheck("$ctor");
@@ -94,16 +89,15 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumInit(ModuleParser::EnumInitCon
 void
 lyric_parser::internal::ModuleDefenumOps::enterEnumVal(ModuleParser::EnumValContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefenumOps::enterEnumVal");
 }
 
 void
 lyric_parser::internal::ModuleDefenumOps::exitEnumVal(ModuleParser::EnumValContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
-    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    tempo_tracing::ExitScope scope;
+
+    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
     // the member name
     auto id = ctx->symbolIdentifier()->getText();
@@ -117,29 +111,23 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumVal(ModuleParser::EnumValConte
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, location);
-    valNode->putAttr(kLyricAstIdentifier, id);
-    valNode->putAttrOrThrow(kLyricAstAccessType, access);
-    valNode->putAttr(kLyricAstTypeOffset, memberTypeNode);
+    ArchetypeNode *valNode;
+    TU_ASSIGN_OR_RAISE (valNode, m_state->appendNode(lyric_schema::kLyricAstValClass, location));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
     if (ctx->defaultInitializer() != nullptr) {
-        // if stack is empty, then mark source as incomplete
-        if (m_state->isEmpty())
-            m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-        auto *defaultNode = m_state->popNode();
-        valNode->appendChild(defaultNode);
+        ArchetypeNode *defaultNode;
+        TU_ASSIGN_OR_RAISE (defaultNode, m_state->popNode());
+        TU_RAISE_IF_NOT_OK (valNode->appendChild(defaultNode));
     }
 
-    // if ancestor node is not a kDefEnum, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *defenumNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(defenumNode, lyric_schema::kLyricAstDefEnumClass);
+    ArchetypeNode *defenumNode;
+    TU_ASSIGN_OR_RAISE (defenumNode, m_state->peekNode(lyric_schema::kLyricAstDefEnumClass));
 
-    defenumNode->appendChild(valNode);
-
-    scopeManager->popSpan();
+    TU_RAISE_IF_NOT_OK (defenumNode->appendChild(valNode));
 
     // pop the top of the symbol stack and verify that the identifier matches
     m_state->popSymbolAndCheck(id);
@@ -148,64 +136,57 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumVal(ModuleParser::EnumValConte
 void
 lyric_parser::internal::ModuleDefenumOps::enterEnumDef(ModuleParser::EnumDefContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefenumOps::enterEnumVal");
 }
 
 void
 lyric_parser::internal::ModuleDefenumOps::exitEnumDef(ModuleParser::EnumDefContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
-    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    tempo_tracing::ExitScope scope;
 
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *blockNode = m_state->popNode();
+    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode());
 
     // the parameter list
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *packNode = m_state->popNode();
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, m_state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
-    span->putTag(kLyricParserLineNumber, location.lineNumber);
-    span->putTag(kLyricParserColumnNumber, location.columnNumber);
-    span->putTag(kLyricParserFileOffset, location.fileOffset);
+    ArchetypeNode *defNode;
+    TU_ASSIGN_OR_RAISE (defNode, m_state->appendNode(lyric_schema::kLyricAstDefClass, location));
+    scope.putTag(kLyricParserLineNumber, location.lineNumber);
+    scope.putTag(kLyricParserColumnNumber, location.columnNumber);
+    scope.putTag(kLyricParserFileOffset, location.fileOffset);
 
     // the method name
     auto id = ctx->symbolIdentifier()->getText();
-    defNode->putAttr(kLyricAstIdentifier, id);
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIdentifier, id));
 
     // the visibility
     auto access = parse_access_type(id);
-    defNode->putAttrOrThrow(kLyricAstAccessType, access);
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstAccessType, access));
 
     // the return type
     if (ctx->returnSpec()) {
         auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
-        defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
+        TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
     } else {
-        auto *returnTypeNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstXTypeClass, location);
-        defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
+        ArchetypeNode *returnTypeNode;
+        TU_ASSIGN_OR_RAISE (returnTypeNode, m_state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
+        TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
     }
 
-    defNode->appendChild(packNode);
-    defNode->appendChild(blockNode);
+    TU_RAISE_IF_NOT_OK (defNode->appendChild(packNode));
+    TU_RAISE_IF_NOT_OK (defNode->appendChild(blockNode));
 
-    // if ancestor node is not a kDefEnum, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *defenumNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(defenumNode, lyric_schema::kLyricAstDefEnumClass);
+    ArchetypeNode *defenumNode;
+    TU_ASSIGN_OR_RAISE (defenumNode, m_state->peekNode(lyric_schema::kLyricAstDefEnumClass));
 
-    defenumNode->appendChild(defNode);
-
-    scopeManager->popSpan();
+    TU_RAISE_IF_NOT_OK (defenumNode->appendChild(defNode));
 
     // pop the top of the symbol stack and verify that the identifier matches
     m_state->popSymbolAndCheck(id);
@@ -214,22 +195,22 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumDef(ModuleParser::EnumDefConte
 void
 lyric_parser::internal::ModuleDefenumOps::enterEnumCase(ModuleParser::EnumCaseContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefenumOps::enterEnumCase");
 }
 
 void
 lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
-    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    tempo_tracing::ExitScope scope;
+
+    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     // create the case node
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
+    ArchetypeNode *caseNode;
+    TU_ASSIGN_OR_RAISE (caseNode, m_state->appendNode(lyric_schema::kLyricAstCaseClass, location));
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
@@ -238,9 +219,8 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
             if (argSpec == nullptr)
                 continue;
 
-            if (m_state->isEmpty())
-                m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-            auto *argNode = m_state->popNode();
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, m_state->popNode());
 
             if (argSpec->Identifier() != nullptr) {
                 // the keyword label
@@ -249,13 +229,14 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
-                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(kLyricAstIdentifier, label);
-                keywordNode->appendChild(argNode);
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, m_state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
                 argNode = keywordNode;
             }
 
-            caseNode->prependChild(argNode);
+            TU_RAISE_IF_NOT_OK (caseNode->prependChild(argNode));
         }
     }
 
@@ -266,18 +247,13 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
     auto id = ctx->symbolIdentifier()->getText();
     auto access = parse_access_type(id);
 
-    caseNode->putAttr(kLyricAstIdentifier, id);
-    caseNode->putAttrOrThrow(kLyricAstAccessType, access);
+    TU_RAISE_IF_NOT_OK (caseNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (caseNode->putAttr(kLyricAstAccessType, access));
 
-    // if ancestor node is not a kDefEnum, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *defenumNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(defenumNode, lyric_schema::kLyricAstDefEnumClass);
+    ArchetypeNode *defenumNode;
+    TU_ASSIGN_OR_RAISE (defenumNode, m_state->peekNode(lyric_schema::kLyricAstDefEnumClass));
 
-    defenumNode->appendChild(caseNode);
-
-    scopeManager->popSpan();
+    TU_RAISE_IF_NOT_OK (defenumNode->appendChild(caseNode));
 
     // pop the top of the symbol stack and verify that the identifier matches
     m_state->popSymbolAndCheck(id);
@@ -286,53 +262,46 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
 void
 lyric_parser::internal::ModuleDefenumOps::enterEnumImpl(ModuleParser::EnumImplContext *ctx)
 {
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefenumOps::enterEnumImpl");
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *implNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImplClass, location);
-    m_state->pushNode(implNode);
+    ArchetypeNode *implNode;
+    TU_ASSIGN_OR_RAISE (implNode, m_state->appendNode(lyric_schema::kLyricAstImplClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(implNode));
 
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
-    span->putTag(kLyricParserLineNumber, location.lineNumber);
-    span->putTag(kLyricParserColumnNumber, location.columnNumber);
-    span->putTag(kLyricParserFileOffset, location.fileOffset);
+    scope.putTag(kLyricParserLineNumber, location.lineNumber);
+    scope.putTag(kLyricParserColumnNumber, location.columnNumber);
+    scope.putTag(kLyricParserFileOffset, location.fileOffset);
 }
 
 void
 lyric_parser::internal::ModuleDefenumOps::exitEnumImpl(ModuleParser::EnumImplContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
+    tempo_tracing::ExitScope scope;
 
     // the impl type
     auto *implTypeNode = make_Type_node(m_state, ctx->assignableType());
 
     // pop impl off the stack
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *implNode = m_state->popNode();
-    m_state->checkNodeOrThrow(implNode, lyric_schema::kLyricAstImplClass);
+    ArchetypeNode *implNode;
+    TU_ASSIGN_OR_RAISE (implNode, m_state->popNode(lyric_schema::kLyricAstImplClass));
 
     // set the impl type
-    implNode->putAttr(kLyricAstTypeOffset, implTypeNode);
+    TU_RAISE_IF_NOT_OK (implNode->putAttr(kLyricAstTypeOffset, implTypeNode));
 
-    // if ancestor node is not a kDefEnum, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *defenumNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(defenumNode, lyric_schema::kLyricAstDefEnumClass);
+    ArchetypeNode *defenumNode;
+    TU_ASSIGN_OR_RAISE (defenumNode, m_state->peekNode(lyric_schema::kLyricAstDefEnumClass));
 
-    defenumNode->appendChild(implNode);
-
-    scopeManager->popSpan();
+    TU_RAISE_IF_NOT_OK (defenumNode->appendChild(implNode));
 }
 
 void
 lyric_parser::internal::ModuleDefenumOps::exitDefenumStatement(ModuleParser::DefenumStatementContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
-    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    tempo_tracing::ExitScope scope;
+
+    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
     // the enum name
     auto id = ctx->symbolIdentifier()->getText();
@@ -340,16 +309,11 @@ lyric_parser::internal::ModuleDefenumOps::exitDefenumStatement(ModuleParser::Def
     // the enum access level
     auto access = parse_access_type(id);
 
-    // if ancestor node is not a kDefEnum, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *defenumNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(defenumNode, lyric_schema::kLyricAstDefEnumClass);
+    ArchetypeNode *defenumNode;
+    TU_ASSIGN_OR_RAISE (defenumNode, m_state->peekNode(lyric_schema::kLyricAstDefEnumClass));
 
-    defenumNode->putAttr(kLyricAstIdentifier, id);
-    defenumNode->putAttrOrThrow(kLyricAstAccessType, access);
-
-    scopeManager->popSpan();
+    TU_RAISE_IF_NOT_OK (defenumNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (defenumNode->putAttr(kLyricAstAccessType, access));
 
     // pop the top of the symbol stack and verify that the identifier matches
     m_state->popSymbolAndCheck(id);

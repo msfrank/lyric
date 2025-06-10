@@ -6,14 +6,15 @@
 #include <tempo_test/status_matchers.h>
 #include <tempo_utils/logging.h>
 
-TEST(ParseValStatement, ParseTypedVal)
-{
-    lyric_parser::LyricParser parser({});
-    auto recorder = tempo_tracing::TraceRecorder::create();
+#include "base_parser_fixture.h"
 
-    auto parseResult = parser.parseModule(R"(
+class ParseValStatement : public BaseParserFixture {};
+
+TEST_F(ParseValStatement, ParseTypedVal)
+{
+    auto parseResult = parseModule(R"(
         val x: Int = 1
-    )", {}, recorder);
+    )");
 
     ASSERT_TRUE(parseResult.isResult());
     auto archetype = parseResult.getResult();

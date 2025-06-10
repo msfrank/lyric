@@ -14,6 +14,25 @@ namespace lyric_parser::internal {
 
     ParseLocation get_token_location(const antlr4::Token *token);
 
+    class SemanticException : public std::exception {
+    public:
+        SemanticException(const antlr4::Token *token, std::string_view message);
+        const char *what() const noexcept override;
+    private:
+        ParseLocation m_location;
+        std::string m_message;
+    };
+
+    void throw_semantic_exception(const antlr4::Token *token, std::string_view message);
+
+    template<typename ...Args>
+    void throw_semantic_exception(const antlr4::Token *token, fmt::string_view messageFmt, Args... messageArgs)
+    {
+        auto message = fmt::vformat(messageFmt, fmt::make_format_args(messageArgs...));
+        throw_semantic_exception(token, message);
+    }
+
+
     ArchetypeNode *make_SType_node(ArchetypeState *state, ModuleParser::SimpleTypeContext *ctx);
     ArchetypeNode *make_PType_node(ArchetypeState *state, ModuleParser::ParametricTypeContext *ctx);
     ArchetypeNode *make_UType_node(ArchetypeState *state, ModuleParser::UnionTypeContext *ctx);

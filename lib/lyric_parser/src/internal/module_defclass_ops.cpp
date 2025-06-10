@@ -7,6 +7,8 @@
 #include <lyric_parser/parser_attrs.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
+#include <tempo_tracing/enter_scope.h>
+#include <tempo_tracing/exit_scope.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_parser::internal::ModuleDefclassOps::ModuleDefclassOps(ArchetypeState *state)
@@ -18,16 +20,17 @@ lyric_parser::internal::ModuleDefclassOps::ModuleDefclassOps(ArchetypeState *sta
 void
 lyric_parser::internal::ModuleDefclassOps::enterDefclassStatement(ModuleParser::DefclassStatementContext *ctx)
 {
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefclassOps::enterDefclassStatement");
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *defclassNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClassClass, location);
-    m_state->pushNode(defclassNode);
+    ArchetypeNode *defclassNode;
+    TU_ASSIGN_OR_RAISE (defclassNode, m_state->appendNode(lyric_schema::kLyricAstDefClassClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(defclassNode));
 
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
-    span->putTag(kLyricParserLineNumber, location.lineNumber);
-    span->putTag(kLyricParserColumnNumber, location.columnNumber);
-    span->putTag(kLyricParserFileOffset, location.fileOffset);
+    scope.putTag(kLyricParserLineNumber, location.lineNumber);
+    scope.putTag(kLyricParserColumnNumber, location.columnNumber);
+    scope.putTag(kLyricParserFileOffset, location.fileOffset);
 }
 
 void
@@ -39,8 +42,9 @@ lyric_parser::internal::ModuleDefclassOps::exitClassSuper(ModuleParser::ClassSup
     // the class super type
     auto *superTypeNode = make_Type_node(m_state, ctx->assignableType());
 
-    auto *superNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSuperClass, location);
-    superNode->putAttr(kLyricAstTypeOffset, superTypeNode);
+    ArchetypeNode *superNode;
+    TU_ASSIGN_OR_RAISE (superNode, m_state->appendNode(lyric_schema::kLyricAstSuperClass, location));
+    TU_RAISE_IF_NOT_OK (superNode->putAttr(kLyricAstTypeOffset, superTypeNode));
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
@@ -49,9 +53,8 @@ lyric_parser::internal::ModuleDefclassOps::exitClassSuper(ModuleParser::ClassSup
             if (argSpec == nullptr)
                 continue;
 
-            if (m_state->isEmpty())
-                m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-            auto *argNode = m_state->popNode();
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, m_state->popNode());
 
             if (argSpec->Identifier() != nullptr) {
                 auto label = argSpec->Identifier()->getText();
@@ -59,33 +62,34 @@ lyric_parser::internal::ModuleDefclassOps::exitClassSuper(ModuleParser::ClassSup
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
-                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(kLyricAstIdentifier, label);
-                keywordNode->appendChild(argNode);
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, m_state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
                 argNode = keywordNode;
             }
 
-            superNode->prependChild(argNode);
+            TU_RAISE_IF_NOT_OK (superNode->prependChild(argNode));
         }
     }
 
-    m_state->pushNode(superNode);
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(superNode));
 }
 
 void
 lyric_parser::internal::ModuleDefclassOps::enterClassInit(ModuleParser::ClassInitContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefclassOps::enterClassInit");
+
     m_state->pushSymbol("$ctor");
 }
 
 void
 lyric_parser::internal::ModuleDefclassOps::exitClassInit(ModuleParser::ClassInitContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
-    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    tempo_tracing::ExitScope scope;
+
+    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -93,53 +97,40 @@ lyric_parser::internal::ModuleDefclassOps::exitClassInit(ModuleParser::ClassInit
     // if init statement has a block, then block is now on top of the stack
     ArchetypeNode *blockNode = nullptr;
     if (ctx->block()) {
-        // if stack is empty, then mark source as incomplete
-        if (m_state->isEmpty())
-            m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-        blockNode = m_state->popNode();
-        m_state->checkNodeOrThrow(blockNode, lyric_schema::kLyricAstBlockClass);
+        TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode(lyric_schema::kLyricAstBlockClass));
     }
 
     // if init statement has superclass, then super is now on top of the stack
     ArchetypeNode *superNode = nullptr;
     if (ctx->classSuper()) {
-        // if stack is empty, then mark source as incomplete
-        if (m_state->isEmpty())
-            m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-        superNode = m_state->popNode();
-        m_state->checkNodeOrThrow(superNode, lyric_schema::kLyricAstSuperClass);
+        TU_ASSIGN_OR_RAISE (superNode, m_state->popNode(lyric_schema::kLyricAstSuperClass));
     }
 
     // the parameter list
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *packNode = m_state->popNode();
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, m_state->popNode());
 
     // create the init node
-    auto *initNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstInitClass, location);
-    initNode->appendChild(packNode);
+    ArchetypeNode *initNode;
+    TU_ASSIGN_OR_RAISE (initNode, m_state->appendNode(lyric_schema::kLyricAstInitClass, location));
+    TU_RAISE_IF_NOT_OK (initNode->appendChild(packNode));
 
     // if super node is not specified then synthesize an empty node
     if (superNode == nullptr) {
-        superNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstSuperClass, {});
+        TU_ASSIGN_OR_RAISE (superNode, m_state->appendNode(lyric_schema::kLyricAstSuperClass, {}));
     }
-    initNode->appendChild(superNode);
+    TU_RAISE_IF_NOT_OK (initNode->appendChild(superNode));
 
     // if block node is not specified then synthesize an empty node
     if (blockNode == nullptr) {
-        blockNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstBlockClass, {});
+        TU_ASSIGN_OR_RAISE (blockNode, m_state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
     }
-    initNode->appendChild(blockNode);
+    TU_RAISE_IF_NOT_OK (initNode->appendChild(blockNode));
 
-    // if ancestor node is not a kDefClass, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *defclassNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(defclassNode, lyric_schema::kLyricAstDefClassClass);
+    ArchetypeNode *defclassNode;
+    TU_ASSIGN_OR_RAISE (defclassNode, m_state->peekNode(lyric_schema::kLyricAstDefClassClass));
 
-    defclassNode->appendChild(initNode);
-
-    scopeManager->popSpan();
+    TU_RAISE_IF_NOT_OK (defclassNode->appendChild(initNode));
 
     // pop the top of the symbol stack and verify that the identifier matches
     m_state->popSymbolAndCheck("$ctor");
@@ -148,16 +139,15 @@ lyric_parser::internal::ModuleDefclassOps::exitClassInit(ModuleParser::ClassInit
 void
 lyric_parser::internal::ModuleDefclassOps::enterClassVal(ModuleParser::ClassValContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefclassOps::enterClassVal");
 }
 
 void
 lyric_parser::internal::ModuleDefclassOps::exitClassVal(ModuleParser::ClassValContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
-    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    tempo_tracing::ExitScope scope;
+
+    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
     // member name
     auto id = ctx->symbolIdentifier()->getText();
@@ -171,29 +161,23 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVal(ModuleParser::ClassValCo
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *valNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstValClass, location);
-    valNode->putAttr(kLyricAstIdentifier, id);
-    valNode->putAttrOrThrow(kLyricAstAccessType, access);
-    valNode->putAttr(kLyricAstTypeOffset, memberTypeNode);
+    ArchetypeNode *valNode;
+    TU_ASSIGN_OR_RAISE (valNode, m_state->appendNode(lyric_schema::kLyricAstValClass, location));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
     if (ctx->defaultInitializer() != nullptr) {
-        // if stack is empty, then mark source as incomplete
-        if (m_state->isEmpty())
-            m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-        auto *defaultNode = m_state->popNode();
-        valNode->appendChild(defaultNode);
+        ArchetypeNode *defaultNode;
+        TU_ASSIGN_OR_RAISE (defaultNode, m_state->popNode());
+        TU_RAISE_IF_NOT_OK (valNode->appendChild(defaultNode));
     }
 
-    // if ancestor node is not a kDefClass, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *defclassNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(defclassNode, lyric_schema::kLyricAstDefClassClass);
+    ArchetypeNode *defclassNode;
+    TU_ASSIGN_OR_RAISE (defclassNode, m_state->peekNode(lyric_schema::kLyricAstDefClassClass));
 
-    defclassNode->appendChild(valNode);
-
-    scopeManager->popSpan();
+    TU_RAISE_IF_NOT_OK (defclassNode->appendChild(valNode));
 
     // pop the top of the symbol stack and verify that the identifier matches
     m_state->popSymbolAndCheck(id);
@@ -202,16 +186,15 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVal(ModuleParser::ClassValCo
 void
 lyric_parser::internal::ModuleDefclassOps::enterClassVar(ModuleParser::ClassVarContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefclassOps::enterClassVar");
 }
 
 void
 lyric_parser::internal::ModuleDefclassOps::exitClassVar(ModuleParser::ClassVarContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
-    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    tempo_tracing::ExitScope scope;
+
+    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
     // member name
     auto id = ctx->symbolIdentifier()->getText();
@@ -225,29 +208,23 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVar(ModuleParser::ClassVarCo
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *varNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstVarClass, location);
-    varNode->putAttr(kLyricAstIdentifier, id);
-    varNode->putAttrOrThrow(kLyricAstAccessType, access);
-    varNode->putAttr(kLyricAstTypeOffset, memberTypeNode);
+    ArchetypeNode *varNode;
+    TU_ASSIGN_OR_RAISE (varNode, m_state->appendNode(lyric_schema::kLyricAstVarClass, location));
+    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
     if (ctx->defaultInitializer() != nullptr) {
-        // if stack is empty, then mark source as incomplete
-        if (m_state->isEmpty())
-            m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-        auto *defaultNode = m_state->popNode();
-        varNode->appendChild(defaultNode);
+        ArchetypeNode *defaultNode;
+        TU_ASSIGN_OR_RAISE (defaultNode, m_state->popNode());
+        TU_RAISE_IF_NOT_OK (varNode->appendChild(defaultNode));
     }
 
-    // if ancestor node is not a kDefClass, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *defclassNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(defclassNode, lyric_schema::kLyricAstDefClassClass);
+    ArchetypeNode *defclassNode;
+    TU_ASSIGN_OR_RAISE (defclassNode, m_state->peekNode(lyric_schema::kLyricAstDefClassClass));
 
-    defclassNode->appendChild(varNode);
-
-    scopeManager->popSpan();
+    TU_RAISE_IF_NOT_OK (defclassNode->appendChild(varNode));
 
     // pop the top of the symbol stack and verify that the identifier matches
     m_state->popSymbolAndCheck(id);
@@ -256,70 +233,63 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVar(ModuleParser::ClassVarCo
 void
 lyric_parser::internal::ModuleDefclassOps::enterClassDef(ModuleParser::ClassDefContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefclassOps::enterClassDef");
 }
 
 void
 lyric_parser::internal::ModuleDefclassOps::exitClassDef(ModuleParser::ClassDefContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
-    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    tempo_tracing::ExitScope scope;
 
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *blockNode = m_state->popNode();
+    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode());
 
     // the parameter list
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *packNode = m_state->popNode();
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, m_state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *defNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstDefClass, location);
-    span->putTag(kLyricParserLineNumber, location.lineNumber);
-    span->putTag(kLyricParserColumnNumber, location.columnNumber);
-    span->putTag(kLyricParserFileOffset, location.fileOffset);
+    ArchetypeNode *defNode;
+    TU_ASSIGN_OR_RAISE (defNode, m_state->appendNode(lyric_schema::kLyricAstDefClass, location));
+    scope.putTag(kLyricParserLineNumber, location.lineNumber);
+    scope.putTag(kLyricParserColumnNumber, location.columnNumber);
+    scope.putTag(kLyricParserFileOffset, location.fileOffset);
 
     // the method name
     auto id = ctx->symbolIdentifier()->getText();
-    defNode->putAttr(kLyricAstIdentifier, id);
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIdentifier, id));
 
     // the visibility
     auto access = parse_access_type(id);
-    defNode->putAttrOrThrow(kLyricAstAccessType, access);
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstAccessType, access));
 
     // the return type
     if (ctx->returnSpec()) {
         auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
-        defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
+        TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
     } else {
-        auto *returnTypeNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstXTypeClass, location);
-        defNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
+        ArchetypeNode *returnTypeNode;
+        TU_ASSIGN_OR_RAISE (returnTypeNode, m_state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
+        TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
     }
 
     // generic information
     if (ctx->placeholderSpec()) {
         auto *genericNode = make_Generic_node(m_state, ctx->placeholderSpec(), ctx->constraintSpec());
-        defNode->putAttr(kLyricAstGenericOffset, genericNode);
+        TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstGenericOffset, genericNode));
     }
 
-    defNode->appendChild(packNode);
-    defNode->appendChild(blockNode);
+    TU_RAISE_IF_NOT_OK (defNode->appendChild(packNode));
+    TU_RAISE_IF_NOT_OK (defNode->appendChild(blockNode));
 
-    // if ancestor node is not a kDefClass, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *defclassNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(defclassNode, lyric_schema::kLyricAstDefClassClass);
+    ArchetypeNode *defclassNode;
+    TU_ASSIGN_OR_RAISE (defclassNode, m_state->peekNode(lyric_schema::kLyricAstDefClassClass));
 
-    defclassNode->appendChild(defNode);
-
-    scopeManager->popSpan();
+    TU_RAISE_IF_NOT_OK (defclassNode->appendChild(defNode));
 
     // pop the top of the symbol stack and verify that the identifier matches
     m_state->popSymbolAndCheck(id);
@@ -328,59 +298,49 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDef(ModuleParser::ClassDefCo
 void
 lyric_parser::internal::ModuleDefclassOps::enterClassImpl(ModuleParser::ClassImplContext *ctx)
 {
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefclassOps::enterClassImpl");
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *implNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstImplClass, location);
-    m_state->pushNode(implNode);
+    ArchetypeNode *implNode;
+    TU_ASSIGN_OR_RAISE (implNode, m_state->appendNode(lyric_schema::kLyricAstImplClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(implNode));
 
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
-    span->putTag(kLyricParserLineNumber, location.lineNumber);
-    span->putTag(kLyricParserColumnNumber, location.columnNumber);
-    span->putTag(kLyricParserFileOffset, location.fileOffset);
+    scope.putTag(kLyricParserLineNumber, location.lineNumber);
+    scope.putTag(kLyricParserColumnNumber, location.columnNumber);
+    scope.putTag(kLyricParserFileOffset, location.fileOffset);
 }
 
 void
 lyric_parser::internal::ModuleDefclassOps::exitClassImpl(ModuleParser::ClassImplContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
+    tempo_tracing::ExitScope scope;
 
     // the impl type
     auto *implTypeNode = make_Type_node(m_state, ctx->assignableType());
 
     // pop impl off the stack
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *implNode = m_state->popNode();
-    m_state->checkNodeOrThrow(implNode, lyric_schema::kLyricAstImplClass);
+    ArchetypeNode *implNode;
+    TU_ASSIGN_OR_RAISE (implNode, m_state->popNode(lyric_schema::kLyricAstImplClass));
 
     // set the impl type
-    implNode->putAttr(kLyricAstTypeOffset, implTypeNode);
+    TU_RAISE_IF_NOT_OK (implNode->putAttr(kLyricAstTypeOffset, implTypeNode));
 
-    // if ancestor node is not a kDefClass, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *defclassNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(defclassNode, lyric_schema::kLyricAstDefClassClass);
+    ArchetypeNode *defclassNode;
+    TU_ASSIGN_OR_RAISE (defclassNode, m_state->peekNode(lyric_schema::kLyricAstDefClassClass));
 
-    defclassNode->appendChild(implNode);
-
-    scopeManager->popSpan();
+    TU_RAISE_IF_NOT_OK (defclassNode->appendChild(implNode));
 }
 
 void
 lyric_parser::internal::ModuleDefclassOps::exitDefclassStatement(ModuleParser::DefclassStatementContext *ctx)
 {
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
-    span->putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    tempo_tracing::ExitScope scope;
 
-    // if ancestor node is not a kDefClass, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *defclassNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(defclassNode, lyric_schema::kLyricAstDefClassClass);
+    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+
+    ArchetypeNode *defclassNode;
+    TU_ASSIGN_OR_RAISE (defclassNode, m_state->peekNode(lyric_schema::kLyricAstDefClassClass));
 
     // the class name
     auto id = ctx->symbolIdentifier()->getText();
@@ -398,18 +358,16 @@ lyric_parser::internal::ModuleDefclassOps::exitDefclassStatement(ModuleParser::D
         }
     }
 
-    defclassNode->putAttr(kLyricAstIdentifier, id);
-    defclassNode->putAttrOrThrow(kLyricAstAccessType, access);
-    defclassNode->putAttrOrThrow(kLyricAstDeriveType, derive);
+    TU_RAISE_IF_NOT_OK (defclassNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (defclassNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (defclassNode->putAttr(kLyricAstDeriveType, derive));
 
     // generic information
     if (ctx->genericClass()) {
         auto *genericClass = ctx->genericClass();
         auto *genericNode = make_Generic_node(m_state, genericClass->placeholderSpec(), genericClass->constraintSpec());
-        defclassNode->putAttr(kLyricAstGenericOffset, genericNode);
+        TU_RAISE_IF_NOT_OK (defclassNode->putAttr(kLyricAstGenericOffset, genericNode));
     }
-
-    scopeManager->popSpan();
 
     // pop the top of the symbol stack and verify that the identifier matches
     m_state->popSymbolAndCheck(id);

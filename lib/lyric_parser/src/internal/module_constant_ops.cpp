@@ -24,8 +24,9 @@ lyric_parser::internal::ModuleConstantOps::exitTrueLiteral(ModuleParser::TrueLit
 {
     auto *token = ctx->TrueKeyword()->getSymbol();
     auto location = get_token_location(token);
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstTrueClass, location);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstTrueClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
 void
@@ -33,8 +34,9 @@ lyric_parser::internal::ModuleConstantOps::exitFalseLiteral(ModuleParser::FalseL
 {
     auto *token = ctx->FalseKeyword()->getSymbol();
     auto location = get_token_location(token);
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstFalseClass, location);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstFalseClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
 void
@@ -42,8 +44,9 @@ lyric_parser::internal::ModuleConstantOps::exitUndefLiteral(ModuleParser::UndefL
 {
     auto *token = ctx->UndefKeyword()->getSymbol();
     auto location = get_token_location(token);
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUndefClass, location);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstUndefClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
 void
@@ -51,8 +54,9 @@ lyric_parser::internal::ModuleConstantOps::exitNilLiteral(ModuleParser::NilLiter
 {
     auto *token = ctx->NilKeyword()->getSymbol();
     auto location = get_token_location(token);
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNilClass, location);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstNilClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
 void
@@ -62,13 +66,15 @@ lyric_parser::internal::ModuleConstantOps::exitDecimalInteger(ModuleParser::Deci
     auto location = get_token_location(token);
 
     auto value = token->getText();
-    if (value.empty())
-        m_state->throwSyntaxError(location, "invalid decimal integer");
+    if (value.empty()) {
+        throw_semantic_exception(token, "invalid decimal integer ''");
+    }
 
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIntegerClass, location);
-    literalNode->putAttr(kLyricAstLiteralValue, value);
-    literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstIntegerClass, location));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
 void
@@ -78,17 +84,22 @@ lyric_parser::internal::ModuleConstantOps::exitHexInteger(ModuleParser::HexInteg
     auto location = get_token_location(token);
 
     auto src = token->getText();
-    if (src.empty())
-        m_state->throwSyntaxError(location, "invalid hex integer");
+    if (src.empty()) {
+        throw_semantic_exception(token, "invalid hex integer ''");
+        TU_UNREACHABLE();
+    }
 
     auto value = std::string(src.cbegin() + 2, src.cend()); // strip the 0x, 0X prefix
-    if (value.empty())
-        m_state->throwSyntaxError(location, "invalid hex integer");
+    if (value.empty()) {
+        throw_semantic_exception(token, "invalid hex integer '{}'", src);
+        TU_UNREACHABLE();
+    }
 
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIntegerClass, location);
-    literalNode->putAttr(kLyricAstLiteralValue, value);
-    literalNode->putAttr(kLyricAstBaseType, BaseType::Hex);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstIntegerClass, location));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Hex));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
 void
@@ -98,17 +109,22 @@ lyric_parser::internal::ModuleConstantOps::exitOctalInteger(ModuleParser::OctalI
     auto location = get_token_location(token);
 
     auto src = token->getText();
-    if (src.empty())
-        m_state->throwSyntaxError(location, "invalid octal integer");
+    if (src.empty()) {
+        throw_semantic_exception(token, "invalid octal integer ''");
+        TU_UNREACHABLE();
+    }
 
     auto value = std::string(src.cbegin() + 1, src.cend()); // strip the 0 prefix
-    if (value.empty())
-        m_state->throwSyntaxError(location, "invalid octal integer");
+    if (value.empty()) {
+        throw_semantic_exception(token, "invalid octal integer '{}'", src);
+        TU_UNREACHABLE();
+    }
 
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstIntegerClass, location);
-    literalNode->putAttr(kLyricAstLiteralValue, value);
-    literalNode->putAttr(kLyricAstBaseType, BaseType::Octal);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstIntegerClass, location));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Octal));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
 void
@@ -118,14 +134,17 @@ lyric_parser::internal::ModuleConstantOps::exitDecimalFixedFloat(ModuleParser::D
     auto location = get_token_location(token);
 
     auto value = token->getText();
-    if (value.empty())
-        m_state->throwSyntaxError(location, "invalid decimal fixed float");
+    if (value.empty()) {
+        throw_semantic_exception(token, "invalid decimal fixed float ''");
+        TU_UNREACHABLE();
+    }
 
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstFloatClass, location);
-    literalNode->putAttr(kLyricAstLiteralValue, value);
-    literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal);
-    literalNode->putAttr(kLyricAstNotationType, NotationType::Fixed);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstFloatClass, location));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Fixed));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
 void
@@ -135,14 +154,17 @@ lyric_parser::internal::ModuleConstantOps::exitDecimalScientificFloat(ModulePars
     auto location = get_token_location(token);
 
     auto value = token->getText();
-    if (value.empty())
-        m_state->throwSyntaxError(location, "invalid decimal scientific float");
+    if (value.empty()) {
+        throw_semantic_exception(token, "invalid decimal scientific float ''");
+        TU_UNREACHABLE();
+    }
 
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstFloatClass, location);
-    literalNode->putAttr(kLyricAstLiteralValue, value);
-    literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal);
-    literalNode->putAttr(kLyricAstNotationType, NotationType::Scientific);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstFloatClass, location));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Scientific));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
 void
@@ -152,18 +174,23 @@ lyric_parser::internal::ModuleConstantOps::exitHexFloat(ModuleParser::HexFloatCo
     auto location = get_token_location(token);
 
     auto src = token->getText();
-    if (src.empty())
-        m_state->throwSyntaxError(location, "invalid hex float");
+    if (src.empty()) {
+        throw_semantic_exception(token, "invalid hex float ''");
+        TU_UNREACHABLE();
+    }
 
     auto value = std::string(src.cbegin() + 2, src.cend()); // strip the 0x, 0X prefix
-    if (value.empty())
-        m_state->throwSyntaxError(location, "invalid hex float");
+    if (value.empty()) {
+        throw_semantic_exception(token, "invalid hex float '{}'", src);
+        TU_UNREACHABLE();
+    }
 
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstFloatClass, location);
-    literalNode->putAttr(kLyricAstLiteralValue, value);
-    literalNode->putAttr(kLyricAstBaseType, BaseType::Hex);
-    literalNode->putAttr(kLyricAstNotationType, NotationType::Fixed);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstFloatClass, location));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Hex));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Fixed));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
 void
@@ -173,16 +200,21 @@ lyric_parser::internal::ModuleConstantOps::exitCharLiteral(ModuleParser::CharLit
     auto location = get_token_location(token);
 
     auto src = token->getText();
-    if (src.empty())
-        m_state->throwSyntaxError(location, "invalid char literal");
+    if (src.empty()) {
+        throw_semantic_exception(token, "invalid char literal ''");
+        TU_UNREACHABLE();
+    }
 
     auto value = std::string(src.cbegin() + 1, src.cend() - 1); // remove quotes
-    if (value.empty())
-        m_state->throwSyntaxError(location, "invalid char literal");
+    if (value.empty()) {
+        throw_semantic_exception(token, "invalid char literal ''");
+        TU_UNREACHABLE();
+    }
 
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCharClass, location);
-    literalNode->putAttr(kLyricAstLiteralValue, value);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstCharClass, location));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
 void
@@ -192,14 +224,17 @@ lyric_parser::internal::ModuleConstantOps::exitStringLiteral(ModuleParser::Strin
     auto location = get_token_location(token);
 
     auto src = token->getText();
-    if (src.empty())
-        m_state->throwSyntaxError(location, "invalid string literal");
+    if (src.empty()) {
+        throw_semantic_exception(token, "invalid string literal ''");
+        TU_UNREACHABLE();
+    }
 
     auto value = std::string(src.cbegin() + 1, src.cend() - 1); // remove quotes
 
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstStringClass, location);
-    literalNode->putAttr(kLyricAstLiteralValue, value);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstStringClass, location));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
 void
@@ -209,12 +244,15 @@ lyric_parser::internal::ModuleConstantOps::exitUrlLiteral(ModuleParser::UrlLiter
     auto location = get_token_location(token);
 
     auto src = token->getText();
-    if (src.empty())
-        m_state->throwSyntaxError(location, "invalid url literal");
+    if (src.empty()) {
+        throw_semantic_exception(token, "invalid url literal ''");
+        TU_UNREACHABLE();
+    }
 
     auto value = std::string(src.cbegin() + 1, src.cend() - 1); // remove quotes
 
-    auto *literalNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUrlClass, location);
-    literalNode->putAttr(kLyricAstLiteralValue, value);
-    m_state->pushNode(literalNode);
+    ArchetypeNode *literalNode;
+    TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstUrlClass, location));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }

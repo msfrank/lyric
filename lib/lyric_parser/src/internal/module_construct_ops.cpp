@@ -17,23 +17,20 @@ lyric_parser::internal::ModuleConstructOps::ModuleConstructOps(ArchetypeState *s
 void
 lyric_parser::internal::ModuleConstructOps::exitPairExpression(ModuleParser::PairExpressionContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *p2 = m_state->popNode();
+    ArchetypeNode *p2;
+    TU_ASSIGN_OR_RAISE (p2, m_state->popNode());
 
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *p1 = m_state->popNode();
+    ArchetypeNode *p1;
+    TU_ASSIGN_OR_RAISE (p1, m_state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *pairNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstPairClass, location);
-    pairNode->appendChild(p1);
-    pairNode->appendChild(p2);
-    m_state->pushNode(pairNode);
+    ArchetypeNode *pairNode;
+    TU_ASSIGN_OR_RAISE (pairNode, m_state->appendNode(lyric_schema::kLyricAstPairClass, location));
+    TU_RAISE_IF_NOT_OK (pairNode->appendChild(p1));
+    TU_RAISE_IF_NOT_OK (pairNode->appendChild(p2));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(pairNode));
 }
 
 void
@@ -44,8 +41,9 @@ lyric_parser::internal::ModuleConstructOps::exitDerefNew(ModuleParser::DerefNewC
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *newNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNewClass, location);
-    newNode->putAttr(kLyricAstTypeOffset, typeNode);
+    ArchetypeNode *newNode;
+    TU_ASSIGN_OR_RAISE (newNode, m_state->appendNode(lyric_schema::kLyricAstNewClass, location));
+    TU_RAISE_IF_NOT_OK (newNode->putAttr(kLyricAstTypeOffset, typeNode));
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
@@ -54,9 +52,8 @@ lyric_parser::internal::ModuleConstructOps::exitDerefNew(ModuleParser::DerefNewC
             if (argSpec == nullptr)
                 continue;
 
-            if (m_state->isEmpty())
-                m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-            auto *argNode = m_state->popNode();
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, m_state->popNode());
 
             if (argSpec->Identifier() != nullptr) {
                 auto label = argSpec->Identifier()->getText();
@@ -64,30 +61,29 @@ lyric_parser::internal::ModuleConstructOps::exitDerefNew(ModuleParser::DerefNewC
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
-                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(kLyricAstIdentifier, label);
-                keywordNode->appendChild(argNode);
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, m_state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
                 argNode = keywordNode;
             }
 
-            newNode->prependChild(argNode);
+            TU_RAISE_IF_NOT_OK (newNode->prependChild(argNode));
         }
     }
 
-    m_state->pushNode(newNode);
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(newNode));
 }
 
 void
 lyric_parser::internal::ModuleConstructOps::exitLambdaExpression(ModuleParser::LambdaExpressionContext *ctx)
 {
     // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *blockNode = m_state->popNode();
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode(lyric_schema::kLyricAstBlockClass));
 
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *packNode = m_state->popNode();
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, m_state->popNode(lyric_schema::kLyricAstPackClass));
 
     // the lambda return type
     auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
@@ -95,11 +91,12 @@ lyric_parser::internal::ModuleConstructOps::exitLambdaExpression(ModuleParser::L
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *lambdaNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstLambdaClass, location);
-    lambdaNode->putAttr(kLyricAstTypeOffset, returnTypeNode);
-    lambdaNode->appendChild(packNode);
-    lambdaNode->appendChild(blockNode);
-    m_state->pushNode(lambdaNode);
+    ArchetypeNode *lambdaNode;
+    TU_ASSIGN_OR_RAISE (lambdaNode, m_state->appendNode(lyric_schema::kLyricAstLambdaClass, location));
+    TU_RAISE_IF_NOT_OK (lambdaNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
+    TU_RAISE_IF_NOT_OK (lambdaNode->appendChild(packNode));
+    TU_RAISE_IF_NOT_OK (lambdaNode->appendChild(blockNode));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(lambdaNode));
 }
 
 void
@@ -116,9 +113,10 @@ lyric_parser::internal::ModuleConstructOps::exitLambdaFromExpression(ModuleParse
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *lambdaFromNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstLambdaFromClass, location);
-    lambdaFromNode->putAttr(kLyricAstSymbolPath, symbolPath);
-    m_state->pushNode(lambdaFromNode);
+    ArchetypeNode *lambdaFromNode;
+    TU_ASSIGN_OR_RAISE (lambdaFromNode, m_state->appendNode(lyric_schema::kLyricAstLambdaFromClass, location));
+    TU_RAISE_IF_NOT_OK (lambdaFromNode->putAttr(kLyricAstSymbolPath, symbolPath));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(lambdaFromNode));
 }
 
 void
@@ -129,8 +127,9 @@ lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerTypedNew(Modul
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *newNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNewClass, location);
-    newNode->putAttr(kLyricAstTypeOffset, typeNode);
+    ArchetypeNode *newNode;
+    TU_ASSIGN_OR_RAISE (newNode, m_state->appendNode(lyric_schema::kLyricAstNewClass, location));
+    TU_RAISE_IF_NOT_OK (newNode->putAttr(kLyricAstTypeOffset, typeNode));
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
@@ -139,9 +138,8 @@ lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerTypedNew(Modul
             if (argSpec == nullptr)
                 continue;
 
-            if (m_state->isEmpty())
-                m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-            auto *argNode = m_state->popNode();
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, m_state->popNode());
 
             if (argSpec->Identifier() != nullptr) {
                 auto label = argSpec->Identifier()->getText();
@@ -149,17 +147,18 @@ lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerTypedNew(Modul
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
-                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(kLyricAstIdentifier, label);
-                keywordNode->appendChild(argNode);
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, m_state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
                 argNode = keywordNode;
             }
 
-            newNode->prependChild(argNode);
+            TU_RAISE_IF_NOT_OK (newNode->prependChild(argNode));
         }
     }
 
-    m_state->pushNode(newNode);
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(newNode));
 }
 
 void
@@ -168,7 +167,8 @@ lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerNew(ModulePars
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *newNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstNewClass, location);
+    ArchetypeNode *newNode;
+    TU_ASSIGN_OR_RAISE (newNode, m_state->appendNode(lyric_schema::kLyricAstNewClass, location));
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
@@ -177,9 +177,8 @@ lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerNew(ModulePars
             if (argSpec == nullptr)
                 continue;
 
-            if (m_state->isEmpty())
-                m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-            auto *argNode = m_state->popNode();
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, m_state->popNode());
 
             if (argSpec->Identifier() != nullptr) {
                 auto label = argSpec->Identifier()->getText();
@@ -187,15 +186,16 @@ lyric_parser::internal::ModuleConstructOps::exitDefaultInitializerNew(ModulePars
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
-                auto *keywordNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstKeywordClass, location);
-                keywordNode->putAttr(kLyricAstIdentifier, label);
-                keywordNode->appendChild(argNode);
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, m_state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
                 argNode = keywordNode;
             }
 
-            newNode->prependChild(argNode);
+            TU_RAISE_IF_NOT_OK (newNode->prependChild(argNode));
         }
     }
 
-    m_state->pushNode(newNode);
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(newNode));
 }

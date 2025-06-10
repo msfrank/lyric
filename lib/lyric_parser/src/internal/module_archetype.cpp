@@ -24,9 +24,13 @@
 #include <lyric_parser/internal/module_match_ops.h>
 #include <lyric_parser/internal/module_parameter_ops.h>
 #include <lyric_parser/internal/parser_utils.h>
+#include <tempo_tracing/enter_scope.h>
+#include <tempo_tracing/exit_scope.h>
 #include <tempo_tracing/tracing_schema.h>
 
-lyric_parser::internal::ModuleArchetype::ModuleArchetype(ArchetypeState *state)
+lyric_parser::internal::ModuleArchetype::ModuleArchetype(
+    ArchetypeState *state,
+    std::shared_ptr<tempo_tracing::TraceContext> context)
     : ModuleSymbolOps(state),
       ModuleConstantOps(state),
       ModuleLogicalOps(state),
@@ -46,18 +50,11 @@ lyric_parser::internal::ModuleArchetype::ModuleArchetype(ArchetypeState *state)
       ModuleParameterOps(state),
       ModuleExceptionOps(state),
       ModuleMacroOps(state),
-      m_state(state)
+      m_state(state),
+      m_context(std::move(context))
 {
     TU_ASSERT (m_state != nullptr);
-}
-
-lyric_parser::internal::ModuleArchetype::ModuleArchetype(
-    ArchetypeState *state,
-    std::shared_ptr<tempo_tracing::TraceSpan> span)
-    : ModuleArchetype(state)
-{
-    TU_ASSERT (span != nullptr);
-    m_span = std::move(span);
+    TU_ASSERT (m_context != nullptr);
 }
 
 void
@@ -74,15 +71,12 @@ lyric_parser::internal::ModuleArchetype::logErrorOrThrow(
             ParseCondition::kSyntaxError, fullMessage);
     }
 
-    if (m_span != nullptr) {
-        m_span->putTag(tempo_tracing::kOpentracingError, true);
-        auto log = m_span->appendLog(absl::Now(), tempo_tracing::LogSeverity::kError);
-        log->putField(tempo_tracing::kTempoTracingLineNumber, (tu_uint64) lineNr);
-        log->putField(tempo_tracing::kTempoTracingColumnNumber, (tu_uint64) columnNr);
-        log->putField(tempo_tracing::kOpentracingMessage, message);
-    } else {
-        throw tempo_utils::StatusException(m_status);
-    }
+    tempo_tracing::CurrentScope scope;
+    scope.putTag(tempo_tracing::kOpentracingError, true);
+    auto log = scope.appendLog(absl::Now(), tempo_tracing::LogSeverity::kError);
+    log->putField(tempo_tracing::kTempoTracingLineNumber, (tu_uint64) lineNr);
+    log->putField(tempo_tracing::kTempoTracingColumnNumber, (tu_uint64) columnNr);
+    log->putField(tempo_tracing::kOpentracingMessage, message);
 }
 
 bool
@@ -100,8 +94,7 @@ void
 lyric_parser::internal::ModuleArchetype::enterRoot(ModuleParser::RootContext *ctx)
 {
     IGNORE_RULE_IF_HAS_ERROR
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->makeSpan();
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleArchetype::enterRoot");
 }
 
 void
@@ -109,8 +102,9 @@ lyric_parser::internal::ModuleArchetype::enterBlock(ModuleParser::BlockContext *
 {
     IGNORE_RULE_IF_HAS_ERROR
     auto location = get_token_location(ctx->getStart());
-    auto *blockNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstBlockClass, location);
-    m_state->pushNode(blockNode);
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, m_state->appendNode(lyric_schema::kLyricAstBlockClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(blockNode));
 }
 
 void
@@ -118,19 +112,14 @@ lyric_parser::internal::ModuleArchetype::exitForm(ModuleParser::FormContext *ctx
 {
     IGNORE_RULE_IF_HAS_ERROR
 
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *formNode = m_state->popNode();
+    ArchetypeNode *formNode;
+    TU_ASSIGN_OR_RAISE (formNode, m_state->popNode());
 
-    // if ancestor node is not a kBlock, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *blockNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(blockNode, lyric_schema::kLyricAstBlockClass);
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, m_state->peekNode(lyric_schema::kLyricAstBlockClass));
 
     // otherwise append form to the block
-    blockNode->appendChild(formNode);
+    TU_RAISE_IF_NOT_OK (blockNode->appendChild(formNode));
 }
 
 void
@@ -138,26 +127,19 @@ lyric_parser::internal::ModuleArchetype::exitRoot(ModuleParser::RootContext *ctx
 {
     IGNORE_RULE_IF_HAS_ERROR
 
-    auto *scopeManager = m_state->scopeManager();
-    auto span = scopeManager->peekSpan();
+    tempo_tracing::ExitScope scope;
 
-    // if ancestor node is not a kBlock, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *rootNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(rootNode, lyric_schema::kLyricAstBlockClass);
-
-    // pop the kBlock off the stack
-    m_state->popNode();
+    ArchetypeNode *rootNode;
+    TU_ASSIGN_OR_RAISE (rootNode, m_state->popNode(lyric_schema::kLyricAstBlockClass));
 
     // set the root node
     m_state->setRoot(rootNode);
 
-    // at this point m_stack should be empty
+    // at this point node stack should be empty
     if (!m_state->isEmpty())
-        m_state->throwParseInvariant("found extra nodes on the parse stack");
-
-    scopeManager->popSpan();
+        throw tempo_utils::StatusException(
+            ParseStatus::forCondition(ParseCondition::kParseInvariant,
+                "found extra nodes on the parse stack"));
 }
 
 void

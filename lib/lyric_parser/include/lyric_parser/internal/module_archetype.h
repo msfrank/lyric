@@ -52,8 +52,7 @@ namespace lyric_parser::internal {
     {
 
     public:
-        explicit ModuleArchetype(ArchetypeState *state);
-        ModuleArchetype(ArchetypeState *state, std::shared_ptr<tempo_tracing::TraceSpan> span);
+        ModuleArchetype(ArchetypeState *state, std::shared_ptr<tempo_tracing::TraceContext> context);
         virtual ~ModuleArchetype() = default;
 
         void logErrorOrThrow(
@@ -292,7 +291,7 @@ namespace lyric_parser::internal {
 
     private:
         ArchetypeState *m_state;
-        std::shared_ptr<tempo_tracing::TraceSpan> m_span;
+        std::shared_ptr<tempo_tracing::TraceContext> m_context;
         tempo_utils::Status m_status;
     };
 }

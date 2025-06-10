@@ -16,6 +16,26 @@ lyric_parser::internal::get_token_location(const antlr4::Token *token)
         static_cast<tu_int64>(token->getStopIndex() - token->getStartIndex()));
 }
 
+lyric_parser::internal::SemanticException::SemanticException(
+    const antlr4::Token *token,
+    std::string_view message)
+    : m_location(get_token_location(token)),
+      m_message(message)
+{
+}
+
+const char *
+lyric_parser::internal::SemanticException::what() const noexcept
+{
+    return m_message.c_str();
+}
+
+void
+lyric_parser::internal::throw_semantic_exception(const antlr4::Token *token, std::string_view message)
+{
+    throw SemanticException(token, message);
+}
+
 lyric_parser::ArchetypeNode *
 lyric_parser::internal::make_SType_node(
     ArchetypeState *state,
@@ -35,7 +55,8 @@ lyric_parser::internal::make_SType_node(
 
     lyric_common::SymbolPath symbolPath(parts);
 
-    auto *stypeNode = state->appendNodeOrThrow(lyric_schema::kLyricAstSTypeClass, location);
+    ArchetypeNode *stypeNode;
+    TU_ASSIGN_OR_RAISE (stypeNode, state->appendNode(lyric_schema::kLyricAstSTypeClass, location));
     stypeNode->putAttr(kLyricAstSymbolPath, symbolPath);
     return stypeNode;
 }
@@ -60,7 +81,8 @@ lyric_parser::internal::make_PType_node(
 
     lyric_common::SymbolPath symbolPath(parts);
 
-    auto *ptypeNode = state->appendNodeOrThrow(lyric_schema::kLyricAstPTypeClass, location);
+    ArchetypeNode *ptypeNode;
+    TU_ASSIGN_OR_RAISE (ptypeNode, state->appendNode(lyric_schema::kLyricAstPTypeClass, location));
     ptypeNode->putAttr(kLyricAstSymbolPath, symbolPath);
 
     for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
@@ -83,7 +105,8 @@ lyric_parser::internal::make_UType_node(
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *utypeNode = state->appendNodeOrThrow(lyric_schema::kLyricAstUTypeClass, location);
+    ArchetypeNode *utypeNode;
+    TU_ASSIGN_OR_RAISE (utypeNode, state->appendNode(lyric_schema::kLyricAstUTypeClass, location));
 
     for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
         auto *member = ctx->singularType(i);
@@ -96,7 +119,7 @@ lyric_parser::internal::make_UType_node(
         } else if (member->simpleType()) {
             memberNode = make_SType_node(state, member->simpleType());
         } else {
-            state->throwSyntaxError(get_token_location(member->getStart()), "illegal union type member");
+            throw_semantic_exception(member->getStart(), "illegal union type member");
             TU_UNREACHABLE();
         }
 
@@ -115,7 +138,8 @@ lyric_parser::internal::make_IType_node(
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *itypeNode = state->appendNodeOrThrow(lyric_schema::kLyricAstITypeClass, location);
+    ArchetypeNode *itypeNode;
+    TU_ASSIGN_OR_RAISE (itypeNode, state->appendNode(lyric_schema::kLyricAstITypeClass, location));
 
     for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
         auto *member = ctx->singularType(i);
@@ -128,7 +152,7 @@ lyric_parser::internal::make_IType_node(
         } else if (member->simpleType()) {
             memberNode = make_SType_node(state, member->simpleType());
         } else {
-            state->throwSyntaxError(get_token_location(member->getStart()), "illegal intersection type member");
+            throw_semantic_exception(member->getStart(), "illegal intersection type member");
             TU_UNREACHABLE();
         }
 
@@ -149,7 +173,7 @@ lyric_parser::internal::make_SType_or_PType_node(
     } else if (ctx->parametricType()) {
         return make_PType_node(state, ctx->parametricType());
     }
-    state->throwSyntaxError(get_token_location(ctx->getStart()), "illegal assignable type");
+    throw_semantic_exception(ctx->getStart(), "illegal assignable type");
     TU_UNREACHABLE();
 }
 
@@ -168,7 +192,7 @@ lyric_parser::internal::make_Type_node(
     } else if (ctx->unionType()) {
         return make_UType_node(state, ctx->unionType());
     }
-    state->throwSyntaxError(get_token_location(ctx->getStart()), "illegal assignable type");
+    throw_semantic_exception(ctx->getStart(), "illegal assignable type");
     TU_UNREACHABLE();
 }
 
@@ -181,7 +205,8 @@ lyric_parser::internal::make_TypeArguments_node(
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *typeArgumentsNode = state->appendNodeOrThrow(lyric_schema::kLyricAstTypeArgumentsClass, location);
+    ArchetypeNode *typeArgumentsNode;
+    TU_ASSIGN_OR_RAISE (typeArgumentsNode, state->appendNode(lyric_schema::kLyricAstTypeArgumentsClass, location));
 
     for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
         auto *argument = ctx->assignableType(i);
@@ -204,7 +229,8 @@ lyric_parser::internal::make_Generic_node(
     auto *token = pctx->getStart();
     auto location = get_token_location(token);
 
-    auto *genericNode = state->appendNodeOrThrow(lyric_schema::kLyricAstGenericClass, location);
+    ArchetypeNode *genericNode;
+    TU_ASSIGN_OR_RAISE (genericNode, state->appendNode(lyric_schema::kLyricAstGenericClass, location));
 
     absl::flat_hash_map<std::string,ArchetypeNode *> placeholderNodes;
 
@@ -226,14 +252,15 @@ lyric_parser::internal::make_Generic_node(
             id = p->invariantPlaceholder()->Identifier()->getText();
             variance = VarianceType::Invariant;
         } else {
-            state->throwParseInvariant(get_token_location(p->getStart()), "illegal placeholder");
+            throw_semantic_exception(p->getStart(), "illegal placeholder");
             TU_UNREACHABLE();
         }
 
         token = p->getStart();
         location = get_token_location(token);
 
-        auto *placeholderNode = state->appendNodeOrThrow(lyric_schema::kLyricAstPlaceholderClass, location);
+        ArchetypeNode *placeholderNode;
+        TU_ASSIGN_OR_RAISE (placeholderNode, state->appendNode(lyric_schema::kLyricAstPlaceholderClass, location));
         placeholderNode->putAttr(kLyricAstIdentifier, id);
         placeholderNode->putAttr(kLyricAstVarianceType, variance);
         genericNode->appendChild(placeholderNode);
@@ -260,19 +287,20 @@ lyric_parser::internal::make_Generic_node(
                 bound = BoundType::Super;
                 constraintTypeNode = make_Type_node(state, c->lowerTypeBound()->assignableType());
             } else {
-                state->throwParseInvariant(get_token_location(c->getStart()), "illegal constraint");
+                throw_semantic_exception(c->getStart(), "illegal constraint");
                 TU_UNREACHABLE();
             }
 
             token = c->getStart();
             location = get_token_location(token);
 
-            auto *constraintNode = state->appendNodeOrThrow(lyric_schema::kLyricAstConstraintClass, location);
+            ArchetypeNode *constraintNode;
+            TU_ASSIGN_OR_RAISE (constraintNode, state->appendNode(lyric_schema::kLyricAstConstraintClass, location));
             constraintNode->putAttr(kLyricAstBoundType, bound);
             constraintNode->putAttr(kLyricAstTypeOffset, constraintTypeNode);
 
             if (!placeholderNodes.contains(id))
-                state->throwSyntaxError(get_token_location(c->getStop()), "no such placeholder {} for constraint", id);
+                throw_semantic_exception(c->getStop(), "no such placeholder {} for constraint", id);
             auto *placeholderNode = placeholderNodes.at(id);
             placeholderNode->appendChild(constraintNode);
         }

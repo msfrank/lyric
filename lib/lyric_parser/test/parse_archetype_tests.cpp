@@ -5,15 +5,15 @@
 #include <lyric_parser/ast_attrs.h>
 #include <tempo_utils/logging.h>
 
-TEST(ParseArchetype, ParseTrueConstant)
+#include "base_parser_fixture.h"
+
+class ParseArchetype : public BaseParserFixture {};
+
+TEST_F(ParseArchetype, ParseTrueConstant)
 {
-    lyric_parser::LyricParser parser({});
-
-    auto recorder = tempo_tracing::TraceRecorder::create();
-
-    auto parseResult = parser.parseModule(R"(
+    auto parseResult = parseModule(R"(
         true
-    )", {}, recorder);
+    )");
 
     ASSERT_TRUE(parseResult.isResult());
     auto archetype = parseResult.getResult();
@@ -26,32 +26,20 @@ TEST(ParseArchetype, ParseTrueConstant)
     ASSERT_TRUE (child.isClass(lyric_schema::kLyricAstTrueClass));
 }
 
-TEST(ParseArchetype, ParseStringLiteral)
+TEST_F(ParseArchetype, ParseStringLiteral)
 {
-    lyric_parser::LyricParser parser({});
-
-    auto recorder = tempo_tracing::TraceRecorder::create();
-
-    auto parseResult = parser.parseModule(R"(
+    auto parseResult = parseModule(R"(
         "hello world!"
-    )", {}, recorder);
+    )");
 
     ASSERT_TRUE(parseResult.isResult());
-
-    //TU_CONSOLE_ERR << dump_lyric_archetype(parseResult.getResult());
 }
 
-TEST(ParseArchetype, ParseAddIntegers)
+TEST_F(ParseArchetype, ParseAddIntegers)
 {
-    lyric_parser::LyricParser parser({});
-
-    auto recorder = tempo_tracing::TraceRecorder::create();
-
-    auto parseResult = parser.parseModule(R"(
+    auto parseResult = parseModule(R"(
         1 + 0xF2
-    )", {}, recorder);
+    )");
 
     ASSERT_TRUE(parseResult.isResult());
-
-    //TU_CONSOLE_ERR << dump_lyric_archetype(parseResult.getResult());
 }

@@ -14,7 +14,8 @@ BaseParserFixture::SetUp()
 tempo_utils::Result<lyric_parser::LyricArchetype>
 BaseParserFixture::parseModule(std::string_view utf8)
 {
-    auto parseResult = parser->parseModule(utf8, {}, recorder);
+    auto sourceUrl = tempo_utils::Url::fromString("/test");
+    auto parseResult = parser->parseModule(utf8, sourceUrl, recorder);
     recorder->close();
     TU_ASSIGN_OR_RAISE (spanset, recorder->toSpanset());
 

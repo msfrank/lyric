@@ -11,6 +11,7 @@
 #include <lyric_parser/lyric_archetype.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/parse_result.h>
+#include <tempo_tracing/enter_scope.h>
 
 lyric_parser::LyricParser::LyricParser(const ParserOptions &options)
     : m_options(options)
@@ -36,21 +37,30 @@ lyric_parser::LyricParser::parseModule(
     const tempo_utils::Url &sourceUrl,
     std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
-    TU_ASSERT (recorder != nullptr);
-
     antlr4::ANTLRInputStream input(utf8.data(), utf8.size());
     ModuleLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     ModuleParser parser(&tokens);
 
-    // create a new span
-    tempo_tracing::ScopeManager scopeManager(recorder);
-    auto span = scopeManager.makeSpan();
-    span->setOperationName("parseModule");
+    // create the trace context
+    std::shared_ptr<tempo_tracing::TraceContext> context;
+    if (recorder != nullptr) {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeUnownedContextAndSwitch(recorder));
+    } else {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeContextAndSwitch());
+    }
+
+    // ensure context is released
+    tempo_tracing::ReleaseContext releaser(context);
+
+    // create the root span
+    tempo_tracing::EnterScope scope("lyric_parser::LyricParser");
+
+    // create the state
+    ArchetypeState state(sourceUrl);
 
     // create the listener
-    ArchetypeState state(sourceUrl, &scopeManager);
-    internal::ModuleArchetype listener(&state);
+    internal::ModuleArchetype listener(&state, context);
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
@@ -86,22 +96,32 @@ tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_parser::LyricParser::parseBlock(
     std::string_view utf8,
     const tempo_utils::Url &sourceUrl,
-    tempo_tracing::ScopeManager *scopeManager)
+    std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
-    TU_ASSERT (scopeManager != nullptr);
-
     antlr4::ANTLRInputStream input(utf8.data(), utf8.size());
     ModuleLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     ModuleParser parser(&tokens);
 
-    // create a new span
-    auto span = scopeManager->makeSpan();
-    span->setOperationName("parseBlock");
+    // create the trace context
+    std::shared_ptr<tempo_tracing::TraceContext> context;
+    if (recorder != nullptr) {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeUnownedContextAndSwitch(recorder));
+    } else {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeContextAndSwitch());
+    }
+
+    // ensure context is released
+    tempo_tracing::ReleaseContext releaser(context);
+
+    // create the root span
+    tempo_tracing::EnterScope scope("lyric_parser::LyricParser");
+
+    // create the state
+    ArchetypeState state(sourceUrl);
 
     // create the listener
-    ArchetypeState state(sourceUrl, scopeManager);
-    internal::ModuleArchetype listener(&state);
+    internal::ModuleArchetype listener(&state, context);
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
@@ -135,22 +155,32 @@ tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_parser::LyricParser::parseClass(
     std::string_view utf8,
     const tempo_utils::Url &sourceUrl,
-    tempo_tracing::ScopeManager *scopeManager)
+    std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
-    TU_ASSERT (scopeManager != nullptr);
-
     antlr4::ANTLRInputStream input(utf8.data(), utf8.size());
     ModuleLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     ModuleParser parser(&tokens);
 
-    // create a new span
-    auto span = scopeManager->makeSpan();
-    span->setOperationName("parseClass");
+    // create the trace context
+    std::shared_ptr<tempo_tracing::TraceContext> context;
+    if (recorder != nullptr) {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeUnownedContextAndSwitch(recorder));
+    } else {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeContextAndSwitch());
+    }
+
+    // ensure context is released
+    tempo_tracing::ReleaseContext releaser(context);
+
+    // create the root span
+    tempo_tracing::EnterScope scope("lyric_parser::LyricParser");
+
+    // create the state
+    ArchetypeState state(sourceUrl);
 
     // create the listener
-    ArchetypeState state(sourceUrl, scopeManager);
-    internal::ModuleArchetype listener(&state);
+    internal::ModuleArchetype listener(&state, context);
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
@@ -184,22 +214,32 @@ tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_parser::LyricParser::parseConcept(
     std::string_view utf8,
     const tempo_utils::Url &sourceUrl,
-    tempo_tracing::ScopeManager *scopeManager)
+    std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
-    TU_ASSERT (scopeManager != nullptr);
-
     antlr4::ANTLRInputStream input(utf8.data(), utf8.size());
     ModuleLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     ModuleParser parser(&tokens);
 
-    // create a new span
-    auto span = scopeManager->makeSpan();
-    span->setOperationName("parseConcept");
+    // create the trace context
+    std::shared_ptr<tempo_tracing::TraceContext> context;
+    if (recorder != nullptr) {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeUnownedContextAndSwitch(recorder));
+    } else {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeContextAndSwitch());
+    }
+
+    // ensure context is released
+    tempo_tracing::ReleaseContext releaser(context);
+
+    // create the root span
+    tempo_tracing::EnterScope scope("lyric_parser::LyricParser");
+
+    // create the state
+    ArchetypeState state(sourceUrl);
 
     // create the listener
-    ArchetypeState state(sourceUrl, scopeManager);
-    internal::ModuleArchetype listener(&state);
+    internal::ModuleArchetype listener(&state, context);
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
@@ -233,22 +273,32 @@ tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_parser::LyricParser::parseEnum(
     std::string_view utf8,
     const tempo_utils::Url &sourceUrl,
-    tempo_tracing::ScopeManager *scopeManager)
+    std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
-    TU_ASSERT (scopeManager != nullptr);
-
     antlr4::ANTLRInputStream input(utf8.data(), utf8.size());
     ModuleLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     ModuleParser parser(&tokens);
 
-    // create a new span
-    auto span = scopeManager->makeSpan();
-    span->setOperationName("parseEnum");
+    // create the trace context
+    std::shared_ptr<tempo_tracing::TraceContext> context;
+    if (recorder != nullptr) {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeUnownedContextAndSwitch(recorder));
+    } else {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeContextAndSwitch());
+    }
+
+    // ensure context is released
+    tempo_tracing::ReleaseContext releaser(context);
+
+    // create the root span
+    tempo_tracing::EnterScope scope("lyric_parser::LyricParser");
+
+    // create the state
+    ArchetypeState state(sourceUrl);
 
     // create the listener
-    ArchetypeState state(sourceUrl, scopeManager);
-    internal::ModuleArchetype listener(&state);
+    internal::ModuleArchetype listener(&state, context);
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
@@ -282,22 +332,32 @@ tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_parser::LyricParser::parseFunction(
     std::string_view utf8,
     const tempo_utils::Url &sourceUrl,
-    tempo_tracing::ScopeManager *scopeManager)
+    std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
-    TU_ASSERT (scopeManager != nullptr);
-
     antlr4::ANTLRInputStream input(utf8.data(), utf8.size());
     ModuleLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     ModuleParser parser(&tokens);
 
-    // create a new span
-    auto span = scopeManager->makeSpan();
-    span->setOperationName("parseFunction");
+    // create the trace context
+    std::shared_ptr<tempo_tracing::TraceContext> context;
+    if (recorder != nullptr) {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeUnownedContextAndSwitch(recorder));
+    } else {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeContextAndSwitch());
+    }
+
+    // ensure context is released
+    tempo_tracing::ReleaseContext releaser(context);
+
+    // create the root span
+    tempo_tracing::EnterScope scope("lyric_parser::LyricParser");
+
+    // create the state
+    ArchetypeState state(sourceUrl);
 
     // create the listener
-    ArchetypeState state(sourceUrl, scopeManager);
-    internal::ModuleArchetype listener(&state);
+    internal::ModuleArchetype listener(&state, context);
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
@@ -331,22 +391,32 @@ tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_parser::LyricParser::parseInstance(
     std::string_view utf8,
     const tempo_utils::Url &sourceUrl,
-    tempo_tracing::ScopeManager *scopeManager)
+    std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
-    TU_ASSERT (scopeManager != nullptr);
-
     antlr4::ANTLRInputStream input(utf8.data(), utf8.size());
     ModuleLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     ModuleParser parser(&tokens);
 
-    // create a new span
-    auto span = scopeManager->makeSpan();
-    span->setOperationName("parseInstance");
+    // create the trace context
+    std::shared_ptr<tempo_tracing::TraceContext> context;
+    if (recorder != nullptr) {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeUnownedContextAndSwitch(recorder));
+    } else {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeContextAndSwitch());
+    }
+
+    // ensure context is released
+    tempo_tracing::ReleaseContext releaser(context);
+
+    // create the root span
+    tempo_tracing::EnterScope scope("lyric_parser::LyricParser");
+
+    // create the state
+    ArchetypeState state(sourceUrl);
 
     // create the listener
-    ArchetypeState state(sourceUrl, scopeManager);
-    internal::ModuleArchetype listener(&state);
+    internal::ModuleArchetype listener(&state, context);
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
@@ -380,22 +450,32 @@ tempo_utils::Result<lyric_parser::LyricArchetype>
 lyric_parser::LyricParser::parseStruct(
     std::string_view utf8,
     const tempo_utils::Url &sourceUrl,
-    tempo_tracing::ScopeManager *scopeManager)
+    std::shared_ptr<tempo_tracing::TraceRecorder> recorder)
 {
-    TU_ASSERT (scopeManager != nullptr);
-
     antlr4::ANTLRInputStream input(utf8.data(), utf8.size());
     ModuleLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     ModuleParser parser(&tokens);
 
-    // create a new span
-    auto span = scopeManager->makeSpan();
-    span->setOperationName("parseStruct");
+    // create the trace context
+    std::shared_ptr<tempo_tracing::TraceContext> context;
+    if (recorder != nullptr) {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeUnownedContextAndSwitch(recorder));
+    } else {
+        TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeContextAndSwitch());
+    }
+
+    // ensure context is released
+    tempo_tracing::ReleaseContext releaser(context);
+
+    // create the root span
+    tempo_tracing::EnterScope scope("lyric_parser::LyricParser");
+
+    // create the state
+    ArchetypeState state(sourceUrl);
 
     // create the listener
-    ArchetypeState state(sourceUrl, scopeManager);
-    internal::ModuleArchetype listener(&state);
+    internal::ModuleArchetype listener(&state, context);
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);

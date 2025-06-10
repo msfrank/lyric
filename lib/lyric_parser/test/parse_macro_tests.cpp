@@ -5,32 +5,27 @@
 #include <lyric_parser/lyric_parser.h>
 #include <tempo_utils/logging.h>
 
+#include "base_parser_fixture.h"
 
-TEST(ParseMacro, ParseBlockMacro)
+class ParseMacro : public BaseParserFixture {};
+
+TEST_F(ParseMacro, ParseBlockMacro)
 {
-    lyric_parser::LyricParser parser({});
-
-    auto recorder = tempo_tracing::TraceRecorder::create();
-
-    auto parseResult = parser.parseModule(R"(
+    auto parseResult = parseModule(R"(
         @{
             Trap("TrapName")
         }
-    )", {}, recorder);
+    )");
 
     ASSERT_TRUE(parseResult.isResult());
 }
 
-TEST(ParseMacro, ParsePragmaMacro)
+TEST_F(ParseMacro, ParsePragmaMacro)
 {
-    lyric_parser::LyricParser parser({});
-
-    auto recorder = tempo_tracing::TraceRecorder::create();
-
-    auto parseResult = parser.parseModule(R"(
+    auto parseResult = parseModule(R"(
         @@Plugin("/plugin")
         nil
-    )", {}, recorder);
+    )");
 
     ASSERT_TRUE(parseResult.isResult());
 }

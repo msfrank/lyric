@@ -6,34 +6,17 @@
 #include <lyric_parser/parse_diagnostics.h>
 #include <tempo_tracing/error_walker.h>
 
-TEST(ParseConstant, InvalidHexIntegerIsSyntaxError)
-{
-    lyric_parser::LyricParser parser({});
+#include "base_parser_fixture.h"
 
-    auto recorder = tempo_tracing::TraceRecorder::create();
+class ParseConstant : public BaseParserFixture {};
 
-    auto parseResult = parser.parseModule(R"(
+TEST_F(ParseConstant, InvalidHexIntegerIsSyntaxError) {
+
+    auto parseResult = parseModule(R"(
         0xz123
-    )", {}, recorder);
+    )");
 
-//    if (parseResult.isResult()) {
-//        auto archetype = parseResult.getResult();
-//        TU_CONSOLE_ERR << "unexpected parse success:";
-//        TU_CONSOLE_ERR << dump_lyric_archetype(archetype);
-//    }
     ASSERT_TRUE (parseResult.isStatus());
-
-    recorder->close();
-    auto toSpansetResult = recorder->toSpanset();
-    ASSERT_TRUE (toSpansetResult.isResult());
-    auto spanset = toSpansetResult.getResult();
-
-    lyric_parser::ParseDiagnosticsOptions options;
-    options.sourcePath = "(stdin)";
-    auto createDiagnosticsResult = lyric_parser::ParseDiagnostics::create(spanset, options);
-    ASSERT_TRUE (createDiagnosticsResult.isResult());
-    auto diagnostics = createDiagnosticsResult.getResult();
-    diagnostics->printDiagnostics();
 
     auto errorWalker = spanset.getErrors();
     ASSERT_EQ (1, errorWalker.numErrors());

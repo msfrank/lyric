@@ -21,35 +21,29 @@ lyric_parser::internal::ModuleExceptionOps::enterTryStatement(ModuleParser::TryS
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    auto *tryNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstTryClass, location);
-    m_state->pushNode(tryNode);
+    ArchetypeNode *tryNode;
+    TU_ASSIGN_OR_RAISE (tryNode, m_state->appendNode(lyric_schema::kLyricAstTryClass, location));
+    TU_RAISE_IF_NOT_OK (m_state->pushNode(tryNode));
 }
 
 void
 lyric_parser::internal::ModuleExceptionOps::exitTryTarget(ModuleParser::TryTargetContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *targetNode = m_state->popNode();
+    ArchetypeNode *targetNode;
+    TU_ASSIGN_OR_RAISE (targetNode, m_state->popNode());
 
-    // if ancestor node is not a kTry, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *tryNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(tryNode, lyric_schema::kLyricAstTryClass);
+    ArchetypeNode *tryNode;
+    TU_ASSIGN_OR_RAISE (tryNode, m_state->peekNode(lyric_schema::kLyricAstTryClass));
 
     // otherwise append target to the try
-    tryNode->appendChild(targetNode);
+    TU_RAISE_IF_NOT_OK (tryNode->appendChild(targetNode));
 }
 
 void
 lyric_parser::internal::ModuleExceptionOps::exitCatchOnType(ModuleParser::CatchOnTypeContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *consequentNode = m_state->popNode();
+    ArchetypeNode *consequentNode;
+    TU_ASSIGN_OR_RAISE (consequentNode, m_state->popNode());
 
     auto id = ctx->Identifier()->getText();
 
@@ -58,52 +52,54 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchOnType(ModuleParser::CatchO
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *unpackNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUnpackClass, location);
-    unpackNode->putAttr(kLyricAstIdentifier, id);
-    unpackNode->putAttr(kLyricAstTypeOffset, typeNode);
+    ArchetypeNode *unpackNode;
+    TU_ASSIGN_OR_RAISE (unpackNode, m_state->appendNode(lyric_schema::kLyricAstUnpackClass, location));
+    TU_RAISE_IF_NOT_OK (unpackNode->putAttr(kLyricAstIdentifier, id));
+    TU_RAISE_IF_NOT_OK (unpackNode->putAttr(kLyricAstTypeOffset, typeNode));
 
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
-    caseNode->appendChild(unpackNode);
-    caseNode->appendChild(consequentNode);
+    ArchetypeNode *caseNode;
+    TU_ASSIGN_OR_RAISE (caseNode, m_state->appendNode(lyric_schema::kLyricAstCaseClass, location));
+    TU_RAISE_IF_NOT_OK (caseNode->appendChild(unpackNode));
+    TU_RAISE_IF_NOT_OK (caseNode->appendChild(consequentNode));
 
-    // if ancestor node is not a kTry, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *tryNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(tryNode, lyric_schema::kLyricAstTryClass);
+    ArchetypeNode *tryNode;
+    TU_ASSIGN_OR_RAISE (tryNode, m_state->peekNode(lyric_schema::kLyricAstTryClass));
 
     // otherwise append case to the match
-    tryNode->appendChild(caseNode);
+    TU_RAISE_IF_NOT_OK (tryNode->appendChild(caseNode));
 }
 
 void
 lyric_parser::internal::ModuleExceptionOps::exitCatchOnUnwrap(ModuleParser::CatchOnUnwrapContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *consequentNode = m_state->popNode();
+    ArchetypeNode *consequentNode;
+    TU_ASSIGN_OR_RAISE (consequentNode, m_state->popNode());
 
     auto *unwrapSpec = ctx->unwrapSpec();
-    if (unwrapSpec == nullptr)
-        m_state->throwSyntaxError(get_token_location(ctx->getStop()), "invalid unwrap spec");
+    if (unwrapSpec == nullptr) {
+        throw_semantic_exception(ctx->getStart(), "invalid unwrap spec");
+        TU_UNREACHABLE();
+    }
 
     auto *unwrapTypeNode = make_Type_node(m_state, unwrapSpec->assignableType());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto *unwrapNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstUnpackClass, location);
-    unwrapNode->putAttr(kLyricAstTypeOffset, unwrapTypeNode);
+    ArchetypeNode *unwrapNode;
+    TU_ASSIGN_OR_RAISE (unwrapNode, m_state->appendNode(lyric_schema::kLyricAstUnpackClass, location));
+    TU_RAISE_IF_NOT_OK (unwrapNode->putAttr(kLyricAstTypeOffset, unwrapTypeNode));
 
     if (ctx->Identifier()) {
         auto id = ctx->Identifier()->getText();
-        unwrapNode->putAttr(kLyricAstIdentifier, id);
+        TU_RAISE_IF_NOT_OK (unwrapNode->putAttr(kLyricAstIdentifier, id));
     }
 
     auto *unwrapList = ctx->unwrapSpec()->unwrapList();
-    if (unwrapList == nullptr)
-        m_state->throwSyntaxError(get_token_location(ctx->getStop()), "invalid unwrap list");
+    if (unwrapList == nullptr) {
+        throw_semantic_exception(ctx->getStart(), "invalid unwrap list");
+        TU_UNREACHABLE();
+    }
 
     for (uint32_t i = 0; i < unwrapList->getRuleIndex(); i++) {
         auto *unwrapParam = unwrapList->unwrapParam(i);
@@ -116,58 +112,47 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchOnUnwrap(ModuleParser::Catc
         auto *paramToken = ctx->getStart();
         auto paramLocation = get_token_location(paramToken);
 
-        auto *paramNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstParamClass, paramLocation);
-        paramNode->putAttr(kLyricAstIdentifier, paramId);
-        paramNode->putAttr(kLyricAstTypeOffset, paramTypeNode);
-        unwrapNode->appendChild(paramNode);
+        ArchetypeNode *paramNode;
+        TU_ASSIGN_OR_RAISE (paramNode, m_state->appendNode(lyric_schema::kLyricAstParamClass, paramLocation));
+        TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstIdentifier, paramId));
+        TU_RAISE_IF_NOT_OK (paramNode->putAttr(kLyricAstTypeOffset, paramTypeNode));
+        TU_RAISE_IF_NOT_OK (unwrapNode->appendChild(paramNode));
     }
 
-    auto *caseNode = m_state->appendNodeOrThrow(lyric_schema::kLyricAstCaseClass, location);
-    caseNode->appendChild(unwrapNode);
-    caseNode->appendChild(consequentNode);
+    ArchetypeNode *caseNode;
+    TU_ASSIGN_OR_RAISE (caseNode, m_state->appendNode(lyric_schema::kLyricAstCaseClass, location));
+    TU_RAISE_IF_NOT_OK (caseNode->appendChild(unwrapNode));
+    TU_RAISE_IF_NOT_OK (caseNode->appendChild(consequentNode));
 
-    // if ancestor node is not a kTry, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *tryNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(tryNode, lyric_schema::kLyricAstTryClass);
+    ArchetypeNode *tryNode;
+    TU_ASSIGN_OR_RAISE (tryNode, m_state->peekNode(lyric_schema::kLyricAstTryClass));
 
     // otherwise append case to the match
-    tryNode->appendChild(caseNode);
+    TU_RAISE_IF_NOT_OK (tryNode->appendChild(caseNode));
 }
 
 void
 lyric_parser::internal::ModuleExceptionOps::exitCatchElse(ModuleParser::CatchElseContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *alternativeNode = m_state->popNode();
+    ArchetypeNode *alternativeNode;
+    TU_ASSIGN_OR_RAISE (alternativeNode, m_state->popNode());
 
-    // if ancestor node is not a kTry, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *tryNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(tryNode, lyric_schema::kLyricAstTryClass);
+    ArchetypeNode *tryNode;
+    TU_ASSIGN_OR_RAISE (tryNode, m_state->peekNode(lyric_schema::kLyricAstTryClass));
 
     // otherwise add defaultOffset attribute to the match
-    tryNode->putAttr(kLyricAstDefaultOffset, alternativeNode);
+    TU_RAISE_IF_NOT_OK (tryNode->putAttr(kLyricAstDefaultOffset, alternativeNode));
 }
 
 void
 lyric_parser::internal::ModuleExceptionOps::exitCatchFinally(ModuleParser::CatchFinallyContext *ctx)
 {
-    // if stack is empty, then mark source as incomplete
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *alwaysNode = m_state->popNode();
+    ArchetypeNode *alwaysNode;
+    TU_ASSIGN_OR_RAISE (alwaysNode, m_state->popNode());
 
-    // if ancestor node is not a kTry, then report internal violation
-    if (m_state->isEmpty())
-        m_state->throwIncompleteModule(get_token_location(ctx->getStop()));
-    auto *tryNode = m_state->peekNode();
-    m_state->checkNodeOrThrow(tryNode, lyric_schema::kLyricAstTryClass);
+    ArchetypeNode *tryNode;
+    TU_ASSIGN_OR_RAISE (tryNode, m_state->peekNode(lyric_schema::kLyricAstTryClass));
 
     // otherwise add finallyOffset attribute to the match
-    tryNode->putAttr(kLyricAstFinallyOffset, alwaysNode);
+    TU_RAISE_IF_NOT_OK (tryNode->putAttr(kLyricAstFinallyOffset, alwaysNode));
 }

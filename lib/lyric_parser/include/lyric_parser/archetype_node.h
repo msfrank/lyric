@@ -40,20 +40,22 @@ namespace lyric_parser {
         std::string_view namespaceView() const;
         bool isNamespace(const tempo_schema::SchemaNs &schemaNs) const;
 
+        tempo_utils::Status putAttr(ArchetypeAttr *attr);
+
         bool hasAttr(const AttrId &attrId) const;
         bool hasAttr(const tempo_schema::AttrValidator &validator) const;
         ArchetypeAttr *getAttr(const AttrId &attrId) const;
-        void putAttr(ArchetypeAttr *attr);
         absl::flat_hash_map<AttrId,ArchetypeAttr *>::const_iterator attrsBegin() const;
         absl::flat_hash_map<AttrId,ArchetypeAttr *>::const_iterator attrsEnd() const;
         int numAttrs() const;
 
+        tempo_utils::Status prependChild(ArchetypeNode *child);
+        tempo_utils::Status appendChild(ArchetypeNode *child);
+        tempo_utils::Status insertChild(int index, ArchetypeNode *child);
+        tempo_utils::Result<ArchetypeNode *> replaceChild(int index, ArchetypeNode *child);
+        tempo_utils::Result<ArchetypeNode *> removeChild(int index);
+
         ArchetypeNode *getChild(int index) const;
-        void prependChild(ArchetypeNode *child);
-        void appendChild(ArchetypeNode *child);
-        void insertChild(int index, ArchetypeNode *child);
-        ArchetypeNode *replaceChild(int index, ArchetypeNode *child);
-        ArchetypeNode *removeChild(int index);
         std::vector<ArchetypeNode *>::const_iterator childrenBegin() const;
         std::vector<ArchetypeNode *>::const_iterator childrenEnd() const;
         int numChildren() const;
@@ -172,20 +174,6 @@ namespace lyric_parser {
             TU_ASSIGN_OR_RETURN (archetypeAttr, ArchetypeStateAttrWriter::createAttr(m_state, key, attr, value));
             putAttr(archetypeAttr);
             return {};
-        };
-
-        template <typename T>
-        void
-        putAttrOrThrow(const tempo_schema::AttrSerde<T> &serde, const T &value)
-        {
-            TU_RAISE_IF_NOT_OK(putAttr(serde, value));
-        };
-
-        template <class T>
-        void
-        putAttrOrThrow(const StatefulAttr &attr, const T &value)
-        {
-            TU_RAISE_IF_NOT_OK(putAttr(attr, value));
         };
     };
 }

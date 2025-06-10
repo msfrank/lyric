@@ -130,16 +130,22 @@ lyric_parser::ArchetypeNode::getAttrValue(const char *nsString, tu_uint32 idValu
 
 }
 
-void
+tempo_utils::Status
 lyric_parser::ArchetypeNode::putAttr(ArchetypeAttr *attr)
 {
     TU_ASSERT (attr != nullptr);
 
     auto attrId = attr->getAttrId();
-    if (m_attrs.contains(attrId)) {
-        m_state->throwParseInvariant("node contains duplicate attr");
-    }
+    if (m_attrs.contains(attrId))
+        return ParseStatus::forCondition(ParseCondition::kParseInvariant,
+            "node contains duplicate attr");
+
+    auto limits = m_state->getLimits();
+    if (m_children.size() >= limits.maxNodeAttrs)
+        return ParseStatus::forCondition(ParseCondition::kResourceExhausted,
+            "node attr count exceeds {}", limits.maxNodeAttrs);
     m_attrs[attrId] = attr;
+    return {};
 }
 
 absl::flat_hash_map<lyric_parser::AttrId,lyric_parser::ArchetypeAttr *>::const_iterator
@@ -168,33 +174,47 @@ lyric_parser::ArchetypeNode::getChild(int index) const
     return {};
 }
 
-void
+tempo_utils::Status
 lyric_parser::ArchetypeNode::prependChild(ArchetypeNode *child)
 {
     TU_ASSERT (child != nullptr);
+    auto limits = m_state->getLimits();
+    if (m_children.size() >= limits.maxNodeChildren)
+        return ParseStatus::forCondition(ParseCondition::kResourceExhausted,
+            "node children count exceeds {}", limits.maxNodeChildren);
     m_children.insert(m_children.begin(), child);
+    return {};
 }
 
-void
+tempo_utils::Status
 lyric_parser::ArchetypeNode::appendChild(ArchetypeNode *child)
 {
     TU_ASSERT (child != nullptr);
+    auto limits = m_state->getLimits();
+    if (m_children.size() >= limits.maxNodeChildren)
+        return ParseStatus::forCondition(ParseCondition::kResourceExhausted,
+            "node children count exceeds {}", limits.maxNodeChildren);
     m_children.push_back(child);
+    return {};
 }
 
-void
+tempo_utils::Status
 lyric_parser::ArchetypeNode::insertChild(int index, ArchetypeNode *child)
 {
     TU_ASSERT (child != nullptr);
-    if (index == 0) {
-        prependChild(child);
-    } else if (index > 0) {
+    if (index == 0)
+        return prependChild(child);
+    auto limits = m_state->getLimits();
+    if (m_children.size() >= limits.maxNodeChildren)
+        return ParseStatus::forCondition(ParseCondition::kResourceExhausted,
+            "node children count exceeds {}", limits.maxNodeChildren);
+    if (index > 0) {
         if (index < m_children.size()) {
             auto it = m_children.begin();
             std::advance(it, index);
             m_children.insert(it, child);
         } else {
-            appendChild(child);
+            return appendChild(child);
         }
     } else {
         if (m_children.size() + index >= 0) {
@@ -202,12 +222,13 @@ lyric_parser::ArchetypeNode::insertChild(int index, ArchetypeNode *child)
             std::advance(it, index + 1);
             m_children.insert(it, child);
         } else {
-            prependChild(child);
+            return prependChild(child);
         }
     }
+    return {};
 }
 
-lyric_parser::ArchetypeNode *
+tempo_utils::Result<lyric_parser::ArchetypeNode *>
 lyric_parser::ArchetypeNode::replaceChild(int index, ArchetypeNode *child)
 {
     TU_ASSERT (child != nullptr);
@@ -216,10 +237,11 @@ lyric_parser::ArchetypeNode::replaceChild(int index, ArchetypeNode *child)
         m_children[index] = child;
         return prev;
     }
-    return nullptr;
+    return ParseStatus::forCondition(ParseCondition::kParseInvariant,
+        "invalid child index {}", index);
 }
 
-lyric_parser::ArchetypeNode *
+tempo_utils::Result<lyric_parser::ArchetypeNode *>
 lyric_parser::ArchetypeNode::removeChild(int index)
 {
     if (0 <= index && std::cmp_less(index, m_children.size())) {
@@ -229,7 +251,8 @@ lyric_parser::ArchetypeNode::removeChild(int index)
         m_children.erase(iterator);
         return child;
     }
-    return nullptr;
+    return ParseStatus::forCondition(ParseCondition::kParseInvariant,
+        "invalid child index {}", index);
 }
 
 std::vector<lyric_parser::ArchetypeNode *>::const_iterator

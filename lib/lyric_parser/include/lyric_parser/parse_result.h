@@ -16,6 +16,7 @@ namespace lyric_parser {
         kIncompleteModule,
         kFormattingError,
         kSyntaxError,
+        kResourceExhausted,
         kParseInvariant,
     };
 
@@ -105,6 +106,8 @@ namespace tempo_utils {
                     return tempo_utils::StatusCode::kInvalidArgument;
                 case lyric_parser::ParseCondition::kSyntaxError:
                     return tempo_utils::StatusCode::kInvalidArgument;
+                case lyric_parser::ParseCondition::kResourceExhausted:
+                    return tempo_utils::StatusCode::kResourceExhausted;
                 case lyric_parser::ParseCondition::kParseInvariant:
                     return tempo_utils::StatusCode::kInternal;
                 default:
@@ -122,6 +125,8 @@ namespace tempo_utils {
                     return "Formatting error";
                 case lyric_parser::ParseCondition::kSyntaxError:
                     return "Syntax error";
+                case lyric_parser::ParseCondition::kResourceExhausted:
+                    return "Resource exhausted";
                 case lyric_parser::ParseCondition::kParseInvariant:
                     return "Parse invariant";
                 default:
