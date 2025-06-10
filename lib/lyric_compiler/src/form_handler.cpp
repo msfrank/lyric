@@ -263,8 +263,8 @@ lyric_compiler::FormChoice::decide(
     auto *driver = getDriver();
 
     if (!node->isNamespace(lyric_schema::kLyricAstNs))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError, "invalid form");
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+            "invalid form");
 
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
     auto astId = resource->getId();

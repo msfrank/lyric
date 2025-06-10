@@ -48,7 +48,6 @@ lyric_compiler::declare_struct_default_init(
 {
     TU_ASSERT (defstruct != nullptr);
     TU_ASSERT (structSymbol != nullptr);
-    auto *structBlock = structSymbol->structBlock();
 
     // verify that super ctor takes no arguments
     auto superCtorUrl = structSymbol->superStruct()->getCtor();
@@ -56,8 +55,7 @@ lyric_compiler::declare_struct_default_init(
     TU_ASSIGN_OR_RETURN (superCtorSymbol, symbolCache->getOrImportSymbol(superCtorUrl));
     auto *superCtorCall = cast_symbol_to_call(superCtorSymbol);
     if (superCtorCall->numParameters() > 0)
-        return structBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "super struct {} is not default-constructable", superCtorUrl.toString());
 
     // declare the constructor
@@ -78,8 +76,7 @@ lyric_compiler::declare_struct_default_init(
         lyric_assembler::AbstractSymbol *symbol;
         TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldRef.symbolUrl));
         if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
-            return structBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "invalid struct field {}", fieldRef.symbolUrl.toString());
         auto *fieldSymbol = cast_symbol_to_field(symbol);
         auto fieldInitializerUrl = fieldSymbol->getInitializer();
@@ -94,8 +91,7 @@ lyric_compiler::declare_struct_default_init(
 
         if (fieldInitializerUrl.isValid()) {
             if (!symbolCache->hasSymbol(fieldInitializerUrl))
-                return structBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                     "missing field initializer {}", fieldInitializerUrl.toString());
             p.placement = lyric_object::PlacementType::NamedOpt;
             paramInitializers[memberName] = fieldInitializerUrl;
@@ -161,8 +157,7 @@ lyric_compiler::declare_struct_default_init(
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     if (!structSymbol->isCompletelyInitialized())
-        return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "struct {} is not completely initialized", structSymbol->getSymbolUrl().toString());
 
     TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << structSymbol->getSymbolUrl();
@@ -243,23 +238,20 @@ lyric_compiler::default_initialize_struct_members(
         // resolve the member binding
         TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldRef.symbolUrl));
         if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
-            return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "invalid struct field {}", fieldRef.symbolUrl.toString());
 
         auto *fieldSymbol = cast_symbol_to_field(symbol);
 
         if (!fieldSymbol->hasInitializer())
-            return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "missing initializer for field {}", memberName);
 
         auto fieldInitializerUrl = fieldSymbol->getInitializer();
 
         TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldInitializerUrl));
         if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-            return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "invalid field initializer {}", fieldInitializerUrl.toString());
 
         auto *initializerCall = cast_symbol_to_call(symbol);

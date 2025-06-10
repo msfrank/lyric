@@ -52,23 +52,20 @@ lyric_compiler::declare_instance_default_init(
         // resolve the member binding
         TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldRef.symbolUrl));
         if (symbol->getSymbolType() != lyric_assembler::SymbolType::FIELD)
-            return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "invalid instance field {}", fieldRef.symbolUrl.toString());
 
         auto *fieldSymbol = cast_symbol_to_field(symbol);
 
         if (!fieldSymbol->hasInitializer())
-            return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "missing initializer for field {}", memberName);
 
         auto fieldInitializerUrl = fieldSymbol->getInitializer();
 
         TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(fieldInitializerUrl));
         if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-            return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "invalid field initializer {}", fieldInitializerUrl.toString());
 
         auto *initializerCall = cast_symbol_to_call(symbol);
@@ -98,8 +95,7 @@ lyric_compiler::declare_instance_default_init(
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     if (!instanceSymbol->isCompletelyInitialized())
-        return ctorBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "instance {} is not completely initialized", instanceSymbol->getSymbolUrl().toString());
 
     return ctorSymbol;

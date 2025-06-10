@@ -43,8 +43,7 @@ lyric_compiler::DefStaticHandler::before(
     auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstDefStaticClass))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected DefStatic node");
 
     // get global name
@@ -75,8 +74,7 @@ lyric_compiler::DefStaticHandler::before(
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(staticRef.symbolUrl));
     if (symbol->getSymbolType() != lyric_assembler::SymbolType::STATIC)
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "invalid static symbol {}", staticRef.symbolUrl.toString());
     m_staticSymbol = cast_symbol_to_static(symbol);
 
@@ -105,7 +103,6 @@ lyric_compiler::DefStaticHandler::after(
 {
     TU_LOG_INFO << "after DefStaticHandler@" << this;
 
-    auto *block = getBlock();
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
     auto *code = m_procHandle->procCode();
@@ -124,16 +121,14 @@ lyric_compiler::DefStaticHandler::after(
     // validate that body returns the expected type
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(declarationType, initializerType));
     if (!isAssignable)
-        return block->logAndContinue(CompilerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "static initializer is incompatible with type {}", declarationType.toString());
 
     // validate that each exit returns the expected type
     for (auto it = m_procHandle->exitTypesBegin(); it != m_procHandle->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(declarationType, *it));
         if (!isAssignable)
-            return block->logAndContinue(CompilerCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
                 "static initializer is incompatible with type {}", declarationType.toString());
     }
 

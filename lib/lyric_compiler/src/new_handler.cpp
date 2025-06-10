@@ -51,14 +51,12 @@ lyric_compiler::NewHandler::before(
     } else if (m_typeHint.isValid()) {
         newType = m_typeHint;
     } else {
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected new type or type hint");
     }
 
     if (newType.getType() != lyric_common::TypeDefType::Concrete)
-        return block->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kIncompatibleType,
             "new type {} is not constructable", newType.toString());
 
     // resolve the symbol ctor
@@ -79,8 +77,7 @@ lyric_compiler::NewHandler::before(
             break;
         }
         default:
-            return block->logAndContinue(CompilerCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
                 "cannot construct new instance of {}", newType.toString());
     }
 

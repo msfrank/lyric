@@ -52,7 +52,6 @@ lyric_compiler::MemberHandler::after(
     if (m_member.procHandle == nullptr)
         return {};
 
-    auto *block = getBlock();
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
     auto *proc = m_member.procHandle;
@@ -72,16 +71,14 @@ lyric_compiler::MemberHandler::after(
     // validate that body returns the expected type
     TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(memberType, initializerType));
     if (!isReturnable)
-        return block->logAndContinue(CompilerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "member initializer is incompatible with type {}", memberType.toString());
 
     // validate that each exit returns the expected type
     for (auto it = proc->exitTypesBegin(); it != proc->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(memberType, *it));
         if (!isReturnable)
-            return block->logAndContinue(CompilerCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
                 "member initializer is incompatible with type {}", memberType.toString());
     }
 

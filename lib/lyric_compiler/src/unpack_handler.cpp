@@ -63,8 +63,7 @@ resolve_unwrap_impl(
     int tupleTypeArity = tupleTypeArguments.size();
     auto fundamentalTuple = fundamentalCache->getTupleUrl(tupleTypeArity);
     if (!fundamentalTuple.isValid())
-        return block->logAndContinue(lyric_compiler::CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kCompilerInvariant,
             "tuple arity is too large");
     auto tupleType = lyric_common::TypeDef::forConcrete(fundamentalTuple, tupleTypeArguments);
 
@@ -85,8 +84,7 @@ resolve_unwrap_impl(
     int genericTupleTypeArity = genericUnwrapTypeArguments.size();
     auto genericTupleUrl = fundamentalCache->getTupleUrl(genericTupleTypeArity);
     if (!genericTupleUrl.isValid())
-        return block->logAndContinue(lyric_compiler::CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kCompilerInvariant,
             "tuple arity is too large");
     auto genericTupleType = lyric_common::TypeDef::forConcrete(
         genericTupleUrl, std::vector<lyric_common::TypeDef>(
@@ -154,13 +152,13 @@ lyric_compiler::UnpackHandler::after(
         switch (receiver->getSymbolType()) {
             case lyric_assembler::SymbolType::CLASS: {
                 auto *classSymbol = cast_symbol_to_class(receiver);
-                lyric_typing::MemberReifier memberReifier(typeSystem, tupleType, classSymbol->classTemplate());
+                lyric_typing::MemberReifier memberReifier(typeSystem);
+                TU_RETURN_IF_NOT_OK (memberReifier.initialize(tupleType, classSymbol->classTemplate()));
                 TU_ASSIGN_OR_RETURN (memberRef, classSymbol->resolveMember(tupleMember, memberReifier, tupleType));
                 break;
             }
             default:
-                return block->logAndContinue(CompilerCondition::kInvalidSymbol,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(CompilerCondition::kInvalidSymbol,
                     "invalid receiver symbol {}", tupleUrl.toString());
         }
 
@@ -205,8 +203,7 @@ lyric_compiler::UnwrapParam::decide(
     auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstParamClass))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected Unwrap node");
 
     lyric_parser::ArchetypeNode *typeNode;

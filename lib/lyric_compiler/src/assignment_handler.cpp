@@ -124,8 +124,7 @@ lyric_compiler::AssignmentHandler::after(
     // check that the rhs is assignable to the target type
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(m_assignment.targetRef.typeDef, rvalueType));
     if (!isAssignable)
-        return block->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "target does not match rvalue type {}", rvalueType.toString());
 
     // check if we are in a constructor

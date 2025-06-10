@@ -324,13 +324,11 @@ lyric_compiler::CompilerScanDriverBuilder::CompilerScanDriverBuilder(
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
-    tempo_tracing::ScopeManager *scopeManager,
     const lyric_assembler::ObjectStateOptions &objectStateOptions)
     : m_location(location),
       m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_shortcutResolver(std::move(shortcutResolver)),
-      m_scopeManager(scopeManager),
       m_objectStateOptions(objectStateOptions)
 {
 }
@@ -361,10 +359,10 @@ lyric_compiler::CompilerScanDriverBuilder::makeScanDriver()
     // construct the object state
     if (m_pluginLocation.isValid()) {
         m_state = std::make_unique<lyric_assembler::ObjectState>(m_location, m_localModuleCache,
-            m_systemModuleCache, m_shortcutResolver, m_scopeManager, m_pluginLocation, m_objectStateOptions);
+            m_systemModuleCache, m_shortcutResolver, m_pluginLocation, m_objectStateOptions);
     } else {
         m_state = std::make_unique<lyric_assembler::ObjectState>(m_location, m_localModuleCache,
-            m_systemModuleCache, m_shortcutResolver, m_scopeManager, m_objectStateOptions);
+            m_systemModuleCache, m_shortcutResolver, m_objectStateOptions);
     }
 
     // define the object root

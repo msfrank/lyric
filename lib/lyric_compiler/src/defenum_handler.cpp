@@ -46,8 +46,7 @@ lyric_compiler::DefEnumHandler::before(
     auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstDefEnumClass))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected DefEnum node");
 
     // get enum name
@@ -82,8 +81,7 @@ lyric_compiler::DefEnumHandler::before(
         switch (astId) {
             case lyric_schema::LyricAstId::Init:
                 if (initNode != nullptr)
-                    return block->logAndContinue(CompilerCondition::kSyntaxError,
-                        tempo_tracing::LogSeverity::kError,
+                    return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                         "duplicate enum init declaration");
                 initNode = child;
                 break;
@@ -104,8 +102,7 @@ lyric_compiler::DefEnumHandler::before(
                 break;
             }
             default:
-                return block->logAndContinue(CompilerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                     "unexpected AST node");
         }
 
@@ -244,8 +241,7 @@ lyric_compiler::EnumDefinition::decide(
             return {};
         }
         default:
-            return block->logAndContinue(CompilerCondition::kSyntaxError,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                 "unexpected AST node");
     }
 }

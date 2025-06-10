@@ -34,8 +34,7 @@ lyric_compiler::MatchHandler::before(
 
     auto numChildren = node->numChildren();
     if (numChildren == 0)
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "missing target for match expression");
 
     auto expression = std::make_unique<FormChoice>(
@@ -44,8 +43,7 @@ lyric_compiler::MatchHandler::before(
     numChildren--;
 
     if (numChildren == 0)
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "empty match expression");
 
     auto consequent = std::make_unique<MatchConsequent>();
@@ -307,8 +305,7 @@ lyric_compiler::MatchPredicate::decide(
             return {};
         }
         default:
-            return block->logAndContinue(CompilerCondition::kSyntaxError,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                 "invalid match predicate");
     }
 }
@@ -389,8 +386,7 @@ lyric_compiler::MatchSymbolRefPredicate::decide(
     lyric_common::SymbolPath symbolPath;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstSymbolPath, symbolPath));
     if (!symbolPath.isValid())
-        return block->logAndContinue(lyric_compiler::CompilerCondition::kInvalidSymbol,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kInvalidSymbol,
             "invalid symbol path");
 
     // resolve the match when symbol
@@ -409,8 +405,7 @@ lyric_compiler::MatchSymbolRefPredicate::decide(
             predicateType = cast_symbol_to_enum(symbol)->getTypeDef();
             break;
         default:
-            return block->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kIncompatibleType,
                 "invalid match {}; predicate must be an instance or an enum",
                 symbol->getSymbolUrl().toString());
     }

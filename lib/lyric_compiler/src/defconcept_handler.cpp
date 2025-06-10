@@ -41,8 +41,7 @@ lyric_compiler::DefConceptHandler::before(
     auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstDefConceptClass))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected DefConcept node");
 
     // get concept name
@@ -82,8 +81,7 @@ lyric_compiler::DefConceptHandler::before(
                 break;
             }
             default:
-                return block->logAndContinue(CompilerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                     "unexpected AST node");
         }
 
@@ -177,8 +175,7 @@ lyric_compiler::ConceptDefinition::decide(
             return {};
         }
         default:
-            return block->logAndContinue(CompilerCondition::kSyntaxError,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                 "unexpected AST node");
     }
 }

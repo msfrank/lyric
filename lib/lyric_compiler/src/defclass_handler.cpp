@@ -47,8 +47,7 @@ lyric_compiler::DefClassHandler::before(
     auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstDefClassClass))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected DefClass node");
 
     // get class name
@@ -94,8 +93,7 @@ lyric_compiler::DefClassHandler::before(
         switch (astId) {
             case lyric_schema::LyricAstId::Init:
                 if (initNode != nullptr)
-                    return block->logAndContinue(CompilerCondition::kSyntaxError,
-                        tempo_tracing::LogSeverity::kError,
+                    return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                         "duplicate class init declaration");
                 initNode = child;
                 break;
@@ -116,8 +114,7 @@ lyric_compiler::DefClassHandler::before(
                 break;
             }
             default:
-                return block->logAndContinue(CompilerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                     "unexpected AST node");
         }
 
@@ -263,8 +260,7 @@ lyric_compiler::ClassDefinition::decide(
             return {};
         }
         default:
-            return block->logAndContinue(CompilerCondition::kSyntaxError,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                 "unexpected AST node");
     }
 }

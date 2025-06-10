@@ -71,8 +71,7 @@ lyric_compiler::VariableHandler::after(
     bool isAssignable;
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(declarationType, expressionType));
     if (!isAssignable)
-        return block->logAndContinue(CompilerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "expression {} is incompatible with declared type {}",
             expressionType.toString(), declarationType.toString());
 

@@ -75,7 +75,6 @@ namespace lyric_compiler {
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
-            tempo_tracing::ScopeManager *scopeManager,
             const lyric_assembler::ObjectStateOptions &objectStateOptions);
 
         tempo_utils::Status applyPragma(
@@ -91,7 +90,6 @@ namespace lyric_compiler {
         std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         std::shared_ptr<lyric_importer::ShortcutResolver> m_shortcutResolver;
-        tempo_tracing::ScopeManager *m_scopeManager;
         lyric_assembler::ObjectStateOptions m_objectStateOptions;
 
         lyric_common::ModuleLocation m_pluginLocation;

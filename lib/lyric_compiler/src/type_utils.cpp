@@ -69,8 +69,7 @@ lyric_compiler::match_types(
             TU_ASSIGN_OR_RETURN (cmp, compare_types(
                 targetType, matchType, /* requiresExtends= */ false, typeCache, fundamentalCache, typeSystem));
             if(cmp == lyric_runtime::TypeComparison::DISJOINT)
-                return block->logAndContinue(lyric_compiler::CompilerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kSyntaxError,
                     "cannot compare {} to {}; types are disjoint",
                     targetType.toString(), matchType.toString());
             return {};
@@ -89,16 +88,14 @@ lyric_compiler::match_types(
                 TU_RETURN_IF_NOT_OK (targetMemberSet.putType(targetMember));
             }
             if (!memberMatches)
-                return block->logAndContinue(lyric_compiler::CompilerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kSyntaxError,
                     "cannot compare {} to {}; right-hand side cannot match any member of the union",
                     targetType.toString(), matchType.toString());
             return {};
         }
 
         default:
-            return block->logAndContinue(lyric_compiler::CompilerCondition::kSyntaxError,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kSyntaxError,
                 "cannot compare {} to {}; invalid type for right-hand side",
                 targetType.toString(), matchType.toString());
     }

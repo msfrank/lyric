@@ -27,8 +27,7 @@ lyric_compiler::ImplHandler::before(
     auto *driver = getDriver();
 
     if (!node->isClass(lyric_schema::kLyricAstImplClass))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected Impl node");
 
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
@@ -43,8 +42,7 @@ lyric_compiler::ImplHandler::before(
                 break;
             }
             default:
-                return block->logAndContinue(CompilerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                     "unexpected AST node");
         }
     }
@@ -178,15 +176,12 @@ lyric_compiler::ExtensionParam::decide(
     const lyric_parser::ArchetypeNode *node,
     DecideContext &ctx)
 {
-    auto *block = getBlock();
-
     if (!node->hasAttr(lyric_parser::kLyricAstDefaultOffset))
         return {};
 
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    return block->logAndContinue(lyric_compiler::CompilerCondition::kSyntaxError,
-        tempo_tracing::LogSeverity::kError,
+    return CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kSyntaxError,
         "parameter '{}' has unexpected initializer", identifier);
 }

@@ -32,8 +32,7 @@ lyric_compiler::compile_predicate(
     TU_RETURN_IF_NOT_OK (fragment->invokeTypeOf());
 
     if (!typeCache->hasType(predicateType))
-        return block->logAndContinue(lyric_compiler::CompilerCondition::kMissingType,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kMissingType,
             "missing predicate type {}", predicateType.toString());
 
     // determine the match type
@@ -47,16 +46,14 @@ lyric_compiler::compile_predicate(
             std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
             TU_ASSIGN_OR_RETURN (bound, typeSystem->resolveBound(predicateType));
             if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
-                return block->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
                     "predicate type {} cannot match; constraint must have Extends bounds",
                     predicateType.toString());
             matchType = bound.second;
             break;
         }
         default:
-            return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "invalid predicate type {}", predicateType.toString());
     }
 
@@ -136,8 +133,7 @@ check_concrete_target_is_exhaustive(
             break;
         }
         default:
-            return block->logAndContinue(lyric_compiler::CompilerCondition::kSyntaxError,
-                tempo_tracing::LogSeverity::kError,
+            return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kSyntaxError,
                 "type {} cannot be used as the target of a match expression",
                 targetType.getConcreteUrl().toString());
     }
@@ -184,7 +180,7 @@ check_placeholder_target_is_exhaustive(
     std::pair<lyric_object::BoundType,lyric_common::TypeDef> bound;
     TU_ASSIGN_OR_RETURN (bound, typeSystem->resolveBound(targetType));
     if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
-        block->throwAssemblerInvariant(
+        return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kTypeError,
             "invalid target type {}; constraint must have Extends bounds",
             targetType.toString());
 
@@ -218,7 +214,8 @@ check_union_target_is_exhaustive(
                 break;
             }
             default:
-                block->throwAssemblerInvariant("invalid target type member {}", memberType.toString());
+                return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kTypeError,
+                    "invalid target type member {}", memberType.toString());
         }
         if (!isExhaustive)
             return false;
@@ -265,8 +262,7 @@ lyric_compiler::check_match_is_exhaustive(
     }
 
     if (!isExhaustive)
-        return block->logAndContinue(lyric_compiler::CompilerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
             "match expression has no else clause and target type {} cannot be checked exhaustively",
             targetType.toString());
 

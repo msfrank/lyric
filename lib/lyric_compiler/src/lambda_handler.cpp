@@ -182,8 +182,7 @@ lyric_compiler::LambdaFrom::decide(
     lyric_assembler::AbstractSymbol *sym;
     TU_ASSIGN_OR_RETURN (sym, symbolCache->getOrImportSymbol(symbolUrl));
     if (sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
-        return block->logAndContinue(CompilerCondition::kInvalidSymbol,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kInvalidSymbol,
             "lambda cannot be constructed from {}", symbolUrl.toString());
 
     // define the lambda builder

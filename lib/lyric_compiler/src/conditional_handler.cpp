@@ -245,7 +245,6 @@ lyric_compiler::ConditionalWhen::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    auto *block = getBlock();
     auto *driver = getDriver();
     auto *fundamentalCache = driver->getFundamentalCache();
     auto *typeSystem = driver->getTypeSystem();
@@ -263,8 +262,7 @@ lyric_compiler::ConditionalWhen::after(
     bool isAssignable;
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(boolType, m_consequent->predicateType));
     if (!isAssignable)
-        return block->logAndContinue(CompilerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "case predicate must return Boolean");
 
     // if consequent is a statement and returns a result then pop the value

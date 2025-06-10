@@ -90,12 +90,10 @@ lyric_compiler::BaseInvokableHandler::placeArguments(
             // evaluate the list parameter
             case lyric_object::PlacementType::List: {
                 if (m_invocation.listOffsets.size() <= currpos)
-                    return state->logAndContinue(CompilerCondition::kUnexpectedArgument,
-                        tempo_tracing::LogSeverity::kError,
+                    return CompilerStatus::forCondition(CompilerCondition::kUnexpectedArgument,
                         "unexpected list argument {}", currpos);
                 if (firstListOptArgument >= 0)
-                    return state->logAndContinue(CompilerCondition::kUnexpectedArgument,
-                        tempo_tracing::LogSeverity::kError,
+                    return CompilerStatus::forCondition(CompilerCondition::kUnexpectedArgument,
                         "unexpected list argument {}; missing default initializer", currpos);
                 auto offset = m_invocation.listOffsets.at(currpos);
                 TU_ASSERT (offset < m_invocation.arguments.size());
@@ -110,16 +108,14 @@ lyric_compiler::BaseInvokableHandler::placeArguments(
             case lyric_object::PlacementType::ListOpt: {
                 if (m_invocation.listOffsets.size() <= currpos) {
                     if (!placement->hasInitializer(param->name))
-                        return state->logAndContinue(CompilerCondition::kCompilerInvariant,
-                            tempo_tracing::LogSeverity::kError,
+                        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                             "invalid list parameter {}", param->name);
                     auto initializerUrl = placement->getInitializer(param->name);
 
                     lyric_assembler::AbstractSymbol *symbol;
                     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(initializerUrl));
                     if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-                        return state->logAndContinue(CompilerCondition::kCompilerInvariant,
-                            tempo_tracing::LogSeverity::kError,
+                        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                             "invalid initializer {}", initializerUrl.toString());
                     auto *initSymbol = cast_symbol_to_call(symbol);
 
@@ -149,8 +145,7 @@ lyric_compiler::BaseInvokableHandler::placeArguments(
             }
 
             default:
-                return state->logAndContinue(CompilerCondition::kCompilerInvariant,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                     "invalid list parameter");
         }
     }
@@ -164,8 +159,7 @@ lyric_compiler::BaseInvokableHandler::placeArguments(
             case lyric_object::PlacementType::Named: {
                 auto entry = m_invocation.keywordOffsets.find(param->name);
                 if (entry == m_invocation.keywordOffsets.cend())
-                    return state->logAndContinue(CompilerCondition::kMissingArgument,
-                        tempo_tracing::LogSeverity::kError,
+                    return CompilerStatus::forCondition(CompilerCondition::kMissingArgument,
                         "missing keyword argument '{}'", param->name);
                 auto offset = entry->second;
                 TU_ASSERT (offset < m_invocation.arguments.size());
@@ -180,16 +174,14 @@ lyric_compiler::BaseInvokableHandler::placeArguments(
                 auto entry = m_invocation.keywordOffsets.find(param->name);
                 if (entry == m_invocation.keywordOffsets.cend()) {
                     if (!placement->hasInitializer(param->name))
-                        return state->logAndContinue(CompilerCondition::kCompilerInvariant,
-                            tempo_tracing::LogSeverity::kError,
+                        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                             "invalid named parameter {}", param->name);
                     auto initializerUrl = placement->getInitializer(param->name);
 
                     lyric_assembler::AbstractSymbol *symbol;
                     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(initializerUrl));
                     if (symbol->getSymbolType() != lyric_assembler::SymbolType::CALL)
-                        return state->logAndContinue(CompilerCondition::kCompilerInvariant,
-                            tempo_tracing::LogSeverity::kError,
+                        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                             "invalid initializer {}", initializerUrl.toString());
                     auto *initSymbol = cast_symbol_to_call(symbol);
 
@@ -234,8 +226,7 @@ lyric_compiler::BaseInvokableHandler::placeArguments(
                     TU_ASSIGN_OR_RETURN (isImplementable,
                         typeSystem->isImplementable(contextType, argument->resultType));
                     if (!isImplementable)
-                        return state->logAndContinue(CompilerCondition::kMissingImpl,
-                            tempo_tracing::LogSeverity::kError,
+                        return CompilerStatus::forCondition(CompilerCondition::kMissingImpl,
                             "ctx argument {} does not implement {}",
                             argument->resultType.toString(), contextType.toString());
                 }
@@ -243,8 +234,7 @@ lyric_compiler::BaseInvokableHandler::placeArguments(
             }
 
             default:
-                return state->logAndContinue(CompilerCondition::kCompilerInvariant,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                     "invalid named parameter");
         }
     }

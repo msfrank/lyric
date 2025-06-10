@@ -48,8 +48,7 @@ lyric_compiler::DefInstanceHandler::before(
     auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstDefInstanceClass))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected DefInstance node");
 
     // get instance name
@@ -102,8 +101,7 @@ lyric_compiler::DefInstanceHandler::before(
                 break;
             }
             default:
-                return block->logAndContinue(CompilerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                     "unexpected AST node");
         }
 
@@ -224,8 +222,7 @@ lyric_compiler::InstanceDefinition::decide(
             return {};
         }
         default:
-            return block->logAndContinue(CompilerCondition::kSyntaxError,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                 "unexpected AST node");
     }
 }

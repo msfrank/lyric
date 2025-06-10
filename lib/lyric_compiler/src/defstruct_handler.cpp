@@ -47,8 +47,7 @@ lyric_compiler::DefStructHandler::before(
     auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstDefStructClass))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected DefStruct node");
 
     // get struct name
@@ -86,8 +85,7 @@ lyric_compiler::DefStructHandler::before(
         switch (astId) {
             case lyric_schema::LyricAstId::Init:
                 if (initNode != nullptr)
-                    return block->logAndContinue(CompilerCondition::kSyntaxError,
-                        tempo_tracing::LogSeverity::kError,
+                    return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                         "duplicate struct init declaration");
                 initNode = child;
                 break;
@@ -104,8 +102,7 @@ lyric_compiler::DefStructHandler::before(
                 break;
             }
             default:
-                return block->logAndContinue(CompilerCondition::kSyntaxError,
-                    tempo_tracing::LogSeverity::kError,
+                return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                     "unexpected AST node");
         }
 
@@ -240,8 +237,7 @@ lyric_compiler::StructDefinition::decide(
             return {};
         }
         default:
-            return block->logAndContinue(CompilerCondition::kSyntaxError,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                 "unexpected AST node");
     }
 }

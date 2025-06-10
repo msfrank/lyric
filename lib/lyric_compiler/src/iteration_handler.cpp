@@ -98,8 +98,7 @@ lyric_compiler::WhileBody::decide(
     bool isAssignable;
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(BoolType, testType));
     if (!isAssignable)
-        return block->logAndContinue(CompilerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "expected test expression to return {}; found {}", BoolType.toString(), testType.toString());
 
     TU_ASSIGN_OR_RETURN (m_loop->exitLoopTarget, m_fragment->jumpIfFalse());
@@ -226,8 +225,7 @@ get_or_construct_iterator(
     bool implementsIterable;
     TU_ASSIGN_OR_RETURN (implementsIterable, typeSystem->isImplementable(iterableType, generatorType));
     if (!implementsIterable)
-        return block->logAndContinue(lyric_compiler::CompilerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
+        return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kIncompatibleType,
             "generator type {} is not iterable", generatorType.toString());
 
     // resolve the Iterate impl method
@@ -262,7 +260,8 @@ lyric_compiler::ForBody::decide(
     lyric_assembler::AbstractSymbol *iteratorSym;
     TU_ASSIGN_OR_RETURN (iteratorSym, symbolCache->getOrImportSymbol(fundamentalIterator));
     if (iteratorSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
-        block->throwAssemblerInvariant("invalid concept symbol {}", fundamentalIterator.toString());
+        return CompilerStatus::forCondition(CompilerCondition::kInvalidSymbol,
+            "invalid concept symbol {}", fundamentalIterator.toString());
     auto *iteratorConcept = cast_symbol_to_concept(iteratorSym);
 
     // look up the Iterable concept symbol
@@ -271,7 +270,8 @@ lyric_compiler::ForBody::decide(
     lyric_assembler::AbstractSymbol *iterableSym;
     TU_ASSIGN_OR_RETURN (iterableSym, symbolCache->getOrImportSymbol(fundamentalIterable));
     if (iterableSym->getSymbolType() != lyric_assembler::SymbolType::CONCEPT)
-        block->throwAssemblerInvariant("invalid concept symbol {}", fundamentalIterator.toString());
+        return CompilerStatus::forCondition(CompilerCondition::kInvalidSymbol,
+            "invalid concept symbol {}", fundamentalIterator.toString());
     auto *iterableConcept = cast_symbol_to_concept(iterableSym);
 
     // put the iterator on the top of the stack. if the result of the generator is the iterator then this
@@ -322,8 +322,7 @@ lyric_compiler::ForBody::decide(
     bool isAssignable;
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(boolType, validReturnType));
     if (!isAssignable)
-        return forBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected Valid method to return {}; found {}",
             boolType.toString(), validReturnType.toString());
 
@@ -344,8 +343,7 @@ lyric_compiler::ForBody::decide(
 
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(m_iteration->targetType, nextReturnType));
     if (!isAssignable)
-        return forBlock->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected Next method to return {}; found {}",
             m_iteration->targetType.toString(), nextReturnType.toString());
 

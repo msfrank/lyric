@@ -38,8 +38,7 @@ lyric_compiler::NamespaceHandler::before(
     auto *driver = getDriver();
 
     if (!node->isClass(lyric_schema::kLyricAstNamespaceClass))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected Namespace node");
 
     // get namespace identifer
@@ -151,8 +150,7 @@ lyric_compiler::NamespaceDefinition::decide(
             return {};
         }
         default:
-            return namespaceBlock->logAndContinue(CompilerCondition::kSyntaxError,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                 "unexpected AST node");
     }
 }

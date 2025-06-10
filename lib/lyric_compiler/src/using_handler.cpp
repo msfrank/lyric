@@ -26,14 +26,12 @@ lyric_compiler::UsingHandler::before(
     auto *driver = getDriver();
 
     if (!node->isClass(lyric_schema::kLyricAstUsingClass))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected Using node");
 
     auto numChildren = node->numChildren();
     if (numChildren == 0)
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "Using node must have at least one child");
     numChildren--;
 

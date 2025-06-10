@@ -35,8 +35,7 @@ lyric_compiler::ProcHandler::before(
     if (numChildren == 0) {
         if (!m_requiresResult)
             return {};
-        return block->logAndContinue(CompilerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
             "block requires a result");
     }
 

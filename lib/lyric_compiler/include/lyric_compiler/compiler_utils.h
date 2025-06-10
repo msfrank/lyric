@@ -5,6 +5,7 @@
 #include <lyric_object/object_types.h>
 #include <lyric_parser/parser_types.h>
 #include <lyric_schema/ast_schema.h>
+#include <tempo_utils/result.h>
 
 namespace lyric_compiler {
 

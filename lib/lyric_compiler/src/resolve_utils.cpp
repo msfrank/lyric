@@ -47,34 +47,34 @@ lyric_compiler::resolve_member(
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
+    lyric_typing::MemberReifier reifier(typeSystem);
     switch (receiver->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {
             auto *classSymbol = cast_symbol_to_class(receiver);
-            lyric_typing::MemberReifier reifier(typeSystem, receiverType, classSymbol->classTemplate());
+            TU_RETURN_IF_NOT_OK (reifier.initialize(receiverType, classSymbol->classTemplate()));
             TU_ASSIGN_OR_RETURN (ref, classSymbol->resolveMember(identifier, reifier, receiverType, thisReceiver));
             return {};
         }
         case lyric_assembler::SymbolType::ENUM: {
             auto *enumSymbol = cast_symbol_to_enum(receiver);
-            lyric_typing::MemberReifier reifier(typeSystem, receiverType);
+            TU_RETURN_IF_NOT_OK (reifier.initialize(receiverType));
             TU_ASSIGN_OR_RETURN (ref, enumSymbol->resolveMember(identifier, reifier, receiverType, thisReceiver));
             return {};
         }
         case lyric_assembler::SymbolType::INSTANCE: {
             auto *instanceSymbol = cast_symbol_to_instance(receiver);
-            lyric_typing::MemberReifier reifier(typeSystem, receiverType);
+            TU_RETURN_IF_NOT_OK (reifier.initialize(receiverType));
             TU_ASSIGN_OR_RETURN (ref, instanceSymbol->resolveMember(identifier, reifier, receiverType, thisReceiver));
             return {};
         }
         case lyric_assembler::SymbolType::STRUCT: {
             auto *structSymbol = cast_symbol_to_struct(receiver);
-            lyric_typing::MemberReifier reifier(typeSystem, receiverType);
+            TU_RETURN_IF_NOT_OK (reifier.initialize(receiverType));
             TU_ASSIGN_OR_RETURN (ref, structSymbol->resolveMember(identifier, reifier, receiverType, thisReceiver));
             return {};
         }
         default:
-            return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
                 "invalid receiver symbol {}", receiverUrl.toString());
     }
 }

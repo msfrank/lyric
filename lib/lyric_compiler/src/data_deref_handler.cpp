@@ -45,8 +45,7 @@ lyric_compiler::DataDerefHandler::before(
 
     auto numChildren = node->numChildren();
     if (numChildren == 0)
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "empty deref statement");
 
     if (numChildren == 1) {
@@ -357,8 +356,7 @@ invoke_method(
 
     // verify the receiver is valid
     if (receiverType.getType() != lyric_common::TypeDefType::Concrete)
-        return invokeBlock->logAndContinue(lyric_compiler::CompilerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kSyntaxError,
             "invalid receiver type {}", receiverType.toString());
     auto receiverUrl = receiverType.getConcreteUrl();
 
@@ -423,8 +421,7 @@ invoke_method(
         }
 
         default:
-            return invokeBlock->logAndContinue(lyric_compiler::CompilerCondition::kInvalidSymbol,
-                tempo_tracing::LogSeverity::kError,
+            return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kInvalidSymbol,
                 "invalid receiver symbol {}", receiverUrl.toString());
     }
 

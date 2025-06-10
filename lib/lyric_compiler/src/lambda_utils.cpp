@@ -13,15 +13,13 @@ lyric_compiler::define_lambda_builder(
     auto arity = lambdaCall->numParameters();
     auto lambdaFunctionUrl = fundamentalCache->getFunctionUrl(arity);
     if (!lambdaFunctionUrl.isValid())
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "lambda arity is too large");
 
     lyric_assembler::AbstractSymbol *closureSym;
     TU_ASSIGN_OR_RETURN (closureSym, symbolCache->getOrImportSymbol(lambdaFunctionUrl));
     if (closureSym->getSymbolType() != lyric_assembler::SymbolType::CLASS)
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "invalid class symbol {}", lambdaFunctionUrl.toString());
 
     auto *closureClass = cast_symbol_to_class(closureSym);

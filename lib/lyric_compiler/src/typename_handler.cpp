@@ -39,8 +39,7 @@ lyric_compiler::TypenameHandler::decide(
     auto *driver = getDriver();
 
     if (!node->isClass(lyric_schema::kLyricAstTypeNameClass))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected TypeName node");
 
     // get global name

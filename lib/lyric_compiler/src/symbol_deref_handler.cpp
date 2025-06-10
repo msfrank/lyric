@@ -42,8 +42,7 @@ lyric_compiler::SymbolDerefHandler::before(
 
     auto numChildren = node->numChildren();
     if (numChildren == 0)
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "empty deref statement");
 
     auto initial = std::make_unique<SymbolDerefInitial>(&m_deref, block, driver);

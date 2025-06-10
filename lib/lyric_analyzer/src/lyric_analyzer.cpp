@@ -5,6 +5,7 @@
 #include <lyric_assembler/object_state.h>
 #include <lyric_parser/node_walker.h>
 #include <lyric_rewriter/lyric_rewriter.h>
+#include <tempo_tracing/enter_scope.h>
 #include <tempo_utils/log_stream.h>
 
 lyric_analyzer::LyricAnalyzer::LyricAnalyzer(
@@ -41,11 +42,19 @@ lyric_analyzer::LyricAnalyzer::analyzeModule(
             AnalyzerCondition::kAnalyzerInvariant, "invalid archetype");
 
     try {
+        // create the trace context
+        std::shared_ptr<tempo_tracing::TraceContext> context;
+        if (recorder != nullptr) {
+            TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeUnownedContextAndSwitch(recorder));
+        } else {
+            TU_ASSIGN_OR_RETURN (context, tempo_tracing::TraceContext::makeContextAndSwitch());
+        }
 
-        // create a new span
-        tempo_tracing::ScopeManager scopeManager(recorder);
-        auto span = scopeManager.makeSpan();
-        span->setOperationName("analyzeModule");
+        // ensure context is released
+        tempo_tracing::ReleaseContext releaser(context);
+
+        // create the root span
+        tempo_tracing::EnterScope scope("lyric_analyzer::LyricAnalyzer::analyzeModule");
 
         std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver;
         if (m_options.shortcutResolver != nullptr) {
@@ -57,7 +66,7 @@ lyric_analyzer::LyricAnalyzer::analyzeModule(
         // construct the analyzer state
         auto builder = std::make_shared<AnalyzerScanDriverBuilder>(
             location, m_localModuleCache, m_systemModuleCache, shortcutResolver,
-            &scopeManager, objectStateOptions);
+            objectStateOptions);
 
         lyric_rewriter::RewriterOptions rewriterOptions;
         lyric_rewriter::LyricRewriter rewriter(rewriterOptions);

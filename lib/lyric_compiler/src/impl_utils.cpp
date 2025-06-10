@@ -78,8 +78,7 @@ lyric_compiler::resolve_impl_handle(
             return structSymbol->getImpl(implRef.implType);
         }
         default:
-            return block->logAndContinue(lyric_compiler::CompilerCondition::kMissingImpl,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kMissingImpl,
                 "missing impl for {}", implRef.implType.toString());
     }
 }

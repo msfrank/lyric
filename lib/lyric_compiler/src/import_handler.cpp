@@ -48,8 +48,7 @@ lyric_compiler::ImportHandler::before(
                 namespaceIdentifier, lyric_object::AccessType::Public));
             m_import.importBlock = importNamespace->namespaceBlock();
         } else {
-            return block->logAndContinue(CompilerCondition::kSyntaxError,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
                 "cannot declare import namespace here");
         }
     }
@@ -102,11 +101,8 @@ lyric_compiler::ImportSymbol::decide(
     const lyric_parser::ArchetypeNode *node,
     DecideContext &ctx)
 {
-    auto *block = getBlock();
-
     if (!node->isClass(lyric_schema::kLyricAstSymbolRefClass))
-        return block->logAndContinue(CompilerCondition::kCompilerInvariant,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "expected SymbolRef node");
 
     lyric_common::SymbolPath symbolPath;

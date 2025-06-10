@@ -77,8 +77,7 @@ lyric_compiler::PackParam::before(
 
     // check if decl param has initializer
     if (m_callSymbol == nullptr && hasDefault)
-        return block->logAndContinue(CompilerCondition::kSyntaxError,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
             "unexpected param initializer");
 
     // otherwise if initializer was not specified then we are done
@@ -109,7 +108,6 @@ lyric_compiler::PackParam::after(
     if (m_procHandle == nullptr)
         return {};
 
-    auto *block = getBlock();
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
     auto *code = m_procHandle->procCode();
@@ -128,16 +126,14 @@ lyric_compiler::PackParam::after(
     // validate that body returns the expected type
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(paramType, initializerType));
     if (!isAssignable)
-        return block->logAndContinue(CompilerCondition::kIncompatibleType,
-            tempo_tracing::LogSeverity::kError,
+        return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "parameter initializer is incompatible with type {}", paramType.toString());
 
     // validate that each exit returns the expected type
     for (auto it = m_procHandle->exitTypesBegin(); it != m_procHandle->exitTypesEnd(); it++) {
         TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(paramType, *it));
         if (!isAssignable)
-            return block->logAndContinue(CompilerCondition::kIncompatibleType,
-                tempo_tracing::LogSeverity::kError,
+            return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
                 "parameter initializer is incompatible with type {}", paramType.toString());
     }
 
