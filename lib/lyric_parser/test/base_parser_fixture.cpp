@@ -8,6 +8,8 @@ BaseParserFixture::SetUp()
 {
     recorder = tempo_tracing::TraceRecorder::create();
     lyric_parser::ParserOptions options;
+    //options.enableExtraDiagnostics = true;
+    //options.reportAllAmbiguities = true;
     parser = std::make_unique<lyric_parser::LyricParser>(options);
 }
 

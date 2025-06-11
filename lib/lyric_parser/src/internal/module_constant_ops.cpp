@@ -74,6 +74,7 @@ lyric_parser::internal::ModuleConstantOps::exitDecimalInteger(ModuleParser::Deci
     TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstIntegerClass, location));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Decimal));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Integral));
     TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
@@ -83,15 +84,9 @@ lyric_parser::internal::ModuleConstantOps::exitHexInteger(ModuleParser::HexInteg
     auto *token = ctx->HexInteger()->getSymbol();
     auto location = get_token_location(token);
 
-    auto src = token->getText();
-    if (src.empty()) {
-        throw_semantic_exception(token, "invalid hex integer ''");
-        TU_UNREACHABLE();
-    }
-
-    auto value = std::string(src.cbegin() + 2, src.cend()); // strip the 0x, 0X prefix
+    auto value = token->getText();
     if (value.empty()) {
-        throw_semantic_exception(token, "invalid hex integer '{}'", src);
+        throw_semantic_exception(token, "invalid hex integer ''");
         TU_UNREACHABLE();
     }
 
@@ -99,6 +94,7 @@ lyric_parser::internal::ModuleConstantOps::exitHexInteger(ModuleParser::HexInteg
     TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstIntegerClass, location));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Hex));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Integral));
     TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
@@ -108,15 +104,9 @@ lyric_parser::internal::ModuleConstantOps::exitOctalInteger(ModuleParser::OctalI
     auto *token = ctx->OctalInteger()->getSymbol();
     auto location = get_token_location(token);
 
-    auto src = token->getText();
-    if (src.empty()) {
-        throw_semantic_exception(token, "invalid octal integer ''");
-        TU_UNREACHABLE();
-    }
-
-    auto value = std::string(src.cbegin() + 1, src.cend()); // strip the 0 prefix
+    auto value = token->getText();
     if (value.empty()) {
-        throw_semantic_exception(token, "invalid octal integer '{}'", src);
+        throw_semantic_exception(token, "invalid octal integer ''");
         TU_UNREACHABLE();
     }
 
@@ -124,6 +114,7 @@ lyric_parser::internal::ModuleConstantOps::exitOctalInteger(ModuleParser::OctalI
     TU_ASSIGN_OR_RAISE (literalNode, m_state->appendNode(lyric_schema::kLyricAstIntegerClass, location));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstLiteralValue, value));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Octal));
+    TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Integral));
     TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
 }
 
@@ -170,18 +161,12 @@ lyric_parser::internal::ModuleConstantOps::exitDecimalScientificFloat(ModulePars
 void
 lyric_parser::internal::ModuleConstantOps::exitHexFloat(ModuleParser::HexFloatContext *ctx)
 {
-    auto *token = ctx->HexFloat()->getSymbol();
+    auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto src = token->getText();
-    if (src.empty()) {
-        throw_semantic_exception(token, "invalid hex float ''");
-        TU_UNREACHABLE();
-    }
-
-    auto value = std::string(src.cbegin() + 2, src.cend()); // strip the 0x, 0X prefix
+    auto value = token->getText();
     if (value.empty()) {
-        throw_semantic_exception(token, "invalid hex float '{}'", src);
+        throw_semantic_exception(token, "invalid hex float ''");
         TU_UNREACHABLE();
     }
 

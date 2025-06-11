@@ -64,11 +64,16 @@ lyric_parser::LyricParser::parseModule(
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
-
     lexer.removeErrorListeners();
     lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
     parser.addErrorListener(&tracingErrorListener);
+
+    //
+    if (m_options.enableExtraDiagnostics) {
+        antlr4::DiagnosticErrorListener diagnosticErrorListener(!m_options.reportAllAmbiguities);
+        parser.addErrorListener(&diagnosticErrorListener);
+    }
 
     try {
         antlr4::tree::ParseTree *tree = parser.root();
@@ -125,11 +130,16 @@ lyric_parser::LyricParser::parseBlock(
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
-
     lexer.removeErrorListeners();
     lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
     parser.addErrorListener(&tracingErrorListener);
+
+    //
+    if (m_options.enableExtraDiagnostics) {
+        antlr4::DiagnosticErrorListener diagnosticErrorListener(!m_options.reportAllAmbiguities);
+        parser.addErrorListener(&diagnosticErrorListener);
+    }
 
     try {
         antlr4::tree::ParseTree *tree = parser.block();
@@ -184,11 +194,16 @@ lyric_parser::LyricParser::parseClass(
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
-
     lexer.removeErrorListeners();
     lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
     parser.addErrorListener(&tracingErrorListener);
+
+    //
+    if (m_options.enableExtraDiagnostics) {
+        antlr4::DiagnosticErrorListener diagnosticErrorListener(!m_options.reportAllAmbiguities);
+        parser.addErrorListener(&diagnosticErrorListener);
+    }
 
     try {
         antlr4::tree::ParseTree *tree = parser.defclassStatement();
@@ -243,11 +258,16 @@ lyric_parser::LyricParser::parseConcept(
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
-
     lexer.removeErrorListeners();
     lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
     parser.addErrorListener(&tracingErrorListener);
+
+    //
+    if (m_options.enableExtraDiagnostics) {
+        antlr4::DiagnosticErrorListener diagnosticErrorListener(!m_options.reportAllAmbiguities);
+        parser.addErrorListener(&diagnosticErrorListener);
+    }
 
     try {
         antlr4::tree::ParseTree *tree = parser.defconceptStatement();
@@ -302,11 +322,16 @@ lyric_parser::LyricParser::parseEnum(
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
-
     lexer.removeErrorListeners();
     lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
     parser.addErrorListener(&tracingErrorListener);
+
+    //
+    if (m_options.enableExtraDiagnostics) {
+        antlr4::DiagnosticErrorListener diagnosticErrorListener(!m_options.reportAllAmbiguities);
+        parser.addErrorListener(&diagnosticErrorListener);
+    }
 
     try {
         antlr4::tree::ParseTree *tree = parser.defenumStatement();
@@ -361,11 +386,16 @@ lyric_parser::LyricParser::parseFunction(
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
-
     lexer.removeErrorListeners();
     lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
     parser.addErrorListener(&tracingErrorListener);
+
+    //
+    if (m_options.enableExtraDiagnostics) {
+        antlr4::DiagnosticErrorListener diagnosticErrorListener(!m_options.reportAllAmbiguities);
+        parser.addErrorListener(&diagnosticErrorListener);
+    }
 
     try {
         antlr4::tree::ParseTree *tree = parser.defStatement();
@@ -420,11 +450,16 @@ lyric_parser::LyricParser::parseInstance(
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
-
     lexer.removeErrorListeners();
     lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
     parser.addErrorListener(&tracingErrorListener);
+
+    //
+    if (m_options.enableExtraDiagnostics) {
+        antlr4::DiagnosticErrorListener diagnosticErrorListener(!m_options.reportAllAmbiguities);
+        parser.addErrorListener(&diagnosticErrorListener);
+    }
 
     try {
         antlr4::tree::ParseTree *tree = parser.definstanceStatement();
@@ -479,11 +514,16 @@ lyric_parser::LyricParser::parseStruct(
 
     // create the error listener
     internal::TracingErrorListener tracingErrorListener(&listener);
-
     lexer.removeErrorListeners();
     lexer.addErrorListener(&tracingErrorListener);
     parser.removeErrorListeners();
     parser.addErrorListener(&tracingErrorListener);
+
+    //
+    if (m_options.enableExtraDiagnostics) {
+        antlr4::DiagnosticErrorListener diagnosticErrorListener(!m_options.reportAllAmbiguities);
+        parser.addErrorListener(&diagnosticErrorListener);
+    }
 
     try {
         antlr4::tree::ParseTree *tree = parser.defstructStatement();

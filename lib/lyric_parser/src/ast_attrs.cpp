@@ -63,6 +63,9 @@ static tempo_utils::Status
 value_to_notation_type(tu_int64 value, lyric_parser::NotationType &notation)
 {
     switch (static_cast<lyric_parser::NotationType>(value)) {
+        case lyric_parser::NotationType::Integral:
+            notation = lyric_parser::NotationType::Integral;
+            return {};
         case lyric_parser::NotationType::Fixed:
             notation = lyric_parser::NotationType::Fixed;
             return {};

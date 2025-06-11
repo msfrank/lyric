@@ -14,43 +14,41 @@ BracketClose                : ']' ;
 CurlyOpen                   : '{' ;
 CurlyClose                  : '}' ;
 
-// mode change indicators
 
-//QuoteBlock                  : '|' -> pushMode(QUOTE) ;
-//CommentBlock                : '#' -> pushMode(COMMENT) ;
+// binary literal
 
-// a number literal is any sequence of characters enclosed in double-quotes
+BinPrefix                   : '0b' -> skip, pushMode(BINLITERAL) ;
+
+
+// hexadecimal literal
+
+HexPrefix                   : '0x' -> skip, pushMode(HEXLITERAL) ;
+
+// octal literal
+
+OctPrefix                   : '0o' -> skip, pushMode(OCTLITERAL);
+
+// decimal literals
 
 fragment
-HexDigit                    : ('0'..'9'|'a'..'f'|'A'..'F') ;
+DecimalDigit                : ('0'..'9') ;
 
 fragment
-Exponent                    : ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
+DecimalWholeNumber          : ('0'|'1'..'9' '0'..'9'*) ;
 
 fragment
-WholeNumber                 : ('0' | '1'..'9' '0'..'9'*) ;
+DecimalExponent             : ('e'|'E') ('+'|'-')? DecimalDigit+ ;
 
-HexInteger                  : '-'? '0' ('x'|'X') HexDigit+ ;
-
-DecimalInteger              : '-'? WholeNumber ;
-
-OctalInteger                : '-'? '0' ('0'..'7')+ ;
-
-HexFloat                    : '-'? ('0x' | '0X') (HexDigit )*
-                              ('.' (HexDigit)*)?
-                              ( ( 'p' | 'P' )
-                                ( '+' | '-' )?
-                                HexDigit+)?
+DecimalScientificFloat      : DecimalWholeNumber '.' DecimalDigit* DecimalExponent
+                            | '.' DecimalDigit+ DecimalExponent
+                            | DecimalWholeNumber DecimalExponent
                             ;
 
-DecimalScientificFloat      : '-'? WholeNumber '.' ('0'..'9')* Exponent
-                            | '-'? '.' ('0'..'9')+ Exponent
-                            | '-'? WholeNumber Exponent
+DecimalFixedFloat           : DecimalWholeNumber '.' DecimalDigit*
+                            | '.' DecimalDigit+
                             ;
 
-DecimalFixedFloat           : '-'? WholeNumber '.' ('0'..'9')*
-                            | '-'? '.' ('0'..'9')+
-                            ;
+DecimalInteger              : DecimalWholeNumber ;
 
 
 // a char literal is a single character or escape sequence enclosed in single-quotes
@@ -197,9 +195,46 @@ Identifier              : IdentifierStart IdentifierChar* ;
 EXPRWS                  : [ \t\r\n]+ -> skip ;  // skip whitespace
 
 
-//mode QUOTE;
-//QuotedLine              : ( ~[\r\n]+ )? '\r'? '\n' -> popMode ;      // match characters until after the newline
-//
+// binary literal processing mode
+
+mode BINLITERAL ;
+
+fragment
+BinaryDigit                 : ('0'|'1') ;
+
+BinaryInteger               : BinaryDigit+ -> popMode ;
+InvalidBinaryLiteral        : ~[ \t\r\n]+ -> popMode ;
+
+
+// hexadecimal literal processing mode
+
+mode HEXLITERAL;
+
+fragment
+HexDigit                    : ('0'..'9'|'a'..'f'|'A'..'F') ;
+
+fragment
+HexExponent                 : ('p'|'P') ('+'|'-')? HexDigit+ ;
+
+HexFloatTrailingPeriod      : HexDigit+ '.' HexDigit* HexExponent -> popMode ;
+HexFloatLeadingPeriod       : '.' HexDigit+ HexExponent -> popMode ;
+HexFloatNoPeriod            : HexDigit+ HexExponent -> popMode ;
+HexInteger                  : HexDigit+ -> popMode ;
+InvalidHexLiteral           : ~[ \t\r\n]+ -> popMode ;
+
+
+// octal literal processing mode
+
+mode OCTLITERAL;
+
+fragment
+OctalDigit                  : ('0'..'7') ;
+
+OctalInteger                : OctalDigit+ -> popMode ;
+InvalidOctalLiteral         : ~[ \t\r\n]+ -> popMode ;
+
+
+// comment processing mode
 
 mode COMMENT;
 CommentLine             : ( ~[\r\n]+ )? '\r'? '\n' -> popMode ;      // match characters until after the newline

@@ -50,6 +50,7 @@ namespace lyric_parser {
     };
 
     enum class NotationType {
+        Integral,
         Fixed,
         Scientific,
     };

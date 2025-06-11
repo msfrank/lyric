@@ -29,5 +29,6 @@ TEST_F(ParseDef, ErrorExtraClosingCurly) {
     )");
 
     ASSERT_THAT (parseResult, tempo_test::IsStatus());
-    diagnostics->printDiagnostics();
+    auto statusMessage = parseResult.getStatus().getMessage();
+    ASSERT_THAT (statusMessage, ::testing::ContainsRegex("Extra '}' closing def"));
 }

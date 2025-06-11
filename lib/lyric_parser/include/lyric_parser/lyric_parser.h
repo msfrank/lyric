@@ -13,6 +13,8 @@ namespace lyric_parser {
     struct ParserOptions {
         std::vector<std::filesystem::path> bootDirectoryList;
         std::filesystem::path srcDirectoryPath;
+        bool enableExtraDiagnostics = false;
+        bool reportAllAmbiguities = false;
     };
 
     class LyricParser {

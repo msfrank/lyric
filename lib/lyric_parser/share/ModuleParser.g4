@@ -424,15 +424,19 @@ literal             : numberLiteral | textLiteral | keywordLiteral ;
 decimalInteger          : DecimalInteger ;
 hexInteger              : HexInteger ;
 octalInteger            : OctalInteger ;
+octalInvalid            : InvalidOctalLiteral { notifyErrorListeners("invalid octal literal"); } ;
 decimalFixedFloat       : DecimalFixedFloat ;
-decimalScientificFloat  :  DecimalScientificFloat ;
-hexFloat                : HexFloat ;
-numberLiteral           : decimalInteger
+decimalScientificFloat  : DecimalScientificFloat ;
+hexFloat                : HexFloatTrailingPeriod | HexFloatLeadingPeriod | HexFloatNoPeriod ;
+hexInvalid              : InvalidHexLiteral { notifyErrorListeners("invalid hex literal"); };
+numberLiteral           : hexFloat
                         | hexInteger
+                        | hexInvalid
                         | octalInteger
+                        | octalInvalid
                         | decimalFixedFloat
                         | decimalScientificFloat
-                        | hexFloat
+                        | decimalInteger
                         ;
 
 charLiteral             : CharLiteral ;
