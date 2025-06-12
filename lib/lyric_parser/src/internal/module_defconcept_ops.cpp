@@ -11,10 +11,9 @@
 #include <tempo_tracing/exit_scope.h>
 #include <tempo_utils/log_stream.h>
 
-lyric_parser::internal::ModuleDefconceptOps::ModuleDefconceptOps(ArchetypeState *state)
-    : m_state(state)
+lyric_parser::internal::ModuleDefconceptOps::ModuleDefconceptOps(ModuleArchetype *listener)
+    : BaseOps(listener)
 {
-    TU_ASSERT (m_state != nullptr);
 }
 
 void
@@ -22,16 +21,24 @@ lyric_parser::internal::ModuleDefconceptOps::enterDefconceptStatement(ModulePars
 {
     tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefconceptOps::enterDefconceptStatement");
 
+    auto *state = getState();
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-
-    ArchetypeNode *defconceptNode;
-    TU_ASSIGN_OR_RAISE (defconceptNode, m_state->appendNode(lyric_schema::kLyricAstDefConceptClass, location));
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(defconceptNode));
 
     scope.putTag(kLyricParserLineNumber, location.lineNumber);
     scope.putTag(kLyricParserColumnNumber, location.columnNumber);
     scope.putTag(kLyricParserFileOffset, location.fileOffset);
+
+    if (hasError())
+        return;
+
+    // allocate defconcept node
+    ArchetypeNode *defconceptNode;
+    TU_ASSIGN_OR_RAISE (defconceptNode, state->appendNode(lyric_schema::kLyricAstDefConceptClass, location));
+
+    // push defconcept onto stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(defconceptNode));
 }
 
 void
@@ -45,49 +52,62 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptDecl(ModuleParser::Conce
 {
     tempo_tracing::ExitScope scope;
 
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
-
-    ArchetypeNode *packNode;
-    TU_ASSIGN_OR_RAISE (packNode, m_state->popNode());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-
-    ArchetypeNode *declNode;
-    TU_ASSIGN_OR_RAISE (declNode, m_state->appendNode(lyric_schema::kLyricAstDeclClass, location));
 
     scope.putTag(kLyricParserLineNumber, location.lineNumber);
     scope.putTag(kLyricParserColumnNumber, location.columnNumber);
     scope.putTag(kLyricParserFileOffset, location.fileOffset);
 
-    // the action name
+    // get the identifier
     auto id = ctx->symbolIdentifier()->getText();
-    TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstIdentifier, id));
-
-    // the visibility
-    auto access = parse_access_type(id);
-    TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstAccessType, access));
-
-    // the return type
-    if (ctx->returnSpec()) {
-        auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
-        TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
-    } else {
-        ArchetypeNode *returnTypeNode;
-        TU_ASSIGN_OR_RAISE (returnTypeNode, m_state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
-        TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
-    }
-
-    TU_RAISE_IF_NOT_OK (declNode->appendChild(packNode));
-
-    // if ancestor node is not a kDefConcept, then report internal violation
-    ArchetypeNode *defconceptNode;
-    TU_ASSIGN_OR_RAISE (defconceptNode, m_state->peekNode(lyric_schema::kLyricAstDefConceptClass));
-
-    TU_RAISE_IF_NOT_OK (defconceptNode->appendChild(declNode));
 
     // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
+    state->popSymbolAndCheck(id);
+
+    // get the visibility
+    auto access = parse_access_type(id);
+
+    // get the return type
+    ArchetypeNode *returnTypeNode = nullptr;
+    if (ctx->returnSpec()) {
+        returnTypeNode = make_Type_node(state, ctx->returnSpec()->assignableType());
+    } else {
+        TU_ASSIGN_OR_RAISE (returnTypeNode, state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
+    }
+
+    if (hasError())
+        return;
+
+    // pop the pack node from stack
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, state->popNode());
+
+    // allocate decl node
+    ArchetypeNode *declNode;
+    TU_ASSIGN_OR_RAISE (declNode, state->appendNode(lyric_schema::kLyricAstDeclClass, location));
+
+    // set the action name
+    TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstIdentifier, id));
+
+    // set the visibility
+    TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstAccessType, access));
+
+    // set the return type
+    TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
+
+    // append pack node to decl
+    TU_RAISE_IF_NOT_OK (declNode->appendChild(packNode));
+
+    // peek node on stack, verify it is defconcept
+    ArchetypeNode *defconceptNode;
+    TU_ASSIGN_OR_RAISE (defconceptNode, state->peekNode(lyric_schema::kLyricAstDefConceptClass));
+
+    // append decl node to defconcept
+    TU_RAISE_IF_NOT_OK (defconceptNode->appendChild(declNode));
 }
 
 void
@@ -95,16 +115,24 @@ lyric_parser::internal::ModuleDefconceptOps::enterConceptImpl(ModuleParser::Conc
 {
     tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefconceptOps::enterConceptImpl");
 
+    auto *state = getState();
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-
-    ArchetypeNode *implNode;
-    TU_ASSIGN_OR_RAISE (implNode, m_state->appendNode(lyric_schema::kLyricAstImplClass, location));
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(implNode));
 
     scope.putTag(kLyricParserLineNumber, location.lineNumber);
     scope.putTag(kLyricParserColumnNumber, location.columnNumber);
     scope.putTag(kLyricParserFileOffset, location.fileOffset);
+
+    if (hasError())
+        return;
+
+    // allocate impl node
+    ArchetypeNode *implNode;
+    TU_ASSIGN_OR_RAISE (implNode, state->appendNode(lyric_schema::kLyricAstImplClass, location));
+
+    // push impl onto stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(implNode));
 }
 
 void
@@ -112,18 +140,26 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptImpl(ModuleParser::Conce
 {
     tempo_tracing::ExitScope scope;
 
-    // the impl type
-    auto *implTypeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *state = getState();
 
+    // the impl type
+    auto *implTypeNode = make_Type_node(state, ctx->assignableType());
+
+    if (hasError())
+        return;
+
+    // pop node from the stack, verify it is impl
     ArchetypeNode *implNode;
-    TU_ASSIGN_OR_RAISE (implNode, m_state->popNode(lyric_schema::kLyricAstImplClass));
+    TU_ASSIGN_OR_RAISE (implNode, state->popNode(lyric_schema::kLyricAstImplClass));
 
     // set the impl type
     TU_RAISE_IF_NOT_OK (implNode->putAttr(kLyricAstTypeOffset, implTypeNode));
 
+    // peek node on stack, verify it is defconcept
     ArchetypeNode *defconceptNode;
-    TU_ASSIGN_OR_RAISE (defconceptNode, m_state->peekNode(lyric_schema::kLyricAstDefConceptClass));
+    TU_ASSIGN_OR_RAISE (defconceptNode, state->peekNode(lyric_schema::kLyricAstDefConceptClass));
 
+    // append impl node to defconcept
     TU_RAISE_IF_NOT_OK (defconceptNode->appendChild(implNode));
 }
 
@@ -132,18 +168,19 @@ lyric_parser::internal::ModuleDefconceptOps::exitDefconceptStatement(ModuleParse
 {
     tempo_tracing::ExitScope scope;
 
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
-    ArchetypeNode *defconceptNode;
-    TU_ASSIGN_OR_RAISE (defconceptNode, m_state->peekNode(lyric_schema::kLyricAstDefConceptClass));
-
-    // the concept name
+    // get the identifier
     auto id = ctx->symbolIdentifier()->getText();
 
-    // the concept access level
+    // pop the top of the symbol stack and verify that the identifier matches
+    state->popSymbolAndCheck(id);
+
+    // get the visibility
     auto access = parse_access_type(id);
 
-    // the concept derive type
+    // get the derive type
     DeriveType derive = DeriveType::Any;
     if (ctx->conceptDerives()) {
         if (ctx->conceptDerives()->SealedKeyword() != nullptr) {
@@ -153,17 +190,31 @@ lyric_parser::internal::ModuleDefconceptOps::exitDefconceptStatement(ModuleParse
         }
     }
 
-    TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstIdentifier, id));
-    TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstAccessType, access));
-    TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstDeriveType, derive));
-
-    // generic information
+    // get the generic information
+    ArchetypeNode *genericNode = nullptr;
     if (ctx->genericConcept()) {
         auto *genericConcept = ctx->genericConcept();
-        auto *genericNode = make_Generic_node(m_state, genericConcept->placeholderSpec(), genericConcept->constraintSpec());
-        TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstGenericOffset, genericNode));
+        genericNode = make_Generic_node(state, genericConcept->placeholderSpec(), genericConcept->constraintSpec());
     }
 
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
+    if (hasError())
+        return;
+
+    // peek node on stack, verify it is defconcept
+    ArchetypeNode *defconceptNode;
+    TU_ASSIGN_OR_RAISE (defconceptNode, state->peekNode(lyric_schema::kLyricAstDefConceptClass));
+
+    // set the concept name
+    TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstIdentifier, id));
+
+    // set the visibility
+    TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstAccessType, access));
+
+    // set the derive type
+    TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstDeriveType, derive));
+
+    // set the generic information, if it exists
+    if (genericNode) {
+        TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstGenericOffset, genericNode));
+    }
 }

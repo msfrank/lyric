@@ -3,15 +3,14 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleMatchOps {
+    class ModuleMatchOps : public BaseOps {
 
     public:
-        explicit ModuleMatchOps(ArchetypeState *state);
-        virtual ~ModuleMatchOps() = default;
+        explicit ModuleMatchOps(ModuleArchetype *listener);
 
         void enterMatchExpression(ModuleParser::MatchExpressionContext *ctx);
         void exitMatchTarget(ModuleParser::MatchTargetContext *ctx);
@@ -19,9 +18,6 @@ namespace lyric_parser::internal {
         void exitMatchOnType(ModuleParser::MatchOnTypeContext *ctx);
         void exitMatchOnUnwrap(ModuleParser::MatchOnUnwrapContext *ctx);
         void exitMatchElse(ModuleParser::MatchElseContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
     };
 }
 

@@ -12,10 +12,9 @@
 #include <tempo_tracing/leaf_scope.h>
 #include <tempo_utils/log_stream.h>
 
-lyric_parser::internal::ModuleDefineOps::ModuleDefineOps(ArchetypeState *state)
-    : m_state(state)
+lyric_parser::internal::ModuleDefineOps::ModuleDefineOps(ModuleArchetype *listener)
+    : BaseOps(listener)
 {
-    TU_ASSERT (m_state != nullptr);
 }
 
 void
@@ -23,23 +22,27 @@ lyric_parser::internal::ModuleDefineOps::exitTypenameStatement(ModuleParser::Typ
 {
     tempo_tracing::LeafScope scope("lyric_parser::internal::ModuleDefineOps::exitTypenameStatement");
 
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
+    // pop the top of the symbol stack and verify that the identifier matches
     auto id = ctx->symbolIdentifier()->getText();
+    state->popSymbolAndCheck(id);
+
     auto access = parse_access_type(id);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
+    if (hasError())
+        return;
+
     ArchetypeNode *typenameNode;
-    TU_ASSIGN_OR_RAISE (typenameNode, m_state->appendNode(lyric_schema::kLyricAstTypeNameClass, location));
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(typenameNode));
+    TU_ASSIGN_OR_RAISE (typenameNode, state->appendNode(lyric_schema::kLyricAstTypeNameClass, location));
+    TU_RAISE_IF_NOT_OK (state->pushNode(typenameNode));
 
     TU_RAISE_IF_NOT_OK (typenameNode->putAttr(kLyricAstIdentifier, id));
     TU_RAISE_IF_NOT_OK (typenameNode->putAttr(kLyricAstAccessType, access));
-
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
 }
 
 void
@@ -52,55 +55,61 @@ void
 lyric_parser::internal::ModuleDefineOps::exitDefStatement(ModuleParser::DefStatementContext *ctx)
 {
     tempo_tracing::ExitScope scope;
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
-    ArchetypeNode *blockNode;
-    TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
-    ArchetypeNode *packNode;
-    TU_ASSIGN_OR_RAISE (packNode, m_state->popNode());
+    // pop the top of the symbol stack and verify that the identifier matches
+    auto id = ctx->symbolIdentifier()->getText();
+    state->popSymbolAndCheck(id);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
+    auto access = parse_access_type(id);
+
+    if (hasError())
+        return;
+
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
+
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, state->popNode());
+
     // allocate the node
     ArchetypeNode *defNode;
-    TU_ASSIGN_OR_RAISE (defNode, m_state->appendNode(lyric_schema::kLyricAstDefClass, location));
+    TU_ASSIGN_OR_RAISE (defNode, state->appendNode(lyric_schema::kLyricAstDefClass, location));
     scope.putTag(kLyricParserLineNumber, location.lineNumber);
     scope.putTag(kLyricParserColumnNumber, location.columnNumber);
     scope.putTag(kLyricParserFileOffset, location.fileOffset);
 
     // the function name
-    auto id = ctx->symbolIdentifier()->getText();
     TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIdentifier, id));
 
     // the function visibility
-    auto access = parse_access_type(id);
     TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstAccessType, access));
 
     // the return type
     if (ctx->returnSpec()) {
-        auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
+        auto *returnTypeNode = make_Type_node(state, ctx->returnSpec()->assignableType());
         TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
     } else {
         ArchetypeNode *returnTypeNode;
-        TU_ASSIGN_OR_RAISE (returnTypeNode, m_state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
+        TU_ASSIGN_OR_RAISE (returnTypeNode, state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
         TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
     }
 
     // generic information
     if (ctx->placeholderSpec()) {
-        auto *genericNode = make_Generic_node(m_state, ctx->placeholderSpec(), ctx->constraintSpec());
+        auto *genericNode = make_Generic_node(state, ctx->placeholderSpec(), ctx->constraintSpec());
         TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstGenericOffset, genericNode));
     }
 
     TU_RAISE_IF_NOT_OK (defNode->appendChild(packNode));
     TU_RAISE_IF_NOT_OK (defNode->appendChild(blockNode));
 
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(defNode));
-
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
+    TU_RAISE_IF_NOT_OK (state->pushNode(defNode));
 }
 
 void
@@ -113,38 +122,47 @@ void
 lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContext *ctx)
 {
     tempo_tracing::ExitScope scope;
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
 
-    ArchetypeNode *blockNode;
-    TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
-    ArchetypeNode *packNode;
-    TU_ASSIGN_OR_RAISE (packNode, m_state->popNode());
+    // pop the top of the symbol stack and verify that the identifier matches
+    auto id = ctx->symbolIdentifier()->getText();
+    state->popSymbolAndCheck(id);
+
+    auto access = parse_access_type(id);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
+    if (hasError())
+        return;
+
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
+
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, state->popNode());
+
     ArchetypeNode *defNode;
-    TU_ASSIGN_OR_RAISE (defNode, m_state->appendNode(lyric_schema::kLyricAstDefClass, location));
+    TU_ASSIGN_OR_RAISE (defNode, state->appendNode(lyric_schema::kLyricAstDefClass, location));
     scope.putTag(kLyricParserLineNumber, location.lineNumber);
     scope.putTag(kLyricParserColumnNumber, location.columnNumber);
     scope.putTag(kLyricParserFileOffset, location.fileOffset);
 
     // the function name
-    auto id = ctx->symbolIdentifier()->getText();
     TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIdentifier, id));
 
     // the function visibility
-    auto access = parse_access_type(id);
     TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstAccessType, access));
 
     // the return type
     if (ctx->returnSpec()) {
-        auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
+        auto *returnTypeNode = make_Type_node(state, ctx->returnSpec()->assignableType());
         TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
     } else {
         ArchetypeNode *returnTypeNode;
-        TU_ASSIGN_OR_RAISE (returnTypeNode, m_state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
+        TU_ASSIGN_OR_RAISE (returnTypeNode, state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
         TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
     }
 
@@ -152,12 +170,9 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
     TU_RAISE_IF_NOT_OK (defNode->appendChild(blockNode));
 
     ArchetypeNode *implNode;
-    TU_ASSIGN_OR_RAISE (implNode, m_state->peekNode(lyric_schema::kLyricAstImplClass));
+    TU_ASSIGN_OR_RAISE (implNode, state->peekNode(lyric_schema::kLyricAstImplClass));
 
     TU_RAISE_IF_NOT_OK (implNode->appendChild(defNode));
-
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
 }
 
 void
@@ -165,18 +180,25 @@ lyric_parser::internal::ModuleDefineOps::exitDefaliasStatement(ModuleParser::Def
 {
     tempo_tracing::LeafScope scope("lyric_parser::internal::ModuleDefineOps::exitTypenameStatement");
 
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
+    // pop the top of the symbol stack and verify that the identifier matches
     auto id = ctx->symbolIdentifier()->getText();
+    state->popSymbolAndCheck(id);
+
     auto access = parse_access_type(id);
-    auto *typeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *typeNode = make_Type_node(state, ctx->assignableType());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
+    if (hasError())
+        return;
+
     ArchetypeNode *defaliasNode;
-    TU_ASSIGN_OR_RAISE (defaliasNode, m_state->appendNode(lyric_schema::kLyricAstDefAliasClass, location));
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(defaliasNode));
+    TU_ASSIGN_OR_RAISE (defaliasNode, state->appendNode(lyric_schema::kLyricAstDefAliasClass, location));
+    TU_RAISE_IF_NOT_OK (state->pushNode(defaliasNode));
 
     TU_RAISE_IF_NOT_OK (defaliasNode->putAttr(kLyricAstIdentifier, id));
     TU_RAISE_IF_NOT_OK (defaliasNode->putAttr(kLyricAstAccessType, access));
@@ -185,10 +207,7 @@ lyric_parser::internal::ModuleDefineOps::exitDefaliasStatement(ModuleParser::Def
     // generic information
     if (ctx->placeholderSpec()) {
         auto *placeholderSpec = ctx->placeholderSpec();
-        auto *genericNode = make_Generic_node(m_state, placeholderSpec);
+        auto *genericNode = make_Generic_node(state, placeholderSpec);
         TU_RAISE_IF_NOT_OK (defaliasNode->putAttr(kLyricAstGenericOffset, genericNode));
     }
-
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
 }

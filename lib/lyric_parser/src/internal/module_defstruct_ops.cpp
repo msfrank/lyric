@@ -11,10 +11,9 @@
 #include <tempo_tracing/exit_scope.h>
 #include <tempo_utils/log_stream.h>
 
-lyric_parser::internal::ModuleDefstructOps::ModuleDefstructOps(ArchetypeState *state)
-    : m_state(state)
+lyric_parser::internal::ModuleDefstructOps::ModuleDefstructOps(ModuleArchetype *listener)
+    : BaseOps(listener)
 {
-    TU_ASSERT (m_state != nullptr);
 }
 
 void
@@ -22,16 +21,24 @@ lyric_parser::internal::ModuleDefstructOps::enterDefstructStatement(ModuleParser
 {
     tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefstructOps::enterDefstructStatement");
 
+    auto *state = getState();
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-
-    ArchetypeNode *defstructNode;
-    TU_ASSIGN_OR_RAISE (defstructNode, m_state->appendNode(lyric_schema::kLyricAstDefStructClass, location));
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(defstructNode));
 
     scope.putTag(kLyricParserLineNumber, location.lineNumber);
     scope.putTag(kLyricParserColumnNumber, location.columnNumber);
     scope.putTag(kLyricParserFileOffset, location.fileOffset);
+
+    if (hasError())
+        return;
+
+    // allocate defstruct node
+    ArchetypeNode *defstructNode;
+    TU_ASSIGN_OR_RAISE (defstructNode, state->appendNode(lyric_schema::kLyricAstDefStructClass, location));
+
+    // push defstruct onto the stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(defstructNode));
 }
 
 void
@@ -39,12 +46,19 @@ lyric_parser::internal::ModuleDefstructOps::exitStructSuper(ModuleParser::Struct
 {
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
+    auto *state = getState();
 
     // struct super type
-    auto *superTypeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *superTypeNode = make_Type_node(state, ctx->assignableType());
 
+    if (hasError())
+        return;
+
+    // allocate super node
     ArchetypeNode *superNode;
-    TU_ASSIGN_OR_RAISE (superNode, m_state->appendNode(lyric_schema::kLyricAstSuperClass, location));
+    TU_ASSIGN_OR_RAISE (superNode, state->appendNode(lyric_schema::kLyricAstSuperClass, location));
+
+    // set the super type
     TU_RAISE_IF_NOT_OK (superNode->putAttr(kLyricAstTypeOffset, superTypeNode));
 
     if (ctx->argList()) {
@@ -54,8 +68,9 @@ lyric_parser::internal::ModuleDefstructOps::exitStructSuper(ModuleParser::Struct
             if (argSpec == nullptr)
                 continue;
 
+            // pop argument off of the stack
             ArchetypeNode *argNode;
-            TU_ASSIGN_OR_RAISE (argNode, m_state->popNode());
+            TU_ASSIGN_OR_RAISE (argNode, state->popNode());
 
             if (argSpec->Identifier() != nullptr) {
                 auto label = argSpec->Identifier()->getText();
@@ -63,25 +78,33 @@ lyric_parser::internal::ModuleDefstructOps::exitStructSuper(ModuleParser::Struct
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
+                // allocate keyword node
                 ArchetypeNode *keywordNode;
-                TU_ASSIGN_OR_RAISE (keywordNode, m_state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+                TU_ASSIGN_OR_RAISE (keywordNode, state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+
+                // set keyword name
                 TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+
+                // append arg node to keyword
                 TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
                 argNode = keywordNode;
             }
 
+            // prepend arg node to the super
             TU_RAISE_IF_NOT_OK (superNode->prependChild(argNode));
         }
     }
 
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(superNode));
+    // push super onto the stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(superNode));
 }
 
 void
 lyric_parser::internal::ModuleDefstructOps::enterStructInit(ModuleParser::StructInitContext *ctx)
 {
     tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefstructOps::enterStructInit");
-    m_state->pushSymbol("$ctor");
+    auto *state = getState();
+    state->pushSymbol("$ctor");
 }
 
 void
@@ -89,51 +112,57 @@ lyric_parser::internal::ModuleDefstructOps::exitStructInit(ModuleParser::StructI
 {
     tempo_tracing::ExitScope scope;
 
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    state->popSymbolAndCheck("$ctor");
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
+    if (hasError())
+        return;
+
     // if init statement has a block, then block is now on top of the stack
     ArchetypeNode *blockNode = nullptr;
     if (ctx->block()) {
-        TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode(lyric_schema::kLyricAstBlockClass));
+        TU_ASSIGN_OR_RAISE (blockNode, state->popNode(lyric_schema::kLyricAstBlockClass));
     }
 
     // if init statement has superstruct, then super is now on top of the stack
     ArchetypeNode *superNode = nullptr;
     if (ctx->structSuper()) {
-        TU_ASSIGN_OR_RAISE (superNode, m_state->popNode(lyric_schema::kLyricAstSuperClass));
+        TU_ASSIGN_OR_RAISE (superNode, state->popNode(lyric_schema::kLyricAstSuperClass));
     }
 
     // the parameter list
     ArchetypeNode *packNode;
-    TU_ASSIGN_OR_RAISE (packNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (packNode, state->popNode());
 
     // create the init node
     ArchetypeNode *initNode;
-    TU_ASSIGN_OR_RAISE (initNode, m_state->appendNode(lyric_schema::kLyricAstInitClass, location));
+    TU_ASSIGN_OR_RAISE (initNode, state->appendNode(lyric_schema::kLyricAstInitClass, location));
     TU_RAISE_IF_NOT_OK (initNode->appendChild(packNode));
 
     // if super node is not specified then synthesize an empty node
     if (superNode == nullptr) {
-        TU_ASSIGN_OR_RAISE (superNode, m_state->appendNode(lyric_schema::kLyricAstSuperClass, {}));
+        TU_ASSIGN_OR_RAISE (superNode, state->appendNode(lyric_schema::kLyricAstSuperClass, {}));
     }
     TU_RAISE_IF_NOT_OK (initNode->appendChild(superNode));
 
     // if block node is not specified then synthesize an empty node
     if (blockNode == nullptr) {
-        TU_ASSIGN_OR_RAISE (blockNode, m_state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
+        TU_ASSIGN_OR_RAISE (blockNode, state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
     }
     TU_RAISE_IF_NOT_OK (initNode->appendChild(blockNode));
 
+    // peek node on stack, verify it is defstruct
     ArchetypeNode *defstructNode;
-    TU_ASSIGN_OR_RAISE (defstructNode, m_state->peekNode(lyric_schema::kLyricAstDefStructClass));
+    TU_ASSIGN_OR_RAISE (defstructNode, state->peekNode(lyric_schema::kLyricAstDefStructClass));
 
+    // append init node to defstruct
     TU_RAISE_IF_NOT_OK (defstructNode->appendChild(initNode));
-
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck("$ctor");
 }
 
 void
@@ -147,40 +176,53 @@ lyric_parser::internal::ModuleDefstructOps::exitStructVal(ModuleParser::StructVa
 {
     tempo_tracing::ExitScope scope;
 
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
-    // member name
+    // get the member name
     auto id = ctx->symbolIdentifier()->getText();
 
-    // member access level
+    // pop the top of the symbol stack and verify that the identifier matches
+    state->popSymbolAndCheck(id);
+
+    // get the visibility
     auto access = parse_access_type(id);
 
-    // member type
-    auto *memberTypeNode = make_Type_node(m_state, ctx->assignableType());
+    // get the member type
+    auto *memberTypeNode = make_Type_node(state, ctx->assignableType());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
+    if (hasError())
+        return;
+
+    // allocate val node
     ArchetypeNode *valNode;
-    TU_ASSIGN_OR_RAISE (valNode, m_state->appendNode(lyric_schema::kLyricAstValClass, location));
+    TU_ASSIGN_OR_RAISE (valNode, state->appendNode(lyric_schema::kLyricAstValClass, location));
+
+    // set the member name
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
+
+    // set the visibility
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstAccessType, access));
+
+    // set the member type
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
     if (ctx->defaultInitializer() != nullptr) {
         ArchetypeNode *defaultNode;
-        TU_ASSIGN_OR_RAISE (defaultNode, m_state->popNode());
+        TU_ASSIGN_OR_RAISE (defaultNode, state->popNode());
         TU_RAISE_IF_NOT_OK (valNode->appendChild(defaultNode));
     }
 
+    // peek node on stack, verify it is defstruct
     ArchetypeNode *defstructNode;
-    TU_ASSIGN_OR_RAISE (defstructNode, m_state->peekNode(lyric_schema::kLyricAstDefStructClass));
+    TU_ASSIGN_OR_RAISE (defstructNode, state->peekNode(lyric_schema::kLyricAstDefStructClass));
 
+    // append val node to defstruct
     TU_RAISE_IF_NOT_OK (defstructNode->appendChild(valNode));
-
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
 }
 
 void
@@ -194,51 +236,69 @@ lyric_parser::internal::ModuleDefstructOps::exitStructDef(ModuleParser::StructDe
 {
     tempo_tracing::ExitScope scope;
 
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
-
-    ArchetypeNode *blockNode;
-    TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode());
-
-    ArchetypeNode *packNode;
-    TU_ASSIGN_OR_RAISE (packNode, m_state->popNode());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    ArchetypeNode *defNode;
-    TU_ASSIGN_OR_RAISE (defNode, m_state->appendNode(lyric_schema::kLyricAstDefClass, location));
     scope.putTag(kLyricParserLineNumber, location.lineNumber);
     scope.putTag(kLyricParserColumnNumber, location.columnNumber);
     scope.putTag(kLyricParserFileOffset, location.fileOffset);
 
-    // the method name
+    // get the method name
     auto id = ctx->symbolIdentifier()->getText();
-    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIdentifier, id));
-
-    // the visibility
-    auto access = parse_access_type(id);
-    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstAccessType, access));
-
-    // the return type
-    if (ctx->returnSpec()) {
-        auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
-        TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
-    } else {
-        ArchetypeNode *returnTypeNode;
-        TU_ASSIGN_OR_RAISE (returnTypeNode, m_state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
-        TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
-    }
-
-    TU_RAISE_IF_NOT_OK (defNode->appendChild(packNode));
-    TU_RAISE_IF_NOT_OK (defNode->appendChild(blockNode));
-
-    ArchetypeNode *defstructNode;
-    TU_ASSIGN_OR_RAISE (defstructNode, m_state->peekNode(lyric_schema::kLyricAstDefStructClass));
-
-    TU_RAISE_IF_NOT_OK (defstructNode->appendChild(defNode));
 
     // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
+    state->popSymbolAndCheck(id);
+
+    // get the visibility
+    auto access = parse_access_type(id);
+
+    // get the return type
+    ArchetypeNode *returnTypeNode;
+    if (ctx->returnSpec()) {
+        returnTypeNode = make_Type_node(state, ctx->returnSpec()->assignableType());
+    } else {
+        TU_ASSIGN_OR_RAISE (returnTypeNode, state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
+    }
+
+    if (hasError())
+        return;
+
+    // pop the block node from the stack
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
+
+    // pop the pack node from the stack
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, state->popNode());
+
+    // allocate the def node
+    ArchetypeNode *defNode;
+    TU_ASSIGN_OR_RAISE (defNode, state->appendNode(lyric_schema::kLyricAstDefClass, location));
+
+    // set the method name
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIdentifier, id));
+
+    // set the visibility
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstAccessType, access));
+
+    // set the return type
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
+
+    // append pack node to def
+    TU_RAISE_IF_NOT_OK (defNode->appendChild(packNode));
+
+    // append block node to def
+    TU_RAISE_IF_NOT_OK (defNode->appendChild(blockNode));
+
+    // peek node on stack, verify it is defstruct
+    ArchetypeNode *defstructNode;
+    TU_ASSIGN_OR_RAISE (defstructNode, state->peekNode(lyric_schema::kLyricAstDefStructClass));
+
+    // append def node to defstruct
+    TU_RAISE_IF_NOT_OK (defstructNode->appendChild(defNode));
 }
 
 void
@@ -246,16 +306,24 @@ lyric_parser::internal::ModuleDefstructOps::enterStructImpl(ModuleParser::Struct
 {
     tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefstructOps::enterStructImpl");
 
+    auto *state = getState();
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-
-    ArchetypeNode *implNode;
-    TU_ASSIGN_OR_RAISE (implNode, m_state->appendNode(lyric_schema::kLyricAstImplClass, location));
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(implNode));
 
     scope.putTag(kLyricParserLineNumber, location.lineNumber);
     scope.putTag(kLyricParserColumnNumber, location.columnNumber);
     scope.putTag(kLyricParserFileOffset, location.fileOffset);
+
+    if (hasError())
+        return;
+
+    // allocate impl node
+    ArchetypeNode *implNode;
+    TU_ASSIGN_OR_RAISE (implNode, state->appendNode(lyric_schema::kLyricAstImplClass, location));
+
+    // push impl onto the stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(implNode));
 }
 
 void
@@ -263,18 +331,26 @@ lyric_parser::internal::ModuleDefstructOps::exitStructImpl(ModuleParser::StructI
 {
     tempo_tracing::ExitScope scope;
 
-    // the impl type
-    auto *implTypeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *state = getState();
 
+    // the impl type
+    auto *implTypeNode = make_Type_node(state, ctx->assignableType());
+
+    if (hasError())
+        return;
+
+    // pop node from stack, verify it is impl
     ArchetypeNode *implNode;
-    TU_ASSIGN_OR_RAISE (implNode, m_state->popNode(lyric_schema::kLyricAstImplClass));
+    TU_ASSIGN_OR_RAISE (implNode, state->popNode(lyric_schema::kLyricAstImplClass));
 
     // set the impl type
     TU_RAISE_IF_NOT_OK (implNode->putAttr(kLyricAstTypeOffset, implTypeNode));
 
+    // peek node on stack, verify it is defstruct
     ArchetypeNode *defstructNode;
-    TU_ASSIGN_OR_RAISE (defstructNode, m_state->peekNode(lyric_schema::kLyricAstDefStructClass));
+    TU_ASSIGN_OR_RAISE (defstructNode, state->peekNode(lyric_schema::kLyricAstDefStructClass));
 
+    // append impl node to defstruct
     TU_RAISE_IF_NOT_OK (defstructNode->appendChild(implNode));
 }
 
@@ -283,13 +359,18 @@ lyric_parser::internal::ModuleDefstructOps::exitDefstructStatement(ModuleParser:
 {
     tempo_tracing::ExitScope scope;
 
-    // the struct name
+    auto *state = getState();
+
+    // get the struct name
     auto id = ctx->symbolIdentifier()->getText();
 
-    // the struct access level
+    // pop the top of the symbol stack and verify that the identifier matches
+    state->popSymbolAndCheck(id);
+
+    // get the visibility
     auto access = parse_access_type(id);
 
-    // the struct derive type
+    // get the derive type
     DeriveType derive = DeriveType::Any;
     if (ctx->structDerives()) {
         if (ctx->structDerives()->SealedKeyword() != nullptr) {
@@ -299,13 +380,19 @@ lyric_parser::internal::ModuleDefstructOps::exitDefstructStatement(ModuleParser:
         }
     }
 
+    if (hasError())
+        return;
+
+    // peek node on stack, verify it is defstruct
     ArchetypeNode *defstructNode;
-    TU_ASSIGN_OR_RAISE (defstructNode, m_state->peekNode(lyric_schema::kLyricAstDefStructClass));
+    TU_ASSIGN_OR_RAISE (defstructNode, state->peekNode(lyric_schema::kLyricAstDefStructClass));
 
+    // set the struct name
     TU_RAISE_IF_NOT_OK (defstructNode->putAttr(kLyricAstIdentifier, id));
-    TU_RAISE_IF_NOT_OK (defstructNode->putAttr(kLyricAstAccessType, access));
-    TU_RAISE_IF_NOT_OK (defstructNode->putAttr(kLyricAstDeriveType, derive));
 
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
+    // set the visibility
+    TU_RAISE_IF_NOT_OK (defstructNode->putAttr(kLyricAstAccessType, access));
+
+    // set the derive type
+    TU_RAISE_IF_NOT_OK (defstructNode->putAttr(kLyricAstDeriveType, derive));
 }

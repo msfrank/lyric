@@ -17,8 +17,14 @@
 #include <lyric_parser/internal/module_constant_ops.h>
 #include <lyric_parser/internal/module_construct_ops.h>
 #include <lyric_parser/internal/module_control_ops.h>
+#include <lyric_parser/internal/module_defclass_ops.h>
+#include <lyric_parser/internal/module_defconcept_ops.h>
+#include <lyric_parser/internal/module_defenum_ops.h>
 #include <lyric_parser/internal/module_define_ops.h>
+#include <lyric_parser/internal/module_definstance_ops.h>
+#include <lyric_parser/internal/module_defstruct_ops.h>
 #include <lyric_parser/internal/module_deref_ops.h>
+#include <lyric_parser/internal/module_exception_ops.h>
 #include <lyric_parser/internal/module_logical_ops.h>
 #include <lyric_parser/internal/module_macro_ops.h>
 #include <lyric_parser/internal/module_match_ops.h>
@@ -33,16 +39,7 @@
 lyric_parser::internal::ModuleArchetype::ModuleArchetype(
     ArchetypeState *state,
     std::shared_ptr<tempo_tracing::TraceContext> context)
-    :
-      ModuleMatchOps(state),
-      ModuleDefclassOps(state),
-      ModuleDefconceptOps(state),
-      ModuleDefenumOps(state),
-      ModuleDefinstanceOps(state),
-      ModuleDefstructOps(state),
-      ModuleDefineOps(state),
-      ModuleExceptionOps(state),
-      m_state(state),
+    : m_state(state),
       m_context(std::move(context))
 {
     TU_ASSERT (m_state != nullptr);
@@ -583,38 +580,38 @@ void lyric_parser::internal::ModuleArchetype::exitReturnStatement(ModuleParser::
  */
 void lyric_parser::internal::ModuleArchetype::enterMatchExpression(ModuleParser::MatchExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMatchOps::enterMatchExpression(ctx);
+    ModuleMatchOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterMatchExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitMatchTarget(ModuleParser::MatchTargetContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMatchOps::exitMatchTarget(ctx);
+    ModuleMatchOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitMatchTarget(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitMatchOnEnum(ModuleParser::MatchOnEnumContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMatchOps::exitMatchOnEnum(ctx);
+    ModuleMatchOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitMatchOnEnum(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitMatchOnType(ModuleParser::MatchOnTypeContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMatchOps::exitMatchOnType(ctx);
+    ModuleMatchOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitMatchOnType(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitMatchOnUnwrap(ModuleParser::MatchOnUnwrapContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMatchOps::exitMatchOnUnwrap(ctx);
+    ModuleMatchOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitMatchOnUnwrap(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitMatchElse(ModuleParser::MatchElseContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMatchOps::exitMatchElse(ctx);
+    ModuleMatchOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitMatchElse(ctx));
 }
 
 /*
@@ -622,38 +619,38 @@ void lyric_parser::internal::ModuleArchetype::exitMatchElse(ModuleParser::MatchE
  */
 void lyric_parser::internal::ModuleArchetype::enterTryStatement(ModuleParser::TryStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleExceptionOps::enterTryStatement(ctx);
+    ModuleExceptionOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterTryStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitTryTarget(ModuleParser::TryTargetContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleExceptionOps::exitTryTarget(ctx);
+    ModuleExceptionOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTryTarget(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCatchOnUnwrap(ModuleParser::CatchOnUnwrapContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleExceptionOps::exitCatchOnUnwrap(ctx);
+    ModuleExceptionOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCatchOnUnwrap(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCatchOnType(ModuleParser::CatchOnTypeContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleExceptionOps::exitCatchOnType(ctx);
+    ModuleExceptionOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCatchOnType(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCatchElse(ModuleParser::CatchElseContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleExceptionOps::exitCatchElse(ctx);
+    ModuleExceptionOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCatchElse(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCatchFinally(ModuleParser::CatchFinallyContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleExceptionOps::exitCatchFinally(ctx);
+    ModuleExceptionOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCatchFinally(ctx));
 }
 
 /*
@@ -817,32 +814,38 @@ void lyric_parser::internal::ModuleArchetype::exitDefaultInitializerNew(ModulePa
  */
 void lyric_parser::internal::ModuleArchetype::exitTypenameStatement(ModuleParser::TypenameStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefineOps::exitTypenameStatement(ctx);
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTypenameStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterDefStatement(ModuleParser::DefStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefineOps::enterDefStatement(ctx);
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefStatement(ModuleParser::DefStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefineOps::exitDefStatement(ctx);
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDefStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterImplDef(ModuleParser::ImplDefContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefineOps::enterImplDef(ctx);
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterImplDef(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitImplDef(ModuleParser::ImplDefContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefineOps::exitImplDef(ctx);
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitImplDef(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx)
+{
+    ModuleDefineOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDefaliasStatement(ctx));
 }
 
 /*
@@ -850,80 +853,80 @@ void lyric_parser::internal::ModuleArchetype::exitImplDef(ModuleParser::ImplDefC
  */
 void lyric_parser::internal::ModuleArchetype::enterDefclassStatement(ModuleParser::DefclassStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::enterDefclassStatement(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefclassStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitClassSuper(ModuleParser::ClassSuperContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::exitClassSuper(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitClassSuper(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterClassInit(ModuleParser::ClassInitContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::enterClassInit(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterClassInit(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitClassInit(ModuleParser::ClassInitContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::exitClassInit(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitClassInit(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterClassVal(ModuleParser::ClassValContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::enterClassVal(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterClassVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitClassVal(ModuleParser::ClassValContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::exitClassVal(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitClassVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterClassVar(ModuleParser::ClassVarContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::enterClassVar(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterClassVar(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitClassVar(ModuleParser::ClassVarContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::exitClassVar(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitClassVar(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterClassDef(ModuleParser::ClassDefContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::enterClassDef(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterClassDef(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitClassDef(ModuleParser::ClassDefContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::exitClassDef(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitClassDef(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterClassImpl(ModuleParser::ClassImplContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::enterClassImpl(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterClassImpl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitClassImpl(ModuleParser::ClassImplContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::exitClassImpl(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitClassImpl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefclassStatement(ModuleParser::DefclassStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefclassOps::exitDefclassStatement(ctx);
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDefclassStatement(ctx));
 }
 
 /*
@@ -931,38 +934,38 @@ void lyric_parser::internal::ModuleArchetype::exitDefclassStatement(ModuleParser
  */
 void lyric_parser::internal::ModuleArchetype::enterDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefconceptOps::enterDefconceptStatement(ctx);
+    ModuleDefconceptOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefconceptStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterConceptDecl(ModuleParser::ConceptDeclContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefconceptOps::enterConceptDecl(ctx);
+    ModuleDefconceptOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterConceptDecl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitConceptDecl(ModuleParser::ConceptDeclContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefconceptOps::exitConceptDecl(ctx);
+    ModuleDefconceptOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitConceptDecl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterConceptImpl(ModuleParser::ConceptImplContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefconceptOps::enterConceptImpl(ctx);
+    ModuleDefconceptOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterConceptImpl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitConceptImpl(ModuleParser::ConceptImplContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefconceptOps::exitConceptImpl(ctx);
+    ModuleDefconceptOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitConceptImpl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefconceptOps::exitDefconceptStatement(ctx);
+    ModuleDefconceptOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDefconceptStatement(ctx));
 }
 
 /*
@@ -970,74 +973,74 @@ void lyric_parser::internal::ModuleArchetype::exitDefconceptStatement(ModulePars
  */
 void lyric_parser::internal::ModuleArchetype::enterDefenumStatement(ModuleParser::DefenumStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefenumOps::enterDefenumStatement(ctx);
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefenumStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterEnumInit(ModuleParser::EnumInitContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefenumOps::enterEnumInit(ctx);
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterEnumInit(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitEnumInit(ModuleParser::EnumInitContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefenumOps::exitEnumInit(ctx);
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitEnumInit(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterEnumVal(ModuleParser::EnumValContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefenumOps::enterEnumVal(ctx);
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterEnumVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitEnumVal(ModuleParser::EnumValContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefenumOps::exitEnumVal(ctx);
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitEnumVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterEnumDef(ModuleParser::EnumDefContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefenumOps::enterEnumDef(ctx);
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterEnumDef(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitEnumDef(ModuleParser::EnumDefContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefenumOps::exitEnumDef(ctx);
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitEnumDef(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterEnumCase(ModuleParser::EnumCaseContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefenumOps::enterEnumCase(ctx);
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterEnumCase(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitEnumCase(ModuleParser::EnumCaseContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefenumOps::exitEnumCase(ctx);
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitEnumCase(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterEnumImpl(ModuleParser::EnumImplContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefenumOps::enterEnumImpl(ctx);
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterEnumImpl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitEnumImpl(ModuleParser::EnumImplContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefenumOps::exitEnumImpl(ctx);
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitEnumImpl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefenumStatement(ModuleParser::DefenumStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefenumOps::exitDefenumStatement(ctx);
+    ModuleDefenumOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDefenumStatement(ctx));
 }
 
 /*
@@ -1045,62 +1048,62 @@ void lyric_parser::internal::ModuleArchetype::exitDefenumStatement(ModuleParser:
  */
 void lyric_parser::internal::ModuleArchetype::enterDefinstanceStatement(ModuleParser::DefinstanceStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefinstanceOps::enterDefinstanceStatement(ctx);
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefinstanceStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterInstanceVal(ModuleParser::InstanceValContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefinstanceOps::enterInstanceVal(ctx);
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterInstanceVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitInstanceVal(ModuleParser::InstanceValContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefinstanceOps::exitInstanceVal(ctx);
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitInstanceVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterInstanceVar(ModuleParser::InstanceVarContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefinstanceOps::enterInstanceVar(ctx);
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterInstanceVar(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitInstanceVar(ModuleParser::InstanceVarContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefinstanceOps::exitInstanceVar(ctx);
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitInstanceVar(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterInstanceDef(ModuleParser::InstanceDefContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefinstanceOps::enterInstanceDef(ctx);
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterInstanceDef(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitInstanceDef(ModuleParser::InstanceDefContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefinstanceOps::exitInstanceDef(ctx);
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitInstanceDef(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterInstanceImpl(ModuleParser::InstanceImplContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefinstanceOps::enterInstanceImpl(ctx);
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterInstanceImpl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitInstanceImpl(ModuleParser::InstanceImplContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefinstanceOps::exitInstanceImpl(ctx);
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitInstanceImpl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefinstanceStatement(ModuleParser::DefinstanceStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefinstanceOps::exitDefinstanceStatement(ctx);
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDefinstanceStatement(ctx));
 }
 
 /*
@@ -1108,77 +1111,68 @@ void lyric_parser::internal::ModuleArchetype::exitDefinstanceStatement(ModulePar
  */
 void lyric_parser::internal::ModuleArchetype::enterDefstructStatement(ModuleParser::DefstructStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefstructOps::enterDefstructStatement(ctx);
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefstructStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitStructSuper(ModuleParser::StructSuperContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefstructOps::exitStructSuper(ctx);
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitStructSuper(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterStructInit(ModuleParser::StructInitContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefstructOps::enterStructInit(ctx);
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterStructInit(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitStructInit(ModuleParser::StructInitContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefstructOps::exitStructInit(ctx);
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitStructInit(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterStructVal(ModuleParser::StructValContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefstructOps::enterStructVal(ctx);
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterStructVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitStructVal(ModuleParser::StructValContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefstructOps::exitStructVal(ctx);
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitStructVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterStructDef(ModuleParser::StructDefContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefstructOps::enterStructDef(ctx);
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterStructDef(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitStructDef(ModuleParser::StructDefContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefstructOps::exitStructDef(ctx);
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitStructDef(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterStructImpl(ModuleParser::StructImplContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefstructOps::enterStructImpl(ctx);
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterStructImpl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitStructImpl(ModuleParser::StructImplContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefstructOps::exitStructImpl(ctx);
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitStructImpl(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefstructStatement(ModuleParser::DefstructStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefstructOps::exitDefstructStatement(ctx);
-}
-
-/*
- * defalias ops
- */
-void lyric_parser::internal::ModuleArchetype::exitDefaliasStatement(ModuleParser::DefaliasStatementContext *ctx)
-{
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDefineOps::exitDefaliasStatement(ctx);
+    ModuleDefstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDefstructStatement(ctx));
 }
 
 /*

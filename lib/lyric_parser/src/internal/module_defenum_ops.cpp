@@ -11,10 +11,9 @@
 #include <tempo_tracing/exit_scope.h>
 #include <tempo_utils/log_stream.h>
 
-lyric_parser::internal::ModuleDefenumOps::ModuleDefenumOps(ArchetypeState *state)
-    : m_state(state)
+lyric_parser::internal::ModuleDefenumOps::ModuleDefenumOps(ModuleArchetype *listener)
+    : BaseOps(listener)
 {
-    TU_ASSERT (m_state != nullptr);
 }
 
 void
@@ -22,15 +21,24 @@ lyric_parser::internal::ModuleDefenumOps::enterDefenumStatement(ModuleParser::De
 {
     tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefenumOps::enterDefenumStatement");
 
+    auto *state = getState();
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    ArchetypeNode *defenumNode;
-    TU_ASSIGN_OR_RAISE (defenumNode, m_state->appendNode(lyric_schema::kLyricAstDefEnumClass, location));
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(defenumNode));
 
     scope.putTag(kLyricParserLineNumber, location.lineNumber);
     scope.putTag(kLyricParserColumnNumber, location.columnNumber);
     scope.putTag(kLyricParserFileOffset, location.fileOffset);
+
+    if (hasError())
+        return;
+
+    // allocate the defenum node
+    ArchetypeNode *defenumNode;
+    TU_ASSIGN_OR_RAISE (defenumNode, state->appendNode(lyric_schema::kLyricAstDefEnumClass, location));
+
+    // push defenum onto the stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(defenumNode));
 }
 
 void
@@ -38,7 +46,8 @@ lyric_parser::internal::ModuleDefenumOps::enterEnumInit(ModuleParser::EnumInitCo
 {
     tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefenumOps::enterEnumInit");
 
-    m_state->pushSymbol("$ctor");
+    auto *state = getState();
+    state->pushSymbol("$ctor");
 }
 
 void
@@ -46,44 +55,50 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumInit(ModuleParser::EnumInitCon
 {
     tempo_tracing::ExitScope scope;
 
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    state->popSymbolAndCheck("$ctor");
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
+    if (hasError())
+        return;
+
     // if init statement has a block, then block is top of the stack
     ArchetypeNode *blockNode = nullptr;
     if (ctx->block()) {
-        TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode(lyric_schema::kLyricAstBlockClass));
+        TU_ASSIGN_OR_RAISE (blockNode, state->popNode(lyric_schema::kLyricAstBlockClass));
     }
 
     // the parameter list
     ArchetypeNode *packNode;
-    TU_ASSIGN_OR_RAISE (packNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (packNode, state->popNode());
 
     // create the init node
     ArchetypeNode *initNode;
-    TU_ASSIGN_OR_RAISE (initNode, m_state->appendNode(lyric_schema::kLyricAstInitClass, location));
+    TU_ASSIGN_OR_RAISE (initNode, state->appendNode(lyric_schema::kLyricAstInitClass, location));
     TU_RAISE_IF_NOT_OK (initNode->appendChild(packNode));
 
     // synthesize an empty super node
     ArchetypeNode *superNode;
-    TU_ASSIGN_OR_RAISE (superNode, m_state->appendNode(lyric_schema::kLyricAstSuperClass, {}));
+    TU_ASSIGN_OR_RAISE (superNode, state->appendNode(lyric_schema::kLyricAstSuperClass, {}));
     TU_RAISE_IF_NOT_OK (initNode->appendChild(superNode));
 
     // if block node is not specified then synthesize an empty node
     if (blockNode == nullptr) {
-        TU_ASSIGN_OR_RAISE (blockNode, m_state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
+        TU_ASSIGN_OR_RAISE (blockNode, state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
     }
     TU_RAISE_IF_NOT_OK (initNode->appendChild(blockNode));
 
+    // peek node on stack, verify it is defenum
     ArchetypeNode *defenumNode;
-    TU_ASSIGN_OR_RAISE (defenumNode, m_state->peekNode(lyric_schema::kLyricAstDefEnumClass));
+    TU_ASSIGN_OR_RAISE (defenumNode, state->peekNode(lyric_schema::kLyricAstDefEnumClass));
 
+    // append init node to defenum
     TU_RAISE_IF_NOT_OK (defenumNode->appendChild(initNode));
-
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck("$ctor");
 }
 
 void
@@ -97,40 +112,53 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumVal(ModuleParser::EnumValConte
 {
     tempo_tracing::ExitScope scope;
 
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
-    // the member name
+    // get the member name
     auto id = ctx->symbolIdentifier()->getText();
 
-    // the member access level
+    // pop the top of the symbol stack and verify that the identifier matches
+    state->popSymbolAndCheck(id);
+
+    // get the visibility
     auto access = parse_access_type(id);
 
-    // the member type
-    auto *memberTypeNode = make_Type_node(m_state, ctx->assignableType());
+    // get the member type
+    auto *memberTypeNode = make_Type_node(state, ctx->assignableType());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
+    if (hasError())
+        return;
+
+    // allocate the val node
     ArchetypeNode *valNode;
-    TU_ASSIGN_OR_RAISE (valNode, m_state->appendNode(lyric_schema::kLyricAstValClass, location));
+    TU_ASSIGN_OR_RAISE (valNode, state->appendNode(lyric_schema::kLyricAstValClass, location));
+
+    // set the member name
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
+
+    // set the visibility
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstAccessType, access));
+
+    // set the member type
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
     if (ctx->defaultInitializer() != nullptr) {
         ArchetypeNode *defaultNode;
-        TU_ASSIGN_OR_RAISE (defaultNode, m_state->popNode());
+        TU_ASSIGN_OR_RAISE (defaultNode, state->popNode());
         TU_RAISE_IF_NOT_OK (valNode->appendChild(defaultNode));
     }
 
+    // peek node on stack, verify it is defenum
     ArchetypeNode *defenumNode;
-    TU_ASSIGN_OR_RAISE (defenumNode, m_state->peekNode(lyric_schema::kLyricAstDefEnumClass));
+    TU_ASSIGN_OR_RAISE (defenumNode, state->peekNode(lyric_schema::kLyricAstDefEnumClass));
 
+    // append val node to defenum
     TU_RAISE_IF_NOT_OK (defenumNode->appendChild(valNode));
-
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
 }
 
 void
@@ -144,52 +172,69 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumDef(ModuleParser::EnumDefConte
 {
     tempo_tracing::ExitScope scope;
 
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
-
-    ArchetypeNode *blockNode;
-    TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode());
-
-    // the parameter list
-    ArchetypeNode *packNode;
-    TU_ASSIGN_OR_RAISE (packNode, m_state->popNode());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    ArchetypeNode *defNode;
-    TU_ASSIGN_OR_RAISE (defNode, m_state->appendNode(lyric_schema::kLyricAstDefClass, location));
     scope.putTag(kLyricParserLineNumber, location.lineNumber);
     scope.putTag(kLyricParserColumnNumber, location.columnNumber);
     scope.putTag(kLyricParserFileOffset, location.fileOffset);
 
-    // the method name
+    // get the method name
     auto id = ctx->symbolIdentifier()->getText();
-    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIdentifier, id));
-
-    // the visibility
-    auto access = parse_access_type(id);
-    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstAccessType, access));
-
-    // the return type
-    if (ctx->returnSpec()) {
-        auto *returnTypeNode = make_Type_node(m_state, ctx->returnSpec()->assignableType());
-        TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
-    } else {
-        ArchetypeNode *returnTypeNode;
-        TU_ASSIGN_OR_RAISE (returnTypeNode, m_state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
-        TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
-    }
-
-    TU_RAISE_IF_NOT_OK (defNode->appendChild(packNode));
-    TU_RAISE_IF_NOT_OK (defNode->appendChild(blockNode));
-
-    ArchetypeNode *defenumNode;
-    TU_ASSIGN_OR_RAISE (defenumNode, m_state->peekNode(lyric_schema::kLyricAstDefEnumClass));
-
-    TU_RAISE_IF_NOT_OK (defenumNode->appendChild(defNode));
 
     // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
+    state->popSymbolAndCheck(id);
+
+    // get the visibility
+    auto access = parse_access_type(id);
+
+    // get the return type
+    ArchetypeNode *returnTypeNode;
+    if (ctx->returnSpec()) {
+        returnTypeNode = make_Type_node(state, ctx->returnSpec()->assignableType());
+    } else {
+        TU_ASSIGN_OR_RAISE (returnTypeNode, state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
+    }
+
+    if (hasError())
+        return;
+
+    // pop the block node from stack
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
+
+    // pop the pack node from stack
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, state->popNode());
+
+    // allocate the def node
+    ArchetypeNode *defNode;
+    TU_ASSIGN_OR_RAISE (defNode, state->appendNode(lyric_schema::kLyricAstDefClass, location));
+
+    // set the method name
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIdentifier, id));
+
+    // set the visibility
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstAccessType, access));
+
+    // set the return type
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
+
+    // append pack node to def
+    TU_RAISE_IF_NOT_OK (defNode->appendChild(packNode));
+
+    // append block node to def
+    TU_RAISE_IF_NOT_OK (defNode->appendChild(blockNode));
+
+    // peek node on stack, verify it is defenum
+    ArchetypeNode *defenumNode;
+    TU_ASSIGN_OR_RAISE (defenumNode, state->peekNode(lyric_schema::kLyricAstDefEnumClass));
+
+    // append def node to defenum
+    TU_RAISE_IF_NOT_OK (defenumNode->appendChild(defNode));
 }
 
 void
@@ -203,14 +248,27 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
 {
     tempo_tracing::ExitScope scope;
 
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    // create the case node
+    // get the case name
+    auto id = ctx->symbolIdentifier()->getText();
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    state->popSymbolAndCheck(id);
+
+    // get the visibility
+    auto access = parse_access_type(id);
+
+    if (hasError())
+        return;
+
+    // allocate the case node
     ArchetypeNode *caseNode;
-    TU_ASSIGN_OR_RAISE (caseNode, m_state->appendNode(lyric_schema::kLyricAstCaseClass, location));
+    TU_ASSIGN_OR_RAISE (caseNode, state->appendNode(lyric_schema::kLyricAstCaseClass, location));
 
     if (ctx->argList()) {
         auto *argList = ctx->argList();
@@ -219,8 +277,9 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
             if (argSpec == nullptr)
                 continue;
 
+            // pop argument off the stack
             ArchetypeNode *argNode;
-            TU_ASSIGN_OR_RAISE (argNode, m_state->popNode());
+            TU_ASSIGN_OR_RAISE (argNode, state->popNode());
 
             if (argSpec->Identifier() != nullptr) {
                 // the keyword label
@@ -229,34 +288,35 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
                 token = argSpec->getStart();
                 location = get_token_location(token);
 
+                // allocate keyword node
                 ArchetypeNode *keywordNode;
-                TU_ASSIGN_OR_RAISE (keywordNode, m_state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+                TU_ASSIGN_OR_RAISE (keywordNode, state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+
+                // set the keyword name
                 TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+
+                // append arg node to keyword
                 TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
                 argNode = keywordNode;
             }
 
+            // prepend arg node to the case
             TU_RAISE_IF_NOT_OK (caseNode->prependChild(argNode));
         }
     }
 
-    token = ctx->getStart();
-    location = get_token_location(token);
-
-    // the enum case name
-    auto id = ctx->symbolIdentifier()->getText();
-    auto access = parse_access_type(id);
-
+    // set the case name
     TU_RAISE_IF_NOT_OK (caseNode->putAttr(kLyricAstIdentifier, id));
+
+    // set the visibility
     TU_RAISE_IF_NOT_OK (caseNode->putAttr(kLyricAstAccessType, access));
 
+    // peek node on stack, verify it is defenum
     ArchetypeNode *defenumNode;
-    TU_ASSIGN_OR_RAISE (defenumNode, m_state->peekNode(lyric_schema::kLyricAstDefEnumClass));
+    TU_ASSIGN_OR_RAISE (defenumNode, state->peekNode(lyric_schema::kLyricAstDefEnumClass));
 
+    // append case node to defenum
     TU_RAISE_IF_NOT_OK (defenumNode->appendChild(caseNode));
-
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
 }
 
 void
@@ -264,15 +324,24 @@ lyric_parser::internal::ModuleDefenumOps::enterEnumImpl(ModuleParser::EnumImplCo
 {
     tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefenumOps::enterEnumImpl");
 
+    auto *state = getState();
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
-    ArchetypeNode *implNode;
-    TU_ASSIGN_OR_RAISE (implNode, m_state->appendNode(lyric_schema::kLyricAstImplClass, location));
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(implNode));
 
     scope.putTag(kLyricParserLineNumber, location.lineNumber);
     scope.putTag(kLyricParserColumnNumber, location.columnNumber);
     scope.putTag(kLyricParserFileOffset, location.fileOffset);
+
+    if (hasError())
+        return;
+
+    // allocate impl node
+    ArchetypeNode *implNode;
+    TU_ASSIGN_OR_RAISE (implNode, state->appendNode(lyric_schema::kLyricAstImplClass, location));
+
+    // push impl onto stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(implNode));
 }
 
 void
@@ -280,19 +349,26 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumImpl(ModuleParser::EnumImplCon
 {
     tempo_tracing::ExitScope scope;
 
-    // the impl type
-    auto *implTypeNode = make_Type_node(m_state, ctx->assignableType());
+    auto *state = getState();
 
-    // pop impl off the stack
+    // get the impl type
+    auto *implTypeNode = make_Type_node(state, ctx->assignableType());
+
+    if (hasError())
+        return;
+
+    // pop node from stack, verify it is impl
     ArchetypeNode *implNode;
-    TU_ASSIGN_OR_RAISE (implNode, m_state->popNode(lyric_schema::kLyricAstImplClass));
+    TU_ASSIGN_OR_RAISE (implNode, state->popNode(lyric_schema::kLyricAstImplClass));
 
     // set the impl type
     TU_RAISE_IF_NOT_OK (implNode->putAttr(kLyricAstTypeOffset, implTypeNode));
 
+    // peek node on stack, verify it is defenum
     ArchetypeNode *defenumNode;
-    TU_ASSIGN_OR_RAISE (defenumNode, m_state->peekNode(lyric_schema::kLyricAstDefEnumClass));
+    TU_ASSIGN_OR_RAISE (defenumNode, state->peekNode(lyric_schema::kLyricAstDefEnumClass));
 
+    // append impl node to defenum
     TU_RAISE_IF_NOT_OK (defenumNode->appendChild(implNode));
 }
 
@@ -301,20 +377,28 @@ lyric_parser::internal::ModuleDefenumOps::exitDefenumStatement(ModuleParser::Def
 {
     tempo_tracing::ExitScope scope;
 
-    scope.putTag(kLyricParserIdentifier, m_state->currentSymbolString());
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
-    // the enum name
+    // get the enum name
     auto id = ctx->symbolIdentifier()->getText();
 
-    // the enum access level
+    // pop the top of the symbol stack and verify that the identifier matches
+    state->popSymbolAndCheck(id);
+
+    // get the visibility
     auto access = parse_access_type(id);
 
+    if (hasError())
+        return;
+
+    // peek node on stack, verify it is defenum
     ArchetypeNode *defenumNode;
-    TU_ASSIGN_OR_RAISE (defenumNode, m_state->peekNode(lyric_schema::kLyricAstDefEnumClass));
+    TU_ASSIGN_OR_RAISE (defenumNode, state->peekNode(lyric_schema::kLyricAstDefEnumClass));
 
+    // set the enum name
     TU_RAISE_IF_NOT_OK (defenumNode->putAttr(kLyricAstIdentifier, id));
-    TU_RAISE_IF_NOT_OK (defenumNode->putAttr(kLyricAstAccessType, access));
 
-    // pop the top of the symbol stack and verify that the identifier matches
-    m_state->popSymbolAndCheck(id);
+    // set the enum visibility
+    TU_RAISE_IF_NOT_OK (defenumNode->putAttr(kLyricAstAccessType, access));
 }

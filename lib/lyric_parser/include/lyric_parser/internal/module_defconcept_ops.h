@@ -3,15 +3,14 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleDefconceptOps {
+    class ModuleDefconceptOps : public BaseOps {
 
     public:
-        explicit ModuleDefconceptOps(ArchetypeState *state);
-        virtual ~ModuleDefconceptOps() = default;
+        explicit ModuleDefconceptOps(ModuleArchetype *listener);
 
         void enterDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx);
         void enterConceptDecl(ModuleParser::ConceptDeclContext *ctx);
@@ -19,9 +18,6 @@ namespace lyric_parser::internal {
         void enterConceptImpl(ModuleParser::ConceptImplContext *ctx);
         void exitConceptImpl(ModuleParser::ConceptImplContext *ctx);
         void exitDefconceptStatement(ModuleParser::DefconceptStatementContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
     };
 }
 

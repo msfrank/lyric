@@ -3,15 +3,14 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleDefinstanceOps {
+    class ModuleDefinstanceOps : public BaseOps {
 
     public:
-        explicit ModuleDefinstanceOps(ArchetypeState *state);
-        virtual ~ModuleDefinstanceOps() = default;
+        explicit ModuleDefinstanceOps(ModuleArchetype *listener);
 
         void enterDefinstanceStatement(ModuleParser::DefinstanceStatementContext *ctx);
         void enterInstanceVal(ModuleParser::InstanceValContext *ctx);
@@ -23,9 +22,6 @@ namespace lyric_parser::internal {
         void enterInstanceImpl(ModuleParser::InstanceImplContext *ctx);
         void exitInstanceImpl(ModuleParser::InstanceImplContext *ctx);
         void exitDefinstanceStatement(ModuleParser::DefinstanceStatementContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
     };
 }
 

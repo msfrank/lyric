@@ -6,29 +6,9 @@
 #include "../archetype_state.h"
 #include "../parse_result.h"
 
-#include "module_defclass_ops.h"
-#include "module_defconcept_ops.h"
-#include "module_defenum_ops.h"
-#include "module_definstance_ops.h"
-#include "module_defstruct_ops.h"
-#include "module_define_ops.h"
-#include "module_exception_ops.h"
-#include "module_match_ops.h"
-
 namespace lyric_parser::internal {
 
-    class ModuleArchetype
-        :
-          ModuleMatchOps,
-          ModuleDefclassOps,
-          ModuleDefconceptOps,
-          ModuleDefenumOps,
-          ModuleDefinstanceOps,
-          ModuleDefstructOps,
-          ModuleDefineOps,
-          ModuleExceptionOps,
-          public ModuleParserBaseListener
-    {
+    class ModuleArchetype : public ModuleParserBaseListener {
 
     public:
         ModuleArchetype(ArchetypeState *state, std::shared_ptr<tempo_tracing::TraceContext> context);

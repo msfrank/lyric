@@ -3,15 +3,14 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleExceptionOps {
+    class ModuleExceptionOps : public BaseOps {
 
     public:
-        explicit ModuleExceptionOps(ArchetypeState *state);
-        virtual ~ModuleExceptionOps() = default;
+        explicit ModuleExceptionOps(ModuleArchetype *listener);
 
         void enterTryStatement(ModuleParser::TryStatementContext *ctx);
         void exitTryTarget(ModuleParser::TryTargetContext *ctx);
@@ -19,9 +18,6 @@ namespace lyric_parser::internal {
         void exitCatchOnType(ModuleParser::CatchOnTypeContext *ctx);
         void exitCatchElse(ModuleParser::CatchElseContext *ctx);
         void exitCatchFinally(ModuleParser::CatchFinallyContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
     };
 }
 

@@ -3,15 +3,14 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleDefenumOps {
+    class ModuleDefenumOps : public BaseOps {
 
     public:
-        explicit ModuleDefenumOps(ArchetypeState *state);
-        virtual ~ModuleDefenumOps() = default;
+        explicit ModuleDefenumOps(ModuleArchetype *listener);
 
         void enterDefenumStatement(ModuleParser::DefenumStatementContext *ctx);
         void enterEnumInit(ModuleParser::EnumInitContext *ctx);
@@ -25,9 +24,6 @@ namespace lyric_parser::internal {
         void enterEnumImpl(ModuleParser::EnumImplContext *ctx);
         void exitEnumImpl(ModuleParser::EnumImplContext *ctx);
         void exitDefenumStatement(ModuleParser::DefenumStatementContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
     };
 }
 
