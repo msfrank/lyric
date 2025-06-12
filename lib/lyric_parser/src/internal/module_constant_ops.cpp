@@ -141,10 +141,10 @@ lyric_parser::internal::ModuleConstantOps::exitDecimalFixedFloat(ModuleParser::D
 void
 lyric_parser::internal::ModuleConstantOps::exitDecimalScientificFloat(ModuleParser::DecimalScientificFloatContext *ctx)
 {
-    auto *token = ctx->DecimalScientificFloat()->getSymbol();
+    auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto value = token->getText();
+    auto value = absl::StrCat(token->getText(), ctx->DecimalExponent()->getText());
     if (value.empty()) {
         throw_semantic_exception(token, "invalid decimal scientific float ''");
         TU_UNREACHABLE();
@@ -164,7 +164,15 @@ lyric_parser::internal::ModuleConstantOps::exitHexFloat(ModuleParser::HexFloatCo
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto value = token->getText();
+    std::string value;
+    if (ctx->HexFloatLeadingPeriod()) {
+        value = ctx->HexFloatLeadingPeriod()->getText();
+    } else if (ctx->HexFloatTrailingPeriod()) {
+        value = ctx->HexFloatTrailingPeriod()->getText();
+    } else if (ctx->HexFloatNoPeriod()) {
+        value = ctx->HexFloatNoPeriod()->getText();
+    }
+
     if (value.empty()) {
         throw_semantic_exception(token, "invalid hex float ''");
         TU_UNREACHABLE();
@@ -176,6 +184,14 @@ lyric_parser::internal::ModuleConstantOps::exitHexFloat(ModuleParser::HexFloatCo
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstBaseType, BaseType::Hex));
     TU_RAISE_IF_NOT_OK (literalNode->putAttr(kLyricAstNotationType, NotationType::Fixed));
     TU_RAISE_IF_NOT_OK (m_state->pushNode(literalNode));
+}
+
+void
+lyric_parser::internal::ModuleConstantOps::exitInvalidNumber(ModuleParser::InvalidNumberContext *ctx)
+{
+    auto value = ctx->getText();
+    throw_semantic_exception(ctx->getStart(), "invalid number literal '{}'", value);
+    TU_UNREACHABLE();
 }
 
 void

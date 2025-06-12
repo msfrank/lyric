@@ -17,18 +17,20 @@ CurlyClose                  : '}' ;
 
 // binary literal
 
-BinPrefix                   : '0b' -> skip, pushMode(BINLITERAL) ;
+BinPrefix                   : '0b' -> pushMode(BINLITERAL) ;
 
 
 // hexadecimal literal
 
-HexPrefix                   : '0x' -> skip, pushMode(HEXLITERAL) ;
+HexPrefix                   : '0x' -> pushMode(HEXLITERAL) ;
+
 
 // octal literal
 
-OctPrefix                   : '0o' -> skip, pushMode(OCTLITERAL);
+OctPrefix                   : '0o' -> pushMode(OCTLITERAL);
 
-// decimal literals
+
+// decimal literal
 
 fragment
 DecimalDigit                : ('0'..'9') ;
@@ -37,17 +39,12 @@ fragment
 DecimalWholeNumber          : ('0'|'1'..'9' '0'..'9'*) ;
 
 fragment
-DecimalExponent             : ('e'|'E') ('+'|'-')? DecimalDigit+ ;
+ENotation                   : 'e'|'E' ;
 
-DecimalScientificFloat      : DecimalWholeNumber '.' DecimalDigit* DecimalExponent
-                            | '.' DecimalDigit+ DecimalExponent
-                            | DecimalWholeNumber DecimalExponent
-                            ;
-
-DecimalFixedFloat           : DecimalWholeNumber '.' DecimalDigit*
-                            | '.' DecimalDigit+
-                            ;
-
+CoefficientLeadingPeriod    : '.' DecimalDigit+ ENotation -> pushMode(EXPONENT) ;
+CoefficientTrailingPeriod   : DecimalWholeNumber '.' DecimalDigit+ ENotation -> pushMode(EXPONENT) ;
+CoefficientNoPeriod         : DecimalWholeNumber ENotation -> pushMode(EXPONENT) ;
+DecimalFixedFloat           : DecimalWholeNumber '.' DecimalDigit* | '.' DecimalDigit+ ;
 DecimalInteger              : DecimalWholeNumber ;
 
 
@@ -206,6 +203,25 @@ BinaryInteger               : BinaryDigit+ -> popMode ;
 InvalidBinaryLiteral        : ~[ \t\r\n]+ -> popMode ;
 
 
+// octal literal processing mode
+
+mode OCTLITERAL;
+
+fragment
+OctalDigit                  : ('0'..'7') ;
+
+OctalInteger                : OctalDigit+ -> popMode ;
+InvalidOctalLiteral         : ~[ \t\r\n]+ -> popMode ;
+
+
+// decimal literal processing mode
+
+mode EXPONENT;
+
+DecimalExponent             : ('+'|'-')? DecimalDigit+ -> popMode ;
+InvalidExponent             : ~[ \t\r\n]+ -> popMode ;
+
+
 // hexadecimal literal processing mode
 
 mode HEXLITERAL;
@@ -216,22 +232,11 @@ HexDigit                    : ('0'..'9'|'a'..'f'|'A'..'F') ;
 fragment
 HexExponent                 : ('p'|'P') ('+'|'-')? HexDigit+ ;
 
-HexFloatTrailingPeriod      : HexDigit+ '.' HexDigit* HexExponent -> popMode ;
-HexFloatLeadingPeriod       : '.' HexDigit+ HexExponent -> popMode ;
+HexFloatTrailingPeriod      : HexDigit+ '.' HexDigit* HexExponent? -> popMode ;
+HexFloatLeadingPeriod       : '.' HexDigit+ HexExponent? -> popMode ;
 HexFloatNoPeriod            : HexDigit+ HexExponent -> popMode ;
 HexInteger                  : HexDigit+ -> popMode ;
 InvalidHexLiteral           : ~[ \t\r\n]+ -> popMode ;
-
-
-// octal literal processing mode
-
-mode OCTLITERAL;
-
-fragment
-OctalDigit                  : ('0'..'7') ;
-
-OctalInteger                : OctalDigit+ -> popMode ;
-InvalidOctalLiteral         : ~[ \t\r\n]+ -> popMode ;
 
 
 // comment processing mode

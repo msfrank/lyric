@@ -288,6 +288,12 @@ void lyric_parser::internal::ModuleArchetype::exitHexFloat(ModuleParser::HexFloa
     IGNORE_RULE_IF_HAS_ERROR
     return ModuleConstantOps::exitHexFloat(ctx);
 }
+void lyric_parser::internal::ModuleArchetype::exitInvalidNumber(ModuleParser::InvalidNumberContext *ctx)
+{
+    // we don't ignore error notification rule
+    return ModuleConstantOps::exitInvalidNumber(ctx);
+}
+
 
 void lyric_parser::internal::ModuleArchetype::exitCharLiteral(ModuleParser::CharLiteralContext *ctx)
 {

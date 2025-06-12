@@ -24,6 +24,7 @@ namespace lyric_parser::internal {
         void exitDecimalFixedFloat(ModuleParser::DecimalFixedFloatContext *ctx);
         void exitDecimalScientificFloat(ModuleParser::DecimalScientificFloatContext *ctx);
         void exitHexFloat(ModuleParser::HexFloatContext *ctx);
+        void exitInvalidNumber(ModuleParser::InvalidNumberContext *ctx);
 
         void exitCharLiteral(ModuleParser::CharLiteralContext *ctx);
         void exitStringLiteral(ModuleParser::StringLiteralContext *ctx);

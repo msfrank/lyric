@@ -422,21 +422,28 @@ derefSpec           : DotOperator
 literal             : numberLiteral | textLiteral | keywordLiteral ;
 
 decimalInteger          : DecimalInteger ;
-hexInteger              : HexInteger ;
-octalInteger            : OctalInteger ;
-octalInvalid            : InvalidOctalLiteral { notifyErrorListeners("invalid octal literal"); } ;
 decimalFixedFloat       : DecimalFixedFloat ;
-decimalScientificFloat  : DecimalScientificFloat ;
-hexFloat                : HexFloatTrailingPeriod | HexFloatLeadingPeriod | HexFloatNoPeriod ;
-hexInvalid              : InvalidHexLiteral { notifyErrorListeners("invalid hex literal"); };
-numberLiteral           : hexFloat
-                        | hexInteger
-                        | hexInvalid
-                        | octalInteger
-                        | octalInvalid
+decimalScientificFloat  : CoefficientLeadingPeriod DecimalExponent
+                        | CoefficientTrailingPeriod DecimalExponent
+                        | CoefficientNoPeriod DecimalExponent
+                        ;
+hexInteger              : HexPrefix HexInteger ;
+hexFloat                : HexPrefix ( HexFloatTrailingPeriod | HexFloatLeadingPeriod | HexFloatNoPeriod );
+octalInteger            : OctPrefix OctalInteger ;
+invalidNumber           : CoefficientLeadingPeriod InvalidExponent
+                        | CoefficientTrailingPeriod InvalidExponent
+                        | CoefficientNoPeriod InvalidExponent
+                        | OctPrefix InvalidOctalLiteral
+                        | HexPrefix InvalidHexLiteral
+                        ;
+
+numberLiteral           : decimalInteger
                         | decimalFixedFloat
                         | decimalScientificFloat
-                        | decimalInteger
+                        | hexInteger
+                        | hexFloat
+                        | octalInteger
+                        | invalidNumber
                         ;
 
 charLiteral             : CharLiteral ;

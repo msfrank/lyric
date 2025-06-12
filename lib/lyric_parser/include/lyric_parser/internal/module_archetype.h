@@ -96,6 +96,7 @@ namespace lyric_parser::internal {
         void exitDecimalFixedFloat(ModuleParser::DecimalFixedFloatContext *ctx) override;
         void exitDecimalScientificFloat(ModuleParser::DecimalScientificFloatContext *ctx) override;
         void exitHexFloat(ModuleParser::HexFloatContext *ctx) override;
+        void exitInvalidNumber(ModuleParser::InvalidNumberContext *ctx) override;
         void exitCharLiteral(ModuleParser::CharLiteralContext *ctx) override;
         void exitStringLiteral(ModuleParser::StringLiteralContext *ctx) override;
         void exitUrlLiteral(ModuleParser::UrlLiteralContext *ctx) override;

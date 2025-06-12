@@ -17,7 +17,7 @@ TEST(CoreInt, EvaluateDecimalInt)
 TEST(CoreInt, EvaluateOctalInt)
 {
     auto result = runModule(R"(
-        010
+        0o10
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(8))));
