@@ -3,15 +3,14 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleAssignOps {
+    class ModuleAssignOps : public BaseOps {
 
     public:
-        explicit ModuleAssignOps(ArchetypeState *state);
-        virtual ~ModuleAssignOps() = default;
+        explicit ModuleAssignOps(ModuleArchetype *listener);
 
         void enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx);
         void exitGlobalStatement(ModuleParser::GlobalStatementContext *ctx);
@@ -23,12 +22,9 @@ namespace lyric_parser::internal {
         void exitUntypedVar(ModuleParser::UntypedVarContext *ctx);
         void enterTypedVar(ModuleParser::TypedVarContext *ctx);
         void exitTypedVar(ModuleParser::TypedVarContext *ctx);
-        void exitNameAssignment(ModuleParser::NameAssignmentContext *ctx);
-        void exitMemberAssignment(ModuleParser::MemberAssignmentContext *ctx);
-        void exitSetStatement(ModuleParser::SetStatementContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
+        void parseNameAssignment(ModuleParser::NameAssignmentContext *ctx);
+        void parseMemberAssignment(ModuleParser::MemberAssignmentContext *ctx);
+        void parseSetStatement(ModuleParser::SetStatementContext *ctx);
     };
 }
 

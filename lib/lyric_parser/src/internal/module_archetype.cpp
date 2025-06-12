@@ -19,11 +19,13 @@
 #include <lyric_parser/internal/module_control_ops.h>
 #include <lyric_parser/internal/module_define_ops.h>
 #include <lyric_parser/internal/module_deref_ops.h>
-#include <lyric_parser/internal/module_symbol_ops.h>
 #include <lyric_parser/internal/module_logical_ops.h>
+#include <lyric_parser/internal/module_macro_ops.h>
 #include <lyric_parser/internal/module_match_ops.h>
 #include <lyric_parser/internal/module_parameter_ops.h>
+#include <lyric_parser/internal/module_symbol_ops.h>
 #include <lyric_parser/internal/parser_utils.h>
+#include <lyric_parser/internal/semantic_exception.h>
 #include <tempo_tracing/enter_scope.h>
 #include <tempo_tracing/exit_scope.h>
 #include <tempo_tracing/tracing_schema.h>
@@ -31,30 +33,26 @@
 lyric_parser::internal::ModuleArchetype::ModuleArchetype(
     ArchetypeState *state,
     std::shared_ptr<tempo_tracing::TraceContext> context)
-    : ModuleSymbolOps(state),
-      ModuleConstantOps(state),
-      ModuleLogicalOps(state),
-      ModuleArithmeticOps(state),
-      ModuleCompareOps(state),
-      ModuleAssignOps(state),
-      ModuleControlOps(state),
+    :
       ModuleMatchOps(state),
-      ModuleDerefOps(state),
-      ModuleConstructOps(state),
       ModuleDefclassOps(state),
       ModuleDefconceptOps(state),
       ModuleDefenumOps(state),
       ModuleDefinstanceOps(state),
       ModuleDefstructOps(state),
       ModuleDefineOps(state),
-      ModuleParameterOps(state),
       ModuleExceptionOps(state),
-      ModuleMacroOps(state),
       m_state(state),
       m_context(std::move(context))
 {
     TU_ASSERT (m_state != nullptr);
     TU_ASSERT (m_context != nullptr);
+}
+
+lyric_parser::ArchetypeState *
+lyric_parser::internal::ModuleArchetype::getState() const
+{
+    return m_state;
 }
 
 void
@@ -85,6 +83,25 @@ lyric_parser::internal::ModuleArchetype::hasError() const
     return m_status.notOk();
 }
 
+#define LOG_ERROR_ON_EXCEPTION(ctx, stmt)               \
+    try {                                               \
+        stmt;                                           \
+    } catch (SemanticException &ex) {                   \
+        logErrorOrThrow(                                \
+            ex.getLineNr(),                             \
+            ex.getColumnNr(),                           \
+            ex.getMessage());                           \
+    } catch (std::exception &ex) {                      \
+        auto *token = ctx->getStart();                  \
+        std::string message((const char *) ex.what());  \
+        logErrorOrThrow(                                \
+            token->getLine(),                           \
+            token->getCharPositionInLine(),             \
+            message);                                   \
+        auto eptr = std::make_exception_ptr(ex);        \
+        std::rethrow_exception(eptr);                   \
+    }
+
 /**
  * Macro to return immediately from rule if we have detected an error.
  */
@@ -93,7 +110,6 @@ lyric_parser::internal::ModuleArchetype::hasError() const
 void
 lyric_parser::internal::ModuleArchetype::enterRoot(ModuleParser::RootContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
     tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleArchetype::enterRoot");
 }
 
@@ -125,9 +141,9 @@ lyric_parser::internal::ModuleArchetype::exitForm(ModuleParser::FormContext *ctx
 void
 lyric_parser::internal::ModuleArchetype::exitRoot(ModuleParser::RootContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-
     tempo_tracing::ExitScope scope;
+
+    IGNORE_RULE_IF_HAS_ERROR
 
     ArchetypeNode *rootNode;
     TU_ASSIGN_OR_RAISE (rootNode, m_state->popNode(lyric_schema::kLyricAstBlockClass));
@@ -145,7 +161,7 @@ lyric_parser::internal::ModuleArchetype::exitRoot(ModuleParser::RootContext *ctx
 void
 lyric_parser::internal::ModuleArchetype::exitSymbolIdentifier(ModuleParser::SymbolIdentifierContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
+    // always parse symbol identifier regardless of error status
     auto id = ctx->Identifier()->getText();
     m_state->pushSymbol(id);
 }
@@ -156,74 +172,74 @@ lyric_parser::internal::ModuleArchetype::exitSymbolIdentifier(ModuleParser::Symb
 
 void lyric_parser::internal::ModuleArchetype::enterNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleSymbolOps::enterNamespaceStatement(ctx);
+    ModuleSymbolOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterNamespaceStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitNamespaceSpec(ModuleParser::NamespaceSpecContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleSymbolOps::exitNamespaceSpec(ctx);
+    ModuleSymbolOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitNamespaceSpec(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleSymbolOps::exitNamespaceStatement(ctx);
+    ModuleSymbolOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitNamespaceStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterUsingStatement(ModuleParser::UsingStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleSymbolOps::enterUsingStatement(ctx);
+    ModuleSymbolOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterUsingStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitUsingRef(ModuleParser::UsingRefContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleSymbolOps::exitUsingRef(ctx);
+    ModuleSymbolOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitUsingRef(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitUsingType(ModuleParser::UsingTypeContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleSymbolOps::exitUsingType(ctx);
+    ModuleSymbolOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitUsingType(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitUsingStatement(ModuleParser::UsingStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleSymbolOps::exitUsingStatement(ctx);
+    ModuleSymbolOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitUsingStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitImportRef(ModuleParser::ImportRefContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleSymbolOps::exitImportRef(ctx);
+    ModuleSymbolOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitImportRef(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitImportModuleStatement(ModuleParser::ImportModuleStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleSymbolOps::exitImportModuleStatement(ctx);
+    ModuleSymbolOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitImportModuleStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitImportAllStatement(ModuleParser::ImportAllStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleSymbolOps::exitImportAllStatement(ctx);
+    ModuleSymbolOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitImportAllStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterImportSymbolsStatement(ModuleParser::ImportSymbolsStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleSymbolOps::enterImportSymbolsStatement(ctx);
+    ModuleSymbolOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterImportSymbolsStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitImportSymbolsStatement(ModuleParser::ImportSymbolsStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleSymbolOps::exitImportSymbolsStatement(ctx);
+    ModuleSymbolOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitImportSymbolsStatement(ctx));
 }
 
 /*
@@ -231,86 +247,86 @@ void lyric_parser::internal::ModuleArchetype::exitImportSymbolsStatement(ModuleP
  */
 void lyric_parser::internal::ModuleArchetype::exitTrueLiteral(ModuleParser::TrueLiteralContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitTrueLiteral(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseTrueLiteral(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitFalseLiteral(ModuleParser::FalseLiteralContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitFalseLiteral(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseFalseLiteral(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitUndefLiteral(ModuleParser::UndefLiteralContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitUndefLiteral(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseUndefLiteral(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitNilLiteral(ModuleParser::NilLiteralContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitNilLiteral(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseNilLiteral(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDecimalInteger(ModuleParser::DecimalIntegerContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitDecimalInteger(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseDecimalInteger(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitHexInteger(ModuleParser::HexIntegerContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitHexInteger(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseHexInteger(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitOctalInteger(ModuleParser::OctalIntegerContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitOctalInteger(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseOctalInteger(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDecimalFixedFloat(ModuleParser::DecimalFixedFloatContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitDecimalFixedFloat(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseDecimalFixedFloat(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDecimalScientificFloat(ModuleParser::DecimalScientificFloatContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitDecimalScientificFloat(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseDecimalScientificFloat(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitHexFloat(ModuleParser::HexFloatContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitHexFloat(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseHexFloat(ctx));
 }
 void lyric_parser::internal::ModuleArchetype::exitInvalidNumber(ModuleParser::InvalidNumberContext *ctx)
 {
-    // we don't ignore error notification rule
-    return ModuleConstantOps::exitInvalidNumber(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseInvalidNumber(ctx));
 }
 
 
 void lyric_parser::internal::ModuleArchetype::exitCharLiteral(ModuleParser::CharLiteralContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitCharLiteral(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseCharLiteral(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitStringLiteral(ModuleParser::StringLiteralContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitStringLiteral(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseStringLiteral(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitUrlLiteral(ModuleParser::UrlLiteralContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstantOps::exitUrlLiteral(ctx);
+    ModuleConstantOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseUrlLiteral(ctx));
 }
 
 /*
@@ -318,20 +334,20 @@ void lyric_parser::internal::ModuleArchetype::exitUrlLiteral(ModuleParser::UrlLi
  */
 void lyric_parser::internal::ModuleArchetype::exitBooleanAndExpression(ModuleParser::BooleanAndExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleLogicalOps::exitBooleanAndExpression(ctx);
+    ModuleLogicalOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitBooleanAndExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitBooleanOrExpression(ModuleParser::BooleanOrExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleLogicalOps::exitBooleanOrExpression(ctx);
+    ModuleLogicalOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitBooleanOrExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitBooleanNotExpression(ModuleParser::BooleanNotExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleLogicalOps::exitBooleanNotExpression(ctx);
+    ModuleLogicalOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitBooleanNotExpression(ctx));
 }
 
 /*
@@ -339,32 +355,32 @@ void lyric_parser::internal::ModuleArchetype::exitBooleanNotExpression(ModulePar
  */
 void lyric_parser::internal::ModuleArchetype::exitAddExpression(ModuleParser::AddExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleArithmeticOps::exitAddExpression(ctx);
+    ModuleArithmeticOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseAddExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitSubExpression(ModuleParser::SubExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleArithmeticOps::exitSubExpression(ctx);
+    ModuleArithmeticOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseSubExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitMulExpression(ModuleParser::MulExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleArithmeticOps::exitMulExpression(ctx);
+    ModuleArithmeticOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseMulExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDivExpression(ModuleParser::DivExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleArithmeticOps::exitDivExpression(ctx);
+    ModuleArithmeticOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseDivExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitNegExpression(ModuleParser::NegExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleArithmeticOps::exitNegExpression(ctx);
+    ModuleArithmeticOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseNegExpression(ctx));
 }
 
 /*
@@ -372,32 +388,32 @@ void lyric_parser::internal::ModuleArchetype::exitNegExpression(ModuleParser::Ne
  */
 void lyric_parser::internal::ModuleArchetype::exitIsEqualExpression(ModuleParser::IsEqualExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleCompareOps::exitIsEqualExpression(ctx);
+    ModuleCompareOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseIsEqualExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitIsLessThanExpression(ModuleParser::IsLessThanExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleCompareOps::exitIsLessThanExpression(ctx);
+    ModuleCompareOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseIsLessThanExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitIsLessOrEqualExpression(ModuleParser::IsLessOrEqualExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleCompareOps::exitIsLessOrEqualExpression(ctx);
+    ModuleCompareOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseIsLessOrEqualExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitIsGreaterThanExpression(ModuleParser::IsGreaterThanExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleCompareOps::exitIsGreaterThanExpression(ctx);
+    ModuleCompareOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseIsGreaterThanExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitIsGreaterOrEqualExpression(ModuleParser::IsGreaterOrEqualExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleCompareOps::exitIsGreaterOrEqualExpression(ctx);
+    ModuleCompareOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseIsGreaterOrEqualExpression(ctx));
 }
 
 /*
@@ -405,80 +421,80 @@ void lyric_parser::internal::ModuleArchetype::exitIsGreaterOrEqualExpression(Mod
  */
 void lyric_parser::internal::ModuleArchetype::enterGlobalStatement(ModuleParser::GlobalStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::enterGlobalStatement(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterGlobalStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitGlobalStatement(ModuleParser::GlobalStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::exitGlobalStatement(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitGlobalStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterUntypedVal(ModuleParser::UntypedValContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::enterUntypedVal(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterUntypedVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitUntypedVal(ModuleParser::UntypedValContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::exitUntypedVal(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitUntypedVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterTypedVal(ModuleParser::TypedValContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::enterTypedVal(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterTypedVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitTypedVal(ModuleParser::TypedValContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::exitTypedVal(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTypedVal(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterUntypedVar(ModuleParser::UntypedVarContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::enterUntypedVar(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterUntypedVar(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitUntypedVar(ModuleParser::UntypedVarContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::exitUntypedVar(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitUntypedVar(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterTypedVar(ModuleParser::TypedVarContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::enterTypedVar(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterTypedVar(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitTypedVar(ModuleParser::TypedVarContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::exitTypedVar(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTypedVar(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitNameAssignment(ModuleParser::NameAssignmentContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::exitNameAssignment(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseNameAssignment(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitMemberAssignment(ModuleParser::MemberAssignmentContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::exitMemberAssignment(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseMemberAssignment(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitSetStatement(ModuleParser::SetStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleAssignOps::exitSetStatement(ctx);
+    ModuleAssignOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseSetStatement(ctx));
 }
 
 /*
@@ -486,80 +502,80 @@ void lyric_parser::internal::ModuleArchetype::exitSetStatement(ModuleParser::Set
  */
 void lyric_parser::internal::ModuleArchetype::exitIfStatement(ModuleParser::IfStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::exitIfStatement(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitIfStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitIfThenElseExpression(ModuleParser::IfThenElseExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::exitIfThenElseExpression(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitIfThenElseExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterCondExpression(ModuleParser::CondExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::enterCondExpression(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterCondExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCondWhen(ModuleParser::CondWhenContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::exitCondWhen(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCondWhen(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCondElse(ModuleParser::CondElseContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::exitCondElse(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCondElse(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterCondIfStatement(ModuleParser::CondIfStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::enterCondIfStatement(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterCondIfStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCondIfWhen(ModuleParser::CondIfWhenContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::exitCondIfWhen(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCondIfWhen(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCondIfElse(ModuleParser::CondIfElseContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::exitCondIfElse(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCondIfElse(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterWhileStatement(ModuleParser::WhileStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::enterWhileStatement(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterWhileStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitWhileStatement(ModuleParser::WhileStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::exitWhileStatement(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitWhileStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterForStatement(ModuleParser::ForStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::enterForStatement(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterForStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitForStatement(ModuleParser::ForStatementContext * ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::exitForStatement(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitForStatement(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitReturnStatement(ModuleParser::ReturnStatementContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleControlOps::exitReturnStatement(ctx);
+    ModuleControlOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitReturnStatement(ctx));
 }
 
 /*
@@ -645,116 +661,116 @@ void lyric_parser::internal::ModuleArchetype::exitCatchFinally(ModuleParser::Cat
  */
 void lyric_parser::internal::ModuleArchetype::enterLiteralExpression(ModuleParser::LiteralExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::enterLiteralExpression(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterLiteralExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterGroupingExpression(ModuleParser::GroupingExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::enterGroupingExpression(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterGroupingExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterThisExpression(ModuleParser::ThisExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::enterThisExpression(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterThisExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterNameExpression(ModuleParser::NameExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::enterNameExpression(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterNameExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterCallExpression(ModuleParser::CallExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::enterCallExpression(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterCallExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDerefLiteral(ModuleParser::DerefLiteralContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitDerefLiteral(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDerefLiteral(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDerefGrouping(ModuleParser::DerefGroupingContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitDerefGrouping(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDerefGrouping(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitThisSpec(ModuleParser::ThisSpecContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitThisSpec(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitThisSpec(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitNameSpec(ModuleParser::NameSpecContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitNameSpec(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitNameSpec(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCallSpec(ModuleParser::CallSpecContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitCallSpec(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCallSpec(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDerefMethod(ModuleParser::DerefMethodContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitDerefMethod(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDerefMethod(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDerefMember(ModuleParser::DerefMemberContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitDerefMember(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDerefMember(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitLiteralExpression(ModuleParser::LiteralExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitLiteralExpression(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitLiteralExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitGroupingExpression(ModuleParser::GroupingExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitGroupingExpression(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitGroupingExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitThisExpression(ModuleParser::ThisExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitThisExpression(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitThisExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitNameExpression(ModuleParser::NameExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitNameExpression(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitNameExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCallExpression(ModuleParser::CallExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitCallExpression(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCallExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitSymbolExpression(ModuleParser::SymbolExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitSymbolExpression(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitSymbolExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitTypeofExpression(ModuleParser::TypeofExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleDerefOps::exitTypeofExpression(ctx);
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTypeofExpression(ctx));
 }
 
 /*
@@ -762,38 +778,38 @@ void lyric_parser::internal::ModuleArchetype::exitTypeofExpression(ModuleParser:
  */
 void lyric_parser::internal::ModuleArchetype::exitPairExpression(ModuleParser::PairExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstructOps::exitPairExpression(ctx);
+    ModuleConstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parsePairExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDerefNew(ModuleParser::DerefNewContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstructOps::exitDerefNew(ctx);
+    ModuleConstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseDerefNew(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitLambdaExpression(ModuleParser::LambdaExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstructOps::exitLambdaExpression(ctx);
+    ModuleConstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseLambdaExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitLambdaFromExpression(ModuleParser::LambdaFromExpressionContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstructOps::exitLambdaFromExpression(ctx);
+    ModuleConstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseLambdaFromExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstructOps::exitDefaultInitializerTypedNew(ctx);
+    ModuleConstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseDefaultInitializerTypedNew(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefaultInitializerNew(ModuleParser::DefaultInitializerNewContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleConstructOps::exitDefaultInitializerNew(ctx);
+    ModuleConstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseDefaultInitializerNew(ctx));
 }
 
 /*
@@ -1170,50 +1186,50 @@ void lyric_parser::internal::ModuleArchetype::exitDefaliasStatement(ModuleParser
  */
 void lyric_parser::internal::ModuleArchetype::enterParamSpec(ModuleParser::ParamSpecContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleParameterOps::enterParamSpec(ctx);
+    ModuleParameterOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterParamSpec(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitPositionalParam(ModuleParser::PositionalParamContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleParameterOps::exitPositionalParam(ctx);
+    ModuleParameterOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitPositionalParam(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitNamedParam(ModuleParser::NamedParamContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleParameterOps::exitNamedParam(ctx);
+    ModuleParameterOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitNamedParam(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitRenamedParam(ModuleParser::RenamedParamContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleParameterOps::exitRenamedParam(ctx);
+    ModuleParameterOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitRenamedParam(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitNamedCtx(ModuleParser::NamedCtxContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleParameterOps::exitNamedCtx(ctx);
+    ModuleParameterOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitNamedCtx(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitRenamedCtx(ModuleParser::RenamedCtxContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleParameterOps::exitRenamedCtx(ctx);
+    ModuleParameterOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitRenamedCtx(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitRest(ModuleParser::RestContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleParameterOps::exitRest(ctx);
+    ModuleParameterOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitRest(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitParamSpec(ModuleParser::ParamSpecContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleParameterOps::exitParamSpec(ctx);
+    ModuleParameterOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitParamSpec(ctx));
 }
 
 /*
@@ -1222,68 +1238,68 @@ void lyric_parser::internal::ModuleArchetype::exitParamSpec(ModuleParser::ParamS
 
 void lyric_parser::internal::ModuleArchetype::exitMacroArgs(ModuleParser::MacroArgsContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMacroOps::exitMacroArgs(ctx);
+    ModuleMacroOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitMacroArgs(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterMacroCall(ModuleParser::MacroCallContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMacroOps::enterMacroCall(ctx);
+    ModuleMacroOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterMacroCall(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitMacroCall(ModuleParser::MacroCallContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMacroOps::exitMacroCall(ctx);
+    ModuleMacroOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitMacroCall(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterMacroAnnotation(ModuleParser::MacroAnnotationContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMacroOps::enterMacroAnnotation(ctx);
+    ModuleMacroOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterMacroAnnotation(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitMacroAnnotation(ModuleParser::MacroAnnotationContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMacroOps::exitMacroAnnotation(ctx);
+    ModuleMacroOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitMacroAnnotation(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterPragmaMacro(ModuleParser::PragmaMacroContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMacroOps::enterPragmaMacro(ctx);
+    ModuleMacroOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterPragmaMacro(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitPragmaMacro(ModuleParser::PragmaMacroContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMacroOps::exitPragmaMacro(ctx);
+    ModuleMacroOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitPragmaMacro(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterDefinitionMacro(ModuleParser::DefinitionMacroContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMacroOps::enterDefinitionMacro(ctx);
+    ModuleMacroOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefinitionMacro(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitDefinitionMacro(ModuleParser::DefinitionMacroContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMacroOps::exitDefinitionMacro(ctx);
+    ModuleMacroOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDefinitionMacro(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterBlockMacro(ModuleParser::BlockMacroContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMacroOps::enterBlockMacro(ctx);
+    ModuleMacroOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterBlockMacro(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitBlockMacro(ModuleParser::BlockMacroContext *ctx)
 {
-    IGNORE_RULE_IF_HAS_ERROR
-    return ModuleMacroOps::exitBlockMacro(ctx);
+    ModuleMacroOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitBlockMacro(ctx));
 }
 
 tempo_utils::Result<lyric_parser::LyricArchetype>

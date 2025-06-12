@@ -8,6 +8,8 @@
 #include <lyric_schema/ast_schema.h>
 #include <tempo_utils/log_stream.h>
 
+#include "lyric_parser/internal/semantic_exception.h"
+
 lyric_parser::internal::ModuleMatchOps::ModuleMatchOps(ArchetypeState *state)
     : m_state(state)
 {
@@ -109,8 +111,7 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnUnwrap(ModuleParser::MatchOnU
 
     auto *unwrapSpec = ctx->unwrapSpec();
     if (unwrapSpec == nullptr) {
-        throw_semantic_exception(ctx->getStart(), "invalid unwrap spec");
-        TU_UNREACHABLE();
+        throw SemanticException(ctx->getStart(), "invalid unwrap spec");
     }
 
     auto *unwrapTypeNode = make_Type_node(m_state, unwrapSpec->assignableType());
@@ -129,8 +130,7 @@ lyric_parser::internal::ModuleMatchOps::exitMatchOnUnwrap(ModuleParser::MatchOnU
 
     auto *unwrapList = ctx->unwrapSpec()->unwrapList();
     if (unwrapList == nullptr) {
-        throw_semantic_exception(ctx->getStart(), "invalid unwrap list");
-        TU_UNREACHABLE();
+        throw SemanticException(ctx->getStart(), "invalid unwrap list");
     }
 
     for (uint32_t i = 0; i < unwrapList->getRuleIndex(); i++) {

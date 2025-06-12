@@ -3,15 +3,14 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleSymbolOps {
+    class ModuleSymbolOps : public BaseOps {
 
     public:
-        explicit ModuleSymbolOps(ArchetypeState *state);
-        virtual ~ModuleSymbolOps() = default;
+        explicit ModuleSymbolOps(ModuleArchetype *listener);
 
         void enterNamespaceStatement(ModuleParser::NamespaceStatementContext *ctx);
         void exitNamespaceSpec(ModuleParser::NamespaceSpecContext *ctx);
@@ -27,9 +26,6 @@ namespace lyric_parser::internal {
         void exitImportAllStatement(ModuleParser::ImportAllStatementContext *ctx);
         void enterImportSymbolsStatement(ModuleParser::ImportSymbolsStatementContext *ctx);
         void exitImportSymbolsStatement(ModuleParser::ImportSymbolsStatementContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
     };
 }
 

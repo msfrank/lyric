@@ -3,24 +3,20 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleArithmeticOps {
+    class ModuleArithmeticOps : public BaseOps {
 
     public:
-        explicit ModuleArithmeticOps(ArchetypeState *state);
-        virtual ~ModuleArithmeticOps() = default;
+        explicit ModuleArithmeticOps(ModuleArchetype *listener);
 
-        void exitAddExpression(ModuleParser::AddExpressionContext *ctx);
-        void exitSubExpression(ModuleParser::SubExpressionContext *ctx);
-        void exitMulExpression(ModuleParser::MulExpressionContext *ctx);
-        void exitDivExpression(ModuleParser::DivExpressionContext *ctx);
-        void exitNegExpression(ModuleParser::NegExpressionContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
+        void parseAddExpression(ModuleParser::AddExpressionContext *ctx);
+        void parseSubExpression(ModuleParser::SubExpressionContext *ctx);
+        void parseMulExpression(ModuleParser::MulExpressionContext *ctx);
+        void parseDivExpression(ModuleParser::DivExpressionContext *ctx);
+        void parseNegExpression(ModuleParser::NegExpressionContext *ctx);
     };
 }
 

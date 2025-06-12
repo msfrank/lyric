@@ -3,15 +3,14 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleParameterOps {
+    class ModuleParameterOps : public BaseOps {
 
     public:
-        explicit ModuleParameterOps(ArchetypeState *state);
-        virtual ~ModuleParameterOps() = default;
+        explicit ModuleParameterOps(ModuleArchetype *listener);
 
         void enterParamSpec(ModuleParser::ParamSpecContext *ctx);
         void exitPositionalParam(ModuleParser::PositionalParamContext *ctx);
@@ -21,9 +20,6 @@ namespace lyric_parser::internal {
         void exitRenamedCtx(ModuleParser::RenamedCtxContext *ctx);
         void exitRest(ModuleParser::RestContext *ctx);
         void exitParamSpec(ModuleParser::ParamSpecContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
     };
 }
 

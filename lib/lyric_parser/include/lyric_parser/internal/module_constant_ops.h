@@ -3,35 +3,32 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
+#include "module_archetype.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleConstantOps {
+    class ModuleConstantOps : public BaseOps {
 
     public:
-        explicit ModuleConstantOps(ArchetypeState *state);
-        virtual ~ModuleConstantOps() = default;
+        explicit ModuleConstantOps(ModuleArchetype *moduleArchetype);
 
-        void exitTrueLiteral(ModuleParser::TrueLiteralContext *ctx);
-        void exitFalseLiteral(ModuleParser::FalseLiteralContext *ctx);
-        void exitUndefLiteral(ModuleParser::UndefLiteralContext *ctx);
-        void exitNilLiteral(ModuleParser::NilLiteralContext *ctx);
+        void parseTrueLiteral(ModuleParser::TrueLiteralContext *ctx);
+        void parseFalseLiteral(ModuleParser::FalseLiteralContext *ctx);
+        void parseUndefLiteral(ModuleParser::UndefLiteralContext *ctx);
+        void parseNilLiteral(ModuleParser::NilLiteralContext *ctx);
 
-        void exitDecimalInteger(ModuleParser::DecimalIntegerContext *ctx);
-        void exitHexInteger(ModuleParser::HexIntegerContext *ctx);
-        void exitOctalInteger(ModuleParser::OctalIntegerContext *ctx);
-        void exitDecimalFixedFloat(ModuleParser::DecimalFixedFloatContext *ctx);
-        void exitDecimalScientificFloat(ModuleParser::DecimalScientificFloatContext *ctx);
-        void exitHexFloat(ModuleParser::HexFloatContext *ctx);
-        void exitInvalidNumber(ModuleParser::InvalidNumberContext *ctx);
+        void parseDecimalInteger(ModuleParser::DecimalIntegerContext *ctx);
+        void parseHexInteger(ModuleParser::HexIntegerContext *ctx);
+        void parseOctalInteger(ModuleParser::OctalIntegerContext *ctx);
+        void parseDecimalFixedFloat(ModuleParser::DecimalFixedFloatContext *ctx);
+        void parseDecimalScientificFloat(ModuleParser::DecimalScientificFloatContext *ctx);
+        void parseHexFloat(ModuleParser::HexFloatContext *ctx);
+        void parseInvalidNumber(ModuleParser::InvalidNumberContext *ctx);
 
-        void exitCharLiteral(ModuleParser::CharLiteralContext *ctx);
-        void exitStringLiteral(ModuleParser::StringLiteralContext *ctx);
-        void exitUrlLiteral(ModuleParser::UrlLiteralContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
+        void parseCharLiteral(ModuleParser::CharLiteralContext *ctx);
+        void parseStringLiteral(ModuleParser::StringLiteralContext *ctx);
+        void parseUrlLiteral(ModuleParser::UrlLiteralContext *ctx);
     };
 }
 

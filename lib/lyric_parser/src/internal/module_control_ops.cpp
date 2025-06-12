@@ -8,93 +8,108 @@
 #include <lyric_schema/ast_schema.h>
 #include <tempo_utils/log_stream.h>
 
-lyric_parser::internal::ModuleControlOps::ModuleControlOps(ArchetypeState *state)
-    : m_state(state)
+lyric_parser::internal::ModuleControlOps::ModuleControlOps(ModuleArchetype *listener)
+    : BaseOps(listener)
 {
-    TU_ASSERT (m_state != nullptr);
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitIfStatement(ModuleParser::IfStatementContext *ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     ArchetypeNode *consequentNode;
-    TU_ASSIGN_OR_RAISE (consequentNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (consequentNode, state->popNode());
 
     ArchetypeNode *conditionNode;
-    TU_ASSIGN_OR_RAISE (conditionNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (conditionNode, state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     ArchetypeNode *whenNode;
-    TU_ASSIGN_OR_RAISE (whenNode, m_state->appendNode(lyric_schema::kLyricAstWhenClass, location));
+    TU_ASSIGN_OR_RAISE (whenNode, state->appendNode(lyric_schema::kLyricAstWhenClass, location));
     TU_RAISE_IF_NOT_OK (whenNode->appendChild(conditionNode));
     TU_RAISE_IF_NOT_OK (whenNode->appendChild(consequentNode));
 
     ArchetypeNode *ifNode;
-    TU_ASSIGN_OR_RAISE (ifNode, m_state->appendNode(lyric_schema::kLyricAstIfClass, location));
+    TU_ASSIGN_OR_RAISE (ifNode, state->appendNode(lyric_schema::kLyricAstIfClass, location));
     TU_RAISE_IF_NOT_OK (ifNode->appendChild(whenNode));
 
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(ifNode));
+    TU_RAISE_IF_NOT_OK (state->pushNode(ifNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitIfThenElseExpression(ModuleParser::IfThenElseExpressionContext *ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     ArchetypeNode *alternativeNode;
-    TU_ASSIGN_OR_RAISE (alternativeNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (alternativeNode, state->popNode());
 
     ArchetypeNode *consequentNode;
-    TU_ASSIGN_OR_RAISE (consequentNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (consequentNode, state->popNode());
 
     ArchetypeNode *conditionNode;
-    TU_ASSIGN_OR_RAISE (conditionNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (conditionNode, state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     ArchetypeNode *whenNode;
-    TU_ASSIGN_OR_RAISE (whenNode, m_state->appendNode(lyric_schema::kLyricAstWhenClass, location));
+    TU_ASSIGN_OR_RAISE (whenNode, state->appendNode(lyric_schema::kLyricAstWhenClass, location));
     TU_RAISE_IF_NOT_OK (whenNode->appendChild(conditionNode));
     TU_RAISE_IF_NOT_OK (whenNode->appendChild(consequentNode));
 
     ArchetypeNode *condNode;
-    TU_ASSIGN_OR_RAISE (condNode, m_state->appendNode(lyric_schema::kLyricAstCondClass, location));
+    TU_ASSIGN_OR_RAISE (condNode, state->appendNode(lyric_schema::kLyricAstCondClass, location));
     TU_RAISE_IF_NOT_OK (condNode->putAttr(kLyricAstDefaultOffset, alternativeNode));
     TU_RAISE_IF_NOT_OK (condNode->appendChild(whenNode));
 
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(condNode));
+    TU_RAISE_IF_NOT_OK (state->pushNode(condNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::enterCondExpression(ModuleParser::CondExpressionContext *ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
     ArchetypeNode *condNode;
-    TU_ASSIGN_OR_RAISE (condNode, m_state->appendNode(lyric_schema::kLyricAstCondClass, location));
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(condNode));
+    TU_ASSIGN_OR_RAISE (condNode, state->appendNode(lyric_schema::kLyricAstCondClass, location));
+    TU_RAISE_IF_NOT_OK (state->pushNode(condNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitCondWhen(ModuleParser::CondWhenContext *ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     ArchetypeNode *consequentNode;
-    TU_ASSIGN_OR_RAISE (consequentNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (consequentNode, state->popNode());
 
     ArchetypeNode *conditionNode;
-    TU_ASSIGN_OR_RAISE (conditionNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (conditionNode, state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     ArchetypeNode *whenNode;
-    TU_ASSIGN_OR_RAISE (whenNode, m_state->appendNode(lyric_schema::kLyricAstWhenClass, location));
+    TU_ASSIGN_OR_RAISE (whenNode, state->appendNode(lyric_schema::kLyricAstWhenClass, location));
     TU_RAISE_IF_NOT_OK (whenNode->appendChild(conditionNode));
     TU_RAISE_IF_NOT_OK (whenNode->appendChild(consequentNode));
 
     ArchetypeNode *condNode;
-    TU_ASSIGN_OR_RAISE (condNode, m_state->peekNode(lyric_schema::kLyricAstCondClass));
+    TU_ASSIGN_OR_RAISE (condNode, state->peekNode(lyric_schema::kLyricAstCondClass));
 
     // append when to the cond
     TU_RAISE_IF_NOT_OK (condNode->appendChild(whenNode));
@@ -103,11 +118,15 @@ lyric_parser::internal::ModuleControlOps::exitCondWhen(ModuleParser::CondWhenCon
 void
 lyric_parser::internal::ModuleControlOps::exitCondElse(ModuleParser::CondElseContext *ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     ArchetypeNode *alternativeNode;
-    TU_ASSIGN_OR_RAISE (alternativeNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (alternativeNode, state->popNode());
 
     ArchetypeNode *condNode;
-    TU_ASSIGN_OR_RAISE (condNode, m_state->peekNode(lyric_schema::kLyricAstCondClass));
+    TU_ASSIGN_OR_RAISE (condNode, state->peekNode(lyric_schema::kLyricAstCondClass));
 
     // add defaultCase attribute to the cond
     TU_RAISE_IF_NOT_OK (condNode->putAttr(kLyricAstDefaultOffset, alternativeNode));
@@ -116,32 +135,40 @@ lyric_parser::internal::ModuleControlOps::exitCondElse(ModuleParser::CondElseCon
 void
 lyric_parser::internal::ModuleControlOps::enterCondIfStatement(ModuleParser::CondIfStatementContext *ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
     ArchetypeNode *ifNode;
-    TU_ASSIGN_OR_RAISE (ifNode, m_state->appendNode(lyric_schema::kLyricAstIfClass, location));
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(ifNode));
+    TU_ASSIGN_OR_RAISE (ifNode, state->appendNode(lyric_schema::kLyricAstIfClass, location));
+    TU_RAISE_IF_NOT_OK (state->pushNode(ifNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitCondIfWhen(ModuleParser::CondIfWhenContext *ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     ArchetypeNode *consequentNode;
-    TU_ASSIGN_OR_RAISE (consequentNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (consequentNode, state->popNode());
 
     ArchetypeNode *conditionNode;
-    TU_ASSIGN_OR_RAISE (conditionNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (conditionNode, state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     ArchetypeNode *whenNode;
-    TU_ASSIGN_OR_RAISE (whenNode, m_state->appendNode(lyric_schema::kLyricAstWhenClass, location));
+    TU_ASSIGN_OR_RAISE (whenNode, state->appendNode(lyric_schema::kLyricAstWhenClass, location));
     TU_RAISE_IF_NOT_OK (whenNode->appendChild(conditionNode));
     TU_RAISE_IF_NOT_OK (whenNode->appendChild(consequentNode));
 
     ArchetypeNode *ifNode;
-    TU_ASSIGN_OR_RAISE (ifNode, m_state->peekNode(lyric_schema::kLyricAstIfClass));
+    TU_ASSIGN_OR_RAISE (ifNode, state->peekNode(lyric_schema::kLyricAstIfClass));
 
     // append when to the if
     TU_RAISE_IF_NOT_OK (ifNode->appendChild(whenNode));
@@ -150,11 +177,15 @@ lyric_parser::internal::ModuleControlOps::exitCondIfWhen(ModuleParser::CondIfWhe
 void
 lyric_parser::internal::ModuleControlOps::exitCondIfElse(ModuleParser::CondIfElseContext *ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     ArchetypeNode *alternativeNode;
-    TU_ASSIGN_OR_RAISE (alternativeNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (alternativeNode, state->popNode());
 
     ArchetypeNode *ifNode;
-    TU_ASSIGN_OR_RAISE (ifNode, m_state->peekNode(lyric_schema::kLyricAstIfClass));
+    TU_ASSIGN_OR_RAISE (ifNode, state->peekNode(lyric_schema::kLyricAstIfClass));
 
     // add defaultCase attribute to the if
     TU_RAISE_IF_NOT_OK (ifNode->putAttr(kLyricAstDefaultOffset, alternativeNode));
@@ -163,24 +194,32 @@ lyric_parser::internal::ModuleControlOps::exitCondIfElse(ModuleParser::CondIfEls
 void
 lyric_parser::internal::ModuleControlOps::enterWhileStatement(ModuleParser::WhileStatementContext *ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
     ArchetypeNode *whileNode;
-    TU_ASSIGN_OR_RAISE (whileNode, m_state->appendNode(lyric_schema::kLyricAstWhileClass, location));
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(whileNode));
+    TU_ASSIGN_OR_RAISE (whileNode, state->appendNode(lyric_schema::kLyricAstWhileClass, location));
+    TU_RAISE_IF_NOT_OK (state->pushNode(whileNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitWhileStatement(ModuleParser::WhileStatementContext *ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     ArchetypeNode *blockNode;
-    TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
 
     ArchetypeNode *testNode;
-    TU_ASSIGN_OR_RAISE (testNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (testNode, state->popNode());
 
     ArchetypeNode *whileNode;
-    TU_ASSIGN_OR_RAISE (whileNode, m_state->peekNode(lyric_schema::kLyricAstWhileClass));
+    TU_ASSIGN_OR_RAISE (whileNode, state->peekNode(lyric_schema::kLyricAstWhileClass));
 
     TU_RAISE_IF_NOT_OK (whileNode->appendChild(testNode));
     TU_RAISE_IF_NOT_OK (whileNode->appendChild(blockNode));
@@ -189,31 +228,39 @@ lyric_parser::internal::ModuleControlOps::exitWhileStatement(ModuleParser::While
 void
 lyric_parser::internal::ModuleControlOps::enterForStatement(ModuleParser::ForStatementContext *ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
     ArchetypeNode *forNode;
-    TU_ASSIGN_OR_RAISE (forNode, m_state->appendNode(lyric_schema::kLyricAstForClass, location));
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(forNode));
+    TU_ASSIGN_OR_RAISE (forNode, state->appendNode(lyric_schema::kLyricAstForClass, location));
+    TU_RAISE_IF_NOT_OK (state->pushNode(forNode));
 }
 
 void
 lyric_parser::internal::ModuleControlOps::exitForStatement(ModuleParser::ForStatementContext * ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     ArchetypeNode *blockNode;
-    TU_ASSIGN_OR_RAISE (blockNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
 
     ArchetypeNode *iteratorNode;
-    TU_ASSIGN_OR_RAISE (iteratorNode, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (iteratorNode, state->popNode());
 
     auto id = ctx->Identifier()->getText();
 
     ArchetypeNode *forNode;
-    TU_ASSIGN_OR_RAISE (forNode, m_state->peekNode(lyric_schema::kLyricAstForClass));
+    TU_ASSIGN_OR_RAISE (forNode, state->peekNode(lyric_schema::kLyricAstForClass));
 
     TU_RAISE_IF_NOT_OK (forNode->putAttr(kLyricAstIdentifier, id));
 
     if (ctx->assignableType()) {
-        auto *typeNode = make_Type_node(m_state, ctx->assignableType());
+        auto *typeNode = make_Type_node(state, ctx->assignableType());
         TU_RAISE_IF_NOT_OK (forNode->putAttr(kLyricAstTypeOffset, typeNode));
     }
 
@@ -224,15 +271,19 @@ lyric_parser::internal::ModuleControlOps::exitForStatement(ModuleParser::ForStat
 void
 lyric_parser::internal::ModuleControlOps::exitReturnStatement(ModuleParser::ReturnStatementContext * ctx)
 {
+    auto *state = getState();
+    if (hasError())
+        return;
+
     ArchetypeNode *p1;
-    TU_ASSIGN_OR_RAISE (p1, m_state->popNode());
+    TU_ASSIGN_OR_RAISE (p1, state->popNode());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     ArchetypeNode *returnNode;
-    TU_ASSIGN_OR_RAISE (returnNode, m_state->appendNode(lyric_schema::kLyricAstReturnClass, location));
+    TU_ASSIGN_OR_RAISE (returnNode, state->appendNode(lyric_schema::kLyricAstReturnClass, location));
     TU_RAISE_IF_NOT_OK (returnNode->appendChild(p1));
 
-    TU_RAISE_IF_NOT_OK (m_state->pushNode(returnNode));
+    TU_RAISE_IF_NOT_OK (state->pushNode(returnNode));
 }

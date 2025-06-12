@@ -3,15 +3,14 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleDerefOps {
+    class ModuleDerefOps : public BaseOps {
 
     public:
-        explicit ModuleDerefOps(ArchetypeState *state);
-        virtual ~ModuleDerefOps() = default;
+        explicit ModuleDerefOps(ModuleArchetype *listener);
 
         void enterLiteralExpression(ModuleParser::LiteralExpressionContext *ctx);
         void enterGroupingExpression(ModuleParser::GroupingExpressionContext *ctx);
@@ -32,9 +31,6 @@ namespace lyric_parser::internal {
         void exitCallExpression(ModuleParser::CallExpressionContext *ctx);
         void exitSymbolExpression(ModuleParser::SymbolExpressionContext *ctx);
         void exitTypeofExpression(ModuleParser::TypeofExpressionContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
     };
 }
 

@@ -111,6 +111,8 @@ target_sources(lyric_parser
     src/internal/archetype_reader.cpp
     include/lyric_parser/internal/archetype_writer.h
     src/internal/archetype_writer.cpp
+    include/lyric_parser/internal/base_ops.h
+    src/internal/base_ops.cpp
     include/lyric_parser/internal/module_archetype.h
     src/internal/module_archetype.cpp
     include/lyric_parser/internal/module_arithmetic_ops.h
@@ -153,6 +155,8 @@ target_sources(lyric_parser
     src/internal/module_symbol_ops.cpp
     include/lyric_parser/internal/parser_utils.h
     src/internal/parser_utils.cpp
+    include/lyric_parser/internal/semantic_exception.h
+    src/internal/semantic_exception.cpp
     include/lyric_parser/internal/tracing_error_listener.h
     src/internal/tracing_error_listener.cpp
 

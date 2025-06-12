@@ -3,27 +3,23 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleConstructOps {
+    class ModuleConstructOps : public BaseOps {
 
     public:
-        explicit ModuleConstructOps(ArchetypeState *state);
-        virtual ~ModuleConstructOps() = default;
+        explicit ModuleConstructOps(ModuleArchetype *listener);
 
-        void exitDerefNew(ModuleParser::DerefNewContext *ctx);
+        void parseDerefNew(ModuleParser::DerefNewContext *ctx);
 
-        void exitPairExpression(ModuleParser::PairExpressionContext *ctx);
-        void exitLambdaExpression(ModuleParser::LambdaExpressionContext *ctx);
-        void exitLambdaFromExpression(ModuleParser::LambdaFromExpressionContext *ctx);
+        void parsePairExpression(ModuleParser::PairExpressionContext *ctx);
+        void parseLambdaExpression(ModuleParser::LambdaExpressionContext *ctx);
+        void parseLambdaFromExpression(ModuleParser::LambdaFromExpressionContext *ctx);
 
-        void exitDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx);
-        void exitDefaultInitializerNew(ModuleParser::DefaultInitializerNewContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
+        void parseDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx);
+        void parseDefaultInitializerNew(ModuleParser::DefaultInitializerNewContext *ctx);
     };
 }
 

@@ -3,22 +3,18 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleLogicalOps {
+    class ModuleLogicalOps : public BaseOps {
 
     public:
-        explicit ModuleLogicalOps(ArchetypeState *state);
-        virtual ~ModuleLogicalOps() = default;
+        explicit ModuleLogicalOps(ModuleArchetype *listener);
 
         void exitBooleanAndExpression(ModuleParser::BooleanAndExpressionContext *ctx);
         void exitBooleanOrExpression(ModuleParser::BooleanOrExpressionContext *ctx);
         void exitBooleanNotExpression(ModuleParser::BooleanNotExpressionContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
     };
 }
 

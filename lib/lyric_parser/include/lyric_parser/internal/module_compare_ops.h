@@ -1,24 +1,20 @@
 #ifndef LYRIC_PARSER_INTERNAL_MODULE_COMPARE_OPS_H
 #define LYRIC_PARSER_INTERNAL_MODULE_COMPARE_OPS_H
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleCompareOps {
+    class ModuleCompareOps : public BaseOps {
 
     public:
-        explicit ModuleCompareOps(ArchetypeState *state);
-        virtual ~ModuleCompareOps() = default;
+        explicit ModuleCompareOps(ModuleArchetype *listener);
 
-        void exitIsEqualExpression(ModuleParser::IsEqualExpressionContext *ctx);
-        void exitIsLessThanExpression(ModuleParser::IsLessThanExpressionContext *ctx);
-        void exitIsLessOrEqualExpression(ModuleParser::IsLessOrEqualExpressionContext *ctx);
-        void exitIsGreaterThanExpression(ModuleParser::IsGreaterThanExpressionContext *ctx);
-        void exitIsGreaterOrEqualExpression(ModuleParser::IsGreaterOrEqualExpressionContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
+        void parseIsEqualExpression(ModuleParser::IsEqualExpressionContext *ctx);
+        void parseIsLessThanExpression(ModuleParser::IsLessThanExpressionContext *ctx);
+        void parseIsLessOrEqualExpression(ModuleParser::IsLessOrEqualExpressionContext *ctx);
+        void parseIsGreaterThanExpression(ModuleParser::IsGreaterThanExpressionContext *ctx);
+        void parseIsGreaterOrEqualExpression(ModuleParser::IsGreaterOrEqualExpressionContext *ctx);
     };
 }
 

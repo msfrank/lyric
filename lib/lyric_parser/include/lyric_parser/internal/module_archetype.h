@@ -6,54 +6,35 @@
 #include "../archetype_state.h"
 #include "../parse_result.h"
 
-#include "module_arithmetic_ops.h"
-#include "module_assign_ops.h"
-#include "module_compare_ops.h"
-#include "module_constant_ops.h"
-#include "module_construct_ops.h"
-#include "module_control_ops.h"
 #include "module_defclass_ops.h"
 #include "module_defconcept_ops.h"
 #include "module_defenum_ops.h"
 #include "module_definstance_ops.h"
 #include "module_defstruct_ops.h"
 #include "module_define_ops.h"
-#include "module_deref_ops.h"
 #include "module_exception_ops.h"
-#include "module_logical_ops.h"
-#include "module_macro_ops.h"
 #include "module_match_ops.h"
-#include "module_parameter_ops.h"
-#include "module_symbol_ops.h"
 
 namespace lyric_parser::internal {
 
     class ModuleArchetype
-        : ModuleSymbolOps,
-          ModuleConstantOps,
-          ModuleLogicalOps,
-          ModuleArithmeticOps,
-          ModuleCompareOps,
-          ModuleAssignOps,
-          ModuleControlOps,
+        :
           ModuleMatchOps,
-          ModuleDerefOps,
-          ModuleConstructOps,
           ModuleDefclassOps,
           ModuleDefconceptOps,
           ModuleDefenumOps,
           ModuleDefinstanceOps,
           ModuleDefstructOps,
           ModuleDefineOps,
-          ModuleParameterOps,
           ModuleExceptionOps,
-          ModuleMacroOps,
           public ModuleParserBaseListener
     {
 
     public:
         ModuleArchetype(ArchetypeState *state, std::shared_ptr<tempo_tracing::TraceContext> context);
         virtual ~ModuleArchetype() = default;
+
+        ArchetypeState *getState() const;
 
         void logErrorOrThrow(
             size_t lineNr,

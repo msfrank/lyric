@@ -3,15 +3,14 @@
 
 #include <ModuleParserBaseListener.h>
 
-#include "../archetype_state.h"
+#include "base_ops.h"
 
 namespace lyric_parser::internal {
 
-    class ModuleMacroOps {
+    class ModuleMacroOps : public BaseOps {
 
     public:
-        explicit ModuleMacroOps(ArchetypeState *state);
-        virtual ~ModuleMacroOps() = default;
+        explicit ModuleMacroOps(ModuleArchetype *listener);
 
         void exitMacroArgs(ModuleParser::MacroArgsContext *ctx);
 
@@ -26,9 +25,6 @@ namespace lyric_parser::internal {
         void exitDefinitionMacro(ModuleParser::DefinitionMacroContext *ctx);
         void enterBlockMacro(ModuleParser::BlockMacroContext *ctx);
         void exitBlockMacro(ModuleParser::BlockMacroContext *ctx);
-
-    private:
-        ArchetypeState *m_state;
     };
 }
 

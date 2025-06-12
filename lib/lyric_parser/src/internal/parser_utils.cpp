@@ -6,6 +6,8 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/internal/parser_utils.h>
 
+#include "lyric_parser/internal/semantic_exception.h"
+
 lyric_parser::ParseLocation
 lyric_parser::internal::get_token_location(const antlr4::Token *token)
 {
@@ -14,26 +16,6 @@ lyric_parser::internal::get_token_location(const antlr4::Token *token)
         static_cast<tu_int64>(token->getCharPositionInLine()),
         static_cast<tu_int64>(token->getStartIndex()),
         static_cast<tu_int64>(token->getStopIndex() - token->getStartIndex()));
-}
-
-lyric_parser::internal::SemanticException::SemanticException(
-    const antlr4::Token *token,
-    std::string_view message)
-    : m_location(get_token_location(token)),
-      m_message(message)
-{
-}
-
-const char *
-lyric_parser::internal::SemanticException::what() const noexcept
-{
-    return m_message.c_str();
-}
-
-void
-lyric_parser::internal::throw_semantic_exception(const antlr4::Token *token, std::string_view message)
-{
-    throw SemanticException(token, message);
 }
 
 lyric_parser::ArchetypeNode *
@@ -119,8 +101,8 @@ lyric_parser::internal::make_UType_node(
         } else if (member->simpleType()) {
             memberNode = make_SType_node(state, member->simpleType());
         } else {
-            throw_semantic_exception(member->getStart(), "illegal union type member");
-            TU_UNREACHABLE();
+            auto message = fmt::format("illegal union type member '{}'", member->toString());
+            throw SemanticException(member->getStart(), message);
         }
 
         utypeNode->appendChild(memberNode);
@@ -152,8 +134,8 @@ lyric_parser::internal::make_IType_node(
         } else if (member->simpleType()) {
             memberNode = make_SType_node(state, member->simpleType());
         } else {
-            throw_semantic_exception(member->getStart(), "illegal intersection type member");
-            TU_UNREACHABLE();
+            auto message = fmt::format("illegal intersection type member '{}'", member->toString());
+            throw SemanticException(member->getStart(), message);
         }
 
         itypeNode->appendChild(memberNode);
@@ -168,13 +150,12 @@ lyric_parser::internal::make_SType_or_PType_node(
     ModuleParser::SingularTypeContext *ctx)
 {
     TU_ASSERT (ctx != nullptr);
-    if (ctx->simpleType()) {
+    if (ctx->simpleType())
         return make_SType_node(state, ctx->simpleType());
-    } else if (ctx->parametricType()) {
+    if (ctx->parametricType())
         return make_PType_node(state, ctx->parametricType());
-    }
-    throw_semantic_exception(ctx->getStart(), "illegal assignable type");
-    TU_UNREACHABLE();
+    auto message = fmt::format("illegal assignable type '{}'", ctx->toString());
+    throw SemanticException(ctx->getStart(), message);
 }
 
 lyric_parser::ArchetypeNode *
@@ -192,8 +173,8 @@ lyric_parser::internal::make_Type_node(
     } else if (ctx->unionType()) {
         return make_UType_node(state, ctx->unionType());
     }
-    throw_semantic_exception(ctx->getStart(), "illegal assignable type");
-    TU_UNREACHABLE();
+    auto message = fmt::format("illegal assignable type '{}'", ctx->toString());
+    throw SemanticException(ctx->getStart(), message);
 }
 
 lyric_parser::ArchetypeNode *
@@ -252,8 +233,8 @@ lyric_parser::internal::make_Generic_node(
             id = p->invariantPlaceholder()->Identifier()->getText();
             variance = VarianceType::Invariant;
         } else {
-            throw_semantic_exception(p->getStart(), "illegal placeholder");
-            TU_UNREACHABLE();
+            auto message = fmt::format("illegal placeholder '{}'", p->toString());
+            throw SemanticException(p->getStart(), message);
         }
 
         token = p->getStart();
@@ -287,8 +268,8 @@ lyric_parser::internal::make_Generic_node(
                 bound = BoundType::Super;
                 constraintTypeNode = make_Type_node(state, c->lowerTypeBound()->assignableType());
             } else {
-                throw_semantic_exception(c->getStart(), "illegal constraint");
-                TU_UNREACHABLE();
+                auto message = fmt::format("illegal constraint '{}'", c->toString());
+                throw SemanticException(c->getStart(), message);
             }
 
             token = c->getStart();
@@ -299,8 +280,10 @@ lyric_parser::internal::make_Generic_node(
             constraintNode->putAttr(kLyricAstBoundType, bound);
             constraintNode->putAttr(kLyricAstTypeOffset, constraintTypeNode);
 
-            if (!placeholderNodes.contains(id))
-                throw_semantic_exception(c->getStop(), "no such placeholder {} for constraint", id);
+            if (!placeholderNodes.contains(id)) {
+                auto message = fmt::format("no such placeholder {} for constraint", id);
+                throw SemanticException(c->getStop(), message);
+            }
             auto *placeholderNode = placeholderNodes.at(id);
             placeholderNode->appendChild(constraintNode);
         }
