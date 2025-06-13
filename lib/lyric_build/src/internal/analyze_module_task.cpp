@@ -168,18 +168,11 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     // configure analyzer
     lyric_analyzer::LyricAnalyzer analyzer(localModuleCache, buildState->getSharedModuleCache(), m_analyzerOptions);
 
-    auto span = getSpan();
-
     // generate the outline object by analyzing the archetype
-    TU_LOG_INFO << "analyzing module " << m_moduleLocation;
-    auto scanResult = analyzer.analyzeModule(m_moduleLocation,
-        archetype, m_objectStateOptions, traceDiagnostics());
-    if (scanResult.isStatus()) {
-        span->logStatus(scanResult.getStatus(), tempo_tracing::LogSeverity::kError);
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to analyze module {}", m_moduleLocation.toString());
-    }
-    auto object = scanResult.getResult();
+    logInfo("analyzing module {}", m_moduleLocation.toString());
+    lyric_object::LyricObject object;
+    TU_ASSIGN_OR_RETURN (object, analyzer.analyzeModule(m_moduleLocation,
+        archetype, m_objectStateOptions, traceDiagnostics()));
 
     // declare the artifact
     tempo_utils::UrlPath outlineArtifactPath;
@@ -193,19 +186,17 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
-    auto toMetadataResult = writer.toMetadata();
-    if (toMetadataResult.isStatus()) {
-        span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to store metadata for {}", outlineArtifact.toString());
-    }
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(outlineArtifact, toMetadataResult.getResult()));
+    LyricMetadata outlineMetadata;
+    TU_ASSIGN_OR_RETURN (outlineMetadata, writer.toMetadata());
+
+    //
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(outlineArtifact, outlineMetadata));
 
     // store the outline object content in the cache
     auto outlineBytes = object.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(outlineArtifact, outlineBytes));
 
-    TU_LOG_INFO << "stored outline at " << outlineArtifact;
+    logInfo("stored outline at {}", outlineArtifact.toString());
 
     return {};
 }
@@ -233,7 +224,7 @@ lyric_build::internal::AnalyzeModuleTask::runTask(
             return Option(status);
         case AnalyzeModulePhase::COMPLETE:
             status = BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                "invalid task phase");
+                "encountered invalid task phase");
             return Option(status);
         default:
             TU_UNREACHABLE();

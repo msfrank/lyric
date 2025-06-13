@@ -37,27 +37,22 @@ print_span(const tempo_tracing::SpanWalker &spanWalker, int indent)
 
     TU_ASSERT (spanWalker.isValid());
 
-    bool error;
-    status = spanWalker.parseTag(tempo_tracing::kOpentracingError, error);
-    if (status.notOk() && !status.matchesCondition(tempo_tracing::TracingCondition::kMissingTag)) {
-        return;
-    }
+    auto failed = spanWalker.isFailed();
 
     TU_CONSOLE_OUT << tempo_utils::Indent(indent)
                    << "task " << spanWalker.getOperationName()
                    << " ... "
-                   << (error ? "failed" : "complete");
+                   << (failed ? "failed" : "complete");
 
     for (int i = 0; i < spanWalker.numLogs(); i++) {
         auto logWalker = spanWalker.getLog(i);
+
+        if (!logWalker.hasField(tempo_tracing::kOpentracingMessage))
+            continue;
         std::string message;
         status = logWalker.parseField(tempo_tracing::kOpentracingMessage, message);
         if (status.isOk()) {
             TU_CONSOLE_OUT << tempo_utils::Indent(indent + 2) << message;
-        } else {
-            if (!status.matchesCondition(tempo_tracing::TracingCondition::kMissingLog)) {
-                TU_CONSOLE_ERR << "failed to print log: " << status;
-            }
         }
     }
 

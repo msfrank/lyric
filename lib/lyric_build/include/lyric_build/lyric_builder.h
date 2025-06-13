@@ -111,7 +111,7 @@ namespace lyric_build {
         std::shared_ptr<TaskRegistry> getTaskRegistry() const;
         std::shared_ptr<AbstractFilesystem> getVirtualFilesystem() const;
 
-        void onTaskNotification(BuildRunner *runner, const TaskNotification *notification);
+        void onTaskNotification(BuildRunner *runner, std::unique_ptr<TaskNotification> notification);
 
     private:
         std::filesystem::path m_workspaceRoot;

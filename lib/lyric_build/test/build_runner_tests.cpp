@@ -12,7 +12,7 @@
 
 void on_notification(
     lyric_build::BuildRunner *runner,
-    const lyric_build::TaskNotification *notification,
+    std::unique_ptr<lyric_build::TaskNotification> notification,
     void *data)
 {
 }
@@ -60,7 +60,7 @@ TEST_F(BuildRunner, EnqueueNewTask)
     taskRegistry.sealRegistry();
 
     lyric_build::TaskKey key("test", std::string{"foo"});
-    auto enqueueTaskStatus = runner->enqueueTask(key, {});
+    auto enqueueTaskStatus = runner->enqueueTask(key);
     ASSERT_THAT (enqueueTaskStatus, tempo_test::IsOk());
 
     auto readyItem = runner->waitForNextReady(0);
@@ -79,7 +79,7 @@ TEST_F(BuildRunner, EnqueueExistingTaskReturnsExistingTask)
     taskRegistry.sealRegistry();
 
     lyric_build::TaskKey key("test", std::string{"foo"});
-    auto enqueueTaskStatus1 = runner->enqueueTask(key, {});
+    auto enqueueTaskStatus1 = runner->enqueueTask(key);
     ASSERT_THAT (enqueueTaskStatus1, tempo_test::IsOk());
 
     auto readyItem1 = runner->waitForNextReady(0);
@@ -87,7 +87,7 @@ TEST_F(BuildRunner, EnqueueExistingTaskReturnsExistingTask)
     ASSERT_EQ (key, readyItem1.task->getKey());
     auto *task1 = readyItem1.task;
 
-    auto enqueueTaskStatus2 = runner->enqueueTask(key, {});
+    auto enqueueTaskStatus2 = runner->enqueueTask(key);
     ASSERT_THAT (enqueueTaskStatus2, tempo_test::IsOk());
 
     auto readyItem2 = runner->waitForNextReady(0);
@@ -109,7 +109,7 @@ TEST_F(BuildRunner, EnqueueExistingTaskUpdatesTaskState)
     lyric_build::TaskState priorState(lyric_build::TaskState::Status::BLOCKED, priorGen, priorHash);
     state->storeState(key, priorState);
 
-    auto enqueueTaskStatus1 = runner->enqueueTask(key, {});
+    auto enqueueTaskStatus1 = runner->enqueueTask(key);
     ASSERT_THAT (enqueueTaskStatus1, tempo_test::IsOk());
 
     auto readyItem = runner->waitForNextReady(0);

@@ -28,7 +28,6 @@ namespace lyric_build {
         TaskId getId() const;
         tempo_config::ConfigMap getParams() const;
 
-        std::shared_ptr<tempo_tracing::TraceSpan> getSpan() const;
         std::shared_ptr<tempo_tracing::TraceRecorder> traceDiagnostics();
         TempDirectory *tempDirectory();
 
@@ -45,6 +44,11 @@ namespace lyric_build {
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,
             BuildState *buildState);
+
+        std::shared_ptr<tempo_tracing::SpanLog> logInfo(std::string_view message);
+        std::shared_ptr<tempo_tracing::SpanLog> logWarn(std::string_view message);
+        std::shared_ptr<tempo_tracing::SpanLog> logError(std::string_view message);
+        std::shared_ptr<tempo_tracing::SpanLog> logStatus(const tempo_utils::Status &status);
 
     private:
         tempo_utils::UUID m_generation;
@@ -75,6 +79,42 @@ namespace lyric_build {
             if (m_span == nullptr)
                 return;
             m_span->putTag(serde, value);
+        }
+        /**
+         *
+         * @tparam Args
+         * @param messageFmt
+         * @param messageArgs
+         */
+        template<typename... Args>
+        std::shared_ptr<tempo_tracing::SpanLog> logInfo(fmt::string_view messageFmt, Args... messageArgs)
+        {
+            auto message = fmt::vformat(messageFmt, fmt::make_format_args(messageArgs...));
+            return logInfo(message);
+        }
+        /**
+         *
+         * @tparam Args
+         * @param messageFmt
+         * @param messageArgs
+         */
+        template<typename... Args>
+        std::shared_ptr<tempo_tracing::SpanLog> logWarn(fmt::string_view messageFmt, Args... messageArgs)
+        {
+            auto message = fmt::vformat(messageFmt, fmt::make_format_args(messageArgs...));
+            return logWarn(message);
+        }
+        /**
+         *
+         * @tparam Args
+         * @param messageFmt
+         * @param messageArgs
+         */
+        template<typename... Args>
+        std::shared_ptr<tempo_tracing::SpanLog> logError(fmt::string_view messageFmt, Args... messageArgs)
+        {
+            auto message = fmt::vformat(messageFmt, fmt::make_format_args(messageArgs...));
+            return logError(message);
         }
     };
 }

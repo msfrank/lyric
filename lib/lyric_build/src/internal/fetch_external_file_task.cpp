@@ -99,8 +99,6 @@ lyric_build::internal::FetchExternalFileTask::fetchExternalFile(
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
 {
-    auto span = getSpan();
-
     auto cache = buildState->getCache();
     auto vfs = buildState->getVirtualFilesystem();
 
@@ -116,20 +114,16 @@ lyric_build::internal::FetchExternalFileTask::fetchExternalFile(
     MetadataWriter writer;
     TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, m_contentType);
-    auto toMetadataResult = writer.toMetadata();
-    if (toMetadataResult.isStatus()) {
-        span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to store metadata for {}", externalArtifact.toString());
-    }
+    LyricMetadata externalMetadata;
+    TU_ASSIGN_OR_RETURN (externalMetadata, writer.toMetadata());
 
     // store the file metadata in the build cache
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(externalArtifact, toMetadataResult.getResult()));
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(externalArtifact, externalMetadata));
 
     // store the file content in the build cache
     TU_RETURN_IF_NOT_OK (cache->storeContent(externalArtifact, content));
 
-    TU_LOG_V << "stored external content at " << externalArtifact;
+    logInfo("stored external content at {}", externalArtifact.toString());
 
     return {};
 }

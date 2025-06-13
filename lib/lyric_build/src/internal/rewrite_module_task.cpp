@@ -100,8 +100,6 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(archetypeArtifact));
     lyric_parser::LyricArchetype archetype(content);
 
-    auto span = getSpan();
-
     // configure rewriter
     lyric_rewriter::LyricRewriter rewriter(m_rewriterOptions);
 
@@ -122,16 +120,10 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     auto macroRewriteDriverBuilder = std::make_shared<lyric_rewriter::MacroRewriteDriverBuilder>(macroRegistry);
 
     // generate the rewritten archetype by applying all macros
-    TU_LOG_V << "rewriting archetype " << m_moduleLocation;
-    auto rewriteModuleResult = rewriter.rewriteArchetype(archetype,
-        m_moduleLocation.toUrl(),
-        macroRewriteDriverBuilder, traceDiagnostics());
-    if (rewriteModuleResult.isStatus()) {
-        span->logStatus(rewriteModuleResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to rewrite archetype {}", m_moduleLocation.toString());
-    }
-    auto rewritten = rewriteModuleResult.getResult();
+    logInfo("rewriting archetype {}",  m_moduleLocation.toString());
+    lyric_parser::LyricArchetype rewritten;
+    TU_ASSIGN_OR_RETURN (rewritten, rewriter.rewriteArchetype(archetype, m_moduleLocation.toUrl(),
+        macroRewriteDriverBuilder, traceDiagnostics()));
 
     // declare the artifact
     tempo_utils::UrlPath rewrittenArtifactPath;
@@ -144,19 +136,17 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     MetadataWriter writer;
     TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kIntermezzoContentType));
-    auto toMetadataResult = writer.toMetadata();
-    if (toMetadataResult.isStatus()) {
-        span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to store metadata for {}", rewrittenArtifact.toString());
-    }
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(rewrittenArtifact, toMetadataResult.getResult()));
+    LyricMetadata rewrittenMetadata;
+    TU_ASSIGN_OR_RETURN (rewrittenMetadata, writer.toMetadata());
+
+    //
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(rewrittenArtifact, rewrittenMetadata));
 
     // store the rewritten archetype content in the build cache
     auto rewrittenBytes = rewritten.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(rewrittenArtifact, rewrittenBytes));
 
-    TU_LOG_V << "stored rewritten archetype at " << rewrittenArtifact;
+    logInfo("stored rewritten archetype at {}", rewrittenArtifact.toString());
 
     return {};
 }

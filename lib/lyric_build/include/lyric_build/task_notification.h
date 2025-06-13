@@ -34,7 +34,7 @@ namespace lyric_build {
     class BuildRunner;
     typedef void (*TaskNotificationFunc)(
         BuildRunner *runner,
-        const TaskNotification *notification,
+        std::unique_ptr<TaskNotification> notification,
         void *data);
 
     class NotifyStateChanged : public TaskNotification {

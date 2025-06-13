@@ -36,7 +36,7 @@ class Lyric(ConanFile):
         'icu/77.1@timbre',
         'openssl/3.2.0@timbre',
         'rocksdb/8.5.3@timbre',
-        'uv/1.44.1@timbre',
+        'uv/1.51.0@timbre',
         )
 
     def validate(self):

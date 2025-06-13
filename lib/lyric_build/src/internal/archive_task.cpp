@@ -198,7 +198,6 @@ lyric_build::internal::ArchiveTask::buildArchive(
 {
     auto cache = buildState->getCache();
     auto recorder = traceDiagnostics();
-    auto span = getSpan();
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
@@ -219,9 +218,9 @@ lyric_build::internal::ArchiveTask::buildArchive(
     TU_RETURN_IF_NOT_OK (archive_symbols(archiver, depStates, cache.get()));
 
     // build the archive
-    TU_LOG_V << "building archive " << m_moduleLocation;
+    logInfo("building archive {}", m_moduleLocation.toString());
     lyric_object::LyricObject object;
-    TU_ASSIGN_OR_RETURN (object, span->checkResult(archiver.toObject()));
+    TU_ASSIGN_OR_RETURN (object, archiver.toObject());
 
     // declare the artifact
     ArtifactId moduleArtifact(buildState->getGeneration().getUuid(), taskHash,
@@ -243,7 +242,7 @@ lyric_build::internal::ArchiveTask::buildArchive(
     auto moduleBytes = object.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(moduleArtifact, moduleBytes));
 
-    TU_LOG_V << "stored module at " << moduleArtifact;
+    logInfo("stored module at {}", moduleArtifact.toString());
 
     return {};
 }

@@ -20,7 +20,7 @@
 
 static void on_notification(
     lyric_build::BuildRunner *runner,
-    const lyric_build::TaskNotification *notification,
+    std::unique_ptr<lyric_build::TaskNotification> notification,
     void *data);
 
 /**
@@ -229,7 +229,7 @@ lyric_build::LyricBuilder::computeTargets(
     // enqueue all tasks in parallel, and let the manager sequence them appropriately
     for (const auto &target : targets) {
         TaskKey key(target.getDomain(), target.getId());
-        TU_RETURN_IF_NOT_OK (runner.enqueueTask(key, {}));
+        TU_RETURN_IF_NOT_OK (runner.enqueueTask(key));
         m_targets.insert(key);
     }
 
@@ -360,7 +360,7 @@ lyric_build::LyricBuilder::getVirtualFilesystem() const
 void
 lyric_build::LyricBuilder::onTaskNotification(
     BuildRunner *runner,
-    const TaskNotification *notification)
+    std::unique_ptr<TaskNotification> notification)
 {
     TU_ASSERT (notification != nullptr);
 
@@ -368,7 +368,7 @@ lyric_build::LyricBuilder::onTaskNotification(
 
         case NotificationType::STATE_CHANGED: {
 
-            const auto *stateChanged = static_cast<const NotifyStateChanged *>(notification);
+            const auto *stateChanged = static_cast<const NotifyStateChanged *>(notification.get());
             auto key = stateChanged->getKey();
             auto state = stateChanged->getState();
 
@@ -389,8 +389,6 @@ lyric_build::LyricBuilder::onTaskNotification(
             break;
     }
 
-    delete notification;
-
     if (m_targets.empty() && m_running) {
         m_running = false;
         runner->shutdown();
@@ -400,9 +398,9 @@ lyric_build::LyricBuilder::onTaskNotification(
 static void
 on_notification(
     lyric_build::BuildRunner *runner,
-    const lyric_build::TaskNotification *notification,
+    std::unique_ptr<lyric_build::TaskNotification> notification,
     void *data)
 {
     auto *builder = static_cast<lyric_build::LyricBuilder *>(data);
-    builder->onTaskNotification(runner, notification);
+    builder->onTaskNotification(runner, std::move(notification));
 }

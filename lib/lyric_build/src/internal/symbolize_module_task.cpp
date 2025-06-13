@@ -109,18 +109,11 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     lyric_symbolizer::LyricSymbolizer symbolizer(
         localModuleCache, buildState->getSharedModuleCache(), m_symbolizerOptions);
 
-    auto span = getSpan();
-
     // generate the linkage object by symbolizing the archetype
-    TU_LOG_V << "symbolizing module " << m_moduleLocation;
-    auto symbolizeModuleResult = symbolizer.symbolizeModule(
-        m_moduleLocation, archetype, m_objectStateOptions, traceDiagnostics());
-    if (symbolizeModuleResult.isStatus()) {
-        span->logStatus(symbolizeModuleResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to symbolize module {}", m_moduleLocation.toString());
-    }
-    auto object = symbolizeModuleResult.getResult();
+    logInfo("symbolizing module {}", m_moduleLocation.toString());
+    lyric_object::LyricObject object;
+    TU_ASSIGN_OR_RETURN (object, symbolizer.symbolizeModule(
+        m_moduleLocation, archetype, m_objectStateOptions, traceDiagnostics()));
 
     // declare the artifact
     tempo_utils::UrlPath linkageArtifactPath;
@@ -134,19 +127,17 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
-    auto toMetadataResult = writer.toMetadata();
-    if (toMetadataResult.isStatus()) {
-        span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to store metadata for {}", linkageArtifact.toString());
-    }
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(linkageArtifact, toMetadataResult.getResult()));
+    LyricMetadata linkageMetadata;
+    TU_ASSIGN_OR_RETURN (linkageMetadata, writer.toMetadata());
+
+    //
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(linkageArtifact, linkageMetadata));
 
     // store the linkage object content in the build cache
     auto linkageBytes = object.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(linkageArtifact, linkageBytes));
 
-    TU_LOG_V << "stored linkage at " << linkageArtifact;
+    logInfo("stored linkage at {}", linkageArtifact.toString());
 
     return {};
 }

@@ -159,7 +159,6 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
 {
-    auto span = getSpan();
     auto vfs = buildState->getVirtualFilesystem();
     auto *tmp = tempDirectory();
 
@@ -237,20 +236,18 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
-    auto toMetadataResult = writer.toMetadata();
-    if (toMetadataResult.isStatus()) {
-        span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to store metadata for {}", pluginArtifact.toString());
-    }
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(pluginArtifact, toMetadataResult.getResult()));
+    LyricMetadata pluginMetadata;
+    TU_ASSIGN_OR_RETURN (pluginMetadata, writer.toMetadata());
+
+    //
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(pluginArtifact, pluginMetadata));
 
     // store the plugin content in the cache
     tempo_utils::FileReader reader(pluginDirectory / pluginFilename);
     TU_RETURN_IF_NOT_OK (reader.getStatus());
     TU_RETURN_IF_NOT_OK (cache->storeContent(pluginArtifact, reader.getBytes()));
 
-    TU_LOG_INFO << "stored plugin at " << pluginArtifact;
+    logInfo("stored plugin at ", pluginArtifact.toString());
 
     return {};
 }

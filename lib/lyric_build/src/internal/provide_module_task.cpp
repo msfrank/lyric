@@ -133,7 +133,6 @@ lyric_build::internal::ProvideModuleTask::provideModule(
     BuildState *buildState)
 {
     TU_ASSERT (!(m_buildTarget.isValid() && m_existingObjectPath.isValid()));
-    auto span = getSpan();
 
     tempo_utils::UrlPath objectArtifactPath;
     TU_ASSIGN_OR_RETURN (objectArtifactPath, convert_module_location_to_artifact_path(
@@ -233,7 +232,7 @@ lyric_build::internal::ProvideModuleTask::provideModule(
     // store the object content in the build cache
     TU_RETURN_IF_NOT_OK (cache->storeContent(objectArtifact, content));
 
-    TU_LOG_V << "stored object at " << objectArtifact;
+    logInfo("stored object at {}", objectArtifact.toString());
 
     auto root = object.getObject();
     if (root.hasPlugin()) {
@@ -269,7 +268,7 @@ lyric_build::internal::ProvideModuleTask::provideModule(
         // store the plugin content in the build cache
         TU_RETURN_IF_NOT_OK (cache->storeContent(pluginArtifact, content));
 
-        TU_LOG_V << "stored plugin at " << pluginArtifact;
+        logInfo("stored plugin at {}", pluginArtifact.toString());
     }
 
     return {};
@@ -282,10 +281,6 @@ lyric_build::internal::ProvideModuleTask::runTask(
     BuildState *buildState)
 {
     auto status = provideModule(taskHash, depStates, buildState);
-    if (status.notOk()) {
-        auto span = getSpan();
-        span->logStatus(status, tempo_tracing::LogSeverity::kError);
-    }
     return Option(status);
 }
 

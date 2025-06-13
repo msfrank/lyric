@@ -12,7 +12,7 @@ lyric_build::BaseTask::BaseTask(
     std::shared_ptr<tempo_tracing::TraceSpan> span)
     : m_generation(generation),
       m_key(key),
-      m_span(span),
+      m_span(std::move(span)),
       m_state(State::READY)
 {
     TU_ASSERT (m_key.isValid());
@@ -49,12 +49,6 @@ tempo_config::ConfigMap
 lyric_build::BaseTask::getParams() const
 {
     return m_key.getParams();
-}
-
-std::shared_ptr<tempo_tracing::TraceSpan>
-lyric_build::BaseTask::getSpan() const
-{
-    return m_span;
 }
 
 std::shared_ptr<tempo_tracing::TraceRecorder>
@@ -94,17 +88,17 @@ lyric_build::BaseTask::run(
 
     // if this is the first iteration of the task then set the hash
     if (m_state == State::READY) {
-        m_span->setStartTime(absl::Now());
         m_span->putTag(tempo_tracing::kOpentracingComponent, std::string("lyric_build"));
-        m_span->putTag(lyric_build::kLyricBuildGeneration, m_generation.toString());
-        m_span->putTag(lyric_build::kLyricBuildTaskParams, m_key.getParams().toString());
-        m_span->putTag(lyric_build::kLyricBuildTaskHash, taskHash);
+        m_span->putTag(kLyricBuildGeneration, m_generation.toString());
+        m_span->putTag(kLyricBuildTaskParams, m_key.getParams().toString());
+        m_span->putTag(kLyricBuildTaskHash, taskHash);
         m_state = State::ACTIVE;
     }
 
     // run the task
+    m_span->activate();
     auto statusOption = runTask(taskHash, depStates, buildState);
-    m_span->setEndTime(absl::Now());
+    m_span->deactivate();
 
     // signal to manager if the task is incomplete
     if (statusOption.isEmpty() )
@@ -142,4 +136,28 @@ lyric_build::BaseTask::run(
     }
 
     return statusOption;
+}
+
+std::shared_ptr<tempo_tracing::SpanLog>
+lyric_build::BaseTask::logInfo(std::string_view message)
+{
+    return m_span->logMessage(message, absl::Now(), tempo_tracing::LogSeverity::kInfo);
+}
+
+std::shared_ptr<tempo_tracing::SpanLog>
+lyric_build::BaseTask::logWarn(std::string_view message)
+{
+    return m_span->logMessage(message, absl::Now(), tempo_tracing::LogSeverity::kWarn);
+}
+
+std::shared_ptr<tempo_tracing::SpanLog>
+lyric_build::BaseTask::logError(std::string_view message)
+{
+    return m_span->logMessage(message, absl::Now(), tempo_tracing::LogSeverity::kError);
+}
+
+std::shared_ptr<tempo_tracing::SpanLog>
+lyric_build::BaseTask::logStatus(const tempo_utils::Status &status)
+{
+    return m_span->logStatus(status, absl::Now(), tempo_tracing::LogSeverity::kError);
 }

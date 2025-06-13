@@ -20,6 +20,16 @@
 
 namespace lyric_build {
 
+    /**
+     *
+     */
+    enum class RunnerState {
+        Ready,
+        Running,
+        Shutdown,
+        Done,
+    };
+
     struct ReadyItem {
         enum class Type {
             TASK,
@@ -28,7 +38,6 @@ namespace lyric_build {
         };
         Type type;
         BaseTask *task;
-        TaskKey dependent;
     };
 
     /**
@@ -38,11 +47,11 @@ namespace lyric_build {
     public:
         virtual ~AbstractBuildRunner() = default;
 
-        virtual tempo_utils::Status enqueueTask(const TaskKey &key, const TaskKey &dependent) = 0;
+        virtual tempo_utils::Status enqueueTask(const TaskKey &key) = 0;
 
         virtual ReadyItem waitForNextReady(int timeout) = 0;
 
-        virtual tempo_utils::Status enqueueNotification(TaskNotification *notification) = 0;
+        virtual tempo_utils::Status enqueueNotification(std::unique_ptr<TaskNotification> notification) = 0;
     };
 
     struct TaskThread {
@@ -55,6 +64,9 @@ namespace lyric_build {
         bool running;
     };
 
+    /**
+     *
+     */
     class BuildRunner : public AbstractBuildRunner {
 
     public:
@@ -74,30 +86,29 @@ namespace lyric_build {
         std::shared_ptr<AbstractCache> getCache() const;
         TaskRegistry *getRegistry() const;
 
-        tempo_utils::Status enqueueTask(const TaskKey &key, const TaskKey &dependent) override;
+        tempo_utils::Status enqueueTask(const TaskKey &key) override;
         ReadyItem waitForNextReady(int timeout) override;
 
-        tempo_utils::Status enqueueNotification(TaskNotification *notification) override;
-        std::queue<TaskNotification *> takeNotifications();
+        tempo_utils::Status enqueueNotification(std::unique_ptr<TaskNotification> notification) override;
+        std::unique_ptr<std::queue<std::unique_ptr<TaskNotification>>> takeNotifications();
 
         tempo_utils::Status run();
 
         std::shared_ptr<tempo_tracing::TraceSpan> makeSpan();
 
-        void parkDeps(const TaskKey &key, const absl::flat_hash_set<TaskKey> &dependencies);
-        void restartDeps(const TaskKey &key);
+        tempo_utils::Status parkDeps(const TaskKey &key, const absl::flat_hash_set<TaskKey> &dependencies);
+        tempo_utils::Status restartDeps(const TaskKey &key);
         absl::flat_hash_set<TaskKey> getWaiting(const TaskKey &key);
         absl::flat_hash_set<TaskKey> getBlocked(const TaskKey &key);
 
-        //void markTaskFailed(const TaskKey &key, BuildStatus status, const tempo_utils::UUID &generation);
         void joinThread(int index);
-        void invokeNotificationCallback(const TaskNotification *notification);
+        void invokeNotificationCallback(std::unique_ptr<TaskNotification> notification);
 
         tempo_utils::Result<tempo_tracing::TempoSpanset> getSpanset() const;
         int getTotalTasksCreated() const;
         int getTotalTasksCached() const;
 
-        void shutdown();
+        tempo_utils::Status shutdown(const tempo_utils::Status &shutdownStatus = {});
 
     private:
 
@@ -123,12 +134,15 @@ namespace lyric_build {
         uv_loop_t m_loop;                                   // uv main loop handle
         uv_async_t m_asyncNotify;                           // async handle to process notifications in the main loop
         std::vector<TaskThread> m_threads;                  // array containing thread data
-        bool m_finished;                                    // true if run() has been invoked
 
         // members below can be accessed from multiple threads after acquiring the appropriate lock
 
-        std::shared_mutex m_tasksRWlock;
-        absl::flat_hash_map<TaskKey, BaseTask *> m_tasks;
+        std::mutex m_statusLock;                            // lock around runnerState and shutdownStatus
+        RunnerState m_runnerState;                          // runner state
+        tempo_utils::Status m_shutdownStatus;               // shutdown status
+
+        std::shared_mutex m_tasksRWlock;                    // readwrite lock around the tasks map
+        absl::flat_hash_map<TaskKey, BaseTask *> m_tasks;   // map of build tasks
 
         std::timed_mutex m_readyLock;                       // lock around the ready queue
         std::queue<ReadyItem> m_ready;                      // queue of ready items in FIFO order
@@ -138,7 +152,10 @@ namespace lyric_build {
         std::condition_variable m_readyWaiter;              // condition variable which signals when there is a ready task
 
         std::timed_mutex m_notificationLock;                // lock around the notifications queue
-        std::queue<TaskNotification *> m_notifications;     // queue of notifications in FIFO order
+        std::unique_ptr<
+            std::queue<
+                std::unique_ptr<TaskNotification>>>
+        m_notifications;                                    // queue of notifications in FIFO order
 
         std::mutex m_randLock;                              // lock around the random engine
         std::mt19937 m_randengine;                          // random number generator engine

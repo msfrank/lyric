@@ -37,8 +37,8 @@ lyric_build::BuildRunner::BuildRunner(
       m_totalTasksCached(0),
       m_numThreads(numThreads),
       m_waitTimeoutInMs(waitTimeoutInMs),
-      m_loop(0),
-      m_asyncNotify(0),
+      m_loop(nullptr),
+      m_asyncNotify(nullptr),
       m_onNotificationFunc(onNotificationFunc),
       m_onNotificationData(onNotificationData)
 {
@@ -52,7 +52,8 @@ lyric_build::BuildRunner::BuildRunner(
 
     m_threads.resize(m_numThreads);
     m_recorder = tempo_tracing::TraceRecorder::create();
-    m_finished = false;
+    m_runnerState = RunnerState::Ready;
+    m_notifications = std::make_unique<std::queue<std::unique_ptr<TaskNotification>>>();
 }
 
 lyric_build::BuildRunner::~BuildRunner()
@@ -63,9 +64,8 @@ lyric_build::BuildRunner::~BuildRunner()
     }
 
     // clean up notifications
-    while (!m_notifications.empty()) {
-        delete m_notifications.front();
-        m_notifications.pop();
+    while (!m_notifications->empty()) {
+        m_notifications->pop();
     }
 }
 
@@ -96,12 +96,9 @@ lyric_build::BuildRunner::getRegistry() const
 tempo_utils::Status
 lyric_build::BuildRunner::run()
 {
-    if (m_finished)
+    if (m_runnerState != RunnerState::Ready)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "manager cannot be restarted");
-
-    // mark instance as finished, meaning we can't invoke run() again on this instance
-    m_finished = true;
+            "runner cannot be restarted");
 
     // initialize the uv loop
     auto result = uv_loop_init(&m_loop);
@@ -117,9 +114,13 @@ lyric_build::BuildRunner::run()
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "uv_async_init failed: {}", uv_err_name(result));
 
-    TU_LOG_VV << "starting up manager uv loop";
+    // mark state as running, meaning we can't invoke run() again on this instance
+    m_runnerState = RunnerState::Running;
+
+    TU_LOG_VV << "starting runner uv loop";
 
     // create each worker thread.  note m_threads was sized in the constructor!
+    int numFailed = 0;
     for (int i = 0; i < m_numThreads; i++) {
         auto &thread = m_threads[i];
         thread.runner = this;
@@ -131,13 +132,29 @@ lyric_build::BuildRunner::run()
         result = uv_thread_create(&thread.tid, internal::runner_worker_thread, &thread);
         if (result == 0) {
             thread.running = true;
+            result = uv_thread_detach(&thread.tid);
+            TU_LOG_FATAL_IF (result < 0) << "failed to detach thread: " << uv_err_name(result);
         } else {
+            thread.running = false;
             TU_LOG_WARN << "failed to create thread: " << uv_err_name(result);
+            numFailed++;
         }
+    }
+
+    // if no worker threads were successfully created then return error.
+    if (numFailed == m_numThreads) {
+        m_runnerState = RunnerState::Shutdown;
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "runner worker thread pool could not be started");
     }
 
     // hand over control of the thread to the uv main loop
     result = uv_run(&m_loop, UV_RUN_DEFAULT);
+
+    // !!!
+    // NOTE: at this point we play it safe assuming worker threads could exist due to
+    // programmer error, so we acquire locks where appropriate.
+    // !!!
 
     // finish the trace
     m_recorder->close();
@@ -164,11 +181,15 @@ lyric_build::BuildRunner::run()
         }
     }
 
-    return {};
+    // we are done
+    std::unique_lock locker(m_statusLock);
+    m_runnerState = RunnerState::Done;
+
+    return m_shutdownStatus;
 }
 
 tempo_utils::Status
-lyric_build::BuildRunner::enqueueTask(const TaskKey &key, const TaskKey &dependent)
+lyric_build::BuildRunner::enqueueTask(const TaskKey &key)
 {
     // when enqueuing a task based on the task key, there are four possibilities:
     //   1. the task has never been executed before. if so, then enqueue new task, and set state
@@ -184,17 +205,7 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key, const TaskKey &depende
 
     BaseTask *task;
     if (!m_tasks.contains(key)) {                       // task has not been seen yet, so create a new task
-        std::shared_ptr<tempo_tracing::TraceSpan> span;
-        if (dependent.isValid()
-            && m_tasks.contains(dependent)) {           // if there is a valid dependent then create a child span
-            auto dep = m_tasks.at(dependent);
-            auto depSpan = dep->getSpan();
-            TU_ASSERT (depSpan != nullptr);
-            span = depSpan->makeSpan();
-        } else {                                        // otherwise create a root span
-            span = m_recorder->makeSpan();
-        }
-
+        auto span = m_recorder->makeSpan();
         TU_ASSIGN_OR_RETURN (task, m_registry->makeTask(
             m_state->getGeneration().getUuid(), key, span));
 
@@ -221,7 +232,7 @@ lyric_build::BuildRunner::enqueueTask(const TaskKey &key, const TaskKey &depende
 
     // store the new task state
     m_state->storeState(key, state);
-    ReadyItem item = {ReadyItem::Type::TASK, task, dependent};
+    ReadyItem item = {ReadyItem::Type::TASK, task};
 
     m_ready.push(item);                                 // enqueue new ready task item
     m_queued.insert(key);                               // add task key to the queued set
@@ -282,13 +293,13 @@ lyric_build::BuildRunner::waitForNextReady(int timeout)
 };
 
 tempo_utils::Status
-lyric_build::BuildRunner::enqueueNotification(TaskNotification *notification)
+lyric_build::BuildRunner::enqueueNotification(std::unique_ptr<TaskNotification> notification)
 {
     TU_ASSERT (notification != nullptr);
 
-    std::unique_lock<std::timed_mutex> locker(m_notificationLock);  // acquire lock for notifications queue
-    m_notifications.push(notification);                             // enqueue the notification
-    TU_LOG_VV << "enqueued notification " << notification->toString();
+    std::unique_lock locker(m_notificationLock);  // acquire lock for notifications queue
+    TU_LOG_VV << "enqueuing notification " << notification->toString();
+    m_notifications->push(std::move(notification));                  // enqueue the notification
     locker.unlock();                                                // explicitly release lock before signaling main loop
 
     auto result = uv_async_send(&m_asyncNotify);                    // signal the async callback to process notification
@@ -299,13 +310,13 @@ lyric_build::BuildRunner::enqueueNotification(TaskNotification *notification)
     return {};
 }
 
-std::queue<lyric_build::TaskNotification *>
+std::unique_ptr<std::queue<std::unique_ptr<lyric_build::TaskNotification>>>
 lyric_build::BuildRunner::takeNotifications()
 {
-    std::unique_lock<std::timed_mutex> locker(m_notificationLock);  // acquire lock for notifications queue
-    std::queue<lyric_build::TaskNotification *> notifications;
-    m_notifications.swap(notifications);                            // swap queues
-    return notifications;                                           // return the pending notifications
+    std::unique_lock locker(m_notificationLock);                // acquire lock for notifications queue
+    auto notifications = std::make_unique<std::queue<std::unique_ptr<TaskNotification>>>();
+    notifications.swap(m_notifications);                        // swap queues
+    return notifications;                            // return the pending notifications
 }
 
 std::shared_ptr<tempo_tracing::TraceSpan>
@@ -328,7 +339,7 @@ lyric_build::BuildRunner::makeSpan()
  * @param key The blocked task key.
  * @param deps The dependencies of the blocked task.
  */
-void
+tempo_utils::Status
 lyric_build::BuildRunner::parkDeps(const TaskKey &key, const absl::flat_hash_set<TaskKey> &deps)
 {
     // add dependencies to blocked set for task
@@ -341,7 +352,7 @@ lyric_build::BuildRunner::parkDeps(const TaskKey &key, const absl::flat_hash_set
 
         // if task has never been executed, then signal the request to compute the value
         if (!m_waiting.contains(dep)) {
-            auto status = enqueueTask(dep, {});
+            auto status = enqueueTask(dep);
             if (status.isOk())
                 TU_LOG_VV << "computing task " << dep;
             else
@@ -350,6 +361,8 @@ lyric_build::BuildRunner::parkDeps(const TaskKey &key, const absl::flat_hash_set
         auto &waitingSet = m_waiting[dep];
         waitingSet.insert(key);
     }
+
+    return {};
 }
 
 /**
@@ -366,7 +379,7 @@ lyric_build::BuildRunner::parkDeps(const TaskKey &key, const absl::flat_hash_set
  *
  * @param key The restarted task key.
  */
-void
+tempo_utils::Status
 lyric_build::BuildRunner::restartDeps(const TaskKey &key)
 {
     std::vector<TaskKey> unblockedSet;
@@ -375,7 +388,7 @@ lyric_build::BuildRunner::restartDeps(const TaskKey &key)
     const auto waitingSet = m_waiting.extract(key);
     if (waitingSet.empty()) {
         TU_LOG_VV << "restarted task " << key << " unexpectedly has no waiting tasks";
-        return;
+        return {};
     }
 
     // remove dependency from each blocked set
@@ -389,12 +402,14 @@ lyric_build::BuildRunner::restartDeps(const TaskKey &key)
 
     // put each unblocked task back on the ready queue
     for (const auto &unblocked : unblockedSet) {
-        auto status = enqueueTask(unblocked, {});
+        auto status = enqueueTask(unblocked);
         if (status.isOk())
             TU_LOG_VV << "restarting task " << unblocked;
         else
             TU_LOG_VV << "task " << unblocked << " failed to restart: " << status.toString();
     }
+
+    return {};
 }
 
 /**
@@ -427,23 +442,10 @@ lyric_build::BuildRunner::getBlocked(const TaskKey &key)
     return {};
 }
 
-// void
-// lyric_build::BuildRunner::markTaskFailed(const TaskKey &key, BuildStatus status, const tempo_utils::UUID &generation)
-// {
-//     std::shared_lock<std::shared_mutex> locker(m_tasksRWlock);
-//     TU_ASSERT (m_tasks.contains(key));
-//     auto *task = m_tasks.at(key);
-//     auto span = task->getSpan();
-//     locker.unlock();
-//
-//     TU_LOG_VV << "task " << key << " failed: " << status;
-//     TaskState state(TaskState::Status::FAILED, generation, {});
-//     m_state->storeState(key, state);
-//     // TODO: add log
-//
-//     enqueueNotification(new lyric_build::NotifyStateChanged(key, state));
-// }
-
+/**
+ *
+ * @param index
+ */
 void
 lyric_build::BuildRunner::joinThread(int index)
 {
@@ -466,9 +468,9 @@ lyric_build::BuildRunner::joinThread(int index)
 }
 
 void
-lyric_build::BuildRunner::invokeNotificationCallback(const TaskNotification *notification)
+lyric_build::BuildRunner::invokeNotificationCallback(std::unique_ptr<TaskNotification> notification)
 {
-    m_onNotificationFunc(this, notification, m_onNotificationData);
+    m_onNotificationFunc(this, std::move(notification), m_onNotificationData);
 }
 
 tempo_utils::Result<tempo_tracing::TempoSpanset>
@@ -489,9 +491,34 @@ lyric_build::BuildRunner::getTotalTasksCached() const
     return m_totalTasksCached;
 }
 
-void
-lyric_build::BuildRunner::shutdown()
+/**
+ * Initiate runner shutdown. If the runner is in Shutdown or Done state then this does nothing and returns
+ * Ok status. Otherwise, runner state is set to Shutdown and a SHUTDOWN message is enqueued for each thread,
+ * and shutdown status is set.
+ *
+ * @param shutdownStatus
+ * @return
+ */
+tempo_utils::Status
+lyric_build::BuildRunner::shutdown(const tempo_utils::Status &shutdownStatus)
 {
+    {
+        std::unique_lock locker(m_statusLock);
+
+        switch (m_runnerState) {
+            case RunnerState::Ready:
+            case RunnerState::Running:
+                m_runnerState = RunnerState::Shutdown;
+                m_shutdownStatus = shutdownStatus;
+                break;
+
+            // do nothing and return success
+            case RunnerState::Shutdown:
+            case RunnerState::Done:
+                return {};
+        }
+    }
+
     ReadyItem item = {ReadyItem::Type::SHUTDOWN, nullptr};
 
     TU_LOG_VV << "starting shutdown";
@@ -501,57 +528,75 @@ lyric_build::BuildRunner::shutdown()
         m_readyLock.unlock();                               // explicitly release ready lock before signaling waiter
         m_readyWaiter.notify_one();                         // signal a waiting task worker
     }
+
+    return {};
 }
 
-static void
+/**
+ *
+ * @param async
+ */
+void
 on_async_notify(uv_async_t *async)
 {
     auto *runner = static_cast<lyric_build::BuildRunner *>(async->loop->data);
 
     auto notifications = runner->takeNotifications();
 
-    while (!notifications.empty()) {
-        auto *notification = notifications.front();
-        notifications.pop();
-        TU_ASSERT (notification != nullptr);
+    while (!notifications->empty()) {
+
+        auto &front = notifications->front();    // peek the front of the queue
+        std::unique_ptr<lyric_build::TaskNotification> notification;
+        front.swap(notification);                                   // swap contents to take ownership of notification
+        notifications->pop();                                        // pop the queue
+
+        // if notification is empty then ignore it
+        if (notification == nullptr)
+            continue;
 
         switch (notification->getType()) {
 
             case lyric_build::NotificationType::THREAD_CANCELLED: {
-                auto *threadCancelled = static_cast<lyric_build::NotifyThreadCancelled *>(notification);
+                auto *threadCancelled = static_cast<lyric_build::NotifyThreadCancelled *>(notification.get());
                 runner->joinThread(threadCancelled->getIndex());
                 break;
             }
 
             case lyric_build::NotificationType::STATE_CHANGED: {
-                auto *stateChanged = static_cast<lyric_build::NotifyStateChanged *>(notification);
+                auto *stateChanged = static_cast<lyric_build::NotifyStateChanged *>(notification.get());
                 auto key = stateChanged->getKey();
                 auto state = stateChanged->getState();
                 TU_LOG_VV << "task " << key << " state changed to " << state;
                 if (state.getStatus() != lyric_build::TaskState::Status::COMPLETED
                     && state.getStatus() != lyric_build::TaskState::Status::FAILED)
                     break;
-                runner->restartDeps(key);
+                auto status = runner->restartDeps(key);
+                if (status.notOk()) {
+                    runner->shutdown(status);
+                }
                 break;
             }
 
             case lyric_build::NotificationType::TASK_BLOCKED: {
-                auto *taskBlocked = static_cast<lyric_build::NotifyTaskBlocked *>(notification);
+                auto *taskBlocked = static_cast<lyric_build::NotifyTaskBlocked *>(notification.get());
                 auto blocked = taskBlocked->getKey();
                 auto dependencies = taskBlocked->getDependencies();
-                runner->parkDeps(blocked, dependencies);
+                auto status = runner->parkDeps(blocked, dependencies);
+                if (status.notOk()) {
+                    runner->shutdown(status);
+                }
                 break;
             }
 
             case lyric_build::NotificationType::INVALID:
             default:
-                TU_LOG_VV << "ignoring notification " << notification
+                TU_LOG_VV << "ignoring notification " << notification.get()
                           << " with type " << (int) notification->getType();
                 break;
         }
 
         // call task notification callback for each notification
-        runner->invokeNotificationCallback(notification);
+        runner->invokeNotificationCallback(std::move(notification));
     }
 }
 

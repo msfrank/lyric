@@ -226,18 +226,11 @@ lyric_build::internal::CompileModuleTask::compileModule(
     // configure compiler
     lyric_compiler::LyricCompiler compiler(localModuleCache, buildState->getSharedModuleCache(), m_compilerOptions);
 
-    auto span = getSpan();
-
     // compile the module
-    TU_LOG_V << "compiling module " << m_moduleLocation;
-    auto compileResult = compiler.compileModule(m_moduleLocation,
-        archetype, m_objectStateOptions, traceDiagnostics());
-    if (compileResult.isStatus()) {
-        span->logStatus(compileResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kError);
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to compile module {}", m_moduleLocation.toString());
-    }
-    auto object = compileResult.getResult();
+    logInfo("compiling module {}", m_moduleLocation.toString());
+    lyric_object::LyricObject object;
+    TU_ASSIGN_OR_RETURN (object, compiler.compileModule(m_moduleLocation,
+        archetype, m_objectStateOptions, traceDiagnostics()));
 
     // declare the artifact
     tempo_utils::UrlPath objectArtifactPath;
@@ -251,21 +244,17 @@ lyric_build::internal::CompileModuleTask::compileModule(
     TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kObjectContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
-    auto toMetadataResult = writer.toMetadata();
-    if (toMetadataResult.isStatus()) {
-        span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to store metadata for {}", objectArtifact.toString());
-    }
+    LyricMetadata objectMetadata;
+    TU_ASSIGN_OR_RETURN (objectMetadata, writer.toMetadata());
 
     // store the object metadata in the build cache
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(objectArtifact, toMetadataResult.getResult()));
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(objectArtifact, objectMetadata));
 
     // store the object content in the build cache
     auto objectBytes = object.bytesView();
     TU_RETURN_IF_NOT_OK (cache->storeContent(objectArtifact, objectBytes));
 
-    TU_LOG_V << "stored object at " << objectArtifact;
+    logInfo("stored object at {}", objectArtifact.toString());
 
     // if a plugin was provided then pull the plugin artifacts forward
     if (m_pluginTarget.isValid()) {
@@ -320,7 +309,7 @@ lyric_build::internal::CompileModuleTask::runTask(
             return Option(status);
         case CompileModulePhase::COMPLETE:
             status = BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                "invalid task phase");
+                "encountered invalid task phase");
             return Option(status);
         default:
             TU_UNREACHABLE();

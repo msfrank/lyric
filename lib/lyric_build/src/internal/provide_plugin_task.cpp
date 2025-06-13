@@ -118,7 +118,6 @@ lyric_build::internal::ProvidePluginTask::providePlugin(
     BuildState *buildState)
 {
     TU_ASSERT (!(m_buildTarget.isValid() && m_existingPluginPath.isValid()));
-    auto span = getSpan();
 
     tempo_utils::UrlPath pluginArtifactPath;
     TU_ASSIGN_OR_RETURN (pluginArtifactPath, convert_module_location_to_artifact_path(
@@ -180,20 +179,16 @@ lyric_build::internal::ProvidePluginTask::providePlugin(
     TU_RETURN_IF_NOT_OK (writer.configure());
     writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
     writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
-    auto toMetadataResult = writer.toMetadata();
-    if (toMetadataResult.isStatus()) {
-        span->logStatus(toMetadataResult.getStatus(), tempo_tracing::LogSeverity::kError);
-        return BuildStatus::forCondition(BuildCondition::kTaskFailure,
-            "failed to store metadata for {}", pluginArtifact.toString());
-    }
+    LyricMetadata metadata;
+    TU_ASSIGN_OR_RETURN (metadata, writer.toMetadata());
 
     // store the plugin metadata in the build cache
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(pluginArtifact, toMetadataResult.getResult()));
+    TU_RETURN_IF_NOT_OK (cache->storeMetadata(pluginArtifact, metadata));
 
     // store the plugin content in the build cache
     TU_RETURN_IF_NOT_OK (cache->storeContent(pluginArtifact, content));
 
-    TU_LOG_V << "stored plugin at " << pluginArtifact;
+    logInfo("stored plugin at {}", pluginArtifact.toString());
 
     return {};
 }

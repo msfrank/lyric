@@ -38,7 +38,7 @@ lyric_build::internal::configure_task(
         case TaskState::Status::COMPLETED:
         case TaskState::Status::FAILED: {
             if (prevState.getGeneration() == generation) {
-                runner->enqueueNotification(new NotifyStateChanged(key, prevState));
+                runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, prevState));
                 result.first = false;   // signal return to top of loop, fetch next task
                 result.second = {};     // no config hash
                 return {};
@@ -58,7 +58,7 @@ lyric_build::internal::configure_task(
                 TU_LOG_VV << "configuration of " << key << " failed: " << configureStatus;
                 auto taskState = TaskState(TaskState::Status::FAILED, generation, {});
                 state->storeState(key, taskState);
-                runner->enqueueNotification(new NotifyStateChanged(key, taskState));
+                runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
                 result.first = false;   // signal return to top of loop, fetch next task
                 result.second = {};     // no config hash
                 return {};
@@ -74,7 +74,7 @@ lyric_build::internal::configure_task(
         TU_LOG_VV << "configuration of " << key << " failed: missing hash";
         auto taskState = TaskState(TaskState::Status::FAILED, generation, {});
         state->storeState(key, taskState);
-        runner->enqueueNotification(new NotifyStateChanged(key, taskState));
+        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
         result.first = false;   // signal return to top of loop, fetch next task
     }
 
@@ -99,7 +99,7 @@ lyric_build::internal::check_dependencies(
         TU_LOG_VV << "dependency check for " << key << " failed: " << checkDepsResult.getStatus();
         auto taskState = TaskState(TaskState::Status::FAILED, generation, {});
         state->storeState(key, taskState);
-        runner->enqueueNotification(new NotifyStateChanged(key, taskState));
+        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
         result.first = false;
         result.second = {};
         return {};
@@ -164,7 +164,7 @@ lyric_build::internal::check_dependencies(
             << " failed dependencies: " << failedDeps;
         auto taskState = TaskState(TaskState::Status::FAILED, generation, {});
         state->storeState(key, taskState);
-        runner->enqueueNotification(new NotifyStateChanged(key, taskState));
+        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
         result.first = false;
         result.second = {};
         return {};
@@ -176,8 +176,8 @@ lyric_build::internal::check_dependencies(
             << " pending dependencies: " << pendingDeps;
         auto taskState = TaskState(TaskState::Status::BLOCKED, generation, configHash);
         state->storeState(key, taskState);
-        runner->enqueueNotification(new NotifyStateChanged(key, taskState));
-        runner->enqueueNotification(new NotifyTaskBlocked(key, taskDeps));
+        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
+        runner->enqueueNotification(std::make_unique<NotifyTaskBlocked>(key, taskDeps));
         result.first = false;
         result.second = {};
         return {};
@@ -227,7 +227,7 @@ lyric_build::internal::check_for_existing_trace(
         TU_LOG_VV << "task " << key << " completed with previous trace " << absl::BytesToHexString(taskHash);
         auto currState = TaskState(TaskState::Status::COMPLETED, generation, taskHash);
         state->storeState(key, currState);
-        runner->enqueueNotification(new NotifyStateChanged(key, currState));
+        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState));
         result.first = false;
         result.second = {};
         return {};
@@ -268,7 +268,7 @@ lyric_build::internal::link_dependencies(
                     TU_LOG_VV << "task " << key << " failed: " << status;
                     auto taskState = TaskState(TaskState::Status::FAILED, generation, {});
                     state->storeState(key, taskState);
-                    runner->enqueueNotification(new NotifyStateChanged(key, taskState));
+                    runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
                     complete = false;
                     return {};
                 }
@@ -297,19 +297,19 @@ lyric_build::internal::run_task(
     // all dependencies have completed but task is not complete, so run the task
     auto currState = TaskState(TaskState::Status::RUNNING, generation, taskHash);
     state->storeState(key, currState);
-    runner->enqueueNotification(new NotifyStateChanged(key, currState));
+    runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState));
     auto statusOption = task->run(taskHash, depStates, state);
 
     // if task did not complete, then mark the task blocked so we rescan dependencies
     if (statusOption.isEmpty()) {
         auto taskState = TaskState(TaskState::Status::BLOCKED, generation, configHash);
         state->storeState(key, taskState);
-        runner->enqueueNotification(new NotifyStateChanged(key, taskState));
+        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
         // enqueue the blocked task again so dependencies are re-scanned
         auto checkIncompleteDepsResult = task->checkDependencies();
         auto incompleteDeps = checkIncompleteDepsResult.getResult();
         TU_LOG_VV << "task " << key << " did not complete, requests dependencies: " << incompleteDeps;
-        runner->enqueueNotification(new NotifyTaskBlocked(key, incompleteDeps));
+        runner->enqueueNotification(std::make_unique<NotifyTaskBlocked>(key, incompleteDeps));
         complete = false;
         return {};
     }
@@ -322,13 +322,13 @@ lyric_build::internal::run_task(
         cache->storeTrace(traceId, generation);
         TU_LOG_VV << "task " << key << " completed with new trace " << absl::BytesToHexString(taskHash);
         state->storeState(key, currState);
-        runner->enqueueNotification(new NotifyStateChanged(key, currState));
+        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState));
     } else {
         // otherwise the result is an error, mark the task failed
         currState = TaskState(TaskState::Status::FAILED, generation, taskHash);
         TU_LOG_VV << "task " << key << " failed: " << taskStatus;
         state->storeState(key, currState);
-        runner->enqueueNotification(new NotifyStateChanged(key, currState));
+        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState));
     }
 
     complete = false;
@@ -436,6 +436,6 @@ lyric_build::internal::runner_worker_thread(void *arg)
         TU_LOG_VV << "worker thread " << thread->index << " failed: " << status;
 
     // notify main loop that thread is cancelled
-    runner->enqueueNotification(new lyric_build::NotifyThreadCancelled(thread->index));
+    runner->enqueueNotification(std::make_unique<NotifyThreadCancelled>(thread->index));
     TU_LOG_VV << "shutting down worker thread " << thread->index;
 }
