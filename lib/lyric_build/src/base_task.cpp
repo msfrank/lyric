@@ -69,16 +69,18 @@ lyric_build::BaseTask::tempDirectory()
     return m_tempDirectory.get();
 }
 
-Option<tempo_utils::Status>
+tempo_utils::Status
 lyric_build::BaseTask::run(
     const std::string &taskHash,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    BuildState *buildState)
+    BuildState *buildState,
+    bool &complete)
 {
-    if (m_state == State::DONE)
-        return Option<tempo_utils::Status>(
-            BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                "task {} is already complete", m_key.toString()));
+    if (m_state == State::DONE) {
+        complete = true;
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "task {} is already complete", m_key.toString());
+    }
 
     // if the temp directory doesn't exist then create it but don't initialize until needed
     if (m_tempDirectory == nullptr) {
@@ -101,28 +103,46 @@ lyric_build::BaseTask::run(
     m_span->deactivate();
 
     // signal to manager if the task is incomplete
-    if (statusOption.isEmpty() )
-        return statusOption;
+    if (statusOption.isEmpty()) {
+        complete = false;
+        return {};
+    }
 
-    // otherwise the task has completed (successfully or with error)
-    // TODO: should we handle retryable status differently?
+    // clean up the task
+    auto status = statusOption.getValue();
+    TU_RETURN_IF_NOT_OK (this->complete(taskHash, buildState, status));
+
+    complete = true;
+    return status;
+}
+
+tempo_utils::Status
+lyric_build::BaseTask::cancel(const std::string &taskHash, BuildState *buildState)
+{
+    if (m_state == State::DONE)
+        return {};
+    return complete(taskHash, buildState,
+        BuildStatus::forCondition(BuildCondition::kTaskFailure, "task has been cancelled"));
+}
+
+tempo_utils::Status
+lyric_build::BaseTask::complete(
+    const std::string &taskHash,
+    BuildState *buildState,
+    const tempo_utils::Status &status)
+{
     m_state = State::DONE;
 
     // if there is a valid diagnostics recorder, then store it
     if (m_diagnostics != nullptr) {
         m_diagnostics->close();
-        auto toSpansetResult = m_diagnostics->toSpanset();
-        if (toSpansetResult.isStatus()) {
-            m_span->logStatus(toSpansetResult.getStatus(), absl::Now(), tempo_tracing::LogSeverity::kWarn);
-        } else {
-            auto spanset = toSpansetResult.getResult();
-            auto cache = buildState->getCache();
-            cache->storeDiagnostics(TraceId(taskHash, m_key.getDomain(), m_key.getId()), spanset);
-        }
+        tempo_tracing::TempoSpanset spanset;
+        TU_ASSIGN_OR_RETURN (spanset, m_diagnostics->toSpanset());
+        auto cache = buildState->getCache();
+        cache->storeDiagnostics(TraceId(taskHash, m_key.getDomain(), m_key.getId()), spanset);
     }
 
     // close the span
-    auto status = statusOption.getValue();
     if (status.notOk()) {
         m_span->logStatus(status, tempo_tracing::LogSeverity::kError);
     }
@@ -130,12 +150,10 @@ lyric_build::BaseTask::run(
 
     // clean up the temp directory
     if (m_tempDirectory) {
-        status = m_tempDirectory->cleanup();
-        if (status.notOk())
-            return Option(status);
+        TU_RETURN_IF_NOT_OK (m_tempDirectory->cleanup());
     }
 
-    return statusOption;
+    return {};
 }
 
 std::shared_ptr<tempo_tracing::SpanLog>

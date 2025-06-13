@@ -147,7 +147,7 @@ lyric_build::internal::check_dependencies(
             }
 
             // task dependency failed, determine if we can re-run the task, otherwise add to failedDeps
-            case lyric_build::TaskState::Status::FAILED: {
+            case TaskState::Status::FAILED: {
                 if (depState.getGeneration() == generation) {
                     failedDeps[depKey] = depState;
                 } else {
@@ -162,6 +162,7 @@ lyric_build::internal::check_dependencies(
     if (!failedDeps.empty()) {
         TU_LOG_VV << "task " << key << " failed due to " << (tu_uint32) failedDeps.size()
             << " failed dependencies: " << failedDeps;
+        TU_RETURN_IF_NOT_OK (task->cancel(configHash, state));
         auto taskState = TaskState(TaskState::Status::FAILED, generation, {});
         state->storeState(key, taskState);
         runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
@@ -295,13 +296,24 @@ lyric_build::internal::run_task(
     auto key = task->getKey();
 
     // all dependencies have completed but task is not complete, so run the task
+    bool taskComplete;
     auto currState = TaskState(TaskState::Status::RUNNING, generation, taskHash);
     state->storeState(key, currState);
     runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState));
-    auto statusOption = task->run(taskHash, depStates, state);
+    auto taskStatus = task->run(taskHash, depStates, state, taskComplete);
 
-    // if task did not complete, then mark the task blocked so we rescan dependencies
-    if (statusOption.isEmpty()) {
+    // if the task returned status, then mark the task failed and return incomplete
+    if (taskStatus.notOk()) {
+        currState = TaskState(TaskState::Status::FAILED, generation, taskHash);
+        TU_LOG_VV << "task " << key << " failed: " << taskStatus;
+        state->storeState(key, currState);
+        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState));
+        complete = false;
+        return {};
+    }
+
+    // if task did not complete, then mark the task blocked and return incomplete
+    if (!taskComplete) {
         auto taskState = TaskState(TaskState::Status::BLOCKED, generation, configHash);
         state->storeState(key, taskState);
         runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, taskState));
@@ -314,24 +326,15 @@ lyric_build::internal::run_task(
         return {};
     }
 
-    auto taskStatus = statusOption.getValue();
-    if (taskStatus.isOk()) {
-        TraceId traceId(taskHash, key.getDomain(), key.getId());
-        // if the result is OK, then the task completed successfully, store the result
-        currState = TaskState(TaskState::Status::COMPLETED, generation, taskHash);
-        cache->storeTrace(traceId, generation);
-        TU_LOG_VV << "task " << key << " completed with new trace " << absl::BytesToHexString(taskHash);
-        state->storeState(key, currState);
-        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState));
-    } else {
-        // otherwise the result is an error, mark the task failed
-        currState = TaskState(TaskState::Status::FAILED, generation, taskHash);
-        TU_LOG_VV << "task " << key << " failed: " << taskStatus;
-        state->storeState(key, currState);
-        runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState));
-    }
+    // otherwise the task completed successfully
+    TraceId traceId(taskHash, key.getDomain(), key.getId());
+    currState = TaskState(TaskState::Status::COMPLETED, generation, taskHash);
+    cache->storeTrace(traceId, generation);
+    TU_LOG_VV << "task " << key << " completed with new trace " << absl::BytesToHexString(taskHash);
+    state->storeState(key, currState);
+    runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState));
 
-    complete = false;
+    complete = true;
     return {};
 }
 

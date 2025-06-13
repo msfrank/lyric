@@ -45,9 +45,10 @@ TEST_F(CompilePluginTask, RunSucceeds)
     ASSERT_THAT (configureTaskResult, tempo_test::IsResult());
     auto taskHash = configureTaskResult.getResult();
 
-    auto runTaskStatusOption = task->run(taskHash, {}, m_state.get());
-    ASSERT_TRUE (runTaskStatusOption.hasValue());
-    ASSERT_THAT (runTaskStatusOption.getValue(), tempo_test::IsOk());
+    bool taskComplete;
+    auto runTaskStatus = task->run(taskHash, {}, m_state.get(), taskComplete);
+    ASSERT_TRUE (taskComplete);
+    ASSERT_THAT (runTaskStatus, tempo_test::IsOk());
 }
 
 TEST_F(CompilePluginTask, ConfigureTaskFailsWhenNoPluginSourcesSpecified)

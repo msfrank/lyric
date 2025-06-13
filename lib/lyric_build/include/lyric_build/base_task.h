@@ -40,10 +40,13 @@ namespace lyric_build {
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,
             BuildState *buildState) = 0;
 
-        Option<tempo_utils::Status> run(
+        tempo_utils::Status run(
             const std::string &taskHash,
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            BuildState *buildState);
+            BuildState *buildState,
+            bool &complete);
+
+        tempo_utils::Status cancel(const std::string &taskHash, BuildState *buildState);
 
         std::shared_ptr<tempo_tracing::SpanLog> logInfo(std::string_view message);
         std::shared_ptr<tempo_tracing::SpanLog> logWarn(std::string_view message);
@@ -63,6 +66,11 @@ namespace lyric_build {
             DONE,
         };
         State m_state;
+
+        tempo_utils::Status complete(
+            const std::string &taskHash,
+            BuildState *buildState,
+            const tempo_utils::Status &status);
 
     public:
         /**
