@@ -148,7 +148,7 @@ target_link_libraries(lyric_runtime
     PRIVATE
     absl::strings
     flatbuffers::flatbuffers
-    icu::icu
+    utfcpp::utfcpp
     )
 
 # install targets

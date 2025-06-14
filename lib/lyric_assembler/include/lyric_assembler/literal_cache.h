@@ -18,7 +18,7 @@ namespace lyric_assembler {
         tempo_utils::Result<LiteralHandle *> makeBool(bool b);
         tempo_utils::Result<LiteralHandle *> makeInteger(tu_int64 i64);
         tempo_utils::Result<LiteralHandle *> makeFloat(double dbl);
-        tempo_utils::Result<LiteralHandle *> makeChar(UChar32 chr);
+        tempo_utils::Result<LiteralHandle *> makeChar(char32_t chr);
         tempo_utils::Result<LiteralHandle *> makeUtf8(const std::string &utf8);
 
         std::vector<LiteralHandle *>::const_iterator literalsBegin() const;

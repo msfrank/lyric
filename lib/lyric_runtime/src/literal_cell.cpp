@@ -29,7 +29,7 @@ lyric_runtime::LiteralCell::LiteralCell(double dbl)
 }
 
 
-lyric_runtime::LiteralCell::LiteralCell(UChar32 chr)
+lyric_runtime::LiteralCell::LiteralCell(char32_t chr)
 {
     type = LiteralCellType::CHAR32;
     literal.chr = chr;

@@ -54,7 +54,7 @@ namespace lyric_runtime {
         explicit DataCell(bool b);
         explicit DataCell(tu_int64 i64);
         explicit DataCell(double dbl);
-        explicit DataCell(UChar32 char32);
+        explicit DataCell(char32_t char32);
         DataCell(const DataCell &other);
         DataCell(DataCell &&other) noexcept;
         ~DataCell() = default;
@@ -82,7 +82,7 @@ namespace lyric_runtime {
             bool b;
             tu_int64 i64;
             double dbl;
-            UChar32 chr;
+            char32_t chr;
             DescriptorEntry *descriptor;
             TypeEntry *type;
             BaseRef *ref;

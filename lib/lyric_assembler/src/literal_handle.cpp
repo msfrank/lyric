@@ -24,7 +24,7 @@ lyric_assembler::LiteralHandle::LiteralHandle(double dbl)
     m_value.dbl = dbl;
 }
 
-lyric_assembler::LiteralHandle::LiteralHandle(UChar32 chr)
+lyric_assembler::LiteralHandle::LiteralHandle(char32_t chr)
     : m_type(lyric_runtime::LiteralCellType::CHAR32)
 {
     m_value.chr = chr;

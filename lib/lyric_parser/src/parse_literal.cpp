@@ -1,8 +1,8 @@
 
 #include <absl/strings/charconv.h>
-#include <unicode/ustring.h>
 
 #include <lyric_parser/parse_literal.h>
+#include <tempo_utils/unicode.h>
 
 tempo_utils::Result<tu_int64>
 lyric_parser::parse_integer_literal(std::string_view literalValue, BaseType baseType)
@@ -85,19 +85,19 @@ lyric_parser::parse_float_literal(
  * @param literalValue The character literal to parse.
  * \return The unescaped character encoded as UTF-32.
  */
-tempo_utils::Result<UChar32>
+tempo_utils::Result<char32_t>
 lyric_parser::parse_char_literal(std::string_view literalValue)
 {
-    // perform unescape on the string
-    int32_t bufsize = literalValue.size() + 1;
-    std::vector<UChar> buf(bufsize, 0);
+    // special case: string is empty so no escaping necessary
+    if (literalValue.empty())
+        return char32_t{0};
 
-    auto nwritten = u_unescape(literalValue.data(), buf.data(), bufsize);
+    auto unescaped = tempo_utils::unescape_utf8(literalValue);
+    if (tempo_utils::get_utf8_length(unescaped) == 0)
+        return ParseStatus::forCondition(
+            ParseCondition::kSyntaxError, "empty char literal");
 
-    UChar32 chr;
-    U16_GET(buf.data(), 0, 0, nwritten, chr);
-
-    return chr;
+    return tempo_utils::get_utf8_char(unescaped, 0);
 }
 
 /**
@@ -112,45 +112,13 @@ lyric_parser::parse_string_literal(std::string_view literalValue, tu_int32 maxUn
 {
     // special case: string is empty so no escaping necessary
     if (literalValue.empty())
-        return std::string(literalValue);
+        return std::string{};
 
-    // perform preflight to determine size of unescaped buffer
-    int32_t unescapedSize = -1;
-    unescapedSize = u_unescape(literalValue.data(), nullptr, 0);
-    if (unescapedSize < 0)
-        return ParseStatus::forCondition(ParseCondition::kParseInvariant,
-            "preflight failed for utf8 literal");
-    if (maxUnescapedSize >= 0 && unescapedSize > maxUnescapedSize)
+    auto unescaped = tempo_utils::unescape_utf8(literalValue);
+    auto unescapedSize = tempo_utils::get_utf8_length(unescaped);
+    if (maxUnescapedSize < unescapedSize)
         return ParseStatus::forCondition(ParseCondition::kSyntaxError,
             "utf8 literal is too large (size was {} code units)", unescapedSize);
 
-    // perform unescape on the string
-    std::vector<UChar> unescaped(unescapedSize, 0);
-    auto nwritten = u_unescape(literalValue.data(), unescaped.data(), unescaped.size());
-    if (nwritten <= 0)
-        return ParseStatus::forCondition(ParseCondition::kParseInvariant,
-            "unescape failed for utf8 literal");
-
-    // perform preflight to determine size of dst buffer
-    int32_t dstSize = -1;
-    UErrorCode err = U_ZERO_ERROR;
-    u_strToUTF8(nullptr, 0, &dstSize, unescaped.data(), unescaped.size(), &err);
-    if (err != U_ZERO_ERROR && err != U_BUFFER_OVERFLOW_ERROR)
-        return ParseStatus::forCondition(ParseCondition::kParseInvariant,
-            "preflight failed for utf8 literal");
-    if (dstSize > (1024 * 1024 * 4))    // FIXME: make this a defined constant somewhere
-        return ParseStatus::forCondition(ParseCondition::kSyntaxError,
-            "utf8 literal is too large");
-
-    err = U_ZERO_ERROR;
-
-    // convert utf16 back to utf8
-    std::string dst;
-    dst.resize(dstSize);    // NOTE: dstSize is in utf8 code units, which is a single byte
-    u_strToUTF8(dst.data(), dstSize, &dstSize, unescaped.data(), unescaped.size(), &err);
-    if (err != U_ZERO_ERROR && err != U_STRING_NOT_TERMINATED_WARNING)
-        return ParseStatus::forCondition(ParseCondition::kParseInvariant,
-            "invalid utf8 literal '{}'", literalValue);
-
-    return dst;
+    return unescaped;
 }

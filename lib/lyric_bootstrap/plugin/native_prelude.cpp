@@ -17,10 +17,11 @@
 #include "string_traps.h"
 #include "url_traps.h"
 
-std::array<lyric_runtime::NativeTrap,48> kPreludeTraps = {{
+std::array<lyric_runtime::NativeTrap,49> kPreludeTraps = {{
     {bytes_at, "BytesAt", 0},
     { bytes_compare, "BytesCompare", 0 },
     { bytes_length, "BytesLength", 0 },
+    { bytes_to_string, "BytesToString", 0 },
     { category_alloc, "CategoryAlloc", 0 },
     { closure_alloc, "ClosureAlloc", 0 },
     { closure_apply, "ClosureApply", 0 },

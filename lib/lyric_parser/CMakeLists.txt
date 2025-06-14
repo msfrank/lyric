@@ -213,7 +213,6 @@ target_link_libraries(lyric_parser
     PRIVATE
     antlr::antlr
     flatbuffers::flatbuffers
-    icu::icu
     )
 
 # install targets

@@ -218,7 +218,6 @@ target_link_libraries(lyric_assembler
     PRIVATE
     absl::strings
     flatbuffers::flatbuffers
-    icu::icu
     )
 
 # install targets

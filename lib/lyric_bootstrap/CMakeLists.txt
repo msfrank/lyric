@@ -161,9 +161,7 @@ add_library(prelude-plugin SHARED
     plugin/string_traps.h
     plugin/url_traps.cpp
     plugin/url_traps.h
-    plugin/utf8_traps.cpp
-    plugin/utf8_traps.h
-    )
+)
 
 target_include_directories(prelude-plugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

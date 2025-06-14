@@ -20,9 +20,9 @@ namespace lyric_runtime {
         tempo_utils::StatusCode errorStatusCode() override;
         std::string toString() const override;
 
-        lyric_runtime::DataCell stringAt(int index) const;
-        lyric_runtime::DataCell stringCompare(StringRef *other) const;
-        lyric_runtime::DataCell stringLength() const;
+        DataCell stringAt(int index) const;
+        DataCell stringCompare(StringRef *other) const;
+        DataCell stringLength() const;
 
         const char *getStringData() const;
         int32_t getStringSize() const;
@@ -36,15 +36,15 @@ namespace lyric_runtime {
          * methods below have the default no-op implementation
          */
         const VirtualTable *getVirtualTable() const override;
-        lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
-        lyric_runtime::DataCell setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value) override;
+        DataCell getField(const DataCell &field) const override;
+        DataCell setField(const DataCell &field, const DataCell &value) override;
         bool uriValue(tempo_utils::Url &url) const override;
         bool iteratorValid() override;
         bool iteratorNext(DataCell &next) override;
         bool prepareFuture(std::shared_ptr<Promise> promise) override;
         bool awaitFuture(SystemScheduler *systemScheduler) override;
         bool resolveFuture(DataCell &result) override;
-        bool applyClosure(Task *task, std::vector<DataCell> &args, lyric_runtime::InterpreterState *state) override;
+        bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) override;
 
     private:
         bool m_owned;

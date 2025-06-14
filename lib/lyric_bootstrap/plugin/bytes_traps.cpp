@@ -55,3 +55,21 @@ bytes_length(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
     currentCoro->pushData(instance->bytesLength());
     return {};
 }
+
+tempo_utils::Status
+bytes_to_string(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+{
+    auto *heapManager = state->heapManager();
+
+    auto *currentCoro = state->currentCoro();
+
+    auto &frame = currentCoro->peekCall();
+
+    auto receiver = frame.getReceiver();
+    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::BYTES);
+    auto *instance = receiver.data.bytes;
+    auto *data = (const char *) instance->getBytesData();
+    auto size = instance->getBytesSize();
+    std::string string(data, size);
+    return heapManager->loadStringOntoStack(string);
+}

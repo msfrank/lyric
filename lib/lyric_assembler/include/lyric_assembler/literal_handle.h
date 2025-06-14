@@ -17,7 +17,7 @@ namespace lyric_assembler {
         LiteralHandle(bool b);
         LiteralHandle(tu_int64 i64);
         LiteralHandle(double dbl);
-        LiteralHandle(UChar32 chr);
+        LiteralHandle(char32_t chr);
         LiteralHandle(std::shared_ptr<const std::string> str);
 
         //LiteralAddress getAddress() const;
@@ -35,7 +35,7 @@ namespace lyric_assembler {
             bool b;
             tu_int64 i64;
             double dbl;
-            UChar32 chr;
+            char32_t chr;
         } m_value;
         std::shared_ptr<const std::string> m_str;
     };

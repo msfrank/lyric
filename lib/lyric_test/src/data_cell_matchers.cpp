@@ -242,7 +242,7 @@ lyric_test::matchers::DataCellFloat(double dbl)
 }
 
 testing::Matcher<lyric_runtime::DataCell>
-lyric_test::matchers::DataCellChar(UChar32 chr)
+lyric_test::matchers::DataCellChar(char32_t chr)
 {
     return DataCellMatcher(lyric_runtime::DataCell(chr));
 }

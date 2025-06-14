@@ -159,7 +159,7 @@ lyric_object::BytecodeBuilder::loadFloat(double dbl)
 }
 
 tempo_utils::Status
-lyric_object::BytecodeBuilder::loadChar(UChar32 chr)
+lyric_object::BytecodeBuilder::loadChar(char32_t chr)
 {
     auto status = writeOpcode(Opcode::OP_CHR);
     if (!status.isOk())

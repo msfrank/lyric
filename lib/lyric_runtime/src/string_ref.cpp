@@ -1,11 +1,35 @@
 
 #include <absl/strings/substitute.h>
+#include <utf8.h>
 
 #include <lyric_runtime/interpreter_state.h>
 #include <lyric_runtime/string_ref.h>
 #include <lyric_serde/patchset_value.h>
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
+
+inline utf8::iterator<const char *>
+make_start_iterator(const lyric_runtime::StringRef *ref, tu_uint32 start = 0)
+{
+    TU_ASSERT (ref != nullptr);
+    auto *data = ref->getStringData();
+    TU_ASSERT (data != nullptr);
+    auto size = ref->getStringSize();
+    TU_ASSERT (size >= 0);
+    auto *rangestart = start < size? data + start : data + size;
+    return utf8::iterator(data, rangestart, data + size);
+}
+
+inline utf8::iterator<const char *>
+make_end_iterator(const lyric_runtime::StringRef *ref)
+{
+    TU_ASSERT (ref != nullptr);
+    auto *data = ref->getStringData();
+    TU_ASSERT (data != nullptr);
+    auto size = ref->getStringSize();
+    TU_ASSERT (size >= 0);
+    return utf8::iterator(data + size, data, data + size);
+}
 
 lyric_runtime::StringRef::StringRef(const LiteralCell &literal)
     : m_owned(false),
@@ -41,11 +65,11 @@ lyric_runtime::StringRef::~StringRef()
 bool
 lyric_runtime::StringRef::equals(const AbstractRef *other) const
 {
-    auto *other_ = static_cast<const StringRef *>(other);
-
-    if (m_size != other_->m_size)
+    auto *otherstring = static_cast<const StringRef *>(other);
+    TU_ASSERT (otherstring != nullptr);
+    if (m_size != otherstring->m_size)
         return false;
-    return !memcmp(m_data, other_->m_data, m_size);
+    return !memcmp(m_data, otherstring->m_data, m_size);
 }
 
 bool
@@ -125,47 +149,61 @@ lyric_runtime::StringRef::stringAt(int index) const
 {
     if (m_data == nullptr)
         return DataCell::undef();
-    UChar32 char32;
-    U8_GET((const tu_uint8 *) m_data, 0, index, m_size, char32);
-    if (char32 < 0)
+    try {
+        auto *it = (char *) m_data;
+        auto *end = it + m_size;
+        utf8::advance(it, index, end);
+        auto chr = utf8::peek_next(it, end);
+        return DataCell(chr);
+    } catch (utf8::not_enough_room &ex) {
         return DataCell::undef();
-    return DataCell(char32);
+    } catch (utf8::invalid_code_point &ex) {
+        return DataCell::undef();
+    }
+}
+
+inline tu_int64
+lexographical_compare(const lyric_runtime::StringRef *ref1, const lyric_runtime::StringRef *ref2)
+{
+    auto it1 = make_start_iterator(ref1);
+    auto end1 = make_end_iterator(ref1);
+    auto it2 = make_start_iterator(ref2);
+    auto end2 = make_end_iterator(ref2);
+
+    for (; (it1 != end1) && (it2 != end2); ++it1, ++it2) {
+        if (*it1 < *it2)
+            return -1;
+        if (*it2 < *it1)
+            return 1;
+    }
+
+    if (it1 == end1) {
+        return it2 != end2? 1 : 0;
+    }
+    return it2 != end2? 0 : -1;
 }
 
 lyric_runtime::DataCell
 lyric_runtime::StringRef::stringCompare(StringRef *other) const
 {
     TU_ASSERT (other != nullptr);
-
-    if (m_data == nullptr && other->m_data == nullptr)
-        return DataCell(static_cast<int64_t>(0));
-    if (m_data == nullptr && other->m_data != nullptr)
-        return DataCell(static_cast<int64_t>(-1));
-    if (m_data != nullptr && other->m_data == nullptr)
-        return DataCell(static_cast<int64_t>(1));
-
-    UCharIterator lhs, rhs;
-    uiter_setUTF8(&lhs, m_data, m_size);
-    uiter_setUTF8(&rhs, other->m_data, other->m_size);
-
-    auto cmp = u_strCompareIter(&lhs, &rhs, true);
-    return DataCell(static_cast<int64_t>(cmp));
+    return DataCell(lexographical_compare(this, other));
 }
 
 lyric_runtime::DataCell
 lyric_runtime::StringRef::stringLength() const
 {
+    if (m_data == nullptr || m_size == 0)
+        return DataCell(static_cast<int64_t>(0));
+
+    auto it = make_start_iterator(this);
+    auto end = make_end_iterator(this);
     tu_int32 length = 0;
-
-    if (m_data != nullptr) {
-        tu_int32 index = 0;
-        while (index < m_size) {
-            U8_FWD_1_UNSAFE(m_data, index);
-            length++;
-        }
+    while (it != end) {
+        utf8::next(it, end);
+        length++;
     }
-
-    return lyric_runtime::DataCell(static_cast<int64_t>(length));
+    return DataCell(static_cast<int64_t>(length));
 }
 
 const char *

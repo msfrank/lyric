@@ -19,7 +19,7 @@ namespace lyric_parser {
         BaseType baseType,
         NotationType notationType);
 
-    tempo_utils::Result<UChar32> parse_char_literal(std::string_view literalValue);
+    tempo_utils::Result<char32_t> parse_char_literal(std::string_view literalValue);
 
     tempo_utils::Result<std::string> parse_string_literal(
         std::string_view literalValue,

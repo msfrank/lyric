@@ -1,10 +1,8 @@
 
-#include <unicode/uchar.h>
-#include <unicode/utf8.h>
-
 #include <lyric_common/symbol_path.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_parser/internal/parser_utils.h>
+#include <tempo_utils/unicode.h>
 
 #include "lyric_parser/internal/semantic_exception.h"
 
@@ -296,16 +294,16 @@ lyric_parser::AccessType
 lyric_parser::internal::parse_access_type(std::string_view identifier)
 {
     TU_ASSERT (!identifier.empty());
-    UChar32 init;
-    U8_GET((const tu_uint8 *) identifier.data(), 0, 0, identifier.size(), init);
-    TU_ASSERT (0 <= init);
+    auto init = tempo_utils::get_utf8_char(identifier, 0);
 
-    if (init == '_')
-        return AccessType::Private;
-    if (u_islower(init))
-        return AccessType::Protected;
-    if (u_isupper(init))
-        return AccessType::Public;
-
+    if (init < 128) {
+        auto ch = (char8_t ) init;
+        if (std::isupper(ch))
+            return AccessType::Public;
+        if (std::islower(ch))
+            return AccessType::Protected;
+        if (ch == '_')
+            return AccessType::Private;
+    }
     return AccessType::Private;
 }

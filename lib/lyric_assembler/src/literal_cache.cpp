@@ -119,7 +119,7 @@ lyric_assembler::LiteralCache::makeFloat(double dbl)
 }
 
 tempo_utils::Result<lyric_assembler::LiteralHandle *>
-lyric_assembler::LiteralCache::makeChar(UChar32 chr)
+lyric_assembler::LiteralCache::makeChar(char32_t chr)
 {
     lyric_runtime::LiteralCell literalCell(chr);
     if (m_literalcache.contains(literalCell)) {

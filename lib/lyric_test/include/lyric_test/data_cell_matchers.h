@@ -58,7 +58,7 @@ namespace lyric_test {
         Matcher<lyric_runtime::DataCell> DataCellBool(bool b);
         Matcher<lyric_runtime::DataCell> DataCellInt(int64_t i64);
         Matcher<lyric_runtime::DataCell> DataCellFloat(double dbl);
-        Matcher<lyric_runtime::DataCell> DataCellChar(UChar32 chr);
+        Matcher<lyric_runtime::DataCell> DataCellChar(char32_t chr);
         Matcher<lyric_runtime::DataCell> DataCellString(std::string_view str);
         Matcher<lyric_runtime::DataCell> DataCellUrl(std::string_view url);
         Matcher<lyric_runtime::DataCell> DataCellUrl(const tempo_utils::Url &url);

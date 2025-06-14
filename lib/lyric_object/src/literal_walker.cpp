@@ -80,7 +80,7 @@ lyric_object::LiteralWalker::boolValue() const
     return literalDescriptor->literal_value_as_TFNUValue()->tfnu() == lyo1::TrueFalseNilUndef::True;
 }
 
-UChar32
+char32_t
 lyric_object::LiteralWalker::charValue() const
 {
     if (!isValid())

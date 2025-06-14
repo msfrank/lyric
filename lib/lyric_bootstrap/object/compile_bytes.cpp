@@ -14,7 +14,8 @@ void
 build_core_Bytes(
     BuilderState &state,
     const CoreExistential *BytesExistential,
-    const CoreType *IntType)
+    const CoreType *IntType,
+    const CoreType *StringType)
 {
     {
         lyric_object::BytecodeBuilder code;
@@ -37,6 +38,16 @@ build_core_Bytes(
                 make_list_param("index", IntType),
             },
             code, IntType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "BytesToString");
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
+        state.addExistentialMethod("ToString",
+            BytesExistential,
+            lyo1::CallFlags::GlobalVisibility,
+            {},
+            code, StringType);
     }
 }
 

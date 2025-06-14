@@ -34,7 +34,7 @@ lyric_runtime::DataCell::DataCell(double dbl)
     data.dbl = dbl;
 }
 
-lyric_runtime::DataCell::DataCell(UChar32 chr)
+lyric_runtime::DataCell::DataCell(char32_t chr)
 {
     type = DataCellType::CHAR32;
     data.chr = chr;

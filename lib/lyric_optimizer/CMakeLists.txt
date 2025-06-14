@@ -82,7 +82,6 @@ target_link_libraries(lyric_optimizer
     PRIVATE
     absl::strings
     Boost::headers
-    icu::icu
     )
 
 # install targets

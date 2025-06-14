@@ -1,10 +1,6 @@
 #ifndef LYRIC_OBJECT_BYTECODE_ITERATOR_H
 #define LYRIC_OBJECT_BYTECODE_ITERATOR_H
 
-#include <cstdint>
-
-#include <unicode/umachine.h>
-
 #include "object_types.h"
 
 namespace lyric_object {
@@ -66,7 +62,7 @@ namespace lyric_object {
                 double dbl;
             } immediate_dbl;
             struct {
-                UChar32 chr;
+                char32_t chr;
             } immediate_chr;
         } operands;
     };

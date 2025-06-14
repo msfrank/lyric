@@ -29,7 +29,7 @@ namespace lyric_runtime {
         explicit LiteralCell(bool b);
         explicit LiteralCell(int64_t i64);
         explicit LiteralCell(double dbl);
-        explicit LiteralCell(UChar32 chr);
+        explicit LiteralCell(char32_t chr);
         explicit LiteralCell(std::string_view utf8);
         explicit LiteralCell(std::span<const tu_uint8> bytes);
         LiteralCell(const LiteralCell &other);
@@ -53,7 +53,7 @@ namespace lyric_runtime {
             bool b;
             int64_t i64;
             double dbl;
-            UChar32 chr;
+            char32_t chr;
             struct {
                 const char *data;
                 int32_t size;

@@ -85,7 +85,6 @@ target_link_libraries(lyric_importer
     PRIVATE
     absl::strings
     flatbuffers::flatbuffers
-    icu::icu
     )
 
 # install targets

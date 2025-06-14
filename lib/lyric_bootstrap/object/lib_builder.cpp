@@ -127,7 +127,8 @@ main(int argc, char *argv[])
     build_core_Int(state, IntExistential);
     build_core_Float(state, FloatExistential);
     build_core_Descriptor(state, DescriptorExistential);
-    build_core_Bytes(state, BytesExistential, IntExistential->existentialType);
+    build_core_Bytes(state, BytesExistential, IntExistential->existentialType,
+        StringExistential->existentialType);
     build_core_String(state, StringExistential, IntExistential->existentialType,
         CharExistential->existentialType, BytesExistential->existentialType);
     build_core_Url(state, UrlExistential);

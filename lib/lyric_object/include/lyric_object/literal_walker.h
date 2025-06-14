@@ -1,8 +1,6 @@
 #ifndef LYRIC_OBJECT_LITERAL_WALKER_H
 #define LYRIC_OBJECT_LITERAL_WALKER_H
 
-#include <unicode/umachine.h>
-
 #include "object_types.h"
 
 namespace lyric_object {
@@ -18,7 +16,7 @@ namespace lyric_object {
         ValueType getValueType() const;
 
         bool boolValue() const;
-        UChar32 charValue() const;
+        char32_t charValue() const;
         tu_int64 int64Value() const;
         double float64Value() const;
         std::string_view stringValue() const;

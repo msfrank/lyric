@@ -137,8 +137,8 @@ find_package(uv REQUIRED)
 # find required Fmt dependency
 find_package(fmt REQUIRED)
 
-# find required ICU dependency
-find_package(icu REQUIRED)
+# find required Utfcpp dependency
+find_package(utfcpp REQUIRED)
 
 # find java build tool dependency for antlr
 find_package(Java REQUIRED)

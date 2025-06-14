@@ -82,7 +82,6 @@ target_link_libraries(lyric_archiver
     absl::flat_hash_set
     PRIVATE
     absl::strings
-    icu::icu
     )
 
 # install targets

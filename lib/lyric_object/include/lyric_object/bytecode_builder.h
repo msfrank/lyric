@@ -3,8 +3,6 @@
 
 #include <vector>
 
-#include <unicode/umachine.h>
-
 #include <tempo_utils/result.h>
 
 #include "object_types.h"
@@ -40,7 +38,7 @@ namespace lyric_object {
         tempo_utils::Status loadBool(bool b);
         tempo_utils::Status loadInt(tu_int64 i64);
         tempo_utils::Status loadFloat(double dbl);
-        tempo_utils::Status loadChar(UChar32 chr);
+        tempo_utils::Status loadChar(char32_t chr);
 
         tempo_utils::Status loadArgument(tu_uint16 index);
         tempo_utils::Status loadLocal(tu_uint16 index);
