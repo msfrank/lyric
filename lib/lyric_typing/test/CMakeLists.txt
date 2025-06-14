@@ -5,6 +5,7 @@ include(GoogleTest)
 # define unit tests
 
 set(TEST_CASES
+    callsite_reifier_error_handling_tests.cpp
     callsite_reifier_tests.cpp
     callsite_reifier_tp0_in_tests.cpp
     callsite_reifier_tp0_inout_tests.cpp
@@ -26,6 +27,7 @@ target_compile_definitions(lyric_typing_testsuite PRIVATE
 target_link_libraries(lyric_typing_testsuite PUBLIC
     lyric::lyric_bootstrap
     lyric::lyric_typing
+    tempo::tempo_test
     gtest::gtest
     )
 gtest_discover_tests(lyric_typing_testsuite DISCOVERY_TIMEOUT 30)
@@ -43,5 +45,6 @@ target_compile_definitions(LyricTypingTestSuite PRIVATE
 target_link_libraries(LyricTypingTestSuite PUBLIC
     lyric::lyric_bootstrap
     lyric::lyric_typing
+    tempo::tempo_test
     gtest::gtest
     )

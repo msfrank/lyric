@@ -1,13 +1,10 @@
 
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/concept_symbol.h>
-#include <lyric_assembler/existential_symbol.h>
-#include <lyric_assembler/enum_symbol.h>
-#include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/internal/write_templates.h>
 #include <lyric_assembler/object_writer.h>
-#include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
@@ -30,6 +27,9 @@ lyric_assembler::internal::touch_template(
     AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(templateUrl));
     switch (symbol->getSymbolType()) {
+        case SymbolType::BINDING:
+            TU_RETURN_IF_NOT_OK (writer.touchBinding(cast_symbol_to_binding(symbol)));
+            break;
         case SymbolType::CALL:
             TU_RETURN_IF_NOT_OK (writer.touchCall(cast_symbol_to_call(symbol)));
             break;

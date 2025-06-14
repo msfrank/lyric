@@ -244,6 +244,11 @@ lyric_typing::CallsiteReifier::reifySingular(
                 "invalid param type", paramType.toString());
     }
 
+    if (!paramTypeArguments.empty() && argTypeArguments.empty())
+        return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
+            "argument type {} is not compatible with parametric parameter {}",
+            argType.toString(), paramType.toString());
+
     std::vector<lyric_common::TypeDef> reifiedParameters;
     tu_uint32 tpIndex = 0;
     for (; tpIndex < paramTypeArguments.size(); tpIndex++) {

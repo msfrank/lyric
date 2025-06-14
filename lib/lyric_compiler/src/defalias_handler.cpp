@@ -76,21 +76,25 @@ lyric_compiler::DefAliasHandler::after(
     lyric_typing::TypeSpec targetSpec;
     TU_ASSIGN_OR_RETURN (targetSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
 
-    // declare binding symbol
-    TU_ASSIGN_OR_RETURN (m_bindingSymbol, block->declareBinding(
-        identifier, convert_access_type(access), templateSpec.templateParameters));
+    // if current namespace is specified then add binding to the current namespace,
+    // otherwise declare binding in current block only
+    if (m_currentNamespace == nullptr) {
+        // declare binding symbol
+        TU_ASSIGN_OR_RETURN (m_bindingSymbol, block->declareBinding(
+            identifier, convert_access_type(access), templateSpec.templateParameters));
+    } else {
+        TU_ASSIGN_OR_RETURN (m_bindingSymbol, m_currentNamespace->declareBinding(
+            identifier, convert_access_type(access), templateSpec.templateParameters));
+    }
 
     auto *resolver = m_bindingSymbol->bindingResolver();
 
     // define the target type
     lyric_common::TypeDef targetType;
     TU_ASSIGN_OR_RETURN (targetType, typeSystem->resolveAssignable(resolver, targetSpec));
-    TU_RETURN_IF_NOT_OK (m_bindingSymbol->defineTarget(targetType));
 
-    // add global to the current namespace if specified
-    if (m_currentNamespace != nullptr) {
-        TU_RETURN_IF_NOT_OK (m_currentNamespace->putTarget(m_bindingSymbol->getSymbolUrl()));
-    }
+    // set the binding target
+    TU_RETURN_IF_NOT_OK (m_bindingSymbol->defineTarget(targetType));
 
     if (!m_isSideEffect) {
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));

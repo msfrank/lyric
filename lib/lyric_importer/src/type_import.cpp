@@ -132,12 +132,7 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
             std::vector<lyric_common::TypeDef> concreteParameters;
             for (const auto &p : concreteTypeWalker.getParameters()) {
                 auto parameterOffset = p.getDescriptorOffset();
-                if (typeOffset <= parameterOffset)
-                    throw tempo_utils::StatusException(
-                        lyric_importer::ImporterStatus::forCondition(
-                            lyric_importer::ImporterCondition::kImportError,
-                            "cannot import type in module {}; invalid descriptor", objectLocation.toString()));
-                auto *parameterType = moduleImport->getType(p.getDescriptorOffset());
+                auto *parameterType = moduleImport->getType(parameterOffset);
                 if (parameterType == nullptr)
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
@@ -171,11 +166,6 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
             std::vector<lyric_common::TypeDef> placeholderParameters;
             for (const auto &p : placeholderTypeWalker.getParameters()) {
                 auto parameterOffset = p.getDescriptorOffset();
-                if (typeOffset <= parameterOffset)
-                    throw tempo_utils::StatusException(
-                        lyric_importer::ImporterStatus::forCondition(
-                            lyric_importer::ImporterCondition::kImportError,
-                            "cannot import type in module {}; invalid descriptor", objectLocation.toString()));
                 auto *parameterType = moduleImport->getType(parameterOffset);
                 if (parameterType == nullptr)
                     throw tempo_utils::StatusException(
@@ -195,10 +185,6 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
             std::vector<lyric_common::TypeDef> unionMembers;
             for (const auto &m : disjunction.getMembers()) {
                 auto memberOffset = m.getDescriptorOffset();
-                if (typeOffset <= memberOffset)
-                    throw tempo_utils::StatusException(lyric_importer::ImporterStatus::forCondition(
-                        lyric_importer::ImporterCondition::kImportError,
-                        "cannot import type in module {}; invalid descriptor", objectLocation.toString()));
                 auto memberType = moduleImport->getType(memberOffset);
                 if (memberType == nullptr)
                     throw tempo_utils::StatusException(lyric_importer::ImporterStatus::forCondition(
@@ -221,11 +207,6 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
             std::vector<lyric_common::TypeDef> intersectionMembers;
             for (const auto &m : conjunction.getMembers()) {
                 auto memberOffset = m.getDescriptorOffset();
-                if (typeOffset <= memberOffset)
-                    throw tempo_utils::StatusException(
-                        lyric_importer::ImporterStatus::forCondition(
-                            lyric_importer::ImporterCondition::kImportError,
-                            "cannot import type in module {}; invalid descriptor", objectLocation.toString()));
                 auto *memberType = moduleImport->getType(memberOffset);
                 if (memberType == nullptr)
                     throw tempo_utils::StatusException(
@@ -274,12 +255,7 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
 
             for (const auto &p : concreteTypeWalker.getParameters()) {
                 auto parameterOffset = p.getDescriptorOffset();
-                if (typeOffset <= parameterOffset)
-                    throw tempo_utils::StatusException(
-                        lyric_importer::ImporterStatus::forCondition(
-                            lyric_importer::ImporterCondition::kImportError,
-                            "cannot import type in module {}; invalid descriptor", objectLocation.toString()));
-                auto *parameterType = moduleImport->getType(p.getDescriptorOffset());
+                auto *parameterType = moduleImport->getType(parameterOffset);
                 if (parameterType == nullptr)
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
@@ -296,11 +272,6 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
 
             for (const auto &p : placeholderTypeWalker.getParameters()) {
                 auto parameterOffset = p.getDescriptorOffset();
-                if (typeOffset <= parameterOffset)
-                    throw tempo_utils::StatusException(
-                        lyric_importer::ImporterStatus::forCondition(
-                            lyric_importer::ImporterCondition::kImportError,
-                            "cannot import type in module {}; invalid descriptor", objectLocation.toString()));
                 auto *parameterType = moduleImport->getType(parameterOffset);
                 if (parameterType == nullptr)
                     throw tempo_utils::StatusException(
@@ -318,10 +289,6 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
 
             for (const auto &m : disjunction.getMembers()) {
                 auto memberOffset = m.getDescriptorOffset();
-                if (typeOffset <= memberOffset)
-                    throw tempo_utils::StatusException(lyric_importer::ImporterStatus::forCondition(
-                        lyric_importer::ImporterCondition::kImportError,
-                        "cannot import type in module {}; invalid descriptor", objectLocation.toString()));
                 auto memberType = moduleImport->getType(memberOffset);
                 if (memberType == nullptr)
                     throw tempo_utils::StatusException(lyric_importer::ImporterStatus::forCondition(
@@ -338,11 +305,6 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
 
             for (const auto &m : conjunction.getMembers()) {
                 auto memberOffset = m.getDescriptorOffset();
-                if (typeOffset <= memberOffset)
-                    throw tempo_utils::StatusException(
-                        lyric_importer::ImporterStatus::forCondition(
-                            lyric_importer::ImporterCondition::kImportError,
-                            "cannot import type in module {}; invalid descriptor", objectLocation.toString()));
                 auto *memberType = moduleImport->getType(memberOffset);
                 if (memberType == nullptr)
                     throw tempo_utils::StatusException(

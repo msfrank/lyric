@@ -22,7 +22,7 @@ BaseTypingFixture::SetUp()
 
     m_objectState = std::make_unique<lyric_assembler::ObjectState>(
         m_location, localModuleCache, sharedModuleCache, shortcutResolver);
-    TU_RAISE_IF_STATUS(m_objectState->defineRoot());
+    TU_ASSIGN_OR_RAISE (m_objectRoot, m_objectState->defineRoot());
 
     m_typeSystem = std::make_unique<lyric_typing::TypeSystem>(m_objectState.get());
 }
