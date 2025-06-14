@@ -8,12 +8,12 @@ namespace lyric_test {
     class MockReceive : public BaseProtocolMock {
 
     public:
-        explicit MockReceive(const std::vector<lyric_serde::LyricPatchset> &messages);
+        explicit MockReceive(const std::vector<std::shared_ptr<tempo_utils::ImmutableBytes>> &messages);
 
         tempo_utils::Status handle(Receive receive) override;
 
     private:
-        std::vector<lyric_serde::LyricPatchset> m_messages;
+        std::vector<std::shared_ptr<tempo_utils::ImmutableBytes>> m_messages;
     };
 }
 

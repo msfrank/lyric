@@ -2,7 +2,7 @@
 #include <lyric_test/mock_receive.h>
 #include <lyric_test/test_result.h>
 
-lyric_test::MockReceive::MockReceive(const std::vector<lyric_serde::LyricPatchset> &messages)
+lyric_test::MockReceive::MockReceive(const std::vector<std::shared_ptr<tempo_utils::ImmutableBytes>> &messages)
     : m_messages(messages)
 {
 }

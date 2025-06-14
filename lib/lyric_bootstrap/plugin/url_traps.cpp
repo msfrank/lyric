@@ -22,5 +22,5 @@ url_equals(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
     auto *lhs = arg0.data.url;
     auto *rhs = arg1.data.url;
     currentCoro->pushData(lhs->uriEquals(rhs));
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }

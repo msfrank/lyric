@@ -33,7 +33,7 @@ lyric_test::TestInspector::beforeOp(
         << " rd:" << interp->getRecursionDepth()
         << " sc:" << interp->getSliceCounter()
         << " ic:" << interp->getInstructionCounter();
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -44,7 +44,7 @@ lyric_test::TestInspector::afterOp(
 {
     printDataStack(state);
     TU_CONSOLE_OUT << "";
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status

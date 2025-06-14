@@ -2,7 +2,6 @@
 #include <absl/strings/substitute.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <lyric_runtime/rest_ref.h>
-#include <lyric_serde/patchset_value.h>
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
@@ -90,12 +89,6 @@ lyric_runtime::RestRef::hashValue(absl::HashState state)
 {
     absl::HashState::combine(std::move(state), m_restArgs);
     return true;
-}
-
-bool
-lyric_runtime::RestRef::serializeValue(lyric_serde::PatchsetState &state, tu_uint32 &index)
-{
-    return false;
 }
 
 tempo_utils::StatusCode

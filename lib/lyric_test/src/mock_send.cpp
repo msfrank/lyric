@@ -14,14 +14,14 @@ lyric_test::MockSend::handle(Receive receive)
         case ReceiveType::DETACH:
             return TestStatus::ok();
         case ReceiveType::PATCHSET:
-            m_messages.push_back(receive.patchset);
+            m_messages.push_back(receive.payload);
             return TestStatus::ok();
         default:
             return TestStatus::forCondition(TestCondition::kTestInvariant, "unexpected receive type");
     }
 }
 
-std::vector<lyric_serde::LyricPatchset>
+std::vector<std::shared_ptr<tempo_utils::ImmutableBytes>>
 lyric_test::MockSend::getMessages() const
 {
     return m_messages;

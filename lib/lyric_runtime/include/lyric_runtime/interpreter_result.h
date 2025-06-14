@@ -43,7 +43,6 @@ namespace lyric_runtime {
     class InterpreterStatus : public tempo_utils::TypedStatus<InterpreterCondition> {
     public:
         using TypedStatus::TypedStatus;
-        static InterpreterStatus ok();
         static bool convert(InterpreterStatus &dstStatus, const tempo_utils::Status &srcStatus);
     private:
         InterpreterStatus(tempo_utils::StatusCode statusCode, std::shared_ptr<const tempo_utils::Detail> detail);

@@ -781,7 +781,7 @@ lyric_runtime::SubroutineManager::returnToCaller(
 
     // return false if IP is not valid, which causes the program to halt
     if (!ip.isValid()) {
-        status = InterpreterStatus::ok();
+        status = {};
         return false;
     }
 

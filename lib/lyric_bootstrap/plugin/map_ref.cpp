@@ -744,7 +744,7 @@ map_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
     auto ref = state->heapManager()->allocateRef<MapRef>(vtable);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -783,7 +783,7 @@ map_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
         map->setNode(node);
     }
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -799,7 +799,7 @@ map_size(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 
     int64_t size = map->mapSize();
     currentCoro->pushData(lyric_runtime::DataCell(size));
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -815,7 +815,7 @@ map_contains(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
     auto *map = static_cast<MapRef *>(receiver.data.ref);
 
     currentCoro->pushData(lyric_runtime::DataCell(map->mapContains(arg0)));
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -836,7 +836,7 @@ map_get(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterSt
         value = arg1;
     }
     currentCoro->pushData(value);
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -860,7 +860,7 @@ map_update(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
     instance->setNode(node);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -888,7 +888,7 @@ map_remove(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
         currentCoro->pushData(lyric_runtime::DataCell::forRef(map));
     }
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -913,7 +913,7 @@ map_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
     auto ref = state->heapManager()->allocateRef<MapIterator>(vtable, instance);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -928,7 +928,7 @@ map_iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::In
     auto ref = state->heapManager()->allocateRef<MapIterator>(vtable);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -945,7 +945,7 @@ map_iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::In
     auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
     currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -967,5 +967,5 @@ map_iterator_next(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Int
     }
     currentCoro->pushData(next);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }

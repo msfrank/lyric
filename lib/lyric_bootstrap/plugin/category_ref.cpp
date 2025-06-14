@@ -87,5 +87,5 @@ category_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interp
     auto ref = state->heapManager()->allocateRef<CategoryRef>(vtable);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }

@@ -1302,7 +1302,7 @@ lyric_runtime::BytecodeInterpreter::onInterrupt(const DataCell &cell)
     TU_LOG_VV << "interrupting interpreter";
     if (m_inspector)
         return m_inspector->onInterrupt(cell, this, m_state.get());
-    return InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<lyric_runtime::DataCell>

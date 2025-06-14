@@ -140,7 +140,6 @@ target_link_libraries(lyric_runtime
     PUBLIC
     lyric::lyric_common
     lyric::lyric_object
-    lyric::lyric_serde
     tempo::tempo_utils
     absl::flat_hash_map
     absl::flat_hash_set

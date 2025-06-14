@@ -17,7 +17,6 @@ namespace lyric_runtime {
         bool uriValue(tempo_utils::Url &url) const override;
         bool utf8Value(std::string &utf8) const override;
         bool hashValue(absl::HashState state) override;
-        bool serializeValue(lyric_serde::PatchsetState &state, tu_uint32 &index) override;
         tempo_utils::StatusCode errorStatusCode() override;
         std::string toString() const override;
 

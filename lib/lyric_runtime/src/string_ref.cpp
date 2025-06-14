@@ -4,7 +4,6 @@
 
 #include <lyric_runtime/interpreter_state.h>
 #include <lyric_runtime/string_ref.h>
-#include <lyric_serde/patchset_value.h>
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
@@ -108,23 +107,6 @@ bool
 lyric_runtime::StringRef::hashValue(absl::HashState state)
 {
     absl::HashState::combine_contiguous(std::move(state), m_data, m_size);
-    return true;
-}
-
-bool
-lyric_runtime::StringRef::serializeValue(lyric_serde::PatchsetState &state, tu_uint32 &index)
-{
-    std::string s;
-    if (m_data) {
-        s = std::string(m_data, m_size);
-    }
-    auto appendValueResult = state.appendValue(tempo_schema::AttrValue(s));
-    if (appendValueResult.isStatus()) {
-        index = INVALID_ADDRESS_U32;
-        return false;
-    }
-    auto *value = appendValueResult.getResult();
-    index = value->getAddress().getAddress();
     return true;
 }
 

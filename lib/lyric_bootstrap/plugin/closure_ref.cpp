@@ -223,7 +223,7 @@ closure_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
     auto ref = state->heapManager()->allocateRef<ClosureRef>(vtable);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -308,7 +308,7 @@ closure_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
     lyric_object::BytecodeIterator ip(header, codeSize);
     instance->setIP(ip);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -387,5 +387,5 @@ closure_apply(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
     currentCoro->pushCall(trampoline, ip, segment);
     TU_LOG_INFO << "moved ip to " << ip;
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }

@@ -120,7 +120,7 @@ status_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
     auto ref = state->heapManager()->allocateRef<StatusRef>(vtable);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -140,5 +140,5 @@ status_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
 
     instance->setStatusCode(statusCode);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }

@@ -3,8 +3,6 @@
 
 #include <unicode/ustring.h>
 
-#include <lyric_serde/patchset_state.h>
-
 #include "abstract_heap.h"
 #include "abstract_ref.h"
 #include "data_cell.h"
@@ -25,7 +23,6 @@ namespace lyric_runtime {
         bool utf8Value(std::string &utf8) const override;
         bool uriValue(tempo_utils::Url &url) const override;
         bool hashValue(absl::HashState state) override;
-        bool serializeValue(lyric_serde::PatchsetState &state, tu_uint32 &index) override;
         bool iteratorValid() override;
         bool iteratorNext(DataCell &cell) override;
         bool prepareFuture(std::shared_ptr<Promise> promise) override;

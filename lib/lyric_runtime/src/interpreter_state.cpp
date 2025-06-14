@@ -113,7 +113,7 @@ detect_bootstrap(
 
     TU_LOG_V << "found system bootstrap " << *bootstrapLocation;
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 static tempo_utils::Status
@@ -167,7 +167,7 @@ allocate_type_manager(
     *typeManagerPtr = new lyric_runtime::TypeManager(
         std::move(intrinsiccache), segmentManager);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<std::shared_ptr<lyric_runtime::InterpreterState>>
@@ -413,7 +413,7 @@ lyric_runtime::InterpreterState::reload(const lyric_common::ModuleLocation &main
     m_statusCode = tempo_utils::StatusCode::kUnknown;
     m_active = true;
 
-    return InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status

@@ -14,7 +14,7 @@ lyric_runtime::internal::push_literal_onto_stack(
     if (!literal.isValid())
         return status;
     currentCoro->pushData(DataCell::forLiteral(literal));
-    return InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -31,7 +31,7 @@ lyric_runtime::internal::push_descriptor_onto_stack(
     if (!descriptor.isValid())
         return status;
     currentCoro->pushData(descriptor);
-    return InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -56,5 +56,5 @@ lyric_runtime::internal::push_symbol_descriptor_onto_stack(
     if (!descriptor.isValid())
         return status;
     currentCoro->pushData(descriptor);
-    return InterpreterStatus::ok();
+    return {};
 }

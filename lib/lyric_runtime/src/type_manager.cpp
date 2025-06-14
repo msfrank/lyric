@@ -113,12 +113,12 @@ resolve_type_to_descriptor(
         descriptor = segmentManager->resolveDescriptor(segment, concreteSection, concreteIndex, status);
         if (!descriptor.isValid())
             return status;
-        return lyric_runtime::InterpreterStatus::ok();
+        return {};
     }
 
     // if the descriptor assignable type is not concrete, return invalid cell
     descriptor = lyric_runtime::DataCell();
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 inline lyric_runtime::InterpreterStatus
@@ -142,7 +142,7 @@ resolve_super_type(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "missing type descriptor");
     if (!descriptorType.hasSuperType()) {
         super = lyric_runtime::DataCell();
-        return lyric_runtime::InterpreterStatus::ok();
+        return {};
     }
     auto superType = descriptorType.getSuperType();
 
@@ -151,7 +151,7 @@ resolve_super_type(
         superType.getDescriptorOffset(), status);
     if (!super.isValid())
         return status;
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Result<lyric_runtime::TypeComparison>

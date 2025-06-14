@@ -87,5 +87,5 @@ singleton_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Inter
     auto ref = state->heapManager()->allocateRef<SingletonRef>(vtable);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }

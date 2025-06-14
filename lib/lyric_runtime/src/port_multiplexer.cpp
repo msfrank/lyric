@@ -46,7 +46,7 @@ lyric_runtime::PortMultiplexer::unregisterPort(const tempo_utils::Url &protocolU
     if (m_ports.contains(protocolUrl)) {
         auto node = m_ports.extract(protocolUrl);
         auto port = node.mapped();
-        return InterpreterStatus::ok();
+        return {};
     }
 
     return InterpreterStatus::forCondition(

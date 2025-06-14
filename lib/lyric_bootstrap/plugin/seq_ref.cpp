@@ -62,28 +62,6 @@ SeqRef::setField(const lyric_runtime::DataCell &field, const lyric_runtime::Data
     return {};
 }
 
-bool
-SeqRef::serializeValue(lyric_serde::PatchsetState &state, tu_uint32 &index)
-{
-    std::vector<lyric_serde::ValueAddress> children;
-    for (tu_int64 i = 0; i < m_node->count; i++) {
-        lyric_runtime::DataCell seqIndex(i);
-        auto child = seqGet(seqIndex);
-        auto childOffset = lyric_runtime::serialize_value(child, state);
-        if (childOffset == lyric_runtime::INVALID_ADDRESS_U32)
-            return lyric_runtime::INVALID_ADDRESS_U32;
-        children.push_back(lyric_serde::ValueAddress(childOffset));
-    }
-    auto appendValueResult = state.appendValue(lyric_schema::kLyricLiteralSeqClass, children);
-    if (appendValueResult.isStatus()) {
-        index = lyric_runtime::INVALID_ADDRESS_U32;
-        return false;
-    }
-    auto *value = appendValueResult.getResult();
-    index = value->getAddress().getAddress();
-    return true;
-}
-
 std::string
 SeqRef::toString() const
 {
@@ -369,7 +347,7 @@ seq_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
     auto ref = state->heapManager()->allocateRef<SeqRef>(vtable);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -394,7 +372,7 @@ seq_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
         seq->setNode(node);
     }
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -409,7 +387,7 @@ seq_size(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
     auto *seq = static_cast<SeqRef *>(receiver.data.ref);
 
     currentCoro->pushData(seq->seqSize());
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -432,7 +410,7 @@ seq_get(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterSt
         value = arg1;
     }
     currentCoro->pushData(value);
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -480,7 +458,7 @@ seq_append(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
     instance->setNode(node);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -524,7 +502,7 @@ seq_extend(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
     instance->setNode(node);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -555,7 +533,7 @@ seq_slice(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
         currentCoro->pushData(lyric_runtime::DataCell::forRef(seq));
     }
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -580,7 +558,7 @@ seq_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
     auto ref = state->heapManager()->allocateRef<SeqIterator>(vtable, instance);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -595,7 +573,7 @@ seq_iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::In
     auto ref = state->heapManager()->allocateRef<SeqIterator>(vtable);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -612,7 +590,7 @@ seq_iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::In
     auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
     currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -634,5 +612,5 @@ seq_iterator_next(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Int
     }
     currentCoro->pushData(next);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }

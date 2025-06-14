@@ -35,7 +35,6 @@ public:
 
     lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
     lyric_runtime::DataCell setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value) override;
-    bool serializeValue(lyric_serde::PatchsetState &state, tu_uint32 &index) override;
     std::string toString() const override;
 
     SeqNode *getNode() const;

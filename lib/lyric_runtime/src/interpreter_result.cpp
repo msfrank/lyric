@@ -9,12 +9,6 @@ lyric_runtime::InterpreterStatus::InterpreterStatus(
 {
 }
 
-lyric_runtime::InterpreterStatus
-lyric_runtime::InterpreterStatus::ok()
-{
-    return InterpreterStatus();
-}
-
 bool
 lyric_runtime::InterpreterStatus::convert(InterpreterStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {

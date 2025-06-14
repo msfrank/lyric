@@ -87,5 +87,5 @@ object_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
     auto ref = state->heapManager()->allocateRef<ObjectRef>(vtable);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }

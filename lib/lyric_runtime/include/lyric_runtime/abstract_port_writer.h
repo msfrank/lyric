@@ -1,7 +1,7 @@
 #ifndef LYRIC_RUNTIME_ABSTRACT_PORT_WRITER_H
 #define LYRIC_RUNTIME_ABSTRACT_PORT_WRITER_H
 
-#include <lyric_serde/lyric_patchset.h>
+#include <tempo_utils/immutable_bytes.h>
 #include <tempo_utils/status.h>
 
 namespace lyric_runtime {
@@ -11,7 +11,7 @@ namespace lyric_runtime {
     public:
         virtual ~AbstractPortWriter() = default;
 
-        virtual tempo_utils::Status write(const lyric_serde::LyricPatchset &patchset) = 0;
+        virtual tempo_utils::Status write(std::shared_ptr<tempo_utils::ImmutableBytes> payload) = 0;
     };
 }
 

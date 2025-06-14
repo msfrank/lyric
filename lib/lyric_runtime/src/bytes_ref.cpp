@@ -3,7 +3,6 @@
 
 #include <lyric_runtime/bytes_ref.h>
 #include <lyric_runtime/interpreter_state.h>
-#include <lyric_serde/patchset_value.h>
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
@@ -84,12 +83,6 @@ lyric_runtime::BytesRef::hashValue(absl::HashState state)
 {
     absl::HashState::combine_contiguous(std::move(state), m_data, m_size);
     return true;
-}
-
-bool
-lyric_runtime::BytesRef::serializeValue(lyric_serde::PatchsetState &state, tu_uint32 &index)
-{
-    return false;
 }
 
 tempo_utils::StatusCode

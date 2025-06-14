@@ -11,10 +11,10 @@ namespace lyric_test {
 
         tempo_utils::Status handle(Receive receive) override;
 
-        std::vector<lyric_serde::LyricPatchset> getMessages() const;
+        std::vector<std::shared_ptr<tempo_utils::ImmutableBytes>> getMessages() const;
 
     private:
-        std::vector<lyric_serde::LyricPatchset> m_messages;
+        std::vector<std::shared_ptr<tempo_utils::ImmutableBytes>> m_messages;
 
     };
 }

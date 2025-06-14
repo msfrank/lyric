@@ -16,7 +16,7 @@ namespace lyric_test {
 
     struct Receive {
         ReceiveType type;
-        lyric_serde::LyricPatchset patchset;
+        std::shared_ptr<tempo_utils::ImmutableBytes> payload;
     };
 
     class BaseProtocolMock : public lyric_runtime::AbstractPortWriter {
@@ -27,9 +27,9 @@ namespace lyric_test {
         bool isAttached();
         tempo_utils::Status attach(uv_loop_t *loop, std::shared_ptr<lyric_runtime::DuplexPort> port);
         tempo_utils::Status detach();
-        tempo_utils::Status send(const lyric_serde::LyricPatchset &patchset);
+        tempo_utils::Status send(std::shared_ptr<tempo_utils::ImmutableBytes> payload);
 
-        tempo_utils::Status write(const lyric_serde::LyricPatchset &patchset) override;
+        tempo_utils::Status write(std::shared_ptr<tempo_utils::ImmutableBytes> payload) override;
 
         virtual tempo_utils::Status handle(Receive receive) = 0;
 

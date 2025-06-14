@@ -33,7 +33,7 @@ lyric_runtime::DuplexPort::attach(AbstractPortWriter *writer)
     absl::MutexLock locker(&m_lock);
     m_writer = writer;
     TU_LOG_V << "attached writer " << (void *) writer << " to port " << m_uri;
-    return InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -42,7 +42,7 @@ lyric_runtime::DuplexPort::detach()
     absl::MutexLock locker(&m_lock);
     TU_LOG_V << "detaching writer " << (void *) m_writer << " from port " << m_uri;
     m_writer = nullptr;
-    return InterpreterStatus::ok();
+    return {};
 }
 
 bool
@@ -52,14 +52,14 @@ lyric_runtime::DuplexPort::hasPending()
     return !m_pending.empty();
 }
 
-lyric_serde::LyricPatchset
+std::shared_ptr<tempo_utils::ImmutableBytes>
 lyric_runtime::DuplexPort::nextPending()
 {
     absl::MutexLock locker(&m_lock);
     TU_ASSERT (!m_pending.empty());
-    auto patchset = m_pending.front();
+    auto payload = m_pending.front();
     m_pending.pop();
-    return patchset;
+    return payload;
 }
 
 int
@@ -69,11 +69,11 @@ lyric_runtime::DuplexPort::numPending()
     return m_pending.size();
 }
 void
-lyric_runtime::DuplexPort::receive(const lyric_serde::LyricPatchset &patchset)
+lyric_runtime::DuplexPort::receive(std::shared_ptr<tempo_utils::ImmutableBytes> payload)
 {
     absl::MutexLock locker(&m_lock);
 
-    m_pending.push(patchset);
+    m_pending.push(std::move(payload));
     if (!m_async)
         return;
     uv_async_send(m_async);
@@ -94,9 +94,9 @@ lyric_runtime::DuplexPort::readyToReceive(uv_async_t *async)
 }
 
 void
-lyric_runtime::DuplexPort::send(const lyric_serde::LyricPatchset &patchset)
+lyric_runtime::DuplexPort::send(std::shared_ptr<tempo_utils::ImmutableBytes> payload)
 {
     absl::MutexLock locker(&m_lock);
-    auto status = m_writer->write(patchset);
+    auto status = m_writer->write(std::move(payload));
     TU_ASSERT (status.isOk());
 }

@@ -3,8 +3,6 @@
 
 #include <absl/hash/hash.h>
 
-#include <lyric_serde/patchset_state.h>
-
 #include "system_scheduler.h"
 #include "virtual_table.h"
 
@@ -92,15 +90,6 @@ namespace lyric_runtime {
          * @return true if the state was updated, otherwise false.
          */
         virtual bool hashValue(absl::HashState state) = 0;
-
-        /**
-         * Serialize the value of the ref into the specified `state` and assign `index` to the index of the
-         * value in the patchset. If the ref type does not support serialization then `state` and `index`
-         * are untouched and the method must return false.
-         *
-         * @return true if serialization was successful, otherwise false.
-         */
-        virtual bool serializeValue(lyric_serde::PatchsetState &state, tu_uint32 &index) = 0;
 
         /**
          * Returns whether the ref supports iteration and contains at least one element.

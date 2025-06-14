@@ -93,7 +93,7 @@ pair_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
     auto ref = state->heapManager()->allocateRef<PairRef>(vtable);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -111,7 +111,7 @@ pair_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
     const auto &arg1 = frame.getArgument(1);
     pair->setPair(arg0, arg1);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -126,7 +126,7 @@ pair_first(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
     auto *pair = static_cast<PairRef *>(receiver.data.ref);
 
     currentCoro->pushData(pair->pairFirst());
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -141,5 +141,5 @@ pair_second(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
     auto *pair = static_cast<PairRef *>(receiver.data.ref);
 
     currentCoro->pushData(pair->pairSecond());
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }

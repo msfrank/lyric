@@ -58,7 +58,7 @@ iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interp
     auto ref = state->heapManager()->allocateRef<IteratorRef>(vtable);
     currentCoro->pushData(ref);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -75,7 +75,7 @@ iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interp
     auto *instance = static_cast<lyric_runtime::AbstractRef *>(receiver.data.ref);
     currentCoro->pushData(lyric_runtime::DataCell(instance->iteratorValid()));
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }
 
 tempo_utils::Status
@@ -97,5 +97,5 @@ iterator_next(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
     }
     currentCoro->pushData(next);
 
-    return lyric_runtime::InterpreterStatus::ok();
+    return {};
 }

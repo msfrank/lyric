@@ -38,20 +38,20 @@ lyric_test::BaseProtocolMock::detach()
 }
 
 tempo_utils::Status
-lyric_test::BaseProtocolMock::send(const lyric_serde::LyricPatchset &patchset)
+lyric_test::BaseProtocolMock::send(std::shared_ptr<tempo_utils::ImmutableBytes> payload)
 {
     if (m_port == nullptr)
         return TestStatus::forCondition(TestCondition::kTestInvariant, "port is detached");
-    m_port->receive(patchset);
+    m_port->receive(std::move(payload));
     return TestStatus::ok();
 }
 
 tempo_utils::Status
-lyric_test::BaseProtocolMock::write(const lyric_serde::LyricPatchset &patchset)
+lyric_test::BaseProtocolMock::write(std::shared_ptr<tempo_utils::ImmutableBytes> payload)
 {
     Receive receive;
     receive.type = ReceiveType::PATCHSET;
-    receive.patchset = patchset;
+    receive.payload = std::move(payload);
     auto status = handle(receive);
     if (status.notOk())
         return status;

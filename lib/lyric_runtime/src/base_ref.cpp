@@ -54,12 +54,6 @@ lyric_runtime::BaseRef::hashValue(absl::HashState state)
 }
 
 bool
-lyric_runtime::BaseRef::serializeValue(lyric_serde::PatchsetState &state, tu_uint32 &index)
-{
-    return false;
-}
-
-bool
 lyric_runtime::BaseRef::iteratorValid()
 {
     return false;

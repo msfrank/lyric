@@ -6,8 +6,7 @@
 
 #include <uv.h>
 
-#include <lyric_serde/lyric_patchset.h>
-#include <tempo_utils/integer_types.h>
+#include <tempo_utils/immutable_bytes.h>
 #include <tempo_utils/url.h>
 
 #include "abstract_port_writer.h"
@@ -28,18 +27,18 @@ namespace lyric_runtime {
         tempo_utils::Status detach();
 
         bool hasPending();
-        lyric_serde::LyricPatchset nextPending();
+        std::shared_ptr<tempo_utils::ImmutableBytes> nextPending();
         int numPending();
 
-        void send(const lyric_serde::LyricPatchset &patchset);
-        void receive(const lyric_serde::LyricPatchset &patchset);
+        void send(std::shared_ptr<tempo_utils::ImmutableBytes> payload);
+        void receive(std::shared_ptr<tempo_utils::ImmutableBytes> payload);
         void readyToReceive(uv_async_t *async);
 
     private:
         tempo_utils::Url m_uri;
         absl::Mutex m_lock;
         AbstractPortWriter *m_writer;
-        std::queue<lyric_serde::LyricPatchset> m_pending;
+        std::queue<std::shared_ptr<tempo_utils::ImmutableBytes>> m_pending;
         uv_async_t *m_async;
     };
 }
