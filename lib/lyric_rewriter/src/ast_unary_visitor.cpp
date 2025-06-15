@@ -27,7 +27,7 @@ lyric_rewriter::AstUnaryVisitor::enter(lyric_parser::ArchetypeNode *node, Visito
     auto *child0 = node->getChild(0);
     std::shared_ptr<AbstractNodeVisitor> visitor0;
     TU_ASSIGN_OR_RETURN (visitor0, makeVisitor(child0));
-    ctx.push(0, child0, visitor0);
+    ctx.push(node, 0, child0, visitor0);
 
     return {};
 }

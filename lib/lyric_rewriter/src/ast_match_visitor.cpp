@@ -27,7 +27,7 @@ lyric_rewriter::AstMatchVisitor::enter(lyric_parser::ArchetypeNode *node, Visito
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDefaultOffset, defaultNode));
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(defaultNode));
-        ctx.push(-1, defaultNode, visitor);
+        ctx.push(node, -1, defaultNode, visitor);
     }
 
     auto index = node->numChildren();
@@ -36,7 +36,7 @@ lyric_rewriter::AstMatchVisitor::enter(lyric_parser::ArchetypeNode *node, Visito
         auto *child = node->getChild(index);
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(child));
-        ctx.push(index, child, visitor);
+        ctx.push(node, index, child, visitor);
     }
 
     return {};

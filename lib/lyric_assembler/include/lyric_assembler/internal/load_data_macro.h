@@ -1,13 +1,13 @@
-#ifndef LYRIC_ASSEMBLER_INTERNAL_PUSH_DATA_MACRO_H
-#define LYRIC_ASSEMBLER_INTERNAL_PUSH_DATA_MACRO_H
+#ifndef LYRIC_ASSEMBLER_INTERNAL_LOAD_DATA_MACRO_H
+#define LYRIC_ASSEMBLER_INTERNAL_LOAD_DATA_MACRO_H
 
 #include <lyric_rewriter/abstract_macro.h>
 
 namespace lyric_assembler::internal {
 
-    class PushDataMacro : public lyric_rewriter::AbstractMacro {
+    class LoadDataMacro : public lyric_rewriter::AbstractMacro {
     public:
-        PushDataMacro();
+        LoadDataMacro();
 
         tempo_utils::Status rewritePragma(
             const lyric_parser::ArchetypeNode *pragmaNode,
@@ -26,4 +26,4 @@ namespace lyric_assembler::internal {
     };
 }
 
-#endif // LYRIC_ASSEMBLER_INTERNAL_PUSH_DATA_MACRO_H
+#endif // LYRIC_ASSEMBLER_INTERNAL_LOAD_DATA_MACRO_H

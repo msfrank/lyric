@@ -50,8 +50,14 @@ lyric_compiler::EntryHandler::before(
     for (int i = 0; i < numChildren; i++) {
         auto *child = node->getChild(i);
 
-        if (!child->isNamespace(lyric_schema::kLyricAstNs))
-            return {};
+        // delegate any nodes not in AST namespace to the form handler
+        if (!child->isNamespace(lyric_schema::kLyricAstNs)) {
+            auto any = std::make_unique<FormChoice>(
+                FormType::Any, fragment, entryBlock, driver);
+            ctx.appendChoice(std::move(any));
+            continue;
+        }
+
         auto *resource = lyric_schema::kLyricAstVocabulary.getResource(child->getIdValue());
 
         auto astId = resource->getId();

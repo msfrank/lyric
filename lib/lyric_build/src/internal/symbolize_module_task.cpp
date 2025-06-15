@@ -7,6 +7,7 @@
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
 #include <lyric_build/dependency_loader.h>
+#include <lyric_build/internal/build_macros.h>
 #include <lyric_build/internal/symbolize_module_task.h>
 #include <lyric_build/internal/task_utils.h>
 #include <lyric_build/metadata_writer.h>
@@ -48,6 +49,9 @@ lyric_build::internal::SymbolizeModuleTask::configure(const TaskSettings *config
 
     // add dependency on parse_module
     m_parseTarget = TaskKey("parse_module", taskId.getId());
+
+    // extend visitor registry to include assembler and compiler vocabularies
+    TU_ASSIGN_OR_RETURN (m_symbolizerOptions.visitorRegistry, make_build_visitors());
 
     return {};
 }

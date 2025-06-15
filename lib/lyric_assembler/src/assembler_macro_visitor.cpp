@@ -14,7 +14,23 @@ lyric_assembler::AssemblerMacroVisitor::enter(
     lyric_parser::ArchetypeNode *node,
     lyric_rewriter::VisitorContext &ctx)
 {
-    return m_state->enterNode(node, ctx);
+    TU_RETURN_IF_NOT_OK (m_state->enterNode(node, ctx));
+
+    if (ctx.skipChildren())
+        return {};
+
+    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> children;
+    for (int i = node->numChildren() - 1; i >= 0; i--) {
+        children.emplace_back(node->getChild(i), i);
+    }
+
+    for (auto &childAndIndex : children) {
+        std::shared_ptr<AbstractNodeVisitor> visitor;
+        TU_ASSIGN_OR_RETURN (visitor, m_state->makeVisitor(childAndIndex.first));
+        ctx.push(node, childAndIndex.second, childAndIndex.first, visitor);
+    }
+
+    return {};
 }
 
 tempo_utils::Status
@@ -36,7 +52,8 @@ lyric_assembler::make_assembler_visitor(
     switch (assemblerId) {
         case lyric_schema::LyricAssemblerId::AllocatorTrap:
         case lyric_schema::LyricAssemblerId::Plugin:
-        case lyric_schema::LyricAssemblerId::PushData:
+        case lyric_schema::LyricAssemblerId::LoadData:
+        case lyric_schema::LyricAssemblerId::StoreData:
         case lyric_schema::LyricAssemblerId::Trap:
             return std::make_shared<AssemblerMacroVisitor>(state);
         default:

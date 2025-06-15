@@ -6,8 +6,9 @@
 #include <lyric_assembler/object_state.h>
 #include <lyric_common/module_location.h>
 #include <lyric_common/symbol_url.h>
-#include <lyric_parser/lyric_archetype.h>
 #include <lyric_object/lyric_object.h>
+#include <lyric_parser/lyric_archetype.h>
+#include <lyric_rewriter/visitor_registry.h>
 #include <lyric_runtime/abstract_loader.h>
 #include <tempo_tracing/trace_recorder.h>
 
@@ -18,6 +19,10 @@ namespace lyric_compiler {
          *
          */
         std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver = {};
+        /**
+         *
+         */
+        std::shared_ptr<lyric_rewriter::VisitorRegistry> visitorRegistry = {};
         /**
          *
          */

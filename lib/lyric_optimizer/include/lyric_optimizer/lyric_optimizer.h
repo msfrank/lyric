@@ -8,6 +8,7 @@
 #include <lyric_common/symbol_url.h>
 #include <lyric_importer/module_cache.h>
 #include <lyric_object/lyric_object.h>
+#include <lyric_rewriter/visitor_registry.h>
 #include <lyric_runtime/abstract_loader.h>
 #include <tempo_tracing/trace_recorder.h>
 
@@ -17,7 +18,9 @@ namespace lyric_optimizer {
      *
      */
     struct OptimizerOptions {
-
+        /**
+         *
+         */
         lyric_common::ModuleLocation preludeLocation;
     };
 

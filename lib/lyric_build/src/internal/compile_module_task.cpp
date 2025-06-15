@@ -6,6 +6,7 @@
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
 #include <lyric_build/dependency_loader.h>
+#include <lyric_build/internal/build_macros.h>
 #include <lyric_build/internal/compile_module_task.h>
 #include <lyric_build/internal/task_utils.h>
 #include <lyric_build/metadata_writer.h>
@@ -85,6 +86,9 @@ lyric_build::internal::CompileModuleTask::configure(const TaskSettings *config)
     // set initial dependencies for task
     m_compileTargets.insert(m_parseTarget);
     m_compileTargets.insert(m_symbolizeTarget);
+
+    // extend visitor registry to include assembler and compiler vocabularies
+    TU_ASSIGN_OR_RETURN (m_compilerOptions.visitorRegistry, make_build_visitors());
 
     return {};
 }

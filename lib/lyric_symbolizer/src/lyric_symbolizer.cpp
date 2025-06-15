@@ -68,6 +68,8 @@ lyric_symbolizer::LyricSymbolizer::symbolizeModule(
             objectStateOptions);
 
         lyric_rewriter::RewriterOptions rewriterOptions;
+        rewriterOptions.visitorRegistry = m_options.visitorRegistry;
+
         lyric_rewriter::LyricRewriter rewriter(rewriterOptions);
         TU_RETURN_IF_NOT_OK (rewriter.scanArchetype(archetype, location.toUrl(), builder, recorder));
 

@@ -16,6 +16,7 @@ set(TEST_CASES
     compile_definstance_tests.cpp
     compile_defstruct_tests.cpp
     compile_lambda_tests.cpp
+    compile_load_and_store_macro_tests.cpp
     compile_match_tests.cpp
     compile_namespace_tests.cpp
     compile_new_tests.cpp

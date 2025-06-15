@@ -7,6 +7,7 @@
 #include <lyric_build/task_settings.h>
 #include <lyric_build/dependency_loader.h>
 #include <lyric_build/internal/analyze_module_task.h>
+#include <lyric_build/internal/build_macros.h>
 #include <lyric_build/internal/task_utils.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/task_hasher.h>
@@ -61,6 +62,9 @@ lyric_build::internal::AnalyzeModuleTask::configure(const TaskSettings *config)
         m_parseTarget,
         m_symbolizeTarget,
     };
+
+    // extend visitor registry to include assembler and compiler vocabularies
+    TU_ASSIGN_OR_RETURN (m_analyzerOptions.visitorRegistry, make_build_visitors());
 
     return {};
 }

@@ -27,7 +27,7 @@ lyric_rewriter::AstParamVisitor::enter(lyric_parser::ArchetypeNode *node, Visito
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDefaultOffset, defaultNode));
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(defaultNode));
-        ctx.push(-1, defaultNode, visitor);
+        ctx.push(node, -1, defaultNode, visitor);
     }
 
     return {};

@@ -20,11 +20,11 @@ lyric_rewriter::RewriteProcessor::process(
             RewriterCondition::kRewriterInvariant, "archetype state has no root");
 
     //
-    m_stack.emplace_back(Visitation{-1, root, std::move(visitor), false});
+    m_stack.emplace_back(Visitation{nullptr, -1, root, std::move(visitor), false});
 
     while (!isEmpty()) {
         auto &visitation = peek();
-        VisitorContext ctx(state, visitation.visitor, parentNode(), visitation.index);
+        VisitorContext ctx(state, visitation.visitor, visitation.parent, visitation.index);
         if (!visitation.seen) {
             TU_RETURN_IF_NOT_OK (visitation.visitor->enter(visitation.node, ctx));
             visitation.seen = true;
@@ -51,14 +51,14 @@ lyric_rewriter::RewriteProcessor::peek()
     return m_stack.back();
 }
 
-lyric_parser::ArchetypeNode *
-lyric_rewriter::RewriteProcessor::parentNode()
-{
-    if (m_stack.size() <= 1)
-        return nullptr;
-    auto &parent = m_stack.at(m_stack.size() - 2);
-    return parent.node;
-}
+// lyric_parser::ArchetypeNode *
+// lyric_rewriter::RewriteProcessor::parentNode()
+// {
+//     if (m_stack.size() <= 1)
+//         return nullptr;
+//     auto &parent = m_stack.at(m_stack.size() - 2);
+//     return parent.node;
+// }
 
 void
 lyric_rewriter::RewriteProcessor::pop()
@@ -113,11 +113,13 @@ lyric_rewriter::VisitorContext::setSkipChildren(bool skip)
 
 void
 lyric_rewriter::VisitorContext::push(
+    lyric_parser::ArchetypeNode *parentNode,
     int childIndex,
     lyric_parser::ArchetypeNode *childNode,
     std::shared_ptr<AbstractNodeVisitor> visitor)
 {
     Visitation visitation;
+    visitation.parent = parentNode;
     visitation.index = childIndex;
     visitation.node = childNode;
     visitation.visitor = visitor? visitor : m_curr;

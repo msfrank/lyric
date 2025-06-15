@@ -23,7 +23,7 @@ lyric_rewriter::AstSequenceVisitor::enter(lyric_parser::ArchetypeNode *node, Vis
         auto *child = node->getChild(index);
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(child));
-        ctx.push(index, child, visitor);
+        ctx.push(node, index, child, visitor);
     }
 
     return {};

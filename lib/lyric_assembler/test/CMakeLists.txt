@@ -5,9 +5,10 @@ include(GoogleTest)
 # define unit tests
 
 set(TEST_CASES
+    allocator_trap_macro_tests.cpp
     block_handle_tests.cpp
     code_fragment_tests.cpp
-    allocator_trap_macro_tests.cpp
+    load_data_macro_tests.cpp
     plugin_macro_tests.cpp
     trap_macro_tests.cpp
     )

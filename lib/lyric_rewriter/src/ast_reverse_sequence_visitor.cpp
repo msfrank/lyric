@@ -26,7 +26,7 @@ lyric_rewriter::AstReverseSequenceVisitor::enter(lyric_parser::ArchetypeNode *no
     for (auto &childAndIndex : children) {
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(childAndIndex.first));
-        ctx.push(childAndIndex.second, childAndIndex.first, visitor);
+        ctx.push(node, childAndIndex.second, childAndIndex.first, visitor);
     }
 
     return {};

@@ -22,7 +22,7 @@ lyric_typing::resolve_singular(
     // if assignable has parameters, then resolve them to types first
     for (const auto &assignableParam : assignable.getTypeParameters()) {
         lyric_common::TypeDef typeArgument;
-        TU_ASSIGN_OR_RETURN (typeArgument, resolve_singular(assignableParam, resolver, state));
+        TU_ASSIGN_OR_RETURN (typeArgument, resolve_assignable(assignableParam, resolver, state));
         typeArguments.push_back(typeArgument);
     }
 

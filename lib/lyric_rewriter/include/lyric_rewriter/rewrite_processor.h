@@ -12,6 +12,7 @@ namespace lyric_rewriter {
     class AbstractNodeVisitor;
 
     struct Visitation {
+        lyric_parser::ArchetypeNode *parent;
         int index;
         lyric_parser::ArchetypeNode *node;
         std::shared_ptr<AbstractNodeVisitor> visitor;
@@ -33,6 +34,7 @@ namespace lyric_rewriter {
 
         void setSkipChildren(bool skip);
         void push(
+            lyric_parser::ArchetypeNode *parent,
             int childIndex,
             lyric_parser::ArchetypeNode *childNode,
             std::shared_ptr<AbstractNodeVisitor> visitor = {});
@@ -81,8 +83,8 @@ namespace lyric_rewriter {
 
         bool isEmpty();
         Visitation& peek();
-        lyric_parser::ArchetypeNode *parentNode();
         void pop();
+        //lyric_parser::ArchetypeNode *parentNode();
     };
 }
 

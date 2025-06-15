@@ -41,13 +41,13 @@ lyric_rewriter::AstDefconceptVisitor::enter(lyric_parser::ArchetypeNode *node, V
     for (auto it = implNodes.rbegin(); it != implNodes.rend(); it++) {
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(it->first));
-        ctx.push(it->second, it->first, visitor);
+        ctx.push(node, it->second, it->first, visitor);
     }
 
     for (auto it = actionNodes.rbegin(); it != actionNodes.rend(); it++) {
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(it->first));
-        ctx.push(it->second, it->first, visitor);
+        ctx.push(node, it->second, it->first, visitor);
     }
 
     return {};

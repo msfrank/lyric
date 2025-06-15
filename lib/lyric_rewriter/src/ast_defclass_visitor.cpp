@@ -53,25 +53,25 @@ lyric_rewriter::AstDefclassVisitor::enter(lyric_parser::ArchetypeNode *node, Vis
         auto &pair = initNodeOption.peekValue();
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(pair.first));
-        ctx.push(pair.second, pair.first, visitor);
+        ctx.push(node, pair.second, pair.first, visitor);
     }
 
     for (auto it = implNodes.rbegin(); it != implNodes.rend(); it++) {
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(it->first));
-        ctx.push(it->second, it->first, visitor);
+        ctx.push(node, it->second, it->first, visitor);
     }
 
     for (auto it = methodNodes.rbegin(); it != methodNodes.rend(); it++) {
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(it->first));
-        ctx.push(it->second, it->first, visitor);
+        ctx.push(node, it->second, it->first, visitor);
     }
 
     for (auto it = memberNodes.rbegin(); it != memberNodes.rend(); it++) {
         std::shared_ptr<AbstractNodeVisitor> visitor;
         TU_ASSIGN_OR_RETURN (visitor, makeVisitor(it->first));
-        ctx.push(it->second, it->first, visitor);
+        ctx.push(node, it->second, it->first, visitor);
     }
 
     return {};

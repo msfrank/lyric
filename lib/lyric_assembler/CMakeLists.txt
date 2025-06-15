@@ -128,8 +128,10 @@ target_sources(lyric_assembler PRIVATE
     src/internal/allocator_trap_macro.cpp
     include/lyric_assembler/internal/plugin_macro.h
     src/internal/plugin_macro.cpp
-    include/lyric_assembler/internal/push_data_macro.h
-    src/internal/push_data_macro.cpp
+    include/lyric_assembler/internal/load_data_macro.h
+    src/internal/load_data_macro.cpp
+    include/lyric_assembler/internal/store_data_macro.h
+    src/internal/store_data_macro.cpp
     include/lyric_assembler/internal/trap_macro.h
     src/internal/trap_macro.cpp
 
