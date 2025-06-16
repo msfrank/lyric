@@ -1,7 +1,6 @@
 
 #include <lyric_assembler/assembler_macro_visitor.h>
-
-#include "lyric_schema/assembler_schema.h"
+#include <lyric_schema/assembler_schema.h>
 
 lyric_assembler::AssemblerMacroVisitor::AssemblerMacroVisitor(lyric_rewriter::AbstractProcessorState *state)
     : m_state(state)

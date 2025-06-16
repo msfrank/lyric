@@ -244,6 +244,46 @@ compare_concrete_to_union(
 }
 
 static tempo_utils::Result<lyric_runtime::TypeComparison>
+compare_placeholder_to_union(
+    const lyric_common::TypeDef &toUnion,
+    const lyric_common::TypeDef &fromPlaceholder,
+    lyric_assembler::ObjectState *state)
+{
+    TU_ASSERT (toUnion.getType() == lyric_common::TypeDefType::Union);
+    TU_ASSERT (fromPlaceholder.getType() == lyric_common::TypeDefType::Placeholder);
+
+    for (auto iterator = toUnion.unionMembersBegin(); iterator != toUnion.unionMembersEnd(); iterator++) {
+        const auto &memberType = *iterator;
+
+        lyric_runtime::TypeComparison comparison = lyric_runtime::TypeComparison::DISJOINT;
+
+        switch (memberType.getType()) {
+            case lyric_common::TypeDefType::Concrete: {
+                break;
+            }
+            case lyric_common::TypeDefType::Placeholder: {
+                TU_ASSIGN_OR_RETURN (comparison, compare_placeholder_to_placeholder(
+                    memberType, fromPlaceholder, state));
+                break;
+            }
+            default:
+                return lyric_typing::TypingStatus::forCondition(lyric_typing::TypingCondition::kInvalidType,
+                    "union type {} contains invalid member {}", toUnion.toString(), memberType.toString());
+        }
+
+        switch (comparison) {
+            case lyric_runtime::TypeComparison::EQUAL:
+            case lyric_runtime::TypeComparison::EXTENDS:
+                return comparison;
+            default:
+                break;
+        }
+    }
+
+    return lyric_runtime::TypeComparison::DISJOINT;
+}
+
+static tempo_utils::Result<lyric_runtime::TypeComparison>
 compare_union_to_union(
     const lyric_common::TypeDef &toUnion,
     const lyric_common::TypeDef &fromUnion,
@@ -384,6 +424,8 @@ compare_union(
     switch (fromType.getType()) {
         case lyric_common::TypeDefType::Concrete:
             return compare_concrete_to_union(toUnion, fromType, state);
+        case lyric_common::TypeDefType::Placeholder:
+            return compare_placeholder_to_union(toUnion, fromType, state);
         case lyric_common::TypeDefType::Union:
             return compare_union_to_union(toUnion, fromType, state);
         default:

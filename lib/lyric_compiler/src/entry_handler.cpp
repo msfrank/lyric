@@ -24,7 +24,7 @@ tempo_utils::Status
 lyric_compiler::EntryHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     if (!node->isClass(lyric_schema::kLyricAstBlockClass))
         return CompilerStatus::forCondition(
@@ -50,10 +50,12 @@ lyric_compiler::EntryHandler::before(
     for (int i = 0; i < numChildren; i++) {
         auto *child = node->getChild(i);
 
+        bool isSideEffect = i < numChildren - 1;
+        auto formType = isSideEffect? FormType::SideEffect : FormType::Any;
+
         // delegate any nodes not in AST namespace to the form handler
         if (!child->isNamespace(lyric_schema::kLyricAstNs)) {
-            auto any = std::make_unique<FormChoice>(
-                FormType::Any, fragment, entryBlock, driver);
+            auto any = std::make_unique<FormChoice>(formType, fragment, entryBlock, driver);
             ctx.appendChoice(std::move(any));
             continue;
         }
@@ -64,61 +66,61 @@ lyric_compiler::EntryHandler::before(
         switch (astId) {
             case lyric_schema::LyricAstId::Namespace: {
                 auto ns = std::make_unique<NamespaceHandler>(
-                    globalNamespace, true, rootBlock, driver);
+                    globalNamespace, isSideEffect, rootBlock, driver);
                 ctx.appendGrouping(std::move(ns));
                 break;
             }
             case lyric_schema::LyricAstId::Def: {
                 auto handler = std::make_unique<DefHandler>(
-                    /* isSideEffect= */ true, globalNamespace, globalNamespace->namespaceBlock(), driver);
+                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
                 break;
             }
             case lyric_schema::LyricAstId::DefAlias: {
                 auto handler = std::make_unique<DefAliasHandler>(
-                    /* isSideEffect= */ true, globalNamespace, globalNamespace->namespaceBlock(), driver);
+                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
                 break;
             }
             case lyric_schema::LyricAstId::DefClass: {
                 auto handler = std::make_unique<DefClassHandler>(
-                    /* isSideEffect= */ true, globalNamespace, globalNamespace->namespaceBlock(), driver);
+                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
                 break;
             }
             case lyric_schema::LyricAstId::DefConcept: {
                 auto handler = std::make_unique<DefConceptHandler>(
-                    /* isSideEffect= */ true, globalNamespace, globalNamespace->namespaceBlock(), driver);
+                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
                 break;
             }
             case lyric_schema::LyricAstId::DefEnum: {
                 auto handler = std::make_unique<DefEnumHandler>(
-                    /* isSideEffect= */ true, globalNamespace, globalNamespace->namespaceBlock(), driver);
+                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
                 break;
             }
             case lyric_schema::LyricAstId::DefInstance: {
                 auto handler = std::make_unique<DefInstanceHandler>(
-                    /* isSideEffect= */ true, globalNamespace, globalNamespace->namespaceBlock(), driver);
+                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
                 break;
             }
             case lyric_schema::LyricAstId::DefStatic: {
                 auto handler = std::make_unique<DefStaticHandler>(
-                    /* isSideEffect= */ true, globalNamespace, globalNamespace->namespaceBlock(), driver);
+                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
                 break;
             }
             case lyric_schema::LyricAstId::DefStruct: {
                 auto handler = std::make_unique<DefStructHandler>(
-                    /* isSideEffect= */ true, globalNamespace, globalNamespace->namespaceBlock(), driver);
+                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
                 ctx.appendGrouping(std::move(handler));
                 break;
             }
             case lyric_schema::LyricAstId::TypeName: {
                 auto handler = std::make_unique<TypenameHandler>(
-                    /* isSideEffect= */ true, globalNamespace, globalNamespace->namespaceBlock(), driver);
+                    isSideEffect, globalNamespace, globalNamespace->namespaceBlock(), driver);
                 ctx.appendChoice(std::move(handler));
                 break;
             }
@@ -131,8 +133,7 @@ lyric_compiler::EntryHandler::before(
                 break;
             }
             default: {
-                auto any = std::make_unique<FormChoice>(
-                    FormType::Any, fragment, entryBlock, driver);
+                auto any = std::make_unique<FormChoice>(formType, fragment, entryBlock, driver);
                 ctx.appendChoice(std::move(any));
                 break;
             }
@@ -146,7 +147,7 @@ tempo_utils::Status
 lyric_compiler::EntryHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     TU_LOG_INFO << "after EntryHandler@" << this;
     return {};
