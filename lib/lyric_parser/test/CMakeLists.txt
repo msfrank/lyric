@@ -10,6 +10,7 @@ set(TEST_CASES
     parse_constant_tests.cpp
     parse_def_tests.cpp
     parse_macro_tests.cpp
+    parse_type_tests.cpp
     parse_val_statement_tests.cpp
     )
 

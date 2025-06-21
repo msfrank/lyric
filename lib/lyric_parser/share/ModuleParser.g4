@@ -43,14 +43,31 @@ statement           : typenameStatement
 // symbols
 
 symbolIdentifier    : Identifier ;
-symbolPath          : Identifier ( DotOperator Identifier )? ;
-symbolAlias         : NamedKeyword Identifier ;
-
+symbolPath          : Identifier ( DotOperator Identifier )*
+                    | Identifier ( DotOperator Identifier )* DotOperator DotOperator
+                        { notifyErrorListeners("Extra '.' between identifiers in the symbol path"); }
+                    | Identifier ( DotOperator Identifier )* DotOperator DotOperator
+                        { notifyErrorListeners("Extra '.' at the end of the symbol path"); }
+                    ;
 
 // types
 
-simpleType          : Identifier ( DotOperator Identifier )* ;
-parametricType      : simpleType BracketOpen assignableType ( CommaOperator assignableType )* BracketClose ;
+simpleType          : Identifier ( DotOperator Identifier )*
+                    | Identifier ( DotOperator Identifier )* DotOperator
+                        { notifyErrorListeners("Extra '.' after identifier in the type path"); }
+                    ;
+parametricType      : simpleType BracketOpen assignableType ( CommaOperator assignableType )* BracketClose
+                    | simpleType BracketOpen assignableType ( CommaOperator assignableType )* BracketClose BracketClose
+                        { notifyErrorListeners("Extra ']' closing parametric type"); }
+                    | simpleType BracketOpen assignableType ( CommaOperator assignableType )* CommaOperator
+                        { notifyErrorListeners("Extra ',' after type parameter in the parametric type"); }
+                    | simpleType BracketOpen assignableType ( CommaOperator assignableType )* assignableType
+                        { notifyErrorListeners("Missing ',' between type parameters in the parametric type"); }
+                    | simpleType BracketOpen CommaOperator
+                        { notifyErrorListeners("Extra ',' before type parameter in the parametric type"); }
+                    | simpleType BracketOpen BracketClose
+                        { notifyErrorListeners("Parametric type must contain at least one type parameter"); }
+                    ;
 singularType        : parametricType | simpleType ;
 unionType           : singularType ( PipeOperator singularType )+ ;
 intersectionType    : singularType ( AmpersandOperator singularType )+ ;
@@ -79,16 +96,42 @@ constraintSpec      : WhereKeyword constraint ( CommaOperator constraint )* ;
 
 // argument lists
 
-argSpec             : Identifier AssignOperator expression | expression ;
-argList             : argSpec ( CommaOperator argSpec )* ;
+argSpec             : Identifier AssignOperator expression
+                    | expression
+                    | form
+                        { notifyErrorListeners("argument must be a valid expression or keyword argument"); }
+                    ;
+argList             : argSpec ( CommaOperator argSpec )*
+                    | argSpec ( CommaOperator argSpec )* CommaOperator
+                        { notifyErrorListeners("Extra ',' after argument in the argument list"); }
+                    | argSpec ( CommaOperator argSpec )* argSpec
+                        { notifyErrorListeners("Missing ',' between arguments in the argument list"); }
+                    | CommaOperator
+                        { notifyErrorListeners("Extra ',' before argument in the argument list"); }
+                    ;
 
 
 // initializer
 
-defaultInitializer  : assignableType CurlyOpen argList? CurlyClose                      # defaultInitializerTypedNew
-                    | CurlyOpen argList? CurlyClose                                     # defaultInitializerNew
-                    | literal                                                           # defaultInitializerLiteral
-                    ;
+defaultInitializerTypedNew      : assignableType CurlyOpen argList? CurlyClose
+                                | assignableType CurlyOpen argList? CurlyClose CurlyClose
+                                    { notifyErrorListeners("Extra '}' closing default initializer"); }
+                                | assignableType CurlyOpen argList?
+                                    { notifyErrorListeners("Missing '}' closing default initializer"); }
+                                | assignableType
+                                    { notifyErrorListeners("Missing default initializer argument list"); }
+                                ;
+defaultInitializerNew           : CurlyOpen argList? CurlyClose
+                                | CurlyOpen argList? CurlyClose CurlyClose
+                                    { notifyErrorListeners("Extra '}' closing default initializer"); }
+                                | CurlyOpen argList?
+                                    { notifyErrorListeners("Missing '}' closing default initializer"); }
+                                ;
+defaultInitializerLiteral       : literal ;
+defaultInitializer              : defaultInitializerTypedNew
+                                | defaultInitializerNew
+                                | defaultInitializerLiteral
+                                ;
 
 
 // parameter lists
@@ -104,11 +147,31 @@ param               : positionalParam | namedParam | renamedParam | namedCtx | r
 
 rest                : Identifier ColonOperator EllipsisOperator assignableType
                     | EllipsisOperator assignableType
+                    | EllipsisOperator
+                        { notifyErrorListeners("Missing type for rest parameter"); }
                     ;
 
-paramList           : rest | param ( CommaOperator param )* ( CommaOperator rest )? ;
-paramSpec           : ParenOpen paramList? ParenClose ;
-returnSpec          : ColonOperator assignableType ;
+paramList           : rest
+                    | param ( CommaOperator param )* ( CommaOperator rest )?
+                    | param ( CommaOperator param )* ( CommaOperator rest )? CommaOperator
+                        { notifyErrorListeners("Extra ',' after parameter in the parameter list"); }
+                    | rest CommaOperator
+                        { notifyErrorListeners("Rest parameter must be the last element in the parameter list"); }
+                    | CommaOperator
+                        { notifyErrorListeners("Extra ',' before parameter in the parameter list"); }
+                    ;
+paramSpec           : ParenOpen paramList? ParenClose
+                    | ParenOpen paramList? ParenClose ParenClose
+                        { notifyErrorListeners("Extra ')' closing parameter list"); }
+                    | ParenOpen paramList?
+                        { notifyErrorListeners("Missing ')' closing parameter list"); }
+                    ;
+returnSpec          : ColonOperator assignableType
+                    | ColonOperator
+                        { notifyErrorListeners("Missing return type after ':'"); }
+                    | assignableType
+                        { notifyErrorListeners("Missing ':' before return type"); }
+                    ;
 
 
 // typename statement
@@ -264,6 +327,7 @@ namespaceStatement  : definitionMacro? NamespaceKeyword
 // symbol management statements
 
 moduleLocation      : StringLiteral ;
+symbolAlias         : NamedKeyword Identifier ;
 
 importRef           : symbolPath symbolAlias? ;
 importSet           : CurlyOpen importRef ( CommaOperator importRef )* CurlyClose ;

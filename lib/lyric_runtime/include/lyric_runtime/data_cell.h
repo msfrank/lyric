@@ -15,7 +15,6 @@ namespace lyric_runtime {
     class BytesRef;
     class DescriptorEntry;
     class RestRef;
-    class StatusRef;
     class StringRef;
     class TypeEntry;
     class UrlRef;
@@ -87,7 +86,6 @@ namespace lyric_runtime {
             TypeEntry *type;
             BaseRef *ref;
             BytesRef *bytes;
-            StatusRef *status;
             StringRef *str;
             RestRef *rest;
             UrlRef *url;
