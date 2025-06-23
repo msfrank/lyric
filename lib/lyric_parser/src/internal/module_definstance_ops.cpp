@@ -202,9 +202,13 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceDef(ModuleParser::Inst
     if (hasError())
         return;
 
-    // pop the block node from the stack
+    // if def statement has a block then block is top of the stack, otherwise synthesize an empty node
     ArchetypeNode *blockNode;
-    TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
+    if (ctx->procBlock() && ctx->procBlock()->block()) {
+        TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
+    } else {
+        TU_ASSIGN_OR_RAISE (blockNode, state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
+    }
 
     // pop the pack node from the stack
     ArchetypeNode *packNode;

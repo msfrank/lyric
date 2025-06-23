@@ -210,21 +210,25 @@ assignmentOp        : AssignOperator
 setStatement        : SetKeyword assignmentSpec assignmentOp expression ;
 
 
-// def statement
+// proc block
 
-defBlock            : CurlyOpen block CurlyClose
-                    | CurlyOpen block CurlyClose CurlyClose
+procBlock           : CurlyOpen block? CurlyClose
+                    | CurlyOpen block? CurlyClose CurlyClose
                         { notifyErrorListeners("Extra '}' closing def"); }
                     | CurlyOpen block
                         { notifyErrorListeners("Missing '}' closing def"); }
                     ;
+
+
+// def statement
+
 defStatement        : definitionMacro? DefKeyword
                         symbolIdentifier placeholderSpec? paramSpec returnSpec? constraintSpec?
-                        defBlock ;
+                        procBlock ;
 
 // impl statement
 
-implDef             : DefKeyword symbolIdentifier paramSpec returnSpec? CurlyOpen block CurlyClose ;
+implDef             : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 implSpec            : implDef ;
 
 
@@ -236,8 +240,8 @@ classVal            : ValKeyword symbolIdentifier ColonOperator assignableType (
 classVar            : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 classDef            : DefKeyword symbolIdentifier
                         placeholderSpec? paramSpec returnSpec? constraintSpec?
-                        CurlyOpen block CurlyClose ;
-classInit           : InitKeyword paramSpec classSuper? CurlyOpen block? CurlyClose ;
+                        procBlock ;
+classInit           : InitKeyword paramSpec classSuper? procBlock ;
 genericClass        : placeholderSpec constraintSpec? ;
 classDerives        : ( SealedKeyword | FinalKeyword ) ;
 classSpec           : classInit | classVal | classVar | classDef | classImpl ;
@@ -262,7 +266,7 @@ defconceptStatement : definitionMacro? DefConceptKeyword
 
 instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType AssignOperator defaultInitializer ;
 instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType AssignOperator defaultInitializer ;
-instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec? CurlyOpen block CurlyClose ;
+instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 instanceDerives     : ( SealedKeyword | FinalKeyword ) ;
 instanceSpec        : instanceVal | instanceVar | instanceDef | instanceImpl ;
@@ -273,9 +277,9 @@ definstanceStatement: definitionMacro? DefInstanceKeyword
 
 // defenum statement
 
-enumInit            : InitKeyword paramSpec CurlyOpen block? CurlyClose ;
+enumInit            : InitKeyword paramSpec procBlock ;
 enumVal             : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
-enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec? CurlyOpen block CurlyClose ;
+enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 enumCase            : CaseKeyword symbolIdentifier ( ParenOpen argList? ParenClose )? ;
 enumImpl            : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 enumSpec            : enumInit | enumVal | enumDef | enumCase | enumImpl ;
@@ -287,9 +291,9 @@ defenumStatement    : definitionMacro? DefEnumKeyword
 // defstruct statement
 
 structSuper         : FromKeyword assignableType ParenOpen argList? ParenClose ;
-structInit          : InitKeyword paramSpec structSuper? CurlyOpen block? CurlyClose ;
+structInit          : InitKeyword paramSpec structSuper? procBlock ;
 structVal           : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
-structDef           : DefKeyword symbolIdentifier paramSpec returnSpec? CurlyOpen block CurlyClose ;
+structDef           : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 structDerives       : ( SealedKeyword | FinalKeyword ) ;
 structSpec          : structInit | structVal | structDef | structImpl ;
@@ -347,7 +351,7 @@ usingStatement      : usingAll | usingImpls ;
 
 // lambda expression
 
-lambdaExpression    : LambdaKeyword paramSpec returnSpec? CurlyOpen block CurlyClose ;
+lambdaExpression    : LambdaKeyword paramSpec returnSpec? procBlock ;
 
 
 // lambda-from expression

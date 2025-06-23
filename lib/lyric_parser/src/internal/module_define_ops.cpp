@@ -71,8 +71,13 @@ lyric_parser::internal::ModuleDefineOps::exitDefStatement(ModuleParser::DefState
     if (hasError())
         return;
 
+    // if def statement has a block then block is top of the stack, otherwise synthesize an empty node
     ArchetypeNode *blockNode;
-    TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
+    if (ctx->procBlock() && ctx->procBlock()->block()) {
+        TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
+    } else {
+        TU_ASSIGN_OR_RAISE (blockNode, state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
+    }
 
     ArchetypeNode *packNode;
     TU_ASSIGN_OR_RAISE (packNode, state->popNode());
@@ -138,8 +143,13 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
     if (hasError())
         return;
 
+    // if def statement has a block then block is top of the stack, otherwise synthesize an empty node
     ArchetypeNode *blockNode;
-    TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
+    if (ctx->procBlock() && ctx->procBlock()->block()) {
+        TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
+    } else {
+        TU_ASSIGN_OR_RAISE (blockNode, state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
+    }
 
     ArchetypeNode *packNode;
     TU_ASSIGN_OR_RAISE (packNode, state->popNode());
@@ -166,12 +176,17 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
         TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
     }
 
+    // append pack node to the def
     TU_RAISE_IF_NOT_OK (defNode->appendChild(packNode));
+
+    // append block node to the def
     TU_RAISE_IF_NOT_OK (defNode->appendChild(blockNode));
 
+    // peek node on stack, verify it is impl
     ArchetypeNode *implNode;
     TU_ASSIGN_OR_RAISE (implNode, state->peekNode(lyric_schema::kLyricAstImplClass));
 
+    // append def node to impl
     TU_RAISE_IF_NOT_OK (implNode->appendChild(defNode));
 }
 

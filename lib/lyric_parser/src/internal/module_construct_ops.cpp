@@ -89,9 +89,13 @@ lyric_parser::internal::ModuleConstructOps::parseLambdaExpression(ModuleParser::
     if (hasError())
         return;
 
-    // if stack is empty, then mark source as incomplete
+    // if lambda expression has a block then block is top of the stack, otherwise synthesize an empty node
     ArchetypeNode *blockNode;
-    TU_ASSIGN_OR_RAISE (blockNode, state->popNode(lyric_schema::kLyricAstBlockClass));
+    if (ctx->procBlock() && ctx->procBlock()->block()) {
+        TU_ASSIGN_OR_RAISE (blockNode, state->popNode(lyric_schema::kLyricAstBlockClass));
+    } else {
+        TU_ASSIGN_OR_RAISE (blockNode, state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
+    }
 
     ArchetypeNode *packNode;
     TU_ASSIGN_OR_RAISE (packNode, state->popNode(lyric_schema::kLyricAstPackClass));

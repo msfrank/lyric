@@ -67,10 +67,12 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumInit(ModuleParser::EnumInitCon
     if (hasError())
         return;
 
-    // if init statement has a block, then block is top of the stack
+    // if init statement has a block then block is top of the stack, otherwise synthesize an empty node
     ArchetypeNode *blockNode = nullptr;
-    if (ctx->block()) {
+    if (ctx->procBlock() && ctx->procBlock()->block()) {
         TU_ASSIGN_OR_RAISE (blockNode, state->popNode(lyric_schema::kLyricAstBlockClass));
+    } else {
+        TU_ASSIGN_OR_RAISE (blockNode, state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
     }
 
     // the parameter list
@@ -80,17 +82,18 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumInit(ModuleParser::EnumInitCon
     // create the init node
     ArchetypeNode *initNode;
     TU_ASSIGN_OR_RAISE (initNode, state->appendNode(lyric_schema::kLyricAstInitClass, location));
+
+    // append pack node to init
     TU_RAISE_IF_NOT_OK (initNode->appendChild(packNode));
 
     // synthesize an empty super node
     ArchetypeNode *superNode;
     TU_ASSIGN_OR_RAISE (superNode, state->appendNode(lyric_schema::kLyricAstSuperClass, {}));
+
+    // append super node to the init
     TU_RAISE_IF_NOT_OK (initNode->appendChild(superNode));
 
-    // if block node is not specified then synthesize an empty node
-    if (blockNode == nullptr) {
-        TU_ASSIGN_OR_RAISE (blockNode, state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
-    }
+    // append block node to the init
     TU_RAISE_IF_NOT_OK (initNode->appendChild(blockNode));
 
     // peek node on stack, verify it is defenum
@@ -202,9 +205,13 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumDef(ModuleParser::EnumDefConte
     if (hasError())
         return;
 
-    // pop the block node from stack
+    // if def statement has a block then block is top of the stack, otherwise synthesize an empty node
     ArchetypeNode *blockNode;
-    TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
+    if (ctx->procBlock() && ctx->procBlock()->block()) {
+        TU_ASSIGN_OR_RAISE (blockNode, state->popNode());
+    } else {
+        TU_ASSIGN_OR_RAISE (blockNode, state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
+    }
 
     // pop the pack node from stack
     ArchetypeNode *packNode;
