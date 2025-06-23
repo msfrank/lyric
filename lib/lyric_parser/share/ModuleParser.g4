@@ -156,7 +156,7 @@ paramList           : rest
                     | param ( CommaOperator param )* ( CommaOperator rest )? CommaOperator
                         { notifyErrorListeners("Extra ',' after parameter in the parameter list"); }
                     | rest CommaOperator
-                        { notifyErrorListeners("Rest parameter must be the last element in the parameter list"); }
+                        { notifyErrorListeners("Rest parameter must be the last parameter in the parameter list"); }
                     | CommaOperator
                         { notifyErrorListeners("Extra ',' before parameter in the parameter list"); }
                     ;
