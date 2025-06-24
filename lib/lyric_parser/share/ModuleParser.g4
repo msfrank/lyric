@@ -96,35 +96,38 @@ constraintSpec      : WhereKeyword constraint ( CommaOperator constraint )* ;
 
 // argument lists
 
-argSpec             : Identifier AssignOperator expression
+argument            : Identifier AssignOperator expression
                     | expression
                     | form
                         { notifyErrorListeners("argument must be a valid expression or keyword argument"); }
                     ;
-argList             : argSpec ( CommaOperator argSpec )*
-                    | argSpec ( CommaOperator argSpec )* CommaOperator
+argumentList        : argument ( CommaOperator argument )*
+                    | argument ( CommaOperator argument )* CommaOperator
                         { notifyErrorListeners("Extra ',' after argument in the argument list"); }
-                    | argSpec ( CommaOperator argSpec )* argSpec
+                    | argument ( CommaOperator argument )* argument
                         { notifyErrorListeners("Missing ',' between arguments in the argument list"); }
                     | CommaOperator
                         { notifyErrorListeners("Extra ',' before argument in the argument list"); }
                     ;
-
+callArguments       : ParenOpen argumentList? ParenClose
+                    ;
+newArguments        : CurlyOpen argumentList? CurlyClose
+                    ;
 
 // initializer
 
-defaultInitializerTypedNew      : assignableType CurlyOpen argList? CurlyClose
-                                | assignableType CurlyOpen argList? CurlyClose CurlyClose
+defaultInitializerTypedNew      : assignableType CurlyOpen argumentList? CurlyClose
+                                | assignableType CurlyOpen argumentList? CurlyClose CurlyClose
                                     { notifyErrorListeners("Extra '}' closing default initializer"); }
-                                | assignableType CurlyOpen argList?
+                                | assignableType CurlyOpen argumentList?
                                     { notifyErrorListeners("Missing '}' closing default initializer"); }
                                 | assignableType
                                     { notifyErrorListeners("Missing default initializer argument list"); }
                                 ;
-defaultInitializerNew           : CurlyOpen argList? CurlyClose
-                                | CurlyOpen argList? CurlyClose CurlyClose
+defaultInitializerNew           : CurlyOpen argumentList? CurlyClose
+                                | CurlyOpen argumentList? CurlyClose CurlyClose
                                     { notifyErrorListeners("Extra '}' closing default initializer"); }
-                                | CurlyOpen argList?
+                                | CurlyOpen argumentList?
                                     { notifyErrorListeners("Missing '}' closing default initializer"); }
                                 ;
 defaultInitializerLiteral       : literal ;
@@ -234,7 +237,7 @@ implSpec            : implDef ;
 
 // defclass statement
 
-classSuper          : FromKeyword assignableType ParenOpen argList? ParenClose ;
+classSuper          : FromKeyword assignableType callArguments? ;
 classImpl           : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 classVal            : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 classVar            : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
@@ -280,7 +283,7 @@ definstanceStatement: definitionMacro? DefInstanceKeyword
 enumInit            : InitKeyword paramSpec procBlock ;
 enumVal             : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
-enumCase            : CaseKeyword symbolIdentifier ( ParenOpen argList? ParenClose )? ;
+enumCase            : CaseKeyword symbolIdentifier callArguments? ;
 enumImpl            : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 enumSpec            : enumInit | enumVal | enumDef | enumCase | enumImpl ;
 defenumStatement    : definitionMacro? DefEnumKeyword
@@ -290,7 +293,7 @@ defenumStatement    : definitionMacro? DefEnumKeyword
 
 // defstruct statement
 
-structSuper         : FromKeyword assignableType ParenOpen argList? ParenClose ;
+structSuper         : FromKeyword assignableType callArguments ;
 structInit          : InitKeyword paramSpec structSuper? procBlock ;
 structVal           : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 structDef           : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
@@ -474,13 +477,12 @@ newOrDeref          : derefLiteral derefSpec*                                   
 
 derefLiteral        : literal ;
 derefGrouping       : ParenOpen expression ParenClose ;
-derefNew            : assignableType CurlyOpen argList? CurlyClose ;
+derefNew            : assignableType newArguments ;
 thisSpec            : ThisKeyword ;
-callSpec            : Identifier typeArguments? ParenOpen argList? ParenClose ;
+callSpec            : Identifier typeArguments? callArguments ;
 nameSpec            : Identifier ;
 
-derefSpec           : DotOperator
-                        Identifier typeArguments? ParenOpen argList? ParenClose             # derefMethod
+derefSpec           : DotOperator Identifier typeArguments? callArguments                   # derefMethod
                     | DotOperator Identifier                                                # derefMember
                     ;
 
@@ -529,7 +531,7 @@ keywordLiteral          : trueLiteral | falseLiteral | undefLiteral | nilLiteral
 
 // macro forms
 
-macroArgs           : ParenOpen argList? ParenClose ;
+macroArgs           : ParenOpen argumentList? ParenClose ;
 macroCall           : Identifier macroArgs ;
 macroAnnotation     : AtOperator Identifier macroArgs ;
 

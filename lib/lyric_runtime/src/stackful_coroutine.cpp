@@ -1,5 +1,24 @@
 
+#include <lyric_runtime/interpreter_result.h>
 #include <lyric_runtime/stackful_coroutine.h>
+
+/**
+ *
+ * @tparam T stack element type
+ * @param stack stack to operate on
+ * @param offset the specified offset, which can be negative
+ * @return the absolute index, or -1 if the offset is out of bounds
+ */
+template<typename T>
+int
+calculate_stack_index(const std::vector<T> &stack, int offset)
+{
+    auto size = stack.size();
+    if (offset < 0) {
+        offset = size + offset;
+    }
+    return offset < size? offset : -1;
+}
 
 lyric_runtime::StackfulCoroutine::StackfulCoroutine()
     : m_IP(),
@@ -38,7 +57,35 @@ lyric_runtime::StackfulCoroutine::transferControl(const lyric_object::BytecodeIt
     m_SP = sp;
 }
 
-void
+/**
+ * Returns the call on the top of the call stack. If the call stack is empty then StatusException is thrown.
+ *
+ * @return Reference to the call on the top of the call stack.
+ */
+lyric_runtime::CallCell&
+lyric_runtime::StackfulCoroutine::currentCallOrThrow()
+{
+    if (m_callStack.empty()) [[unlikely]]
+        throw tempo_utils::StatusException(InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "empty call stack"));
+    return m_callStack.back();
+}
+
+/**
+ * Returns the call on the top of the call stack. If the call stack is empty then StatusException is thrown.
+ *
+ * @return Const reference to the call on the top of the call stack.
+ */
+const lyric_runtime::CallCell&
+lyric_runtime::StackfulCoroutine::currentCallOrThrow() const
+{
+    if (m_callStack.empty()) [[unlikely]]
+        throw tempo_utils::StatusException(InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "empty call stack"));
+    return m_callStack.back();
+}
+
+tempo_utils::Status
 lyric_runtime::StackfulCoroutine::pushCall(
     const CallCell &value,
     const lyric_object::BytecodeIterator &ip,
@@ -47,41 +94,60 @@ lyric_runtime::StackfulCoroutine::pushCall(
     m_IP = ip;
     m_SP = sp;
     m_callStack.push_back(value);
+    return {};
 }
 
-lyric_runtime::CallCell
-lyric_runtime::StackfulCoroutine::popCall()
+tempo_utils::Status
+lyric_runtime::StackfulCoroutine::popCall(CallCell &value)
 {
-    auto call = m_callStack.back();
+    if (m_callStack.empty())
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "call stack is empty");
+    value = std::move(m_callStack.back());
     m_callStack.pop_back();
-    return call;
+    return {};
 }
 
-lyric_runtime::CallCell&
-lyric_runtime::StackfulCoroutine::peekCall(int offset)
+tempo_utils::Status
+lyric_runtime::StackfulCoroutine::peekCall(const CallCell **valueptr, int offset) const
 {
+    TU_ASSERT (valueptr != nullptr);
+    offset = calculate_stack_index(m_callStack, offset);
     if (offset < 0)
-        return m_callStack[m_callStack.size() + offset];
-    return m_callStack[offset];
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid call stack offset");
+    auto &value = m_callStack.at(offset);
+    *valueptr = &value;
+    return {};
 }
 
-const lyric_runtime::CallCell&
-lyric_runtime::StackfulCoroutine::peekCall(int offset) const
+tempo_utils::Status
+lyric_runtime::StackfulCoroutine::peekCall(CallCell **valueptr, int offset)
 {
+    TU_ASSERT (valueptr != nullptr);
+    offset = calculate_stack_index(m_callStack, offset);
     if (offset < 0)
-        return m_callStack[m_callStack.size() + offset];
-    return m_callStack[offset];
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid call stack offset");
+    *valueptr = &m_callStack[offset];
+    return {};
 }
 
-void
+tempo_utils::Status
 lyric_runtime::StackfulCoroutine::dropCall(int offset)
 {
-    int index = offset < 0? m_callStack.size() + offset : offset;
-    if (0 <= index && std::cmp_less(index, m_callStack.size())) {
-        m_callStack.erase(m_callStack.cbegin() + index);
-    } else {
-        TU_LOG_ERROR << "dropCall failed due to invalid offset " << offset;
-    }
+    offset = calculate_stack_index(m_callStack, offset);
+    if (offset < 0)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid call stack offset");
+    m_callStack.erase(m_callStack.cbegin() + offset);
+    return {};
+}
+
+bool
+lyric_runtime::StackfulCoroutine::callStackEmpty() const
+{
+    return m_callStack.empty();
 }
 
 int
@@ -102,77 +168,105 @@ lyric_runtime::StackfulCoroutine::callsEnd() const
     return m_callStack.crend();
 }
 
-void
+tempo_utils::Status
 lyric_runtime::StackfulCoroutine::pushData(const DataCell &value)
 {
     m_dataStack.push_back(value);
+    return {};
 }
 
-lyric_runtime::DataCell
-lyric_runtime::StackfulCoroutine::popData()
+tempo_utils::Status
+lyric_runtime::StackfulCoroutine::popData(DataCell &value)
 {
-    auto value = m_dataStack.back();
+    if (m_dataStack.empty())
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "data stack is empty");
+    value = std::move(m_dataStack.back());
     m_dataStack.pop_back();
-    return value;
+    return {};
 }
 
-std::vector<lyric_runtime::DataCell>
-lyric_runtime::StackfulCoroutine::popData(int count)
+tempo_utils::Status
+lyric_runtime::StackfulCoroutine::popData(int count, std::vector<DataCell> &values)
 {
+    if (count < 0)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "pop data request count cannot be negative");
     if (std::cmp_greater(count, m_dataStack.size()))
-        return {};
-    std::vector<DataCell> values(count);
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "not enough values on data stack");
+    values.resize(count);
     for (int di = 0, si = m_dataStack.size() - count; di < count; di++, si++) {
-        values[di] = m_dataStack[si];
+        values[di] = std::move(m_dataStack[si]);
     }
     m_dataStack.resize(m_dataStack.size() - count);
-    return values;
+    return {};
 }
 
-lyric_runtime::DataCell&
-lyric_runtime::StackfulCoroutine::peekData(int offset)
+tempo_utils::Status
+lyric_runtime::StackfulCoroutine::peekData(const DataCell **valueptr, int offset) const
 {
+    offset = calculate_stack_index(m_dataStack, offset);
     if (offset < 0)
-        return m_dataStack[m_dataStack.size() + offset];
-    return m_dataStack[offset];
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid data stack offset");
+    const auto &value = m_dataStack.at(offset);
+    *valueptr = &value;
+    return {};
 }
 
-const lyric_runtime::DataCell&
-lyric_runtime::StackfulCoroutine::peekData(int offset) const
+tempo_utils::Status
+lyric_runtime::StackfulCoroutine::peekData(DataCell **valueptr, int offset)
 {
+    offset = calculate_stack_index(m_dataStack, offset);
     if (offset < 0)
-        return m_dataStack[m_dataStack.size() + offset];
-    return m_dataStack[offset];
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid data stack offset");
+    *valueptr = &m_dataStack[offset];
+    return {};
 }
 
-void
+tempo_utils::Status
 lyric_runtime::StackfulCoroutine::dropData(int offset)
 {
-    int index = offset < 0? m_dataStack.size() + offset : offset;
-    if (0 <= index && std::cmp_less(index, m_dataStack.size())) {
-        m_dataStack.erase(m_dataStack.cbegin() + index);
-    } else {
-        TU_LOG_ERROR << "dropValue failed due to invalid offset " << offset;
-    }
+    offset = calculate_stack_index(m_dataStack, offset);
+    if (offset < 0)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid data stack offset");
+    m_dataStack.erase(m_dataStack.cbegin() + offset);
+    return {};
+}
+
+tempo_utils::Status
+lyric_runtime::StackfulCoroutine::extendDataStack(int count)
+{
+    if (count < 0)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "cannot extend data stack using negative count");
+    m_dataStack.resize(m_dataStack.size() + count);
+    return {};
+}
+
+tempo_utils::Status
+lyric_runtime::StackfulCoroutine::resizeDataStack(int size)
+{
+    if (size < 0)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "cannot resize data stack using negative size");
+    m_dataStack.resize(size);
+    return {};
+}
+
+bool
+lyric_runtime::StackfulCoroutine::dataStackEmpty() const
+{
+    return m_dataStack.empty();
 }
 
 int
 lyric_runtime::StackfulCoroutine::dataStackSize() const
 {
     return m_dataStack.size();
-}
-
-void
-lyric_runtime::StackfulCoroutine::extendDataStack(int count)
-{
-    TU_ASSERT(count >= 0);
-    m_dataStack.resize(m_dataStack.size() + count);
-}
-
-void
-lyric_runtime::StackfulCoroutine::resizeDataStack(int count)
-{
-    m_dataStack.resize(count);
 }
 
 std::vector<lyric_runtime::DataCell>::const_reverse_iterator

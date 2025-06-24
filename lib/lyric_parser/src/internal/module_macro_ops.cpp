@@ -20,12 +20,12 @@ lyric_parser::internal::ModuleMacroOps::exitMacroArgs(ModuleParser::MacroArgsCon
     if (hasError())
         return;
 
-    if (ctx->argList()) {
-        auto *argList = ctx->argList();
+    if (ctx->argumentList()) {
+        auto *argList = ctx->argumentList();
 
         std::deque<ArchetypeNode *> argNodes;
         for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
-            auto *argSpec = argList->argSpec(i);
+            auto *argSpec = argList->argument(i);
             if (argSpec == nullptr)
                 continue;
 

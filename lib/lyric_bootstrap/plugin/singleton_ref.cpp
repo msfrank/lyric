@@ -80,7 +80,7 @@ singleton_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Inter
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
     const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
 

@@ -340,7 +340,7 @@ seq_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
     const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
 
@@ -355,7 +355,7 @@ seq_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
     auto *seq = static_cast<SeqRef *>(receiver.data.ref);
@@ -380,7 +380,7 @@ seq_size(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
@@ -395,7 +395,7 @@ seq_get(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterSt
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     TU_ASSERT (frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
@@ -418,7 +418,7 @@ seq_append(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     TU_ASSERT (frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
@@ -466,7 +466,7 @@ seq_extend(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     TU_ASSERT (frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
@@ -510,7 +510,7 @@ seq_slice(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     TU_ASSERT (frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
@@ -541,9 +541,10 @@ seq_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
-    const auto cell = currentCoro->popData();
+    lyric_runtime::DataCell cell;
+    TU_RETURN_IF_NOT_OK (currentCoro->popData(cell));
     TU_ASSERT(cell.type == lyric_runtime::DataCellType::CLASS);
 
     auto receiver = frame.getReceiver();
@@ -566,7 +567,7 @@ seq_iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::In
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
     const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
 
@@ -581,7 +582,7 @@ seq_iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::In
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     TU_ASSERT(frame.numArguments() == 0);
 
@@ -598,7 +599,7 @@ seq_iterator_next(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Int
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     TU_ASSERT(frame.numArguments() == 0);
 

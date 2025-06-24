@@ -14,6 +14,7 @@ namespace lyric_runtime {
     class CallCell {
 
     public:
+        CallCell();
         CallCell(
             tu_uint32 callIndex,
             tu_uint32 callSegment,
@@ -60,6 +61,8 @@ namespace lyric_runtime {
 
         CallCell& operator=(const CallCell &other);
         CallCell& operator=(CallCell &&other) noexcept;
+
+        bool isValid() const;
 
         tu_uint32 getCallIndex() const;
         tu_uint32 getCallSegment() const;

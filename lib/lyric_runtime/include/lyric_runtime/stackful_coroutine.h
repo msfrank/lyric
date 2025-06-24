@@ -20,24 +20,34 @@ namespace lyric_runtime {
 
         void transferControl(const lyric_object::BytecodeIterator &ip, BytecodeSegment *sp);
 
-        void pushCall(const CallCell &value, const lyric_object::BytecodeIterator &ip, BytecodeSegment *sp);
-        CallCell popCall();
-        CallCell& peekCall(int offset = -1);
-        const CallCell& peekCall(int offset = -1) const;
-        void dropCall(int offset = -1);
+        CallCell& currentCallOrThrow();
+        const CallCell& currentCallOrThrow() const;
+
+        tempo_utils::Status pushCall(
+            const CallCell &value,
+            const lyric_object::BytecodeIterator &ip,
+            BytecodeSegment *sp);
+        tempo_utils::Status popCall(CallCell &value);
+        tempo_utils::Status peekCall(const CallCell **valueptr, int offset = -1) const;
+        tempo_utils::Status peekCall(CallCell **valueptr, int offset = -1);
+        tempo_utils::Status dropCall(int offset = -1);
+
+        bool callStackEmpty() const;
         int callStackSize() const;
         std::vector<CallCell>::const_reverse_iterator callsBegin() const;
         std::vector<CallCell>::const_reverse_iterator callsEnd() const;
 
-        void pushData(const DataCell &value);
-        DataCell popData();
-        std::vector<DataCell> popData(int count);
-        DataCell& peekData(int offset = -1);
-        const DataCell& peekData(int offset = -1) const;
-        void dropData(int offset = -1);
+        tempo_utils::Status pushData(const DataCell &value);
+        tempo_utils::Status popData(DataCell &value);
+        tempo_utils::Status popData(int count, std::vector<DataCell> &values);
+        tempo_utils::Status peekData(const DataCell **valueptr, int offset = -1) const;
+        tempo_utils::Status peekData(DataCell **valueptr, int offset = -1);
+        tempo_utils::Status dropData(int offset = -1);
+        tempo_utils::Status extendDataStack(int count);
+        tempo_utils::Status resizeDataStack(int count);
+
+        bool dataStackEmpty() const;
         int dataStackSize() const;
-        void extendDataStack(int count);
-        void resizeDataStack(int count);
         std::vector<DataCell>::const_reverse_iterator dataBegin() const;
         std::vector<DataCell>::const_reverse_iterator dataEnd() const;
 

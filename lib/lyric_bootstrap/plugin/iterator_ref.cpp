@@ -51,7 +51,7 @@ iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interp
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
     const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
 
@@ -66,7 +66,7 @@ iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interp
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     TU_ASSERT(frame.numArguments() == 0);
 
@@ -83,7 +83,7 @@ iterator_next(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     TU_ASSERT(frame.numArguments() == 0);
 

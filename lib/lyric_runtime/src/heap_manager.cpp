@@ -270,15 +270,19 @@ lyric_runtime::HeapManager::constructNew(std::vector<DataCell> &args, tempo_util
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
 
-    auto &receiver = currentCoro->peekData();
-    if (receiver.type != DataCellType::REF) {
+    DataCell *receiver;
+    status = currentCoro->peekData(&receiver);
+    if (status.notOk())
+        return false;
+
+    if (receiver->type != DataCellType::REF) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kInvalidReceiver, "invalid data cell");
         return false;
     }
 
     // get the ctor call from the vtable
-    const auto *vtable = receiver.data.ref->getVirtualTable();
+    const auto *vtable = receiver->data.ref->getVirtualTable();
     TU_ASSERT (vtable != nullptr);
     const auto *ctor = vtable->getCtor();
     if (ctor == nullptr) {
@@ -332,7 +336,7 @@ lyric_runtime::HeapManager::constructNew(std::vector<DataCell> &args, tempo_util
     CallCell frame(callIndex, segment->getSegmentIndex(),
         procOffset, returnSP->getSegmentIndex(), returnIP, true,
         stackGuard, numArguments, numRest, numLocals, numLexicals,
-        args, receiver);
+        args, *receiver);
 
     // import each lexical from the latest activation and push it onto the stack
     for (uint16_t i = 0; i < numLexicals; i++) {

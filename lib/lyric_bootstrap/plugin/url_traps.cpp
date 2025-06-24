@@ -11,7 +11,7 @@ url_equals(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     TU_ASSERT(frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);

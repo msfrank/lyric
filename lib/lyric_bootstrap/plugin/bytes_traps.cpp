@@ -11,7 +11,7 @@ bytes_at(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     TU_ASSERT (frame.numArguments() == 1);
     const auto &index = frame.getArgument(0);
@@ -28,7 +28,7 @@ bytes_compare(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     TU_ASSERT(frame.numArguments() == 2);
     const auto &arg0 = frame.getArgument(0);
@@ -47,7 +47,7 @@ bytes_length(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::BYTES);
@@ -63,7 +63,7 @@ bytes_to_string(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Inter
 
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
 
     auto receiver = frame.getReceiver();
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::BYTES);

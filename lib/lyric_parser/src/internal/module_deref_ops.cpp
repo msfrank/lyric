@@ -185,10 +185,10 @@ lyric_parser::internal::ModuleDerefOps::exitCallSpec(ModuleParser::CallSpecConte
         TU_RAISE_IF_NOT_OK (callNode->putAttr(kLyricAstTypeArgumentsOffset, typeArgsNode));
     }
 
-    if (ctx->argList()) {
-        auto *argList = ctx->argList();
+    if (ctx->callArguments()->argumentList()) {
+        auto *argList = ctx->callArguments()->argumentList();
         for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
-            auto *argSpec = argList->argSpec(i);
+            auto *argSpec = argList->argument(i);
             if (argSpec == nullptr)
                 continue;
 
@@ -264,10 +264,10 @@ lyric_parser::internal::ModuleDerefOps::exitDerefMethod(ModuleParser::DerefMetho
         TU_RAISE_IF_NOT_OK (callNode->putAttr(kLyricAstTypeArgumentsOffset, typeArgsNode));
     }
 
-    if (ctx->argList()) {
-        auto *argList = ctx->argList();
+    if (ctx->callArguments()->argumentList()) {
+        auto *argList = ctx->callArguments()->argumentList();
         for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
-            auto *argSpec = argList->argSpec(i);
+            auto *argSpec = argList->argument(i);
             if (argSpec == nullptr)
                 continue;
 

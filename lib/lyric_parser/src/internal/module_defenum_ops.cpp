@@ -277,10 +277,10 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
     ArchetypeNode *caseNode;
     TU_ASSIGN_OR_RAISE (caseNode, state->appendNode(lyric_schema::kLyricAstCaseClass, location));
 
-    if (ctx->argList()) {
-        auto *argList = ctx->argList();
+    if (ctx->callArguments() && ctx->callArguments()->argumentList()) {
+        auto *argList = ctx->callArguments()->argumentList();
         for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
-            auto *argSpec = argList->argSpec(i);
+            auto *argSpec = argList->argument(i);
             if (argSpec == nullptr)
                 continue;
 

@@ -52,10 +52,10 @@ lyric_parser::internal::ModuleConstructOps::parseDerefNew(ModuleParser::DerefNew
     TU_ASSIGN_OR_RAISE (newNode, state->appendNode(lyric_schema::kLyricAstNewClass, location));
     TU_RAISE_IF_NOT_OK (newNode->putAttr(kLyricAstTypeOffset, typeNode));
 
-    if (ctx->argList()) {
-        auto *argList = ctx->argList();
+    if (ctx->newArguments()->argumentList()) {
+        auto *argList = ctx->newArguments()->argumentList();
         for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
-            auto *argSpec = argList->argSpec(static_cast<size_t>(i));
+            auto *argSpec = argList->argument(static_cast<size_t>(i));
             if (argSpec == nullptr)
                 continue;
 
@@ -154,10 +154,10 @@ lyric_parser::internal::ModuleConstructOps::parseDefaultInitializerTypedNew(Modu
     TU_ASSIGN_OR_RAISE (newNode, state->appendNode(lyric_schema::kLyricAstNewClass, location));
     TU_RAISE_IF_NOT_OK (newNode->putAttr(kLyricAstTypeOffset, typeNode));
 
-    if (ctx->argList()) {
-        auto *argList = ctx->argList();
+    if (ctx->argumentList()) {
+        auto *argList = ctx->argumentList();
         for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
-            auto *argSpec = argList->argSpec(static_cast<size_t>(i));
+            auto *argSpec = argList->argument(static_cast<size_t>(i));
             if (argSpec == nullptr)
                 continue;
 
@@ -197,10 +197,10 @@ lyric_parser::internal::ModuleConstructOps::parseDefaultInitializerNew(ModulePar
     ArchetypeNode *newNode;
     TU_ASSIGN_OR_RAISE (newNode, state->appendNode(lyric_schema::kLyricAstNewClass, location));
 
-    if (ctx->argList()) {
-        auto *argList = ctx->argList();
+    if (ctx->argumentList()) {
+        auto *argList = ctx->argumentList();
         for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
-            auto *argSpec = argList->argSpec(static_cast<size_t>(i));
+            auto *argSpec = argList->argument(static_cast<size_t>(i));
             if (argSpec == nullptr)
                 continue;
 

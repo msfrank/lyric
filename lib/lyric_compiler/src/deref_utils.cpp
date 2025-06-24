@@ -239,8 +239,9 @@ lyric_compiler::deref_namespace(
                 "invalid namespace binding");
     }
 
+    // FIXME: was this a remnant of previous behavior? removing the pop fixes test case
     // pop the prior namespace descriptor off the stack
-    TU_RETURN_IF_NOT_OK (fragment->popValue());
+    //TU_RETURN_IF_NOT_OK (fragment->popValue());
 
     // load the namespace binding onto the stack
     TU_RETURN_IF_NOT_OK (fragment->loadRef(ref));

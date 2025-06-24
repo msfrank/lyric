@@ -4,6 +4,21 @@
 #include <lyric_runtime/call_cell.h>
 #include <tempo_utils/log_stream.h>
 
+lyric_runtime::CallCell::CallCell()
+    : m_callIndex(INVALID_ADDRESS_U32),
+      m_callSegment(INVALID_ADDRESS_U32),
+      m_procOffset(INVALID_ADDRESS_U32),
+      m_returnSegment(INVALID_ADDRESS_U32),
+      m_returnsValue(false),
+      m_stackGuard(0),
+      m_numArguments(0),
+      m_numRest(0),
+      m_numLocals(0),
+      m_numLexicals(0),
+      m_vtable(nullptr)
+{
+}
+
 lyric_runtime::CallCell::CallCell(
     tu_uint32 callIndex,
     tu_uint32 callSegment,
@@ -194,10 +209,10 @@ lyric_runtime::CallCell::operator=(CallCell &&other) noexcept
         m_vtable = other.m_vtable;
 
         // invalidate other instance
-        other.m_callIndex = 0;
-        other.m_callSegment = 0;
-        other.m_procOffset = 0;
-        other.m_returnSegment = 0;
+        other.m_callIndex = INVALID_ADDRESS_U32;
+        other.m_callSegment = INVALID_ADDRESS_U32;
+        other.m_procOffset = INVALID_ADDRESS_U32;
+        other.m_returnSegment = INVALID_ADDRESS_U32;
         other.m_returnIP = {};
         other.m_stackGuard = 0;
         other.m_numArguments = 0;
@@ -210,6 +225,12 @@ lyric_runtime::CallCell::operator=(CallCell &&other) noexcept
     }
 
     return *this;
+}
+
+bool
+lyric_runtime::CallCell::isValid() const
+{
+    return m_callIndex != INVALID_ADDRESS_U32;
 }
 
 tu_uint32

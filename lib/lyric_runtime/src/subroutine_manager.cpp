@@ -762,7 +762,11 @@ lyric_runtime::SubroutineManager::returnToCaller(
     }
 
     // otherwise pop the top of the call stack and restore the *SP and *IP registers from the activation frame
-    auto frame = currentCoro->popCall();
+    CallCell frame;
+    status = currentCoro->popCall(frame);
+    if (status.notOk())
+        return false;
+
     auto ip = frame.getReturnIP();
     auto sp = m_segmentManager->getSegment(frame.getReturnSegment());
     currentCoro->transferControl(ip, sp);
@@ -771,11 +775,20 @@ lyric_runtime::SubroutineManager::returnToCaller(
     if (currentCoro->dataStackSize() > frame.getStackGuard()) {
         // preserve the top most item as the return value if call returns a value
         if (frame.returnsValue()) {
-            auto returnValue = currentCoro->popData();
-            currentCoro->resizeDataStack(frame.getStackGuard());
-            currentCoro->pushData(returnValue);
+            DataCell returnValue;
+            status = currentCoro->popData(returnValue);
+            if (status.notOk())
+                return false;
+            status = currentCoro->resizeDataStack(frame.getStackGuard());
+            if (status.notOk())
+                return false;
+            status = currentCoro->pushData(returnValue);
+            if (status.notOk())
+                return false;
         } else {
-            currentCoro->resizeDataStack(frame.getStackGuard());
+            status = currentCoro->resizeDataStack(frame.getStackGuard());
+            if (status.notOk())
+                return false;
         }
     }
 

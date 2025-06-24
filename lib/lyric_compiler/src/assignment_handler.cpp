@@ -52,7 +52,7 @@ tempo_utils::Status
 lyric_compiler::AssignmentHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     TU_LOG_INFO << "before AssignmentHandler@" << this;
 
@@ -80,7 +80,7 @@ tempo_utils::Status
 lyric_compiler::AssignmentHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     TU_LOG_INFO << "after AssignmentHandler@" << this;
 
@@ -100,13 +100,16 @@ lyric_compiler::AssignmentHandler::after(
 
     lyric_common::TypeDef rvalueType;
 
-    // apply the expression
     if (m_assignment.astId == lyric_schema::LyricAstId::Set) {
+        // append the evaluation expression
         TU_RETURN_IF_NOT_OK (m_fragment->appendFragment(std::move(m_assignment.evaluateExpression)));
+        // the type of the rhs of the assignment is expressionType
         rvalueType = m_assignment.expressionType;
     } else {
-        // duplicate the receiver
-        TU_RETURN_IF_NOT_OK (m_fragment->dupValue());
+        // if we are modifying a member then we need to duplicate the receiver because the next load consumes it
+        if (m_assignment.receiverType.isValid()) {
+            TU_RETURN_IF_NOT_OK (m_fragment->dupValue());
+        }
         // load the target (lhs) onto the stack
         TU_RETURN_IF_NOT_OK (m_fragment->loadRef(m_assignment.targetRef));
         TU_RETURN_IF_NOT_OK (driver->pushResult(m_assignment.targetRef.typeDef));
@@ -115,6 +118,7 @@ lyric_compiler::AssignmentHandler::after(
         TU_RETURN_IF_NOT_OK (driver->pushResult(m_assignment.expressionType));
         // perform the inplace operation
         TU_RETURN_IF_NOT_OK (compile_inplace_operator(m_assignment.astId, m_fragment, block, driver));
+        // the type of the rhs of the assignment is the result type from the in-place operation
         rvalueType = driver->peekResult();
         TU_RETURN_IF_NOT_OK (driver->popResult());
     }
@@ -145,9 +149,9 @@ lyric_compiler::AssignmentHandler::after(
 }
 
 lyric_compiler::AssignmentTarget::AssignmentTarget(
-    lyric_compiler::Assignment *assignment,
+    Assignment *assignment,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseChoice(block, driver),
       m_assignment(assignment)
 {
@@ -158,7 +162,7 @@ tempo_utils::Status
 lyric_compiler::AssignmentTarget::decide(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::DecideContext &ctx)
+    DecideContext &ctx)
 {
     if (!node->isNamespace(lyric_schema::kLyricAstNs))
         return {};
@@ -200,7 +204,7 @@ tempo_utils::Status
 lyric_compiler::AssignmentTargetHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     auto numChildren = node->numChildren();
     TU_ASSERT (numChildren > 0);
@@ -225,7 +229,7 @@ tempo_utils::Status
 lyric_compiler::AssignmentTargetHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     return {};
 }

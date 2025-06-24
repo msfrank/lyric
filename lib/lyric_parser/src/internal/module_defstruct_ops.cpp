@@ -61,10 +61,10 @@ lyric_parser::internal::ModuleDefstructOps::exitStructSuper(ModuleParser::Struct
     // set the super type
     TU_RAISE_IF_NOT_OK (superNode->putAttr(kLyricAstTypeOffset, superTypeNode));
 
-    if (ctx->argList()) {
-        auto *argList = ctx->argList();
+    if (ctx->callArguments()->argumentList()) {
+        auto *argList = ctx->callArguments()->argumentList();
         for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
-            auto *argSpec = argList->argSpec(i);
+            auto *argSpec = argList->argument(i);
             if (argSpec == nullptr)
                 continue;
 

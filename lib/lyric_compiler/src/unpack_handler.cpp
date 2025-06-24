@@ -173,8 +173,9 @@ lyric_compiler::UnpackHandler::after(
         TU_RETURN_IF_NOT_OK (m_fragment->storeRef(unwrapRef.second, /* initialStore= */ true));
     }
 
+    // FIXME: was this a remnant of previous behavior? removing the pop fixes test case
     // pop the tuple off the stack
-    TU_RETURN_IF_NOT_OK (m_fragment->popValue());
+    //TU_RETURN_IF_NOT_OK (m_fragment->popValue());
 
     return {};
 }

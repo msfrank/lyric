@@ -86,7 +86,7 @@ pair_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
     const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
 
@@ -101,7 +101,7 @@ pair_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
     auto receiver = frame.getReceiver();
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
     auto *pair = static_cast<PairRef *>(receiver.data.ref);
@@ -119,7 +119,7 @@ pair_first(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
@@ -134,7 +134,7 @@ pair_second(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
     TU_ASSERT (frame.numArguments() == 0);
     auto receiver = frame.getReceiver();
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);

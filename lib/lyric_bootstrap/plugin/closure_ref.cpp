@@ -216,7 +216,7 @@ closure_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
     const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
 
@@ -231,7 +231,7 @@ closure_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
 {
     auto *currentCoro = state->currentCoro();
 
-    auto &frame = currentCoro->peekCall();
+    auto &frame = currentCoro->currentCallOrThrow();
     TU_ASSERT(frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
     TU_ASSERT(arg0.type == lyric_runtime::DataCellType::CALL);
@@ -317,7 +317,8 @@ closure_apply(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
     auto *currentCoro = state->currentCoro();
 
     // pop the enclosing frame off the call stack
-    auto frame = currentCoro->popCall();
+    lyric_runtime::CallCell frame;
+    TU_RETURN_IF_NOT_OK (currentCoro->popCall(frame));
 
     // pop any temporaries related to the previous frame off the data stack
     currentCoro->resizeDataStack(frame.getStackGuard());

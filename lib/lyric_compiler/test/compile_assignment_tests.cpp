@@ -94,6 +94,87 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceAdd)
             var Count: Int
             init(count: Int) {
                 set this.Count = count
+            }
+        }
+
+        val test: Test = Test{10}
+        set test.Count += 1
+        test.Count
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(11))));
+}
+
+TEST_F(CompileAssignment, EvaluateMemberInplaceSubtract)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Test {
+            var Count: Int
+            init(count: Int) {
+                set this.Count = count
+            }
+        }
+
+        val test: Test = Test{10}
+        set test.Count -= 1
+        test.Count
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(9))));
+}
+
+TEST_F(CompileAssignment, EvaluateMemberInplaceMultiply)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Test {
+            var Count: Int
+            init(count: Int) {
+                set this.Count = count
+            }
+        }
+
+        val test: Test = Test{10}
+        set test.Count *= 2
+        test.Count
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(20))));
+}
+
+TEST_F(CompileAssignment, EvaluateMemberInplaceDivide)
+{
+    auto result = m_tester->runModule(R"(
+
+        defclass Test {
+            var Count: Int
+            init(count: Int) {
+                set this.Count = count
+            }
+        }
+
+        val test: Test = Test{10}
+        set test.Count /= 2
+        test.Count
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(5))));
+}
+
+TEST_F(CompileAssignment, EvaluateThisInplaceAdd)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Test {
+            var Count: Int
+            init(count: Int) {
+                set this.Count = count
                 set this.Count += 1
             }
         }
@@ -107,7 +188,7 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceAdd)
             DataCellInt(11))));
 }
 
-TEST_F(CompileAssignment, EvaluateMemberInplaceSubtract)
+TEST_F(CompileAssignment, EvaluateThisInplaceSubtract)
 {
     auto result = m_tester->runModule(R"(
         defclass Test {
@@ -127,7 +208,7 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceSubtract)
             DataCellInt(9))));
 }
 
-TEST_F(CompileAssignment, EvaluateMemberInplaceMultiply)
+TEST_F(CompileAssignment, EvaluateThisInplaceMultiply)
 {
     auto result = m_tester->runModule(R"(
         defclass Test {
@@ -147,7 +228,7 @@ TEST_F(CompileAssignment, EvaluateMemberInplaceMultiply)
             DataCellInt(20))));
 }
 
-TEST_F(CompileAssignment, EvaluateMemberInplaceDivide)
+TEST_F(CompileAssignment, EvaluateThisInplaceDivide)
 {
     auto result = m_tester->runModule(R"(
 

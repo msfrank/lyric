@@ -82,12 +82,12 @@ frame_to_symbol_url(const lyric_runtime::CallCell &frame, lyric_runtime::Interpr
 {
     auto *segment = state->segmentManager()->getSegment(frame.getCallSegment());
     if (segment == nullptr)
-        return lyric_common::SymbolUrl();
+        return {};
     auto objectLocation = segment->getObjectLocation();
     auto object = segment->getObject().getObject();
     auto call = object.getCall(frame.getCallIndex());
     if (!call.isValid())
-        return lyric_common::SymbolUrl();
+        return {};
     auto symbolPath = call.getSymbolPath();
     return lyric_common::SymbolUrl(objectLocation, symbolPath);
 }
@@ -125,12 +125,15 @@ lyric_test::TestInspector::printDataStack(lyric_runtime::InterpreterState *state
     TU_CONSOLE_OUT << "-------- DATA STACK DUMP --------";
 
     if (currentCoro->callStackSize() > 0) {
-        int lowerGuard = currentCoro->peekCall(untilFrameNr).getStackGuard();
+        lyric_runtime::CallCell *lowerCall, *currCall;
+        TU_RAISE_IF_NOT_OK (currentCoro->peekCall(&lowerCall, untilFrameNr));
+        int lowerGuard = lowerCall->getStackGuard();
         int currFrameNr = currentCoro->callStackSize() - 1;
-        int currGuard = currentCoro->peekCall().getStackGuard();
+        TU_RAISE_IF_NOT_OK (currentCoro->peekCall(&currCall));
+        int currGuard = currCall->getStackGuard();
         int valueNr = currentCoro->dataStackSize() - 1;
 
-        auto frameDescription = frame_to_description(currentCoro->peekCall(), state);
+        auto frameDescription = frame_to_description(*currCall, state);
         TU_CONSOLE_OUT << "Frame #" << currFrameNr << ": " << frameDescription;
 
         for (auto iterator = currentCoro->dataBegin(); iterator != currentCoro->dataEnd(); iterator++) {
@@ -139,9 +142,9 @@ lyric_test::TestInspector::printDataStack(lyric_runtime::InterpreterState *state
             if (valueNr < currGuard) {
                 while (valueNr < currGuard) {
                     currFrameNr--;
-                    const auto &frame = currentCoro->peekCall(currFrameNr);
-                    currGuard = frame.getStackGuard();
-                    frameDescription = frame_to_description(frame, state);
+                    TU_RAISE_IF_NOT_OK (currentCoro->peekCall(&currCall, currFrameNr));
+                    currGuard = currCall->getStackGuard();
+                    frameDescription = frame_to_description(*currCall, state);
                     TU_CONSOLE_OUT << "Frame #" << currFrameNr << ": " << frameDescription;
                 }
             }
@@ -151,8 +154,8 @@ lyric_test::TestInspector::printDataStack(lyric_runtime::InterpreterState *state
 
         while (currFrameNr > 0) {
             currFrameNr--;
-            const auto &frame = currentCoro->peekCall(currFrameNr);
-            frameDescription = frame_to_description(frame, state);
+            TU_RAISE_IF_NOT_OK (currentCoro->peekCall(&currCall, currFrameNr));
+            frameDescription = frame_to_description(*currCall, state);
             TU_CONSOLE_OUT << "Frame #" << currFrameNr << ": " << frameDescription;
         }
     }
@@ -168,15 +171,21 @@ lyric_test::TestInspector::printDataStackForFrame(lyric_runtime::InterpreterStat
     if (frameNr < 0 || frameNr > currentCoro->callStackSize() - 1)
         return;
 
-    const auto &frame = currentCoro->peekCall(frameNr);
-    int lowerGuard = frame.getStackGuard();
+    lyric_runtime::CallCell *lowerCall;
+    TU_RAISE_IF_NOT_OK (currentCoro->peekCall(&lowerCall, frameNr));
+    int lowerGuard = lowerCall->getStackGuard();
     int upperGuard = std::numeric_limits<int>::max();
-    if (frameNr + 1 < currentCoro->callStackSize())
-        upperGuard = currentCoro->peekCall(frameNr + 1).getStackGuard();
+    if (frameNr + 1 < currentCoro->callStackSize()) {
+        lyric_runtime::CallCell *upperCall;
+        currentCoro->peekCall(&upperCall, frameNr + 1);
+        upperGuard = upperCall->getStackGuard();
+    }
 
     TU_CONSOLE_OUT << "-------- DATA STACK DUMP --------";
 
-    auto frameDescription = frame_to_description(currentCoro->peekCall(), state);
+    lyric_runtime::CallCell *currCall;
+    TU_RAISE_IF_NOT_OK (currentCoro->peekCall(&currCall));
+    auto frameDescription = frame_to_description(*currCall, state);
     TU_CONSOLE_OUT << "Frame #" << frameNr << ": " << frameDescription;
 
     int cellNr = currentCoro->dataStackSize() - 1;

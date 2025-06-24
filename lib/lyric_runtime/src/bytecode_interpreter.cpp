@@ -45,6 +45,14 @@ lyric_runtime::BytecodeInterpreter::interrupt()
         InterpreterCondition::kRuntimeInvariant, "interrupt failed");
 }
 
+#define ON_ERROR_IF_NOT_OK(expr)                                        \
+    do {                                                                \
+        auto status__ = static_cast<tempo_utils::Status>(expr);         \
+        if (status__.notOk())                                           \
+            return onError(op, status__);                               \
+    } while (0)
+
+
 tempo_utils::Result<lyric_runtime::DataCell>
 lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 {
@@ -220,24 +228,23 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // push synthetic onto the stack
             case lyric_object::Opcode::OP_SYNTHETIC: {
-                const auto &activation = currentCoro->peekCall();
+                const CallCell *activation;
+                ON_ERROR_IF_NOT_OK (currentCoro->peekCall(&activation));
                 auto synthetic = op.operands.type_u8.type;
                 switch (synthetic) {
                     case lyric_object::SYNTHETIC_THIS: {
-                        auto receiver = activation.getReceiver();
+                        auto receiver = activation->getReceiver();
                         TU_LOG_V << "loaded receiver " << receiver.toString();
-                        currentCoro->pushData(receiver);
+                        ON_ERROR_IF_NOT_OK (currentCoro->pushData(receiver));
                         break;
                     }
                     case lyric_object::SYNTHETIC_REST: {
-                        auto status = heapManager->loadRestOntoStack(activation);
-                        if (status.notOk())
-                            return onError(op, status);
+                        ON_ERROR_IF_NOT_OK (heapManager->loadRestOntoStack(*activation));
                         break;
                     }
                     default:
-                        return onError(op, InterpreterStatus::forCondition(InterpreterCondition::kInvalidOperandTypeV1,
-                            "unknown SYNTHETIC type"));
+                        return onError(op, InterpreterStatus::forCondition(
+                            InterpreterCondition::kInvalidOperandTypeV1, "unknown SYNTHETIC type"));
                 }
                 break;
             }
@@ -257,24 +264,25 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_LOAD: {
                 auto flags = op.operands.flags_u8_address_u32.flags;
                 auto index = op.operands.flags_u8_address_u32.address;
-                const auto &activation = currentCoro->peekCall();
+                const CallCell *activation;
+                ON_ERROR_IF_NOT_OK (currentCoro->peekCall(&activation));
                 switch (flags) {
                     case lyric_object::LOAD_ARGUMENT: {
-                        auto argument = activation.getArgument(index);
+                        auto argument = activation->getArgument(index);
                         TU_LOG_V << "loaded argument " << argument;
-                        currentCoro->pushData(argument);
+                        ON_ERROR_IF_NOT_OK (currentCoro->pushData(argument));
                         break;
                     }
                     case lyric_object::LOAD_LOCAL: {
-                        auto local = activation.getLocal(index);
+                        auto local = activation->getLocal(index);
                         TU_LOG_V << "loaded local " << local;
-                        currentCoro->pushData(local);
+                        ON_ERROR_IF_NOT_OK (currentCoro->pushData(local));
                         break;
                     }
                     case lyric_object::LOAD_LEXICAL: {
-                        auto lexical = activation.getLexical(index);
+                        auto lexical = activation->getLexical(index);
                         TU_LOG_V << "loaded lexical " << lexical;
-                        currentCoro->pushData(lexical);
+                        ON_ERROR_IF_NOT_OK (currentCoro->pushData(lexical));
                         break;
                     }
                     case lyric_object::LOAD_FIELD: {
@@ -283,14 +291,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             lyric_object::LinkageSection::Field, index, status);
                         if (!field.isValid())
                             return onError(op, status);
-                        auto receiver = currentCoro->popData();
+                        DataCell receiver;
+                        ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
                         if (receiver.type != DataCellType::REF)
                             return onError(op, InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
                                 "invalid receiver for LOAD"));
                         auto *instance = receiver.data.ref;
                         auto member = instance->getField(field);
                         TU_LOG_V << "loaded value " << member << " in field " << field << " of receiver " << receiver;
-                        currentCoro->pushData(member);
+                        ON_ERROR_IF_NOT_OK (currentCoro->pushData(member));
                         break;
                     }
                     case lyric_object::LOAD_STATIC: {
@@ -311,13 +320,13 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                                 return onError(op, status);
                         }
                         TU_LOG_V << "loaded value " << value << " at static address " << index;
-                        currentCoro->pushData(value);
+                        ON_ERROR_IF_NOT_OK (currentCoro->pushData(value));
                         break;
                     }
                     case lyric_object::LOAD_INSTANCE: {
                         tempo_utils::Status status;
-                        auto value = segmentManager->loadInstance(index, currentCoro, status);
-                        if (value.type == DataCellType::INVALID) {
+                        auto existing = segmentManager->loadInstance(index, currentCoro, status);
+                        if (existing.type == DataCellType::INVALID) {
                             if (status.notOk())
                                 return onError(op, status);
                             // invoke the allocator
@@ -331,7 +340,9 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             if (!subroutineManager->returnToCaller(currentCoro, status))
                                 return onError(op, status);
                             // capture the uninitialized instance
-                            value = currentCoro->peekData();
+                            const DataCell *instanceptr;
+                            ON_ERROR_IF_NOT_OK (currentCoro->peekData(&instanceptr));
+                            auto constructed = *instanceptr;
                             // push the ctor frame onto the call stack
                             std::vector<DataCell> noArguments;
                             if (!heapManager->constructNew(noArguments, status))
@@ -341,17 +352,20 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             if (initInstanceResult.isStatus())
                                 return initInstanceResult;
                             // store the instance
-                            if (!segmentManager->storeInstance(index, value, currentCoro, status))
+                            if (!segmentManager->storeInstance(index, constructed, currentCoro, status))
                                 return onError(op, status);
+                            TU_LOG_V << "constructed instance " << constructed << " at instance address " << index;
+                            ON_ERROR_IF_NOT_OK (currentCoro->pushData(constructed));
+                        } else {
+                            TU_LOG_V << "loaded instance " << existing << " at instance address " << index;
+                            ON_ERROR_IF_NOT_OK (currentCoro->pushData(existing));
                         }
-                        TU_LOG_V << "loaded value " << value << " at instance address " << index;
-                        currentCoro->pushData(value);
                         break;
                     }
                     case lyric_object::LOAD_ENUM: {
                         tempo_utils::Status status;
-                        auto value = segmentManager->loadEnum(index, currentCoro, status);
-                        if (value.type == DataCellType::INVALID) {
+                        auto existing = segmentManager->loadEnum(index, currentCoro, status);
+                        if (existing.type == DataCellType::INVALID) {
                             if (status.notOk())
                                 return onError(op, status);
                             // invoke the allocator
@@ -365,7 +379,9 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             if (!subroutineManager->returnToCaller(currentCoro, status))
                                 return onError(op, status);
                             // capture the uninitialized enum
-                            value = currentCoro->peekData();
+                            const DataCell *enumptr;
+                            ON_ERROR_IF_NOT_OK (currentCoro->peekData(&enumptr));
+                            auto constructed = *enumptr;
                             // push the ctor frame onto the call stack
                             std::vector<DataCell> noArguments;
                             if (!heapManager->constructNew(noArguments, status))
@@ -375,11 +391,14 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             if (initEnumResult.isStatus())
                                 return initEnumResult;
                             // store the enum
-                            if (!segmentManager->storeEnum(index, value, currentCoro, status))
+                            if (!segmentManager->storeEnum(index, constructed, currentCoro, status))
                                 return onError(op, status);
+                            TU_LOG_V << "constructed enum " << constructed << " at enum address " << index;
+                            ON_ERROR_IF_NOT_OK (currentCoro->pushData(constructed));
+                        } else {
+                            TU_LOG_V << "loaded enum " << existing << " at enum address " << index;
+                            ON_ERROR_IF_NOT_OK (currentCoro->pushData(existing));
                         }
-                        TU_LOG_V << "loaded value " << value << " at enum address " << index;
-                        currentCoro->pushData(value);
                         break;
                     }
                     default:
@@ -393,21 +412,23 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_STORE: {
                 auto flags = op.operands.flags_u8_address_u32.flags;
                 auto index = op.operands.flags_u8_address_u32.address;
-                auto value = currentCoro->popData();
-                auto &activation = currentCoro->peekCall();
+                DataCell value;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(value));
+                CallCell *activation;
+                ON_ERROR_IF_NOT_OK (currentCoro->peekCall(&activation));
                 switch (flags) {
                     case lyric_object::STORE_ARGUMENT: {
-                        activation.setArgument(index, value);
+                        activation->setArgument(index, value);
                         TU_LOG_V << "stored argument " << value;
                         break;
                     }
                     case lyric_object::STORE_LOCAL: {
-                        activation.setLocal(index, value);
+                        activation->setLocal(index, value);
                         TU_LOG_V << "stored local " << value;
                         break;
                     }
                     case lyric_object::STORE_LEXICAL: {
-                        activation.setLexical(index, value);
+                        activation->setLexical(index, value);
                         TU_LOG_V << "stored lexical " << value;
                         break;
                     }
@@ -417,7 +438,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             lyric_object::LinkageSection::Field, index, status);
                         if (!field.isValid())
                             return onError(op, status);
-                        auto receiver = currentCoro->popData();
+                        DataCell receiver;
+                        ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
                         if (receiver.type != DataCellType::REF)
                             return onError(op, InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
                                 "invalid receiver for STORE"));
@@ -442,234 +464,256 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop index from the stack and push variadic argument in the current activation onto the top of the stack
             case lyric_object::Opcode::OP_VA_LOAD: {
-                auto arg = currentCoro->popData();
-                const auto &activation = currentCoro->peekCall();
+                DataCell arg;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(arg));
+                CallCell *activation;
+                ON_ERROR_IF_NOT_OK (currentCoro->peekCall(&activation));
                 if (arg.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "LOAD index must be Integer"));
-                if (arg.data.i64 < 0 || activation.numRest() <= arg.data.i64)
+                if (arg.data.i64 < 0 || activation->numRest() <= arg.data.i64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "LOAD index out of range"));
-                currentCoro->pushData(activation.getRest(arg.data.i64));
+                auto rest = activation->getRest(arg.data.i64);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(rest));
                 break;
             }
 
             // push count of the variadic arguments in the current activation onto the top of the stack
             case lyric_object::Opcode::OP_VA_SIZE: {
-                const auto &activation = currentCoro->peekCall();
-                currentCoro->pushData(DataCell(static_cast<int64_t>(activation.numRest())));
+                CallCell *activation;
+                ON_ERROR_IF_NOT_OK (currentCoro->peekCall(&activation));
+                DataCell numRest(static_cast<int64_t>(activation->numRest()));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(numRest));
                 break;
             }
 
             // pop value from the stack and discard it
             case lyric_object::Opcode::OP_POP: {
-                currentCoro->dropData();
+                ON_ERROR_IF_NOT_OK (currentCoro->dropData());
                 break;
             }
 
             // duplicate top value on the stack and push it onto the top of the stack
             case lyric_object::Opcode::OP_DUP: {
-                currentCoro->pushData(currentCoro->peekData());
+                DataCell *value;
+                ON_ERROR_IF_NOT_OK (currentCoro->peekData(&value));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(*value));
                 break;
             }
 
             // duplicate the picked value on the stack and push onto the top of the stack
             case lyric_object::Opcode::OP_PICK: {
                 auto offset = op.operands.offset_u16.offset;
-                currentCoro->pushData(currentCoro->peekData(offset));
+                DataCell *value;
+                ON_ERROR_IF_NOT_OK (currentCoro->peekData(&value, offset));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(*value));
                 break;
             }
 
             // remove the value at the specified offset from the stack
             case lyric_object::Opcode::OP_DROP: {
                 auto offset = op.operands.offset_u16.offset;
-                currentCoro->dropData(offset);
+                ON_ERROR_IF_NOT_OK (currentCoro->dropData(offset));
                 break;
             }
 
             // duplicate the picked value on the stack and push onto the top of the stack
             case lyric_object::Opcode::OP_RPICK: {
                 auto offset = op.operands.offset_u16.offset;
-                currentCoro->pushData(currentCoro->peekData(-1 - offset));
+                DataCell *value;
+                ON_ERROR_IF_NOT_OK (currentCoro->peekData(&value, -1 - offset));
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(*value));
                 break;
             }
 
             // remove the value at the specified offset from the stack
             case lyric_object::Opcode::OP_RDROP: {
                 auto offset = op.operands.offset_u16.offset;
-                currentCoro->dropData(-1 - offset);
+                ON_ERROR_IF_NOT_OK (currentCoro->dropData(-1 - offset));
                 break;
             }
 
             // pop 2 integer values from the stack and add them, and push result onto the stack
             case lyric_object::Opcode::OP_I64_ADD: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::I64;
                 result.data.i64 = lhs.data.i64 + rhs.data.i64;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 integer values from the stack and subtract them, and push result onto the stack
             case lyric_object::Opcode::OP_I64_SUB: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::I64;
                 result.data.i64 = lhs.data.i64 - rhs.data.i64;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 integer values from the stack and multiply them, and push result onto the stack
             case lyric_object::Opcode::OP_I64_MUL: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::I64;
                 result.data.i64 = lhs.data.i64 * rhs.data.i64;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 integer values from the stack and divide them, and push result onto the stack
             case lyric_object::Opcode::OP_I64_DIV: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::I64;
                 result.data.i64 = lhs.data.i64 / rhs.data.i64;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 1 integer value from the stack and negate it, and push result onto the stack
             case lyric_object::Opcode::OP_I64_NEG: {
-                auto rhs = currentCoro->popData();
-                if (rhs.type != DataCellType::I64)
+                DataCell value;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(value));
+                if (value.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for rhs"));
+                        InterpreterCondition::kInvalidDataStackV1, "wrong type for value"));
                 DataCell result;
                 result.type = DataCellType::I64;
-                result.data.i64 = -rhs.data.i64;
-                currentCoro->pushData(result);
+                result.data.i64 = -value.data.i64;
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 float values from the stack and add them, and push result onto the stack
             case lyric_object::Opcode::OP_DBL_ADD: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::DBL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::DBL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::DBL;
                 result.data.dbl = lhs.data.dbl + rhs.data.dbl;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 float values from the stack and subtract them, and push result onto the stack
             case lyric_object::Opcode::OP_DBL_SUB: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::DBL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::DBL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::DBL;
                 result.data.dbl = lhs.data.dbl - rhs.data.dbl;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 float values from the stack and multiply them, and push result onto the stack
             case lyric_object::Opcode::OP_DBL_MUL: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::DBL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::DBL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::DBL;
                 result.data.dbl = lhs.data.dbl * rhs.data.dbl;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 float values from the stack and divide them, and push result onto the stack
             case lyric_object::Opcode::OP_DBL_DIV: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::DBL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::DBL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::DBL;
                 result.data.dbl = lhs.data.dbl / rhs.data.dbl;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 1 float value from the stack and negate it, and push result onto the stack
             case lyric_object::Opcode::OP_DBL_NEG: {
-                auto rhs = currentCoro->popData();
-                if (rhs.type != DataCellType::DBL)
+                DataCell value;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(value));
+                if (value.type != DataCellType::DBL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for rhs"));
                 DataCell result;
                 result.type = DataCellType::DBL;
-                result.data.dbl = -rhs.data.dbl;
-                currentCoro->pushData(result);
+                result.data.dbl = -value.data.dbl;
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 bool values from the stack and compare them, and push result onto the stack
             case lyric_object::Opcode::OP_BOOL_CMP: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::BOOL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::BOOL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
@@ -681,17 +725,18 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                     result.data.i64 = 1;
                 else
                     result.data.i64 = 0;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 integer values from the stack and compare them, and push result onto the stack
             case lyric_object::Opcode::OP_I64_CMP: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
@@ -709,11 +754,12 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop 2 float values from the stack and compare them, and push result onto the stack
             case lyric_object::Opcode::OP_DBL_CMP: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::DBL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::DBL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
@@ -725,17 +771,18 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                     result.data.i64 = 1;
                 else
                     result.data.i64 = 0;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 chr values from the stack and compare them, and push result onto the stack
             case lyric_object::Opcode::OP_CHR_CMP: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::CHAR32)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::CHAR32)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
@@ -747,17 +794,18 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                     result.data.i64 = 1;
                 else
                     result.data.i64 = 0;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop two type descriptors from the stack and compare them, and push result onto the stack
             case lyric_object::Opcode::OP_TYPE_CMP: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::TYPE)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::TYPE)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
@@ -778,54 +826,57 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         result.data.i64 = 1;
                         break;
                 }
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 bool values from the stack and perform logical AND, and push result onto the stack
             case lyric_object::Opcode::OP_LOGICAL_AND: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::BOOL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::BOOL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::BOOL;
                 result.data.b = lhs.data.b && rhs.data.b;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 2 bool values from the stack and perform logical OR, and push result onto the stack
             case lyric_object::Opcode::OP_LOGICAL_OR: {
-                auto rhs = currentCoro->popData();
+                DataCell lhs, rhs;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(rhs));
                 if (rhs.type != DataCellType::BOOL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV2, "wrong type for rhs"));
-                auto lhs = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(lhs));
                 if (lhs.type != DataCellType::BOOL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "wrong type for lhs"));
                 DataCell result;
                 result.type = DataCellType::BOOL;
                 result.data.b = lhs.data.b || rhs.data.b;
-                currentCoro->pushData(result);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
             // pop 1 bool value from the stack and perform logical NOT, and push result onto the stack
             case lyric_object::Opcode::OP_LOGICAL_NOT: {
-                auto rhs = currentCoro->popData();
-                if (rhs.type != DataCellType::BOOL)
+                DataCell value;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(value));
+                if (value.type != DataCellType::BOOL)
                     return onError(op, InterpreterStatus::forCondition(
-                        InterpreterCondition::kInvalidDataStackV1, "wrong type for rhs"));
+                        InterpreterCondition::kInvalidDataStackV1, "wrong type for value"));
                 DataCell result;
                 result.type = DataCellType::BOOL;
-                result.data.b = !rhs.data.b;
-                currentCoro->pushData(result);
+                result.data.b = !value.data.b;
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(result));
                 break;
             }
 
@@ -841,7 +892,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop value from stack, and jump to offset if value is Nil
             case lyric_object::Opcode::OP_IF_NIL: {
-                auto cmp = currentCoro->popData();
+                DataCell cmp;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
                 if (cmp.type == DataCellType::NIL) {
                     auto delta = op.operands.jump_i16.jump;
                     if (!currentCoro->moveIP(delta))
@@ -854,7 +906,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop value from stack, and jump to offset if value is not Nil
             case lyric_object::Opcode::OP_IF_NOTNIL: {
-                auto cmp = currentCoro->popData();
+                DataCell cmp;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
                 if (cmp.type != DataCellType::NIL) {
                     auto delta = op.operands.jump_i16.jump;
                     if (!currentCoro->moveIP(delta))
@@ -867,7 +920,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop value from stack, and jump to offset if value is zero
             case lyric_object::Opcode::OP_IF_TRUE: {
-                auto cmp = currentCoro->popData();
+                DataCell cmp;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
                 if (cmp.type != DataCellType::BOOL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be a boolean"));
@@ -883,7 +937,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop value from stack, and jump to offset if value is not zero
             case lyric_object::Opcode::OP_IF_FALSE: {
-                auto cmp = currentCoro->popData();
+                DataCell cmp;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
                 if (cmp.type != DataCellType::BOOL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be a boolean"));
@@ -899,7 +954,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop value from stack, and jump to offset if value is zero
             case lyric_object::Opcode::OP_IF_ZERO: {
-                auto cmp = currentCoro->popData();
+                DataCell cmp;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
                 if (cmp.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be an integer"));
@@ -915,7 +971,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop value from stack, and jump to offset if value is not zero
             case lyric_object::Opcode::OP_IF_NOTZERO: {
-                auto cmp = currentCoro->popData();
+                DataCell cmp;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
                 if (cmp.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be an integer"));
@@ -931,7 +988,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop value from stack, and jump to offset if value is less than zero
             case lyric_object::Opcode::OP_IF_LT: {
-                auto cmp = currentCoro->popData();
+                DataCell cmp;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
                 if (cmp.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be an integer"));
@@ -947,7 +1005,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop value from stack, and jump to offset if value is less than or equal to zero
             case lyric_object::Opcode::OP_IF_LE: {
-                auto cmp = currentCoro->popData();
+                DataCell cmp;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
                 if (cmp.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be an integer"));
@@ -963,7 +1022,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop value from stack, and jump to offset if value is greater than zero
             case lyric_object::Opcode::OP_IF_GT: {
-                auto cmp = currentCoro->popData();
+                DataCell cmp;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
                 if (cmp.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be an integer"));
@@ -979,7 +1039,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
             // pop value from stack, and jump to offset if value is not zero
             case lyric_object::Opcode::OP_IF_GE: {
-                auto cmp = currentCoro->popData();
+                DataCell cmp;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(cmp));
                 if (cmp.type != DataCellType::I64)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "value must be an integer"));
@@ -1003,7 +1064,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_CALL_STATIC: {
                 auto address = op.operands.flags_u8_address_u32_placement_u16.address;
                 auto placementSize = op.operands.flags_u8_address_u32_placement_u16.placement;
-                auto placement = currentCoro->popData(placementSize);
+                std::vector<DataCell> placement;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
 
                 // construct the activation call frame
                 InterpreterStatus status;
@@ -1022,16 +1084,16 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
                 if (flags & lyric_object::CALL_RECEIVER_FOLLOWS) {
                     // receiver comes after arguments so we pop receiver first
-                    receiver = currentCoro->popData();
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
                     if (receiver.type != DataCellType::REF)
                         return onError(op,
                             InterpreterStatus::forCondition(
                                 InterpreterCondition::kInvalidReceiver, "invalid receiver for virtual call"));
-                    placement = currentCoro->popData(placementSize);
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
                 } else {
                     // receiver comes before arguments so we pop placement first
-                    placement = currentCoro->popData(placementSize);
-                    receiver = currentCoro->popData();
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
                     if (receiver.type != DataCellType::REF)
                         return onError(op,
                             InterpreterStatus::forCondition(
@@ -1039,9 +1101,10 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 }
 
                 if (flags & lyric_object::CALL_FORWARD_REST) {
-                    auto &call = currentCoro->peekCall();
-                    for (int i = 0; i < call.numRest(); i++) {
-                        placement.push_back(call.getRest(i));
+                    CallCell *call;
+                    ON_ERROR_IF_NOT_OK (currentCoro->peekCall(&call));
+                    for (int i = 0; i < call->numRest(); i++) {
+                        placement.push_back(call->getRest(i));
                     }
                 }
 
@@ -1058,23 +1121,24 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 auto flags = op.operands.flags_u8_address_u32_placement_u16.flags;
                 DataCell receiver;
                 std::vector<DataCell> placement;
+                DataCell conceptDescriptor;
 
-                auto conceptDescriptor = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(conceptDescriptor));
                 if (conceptDescriptor.type != DataCellType::CONCEPT)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "invalid descriptor for concept call"));
 
                 if (flags & lyric_object::CALL_RECEIVER_FOLLOWS) {
                     // receiver comes after arguments so we pop receiver first
-                    receiver = currentCoro->popData();
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
                     if (receiver.type != DataCellType::REF)
                         return onError(op, InterpreterStatus::forCondition(
                             InterpreterCondition::kInvalidReceiver, "invalid receiver for concept call"));
-                    placement = currentCoro->popData(placementSize);
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
                 } else {
                     // receiver comes before arguments so we pop placement first
-                    placement = currentCoro->popData(placementSize);
-                    receiver = currentCoro->popData();
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
                     if (receiver.type != DataCellType::REF)
                         return onError(op, InterpreterStatus::forCondition(
                             InterpreterCondition::kInvalidReceiver, "invalid receiver for concept call"));
@@ -1091,14 +1155,17 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             case lyric_object::Opcode::OP_CALL_EXISTENTIAL: {
                 auto callAddress = op.operands.flags_u8_address_u32_placement_u16.address;
                 auto placementSize = op.operands.flags_u8_address_u32_placement_u16.placement;
+                DataCell receiver;
+                std::vector<DataCell> placement;
+                DataCell existentialDescriptor;
 
-                auto existentialDescriptor = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(existentialDescriptor));
                 if (existentialDescriptor.type != DataCellType::EXISTENTIAL)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "invalid descriptor for existential call"));
 
-                auto placement = currentCoro->popData(placementSize);
-                auto receiver = currentCoro->popData();
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
 
                 // construct the activation call frame
                 InterpreterStatus status;
@@ -1127,9 +1194,11 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 }
                 // if the call stack is still valid and we reached a guard then return from the subinterpreter
                 if (reachedGuard) {
-                    if (currentCoro->dataStackSize() > 0)
-                        return currentCoro->popData();
-                    return DataCell();
+                    DataCell result;
+                    if (currentCoro->dataStackSize() > 0) {
+                        ON_ERROR_IF_NOT_OK (currentCoro->popData(result));
+                    }
+                    return result;
                 }
                 break;
             }
@@ -1142,7 +1211,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                     if (address != 0)
                         return onError(op, InterpreterStatus::forCondition(
                             InterpreterCondition::kInvalidOperandFlagsAddressV2, "invalid trap address operand"));
-                    auto index = currentCoro->popData();
+                    DataCell index;
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(index));
                     if (index.type != DataCellType::I64)
                         return onError(op, InterpreterStatus::forCondition(
                             InterpreterCondition::kInvalidDataStackV1, "invalid trap index"));
@@ -1170,7 +1240,9 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 auto flags = op.operands.flags_u8_address_u32_placement_u16.flags;
                 auto address = op.operands.flags_u8_address_u32_placement_u16.address;
                 auto placementSize = op.operands.flags_u8_address_u32_placement_u16.placement;
-                auto placement = currentCoro->popData(placementSize);
+                std::vector<DataCell> placement;
+
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
 
                 // invoke the allocator
                 tempo_utils::Status status;
@@ -1187,9 +1259,10 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 auto callFlags = lyric_object::GET_CALL_FLAGS(flags);
 
                 if (callFlags & lyric_object::CALL_FORWARD_REST) {
-                    auto &call = currentCoro->peekCall();
-                    for (int i = 0; i < call.numRest(); i++) {
-                        placement.push_back(call.getRest(i));
+                    CallCell *call;
+                    ON_ERROR_IF_NOT_OK (currentCoro->peekCall(&call));
+                    for (int i = 0; i < call->numRest(); i++) {
+                        placement.push_back(call->getRest(i));
                     }
                 }
 
@@ -1200,20 +1273,26 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             }
 
             case lyric_object::Opcode::OP_TYPE_OF: {
-                auto typeOfResult = typeManager->typeOf(currentCoro->popData());
+                DataCell value;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(value));
+                auto typeOfResult = typeManager->typeOf(value);
                 if (typeOfResult.isStatus())
                     return onError(op, typeOfResult.getStatus());
                 auto typeOf = typeOfResult.getResult();
                 if (typeOf.type != DataCellType::TYPE)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "invalid type result"));
-                currentCoro->pushData(typeOf);
+                ON_ERROR_IF_NOT_OK (currentCoro->pushData(typeOf));
                 break;
             }
 
             // interrupt the interpreter.  if there is a value on the stack, return it, otherwise return nil.
             case lyric_object::Opcode::OP_INTERRUPT: {
-                auto status = onInterrupt(currentCoro->popData());
+                DataCell result;
+                if (!currentCoro->dataStackEmpty()) {
+                    ON_ERROR_IF_NOT_OK (currentCoro->popData(result));
+                }
+                auto status = onInterrupt(result);
                 // if status from interrupt handler is ok, then replace with generic status
                 if (status.isOk())
                     return InterpreterStatus::forCondition(
@@ -1249,7 +1328,11 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
     if (currentCoro == nullptr)
         return InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "no current coroutine");
-    auto result = currentCoro->popData();
+
+    DataCell result;
+    auto status = currentCoro->popData(result);
+    if (status.notOk())
+        return status;
     return result;
 }
 
@@ -1320,7 +1403,10 @@ lyric_runtime::BytecodeInterpreter::onHalt(const lyric_object::OpCell &op)
     TU_LOG_VV << "halting interpreter";
 
     auto *currentCoro = m_state->currentCoro();
-    auto mainReturn = currentCoro->dataStackSize() > 0? currentCoro->popData() : DataCell{};
+    DataCell mainReturn;
+    if (!currentCoro->dataStackEmpty()) {
+        TU_RETURN_IF_NOT_OK (currentCoro->popData(mainReturn));
+    }
 
     if (m_state->isActive()) {
         m_state->halt(tempo_utils::StatusCode::kOk);
