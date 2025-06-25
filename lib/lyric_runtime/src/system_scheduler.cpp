@@ -479,6 +479,20 @@ lyric_runtime::SystemScheduler::destroyWaiter(Waiter *waiter)
     delete waiter;
 }
 
+lyric_runtime::Waiter *
+lyric_runtime::SystemScheduler::firstWaiter() const
+{
+    return m_waiters;
+}
+
+lyric_runtime::Waiter *
+lyric_runtime::SystemScheduler::lastWaiter() const
+{
+    if (m_waiters == nullptr)
+        return nullptr;
+    return m_waiters->prev;
+}
+
 /**
  * Pump the event loop one time then return immediately without blocking.
  *

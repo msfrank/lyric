@@ -403,6 +403,12 @@ set_reachable_for_task(lyric_runtime::Task *task)
     }
 }
 
+static void
+set_reachable_for_waiter(lyric_runtime::Waiter *waiter)
+{
+    waiter->promise->setReachable();
+}
+
 tempo_utils::Status
 lyric_runtime::HeapManager::collectGarbage() {
 
@@ -419,8 +425,19 @@ lyric_runtime::HeapManager::collectGarbage() {
         set_reachable_for_task(task);
     }
 
+    Waiter *waiterHead = m_systemScheduler->firstWaiter();
+    if (waiterHead != nullptr) {
+        Waiter *waiter = waiterHead;
+        Waiter *next = waiter->nextWaiter();
+        do {
+            set_reachable_for_waiter(waiter);
+            waiter = next;
+            next = waiter->nextWaiter();
+        } while (next != nullptr && next != waiterHead);
+    }
+
     // scan the heap and delete all unreachable instances
     m_heap->deleteUnreachable();
 
-    return tempo_utils::Status();
+    return {};
 }

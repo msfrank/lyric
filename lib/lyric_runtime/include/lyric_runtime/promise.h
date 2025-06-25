@@ -23,6 +23,9 @@ namespace lyric_runtime {
     /** Callback invoked to release the void *data member when the Promise is deallocated */
     typedef void (*ReleaseCallback)(void *);
 
+    /** Callback invoked to set reachable during GC any refs held in the void *data member */
+    typedef void (*ReachableCallback)(void *);
+
     /**
      * The promise state.
      */
@@ -39,6 +42,7 @@ namespace lyric_runtime {
     struct PromiseOptions {
         AdaptCallback adapt = nullptr;
         ReleaseCallback release = nullptr;
+        ReachableCallback reachable = nullptr;
         void *data = nullptr;
     };
 
@@ -47,7 +51,7 @@ namespace lyric_runtime {
      */
     class Promise final {
     public:
-        static std::shared_ptr<Promise> create(AcceptCallback accept, const PromiseOptions &options = {});
+        static std::shared_ptr<Promise> create(AcceptCallback accept = {}, const PromiseOptions &options = {});
         static std::shared_ptr<Promise> completed(const DataCell &result);
         static std::shared_ptr<Promise> rejected(const DataCell &result);
         ~Promise();
@@ -61,6 +65,7 @@ namespace lyric_runtime {
         void accept();
         void adapt(BytecodeInterpreter *interp, InterpreterState *state);
         bool needsAdapt() const;
+        void setReachable();
         void complete(const DataCell &result);
         void reject(const DataCell &result);
 

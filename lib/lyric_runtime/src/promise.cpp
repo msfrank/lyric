@@ -16,7 +16,6 @@ lyric_runtime::Promise::Promise(AcceptCallback accept, const PromiseOptions &opt
       m_state(PromiseState::Initial),
       m_waiter(nullptr)
 {
-    TU_ASSERT (m_accept != nullptr);
 }
 
 lyric_runtime::Promise::~Promise()
@@ -26,18 +25,38 @@ lyric_runtime::Promise::~Promise()
     }
 }
 
+/**
+ * Constructs a new promise managed by a shared ptr.
+ *
+ * @param accept Optional accept callback which is invoked when the result becomes available.
+ * @param options Promise options.
+ * @return
+ */
 std::shared_ptr<lyric_runtime::Promise>
 lyric_runtime::Promise::create(AcceptCallback accept, const PromiseOptions &options)
 {
     return std::shared_ptr<Promise>(new Promise(accept, options));
 }
 
+/**
+ * Constructs a new promise which is already completed and contains the specified `result`.
+ *
+ * @param result
+ * @return
+ */
 std::shared_ptr<lyric_runtime::Promise>
 lyric_runtime::Promise::completed(const DataCell &result)
 {
     return std::shared_ptr<Promise>(new Promise(PromiseState::Completed, result));
 }
 
+/**
+ * Constructs a new promise which is already rejected and contains the specified `result`, which is
+ * expected to contain a Status.
+ *
+ * @param result
+ * @return
+ */
 std::shared_ptr<lyric_runtime::Promise>
 lyric_runtime::Promise::rejected(const DataCell &result)
 {
@@ -91,7 +110,9 @@ lyric_runtime::Promise::await(SystemScheduler *systemScheduler)
 void
 lyric_runtime::Promise::accept()
 {
-    m_accept(this);
+    if (m_accept) {
+        m_accept(this);
+    }
 }
 
 void
@@ -106,6 +127,14 @@ bool
 lyric_runtime::Promise::needsAdapt() const
 {
     return m_options.adapt != nullptr;
+}
+
+void
+lyric_runtime::Promise::setReachable()
+{
+    if (m_options.reachable) {
+        m_options.reachable(m_options.data);
+    }
 }
 
 void

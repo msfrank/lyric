@@ -17,16 +17,17 @@ namespace lyric_runtime {
      *
      */
     struct Waiter final {
-    public:
-        uv_handle_t * const handle;
-        Task *task = nullptr;
-        std::shared_ptr<Promise> promise;
     private:
         Waiter *prev = nullptr;
         Waiter *next = nullptr;
         friend class SystemScheduler;
     public:
+        uv_handle_t * const handle;
+        Task *task = nullptr;
+        std::shared_ptr<Promise> promise;
         explicit Waiter(uv_handle_t *handle): handle(handle) {};
+        Waiter *prevWaiter() const { return prev; };
+        Waiter *nextWaiter() const { return next; };
     };
 
     /**
@@ -59,6 +60,9 @@ namespace lyric_runtime {
         void registerTimer(tu_uint64 deadline, std::shared_ptr<Promise> promise);
         void registerAsync(uv_async_t **asyncptr, std::shared_ptr<Promise> promise, tu_uint64 deadline = 0);
         void destroyWaiter(Waiter *waiter);
+
+        Waiter *firstWaiter() const;
+        Waiter *lastWaiter() const;
 
         bool poll();
         bool blockingPoll();
