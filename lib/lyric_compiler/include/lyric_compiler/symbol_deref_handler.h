@@ -13,6 +13,7 @@ namespace lyric_compiler {
     struct SymbolDeref {
         lyric_assembler::CodeFragment *fragment = nullptr;
         lyric_assembler::BlockHandle *bindingBlock = nullptr;
+        lyric_assembler::AbstractSymbol *symbol = nullptr;
     };
 
     class SymbolDerefHandler : public BaseGrouping {
@@ -36,32 +37,6 @@ namespace lyric_compiler {
     private:
         bool m_isSideEffect;
         SymbolDeref m_deref;
-    };
-
-    class SymbolDerefInitial : public BaseChoice {
-    public:
-        SymbolDerefInitial(SymbolDeref *deref, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
-
-        tempo_utils::Status decide(
-            const lyric_parser::ArchetypeState *state,
-            const lyric_parser::ArchetypeNode *node,
-            DecideContext &ctx) override;
-
-    private:
-        SymbolDeref *m_deref;
-    };
-
-    class SymbolDerefNext : public BaseChoice {
-    public:
-        SymbolDerefNext(SymbolDeref *deref, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
-
-        tempo_utils::Status decide(
-            const lyric_parser::ArchetypeState *state,
-            const lyric_parser::ArchetypeNode *node,
-            DecideContext &ctx) override;
-
-    private:
-        SymbolDeref *m_deref;
     };
 }
 

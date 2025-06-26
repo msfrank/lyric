@@ -94,6 +94,9 @@ lyric_assembler::ConceptSymbol::load()
 
     auto priv = std::make_unique<ConceptSymbolPriv>();
 
+    priv->conceptBlock = std::make_unique<BlockHandle>(
+        m_conceptUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
+
     priv->isDeclOnly = m_conceptImport->isDeclOnly();
     priv->access = lyric_object::AccessType::Public;
     priv->derive = m_conceptImport->getDerive();
@@ -111,28 +114,27 @@ lyric_assembler::ConceptSymbol::load()
         TU_ASSIGN_OR_RAISE (priv->superConcept, importCache->importConcept(superConceptUrl));
     }
 
-    for (auto iterator = m_conceptImport->actionsBegin(); iterator != m_conceptImport->actionsEnd(); iterator++) {
-        TU_RAISE_IF_STATUS(importCache->importAction(iterator->second));
+    for (auto it = m_conceptImport->actionsBegin(); it != m_conceptImport->actionsEnd(); it++) {
+        ActionSymbol *actionSymbol;
+        TU_ASSIGN_OR_RAISE (actionSymbol, importCache->importAction(it->second));
+        TU_RAISE_IF_NOT_OK (priv->conceptBlock->putBinding(actionSymbol));
 
         ActionMethod methodBinding;
-        methodBinding.methodAction = iterator->second;
-        priv->actions[iterator->first] = methodBinding;
+        methodBinding.methodAction = it->second;
+        priv->actions[it->first] = methodBinding;
     }
 
     auto *implCache = m_state->implCache();
-    for (auto iterator = m_conceptImport->implsBegin(); iterator != m_conceptImport->implsEnd(); iterator++) {
+    for (auto it = m_conceptImport->implsBegin(); it != m_conceptImport->implsEnd(); it++) {
         ImplHandle *implHandle;
-        TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(iterator->second));
-        auto implUrl = iterator->first.getConcreteUrl();
+        TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(it->second));
+        auto implUrl = it->first.getConcreteUrl();
         priv->impls[implUrl] = implHandle;
     }
 
-    for (auto iterator = m_conceptImport->sealedTypesBegin(); iterator != m_conceptImport->sealedTypesEnd(); iterator++) {
-        priv->sealedTypes.insert(*iterator);
+    for (auto it = m_conceptImport->sealedTypesBegin(); it != m_conceptImport->sealedTypesEnd(); it++) {
+        priv->sealedTypes.insert(*it);
     }
-
-    priv->conceptBlock = std::make_unique<BlockHandle>(
-        m_conceptUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
 
     return priv.release();
 }
@@ -280,6 +282,7 @@ lyric_assembler::ConceptSymbol::declareAction(
 
     ActionSymbol *actionPtr;
     TU_ASSIGN_OR_RETURN (actionPtr, m_state->appendAction(std::move(actionSymbol)));
+    TU_RETURN_IF_NOT_OK (priv->conceptBlock->putBinding(actionPtr));
 
     // add bound method
     priv->actions[name] = { methodUrl };
@@ -300,7 +303,7 @@ lyric_assembler::ConceptSymbol::prepareAction(
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingAction,
             "missing action {}", name);
     const auto &actionMethod = priv->actions.at(name);
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(actionMethod.methodAction));
     if (symbol->getSymbolType() != SymbolType::ACTION)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,

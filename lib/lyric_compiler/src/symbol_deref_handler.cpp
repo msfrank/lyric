@@ -45,13 +45,23 @@ lyric_compiler::SymbolDerefHandler::before(
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "empty deref statement");
 
-    auto initial = std::make_unique<SymbolDerefInitial>(&m_deref, block, driver);
-    ctx.appendChoice(std::move(initial));
+    ctx.setSkipChildren(true);
 
-    for (int i = 0; i < node->numChildren() - 1; i++) {
-        auto next = std::make_unique<SymbolDerefNext>(&m_deref, block, driver);
-        ctx.appendChoice(std::move(next));
+    std::vector<std::string> path;
+    for (int i = 0; i < node->numChildren(); i++) {
+        auto *child = node->getChild(i);
+        std::string identifier;
+        TU_RETURN_IF_NOT_OK (child->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+        path.push_back(std::move(identifier));
     }
+    lyric_common::SymbolUrl symbolUrl;
+    TU_ASSIGN_OR_RETURN (symbolUrl, block->resolveDefinition(path));
+
+    auto *symbolCache = driver->getSymbolCache();
+    m_deref.symbol = symbolCache->getSymbolOrNull(symbolUrl);
+    if (m_deref.symbol == nullptr)
+        return CompilerStatus::forCondition(CompilerCondition::kMissingSymbol,
+            "missing symbol {}", symbolUrl.toString());
 
     return {};
 }
@@ -64,6 +74,8 @@ lyric_compiler::SymbolDerefHandler::after(
 {
     TU_LOG_INFO << "after SymbolDerefHandler@" << this;
 
+    TU_RETURN_IF_NOT_OK (m_deref.fragment->loadDescriptor(m_deref.symbol));
+
     if (m_isSideEffect) {
         auto *driver = getDriver();
         auto resultType = driver->peekResult();
@@ -74,77 +86,4 @@ lyric_compiler::SymbolDerefHandler::after(
     }
 
     return {};
-}
-
-lyric_compiler::SymbolDerefInitial::SymbolDerefInitial(
-    lyric_compiler::SymbolDeref *deref,
-    lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
-    : BaseChoice(block, driver),
-      m_deref(deref)
-{
-    TU_ASSERT (m_deref != nullptr);
-}
-
-tempo_utils::Status
-lyric_compiler::SymbolDerefInitial::decide(
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::DecideContext &ctx)
-{
-    if (!node->isNamespace(lyric_schema::kLyricAstNs))
-        return {};
-    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
-
-    auto *driver = getDriver();
-    auto *fragment = m_deref->fragment;
-
-    auto astId = resource->getId();
-    switch (astId) {
-        case lyric_schema::LyricAstId::Name:
-            return deref_descriptor(node, &m_deref->bindingBlock, fragment, driver);
-        default:
-            return CompilerStatus::forCondition(
-                CompilerCondition::kCompilerInvariant, "invalid deref target node");
-    }
-}
-
-lyric_compiler::SymbolDerefNext::SymbolDerefNext(
-    lyric_compiler::SymbolDeref *deref,
-    lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
-    : BaseChoice(block, driver),
-      m_deref(deref)
-{
-    TU_ASSERT (m_deref != nullptr);
-}
-
-tempo_utils::Status
-lyric_compiler::SymbolDerefNext::decide(
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::DecideContext &ctx)
-{
-    if (!node->isNamespace(lyric_schema::kLyricAstNs))
-        return {};
-    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
-    auto astId = resource->getId();
-
-    auto *driver = getDriver();
-    auto *fragment = m_deref->fragment;
-
-    auto receiverType = driver->peekResult();
-    TU_ASSERT (receiverType.isValid());
-    TU_RETURN_IF_NOT_OK (driver->popResult());
-
-
-    switch (astId) {
-        case lyric_schema::LyricAstId::Name:
-            TU_RETURN_IF_NOT_OK (fragment->popValue());
-            return deref_descriptor(node, &m_deref->bindingBlock, fragment, driver);
-        default:
-            return CompilerStatus::forCondition(
-                CompilerCondition::kCompilerInvariant, "invalid deref target node");
-    }
-
 }

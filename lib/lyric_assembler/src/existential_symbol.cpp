@@ -95,6 +95,10 @@ lyric_assembler::ExistentialSymbol::load()
     auto *typeCache = m_state->typeCache();
 
     auto priv = std::make_unique<ExistentialSymbolPriv>();
+
+    priv->existentialBlock = std::make_unique<BlockHandle>(
+        m_existentialUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
+
     priv->access = lyric_object::AccessType::Public;
     priv->derive = m_existentialImport->getDerive();
     priv->isDeclOnly = m_existentialImport->isDeclOnly();
@@ -115,6 +119,7 @@ lyric_assembler::ExistentialSymbol::load()
     for (auto iterator = m_existentialImport->methodsBegin(); iterator != m_existentialImport->methodsEnd(); iterator++) {
         CallSymbol *callSymbol;
         TU_ASSIGN_OR_RAISE (callSymbol, importCache->importCall(iterator->second));
+        TU_RAISE_IF_NOT_OK (priv->existentialBlock->putBinding(callSymbol));
 
         BoundMethod methodBinding;
         methodBinding.methodCall = iterator->second;
@@ -261,6 +266,7 @@ lyric_assembler::ExistentialSymbol::declareMethod(
 
     CallSymbol *callPtr;
     TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
+    TU_RAISE_IF_NOT_OK (priv->existentialBlock->putBinding(callPtr));
 
     // add bound method
     priv->methods[name] = { methodUrl, lyric_object::AccessType::Public, false /* final */ };

@@ -68,6 +68,10 @@ lyric_assembler::EnumSymbol::load()
     auto *typeCache = m_state->typeCache();
 
     auto priv = std::make_unique<EnumSymbolPriv>();
+
+    priv->enumBlock = std::make_unique<BlockHandle>(
+        m_enumUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
+
     priv->access = lyric_object::AccessType::Public;
     priv->derive = m_enumImport->getDerive();
     priv->isAbstract = m_enumImport->isAbstract();
@@ -84,6 +88,7 @@ lyric_assembler::EnumSymbol::load()
     for (auto iterator = m_enumImport->membersBegin(); iterator != m_enumImport->membersEnd(); iterator++) {
         FieldSymbol *fieldSymbol;
         TU_ASSIGN_OR_RAISE (fieldSymbol, importCache->importField(iterator->second));
+        TU_RAISE_IF_NOT_OK (priv->enumBlock->putBinding(fieldSymbol));
 
         DataReference memberRef;
         memberRef.symbolUrl = iterator->second;
@@ -95,6 +100,7 @@ lyric_assembler::EnumSymbol::load()
     for (auto iterator = m_enumImport->methodsBegin(); iterator != m_enumImport->methodsEnd(); iterator++) {
         CallSymbol *callSymbol;
         TU_ASSIGN_OR_RAISE (callSymbol, importCache->importCall(iterator->second));
+        TU_RAISE_IF_NOT_OK (priv->enumBlock->putBinding(callSymbol));
 
         BoundMethod methodBinding;
         methodBinding.methodCall = iterator->second;
@@ -261,6 +267,7 @@ lyric_assembler::EnumSymbol::declareMember(
 
     FieldSymbol *fieldPtr;
     TU_ASSIGN_OR_RETURN (fieldPtr, m_state->appendField(std::move(fieldSymbol)));
+    TU_RAISE_IF_NOT_OK (priv->enumBlock->putBinding(fieldPtr));
 
     DataReference ref;
     ref.symbolUrl = memberUrl;
@@ -383,6 +390,7 @@ lyric_assembler::EnumSymbol::declareCtor(
 
     CallSymbol *ctorPtr;
     TU_ASSIGN_OR_RETURN (ctorPtr, m_state->appendCall(std::move(ctorSymbol)));
+    TU_RAISE_IF_NOT_OK (priv->enumBlock->putBinding(ctorPtr));
 
     // add bound method
     BoundMethod method;
@@ -477,6 +485,7 @@ lyric_assembler::EnumSymbol::declareMethod(
 
     CallSymbol *callPtr;
     TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
+    TU_RAISE_IF_NOT_OK (priv->enumBlock->putBinding(callPtr));
 
     // add bound method
     priv->methods[name] = { methodUrl, access, true /* final */ };

@@ -231,6 +231,41 @@ lyric_assembler::BlockHandle::getBinding(const std::string &name) const
     return {};
 }
 
+/**
+ * Create a binding for the specified `symbol` into the block.
+ *
+ * @param symbol
+ * @return
+ */
+tempo_utils::Status
+lyric_assembler::BlockHandle::putBinding(AbstractSymbol *symbol)
+{
+    TU_ASSERT (symbol != nullptr);
+    auto symbolUrl = symbol->getSymbolUrl();
+    auto symbolPath = symbolUrl.getSymbolPath();
+
+    if (m_definition.getSymbolPath().getPath() != symbolPath.getEnclosure())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "cannot put binding {}; symbol is not a direct descendent of {}",
+            symbolUrl.toString(), m_definition.toString());
+
+    auto name = symbolPath.getName();
+    if (m_bindings.contains(name))
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "cannot put binding {}; binding with the same name already exists",
+            symbolUrl.toString());
+
+    auto *fundamentalCache = m_state->fundamentalCache();
+
+    SymbolBinding binding;
+    binding.symbolUrl = symbolUrl;
+    binding.bindingType = BindingType::Descriptor;
+    binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Descriptor);
+    m_bindings[name] = binding;
+
+    return {};
+}
+
 // forward declaration
 static tempo_utils::Result<lyric_assembler::SymbolBinding>
 resolve_binding_tail_recursive(
@@ -421,40 +456,146 @@ lyric_assembler::BlockHandle::resolveDefinition(const lyric_common::SymbolPath &
     for (const auto &part : symbolPath.getPath()) {
         path.push_back(part);
     }
+    return resolveDefinition(path);
+}
 
-    SymbolBinding binding;
-    TU_ASSIGN_OR_RETURN (binding, resolveBinding(path));
+static tempo_utils::Result<lyric_common::SymbolUrl>
+resolve_definition_tail_recursive(
+    lyric_assembler::AbstractSymbol *symbol,
+    const lyric_common::SymbolPath &symbolPath,
+    int index,
+    lyric_assembler::SymbolCache *symbolCache)      // NOLINT(misc-no-recursion)
+{
+    auto path = symbolPath.getPath();
+    if (path.size() == index)
+        return symbol->getSymbolUrl();
 
-    auto *symbolCache = m_state->symbolCache();
-    AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(binding.symbolUrl));
+    lyric_assembler::BlockHandle *block;
 
     switch (symbol->getSymbolType()) {
-        case SymbolType::BINDING:
-        case SymbolType::CALL:
-        case SymbolType::CLASS:
-        case SymbolType::CONCEPT:
-        case SymbolType::ENUM:
-        case SymbolType::EXISTENTIAL:
-        case SymbolType::INSTANCE:
-        case SymbolType::STRUCT:
-            return symbol->getSymbolUrl();
+        case lyric_assembler::SymbolType::CALL:
+            block = lyric_assembler::cast_symbol_to_call(symbol)->callProc()->procBlock();
+            break;
+        case lyric_assembler::SymbolType::CLASS:
+            block = lyric_assembler::cast_symbol_to_class(symbol)->classBlock();
+            break;
+        case lyric_assembler::SymbolType::CONCEPT:
+            block = lyric_assembler::cast_symbol_to_concept(symbol)->conceptBlock();
+            break;
+        case lyric_assembler::SymbolType::ENUM:
+            block = lyric_assembler::cast_symbol_to_enum(symbol)->enumBlock();
+            break;
+        case lyric_assembler::SymbolType::INSTANCE:
+            block = lyric_assembler::cast_symbol_to_instance(symbol)->instanceBlock();
+            break;
+        case lyric_assembler::SymbolType::NAMESPACE:
+            block = lyric_assembler::cast_symbol_to_namespace(symbol)->namespaceBlock();
+            break;
+        case lyric_assembler::SymbolType::STRUCT:
+            block = lyric_assembler::cast_symbol_to_struct(symbol)->structBlock();
+            break;
+
         default:
-            return AssemblerStatus::forCondition(
-                AssemblerCondition::kMissingSymbol,
-                "missing definition {}", lyric_common::SymbolPath(path).toString());
+            return lyric_assembler::AssemblerStatus::forCondition(
+                lyric_assembler::AssemblerCondition::kMissingSymbol,
+                "missing definition {}", symbolPath.toString());
     }
+
+    auto &name = path.at(index);
+    auto binding = block->getBinding(name);
+    symbol = symbolCache->getSymbolOrNull(binding.symbolUrl);
+    if (symbol == nullptr)
+        return lyric_assembler::AssemblerStatus::forCondition(
+            lyric_assembler::AssemblerCondition::kMissingSymbol,
+                "missing definition {}", symbolPath.toString());
+
+    return resolve_definition_tail_recursive(symbol, symbolPath, index + 1, symbolCache);
+}
+
+tempo_utils::Result<lyric_common::SymbolUrl>
+lyric_assembler::BlockHandle::resolveDefinition(const std::vector<std::string> &path)
+{
+    if (path.empty())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "cannot resolve empty definition");
+
+    auto *symbolCache = m_state->symbolCache();
+
+    lyric_common::SymbolPath symbolPath(path);
+    auto &name = path.front();
+
+    // if variable exists in a parent block in the current proc, then return it
+    for (BlockHandle *block = this; block != nullptr ; block = block->m_parentBlock) {
+        if (block->m_bindings.contains(name)) {
+            const auto &binding = block->m_bindings[name];
+            AbstractSymbol *symbol = symbolCache->getSymbolOrNull(binding.symbolUrl);
+            if (symbol == nullptr)
+                return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
+                    "missing definition {}", symbolPath.toString());
+
+            switch (symbol->getSymbolType()) {
+                case SymbolType::BINDING:
+                case SymbolType::CALL:
+                case SymbolType::CLASS:
+                case SymbolType::CONCEPT:
+                case SymbolType::ENUM:
+                case SymbolType::EXISTENTIAL:
+                case SymbolType::INSTANCE:
+                case SymbolType::NAMESPACE:
+                case SymbolType::STRUCT:
+                    return resolve_definition_tail_recursive(symbol, symbolPath, 1, symbolCache);
+
+                default:
+                    return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
+                        "missing definition {}", symbolPath.toString());
+            }
+        }
+    }
+
+    // if variable is not found in any reachable block, then check the global namespace
+    auto *root = m_state->objectRoot();
+    auto *globalNamespace = root->globalNamespace();
+    auto *globalBlock = globalNamespace->namespaceBlock();
+    if (globalBlock->hasBinding(name)) {
+        const auto &binding = globalBlock->m_bindings[name];
+        AbstractSymbol *symbol = symbolCache->getSymbolOrNull(binding.symbolUrl);
+        if (symbol == nullptr)
+            return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
+                "missing definition {}", symbolPath.toString());
+
+        switch (symbol->getSymbolType()) {
+            case SymbolType::BINDING:
+            case SymbolType::CALL:
+            case SymbolType::CLASS:
+            case SymbolType::CONCEPT:
+            case SymbolType::ENUM:
+            case SymbolType::EXISTENTIAL:
+            case SymbolType::INSTANCE:
+            case SymbolType::NAMESPACE:
+            case SymbolType::STRUCT:
+                return resolve_definition_tail_recursive(symbol, symbolPath, 1, symbolCache);
+
+            default:
+                return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
+                    "missing definition {}", symbolPath.toString());
+        }
+    }
+
+    // we have exhausted our search, definition is missing
+    debugBindings();
+    return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
+        "missing definition {}", symbolPath.toString());
 }
 
 tempo_utils::Result<lyric_common::SymbolUrl>
 lyric_assembler::BlockHandle::resolveFunction(const std::string &name)
 {
-    SymbolBinding binding;
-    TU_ASSIGN_OR_RETURN (binding, resolveBinding({name}));
+    lyric_common::SymbolUrl symbolUrl;
+    TU_ASSIGN_OR_RETURN (symbolUrl, resolveDefinition({name}));
 
     auto *symbolCache = m_state->symbolCache();
     AbstractSymbol *symbol;
-    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(binding.symbolUrl));
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(symbolUrl));
 
     if (symbol->getSymbolType() == SymbolType::BINDING) {
         auto *bindingSymbol = cast_symbol_to_binding(symbol);

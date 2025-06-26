@@ -99,6 +99,10 @@ lyric_assembler::ClassSymbol::load()
     auto *typeCache = m_state->typeCache();
 
     auto priv = std::make_unique<ClassSymbolPriv>();
+
+    priv->classBlock = std::make_unique<BlockHandle>(
+        m_classUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
+
     priv->access = lyric_object::AccessType::Public;
     priv->derive = m_classImport->getDerive();
     priv->isAbstract = m_classImport->isAbstract();
@@ -120,6 +124,7 @@ lyric_assembler::ClassSymbol::load()
     for (auto iterator = m_classImport->membersBegin(); iterator != m_classImport->membersEnd(); iterator++) {
         FieldSymbol *fieldSymbol;
         TU_ASSIGN_OR_RAISE (fieldSymbol, importCache->importField(iterator->second));
+        TU_RAISE_IF_NOT_OK (priv->classBlock->putBinding(fieldSymbol));
 
         DataReference memberRef;
         memberRef.symbolUrl = iterator->second;
@@ -131,6 +136,7 @@ lyric_assembler::ClassSymbol::load()
     for (auto iterator = m_classImport->methodsBegin(); iterator != m_classImport->methodsEnd(); iterator++) {
         CallSymbol *callSymbol;
         TU_ASSIGN_OR_RAISE (callSymbol, importCache->importCall(iterator->second));
+        TU_RAISE_IF_NOT_OK (priv->classBlock->putBinding(callSymbol));
 
         BoundMethod methodBinding;
         methodBinding.methodCall = iterator->second;
@@ -304,6 +310,7 @@ lyric_assembler::ClassSymbol::declareMember(
 
     FieldSymbol *fieldPtr;
     TU_ASSIGN_OR_RETURN (fieldPtr, m_state->appendField(std::move(fieldSymbol)));
+    TU_RETURN_IF_NOT_OK (priv->classBlock->putBinding(fieldPtr));
 
     DataReference ref;
     ref.symbolUrl = memberUrl;
@@ -445,6 +452,7 @@ lyric_assembler::ClassSymbol::declareCtor(
 
     CallSymbol *ctorPtr;
     TU_ASSIGN_OR_RETURN (ctorPtr, m_state->appendCall(std::move(ctorSymbol)));
+    TU_RETURN_IF_NOT_OK (priv->classBlock->putBinding(ctorPtr));
 
     // add bound method
     BoundMethod method;
@@ -563,6 +571,7 @@ lyric_assembler::ClassSymbol::declareMethod(
 
     CallSymbol *callPtr;
     TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
+    TU_RETURN_IF_NOT_OK (priv->classBlock->putBinding(callPtr));
 
     // add bound method
     BoundMethod method;

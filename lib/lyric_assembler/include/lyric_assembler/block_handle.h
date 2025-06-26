@@ -62,9 +62,7 @@ namespace lyric_assembler {
 
         bool hasBinding(const std::string &name) const;
         SymbolBinding getBinding(const std::string &name) const;
-
-        tempo_utils::Result<SymbolBinding>
-        resolveBinding(const std::vector<std::string> &path);
+        tempo_utils::Status putBinding(AbstractSymbol *symbol);
 
         tempo_utils::Result<lyric_common::TypeDef> resolveSingular(
             const lyric_common::SymbolPath &typePath,
@@ -72,6 +70,8 @@ namespace lyric_assembler {
 
         tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
             const lyric_common::SymbolPath &symbolPath);
+        tempo_utils::Result<lyric_common::SymbolUrl> resolveDefinition(
+            const std::vector<std::string> &path);
 
         tempo_utils::Result<lyric_common::SymbolUrl> resolveFunction(const std::string &name);
 
@@ -210,6 +210,8 @@ namespace lyric_assembler {
         ObjectState *m_state;
         absl::flat_hash_map<std::string, SymbolBinding> m_bindings;
         absl::flat_hash_map<lyric_common::TypeDef, ImplReference> m_impls;
+
+        tempo_utils::Result<SymbolBinding> resolveBinding(const std::vector<std::string> &path);
 
         tempo_utils::Result<TypenameSymbol *> checkForTypenameOrNull(
             std::string_view name,

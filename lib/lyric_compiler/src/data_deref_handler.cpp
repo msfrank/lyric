@@ -49,8 +49,8 @@ lyric_compiler::DataDerefHandler::before(
             "empty deref statement");
 
     if (numChildren == 1) {
-        auto initial = std::make_unique<DataDerefSingle>(&m_deref, block, driver);
-        ctx.appendChoice(std::move(initial));
+        auto single = std::make_unique<DataDerefSingle>(&m_deref, block, driver);
+        ctx.appendChoice(std::move(single));
         return {};
     }
 
