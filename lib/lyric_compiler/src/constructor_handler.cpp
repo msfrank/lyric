@@ -63,7 +63,7 @@ lyric_compiler::ConstructorHandler::after(
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     // finalize the call
-    TU_RETURN_IF_NOT_OK (m_constructor.callSymbol->finalizeCall());
+    TU_RETURN_IF_STATUS (m_constructor.callSymbol->finalizeCall());
 
     return {};
 }

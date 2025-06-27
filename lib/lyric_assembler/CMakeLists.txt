@@ -44,6 +44,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/impl_cache.h
     include/lyric_assembler/impl_handle.h
     include/lyric_assembler/import_cache.h
+    include/lyric_assembler/initializer_handle.h
     include/lyric_assembler/instance_symbol.h
     include/lyric_assembler/lexical_variable.h
     include/lyric_assembler/literal_cache.h
@@ -99,6 +100,7 @@ target_sources(lyric_assembler PRIVATE
     src/impl_cache.cpp
     src/impl_handle.cpp
     src/import_cache.cpp
+    src/initializer_handle.cpp
     src/instance_symbol.cpp
     src/lexical_variable.cpp
     src/literal_cache.cpp

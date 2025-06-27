@@ -3,11 +3,10 @@
 
 #include <vector>
 
-#include <absl/container/flat_hash_set.h>
-
 #include "abstract_resolver.h"
 #include "abstract_symbol.h"
 #include "base_symbol.h"
+#include "initializer_handle.h"
 #include "object_state.h"
 
 namespace lyric_assembler {
@@ -27,7 +26,7 @@ namespace lyric_assembler {
         TemplateHandle *callTemplate;
         BlockHandle *parentBlock;
         std::unique_ptr<ProcHandle> proc;
-        absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
+        absl::flat_hash_map<std::string,std::unique_ptr<InitializerHandle>> initializers;
     };
 
     /**
@@ -131,9 +130,9 @@ namespace lyric_assembler {
         bool hasInitializer(const std::string &name) const;
         lyric_common::SymbolUrl getInitializer(const std::string &name) const;
         tempo_utils::Status putInitializer(const std::string &name, const lyric_common::SymbolUrl &initializerUrl);
-        tempo_utils::Result<ProcHandle *> defineInitializer(const std::string &name);
+        tempo_utils::Result<InitializerHandle *> defineInitializer(const std::string &name);
 
-        tempo_utils::Status finalizeCall();
+        tempo_utils::Result<lyric_common::TypeDef> finalizeCall();
 
     private:
         lyric_common::SymbolUrl m_callUrl;

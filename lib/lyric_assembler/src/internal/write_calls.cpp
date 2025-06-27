@@ -65,10 +65,18 @@ lyric_assembler::internal::touch_call(
 
     for (auto it = callSymbol->listPlacementBegin(); it != callSymbol->listPlacementEnd(); it++) {
         TU_RETURN_IF_NOT_OK (writer.touchType(it->typeDef));
+        auto initializerUrl = callSymbol->getInitializer(it->name);
+        if (initializerUrl.isValid()) {
+            writer.touchInitializer(initializerUrl);
+        }
     }
 
     for (auto it = callSymbol->namedPlacementBegin(); it != callSymbol->namedPlacementEnd(); it++) {
         TU_RETURN_IF_NOT_OK (writer.touchType(it->typeDef));
+        auto initializerUrl = callSymbol->getInitializer(it->name);
+        if (initializerUrl.isValid()) {
+            writer.touchInitializer(initializerUrl);
+        }
     }
 
     auto *rest = callSymbol->restPlacement();

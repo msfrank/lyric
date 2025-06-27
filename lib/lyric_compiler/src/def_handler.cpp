@@ -116,7 +116,7 @@ lyric_compiler::DefHandler::after(
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
     // finalize the call
-    TU_RETURN_IF_NOT_OK (m_function.callSymbol->finalizeCall());
+    TU_RETURN_IF_STATUS (m_function.callSymbol->finalizeCall());
 
     if (!m_isSideEffect) {
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));

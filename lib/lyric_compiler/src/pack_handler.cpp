@@ -88,12 +88,12 @@ lyric_compiler::PackParam::before(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // define the initializer
-    TU_ASSIGN_OR_RETURN (m_procHandle, m_callSymbol->defineInitializer(identifier));
+    TU_ASSIGN_OR_RETURN (m_initializerHandle, m_callSymbol->defineInitializer(identifier));
 
     // find the parameter
     m_param = m_callSymbol->getParameter(identifier);
 
-    auto init = std::make_unique<ParamInit>(m_param.typeDef, m_procHandle, block, driver);
+    auto init = std::make_unique<ParamInit>(m_param.typeDef, m_initializerHandle, block, driver);
     ctx.appendChoice(std::move(init));
 
     return {};
@@ -103,22 +103,27 @@ tempo_utils::Status
 lyric_compiler::PackParam::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
-    if (m_procHandle == nullptr)
+    if (m_initializerHandle == nullptr)
         return {};
 
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
-    auto *code = m_procHandle->procCode();
+    auto *procHandle = m_initializerHandle->initializerProc();
+    auto *code = procHandle->procCode();
     auto *fragment = code->rootFragment();
 
     auto initializerType = driver->peekResult();
     TU_RETURN_IF_NOT_OK (driver->popResult());
-    m_procHandle->putExitType(initializerType);
+    procHandle->putExitType(initializerType);
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
+
+    // finialize the call
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, m_initializerHandle->finalizeInitializer());
 
     auto paramType = m_param.typeDef;
     bool isAssignable;
@@ -129,27 +134,19 @@ lyric_compiler::PackParam::after(
         return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "parameter initializer is incompatible with type {}", paramType.toString());
 
-    // validate that each exit returns the expected type
-    for (auto it = m_procHandle->exitTypesBegin(); it != m_procHandle->exitTypesEnd(); it++) {
-        TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(paramType, *it));
-        if (!isAssignable)
-            return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
-                "parameter initializer is incompatible with type {}", paramType.toString());
-    }
-
     return {};
 }
 
 lyric_compiler::ParamInit::ParamInit(
     const lyric_common::TypeDef &paramType,
-    lyric_assembler::ProcHandle *procHandle,
+    lyric_assembler::InitializerHandle *initializerHandle,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseChoice(block, driver),
       m_paramType(paramType),
-      m_procHandle(procHandle)
+      m_initializerHandle(initializerHandle)
 {
-    TU_ASSERT (m_procHandle != nullptr);
+    TU_ASSERT (m_initializerHandle != nullptr);
 }
 
 tempo_utils::Status
@@ -168,7 +165,9 @@ lyric_compiler::ParamInit::decide(
 
     auto *block = getBlock();
     auto *driver = getDriver();
-    auto *fragment = m_procHandle->procCode()->rootFragment();
+
+    auto *procHandle = m_initializerHandle->initializerProc();
+    auto *fragment = procHandle->procCode()->rootFragment();
 
     switch (astId) {
 

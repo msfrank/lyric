@@ -216,7 +216,7 @@ lyric_typing::CallsiteReifier::reifySingular(
 
         case lyric_common::TypeDefType::Placeholder: {
             // if the placeholder template matches the callsite template then we can reify the placeholder
-            if (paramType.getPlaceholderTemplateUrl() == m_invokerTemplate->getTemplateUrl()) {
+            if (m_invokerTemplate && paramType.getPlaceholderTemplateUrl() == m_invokerTemplate->getTemplateUrl()) {
                 auto index = paramType.getPlaceholderIndex();
                 // if placeholder slot is not reified, then perform reification and validate against the arg type
                 if (!m_reifiedPlaceholders[index].isValid()) {
@@ -363,7 +363,8 @@ lyric_typing::CallsiteReifier::reifyUnion(
                 TU_ASSIGN_OR_RETURN (bound, m_typeSystem->resolveBound(member));
                 if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
                     return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
-                        "incompatible union member type {}; type bounds must be Extends", member.toString());
+                        "incompatible union member type {}; type bounds must be Extends",
+                        member.toString());
                 auto constraintType = bound.second;
                 if (constraintType.getType() != lyric_common::TypeDefType::Concrete)
                     return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
@@ -396,7 +397,8 @@ lyric_typing::CallsiteReifier::reifyUnion(
                 TU_ASSIGN_OR_RETURN (bound, m_typeSystem->resolveBound(member));
                 if (bound.first != lyric_object::BoundType::None && bound.first != lyric_object::BoundType::Extends)
                     return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
-                        "incompatible union member type {}; type bounds must be Extends", member.toString());
+                        "incompatible union member type {}; type bounds must be Extends",
+                        member.toString());
                 auto constraintType = bound.second;
                 if (constraintType.getType() != lyric_common::TypeDefType::Concrete)
                     return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
@@ -415,7 +417,8 @@ lyric_typing::CallsiteReifier::reifyUnion(
         for (const auto &paramBase : paramBaseUrlToParamTypeMap) {
             lyric_runtime::TypeComparison cmp;
             TU_ASSIGN_OR_RETURN (cmp, m_typeSystem->compareAssignable(
-                lyric_common::TypeDef::forConcrete(paramBase.first), lyric_common::TypeDef::forConcrete(argBaseUrl)));
+                lyric_common::TypeDef::forConcrete(paramBase.first),
+                lyric_common::TypeDef::forConcrete(argBaseUrl)));
             if (cmp == lyric_runtime::TypeComparison::EQUAL || cmp == lyric_runtime::TypeComparison::EXTENDS) {
                 paramBaseUrl = paramBase.first;
                 break;
@@ -514,7 +517,8 @@ lyric_typing::CallsiteReifier::reifyNextArgument(const lyric_common::TypeDef &ar
         TU_ASSIGN_OR_RETURN (isAssignable, m_typeSystem->isAssignable(paramType, argumentType));
         if (!isAssignable)
             return TypingStatus::forCondition(TypingCondition::kIncompatibleType,
-                "argument type {} is not compatible with parameter {}", argumentType.toString(), param.name);
+                "argument type {} is not compatible with parameter {}",
+                argumentType.toString(), param.name);
 
         m_argumentTypes.push_back(argumentType);
 
@@ -661,11 +665,12 @@ lyric_typing::CallsiteReifier::reifyResult(const lyric_common::TypeDef &returnTy
 
         case lyric_common::TypeDefType::Placeholder: {
             // if the placeholder template matches the callsite template then we can reify the placeholder
-            if (returnType.getPlaceholderTemplateUrl() == m_invokerTemplate->getTemplateUrl()) {
+            if (m_invokerTemplate && returnType.getPlaceholderTemplateUrl() == m_invokerTemplate->getTemplateUrl()) {
                 auto index = returnType.getPlaceholderIndex();
                 // the placeholder slot must have been reified
                 if (!m_reifiedPlaceholders[index].isValid())
-                    return TypingStatus::forCondition(TypingCondition::kTypingInvariant,"call cannot be parameterized by return type only");
+                    return TypingStatus::forCondition(TypingCondition::kTypingInvariant,
+                        "call cannot be parameterized by return type only");
                 // if return type takes no parameters, we can return the reified placeholder immediately
                 if (returnType.numPlaceholderArguments() == 0)
                     return m_reifiedPlaceholders[index];

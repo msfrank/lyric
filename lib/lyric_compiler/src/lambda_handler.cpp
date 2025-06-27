@@ -97,7 +97,7 @@ lyric_compiler::LambdaHandler::after(
     TU_RETURN_IF_NOT_OK (lambdaFragment->returnToCaller());
 
     // finalize the lambda call
-    TU_RETURN_IF_NOT_OK (m_lambda.callSymbol->finalizeCall());
+    TU_RETURN_IF_STATUS (m_lambda.callSymbol->finalizeCall());
 
     // define the lambda builder
     lyric_assembler::CallSymbol *builderCall;

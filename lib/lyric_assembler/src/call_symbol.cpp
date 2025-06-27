@@ -267,11 +267,12 @@ lyric_assembler::CallSymbol::load()
     TU_ASSIGN_OR_RAISE (returnType, typeCache->importType(m_callImport->getReturnType()));
     priv->returnType = returnType->getTypeDef();
 
-    priv->initializers = absl::flat_hash_map<std::string,lyric_common::SymbolUrl>(
-        m_callImport->initializersBegin(), m_callImport->initializersEnd());
     auto *importCache = m_state->importCache();
-    for (const auto &entry : priv->initializers) {
-        TU_RAISE_IF_STATUS (importCache->importCall(entry.second));
+    for (auto it = m_callImport->initializersBegin(); it != m_callImport->initializersEnd(); it++) {
+        CallSymbol *initializerCall;
+        TU_ASSIGN_OR_RAISE (initializerCall, importCache->importCall(it->second));
+        auto initializer = std::make_unique<InitializerHandle>(it->first, initializerCall);
+        priv->initializers[it->first] = std::move(initializer);
     }
 
     bool importProc = false;
@@ -663,8 +664,9 @@ lyric_common::SymbolUrl
 lyric_assembler::CallSymbol::getInitializer(const std::string &name) const
 {
     auto *priv = getPriv();
-    if (priv->initializers.contains(name))
-        return priv->initializers.at(name);
+    auto entry = priv->initializers.find(name);
+    if (entry != priv->initializers.cend())
+        return entry->second->getSymbolUrl();
     return {};
 }
 
@@ -686,12 +688,24 @@ lyric_assembler::CallSymbol::putInitializer(
         return AssemblerStatus::forCondition(AssemblerCondition::kInvalidBinding,
             "cannot put initializer for unknown param {}", name);
 
-    priv->initializers[name] = initializerUrl;
+    auto *symbolCache = m_state->symbolCache();
+
+    auto *sym = symbolCache->getSymbolOrNull(initializerUrl);
+    if (sym == nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
+            "missing initializer call {}", initializerUrl.toString());
+    if (sym->getSymbolType() != SymbolType::CALL)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "invalid initializer call {}", initializerUrl.toString());
+    auto *callSymbol = cast_symbol_to_call(sym);
+
+    auto initializer = std::make_unique<InitializerHandle>(name, callSymbol);
+    priv->initializers[name] = std::move(initializer);
 
     return {};
 }
 
-tempo_utils::Result<lyric_assembler::ProcHandle *>
+tempo_utils::Result<lyric_assembler::InitializerHandle *>
 lyric_assembler::CallSymbol::defineInitializer(const std::string &name)
 {
     if (isImported())
@@ -702,26 +716,35 @@ lyric_assembler::CallSymbol::defineInitializer(const std::string &name)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "initializer already defined for param {}", name);
 
-    auto entry = priv->parametersMap.find(name);
-    if (entry == priv->parametersMap.cend())
+    if (!priv->parametersMap.contains(name))
         return AssemblerStatus::forCondition(AssemblerCondition::kInvalidBinding,
             "cannot define initializer for unknown param {}", name);
-    auto &param = entry->second;
 
     auto identifier = absl::StrCat("$init$", name);
+
+    // if call is generic then copy the template parameters to the initializer
+    std::vector<lyric_object::TemplateParameter> templateParameters;
+    if (priv->callTemplate) {
+        templateParameters = priv->callTemplate->getTemplateParameters();
+    }
 
     // declare the initializer call
     lyric_assembler::CallSymbol *callSymbol;
     TU_ASSIGN_OR_RETURN (callSymbol, priv->parentBlock->declareFunction(
-        identifier, lyric_object::AccessType::Public, {}, priv->isDeclOnly));
+        identifier, lyric_object::AccessType::Public, templateParameters, priv->isDeclOnly));
 
-    priv->initializers[name] = callSymbol->getSymbolUrl();
+    // define the initializer with no parameters
+    TU_RETURN_IF_STATUS (callSymbol->defineCall({}));
 
-    // define the initializer with no parameters and the param type as return type
-    return callSymbol->defineCall({}, param.typeDef);
+    // create an initializer handle
+    auto initializer = std::make_unique<InitializerHandle>(name, callSymbol);
+    auto *initializerPtr = initializer.get();
+    priv->initializers[name] = std::move(initializer);
+
+    return initializerPtr;
 }
 
-tempo_utils::Status
+tempo_utils::Result<lyric_common::TypeDef>
 lyric_assembler::CallSymbol::finalizeCall()
 {
     if (isImported())
@@ -746,5 +769,5 @@ lyric_assembler::CallSymbol::finalizeCall()
     // ensure return type exists in cache and is addressable
     TU_RETURN_IF_STATUS (typeCache->getOrMakeType(priv->returnType));
 
-    return {};
+    return priv->returnType;
 }

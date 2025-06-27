@@ -50,7 +50,7 @@ namespace lyric_compiler {
 
     private:
         lyric_assembler::CallSymbol *m_callSymbol;
-        lyric_assembler::ProcHandle *m_procHandle;
+        lyric_assembler::InitializerHandle *m_initializerHandle;
         lyric_assembler::Parameter m_param;
     };
 
@@ -58,7 +58,7 @@ namespace lyric_compiler {
     public:
         ParamInit(
             const lyric_common::TypeDef &paramType,
-            lyric_assembler::ProcHandle *procHandle,
+            lyric_assembler::InitializerHandle *initializerHandle,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
 
@@ -69,7 +69,7 @@ namespace lyric_compiler {
 
     private:
         lyric_common::TypeDef m_paramType;
-        lyric_assembler::ProcHandle *m_procHandle;
+        lyric_assembler::InitializerHandle *m_initializerHandle;
     };
 }
 
