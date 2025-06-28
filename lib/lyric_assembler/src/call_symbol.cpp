@@ -720,7 +720,7 @@ lyric_assembler::CallSymbol::defineInitializer(const std::string &name)
         return AssemblerStatus::forCondition(AssemblerCondition::kInvalidBinding,
             "cannot define initializer for unknown param {}", name);
 
-    auto identifier = absl::StrCat("$init$", name);
+    auto identifier = absl::StrCat("$initp$", name);
 
     // if call is generic then copy the template parameters to the initializer
     std::vector<lyric_object::TemplateParameter> templateParameters;

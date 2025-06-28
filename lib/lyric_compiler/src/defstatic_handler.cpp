@@ -10,7 +10,7 @@
 lyric_compiler::DefStaticHandler::DefStaticHandler(
     bool isSideEffect,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_isSideEffect(isSideEffect),
       m_currentNamespace(nullptr)
@@ -21,7 +21,7 @@ lyric_compiler::DefStaticHandler::DefStaticHandler(
     bool isSideEffect,
     lyric_assembler::NamespaceSymbol *currentNamespace,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_isSideEffect(isSideEffect),
       m_currentNamespace(currentNamespace)
@@ -33,7 +33,7 @@ tempo_utils::Status
 lyric_compiler::DefStaticHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     TU_LOG_INFO << "before DefStaticHandler@" << this;
 
@@ -84,8 +84,9 @@ lyric_compiler::DefStaticHandler::before(
     }
 
     //
-    TU_ASSIGN_OR_RETURN (m_procHandle, m_staticSymbol->defineInitializer());
-    auto *code = m_procHandle->procCode();
+    TU_ASSIGN_OR_RETURN (m_initializerHandle, m_staticSymbol->defineInitializer());
+    auto *procHandle = m_initializerHandle->initializerProc();
+    auto *code = procHandle->procCode();
     auto *fragment = code->rootFragment();
 
     auto expression = std::make_unique<FormChoice>(
@@ -99,38 +100,35 @@ tempo_utils::Status
 lyric_compiler::DefStaticHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     TU_LOG_INFO << "after DefStaticHandler@" << this;
 
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
-    auto *code = m_procHandle->procCode();
+    auto *procHandle = m_initializerHandle->initializerProc();
+    auto *code = procHandle->procCode();
     auto *fragment = code->rootFragment();
 
     auto initializerType = driver->peekResult();
     TU_RETURN_IF_NOT_OK (driver->popResult());
-    m_procHandle->putExitType(initializerType);
+    procHandle->putExitType(initializerType);
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
+
+    // finalize the call
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, m_initializerHandle->finalizeInitializer());
 
     auto declarationType = m_staticSymbol->getTypeDef();
     bool isAssignable;
 
     // validate that body returns the expected type
-    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(declarationType, initializerType));
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(declarationType, returnType));
     if (!isAssignable)
         return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "static initializer is incompatible with type {}", declarationType.toString());
-
-    // validate that each exit returns the expected type
-    for (auto it = m_procHandle->exitTypesBegin(); it != m_procHandle->exitTypesEnd(); it++) {
-        TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(declarationType, *it));
-        if (!isAssignable)
-            return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
-                "static initializer is incompatible with type {}", declarationType.toString());
-    }
 
     if (!m_isSideEffect) {
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));

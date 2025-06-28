@@ -35,7 +35,7 @@ namespace lyric_compiler {
         bool m_isSideEffect;
         lyric_assembler::NamespaceSymbol *m_currentNamespace;
         lyric_assembler::StaticSymbol *m_staticSymbol;
-        lyric_assembler::ProcHandle *m_procHandle;
+        lyric_assembler::InitializerHandle *m_initializerHandle;
     };
 }
 

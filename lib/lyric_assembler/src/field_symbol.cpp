@@ -153,7 +153,7 @@ lyric_assembler::FieldSymbol::defineInitializer()
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "cannot redefine initializer for {}", m_fieldUrl.toString());
 
-    auto identifier = absl::StrCat("$init$", m_fieldUrl.getSymbolName());
+    auto identifier = absl::StrCat("$initf$", m_fieldUrl.getSymbolName());
 
     // declare the initializer call
     CallSymbol *callSymbol;

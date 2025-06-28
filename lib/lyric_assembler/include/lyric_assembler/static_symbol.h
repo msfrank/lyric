@@ -2,10 +2,11 @@
 #define LYRIC_ASSEMBLER_STATIC_SYMBOL_H
 
 #include "abstract_symbol.h"
-#include "object_state.h"
 #include "base_symbol.h"
 #include "callable_invoker.h"
 #include "function_callable.h"
+#include "initializer_handle.h"
+#include "object_state.h"
 #include "type_handle.h"
 
 namespace lyric_assembler {
@@ -14,7 +15,8 @@ namespace lyric_assembler {
         lyric_object::AccessType access;
         bool isVariable;
         TypeHandle *staticType;
-        CallSymbol *initCall;
+        BlockHandle *parentBlock;
+        std::unique_ptr<InitializerHandle> initializerHandle;
         bool isDeclOnly;
         std::unique_ptr<BlockHandle> staticBlock;
     };
@@ -48,7 +50,8 @@ namespace lyric_assembler {
         bool isDeclOnly() const;
 
         lyric_common::SymbolUrl getInitializer() const;
-        tempo_utils::Result<ProcHandle *> defineInitializer();
+        tempo_utils::Result<InitializerHandle *> defineInitializer();
+
         tempo_utils::Status prepareInitializer(CallableInvoker &invoker);
 
         DataReference getReference() const;
@@ -61,12 +64,12 @@ namespace lyric_assembler {
         StaticSymbolPriv *load() override;
     };
 
-    static inline const StaticSymbol *cast_symbol_to_static(const AbstractSymbol *sym) {
+    inline const StaticSymbol *cast_symbol_to_static(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::STATIC);
         return static_cast<const StaticSymbol *>(sym);      // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline StaticSymbol *cast_symbol_to_static(AbstractSymbol *sym) {
+    inline StaticSymbol *cast_symbol_to_static(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::STATIC);
         return static_cast<StaticSymbol *>(sym);            // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

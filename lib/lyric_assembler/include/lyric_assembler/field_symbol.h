@@ -59,12 +59,12 @@ namespace lyric_assembler {
         FieldSymbolPriv *load() override;
     };
 
-    static inline const FieldSymbol *cast_symbol_to_field(const AbstractSymbol *sym) {
+    inline const FieldSymbol *cast_symbol_to_field(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::FIELD);
         return static_cast<const FieldSymbol *>(sym);       // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline FieldSymbol *cast_symbol_to_field(AbstractSymbol *sym) {
+    inline FieldSymbol *cast_symbol_to_field(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::FIELD);
         return static_cast<FieldSymbol *>(sym);             // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

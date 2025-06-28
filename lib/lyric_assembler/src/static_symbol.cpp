@@ -25,11 +25,12 @@ lyric_assembler::StaticSymbol::StaticSymbol(
     priv->access = access;
     priv->isVariable = isVariable;
     priv->staticType = staticType;
-    priv->initCall = nullptr;
+    priv->parentBlock = parentBlock;
     priv->isDeclOnly = isDeclOnly;
     priv->staticBlock = std::make_unique<BlockHandle>(staticUrl, parentBlock);
 
     TU_ASSERT (priv->staticType != nullptr);
+    TU_ASSERT (priv->parentBlock != nullptr);
 }
 
 lyric_assembler::StaticSymbol::StaticSymbol(
@@ -50,20 +51,26 @@ lyric_assembler::StaticSymbol::StaticSymbol(
 lyric_assembler::StaticSymbolPriv *
 lyric_assembler::StaticSymbol::load()
 {
-    auto *importCache = m_state->importCache();
     auto *typeCache = m_state->typeCache();
 
     auto priv = std::make_unique<StaticSymbolPriv>();
+
+    priv->parentBlock = nullptr;
     priv->access = m_staticImport->getAccess();
     priv->isVariable = m_staticImport->isVariable();
+    priv->isDeclOnly = m_staticImport->isDeclOnly();
 
     auto *staticType = m_staticImport->getStaticType();
     TU_ASSIGN_OR_RAISE (priv->staticType, typeCache->importType(staticType));
 
-    auto initializerUrl = m_staticImport->getInitializer();
-    TU_ASSIGN_OR_RAISE (priv->initCall, importCache->importCall(initializerUrl));
+    auto *symbolCache = m_state->symbolCache();
 
-    priv->isDeclOnly = m_staticImport->isDeclOnly();
+    auto initializerUrl = m_staticImport->getInitializer();
+    if (initializerUrl.isValid()) {
+        CallSymbol *initializerCall;
+        TU_ASSIGN_OR_RAISE (initializerCall, symbolCache->getOrImportCall(initializerUrl));
+        priv->initializerHandle = std::make_unique<InitializerHandle>(getName(), initializerCall);
+    }
 
     priv->staticBlock = std::make_unique<BlockHandle>(
         m_staticUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
@@ -127,12 +134,12 @@ lyric_common::SymbolUrl
 lyric_assembler::StaticSymbol::getInitializer() const
 {
     auto *priv = getPriv();
-    if (priv->initCall == nullptr)
-        return {};
-    return priv->initCall->getSymbolUrl();
+    if (priv->initializerHandle != nullptr)
+        return priv->initializerHandle->getSymbolUrl();
+    return {};
 }
 
-tempo_utils::Result<lyric_assembler::ProcHandle *>
+tempo_utils::Result<lyric_assembler::InitializerHandle *>
 lyric_assembler::StaticSymbol::defineInitializer()
 {
     if (isImported())
@@ -144,22 +151,24 @@ lyric_assembler::StaticSymbol::defineInitializer()
     lyric_common::SymbolPath path(m_staticUrl.getSymbolPath().getPath(), "$init");
     lyric_common::SymbolUrl initializerUrl(path);
 
-    if (priv->initCall != nullptr || m_state->symbolCache()->hasSymbol(initializerUrl))
+    if (priv->initializerHandle != nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "initializer already defined for static {}", m_staticUrl.toString());
 
-    //
-    auto returnType = getTypeDef();
+    auto identifier = absl::StrCat("$inits$", m_staticUrl.getSymbolName());
 
-    std::vector<lyric_object::Parameter> parameters;
+    // declare the initializer call
+    CallSymbol *callSymbol;
+    TU_ASSIGN_OR_RETURN (callSymbol, priv->parentBlock->declareFunction(
+        identifier, lyric_object::AccessType::Public, {}, priv->isDeclOnly));
 
-    // construct call symbol
-    auto initSymbol = std::make_unique<CallSymbol>(initializerUrl, lyric_object::AccessType::Public,
-        lyric_object::CallMode::Normal, priv->isDeclOnly, priv->staticBlock.get(), m_state);
+    // define the initializer with no parameters
+    TU_RETURN_IF_STATUS (callSymbol->defineCall({}));
 
-    TU_ASSIGN_OR_RETURN (priv->initCall, m_state->appendCall(std::move(initSymbol)));
+    // create an initializer handle
+    priv->initializerHandle = std::make_unique<InitializerHandle>(getName(), callSymbol);
 
-    return priv->initCall->defineCall({}, returnType);
+    return priv->initializerHandle.get();
 }
 
 tempo_utils::Status
@@ -167,23 +176,18 @@ lyric_assembler::StaticSymbol::prepareInitializer(CallableInvoker &invoker)
 {
     auto *priv = getPriv();
 
-    if (priv->initCall == nullptr)
+    if (priv->initializerHandle == nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
             "missing initializer for static {}", m_staticUrl.toString());
 
-    auto initializerUrl = priv->initCall->getSymbolUrl();
+    auto initializerUrl = priv->initializerHandle->getSymbolUrl();
 
-    if (!m_state->symbolCache()->hasSymbol(initializerUrl))
-        return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
-            "missing init for static {}", m_staticUrl.toString());
-    AbstractSymbol *initSym;
-    TU_ASSIGN_OR_RETURN (initSym, m_state->symbolCache()->getOrImportSymbol(initializerUrl));
-    if (initSym->getSymbolType() != SymbolType::CALL)
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "invalid call symbol {}", initializerUrl.toString());
-    auto *init = cast_symbol_to_call(initSym);
+    auto *symbolCache = m_state->symbolCache();
 
-    auto callable = std::make_unique<FunctionCallable>(init, /* isInlined= */ false);
+    CallSymbol *initSymbol;
+    TU_ASSIGN_OR_RETURN (initSymbol, symbolCache->getOrImportCall(initializerUrl));
+
+    auto callable = std::make_unique<FunctionCallable>(initSymbol, /* isInlined= */ false);
     return invoker.initialize(std::move(callable));
 }
 
