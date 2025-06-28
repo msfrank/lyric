@@ -43,7 +43,6 @@ lyric_compiler::DefClassHandler::before(
     auto *block = getBlock();
     auto *driver = getDriver();
     auto *fundamentalCache = driver->getFundamentalCache();
-    auto *symbolCache = driver->getSymbolCache();
     auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstDefClassClass))
@@ -172,7 +171,8 @@ lyric_compiler::DefClassHandler::before(
             initNode, m_defclass.classSymbol, allocatorTrap, typeSystem));
     } else {
         TU_ASSIGN_OR_RETURN (m_defclass.initCall, declare_class_default_init(
-            &m_defclass, m_defclass.classSymbol, allocatorTrap, symbolCache, typeSystem));
+            m_defclass.classSymbol, allocatorTrap));
+        m_defclass.defaultInit = true;
     }
 
     // declare methods
@@ -198,12 +198,19 @@ tempo_utils::Status
 lyric_compiler::DefClassHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     TU_LOG_INFO << "after DefClassHandler@" << this;
 
+    auto *driver = getDriver();
+
+    if (m_defclass.defaultInit) {
+        auto *symbolCache = driver->getSymbolCache();
+        auto *typeSystem = driver->getTypeSystem();
+        TU_RETURN_IF_NOT_OK (define_class_default_init(&m_defclass, symbolCache, typeSystem));
+    }
+
     if (!m_isSideEffect) {
-        auto *driver = getDriver();
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));
     }
 

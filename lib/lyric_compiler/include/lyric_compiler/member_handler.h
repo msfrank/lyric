@@ -12,7 +12,7 @@ namespace lyric_compiler {
 
     struct Member {
         lyric_assembler::FieldSymbol *fieldSymbol = nullptr;
-        lyric_assembler::ProcHandle *procHandle = nullptr;
+        lyric_assembler::InitializerHandle *initializerHandle = nullptr;
     };
 
     class MemberHandler : public BaseGrouping {
@@ -40,7 +40,7 @@ namespace lyric_compiler {
     public:
         MemberInit(
             const lyric_common::TypeDef &memberType,
-            lyric_assembler::ProcHandle *procHandle,
+            lyric_assembler::InitializerHandle *initializerHandle,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
 
@@ -51,7 +51,7 @@ namespace lyric_compiler {
 
     private:
         lyric_common::TypeDef m_memberType;
-        lyric_assembler::ProcHandle *m_procHandle;
+        lyric_assembler::InitializerHandle *m_initializerHandle;
     };
 }
 

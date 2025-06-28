@@ -20,6 +20,7 @@ namespace lyric_compiler {
         lyric_assembler::ClassSymbol *superclassSymbol = nullptr;
         lyric_typing::TemplateSpec templateSpec;
         lyric_assembler::CallSymbol *initCall = nullptr;
+        bool defaultInit = false;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Member> members;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Method> methods;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Impl> impls;

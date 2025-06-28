@@ -35,7 +35,7 @@ lyric_compiler::MemberHandler::before(
     auto memberType = m_member.fieldSymbol->getTypeDef();
 
     auto init = std::make_unique<MemberInit>(
-        memberType, m_member.procHandle, block, driver);
+        memberType, m_member.initializerHandle, block, driver);
     ctx.appendChoice(std::move(init));
 
     return {};
@@ -49,53 +49,49 @@ lyric_compiler::MemberHandler::after(
 {
     TU_LOG_INFO << "after MemberHandler@" << this;
 
-    if (m_member.procHandle == nullptr)
+    if (m_member.initializerHandle == nullptr)
         return {};
 
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
-    auto *proc = m_member.procHandle;
-    auto *code = proc->procCode();
+    auto *procHandle = m_member.initializerHandle->initializerProc();
+    auto *code = procHandle->procCode();
     auto *fragment = code->rootFragment();
 
     auto initializerType = driver->peekResult();
     TU_RETURN_IF_NOT_OK (driver->popResult());
-    proc->putExitType(initializerType);
+    procHandle->putExitType(initializerType);
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
+
+    // finalize the call
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, m_member.initializerHandle->finalizeInitializer());
 
     auto memberType = m_member.fieldSymbol->getTypeDef();
     bool isReturnable;
 
     // validate that body returns the expected type
-    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(memberType, initializerType));
+    TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(memberType, returnType));
     if (!isReturnable)
         return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "member initializer is incompatible with type {}", memberType.toString());
-
-    // validate that each exit returns the expected type
-    for (auto it = proc->exitTypesBegin(); it != proc->exitTypesEnd(); it++) {
-        TU_ASSIGN_OR_RETURN (isReturnable, typeSystem->isAssignable(memberType, *it));
-        if (!isReturnable)
-            return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
-                "member initializer is incompatible with type {}", memberType.toString());
-    }
 
     return {};
 }
 
 lyric_compiler::MemberInit::MemberInit(
     const lyric_common::TypeDef &memberType,
-    lyric_assembler::ProcHandle *procHandle,
+    lyric_assembler::InitializerHandle *initializerHandle,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseChoice(block, driver),
       m_memberType(memberType),
-      m_procHandle(procHandle)
+      m_initializerHandle(initializerHandle)
 {
     TU_ASSERT (m_memberType.isValid());
-    TU_ASSERT (m_procHandle != nullptr);
+    TU_ASSERT (m_initializerHandle != nullptr);
 }
 
 tempo_utils::Status
@@ -114,7 +110,8 @@ lyric_compiler::MemberInit::decide(
 
     auto *block = getBlock();
     auto *driver = getDriver();
-    auto *fragment = m_procHandle->procCode()->rootFragment();
+    auto *procHandle = m_initializerHandle->initializerProc();
+    auto *fragment = procHandle->procCode()->rootFragment();
 
     switch (astId) {
 

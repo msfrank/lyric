@@ -199,7 +199,7 @@ lyric_compiler::declare_struct_member(
 
     // define the initializer if specified
     if (node->numChildren() > 0) {
-        TU_ASSIGN_OR_RETURN (member.procHandle, member.fieldSymbol->defineInitializer());
+        TU_ASSIGN_OR_RETURN (member.initializerHandle, member.fieldSymbol->defineInitializer());
     }
 
     return member;

@@ -1,6 +1,7 @@
 
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/field_symbol.h>
+#include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_importer/field_import.h>
 
@@ -60,7 +61,14 @@ lyric_assembler::FieldSymbol::load()
     auto *fieldType = m_fieldImport->getFieldType();
     TU_ASSIGN_OR_RAISE (priv->fieldType, typeCache->importType(fieldType));
 
-    priv->init = m_fieldImport->getInitializer();
+    auto *symbolCache = m_state->symbolCache();
+
+    auto initializerUrl = m_fieldImport->getInitializer();
+    if (initializerUrl.isValid()) {
+        CallSymbol *initializerCall;
+        TU_ASSIGN_OR_RAISE (initializerCall, symbolCache->getOrImportCall(initializerUrl));
+        priv->initializerHandle = std::make_unique<InitializerHandle>(getName(), initializerCall);
+    }
 
     return priv.release();
 }
@@ -121,17 +129,19 @@ bool
 lyric_assembler::FieldSymbol::hasInitializer() const
 {
     auto *priv = getPriv();
-    return priv->init.isValid();
+    return priv->initializerHandle != nullptr;
 }
 
 lyric_common::SymbolUrl
 lyric_assembler::FieldSymbol::getInitializer() const
 {
     auto *priv = getPriv();
-    return priv->init;
+    if (priv->initializerHandle != nullptr)
+        return priv->initializerHandle->getSymbolUrl();
+    return {};
 }
 
-tempo_utils::Result<lyric_assembler::ProcHandle *>
+tempo_utils::Result<lyric_assembler::InitializerHandle *>
 lyric_assembler::FieldSymbol::defineInitializer()
 {
     if (isImported())
@@ -139,21 +149,24 @@ lyric_assembler::FieldSymbol::defineInitializer()
             "can't define initializer on imported field {}", m_fieldUrl.toString());
     auto *priv = getPriv();
 
-    if (priv->init.isValid())
+    if (priv->initializerHandle != nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "cannot redefine initializer for {}", m_fieldUrl.toString());
 
     auto identifier = absl::StrCat("$init$", m_fieldUrl.getSymbolName());
 
     // declare the initializer call
-    lyric_assembler::CallSymbol *callSymbol;
+    CallSymbol *callSymbol;
     TU_ASSIGN_OR_RETURN (callSymbol, priv->parentBlock->declareFunction(
         identifier, lyric_object::AccessType::Public, {}, priv->isDeclOnly));
 
-    priv->init = callSymbol->getSymbolUrl();
+    // define the initializer with no parameters
+    TU_RETURN_IF_STATUS (callSymbol->defineCall({}));
 
-    // define the initializer with no parameters and the field type as return type
-    return callSymbol->defineCall({}, priv->fieldType->getTypeDef());
+    // create an initializer handle
+    priv->initializerHandle = std::make_unique<InitializerHandle>(getName(), callSymbol);
+
+    return priv->initializerHandle.get();
 }
 
 lyric_assembler::DataReference

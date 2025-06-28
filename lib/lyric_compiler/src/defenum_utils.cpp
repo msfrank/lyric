@@ -8,6 +8,23 @@
 #include <lyric_parser/ast_attrs.h>
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
+lyric_compiler::declare_enum_default_init(
+    lyric_assembler::EnumSymbol *enumSymbol,
+    const std::string &allocatorTrap)
+{
+    TU_ASSERT (enumSymbol != nullptr);
+
+    // declare the constructor
+    lyric_assembler::CallSymbol *ctorSymbol;
+    TU_ASSIGN_OR_RETURN (ctorSymbol, enumSymbol->declareCtor(lyric_object::AccessType::Public, allocatorTrap));
+
+    // define 0-arity constructor
+    TU_RETURN_IF_STATUS(ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
+
+    return ctorSymbol;
+}
+
+tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_compiler::declare_enum_init(
     const lyric_parser::ArchetypeNode *initNode,
     lyric_assembler::EnumSymbol *enumSymbol,
@@ -38,31 +55,23 @@ lyric_compiler::declare_enum_init(
     return ctorSymbol;
 }
 
-tempo_utils::Result<lyric_assembler::CallSymbol *>
-lyric_compiler::declare_enum_default_init(
+
+tempo_utils::Status
+lyric_compiler::define_enum_default_init(
     const DefEnum *defenum,
-    lyric_assembler::EnumSymbol *enumSymbol,
-    const std::string &allocatorTrap,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_typing::TypeSystem *typeSystem)
 {
     TU_ASSERT (defenum != nullptr);
-    TU_ASSERT (enumSymbol != nullptr);
 
-    // declare the constructor
-    lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, enumSymbol->declareCtor(lyric_object::AccessType::Public, allocatorTrap));
-
-    lyric_assembler::ProcHandle *procHandle;
-    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
-
+    auto *procHandle = defenum->initCall->callProc();
     auto *ctorBlock = procHandle->procBlock();
     auto *procBuilder = procHandle->procCode();
     auto *fragment = procBuilder->rootFragment();
 
     // find the superenum ctor
     lyric_assembler::ConstructableInvoker superCtor;
-    TU_RETURN_IF_NOT_OK (enumSymbol->superEnum()->prepareCtor(superCtor));
+    TU_RETURN_IF_NOT_OK (defenum->superenumSymbol->prepareCtor(superCtor));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
@@ -74,7 +83,7 @@ lyric_compiler::declare_enum_default_init(
     TU_RETURN_IF_STATUS (superCtor.invoke(ctorBlock, reifier, fragment, /* flags= */ 0));
 
     // default-initialize all members
-    for (auto it = enumSymbol->membersBegin(); it != enumSymbol->membersEnd(); it++) {
+    for (auto it = defenum->enumSymbol->membersBegin(); it != defenum->enumSymbol->membersEnd(); it++) {
         auto &memberName = it->first;
         auto &fieldRef = it->second;
 
@@ -117,19 +126,21 @@ lyric_compiler::declare_enum_default_init(
         TU_RETURN_IF_NOT_OK (fragment->storeRef(fieldRef, /* initialStore= */ true));
 
         // mark member as initialized
-        TU_RETURN_IF_NOT_OK (enumSymbol->setMemberInitialized(memberName));
+        TU_RETURN_IF_NOT_OK (defenum->enumSymbol->setMemberInitialized(memberName));
     }
 
-    TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << enumSymbol->getSymbolUrl();
+    TU_LOG_INFO << "declared ctor " << defenum->initCall->getSymbolUrl()
+                << " for " << defenum->enumSymbol->getSymbolUrl();
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
-    if (!enumSymbol->isCompletelyInitialized())
+    if (!defenum->enumSymbol->isCompletelyInitialized())
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-            "enum {} is not completely initialized", enumSymbol->getSymbolUrl().toString());
+            "enum {} is not completely initialized",
+            defenum->enumSymbol->getSymbolUrl().toString());
 
-    return ctorSymbol;
+    return {};
 }
 
 tempo_utils::Result<lyric_compiler::Member>
@@ -167,7 +178,7 @@ lyric_compiler::declare_enum_member(
 
     // define the initializer if specified
     if (node->numChildren() > 0) {
-        TU_ASSIGN_OR_RETURN (member.procHandle, member.fieldSymbol->defineInitializer());
+        TU_ASSIGN_OR_RETURN (member.initializerHandle, member.fieldSymbol->defineInitializer());
     }
 
     return member;

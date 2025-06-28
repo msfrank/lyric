@@ -121,7 +121,7 @@ lyric_compiler::PackParam::after(
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
-    // finialize the call
+    // finalize the call
     lyric_common::TypeDef returnType;
     TU_ASSIGN_OR_RETURN (returnType, m_initializerHandle->finalizeInitializer());
 
@@ -129,7 +129,7 @@ lyric_compiler::PackParam::after(
     bool isAssignable;
 
     // validate that body returns the expected type
-    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(paramType, initializerType));
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(paramType, returnType));
     if (!isAssignable)
         return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "parameter initializer is incompatible with type {}", paramType.toString());

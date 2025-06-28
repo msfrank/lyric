@@ -9,29 +9,37 @@
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_compiler::declare_instance_default_init(
-    const DefInstance *definstance,
     lyric_assembler::InstanceSymbol *instanceSymbol,
-    const std::string &allocatorTrap,
-    lyric_assembler::SymbolCache *symbolCache,
-    lyric_typing::TypeSystem *typeSystem)
+    const std::string &allocatorTrap)
 {
-    TU_ASSERT (definstance != nullptr);
     TU_ASSERT (instanceSymbol != nullptr);
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
     TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(lyric_object::AccessType::Public, allocatorTrap));
 
-    lyric_assembler::ProcHandle *procHandle;
-    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
+    // define 0-arity constructor
+    TU_RETURN_IF_STATUS(ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
 
+    return ctorSymbol;
+}
+
+tempo_utils::Status
+lyric_compiler::define_instance_default_init(
+    const DefInstance *definstance,
+    lyric_assembler::SymbolCache *symbolCache,
+    lyric_typing::TypeSystem *typeSystem)
+{
+    TU_ASSERT (definstance != nullptr);
+
+    auto *procHandle = definstance->initCall->callProc();
     auto *ctorBlock = procHandle->procBlock();
     auto *procBuilder = procHandle->procCode();
     auto *fragment = procBuilder->rootFragment();
 
     // find the superinstance ctor
     lyric_assembler::ConstructableInvoker superCtor;
-    TU_RETURN_IF_NOT_OK (instanceSymbol->superInstance()->prepareCtor(superCtor));
+    TU_RETURN_IF_NOT_OK (definstance->superinstanceSymbol->prepareCtor(superCtor));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
@@ -43,7 +51,7 @@ lyric_compiler::declare_instance_default_init(
     TU_RETURN_IF_STATUS (superCtor.invoke(ctorBlock, reifier, fragment, /* flags= */ 0));
 
     // default-initialize all members
-    for (auto it = instanceSymbol->membersBegin(); it != instanceSymbol->membersEnd(); it++) {
+    for (auto it = definstance->instanceSymbol->membersBegin(); it != definstance->instanceSymbol->membersEnd(); it++) {
         auto &memberName = it->first;
         auto &fieldRef = it->second;
 
@@ -86,19 +94,21 @@ lyric_compiler::declare_instance_default_init(
         TU_RETURN_IF_NOT_OK (fragment->storeRef(fieldRef, /* initialStore= */ true));
 
         // mark member as initialized
-        TU_RETURN_IF_NOT_OK (instanceSymbol->setMemberInitialized(memberName));
+        TU_RETURN_IF_NOT_OK (definstance->instanceSymbol->setMemberInitialized(memberName));
     }
 
-    TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << instanceSymbol->getSymbolUrl();
+    TU_LOG_INFO << "declared ctor " << definstance->initCall->getSymbolUrl()
+                << " for " << definstance->instanceSymbol->getSymbolUrl();
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
 
-    if (!instanceSymbol->isCompletelyInitialized())
+    if (!definstance->instanceSymbol->isCompletelyInitialized())
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-            "instance {} is not completely initialized", instanceSymbol->getSymbolUrl().toString());
+            "instance {} is not completely initialized",
+            definstance->instanceSymbol->getSymbolUrl().toString());
 
-    return ctorSymbol;
+    return {};
 }
 
 tempo_utils::Result<lyric_compiler::Member>
@@ -135,7 +145,7 @@ lyric_compiler::declare_instance_member(
     TU_LOG_INFO << "declared member " << identifier << " for " << instanceSymbol->getSymbolUrl();
 
     // define the required initializer
-    TU_ASSIGN_OR_RETURN (member.procHandle, member.fieldSymbol->defineInitializer());
+    TU_ASSIGN_OR_RETURN (member.initializerHandle, member.fieldSymbol->defineInitializer());
 
     return member;
 }

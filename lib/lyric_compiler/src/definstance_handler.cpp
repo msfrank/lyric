@@ -14,7 +14,7 @@
 lyric_compiler::DefInstanceHandler::DefInstanceHandler(
     bool isSideEffect,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_isSideEffect(isSideEffect),
       m_currentNamespace(nullptr)
@@ -25,7 +25,7 @@ lyric_compiler::DefInstanceHandler::DefInstanceHandler(
     bool isSideEffect,
     lyric_assembler::NamespaceSymbol *currentNamespace,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_isSideEffect(isSideEffect),
       m_currentNamespace(currentNamespace)
@@ -37,14 +37,13 @@ tempo_utils::Status
 lyric_compiler::DefInstanceHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     TU_LOG_INFO << "before DefInstanceHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
     auto *fundamentalCache = driver->getFundamentalCache();
-    auto *symbolCache = driver->getSymbolCache();
     auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstDefInstanceClass))
@@ -143,7 +142,8 @@ lyric_compiler::DefInstanceHandler::before(
 
     // declare instance init
     TU_ASSIGN_OR_RETURN (m_definstance.initCall, declare_instance_default_init(
-        &m_definstance, m_definstance.instanceSymbol, allocatorTrap, symbolCache, typeSystem));
+        m_definstance.instanceSymbol, allocatorTrap));
+    m_definstance.defaultInit = true;
 
     // declare methods
     for (auto &defNode : defNodes) {
@@ -168,12 +168,19 @@ tempo_utils::Status
 lyric_compiler::DefInstanceHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     TU_LOG_INFO << "after DefInstanceHandler@" << this;
 
+    auto *driver = getDriver();
+
+    if (m_definstance.defaultInit) {
+        auto *symbolCache = driver->getSymbolCache();
+        auto *typeSystem = driver->getTypeSystem();
+        TU_RETURN_IF_NOT_OK (define_instance_default_init(&m_definstance, symbolCache, typeSystem));
+    }
+
     if (!m_isSideEffect) {
-        auto *driver = getDriver();
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));
     }
 

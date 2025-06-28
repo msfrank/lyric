@@ -90,8 +90,9 @@ lyric_archiver::copy_enum(
             if (templateImport != nullptr) {
                 TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
             }
-            lyric_assembler::ProcHandle *procHandle;
-            TU_ASSIGN_OR_RETURN (procHandle, fieldSymbol->defineInitializer());
+            lyric_assembler::InitializerHandle *initializerHandle;
+            TU_ASSIGN_OR_RETURN (initializerHandle, fieldSymbol->defineInitializer());
+            auto *procHandle = initializerHandle->initializerProc();
             lyric_assembler::AbstractSymbol *initSymbol;
             TU_ASSIGN_OR_RETURN (initSymbol, archiverState.getSymbol(fieldSymbol->getInitializer()));
             TU_RETURN_IF_NOT_OK (archiverState.putSymbol(initializerUrl, initSymbol));

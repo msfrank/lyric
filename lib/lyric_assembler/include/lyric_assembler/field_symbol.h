@@ -2,8 +2,9 @@
 #define LYRIC_ASSEMBLER_FIELD_SYMBOL_H
 
 #include "abstract_symbol.h"
-#include "object_state.h"
 #include "base_symbol.h"
+#include "initializer_handle.h"
+#include "object_state.h"
 #include "type_handle.h"
 
 namespace lyric_assembler {
@@ -12,7 +13,7 @@ namespace lyric_assembler {
         lyric_object::AccessType access;
         bool isVariable;
         bool isDeclOnly;
-        lyric_common::SymbolUrl init;
+        std::unique_ptr<InitializerHandle> initializerHandle;
         BlockHandle *parentBlock;
         TypeHandle *fieldType;
     };
@@ -46,7 +47,7 @@ namespace lyric_assembler {
 
         bool hasInitializer() const;
         lyric_common::SymbolUrl getInitializer() const;
-        tempo_utils::Result<ProcHandle *> defineInitializer();
+        tempo_utils::Result<InitializerHandle *> defineInitializer();
 
         DataReference getReference() const;
 

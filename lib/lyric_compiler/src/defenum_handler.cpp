@@ -12,7 +12,7 @@
 lyric_compiler::DefEnumHandler::DefEnumHandler(
     bool isSideEffect,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_isSideEffect(isSideEffect),
       m_currentNamespace(nullptr)
@@ -23,7 +23,7 @@ lyric_compiler::DefEnumHandler::DefEnumHandler(
     bool isSideEffect,
     lyric_assembler::NamespaceSymbol *currentNamespace,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_isSideEffect(isSideEffect),
       m_currentNamespace(currentNamespace)
@@ -35,14 +35,13 @@ tempo_utils::Status
 lyric_compiler::DefEnumHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     TU_LOG_INFO << "before DefEnumHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
     auto *fundamentalCache = driver->getFundamentalCache();
-    auto *symbolCache = driver->getSymbolCache();
     auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstDefEnumClass))
@@ -140,7 +139,8 @@ lyric_compiler::DefEnumHandler::before(
             initNode, m_defenum.enumSymbol, allocatorTrap, typeSystem));
     } else {
         TU_ASSIGN_OR_RETURN (m_defenum.initCall, declare_enum_default_init(
-            &m_defenum, m_defenum.enumSymbol, allocatorTrap, symbolCache, typeSystem));
+            m_defenum.enumSymbol, allocatorTrap));
+        m_defenum.defaultInit = true;
     }
 
     // declare methods
@@ -174,12 +174,19 @@ tempo_utils::Status
 lyric_compiler::DefEnumHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     TU_LOG_INFO << "after DefEnumHandler@" << this;
 
+    auto *driver = getDriver();
+
+    if (m_defenum.defaultInit) {
+        auto *symbolCache = driver->getSymbolCache();
+        auto *typeSystem = driver->getTypeSystem();
+        TU_RETURN_IF_NOT_OK (define_enum_default_init(&m_defenum, symbolCache, typeSystem));
+    }
+
     if (!m_isSideEffect) {
-        auto *driver = getDriver();
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));
     }
 

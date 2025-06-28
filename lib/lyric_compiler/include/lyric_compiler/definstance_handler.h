@@ -19,6 +19,7 @@ namespace lyric_compiler {
         lyric_assembler::InstanceSymbol *instanceSymbol = nullptr;
         lyric_assembler::InstanceSymbol *superinstanceSymbol = nullptr;
         lyric_assembler::CallSymbol *initCall = nullptr;
+        bool defaultInit = false;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Member> members;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Method> methods;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Impl> impls;

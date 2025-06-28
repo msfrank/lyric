@@ -4,6 +4,8 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/typename_symbol.h>
 
+#include "lyric_assembler/call_symbol.h"
+
 lyric_assembler::SymbolCache::SymbolCache(ObjectState *state)
     : m_state(state)
 {
@@ -160,4 +162,136 @@ int
 lyric_assembler::SymbolCache::numSymbols() const
 {
     return m_symcache.size();
+}
+
+tempo_utils::Result<lyric_assembler::ActionSymbol *>
+lyric_assembler::SymbolCache::getOrImportAction(const lyric_common::SymbolUrl &actionUrl) const
+{
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(actionUrl));
+    if (sym->getSymbolType() != SymbolType::ACTION)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "symbol {} is not a valid action", actionUrl.toString());
+    return (ActionSymbol *) sym;
+}
+
+tempo_utils::Result<lyric_assembler::BindingSymbol *>
+lyric_assembler::SymbolCache::getOrImportBinding(const lyric_common::SymbolUrl &bindingUrl) const
+{
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(bindingUrl));
+    if (sym->getSymbolType() != SymbolType::BINDING)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "symbol {} is not a valid binding", bindingUrl.toString());
+    return (BindingSymbol *) sym;
+}
+
+tempo_utils::Result<lyric_assembler::CallSymbol *>
+lyric_assembler::SymbolCache::getOrImportCall(const lyric_common::SymbolUrl &callUrl) const
+{
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(callUrl));
+    if (sym->getSymbolType() != SymbolType::CALL)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "symbol {} is not a valid call", callUrl.toString());
+    return (CallSymbol *) sym;
+}
+
+tempo_utils::Result<lyric_assembler::ClassSymbol *>
+lyric_assembler::SymbolCache::getOrImportClass(const lyric_common::SymbolUrl &classUrl) const
+{
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(classUrl));
+    if (sym->getSymbolType() != SymbolType::CLASS)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "symbol {} is not a valid class", classUrl.toString());
+    return (ClassSymbol *) sym;
+}
+
+tempo_utils::Result<lyric_assembler::ConceptSymbol *>
+lyric_assembler::SymbolCache::getOrImportConcept(const lyric_common::SymbolUrl &conceptUrl) const
+{
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(conceptUrl));
+    if (sym->getSymbolType() != SymbolType::CONCEPT)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "symbol {} is not a valid concept", conceptUrl.toString());
+    return (ConceptSymbol *) sym;
+}
+
+tempo_utils::Result<lyric_assembler::EnumSymbol *>
+lyric_assembler::SymbolCache::getOrImportEnum(const lyric_common::SymbolUrl &enumUrl) const
+{
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(enumUrl));
+    if (sym->getSymbolType() != SymbolType::ENUM)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "symbol {} is not a valid enum", enumUrl.toString());
+    return (EnumSymbol *) sym;
+}
+
+tempo_utils::Result<lyric_assembler::ExistentialSymbol *>
+lyric_assembler::SymbolCache::getOrImportExistential(const lyric_common::SymbolUrl &existentialUrl) const
+{
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(existentialUrl));
+    if (sym->getSymbolType() != SymbolType::EXISTENTIAL)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "symbol {} is not a valid existential", existentialUrl.toString());
+    return (ExistentialSymbol *) sym;
+}
+
+tempo_utils::Result<lyric_assembler::FieldSymbol *>
+lyric_assembler::SymbolCache::getOrImportField(const lyric_common::SymbolUrl &fieldUrl) const
+{
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(fieldUrl));
+    if (sym->getSymbolType() != SymbolType::FIELD)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "symbol {} is not a valid field", fieldUrl.toString());
+    return (FieldSymbol *) sym;
+}
+
+tempo_utils::Result<lyric_assembler::InstanceSymbol *>
+lyric_assembler::SymbolCache::getOrImportInstance(const lyric_common::SymbolUrl &instanceUrl) const
+{
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(instanceUrl));
+    if (sym->getSymbolType() != SymbolType::INSTANCE)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "symbol {} is not a valid instance", instanceUrl.toString());
+    return (InstanceSymbol *) sym;
+}
+
+tempo_utils::Result<lyric_assembler::NamespaceSymbol *>
+lyric_assembler::SymbolCache::getOrImportNamespace(const lyric_common::SymbolUrl &namespaceUrl) const
+{
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(namespaceUrl));
+    if (sym->getSymbolType() != SymbolType::NAMESPACE)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "symbol {} is not a valid namespace", namespaceUrl.toString());
+    return (NamespaceSymbol *) sym;
+}
+
+tempo_utils::Result<lyric_assembler::StaticSymbol *>
+lyric_assembler::SymbolCache::getOrImportStatic(const lyric_common::SymbolUrl &staticUrl) const
+{
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(staticUrl));
+    if (sym->getSymbolType() != SymbolType::STATIC)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "symbol {} is not a valid static", staticUrl.toString());
+    return (StaticSymbol *) sym;
+}
+
+tempo_utils::Result<lyric_assembler::StructSymbol *>
+lyric_assembler::SymbolCache::getOrImportStruct(const lyric_common::SymbolUrl &structUrl) const
+{
+    AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, getOrImportSymbol(structUrl));
+    if (sym->getSymbolType() != SymbolType::STRUCT)
+        return AssemblerStatus::forCondition(AssemblerCondition::kInvalidSymbol,
+            "symbol {} is not a valid struct", structUrl.toString());
+    return (StructSymbol *) sym;
 }

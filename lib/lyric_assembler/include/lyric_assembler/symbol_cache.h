@@ -24,15 +24,20 @@ namespace lyric_assembler {
         absl::flat_hash_map<lyric_common::SymbolUrl, AbstractSymbol *>::const_iterator symbolsEnd() const;
         int numSymbols() const;
 
-        tempo_utils::Result<TypenameSymbol *> putTypename(const lyric_common::SymbolUrl &typenameUrl);
+        tempo_utils::Result<ActionSymbol *> getOrImportAction(const lyric_common::SymbolUrl &actionUrl) const;
+        tempo_utils::Result<BindingSymbol *> getOrImportBinding(const lyric_common::SymbolUrl &bindingUrl) const;
+        tempo_utils::Result<CallSymbol *> getOrImportCall(const lyric_common::SymbolUrl &callUrl) const;
+        tempo_utils::Result<ClassSymbol *> getOrImportClass(const lyric_common::SymbolUrl &classUrl) const;
+        tempo_utils::Result<ConceptSymbol *> getOrImportConcept(const lyric_common::SymbolUrl &conceptUrl) const;
+        tempo_utils::Result<EnumSymbol *> getOrImportEnum(const lyric_common::SymbolUrl &enumUrl) const;
+        tempo_utils::Result<ExistentialSymbol *> getOrImportExistential(const lyric_common::SymbolUrl &existentialUrl) const;
+        tempo_utils::Result<FieldSymbol *> getOrImportField(const lyric_common::SymbolUrl &fieldUrl) const;
+        tempo_utils::Result<InstanceSymbol *> getOrImportInstance(const lyric_common::SymbolUrl &instanceUrl) const;
+        tempo_utils::Result<NamespaceSymbol *> getOrImportNamespace(const lyric_common::SymbolUrl &namespaceUrl) const;
+        tempo_utils::Result<StaticSymbol *> getOrImportStatic(const lyric_common::SymbolUrl &staticUrl) const;
+        tempo_utils::Result<StructSymbol *> getOrImportStruct(const lyric_common::SymbolUrl &structUrl) const;
 
-//        bool hasEnvBinding(const std::string &name) const;
-//        SymbolBinding getEnvBinding(const std::string &name) const;
-//        tempo_utils::Status insertEnvBinding(const std::string &name, const SymbolBinding &binding);
-//
-//        bool hasEnvInstance(const lyric_common::TypeDef &type) const;
-//        lyric_common::SymbolUrl getEnvInstance(const lyric_common::TypeDef &type) const;
-//        tempo_utils::Status insertEnvInstance(const lyric_common::TypeDef &type, const lyric_common::SymbolUrl &url);
+        tempo_utils::Result<TypenameSymbol *> putTypename(const lyric_common::SymbolUrl &typenameUrl);
 
     private:
         ObjectState *m_state;

@@ -267,10 +267,10 @@ lyric_assembler::CallSymbol::load()
     TU_ASSIGN_OR_RAISE (returnType, typeCache->importType(m_callImport->getReturnType()));
     priv->returnType = returnType->getTypeDef();
 
-    auto *importCache = m_state->importCache();
+    auto *symbolCache = m_state->symbolCache();
     for (auto it = m_callImport->initializersBegin(); it != m_callImport->initializersEnd(); it++) {
         CallSymbol *initializerCall;
-        TU_ASSIGN_OR_RAISE (initializerCall, importCache->importCall(it->second));
+        TU_ASSIGN_OR_RAISE (initializerCall, symbolCache->getOrImportCall(it->second));
         auto initializer = std::make_unique<InitializerHandle>(it->first, initializerCall);
         priv->initializers[it->first] = std::move(initializer);
     }
