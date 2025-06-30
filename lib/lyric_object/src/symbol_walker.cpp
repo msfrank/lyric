@@ -60,3 +60,9 @@ lyric_object::SymbolWalker::getLinkageIndex() const
         return INVALID_ADDRESS_U32;
     return symbolDescriptor->symbol_descriptor();
 }
+
+tu_uint32
+lyric_object::SymbolWalker::getDescriptorOffset() const
+{
+    return m_symbolOffset;
+}

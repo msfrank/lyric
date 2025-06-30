@@ -7,8 +7,12 @@ namespace lyric_runtime {
 
     class RestRef final : public AbstractRef {
     public:
-        explicit RestRef(std::vector<DataCell> &&restArgs);
+        RestRef(const ExistentialTable *etable, std::vector<DataCell> &&restArgs);
         ~RestRef() override;
+
+        const AbstractMemberResolver *getMemberResolver() const override;
+        const AbstractMethodResolver *getMethodResolver() const override;
+        const AbstractExtensionResolver *getExtensionResolver() const override;
 
         DataCell restAt(int index) const;
         DataCell restLength() const;
@@ -24,7 +28,7 @@ namespace lyric_runtime {
         /*
          * methods below have the default no-op implementation
          */
-        const VirtualTable *getVirtualTable() const override;
+        lyric_common::SymbolUrl getSymbolUrl() const override;
         DataCell getField(const DataCell &field) const override;
         DataCell setField(const DataCell &field, const DataCell &value) override;
         bool rawSize(tu_int32 &size) const override;
@@ -41,6 +45,7 @@ namespace lyric_runtime {
         bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) override;
 
     private:
+        const ExistentialTable *m_etable;
         std::vector<DataCell> m_restArgs;
         bool m_reachable;
     };

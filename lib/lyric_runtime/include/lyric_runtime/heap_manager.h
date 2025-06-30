@@ -7,9 +7,17 @@
 
 namespace lyric_runtime {
 
+    struct PreludeTables {
+        const ExistentialTable *bytesTable = nullptr;
+        const ExistentialTable *restTable = nullptr;
+        const ExistentialTable *stringTable = nullptr;
+        const ExistentialTable *urlTable = nullptr;
+    };
+
     class HeapManager {
     public:
         HeapManager(
+            PreludeTables preludeTables,
             SegmentManager *segmentManager,
             SystemScheduler *systemScheduler,
             std::shared_ptr<AbstractHeap> heap);
@@ -35,6 +43,7 @@ namespace lyric_runtime {
         virtual tempo_utils::Status collectGarbage();
 
     private:
+        PreludeTables m_preludeTables;
         SegmentManager *m_segmentManager;
         SystemScheduler *m_systemScheduler;
         std::shared_ptr<AbstractHeap> m_heap;

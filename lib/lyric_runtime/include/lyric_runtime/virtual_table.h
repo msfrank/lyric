@@ -45,7 +45,27 @@ namespace lyric_runtime {
         bool m_returnsValue;
     };
 
-    class ImplTable {
+    class AbstractMemberResolver {
+    public:
+        virtual ~AbstractMemberResolver() = default;
+        virtual const VirtualMember *getMember(const DataCell &descriptor) const = 0;
+    };
+
+    class AbstractMethodResolver {
+    public:
+        virtual ~AbstractMethodResolver() = default;
+        virtual const VirtualMethod *getMethod(const DataCell &descriptor) const = 0;
+    };
+
+    class AbstractExtensionResolver {
+    public:
+        virtual ~AbstractExtensionResolver() = default;
+        virtual const VirtualMethod *getExtension(
+            const DataCell &conceptDescriptor,
+            const DataCell &callDescriptor) const = 0;
+    };
+
+    class ImplTable : public AbstractMethodResolver {
 
     public:
         ImplTable(
@@ -62,7 +82,7 @@ namespace lyric_runtime {
         lyric_object::LinkageSection getLinkageSection() const;
         tu_uint32 getDescriptorIndex() const;
 
-        const VirtualMethod *getMethod(const DataCell &descriptor) const;
+        const VirtualMethod *getMethod(const DataCell &descriptor) const override;
 
     private:
         BytecodeSegment *m_segment;
@@ -71,7 +91,7 @@ namespace lyric_runtime {
         const absl::flat_hash_map<DataCell,VirtualMethod> m_methods;
     };
 
-    class ExistentialTable {
+    class ExistentialTable : public AbstractMethodResolver, public AbstractExtensionResolver{
 
     public:
         ExistentialTable(
@@ -91,8 +111,10 @@ namespace lyric_runtime {
         lyric_object::LinkageSection getLinkageSection() const;
         tu_uint32 getDescriptorIndex() const;
 
-        const VirtualMethod *getMethod(const DataCell &descriptor) const;
-        const VirtualMethod *getExtension(const DataCell &conceptDescriptor, const DataCell &callDescriptor) const;
+        const VirtualMethod *getMethod(const DataCell &descriptor) const override;
+        const VirtualMethod *getExtension(
+            const DataCell &conceptDescriptor,
+            const DataCell &callDescriptor) const override;
 
     private:
         BytecodeSegment *m_segment;
@@ -103,7 +125,7 @@ namespace lyric_runtime {
         const absl::flat_hash_map<DataCell,ImplTable> m_impls;
     };
 
-    class ConceptTable {
+    class ConceptTable : public AbstractExtensionResolver {
 
     public:
         ConceptTable(
@@ -122,7 +144,9 @@ namespace lyric_runtime {
         lyric_object::LinkageSection getLinkageSection() const;
         tu_uint32 getDescriptorIndex() const;
 
-        const VirtualMethod *getExtension(const DataCell &conceptDescriptor, const DataCell &callDescriptor) const;
+        const VirtualMethod *getExtension(
+            const DataCell &conceptDescriptor,
+            const DataCell &callDescriptor) const override;
 
     private:
         BytecodeSegment *m_segment;
@@ -132,7 +156,7 @@ namespace lyric_runtime {
         const absl::flat_hash_map<DataCell,ImplTable> m_impls;
     };
 
-    class VirtualTable {
+    class VirtualTable : public AbstractMemberResolver, public AbstractMethodResolver, public AbstractExtensionResolver {
 
     public:
         VirtualTable(
@@ -160,9 +184,11 @@ namespace lyric_runtime {
         NativeFunc getAllocator() const;
         const VirtualMethod *getCtor() const;
 
-        const VirtualMember *getMember(const DataCell &descriptor) const;
-        const VirtualMethod *getMethod(const DataCell &descriptor) const;
-        const VirtualMethod *getExtension(const DataCell &conceptDescriptor, const DataCell &callDescriptor) const;
+        const VirtualMember *getMember(const DataCell &descriptor) const override;
+        const VirtualMethod *getMethod(const DataCell &descriptor) const override;
+        const VirtualMethod *getExtension(
+            const DataCell &conceptDescriptor,
+            const DataCell &callDescriptor) const override;
 
     private:
         BytecodeSegment *m_segment;

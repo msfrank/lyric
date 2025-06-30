@@ -10,10 +10,12 @@
 #include "lyric_runtime/rest_ref.h"
 
 lyric_runtime::HeapManager::HeapManager(
+    PreludeTables preludeTables,
     SegmentManager *segmentManager,
     SystemScheduler *systemScheduler,
     std::shared_ptr<AbstractHeap> heap)
-    : m_segmentManager(segmentManager),
+    : m_preludeTables(std::move(preludeTables)),
+      m_segmentManager(segmentManager),
       m_systemScheduler(systemScheduler),
       m_heap(std::move(heap))
 {
@@ -23,7 +25,7 @@ lyric_runtime::HeapManager::HeapManager(
 lyric_runtime::DataCell
 lyric_runtime::HeapManager::allocateString(std::string_view string)
 {
-    auto *instance = new StringRef(string.data(), string.size());
+    auto *instance = new StringRef(m_preludeTables.stringTable, string.data(), string.size());
     m_heap->insertInstance(instance);
     return DataCell::forString(instance);
 }
@@ -41,7 +43,7 @@ lyric_runtime::HeapManager::loadLiteralStringOntoStack(tu_uint32 address)
     literal = m_segmentManager->resolveLiteral(sp, address, status);
     TU_RETURN_IF_NOT_OK (status);
 
-    auto *instance = new StringRef(literal);
+    auto *instance = new StringRef(m_preludeTables.stringTable, literal);
     m_heap->insertInstance(instance);
     auto cell = DataCell::forString(instance);
     currentCoro->pushData(cell);
@@ -55,7 +57,7 @@ lyric_runtime::HeapManager::loadStringOntoStack(std::string_view string)
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
 
-    auto *instance = new StringRef(string.data(), string.size());
+    auto *instance = new StringRef(m_preludeTables.stringTable, string.data(), string.size());
     m_heap->insertInstance(instance);
     auto cell = DataCell::forString(instance);
     currentCoro->pushData(cell);
@@ -66,7 +68,7 @@ lyric_runtime::HeapManager::loadStringOntoStack(std::string_view string)
 lyric_runtime::DataCell
 lyric_runtime::HeapManager::allocateUrl(const tempo_utils::Url &url)
 {
-    auto *instance = new UrlRef(url);
+    auto *instance = new UrlRef(m_preludeTables.urlTable, url);
     m_heap->insertInstance(instance);
     return DataCell::forUrl(instance);
 }
@@ -84,7 +86,7 @@ lyric_runtime::HeapManager::loadLiteralUrlOntoStack(tu_uint32 address)
     literal = m_segmentManager->resolveLiteral(sp, address, status);
     TU_RETURN_IF_NOT_OK (status);
 
-    auto *instance = new UrlRef(literal);
+    auto *instance = new UrlRef(m_preludeTables.urlTable, literal);
     m_heap->insertInstance(instance);
     auto cell = DataCell::forUrl(instance);
     currentCoro->pushData(cell);
@@ -98,7 +100,7 @@ lyric_runtime::HeapManager::loadUrlOntoStack(const tempo_utils::Url &url)
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
 
-    auto *instance = new UrlRef(url);
+    auto *instance = new UrlRef(m_preludeTables.urlTable, url);
     m_heap->insertInstance(instance);
     auto cell = DataCell::forUrl(instance);
     currentCoro->pushData(cell);
@@ -109,7 +111,7 @@ lyric_runtime::HeapManager::loadUrlOntoStack(const tempo_utils::Url &url)
 lyric_runtime::DataCell
 lyric_runtime::HeapManager::allocateBytes(std::span<const tu_uint8> bytes)
 {
-    auto *instance = new BytesRef(bytes.data(), bytes.size());
+    auto *instance = new BytesRef(m_preludeTables.bytesTable, bytes.data(), bytes.size());
     m_heap->insertInstance(instance);
     return DataCell::forBytes(instance);
 }
@@ -127,7 +129,7 @@ lyric_runtime::HeapManager::loadLiteralBytesOntoStack(tu_uint32 address)
     literal = m_segmentManager->resolveLiteral(sp, address, status);
     TU_RETURN_IF_NOT_OK (status);
 
-    auto *instance = new BytesRef(literal);
+    auto *instance = new BytesRef(m_preludeTables.bytesTable, literal);
     m_heap->insertInstance(instance);
     auto cell = DataCell::forBytes(instance);
     currentCoro->pushData(cell);
@@ -141,7 +143,7 @@ lyric_runtime::HeapManager::loadBytesOntoStack(std::span<const tu_uint8> bytes)
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
 
-    auto *instance = new BytesRef(bytes.data(), bytes.size());
+    auto *instance = new BytesRef(m_preludeTables.bytesTable, bytes.data(), bytes.size());
     m_heap->insertInstance(instance);
     auto cell = DataCell::forBytes(instance);
     currentCoro->pushData(cell);
@@ -156,7 +158,7 @@ lyric_runtime::HeapManager::allocateRest(const CallCell &frame)
     for (int i = 0; i < frame.numRest(); i++) {
         restArgs.push_back(frame.getRest(i));
     }
-    auto *instance = new RestRef(std::move(restArgs));
+    auto *instance = new RestRef(m_preludeTables.restTable, std::move(restArgs));
     m_heap->insertInstance(instance);
     return DataCell::forRest(instance);
 }
@@ -281,9 +283,13 @@ lyric_runtime::HeapManager::constructNew(std::vector<DataCell> &args, tempo_util
         return false;
     }
 
-    // get the ctor call from the vtable
+    // get the ctor method
     const auto *vtable = receiver->data.ref->getVirtualTable();
-    TU_ASSERT (vtable != nullptr);
+    if (vtable == nullptr) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "missing vtable");
+        return false;
+    }
     const auto *ctor = vtable->getCtor();
     if (ctor == nullptr) {
         status = InterpreterStatus::forCondition(

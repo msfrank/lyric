@@ -16,7 +16,13 @@ namespace lyric_runtime {
     public:
         explicit BaseRef(const VirtualTable *vtable);
 
-        const VirtualTable *getVirtualTable() const override;
+        const VirtualTable *getVirtualTable() const;
+
+        lyric_common::SymbolUrl getSymbolUrl() const override;
+        const AbstractMemberResolver *getMemberResolver() const override;
+        const AbstractMethodResolver *getMethodResolver() const override;
+        const AbstractExtensionResolver *getExtensionResolver() const override;
+
         bool equals(const AbstractRef *other) const override;
         bool rawSize(tu_int32 &size) const override;
         tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) override;

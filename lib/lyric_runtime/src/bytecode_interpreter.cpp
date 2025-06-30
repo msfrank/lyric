@@ -1085,7 +1085,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 if (flags & lyric_object::CALL_RECEIVER_FOLLOWS) {
                     // receiver comes after arguments so we pop receiver first
                     ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
-                    if (receiver.type != DataCellType::REF)
+                    if (!receiver.isReference())
                         return onError(op,
                             InterpreterStatus::forCondition(
                                 InterpreterCondition::kInvalidReceiver, "invalid receiver for virtual call"));
@@ -1094,7 +1094,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                     // receiver comes before arguments so we pop placement first
                     ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
                     ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
-                    if (receiver.type != DataCellType::REF)
+                    if (!receiver.isReference())
                         return onError(op,
                             InterpreterStatus::forCondition(
                                 InterpreterCondition::kInvalidReceiver, "invalid receiver for virtual call"));
@@ -1131,7 +1131,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 if (flags & lyric_object::CALL_RECEIVER_FOLLOWS) {
                     // receiver comes after arguments so we pop receiver first
                     ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
-                    if (receiver.type != DataCellType::REF)
+                    if (!receiver.isReference())
                         return onError(op, InterpreterStatus::forCondition(
                             InterpreterCondition::kInvalidReceiver, "invalid receiver for concept call"));
                     ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
@@ -1139,7 +1139,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                     // receiver comes before arguments so we pop placement first
                     ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
                     ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
-                    if (receiver.type != DataCellType::REF)
+                    if (!receiver.isReference())
                         return onError(op, InterpreterStatus::forCondition(
                             InterpreterCondition::kInvalidReceiver, "invalid receiver for concept call"));
                 }

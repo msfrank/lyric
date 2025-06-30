@@ -15,6 +15,7 @@ set(TEST_CASES
     Nil_tests.cpp
     Option_tests.cpp
     Pair_tests.cpp
+    Rest_tests.cpp
     Seq_tests.cpp
     Status_tests.cpp
     String_tests.cpp

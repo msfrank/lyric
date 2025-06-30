@@ -5,15 +5,41 @@
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
-lyric_runtime::RestRef::RestRef(std::vector<DataCell> &&restArgs)
-    : m_restArgs(std::move(restArgs)),
+lyric_runtime::RestRef::RestRef(const ExistentialTable *etable, std::vector<DataCell> &&restArgs)
+    : m_etable(etable),
+      m_restArgs(std::move(restArgs)),
       m_reachable(false)
 {
+    TU_ASSERT (m_etable != nullptr);
 }
 
 lyric_runtime::RestRef::~RestRef()
 {
     TU_LOG_INFO << "free RestRef" << RestRef::toString();
+}
+
+const lyric_runtime::AbstractMemberResolver *
+lyric_runtime::RestRef::getMemberResolver() const
+{
+    return nullptr;
+}
+
+const lyric_runtime::AbstractMethodResolver *
+lyric_runtime::RestRef::getMethodResolver() const
+{
+    return m_etable;
+}
+
+const lyric_runtime::AbstractExtensionResolver *
+lyric_runtime::RestRef::getExtensionResolver() const
+{
+    return m_etable;
+}
+
+lyric_common::SymbolUrl
+lyric_runtime::RestRef::getSymbolUrl() const
+{
+    return m_etable->getSymbolUrl();
 }
 
 lyric_runtime::DataCell
@@ -95,12 +121,6 @@ tempo_utils::StatusCode
 lyric_runtime::RestRef::errorStatusCode()
 {
     return tempo_utils::StatusCode::kOk;
-}
-
-const lyric_runtime::VirtualTable *
-lyric_runtime::RestRef::getVirtualTable() const
-{
-    return nullptr;
 }
 
 lyric_runtime::DataCell

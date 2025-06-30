@@ -62,6 +62,10 @@ namespace lyric_runtime {
         DataCell& operator=(DataCell &&other) noexcept;
 
         bool isValid() const;
+        bool isIntrinsic() const;
+        bool isDescriptor() const;
+        bool isReference() const;
+
         std::string toString() const;
 
         static DataCell nil();

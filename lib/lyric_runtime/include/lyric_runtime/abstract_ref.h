@@ -14,11 +14,32 @@ namespace lyric_runtime {
         virtual ~AbstractRef() = default;
 
         /**
-         * Returns the vtable for the ref. All valid refs must return a non-null vtable.
+         * Returns the symbol url for the ref.
          *
-         * @return The virtual table for the ref.
+         * @return The symbol url for the ref.
          */
-        virtual const VirtualTable *getVirtualTable() const = 0;
+        virtual lyric_common::SymbolUrl getSymbolUrl() const = 0;
+
+        /**
+         * Returns the member resolver for the ref. If the ref does not support members then returns nullptr.
+         *
+         * @return The member resolver for the ref.
+         */
+        virtual const AbstractMemberResolver *getMemberResolver() const = 0;
+
+        /**
+         * Returns the method resolver for the ref. If the ref does not support methods then returns nullptr.
+         *
+         * @return The method resolver for the ref.
+         */
+        virtual const AbstractMethodResolver *getMethodResolver() const = 0;
+
+        /**
+         * Returns the extension resolver for the ref. If the ref does not support extensions then returns nullptr.
+         *
+         * @return The extension resolver for the ref.
+         */
+        virtual const AbstractExtensionResolver *getExtensionResolver() const = 0;
 
         /**
          * returns a data cell containing the value stored in the specified field. If `field` does not

@@ -5,6 +5,11 @@
 #include <lyric_runtime/subroutine_manager.h>
 #include <tempo_utils/big_endian.h>
 
+#include <lyric_runtime/bytes_ref.h>
+#include <lyric_runtime/string_ref.h>
+#include <lyric_runtime/rest_ref.h>
+#include <lyric_runtime/url_ref.h>
+
 lyric_runtime::SubroutineManager::SubroutineManager(SegmentManager *segmentManager)
     : m_segmentManager(segmentManager)
 {
@@ -340,19 +345,45 @@ lyric_runtime::SubroutineManager::callVirtual(
 
     auto *sp = currentCoro->peekSP();
 
-    // resolve address to a descriptor
+    // get method resolver for receiver
+    const AbstractMethodResolver *resolver;
+    switch (receiver.type) {
+        case DataCellType::BYTES:
+            resolver = receiver.data.bytes->getMethodResolver();
+            break;
+        case DataCellType::REF:
+            resolver = receiver.data.ref->getMethodResolver();
+            break;
+        case DataCellType::REST:
+            resolver = receiver.data.rest->getMethodResolver();
+            break;
+        case DataCellType::STRING:
+            resolver = receiver.data.str->getMethodResolver();
+            break;
+        case DataCellType::URL:
+            resolver = receiver.data.url->getMethodResolver();
+            break;
+        default:
+            resolver = nullptr;
+            break;
+    }
+    if (resolver == nullptr) {
+        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "cannot resolve method; invalid receiver {}", receiver.toString());
+        return false;
+    }
+
+    // resolve address to a call descriptor
     auto descriptor = m_segmentManager->resolveDescriptor(
         sp, lyric_object::LinkageSection::Call, address, status);
     if (!descriptor.isValid())
         return false;
 
-    // resolve the descriptor  to a vtable entry
-    const auto *vtable = receiver.data.ref->getVirtualTable();
-    TU_ASSERT (vtable != nullptr);
-    const auto *method = vtable->getMethod(descriptor);
+    // resolve the descriptor to a method
+    const auto *method = resolver->getMethod(descriptor);
     if (method == nullptr) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "missing method");
+        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "failed to call method; missing method");
         return false;
     }
 
@@ -364,8 +395,8 @@ lyric_runtime::SubroutineManager::callVirtual(
     auto *bytecodeData = segment->getBytecodeData();
     auto bytecodeSize = segment->getBytecodeSize();
     if (bytecodeSize <= procOffset) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
+        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "failed to call method; invalid proc offset");
         return false;
     }
 
@@ -383,15 +414,15 @@ lyric_runtime::SubroutineManager::callVirtual(
 
     // maximum number of args is 2^16
     if (std::numeric_limits<uint16_t>::max() <= args.size()) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "too many arguments");
+        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "failed to call method; too many arguments");
         return false;
     }
 
     // all required args must be present
     if (args.size() < numArguments) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "not enough arguments");
+        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "failed to call method; not enough arguments");
         return false;
     }
 
@@ -426,16 +457,16 @@ lyric_runtime::SubroutineManager::callVirtual(
                     frame.setLexical(i, ancestor.getLocal(targetOffset));
                     break;
                 default:
-                    status = InterpreterStatus::forCondition(
-                        InterpreterCondition::kRuntimeInvariant, "invalid lexical target");
+                    status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                        "failed to call method; invalid lexical target");
                     return false;
             }
             found = true;                       // we found the lexical, break loop early
             break;
         }
         if (!found) {
-            status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "missing lexical");
+            status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                "failed to call method; missing lexical");
             return false;
         }
     }
@@ -454,28 +485,50 @@ lyric_runtime::SubroutineManager::callConcept(
     tu_uint32 actionAddress,
     std::vector<DataCell> &args,
     StackfulCoroutine *currentCoro,
-    tempo_utils::Status &status)
-{
-    TU_ASSERT (receiver.type == DataCellType::REF);
+    tempo_utils::Status &status) {
     TU_ASSERT (currentCoro != nullptr);
 
     auto *sp = currentCoro->peekSP();
 
-    const auto *vtable = receiver.data.ref->getVirtualTable();
-    if (vtable == nullptr)
+    // get extension resolver for receiver
+    const AbstractExtensionResolver *resolver;
+    switch (receiver.type) {
+        case DataCellType::BYTES:
+            resolver = receiver.data.bytes->getExtensionResolver();
+            break;
+        case DataCellType::REF:
+            resolver = receiver.data.ref->getExtensionResolver();
+            break;
+        case DataCellType::REST:
+            resolver = receiver.data.rest->getExtensionResolver();
+            break;
+        case DataCellType::STRING:
+            resolver = receiver.data.str->getExtensionResolver();
+            break;
+        case DataCellType::URL:
+            resolver = receiver.data.url->getExtensionResolver();
+            break;
+        default:
+            resolver = nullptr;
+            break;
+    }
+    if (resolver == nullptr) {
+        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "cannot resolve extension; invalid receiver {}", receiver.toString());
         return false;
+    }
 
-    // resolve address to a descriptor
+    // resolve address to an action descriptor
     auto actionDescriptor = m_segmentManager->resolveDescriptor(
         sp, lyric_object::LinkageSection::Action, actionAddress, status);
     if (!actionDescriptor.isValid())
         return false;
 
-    // resolve the descriptor to a vtable entry
-    const auto *method = vtable->getExtension(conceptDescriptor, actionDescriptor);
+    // resolve the descriptor to a method
+    const auto *method = resolver->getExtension(conceptDescriptor, actionDescriptor);
     if (method == nullptr) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "missing extension");
+        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "failed to call extension; missing extension");
         return false;
     }
 
@@ -487,8 +540,8 @@ lyric_runtime::SubroutineManager::callConcept(
     auto *bytecodeData = segment->getBytecodeData();
     auto bytecodeSize = segment->getBytecodeSize();
     if (bytecodeSize <= procOffset) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
+        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "failed to call extension; invalid proc offset");
         return false;
     }
 
@@ -506,15 +559,15 @@ lyric_runtime::SubroutineManager::callConcept(
 
     // maximum number of args is 2^16
     if (std::numeric_limits<uint16_t>::max() <= args.size()) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "too many arguments");
+        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "failed to call extension; too many arguments");
         return false;
     }
 
     // all required args must be present
     if (args.size() < numArguments) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "not enough arguments");
+        status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "failed to call extension; not enough arguments");
         return false;
     }
 
@@ -549,16 +602,16 @@ lyric_runtime::SubroutineManager::callConcept(
                     frame.setLexical(i, ancestor.getLocal(targetOffset));
                     break;
                 default:
-                    status = InterpreterStatus::forCondition(
-                        InterpreterCondition::kRuntimeInvariant, "invalid lexical target");
+                    status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                        "failed to call extension; invalid lexical target");
                     return false;
             }
             found = true;                       // we found the lexical, break loop early
             break;
         }
         if (!found) {
-            status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "missing lexical");
+            status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                "failed to call extension; missing lexical");
             return false;
         }
     }

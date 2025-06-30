@@ -69,17 +69,17 @@ main(int argc, char *argv[])
 
     BuilderState state(location, trapIndex);
 
-    // define the Any type, which is the top of the type hierarchy
+    // define the Any existential, which is the top of the type hierarchy
     auto *AnyExistential = build_core_Any(state);
 
-    // define the Nil type, which exists in its own type hierarchy
-    build_core_Nil(state);
+    // define the Nil existential, which exists in its own type hierarchy
+    auto *NilExistential = build_core_Nil(state);
 
-    // define the Intrinsic type
+    // define Intrinsic existential
     auto *IntrinsicExistential = build_core_Intrinsic(state, AnyExistential);
 
-    // declare intrinsic subtypes
-    auto *UndefExistential = build_core_Undef(state, IntrinsicExistential);
+    // declare intrinsic existentials
+    build_core_Undef(state, IntrinsicExistential);
     auto *BoolExistential = declare_core_Bool(state, IntrinsicExistential);
     auto *CharExistential = declare_core_Char(state, IntrinsicExistential);
     auto *IntExistential = declare_core_Int(state, IntrinsicExistential);
@@ -88,16 +88,16 @@ main(int argc, char *argv[])
     auto *StringExistential = declare_core_String(state, IntrinsicExistential);
     auto *UrlExistential = declare_core_Url(state, IntrinsicExistential);
 
-    // declare Rest type
+    // declare Rest existential
     auto *RestExistential = declare_core_Rest(state, AnyExistential);
 
-    // declare Descriptor type
+    // declare Descriptor existential
     auto *DescriptorExistential = declare_core_Descriptor(state, AnyExistential);
 
-    // declare Type type
+    // declare Type existential
     auto *TypeExistential = declare_core_Type(state, AnyExistential);
 
-    // define descriptor subtypes
+    // define descriptor existentials
     build_core_Binding(state, DescriptorExistential);
     build_core_Namespace(state, DescriptorExistential);
     build_core_Class(state, DescriptorExistential);
@@ -121,7 +121,18 @@ main(int argc, char *argv[])
         functionClasses.push_back(FunctionNClass);
     }
 
-    // define existentials
+    // define core concepts
+    auto *ArithmeticConcept = build_core_Arithmetic(state, IdeaConcept);
+    auto *ComparisonConcept = build_core_Comparison(state, IdeaConcept, BoolExistential->existentialType);
+    auto *EqualityConcept = build_core_Equality(state, IdeaConcept, BoolExistential->existentialType);
+    auto *IteratorConcept = build_core_Iterator(state, IdeaConcept, BoolExistential->existentialType);
+    auto *IterableConcept = build_core_Iterable(state, IdeaConcept, IteratorConcept);
+    auto *OrderedConcept = build_core_Ordered(state, IdeaConcept, IntExistential->existentialType);
+    auto *PropositionConcept = build_core_Proposition(state, IdeaConcept, BoolExistential->existentialType);
+    auto *UnwrapConcept = build_core_Unwrap(state, IdeaConcept);
+    build_core_Varargs(state, IdeaConcept);
+
+    // define intrinsic existentials
     build_core_Bool(state, BoolExistential);
     build_core_Char(state, CharExistential);
     build_core_Int(state, IntExistential);
@@ -132,8 +143,8 @@ main(int argc, char *argv[])
     build_core_String(state, StringExistential, IntExistential->existentialType,
         CharExistential->existentialType, BytesExistential->existentialType);
     build_core_Url(state, UrlExistential);
-    build_core_Rest(state, RestExistential, IntExistential->existentialType,
-        UndefExistential->existentialType);
+
+    // define Type existential
     build_core_Type(state, TypeExistential, IntExistential->existentialType,
         BoolExistential->existentialType);
 
@@ -142,24 +153,11 @@ main(int argc, char *argv[])
         build_core_FunctionN(state, i, functionClasses[i], CallExistential->existentialType);
     }
 
-    // define Object and Singleton
+    // define core reference types
     build_core_Singleton(state, SingletonInstance);
     build_core_Category(state, CategoryEnum);
     build_core_Object(state, ObjectClass);
     build_core_Record(state, RecordStruct);
-
-    // core concepts
-    auto *ArithmeticConcept = build_core_Arithmetic(state, IdeaConcept);
-    auto *ComparisonConcept = build_core_Comparison(state, IdeaConcept, BoolExistential->existentialType);
-    auto *EqualityConcept = build_core_Equality(state, IdeaConcept, BoolExistential->existentialType);
-    auto *OrderedConcept = build_core_Ordered(state, IdeaConcept, IntExistential->existentialType);
-    auto *PropositionConcept = build_core_Proposition(state, IdeaConcept, BoolExistential->existentialType);
-    auto *UnwrapConcept = build_core_Unwrap(state, IdeaConcept);
-    build_core_Varargs(state, IdeaConcept);
-
-    auto *IteratorConcept = build_core_Iterator(state, IdeaConcept, BoolExistential->existentialType);
-    auto *IterableConcept = build_core_Iterable(state, IdeaConcept, IteratorConcept);
-    //build_core_Rest(state, AnyType, VarargsConcept, IntType);
 
     // core status structs
     auto *StatusStruct = build_core_Status(
@@ -195,7 +193,7 @@ main(int argc, char *argv[])
     build_core_Status_code(tempo_utils::StatusCode::kUnknown,
         "Unknown", state, StatusStruct, StringExistential->existentialType);
 
-    // core instances
+    // define core instances
     build_core_BoolInstance(state, BoolExistential->existentialType, SingletonInstance,
         EqualityConcept, OrderedConcept, PropositionConcept,
         IntExistential->existentialType);
@@ -223,26 +221,35 @@ main(int argc, char *argv[])
         build_core_TupleNInstance(state, TupleNClass, SingletonInstance, UnwrapConcept);
     }
 
-    //
+    // define Data union type
     auto *DataUnionType = state.addUnionType({IntrinsicExistential->existentialType, RecordStruct->structType});
     auto *DataIterableType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
         IterableConcept->concept_index, {DataUnionType});
     auto *DataIteratorType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,
         IteratorConcept->concept_index, {DataUnionType});
 
+    // define Pair struct
     build_core_Pair(state, RecordStruct, DataUnionType);
 
-    auto *MapIteratorClass = build_core_MapIterator(state, ObjectClass, IteratorConcept, DataUnionType,
-        DataIteratorType, BoolExistential->existentialType);
-    build_core_Map(state, RecordStruct, IteratorConcept, IterableConcept, MapIteratorClass, DataUnionType,
-        DataIteratorType, DataIterableType, BoolExistential->existentialType, IntExistential->existentialType);
+    // define Rest existential
+    auto *RestIteratorClass = build_core_RestIterator(state, ObjectClass, IteratorConcept,
+        BoolExistential->existentialType);
+    build_core_Rest(state, RestExistential, IterableConcept, IterableConcept, RestIteratorClass,
+        IntExistential->existentialType, NilExistential->existentialType);
 
+    // define Seq struct
     auto *SeqIteratorClass = build_core_SeqIterator(state, ObjectClass, IteratorConcept, DataUnionType,
         DataIteratorType, BoolExistential->existentialType);
     build_core_Seq(state, RecordStruct, IteratorConcept, IterableConcept, SeqIteratorClass, DataUnionType,
         DataIteratorType, DataIterableType, BoolExistential->existentialType, IntExistential->existentialType);
 
-    //
+    // define Map struct
+    auto *MapIteratorClass = build_core_MapIterator(state, ObjectClass, IteratorConcept, DataUnionType,
+        DataIteratorType, BoolExistential->existentialType);
+    build_core_Map(state, RecordStruct, IteratorConcept, IterableConcept, MapIteratorClass, DataUnionType,
+        DataIteratorType, DataIterableType, BoolExistential->existentialType, IntExistential->existentialType);
+
+    // define prelude functions
     build_core_prelude_trap(state, IntExistential->existentialType, state.noReturnType);
     build_core_prelude_va_load(state, IntExistential->existentialType, AnyExistential->existentialType);
     build_core_prelude_va_size(state, IntExistential->existentialType);

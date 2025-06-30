@@ -6,19 +6,23 @@
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
-lyric_runtime::BytesRef::BytesRef(const LiteralCell &literal)
-    : m_owned(false),
+lyric_runtime::BytesRef::BytesRef(const ExistentialTable *etable, const LiteralCell &literal)
+    : m_etable(etable),
+      m_owned(false),
       m_reachable(false)
 {
+    TU_ASSERT (m_etable != nullptr);
     TU_ASSERT (literal.type == LiteralCellType::BYTES);
     m_data = literal.literal.bytes.data;
     m_size = literal.literal.bytes.size;
 }
 
-lyric_runtime::BytesRef::BytesRef(const tu_uint8 *src, int32_t size)
-    : m_owned(true),
+lyric_runtime::BytesRef::BytesRef(const ExistentialTable *etable, const tu_uint8 *src, int32_t size)
+    : m_etable(etable),
+      m_owned(true),
       m_reachable(false)
 {
+    TU_ASSERT (m_etable != nullptr);
     TU_ASSERT (src != nullptr);
     TU_ASSERT (size >= 0);
 
@@ -35,6 +39,30 @@ lyric_runtime::BytesRef::~BytesRef()
     if (m_owned) {
         delete[] m_data;
     }
+}
+
+const lyric_runtime::AbstractMemberResolver *
+lyric_runtime::BytesRef::getMemberResolver() const
+{
+    return nullptr;
+}
+
+const lyric_runtime::AbstractMethodResolver *
+lyric_runtime::BytesRef::getMethodResolver() const
+{
+    return m_etable;
+}
+
+const lyric_runtime::AbstractExtensionResolver *
+lyric_runtime::BytesRef::getExtensionResolver() const
+{
+    return m_etable;
+}
+
+lyric_common::SymbolUrl
+lyric_runtime::BytesRef::getSymbolUrl() const
+{
+    return m_etable->getSymbolUrl();
 }
 
 bool
@@ -166,12 +194,6 @@ void
 lyric_runtime::BytesRef::clearReachable()
 {
     m_reachable = false;
-}
-
-const lyric_runtime::VirtualTable *
-lyric_runtime::BytesRef::getVirtualTable() const
-{
-    return nullptr;
 }
 
 lyric_runtime::DataCell

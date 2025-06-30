@@ -17,6 +17,30 @@ lyric_runtime::BaseRef::getVirtualTable() const
     return m_vtable;
 }
 
+const lyric_runtime::AbstractMemberResolver *
+lyric_runtime::BaseRef::getMemberResolver() const
+{
+    return m_vtable;
+}
+
+const lyric_runtime::AbstractMethodResolver *
+lyric_runtime::BaseRef::getMethodResolver() const
+{
+    return m_vtable;
+}
+
+const lyric_runtime::AbstractExtensionResolver *
+lyric_runtime::BaseRef::getExtensionResolver() const
+{
+    return m_vtable;
+}
+
+lyric_common::SymbolUrl
+lyric_runtime::BaseRef::getSymbolUrl() const
+{
+    return m_vtable->getSymbolUrl();
+}
+
 bool
 lyric_runtime::BaseRef::equals(const AbstractRef *other) const
 {

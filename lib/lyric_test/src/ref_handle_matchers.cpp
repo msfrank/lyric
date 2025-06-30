@@ -27,10 +27,7 @@ lyric_test::matchers::RefHandleMatcher::MatchAndExplain(const lyric_runtime::Ref
     auto *ref = refHandle.getRef();
     if (ref == nullptr)
         return false;
-    auto *vtable = ref->getVirtualTable();
-    if (vtable == nullptr)
-        return false;
-    auto refUrl = vtable->getSymbolUrl();
+    auto refUrl = ref->getSymbolUrl();
     if (m_symbolUrl.getModuleLocation().isValid())
         return refUrl == m_symbolUrl;
     return refUrl.getSymbolPath() == m_symbolUrl.getSymbolPath();

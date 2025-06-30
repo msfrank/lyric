@@ -53,7 +53,7 @@ TEST_F(CompileDef, EvaluateDefFunctionWithNamedRestParam)
 {
     auto result = m_tester->runModule(R"(
         def numInts(ints: ...Int): Int {
-            ints.NumArgs()
+            ints.Size()
         }
         numInts(5, 4, 3, 2, 1)
     )");

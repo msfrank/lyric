@@ -30,19 +30,23 @@ make_end_iterator(const lyric_runtime::StringRef *ref)
     return utf8::iterator(data + size, data, data + size);
 }
 
-lyric_runtime::StringRef::StringRef(const LiteralCell &literal)
-    : m_owned(false),
+lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, const LiteralCell &literal)
+    : m_etable(etable),
+      m_owned(false),
       m_reachable(false)
 {
+    TU_ASSERT (m_etable != nullptr);
     TU_ASSERT (literal.type == LiteralCellType::UTF8);
     m_data = literal.literal.utf8.data;
     m_size = literal.literal.utf8.size;
 }
 
-lyric_runtime::StringRef::StringRef(const char *src, int32_t size)
-    : m_owned(true),
+lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, const char *src, int32_t size)
+    : m_etable(etable),
+      m_owned(true),
       m_reachable(false)
 {
+    TU_ASSERT (m_etable != nullptr);
     TU_ASSERT (src != nullptr);
     TU_ASSERT (size >= 0);
 
@@ -59,6 +63,30 @@ lyric_runtime::StringRef::~StringRef()
     if (m_owned) {
         delete[] m_data;
     }
+}
+
+const lyric_runtime::AbstractMemberResolver *
+lyric_runtime::StringRef::getMemberResolver() const
+{
+    return nullptr;
+}
+
+const lyric_runtime::AbstractMethodResolver *
+lyric_runtime::StringRef::getMethodResolver() const
+{
+    return m_etable;
+}
+
+const lyric_runtime::AbstractExtensionResolver *
+lyric_runtime::StringRef::getExtensionResolver() const
+{
+    return m_etable;
+}
+
+lyric_common::SymbolUrl
+lyric_runtime::StringRef::getSymbolUrl() const
+{
+    return m_etable->getSymbolUrl();
 }
 
 bool
@@ -216,12 +244,6 @@ void
 lyric_runtime::StringRef::clearReachable()
 {
     m_reachable = false;
-}
-
-const lyric_runtime::VirtualTable *
-lyric_runtime::StringRef::getVirtualTable() const
-{
-    return nullptr;
 }
 
 lyric_runtime::DataCell

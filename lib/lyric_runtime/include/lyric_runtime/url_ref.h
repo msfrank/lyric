@@ -7,9 +7,13 @@ namespace lyric_runtime {
 
     class UrlRef final : public AbstractRef {
     public:
-        UrlRef(const LiteralCell &literal);
-        UrlRef(const tempo_utils::Url &url);
+        UrlRef(const ExistentialTable *etable, const LiteralCell &literal);
+        UrlRef(const ExistentialTable *etable, const tempo_utils::Url &url);
         ~UrlRef() override;
+
+        const AbstractMemberResolver *getMemberResolver() const override;
+        const AbstractMethodResolver *getMethodResolver() const override;
+        const AbstractExtensionResolver *getExtensionResolver() const override;
 
         bool equals(const AbstractRef *other) const override;
         bool rawSize(tu_int32 &size) const override;
@@ -32,7 +36,7 @@ namespace lyric_runtime {
         /*
          * methods below have the default no-op implementation
          */
-        const VirtualTable *getVirtualTable() const override;
+        lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
         lyric_runtime::DataCell setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value) override;
         bool iteratorValid() override;
@@ -43,6 +47,7 @@ namespace lyric_runtime {
         bool applyClosure(Task *task, std::vector<DataCell> &args, lyric_runtime::InterpreterState *state) override;
 
     private:
+        const ExistentialTable *m_etable;
         bool m_owned;
         tempo_utils::Url m_url;
         bool m_reachable;

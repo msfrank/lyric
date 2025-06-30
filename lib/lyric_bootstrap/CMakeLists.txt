@@ -147,6 +147,8 @@ add_library(prelude-plugin SHARED
     plugin/object_ref.h
     plugin/pair_ref.cpp
     plugin/pair_ref.h
+    plugin/rest_iterator_ref.cpp
+    plugin/rest_iterator_ref.h
     plugin/rest_traps.cpp
     plugin/rest_traps.h
     plugin/record_ref.cpp

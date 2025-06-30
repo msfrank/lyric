@@ -7,9 +7,13 @@ namespace lyric_runtime {
 
     class BytesRef final : public AbstractRef {
     public:
-        explicit BytesRef(const LiteralCell &literal);
-        BytesRef(const tu_uint8 *data, int32_t size);
+        BytesRef(const ExistentialTable *etable, const LiteralCell &literal);
+        BytesRef(const ExistentialTable *etable, const tu_uint8 *data, int32_t size);
         ~BytesRef() override;
+
+        const AbstractMemberResolver *getMemberResolver() const override;
+        const AbstractMethodResolver *getMethodResolver() const override;
+        const AbstractExtensionResolver *getExtensionResolver() const override;
 
         bool equals(const AbstractRef *other) const override;
         bool rawSize(tu_int32 &size) const override;
@@ -34,7 +38,7 @@ namespace lyric_runtime {
         /*
          * methods below have the default no-op implementation
          */
-        const VirtualTable *getVirtualTable() const override;
+        lyric_common::SymbolUrl getSymbolUrl() const override;
         DataCell getField(const DataCell &field) const override;
         DataCell setField(const DataCell &field, const DataCell &value) override;
         bool uriValue(tempo_utils::Url &url) const override;
@@ -46,6 +50,7 @@ namespace lyric_runtime {
         bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) override;
 
     private:
+        const ExistentialTable *m_etable;
         bool m_owned;
         const tu_uint8 *m_data;
         int32_t m_size;

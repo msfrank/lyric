@@ -1,5 +1,5 @@
 
-#include <lyric_runtime/abstract_plugin.h>
+#include <lyric_object/symbol_walker.h>
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_segment.h>
 #include <lyric_runtime/data_cell.h>
@@ -170,6 +170,70 @@ allocate_type_manager(
     return {};
 }
 
+static const lyric_runtime::ExistentialTable *
+resolve_bootstrap_existential_table(
+    lyric_runtime::SegmentManager *segmentManager,
+    lyric_runtime::BytecodeSegment *bootstrapSegment,
+    const lyric_object::ObjectWalker &bootstrapObject,
+    lyric_common::SymbolPath existentialPath,
+    tempo_utils::Status &status)
+{
+    auto bytesSymbol = bootstrapObject.findSymbol(existentialPath);
+    auto bytesDescriptor = segmentManager->resolveDescriptor(bootstrapSegment,
+        bytesSymbol.getLinkageSection(), bytesSymbol.getLinkageIndex(), status);
+    return segmentManager->resolveExistentialTable(bytesDescriptor, status);
+}
+
+static tempo_utils::Status
+allocate_heap_manager(
+    lyric_runtime::SegmentManager *segmentManager,
+    lyric_runtime::SystemScheduler *systemScheduler,
+    const lyric_common::ModuleLocation &preludeLocation,
+    std::shared_ptr<lyric_runtime::AbstractHeap> heap,
+    lyric_runtime::HeapManager **heapManagerPtr)
+{
+    TU_ASSERT (segmentManager != nullptr);
+    TU_ASSERT (systemScheduler != nullptr);
+    TU_ASSERT (preludeLocation.isValid());
+    TU_ASSERT (heap != nullptr);
+    TU_ASSERT (heapManagerPtr != nullptr);
+
+    // get the prelude segment
+    auto *bootstrapSegment = segmentManager->getOrLoadSegment(preludeLocation);
+    if (bootstrapSegment == nullptr)
+        return lyric_runtime::InterpreterStatus::forCondition(
+            lyric_runtime::InterpreterCondition::kRuntimeInvariant,
+            "failed to load bootstrap prelude {}", preludeLocation.toString());
+
+    auto bootstrapObject = bootstrapSegment->getObject().getObject();
+    if (!bootstrapObject.isValid())
+        return lyric_runtime::InterpreterStatus::forCondition(
+            lyric_runtime::InterpreterCondition::kRuntimeInvariant,
+            "bootstrap prelude {} is invalid", preludeLocation.toString());
+
+    TU_LOG_V << "loaded bootstrap prelude " << preludeLocation;
+
+    lyric_runtime::PreludeTables preludeTables;
+    tempo_utils::Status status;
+
+    preludeTables.bytesTable = resolve_bootstrap_existential_table(segmentManager,
+        bootstrapSegment, bootstrapObject, lyric_common::SymbolPath::fromString("Bytes"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.restTable = resolve_bootstrap_existential_table(segmentManager,
+        bootstrapSegment, bootstrapObject, lyric_common::SymbolPath::fromString("Rest"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.stringTable = resolve_bootstrap_existential_table(segmentManager,
+        bootstrapSegment, bootstrapObject, lyric_common::SymbolPath::fromString("String"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.urlTable = resolve_bootstrap_existential_table(segmentManager,
+        bootstrapSegment, bootstrapObject, lyric_common::SymbolPath::fromString("Url"), status);
+    TU_RETURN_IF_NOT_OK (status);
+
+    *heapManagerPtr = new lyric_runtime::HeapManager(preludeTables, segmentManager, systemScheduler, std::move(heap));
+
+    return {};
+}
+
 tempo_utils::Result<std::shared_ptr<lyric_runtime::InterpreterState>>
 lyric_runtime::InterpreterState::create(
     const InterpreterStateOptions &options,
@@ -236,11 +300,15 @@ lyric_runtime::InterpreterState::create(
         goto err;
     }
 
-    // allocate the remaining subsystems
+    portMultiplexer = new PortMultiplexer();
     subroutineManager = new SubroutineManager(segmentManager);
     systemScheduler = new SystemScheduler(loop);
-    portMultiplexer = new PortMultiplexer();
-    heapManager = new HeapManager(segmentManager, systemScheduler, heap);
+
+    // allocate the remaining subsystems
+    status = allocate_heap_manager(segmentManager, systemScheduler, preludeLocation, heap, &heapManager);
+    if (status.notOk()) {
+        goto err;
+    }
 
     // allocate the interpreter state
     stateptr = new InterpreterState(loop, std::move(heap), segmentManager, typeManager,

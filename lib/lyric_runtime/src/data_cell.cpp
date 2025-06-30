@@ -458,30 +458,85 @@ bool
 lyric_runtime::DataCell::isValid() const
 {
     switch (type) {
+        case DataCellType::ACTION:
+        case DataCellType::BINDING:
+        case DataCellType::BOOL:
+        case DataCellType::BYTES:
+        case DataCellType::CALL:
+        case DataCellType::CHAR32:
+        case DataCellType::CLASS:
+        case DataCellType::CONCEPT:
+        case DataCellType::DBL:
+        case DataCellType::ENUM:
+        case DataCellType::EXISTENTIAL:
+        case DataCellType::FIELD:
+        case DataCellType::INSTANCE:
+        case DataCellType::I64:
+        case DataCellType::NAMESPACE:
+        case DataCellType::NIL:
+        case DataCellType::REF:
+        case DataCellType::REST:
+        case DataCellType::STATIC:
+        case DataCellType::STRING:
+        case DataCellType::STRUCT:
+        case DataCellType::TYPE:
+        case DataCellType::UNDEF:
+        case DataCellType::URL:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+lyric_runtime::DataCell::isIntrinsic() const
+{
+    switch (type) {
+        case DataCellType::BOOL:
+        case DataCellType::CHAR32:
+        case DataCellType::DBL:
+        case DataCellType::I64:
         case DataCellType::NIL:
         case DataCellType::UNDEF:
-        case DataCellType::BOOL:
-        case DataCellType::I64:
-        case DataCellType::DBL:
-        case DataCellType::CHAR32:
-        case DataCellType::BYTES:
-        case DataCellType::STRING:
-        case DataCellType::URL:
-        case DataCellType::REST:
-        case DataCellType::REF:
-        case DataCellType::TYPE:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+lyric_runtime::DataCell::isDescriptor() const
+{
+    switch (type) {
+        case DataCellType::ACTION:
+        case DataCellType::BINDING:
+        case DataCellType::CALL:
         case DataCellType::CLASS:
-        case DataCellType::STRUCT:
-        case DataCellType::INSTANCE:
         case DataCellType::CONCEPT:
         case DataCellType::ENUM:
-        case DataCellType::FIELD:
-        case DataCellType::CALL:
-        case DataCellType::ACTION:
         case DataCellType::EXISTENTIAL:
+        case DataCellType::FIELD:
+        case DataCellType::INSTANCE:
         case DataCellType::NAMESPACE:
-        case DataCellType::BINDING:
         case DataCellType::STATIC:
+        case DataCellType::STRUCT:
+        case DataCellType::TYPE:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
+bool
+lyric_runtime::DataCell::isReference() const
+{
+    switch (type) {
+        case DataCellType::BYTES:
+        case DataCellType::REF:
+        case DataCellType::REST:
+        case DataCellType::STRING:
+        case DataCellType::URL:
             return true;
         default:
             break;

@@ -6,10 +6,12 @@
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
-lyric_runtime::UrlRef::UrlRef(const LiteralCell &literal)
-    : m_owned(false),
+lyric_runtime::UrlRef::UrlRef(const ExistentialTable *etable, const LiteralCell &literal)
+    : m_etable(etable),
+      m_owned(false),
       m_reachable(false)
 {
+    TU_ASSERT (m_etable != nullptr);
     TU_ASSERT (literal.type == LiteralCellType::UTF8);
 
     m_owned = false;
@@ -18,10 +20,12 @@ lyric_runtime::UrlRef::UrlRef(const LiteralCell &literal)
     m_url = tempo_utils::Url::fromString(sv);
 }
 
-lyric_runtime::UrlRef::UrlRef(const tempo_utils::Url &url)
-    : m_owned(true),
+lyric_runtime::UrlRef::UrlRef(const ExistentialTable *etable, const tempo_utils::Url &url)
+    : m_etable(etable),
+      m_owned(true),
       m_reachable(false)
 {
+    TU_ASSERT (m_etable != nullptr);
     TU_ASSERT (url.isValid());
     m_owned = true;
     m_url = url;
@@ -30,6 +34,30 @@ lyric_runtime::UrlRef::UrlRef(const tempo_utils::Url &url)
 lyric_runtime::UrlRef::~UrlRef()
 {
     TU_LOG_INFO << "free UrlRef" << UrlRef::toString();
+}
+
+const lyric_runtime::AbstractMemberResolver *
+lyric_runtime::UrlRef::getMemberResolver() const
+{
+    return nullptr;
+}
+
+const lyric_runtime::AbstractMethodResolver *
+lyric_runtime::UrlRef::getMethodResolver() const
+{
+    return m_etable;
+}
+
+const lyric_runtime::AbstractExtensionResolver *
+lyric_runtime::UrlRef::getExtensionResolver() const
+{
+    return m_etable;
+}
+
+lyric_common::SymbolUrl
+lyric_runtime::UrlRef::getSymbolUrl() const
+{
+    return m_etable->getSymbolUrl();
 }
 
 bool
@@ -121,12 +149,6 @@ void
 lyric_runtime::UrlRef::clearReachable()
 {
     m_reachable = false;
-}
-
-const lyric_runtime::VirtualTable *
-lyric_runtime::UrlRef::getVirtualTable() const
-{
-    return nullptr;
 }
 
 lyric_runtime::DataCell
