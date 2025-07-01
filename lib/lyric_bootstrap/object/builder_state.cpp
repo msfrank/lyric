@@ -1915,7 +1915,9 @@ BuilderState::toBytes() const
     // write the plugin descriptor if plugin exists
     flatbuffers::Offset<lyo1::PluginDescriptor> optionalPluginOffset = 0;
     if (trapIndex != nullptr) {
-        optionalPluginOffset = lyo1::CreatePluginDescriptor(buffer);
+        auto pluginLocation = location.getPath();
+        auto fb_pluginLocation = buffer.CreateSharedString(pluginLocation.toString());
+        optionalPluginOffset = lyo1::CreatePluginDescriptor(buffer, fb_pluginLocation);
     }
 
     // serialize vectors

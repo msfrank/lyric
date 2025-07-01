@@ -10,6 +10,10 @@ protected:
     std::unique_ptr<lyric_test::LyricTester> m_tester;
 
     void SetUp() override;
+
+    tempo_utils::Result<lyric_runtime::InterpreterExit> runComputationSet(
+        absl::flat_hash_map<lyric_build::TaskKey,lyric_build::TaskState> &depStates,
+        const lyric_build::TaskKey &mainKey);
 };
 
 #endif // LYRIC_COMPILER_BASE_COMPILER_FIXTURE_H

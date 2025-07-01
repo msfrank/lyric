@@ -92,6 +92,7 @@ namespace lyric_assembler {
 
         lyric_common::ModuleLocation getLocation() const;
         lyric_common::ModuleLocation getOrigin() const;
+        lyric_common::ModuleLocation getPluginLocation() const;
         const ObjectStateOptions *getOptions() const;
 
         tempo_utils::Status load();

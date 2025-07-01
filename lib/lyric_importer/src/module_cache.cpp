@@ -92,11 +92,15 @@ lyric_importer::ModuleCache::importModule(const lyric_common::ModuleLocation &ob
         auto walker = root.getPlugin();
 
         pluginLocation = walker.getPluginLocation();
-        if (pluginLocation.isValid()) {
-            pluginLocation = objectLocation.resolve(pluginLocation);
-        } else {
-            pluginLocation = objectLocation;
-        }
+        if (!pluginLocation.isValid())
+            return ImporterStatus::forCondition(ImporterCondition::kImportError,
+                "failed to import module {}; plugin location is invalid", objectLocation.toString());
+        if (!pluginLocation.isRelative())
+            return ImporterStatus::forCondition(ImporterCondition::kImportError,
+                "failed to import plugin {} for module {}; plugin location must be relative",
+                pluginLocation.toString(), objectLocation.toString());
+        pluginLocation = objectLocation.resolve(pluginLocation);
+
         Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>> pluginOption;
         TU_ASSIGN_OR_RETURN (pluginOption,
             m_loader->loadPlugin(pluginLocation, lyric_object::PluginSpecifier::systemDefault()));

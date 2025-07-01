@@ -47,8 +47,9 @@ BaseArchiverFixture::prepare()
     options.preludeLocation = lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
 
     auto recorder = tempo_tracing::TraceRecorder::create();
+    auto archiveLocation = lyric_common::ModuleLocation::fromUrlPath(m_archiveLocation.getPath());
     m_archiver = std::make_unique<lyric_archiver::LyricArchiver>(
-        m_archiveLocation, m_originLocation, localModuleCache, sharedModuleCache,
+        archiveLocation, m_originLocation, localModuleCache, sharedModuleCache,
         shortcutResolver, recorder, options);
 
     return m_archiver->initialize();
