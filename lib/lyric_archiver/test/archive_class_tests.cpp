@@ -23,7 +23,7 @@ protected:
 
 TEST_F(ArchiveClassTests, ArchiveClassAndCheckMember)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
@@ -45,7 +45,7 @@ TEST_F(ArchiveClassTests, ArchiveClassAndCheckMember)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooClassAlias }
+        import from "archive:///archive" { FooClassAlias }
         val foo: FooClassAlias = FooClassAlias{}
         foo.Field == 42
     )");
@@ -55,7 +55,7 @@ TEST_F(ArchiveClassTests, ArchiveClassAndCheckMember)
 
 TEST_F(ArchiveClassTests, ArchiveClassAndCheckMethod)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
@@ -79,7 +79,7 @@ TEST_F(ArchiveClassTests, ArchiveClassAndCheckMethod)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooClassAlias }
+        import from "archive:///archive" { FooClassAlias }
         val foo: FooClassAlias = FooClassAlias{}
         foo.FortyTwo() == 42
     )");
@@ -89,13 +89,13 @@ TEST_F(ArchiveClassTests, ArchiveClassAndCheckMethod)
 
 TEST_F(ArchiveClassTests, ArchiveClassAndCheckImpl)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
         defclass FooClass {
             impl Equality[FooClass,FooClass] {
-                def equals(lhs: FooClass, rhs: FooClass): Bool {
+                def Equals(lhs: FooClass, rhs: FooClass): Bool {
                     true
                 }
             }
@@ -115,7 +115,7 @@ TEST_F(ArchiveClassTests, ArchiveClassAndCheckImpl)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooClassAlias }
+        import from "archive:///archive" { FooClassAlias }
         val foo1: FooClassAlias = FooClassAlias{}
         val foo2: FooClassAlias = FooClassAlias{}
         using foo1

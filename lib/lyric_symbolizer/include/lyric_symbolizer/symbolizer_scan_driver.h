@@ -48,6 +48,7 @@ namespace lyric_symbolizer {
     public:
         SymbolizerScanDriverBuilder(
             const lyric_common::ModuleLocation &location,
+            const lyric_common::ModuleLocation &origin,
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
@@ -63,6 +64,7 @@ namespace lyric_symbolizer {
 
     private:
         lyric_common::ModuleLocation m_location;
+        lyric_common::ModuleLocation m_origin;
         std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         std::shared_ptr<lyric_importer::ShortcutResolver> m_shortcutResolver;

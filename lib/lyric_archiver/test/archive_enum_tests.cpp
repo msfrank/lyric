@@ -23,7 +23,7 @@ protected:
 
 TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMember)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
@@ -49,7 +49,7 @@ TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMember)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooEnumAlias }
+        import from "archive:///archive" { FooEnumAlias }
         FooEnumAlias.Field == 42
     )");
 
@@ -58,7 +58,7 @@ TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMember)
 
 TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMethod)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
@@ -86,7 +86,7 @@ TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMethod)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooEnumAlias }
+        import from "archive:///archive" { FooEnumAlias }
         FooEnumAlias.FortyTwo() == 42
     )");
 
@@ -95,7 +95,7 @@ TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMethod)
 
 TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckImpl)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
@@ -105,7 +105,7 @@ TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckImpl)
             case Baz
             case Qux
             impl Equality[FooEnum,FooEnum] {
-                def equals(lhs: FooEnum, rhs: FooEnum): Bool {
+                def Equals(lhs: FooEnum, rhs: FooEnum): Bool {
                     true
                 }
             }
@@ -125,7 +125,7 @@ TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckImpl)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooEnumAlias }
+        import from "archive:///archive" { FooEnumAlias }
         using FooEnumAlias
         FooEnumAlias == FooEnumAlias
     )");

@@ -35,6 +35,7 @@ namespace lyric_common {
         std::string getModuleName() const;
 
         ModuleLocation resolve(const ModuleLocation &rel) const;
+        bool isWithinOrigin(const ModuleLocation &origin) const;
 
         std::string toString() const;
         tempo_utils::Url toUrl() const;

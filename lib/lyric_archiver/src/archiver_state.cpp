@@ -53,12 +53,21 @@ lyric_archiver::ArchiverState::insertObject(
     const lyric_common::ModuleLocation &location,
     const lyric_object::LyricObject &object)
 {
-    if (m_moduleImports.contains(location))
+    auto *importCache = m_objectState->importCache();
+
+    lyric_common::ModuleLocation importLocation;
+    if (!location.isAbsolute()) {
+        TU_ASSIGN_OR_RETURN (importLocation, importCache->resolveImportLocation(location.toUrl()));
+    } else {
+        importLocation = location;
+    }
+
+    if (m_moduleImports.contains(importLocation))
         return {};
 
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
-    TU_ASSIGN_OR_RETURN (moduleImport, lyric_importer::ModuleImport::create(location, object));
-    m_moduleImports[location] = std::move(moduleImport);
+    TU_ASSIGN_OR_RETURN (moduleImport, lyric_importer::ModuleImport::create(importLocation, object));
+    m_moduleImports[importLocation] = std::move(moduleImport);
 
     return {};
 }
@@ -66,14 +75,22 @@ lyric_archiver::ArchiverState::insertObject(
 tempo_utils::Status
 lyric_archiver::ArchiverState::importObject(const lyric_common::ModuleLocation &location)
 {
-    if (m_moduleImports.contains(location))
+    auto *importCache = m_objectState->importCache();
+
+    lyric_common::ModuleLocation importLocation;
+    if (!location.isAbsolute()) {
+        TU_ASSIGN_OR_RETURN (importLocation, importCache->resolveImportLocation(location.toUrl()));
+    } else {
+        importLocation = location;
+    }
+
+    if (m_moduleImports.contains(importLocation))
         return {};
 
-    auto *importCache = m_objectState->importCache();
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN (moduleImport, importCache->importModule(
-        location, lyric_assembler::ImportFlags::ApiLinkage));
-    m_moduleImports[location] = std::move(moduleImport);
+        importLocation, lyric_assembler::ImportFlags::ApiLinkage));
+    m_moduleImports[importLocation] = std::move(moduleImport);
 
     return {};
 }
@@ -84,14 +101,34 @@ lyric_archiver::ArchiverState::hasImport(const lyric_common::ModuleLocation &loc
     return m_moduleImports.contains(location);
 }
 
+static tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
+get_module_import(
+    const lyric_common::SymbolUrl &symbolUrl,
+    const absl::flat_hash_map<
+        lyric_common::ModuleLocation,
+        std::shared_ptr<lyric_importer::ModuleImport>
+    > &moduleImports,
+    const lyric_assembler::ObjectState *state)
+{
+    auto importLocation = symbolUrl.getModuleLocation();
+    if (!importLocation.isAbsolute()) {
+        auto *importCache = state->importCache();
+        TU_ASSIGN_OR_RETURN (importLocation, importCache->resolveImportLocation(importLocation.toUrl()));
+    }
+    auto entry = moduleImports.find(importLocation);
+    if (entry == moduleImports.cend())
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant,
+            "missing module import {}", importLocation.toString());
+    return entry->second;
+}
+
 tempo_utils::Result<lyric_importer::ActionImport *>
 lyric_archiver::ArchiverState::importAction(const lyric_common::SymbolUrl &actionUrl)
 {
-    auto entry = m_moduleImports.find(actionUrl.getModuleLocation());
-    if (entry == m_moduleImports.cend())
-        return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
-            "missing module import {}", actionUrl.getModuleLocation().toString());
-    auto &moduleImport = entry->second;
+    std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN (moduleImport, get_module_import(actionUrl, m_moduleImports, m_objectState.get()));
+
     auto object = moduleImport->getObject().getObject();
     auto symbol = object.findSymbol(actionUrl.getSymbolPath());
     return moduleImport->getAction(symbol.getLinkageIndex());
@@ -100,11 +137,9 @@ lyric_archiver::ArchiverState::importAction(const lyric_common::SymbolUrl &actio
 tempo_utils::Result<lyric_importer::CallImport *>
 lyric_archiver::ArchiverState::importCall(const lyric_common::SymbolUrl &callUrl)
 {
-    auto entry = m_moduleImports.find(callUrl.getModuleLocation());
-    if (entry == m_moduleImports.cend())
-        return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
-            "missing module import {}", callUrl.getModuleLocation().toString());
-    auto &moduleImport = entry->second;
+    std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN (moduleImport, get_module_import(callUrl, m_moduleImports, m_objectState.get()));
+
     auto object = moduleImport->getObject().getObject();
     auto symbol = object.findSymbol(callUrl.getSymbolPath());
     return moduleImport->getCall(symbol.getLinkageIndex());
@@ -113,11 +148,9 @@ lyric_archiver::ArchiverState::importCall(const lyric_common::SymbolUrl &callUrl
 tempo_utils::Result<lyric_importer::FieldImport *>
 lyric_archiver::ArchiverState::importField(const lyric_common::SymbolUrl &fieldUrl)
 {
-    auto entry = m_moduleImports.find(fieldUrl.getModuleLocation());
-    if (entry == m_moduleImports.cend())
-        return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
-            "missing module import {}", fieldUrl.getModuleLocation().toString());
-    auto &moduleImport = entry->second;
+    std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN (moduleImport, get_module_import(fieldUrl, m_moduleImports, m_objectState.get()));
+
     auto object = moduleImport->getObject().getObject();
     auto symbol = object.findSymbol(fieldUrl.getSymbolPath());
     return moduleImport->getField(symbol.getLinkageIndex());
@@ -154,9 +187,14 @@ lyric_archiver::ArchiverState::archiveSymbol(
     const lyric_common::SymbolUrl &symbolUrl,
     SymbolReferenceSet &symbolReferenceSet)
 {
-    auto moduleLocation = symbolUrl.getModuleLocation();
+    TU_LOG_V << "archiving symbol " << symbolUrl;
 
-    auto *globalNamespace = m_objectRoot->globalNamespace();
+    auto moduleLocation = symbolUrl.getModuleLocation();
+    if (!moduleLocation.isAbsolute()) {
+        auto *importCache = m_objectState->importCache();
+        TU_ASSIGN_OR_RETURN (moduleLocation, importCache->resolveImportLocation(moduleLocation.toUrl()));
+        TU_LOG_V << "resolved relative location " << symbolUrl.getModuleLocation() << " to " << moduleLocation;
+    }
 
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
     auto importEntry = m_moduleImports.find(moduleLocation);
@@ -181,6 +219,7 @@ lyric_archiver::ArchiverState::archiveSymbol(
 
     auto object = moduleImport->getObject().getObject();
     auto symbol = object.findSymbol(symbolUrl.getSymbolPath());
+    auto *globalNamespace = m_objectRoot->globalNamespace();
 
     switch (symbol.getLinkageSection()) {
 

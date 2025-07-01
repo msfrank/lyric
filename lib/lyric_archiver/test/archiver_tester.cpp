@@ -3,14 +3,21 @@
 
 #include "archiver_tester.h"
 
-ArchiverTester::ArchiverTester(lyric_test::LyricTester *tester)
-    : m_tester(tester)
+ArchiverTester::ArchiverTester(const lyric_common::ModuleLocation &origin, lyric_test::LyricTester *tester)
+    : m_origin(origin),
+      m_tester(tester)
 {
     TU_ASSERT (m_tester != nullptr);
     auto *runner = m_tester->getRunner();
     auto *builder = runner->getBuilder();
     auto tempRoot = builder->getTempRoot();
     m_tempDirectory = std::make_unique<lyric_build::TempDirectory>(tempRoot, "dependency-loader");
+}
+
+lyric_common::ModuleLocation
+ArchiverTester::getOrigin() const
+{
+    return m_origin;
 }
 
 tempo_utils::Result<lyric_common::ModuleLocation>
@@ -36,7 +43,7 @@ ArchiverTester::build()
 
     std::shared_ptr<lyric_runtime::AbstractLoader> loader;
     TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(
-        targetComputationSet, cache, m_tempDirectory.get()));
+        m_origin, targetComputationSet, cache, m_tempDirectory.get()));
 
     return loader;
 }

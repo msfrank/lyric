@@ -104,14 +104,18 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(archetypeArtifact));
     lyric_parser::LyricArchetype archetype(content);
 
+    // define the module origin
+    auto origin = lyric_common::ModuleLocation::fromString(
+        absl::StrCat("dev.zuri.build://", buildState->getGeneration().getUuid().toString()));
+
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache, tempDirectory()));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, cache, tempDirectory()));
     auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     // configure symbolizer
     lyric_symbolizer::LyricSymbolizer symbolizer(
-        localModuleCache, buildState->getSharedModuleCache(), m_symbolizerOptions);
+        origin, localModuleCache, buildState->getSharedModuleCache(), m_symbolizerOptions);
 
     // generate the linkage object by symbolizing the archetype
     logInfo("symbolizing module {}", m_moduleLocation.toString());

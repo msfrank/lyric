@@ -23,7 +23,7 @@ protected:
 
 TEST_F(ArchiveConceptTests, ArchiveConceptAndCheckMethod)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
@@ -45,7 +45,7 @@ TEST_F(ArchiveConceptTests, ArchiveConceptAndCheckMethod)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooConceptAlias }
+        import from "archive:///archive" { FooConceptAlias }
         defclass FooClass {
             impl FooConceptAlias {
                 def FortyTwo(): Int { 42 }

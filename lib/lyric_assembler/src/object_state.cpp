@@ -31,17 +31,20 @@
 
 lyric_assembler::ObjectState::ObjectState(
     const lyric_common::ModuleLocation &location,
+    const lyric_common::ModuleLocation &origin,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
     const ObjectStateOptions &options)
     : m_location(location),
+      m_origin(origin),
       m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_shortcutResolver(std::move(shortcutResolver)),
       m_options(options)
 {
     TU_ASSERT (m_location.isValid());
+    TU_ASSERT (m_origin.isValid());
     TU_ASSERT (m_localModuleCache != nullptr);
     TU_ASSERT (m_systemModuleCache != nullptr);
     TU_ASSERT (m_shortcutResolver != nullptr);
@@ -53,6 +56,7 @@ lyric_assembler::ObjectState::ObjectState(
 
 lyric_assembler::ObjectState::ObjectState(
     const lyric_common::ModuleLocation &location,
+    const lyric_common::ModuleLocation &origin,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
@@ -60,6 +64,7 @@ lyric_assembler::ObjectState::ObjectState(
     const ObjectStateOptions &options)
     : ObjectState(
         location,
+        origin,
         std::move(localModuleCache),
         std::move(systemModuleCache),
         std::move(shortcutResolver),
@@ -83,6 +88,12 @@ lyric_common::ModuleLocation
 lyric_assembler::ObjectState::getLocation() const
 {
     return m_location;
+}
+
+lyric_common::ModuleLocation
+lyric_assembler::ObjectState::getOrigin() const
+{
+    return m_origin;
 }
 
 const lyric_assembler::ObjectStateOptions *

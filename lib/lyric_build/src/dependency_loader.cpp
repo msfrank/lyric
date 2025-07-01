@@ -101,6 +101,7 @@ lyric_build::DependencyLoader::loadPlugin(
  */
 tempo_utils::Result<std::shared_ptr<lyric_build::DependencyLoader>>
 lyric_build::DependencyLoader::create(
+    const lyric_common::ModuleLocation &origin,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     std::shared_ptr<AbstractCache> cache,
     TempDirectory *tempDirectory)
@@ -146,6 +147,12 @@ lyric_build::DependencyLoader::create(
             if (!location.isValid())
                 return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                     "invalid module location for artifact {}", artifactId.toString());
+
+            // if module location is relative then construct an absolute location using origin as the base
+            if (location.isRelative()) {
+                location = origin.resolve(location);
+            }
+
             if (objects.contains(location))
                 return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                     "loader found duplicate object {}", location.toString());
@@ -179,10 +186,15 @@ lyric_build::DependencyLoader::create(
 
             lyric_common::ModuleLocation location;
             TU_RETURN_IF_NOT_OK (pluginMetadata.parseAttr(kLyricBuildModuleLocation, location));
-
             if (!location.isValid())
                 return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                     "invalid module location for artifact {}", artifactId.toString());
+
+            // if module location is relative then construct an absolute location using origin as the base
+            if (location.isRelative()) {
+                location = origin.resolve(location);
+            }
+
             if (plugins.contains(location))
                 return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                     "loader found duplicate plugin {}", location.toString());
@@ -207,17 +219,19 @@ lyric_build::DependencyLoader::create(
 
 tempo_utils::Result<std::shared_ptr<lyric_build::DependencyLoader>>
 lyric_build::DependencyLoader::create(
+    const lyric_common::ModuleLocation &origin,
     const TargetComputation &targetComputation,
     std::shared_ptr<AbstractCache> cache,
     TempDirectory *tempDirectory)
 {
     auto taskId = targetComputation.getId();
     TaskKey taskKey(taskId.getDomain(), taskId.getId());
-    return create({{taskKey, targetComputation.getState()}}, cache, tempDirectory);
+    return create(origin, {{taskKey, targetComputation.getState()}}, cache, tempDirectory);
 }
 
 tempo_utils::Result<std::shared_ptr<lyric_build::DependencyLoader>>
 lyric_build::DependencyLoader::create(
+    const lyric_common::ModuleLocation &origin,
     const TargetComputationSet &targetComputationSet,
     std::shared_ptr<AbstractCache> cache,
     TempDirectory *tempDirectory)
@@ -227,5 +241,5 @@ lyric_build::DependencyLoader::create(
         TaskKey taskKey(it->first.getDomain(), it->first.getId());
         depStates[taskKey] = it->second.getState();
     }
-    return create(depStates, cache, tempDirectory);
+    return create(origin, depStates, cache, tempDirectory);
 }

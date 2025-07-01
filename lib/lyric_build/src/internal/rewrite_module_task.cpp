@@ -103,9 +103,13 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     // configure rewriter
     lyric_rewriter::LyricRewriter rewriter(m_rewriterOptions);
 
+    // define the module origin
+    auto origin = lyric_common::ModuleLocation::fromString(
+        absl::StrCat("dev.zuri.build://", buildState->getGeneration().getUuid().toString()));
+
     // configure loader
     std::shared_ptr<DependencyLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache, tempDirectory()));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, cache, tempDirectory()));
 
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
     loaderChain.push_back(dependencyLoader);

@@ -5,6 +5,7 @@
 #include <lyric_runtime/static_loader.h>
 #include <lyric_typing/type_system.h>
 #include <tempo_tracing/trace_recorder.h>
+#include <tempo_utils/uuid.h>
 
 #include "base_typing_fixture.h"
 
@@ -19,9 +20,11 @@ BaseTypingFixture::SetUp()
     auto sharedModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
     auto shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
     auto recorder = tempo_tracing::TraceRecorder::create();
+    auto origin = lyric_common::ModuleLocation::fromString(
+        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toString()));
 
     m_objectState = std::make_unique<lyric_assembler::ObjectState>(
-        m_location, localModuleCache, sharedModuleCache, shortcutResolver);
+        m_location, origin, localModuleCache, sharedModuleCache, shortcutResolver);
     TU_ASSIGN_OR_RAISE (m_objectRoot, m_objectState->defineRoot());
 
     m_typeSystem = std::make_unique<lyric_typing::TypeSystem>(m_objectState.get());

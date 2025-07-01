@@ -596,16 +596,20 @@ lyric_analyzer::AnalyzerScanDriver::pushNamespace(
 
 lyric_analyzer::AnalyzerScanDriverBuilder::AnalyzerScanDriverBuilder(
     const lyric_common::ModuleLocation &location,
+    const lyric_common::ModuleLocation &origin,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
     const lyric_assembler::ObjectStateOptions &objectStateOptions)
     : m_location(location),
+      m_origin(origin),
       m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_shortcutResolver(std::move(shortcutResolver)),
       m_objectStateOptions(objectStateOptions)
 {
+    TU_ASSERT (m_location.isValid());
+    TU_ASSERT (m_origin.isValid());
 }
 
 tempo_utils::Status
@@ -620,8 +624,8 @@ tempo_utils::Result<std::shared_ptr<lyric_rewriter::AbstractScanDriver>>
 lyric_analyzer::AnalyzerScanDriverBuilder::makeScanDriver()
 {
     // construct the object state
-    m_state = std::make_unique<lyric_assembler::ObjectState>(
-        m_location, m_localModuleCache, m_systemModuleCache, m_shortcutResolver, m_objectStateOptions);
+    m_state = std::make_unique<lyric_assembler::ObjectState>(m_location, m_origin,
+        m_localModuleCache, m_systemModuleCache, m_shortcutResolver, m_objectStateOptions);
 
     // define the object root
     lyric_assembler::ObjectRoot *root;

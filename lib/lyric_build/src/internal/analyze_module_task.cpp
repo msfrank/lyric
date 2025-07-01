@@ -164,13 +164,18 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(archetypeArtifact));
     lyric_parser::LyricArchetype archetype(content);
 
+    // define the module origin
+    auto origin = lyric_common::ModuleLocation::fromString(
+        absl::StrCat("dev.zuri.build://", buildState->getGeneration().getUuid().toString()));
+
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache, tempDirectory()));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, cache, tempDirectory()));
     auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     // configure analyzer
-    lyric_analyzer::LyricAnalyzer analyzer(localModuleCache, buildState->getSharedModuleCache(), m_analyzerOptions);
+    lyric_analyzer::LyricAnalyzer analyzer(
+        origin, localModuleCache, buildState->getSharedModuleCache(), m_analyzerOptions);
 
     // generate the outline object by analyzing the archetype
     logInfo("analyzing module {}", m_moduleLocation.toString());

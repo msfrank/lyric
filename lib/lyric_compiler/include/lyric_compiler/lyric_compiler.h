@@ -39,6 +39,7 @@ namespace lyric_compiler {
 
     public:
         LyricCompiler(
+            const lyric_common::ModuleLocation &origin,
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             const CompilerOptions &options);
@@ -51,6 +52,7 @@ namespace lyric_compiler {
             std::shared_ptr<tempo_tracing::TraceRecorder> recorder);
 
     private:
+        lyric_common::ModuleLocation m_origin;
         std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         CompilerOptions m_options;

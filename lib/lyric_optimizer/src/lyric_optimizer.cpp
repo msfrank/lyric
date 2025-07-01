@@ -14,6 +14,7 @@ lyric_optimizer::LyricOptimizer::LyricOptimizer(
 
 lyric_optimizer::LyricOptimizer::LyricOptimizer(
     const lyric_common::ModuleLocation &location,
+    const lyric_common::ModuleLocation &origin,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
@@ -23,7 +24,7 @@ lyric_optimizer::LyricOptimizer::LyricOptimizer(
       m_options(options)
 {
     m_objectState = std::make_unique<lyric_assembler::ObjectState>(
-        location, localModuleCache, systemModuleCache, shortcutResolver);
+        location, origin, localModuleCache, systemModuleCache, shortcutResolver);
 }
 
 tempo_utils::Status

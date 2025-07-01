@@ -9,13 +9,16 @@
 #include <tempo_tracing/enter_scope.h>
 
 lyric_compiler::LyricCompiler::LyricCompiler(
+    const lyric_common::ModuleLocation &origin,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     const CompilerOptions &options)
-    : m_localModuleCache(std::move(localModuleCache)),
+    : m_origin(origin),
+      m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_options(options)
 {
+    TU_ASSERT (m_origin.isValid());
     TU_ASSERT (m_systemModuleCache != nullptr);
 }
 
@@ -66,7 +69,7 @@ lyric_compiler::LyricCompiler::compileModule(
 
         // construct the compiler state
         auto builder = std::make_shared<CompilerScanDriverBuilder>(
-            location, m_localModuleCache, m_systemModuleCache, shortcutResolver, objectStateOptions);
+            location, m_origin, m_localModuleCache, m_systemModuleCache, shortcutResolver, objectStateOptions);
 
         lyric_rewriter::RewriterOptions rewriterOptions;
         rewriterOptions.visitorRegistry = m_options.visitorRegistry;

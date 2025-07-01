@@ -290,18 +290,25 @@ lyric_test::TestRunner::compileModuleInternal(
     auto cache = m_builder->getCache();
     auto tempRoot = m_builder->getTempRoot();
 
+    // define the module origin
+    auto origin = lyric_common::ModuleLocation::fromString(
+        absl::StrCat("dev.zuri.tester://", tempo_utils::UUID::randomUUID().toString()));
+
     lyric_build::BuildGeneration targetGen(targetState.getGeneration());
     lyric_build::TempDirectory tempDirectory(tempRoot, targetGen);
     std::shared_ptr<lyric_build::DependencyLoader> loader;
-    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, cache, &tempDirectory));
-    Option<lyric_object::LyricObject> moduleOption;
-    TU_ASSIGN_OR_RETURN (moduleOption, loader->loadModule(moduleLocation));
-    if (moduleOption.isEmpty())
+    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(
+        origin, targetComputation, cache, &tempDirectory));
+
+    Option<lyric_object::LyricObject> objectOption;
+    auto objectLocation = origin.resolve(moduleLocation);
+    TU_ASSIGN_OR_RETURN (objectOption, loader->loadModule(objectLocation));
+    if (objectOption.isEmpty())
         return TestStatus::forCondition(TestCondition::kTestInvariant,
-            "missing module {}", moduleLocation.toString());
+            "dependency loader is missing object {}", objectLocation.toString());
 
     return CompileModule(shared_from_this(), targetComputation,
-        targetComputationSet.getDiagnostics(), moduleOption.getValue());
+        targetComputationSet.getDiagnostics(), objectOption.getValue());
 }
 
 tempo_utils::Result<lyric_test::AnalyzeModule>
@@ -332,18 +339,25 @@ lyric_test::TestRunner::analyzeModuleInternal(
     auto cache = m_builder->getCache();
     auto tempRoot = m_builder->getTempRoot();
 
+    // define the module origin
+    auto origin = lyric_common::ModuleLocation::fromString(
+        absl::StrCat("dev.zuri.tester://", tempo_utils::UUID::randomUUID().toString()));
+
     lyric_build::BuildGeneration targetGen(targetState.getGeneration());
     lyric_build::TempDirectory tempDirectory(tempRoot, targetGen, targetState.getHash());
     std::shared_ptr<lyric_build::DependencyLoader> loader;
-    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, cache, &tempDirectory));
-    Option<lyric_object::LyricObject> moduleOption;
-    TU_ASSIGN_OR_RETURN (moduleOption, loader->loadModule(moduleLocation));
-    if (moduleOption.isEmpty())
+    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(
+        origin, targetComputation, cache, &tempDirectory));
+
+    Option<lyric_object::LyricObject> objectOption;
+    auto objectLocation = origin.resolve(moduleLocation);
+    TU_ASSIGN_OR_RETURN (objectOption, loader->loadModule(objectLocation));
+    if (objectOption.isEmpty())
         return TestStatus::forCondition(TestCondition::kTestInvariant,
-            "missing module {}", moduleLocation.toString());
+            "dependency loader is missing object {}", objectLocation.toString());
 
     return AnalyzeModule(shared_from_this(), targetComputation,
-        targetComputationSet.getDiagnostics(), moduleOption.getValue());
+        targetComputationSet.getDiagnostics(), objectOption.getValue());
 }
 
 tempo_utils::Result<lyric_test::SymbolizeModule>
@@ -374,18 +388,25 @@ lyric_test::TestRunner::symbolizeModuleInternal(
     auto cache = m_builder->getCache();
     auto tempRoot = m_builder->getTempRoot();
 
+    // define the module origin
+    auto origin = lyric_common::ModuleLocation::fromString(
+        absl::StrCat("dev.zuri.tester://", tempo_utils::UUID::randomUUID().toString()));
+
     lyric_build::BuildGeneration targetGen(targetState.getGeneration());
     lyric_build::TempDirectory tempDirectory(tempRoot, targetGen, targetState.getHash());
     std::shared_ptr<lyric_build::DependencyLoader> loader;
-    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(targetComputation, cache, &tempDirectory));
-    Option<lyric_object::LyricObject> moduleOption;
-    TU_ASSIGN_OR_RETURN (moduleOption, loader->loadModule(moduleLocation));
-    if (moduleOption.isEmpty())
+    TU_ASSIGN_OR_RETURN (loader, lyric_build::DependencyLoader::create(
+    origin, targetComputation, cache, &tempDirectory));
+
+    Option<lyric_object::LyricObject> objectOption;
+    auto objectLocation = origin.resolve(moduleLocation);
+    TU_ASSIGN_OR_RETURN (objectOption, loader->loadModule(objectLocation));
+    if (objectOption.isEmpty())
         return TestStatus::forCondition(TestCondition::kTestInvariant,
-            "missing module {}", moduleLocation.toString());
+            "dependency loader is missing object {}", objectLocation.toString());
 
     return SymbolizeModule(shared_from_this(), targetComputation,
-        targetComputationSet.getDiagnostics(), moduleOption.getValue());
+        targetComputationSet.getDiagnostics(), objectOption.getValue());
 }
 
 std::filesystem::path

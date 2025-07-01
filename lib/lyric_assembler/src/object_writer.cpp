@@ -102,6 +102,12 @@ lyric_assembler::ObjectWriter::initialize()
     return {};
 }
 
+lyric_common::ModuleLocation
+lyric_assembler::ObjectWriter::getOrigin() const
+{
+    return m_state->getOrigin();
+}
+
 tempo_utils::Result<tu_uint32>
 lyric_assembler::ObjectWriter::getLiteralAddress(const LiteralHandle *literalHandle) const
 {

@@ -23,7 +23,7 @@ protected:
 
 TEST_F(ArchiveInstanceTests, ArchiveInstanceAndCheckMember)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
@@ -45,7 +45,7 @@ TEST_F(ArchiveInstanceTests, ArchiveInstanceAndCheckMember)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooInstanceAlias }
+        import from "archive:///archive" { FooInstanceAlias }
         FooInstanceAlias.Field == 42
     )");
 
@@ -54,7 +54,7 @@ TEST_F(ArchiveInstanceTests, ArchiveInstanceAndCheckMember)
 
 TEST_F(ArchiveInstanceTests, ArchiveInstanceAndCheckMethod)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
@@ -78,7 +78,7 @@ TEST_F(ArchiveInstanceTests, ArchiveInstanceAndCheckMethod)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooInstanceAlias }
+        import from "archive:///archive" { FooInstanceAlias }
         FooInstanceAlias.FortyTwo() == 42
     )");
 
@@ -87,13 +87,13 @@ TEST_F(ArchiveInstanceTests, ArchiveInstanceAndCheckMethod)
 
 TEST_F(ArchiveInstanceTests, ArchiveInstanceAndCheckImpl)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
         definstance FooInstance {
             impl Equality[FooInstance,FooInstance] {
-                def equals(lhs: FooInstance, rhs: FooInstance): Bool {
+                def Equals(lhs: FooInstance, rhs: FooInstance): Bool {
                     true
                 }
             }
@@ -113,7 +113,7 @@ TEST_F(ArchiveInstanceTests, ArchiveInstanceAndCheckImpl)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooInstanceAlias }
+        import from "archive:///archive" { FooInstanceAlias }
         using FooInstanceAlias
         FooInstanceAlias == FooInstanceAlias
     )");

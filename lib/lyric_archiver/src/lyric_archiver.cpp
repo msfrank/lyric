@@ -6,18 +6,22 @@
 
 lyric_archiver::LyricArchiver::LyricArchiver(
     const lyric_common::ModuleLocation &location,
+    const lyric_common::ModuleLocation &origin,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
     std::shared_ptr<tempo_tracing::TraceRecorder> recorder,
     const ArchiverOptions &options)
     : m_location(location),
+      m_origin(origin),
       m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_shortcutResolver(std::move(shortcutResolver)),
       m_recorder(std::move(recorder)),
       m_options(options)
 {
+    TU_ASSERT (m_location.isValid());
+    TU_ASSERT (m_origin.isValid());
 }
 
 tempo_utils::Status
@@ -29,9 +33,8 @@ lyric_archiver::LyricArchiver::initialize()
 
     lyric_assembler::ObjectStateOptions objectStateOptions;
 
-    auto objectState = std::make_unique<lyric_assembler::ObjectState>(
-        m_location, m_localModuleCache, m_systemModuleCache, m_shortcutResolver,
-        objectStateOptions);
+    auto objectState = std::make_unique<lyric_assembler::ObjectState>(m_location, m_origin,
+        m_localModuleCache, m_systemModuleCache, m_shortcutResolver, objectStateOptions);
 
     lyric_assembler::ObjectRoot *objectRoot;
     TU_ASSIGN_OR_RETURN (objectRoot, objectState->defineRoot());

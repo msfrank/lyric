@@ -9,9 +9,13 @@
 #include <lyric_runtime/internal/resolve_link.h>
 #include <lyric_runtime/segment_manager.h>
 
-lyric_runtime::SegmentManager::SegmentManager(std::shared_ptr<AbstractLoader> loader)
+lyric_runtime::SegmentManager::SegmentManager(
+    const lyric_common::ModuleLocation &origin,
+    std::shared_ptr<AbstractLoader> loader)
 {
+    m_data.origin = origin;
     m_data.loader = std::move(loader);
+    TU_ASSERT (m_data.origin.isValid());
     TU_ASSERT (m_data.loader != nullptr);
 }
 

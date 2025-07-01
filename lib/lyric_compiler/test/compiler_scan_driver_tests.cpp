@@ -16,6 +16,7 @@
 class CompilerScanDriver : public ::testing::Test {
 protected:
     lyric_common::ModuleLocation location;
+    lyric_common::ModuleLocation origin;
     std::shared_ptr<lyric_runtime::StaticLoader> staticLoader;
     std::shared_ptr<lyric_bootstrap::BootstrapLoader> bootstrapLoader;
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache;
@@ -27,6 +28,7 @@ protected:
 
     void SetUp() override {
         location = lyric_common::ModuleLocation::fromString("/test");
+        origin = lyric_common::ModuleLocation::fromString("test://");
         staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
         bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
         localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
@@ -34,7 +36,7 @@ protected:
         shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
         recorder = tempo_tracing::TraceRecorder::create();
         objectState = std::make_unique<lyric_assembler::ObjectState>(
-            location, localModuleCache, systemModuleCache, shortcutResolver);
+            location, origin, localModuleCache, systemModuleCache, shortcutResolver);
         TU_ASSIGN_OR_RAISE (objectRoot, objectState->defineRoot());
     }
 };

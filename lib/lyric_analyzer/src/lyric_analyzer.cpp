@@ -9,13 +9,16 @@
 #include <tempo_utils/log_stream.h>
 
 lyric_analyzer::LyricAnalyzer::LyricAnalyzer(
+    const lyric_common::ModuleLocation &origin,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     const AnalyzerOptions &options)
-    : m_localModuleCache(std::move(localModuleCache)),
+    : m_origin(origin),
+      m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_options(options)
 {
+    TU_ASSERT (m_origin.isValid());
 }
 
 lyric_analyzer::LyricAnalyzer::LyricAnalyzer(const LyricAnalyzer &other)
@@ -64,9 +67,8 @@ lyric_analyzer::LyricAnalyzer::analyzeModule(
         }
 
         // construct the analyzer state
-        auto builder = std::make_shared<AnalyzerScanDriverBuilder>(
-            location, m_localModuleCache, m_systemModuleCache, shortcutResolver,
-            objectStateOptions);
+        auto builder = std::make_shared<AnalyzerScanDriverBuilder>(location, m_origin,
+            m_localModuleCache, m_systemModuleCache, shortcutResolver, objectStateOptions);
 
         lyric_rewriter::RewriterOptions rewriterOptions;
         rewriterOptions.visitorRegistry = m_options.visitorRegistry;

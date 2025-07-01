@@ -31,9 +31,11 @@ TEST(AnalyzeBlock, NoDefinitions)
     auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
     auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
     auto systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
+    auto origin = lyric_common::ModuleLocation::fromString(
+        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toString()));
 
     lyric_analyzer::AnalyzerOptions options;
-    lyric_analyzer::LyricAnalyzer analyzer(localModuleCache, systemModuleCache, options);
+    lyric_analyzer::LyricAnalyzer analyzer(origin, localModuleCache, systemModuleCache, options);
 
     lyric_assembler::ObjectStateOptions objectStateOptions;
     lyric_object::LyricObject object;

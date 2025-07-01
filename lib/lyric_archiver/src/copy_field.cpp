@@ -61,9 +61,13 @@ lyric_archiver::copy_field(
         if (templateImport != nullptr) {
             TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
         }
+
         lyric_assembler::InitializerHandle *initializerHandle;
         TU_ASSIGN_OR_RETURN (initializerHandle, fieldSymbol->defineInitializer());
         auto *procHandle = initializerHandle->initializerProc();
+        procHandle->putExitType(fieldType->getTypeDef());
+        TU_RETURN_IF_STATUS (initializerHandle->finalizeInitializer());
+
         TU_RETURN_IF_NOT_OK (put_pending_proc(initImport, procHandle, symbolReferenceSet, archiverState));
     }
 

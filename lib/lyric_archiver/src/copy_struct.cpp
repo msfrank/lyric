@@ -81,6 +81,7 @@ lyric_archiver::copy_struct(
         TU_ASSIGN_OR_RETURN (fieldSymbol, structSymbolPtr->declareMember(
             name, memberTypeHandle->getTypeDef(), fieldImport->getAccess()));
         TU_RETURN_IF_NOT_OK (archiverState.putSymbol(fieldImport->getSymbolUrl(), fieldSymbol));
+
         auto initializerUrl = fieldImport->getInitializer();
         if (initializerUrl.isValid()) {
             lyric_importer::CallImport *initImport;
@@ -90,9 +91,13 @@ lyric_archiver::copy_struct(
             if (templateImport != nullptr) {
                 TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
             }
+
             lyric_assembler::InitializerHandle *initializerHandle;
             TU_ASSIGN_OR_RETURN (initializerHandle, fieldSymbol->defineInitializer());
             auto *procHandle = initializerHandle->initializerProc();
+            procHandle->putExitType(memberTypeHandle->getTypeDef());
+            TU_RETURN_IF_STATUS (initializerHandle->finalizeInitializer());
+
             lyric_assembler::AbstractSymbol *initSymbol;
             TU_ASSIGN_OR_RETURN (initSymbol, archiverState.getSymbol(fieldSymbol->getInitializer()));
             TU_RETURN_IF_NOT_OK (archiverState.putSymbol(initializerUrl, initSymbol));

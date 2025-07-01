@@ -38,7 +38,8 @@ namespace lyric_analyzer {
     class LyricAnalyzer {
 
     public:
-        explicit LyricAnalyzer(
+        LyricAnalyzer(
+            const lyric_common::ModuleLocation &origin,
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             const AnalyzerOptions &options);
@@ -51,6 +52,7 @@ namespace lyric_analyzer {
             std::shared_ptr<tempo_tracing::TraceRecorder> recorder);
 
     private:
+        lyric_common::ModuleLocation m_origin;
         std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         AnalyzerOptions m_options;

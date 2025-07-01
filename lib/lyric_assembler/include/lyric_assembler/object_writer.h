@@ -72,6 +72,8 @@ namespace lyric_assembler {
 
         tempo_utils::Status insertImport(const lyric_common::ModuleLocation &location);
 
+        lyric_common::ModuleLocation getOrigin() const;
+
         tempo_utils::Result<SymbolDefinition> getSymbolDefinition(
             const lyric_common::SymbolUrl &symbolUrl) const;
         Option<SymbolDefinition> getSymbolDefinitionOption(const lyric_common::SymbolUrl &symbolUrl) const;

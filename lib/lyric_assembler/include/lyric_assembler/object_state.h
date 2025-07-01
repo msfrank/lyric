@@ -75,12 +75,14 @@ namespace lyric_assembler {
     public:
         ObjectState(
             const lyric_common::ModuleLocation &location,
+            const lyric_common::ModuleLocation &origin,
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
             const ObjectStateOptions &options = {});
         ObjectState(
             const lyric_common::ModuleLocation &location,
+            const lyric_common::ModuleLocation &origin,
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             std::shared_ptr<lyric_importer::ShortcutResolver> shortcutResolver,
@@ -89,6 +91,7 @@ namespace lyric_assembler {
         ~ObjectState();
 
         lyric_common::ModuleLocation getLocation() const;
+        lyric_common::ModuleLocation getOrigin() const;
         const ObjectStateOptions *getOptions() const;
 
         tempo_utils::Status load();
@@ -199,6 +202,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::ModuleLocation m_location;
+        lyric_common::ModuleLocation m_origin;
         std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         std::shared_ptr<lyric_importer::ShortcutResolver> m_shortcutResolver;

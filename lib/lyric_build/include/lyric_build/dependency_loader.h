@@ -15,14 +15,17 @@ namespace lyric_build {
 
     public:
         static tempo_utils::Result<std::shared_ptr<DependencyLoader>> create(
+            const lyric_common::ModuleLocation &origin,
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,
             std::shared_ptr<AbstractCache> cache,
             TempDirectory *tempDirectory);
         static tempo_utils::Result<std::shared_ptr<DependencyLoader>> create(
+            const lyric_common::ModuleLocation &origin,
             const TargetComputation &targetComputation,
             std::shared_ptr<AbstractCache> cache,
             TempDirectory *tempDirectory);
         static tempo_utils::Result<std::shared_ptr<DependencyLoader>> create(
+            const lyric_common::ModuleLocation &origin,
             const TargetComputationSet &targetComputationSet,
             std::shared_ptr<AbstractCache> cache,
             TempDirectory *tempDirectory);
@@ -36,6 +39,7 @@ namespace lyric_build {
             const lyric_object::PluginSpecifier &specifier) override;
 
     private:
+        lyric_common::ModuleLocation m_origin;
         TempDirectory *m_tempDirectory;
         absl::flat_hash_map<
             lyric_common::ModuleLocation,

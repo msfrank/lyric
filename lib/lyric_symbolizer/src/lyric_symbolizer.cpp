@@ -8,13 +8,16 @@
 #include <tempo_utils/log_stream.h>
 
 lyric_symbolizer::LyricSymbolizer::LyricSymbolizer(
+    const lyric_common::ModuleLocation &origin,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
     const SymbolizerOptions &options)
-    : m_localModuleCache(std::move(localModuleCache)),
+    : m_origin(origin),
+      m_localModuleCache(std::move(localModuleCache)),
       m_systemModuleCache(std::move(systemModuleCache)),
       m_options(options)
 {
+    TU_ASSERT (m_origin.isValid());
 }
 
 lyric_symbolizer::LyricSymbolizer::LyricSymbolizer(const LyricSymbolizer &other)
@@ -63,9 +66,8 @@ lyric_symbolizer::LyricSymbolizer::symbolizeModule(
         }
 
         // construct the symbolizer state
-        auto builder = std::make_shared<SymbolizerScanDriverBuilder>(
-            location, m_localModuleCache, m_systemModuleCache, shortcutResolver,
-            objectStateOptions);
+        auto builder = std::make_shared<SymbolizerScanDriverBuilder>(location, m_origin,
+            m_localModuleCache, m_systemModuleCache, shortcutResolver, objectStateOptions);
 
         lyric_rewriter::RewriterOptions rewriterOptions;
         rewriterOptions.visitorRegistry = m_options.visitorRegistry;

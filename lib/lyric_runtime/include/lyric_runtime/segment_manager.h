@@ -12,6 +12,7 @@
 namespace lyric_runtime {
 
     struct SegmentManagerData {
+        lyric_common::ModuleLocation origin;
         std::shared_ptr<AbstractLoader> loader;
         std::vector<BytecodeSegment *> segments;
         absl::flat_hash_map<lyric_common::ModuleLocation,tu_uint32> segmentcache;
@@ -22,7 +23,7 @@ namespace lyric_runtime {
 
     class SegmentManager {
     public:
-        explicit SegmentManager(std::shared_ptr<AbstractLoader> loader);
+        SegmentManager(const lyric_common::ModuleLocation &origin, std::shared_ptr<AbstractLoader> loader);
         virtual ~SegmentManager();
 
         virtual BytecodeSegment *getSegment(tu_uint32 segmentIndex);

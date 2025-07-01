@@ -139,6 +139,16 @@ lyric_common::ModuleLocation::resolve(const ModuleLocation &rel) const
     return ModuleLocation(resolved);
 }
 
+bool
+lyric_common::ModuleLocation::isWithinOrigin(const ModuleLocation &origin) const
+{
+    if (!origin.isAbsolute())
+        return false;
+    if (m_location->schemeView() != origin.getScheme())
+        return false;
+    return m_location->toAuthority() == origin.getAuthority();
+}
+
 std::string
 lyric_common::ModuleLocation::toString() const
 {

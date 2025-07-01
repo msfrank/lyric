@@ -7,21 +7,20 @@ BaseArchiverFixture::BaseArchiverFixture()
 {
     m_staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
     m_testerOptions.fallbackLoader = m_staticLoader;
-    m_testerOptions.taskSettings = lyric_build::TaskSettings(tempo_config::ConfigMap{
-        {"global", tempo_config::ConfigMap{
-            {"bootstrapDirectoryPath", tempo_config::ConfigValue(LYRIC_BUILD_BOOTSTRAP_DIR)},
-            {"sourceBaseUrl", tempo_config::ConfigValue("/src")},
-        }},
-    });
+    m_testerOptions.bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
 }
 
 tempo_utils::Status
-BaseArchiverFixture::configure()
+BaseArchiverFixture::configure(std::string_view archiveUrlString)
 {
-    m_archiveLocation = lyric_common::ModuleLocation::fromString("dev.zuri.test:///archive");
+    m_archiveLocation = lyric_common::ModuleLocation::fromString(archiveUrlString);
+    TU_ASSERT (m_archiveLocation.isAbsolute());
     m_tester = std::make_unique<lyric_test::LyricTester>(m_testerOptions);
     TU_RETURN_IF_NOT_OK (m_tester->configure());
-    m_archiverTester = std::make_unique<ArchiverTester>(m_tester.get());
+    m_originLocation = lyric_common::ModuleLocation::fromString(
+        absl::StrCat("tester://", tempo_utils::UUID::randomUUID().toString()));
+    TU_ASSERT (m_originLocation.isValid());
+    m_archiverTester = std::make_unique<ArchiverTester>(m_originLocation, m_tester.get());
     return {};
 }
 
@@ -49,7 +48,7 @@ BaseArchiverFixture::prepare()
 
     auto recorder = tempo_tracing::TraceRecorder::create();
     m_archiver = std::make_unique<lyric_archiver::LyricArchiver>(
-        m_archiveLocation, localModuleCache, sharedModuleCache,
+        m_archiveLocation, m_originLocation, localModuleCache, sharedModuleCache,
         shortcutResolver, recorder, options);
 
     return m_archiver->initialize();

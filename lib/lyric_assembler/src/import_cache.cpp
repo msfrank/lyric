@@ -43,28 +43,33 @@ lyric_assembler::ImportCache::~ImportCache()
 }
 
 tempo_utils::Result<lyric_common::ModuleLocation>
-lyric_assembler::ImportCache::resolveImportLocation(const tempo_utils::Url &importLocation) const
+lyric_assembler::ImportCache::resolveImportLocation(const tempo_utils::Url &importUrl) const
 {
-    if (!importLocation.isValid())
+    if (!importUrl.isValid())
         return AssemblerStatus::forCondition(AssemblerCondition::kImportError,
             "empty import location");
 
-    // absolute url and relative ref can pass through unmodified
-    if (importLocation.isAbsolute())
-        return lyric_common::ModuleLocation::fromUrl(importLocation);
-    if (importLocation.isRelative())
-        return lyric_common::ModuleLocation::fromUrl(importLocation);
+    // if import location is an absolute url then no resolution is necessary
+    if (importUrl.isAbsolute())
+        return lyric_common::ModuleLocation::fromUrl(importUrl);
+
+    auto origin = m_state->getOrigin();
+    auto importLocation = lyric_common::ModuleLocation::fromUrl(importUrl);
+
+    // if import location is a relative ref then resolve location relative to the origin
+    if (importLocation.isRelative() || importLocation.isWithinOrigin(origin))
+        return origin.resolve(importLocation);
 
     // any fields in the authority other than host are invalid
-    auto authority = importLocation.toAuthority();
+    auto authority = importUrl.toAuthority();
     if (authority.hasCredentials() || authority.hasPort())
         return AssemblerStatus::forCondition(AssemblerCondition::kImportError,
             "invalid shortcut for import location '{}'", importLocation.toString());
     auto shortcut = authority.getHost();
 
-    tempo_utils::UrlOrigin origin;
-    TU_ASSIGN_OR_RETURN (origin, m_shortcutResolver->resolveShortcut(shortcut));
-    auto resolvedLocation = tempo_utils::Url::fromOrigin(origin, importLocation.getPath());
+    tempo_utils::UrlOrigin urlOrigin;
+    TU_ASSIGN_OR_RETURN (urlOrigin, m_shortcutResolver->resolveShortcut(shortcut));
+    auto resolvedLocation = tempo_utils::Url::fromOrigin(urlOrigin, importUrl.getPath());
     return lyric_common::ModuleLocation::fromUrl(resolvedLocation);
 }
 
@@ -257,18 +262,30 @@ import_module(
     return {};
 }
 
+
 inline tempo_utils::Result<std::shared_ptr<lyric_importer::ModuleImport>>
 import_module_for_location(
     const lyric_common::ModuleLocation &importLocation,
     std::shared_ptr<lyric_importer::ModuleCache> &localModuleCache,
     std::shared_ptr<lyric_importer::ModuleCache> &systemModuleCache,
+    const lyric_assembler::ImportCache *importCache,
     lyric_assembler::ObjectState *state)
 {
-    if (importLocation.isRelative()) {
-        auto baseLocation = state->getLocation();
-        auto resolvedLocation = baseLocation.resolve(importLocation);
-        return localModuleCache->importModule(resolvedLocation);
+    lyric_common::ModuleLocation location;
+
+    // if import location is not absolute then resolve it
+    if (!importLocation.isAbsolute()) {
+        TU_ASSIGN_OR_RETURN (location, importCache->resolveImportLocation(importLocation.toUrl()));
+    } else {
+        location = importLocation;
     }
+
+    // if location is within the origin then import from the local cache
+    auto origin = state->getOrigin();
+    if (location.isWithinOrigin(origin))
+        return localModuleCache->importModule(location);
+
+    // otherewise import from the system cache
     return systemModuleCache->importModule(importLocation);
 }
 
@@ -302,7 +319,7 @@ lyric_assembler::ImportCache::importModule(
 {
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN (moduleImport, import_module_for_location(
-        importLocation, m_localModuleCache, m_systemModuleCache, m_state));
+        importLocation, m_localModuleCache, m_systemModuleCache, this, m_state));
 
     auto objectLocation = moduleImport->getObjectLocation();
 
@@ -315,6 +332,9 @@ lyric_assembler::ImportCache::importModule(
 }
 
 /**
+ * Import symbols from the module given by `importLocation` and insert them into the specified `block. If
+ * `importSymbols` is not empty then only insert the symbols from the `importSymbols` set into the block,
+ * otherwise insert all symbols into the block.
  *
  * @param importLocation
  * @param block
@@ -330,7 +350,7 @@ lyric_assembler::ImportCache::importModule(
 {
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN (moduleImport, import_module_for_location(
-        importLocation, m_localModuleCache, m_systemModuleCache, m_state));
+        importLocation, m_localModuleCache, m_systemModuleCache, this, m_state));
 
     auto objectLocation = moduleImport->getObjectLocation();
 
@@ -351,10 +371,17 @@ lyric_assembler::ImportCache::importModule(
     return {};
 }
 
+/**
+ * Get the `ModuleImport` from the import cache. If the module is not in the import cache then return nullptr.
+ *
+ * @param importLocation The location of the module.
+ * @return Shared pointer wrapping the `ModuleImport`, or nullptr if the module is not in the import cache.
+ */
 std::shared_ptr<lyric_importer::ModuleImport>
 lyric_assembler::ImportCache::getModule(const lyric_common::ModuleLocation &importLocation)
 {
-    TU_ASSERT (importLocation.isAbsolute());
+    if (!importLocation.isAbsolute())
+        return nullptr;
 
     auto entry = m_importcache.find(importLocation);
     if (entry == m_importcache.cend())
@@ -366,6 +393,11 @@ lyric_assembler::ImportCache::getModule(const lyric_common::ModuleLocation &impo
     return m_localModuleCache->getModule(importLocation);
 }
 
+/**
+ *
+ * @param symbolUrl
+ * @return
+ */
 tempo_utils::Result<lyric_assembler::AbstractSymbol *>
 lyric_assembler::ImportCache::importSymbol(const lyric_common::SymbolUrl &symbolUrl)
 {
@@ -373,7 +405,7 @@ lyric_assembler::ImportCache::importSymbol(const lyric_common::SymbolUrl &symbol
 
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN (moduleImport, import_module_for_location(
-        importLocation, m_localModuleCache, m_systemModuleCache, m_state));
+        importLocation, m_localModuleCache, m_systemModuleCache, this, m_state));
 
     auto objectLocation = moduleImport->getObjectLocation();
 

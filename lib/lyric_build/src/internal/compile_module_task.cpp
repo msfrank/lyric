@@ -222,13 +222,18 @@ lyric_build::internal::CompileModuleTask::compileModule(
     TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(archetypeArtifact));
     lyric_parser::LyricArchetype archetype(content);
 
+    // define the module origin
+    auto origin = lyric_common::ModuleLocation::fromString(
+        absl::StrCat("dev.zuri.build://", buildState->getGeneration().getUuid().toString()));
+
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache, tempDirectory()));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, cache, tempDirectory()));
     auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     // configure compiler
-    lyric_compiler::LyricCompiler compiler(localModuleCache, buildState->getSharedModuleCache(), m_compilerOptions);
+    lyric_compiler::LyricCompiler compiler(
+        origin, localModuleCache, buildState->getSharedModuleCache(), m_compilerOptions);
 
     // compile the module
     logInfo("compiling module {}", m_moduleLocation.toString());

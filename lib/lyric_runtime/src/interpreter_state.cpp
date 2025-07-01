@@ -252,6 +252,14 @@ lyric_runtime::InterpreterState::create(
 
     tempo_utils::Status status;
 
+    if (!mainLocation.isValid())
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid main location");
+    if (!mainLocation.isAbsolute())
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "cannot initialize interpreter; main location {} must be absolute location",
+            mainLocation.toString());
+
     if (options.loader == nullptr)
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             "loader must be specified");
@@ -277,7 +285,7 @@ lyric_runtime::InterpreterState::create(
     }
 
     // allocate a new segment manager
-    segmentManager = new SegmentManager(options.loader);
+    segmentManager = new SegmentManager(mainLocation, options.loader);
 
     // the prelude must either be explicitly specified or inferred from the main location
     if (!options.preludeLocation.isValid()) {

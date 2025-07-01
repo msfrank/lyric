@@ -34,7 +34,8 @@ namespace lyric_symbolizer {
     class LyricSymbolizer {
 
     public:
-        explicit LyricSymbolizer(
+        LyricSymbolizer(
+            const lyric_common::ModuleLocation &origin,
             std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
             std::shared_ptr<lyric_importer::ModuleCache> systemModuleCache,
             const SymbolizerOptions &options);
@@ -47,6 +48,7 @@ namespace lyric_symbolizer {
             std::shared_ptr<tempo_tracing::TraceRecorder> recorder);
 
     private:
+        lyric_common::ModuleLocation m_origin;
         std::shared_ptr<lyric_importer::ModuleCache> m_localModuleCache;
         std::shared_ptr<lyric_importer::ModuleCache> m_systemModuleCache;
         SymbolizerOptions m_options;

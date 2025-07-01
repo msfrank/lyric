@@ -23,7 +23,7 @@ protected:
 
 TEST_F(ArchiveStructTests, ArchiveStructAndCheckMember)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
@@ -45,7 +45,7 @@ TEST_F(ArchiveStructTests, ArchiveStructAndCheckMember)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooStructAlias }
+        import from "archive:///archive" { FooStructAlias }
         val foo: FooStructAlias = FooStructAlias{}
         foo.Field == 42
     )");
@@ -55,7 +55,7 @@ TEST_F(ArchiveStructTests, ArchiveStructAndCheckMember)
 
 TEST_F(ArchiveStructTests, ArchiveStructAndCheckMethod)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
@@ -79,7 +79,7 @@ TEST_F(ArchiveStructTests, ArchiveStructAndCheckMethod)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooStructAlias }
+        import from "archive:///archive" { FooStructAlias }
         val foo: FooStructAlias = FooStructAlias{}
         foo.FortyTwo() == 42
     )");
@@ -89,13 +89,13 @@ TEST_F(ArchiveStructTests, ArchiveStructAndCheckMethod)
 
 TEST_F(ArchiveStructTests, ArchiveStructAndCheckImpl)
 {
-    ASSERT_THAT (configure(), tempo_test::IsOk());
+    ASSERT_THAT (configure("archive:///archive"), tempo_test::IsOk());
 
     lyric_common::ModuleLocation mod1location;
     TU_ASSIGN_OR_RAISE (mod1location, writeModule(R"(
         defstruct FooStruct {
             impl Equality[FooStruct,FooStruct] {
-                def equals(lhs: FooStruct, rhs: FooStruct): Bool {
+                def Equals(lhs: FooStruct, rhs: FooStruct): Bool {
                     true
                 }
             }
@@ -115,7 +115,7 @@ TEST_F(ArchiveStructTests, ArchiveStructAndCheckImpl)
     ASSERT_THAT (build(), tempo_test::IsOk());
 
     auto runModuleResult = runCode(R"(
-        import from "dev.zuri.test:///archive" { FooStructAlias }
+        import from "archive:///archive" { FooStructAlias }
         val foo1: FooStructAlias = FooStructAlias{}
         val foo2: FooStructAlias = FooStructAlias{}
         using foo1

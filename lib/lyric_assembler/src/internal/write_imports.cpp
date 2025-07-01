@@ -10,9 +10,17 @@ lyric_assembler::internal::write_imports(
 {
     std::vector<flatbuffers::Offset<lyo1::ImportDescriptor>> imports_vector;
 
+    auto origin = writer.getOrigin();
+
     // serialize array of import descriptors
     for (const auto *importHandle : imports) {
-        const auto &importLocation = importHandle->location;
+
+        lyric_common::ModuleLocation importLocation;
+        if (importHandle->location.isWithinOrigin(origin)) {
+            importLocation = lyric_common::ModuleLocation::fromUrlPath(importHandle->location.getPath());
+        } else {
+            importLocation = importHandle->location;
+        }
 
         lyo1::ImportFlags flags;
         switch (importHandle->flags) {

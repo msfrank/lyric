@@ -12,12 +12,19 @@
  */
 lyric_runtime::BytecodeSegment *
 lyric_runtime::internal::get_or_load_segment(
-    const lyric_common::ModuleLocation &objectLocation,
+    const lyric_common::ModuleLocation &location,
     SegmentManagerData *segmentManagerData)
 {
     // return null if assembly location is invalid
-    if (!objectLocation.isValid())
+    if (!location.isValid())
         return nullptr;
+
+    lyric_common::ModuleLocation objectLocation;
+    if (location.isRelative()) {
+        objectLocation = segmentManagerData->origin.resolve(location);
+    } else {
+        objectLocation = location;
+    }
 
     // if segment is already loaded then return it
     auto entry = segmentManagerData->segmentcache.find(objectLocation);

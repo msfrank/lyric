@@ -199,9 +199,13 @@ lyric_build::internal::ArchiveTask::buildArchive(
     auto cache = buildState->getCache();
     auto recorder = traceDiagnostics();
 
+    // define the module origin
+    auto origin = lyric_common::ModuleLocation::fromString(
+        absl::StrCat("dev.zuri.build://", buildState->getGeneration().getUuid().toString()));
+
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(depStates, cache, tempDirectory()));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, cache, tempDirectory()));
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
     loaderChain.push_back(dependencyLoader);
     loaderChain.push_back(buildState->getLoaderChain());
@@ -210,7 +214,7 @@ lyric_build::internal::ArchiveTask::buildArchive(
 
     // configure archiver
     lyric_archiver::LyricArchiver archiver(
-        m_moduleLocation, localModuleCache, buildState->getSharedModuleCache(),
+        m_moduleLocation, origin, localModuleCache, buildState->getSharedModuleCache(),
         buildState->getShortcutResolver(), recorder, m_archiverOptions);
     TU_RETURN_IF_NOT_OK (archiver.initialize());
 

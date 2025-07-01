@@ -12,7 +12,7 @@ class BaseArchiverFixture : public ::testing::Test {
 protected:
     BaseArchiverFixture();
 
-    tempo_utils::Status configure();
+    tempo_utils::Status configure(std::string_view archiveUrlString);
 
     tempo_utils::Result<lyric_common::ModuleLocation> writeModule(
         const std::string &code,
@@ -36,12 +36,13 @@ protected:
     tempo_utils::Result<lyric_test::RunModule> runCode(const std::string &code);
 
 private:
+    lyric_common::ModuleLocation m_archiveLocation;
+    lyric_common::ModuleLocation m_originLocation;
     std::shared_ptr<lyric_runtime::StaticLoader> m_staticLoader;
     lyric_test::TesterOptions m_testerOptions;
     std::unique_ptr<lyric_test::LyricTester> m_tester;
     std::unique_ptr<ArchiverTester> m_archiverTester;
     std::unique_ptr<lyric_archiver::LyricArchiver> m_archiver;
-    lyric_common::ModuleLocation m_archiveLocation;
 };
 
 
