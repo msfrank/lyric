@@ -653,6 +653,18 @@ void lyric_parser::internal::ModuleArchetype::exitCatchFinally(ModuleParser::Cat
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCatchFinally(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::exitExpectExpression(ModuleParser::ExpectExpressionContext *ctx)
+{
+    ModuleExceptionOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitExpectExpression(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitRaiseExpression(ModuleParser::RaiseExpressionContext *ctx)
+{
+    ModuleExceptionOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitRaiseExpression(ctx));
+}
+
 /*
  * deref ops
  */

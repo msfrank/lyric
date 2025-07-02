@@ -165,6 +165,8 @@ BreakKeyword            : 'break' ;
 ContinueKeyword         : 'continue' ;
 TryKeyword              : 'try' ;
 FinallyKeyword          : 'finally' ;
+ExpectKeyword           : 'expect' ;
+RaiseKeyword            : 'raise' ;
 AndKeyword              : 'and' ;
 OrKeyword               : 'or' ;
 NotKeyword              : 'not' ;

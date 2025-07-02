@@ -133,8 +133,6 @@ lyric_compiler::MatchHandler::after(
         auto &alternativeType = alternative->alternativeType;
         TU_RETURN_IF_NOT_OK (resultSet.putType(alternativeType));
     } else {
-        //auto NilType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Nil);
-        //TU_RETURN_IF_NOT_OK (resultSet.putType(NilType));
         TU_RETURN_IF_NOT_OK (check_match_is_exhaustive(&m_match, block, driver));
     }
 

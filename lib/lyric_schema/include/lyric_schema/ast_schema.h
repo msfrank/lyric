@@ -80,6 +80,8 @@ namespace lyric_schema {
         For,                       // for statement
         Try,                       // try statement
         Return,                    // return immediately from call
+        Expect,                    // return immediately if expression returns status
+        Raise,                     // raise status as exception if expression returns status
 
         Val,                       // define val
         Var,                       // define var
@@ -269,6 +271,10 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::Try, "Try");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstReturnClass(
         &kLyricAstNs, LyricAstId::Return, "Return");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstExpectClass(
+        &kLyricAstNs, LyricAstId::Expect, "Expect");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstRaiseClass(
+        &kLyricAstNs, LyricAstId::Raise, "Raise");
 
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstValClass(
         &kLyricAstNs, LyricAstId::Val, "Val");
@@ -497,6 +503,8 @@ namespace lyric_schema {
         &kLyricAstForClass,
         &kLyricAstTryClass,
         &kLyricAstReturnClass,
+        &kLyricAstExpectClass,
+        &kLyricAstRaiseClass,
 
         &kLyricAstValClass,
         &kLyricAstVarClass,

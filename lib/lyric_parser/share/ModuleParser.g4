@@ -14,6 +14,8 @@ expression          : basicExpression
                     | ifThenElseExpression
                     | matchExpression
                     | condExpression
+                    | expectExpression
+                    | raiseExpression
                     ;
 
 statement           : typenameStatement
@@ -426,6 +428,17 @@ catchWhen           : WhenKeyword ( Identifier ColonOperator )? unwrapSpec block
 catchElse           : ElseKeyword block ;
 catchFinally        : FinallyKeyword block ;
 tryStatement        : TryKeyword CurlyOpen tryTarget catchWhen* catchElse? catchFinally? CurlyClose ;
+
+
+// expect expression
+
+expectExpression    : ExpectKeyword expression ;
+
+
+// raise expression
+
+raiseExpression     : RaiseKeyword expression ;
+
 
 // basic expressions
 

@@ -18,7 +18,7 @@ lyric_compiler::compile_predicate(
     const lyric_common::TypeDef &predicateType,
     lyric_assembler::CodeFragment *fragment,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
 {
     TU_ASSERT (block != nullptr);
     TU_ASSERT (predicateType.isValid());

@@ -17,6 +17,7 @@
 #include <lyric_compiler/defstruct_handler.h>
 #include <lyric_compiler/data_deref_handler.h>
 #include <lyric_compiler/deref_utils.h>
+#include <lyric_compiler/expect_handler.h>
 #include <lyric_compiler/form_handler.h>
 #include <lyric_compiler/import_handler.h>
 #include <lyric_compiler/iteration_handler.h>
@@ -168,7 +169,10 @@ node_is_valid_for_phrase(
         case lyric_schema::LyricAstId::Cond:
         case lyric_schema::LyricAstId::Match:
         case lyric_schema::LyricAstId::LambdaFrom:
-        case lyric_schema::LyricAstId::Lambda: {
+        case lyric_schema::LyricAstId::Lambda:
+        case lyric_schema::LyricAstId::Expect:
+        case lyric_schema::LyricAstId::Raise:
+        {
             switch (type) {
                 case lyric_compiler::FormType::Any:
                 case lyric_compiler::FormType::Expression:
@@ -208,7 +212,8 @@ node_is_valid_for_phrase(
         case lyric_schema::LyricAstId::ImportModule:
         case lyric_schema::LyricAstId::ImportSymbols:
         case lyric_schema::LyricAstId::ImportAll:
-        case lyric_schema::LyricAstId::Using: {
+        case lyric_schema::LyricAstId::Using:
+        {
             switch (type) {
                 case lyric_compiler::FormType::Any:
                 case lyric_compiler::FormType::SideEffect:
@@ -243,7 +248,7 @@ tempo_utils::Status
 lyric_compiler::FormChoice::decide(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::DecideContext &ctx)
+    DecideContext &ctx)
 {
     // assembler forms
     if (node->isNamespace(lyric_schema::kLyricAssemblerNs)) {
@@ -393,6 +398,14 @@ lyric_compiler::FormChoice::decide(
         // match form
         case lyric_schema::LyricAstId::Match: {
             auto handler = std::make_unique<MatchHandler>(
+                isSideEffect, m_fragment, block, driver);
+            ctx.setGrouping(std::move(handler));
+            break;
+        }
+
+        // expect form
+        case lyric_schema::LyricAstId::Expect: {
+            auto handler = std::make_unique<ExpectHandler>(
                 isSideEffect, m_fragment, block, driver);
             ctx.setGrouping(std::move(handler));
             break;

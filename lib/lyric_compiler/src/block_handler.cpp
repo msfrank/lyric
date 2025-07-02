@@ -25,7 +25,7 @@ tempo_utils::Status
 lyric_compiler::BlockHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     auto *driver = getDriver();
 
@@ -59,7 +59,7 @@ tempo_utils::Status
 lyric_compiler::BlockHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     return {};
 }

@@ -126,6 +126,8 @@ namespace lyric_parser::internal {
         void exitCatchOnType(ModuleParser::CatchOnTypeContext *ctx) override;
         void exitCatchElse(ModuleParser::CatchElseContext *ctx) override;
         void exitCatchFinally(ModuleParser::CatchFinallyContext *ctx) override;
+        void exitExpectExpression(ModuleParser::ExpectExpressionContext *ctx) override;
+        void exitRaiseExpression(ModuleParser::RaiseExpressionContext *ctx) override;
 
         // implemented by ModuleDerefOps
         void enterLiteralExpression(ModuleParser::LiteralExpressionContext *ctx) override;

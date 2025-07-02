@@ -18,6 +18,8 @@ namespace lyric_parser::internal {
         void exitCatchOnType(ModuleParser::CatchOnTypeContext *ctx);
         void exitCatchElse(ModuleParser::CatchElseContext *ctx);
         void exitCatchFinally(ModuleParser::CatchFinallyContext *ctx);
+        void exitExpectExpression(ModuleParser::ExpectExpressionContext *ctx);
+        void exitRaiseExpression(ModuleParser::RaiseExpressionContext *ctx);
     };
 }
 

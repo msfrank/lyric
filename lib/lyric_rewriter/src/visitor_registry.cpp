@@ -161,10 +161,13 @@ make_ast_visitor(
             return std::make_shared<lyric_rewriter::AstTerminalVisitor>(astId, state);
 
         // unary forms
+        case lyric_schema::LyricAstId::Expect:
+        case lyric_schema::LyricAstId::Keyword:
         case lyric_schema::LyricAstId::Neg:
         case lyric_schema::LyricAstId::Not:
-        case lyric_schema::LyricAstId::Keyword:
         case lyric_schema::LyricAstId::Rest:
+        case lyric_schema::LyricAstId::Raise:
+        case lyric_schema::LyricAstId::Return:
             return std::make_shared<lyric_rewriter::AstUnaryVisitor>(astId, state);
 
         // binary forms
@@ -205,7 +208,6 @@ make_ast_visitor(
         case lyric_schema::LyricAstId::InplaceSub:
         case lyric_schema::LyricAstId::InplaceMul:
         case lyric_schema::LyricAstId::InplaceDiv:
-        case lyric_schema::LyricAstId::Return:
         case lyric_schema::LyricAstId::ImportModule:
         case lyric_schema::LyricAstId::ImportSymbols:
         case lyric_schema::LyricAstId::ImportAll:

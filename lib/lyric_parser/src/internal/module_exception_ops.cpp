@@ -179,3 +179,43 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchFinally(ModuleParser::Catch
     // otherwise add finallyOffset attribute to the match
     TU_RAISE_IF_NOT_OK (tryNode->putAttr(kLyricAstFinallyOffset, alwaysNode));
 }
+
+void
+lyric_parser::internal::ModuleExceptionOps::exitExpectExpression(ModuleParser::ExpectExpressionContext *ctx)
+{
+    auto *state = getState();
+    if (hasError())
+        return;
+
+    ArchetypeNode *p1;
+    TU_ASSIGN_OR_RAISE (p1, state->popNode());
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    ArchetypeNode *expectNode;
+    TU_ASSIGN_OR_RAISE (expectNode, state->appendNode(lyric_schema::kLyricAstExpectClass, location));
+    TU_RAISE_IF_NOT_OK (expectNode->appendChild(p1));
+
+    TU_RAISE_IF_NOT_OK (state->pushNode(expectNode));
+}
+
+void
+lyric_parser::internal::ModuleExceptionOps::exitRaiseExpression(ModuleParser::RaiseExpressionContext *ctx)
+{
+    auto *state = getState();
+    if (hasError())
+        return;
+
+    ArchetypeNode *p1;
+    TU_ASSIGN_OR_RAISE (p1, state->popNode());
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    ArchetypeNode *raiseNode;
+    TU_ASSIGN_OR_RAISE (raiseNode, state->appendNode(lyric_schema::kLyricAstRaiseClass, location));
+    TU_RAISE_IF_NOT_OK (raiseNode->appendChild(p1));
+
+    TU_RAISE_IF_NOT_OK (state->pushNode(raiseNode));
+}

@@ -15,7 +15,7 @@ namespace lyric_assembler {
     class DisjointTypeSet {
 
     public:
-        explicit DisjointTypeSet(const lyric_assembler::ObjectState *state);
+        explicit DisjointTypeSet(const ObjectState *state);
         ~DisjointTypeSet();
 
         tempo_utils::Status putType(const lyric_common::TypeDef &type);
@@ -28,7 +28,7 @@ namespace lyric_assembler {
     class UnifiedTypeSet {
 
     public:
-        explicit UnifiedTypeSet(const lyric_assembler::ObjectState *state);
+        explicit UnifiedTypeSet(const ObjectState *state);
         ~UnifiedTypeSet();
 
         tempo_utils::Status putType(const lyric_common::TypeDef &type);

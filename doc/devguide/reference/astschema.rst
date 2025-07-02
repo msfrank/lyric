@@ -150,6 +150,9 @@ DefStruct defines a new struct.
 
 Div applies the division operator to child 1 (the left operand) and child 2 (the right operand).
 
+``Expect``
+..........
+
 ``ExportAll``
 .............
 
@@ -443,6 +446,9 @@ Or applies the logical disjunction operator to child 1 (the left operand) and ch
 PType represents a parameterized type. A SType must have a `SymbolPath`_ attribute which specifies the
 path to the symbol represented by the type. The children represent the type parameters.
 
+``Raise``
+.........
+
 ``Rest``
 ........
 
@@ -517,8 +523,14 @@ True evaluates a true boolean value.
 ``Try``
 .......
 
+``Typename``
+............
+
 ``TypeArguments``
 .................
+
+``TypeOf``
+..........
 
 ``Undef``
 .........

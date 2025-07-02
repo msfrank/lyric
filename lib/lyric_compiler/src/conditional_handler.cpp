@@ -5,6 +5,8 @@
 #include <lyric_compiler/conditional_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
+#include "lyric_assembler/type_set.h"
+
 lyric_compiler::IfHandler::IfHandler(
     bool isSideEffect,
     lyric_assembler::CodeFragment *fragment,
@@ -139,9 +141,9 @@ lyric_compiler::CondHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
+    auto *block = getBlock();
     auto *driver = getDriver();
     auto *fundamentalCache = driver->getFundamentalCache();
-    auto *typeSystem = driver->getTypeSystem();
 
     // if there was a default then pop the expression type
     if (m_conditional.alternative) {
@@ -176,27 +178,27 @@ lyric_compiler::CondHandler::after(
     }
     TU_RETURN_IF_NOT_OK (m_fragment->patchTarget(lastPatch.getConsequentJump(), exitLabel));
 
+    lyric_assembler::UnifiedTypeSet resultSet(block->blockState());
+
     // unify the set of consequent types
-    lyric_common::TypeDef resultType = consequents[0]->consequentType;
     for (int i = 1; i < consequents.size(); i++) {
         auto &consequentType = consequents[i]->consequentType;
-        TU_ASSIGN_OR_RETURN (resultType, typeSystem->unifyAssignable(consequentType, resultType));
+        TU_RETURN_IF_NOT_OK (resultSet.putType(consequentType));
     }
 
-    // if alternative exists then the result is a singular unified type, otherwise its
+    // if alternative exists then add the result to the type set
     if (alternative != nullptr) {
         auto &alternativeType = alternative->alternativeType;
-        TU_ASSIGN_OR_RETURN (resultType, typeSystem->unifyAssignable(alternativeType, resultType));
-    } else {
-        auto NilType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Nil);
-        resultType = lyric_common::TypeDef::forUnion({resultType, NilType});
+        TU_RETURN_IF_NOT_OK (resultSet.putType(alternativeType));
     }
+
+    auto unifiedType = resultSet.getUnifiedType();
 
     // if cond is a side effect then pop the value, otherwise push the result
     if (m_isSideEffect) {
         TU_RETURN_IF_NOT_OK (m_fragment->popValue());
     } else {
-        TU_RETURN_IF_NOT_OK (driver->pushResult(resultType));
+        TU_RETURN_IF_NOT_OK (driver->pushResult(unifiedType));
     }
 
     return {};
