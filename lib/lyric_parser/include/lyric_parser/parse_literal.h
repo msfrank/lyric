@@ -1,8 +1,6 @@
 #ifndef LYRIC_PARSER_PARSE_LITERAL_H
 #define LYRIC_PARSER_PARSE_LITERAL_H
 
-#include <unicode/umachine.h>
-
 #include <tempo_utils/result.h>
 
 #include "parse_result.h"

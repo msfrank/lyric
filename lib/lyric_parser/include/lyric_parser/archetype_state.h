@@ -2,6 +2,7 @@
 #define LYRIC_PARSER_ARCHETYPE_STATE_H
 
 #include <filesystem>
+#include <stack>
 
 #include <tempo_tracing/current_scope.h>
 #include <tempo_tracing/span_log.h>

@@ -43,7 +43,7 @@ namespace lyric_assembler {
         tempo_utils::Status immediateBool(bool b);
         tempo_utils::Status immediateInt(int64_t i64);
         tempo_utils::Status immediateFloat(double dbl);
-        tempo_utils::Status immediateChar(UChar32 chr);
+        tempo_utils::Status immediateChar(char32_t chr);
 
         // load and store instructions
         tempo_utils::Status loadString(const std::string &str);

@@ -109,7 +109,7 @@ namespace lyric_assembler {
 
     class CharImmediateInstruction: public AbstractInstruction {
     public:
-        explicit CharImmediateInstruction(UChar32 chr);
+        explicit CharImmediateInstruction(char32_t chr);
         InstructionType getType() const override;
         tempo_utils::Status touch(ObjectWriter &writer) const override;
         tempo_utils::Status apply(
@@ -120,9 +120,9 @@ namespace lyric_assembler {
             tu_uint32 &targetId,
             tu_uint16 &patchOffset) const override;
         std::string toString() const override;
-        UChar32 charValue() const;
+        char32_t charValue() const;
     private:
-        UChar32 m_chr;
+        char32_t m_chr;
     };
 
     class BoolOperationInstruction: public AbstractInstruction {

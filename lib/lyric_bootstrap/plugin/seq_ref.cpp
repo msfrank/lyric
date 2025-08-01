@@ -5,7 +5,6 @@
 
 #include <lyric_runtime/serialize_value.h>
 #include <lyric_schema/literal_schema.h>
-#include <lyric_serde/patchset_value.h>
 
 #include "seq_ref.h"
 

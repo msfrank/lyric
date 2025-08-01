@@ -1,8 +1,6 @@
 #ifndef LYRIC_RUNTIME_BASE_REF_H
 #define LYRIC_RUNTIME_BASE_REF_H
 
-#include <unicode/ustring.h>
-
 #include "abstract_heap.h"
 #include "abstract_ref.h"
 #include "data_cell.h"

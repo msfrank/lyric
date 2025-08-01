@@ -1,8 +1,6 @@
 #ifndef LYRIC_RUNTIME_DATA_CELL_H
 #define LYRIC_RUNTIME_DATA_CELL_H
 
-#include <unicode/ustring.h>
-
 #include <tempo_utils/log_message.h>
 
 #include "runtime_types.h"

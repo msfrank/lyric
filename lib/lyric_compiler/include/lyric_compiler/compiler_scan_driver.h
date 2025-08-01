@@ -1,6 +1,8 @@
 #ifndef LYRIC_COMPILER_COMPILER_SCAN_DRIVER_H
 #define LYRIC_COMPILER_COMPILER_SCAN_DRIVER_H
 
+#include <stack>
+
 #include <lyric_assembler/object_state.h>
 #include <lyric_rewriter/abstract_scan_driver.h>
 #include <lyric_typing/type_system.h>

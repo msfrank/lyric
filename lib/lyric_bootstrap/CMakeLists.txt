@@ -187,7 +187,6 @@ set_target_properties(prelude-plugin PROPERTIES
 target_link_libraries(prelude-plugin PRIVATE
     lyric::lyric_runtime
     lyric::lyric_schema
-    lyric::lyric_serde
     Boost::headers
     flatbuffers::flatbuffers
     )

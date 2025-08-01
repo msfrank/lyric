@@ -2,7 +2,6 @@
 #define LYRIC_OPTIMIZER_OPTIMIZER_DIRECTIVES_H
 
 #include <tempo_utils/integer_types.h>
-#include <unicode/umachine.h>
 
 #include "abstract_directive.h"
 #include "directive_chain.h"
@@ -102,7 +101,7 @@ namespace lyric_optimizer {
 
     class Char : public ExpressionDirective {
     public:
-        explicit Char(UChar32 chr);
+        explicit Char(char32_t chr);
         DirectiveType getType() const override;
         bool isEquivalentTo(std::shared_ptr<AbstractDirective> directive) const override;
         tempo_utils::Status applyOperands(ActivationState &state, OperandStack &stack) override;
@@ -111,7 +110,7 @@ namespace lyric_optimizer {
             lyric_assembler::ProcHandle *procHandle) override;
         std::string toString() const override;
     private:
-        UChar32 m_chr;
+        char32_t m_chr;
     };
 
     class IntAdd : public ExpressionDirective {

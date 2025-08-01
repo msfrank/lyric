@@ -1,6 +1,5 @@
 
 #include <absl/strings/str_join.h>
-#include <unicode/ustring.h>
 
 #include <ModuleParser.h>
 

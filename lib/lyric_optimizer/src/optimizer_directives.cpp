@@ -243,7 +243,7 @@ lyric_optimizer::Float::toString() const
     return absl::StrCat("Float(", m_dbl, ")");
 }
 
-lyric_optimizer::Char::Char(UChar32 chr)
+lyric_optimizer::Char::Char(char32_t chr)
     : m_chr(chr)
 {
 }

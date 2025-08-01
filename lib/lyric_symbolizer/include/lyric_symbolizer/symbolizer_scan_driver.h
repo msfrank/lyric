@@ -1,6 +1,8 @@
 #ifndef LYRIC_SYMBOLIZER_SYMBOLIZER_SCAN_DRIVER_H
 #define LYRIC_SYMBOLIZER_SYMBOLIZER_SCAN_DRIVER_H
 
+#include <stack>
+
 #include <lyric_assembler/object_root.h>
 #include <lyric_assembler/object_state.h>
 #include <lyric_rewriter/abstract_scan_driver.h>

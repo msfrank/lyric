@@ -1,12 +1,54 @@
 cmake_minimum_required(VERSION 3.27)
 
-project(lyric)
+# read project metadata
+file(READ ${CMAKE_SOURCE_DIR}/meta/version LYRIC_PROJECT_VERSION)
+string(STRIP ${LYRIC_PROJECT_VERSION} LYRIC_PROJECT_VERSION)
+file(READ ${CMAKE_SOURCE_DIR}/meta/url LYRIC_PROJECT_URL)
+string(STRIP ${LYRIC_PROJECT_URL} LYRIC_PROJECT_URL)
+file(READ ${CMAKE_SOURCE_DIR}/meta/description LYRIC_PROJECT_DESCRIPTION)
+string(STRIP ${LYRIC_PROJECT_DESCRIPTION} LYRIC_PROJECT_DESCRIPTION)
+file(READ ${CMAKE_SOURCE_DIR}/meta/license LYRIC_PROJECT_LICENSE)
+string(STRIP ${LYRIC_PROJECT_LICENSE} LYRIC_PROJECT_LICENSE)
 
+# declare the project
+project(lyric
+    VERSION ${LYRIC_PROJECT_VERSION}
+    HOMEPAGE_URL ${LYRIC_PROJECT_URL}
+    DESCRIPTION ${LYRIC_PROJECT_DESCRIPTION}
+    )
+
+# if build type was not explicitly defined then default to Debug
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "build type not specified so defaulting to Debug" FORCE)
+endif()
+
+# define IS_DEBUG_BUILD boolean to make it easier to check whether we are in debug mode
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     set(IS_DEBUG_BUILD ON)
 else()
     set(IS_DEBUG_BUILD OFF)
 endif()
+
+
+#######################################################################
+#
+# enable/disable build targets
+#
+#######################################################################
+
+option(DISABLE_LOCAL_BUILD "Disable local build" FALSE)
+option(ENABLE_DOCKER_BUILD "Enable docker build" FALSE)
+
+# if docker build is enabled then add targets from docker directory
+if (ENABLE_DOCKER_BUILD)
+    add_subdirectory(docker)
+endif()
+
+# if local build is disabled then don't process any further targets
+if (DISABLE_LOCAL_BUILD)
+    return()
+endif()
+
 
 #######################################################################
 #
@@ -19,7 +61,7 @@ set(RUNTIME_DISTRIBUTION_ROOT "${CMAKE_INSTALL_PREFIX}"
     "The runtime distribution root directory. Defaults to CMAKE_INSTALL_PREFIX.")
 message(STATUS "runtime distribution root is ${RUNTIME_DISTRIBUTION_ROOT}")
 
-option(USE_SANITIZER "Enable sanitizer library." OFF)
+option(ENABLE_SANITIZER "Enable sanitizer library." OFF)
 
 set(SANITIZER ""
     CACHE STRING
@@ -29,7 +71,8 @@ set(SANITIZER_IGNORELIST ""
     CACHE PATH
     "Instruct sanitizer to ignore symbols specified in ignorelist.")
 
-option(USE_PROFILER "Enable gperftools profiler." OFF)
+option(ENABLE_PROFILER "Enable gperftools profiler." OFF)
+
 
 #######################################################################
 #
@@ -161,6 +204,7 @@ include(CTest)
 include(GNUInstallDirs)
 include(GoogleTest)
 
+
 #######################################################################
 #
 # configure tools and paths
@@ -180,6 +224,7 @@ set(ANTLR
     )
 message(STATUS "antlr command is ${ANTLR}")
 
+
 #######################################################################
 #
 # define build constants
@@ -189,23 +234,10 @@ message(STATUS "antlr command is ${ANTLR}")
 set(FULL_PLATFORM "${CMAKE_SYSTEM_NAME}.${CMAKE_SYSTEM_VERSION}-${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "full platform is ${FULL_PLATFORM}")
 
-# define individual version components and version string
-string(REGEX REPLACE "([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1"
-    MAJOR_VERSION
-    "${LYRIC_PACKAGE_VERSION}")
-string(REGEX REPLACE "[0-9]+\\.([0-9]+)\\.[0-9]+" "\\1"
-    MINOR_VERSION
-    "${LYRIC_PACKAGE_VERSION}")
-string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1"
-    PATCH_VERSION
-    "${LYRIC_PACKAGE_VERSION}")
-set(FULL_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}")
-message(STATUS "version is ${FULL_VERSION}")
-
 set(BOOTSTRAP_PRELUDE_LOCATION      "dev.zuri.bootstrap:/prelude")
 
 # install paths
-set(BOOTSTRAP_DIR_PREFIX            "${CMAKE_INSTALL_LIBDIR}/lyric-bootstrap-${FULL_VERSION}")
+set(BOOTSTRAP_DIR_PREFIX            "${CMAKE_INSTALL_LIBDIR}/lyric-bootstrap-${PROJECT_VERSION}")
 
 # build paths
 set(LYRIC_BUILD_OUTPUT_ROOT         "${CMAKE_BINARY_DIR}/output")
@@ -216,6 +248,7 @@ set(LYRIC_BUILD_BOOTSTRAP_DIR       "${LYRIC_BUILD_OUTPUT_ROOT}/${BOOTSTRAP_DIR_
 # runtime paths
 set(LYRIC_RUNTIME_BOOTSTRAP_DIR     "${RUNTIME_DISTRIBUTION_ROOT}/${BOOTSTRAP_DIR_PREFIX}")
 
+
 #######################################################################
 #
 # add targets from subdirectories
@@ -225,6 +258,7 @@ set(LYRIC_RUNTIME_BOOTSTRAP_DIR     "${RUNTIME_DISTRIBUTION_ROOT}/${BOOTSTRAP_DI
 add_subdirectory(bin)
 add_subdirectory(doc)
 add_subdirectory(lib)
+
 
 #######################################################################
 #
@@ -273,7 +307,7 @@ configure_package_config_file(
     )
 
 write_basic_package_version_file(lyric-config-version.cmake
-    VERSION "${FULL_VERSION}"
+    VERSION "${PROJECT_VERSION}"
     COMPATIBILITY SameMajorVersion
     )
 

@@ -72,7 +72,7 @@ lyric_compiler::constant_char(
     std::string literalValue;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue));
 
-    UChar32 chr;
+    char32_t chr;
     TU_ASSIGN_OR_RETURN (chr, lyric_parser::parse_char_literal(literalValue));
     TU_RETURN_IF_NOT_OK (fragment->immediateChar(chr));
     TU_LOG_INFO << "immediate char '" << chr << "'";

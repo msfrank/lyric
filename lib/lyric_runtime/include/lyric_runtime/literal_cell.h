@@ -4,7 +4,6 @@
 #include <span>
 
 #include <absl/strings/string_view.h>
-#include <unicode/ustring.h>
 
 #include <tempo_utils/integer_types.h>
 #include <tempo_utils/log_message.h>

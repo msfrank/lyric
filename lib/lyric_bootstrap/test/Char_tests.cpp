@@ -14,7 +14,7 @@ TEST(CoreChar, EvaluateCharLiteral)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellChar(static_cast<UChar32>('H')))));
+                     RunModule(DataCellChar(static_cast<char32_t>('H')))));
 }
 
 TEST(CoreChar, EvaluateUnicode2ByteEscape)
@@ -25,7 +25,7 @@ TEST(CoreChar, EvaluateUnicode2ByteEscape)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellChar(static_cast<UChar32>(u'Ω')))));
+                     RunModule(DataCellChar(static_cast<char32_t>(u'Ω')))));
 }
 
 TEST(CoreChar, EvaluateUnicode4ByteEscape)
@@ -36,7 +36,7 @@ TEST(CoreChar, EvaluateUnicode4ByteEscape)
 
     ASSERT_THAT (result,
                  tempo_test::ContainsResult(
-                     RunModule(DataCellChar(static_cast<UChar32>(0x1f71f)))));
+                     RunModule(DataCellChar(static_cast<char32_t>(0x1f71f)))));
 }
 
 TEST(CoreChar, EvaluateIsEq)

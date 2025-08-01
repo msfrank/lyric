@@ -46,7 +46,7 @@ TEST(CoreString, TestEvaluateStringAt)
         string.At(0)
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellChar(static_cast<UChar32>('H')))));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellChar(static_cast<char32_t>('H')))));
 }
 
 TEST(CoreString, TestEvaluateIsEq)

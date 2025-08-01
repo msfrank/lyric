@@ -1,7 +1,5 @@
 
 #include <absl/container/flat_hash_map.h>
-#include <unicode/umachine.h>
-#include <unicode/ustring.h>
 
 #include <lyric_build/build_result.h>
 #include <lyric_build/build_types.h>

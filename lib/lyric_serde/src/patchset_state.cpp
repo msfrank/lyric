@@ -1,7 +1,5 @@
 
 #include <absl/container/flat_hash_map.h>
-#include <unicode/umachine.h>
-#include <unicode/ustring.h>
 
 #include <lyric_serde/generated/patchset.h>
 #include <lyric_serde/patchset_change.h>

@@ -1,7 +1,6 @@
 
 #include <lyric_runtime/interpreter_state.h>
 #include <lyric_runtime/bytes_ref.h>
-#include <lyric_serde/patchset_value.h>
 #include <tempo_utils/log_stream.h>
 
 #include "bytes_traps.h"

@@ -1,4 +1,6 @@
 
+#include <stack>
+
 #include <lyric_assembler/argument_variable.h>
 #include <lyric_assembler/assembler_instructions.h>
 #include <lyric_assembler/assembler_result.h>

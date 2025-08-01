@@ -1,8 +1,6 @@
 #ifndef ZURI_CORE_STRING_TRAPS_H
 #define ZURI_CORE_STRING_TRAPS_H
 
-#include <unicode/ustring.h>
-
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_interpreter.h>
 #include <lyric_runtime/interpreter_state.h>

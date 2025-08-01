@@ -1,4 +1,7 @@
 
+#include <queue>
+#include <stack>
+
 // NOTE: this must come before topological_sort.hpp!
 #include <boost/graph/vector_as_graph.hpp>
 

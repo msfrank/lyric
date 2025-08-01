@@ -60,7 +60,7 @@ lyric_assembler::LiteralHandle::getDouble() const
     return m_type == lyric_runtime::LiteralCellType::DBL ? m_value.dbl : 0.0;
 }
 
-UChar32
+char32_t
 lyric_assembler::LiteralHandle::getUChar32() const
 {
     return m_type == lyric_runtime::LiteralCellType::CHAR32 ? m_value.chr : 0;

@@ -1,6 +1,8 @@
 #ifndef LYRIC_ASSEMBLER_SYMBOL_CACHE_H
 #define LYRIC_ASSEMBLER_SYMBOL_CACHE_H
 
+#include <queue>
+
 #include "abstract_symbol.h"
 #include "assembler_types.h"
 #include "object_state.h"

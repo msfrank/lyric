@@ -26,7 +26,7 @@ namespace lyric_assembler {
         bool getBool() const;
         int64_t getInt64() const;
         double getDouble() const;
-        UChar32 getUChar32() const;
+        char32_t getUChar32() const;
         std::shared_ptr<const std::string> getUtf8() const;
 
     private:

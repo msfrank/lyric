@@ -204,7 +204,7 @@ lyric_assembler::CodeFragment::immediateFloat(double dbl)
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::immediateChar(UChar32 chr)
+lyric_assembler::CodeFragment::immediateChar(char32_t chr)
 {
     Statement statement;
     statement.instruction = std::make_shared<CharImmediateInstruction>(chr);

@@ -237,7 +237,7 @@ lyric_assembler::FloatImmediateInstruction::floatValue() const
     return m_dbl;
 }
 
-lyric_assembler::CharImmediateInstruction::CharImmediateInstruction(UChar32 chr)
+lyric_assembler::CharImmediateInstruction::CharImmediateInstruction(char32_t chr)
     : m_chr(chr)
 {
 }
@@ -272,7 +272,7 @@ lyric_assembler::CharImmediateInstruction::toString() const
     return absl::StrCat("Immediate Char: ", tempo_utils::convert_to_utf8(m_chr));
 }
 
-UChar32
+char32_t
 lyric_assembler::CharImmediateInstruction::charValue() const
 {
     return m_chr;

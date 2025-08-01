@@ -1,4 +1,3 @@
-#include <unicode/ustring.h>
 
 #include <lyric_parser/archetype_node.h>
 #include <lyric_parser/archetype_state.h>
