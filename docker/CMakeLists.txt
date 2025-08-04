@@ -101,7 +101,7 @@ add_custom_target(build_docker_image
       -t "${DOCKER_REGISTRY}${PLATFORM_IMAGE_NAME}:${CMAKE_PROJECT_VERSION}"
       -t "${DOCKER_REGISTRY}${PLATFORM_IMAGE_NAME}:latest"
       -t "${DOCKER_REGISTRY}lyric-current-build"
-      -f ${DOCKERFILE_PATH}
+      -f ${PLATFORM_DOCKERFILE_PATH}
       --label "org.opencontainers.image.version=${CMAKE_PROJECT_VERSION}"
       --label "org.opencontainers.image.source=${CMAKE_PROJECT_HOMEPAGE_URL}"
       --label "org.opencontainers.image.description=${CMAKE_PROJECT_DESCRIPTION}"
