@@ -17,13 +17,13 @@ set(DOCKER_PLATFORM_ID ""
     CACHE STRING
     "Target platform for docker image. If empty then the platform is auto-detected. Defaults to ''")
 
-set(DOCKER_BASE_IMAGE "$<IF:$<BOOL:${IS_DEBUG_BUILD}>,timbre:debug-latest,timbre:latest>"
+set(DOCKER_BASE_IMAGE "$<IF:$<BOOL:${IS_DEBUG_BUILD}>,timbre-debug:latest,timbre:latest>"
     CACHE STRING
-    "The docker image to use as the base. Defaults to 'timbre:debug-latest' for a debug build, otherwise 'timbre:latest'")
+    "The docker image to use as the base. Defaults to 'timbre-debug:latest' for a debug build, otherwise 'timbre:latest'")
 
-set(DOCKER_TEMPO_IMAGE "$<IF:$<BOOL:${IS_DEBUG_BUILD}>,tempo:debug-latest,tempo:latest>"
+set(DOCKER_TEMPO_IMAGE "$<IF:$<BOOL:${IS_DEBUG_BUILD}>,tempo-pkgcache-debug:latest,tempo-pkgcache:latest>"
     CACHE STRING
-    "The docker image which contains the Tempo cache save. Defaults to 'tempo:debug-latest' for a debug build, otherwise 'tempo:latest'")
+    "The docker image which contains the Tempo cache save. Defaults to 'tempo-pkgcache-debug:latest' for a debug build, otherwise 'tempo-pkgcache:latest'")
 
 set(DOCKER_REGISTRY ""
     CACHE STRING
@@ -93,6 +93,7 @@ add_custom_target(build_docker_image
     --platform ${PLATFORM_ID}
     --build-arg base_image=${DOCKER_BASE_IMAGE}
     --build-arg tempo_image=${DOCKER_TEMPO_IMAGE}
+    --build-arg is_debug_build=$<BOOL:${IS_DEBUG_BUILD}>
     -o ${DOCKER_OUTPUT}
     -t "${DOCKER_REGISTRY}lyric"
     -t "${DOCKER_REGISTRY}lyric:${CMAKE_PROJECT_VERSION}"

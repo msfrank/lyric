@@ -3,8 +3,14 @@
 ARG base_image=timbre:latest
 ARG tempo_image=tempo:latest
 
+# declare the tempo named context
 FROM ${tempo_image} AS tempo
-FROM ${base_image}
+
+# declare the base stage
+FROM ${base_image} AS base
+
+# define stage args
+ARG is_debug_build=0
 
 # switch current user
 USER jrandomhacker
@@ -26,3 +32,10 @@ RUN conan create .
 
 # create a conan cache save containing only lyric
 RUN conan cache save "lyric/*:*" --file lyric_cache_save.tgz
+
+# remove lyric temporary files
+RUN conan cache clean --download --source --temp --backup-sources 'lyric/*'
+
+# if this is not a debug build then remove lyric build files
+ENV IS_DEBUG_BUILD=$is_debug_build
+RUN if test $IS_DEBUG_BUILD == 0; then conan cache clean --build 'lyric/*'; fi
