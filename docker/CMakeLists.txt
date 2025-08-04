@@ -85,9 +85,11 @@ if (NOT PLATFORM_ID)
     message(FATAL_ERROR "failed to determine docker platform id")
 endif()
 
-set(DOCKERFILE_PATH "${CMAKE_SOURCE_DIR}/docker/Dockerfile")
+set(PLATFORM_DOCKERFILE_PATH "${CMAKE_SOURCE_DIR}/docker/platform/Dockerfile")
+set(PKGCACHE_DOCKERFILE_PATH "${CMAKE_SOURCE_DIR}/docker/pkgcache/Dockerfile")
 
 # build the lyric image
+set(PLATFORM_IMAGE_NAME "$<IF:$<BOOL:${IS_DEBUG_BUILD}>,lyric-debug,lyric>")
 add_custom_target(build_docker_image
     COMMAND ${DOCKER} build
     --platform ${PLATFORM_ID}
@@ -95,8 +97,10 @@ add_custom_target(build_docker_image
     --build-arg tempo_image=${DOCKER_TEMPO_IMAGE}
     --build-arg is_debug_build=$<BOOL:${IS_DEBUG_BUILD}>
     -o ${DOCKER_OUTPUT}
-    -t "${DOCKER_REGISTRY}lyric"
-    -t "${DOCKER_REGISTRY}lyric:${CMAKE_PROJECT_VERSION}"
+    -t "${DOCKER_REGISTRY}${PLATFORM_IMAGE_NAME}"
+    -t "${DOCKER_REGISTRY}${PLATFORM_IMAGE_NAME}:${CMAKE_PROJECT_VERSION}"
+    -t "${DOCKER_REGISTRY}${PLATFORM_IMAGE_NAME}:latest"
+    -t "${DOCKER_REGISTRY}lyric-current-build"
     -f ${DOCKERFILE_PATH}
     --label "org.opencontainers.image.version=${CMAKE_PROJECT_VERSION}"
     --label "org.opencontainers.image.source=${CMAKE_PROJECT_HOMEPAGE_URL}"
@@ -104,6 +108,28 @@ add_custom_target(build_docker_image
     --label "org.opencontainers.image.licenses=${LYRIC_PROJECT_LICENSE}"
     .
     COMMENT "building lyric docker image"
-    DEPENDS ${DOCKERFILE_PATH}
+    DEPENDS ${PLATFORM_DOCKERFILE_PATH}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+
+# build the lyric-pkgcache image
+set(PKGCACHE_IMAGE_NAME "$<IF:$<BOOL:${IS_DEBUG_BUILD}>,lyric-pkgcache-debug,lyric-pkgcache>")
+add_custom_target(build_docker_pkgcache_image
+    COMMAND ${DOCKER} build
+    --platform ${PLATFORM_ID}
+    --build-arg lyric_image=${DOCKER_REGISTRY}${PLATFORM_IMAGE_NAME}
+    -o ${DOCKER_OUTPUT}
+    -t "${DOCKER_REGISTRY}${PKGCACHE_IMAGE_NAME}"
+    -t "${DOCKER_REGISTRY}${PKGCACHE_IMAGE_NAME}:${CMAKE_PROJECT_VERSION}"
+    -t "${DOCKER_REGISTRY}${PKGCACHE_IMAGE_NAME}:latest"
+    -t "${DOCKER_REGISTRY}lyric-pkgcache-current-build"
+    -f ${PKGCACHE_DOCKERFILE_PATH}
+    --label "org.opencontainers.image.version=${CMAKE_PROJECT_VERSION}"
+    --label "org.opencontainers.image.source=${CMAKE_PROJECT_HOMEPAGE_URL}"
+    --label "org.opencontainers.image.description=${CMAKE_PROJECT_DESCRIPTION}"
+    --label "org.opencontainers.image.licenses=${LYRIC_PROJECT_LICENSE}"
+    .
+    COMMENT "building lyric-pkgcache docker image"
+    DEPENDS ${PKGCACHE_DOCKERFILE_PATH}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
