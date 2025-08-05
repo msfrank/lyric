@@ -90,7 +90,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Werror -Wno-deprecated-declar
 set (OPTIMIZATION_LEVEL "")
 
 # enable one of the sanitizer libraries if specified
-if (USE_SANITIZER)
+if (ENABLE_SANITIZER)
     if ("${SANITIZER}" STREQUAL "address")
         set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls")
         set (OPTIMIZATION_LEVEL "-O1")
@@ -124,7 +124,7 @@ if (USE_SANITIZER)
     endif (SANITIZER)
 else()
     message(STATUS "sanitizer not enabled")
-endif (USE_SANITIZER)
+endif (ENABLE_SANITIZER)
 
 #
 if (NOT OPTIMIZATION_LEVEL)
@@ -146,6 +146,7 @@ else()
     set(LIB_RPATH "$ORIGIN/")
     set(BOOTSTRAP_RPATH "$ORIGIN/..")
 endif()
+
 
 #######################################################################
 #
@@ -191,12 +192,12 @@ find_package(gtest REQUIRED)
 
 # link to gperftools profiler library if specified
 set (PROFILER_LIBRARIES "")
-if (${USE_PROFILER})
+if (${ENABLE_PROFILER})
     set (PROFILER_LIBRARIES "-lprofiler")
     message(STATUS "enabling gperftools profiler")
 else()
     message(STATUS "gperftools profiler not enabled")
-endif(${USE_PROFILER})
+endif(${ENABLE_PROFILER})
 
 # include needed CMake features
 include(CMakePackageConfigHelpers)

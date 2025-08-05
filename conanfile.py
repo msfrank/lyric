@@ -36,7 +36,7 @@ class Lyric(ConanFile):
         'docker_registry': None,
     }
 
-    exports = ('meta/*')
+    exports = ('meta/*',)
 
     exports_sources = (
         'CMakeLists.txt',
