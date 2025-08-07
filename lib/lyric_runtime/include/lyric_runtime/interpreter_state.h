@@ -23,15 +23,11 @@ namespace lyric_runtime {
         /**
          *
          */
-        lyric_common::ModuleLocation preludeLocation = {};
-        /**
-         *
-         */
         lyric_common::ModuleLocation mainLocation = {};
         /**
          *
          */
-        std::shared_ptr<AbstractLoader> bootstrapLoader = {};
+        lyric_common::ModuleLocation preludeLocation = {};
         /**
          *
          */
@@ -40,6 +36,7 @@ namespace lyric_runtime {
 
     class InterpreterState : public std::enable_shared_from_this<InterpreterState> {
     public:
+        InterpreterState();
         virtual ~InterpreterState();
 
         lyric_common::ModuleLocation getMainLocation() const;
@@ -66,14 +63,16 @@ namespace lyric_runtime {
         RefHandle createHandle(const DataCell &ref);
 
         static tempo_utils::Result<std::shared_ptr<InterpreterState>> create(
-            std::shared_ptr<AbstractLoader> loader,
+            std::shared_ptr<AbstractLoader> systemLoader,
+            std::shared_ptr<AbstractLoader> applicationLoader,
             const InterpreterStateOptions &options = {});
 
     private:
         // set in constructor
         uv_loop_t *m_loop;
         lyric_common::ModuleLocation m_preludeLocation;
-        std::shared_ptr<AbstractLoader> m_loader;
+        std::shared_ptr<AbstractLoader> m_systemLoader;
+        std::shared_ptr<AbstractLoader> m_applicationLoader;
         std::shared_ptr<AbstractHeap> m_heap;
 
         // set in initialize method
@@ -93,7 +92,8 @@ namespace lyric_runtime {
         InterpreterState(
             uv_loop_t *loop,
             lyric_common::ModuleLocation preludeLocation,
-            std::shared_ptr<AbstractLoader> loader,
+            std::shared_ptr<AbstractLoader> systemLoader,
+            std::shared_ptr<AbstractLoader> applicationLoader,
             std::shared_ptr<AbstractHeap> heap);
 
         tempo_utils::Status initialize(const lyric_common::ModuleLocation &mainLocation);

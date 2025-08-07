@@ -20,6 +20,7 @@ namespace lyric_runtime {
     public:
         BytecodeSegment(
             tu_uint32 segmentIndex,
+            bool isSystem,
             const lyric_common::ModuleLocation &objectLocation,
             const lyric_object::LyricObject &object,
             const lyric_common::ModuleLocation &pluginLocation,
@@ -27,6 +28,7 @@ namespace lyric_runtime {
         ~BytecodeSegment();
 
         tu_uint32 getSegmentIndex() const;
+        bool isSystem() const;
         lyric_common::ModuleLocation getObjectLocation() const;
         lyric_object::LyricObject getObject() const;
         lyric_common::ModuleLocation getPluginLocation() const;
@@ -57,6 +59,7 @@ namespace lyric_runtime {
 
     private:
         tu_uint32 m_segmentIndex;
+        bool m_isSystem;
         lyric_common::ModuleLocation m_objectLocation;
         lyric_object::LyricObject m_object;
         lyric_common::ModuleLocation m_pluginLocation;

@@ -13,12 +13,14 @@
 lyric_runtime::BytecodeSegment *
 lyric_runtime::internal::get_or_load_segment(
     const lyric_common::ModuleLocation &location,
+    bool useSystemLoader,
     SegmentManagerData *segmentManagerData)
 {
     // return null if assembly location is invalid
     if (!location.isValid())
         return nullptr;
 
+    // if location is relative then resolve to an absolute location
     lyric_common::ModuleLocation objectLocation;
     if (location.isRelative()) {
         objectLocation = segmentManagerData->origin.resolve(location);
@@ -26,12 +28,14 @@ lyric_runtime::internal::get_or_load_segment(
         objectLocation = location;
     }
 
+    auto loader = useSystemLoader? segmentManagerData->systemLoader : segmentManagerData->applicationLoader;
+
     // if segment is already loaded then return it
     auto entry = segmentManagerData->segmentcache.find(objectLocation);
     if (entry != segmentManagerData->segmentcache.cend())
         return segmentManagerData->segments[entry->second];
 
-    auto loadModuleResult = segmentManagerData->loader->loadModule(objectLocation);
+    auto loadModuleResult = loader->loadModule(objectLocation);
     if (loadModuleResult.isStatus()) {
         TU_LOG_V << "failed to load " << objectLocation << ": " << loadModuleResult.getStatus();
         return nullptr;                                 // failed to load assembly from location
@@ -62,7 +66,7 @@ lyric_runtime::internal::get_or_load_segment(
             pluginLocation = objectLocation;
         }
 
-        auto loadPluginResult = segmentManagerData->loader->loadPlugin(
+        auto loadPluginResult = loader->loadPlugin(
             pluginLocation, lyric_object::PluginSpecifier::systemDefault());
         if (loadPluginResult.isStatus()) {
             TU_LOG_V << "failed to load " << pluginLocation << ": " << loadPluginResult.getStatus();
@@ -78,7 +82,7 @@ lyric_runtime::internal::get_or_load_segment(
 
     // allocate the segment
     auto segmentIndex = segmentManagerData->segments.size();
-    auto *segment = new BytecodeSegment(segmentIndex, objectLocation, object, pluginLocation, plugin);
+    auto *segment = new BytecodeSegment(segmentIndex, useSystemLoader, objectLocation, object, pluginLocation, plugin);
 
     // if there is a plugin then load it
     if (plugin != nullptr) {
@@ -108,7 +112,7 @@ lyric_runtime::internal::get_or_load_segment(
  */
 const lyric_runtime::LinkEntry *
 lyric_runtime::internal::resolve_link(
-    const lyric_runtime::BytecodeSegment *sp,
+    const BytecodeSegment *sp,
     tu_uint32 index,
     SegmentManagerData *segmentManagerData,
     tempo_utils::Status &status)
@@ -140,7 +144,7 @@ lyric_runtime::internal::resolve_link(
 
     // get the segment containing the linked symbol
     auto location = referenceUrl.getModuleLocation();
-    auto *segment = get_or_load_segment(location, segmentManagerData);
+    auto *segment = get_or_load_segment(location, sp->isSystem(), segmentManagerData);
     if (segment == nullptr) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kMissingObject, location.toString());

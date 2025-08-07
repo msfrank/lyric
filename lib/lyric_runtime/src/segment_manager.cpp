@@ -9,10 +9,14 @@
 #include <lyric_runtime/internal/resolve_link.h>
 #include <lyric_runtime/segment_manager.h>
 
-lyric_runtime::SegmentManager::SegmentManager(std::shared_ptr<AbstractLoader> loader)
+lyric_runtime::SegmentManager::SegmentManager(
+    std::shared_ptr<AbstractLoader> systemLoader,
+    std::shared_ptr<AbstractLoader> applicationLoader)
 {
-    m_data.loader = std::move(loader);
-    TU_ASSERT (m_data.loader != nullptr);
+    m_data.systemLoader = std::move(systemLoader);
+    m_data.applicationLoader = std::move(applicationLoader);
+    TU_ASSERT (m_data.systemLoader != nullptr);
+    TU_ASSERT (m_data.applicationLoader != nullptr);
 }
 
 lyric_runtime::SegmentManager::~SegmentManager()
@@ -63,9 +67,9 @@ lyric_runtime::SegmentManager::getSegment(const lyric_common::ModuleLocation &lo
 }
 
 lyric_runtime::BytecodeSegment *
-lyric_runtime::SegmentManager::getOrLoadSegment(const lyric_common::ModuleLocation &location)
+lyric_runtime::SegmentManager::getOrLoadSegment(const lyric_common::ModuleLocation &location, bool useSystemLoader)
 {
-    return internal::get_or_load_segment(location, &m_data);
+    return internal::get_or_load_segment(location, useSystemLoader, &m_data);
 }
 
 const lyric_runtime::LinkEntry *
@@ -166,9 +170,10 @@ lyric_runtime::SegmentManager::pushDescriptorOntoStack(
 tempo_utils::Status
 lyric_runtime::SegmentManager::pushSymbolDescriptorOntoStack(
     const lyric_common::SymbolUrl &symbolUrl,
+    bool useSystemLoader,
     StackfulCoroutine *currentCoro)
 {
-    return internal::push_symbol_descriptor_onto_stack(symbolUrl, currentCoro, &m_data);
+    return internal::push_symbol_descriptor_onto_stack(symbolUrl, useSystemLoader, currentCoro, &m_data);
 }
 
 lyric_runtime::DataCell

@@ -34,14 +34,10 @@ BaseCompilerFixture::runComputationSet(
     lyric_runtime::InterpreterStateOptions options;
     options.mainLocation = origin.resolve(lyric_common::ModuleLocation::fromString(mainKey.getId()));
 
-    std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
-    loaderChain.push_back(builder->getBootstrapLoader());
-    loaderChain.push_back(dependencyLoader);
-    auto loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
-
     // construct the interpreter state
     std::shared_ptr<lyric_runtime::InterpreterState> state;
-    TU_ASSIGN_OR_RETURN (state, lyric_runtime::InterpreterState::create(loader, options));
+    TU_ASSIGN_OR_RETURN (state, lyric_runtime::InterpreterState::create(
+        builder->getBootstrapLoader(), dependencyLoader, options));
 
     // run the module in the interpreter
     lyric_test::TestInspector inspector;

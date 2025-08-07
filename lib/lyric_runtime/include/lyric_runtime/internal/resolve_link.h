@@ -9,6 +9,7 @@ namespace lyric_runtime::internal {
 
     BytecodeSegment *get_or_load_segment(
         const lyric_common::ModuleLocation &location,
+        bool useSystemLoader,
         SegmentManagerData *segmentManagerData);
 
     const LinkEntry *resolve_link(

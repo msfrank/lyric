@@ -67,11 +67,16 @@ lyric_test::LyricProtocolTester::runModuleInMockSandbox(
     auto cache = builder->getCache();
     auto tempRoot = builder->getTempRoot();
 
+    lyric_runtime::InterpreterStateOptions options;
+
     // define the module origin
     auto origin = lyric_common::ModuleLocation::fromString(
         absl::StrCat("dev.zuri.tester://", tempo_utils::UUID::randomUUID().toString()));
 
-    // construct the loader
+    // resolve the main location
+    options.mainLocation = origin.resolve(moduleLocation);
+
+    // construct the dependency loader
     auto targetState = targetComputation.getState();
     lyric_build::BuildGeneration targetGen(targetState.getGeneration());
     lyric_build::TempDirectory tempDirectory(tempRoot, targetGen);
@@ -79,17 +84,18 @@ lyric_test::LyricProtocolTester::runModuleInMockSandbox(
     TU_ASSIGN_OR_RETURN (dependencyLoader, lyric_build::DependencyLoader::create(
         origin, targetComputation, cache, &tempDirectory));
 
-    lyric_runtime::InterpreterStateOptions options;
-    options.mainLocation = origin.resolve(moduleLocation);
-
+    // construct the application loader
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
-    loaderChain.push_back(builder->getBootstrapLoader());
     loaderChain.push_back(dependencyLoader);
-    auto loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
+    if (m_options.fallbackLoader) {
+        loaderChain.push_back(m_options.fallbackLoader);
+    }
+    auto applicationLoader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
 
     // construct the interpreter state
     std::shared_ptr<lyric_runtime::InterpreterState> state;
-    TU_ASSIGN_OR_RETURN (state, lyric_runtime::InterpreterState::create(loader, options));
+    TU_ASSIGN_OR_RETURN (state, lyric_runtime::InterpreterState::create(
+        builder->getBootstrapLoader(), applicationLoader, options));
 
     // run the module in the interpreter
     TestInspector inspector;

@@ -12,29 +12,32 @@
  * Default no-args constructor which creates an invalid InterpreterState instance. This is only useful
  * for mocking the class when testing.
  */
-// lyric_runtime::InterpreterState::InterpreterState()
-//     : m_loop(nullptr),
-//       m_loadEpochMillis(0),
-//       m_statusCode(tempo_utils::StatusCode::kUnknown),
-//       m_active(false)
-// {
-// }
+lyric_runtime::InterpreterState::InterpreterState()
+    : m_loop(nullptr),
+      m_loadEpochMillis(0),
+      m_statusCode(tempo_utils::StatusCode::kUnknown),
+      m_active(false)
+{
+}
 
 lyric_runtime::InterpreterState::InterpreterState(
     uv_loop_t *loop,
     lyric_common::ModuleLocation preludeLocation,
-    std::shared_ptr<AbstractLoader> loader,
+    std::shared_ptr<AbstractLoader> systemLoader,
+    std::shared_ptr<AbstractLoader> applicationLoader,
     std::shared_ptr<AbstractHeap> heap)
     : m_loop(loop),
       m_preludeLocation(preludeLocation),
-      m_loader(std::move(loader)),
+      m_systemLoader(std::move(systemLoader)),
+      m_applicationLoader(std::move(applicationLoader)),
       m_heap(std::move(heap)),
       m_loadEpochMillis(0),
       m_statusCode(tempo_utils::StatusCode::kUnknown),
       m_active(false)
 {
     TU_ASSERT (m_loop != nullptr);
-    TU_ASSERT (m_loader != nullptr);
+    TU_ASSERT (m_systemLoader != nullptr);
+    TU_ASSERT (m_applicationLoader != nullptr);
     TU_ASSERT (m_heap != nullptr);
 }
 
@@ -53,6 +56,56 @@ lyric_runtime::InterpreterState::~InterpreterState()
     }
 }
 
+tempo_utils::Result<std::shared_ptr<lyric_runtime::InterpreterState>>
+lyric_runtime::InterpreterState::create(
+    std::shared_ptr<AbstractLoader> systemLoader,
+    std::shared_ptr<AbstractLoader> applicationLoader,
+    const InterpreterStateOptions &options)
+{
+    TU_ASSERT (systemLoader != nullptr);
+    TU_ASSERT (applicationLoader != nullptr);
+
+    lyric_common::ModuleLocation preludeLocation;
+    uv_loop_t *loop = nullptr;
+
+    // if heap is not specified in options then allocate one
+    std::shared_ptr<AbstractHeap> heap;
+    if (options.heap == nullptr) {
+        heap = GCHeap::create();
+    } else {
+        heap = options.heap;
+    }
+
+    // allocate a new UV main loop
+    loop = new uv_loop_t;
+
+    // initialize the main loop here, but note that SystemScheduler takes ownership of the loop
+    // once it is constructed. in particular, the SystemScheduler owns the loop.data pointer.
+    auto ret = uv_loop_init(loop);
+    if (ret != 0) {
+        uv_loop_close(loop);
+        delete loop;
+        return InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "failed to initialize main loop");
+    }
+
+    /*
+     * WARNING: loop is not a managed pointer so we can't fail or exit early until we have transferred
+     * ownership to the interpreter state!
+     */
+
+    // allocate the interpreter state
+    auto state = std::shared_ptr<InterpreterState>(new InterpreterState(loop, options.preludeLocation,
+        std::move(systemLoader), std::move(applicationLoader), std::move(heap)));
+
+    // if main location was specified then load it
+    if (options.mainLocation.isValid()) {
+        TU_RETURN_IF_NOT_OK(state->load(options.mainLocation));
+    }
+
+    return state;
+}
+
 static tempo_utils::Status
 detect_bootstrap(
     lyric_runtime::SegmentManager *segmentManager,
@@ -63,7 +116,7 @@ detect_bootstrap(
     TU_ASSERT (mainLocation.isValid());
 
     // load segment for the main module from the specified location
-    auto *segment = segmentManager->getOrLoadSegment(mainLocation);
+    auto *segment = segmentManager->getOrLoadSegment(mainLocation, /* useSystemLoader= */ false);
     if (segment == nullptr)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kMissingObject,
@@ -100,32 +153,19 @@ detect_bootstrap(
 static tempo_utils::Status
 allocate_type_manager(
     lyric_runtime::SegmentManager *segmentManager,
-    const lyric_common::ModuleLocation &preludeLocation,
+    lyric_runtime::BytecodeSegment *preludeSegment,
+    const lyric_object::ObjectWalker &preludeObject,
     std::unique_ptr<lyric_runtime::TypeManager> &typeManagerPtr)
 {
     TU_ASSERT (segmentManager != nullptr);
-
-    // get the prelude segment
-    auto *bootstrapSegment = segmentManager->getOrLoadSegment(preludeLocation);
-    if (bootstrapSegment == nullptr)
-        return lyric_runtime::InterpreterStatus::forCondition(
-            lyric_runtime::InterpreterCondition::kRuntimeInvariant,
-            "failed to load bootstrap prelude {}", preludeLocation.toString());
-
-    auto bootstrapObject = bootstrapSegment->getObject().getObject();
-    if (!bootstrapObject.isValid())
-        return lyric_runtime::InterpreterStatus::forCondition(
-            lyric_runtime::InterpreterCondition::kRuntimeInvariant,
-            "bootstrap prelude {} is invalid", preludeLocation.toString());
-
-    TU_LOG_V << "loaded bootstrap prelude " << preludeLocation;
+    TU_ASSERT (preludeSegment != nullptr);
 
     std::vector<lyric_runtime::DataCell> intrinsiccache;
     intrinsiccache.resize(static_cast<int>(lyric_object::IntrinsicType::NUM_INTRINSIC_TYPES));
 
     // perform the bootstrapping process
-    for (int i = 0; i < bootstrapObject.numExistentials(); i++) {
-        auto existential = bootstrapObject.getExistential(i);
+    for (int i = 0; i < preludeObject.numExistentials(); i++) {
+        auto existential = preludeObject.getExistential(i);
         if (existential.getIntrinsicType() == lyric_object::IntrinsicType::Invalid)
             continue;
         auto index = static_cast<int>(existential.getIntrinsicType());
@@ -140,7 +180,7 @@ allocate_type_manager(
                 lyric_runtime::InterpreterCondition::kRuntimeInvariant,
                 "invalid intrinsic mapping detected");
 
-        auto *typeEntry = bootstrapSegment->lookupType(type.getDescriptorOffset());
+        auto *typeEntry = preludeSegment->lookupType(type.getDescriptorOffset());
         intrinsiccache[index] = lyric_runtime::DataCell::forType(typeEntry);
     }
 
@@ -153,13 +193,13 @@ allocate_type_manager(
 static const lyric_runtime::ExistentialTable *
 resolve_bootstrap_existential_table(
     lyric_runtime::SegmentManager *segmentManager,
-    lyric_runtime::BytecodeSegment *bootstrapSegment,
-    const lyric_object::ObjectWalker &bootstrapObject,
+    lyric_runtime::BytecodeSegment *preludeSegment,
+    const lyric_object::ObjectWalker &preludeObject,
     lyric_common::SymbolPath existentialPath,
     tempo_utils::Status &status)
 {
-    auto bytesSymbol = bootstrapObject.findSymbol(existentialPath);
-    auto bytesDescriptor = segmentManager->resolveDescriptor(bootstrapSegment,
+    auto bytesSymbol = preludeObject.findSymbol(existentialPath);
+    auto bytesDescriptor = segmentManager->resolveDescriptor(preludeSegment,
         bytesSymbol.getLinkageSection(), bytesSymbol.getLinkageIndex(), status);
     return segmentManager->resolveExistentialTable(bytesDescriptor, status);
 }
@@ -168,101 +208,36 @@ static tempo_utils::Status
 allocate_heap_manager(
     lyric_runtime::SegmentManager *segmentManager,
     lyric_runtime::SystemScheduler *systemScheduler,
-    const lyric_common::ModuleLocation &preludeLocation,
+    lyric_runtime::BytecodeSegment *preludeSegment,
+    const lyric_object::ObjectWalker &preludeObject,
     std::shared_ptr<lyric_runtime::AbstractHeap> heap,
     std::unique_ptr<lyric_runtime::HeapManager> &heapManagerPtr)
 {
     TU_ASSERT (segmentManager != nullptr);
     TU_ASSERT (systemScheduler != nullptr);
-    TU_ASSERT (preludeLocation.isValid());
+    TU_ASSERT (preludeSegment != nullptr);
     TU_ASSERT (heap != nullptr);
-
-    // get the prelude segment
-    auto *bootstrapSegment = segmentManager->getOrLoadSegment(preludeLocation);
-    if (bootstrapSegment == nullptr)
-        return lyric_runtime::InterpreterStatus::forCondition(
-            lyric_runtime::InterpreterCondition::kRuntimeInvariant,
-            "failed to load bootstrap prelude {}", preludeLocation.toString());
-
-    auto bootstrapObject = bootstrapSegment->getObject().getObject();
-    if (!bootstrapObject.isValid())
-        return lyric_runtime::InterpreterStatus::forCondition(
-            lyric_runtime::InterpreterCondition::kRuntimeInvariant,
-            "bootstrap prelude {} is invalid", preludeLocation.toString());
-
-    TU_LOG_V << "loaded bootstrap prelude " << preludeLocation;
 
     lyric_runtime::PreludeTables preludeTables;
     tempo_utils::Status status;
 
     preludeTables.bytesTable = resolve_bootstrap_existential_table(segmentManager,
-        bootstrapSegment, bootstrapObject, lyric_common::SymbolPath::fromString("Bytes"), status);
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Bytes"), status);
     TU_RETURN_IF_NOT_OK (status);
     preludeTables.restTable = resolve_bootstrap_existential_table(segmentManager,
-        bootstrapSegment, bootstrapObject, lyric_common::SymbolPath::fromString("Rest"), status);
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Rest"), status);
     TU_RETURN_IF_NOT_OK (status);
     preludeTables.stringTable = resolve_bootstrap_existential_table(segmentManager,
-        bootstrapSegment, bootstrapObject, lyric_common::SymbolPath::fromString("String"), status);
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("String"), status);
     TU_RETURN_IF_NOT_OK (status);
     preludeTables.urlTable = resolve_bootstrap_existential_table(segmentManager,
-        bootstrapSegment, bootstrapObject, lyric_common::SymbolPath::fromString("Url"), status);
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Url"), status);
     TU_RETURN_IF_NOT_OK (status);
 
     heapManagerPtr = std::make_unique<lyric_runtime::HeapManager>(
         preludeTables, segmentManager, systemScheduler, std::move(heap));
 
     return {};
-}
-
-tempo_utils::Result<std::shared_ptr<lyric_runtime::InterpreterState>>
-lyric_runtime::InterpreterState::create(
-    std::shared_ptr<AbstractLoader> loader,
-    const InterpreterStateOptions &options)
-{
-    TU_ASSERT (loader != nullptr);
-
-    lyric_common::ModuleLocation preludeLocation;
-    uv_loop_t *loop = nullptr;
-
-    tempo_utils::Status status;
-
-
-    // if heap is not specified in options then allocate one
-    std::shared_ptr<AbstractHeap> heap;
-    if (options.heap == nullptr) {
-        heap = GCHeap::create();
-    } else {
-        heap = options.heap;
-    }
-
-    // allocate a new UV main loop
-    loop = new uv_loop_t;
-
-    // initialize the main loop here, but note that SystemScheduler takes ownership of the loop
-    // once it is constructed. in particular, the SystemScheduler owns the loop.data pointer.
-    auto ret = uv_loop_init(loop);
-    if (ret != 0) {
-        uv_loop_close(loop);
-        delete loop;
-        return InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "failed to initialize main loop");
-    }
-
-    /*
-     * WARNING: loop is not a managed pointer so we can't fail or exit early until we have transferred
-     * ownership to the interpreter state!
-     */
-
-    // allocate the interpreter state
-    auto state = std::shared_ptr<InterpreterState>(new InterpreterState(
-        loop, options.preludeLocation, std::move(loader), std::move(heap)));
-
-    // if main location was specified then load it
-    if (options.mainLocation.isValid()) {
-        TU_RETURN_IF_NOT_OK(state->load(options.mainLocation));
-    }
-
-    return state;
 }
 
 lyric_common::ModuleLocation
@@ -343,12 +318,15 @@ lyric_runtime::InterpreterState::initialize(const lyric_common::ModuleLocation &
     TU_ASSERT (m_segmentManager == nullptr);
     TU_ASSERT (mainLocation.isValid());
 
-    if (m_loader == nullptr)
+    if (m_systemLoader == nullptr)
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "invalid interpreter state loader");
+            "invalid system loader");
+    if (m_applicationLoader == nullptr)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid application loader");
 
     // allocate a new segment manager
-    auto segmentManager = std::make_unique<SegmentManager>(m_loader);
+    auto segmentManager = std::make_unique<SegmentManager>(m_systemLoader, m_applicationLoader);
     TU_RETURN_IF_NOT_OK (segmentManager->setOrigin(mainLocation));
 
     // the prelude must either be explicitly specified or inferred from the main location
@@ -363,9 +341,23 @@ lyric_runtime::InterpreterState::initialize(const lyric_common::ModuleLocation &
         preludeLocation = m_preludeLocation;
     }
 
+    // get the prelude segment
+    auto *preludeSegment = segmentManager->getOrLoadSegment(preludeLocation, /* useSystemLoader= */ true);
+    if (preludeSegment == nullptr)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "failed to load prelude {}", preludeLocation.toString());
+
+    auto preludeObject = preludeSegment->getObject().getObject();
+    if (!preludeObject.isValid())
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "prelude {} is invalid", preludeLocation.toString());
+
+    TU_LOG_V << "loaded prelude " << preludeLocation;
+
     // allocate the type manager using intrinsics from the specified prelude
     std::unique_ptr<TypeManager> typeManager;
-    TU_RETURN_IF_NOT_OK (allocate_type_manager(segmentManager.get(), preludeLocation, typeManager));
+    TU_RETURN_IF_NOT_OK (allocate_type_manager(
+        segmentManager.get(), preludeSegment, preludeObject, typeManager));
 
     auto portMultiplexer = std::make_unique<PortMultiplexer>();
     auto subroutineManager = std::make_unique<SubroutineManager>(segmentManager.get());
@@ -373,8 +365,8 @@ lyric_runtime::InterpreterState::initialize(const lyric_common::ModuleLocation &
 
     // allocate the remaining subsystems
     std::unique_ptr<HeapManager> heapManager;
-    TU_RETURN_IF_NOT_OK (allocate_heap_manager(
-        segmentManager.get(), systemScheduler.get(), preludeLocation, m_heap, heapManager));
+    TU_RETURN_IF_NOT_OK (allocate_heap_manager(segmentManager.get(), systemScheduler.get(),
+        preludeSegment, preludeObject, m_heap, heapManager));
 
     // transfer ownership to this
     m_segmentManager = std::move(segmentManager);
@@ -405,7 +397,7 @@ lyric_runtime::InterpreterState::load(const lyric_common::ModuleLocation &mainLo
     }
 
     // load segment for the main module from the specified main location
-    auto *segment = m_segmentManager->getOrLoadSegment(mainLocation);
+    auto *segment = m_segmentManager->getOrLoadSegment(mainLocation, /* useSystemLoader= */ false);
     if (segment == nullptr)
         return InterpreterStatus::forCondition(
             InterpreterCondition::kMissingObject,

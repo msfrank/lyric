@@ -19,7 +19,7 @@ lyric_runtime::internal::push_literal_onto_stack(
 
 tempo_utils::Status
 lyric_runtime::internal::push_descriptor_onto_stack(
-    const lyric_runtime::BytecodeSegment *sp,
+    const BytecodeSegment *sp,
     tu_uint8 section,
     tu_uint32 address,
     StackfulCoroutine *currentCoro,
@@ -37,10 +37,11 @@ lyric_runtime::internal::push_descriptor_onto_stack(
 tempo_utils::Status
 lyric_runtime::internal::push_symbol_descriptor_onto_stack(
     const lyric_common::SymbolUrl &symbolUrl,
+    bool useSystemLoader,
     StackfulCoroutine *currentCoro,
     SegmentManagerData *segmentManagerData)
 {
-    auto *segment = get_or_load_segment(symbolUrl.getModuleLocation(), segmentManagerData);
+    auto *segment = get_or_load_segment(symbolUrl.getModuleLocation(), useSystemLoader, segmentManagerData);
     if (segment == nullptr)
         return InterpreterStatus::forCondition(
             InterpreterCondition::kMissingObject, symbolUrl.getModuleLocation().toString());

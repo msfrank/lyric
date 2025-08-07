@@ -4,11 +4,13 @@
 
 lyric_runtime::BytecodeSegment::BytecodeSegment(
     uint32_t segmentIndex,
+    bool isSystem,
     const lyric_common::ModuleLocation &objectLocation,
     const lyric_object::LyricObject &object,
     const lyric_common::ModuleLocation &pluginLocation,
     std::shared_ptr<const AbstractPlugin> plugin)
     : m_segmentIndex(segmentIndex),
+      m_isSystem(isSystem),
       m_objectLocation(objectLocation),
       m_object(object),
       m_pluginLocation(pluginLocation),
@@ -58,6 +60,18 @@ lyric_runtime::BytecodeSegment::~BytecodeSegment()
     delete[] m_enums;
 }
 
+uint32_t
+lyric_runtime::BytecodeSegment::getSegmentIndex() const
+{
+    return m_segmentIndex;
+}
+
+bool
+lyric_runtime::BytecodeSegment::isSystem() const
+{
+    return m_isSystem;
+}
+
 lyric_common::ModuleLocation
 lyric_runtime::BytecodeSegment::getObjectLocation() const
 {
@@ -80,12 +94,6 @@ std::shared_ptr<const lyric_runtime::AbstractPlugin>
 lyric_runtime::BytecodeSegment::getPlugin() const
 {
     return m_plugin;
-}
-
-uint32_t
-lyric_runtime::BytecodeSegment::getSegmentIndex() const
-{
-    return m_segmentIndex;
 }
 
 const uint8_t *

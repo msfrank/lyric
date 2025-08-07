@@ -13,7 +13,8 @@ namespace lyric_runtime {
 
     struct SegmentManagerData {
         lyric_common::ModuleLocation origin;
-        std::shared_ptr<AbstractLoader> loader;
+        std::shared_ptr<AbstractLoader> systemLoader;
+        std::shared_ptr<AbstractLoader> applicationLoader;
         std::vector<BytecodeSegment *> segments;
         absl::flat_hash_map<lyric_common::ModuleLocation,tu_uint32> segmentcache;
         absl::flat_hash_map<DataCell,const VirtualTable *> vtablecache;
@@ -23,7 +24,9 @@ namespace lyric_runtime {
 
     class SegmentManager {
     public:
-        explicit SegmentManager(std::shared_ptr<AbstractLoader> loader);
+        SegmentManager(
+            std::shared_ptr<AbstractLoader> systemLoader,
+            std::shared_ptr<AbstractLoader> applicationLoader);
         virtual ~SegmentManager();
 
         virtual lyric_common::ModuleLocation getOrigin() const;
@@ -32,7 +35,7 @@ namespace lyric_runtime {
         virtual BytecodeSegment *getSegment(tu_uint32 segmentIndex);
         virtual BytecodeSegment *getSegment(const lyric_common::ModuleLocation &location);
 
-        virtual BytecodeSegment *getOrLoadSegment(const lyric_common::ModuleLocation &location);
+        virtual BytecodeSegment *getOrLoadSegment(const lyric_common::ModuleLocation &location, bool useSystemLoader);
 
         virtual const LinkEntry *resolveLink(
             const BytecodeSegment *sp,
@@ -81,6 +84,7 @@ namespace lyric_runtime {
             StackfulCoroutine *currentCoro);
         virtual tempo_utils::Status pushSymbolDescriptorOntoStack(
             const lyric_common::SymbolUrl &symbolUrl,
+            bool useSystemLoader,
             StackfulCoroutine *currentCoro);
 
         virtual DataCell loadStatic(

@@ -20,6 +20,7 @@ namespace lyric_runtime::internal {
 
     tempo_utils::Status push_symbol_descriptor_onto_stack(
         const lyric_common::SymbolUrl &symbolUrl,
+        bool useSystemLoader,
         StackfulCoroutine *currentCoro,
         SegmentManagerData *segmentManagerData);
 }
