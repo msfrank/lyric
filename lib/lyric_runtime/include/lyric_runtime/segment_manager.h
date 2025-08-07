@@ -23,8 +23,11 @@ namespace lyric_runtime {
 
     class SegmentManager {
     public:
-        SegmentManager(const lyric_common::ModuleLocation &origin, std::shared_ptr<AbstractLoader> loader);
+        explicit SegmentManager(std::shared_ptr<AbstractLoader> loader);
         virtual ~SegmentManager();
+
+        virtual lyric_common::ModuleLocation getOrigin() const;
+        virtual tempo_utils::Status setOrigin(const lyric_common::ModuleLocation &origin);
 
         virtual BytecodeSegment *getSegment(tu_uint32 segmentIndex);
         virtual BytecodeSegment *getSegment(const lyric_common::ModuleLocation &location);

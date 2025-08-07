@@ -12,59 +12,40 @@
  * Default no-args constructor which creates an invalid InterpreterState instance. This is only useful
  * for mocking the class when testing.
  */
-lyric_runtime::InterpreterState::InterpreterState()
-    : m_loop(nullptr),
-      m_segmentManager(nullptr),
-      m_typeManager(nullptr),
-      m_subroutineManager(nullptr),
-      m_systemScheduler(nullptr),
-      m_portMultiplexer(nullptr),
-      m_heapManager(nullptr),
-      m_reloadEpochMillis(0),
-      m_statusCode(tempo_utils::StatusCode::kUnknown),
-      m_active(false)
-{
-}
+// lyric_runtime::InterpreterState::InterpreterState()
+//     : m_loop(nullptr),
+//       m_loadEpochMillis(0),
+//       m_statusCode(tempo_utils::StatusCode::kUnknown),
+//       m_active(false)
+// {
+// }
 
 lyric_runtime::InterpreterState::InterpreterState(
     uv_loop_t *loop,
-    std::shared_ptr<AbstractHeap> heap,
-    SegmentManager *segmentManager,
-    TypeManager *typeManager,
-    SubroutineManager *subroutineManager,
-    SystemScheduler *systemScheduler,
-    PortMultiplexer *portMultiplexer,
-    HeapManager *heapManager)
+    lyric_common::ModuleLocation preludeLocation,
+    std::shared_ptr<AbstractLoader> loader,
+    std::shared_ptr<AbstractHeap> heap)
     : m_loop(loop),
+      m_preludeLocation(preludeLocation),
+      m_loader(std::move(loader)),
       m_heap(std::move(heap)),
-      m_segmentManager(segmentManager),
-      m_typeManager(typeManager),
-      m_subroutineManager(subroutineManager),
-      m_systemScheduler(systemScheduler),
-      m_portMultiplexer(portMultiplexer),
-      m_heapManager(heapManager),
-      m_reloadEpochMillis(0),
+      m_loadEpochMillis(0),
       m_statusCode(tempo_utils::StatusCode::kUnknown),
       m_active(false)
 {
     TU_ASSERT (m_loop != nullptr);
+    TU_ASSERT (m_loader != nullptr);
     TU_ASSERT (m_heap != nullptr);
-    TU_ASSERT (m_segmentManager != nullptr);
-    TU_ASSERT (m_typeManager != nullptr);
-    TU_ASSERT (m_subroutineManager != nullptr);
-    TU_ASSERT (m_systemScheduler != nullptr);
-    TU_ASSERT (m_portMultiplexer != nullptr);
-    TU_ASSERT (m_heapManager != nullptr);
 }
 
 lyric_runtime::InterpreterState::~InterpreterState()
 {
-    delete m_heapManager;
-    delete m_portMultiplexer;
-    delete m_systemScheduler;
-    delete m_subroutineManager;
-    delete m_typeManager;
-    delete m_segmentManager;
+    m_heapManager.reset();
+    m_portMultiplexer.reset();
+    m_systemScheduler.reset();
+    m_subroutineManager.reset();
+    m_typeManager.reset();
+    m_segmentManager.reset();
 
     if (m_loop != nullptr) {
         uv_loop_close(m_loop);
@@ -76,11 +57,10 @@ static tempo_utils::Status
 detect_bootstrap(
     lyric_runtime::SegmentManager *segmentManager,
     const lyric_common::ModuleLocation &mainLocation,
-    lyric_common::ModuleLocation *bootstrapLocation)
+    lyric_common::ModuleLocation &bootstrapLocation)
 {
     TU_ASSERT (segmentManager != nullptr);
     TU_ASSERT (mainLocation.isValid());
-    TU_ASSERT (bootstrapLocation != nullptr);
 
     // load segment for the main module from the specified location
     auto *segment = segmentManager->getOrLoadSegment(mainLocation);
@@ -106,12 +86,13 @@ detect_bootstrap(
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "missing system bootstrap import");
 
-    *bootstrapLocation = bootstrapImport.getImportLocation();
-    if (!bootstrapLocation->isValid())
+    auto importLocation = bootstrapImport.getImportLocation();
+    if (!importLocation.isValid())
         return lyric_runtime::InterpreterStatus::forCondition(
-            lyric_runtime::InterpreterCondition::kMissingObject, bootstrapLocation->toString());
+            lyric_runtime::InterpreterCondition::kMissingObject, bootstrapLocation.toString());
+    TU_LOG_V << "found system bootstrap " << importLocation;
 
-    TU_LOG_V << "found system bootstrap " << *bootstrapLocation;
+    bootstrapLocation = importLocation;
 
     return {};
 }
@@ -120,10 +101,9 @@ static tempo_utils::Status
 allocate_type_manager(
     lyric_runtime::SegmentManager *segmentManager,
     const lyric_common::ModuleLocation &preludeLocation,
-    lyric_runtime::TypeManager **typeManagerPtr)
+    std::unique_ptr<lyric_runtime::TypeManager> &typeManagerPtr)
 {
     TU_ASSERT (segmentManager != nullptr);
-    TU_ASSERT (typeManagerPtr != nullptr);
 
     // get the prelude segment
     auto *bootstrapSegment = segmentManager->getOrLoadSegment(preludeLocation);
@@ -164,7 +144,7 @@ allocate_type_manager(
         intrinsiccache[index] = lyric_runtime::DataCell::forType(typeEntry);
     }
 
-    *typeManagerPtr = new lyric_runtime::TypeManager(
+    typeManagerPtr = std::make_unique<lyric_runtime::TypeManager>(
         std::move(intrinsiccache), segmentManager);
 
     return {};
@@ -190,13 +170,12 @@ allocate_heap_manager(
     lyric_runtime::SystemScheduler *systemScheduler,
     const lyric_common::ModuleLocation &preludeLocation,
     std::shared_ptr<lyric_runtime::AbstractHeap> heap,
-    lyric_runtime::HeapManager **heapManagerPtr)
+    std::unique_ptr<lyric_runtime::HeapManager> &heapManagerPtr)
 {
     TU_ASSERT (segmentManager != nullptr);
     TU_ASSERT (systemScheduler != nullptr);
     TU_ASSERT (preludeLocation.isValid());
     TU_ASSERT (heap != nullptr);
-    TU_ASSERT (heapManagerPtr != nullptr);
 
     // get the prelude segment
     auto *bootstrapSegment = segmentManager->getOrLoadSegment(preludeLocation);
@@ -229,40 +208,24 @@ allocate_heap_manager(
         bootstrapSegment, bootstrapObject, lyric_common::SymbolPath::fromString("Url"), status);
     TU_RETURN_IF_NOT_OK (status);
 
-    *heapManagerPtr = new lyric_runtime::HeapManager(preludeTables, segmentManager, systemScheduler, std::move(heap));
+    heapManagerPtr = std::make_unique<lyric_runtime::HeapManager>(
+        preludeTables, segmentManager, systemScheduler, std::move(heap));
 
     return {};
 }
 
 tempo_utils::Result<std::shared_ptr<lyric_runtime::InterpreterState>>
 lyric_runtime::InterpreterState::create(
-    const InterpreterStateOptions &options,
-    const lyric_common::ModuleLocation &mainLocation)
+    std::shared_ptr<AbstractLoader> loader,
+    const InterpreterStateOptions &options)
 {
+    TU_ASSERT (loader != nullptr);
+
     lyric_common::ModuleLocation preludeLocation;
     uv_loop_t *loop = nullptr;
-    SegmentManager *segmentManager = nullptr;
-    TypeManager *typeManager = nullptr;
-    SubroutineManager *subroutineManager = nullptr;
-    SystemScheduler *systemScheduler = nullptr;
-    PortMultiplexer *portMultiplexer = nullptr;
-    HeapManager *heapManager = nullptr;
-    InterpreterState *stateptr = nullptr;
-    std::shared_ptr<InterpreterState> state;
 
     tempo_utils::Status status;
 
-    if (!mainLocation.isValid())
-        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "invalid main location");
-    if (!mainLocation.isAbsolute())
-        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "cannot initialize interpreter; main location {} must be absolute location",
-            mainLocation.toString());
-
-    if (options.loader == nullptr)
-        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "loader must be specified");
 
     // if heap is not specified in options then allocate one
     std::shared_ptr<AbstractHeap> heap;
@@ -279,65 +242,27 @@ lyric_runtime::InterpreterState::create(
     // once it is constructed. in particular, the SystemScheduler owns the loop.data pointer.
     auto ret = uv_loop_init(loop);
     if (ret != 0) {
-        status = InterpreterStatus::forCondition(
+        uv_loop_close(loop);
+        delete loop;
+        return InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "failed to initialize main loop");
-        goto err;
     }
 
-    // allocate a new segment manager
-    segmentManager = new SegmentManager(mainLocation, options.loader);
-
-    // the prelude must either be explicitly specified or inferred from the main location
-    if (!options.preludeLocation.isValid()) {
-        if (mainLocation.isValid()) {
-            status = detect_bootstrap(segmentManager, mainLocation, &preludeLocation);
-        } else {
-            status = InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
-            "either main location or prelude location must be specified");
-        }
-        if (status.notOk()) {
-            goto err;
-        }
-    } else {
-        preludeLocation = options.preludeLocation;
-    }
-
-    // allocate the type manager using intrinsics from the specified prelude
-    status = allocate_type_manager(segmentManager, preludeLocation, &typeManager);
-    if (status.notOk()) {
-        goto err;
-    }
-
-    portMultiplexer = new PortMultiplexer();
-    subroutineManager = new SubroutineManager(segmentManager);
-    systemScheduler = new SystemScheduler(loop);
-
-    // allocate the remaining subsystems
-    status = allocate_heap_manager(segmentManager, systemScheduler, preludeLocation, heap, &heapManager);
-    if (status.notOk()) {
-        goto err;
-    }
+    /*
+     * WARNING: loop is not a managed pointer so we can't fail or exit early until we have transferred
+     * ownership to the interpreter state!
+     */
 
     // allocate the interpreter state
-    stateptr = new InterpreterState(loop, std::move(heap), segmentManager, typeManager,
-        subroutineManager, systemScheduler, portMultiplexer, heapManager);
-    state = std::shared_ptr<InterpreterState>(stateptr);
+    auto state = std::shared_ptr<InterpreterState>(new InterpreterState(
+        loop, options.preludeLocation, std::move(loader), std::move(heap)));
 
     // if main location was specified then load it
-    if (mainLocation.isValid()) {
-        TU_RETURN_IF_NOT_OK(state->reload(mainLocation));
+    if (options.mainLocation.isValid()) {
+        TU_RETURN_IF_NOT_OK(state->load(options.mainLocation));
     }
-    return state;
 
-err:
-    delete heapManager;
-    delete portMultiplexer;
-    delete systemScheduler;
-    delete subroutineManager;
-    delete segmentManager;
-    uv_loop_close(loop);
-    delete loop;
-    return status;
+    return state;
 }
 
 lyric_common::ModuleLocation
@@ -347,9 +272,9 @@ lyric_runtime::InterpreterState::getMainLocation() const
 }
 
 tu_uint64
-lyric_runtime::InterpreterState::getReloadEpochMillis() const
+lyric_runtime::InterpreterState::getLoadEpochMillis() const
 {
-    return m_reloadEpochMillis;
+    return m_loadEpochMillis;
 }
 
 tempo_utils::StatusCode
@@ -373,37 +298,37 @@ lyric_runtime::InterpreterState::currentCoro() const
 lyric_runtime::SegmentManager *
 lyric_runtime::InterpreterState::segmentManager() const
 {
-    return m_segmentManager;
+    return m_segmentManager.get();
 }
 
 lyric_runtime::TypeManager *
 lyric_runtime::InterpreterState::typeManager() const
 {
-    return m_typeManager;
+    return m_typeManager.get();
 }
 
 lyric_runtime::SubroutineManager *
 lyric_runtime::InterpreterState::subroutineManager() const
 {
-    return m_subroutineManager;
+    return m_subroutineManager.get();
 }
 
 lyric_runtime::SystemScheduler *
 lyric_runtime::InterpreterState::systemScheduler() const
 {
-    return m_systemScheduler;
+    return m_systemScheduler.get();
 }
 
 lyric_runtime::PortMultiplexer *
 lyric_runtime::InterpreterState::portMultiplexer() const
 {
-    return m_portMultiplexer;
+    return m_portMultiplexer.get();
 }
 
 lyric_runtime::HeapManager *
 lyric_runtime::InterpreterState::heapManager() const
 {
-    return m_heapManager;
+    return m_heapManager.get();
 }
 
 uv_loop_t *
@@ -413,14 +338,81 @@ lyric_runtime::InterpreterState::mainLoop() const
 }
 
 tempo_utils::Status
-lyric_runtime::InterpreterState::reload(const lyric_common::ModuleLocation &mainLocation)
+lyric_runtime::InterpreterState::initialize(const lyric_common::ModuleLocation &mainLocation)
 {
+    TU_ASSERT (m_segmentManager == nullptr);
+    TU_ASSERT (mainLocation.isValid());
+
+    if (m_loader == nullptr)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid interpreter state loader");
+
+    // allocate a new segment manager
+    auto segmentManager = std::make_unique<SegmentManager>(m_loader);
+    TU_RETURN_IF_NOT_OK (segmentManager->setOrigin(mainLocation));
+
+    // the prelude must either be explicitly specified or inferred from the main location
+    lyric_common::ModuleLocation preludeLocation;
+    if (!m_preludeLocation.isValid()) {
+        if (!mainLocation.isValid())
+            return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                "either main location or prelude location must be specified");
+        TU_RETURN_IF_NOT_OK (detect_bootstrap(
+            segmentManager.get(), mainLocation, preludeLocation));
+    } else {
+        preludeLocation = m_preludeLocation;
+    }
+
+    // allocate the type manager using intrinsics from the specified prelude
+    std::unique_ptr<TypeManager> typeManager;
+    TU_RETURN_IF_NOT_OK (allocate_type_manager(segmentManager.get(), preludeLocation, typeManager));
+
+    auto portMultiplexer = std::make_unique<PortMultiplexer>();
+    auto subroutineManager = std::make_unique<SubroutineManager>(segmentManager.get());
+    auto systemScheduler = std::make_unique<SystemScheduler>(m_loop);
+
+    // allocate the remaining subsystems
+    std::unique_ptr<HeapManager> heapManager;
+    TU_RETURN_IF_NOT_OK (allocate_heap_manager(
+        segmentManager.get(), systemScheduler.get(), preludeLocation, m_heap, heapManager));
+
+    // transfer ownership to this
+    m_segmentManager = std::move(segmentManager);
+    m_preludeLocation = std::move(preludeLocation);
+    m_typeManager = std::move(typeManager);
+    m_portMultiplexer = std::move(portMultiplexer);
+    m_subroutineManager = std::move(subroutineManager);
+    m_systemScheduler = std::move(systemScheduler);
+    m_heapManager = std::move(heapManager);
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_runtime::InterpreterState::load(const lyric_common::ModuleLocation &mainLocation)
+{
+    if (!mainLocation.isValid())
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "invalid main location");
+    if (!mainLocation.isAbsolute())
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "cannot initialize interpreter; main location {} must be absolute location",
+            mainLocation.toString());
+
+    // if state is not yet initialized then initialize it
+    if (m_segmentManager == nullptr) {
+        TU_RETURN_IF_NOT_OK (initialize(mainLocation));
+    }
+
     // load segment for the main module from the specified main location
     auto *segment = m_segmentManager->getOrLoadSegment(mainLocation);
     if (segment == nullptr)
         return InterpreterStatus::forCondition(
             InterpreterCondition::kMissingObject,
             "missing object {}", mainLocation.toString());
+
+    // update the origin
+    TU_RETURN_IF_NOT_OK (m_segmentManager->setOrigin(mainLocation));
 
     auto mainObject = segment->getObject().getObject();
 
@@ -485,7 +477,7 @@ lyric_runtime::InterpreterState::reload(const lyric_common::ModuleLocation &main
 
     // initialize process accounting
     m_mainLocation = mainLocation;
-    m_reloadEpochMillis = ToUnixMillis(absl::Now());
+    m_loadEpochMillis = ToUnixMillis(absl::Now());
     m_statusCode = tempo_utils::StatusCode::kUnknown;
     m_active = true;
 

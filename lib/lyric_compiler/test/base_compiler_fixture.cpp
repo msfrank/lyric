@@ -32,16 +32,16 @@ BaseCompilerFixture::runComputationSet(
         origin, depStates, builder->getCache(), &tempDirectory));
 
     lyric_runtime::InterpreterStateOptions options;
+    options.mainLocation = origin.resolve(lyric_common::ModuleLocation::fromString(mainKey.getId()));
 
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
     loaderChain.push_back(builder->getBootstrapLoader());
     loaderChain.push_back(dependencyLoader);
-    options.loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
+    auto loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
 
     // construct the interpreter state
-    auto mainLocation = origin.resolve(lyric_common::ModuleLocation::fromString(mainKey.getId()));
     std::shared_ptr<lyric_runtime::InterpreterState> state;
-    TU_ASSIGN_OR_RETURN (state, lyric_runtime::InterpreterState::create(options, mainLocation));
+    TU_ASSIGN_OR_RETURN (state, lyric_runtime::InterpreterState::create(loader, options));
 
     // run the module in the interpreter
     lyric_test::TestInspector inspector;

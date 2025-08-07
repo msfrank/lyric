@@ -121,6 +121,7 @@ lyric_test::LyricTester::runModule(
         origin, targetComputation, cache, &tempDirectory));
 
     lyric_runtime::InterpreterStateOptions options;
+    options.mainLocation = origin.resolve(moduleLocation);
 
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
     loaderChain.push_back(builder->getBootstrapLoader());
@@ -128,12 +129,11 @@ lyric_test::LyricTester::runModule(
     if (m_options.fallbackLoader) {
         loaderChain.push_back(m_options.fallbackLoader);
     }
-    options.loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
+    auto loader = std::make_shared<lyric_runtime::ChainLoader>(loaderChain);
 
     // construct the interpreter state
     std::shared_ptr<lyric_runtime::InterpreterState> state;
-    TU_ASSIGN_OR_RETURN (state, lyric_runtime::InterpreterState::create(
-        options, origin.resolve(moduleLocation)));
+    TU_ASSIGN_OR_RETURN (state, lyric_runtime::InterpreterState::create(loader, options));
 
     // run the module in the interpreter
     lyric_test::TestInspector inspector;

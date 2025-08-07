@@ -32,7 +32,7 @@ lyric_runtime::BytecodeInterpreter::run()
     TU_ASSERT (m_recursionDepth == 0);
 
     interpreterExit.statusCode = m_state->getStatusCode();
-    interpreterExit.interpreterStartEpochMillis = m_state->getReloadEpochMillis();
+    interpreterExit.interpreterStartEpochMillis = m_state->getLoadEpochMillis();
     interpreterExit.instructionCount = m_instructionCounter;
 
     return interpreterExit;

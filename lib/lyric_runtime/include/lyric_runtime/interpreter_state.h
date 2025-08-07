@@ -20,22 +20,30 @@
 namespace lyric_runtime {
 
     struct InterpreterStateOptions {
-        std::shared_ptr<AbstractLoader> loader;
+        /**
+         *
+         */
         lyric_common::ModuleLocation preludeLocation = {};
+        /**
+         *
+         */
+        lyric_common::ModuleLocation mainLocation = {};
+        /**
+         *
+         */
         std::shared_ptr<AbstractLoader> bootstrapLoader = {};
+        /**
+         *
+         */
         std::shared_ptr<AbstractHeap> heap = {};
     };
 
     class InterpreterState : public std::enable_shared_from_this<InterpreterState> {
     public:
-        InterpreterState();
-        static tempo_utils::Result<std::shared_ptr<InterpreterState>> create(
-            const InterpreterStateOptions &options,
-            const lyric_common::ModuleLocation &mainLocation = {});
         virtual ~InterpreterState();
 
         lyric_common::ModuleLocation getMainLocation() const;
-        tu_uint64 getReloadEpochMillis() const;
+        tu_uint64 getLoadEpochMillis() const;
         tempo_utils::StatusCode getStatusCode() const;
         bool isActive() const;
 
@@ -50,47 +58,45 @@ namespace lyric_runtime {
         virtual HeapManager *heapManager() const;
         virtual uv_loop_t *mainLoop() const;
 
-        tempo_utils::Status reload(const lyric_common::ModuleLocation &mainLocation);
+        tempo_utils::Status load(const lyric_common::ModuleLocation &mainLocation);
         tempo_utils::Status halt(tempo_utils::StatusCode statusCode);
 
         // heap management
 
         RefHandle createHandle(const DataCell &ref);
 
-    private:
-        uv_loop_t *m_loop;
-        std::shared_ptr<AbstractHeap> m_heap;
-        SegmentManager *m_segmentManager;
-        TypeManager *m_typeManager;
-        SubroutineManager *m_subroutineManager;
-        SystemScheduler *m_systemScheduler;
-        PortMultiplexer *m_portMultiplexer;
-        HeapManager *m_heapManager;
+        static tempo_utils::Result<std::shared_ptr<InterpreterState>> create(
+            std::shared_ptr<AbstractLoader> loader,
+            const InterpreterStateOptions &options = {});
 
+    private:
+        // set in constructor
+        uv_loop_t *m_loop;
+        lyric_common::ModuleLocation m_preludeLocation;
+        std::shared_ptr<AbstractLoader> m_loader;
+        std::shared_ptr<AbstractHeap> m_heap;
+
+        // set in initialize method
+        std::unique_ptr<SegmentManager> m_segmentManager;
+        std::unique_ptr<TypeManager> m_typeManager;
+        std::unique_ptr<SubroutineManager> m_subroutineManager;
+        std::unique_ptr<SystemScheduler> m_systemScheduler;
+        std::unique_ptr<PortMultiplexer> m_portMultiplexer;
+        std::unique_ptr<HeapManager> m_heapManager;
+
+        // set in load method
         lyric_common::ModuleLocation m_mainLocation;
-        tu_uint64 m_reloadEpochMillis;
+        tu_uint64 m_loadEpochMillis;
         tempo_utils::StatusCode m_statusCode;
         bool m_active;
 
         InterpreterState(
             uv_loop_t *loop,
-            std::shared_ptr<AbstractHeap> heap,
-            SegmentManager *segmentManager,
-            TypeManager *typeManager,
-            SubroutineManager *subroutineManager,
-            SystemScheduler *systemScheduler,
-            PortMultiplexer *portMultiplexer,
-            HeapManager *heapManager);
+            lyric_common::ModuleLocation preludeLocation,
+            std::shared_ptr<AbstractLoader> loader,
+            std::shared_ptr<AbstractHeap> heap);
 
-        static tempo_utils::Result<std::shared_ptr<InterpreterState>> createInterpreterState(
-            const lyric_common::ModuleLocation &location,
-            uv_loop_t *m_loop,
-            std::shared_ptr<AbstractHeap> heap,
-            SegmentManager *segmentManager,
-            SubroutineManager *subroutineManager,
-            SystemScheduler *systemScheduler,
-            PortMultiplexer *portMultiplexer,
-            HeapManager *heapManager);
+        tempo_utils::Status initialize(const lyric_common::ModuleLocation &mainLocation);
 
         friend class BytecodeInterpreter;
         friend class RefHandle;

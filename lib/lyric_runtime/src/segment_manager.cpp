@@ -9,13 +9,9 @@
 #include <lyric_runtime/internal/resolve_link.h>
 #include <lyric_runtime/segment_manager.h>
 
-lyric_runtime::SegmentManager::SegmentManager(
-    const lyric_common::ModuleLocation &origin,
-    std::shared_ptr<AbstractLoader> loader)
+lyric_runtime::SegmentManager::SegmentManager(std::shared_ptr<AbstractLoader> loader)
 {
-    m_data.origin = origin;
     m_data.loader = std::move(loader);
-    TU_ASSERT (m_data.origin.isValid());
     TU_ASSERT (m_data.loader != nullptr);
 }
 
@@ -31,6 +27,22 @@ lyric_runtime::SegmentManager::~SegmentManager()
     }
     m_data.segments.clear();
     m_data.segmentcache.clear();
+}
+
+lyric_common::ModuleLocation
+lyric_runtime::SegmentManager::getOrigin() const
+{
+    return m_data.origin;
+}
+
+tempo_utils::Status
+lyric_runtime::SegmentManager::setOrigin(const lyric_common::ModuleLocation &origin)
+{
+    if (!origin.isValid())
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "segment manager origin is invalid");
+    m_data.origin = origin;
+    return {};
 }
 
 lyric_runtime::BytecodeSegment *
