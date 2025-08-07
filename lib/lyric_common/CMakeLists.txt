@@ -33,7 +33,7 @@ target_sources(lyric_common
     )
 
 # set the library version
-set_target_properties(lyric_common PROPERTIES VERSION "${FULL_VERSION}" SOVERSION "${MAJOR_VERSION}")
+set_target_properties(lyric_common PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION "${PROJECT_VERSION_MAJOR}")
 
 # set the RPATH if on OS X
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

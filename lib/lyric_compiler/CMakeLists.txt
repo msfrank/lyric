@@ -136,7 +136,7 @@ target_sources(lyric_compiler PRIVATE
     )
 
 # set the library version
-set_target_properties(lyric_compiler PROPERTIES VERSION "${FULL_VERSION}" SOVERSION "${MAJOR_VERSION}")
+set_target_properties(lyric_compiler PROPERTIES VERSION "${PROJECT_VERSION}" SOVERSION "${PROJECT_VERSION_MAJOR}")
 
 # set the RPATH if on OS X
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
