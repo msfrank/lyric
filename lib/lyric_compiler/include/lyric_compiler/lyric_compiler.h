@@ -23,16 +23,6 @@ namespace lyric_compiler {
          *
          */
         std::shared_ptr<lyric_rewriter::VisitorRegistry> visitorRegistry = {};
-        /**
-         *
-         */
-        absl::flat_hash_map<
-            lyric_common::ModuleLocation,
-            absl::flat_hash_set<lyric_common::SymbolPath>> envSymbols = {};
-        /**
-         *
-         */
-        bool touchExternalSymbols = false;
     };
 
     class LyricCompiler {

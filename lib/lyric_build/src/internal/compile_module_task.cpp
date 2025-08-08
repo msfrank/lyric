@@ -17,8 +17,8 @@
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
 #include <tempo_config/base_conversions.h>
+#include <tempo_config/config_builder.h>
 #include <tempo_config/container_conversions.h>
-#include <tempo_config/parse_config.h>
 #include <tempo_tracing/tracing_schema.h>
 #include <tempo_utils/date_time.h>
 #include <tempo_utils/log_message.h>
@@ -45,35 +45,16 @@ lyric_build::internal::CompileModuleTask::configure(const TaskSettings *config)
     m_moduleLocation = lyric_common::ModuleLocation::fromString(modulePath.toString());
 
     lyric_common::ModuleLocationParser preludeLocationParser(lyric_bootstrap::preludeLocation());
-    tempo_config::PathParser envSymbolsPathParser(std::filesystem::path{});
-    tempo_config::OptionTParser<std::filesystem::path> optEnvSymbolsPathParser(&envSymbolsPathParser);
-    tempo_config::BooleanParser touchExternalSymbolsParser(false);
+    lyric_common::ModuleLocationParser environmentModuleParser;
+    tempo_config::SeqTParser environmentModulesParser(&environmentModuleParser, {});
 
     // set the compiler prelude location
     TU_RETURN_IF_NOT_OK(parse_config(m_objectStateOptions.preludeLocation, preludeLocationParser,
         config, taskId, "preludeLocation"));
 
-    // check for environment symbol map and load it into compiler options if found
-    Option<std::filesystem::path> optEnvSymbolsPath;
-    TU_RETURN_IF_NOT_OK(parse_config(optEnvSymbolsPath, optEnvSymbolsPathParser,
-        config, taskId, "envSymbolsPath"));
-    if (!optEnvSymbolsPath.isEmpty()) {
-        lyric_common::ModuleLocationParser keyParser;
-        lyric_common::SymbolPathParser symbolPathParser;
-        tempo_config::SetTParser<lyric_common::SymbolPath> valueParser(&symbolPathParser);
-        tempo_config::MapKVParser<
-            lyric_common::ModuleLocation,
-            absl::flat_hash_set<lyric_common::SymbolPath>
-            >
-        envSymbolsParser(&keyParser, &valueParser);
-        absl::flat_hash_map<lyric_common::ModuleLocation,std::vector<lyric_common::SymbolPath>> envSymbols;
-        TU_RETURN_IF_NOT_OK(tempo_config::parse_config_file(m_compilerOptions.envSymbols,
-            envSymbolsParser, optEnvSymbolsPath.getValue()));
-    }
-
-    // if true, then instruct compiler to add external symbols to links section
-    TU_RETURN_IF_NOT_OK(parse_config(m_compilerOptions.touchExternalSymbols, touchExternalSymbolsParser,
-        config, taskId, "touchExternalSymbols"));
+    // check for environment modules
+    TU_RETURN_IF_NOT_OK(parse_config(m_objectStateOptions.environmentModules, environmentModulesParser,
+        config, taskId, "environmentModules"));
 
     // configure the parse_module dependency
     m_parseTarget = TaskKey("parse_module", taskId.getId());
@@ -185,11 +166,17 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
         if (location.hasScheme() || location.hasAuthority())    // ignore imports that aren't in the workspace
             continue;
         auto importPath = location.getPath().toString();
-        analyzeTargets.insert(
-            TaskKey("analyze_module", importPath, tempo_config::ConfigMap({
-                {"preludeLocation", tempo_config::ConfigValue(m_objectStateOptions.preludeLocation.toString())},
-            })
-        ));
+        auto mapBuilder = tempo_config::startMap();
+        mapBuilder = mapBuilder.put(
+            "environmentLocation", tempo_config::valueNode(m_objectStateOptions.preludeLocation.toString()));
+        if (!m_objectStateOptions.environmentModules.empty()) {
+            auto seqBuilder = tempo_config::startSeq();
+            for (const auto &environmentLocation : m_objectStateOptions.environmentModules) {
+                seqBuilder = seqBuilder.append(tempo_config::valueNode(environmentLocation.toString()));
+            }
+            mapBuilder = mapBuilder.put("environmentModules", seqBuilder.buildNode());
+        }
+        analyzeTargets.insert(TaskKey("analyze_module", importPath, mapBuilder.buildMap()));
     }
 
     m_compileTargets.insert(analyzeTargets.cbegin(), analyzeTargets.cend());

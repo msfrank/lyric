@@ -145,13 +145,8 @@ lyric_assembler::ObjectState::createRoot(const lyric_common::ModuleLocation &pre
     m_importcache = new ImportCache(this, m_localModuleCache, m_systemModuleCache,
         m_shortcutResolver, m_symbolcache);
 
-    // load the prelude object
-    std::shared_ptr<lyric_importer::ModuleImport> preludeImport;
-    TU_ASSIGN_OR_RETURN (preludeImport, m_importcache->importModule(
-        preludeLocation, ImportFlags::SystemBootstrap));
-
     // initialize the root
-    TU_RETURN_IF_NOT_OK (m_root->initialize(preludeImport));
+    TU_RETURN_IF_NOT_OK (m_root->initialize(preludeLocation, m_options.environmentModules));
 
     // if specified then find the plugin associated with the module
     if (m_pluginLocation.isValid()) {

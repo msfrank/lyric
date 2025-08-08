@@ -53,20 +53,37 @@ namespace lyric_assembler {
 
     enum class ProcImportMode {
         Invalid,
-        None,
-        InlineableOnly,
-        All,
+        None,                       /*< Do not import any procs. */
+        InlineableOnly,             /*< Import inlineable procs only. */
+        All,                        /*< Import all procs. */
     };
 
     struct ObjectStateLimits {
     };
 
     struct ObjectStateOptions {
-        tu_uint32 majorVersion = 0;
-        tu_uint32 minorVersion = 0;
-        tu_uint32 patchVersion = 0;
+        tu_uint32 majorVersion = 0; /*< Object major version. */
+        tu_uint32 minorVersion = 0; /*< Object minor version. */
+        tu_uint32 patchVersion = 0; /*< Object patch version. */
+        /**
+         * The location of the prelude module. If not specified then the default location from
+         * lyric_bootstrap is used.
+         */
         lyric_common::ModuleLocation preludeLocation = {};
+        /**
+         * The location of any environment modules. If not empty then the vector is processed in
+         * reverse order and aliases for all top level symbols in each location are inserted into
+         * the internal environment block.
+         */
+        std::vector<lyric_common::ModuleLocation> environmentModules = {};
+        /**
+         * The proc import mode. If not specified then defaults to only importing procs which are
+         * marked as inlineable.
+         */
         ProcImportMode procImportMode = ProcImportMode::InlineableOnly;
+        /**
+         * Object state limits.
+         */
         ObjectStateLimits limits = {};
     };
 
