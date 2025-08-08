@@ -25,7 +25,7 @@ lyric_compiler::LambdaHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before LambdaHandler@" << this;
+    TU_LOG_VV << "before LambdaHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -83,7 +83,7 @@ lyric_compiler::LambdaHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_INFO << "after LambdaHandler@" << this;
+    TU_LOG_VV << "after LambdaHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -166,7 +166,7 @@ lyric_compiler::LambdaFrom::decide(
     const lyric_parser::ArchetypeNode *node,
     DecideContext &ctx)
 {
-    TU_LOG_INFO << "decide LambdaFrom@" << this;
+    TU_LOG_VV << "decide LambdaFrom@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();

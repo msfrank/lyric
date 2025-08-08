@@ -13,7 +13,7 @@ StatusRef::StatusRef(const lyric_runtime::VirtualTable *vtable)
 
 StatusRef::~StatusRef()
 {
-    TU_LOG_INFO << "free" << StatusRef::toString();
+    TU_LOG_VV << "free" << StatusRef::toString();
 }
 
 lyric_runtime::DataCell

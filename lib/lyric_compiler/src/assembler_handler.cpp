@@ -48,7 +48,7 @@ public:
         auto *resource = lyric_schema::kLyricAstVocabulary.getResource(child->getIdValue());
         auto astId = resource->getId();
 
-        TU_LOG_INFO << "before LoadData@" << this << ": "
+        TU_LOG_VV << "before LoadData@" << this << ": "
             << resource->getNsUrl() << "#" << resource->getName();
 
         auto *block = getBlock();
@@ -134,7 +134,7 @@ public:
         auto *resource = lyric_schema::kLyricAstVocabulary.getResource(child->getIdValue());
         auto astId = resource->getId();
 
-        TU_LOG_INFO << "before StoreData@" << this << ": "
+        TU_LOG_VV << "before StoreData@" << this << ": "
             << resource->getNsUrl() << "#" << resource->getName();
 
         auto *block = getBlock();
@@ -184,7 +184,7 @@ lyric_compiler::AssemblerChoice::decide(
     auto *resource = lyric_schema::kLyricAssemblerVocabulary.getResource(node->getIdValue());
 
     auto astId = resource->getId();
-    TU_LOG_INFO << "decide AssemblerChoice@" << this << ": "
+    TU_LOG_VV << "decide AssemblerChoice@" << this << ": "
                 << resource->getNsUrl() << "#" << resource->getName();
 
     switch (astId) {

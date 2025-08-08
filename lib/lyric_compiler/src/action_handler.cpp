@@ -22,7 +22,7 @@ lyric_compiler::ActionHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before ActionHandler@" << this;
+    TU_LOG_VV << "before ActionHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -39,7 +39,7 @@ lyric_compiler::ActionHandler::after(
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::AfterContext &ctx)
 {
-    TU_LOG_INFO << "after ActionHandler@" << this;
+    TU_LOG_VV << "after ActionHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();

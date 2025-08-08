@@ -129,7 +129,7 @@ lyric_compiler::define_enum_default_init(
         TU_RETURN_IF_NOT_OK (defenum->enumSymbol->setMemberInitialized(memberName));
     }
 
-    TU_LOG_INFO << "declared ctor " << defenum->initCall->getSymbolUrl()
+    TU_LOG_V << "declared ctor " << defenum->initCall->getSymbolUrl()
                 << " for " << defenum->enumSymbol->getSymbolUrl();
 
     // add return instruction
@@ -174,7 +174,7 @@ lyric_compiler::declare_enum_member(
     TU_ASSIGN_OR_RETURN (member.fieldSymbol, enumSymbol->declareMember(
         identifier, memberType, isVariable, convert_access_type(access)));
 
-    TU_LOG_INFO << "declared member " << identifier << " for " << enumSymbol->getSymbolUrl();
+    TU_LOG_V << "declared member " << identifier << " for " << enumSymbol->getSymbolUrl();
 
     // define the initializer if specified
     if (node->numChildren() > 0) {
@@ -219,7 +219,7 @@ lyric_compiler::declare_enum_method(
     TU_ASSIGN_OR_RETURN (method.callSymbol, enumSymbol->declareMethod(
         identifier, convert_access_type(access)));
 
-    TU_LOG_INFO << "declared method " << identifier << " for " << enumSymbol->getSymbolUrl();
+    TU_LOG_V << "declared method " << identifier << " for " << enumSymbol->getSymbolUrl();
 
     auto *resolver = method.callSymbol->callResolver();
 
@@ -262,7 +262,7 @@ lyric_compiler::declare_enum_impl(
     // declare the impl
     TU_ASSIGN_OR_RETURN (impl.implHandle, enumSymbol->declareImpl(implType));
 
-    TU_LOG_INFO << "declared impl " << implType << " for " << enumSymbol->getSymbolUrl();
+    TU_LOG_V << "declared impl " << implType << " for " << enumSymbol->getSymbolUrl();
 
     return impl;
 }

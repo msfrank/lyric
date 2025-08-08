@@ -37,7 +37,7 @@ lyric_compiler::DefEnumHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before DefEnumHandler@" << this;
+    TU_LOG_VV << "before DefEnumHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -176,7 +176,7 @@ lyric_compiler::DefEnumHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_INFO << "after DefEnumHandler@" << this;
+    TU_LOG_VV << "after DefEnumHandler@" << this;
 
     auto *driver = getDriver();
 

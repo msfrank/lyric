@@ -270,40 +270,40 @@ public:
         int index = m_props[v];
 
         if (v == m_priv->entry->blockVertex) {
-            TU_LOG_INFO << "vertex " << index << " (entry)";
+            TU_LOG_VV << "vertex " << index << " (entry)";
         } else if (v == m_priv->exit->blockVertex) {
-            TU_LOG_INFO << "vertex " << index << " (exit)";
+            TU_LOG_VV << "vertex " << index << " (exit)";
         } else {
-            TU_LOG_INFO << "vertex " << index;
+            TU_LOG_VV << "vertex " << index;
         }
         const auto &basicBlock = m_priv->vertexBlocks.at(v);
 
         if (!basicBlock->name.empty()) {
-            TU_LOG_INFO << "    label: " << basicBlock->name;
+            TU_LOG_VV << "    label: " << basicBlock->name;
         }
 
         if (!basicBlock->phis.empty()) {
-            TU_LOG_INFO << "    phis:";
+            TU_LOG_VV << "    phis:";
             for (const auto &phi : basicBlock->phis) {
-                TU_LOG_INFO << "        " << phi.toString();
+                TU_LOG_VV << "        " << phi.toString();
             }
         }
 
-        TU_LOG_INFO << "    block:";
+        TU_LOG_VV << "    block:";
         const auto &directives = basicBlock->directives;
         for (const auto &directive : directives) {
             if (directive->isValid()) {
-                TU_LOG_INFO << "        " << directive->resolveDirective()->toString();
+                TU_LOG_VV << "        " << directive->resolveDirective()->toString();
             } else {
-                TU_LOG_INFO << "        ???";
+                TU_LOG_VV << "        ???";
             }
         }
 
         if (basicBlock->transfer) {
             auto &transfer = basicBlock->transfer;
-            TU_LOG_INFO << "    transfer: " << lyric_object::opcode_to_name(transfer->trailer);
+            TU_LOG_VV << "    transfer: " << lyric_object::opcode_to_name(transfer->trailer);
             if (transfer->operand) {
-                TU_LOG_INFO << "        operand: " << transfer->operand->toString();
+                TU_LOG_VV << "        operand: " << transfer->operand->toString();
             }
         }
 
@@ -311,16 +311,16 @@ public:
             auto &next = basicBlock->next;
             if (m_priv->exit->blockVertex == boost::target(next->nextEdge, g)) {
                 if (next->operand) {
-                    TU_LOG_INFO << "    return: " << next->operand->toString();
+                    TU_LOG_VV << "    return: " << next->operand->toString();
                 } else {
-                    TU_LOG_INFO << "    return";
+                    TU_LOG_VV << "    return";
                 }
             }
         }
 
         lyric_optimizer::internal::OutEdgeIterator it, end;
 
-        TU_LOG_INFO << "    out edges:";
+        TU_LOG_VV << "    out edges:";
         for (boost::tie(it, end) = boost::out_edges(v, g); it != end; ++it) {
             auto e = *it;
             Vertex src = boost::source(e, g);
@@ -328,10 +328,10 @@ public:
             tu_uint32 targetId = target_id[e];
             const auto &labelName = label_name[e];
             if (!labelName.empty()) {
-                TU_LOG_INFO << "        " << (int) m_props[src] << " -> " << (int) m_props[tgt]
+                TU_LOG_VV << "        " << (int) m_props[src] << " -> " << (int) m_props[tgt]
                             << " label=" << labelName << " targetId=" << targetId;
             } else {
-                TU_LOG_INFO << "        " << (int) m_props[src] << " -> " << (int) m_props[tgt];
+                TU_LOG_VV << "        " << (int) m_props[src] << " -> " << (int) m_props[tgt];
             }
         }
     }

@@ -25,7 +25,7 @@ lyric_compiler::CompilerChoice::decide(
     auto *resource = lyric_schema::kLyricCompilerVocabulary.getResource(node->getIdValue());
 
     auto astId = resource->getId();
-    TU_LOG_INFO << "decide CompilerChoice@" << this << ": "
+    TU_LOG_VV << "decide CompilerChoice@" << this << ": "
                 << resource->getNsUrl() << "#" << resource->getName();
 
     auto *block = getBlock();

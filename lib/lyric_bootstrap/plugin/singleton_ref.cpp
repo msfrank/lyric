@@ -13,7 +13,7 @@ SingletonRef::SingletonRef(const lyric_runtime::VirtualTable *vtable)
 
 SingletonRef::~SingletonRef()
 {
-    TU_LOG_INFO << "free" << SingletonRef::toString();
+    TU_LOG_VV << "free" << SingletonRef::toString();
 }
 
 lyric_runtime::DataCell

@@ -145,7 +145,7 @@ apply_phi_functions(
     // apply each phi function in order
     for (auto index : topologicalOrder) {
         auto &instance = instances.at(index);
-        TU_LOG_INFO << "apply phi " << instance.toString();
+        TU_LOG_VV << "apply phi " << instance.toString();
     }
 
     return {};

@@ -13,7 +13,7 @@ ObjectRef::ObjectRef(const lyric_runtime::VirtualTable *vtable)
 
 ObjectRef::~ObjectRef()
 {
-    TU_LOG_INFO << "free" << ObjectRef::toString();
+    TU_LOG_VV << "free" << ObjectRef::toString();
 }
 
 lyric_runtime::DataCell

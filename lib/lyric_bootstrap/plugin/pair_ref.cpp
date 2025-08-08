@@ -12,7 +12,7 @@ PairRef::PairRef(const lyric_runtime::VirtualTable *vtable)
 
 PairRef::~PairRef()
 {
-    TU_LOG_INFO << "free " << PairRef::toString();
+    TU_LOG_VV << "free " << PairRef::toString();
 }
 
 lyric_runtime::DataCell

@@ -33,7 +33,7 @@ lyric_runtime::UrlRef::UrlRef(const ExistentialTable *etable, const tempo_utils:
 
 lyric_runtime::UrlRef::~UrlRef()
 {
-    TU_LOG_INFO << "free UrlRef" << UrlRef::toString();
+    TU_LOG_VV << "free UrlRef" << UrlRef::toString();
 }
 
 const lyric_runtime::AbstractMemberResolver *

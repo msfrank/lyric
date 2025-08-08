@@ -283,7 +283,7 @@ lyric_compiler::MatchPredicate::decide(
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
     auto astId = resource->getId();
-    TU_LOG_INFO << "decide MatchPredicate@" << this << ": "
+    TU_LOG_VV << "decide MatchPredicate@" << this << ": "
                 << resource->getNsUrl() << "#" << resource->getName();
 
     auto *block = getBlock();

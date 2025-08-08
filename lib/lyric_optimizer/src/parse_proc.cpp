@@ -44,7 +44,7 @@ scan_for_basic_blocks(
         const auto &statement = fragment->getStatement(i);
         auto &instruction = statement.instruction;
 
-        TU_LOG_INFO << "scanning instruction " << instruction->toString();
+        TU_LOG_VV << "scanning instruction " << instruction->toString();
 
         switch (instruction->getType()) {
 
@@ -64,7 +64,7 @@ scan_for_basic_blocks(
                     nextProposed->exitState = std::make_unique<lyric_optimizer::ActivationState>(*nextProposed->entryState);
                     currProposed = nextProposed.get();
                     proposedBlocks.push_back(std::move(nextProposed));
-                    TU_LOG_INFO << "created block with io=" << i + 1;
+                    TU_LOG_VV << "created block with io=" << i + 1;
                 }
 
                 break;
@@ -79,7 +79,7 @@ scan_for_basic_blocks(
                     nextProposed->exitState = std::make_unique<lyric_optimizer::ActivationState>(*nextProposed->entryState);
                     currProposed = nextProposed.get();
                     proposedBlocks.push_back(std::move(nextProposed));
-                    TU_LOG_INFO << "created block with io=" << i;
+                    TU_LOG_VV << "created block with io=" << i;
                 }
 
                 // set label
@@ -600,7 +600,7 @@ minimize_phi_functions(
 
     } while (progress);
 
-    TU_LOG_INFO << "minimized CFG to " << (int) phiStates.size() << " phis after " << numRounds << " rounds";
+    TU_LOG_VV << "minimized CFG to " << (int) phiStates.size() << " phis after " << numRounds << " rounds";
 
     return {};
 }

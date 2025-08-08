@@ -15,7 +15,7 @@ lyric_runtime::RestRef::RestRef(const ExistentialTable *etable, std::vector<Data
 
 lyric_runtime::RestRef::~RestRef()
 {
-    TU_LOG_INFO << "free RestRef" << RestRef::toString();
+    TU_LOG_VV << "free RestRef" << RestRef::toString();
 }
 
 const lyric_runtime::AbstractMemberResolver *

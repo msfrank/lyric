@@ -54,7 +54,7 @@ lyric_compiler::AssignmentHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before AssignmentHandler@" << this;
+    TU_LOG_VV << "before AssignmentHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -82,7 +82,7 @@ lyric_compiler::AssignmentHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_INFO << "after AssignmentHandler@" << this;
+    TU_LOG_VV << "after AssignmentHandler@" << this;
 
     auto *block = BaseGrouping::getBlock();
     auto *driver = getDriver();

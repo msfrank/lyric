@@ -35,7 +35,7 @@ lyric_runtime::BytesRef::BytesRef(const ExistentialTable *etable, const tu_uint8
 
 lyric_runtime::BytesRef::~BytesRef()
 {
-    TU_LOG_INFO << "free BytesRef" << BytesRef::toString();
+    TU_LOG_VV << "free BytesRef" << BytesRef::toString();
     if (m_owned) {
         delete[] m_data;
     }

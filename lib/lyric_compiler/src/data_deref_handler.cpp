@@ -38,7 +38,7 @@ lyric_compiler::DataDerefHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before DataDerefHandler@" << this;
+    TU_LOG_VV << "before DataDerefHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -74,7 +74,7 @@ lyric_compiler::DataDerefHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_INFO << "after DataDerefHandler@" << this;
+    TU_LOG_VV << "after DataDerefHandler@" << this;
 
     if (m_isSideEffect) {
         auto *driver = getDriver();

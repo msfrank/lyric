@@ -160,7 +160,7 @@ lyric_compiler::declare_struct_default_init(
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "struct {} is not completely initialized", structSymbol->getSymbolUrl().toString());
 
-    TU_LOG_INFO << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << structSymbol->getSymbolUrl();
+    TU_LOG_V << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << structSymbol->getSymbolUrl();
 
     return ctorSymbol;
 }
@@ -195,7 +195,7 @@ lyric_compiler::declare_struct_member(
     TU_ASSIGN_OR_RETURN (member.fieldSymbol, structSymbol->declareMember(
         identifier, memberType, convert_access_type(access)));
 
-    TU_LOG_INFO << "declared member " << identifier << " for " << structSymbol->getSymbolUrl();
+    TU_LOG_V << "declared member " << identifier << " for " << structSymbol->getSymbolUrl();
 
     // define the initializer if specified
     if (node->numChildren() > 0) {
@@ -321,7 +321,7 @@ lyric_compiler::declare_struct_method(
     TU_ASSIGN_OR_RETURN (method.callSymbol, structSymbol->declareMethod(
         identifier, convert_access_type(access)));
 
-    TU_LOG_INFO << "declared method " << identifier << " for " << structSymbol->getSymbolUrl();
+    TU_LOG_V << "declared method " << identifier << " for " << structSymbol->getSymbolUrl();
 
     auto *resolver = method.callSymbol->callResolver();
 
@@ -364,7 +364,7 @@ lyric_compiler::declare_struct_impl(
     // declare the impl
     TU_ASSIGN_OR_RETURN (impl.implHandle, structSymbol->declareImpl(implType));
 
-    TU_LOG_INFO << "declared impl " << implType << " for " << structSymbol->getSymbolUrl();
+    TU_LOG_V << "declared impl " << implType << " for " << structSymbol->getSymbolUrl();
 
     return impl;
 }

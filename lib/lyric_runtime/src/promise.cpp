@@ -103,7 +103,7 @@ lyric_runtime::Promise::await(SystemScheduler *systemScheduler)
     m_waiter->task = currentTask;
 
     // suspend the current task and set state to Waiting
-    TU_LOG_INFO << "suspending task " << currentTask;
+    TU_LOG_VV << "suspending task " << currentTask;
     systemScheduler->suspendTask(currentTask);
 }
 

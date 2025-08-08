@@ -39,7 +39,7 @@ lyric_compiler::DefInstanceHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before DefInstanceHandler@" << this;
+    TU_LOG_VV << "before DefInstanceHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -170,7 +170,7 @@ lyric_compiler::DefInstanceHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_INFO << "after DefInstanceHandler@" << this;
+    TU_LOG_VV << "after DefInstanceHandler@" << this;
 
     auto *driver = getDriver();
 

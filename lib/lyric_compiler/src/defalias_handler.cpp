@@ -34,7 +34,7 @@ lyric_compiler::DefAliasHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before DefAliasHandler@" << this;
+    TU_LOG_VV << "before DefAliasHandler@" << this;
     return {};
 }
 
@@ -44,7 +44,7 @@ lyric_compiler::DefAliasHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_INFO << "after DefAliasHandler@" << this;
+    TU_LOG_VV << "after DefAliasHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();

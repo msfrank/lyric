@@ -67,7 +67,7 @@ lyric_compiler::CompilerScanDriver::enter(
     auto &groupingData = m_groupings.back();
     auto &grouping = groupingData->grouping;
 
-    TU_LOG_INFO << "PUSH ArchetypeNode@" << node;
+    TU_LOG_VV << "PUSH ArchetypeNode@" << node;
 
     // if grouping is pending, then run before handler and return
     if (groupingData->pending) {
@@ -153,7 +153,7 @@ lyric_compiler::CompilerScanDriver::exit(
     TU_ASSERT (!groupingData->pending);
     auto &grouping = groupingData->grouping;
 
-    TU_LOG_INFO << "POP ArchetypeNode@" << node;
+    TU_LOG_VV << "POP ArchetypeNode@" << node;
 
     // we have reached the end of the node group
     if (groupingData->node == node) {
@@ -276,7 +276,7 @@ lyric_compiler::CompilerScanDriver::popGrouping()
         return CompilerStatus::forCondition(
             CompilerCondition::kCompilerInvariant, "grouping stack is empty");
     m_groupings.pop_back();
-    TU_LOG_INFO << "pop handler (" << (int) m_groupings.size() << " total)";
+    TU_LOG_VV << "pop handler (" << (int) m_groupings.size() << " total)";
     return {};
 }
 
@@ -298,7 +298,7 @@ tempo_utils::Status
 lyric_compiler::CompilerScanDriver::pushResult(const lyric_common::TypeDef &result)
 {
     m_results.push(result);
-    TU_LOG_INFO << "push result " << result.toString() << " (" << (int) m_results.size() << " total)";
+    TU_LOG_VV << "push result " << result.toString() << " (" << (int) m_results.size() << " total)";
     return {};
 }
 
@@ -309,7 +309,7 @@ lyric_compiler::CompilerScanDriver::popResult()
         return CompilerStatus::forCondition(
             CompilerCondition::kCompilerInvariant, "results stack is empty");
     m_results.pop();
-    TU_LOG_INFO << "pop result (" << (int) m_results.size() << " total)";
+    TU_LOG_VV << "pop result (" << (int) m_results.size() << " total)";
     return {};
 }
 

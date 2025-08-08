@@ -128,7 +128,7 @@ lyric_compiler::define_class_default_init(
         TU_RETURN_IF_NOT_OK (defclass->classSymbol->setMemberInitialized(memberName));
     }
 
-    TU_LOG_INFO << "defined default ctor " << defclass->initCall->getSymbolUrl()
+    TU_LOG_V << "defined default ctor " << defclass->initCall->getSymbolUrl()
                 << " for " << defclass->classSymbol->getSymbolUrl();
 
     // add return instruction
@@ -173,7 +173,7 @@ lyric_compiler::declare_class_member(
     TU_ASSIGN_OR_RETURN (member.fieldSymbol, classSymbol->declareMember(
         identifier, memberType, isVariable, convert_access_type(access)));
 
-    TU_LOG_INFO << "declared member " << identifier << " for " << classSymbol->getSymbolUrl();
+    TU_LOG_V << "declared member " << identifier << " for " << classSymbol->getSymbolUrl();
 
     // define the initializer if specified
     if (node->numChildren() > 0) {
@@ -226,7 +226,7 @@ lyric_compiler::declare_class_method(
     TU_ASSIGN_OR_RETURN (method.callSymbol, classSymbol->declareMethod(
         identifier, convert_access_type(access), templateSpec.templateParameters));
 
-    TU_LOG_INFO << "declared method " << identifier << " for " << classSymbol->getSymbolUrl();
+    TU_LOG_V << "declared method " << identifier << " for " << classSymbol->getSymbolUrl();
 
     auto *resolver = method.callSymbol->callResolver();
 
@@ -269,7 +269,7 @@ lyric_compiler::declare_class_impl(
     // declare the impl
     TU_ASSIGN_OR_RETURN (impl.implHandle, classSymbol->declareImpl(implType));
 
-    TU_LOG_INFO << "declared impl " << implType << " for " << classSymbol->getSymbolUrl();
+    TU_LOG_V << "declared impl " << implType << " for " << classSymbol->getSymbolUrl();
 
     return impl;
 }

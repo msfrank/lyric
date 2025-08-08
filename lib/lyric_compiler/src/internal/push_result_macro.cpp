@@ -36,7 +36,7 @@ lyric_compiler::internal::PushResultMacro::rewriteBlock(
     lyric_rewriter::MacroBlock &macroBlock,
     lyric_parser::ArchetypeState *state)
 {
-    TU_LOG_INFO << "rewrite PushResult macro";
+    TU_LOG_VV << "rewrite PushResult macro";
 
     if (macroCallNode->numChildren() != 1)
         return lyric_rewriter::RewriterStatus::forCondition(

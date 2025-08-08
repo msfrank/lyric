@@ -33,7 +33,7 @@ lyric_compiler::TypenameHandler::decide(
     const lyric_parser::ArchetypeNode *node,
     DecideContext &ctx)
 {
-    TU_LOG_INFO << "decide TypenameHandler@" << this;
+    TU_LOG_VV << "decide TypenameHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();

@@ -33,7 +33,7 @@ lyric_compiler::DefConceptHandler::before(
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before DefConceptHandler@" << this;
+    TU_LOG_VV << "before DefConceptHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -130,7 +130,7 @@ lyric_compiler::DefConceptHandler::after(
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::AfterContext &ctx)
 {
-    TU_LOG_INFO << "after DefConceptHandler@" << this;
+    TU_LOG_VV << "after DefConceptHandler@" << this;
 
     if (!m_isSideEffect) {
         auto *driver = getDriver();

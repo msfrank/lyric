@@ -43,7 +43,7 @@ free_node(SeqNode *node)
 
 SeqRef::~SeqRef()
 {
-    TU_LOG_INFO << "free " << SeqRef::toString();
+    TU_LOG_VV << "free " << SeqRef::toString();
     if (m_node != nullptr) {
         free_node(m_node);
     }

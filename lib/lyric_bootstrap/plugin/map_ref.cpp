@@ -368,7 +368,7 @@ MapRef::MapRef(const lyric_runtime::VirtualTable *vtable)
 
 MapRef::~MapRef()
 {
-    TU_LOG_INFO << "free " << MapRef::toString();
+    TU_LOG_VV << "free " << MapRef::toString();
     if (m_node) {
         free_node(m_node);
     }

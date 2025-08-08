@@ -18,7 +18,7 @@ ClosureRef::ClosureRef(const lyric_runtime::VirtualTable *vtable)
 
 ClosureRef::~ClosureRef()
 {
-    TU_LOG_INFO << "free" << ClosureRef::toString();
+    TU_LOG_VV << "free" << ClosureRef::toString();
     m_lexicals.clear();
 }
 
@@ -97,7 +97,7 @@ ClosureRef::applyClosure(
     // push the lambda onto the call stack
     auto ip = getIP();
     currentCoro->pushCall(frame, ip, segment);
-    TU_LOG_INFO << "moved ip to " << ip;
+    TU_LOG_VV << "moved ip to " << ip;
 
     return true;
 }
@@ -386,7 +386,7 @@ closure_apply(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
     // push the lambda onto the call stack
     auto ip = instance->getIP();
     currentCoro->pushCall(trampoline, ip, segment);
-    TU_LOG_INFO << "moved ip to " << ip;
+    TU_LOG_VV << "moved ip to " << ip;
 
     return {};
 }

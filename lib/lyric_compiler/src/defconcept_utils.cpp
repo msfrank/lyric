@@ -41,7 +41,7 @@ lyric_compiler::declare_concept_action(
     TU_ASSIGN_OR_RETURN (action.actionSymbol, conceptSymbol->declareAction(
         identifier, convert_access_type(access)));
 
-    TU_LOG_INFO << "declared method " << identifier << " for " << conceptSymbol->getSymbolUrl();
+    TU_LOG_V << "declared method " << identifier << " for " << conceptSymbol->getSymbolUrl();
 
     return action;
 }
@@ -71,7 +71,7 @@ lyric_compiler::declare_concept_impl(
     // declare the impl
     TU_ASSIGN_OR_RETURN (impl.implHandle, conceptSymbol->declareImpl(implType));
 
-    TU_LOG_INFO << "declared impl " << implType << " for " << conceptSymbol->getSymbolUrl();
+    TU_LOG_V << "declared impl " << implType << " for " << conceptSymbol->getSymbolUrl();
 
     return impl;
 }

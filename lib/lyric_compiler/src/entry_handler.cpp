@@ -30,7 +30,7 @@ lyric_compiler::EntryHandler::before(
         return CompilerStatus::forCondition(
             CompilerCondition::kCompilerInvariant, "invalid node for entry");
 
-    TU_LOG_INFO << "before EntryHandler@" << this;
+    TU_LOG_VV << "before EntryHandler@" << this;
 
     auto *driver = getDriver();
 
@@ -149,6 +149,6 @@ lyric_compiler::EntryHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_INFO << "after EntryHandler@" << this;
+    TU_LOG_VV << "after EntryHandler@" << this;
     return {};
 }

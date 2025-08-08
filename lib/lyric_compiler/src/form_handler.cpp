@@ -59,7 +59,7 @@ lyric_compiler::TerminalFormBehavior::enter(
     EnterContext &ctx)
 {
     if (m_isSideEffect) {
-        TU_LOG_INFO << "ignoring terminal side effect";
+        TU_LOG_VV << "ignoring terminal side effect";
         return {};
     }
 
@@ -68,7 +68,7 @@ lyric_compiler::TerminalFormBehavior::enter(
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
     auto astId = resource->getId();
-    TU_LOG_INFO << "enter TerminalFormBehavior@" << this << ": "
+    TU_LOG_VV << "enter TerminalFormBehavior@" << this << ": "
                 << resource->getNsUrl() << "#" << resource->getName();
 
     switch (astId) {
@@ -122,7 +122,7 @@ lyric_compiler::TerminalFormBehavior::exit(
         return {};
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
-    TU_LOG_INFO << "exit TerminalFormBehavior@" << this << ": "
+    TU_LOG_VV << "exit TerminalFormBehavior@" << this << ": "
                 << resource->getNsUrl() << "#" << resource->getName();
     return {};
 }
@@ -274,7 +274,7 @@ lyric_compiler::FormChoice::decide(
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
     auto astId = resource->getId();
 
-    TU_LOG_INFO << "decide FormChoice@" << this << ": "
+    TU_LOG_VV << "decide FormChoice@" << this << ": "
                 << resource->getNsUrl() << "#" << resource->getName();
 
     bool isSideEffect = m_type == FormType::SideEffect;

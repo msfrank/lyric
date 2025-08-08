@@ -35,7 +35,7 @@ lyric_compiler::SymbolDerefHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before SymbolDerefHandler@" << this;
+    TU_LOG_VV << "before SymbolDerefHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -72,7 +72,7 @@ lyric_compiler::SymbolDerefHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_INFO << "after SymbolDerefHandler@" << this;
+    TU_LOG_VV << "after SymbolDerefHandler@" << this;
 
     TU_RETURN_IF_NOT_OK (m_deref.fragment->loadDescriptor(m_deref.symbol));
 

@@ -13,7 +13,7 @@ IteratorRef::IteratorRef(const lyric_runtime::VirtualTable *vtable)
 
 IteratorRef::~IteratorRef()
 {
-    TU_LOG_INFO << "free" << IteratorRef::toString();
+    TU_LOG_VV << "free" << IteratorRef::toString();
 }
 
 lyric_runtime::DataCell IteratorRef::getField(const lyric_runtime::DataCell &field) const

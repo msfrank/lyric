@@ -27,7 +27,7 @@ lyric_compiler::ConstructorHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before ConstructorHandler@" << this;
+    TU_LOG_VV << "before ConstructorHandler@" << this;
 
     auto *classBlock = getBlock();
     auto *driver = getDriver();
@@ -54,7 +54,7 @@ lyric_compiler::ConstructorHandler::after(
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::AfterContext &ctx)
 {
-    TU_LOG_INFO << "after ConstructorHandler@" << this;
+    TU_LOG_VV << "after ConstructorHandler@" << this;
 
     auto *procBuilder = m_constructor.procHandle->procCode();
     auto *fragment = procBuilder->rootFragment();

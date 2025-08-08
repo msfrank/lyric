@@ -278,7 +278,7 @@ lyric_compiler::InvokableArgument::decide(
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
     auto astId = resource->getId();
 
-    TU_LOG_INFO << "enter ArgumentHandler@" << this << ": " << resource->getNsUrl() << "#" << resource->getName();
+    TU_LOG_VV << "enter ArgumentHandler@" << this << ": " << resource->getNsUrl() << "#" << resource->getName();
 
     auto *block = getBlock();
     auto *driver = getDriver();

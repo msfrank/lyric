@@ -13,7 +13,7 @@ RecordRef::RecordRef(const lyric_runtime::VirtualTable *vtable)
 
 RecordRef::~RecordRef()
 {
-    TU_LOG_INFO << "free" << RecordRef::toString();
+    TU_LOG_VV << "free" << RecordRef::toString();
 }
 
 lyric_runtime::DataCell

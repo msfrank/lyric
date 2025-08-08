@@ -182,7 +182,7 @@ write_namespace(
         // skip symbols which are not in the current module
         if (symbolUrl.isAbsolute()) {
             if (location != symbolUrl.getModuleLocation()) {
-                TU_LOG_INFO << "ignoring namespace binding " << symbolIterator->first << " for " << symbolUrl;
+                TU_LOG_V << "ignoring namespace binding " << symbolIterator->first << " for " << symbolUrl;
                 continue;
             }
         }

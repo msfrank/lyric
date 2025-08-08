@@ -59,7 +59,7 @@ lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, const char *
 
 lyric_runtime::StringRef::~StringRef()
 {
-    TU_LOG_INFO << "free StringRef" << StringRef::toString();
+    TU_LOG_VV << "free StringRef" << StringRef::toString();
     if (m_owned) {
         delete[] m_data;
     }

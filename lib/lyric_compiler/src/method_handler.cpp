@@ -22,7 +22,7 @@ lyric_compiler::MethodHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before MethodHandler@" << this;
+    TU_LOG_VV << "before MethodHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -47,7 +47,7 @@ lyric_compiler::MethodHandler::after(
     const lyric_parser::ArchetypeNode *node,
     lyric_compiler::AfterContext &ctx)
 {
-    TU_LOG_INFO << "after MethodHandler@" << this;
+    TU_LOG_VV << "after MethodHandler@" << this;
 
     auto *procBuilder = m_method.procHandle->procCode();
     auto *fragment = procBuilder->rootFragment();

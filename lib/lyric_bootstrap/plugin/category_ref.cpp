@@ -13,7 +13,7 @@ CategoryRef::CategoryRef(const lyric_runtime::VirtualTable *vtable)
 
 CategoryRef::~CategoryRef()
 {
-    TU_LOG_INFO << "free" << CategoryRef::toString();
+    TU_LOG_VV << "free" << CategoryRef::toString();
 }
 
 lyric_runtime::DataCell

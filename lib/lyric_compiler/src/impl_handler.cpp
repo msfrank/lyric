@@ -21,7 +21,7 @@ lyric_compiler::ImplHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before DefClassHandler@" << this;
+    TU_LOG_VV << "before DefClassHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -75,7 +75,7 @@ lyric_compiler::ImplDef::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before ImplDef@" << this;
+    TU_LOG_VV << "before ImplDef@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
@@ -126,7 +126,7 @@ lyric_compiler::ImplDef::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_INFO << "after ImplDef@" << this;
+    TU_LOG_VV << "after ImplDef@" << this;
 
     auto *procBuilder = m_procHandle->procCode();
     auto *fragment = procBuilder->rootFragment();

@@ -24,7 +24,7 @@ lyric_compiler::MemberHandler::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    TU_LOG_INFO << "before MemberHandler@" << this;
+    TU_LOG_VV << "before MemberHandler@" << this;
 
     // if there is no initializer then we are done
     if (node->numChildren() == 0)
@@ -47,7 +47,7 @@ lyric_compiler::MemberHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_LOG_INFO << "after MemberHandler@" << this;
+    TU_LOG_VV << "after MemberHandler@" << this;
 
     if (m_member.initializerHandle == nullptr)
         return {};
@@ -105,7 +105,7 @@ lyric_compiler::MemberInit::decide(
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
     auto astId = resource->getId();
-    TU_LOG_INFO << "decide ParamInit@" << this << ": "
+    TU_LOG_VV << "decide ParamInit@" << this << ": "
                 << resource->getNsUrl() << "#" << resource->getName();
 
     auto *block = getBlock();
