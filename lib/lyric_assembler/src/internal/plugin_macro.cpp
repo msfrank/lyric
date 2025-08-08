@@ -18,7 +18,7 @@ lyric_assembler::internal::PluginMacro::rewritePragma(
     lyric_rewriter::PragmaContext &ctx,
     lyric_parser::ArchetypeState *state)
 {
-    TU_LOG_INFO << "rewrite PluginLocation macro";
+    TU_LOG_VV << "rewrite PluginLocation macro";
 
     if (pragmaNode->numChildren() != 1)
         return lyric_rewriter::RewriterStatus::forCondition(

@@ -10,7 +10,7 @@ set(TEST_CASES
 
 # define test suite driver
 
-add_executable(lyric_object_testsuite ${TEST_CASES})
+add_executable(lyric_object_testsuite ${TEST_CASES} ${TEST_MAIN_CPP})
 target_link_libraries(lyric_object_testsuite PUBLIC
     lyric::lyric_object
     flatbuffers::flatbuffers

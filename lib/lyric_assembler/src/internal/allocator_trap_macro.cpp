@@ -26,7 +26,7 @@ lyric_assembler::internal::AllocatorTrapMacro::rewriteDefinition(
     lyric_parser::ArchetypeNode *definitionNode,
     lyric_parser::ArchetypeState *state)
 {
-    TU_LOG_INFO << "rewrite AllocatorTrap macro";
+    TU_LOG_VV << "rewrite AllocatorTrap macro";
 
     if (macroCallNode->numChildren() != 1)
         return lyric_rewriter::RewriterStatus::forCondition(

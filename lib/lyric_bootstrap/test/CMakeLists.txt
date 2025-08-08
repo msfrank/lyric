@@ -29,7 +29,7 @@ set(TEST_CASES
 
 # define test suite driver
 
-add_executable(lyric_bootstrap_testsuite ${TEST_CASES} test_helpers.cpp test_helpers.h)
+add_executable(lyric_bootstrap_testsuite ${TEST_CASES} test_helpers.cpp test_helpers.h ${TEST_MAIN_CPP})
 target_compile_definitions(lyric_bootstrap_testsuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""

@@ -19,6 +19,7 @@ add_executable(lyric_archiver_testsuite
     ${TEST_CASES}
     archiver_tester.cpp archiver_tester.h
     base_archiver_fixture.cpp base_archiver_fixture.h
+    ${TEST_MAIN_CPP}
     )
 target_compile_definitions(lyric_archiver_testsuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""

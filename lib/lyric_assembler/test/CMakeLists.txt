@@ -15,7 +15,7 @@ set(TEST_CASES
 
 # define test suite driver
 
-add_executable(lyric_assembler_testsuite ${TEST_CASES})
+add_executable(lyric_assembler_testsuite ${TEST_CASES} ${TEST_MAIN_CPP})
 target_compile_definitions(lyric_assembler_testsuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""

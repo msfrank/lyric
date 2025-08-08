@@ -37,7 +37,7 @@ lyric_assembler::internal::LoadDataMacro::rewriteBlock(
     lyric_rewriter::MacroBlock &macroBlock,
     lyric_parser::ArchetypeState *state)
 {
-    TU_LOG_INFO << "rewrite LoadData macro";
+    TU_LOG_VV << "rewrite LoadData macro";
 
     if (macroCallNode->numChildren() != 1)
         return lyric_rewriter::RewriterStatus::forCondition(

@@ -20,6 +20,7 @@ add_executable(lyric_typing_testsuite
     ${TEST_CASES}
     base_typing_fixture.cpp base_typing_fixture.h
     test_callable.cpp test_callable.h
+    ${TEST_MAIN_CPP}
     )
 target_compile_definitions(lyric_typing_testsuite PRIVATE
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""

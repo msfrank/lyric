@@ -17,7 +17,10 @@ set(TEST_CASES
 
 # define test suite driver
 
-add_executable(lyric_parser_testsuite ${TEST_CASES} base_parser_fixture.cpp base_parser_fixture.h)
+add_executable(lyric_parser_testsuite
+    ${TEST_CASES}
+    base_parser_fixture.cpp base_parser_fixture.h
+    ${TEST_MAIN_CPP})
 target_link_libraries(lyric_parser_testsuite PUBLIC
     lyric::lyric_parser
     lyric::lyric_schema

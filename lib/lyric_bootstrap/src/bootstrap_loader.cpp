@@ -99,7 +99,7 @@ lyric_bootstrap::BootstrapLoader::loadModule(const lyric_common::ModuleLocation 
         return BootstrapStatus::forCondition(
             BootstrapCondition::kBootstrapInvariant, "failed to verify object");
 
-    TU_LOG_INFO << "loaded module at " << absolutePath;
+    TU_LOG_V << "loaded bootstrap module at " << absolutePath;
     return Option(lyric_object::LyricObject(bytes));
 }
 
@@ -133,7 +133,7 @@ lyric_bootstrap::BootstrapLoader::loadPlugin(
         return BootstrapStatus::forCondition(BootstrapCondition::kBootstrapInvariant,
             "failed to retrieve interface for plugin {}", absolutePath.string());
 
-    TU_LOG_INFO << "loaded plugin " << absolutePath;
+    TU_LOG_V << "loaded bootstrap plugin " << absolutePath;
     auto plugin = std::make_shared<const lyric_runtime::LibraryPlugin>(loader, iface);
     return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>(plugin);
 }

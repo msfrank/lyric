@@ -108,7 +108,7 @@ lyric_analyzer::ConceptAnalyzerContext::declareAction(const lyric_parser::Archet
     // define the action
     TU_RETURN_IF_NOT_OK (actionSymbol->defineAction(parameterPack, returnType));
 
-    TU_LOG_INFO << "declared action " << actionSymbol->getSymbolUrl() << " for " << m_conceptSymbol->getSymbolUrl();
+    TU_LOG_V << "declared action " << actionSymbol->getSymbolUrl() << " for " << m_conceptSymbol->getSymbolUrl();
 
     return {};
 }
@@ -130,7 +130,7 @@ lyric_analyzer::ConceptAnalyzerContext::declareImpl(const lyric_parser::Archetyp
     lyric_assembler::ImplHandle *implHandle;
     TU_ASSIGN_OR_RETURN (implHandle, m_conceptSymbol->declareImpl(implType));
 
-    TU_LOG_INFO << "declared impl " << implType << " on " << m_conceptSymbol->getSymbolUrl();
+    TU_LOG_V << "declared impl " << implType << " on " << m_conceptSymbol->getSymbolUrl();
 
     // push the impl context
     auto ctx = std::make_unique<ImplAnalyzerContext>(m_driver, implHandle);

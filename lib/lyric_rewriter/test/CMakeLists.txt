@@ -10,7 +10,7 @@ set(TEST_CASES
 
 # define test suite driver
 
-add_executable(lyric_rewriter_testsuite ${TEST_CASES})
+add_executable(lyric_rewriter_testsuite ${TEST_CASES} ${TEST_MAIN_CPP})
 target_compile_definitions(lyric_rewriter_testsuite PRIVATE
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
     )

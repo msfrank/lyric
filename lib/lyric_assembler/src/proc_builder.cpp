@@ -70,7 +70,7 @@ lyric_assembler::ProcBuilder::makeLabel(std::string_view userLabel)
     }
 
     m_labelTargets[labelName] = {};
-    TU_LOG_INFO << "proc " << m_procHandle << " makes label " << labelName;
+    TU_LOG_VV << "proc " << m_procHandle << " makes label " << labelName;
     return labelName;
 }
 
@@ -83,7 +83,7 @@ lyric_assembler::ProcBuilder::makeJump()
 
     auto targetId = m_nextId++;
     m_jumpLabels[targetId] = {};
-    TU_LOG_INFO << "proc " << m_procHandle << " makes jump " << targetId;
+    TU_LOG_VV << "proc " << m_procHandle << " makes jump " << targetId;
     return targetId;
 }
 
@@ -107,7 +107,7 @@ lyric_assembler::ProcBuilder::patchTarget(tu_uint32 targetId, std::string_view l
     labelTargetSet.targets.insert(targetId);
     jumpLabel.name = labelName;
 
-    TU_LOG_INFO << "proc " << m_procHandle << " patches target " << targetId << " to label " << std::string(labelName);
+    TU_LOG_VV << "proc " << m_procHandle << " patches target " << targetId << " to label " << std::string(labelName);
     return {};
 }
 
@@ -127,16 +127,16 @@ lyric_assembler::ProcBuilder::build(
 
     TU_RETURN_IF_NOT_OK (m_rootFragment->build(writer, bytecodeBuilder, labelOffsets, patchOffsets));
 
-    TU_LOG_INFO << "label targets:";
+    TU_LOG_VV << "label targets:";
     for (const auto &entry : m_labelTargets) {
-        TU_LOG_INFO << "  label " << entry.first;
+        TU_LOG_VV << "  label " << entry.first;
         for (const auto &target : entry.second.targets) {
-            TU_LOG_INFO << "    target " << target;
+            TU_LOG_VV << "    target " << target;
         }
     }
-    TU_LOG_INFO << "jump labels:";
+    TU_LOG_VV << "jump labels:";
     for (const auto &entry : m_jumpLabels) {
-        TU_LOG_INFO << "  target " << entry.first << " -> " << entry.second.name;
+        TU_LOG_VV << "  target " << entry.first << " -> " << entry.second.name;
     }
 
     for (const auto &entry : patchOffsets) {

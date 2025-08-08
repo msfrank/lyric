@@ -22,10 +22,10 @@ lyric_rewriter::MacroRewriteDriver::enter(
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
     auto astId = resource->getId();
 
-    TU_LOG_INFO << "enter " << resource->getName() << " node with child index " << ctx.childIndex();
+    TU_LOG_V << "enter " << resource->getName() << " node with child index " << ctx.childIndex();
 
     if (astId == lyric_schema::LyricAstId::MacroList) {
-        TU_LOG_INFO << "skipping macro list children";
+        TU_LOG_V << "skipping macro list children";
         ctx.setSkipChildren(true);
         m_macroList = node;
     } else if (node->hasAttr(lyric_parser::kLyricAstMacroListOffset)) {
@@ -104,7 +104,7 @@ lyric_rewriter::MacroRewriteDriver::exit(
         return {};
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
-    TU_LOG_INFO << "exit " << resource->getName() << " node with child index " << ctx.childIndex();
+    TU_LOG_V << "exit " << resource->getName() << " node with child index " << ctx.childIndex();
 
     if (m_macroList != nullptr) {
         m_macroList = nullptr;

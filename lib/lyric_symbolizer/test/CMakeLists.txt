@@ -16,7 +16,11 @@ set(TEST_CASES
 
 # define test suite driver
 
-add_executable(lyric_symbolizer_testsuite ${TEST_CASES} base_symbolizer_fixture.cpp base_symbolizer_fixture.h)
+add_executable(lyric_symbolizer_testsuite
+    ${TEST_CASES}
+    base_symbolizer_fixture.cpp base_symbolizer_fixture.h
+    ${TEST_MAIN_CPP}
+    )
 target_compile_definitions(lyric_symbolizer_testsuite PRIVATE
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
     )

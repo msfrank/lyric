@@ -109,7 +109,7 @@ lyric_analyzer::ClassAnalyzerContext::declareMember(const lyric_parser::Archetyp
     TU_RETURN_IF_STATUS(m_classSymbol->declareMember(
         identifier, memberType, isVariable, internal::convert_access_type(access)));
 
-    TU_LOG_INFO << "declared member " << identifier << " on " << m_classSymbol->getSymbolUrl();
+    TU_LOG_V << "declared member " << identifier << " on " << m_classSymbol->getSymbolUrl();
 
     return {};
 }
@@ -163,7 +163,7 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnType));
 
-    TU_LOG_INFO << "declared method " << callSymbol->getSymbolUrl() << " for " << m_classSymbol->getSymbolUrl();
+    TU_LOG_V << "declared method " << callSymbol->getSymbolUrl() << " for " << m_classSymbol->getSymbolUrl();
 
     // push the proc context
     auto ctx = std::make_unique<ProcAnalyzerContext>(m_driver, procHandle);
@@ -187,7 +187,7 @@ lyric_analyzer::ClassAnalyzerContext::declareImpl(const lyric_parser::ArchetypeN
     lyric_assembler::ImplHandle *implHandle;
     TU_ASSIGN_OR_RETURN (implHandle, m_classSymbol->declareImpl(implType));
 
-    TU_LOG_INFO << "declared impl " << implType << " on " << m_classSymbol->getSymbolUrl();
+    TU_LOG_V << "declared impl " << implType << " on " << m_classSymbol->getSymbolUrl();
 
     // push the impl context
     auto ctx = std::make_unique<ImplAnalyzerContext>(m_driver, implHandle);

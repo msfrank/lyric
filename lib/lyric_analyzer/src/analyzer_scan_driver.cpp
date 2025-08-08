@@ -132,7 +132,7 @@ lyric_analyzer::AnalyzerScanDriver::declareTypename(
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(typenameSymbol->getSymbolUrl()));
 
-    TU_LOG_INFO << "declared typename " << typenameSymbol->getSymbolUrl();
+    TU_LOG_V << "declared typename " << typenameSymbol->getSymbolUrl();
 
     return {};
 }
@@ -176,7 +176,7 @@ lyric_analyzer::AnalyzerScanDriver::declareBinding(
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(bindingSymbol->getSymbolUrl()));
 
-    TU_LOG_INFO << "declared binding " << bindingSymbol->getSymbolUrl();
+    TU_LOG_V << "declared binding " << bindingSymbol->getSymbolUrl();
 
     return {};
 }
@@ -215,7 +215,7 @@ lyric_analyzer::AnalyzerScanDriver::declareStatic(
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(ref.symbolUrl));
 
-    TU_LOG_INFO << "declared static " << ref.symbolUrl;
+    TU_LOG_V << "declared static " << ref.symbolUrl;
 
     return {};
 }
@@ -272,7 +272,7 @@ lyric_analyzer::AnalyzerScanDriver::pushFunction(
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnType));
 
-    TU_LOG_INFO << "declared function " << callSymbol->getSymbolUrl();
+    TU_LOG_V << "declared function " << callSymbol->getSymbolUrl();
 
     // push the function context
     auto ctx = std::make_unique<ProcAnalyzerContext>(this, procHandle);
@@ -347,7 +347,7 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(classSymbol->getSymbolUrl()));
 
-    TU_LOG_INFO << "declared class " << classSymbol->getSymbolUrl() << " from " << superClass->getSymbolUrl();
+    TU_LOG_V << "declared class " << classSymbol->getSymbolUrl() << " from " << superClass->getSymbolUrl();
 
     // push the class context
     auto ctx = std::make_unique<ClassAnalyzerContext>(this, classSymbol, initNode);
@@ -394,7 +394,7 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(conceptSymbol->getSymbolUrl()));
 
-    TU_LOG_INFO << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConcept->getSymbolUrl();
+    TU_LOG_V << "declared concept " << conceptSymbol->getSymbolUrl() << " from " << superConcept->getSymbolUrl();
 
     // push the concept context
     auto ctx = std::make_unique<ConceptAnalyzerContext>(this, conceptSymbol);
@@ -444,7 +444,7 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(enumSymbol->getSymbolUrl()));
 
-    TU_LOG_INFO << "declared enum " << enumSymbol->getSymbolUrl() << " from " << superEnum->getSymbolUrl();
+    TU_LOG_V << "declared enum " << enumSymbol->getSymbolUrl() << " from " << superEnum->getSymbolUrl();
 
     // push the enum context
     auto ctx = std::make_unique<EnumAnalyzerContext>(this, enumSymbol, initNode);
@@ -494,7 +494,7 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(instanceSymbol->getSymbolUrl()));
 
-    TU_LOG_INFO << "declared instance " << instanceSymbol->getSymbolUrl() << " from " << superInstance->getSymbolUrl();
+    TU_LOG_V << "declared instance " << instanceSymbol->getSymbolUrl() << " from " << superInstance->getSymbolUrl();
 
     // push the instance context
     auto ctx = std::make_unique<InstanceAnalyzerContext>(this, instanceSymbol, initNode);
@@ -562,7 +562,7 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
     TU_ASSERT (currentNamespace != nullptr);
     TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(structSymbol->getSymbolUrl()));
 
-    TU_LOG_INFO << "declared struct " << structSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
+    TU_LOG_V << "declared struct " << structSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
 
     // push the struct context
     auto ctx = std::make_unique<StructAnalyzerContext>(this, structSymbol, initNode);

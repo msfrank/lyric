@@ -263,38 +263,6 @@ add_subdirectory(lib)
 
 #######################################################################
 #
-# declare the package test suite target
-#
-#######################################################################
-
-set(EMPTY_CPP ${CMAKE_CURRENT_BINARY_DIR}/empty.cpp)
-add_custom_command(
-    OUTPUT ${EMPTY_CPP}
-    COMMAND cmake -E touch ${EMPTY_CPP}
-    )
-
-add_executable(lyric_testsuite ${EMPTY_CPP})
-target_link_libraries(lyric_testsuite
-    PUBLIC gtest::gtest
-    PRIVATE
-    LyricAnalyzerTestSuite
-    LyricArchiverTestSuite
-    LyricAssemblerTestSuite
-    LyricBootstrapTestSuite
-    LyricBuildTestSuite
-    LyricCommonTestSuite
-    LyricCompilerTestSuite
-    LyricObjectTestSuite
-    LyricOptimizerTestSuite
-    LyricParserTestSuite
-    LyricRewriterTestSuite
-    LyricSymbolizerTestSuite
-    LyricTypingTestSuite
-    )
-gtest_discover_tests(lyric_testsuite DISCOVERY_TIMEOUT 30)
-
-#######################################################################
-#
 # create cmake package config
 #
 #######################################################################

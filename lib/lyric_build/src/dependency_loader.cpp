@@ -84,7 +84,7 @@ lyric_build::DependencyLoader::loadPlugin(
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "failed to retrieve interface for plugin {}", absolutePath.string());
 
-    TU_LOG_INFO << "loaded plugin " << absolutePath;
+    TU_LOG_V << "loaded plugin " << absolutePath;
 
     auto plugin = std::make_shared<const lyric_runtime::LibraryPlugin>(loader, iface);
     m_libraries[location] = plugin;
@@ -209,7 +209,7 @@ lyric_build::DependencyLoader::create(
         taskKeys.insert(taskKey);
     }
 
-    TU_LOG_INFO << "built DependencyLoader from tasks=" << taskKeys
+    TU_LOG_V << "built DependencyLoader from tasks=" << taskKeys
         << " objects=" << objectLocations
         << " plugins=" << pluginLocations;
 

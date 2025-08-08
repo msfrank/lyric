@@ -109,7 +109,7 @@ lyric_analyzer::ImplAnalyzerContext::declareExtension(const lyric_parser::Archet
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, m_implHandle->defineExtension(identifier, parameterPack, returnType));
 
-    TU_LOG_INFO << "declared extension " << procHandle->getActivationUrl();
+    TU_LOG_V << "declared extension " << procHandle->getActivationUrl();
 
     // push the function context
     auto ctx = std::make_unique<ProcAnalyzerContext>(m_driver, procHandle);

@@ -44,7 +44,7 @@ lyric_build::internal::OrchestrateTask::configure(const TaskSettings *config)
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "task {} has no orchestrate targets declared", getKey().toString());
 
-    TU_LOG_INFO << "orchestrate targets:" << m_orchestrateTargets;
+    TU_LOG_V << "orchestrate targets:" << m_orchestrateTargets;
 
     return {};
 }

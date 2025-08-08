@@ -31,7 +31,7 @@ lyric_build::internal::BuildTask::configure(const TaskSettings *config)
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "task {} has no build targets", getKey().toString());
 
-    TU_LOG_INFO << "build targets:" << m_buildTargets;
+    TU_LOG_V << "build targets:" << m_buildTargets;
 
     return {};
 }

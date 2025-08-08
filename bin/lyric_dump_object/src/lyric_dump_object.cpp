@@ -87,8 +87,6 @@ dump_lyric_object(int argc, const char *argv[])
     tempo_utils::LoggingConfiguration logging = {
         tempo_utils::SeverityFilter::kDefault,
         true,
-        false,
-        false,
     };
 
     bool silent;

@@ -65,7 +65,7 @@ lyric_build::internal::CompileTask::configure(
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
             "task {} has no compile targets", getKey().toString());
 
-    TU_LOG_INFO << "compile targets:" << m_compileTargets;
+    TU_LOG_V << "compile targets:" << m_compileTargets;
 
     return {};
 }

@@ -14,6 +14,7 @@ set(TEST_CASES
 add_executable(lyric_optimizer_testsuite
     ${TEST_CASES}
     base_optimizer_fixture.cpp base_optimizer_fixture.h
+    ${TEST_MAIN_CPP}
     )
 target_compile_definitions(lyric_optimizer_testsuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""

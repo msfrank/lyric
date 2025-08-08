@@ -112,7 +112,7 @@ lyric_symbolizer::SymbolizerScanDriver::declareTypename(const lyric_parser::Arch
     lyric_common::SymbolUrl symbolUrl(symbolPath);
     TU_RETURN_IF_STATUS (symbolCache->putTypename(symbolUrl));
 
-    TU_LOG_INFO << "declared typename " << symbolUrl;
+    TU_LOG_V << "declared typename " << symbolUrl;
 
     return putNamespaceTarget(symbolUrl);
 }
@@ -132,7 +132,7 @@ lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::Archet
         symbolUrl, lyric_object::LinkageSection::Static);
 
     TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
-    TU_LOG_INFO << "declared static " << symbolUrl;
+    TU_LOG_V << "declared static " << symbolUrl;
 
     return putNamespaceTarget(symbolUrl);
 }
@@ -151,7 +151,7 @@ lyric_symbolizer::SymbolizerScanDriver::pushDefinition(
     auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(symbolUrl, section);
 
     TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
-    TU_LOG_INFO << "declared definition " << symbolUrl;
+    TU_LOG_V << "declared definition " << symbolUrl;
 
     auto *currentNamespace = m_namespaces.top();
     auto namespacePath = currentNamespace->getSymbolUrl().getSymbolPath();
@@ -184,7 +184,7 @@ lyric_symbolizer::SymbolizerScanDriver::declareImport(const lyric_parser::Archet
 
     TU_RETURN_IF_NOT_OK (importCache->insertImport(moduleLocation, lyric_assembler::ImportFlags::ApiLinkage));
 
-    TU_LOG_INFO << "imported module " << moduleLocation;
+    TU_LOG_V << "imported module " << moduleLocation;
     return {};
 }
 
@@ -204,7 +204,7 @@ lyric_symbolizer::SymbolizerScanDriver::pushNamespace(const lyric_parser::Archet
     TU_ASSIGN_OR_RETURN (subspace, currentNamespace->declareSubspace(identifier, lyric_object::AccessType::Public));
     m_namespaces.push(subspace);
 
-    TU_LOG_INFO << "declared namespace " << subspace->getSymbolUrl().toString();
+    TU_LOG_V << "declared namespace " << subspace->getSymbolUrl().toString();
 
     return {};
 }
