@@ -34,8 +34,8 @@ RUN conan create .
 RUN conan cache save "lyric/*:*" --file lyric_cache_save.tgz
 
 # remove lyric temporary files
-RUN conan cache clean --download --source --temp --backup-sources 'lyric/*'
+RUN conan cache clean --download --temp --backup-sources 'lyric/*'
 
 # if this is not a debug build then remove lyric build files
 ENV IS_DEBUG_BUILD=$is_debug_build
-RUN if test $IS_DEBUG_BUILD == 0; then conan cache clean --build 'lyric/*'; fi
+RUN if test $IS_DEBUG_BUILD == 0; then conan cache clean --source --build 'lyric/*'; fi
