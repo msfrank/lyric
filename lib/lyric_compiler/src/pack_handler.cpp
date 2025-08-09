@@ -49,7 +49,7 @@ lyric_compiler::PackHandler::before(
 lyric_compiler::PackParam::PackParam(
     lyric_assembler::CallSymbol *callSymbol,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_callSymbol(callSymbol)
 {
@@ -58,9 +58,10 @@ lyric_compiler::PackParam::PackParam(
 
 lyric_compiler::PackParam::PackParam(
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_callSymbol(nullptr)
+      m_callSymbol(nullptr),
+      m_initializerHandle(nullptr)
 {
 }
 
@@ -68,7 +69,7 @@ tempo_utils::Status
 lyric_compiler::PackParam::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     auto *block = getBlock();
     auto *driver = getDriver();
