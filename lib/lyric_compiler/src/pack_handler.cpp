@@ -51,7 +51,8 @@ lyric_compiler::PackParam::PackParam(
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_callSymbol(callSymbol)
+      m_callSymbol(callSymbol),
+      m_initializerHandle(nullptr)
 {
     TU_ASSERT (m_callSymbol != nullptr);
 }
