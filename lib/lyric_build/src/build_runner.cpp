@@ -128,6 +128,7 @@ lyric_build::BuildRunner::run()
         thread.taskSettings = getConfig();
         thread.buildState = getState();
         thread.buildCache = getCache();
+        thread.joined = false;
 
         result = uv_thread_create(&thread.tid, internal::runner_worker_thread, &thread);
         if (result == 0) {
@@ -443,24 +444,38 @@ lyric_build::BuildRunner::getBlocked(const TaskKey &key)
 }
 
 /**
+ * Block until the thread at the specified index has been joined. It is assumed that the thread has been
+ * signaled to exit already via a ThreadCancelled notification, otherwise calling this method will deadlock.
+ * If the specified thread is the last thread in the pool to be joined, then the UV main loop is signaled
+ * to stop. If the specified thread is already joined then this method does nothing.
  *
- * @param index
+ * @param index Index of the thread to join in the threadpool.
  */
 void
 lyric_build::BuildRunner::joinThread(int index)
 {
-    auto &cancelled = m_threads[index];
-    if (!cancelled.running)
-        return;
+    auto &thread = m_threads[index];
+
+    {
+        std::unique_lock locker(m_threadsLock);
+        if (!thread.running)
+            return;
+        thread.running = false;
+        TU_LOG_VV << "joining thread " << index;
+    }
 
     // cancel the thread and wait for it to join
-    uv_thread_join(&cancelled.tid);
-    cancelled.running = false;
+    auto ret = uv_thread_join(&thread.tid);
+    TU_LOG_WARN_IF (ret != 0) << "failed to join thread " << index << ": " << uv_strerror(ret);
 
     // if all threads are cancelled then stop the main loop
-    for (auto &thread : m_threads) {
-        if (thread.running)
-            return;
+    {
+        std::unique_lock locker(m_threadsLock);
+        thread.joined = true;
+        for (auto &curr : m_threads) {
+            if (curr.running || !curr.joined)
+                return;
+        }
     }
 
     // request the async handle be closed

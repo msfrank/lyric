@@ -55,13 +55,14 @@ namespace lyric_build {
     };
 
     struct TaskThread {
-        AbstractBuildRunner *runner;
-        const TaskSettings *taskSettings;
+        AbstractBuildRunner *runner = nullptr;
+        const TaskSettings *taskSettings = nullptr;
         std::shared_ptr<BuildState> buildState;
         std::shared_ptr<AbstractCache> buildCache;
-        int index;
+        int index = -1;
         uv_thread_t tid;
-        bool running;
+        bool running = false;
+        bool joined = false;
     };
 
     /**
@@ -133,6 +134,8 @@ namespace lyric_build {
         // uv data
         uv_loop_t m_loop;                                   // uv main loop handle
         uv_async_t m_asyncNotify;                           // async handle to process notifications in the main loop
+
+        std::mutex m_threadsLock;                           // lock around threads
         std::vector<TaskThread> m_threads;                  // array containing thread data
 
         // members below can be accessed from multiple threads after acquiring the appropriate lock
