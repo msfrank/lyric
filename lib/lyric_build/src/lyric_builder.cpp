@@ -109,9 +109,10 @@ lyric_build::LyricBuilder::configure()
         m_numThreads = static_cast<int>(uv_available_parallelism());
     }
 
-    // if waitTimeoutInMs <= 0 then default to 1 second
-    if (m_options.waitTimeoutInMs > 0) {
-        m_waitTimeoutInMs = m_options.waitTimeoutInMs;
+    // if waitTimeout is not a positive duration then default to 1000ms
+    auto waitTimeoutInMs = ToInt64Milliseconds(m_options.waitTimeout);
+    if (waitTimeoutInMs > 0) {
+        m_waitTimeoutInMs = static_cast<int>(waitTimeoutInMs);
     } else {
         m_waitTimeoutInMs = 1000;
     }
@@ -120,7 +121,11 @@ lyric_build::LyricBuilder::configure()
     if (m_options.bootstrapLoader != nullptr) {
         m_bootstrapLoader = m_options.bootstrapLoader;
     } else {
-        m_bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
+        if (!m_options.bootstrapDirectory.empty()) {
+            m_bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(m_options.bootstrapDirectory);
+        } else {
+            m_bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
+        }
     }
 
     // set the fallback loader if one is specified

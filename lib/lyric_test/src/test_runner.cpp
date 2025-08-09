@@ -109,7 +109,7 @@ lyric_test::TestRunner::configureBaseTester()
     // default to a single builder thread, 1s lock wait timeout
     lyric_build::BuilderOptions builderOptions;
     builderOptions.numThreads = 1;
-    builderOptions.waitTimeoutInMs = 1000;
+    builderOptions.waitTimeout = absl::Seconds(1);
     builderOptions.bootstrapLoader = m_bootstrapLoader;
     builderOptions.fallbackLoader = m_fallbackLoader;
 

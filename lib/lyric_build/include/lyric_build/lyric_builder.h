@@ -41,16 +41,14 @@ namespace lyric_build {
          */
         std::filesystem::path buildRoot;
         /**
-         * The number of build runner threads. If < 0 then the number of threads will be calculated based
-         * on the available parallelism of the host. If 0 then this option defaults to the value specified
-         * in config.
+         * The number of build runner threads. If <= 0 then the number of threads will be calculated based
+         * on the available parallelism of the host.
          */
         int numThreads = 0;
         /**
-         * The runner thread ready queue timeout. If 0 then this option defaults to the value specified
-         * in config.
+         * The runner thread ready queue timeout. If not specified then this option defaults to 1000ms.
          */
-        int waitTimeoutInMs = 0;
+        absl::Duration waitTimeout = {};
         /**
          * The task registry. If not specified then this option defaults to an internally allocated instance.
          */
@@ -74,6 +72,12 @@ namespace lyric_build {
          * BootstrapLoader is used.
          */
         std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader = {};
+        /**
+         * If the bootstrapLoader is not explicitly specified then pass the bootstrapDirectory path as the
+         * constructor argument when allocating the internal BootstrapLoader. If not specified then the
+         * hardcoded default is used.
+         */
+        std::filesystem::path bootstrapDirectory = {};
         /**
          * Loader which is added to the end of the loader chain. If not specified then no fallback loader
          * is appended to the loader chain.
