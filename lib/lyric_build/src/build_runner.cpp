@@ -9,7 +9,6 @@
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
-#include <lyric_build/rocksdb_cache.h>
 #include <lyric_build/task_notification.h>
 #include <lyric_build/task_registry.h>
 #include <tempo_security/sha256_hash.h>
@@ -101,18 +100,18 @@ lyric_build::BuildRunner::run()
             "runner cannot be restarted");
 
     // initialize the uv loop
-    auto result = uv_loop_init(&m_loop);
-    if (result < 0)
+    auto ret = uv_loop_init(&m_loop);
+    if (ret < 0)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "uv_loop_init failed: {}", uv_err_name(result));
+            "uv_loop_init failed: {}", uv_err_name(ret));
 
     m_loop.data = this;
 
     // initialize the notify async handle
-    result = uv_async_init(&m_loop, &m_asyncNotify, on_async_notify);
-    if (result < 0)
+    ret = uv_async_init(&m_loop, &m_asyncNotify, on_async_notify);
+    if (ret < 0)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "uv_async_init failed: {}", uv_err_name(result));
+            "uv_async_init failed: {}", uv_err_name(ret));
 
     // mark state as running, meaning we can't invoke run() again on this instance
     m_runnerState = RunnerState::Running;
@@ -128,16 +127,14 @@ lyric_build::BuildRunner::run()
         thread.taskSettings = getConfig();
         thread.buildState = getState();
         thread.buildCache = getCache();
+        thread.running = false;
         thread.joined = false;
 
-        result = uv_thread_create(&thread.tid, internal::runner_worker_thread, &thread);
-        if (result == 0) {
+        ret = uv_thread_create(&thread.tid, internal::runner_worker_thread, &thread);
+        if (ret == 0) {
             thread.running = true;
-            result = uv_thread_detach(&thread.tid);
-            TU_LOG_FATAL_IF (result < 0) << "failed to detach thread: " << uv_err_name(result);
         } else {
-            thread.running = false;
-            TU_LOG_WARN << "failed to create thread: " << uv_err_name(result);
+            TU_LOG_WARN << "failed to create worker thread " << i << ": " << uv_err_name(ret);
             numFailed++;
         }
     }
@@ -150,7 +147,7 @@ lyric_build::BuildRunner::run()
     }
 
     // hand over control of the thread to the uv main loop
-    result = uv_run(&m_loop, UV_RUN_DEFAULT);
+    ret = uv_run(&m_loop, UV_RUN_DEFAULT);
 
     // !!!
     // NOTE: at this point we play it safe assuming worker threads could exist due to
@@ -161,15 +158,15 @@ lyric_build::BuildRunner::run()
     m_recorder->close();
 
     // uv_run failed, so report the error
-    if (result < 0)
+    if (ret < 0)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "uv_run failed: {}", uv_err_name(result));
+            "uv_run failed: {}", uv_err_name(ret));
 
     // clean up the main loop
-    result = uv_loop_close(&m_loop);
-    if (result < 0)
+    ret = uv_loop_close(&m_loop);
+    if (ret < 0)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "uv_loop_close failed: {}", uv_err_name(result));
+            "uv_loop_close failed: {}", uv_err_name(ret));
 
     // determine the counts of created and cached tasks
     auto generation = m_state->getGeneration().getUuid();
