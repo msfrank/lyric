@@ -52,7 +52,7 @@ namespace lyric_test {
         tempo_utils::Result<lyric_build::TargetComputationSet>
         computeTargetInternal(
             const lyric_build::TaskId &target,
-            const lyric_build::TaskSettings &overrides = {});
+            const lyric_build::ComputeTargetOverrides &overrides = {});
 
         tempo_utils::Result<BuildModule> buildModuleInternal(
             const std::string &code,

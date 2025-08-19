@@ -214,14 +214,14 @@ lyric_test::TestRunner::writeModuleInternal(
 tempo_utils::Result<lyric_build::TargetComputationSet>
 lyric_test::TestRunner::computeTargetInternal(
     const lyric_build::TaskId &target,
-    const lyric_build::TaskSettings &overrides)
+    const lyric_build::ComputeTargetOverrides &overrides)
 {
     TU_CONSOLE_OUT << "";
     TU_CONSOLE_OUT << "======== BUILD: " << target << " ========";
     TU_CONSOLE_OUT << "";
 
     lyric_build::TargetComputationSet targetComputationSet;
-    TU_ASSIGN_OR_RETURN (targetComputationSet, m_builder->computeTargets({target}, overrides));
+    TU_ASSIGN_OR_RETURN (targetComputationSet, m_builder->computeTarget(target, overrides));
 
     auto diagnostics = targetComputationSet.getDiagnostics();
 

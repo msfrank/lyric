@@ -210,21 +210,51 @@ lyric_build::LyricBuilder::configure()
 
     return {};
 }
+tempo_utils::Result<lyric_build::TargetComputationSet>
+lyric_build::LyricBuilder::computeTarget(
+    const TaskId &target,
+    const ComputeTargetOverrides &overrides)
+{
+    return computeTargets({target}, overrides);
+}
+
+static std::shared_ptr<lyric_importer::ShortcutResolver> merge_shortcuts(
+    std::shared_ptr<lyric_importer::ShortcutResolver> base,
+    std::shared_ptr<lyric_importer::ShortcutResolver> overrides)
+{
+    if (overrides == nullptr)
+        return base;
+    if (base == nullptr)
+        return overrides;
+    auto merged = std::make_shared<lyric_importer::ShortcutResolver>();
+    for (auto it = overrides->shortcutsBegin(); it != overrides->shortcutsEnd(); it++) {
+        merged->insertShortcut(it->first, it->second);
+    }
+    for (auto it = overrides->shortcutsBegin(); it != overrides->shortcutsEnd(); it++) {
+        if (!merged->hasShortcut(it->first)) {
+            merged->insertShortcut(it->first, it->second);
+        }
+    }
+    return merged;
+}
 
 tempo_utils::Result<lyric_build::TargetComputationSet>
 lyric_build::LyricBuilder::computeTargets(
     const absl::flat_hash_set<TaskId> &targets,
-    const TaskSettings &overrides)
+    const ComputeTargetOverrides &overrides)
 {
     tempo_utils::Status status;
 
     // construct a new Config with overrides merged in
-    auto taskSettings = m_taskSettings.merge(overrides);
+    auto taskSettings = m_taskSettings.merge(overrides.settings);
+
+    // merge shortcuts
+    auto shortcuts = merge_shortcuts(m_shortcutResolver, overrides.shortcuts);
 
     // wrap the build cache and loader chain in a unique generation
     auto buildGen = BuildGeneration::create();
     auto state = std::make_shared<BuildState>(buildGen, m_cache,
-        m_bootstrapLoader, m_fallbackLoader, m_sharedModuleCache, m_shortcutResolver,
+        m_bootstrapLoader, m_fallbackLoader, m_sharedModuleCache, shortcuts,
         m_virtualFilesystem, m_tempRoot);
 
     // construct a new task manager for managing parallel tasks

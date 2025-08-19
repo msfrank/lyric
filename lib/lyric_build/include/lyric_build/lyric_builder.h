@@ -85,6 +85,11 @@ namespace lyric_build {
         std::shared_ptr<lyric_runtime::AbstractLoader> fallbackLoader = {};
     };
 
+    struct ComputeTargetOverrides {
+        TaskSettings settings = {};
+        std::shared_ptr<lyric_importer::ShortcutResolver> shortcuts = {};
+    };
+
     /**
      * LyricBuilder is the entry point into the build system.
      */
@@ -101,9 +106,12 @@ namespace lyric_build {
 
         tempo_utils::Status configure();
 
+        tempo_utils::Result<TargetComputationSet> computeTarget(
+            const TaskId &target,
+            const ComputeTargetOverrides &overrides = {});
         tempo_utils::Result<TargetComputationSet> computeTargets(
             const absl::flat_hash_set<TaskId> &targets,
-            const TaskSettings &overrides = {});
+            const ComputeTargetOverrides &overrides = {});
 
         std::filesystem::path getBuildRoot() const;
         std::filesystem::path getTempRoot() const;
