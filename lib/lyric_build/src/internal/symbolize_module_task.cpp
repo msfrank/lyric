@@ -114,8 +114,11 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     // configure symbolizer
+    lyric_symbolizer::SymbolizerOptions symbolizerOptions = m_symbolizerOptions;
+    symbolizerOptions.shortcutResolver = buildState->getShortcutResolver();
+
     lyric_symbolizer::LyricSymbolizer symbolizer(
-        origin, localModuleCache, buildState->getSharedModuleCache(), m_symbolizerOptions);
+        origin, localModuleCache, buildState->getSharedModuleCache(), symbolizerOptions);
 
     // generate the linkage object by symbolizing the archetype
     logInfo("symbolizing module {}", m_moduleLocation.toString());

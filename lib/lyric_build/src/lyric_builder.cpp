@@ -230,7 +230,7 @@ static std::shared_ptr<lyric_importer::ShortcutResolver> merge_shortcuts(
     for (auto it = overrides->shortcutsBegin(); it != overrides->shortcutsEnd(); it++) {
         merged->insertShortcut(it->first, it->second);
     }
-    for (auto it = overrides->shortcutsBegin(); it != overrides->shortcutsEnd(); it++) {
+    for (auto it = base->shortcutsBegin(); it != base->shortcutsEnd(); it++) {
         if (!merged->hasShortcut(it->first)) {
             merged->insertShortcut(it->first, it->second);
         }

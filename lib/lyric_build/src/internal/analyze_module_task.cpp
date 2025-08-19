@@ -174,8 +174,11 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     // configure analyzer
+    lyric_analyzer::AnalyzerOptions analyzerOptions = m_analyzerOptions;
+    analyzerOptions.shortcutResolver = buildState->getShortcutResolver();
+
     lyric_analyzer::LyricAnalyzer analyzer(
-        origin, localModuleCache, buildState->getSharedModuleCache(), m_analyzerOptions);
+        origin, localModuleCache, buildState->getSharedModuleCache(), analyzerOptions);
 
     // generate the outline object by analyzing the archetype
     logInfo("analyzing module {}", m_moduleLocation.toString());

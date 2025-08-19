@@ -67,9 +67,9 @@ lyric_assembler::ImportCache::resolveImportLocation(const tempo_utils::Url &impo
             "invalid shortcut for import location '{}'", importLocation.toString());
     auto shortcut = authority.getHost();
 
-    tempo_utils::UrlOrigin urlOrigin;
-    TU_ASSIGN_OR_RETURN (urlOrigin, m_shortcutResolver->resolveShortcut(shortcut));
-    auto resolvedLocation = tempo_utils::Url::fromOrigin(urlOrigin, importUrl.getPath());
+    tempo_utils::Url urlBase;
+    TU_ASSIGN_OR_RETURN (urlBase, m_shortcutResolver->resolveShortcut(shortcut));
+    auto resolvedLocation = urlBase.resolve(importUrl.toPath());
     return lyric_common::ModuleLocation::fromUrl(resolvedLocation);
 }
 

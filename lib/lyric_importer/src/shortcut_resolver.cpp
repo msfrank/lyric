@@ -10,7 +10,7 @@ lyric_importer::ShortcutResolver::hasShortcut(const std::string &shortcut) const
     return m_shortcuts.contains(shortcut);
 }
 
-tempo_utils::UrlOrigin
+tempo_utils::Url
 lyric_importer::ShortcutResolver::getShortcut(const std::string &shortcut) const
 {
     if (shortcut.empty())
@@ -21,13 +21,13 @@ lyric_importer::ShortcutResolver::getShortcut(const std::string &shortcut) const
     return {};
 }
 
-absl::flat_hash_map<std::string,tempo_utils::UrlOrigin>::const_iterator
+absl::flat_hash_map<std::string,tempo_utils::Url>::const_iterator
 lyric_importer::ShortcutResolver::shortcutsBegin() const
 {
     return m_shortcuts.cbegin();
 }
 
-absl::flat_hash_map<std::string,tempo_utils::UrlOrigin>::const_iterator
+absl::flat_hash_map<std::string,tempo_utils::Url>::const_iterator
 lyric_importer::ShortcutResolver::shortcutsEnd() const
 {
     return m_shortcuts.cend();
@@ -40,7 +40,7 @@ lyric_importer::ShortcutResolver::numShortcuts() const
 }
 
 tempo_utils::Status
-lyric_importer::ShortcutResolver::insertShortcut(const std::string &shortcut, const tempo_utils::UrlOrigin &origin)
+lyric_importer::ShortcutResolver::insertShortcut(const std::string &shortcut, const tempo_utils::Url &origin)
 {
     if (shortcut.empty())
         return ImporterStatus::forCondition(ImporterCondition::kImporterInvariant,
@@ -55,7 +55,7 @@ lyric_importer::ShortcutResolver::insertShortcut(const std::string &shortcut, co
     return {};
 }
 
-tempo_utils::Result<tempo_utils::UrlOrigin>
+tempo_utils::Result<tempo_utils::Url>
 lyric_importer::ShortcutResolver::resolveShortcut(const std::string &shortcut) const
 {
     if (shortcut.empty())

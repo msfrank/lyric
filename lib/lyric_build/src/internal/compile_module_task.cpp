@@ -219,8 +219,11 @@ lyric_build::internal::CompileModuleTask::compileModule(
     auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     // configure compiler
+    lyric_compiler::CompilerOptions compilerOptions = m_compilerOptions;
+    compilerOptions.shortcutResolver = buildState->getShortcutResolver();
+
     lyric_compiler::LyricCompiler compiler(
-        origin, localModuleCache, buildState->getSharedModuleCache(), m_compilerOptions);
+        origin, localModuleCache, buildState->getSharedModuleCache(), compilerOptions);
 
     // compile the module
     logInfo("compiling module {}", m_moduleLocation.toString());
