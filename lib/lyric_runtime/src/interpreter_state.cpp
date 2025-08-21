@@ -8,6 +8,8 @@
 #include <tempo_utils/big_endian.h>
 #include <tempo_utils/log_stream.h>
 
+#include "lyric_runtime/string_ref.h"
+
 /**
  * Default no-args constructor which creates an invalid InterpreterState instance. This is only useful
  * for mocking the class when testing.
@@ -22,7 +24,7 @@ lyric_runtime::InterpreterState::InterpreterState()
 
 lyric_runtime::InterpreterState::InterpreterState(
     uv_loop_t *loop,
-    lyric_common::ModuleLocation preludeLocation,
+    const lyric_common::ModuleLocation &preludeLocation,
     std::shared_ptr<AbstractLoader> systemLoader,
     std::shared_ptr<AbstractLoader> applicationLoader,
     std::shared_ptr<AbstractHeap> heap)
@@ -100,7 +102,7 @@ lyric_runtime::InterpreterState::create(
 
     // if main location was specified then load it
     if (options.mainLocation.isValid()) {
-        TU_RETURN_IF_NOT_OK(state->load(options.mainLocation));
+        TU_RETURN_IF_NOT_OK(state->load(options.mainLocation, options.mainArguments));
     }
 
     return state;
@@ -246,6 +248,20 @@ lyric_runtime::InterpreterState::getMainLocation() const
     return m_mainLocation;
 }
 
+lyric_runtime::DataCell
+lyric_runtime::InterpreterState::getMainArgument(int index) const
+{
+    if (0 <= index && index < m_mainArguments.size())
+        return m_mainArguments.at(index);
+    return {};
+}
+
+int
+lyric_runtime::InterpreterState::numMainArguments() const
+{
+    return m_mainArguments.size();
+}
+
 tu_uint64
 lyric_runtime::InterpreterState::getLoadEpochMillis() const
 {
@@ -381,7 +397,9 @@ lyric_runtime::InterpreterState::initialize(const lyric_common::ModuleLocation &
 }
 
 tempo_utils::Status
-lyric_runtime::InterpreterState::load(const lyric_common::ModuleLocation &mainLocation)
+lyric_runtime::InterpreterState::load(
+    const lyric_common::ModuleLocation &mainLocation,
+    const std::vector<std::string> &mainArguments)
 {
     if (!mainLocation.isValid())
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
@@ -467,7 +485,15 @@ lyric_runtime::InterpreterState::load(const lyric_common::ModuleLocation &mainLo
     m_systemScheduler->resumeTask(mainTask);
     m_systemScheduler->selectNextReady();
 
-    // initialize process accounting
+    // store internal copy of main arguments list
+    m_mainArguments.resize(mainArguments.size());
+    for (int i = 0; i < mainArguments.size(); ++i) {
+        auto arg = m_heapManager->allocateString(mainArguments.at(i));
+        arg.data.str->setPermanent();
+        m_mainArguments[i] = std::move(arg);
+    }
+
+    // initialize process information
     m_mainLocation = mainLocation;
     m_loadEpochMillis = ToUnixMillis(absl::Now());
     m_statusCode = tempo_utils::StatusCode::kUnknown;

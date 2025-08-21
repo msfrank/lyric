@@ -32,6 +32,10 @@ namespace lyric_runtime {
          *
          */
         std::shared_ptr<AbstractHeap> heap = {};
+        /**
+         *
+         */
+        std::vector<std::string> mainArguments = {};
     };
 
     class InterpreterState : public std::enable_shared_from_this<InterpreterState> {
@@ -44,6 +48,9 @@ namespace lyric_runtime {
         tempo_utils::StatusCode getStatusCode() const;
         bool isActive() const;
 
+        DataCell getMainArgument(int index) const;
+        int numMainArguments() const;
+
         // subsystems
 
         virtual StackfulCoroutine *currentCoro() const;
@@ -55,7 +62,9 @@ namespace lyric_runtime {
         virtual HeapManager *heapManager() const;
         virtual uv_loop_t *mainLoop() const;
 
-        tempo_utils::Status load(const lyric_common::ModuleLocation &mainLocation);
+        tempo_utils::Status load(
+            const lyric_common::ModuleLocation &mainLocation,
+            const std::vector<std::string> &mainArguments = {});
         tempo_utils::Status halt(tempo_utils::StatusCode statusCode);
 
         // heap management
@@ -85,13 +94,14 @@ namespace lyric_runtime {
 
         // set in load method
         lyric_common::ModuleLocation m_mainLocation;
+        std::vector<DataCell> m_mainArguments;
         tu_uint64 m_loadEpochMillis;
         tempo_utils::StatusCode m_statusCode;
         bool m_active;
 
         InterpreterState(
             uv_loop_t *loop,
-            lyric_common::ModuleLocation preludeLocation,
+            const lyric_common::ModuleLocation &preludeLocation,
             std::shared_ptr<AbstractLoader> systemLoader,
             std::shared_ptr<AbstractLoader> applicationLoader,
             std::shared_ptr<AbstractHeap> heap);

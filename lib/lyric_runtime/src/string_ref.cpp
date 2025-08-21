@@ -33,6 +33,7 @@ make_end_iterator(const lyric_runtime::StringRef *ref)
 lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, const LiteralCell &literal)
     : m_etable(etable),
       m_owned(false),
+      m_permanent(false),
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
@@ -44,6 +45,7 @@ lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, const Litera
 lyric_runtime::StringRef::StringRef(const ExistentialTable *etable, const char *src, int32_t size)
     : m_etable(etable),
       m_owned(true),
+      m_permanent(false),
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
@@ -228,10 +230,16 @@ lyric_runtime::StringRef::getStringSize() const
     return m_size;
 }
 
+void
+lyric_runtime::StringRef::setPermanent()
+{
+    m_permanent = true;
+}
+
 bool
 lyric_runtime::StringRef::isReachable() const
 {
-    return m_reachable;
+    return m_permanent || m_reachable;
 }
 
 void

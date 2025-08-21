@@ -30,6 +30,7 @@ namespace lyric_runtime {
         const char *getStringData() const;
         int32_t getStringSize() const;
 
+        void setPermanent();
         bool isReachable() const override;
         void setReachable() override;
         void clearReachable() override;
@@ -54,6 +55,7 @@ namespace lyric_runtime {
         bool m_owned;
         const char *m_data;
         int32_t m_size;
+        bool m_permanent;
         bool m_reachable;
     };
 }
