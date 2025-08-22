@@ -13,6 +13,7 @@
 lyric_runtime::BytecodeSegment *
 lyric_runtime::internal::get_or_load_segment(
     const lyric_common::ModuleLocation &location,
+    const lyric_common::ModuleLocation &currentLocation,
     bool useSystemLoader,
     SegmentManagerData *segmentManagerData)
 {
@@ -23,12 +24,18 @@ lyric_runtime::internal::get_or_load_segment(
     // if location is relative then resolve to an absolute location
     lyric_common::ModuleLocation objectLocation;
     if (location.isRelative()) {
-        objectLocation = segmentManagerData->origin.resolve(location);
+        if (!currentLocation.isValid()) {
+            TU_LOG_V << "failed to load " << location
+                     << ": location is relative and current location is not specified";
+            return nullptr;
+        }
+        objectLocation = currentLocation.resolve(location);
     } else {
         objectLocation = location;
     }
 
-    auto loader = useSystemLoader? segmentManagerData->systemLoader : segmentManagerData->applicationLoader;
+    auto loader = useSystemLoader?
+        segmentManagerData->systemLoader : segmentManagerData->applicationLoader;
 
     // if segment is already loaded then return it
     auto entry = segmentManagerData->segmentcache.find(objectLocation);
@@ -144,7 +151,7 @@ lyric_runtime::internal::resolve_link(
 
     // get the segment containing the linked symbol
     auto location = referenceUrl.getModuleLocation();
-    auto *segment = get_or_load_segment(location, sp->isSystem(), segmentManagerData);
+    auto *segment = get_or_load_segment(location, sp->getObjectLocation(), sp->isSystem(), segmentManagerData);
     if (segment == nullptr) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kMissingObject, location.toString());

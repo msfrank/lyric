@@ -84,7 +84,7 @@ namespace lyric_runtime {
             StackfulCoroutine *currentCoro);
         virtual tempo_utils::Status pushSymbolDescriptorOntoStack(
             const lyric_common::SymbolUrl &symbolUrl,
-            bool useSystemLoader,
+            const BytecodeSegment *sp,
             StackfulCoroutine *currentCoro);
 
         virtual DataCell loadStatic(

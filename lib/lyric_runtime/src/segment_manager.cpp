@@ -69,7 +69,7 @@ lyric_runtime::SegmentManager::getSegment(const lyric_common::ModuleLocation &lo
 lyric_runtime::BytecodeSegment *
 lyric_runtime::SegmentManager::getOrLoadSegment(const lyric_common::ModuleLocation &location, bool useSystemLoader)
 {
-    return internal::get_or_load_segment(location, useSystemLoader, &m_data);
+    return internal::get_or_load_segment(location, {}, useSystemLoader, &m_data);
 }
 
 const lyric_runtime::LinkEntry *
@@ -170,10 +170,10 @@ lyric_runtime::SegmentManager::pushDescriptorOntoStack(
 tempo_utils::Status
 lyric_runtime::SegmentManager::pushSymbolDescriptorOntoStack(
     const lyric_common::SymbolUrl &symbolUrl,
-    bool useSystemLoader,
+    const BytecodeSegment *sp,
     StackfulCoroutine *currentCoro)
 {
-    return internal::push_symbol_descriptor_onto_stack(symbolUrl, useSystemLoader, currentCoro, &m_data);
+    return internal::push_symbol_descriptor_onto_stack(symbolUrl, sp, currentCoro, &m_data);
 }
 
 lyric_runtime::DataCell
