@@ -141,7 +141,7 @@ lookup_symbol(
         auto link = root.getLink(address);
         if (link.getLinkageSection() != section)
             return {};
-        return link.getLinkUrl();
+        return link.getLinkUrl(data.objectLocation);
     }
 }
 

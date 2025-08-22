@@ -200,7 +200,7 @@ lyric_importer::ExistentialImport::load()
                     existentialWalker.getNearSuperExistential().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                priv->superExistential = existentialWalker.getFarSuperExistential().getLinkUrl();
+                priv->superExistential = existentialWalker.getFarSuperExistential().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(
@@ -219,7 +219,7 @@ lyric_importer::ExistentialImport::load()
                 callUrl = lyric_common::SymbolUrl(objectLocation, method.getNearCall().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                callUrl = method.getFarCall().getLinkUrl();
+                callUrl = method.getFarCall().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(

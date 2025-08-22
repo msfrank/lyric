@@ -102,7 +102,7 @@ lyric_importer::FieldImport::load()
                 break;
             }
             case lyric_object::AddressType::Far: {
-                priv->initializer = fieldWalker.getFarInitializer().getLinkUrl();
+                priv->initializer = fieldWalker.getFarInitializer().getLinkUrl(objectLocation);
                 break;
             }
             default:

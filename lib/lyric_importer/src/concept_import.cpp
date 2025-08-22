@@ -199,7 +199,7 @@ lyric_importer::ConceptImport::load()
                     objectLocation, conceptWalker.getNearSuperConcept().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                priv->superConcept = conceptWalker.getFarSuperConcept().getLinkUrl();
+                priv->superConcept = conceptWalker.getFarSuperConcept().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(
@@ -218,7 +218,7 @@ lyric_importer::ConceptImport::load()
                 actionUrl = lyric_common::SymbolUrl(objectLocation, action.getNearAction().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                actionUrl = action.getFarAction().getLinkUrl();
+                actionUrl = action.getFarAction().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(

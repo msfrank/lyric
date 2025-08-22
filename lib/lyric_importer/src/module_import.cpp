@@ -271,3 +271,9 @@ lyric_importer::ModuleImport::getType(tu_uint32 offset) const
         return m_importedTypes.at(offset);
     return nullptr;
 }
+
+lyric_common::SymbolUrl
+lyric_importer::ModuleImport::resolveLinkUrl(const lyric_common::SymbolUrl &linkUrl) const
+{
+    return linkUrl.resolve(m_objectLocation);
+}

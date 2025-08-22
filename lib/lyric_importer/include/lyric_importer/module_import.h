@@ -61,6 +61,8 @@ namespace lyric_importer {
         TypeImport *getType(tu_uint32 offset) const;
         TemplateImport *getTemplate(tu_uint32 offset) const;
 
+        lyric_common::SymbolUrl resolveLinkUrl(const lyric_common::SymbolUrl &linkUrl) const;
+
     private:
         lyric_common::ModuleLocation m_objectLocation;
         lyric_object::LyricObject m_object;
@@ -92,7 +94,6 @@ namespace lyric_importer {
 
         friend class ModuleCache;
     };
-
 }
 
 #endif // LYRIC_IMPORTER_MODULE_IMPORT_H

@@ -33,6 +33,8 @@ namespace lyric_common {
         SymbolPath getSymbolPath() const;
         std::string getSymbolName() const;
 
+        SymbolUrl resolve(const ModuleLocation &base) const;
+
         std::string toString() const;
         tempo_utils::Url toUrl() const;
 

@@ -102,7 +102,7 @@ lyric_importer::NamespaceImport::load()
                     objectLocation, namespaceWalker.getNearSuperNamespace().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                priv->superNamespace = namespaceWalker.getFarSuperNamespace().getLinkUrl();
+                priv->superNamespace = namespaceWalker.getFarSuperNamespace().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(

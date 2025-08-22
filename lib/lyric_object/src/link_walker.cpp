@@ -71,7 +71,7 @@ lyric_object::LinkWalker::getLinkImport() const
 }
 
 lyric_common::SymbolUrl
-lyric_object::LinkWalker::getLinkUrl() const
+lyric_object::LinkWalker::getLinkUrl(const lyric_common::ModuleLocation &base) const
 {
     if (!isValid())
         return {};
@@ -89,6 +89,11 @@ lyric_object::LinkWalker::getLinkUrl() const
         return {};
     auto linkLocation = lyric_common::ModuleLocation::fromString(importDescriptor->import_location()->str());
 
+    if (linkLocation.isAbsolute())
+        return lyric_common::SymbolUrl(linkLocation, linkPath);
+    if (base.isValid()) {
+        linkLocation = base.resolve(linkLocation);
+    }
     return lyric_common::SymbolUrl(linkLocation, linkPath);
 }
 

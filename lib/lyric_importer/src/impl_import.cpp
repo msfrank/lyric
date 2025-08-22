@@ -94,7 +94,7 @@ lyric_importer::ImplImport::load()
                 objectLocation, implWalker.getNearImplConcept().getSymbolPath());
             break;
         case lyric_object::AddressType::Far:
-            priv->implConcept = implWalker.getFarImplConcept().getLinkUrl();
+            priv->implConcept = implWalker.getFarImplConcept().getLinkUrl(objectLocation);
             break;
         default:
             throw tempo_utils::StatusException(
@@ -115,7 +115,7 @@ lyric_importer::ImplImport::load()
                     objectLocation, extensionWalker.getNearAction().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                extension.actionUrl = extensionWalker.getFarAction().getLinkUrl();
+                extension.actionUrl = extensionWalker.getFarAction().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(
@@ -131,7 +131,7 @@ lyric_importer::ImplImport::load()
                     objectLocation, extensionWalker.getNearCall().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                extension.callUrl = extensionWalker.getFarCall().getLinkUrl();
+                extension.callUrl = extensionWalker.getFarCall().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(

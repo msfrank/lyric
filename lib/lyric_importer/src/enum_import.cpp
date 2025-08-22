@@ -237,7 +237,7 @@ lyric_importer::EnumImport::load()
                     objectLocation, enumWalker.getNearSuperEnum().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                priv->superEnum = enumWalker.getFarSuperEnum().getLinkUrl();
+                priv->superEnum = enumWalker.getFarSuperEnum().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(
@@ -256,7 +256,7 @@ lyric_importer::EnumImport::load()
                 fieldUrl = lyric_common::SymbolUrl(objectLocation, member.getNearField().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                fieldUrl = member.getFarField().getLinkUrl();
+                fieldUrl = member.getFarField().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(
@@ -277,7 +277,7 @@ lyric_importer::EnumImport::load()
                 callUrl = lyric_common::SymbolUrl(objectLocation, method.getNearCall().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                callUrl = method.getFarCall().getLinkUrl();
+                callUrl = method.getFarCall().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(

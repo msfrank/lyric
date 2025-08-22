@@ -253,7 +253,7 @@ lyric_importer::ClassImport::load()
                     objectLocation, classWalker.getNearSuperClass().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                priv->superClass = classWalker.getFarSuperClass().getLinkUrl();
+                priv->superClass = classWalker.getFarSuperClass().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(
@@ -272,7 +272,7 @@ lyric_importer::ClassImport::load()
                 fieldUrl = lyric_common::SymbolUrl(objectLocation, member.getNearField().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                fieldUrl = member.getFarField().getLinkUrl();
+                fieldUrl = member.getFarField().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(
@@ -293,7 +293,7 @@ lyric_importer::ClassImport::load()
                 callUrl = lyric_common::SymbolUrl(objectLocation, method.getNearCall().getSymbolPath());
                 break;
             case lyric_object::AddressType::Far:
-                callUrl = method.getFarCall().getLinkUrl();
+                callUrl = method.getFarCall().getLinkUrl(objectLocation);
                 break;
             default:
                 throw tempo_utils::StatusException(

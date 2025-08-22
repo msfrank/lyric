@@ -26,7 +26,7 @@ lookup_symbol(
         if (link.getLinkageSection() != section)
             return lyric_archiver::ArchiverStatus::forCondition(
                 lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid symbol");
-        return link.getLinkUrl();
+        return link.getLinkUrl(data.location);
     } else {
         return lyric_archiver::ArchiverStatus::forCondition(
             lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid symbol");

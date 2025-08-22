@@ -262,7 +262,7 @@ lyric_importer::ActionImport::load()
                             ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
                                 "cannot import action at index {} in module {}; invalid list parameter at index {}",
                                 actionWalker.getDescriptorOffset(), objectLocation.toString(), i));
-                    initializerCallUrl = initializer.getLinkUrl();
+                    initializerCallUrl = initializer.getLinkUrl(objectLocation);
                     break;
                 }
                 default:
@@ -322,7 +322,7 @@ lyric_importer::ActionImport::load()
                             ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
                                 "cannot import action at index {} in module {}; invalid named parameter at index {}",
                                 actionWalker.getDescriptorOffset(), objectLocation.toString(), i));
-                    initializerCallUrl = initializer.getLinkUrl();
+                    initializerCallUrl = initializer.getLinkUrl(objectLocation);
                     break;
                 }
                 default:

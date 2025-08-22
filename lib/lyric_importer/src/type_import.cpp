@@ -97,7 +97,8 @@ import_type_symbol(
         }
         case lyric_object::AddressType::Far: {
             auto linkUrl = object.getLink(
-                lyric_object::GET_LINK_OFFSET(concreteTypeWalker.getLinkageIndex())).getLinkUrl();
+                lyric_object::GET_LINK_OFFSET(concreteTypeWalker.getLinkageIndex()))
+                .getLinkUrl(objectLocation);
             if (!linkUrl.isValid())
                 throw tempo_utils::StatusException(
                     lyric_importer::ImporterStatus::forCondition(
@@ -156,7 +157,7 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
                 }
                 case lyric_object::AddressType::Far: {
                     auto templateLink = placeholderTypeWalker.getFarPlaceholderTemplate();
-                    templateUrl = templateLink.getLinkUrl();
+                    templateUrl = templateLink.getLinkUrl(objectLocation);
                     break;
                 }
                 default:

@@ -90,6 +90,15 @@ lyric_common::SymbolUrl::getModuleLocation() const
     return m_location;
 }
 
+lyric_common::SymbolUrl
+lyric_common::SymbolUrl::resolve(const ModuleLocation &base) const
+{
+    if (m_location.isAbsolute())
+        return *this;
+    auto resolved = base.resolve(m_location);
+    return SymbolUrl(resolved, m_path);
+}
+
 std::string
 lyric_common::SymbolUrl::toString() const
 {

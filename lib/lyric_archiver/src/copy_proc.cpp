@@ -68,7 +68,7 @@ resolve_symbol(lyric_object::LinkageSection section, tu_uint32 address, CopyProc
             return lyric_archiver::ArchiverStatus::forCondition(
                 lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid symbol");
         auto *symbolCache = data.state->symbolCache();
-        return symbolCache->getOrImportSymbol(link.getLinkUrl());
+        return symbolCache->getOrImportSymbol(link.getLinkUrl(data.objectLocation));
     } else {
         return lyric_archiver::ArchiverStatus::forCondition(
             lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid symbol");
