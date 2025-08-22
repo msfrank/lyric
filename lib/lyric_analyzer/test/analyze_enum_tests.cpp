@@ -40,6 +40,38 @@ TEST_F(AnalyzeEnum, DeclareEnum)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "$ctor"}), ctor.getSymbolPath());
 }
 
+TEST_F(AnalyzeEnum, DeclareEnumWithExplicitInit)
+{
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
+        defenum Foo {
+            val answer: Int
+            init() {
+                set this.answer = 42
+            }
+        }
+    )");
+    ASSERT_THAT (analyzeModuleResult,
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+
+    auto analyzeModule = analyzeModuleResult.getResult();
+    auto object = analyzeModule.getModule();
+    auto root = object.getObject();
+    ASSERT_EQ (5, root.numSymbols());
+    ASSERT_EQ (1, root.numEnums());
+    ASSERT_EQ (1, root.numFields());
+
+    auto enum0 = root.getEnum(0);
+    ASSERT_TRUE (enum0.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
+
+    ASSERT_EQ (1, enum0.numMembers());
+    auto field0 = enum0.getMember(0).getNearField();
+    ASSERT_TRUE (field0.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
+    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
+    ASSERT_FALSE (field0.isVariable());
+}
+
 TEST_F(AnalyzeEnum, DeclareEnumCase)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(

@@ -14,7 +14,7 @@
 namespace lyric_compiler {
 
     tempo_utils::Result<lyric_assembler::CallSymbol *>
-    declare_instance_default_init(
+    declare_instance_init(
         lyric_assembler::InstanceSymbol *instanceSymbol,
         const std::string &allocatorTrap);
 

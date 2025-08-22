@@ -8,7 +8,7 @@
 #include <lyric_parser/ast_attrs.h>
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
-lyric_compiler::declare_instance_default_init(
+lyric_compiler::declare_instance_init(
     lyric_assembler::InstanceSymbol *instanceSymbol,
     const std::string &allocatorTrap)
 {
@@ -144,8 +144,10 @@ lyric_compiler::declare_instance_member(
 
     TU_LOG_V << "declared member " << identifier << " for " << instanceSymbol->getSymbolUrl();
 
-    // define the required initializer
-    TU_ASSIGN_OR_RETURN (member.initializerHandle, member.fieldSymbol->defineInitializer());
+    // define the initializer if specified
+    if (node->numChildren() > 0) {
+        TU_ASSIGN_OR_RETURN (member.initializerHandle, member.fieldSymbol->defineInitializer());
+    }
 
     return member;
 }

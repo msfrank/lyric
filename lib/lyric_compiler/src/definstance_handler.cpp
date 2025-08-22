@@ -72,6 +72,7 @@ lyric_compiler::DefInstanceHandler::before(
     // FIXME: get abstract flag from node
     bool isAbstract = false;
 
+    lyric_parser::ArchetypeNode *initNode = nullptr;
     std::vector<lyric_parser::ArchetypeNode *> valNodes;
     std::vector<lyric_parser::ArchetypeNode *> varNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
@@ -83,6 +84,12 @@ lyric_compiler::DefInstanceHandler::before(
         lyric_schema::LyricAstId astId;
         TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, astId));
         switch (astId) {
+            case lyric_schema::LyricAstId::Init:
+                if (initNode != nullptr)
+                    return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
+                        "duplicate instance init declaration");
+                initNode = child;
+                break;
             case lyric_schema::LyricAstId::Val: {
                 valNodes.push_back(child);
                 break;
@@ -141,9 +148,11 @@ lyric_compiler::DefInstanceHandler::before(
     }
 
     // declare instance init
-    TU_ASSIGN_OR_RETURN (m_definstance.initCall, declare_instance_default_init(
+    TU_ASSIGN_OR_RETURN (m_definstance.initCall, declare_instance_init(
         m_definstance.instanceSymbol, allocatorTrap));
-    m_definstance.defaultInit = true;
+    if (initNode == nullptr) {
+        m_definstance.defaultInit = true;
+    }
 
     // declare methods
     for (auto &defNode : defNodes) {
@@ -209,6 +218,14 @@ lyric_compiler::InstanceDefinition::decide(
     lyric_schema::LyricAstId astId;
     TU_RETURN_IF_NOT_OK (node->parseId(lyric_schema::kLyricAstVocabulary, astId));
     switch (astId) {
+        case lyric_schema::LyricAstId::Init: {
+            auto superInvoker = std::make_unique<lyric_assembler::ConstructableInvoker>();
+            TU_RETURN_IF_NOT_OK (m_definstance->superinstanceSymbol->prepareCtor(*superInvoker));
+            auto handler = std::make_unique<ConstructorHandler>(
+                std::move(superInvoker), m_definstance->initCall, block, driver);
+            ctx.setGrouping(std::move(handler));
+            return {};
+        }
         case lyric_schema::LyricAstId::Val:
         case lyric_schema::LyricAstId::Var: {
             auto member = m_definstance->members.at(node);

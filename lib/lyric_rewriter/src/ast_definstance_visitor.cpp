@@ -19,6 +19,7 @@ lyric_rewriter::AstDefinstanceVisitor::enter(lyric_parser::ArchetypeNode *node, 
     if (ctx.skipChildren())
         return {};
 
+    Option<std::pair<lyric_parser::ArchetypeNode *,int>> initNodeOption;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> memberNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> methodNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> implNodes;
@@ -28,6 +29,11 @@ lyric_rewriter::AstDefinstanceVisitor::enter(lyric_parser::ArchetypeNode *node, 
         lyric_schema::LyricAstId childId;
         TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
         switch (childId) {
+            case lyric_schema::LyricAstId::Init:
+                if (initNodeOption.hasValue())
+                    return RewriterStatus::forCondition(RewriterCondition::kSyntaxError);
+                initNodeOption = Option(std::pair{child, i});
+                break;
             case lyric_schema::LyricAstId::Val:
             case lyric_schema::LyricAstId::Var:
                 memberNodes.push_back(std::pair{child, i});
@@ -41,6 +47,13 @@ lyric_rewriter::AstDefinstanceVisitor::enter(lyric_parser::ArchetypeNode *node, 
             default:
                 return RewriterStatus::forCondition(RewriterCondition::kSyntaxError);
         }
+    }
+
+    if (initNodeOption.hasValue()) {
+        auto &pair = initNodeOption.peekValue();
+        std::shared_ptr<AbstractNodeVisitor> visitor;
+        TU_ASSIGN_OR_RETURN (visitor, makeVisitor(pair.first));
+        ctx.push(node, pair.second, pair.first, visitor);
     }
 
     for (auto it = implNodes.rbegin(); it != implNodes.rend(); it++) {

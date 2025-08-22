@@ -40,6 +40,39 @@ TEST_F(AnalyzeInstance, DeclareInstance)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "$ctor"}), ctor.getSymbolPath());
 }
 
+TEST_F(AnalyzeInstance, DeclareInstanceWithExplicitInit)
+{
+    auto analyzeModuleResult = m_tester->analyzeModule(R"(
+        definstance Foo {
+            var answer: Int
+            init {
+                set this.answer = 42
+            }
+        }
+    )");
+    ASSERT_THAT (analyzeModuleResult,
+                 tempo_test::ContainsResult(AnalyzeModule(lyric_build::TaskState::Status::COMPLETED)));
+
+    auto analyzeModule = analyzeModuleResult.getResult();
+    auto object = analyzeModule.getModule();
+    auto root = object.getObject();
+    ASSERT_EQ (5, root.numSymbols());
+    ASSERT_EQ (1, root.numInstances());
+    ASSERT_EQ (1, root.numFields());
+
+    auto instance0 = root.getInstance(0);
+    ASSERT_TRUE (instance0.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), instance0.getSymbolPath());
+
+    ASSERT_EQ (1, instance0.numMembers());
+    auto field0 = instance0.getMember(0).getNearField();
+    ASSERT_TRUE (field0.isDeclOnly());
+    ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
+    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
+    ASSERT_TRUE (field0.isVariable());
+}
+
+
 TEST_F(AnalyzeInstance, DeclareInstanceMemberVal)
 {
     auto analyzeModuleResult = m_tester->analyzeModule(R"(

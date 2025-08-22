@@ -13,8 +13,7 @@ lyric_analyzer::InstanceAnalyzerContext::InstanceAnalyzerContext(
     lyric_assembler::InstanceSymbol *instanceSymbol,
     const lyric_parser::ArchetypeNode *initNode)
     : m_driver(driver),
-      m_instanceSymbol(instanceSymbol),
-      m_initNode(initNode)
+      m_instanceSymbol(instanceSymbol)
 {
     TU_ASSERT (m_driver != nullptr);
     TU_ASSERT (m_instanceSymbol != nullptr);
@@ -64,22 +63,9 @@ lyric_analyzer::InstanceAnalyzerContext::exit(
 
     if (resource->getId() == lyric_schema::LyricAstId::DefInstance) {
         // define the constructor
-        if (m_initNode != nullptr) {
-            auto *block = getBlock();
-            auto *typeSystem = m_driver->getTypeSystem();
-            auto *packNode = m_initNode->getChild(0);
-            lyric_typing::PackSpec packSpec;
-            TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(block, packNode->getArchetypeNode()));
-            lyric_assembler::ParameterPack parameterPack;
-            TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(block, packSpec));
-            lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_instanceSymbol->declareCtor(lyric_object::AccessType::Public));
-            TU_RETURN_IF_STATUS (ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
-        } else {
-            lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_instanceSymbol->declareCtor(lyric_object::AccessType::Public));
-            TU_RETURN_IF_STATUS (ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
-        }
+        lyric_assembler::CallSymbol *ctorSymbol;
+        TU_ASSIGN_OR_RETURN (ctorSymbol, m_instanceSymbol->declareCtor(lyric_object::AccessType::Public));
+        TU_RETURN_IF_STATUS (ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
         return m_driver->popContext();
     }
 

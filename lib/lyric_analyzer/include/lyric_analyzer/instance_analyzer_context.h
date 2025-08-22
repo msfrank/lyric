@@ -34,7 +34,6 @@ namespace lyric_analyzer {
     private:
         AnalyzerScanDriver *m_driver;
         lyric_assembler::InstanceSymbol *m_instanceSymbol;
-        const lyric_parser::ArchetypeNode *m_initNode;
     };
 }
 

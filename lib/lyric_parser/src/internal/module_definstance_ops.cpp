@@ -42,6 +42,69 @@ lyric_parser::internal::ModuleDefinstanceOps::enterDefinstanceStatement(ModulePa
 }
 
 void
+lyric_parser::internal::ModuleDefinstanceOps::enterInstanceInit(ModuleParser::InstanceInitContext *ctx)
+{
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefinstanceOps::enterInstanceInit");
+
+    auto *state = getState();
+    state->pushSymbol("$ctor");
+}
+
+void
+lyric_parser::internal::ModuleDefinstanceOps::exitInstanceInit(ModuleParser::InstanceInitContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    state->popSymbolAndCheck("$ctor");
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    if (hasError())
+        return;
+
+    // if init statement has a block then block is top of the stack, otherwise synthesize an empty node
+    ArchetypeNode *blockNode = nullptr;
+    if (ctx->procBlock() && ctx->procBlock()->block()) {
+        TU_ASSIGN_OR_RAISE (blockNode, state->popNode(lyric_schema::kLyricAstBlockClass));
+    } else {
+        TU_ASSIGN_OR_RAISE (blockNode, state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
+    }
+
+    // synthesize an empty parameter list
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, state->appendNode(lyric_schema::kLyricAstPackClass, {}));
+
+    // create the init node
+    ArchetypeNode *initNode;
+    TU_ASSIGN_OR_RAISE (initNode, state->appendNode(lyric_schema::kLyricAstInitClass, location));
+
+    // append pack node to init
+    TU_RAISE_IF_NOT_OK (initNode->appendChild(packNode));
+
+    // synthesize an empty super node
+    ArchetypeNode *superNode;
+    TU_ASSIGN_OR_RAISE (superNode, state->appendNode(lyric_schema::kLyricAstSuperClass, {}));
+
+    // append super node to the init
+    TU_RAISE_IF_NOT_OK (initNode->appendChild(superNode));
+
+    // append block node to the init
+    TU_RAISE_IF_NOT_OK (initNode->appendChild(blockNode));
+
+    // peek node on stack, verify it is definstance
+    ArchetypeNode *definstanceNode;
+    TU_ASSIGN_OR_RAISE (definstanceNode, state->peekNode(lyric_schema::kLyricAstDefInstanceClass));
+
+    // append init node to defenum
+    TU_RAISE_IF_NOT_OK (definstanceNode->appendChild(initNode));
+}
+
+void
 lyric_parser::internal::ModuleDefinstanceOps::enterInstanceVal(ModuleParser::InstanceValContext *ctx)
 {
     tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefinstanceOps::enterInstanceVal");

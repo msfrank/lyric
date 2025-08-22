@@ -269,12 +269,13 @@ defconceptStatement : definitionMacro? DefConceptKeyword
 
 // definstance statement
 
-instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType AssignOperator defaultInitializer ;
-instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType AssignOperator defaultInitializer ;
+instanceInit        : InitKeyword procBlock ;
+instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
+instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 instanceDerives     : ( SealedKeyword | FinalKeyword ) ;
-instanceSpec        : instanceVal | instanceVar | instanceDef | instanceImpl ;
+instanceSpec        : instanceInit | instanceVal | instanceVar | instanceDef | instanceImpl ;
 definstanceStatement: definitionMacro? DefInstanceKeyword
                         symbolIdentifier instanceDerives?
                         CurlyOpen instanceSpec* CurlyClose ;

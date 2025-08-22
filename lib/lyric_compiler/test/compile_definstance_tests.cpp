@@ -7,6 +7,21 @@
 
 class CompileDefinstance : public BaseCompilerFixture {};
 
+TEST_F(CompileDefinstance, EvaluateInstanceWithExplicitInit)
+{
+    auto result = m_tester->runModule(R"(
+        definstance Foo {
+            val Index: Int
+            init {
+                set this.Index = 100
+            }
+        }
+        Foo.Index
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(100))));
+}
+
 TEST_F(CompileDefinstance, EvaluateInstanceValMember)
 {
     auto result = m_tester->runModule(R"(
