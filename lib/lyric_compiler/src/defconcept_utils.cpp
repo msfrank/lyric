@@ -21,8 +21,8 @@ lyric_compiler::declare_concept_action(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // determine the access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // parse the return type
     lyric_parser::ArchetypeNode *typeNode;
@@ -38,8 +38,7 @@ lyric_compiler::declare_concept_action(
     Action action;
 
     // declare the action
-    TU_ASSIGN_OR_RETURN (action.actionSymbol, conceptSymbol->declareAction(
-        identifier, convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (action.actionSymbol, conceptSymbol->declareAction(identifier, isHidden));
 
     TU_LOG_V << "declared method " << identifier << " for " << conceptSymbol->getSymbolUrl();
 

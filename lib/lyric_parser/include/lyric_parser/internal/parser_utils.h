@@ -25,7 +25,7 @@ namespace lyric_parser::internal {
         ArchetypeState *state,
         ModuleParser::PlaceholderSpecContext *pctx,
         ModuleParser::ConstraintSpecContext *cctx = nullptr);
-    AccessType parse_access_type(std::string_view identifier);
+    bool identifier_is_hidden(std::string_view identifier);
 }
 
 #endif // LYRIC_PARSER_INTERNAL_PARSER_UTILS_H

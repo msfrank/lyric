@@ -96,11 +96,9 @@ lyric_object::CallWalker::getAccess() const
     if (callDescriptor == nullptr)
         return AccessType::Invalid;
 
-    if (bool(callDescriptor->flags() & lyo1::CallFlags::GlobalVisibility))
-        return AccessType::Public;
-    if (bool(callDescriptor->flags() & lyo1::CallFlags::InheritVisibility))
-        return AccessType::Protected;
-    return AccessType::Private;
+    if (bool(callDescriptor->flags() & lyo1::CallFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
 }
 
 lyric_object::CallMode

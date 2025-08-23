@@ -16,7 +16,7 @@ lyric_compiler::declare_enum_default_init(
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, enumSymbol->declareCtor(lyric_object::AccessType::Public, allocatorTrap));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, enumSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
 
     // define 0-arity constructor
     TU_RETURN_IF_STATUS(ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
@@ -37,7 +37,7 @@ lyric_compiler::declare_enum_init(
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, enumSymbol->declareCtor(lyric_object::AccessType::Public, allocatorTrap));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, enumSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
 
     lyric_typing::PackSpec packSpec;
     lyric_assembler::ParameterPack parameterPack;
@@ -166,13 +166,13 @@ lyric_compiler::declare_enum_member(
     lyric_common::TypeDef memberType;
     TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(enumBlock, memberSpec));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     Member member;
 
     TU_ASSIGN_OR_RETURN (member.fieldSymbol, enumSymbol->declareMember(
-        identifier, memberType, isVariable, convert_access_type(access)));
+        identifier, memberType, isVariable, isHidden));
 
     TU_LOG_V << "declared member " << identifier << " for " << enumSymbol->getSymbolUrl();
 
@@ -199,8 +199,8 @@ lyric_compiler::declare_enum_method(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // determine the access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // parse the return type
     lyric_parser::ArchetypeNode *typeNode;
@@ -216,8 +216,7 @@ lyric_compiler::declare_enum_method(
     Method method;
 
     // declare the method
-    TU_ASSIGN_OR_RETURN (method.callSymbol, enumSymbol->declareMethod(
-        identifier, convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (method.callSymbol, enumSymbol->declareMethod(identifier, isHidden));
 
     TU_LOG_V << "declared method " << identifier << " for " << enumSymbol->getSymbolUrl();
 
@@ -279,13 +278,12 @@ lyric_compiler::declare_enum_case(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // get case access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_assembler::EnumSymbol *caseEnum;
     TU_ASSIGN_OR_RETURN (caseEnum, block->declareEnum(
-        identifier, enumSymbol, lyric_compiler::convert_access_type(access),
-        lyric_object::DeriveType::Final));
+        identifier, enumSymbol, isHidden, lyric_object::DeriveType::Final));
 
     // add case to set of sealed subtypes
     TU_RETURN_IF_NOT_OK (enumSymbol->putSealedType(caseEnum->getTypeDef()));

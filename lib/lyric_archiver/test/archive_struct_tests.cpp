@@ -39,7 +39,7 @@ TEST_F(ArchiveStructTests, ArchiveStructAndCheckMember)
     lyric_common::SymbolUrl archivedUrl;
     TU_ASSIGN_OR_RAISE (archivedUrl, archiveSymbol(mod1location, "FooStruct"));
     lyric_assembler::BindingSymbol *bindingSymbol;
-    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooStructAlias", lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooStructAlias", /* isHidden= */ false));
     ASSERT_THAT (bindingSymbol->defineTarget(lyric_common::TypeDef::forConcrete(archivedUrl)), tempo_test::IsOk());
 
     ASSERT_THAT (build(), tempo_test::IsOk());
@@ -73,7 +73,7 @@ TEST_F(ArchiveStructTests, ArchiveStructAndCheckMethod)
     lyric_common::SymbolUrl archivedUrl;
     TU_ASSIGN_OR_RAISE (archivedUrl, archiveSymbol(mod1location, "FooStruct"));
     lyric_assembler::BindingSymbol *bindingSymbol;
-    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooStructAlias", lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooStructAlias", /* isHidden= */ false));
     ASSERT_THAT (bindingSymbol->defineTarget(lyric_common::TypeDef::forConcrete(archivedUrl)), tempo_test::IsOk());
 
     ASSERT_THAT (build(), tempo_test::IsOk());
@@ -109,7 +109,7 @@ TEST_F(ArchiveStructTests, ArchiveStructAndCheckImpl)
     lyric_common::SymbolUrl archivedUrl;
     TU_ASSIGN_OR_RAISE (archivedUrl, archiveSymbol(mod1location, "FooStruct"));
     lyric_assembler::BindingSymbol *bindingSymbol;
-    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooStructAlias", lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooStructAlias", /* isHidden= */ false));
     ASSERT_THAT (bindingSymbol->defineTarget(lyric_common::TypeDef::forConcrete(archivedUrl)), tempo_test::IsOk());
 
     ASSERT_THAT (build(), tempo_test::IsOk());

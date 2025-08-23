@@ -10,7 +10,7 @@ namespace lyric_importer {
         bool isAbstract;
         bool isDeclOnly;
         lyric_object::DeriveType derive;
-        lyric_object::AccessType access;
+        bool isHidden;
         TypeImport *instanceType;
         lyric_common::SymbolUrl superInstance;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
@@ -58,11 +58,11 @@ lyric_importer::InstanceImport::getDerive()
     return m_priv->derive;
 }
 
-lyric_object::AccessType
-lyric_importer::InstanceImport::getAccess()
+bool
+lyric_importer::InstanceImport::isHidden()
 {
     load();
-    return m_priv->access;
+    return m_priv->isHidden;
 }
 
 lyric_importer::TypeImport *
@@ -219,13 +219,20 @@ lyric_importer::InstanceImport::load()
                 "cannot import instance at index {} in module {}; invalid derive type",
                 m_instanceOffset, objectLocation.toString()));
 
-    priv->access = instanceWalker.getAccess();
-    if (priv->access == lyric_object::AccessType::Invalid)
-        throw tempo_utils::StatusException(
-            ImporterStatus::forCondition(
-                ImporterCondition::kImportError,
-                "cannot import instance at index {} in module {}; invalid access type",
-                m_instanceOffset, objectLocation.toString()));
+    switch (instanceWalker.getAccess()) {
+        case lyric_object::AccessType::Hidden:
+            priv->isHidden = true;
+            break;
+        case lyric_object::AccessType::Public:
+            priv->isHidden = false;
+            break;
+        default:
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import instance at index {} in module {}; invalid access type",
+                    m_instanceOffset, objectLocation.toString()));
+    }
 
     priv->instanceType = moduleImport->getType(
         instanceWalker.getInstanceType().getDescriptorOffset());

@@ -184,7 +184,7 @@ apply_load(const lyric_object::OpCell &op, ImportProcData &data)
             auto name = absl::StrCat("loc", operands.address);
             auto localUrl = get_variable_url(name, data);
             auto localSymbol = std::make_unique<lyric_assembler::LocalVariable>(
-                localUrl, lyric_object::AccessType::Invalid, lyric_common::TypeDef{},
+                localUrl, /* isHidden= */ true, lyric_common::TypeDef{},
                 lyric_assembler::LocalOffset(operands.address));
             auto *symbolCache = data.state->symbolCache();
             TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(localUrl, localSymbol.get()));
@@ -346,7 +346,7 @@ apply_store(const lyric_object::OpCell &op, ImportProcData &data)
             auto name = absl::StrCat("loc", operands.address);
             auto localUrl = get_variable_url(name, data);
             auto localSymbol = std::make_unique<lyric_assembler::LocalVariable>(
-                localUrl, lyric_object::AccessType::Invalid, lyric_common::TypeDef{},
+                localUrl, /* isHidden= */ true, lyric_common::TypeDef{},
                 lyric_assembler::LocalOffset(operands.address));
             auto *symbolCache = data.state->symbolCache();
             TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(localUrl, localSymbol.get()));

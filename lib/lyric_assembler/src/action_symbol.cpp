@@ -8,7 +8,7 @@
 lyric_assembler::ActionSymbol::ActionSymbol(
     const lyric_common::SymbolUrl &actionUrl,
     const lyric_common::SymbolUrl &receiverUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
@@ -22,19 +22,18 @@ lyric_assembler::ActionSymbol::ActionSymbol(
     auto *priv = getPriv();
     priv->isDeclOnly = isDeclOnly;
     priv->receiverUrl = receiverUrl;
-    priv->access = access;
+    priv->isHidden = isHidden;
     priv->actionTemplate = nullptr;
     priv->parentBlock = parentBlock;
 
     TU_ASSERT (priv->receiverUrl.isValid());
-    TU_ASSERT (priv->access != lyric_object::AccessType::Invalid);
     TU_ASSERT (priv->parentBlock != nullptr);
 }
 
 lyric_assembler::ActionSymbol::ActionSymbol(
     const lyric_common::SymbolUrl &actionUrl,
     const lyric_common::SymbolUrl &receiverUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     TemplateHandle *actionTemplate,
     bool isDeclOnly,
     BlockHandle *parentBlock,
@@ -42,7 +41,7 @@ lyric_assembler::ActionSymbol::ActionSymbol(
     : ActionSymbol(
         actionUrl,
         receiverUrl,
-        access,
+        isHidden,
         isDeclOnly,
         parentBlock,
         state)
@@ -75,6 +74,7 @@ lyric_assembler::ActionSymbol::load()
     auto priv = std::make_unique<ActionSymbolPriv>();
 
     priv->isDeclOnly = m_actionImport->isDeclOnly();
+    priv->isHidden = m_actionImport->isHidden();
 
     for (auto it = m_actionImport->listParametersBegin(); it != m_actionImport->listParametersEnd(); it++) {
         Parameter p;
@@ -218,11 +218,11 @@ lyric_assembler::ActionSymbol::getReceiverUrl() const
     return priv->receiverUrl;
 }
 
-lyric_object::AccessType
-lyric_assembler::ActionSymbol::getAccessType() const
+bool
+lyric_assembler::ActionSymbol::isHidden() const
 {
     auto *priv = getPriv();
-    return priv->access;
+    return priv->isHidden;
 }
 
 lyric_assembler::AbstractResolver *

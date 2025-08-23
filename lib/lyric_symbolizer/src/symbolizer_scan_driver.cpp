@@ -201,7 +201,7 @@ lyric_symbolizer::SymbolizerScanDriver::pushNamespace(const lyric_parser::Archet
     m_symbolPath.push_back(identifier);
 
     lyric_assembler::NamespaceSymbol *subspace;
-    TU_ASSIGN_OR_RETURN (subspace, currentNamespace->declareSubspace(identifier, lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RETURN (subspace, currentNamespace->declareSubspace(identifier, /* isHidden= */ false));
     m_namespaces.push(subspace);
 
     TU_LOG_V << "declared namespace " << subspace->getSymbolUrl().toString();

@@ -10,7 +10,7 @@ namespace lyric_importer {
         bool isAbstract;
         bool isDeclOnly;
         lyric_object::DeriveType derive;
-        lyric_object::AccessType access;
+        bool isHidden;
         TypeImport *structType;
         lyric_common::SymbolUrl superStruct;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
@@ -58,11 +58,11 @@ lyric_importer::StructImport::getDerive()
     return m_priv->derive;
 }
 
-lyric_object::AccessType
-lyric_importer::StructImport::getAccess()
+bool
+lyric_importer::StructImport::isHidden()
 {
     load();
-    return m_priv->access;
+    return m_priv->isHidden;
 }
 
 lyric_importer::TypeImport *
@@ -219,13 +219,20 @@ lyric_importer::StructImport::load()
                 "cannot import struct at index {} in module {}; invalid derive type",
                 m_structOffset, objectLocation.toString()));
 
-    priv->access = structWalker.getAccess();
-    if (priv->access == lyric_object::AccessType::Invalid)
-        throw tempo_utils::StatusException(
-            ImporterStatus::forCondition(
-                ImporterCondition::kImportError,
-                "cannot import struct at index {} in module {}; invalid access type",
-                m_structOffset, objectLocation.toString()));
+    switch (structWalker.getAccess()) {
+        case lyric_object::AccessType::Hidden:
+            priv->isHidden = true;
+            break;
+        case lyric_object::AccessType::Public:
+            priv->isHidden = false;
+            break;
+        default:
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import struct at index {} in module {}; invalid access type",
+                    m_structOffset, objectLocation.toString()));
+    }
 
     priv->structType = moduleImport->getType(
         structWalker.getStructType().getDescriptorOffset());

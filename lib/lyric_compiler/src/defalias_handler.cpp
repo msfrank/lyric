@@ -59,8 +59,8 @@ lyric_compiler::DefAliasHandler::after(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // get binding access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // if binding is generic, then compile the template parameter list
     lyric_typing::TemplateSpec templateSpec;
@@ -81,10 +81,10 @@ lyric_compiler::DefAliasHandler::after(
     if (m_currentNamespace == nullptr) {
         // declare binding symbol
         TU_ASSIGN_OR_RETURN (m_bindingSymbol, block->declareBinding(
-            identifier, convert_access_type(access), templateSpec.templateParameters));
+            identifier, isHidden, templateSpec.templateParameters));
     } else {
         TU_ASSIGN_OR_RETURN (m_bindingSymbol, m_currentNamespace->declareBinding(
-            identifier, convert_access_type(access), templateSpec.templateParameters));
+            identifier, isHidden, templateSpec.templateParameters));
     }
 
     auto *resolver = m_bindingSymbol->bindingResolver();

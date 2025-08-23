@@ -139,21 +139,11 @@ write_call(
     auto fullyQualifiedName = buffer.CreateSharedString(callPathString);
 
     lyo1::CallFlags callFlags = lyo1::CallFlags::NONE;
-    if (callSymbol->isDeclOnly())
+    if (callSymbol->isDeclOnly()) {
         callFlags |= lyo1::CallFlags::DeclOnly;
-    switch (callSymbol->getAccessType()) {
-        case lyric_object::AccessType::Public:
-            callFlags |= lyo1::CallFlags::GlobalVisibility;
-            break;
-        case lyric_object::AccessType::Protected:
-            callFlags |= lyo1::CallFlags::InheritVisibility;
-            break;
-        case lyric_object::AccessType::Private:
-            break;
-        default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                "invalid call access");
+    }
+    if (callSymbol->isHidden()) {
+        callFlags |= lyo1::CallFlags::Hidden;
     }
 
     tu_uint32 callTemplate = lyric_runtime::INVALID_ADDRESS_U32;

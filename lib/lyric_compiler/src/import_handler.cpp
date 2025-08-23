@@ -45,7 +45,7 @@ lyric_compiler::ImportHandler::before(
         lyric_assembler::NamespaceSymbol *importNamespace;
         if (m_parentNamespace) {
             TU_ASSIGN_OR_RETURN (importNamespace, m_parentNamespace->declareSubspace(
-                namespaceIdentifier, lyric_object::AccessType::Public));
+                namespaceIdentifier, /* isHidden= */ false));
             m_import.importBlock = importNamespace->namespaceBlock();
         } else {
             return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,

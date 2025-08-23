@@ -228,11 +228,9 @@ lyric_object::EnumWalker::getAccess() const
     if (enumDescriptor == nullptr)
         return AccessType::Invalid;
 
-    if (bool(enumDescriptor->flags() & lyo1::EnumFlags::GlobalVisibility))
-        return AccessType::Public;
-    if (bool(enumDescriptor->flags() & lyo1::EnumFlags::InheritVisibility))
-        return AccessType::Protected;
-    return AccessType::Private;
+    if (bool(enumDescriptor->flags() & lyo1::EnumFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
 }
 
 bool

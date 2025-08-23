@@ -73,11 +73,11 @@ lyric_analyzer::EnumAnalyzerContext::exit(
             lyric_assembler::ParameterPack parameterPack;
             TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(block, packSpec));
             lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_enumSymbol->declareCtor(lyric_object::AccessType::Public));
+            TU_ASSIGN_OR_RETURN (ctorSymbol, m_enumSymbol->declareCtor(/* isHidden= */ false));
             TU_RETURN_IF_STATUS (ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
         } else {
             lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_enumSymbol->declareCtor(lyric_object::AccessType::Public));
+            TU_ASSIGN_OR_RETURN (ctorSymbol, m_enumSymbol->declareCtor(/* isHidden= */ false));
             TU_RETURN_IF_STATUS (ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
         }
         return m_driver->popContext();
@@ -92,18 +92,18 @@ lyric_analyzer::EnumAnalyzerContext::declareCase(const lyric_parser::ArchetypeNo
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     auto *parentBlock = m_enumSymbol->enumBlock()->blockParent();
 
     lyric_assembler::EnumSymbol *enumCaseSymbol;
     TU_ASSIGN_OR_RETURN (enumCaseSymbol, parentBlock->declareEnum(
-        identifier, m_enumSymbol, internal::convert_access_type(access),
-        lyric_object::DeriveType::Final, /* isAbstract= */ false, /* declOnly= */ true));
+        identifier, m_enumSymbol, isHidden, lyric_object::DeriveType::Final,
+        /* isAbstract= */ false, /* declOnly= */ true));
 
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, enumCaseSymbol->declareCtor(lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, enumCaseSymbol->declareCtor(/* isHidden= */ false));
     TU_RETURN_IF_STATUS(ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
 
     TU_RETURN_IF_NOT_OK (m_enumSymbol->putSealedType(enumCaseSymbol->getTypeDef()));
@@ -119,8 +119,8 @@ lyric_analyzer::EnumAnalyzerContext::declareMember(const lyric_parser::Archetype
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     auto walker = node->getArchetypeNode();
     auto *block = getBlock();
@@ -134,7 +134,7 @@ lyric_analyzer::EnumAnalyzerContext::declareMember(const lyric_parser::Archetype
     TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(block, memberSpec));
 
     TU_RETURN_IF_STATUS(m_enumSymbol->declareMember(
-        identifier, memberType, /* isVariable= */ false, internal::convert_access_type(access)));
+        identifier, memberType, /* isVariable= */ false, isHidden));
 
     TU_LOG_V << "declared member " << identifier << " on " << m_enumSymbol->getSymbolUrl();
 
@@ -147,8 +147,8 @@ lyric_analyzer::EnumAnalyzerContext::declareMethod(const lyric_parser::Archetype
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_parser::ArchetypeNode *genericNode = nullptr;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
@@ -164,7 +164,7 @@ lyric_analyzer::EnumAnalyzerContext::declareMethod(const lyric_parser::Archetype
     }
 
     lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, m_enumSymbol->declareMethod(identifier, internal::convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (callSymbol, m_enumSymbol->declareMethod(identifier, isHidden));
 
     auto *resolver = callSymbol->callResolver();
 

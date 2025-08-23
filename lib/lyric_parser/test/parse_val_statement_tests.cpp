@@ -32,9 +32,9 @@ TEST_F(ParseValStatement, ParseTypedVal)
     ASSERT_THAT (valNode.parseAttr(lyric_parser::kLyricAstIdentifier, identifier), tempo_test::IsOk());
     ASSERT_EQ ("x", identifier);
 
-    lyric_parser::AccessType access;
-    ASSERT_THAT (valNode.parseAttr(lyric_parser::kLyricAstAccessType, access), tempo_test::IsOk());
-    ASSERT_EQ (lyric_parser::AccessType::Protected, access);
+    bool isHidden;
+    ASSERT_THAT (valNode.parseAttr(lyric_parser::kLyricAstIsHidden, isHidden), tempo_test::IsOk());
+    ASSERT_FALSE (isHidden);
 
     lyric_parser::NodeWalker typeNode;
     ASSERT_THAT (valNode.parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode), tempo_test::IsOk());

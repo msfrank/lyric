@@ -44,8 +44,8 @@ lyric_compiler::DefHandler::before(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // get function access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_typing::TemplateSpec templateSpec;
     lyric_assembler::ParameterPack parameterPack;
@@ -60,7 +60,7 @@ lyric_compiler::DefHandler::before(
 
     // declare the function call
     TU_ASSIGN_OR_RETURN (m_function.callSymbol, block->declareFunction(identifier,
-        lyric_compiler::convert_access_type(access), templateSpec.templateParameters));
+        isHidden, templateSpec.templateParameters));
 
     // add function to the current namespace if specified
     if (m_currentNamespace != nullptr) {

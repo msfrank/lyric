@@ -51,8 +51,8 @@ lyric_compiler::DefStaticHandler::before(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // get global access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // determine whether global is variable
     bool isVariable;
@@ -68,8 +68,7 @@ lyric_compiler::DefStaticHandler::before(
 
     // declare static symbol
     lyric_assembler::DataReference staticRef;
-    TU_ASSIGN_OR_RETURN (staticRef, block->declareStatic(
-        identifier, convert_access_type(access), declarationType, isVariable));
+    TU_ASSIGN_OR_RETURN (staticRef, block->declareStatic(identifier, isHidden, declarationType, isVariable));
 
     lyric_assembler::AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(staticRef.symbolUrl));

@@ -9,7 +9,7 @@
 namespace lyric_assembler {
 
     struct BindingSymbolPriv {
-        lyric_object::AccessType access = lyric_object::AccessType::Invalid;
+        bool isHidden;
         TypeHandle *bindingType = nullptr;
         TemplateHandle *bindingTemplate = nullptr;
         TypeHandle *targetType = nullptr;
@@ -20,13 +20,13 @@ namespace lyric_assembler {
     public:
         BindingSymbol(
             const lyric_common::SymbolUrl &bindingUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             TypeHandle *bindingType,
             BlockHandle *parentBlock,
             ObjectState *state);
         BindingSymbol(
             const lyric_common::SymbolUrl &bindingUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             TypeHandle *bindingType,
             TemplateHandle *bindingTemplate,
             BlockHandle *parentBlock,
@@ -45,7 +45,7 @@ namespace lyric_assembler {
         lyric_common::TypeDef getTypeDef() const override;
 
         std::string getName() const;
-        lyric_object::AccessType getAccessType() const;
+        bool isHidden() const;
 
         TypeHandle *bindingType() const;
         TemplateHandle *bindingTemplate() const;
@@ -66,12 +66,12 @@ namespace lyric_assembler {
         BindingSymbolPriv *load() override;
     };
 
-    static inline const BindingSymbol *cast_symbol_to_binding(const AbstractSymbol *sym) {
+    inline const BindingSymbol *cast_symbol_to_binding(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::BINDING);
         return static_cast<const BindingSymbol *>(sym);      // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline BindingSymbol *cast_symbol_to_binding(AbstractSymbol *sym) {
+    inline BindingSymbol *cast_symbol_to_binding(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::BINDING);
         return static_cast<BindingSymbol *>(sym);            // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

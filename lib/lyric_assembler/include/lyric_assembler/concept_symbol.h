@@ -15,7 +15,7 @@
 namespace lyric_assembler {
 
     struct ConceptSymbolPriv {
-        lyric_object::AccessType access;
+        bool isHidden;
         lyric_object::DeriveType derive;
         bool isDeclOnly;
         TypeHandle *conceptType;
@@ -32,7 +32,7 @@ namespace lyric_assembler {
     public:
         ConceptSymbol(
             const lyric_common::SymbolUrl &conceptUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             lyric_object::DeriveType derive,
             TypeHandle *conceptType,
             TemplateHandle *conceptTemplate,
@@ -43,7 +43,7 @@ namespace lyric_assembler {
 
         ConceptSymbol(
             const lyric_common::SymbolUrl &conceptUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             lyric_object::DeriveType derive,
             TypeHandle *conceptType,
             ConceptSymbol *superConcept,
@@ -64,7 +64,7 @@ namespace lyric_assembler {
         lyric_common::TypeDef getTypeDef() const override;
 
         bool isDeclOnly() const;
-        lyric_object::AccessType getAccessType() const;
+        bool isHidden() const;
         lyric_object::DeriveType getDeriveType() const;
 
         ConceptSymbol *superConcept() const;
@@ -80,7 +80,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<ActionSymbol *> declareAction(
             const std::string &name,
-            lyric_object::AccessType access);
+            bool isHidden);
 
         tempo_utils::Status prepareAction(
             const std::string &name,

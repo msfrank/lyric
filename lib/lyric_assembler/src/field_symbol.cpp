@@ -7,7 +7,7 @@
 
 lyric_assembler::FieldSymbol::FieldSymbol(
     const lyric_common::SymbolUrl &fieldUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     bool isVariable,
     TypeHandle *fieldType,
     bool isDeclOnly,
@@ -21,7 +21,7 @@ lyric_assembler::FieldSymbol::FieldSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->access = access;
+    priv->isHidden = isHidden;
     priv->isVariable = isVariable;
     priv->isDeclOnly = isDeclOnly;
     priv->fieldType = fieldType;
@@ -54,7 +54,7 @@ lyric_assembler::FieldSymbol::load()
     auto priv = std::make_unique<FieldSymbolPriv>();
 
     priv->parentBlock = nullptr;
-    priv->access = m_fieldImport->getAccess();
+    priv->isHidden = m_fieldImport->isHidden();
     priv->isVariable = m_fieldImport->isVariable();
     priv->isDeclOnly = m_fieldImport->isDeclOnly();
 
@@ -104,11 +104,11 @@ lyric_assembler::FieldSymbol::getName() const
     return m_fieldUrl.getSymbolPath().getName();
 }
 
-lyric_object::AccessType
-lyric_assembler::FieldSymbol::getAccessType() const
+bool
+lyric_assembler::FieldSymbol::isHidden() const
 {
     auto *priv = getPriv();
-    return priv->access;
+    return priv->isHidden;
 }
 
 bool
@@ -158,7 +158,7 @@ lyric_assembler::FieldSymbol::defineInitializer()
     // declare the initializer call
     CallSymbol *callSymbol;
     TU_ASSIGN_OR_RETURN (callSymbol, priv->parentBlock->declareFunction(
-        identifier, lyric_object::AccessType::Public, {}, priv->isDeclOnly));
+        identifier, /* isHidden= */ false, {}, priv->isDeclOnly));
 
     // define the initializer with no parameters
     TU_RETURN_IF_STATUS (callSymbol->defineCall({}));

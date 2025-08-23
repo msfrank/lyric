@@ -172,8 +172,7 @@ namespace lyric_object {
     enum class AccessType {
         Invalid,
         Public,
-        Protected,
-        Private,
+        Hidden,
     };
 
     enum class BoundType {

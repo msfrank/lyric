@@ -28,7 +28,7 @@ protected:
 
     tempo_utils::Result<lyric_assembler::BindingSymbol *> declareBinding(
         const std::string &name,
-        lyric_object::AccessType access,
+        bool isHidden,
         const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
     tempo_utils::Status build();

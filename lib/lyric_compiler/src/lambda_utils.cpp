@@ -42,7 +42,7 @@ lyric_compiler::define_lambda_builder(
 
     // declare the lambda builder function
     lyric_assembler::CallSymbol *builderCall;
-    TU_ASSIGN_OR_RETURN (builderCall, block->declareFunction(builderName, lyric_object::AccessType::Public, {}));
+    TU_ASSIGN_OR_RETURN (builderCall, block->declareFunction(builderName, /* isHidden= */ false, {}));
 
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, builderCall->defineCall({}, builderReturnType));

@@ -300,7 +300,7 @@ lyric_compiler::ForBody::decide(
     // declare the target variable which stores the value yielded from the iterator on each loop iteration
     lyric_assembler::DataReference targetRef;
     TU_ASSIGN_OR_RETURN (targetRef, forBlock->declareVariable(
-        m_iteration->targetIdentifier, lyric_object::AccessType::Private,
+        m_iteration->targetIdentifier, /* isHidden= */ true,
         m_iteration->targetType, /* isVariable= */ true));
 
     // push the iterator onto the stack, and invoke Valid() method

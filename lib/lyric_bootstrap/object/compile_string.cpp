@@ -24,7 +24,7 @@ build_core_String(
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Length",
             StringExistential,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {},
             code, IntType);
     }
@@ -34,7 +34,7 @@ build_core_String(
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("At",
             StringExistential,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {
                 make_list_param("index", IntType),
             },
@@ -46,7 +46,7 @@ build_core_String(
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("ToBytes",
             StringExistential,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {},
             code, BytesType);
     }

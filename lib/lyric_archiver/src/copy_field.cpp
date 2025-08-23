@@ -33,7 +33,7 @@ lyric_archiver::copy_field(
             "cannot archive {}; symbol is already defined", importUrl.toString());
     }
 
-    auto access = fieldImport->getAccess();
+    auto isHidden = fieldImport->isHidden();
     auto isVariable = fieldImport->isVariable();
 
     lyric_assembler::TypeHandle *fieldType;
@@ -42,7 +42,7 @@ lyric_archiver::copy_field(
 
     // declare the field
     auto fieldSymbol = std::make_unique<lyric_assembler::FieldSymbol>(
-        fieldUrl, access, isVariable, fieldType, /* isDeclOnly= */ false, namespaceBlock, objectState);
+        fieldUrl, isHidden, isVariable, fieldType, /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     // append the field to the object
     lyric_assembler::FieldSymbol *fieldSymbolPtr;

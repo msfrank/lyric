@@ -24,7 +24,7 @@ TEST_F(BuildProcTests, Build)
 
     lyric_assembler::CallSymbol *inputCall;
     TU_ASSIGN_OR_RAISE (inputCall, declareFunction(
-        "input", lyric_object::AccessType::Public, {}));
+        "input", /* isHidden= */ false, {}));
 
     lyric_assembler::ProcHandle *inputProc;
     TU_ASSIGN_OR_RAISE (inputProc, inputCall->defineCall({}));
@@ -50,7 +50,7 @@ TEST_F(BuildProcTests, Build)
 
     lyric_assembler::CallSymbol *outputCall;
     TU_ASSIGN_OR_RAISE (outputCall, declareFunction(
-        "output", lyric_object::AccessType::Public, {}));
+        "output", /* isHidden= */ false, {}));
 
     lyric_assembler::ProcHandle *outputProc;
     TU_ASSIGN_OR_RAISE (outputProc, outputCall->defineCall({}));
@@ -73,7 +73,7 @@ TEST_F(BuildProcTests, BuildConditionalWithPhiFunction)
 
     lyric_assembler::CallSymbol *inputCall;
     TU_ASSIGN_OR_RAISE (inputCall, declareFunction(
-        "input", lyric_object::AccessType::Public, {}));
+        "input", /* isHidden= */ false, {}));
 
     lyric_assembler::ProcHandle *inputProc;
     TU_ASSIGN_OR_RAISE (inputProc, inputCall->defineCall({}));
@@ -126,7 +126,7 @@ TEST_F(BuildProcTests, BuildConditionalWithPhiFunction)
 
     lyric_assembler::CallSymbol *outputCall;
     TU_ASSIGN_OR_RAISE (outputCall, declareFunction(
-        "output", lyric_object::AccessType::Public, {}));
+        "output", /* isHidden= */ false, {}));
 
     lyric_assembler::ProcHandle *outputProc;
     TU_ASSIGN_OR_RAISE (outputProc, outputCall->defineCall({}));

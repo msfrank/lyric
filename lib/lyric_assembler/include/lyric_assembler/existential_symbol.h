@@ -13,7 +13,7 @@
 namespace lyric_assembler {
 
     struct ExistentialSymbolPriv {
-        lyric_object::AccessType access;
+        bool isHidden;
         lyric_object::DeriveType derive;
         bool isDeclOnly;
         TypeHandle *existentialType;
@@ -30,7 +30,7 @@ namespace lyric_assembler {
     public:
         ExistentialSymbol(
             const lyric_common::SymbolUrl &existentialUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             lyric_object::DeriveType derive,
             TypeHandle *existentialType,
             ExistentialSymbol *superExistential,
@@ -39,7 +39,7 @@ namespace lyric_assembler {
             ObjectState *state);
         ExistentialSymbol(
             const lyric_common::SymbolUrl &existentialUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             lyric_object::DeriveType derive,
             TypeHandle *existentialType,
             TemplateHandle *existentialTemplate,
@@ -77,7 +77,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<lyric_assembler::CallSymbol *> declareMethod(
             const std::string &name,
-            lyric_object::AccessType access);
+            bool isHidden);
 
         tempo_utils::Status prepareMethod(
             const std::string &name,

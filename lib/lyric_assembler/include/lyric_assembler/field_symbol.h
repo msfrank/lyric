@@ -10,7 +10,7 @@
 namespace lyric_assembler {
 
     struct FieldSymbolPriv {
-        lyric_object::AccessType access;
+        bool isHidden;
         bool isVariable;
         bool isDeclOnly;
         std::unique_ptr<InitializerHandle> initializerHandle;
@@ -22,7 +22,7 @@ namespace lyric_assembler {
     public:
         FieldSymbol(
             const lyric_common::SymbolUrl &fieldUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             bool isVariable,
             TypeHandle *fieldType,
             bool isDeclOnly,
@@ -41,7 +41,7 @@ namespace lyric_assembler {
         lyric_common::TypeDef getTypeDef() const override;
 
         std::string getName() const;
-        lyric_object::AccessType getAccessType() const;
+        bool isHidden() const;
         bool isVariable() const;
         bool isDeclOnly() const;
 

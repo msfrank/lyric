@@ -28,9 +28,9 @@ build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *
     state.symboltable[StatusStruct->structPath] = symbol_index;
 
     auto *CodeField = state.addStructMember("Code", StatusStruct,
-        lyo1::FieldFlags::GlobalVisibility, IntType);
+        lyo1::FieldFlags::NONE, IntType);
     auto *MessageField = state.addStructMember("Message", StatusStruct,
-        lyo1::FieldFlags::GlobalVisibility, StringType);
+        lyo1::FieldFlags::NONE, StringType);
 
     {
         lyric_object::BytecodeBuilder code;

@@ -69,7 +69,7 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptDecl(ModuleParser::Conce
     state->popSymbolAndCheck(id);
 
     // get the visibility
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     // get the return type
     ArchetypeNode *returnTypeNode = nullptr;
@@ -94,7 +94,7 @@ lyric_parser::internal::ModuleDefconceptOps::exitConceptDecl(ModuleParser::Conce
     TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the return type
     TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
@@ -178,7 +178,7 @@ lyric_parser::internal::ModuleDefconceptOps::exitDefconceptStatement(ModuleParse
     state->popSymbolAndCheck(id);
 
     // get the visibility
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     // get the derive type
     DeriveType derive = DeriveType::Any;
@@ -208,7 +208,7 @@ lyric_parser::internal::ModuleDefconceptOps::exitDefconceptStatement(ModuleParse
     TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the derive type
     TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstDeriveType, derive));

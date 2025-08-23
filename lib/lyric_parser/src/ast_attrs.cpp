@@ -88,47 +88,6 @@ lyric_parser::NotationTypeAttr::parseAttr(tu_uint32 index, tempo_schema::Abstrac
     return value_to_notation_type(value, notation);
 }
 
-lyric_parser::AccessTypeAttr::AccessTypeAttr(const tempo_schema::ComparableResource *resource)
-    : tempo_schema::AttrSerde<AccessType>(resource)
-{
-}
-
-tempo_utils::Result<tu_uint32>
-lyric_parser::AccessTypeAttr::writeAttr(tempo_schema::AbstractAttrWriter *writer, const AccessType &access) const
-{
-    TU_ASSERT (writer != nullptr);
-    return writer->putUInt32(static_cast<tu_uint32>(access));
-}
-
-static tempo_utils::Status
-value_to_access_type(tu_int64 value, lyric_parser::AccessType &access)
-{
-    switch (static_cast<lyric_parser::AccessType>(value)) {
-        case lyric_parser::AccessType::Private:
-            access = lyric_parser::AccessType::Private;
-            return {};
-        case lyric_parser::AccessType::Protected:
-            access = lyric_parser::AccessType::Protected;
-            return {};
-        case lyric_parser::AccessType::Public:
-            access = lyric_parser::AccessType::Public;
-            return {};
-        default:
-            return tempo_schema::SchemaStatus::forCondition(
-                tempo_schema::SchemaCondition::kConversionError, "invalid access type");
-    }
-}
-
-tempo_utils::Status
-lyric_parser::AccessTypeAttr::parseAttr(tu_uint32 index, tempo_schema::AbstractAttrParser *parser, AccessType &access) const
-{
-    tu_uint32 value;
-    auto status = parser->getUInt32(index, value);
-    if (status.notOk())
-        return status;
-    return value_to_access_type(value, access);
-}
-
 lyric_parser::BoundTypeAttr::BoundTypeAttr(const tempo_schema::ComparableResource *resource)
     : tempo_schema::AttrSerde<BoundType>(resource)
 {
@@ -309,7 +268,6 @@ const tempo_schema::StringAttr lyric_parser::kLyricAstLiteralValue(&lyric_schema
 
 const lyric_parser::BaseTypeAttr lyric_parser::kLyricAstBaseType(&lyric_schema::kLyricAstBaseEnumProperty);
 const lyric_parser::NotationTypeAttr lyric_parser::kLyricAstNotationType(&lyric_schema::kLyricAstNotationEnumProperty);
-const lyric_parser::AccessTypeAttr lyric_parser::kLyricAstAccessType(&lyric_schema::kLyricAstAccessEnumProperty);
 const lyric_parser::BoundTypeAttr lyric_parser::kLyricAstBoundType(&lyric_schema::kLyricAstBoundEnumProperty);
 const lyric_parser::VarianceTypeAttr lyric_parser::kLyricAstVarianceType(&lyric_schema::kLyricAstVarianceEnumProperty);
 const lyric_parser::DeriveTypeAttr lyric_parser::kLyricAstDeriveType(&lyric_schema::kLyricAstDeriveEnumProperty);
@@ -319,6 +277,7 @@ const lyric_common::ModuleLocationAttr lyric_parser::kLyricAstModuleLocation(&ly
 const lyric_common::SymbolPathAttr lyric_parser::kLyricAstSymbolPath(&lyric_schema::kLyricAstSymbolPathProperty);
 const tempo_schema::StringAttr lyric_parser::kLyricAstIdentifier(&lyric_schema::kLyricAstIdentifierProperty);
 const tempo_schema::StringAttr lyric_parser::kLyricAstLabel(&lyric_schema::kLyricAstLabelProperty);
+const tempo_schema::BoolAttr lyric_parser::kLyricAstIsHidden(&lyric_schema::kLyricAstIsHiddenProperty);
 const tempo_schema::BoolAttr lyric_parser::kLyricAstIsVariable(&lyric_schema::kLyricAstIsVariableProperty);
 
 const lyric_parser::NodeAttr lyric_parser::kLyricAstTypeOffset(&lyric_schema::kLyricAstTypeOffsetProperty);

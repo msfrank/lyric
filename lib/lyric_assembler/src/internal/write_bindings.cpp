@@ -57,20 +57,8 @@ write_binding(
     auto fb_fullyQualifiedName = buffer.CreateSharedString(bindingPathString);
 
     lyo1::BindingFlags bindingFlags = lyo1::BindingFlags::NONE;
-
-    switch (bindingSymbol->getAccessType()) {
-        case lyric_object::AccessType::Public:
-            bindingFlags |= lyo1::BindingFlags::GlobalVisibility;
-            break;
-        case lyric_object::AccessType::Protected:
-            bindingFlags |= lyo1::BindingFlags::InheritVisibility;
-            break;
-        case lyric_object::AccessType::Private:
-            break;
-        default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                "invalid binding access");
+    if (bindingSymbol->isHidden()) {
+        bindingFlags |= lyo1::BindingFlags::Hidden;
     }
 
     tu_uint32 bindingType;

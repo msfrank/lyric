@@ -43,7 +43,7 @@ TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMember)
     lyric_common::SymbolUrl archivedUrl;
     TU_ASSIGN_OR_RAISE (archivedUrl, archiveSymbol(mod1location, "FooEnum"));
     lyric_assembler::BindingSymbol *bindingSymbol;
-    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooEnumAlias", lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooEnumAlias", /* isHidden= */ false));
     ASSERT_THAT (bindingSymbol->defineTarget(lyric_common::TypeDef::forConcrete(archivedUrl)), tempo_test::IsOk());
 
     ASSERT_THAT (build(), tempo_test::IsOk());
@@ -80,7 +80,7 @@ TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckMethod)
     lyric_common::SymbolUrl archivedUrl;
     TU_ASSIGN_OR_RAISE (archivedUrl, archiveSymbol(mod1location, "FooEnum"));
     lyric_assembler::BindingSymbol *bindingSymbol;
-    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooEnumAlias", lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooEnumAlias", /* isHidden= */ false));
     ASSERT_THAT (bindingSymbol->defineTarget(lyric_common::TypeDef::forConcrete(archivedUrl)), tempo_test::IsOk());
 
     ASSERT_THAT (build(), tempo_test::IsOk());
@@ -119,7 +119,7 @@ TEST_F(ArchiveEnumTests, ArchiveEnumAndCheckImpl)
     lyric_common::SymbolUrl archivedUrl;
     TU_ASSIGN_OR_RAISE (archivedUrl, archiveSymbol(mod1location, "FooEnum"));
     lyric_assembler::BindingSymbol *bindingSymbol;
-    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooEnumAlias", lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooEnumAlias", /* isHidden= */ false));
     ASSERT_THAT (bindingSymbol->defineTarget(lyric_common::TypeDef::forConcrete(archivedUrl)), tempo_test::IsOk());
 
     ASSERT_THAT (build(), tempo_test::IsOk());

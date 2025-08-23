@@ -15,7 +15,7 @@
 
 lyric_assembler::ConceptSymbol::ConceptSymbol(
     const lyric_common::SymbolUrl &conceptUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::DeriveType derive,
     TypeHandle *conceptType,
     ConceptSymbol *superConcept,
@@ -30,7 +30,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->access = access;
+    priv->isHidden = isHidden;
     priv->derive = derive;
     priv->isDeclOnly = isDeclOnly;
     priv->conceptType = conceptType;
@@ -44,7 +44,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
 
 lyric_assembler::ConceptSymbol::ConceptSymbol(
     const lyric_common::SymbolUrl &conceptUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::DeriveType derive,
     TypeHandle *conceptType,
     TemplateHandle *conceptTemplate,
@@ -54,7 +54,7 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
     ObjectState *state)
     : ConceptSymbol(
         conceptUrl,
-        access,
+        isHidden,
         derive,
         conceptType,
         superConcept,
@@ -98,7 +98,7 @@ lyric_assembler::ConceptSymbol::load()
         m_conceptUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
 
     priv->isDeclOnly = m_conceptImport->isDeclOnly();
-    priv->access = lyric_object::AccessType::Public;
+    priv->isHidden = m_conceptImport->isHidden();
     priv->derive = m_conceptImport->getDerive();
 
     auto *conceptType = m_conceptImport->getConceptType();
@@ -171,11 +171,11 @@ lyric_assembler::ConceptSymbol::isDeclOnly() const
     return priv->isDeclOnly;
 }
 
-lyric_object::AccessType
-lyric_assembler::ConceptSymbol::getAccessType() const
+bool
+lyric_assembler::ConceptSymbol::isHidden() const
 {
     auto *priv = getPriv();
-    return priv->access;
+    return priv->isHidden;
 }
 
 lyric_object::DeriveType
@@ -253,7 +253,7 @@ lyric_assembler::ConceptSymbol::numActions() const
 tempo_utils::Result<lyric_assembler::ActionSymbol *>
 lyric_assembler::ConceptSymbol::declareAction(
     const std::string &name,
-    lyric_object::AccessType access)
+    bool isHidden)
 {
     if (isImported())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
@@ -274,9 +274,9 @@ lyric_assembler::ConceptSymbol::declareAction(
     std::unique_ptr<ActionSymbol> actionSymbol;
     if (priv->conceptTemplate != nullptr) {
         actionSymbol = std::make_unique<ActionSymbol>(methodUrl, m_conceptUrl,
-            access, priv->conceptTemplate, priv->isDeclOnly, priv->conceptBlock.get(), m_state);
+            isHidden, priv->conceptTemplate, priv->isDeclOnly, priv->conceptBlock.get(), m_state);
     } else {
-        actionSymbol = std::make_unique<ActionSymbol>(methodUrl, m_conceptUrl, access,
+        actionSymbol = std::make_unique<ActionSymbol>(methodUrl, m_conceptUrl, isHidden,
             priv->isDeclOnly, priv->conceptBlock.get(), m_state);
     }
 

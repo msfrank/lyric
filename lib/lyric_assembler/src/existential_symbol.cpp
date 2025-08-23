@@ -17,7 +17,7 @@
 
 lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     const lyric_common::SymbolUrl &existentialUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::DeriveType derive,
     TypeHandle *existentialType,
     ExistentialSymbol *superExistential,
@@ -32,7 +32,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->access = access;
+    priv->isHidden = isHidden;
     priv->derive = derive;
     priv->isDeclOnly = isDeclOnly;
     priv->existentialType = existentialType;
@@ -46,7 +46,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
 
 lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     const lyric_common::SymbolUrl &existentialUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::DeriveType derive,
     TypeHandle *existentialType,
     TemplateHandle *existentialTemplate,
@@ -56,7 +56,7 @@ lyric_assembler::ExistentialSymbol::ExistentialSymbol(
     ObjectState *state)
     : ExistentialSymbol(
         existentialUrl,
-        access,
+        isHidden,
         derive,
         existentialType,
         superExistential,
@@ -99,7 +99,7 @@ lyric_assembler::ExistentialSymbol::load()
     priv->existentialBlock = std::make_unique<BlockHandle>(
         m_existentialUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
 
-    priv->access = lyric_object::AccessType::Public;
+    priv->isHidden = m_existentialImport->isHidden();
     priv->derive = m_existentialImport->getDerive();
     priv->isDeclOnly = m_existentialImport->isDeclOnly();
 
@@ -123,7 +123,7 @@ lyric_assembler::ExistentialSymbol::load()
 
         BoundMethod methodBinding;
         methodBinding.methodCall = iterator->second;
-        methodBinding.access = callSymbol->getAccessType();
+        methodBinding.hidden = callSymbol->isHidden();
         methodBinding.final = false;    // FIXME: this should come from the call symbol
         priv->methods[iterator->first] = methodBinding;
     }
@@ -243,7 +243,7 @@ lyric_assembler::ExistentialSymbol::numMethods() const
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::ExistentialSymbol::declareMethod(
     const std::string &name,
-    lyric_object::AccessType access)
+    bool isHidden)
 {
     if (isImported())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
@@ -261,7 +261,7 @@ lyric_assembler::ExistentialSymbol::declareMethod(
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
 
     // construct call symbol
-    auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_existentialUrl, access,
+    auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_existentialUrl, isHidden,
         lyric_object::CallMode::Normal, priv->isDeclOnly, priv->existentialBlock.get(), m_state);
 
     CallSymbol *callPtr;
@@ -269,7 +269,7 @@ lyric_assembler::ExistentialSymbol::declareMethod(
     TU_RAISE_IF_NOT_OK (priv->existentialBlock->putBinding(callPtr));
 
     // add bound method
-    priv->methods[name] = { methodUrl, lyric_object::AccessType::Public, false /* final */ };
+    priv->methods[name] = { methodUrl, isHidden, false /* final */ };
 
     return callPtr;
 }

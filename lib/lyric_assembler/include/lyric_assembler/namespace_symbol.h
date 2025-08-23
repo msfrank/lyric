@@ -10,7 +10,7 @@
 namespace lyric_assembler {
 
     struct NamespaceSymbolPriv {
-        lyric_object::AccessType access;
+        bool isHidden;
         bool isDeclOnly;
         TypeHandle *namespaceType;
         NamespaceSymbol *superNamespace;
@@ -28,7 +28,7 @@ namespace lyric_assembler {
             ObjectState *state);
         NamespaceSymbol(
             const lyric_common::SymbolUrl &nsUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             TypeHandle *nsType,
             NamespaceSymbol *superNs,
             bool isDeclOnly,
@@ -46,7 +46,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;
 
-        lyric_object::AccessType getAccessType() const;
+        bool isHidden() const;
         bool isDeclOnly() const;
 
         NamespaceSymbol *superNamespace() const;
@@ -63,12 +63,12 @@ namespace lyric_assembler {
 
         tempo_utils::Result<BindingSymbol *> declareBinding(
             const std::string &name,
-            lyric_object::AccessType access,
+            bool isHidden,
             const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
         tempo_utils::Result<NamespaceSymbol *> declareSubspace(
             const std::string &name,
-            lyric_object::AccessType access);
+            bool isHidden);
 
     private:
         lyric_common::SymbolUrl m_namespaceUrl;

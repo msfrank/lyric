@@ -14,7 +14,7 @@ namespace lyric_importer {
 
         bool isDeclOnly();
         bool isVariable();
-        lyric_object::AccessType getAccess();
+        bool isHidden();
 
         TypeImport *getFieldType();
 

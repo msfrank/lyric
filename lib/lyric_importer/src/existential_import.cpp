@@ -10,7 +10,7 @@ namespace lyric_importer {
         lyric_common::SymbolUrl symbolUrl;
         bool isDeclOnly;
         lyric_object::DeriveType derive;
-        lyric_object::AccessType access;
+        bool isHidden;
         TypeImport *existentialType;
         TemplateImport *existentialTemplate;
         lyric_common::SymbolUrl superExistential;
@@ -50,11 +50,11 @@ lyric_importer::ExistentialImport::getDerive()
     return m_priv->derive;
 }
 
-lyric_object::AccessType
-lyric_importer::ExistentialImport::getAccess()
+bool
+lyric_importer::ExistentialImport::isHidden()
 {
     load();
-    return m_priv->access;
+    return m_priv->isHidden;
 }
 
 lyric_importer::TypeImport *
@@ -175,13 +175,20 @@ lyric_importer::ExistentialImport::load()
                 "cannot import existential at index {} in module {}; invalid derive type",
                 m_existentialOffset, objectLocation.toString()));
 
-    priv->access = existentialWalker.getAccess();
-    if (priv->access == lyric_object::AccessType::Invalid)
-        throw tempo_utils::StatusException(
-            ImporterStatus::forCondition(
-                ImporterCondition::kImportError,
-                "cannot import existential at index {} in module {}; invalid access type",
-                m_existentialOffset, objectLocation.toString()));
+    switch (existentialWalker.getAccess()) {
+        case lyric_object::AccessType::Hidden:
+            priv->isHidden = true;
+            break;
+        case lyric_object::AccessType::Public:
+            priv->isHidden = false;
+            break;
+        default:
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import existential at index {} in module {}; invalid access type",
+                    m_existentialOffset, objectLocation.toString()));
+    }
 
     priv->existentialType = moduleImport->getType(
         existentialWalker.getExistentialType().getDescriptorOffset());

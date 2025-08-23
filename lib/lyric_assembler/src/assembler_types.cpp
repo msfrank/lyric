@@ -315,19 +315,20 @@ lyric_assembler::ActionMethod::ActionMethod(const lyric_common::SymbolUrl &metho
 
 lyric_assembler::BoundMethod::BoundMethod()
     : methodCall(),
-      access(lyric_object::AccessType::Private),
+      hidden(false),
       final(false)
 {
 }
 
 lyric_assembler::BoundMethod::BoundMethod(
     const lyric_common::SymbolUrl &methodCall,
-    lyric_object::AccessType access,
+    bool hidden,
     bool final)
     : methodCall(methodCall),
-      access(access),
+      hidden(hidden),
       final(final)
 {
+    TU_ASSERT (methodCall.isValid());
 }
 
 lyric_assembler::ExtensionMethod::ExtensionMethod()
@@ -340,6 +341,8 @@ lyric_assembler::ExtensionMethod::ExtensionMethod(
     : methodCall(methodCall),
       methodAction(methodAction)
 {
+    TU_ASSERT (methodCall.isValid());
+    TU_ASSERT (methodAction.isValid());
 }
 
 lyric_assembler::CondWhenPatch::CondWhenPatch()

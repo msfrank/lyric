@@ -73,11 +73,9 @@ lyric_object::StaticWalker::getAccess() const
     if (staticDescriptor == nullptr)
         return AccessType::Invalid;
 
-    if (bool(staticDescriptor->flags() & lyo1::StaticFlags::GlobalVisibility))
-        return AccessType::Public;
-    if (bool(staticDescriptor->flags() & lyo1::StaticFlags::InheritVisibility))
-        return AccessType::Protected;
-    return AccessType::Private;
+    if (bool(staticDescriptor->flags() & lyo1::StaticFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
 }
 
 lyric_object::TypeWalker

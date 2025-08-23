@@ -36,7 +36,7 @@ build_core_Map(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Size",
             MapStruct,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {},
             code,
             IntegerType);
@@ -47,7 +47,7 @@ build_core_Map(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Contains",
             MapStruct,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {
                 make_list_param("key", DataType),
             },
@@ -60,7 +60,7 @@ build_core_Map(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("GetOrElse",
             MapStruct,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {
                 make_list_param("key", DataType),
                 make_list_param("default", DataType),
@@ -74,7 +74,7 @@ build_core_Map(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Update",
             MapStruct,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {
                 make_list_param("key", DataType),
                 make_list_param("value", DataType),
@@ -88,7 +88,7 @@ build_core_Map(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Remove",
             MapStruct,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {
                 make_list_param("key", DataType),
             },

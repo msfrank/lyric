@@ -219,7 +219,7 @@ lyric_compiler::UnwrapParam::decide(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, paramName));
     lyric_assembler::DataReference ref;
     TU_ASSIGN_OR_RETURN (ref, block->declareVariable(
-        paramName, lyric_object::AccessType::Private, paramType, /* isVariable= */ true));
+        paramName, /* isHidden= */ true, paramType, /* isVariable= */ true));
     m_unpack->unwrapRefs.emplace_back(paramName, ref);
 
     return {};

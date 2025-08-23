@@ -9,8 +9,6 @@
 
 namespace lyric_compiler {
 
-    lyric_object::AccessType convert_access_type(lyric_parser::AccessType access);
-
     lyric_object::DeriveType convert_derive_type(lyric_parser::DeriveType derive);
 
     tempo_utils::Result<std::string> resolve_operator_action_name(lyric_schema::LyricAstId operatorClass);

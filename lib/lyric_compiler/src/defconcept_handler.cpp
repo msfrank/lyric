@@ -49,8 +49,8 @@ lyric_compiler::DefConceptHandler::before(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // get concept access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // get concept derive type
     lyric_parser::DeriveType derive;
@@ -97,7 +97,7 @@ lyric_compiler::DefConceptHandler::before(
 
     // declare the class
     TU_ASSIGN_OR_RETURN (m_defconcept.conceptSymbol, block->declareConcept(
-        identifier, m_defconcept.superconceptSymbol, lyric_compiler::convert_access_type(access),
+        identifier, m_defconcept.superconceptSymbol, isHidden,
         m_defconcept.templateSpec.templateParameters, lyric_compiler::convert_derive_type(derive)));
 
     // add concept to the current namespace if specified

@@ -18,7 +18,7 @@ protected:
 
     tempo_utils::Result<lyric_assembler::CallSymbol *> declareFunction(
         const std::string &name,
-        lyric_object::AccessType access,
+        bool isHidden,
         const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
     lyric_optimizer::ControlFlowGraph parseProc(lyric_assembler::ProcHandle *procHandle);

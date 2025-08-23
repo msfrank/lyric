@@ -6,7 +6,7 @@
 namespace lyric_importer {
     struct FieldImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
-        lyric_object::AccessType access;
+        bool isHidden;
         bool isVariable;
         bool isDeclOnly;
         TypeImport *fieldType;
@@ -44,11 +44,11 @@ lyric_importer::FieldImport::isDeclOnly()
     return m_priv->isDeclOnly;
 }
 
-lyric_object::AccessType
-lyric_importer::FieldImport::getAccess()
+bool
+lyric_importer::FieldImport::isHidden()
 {
     load();
-    return m_priv->access;
+    return m_priv->isHidden;
 }
 
 lyric_importer::TypeImport *
@@ -80,13 +80,20 @@ lyric_importer::FieldImport::load()
     auto fieldWalker = moduleImport->getObject().getObject().getField(m_fieldOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, fieldWalker.getSymbolPath());
 
-    if (fieldWalker.getAccess() == lyric_object::AccessType::Invalid)
-        throw tempo_utils::StatusException(
-            ImporterStatus::forCondition(
-                ImporterCondition::kImportError,
-                "cannot import field at index {} in module {}; invalid access type",
-                m_fieldOffset, objectLocation.toString()));
-    priv->access = fieldWalker.getAccess();
+    switch (fieldWalker.getAccess()) {
+        case lyric_object::AccessType::Hidden:
+            priv->isHidden = true;
+            break;
+        case lyric_object::AccessType::Public:
+            priv->isHidden = false;
+            break;
+        default:
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import field at index {} in module {}; invalid access type",
+                    m_fieldOffset, objectLocation.toString()));
+    }
 
     priv->isVariable = fieldWalker.isVariable();
     priv->isDeclOnly = fieldWalker.isDeclOnly();

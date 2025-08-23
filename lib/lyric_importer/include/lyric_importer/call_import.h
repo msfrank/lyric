@@ -16,7 +16,7 @@ namespace lyric_importer {
         lyric_common::SymbolUrl getSymbolUrl();
 
         bool isDeclOnly();
-        lyric_object::AccessType getAccess();
+        bool isHidden();
         lyric_object::CallMode getCallMode();
 
         lyric_common::SymbolUrl getReceiverUrl();

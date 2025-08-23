@@ -16,7 +16,7 @@ lyric_compiler::declare_instance_init(
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(lyric_object::AccessType::Public, allocatorTrap));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
 
     // define 0-arity constructor
     TU_RETURN_IF_STATUS(ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
@@ -134,13 +134,13 @@ lyric_compiler::declare_instance_member(
     lyric_common::TypeDef memberType;
     TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(instanceBlock, memberSpec));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     Member member;
 
     TU_ASSIGN_OR_RETURN (member.fieldSymbol, instanceSymbol->declareMember(
-        identifier, memberType, isVariable, convert_access_type(access)));
+        identifier, memberType, isVariable, isHidden));
 
     TU_LOG_V << "declared member " << identifier << " for " << instanceSymbol->getSymbolUrl();
 
@@ -167,8 +167,8 @@ lyric_compiler::declare_instance_method(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // determine the access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // parse the return type
     lyric_parser::ArchetypeNode *typeNode;
@@ -192,8 +192,7 @@ lyric_compiler::declare_instance_method(
     Method method;
 
     // declare the method
-    TU_ASSIGN_OR_RETURN (method.callSymbol, instanceSymbol->declareMethod(
-        identifier, convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (method.callSymbol, instanceSymbol->declareMethod(identifier, isHidden));
 
     TU_LOG_V << "declared method " << identifier << " for " << instanceSymbol->getSymbolUrl();
 

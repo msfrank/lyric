@@ -60,11 +60,9 @@ lyric_object::FieldWalker::getAccess() const
     if (fieldDescriptor == nullptr)
         return AccessType::Invalid;
 
-    if (bool(fieldDescriptor->flags() & lyo1::FieldFlags::GlobalVisibility))
-        return AccessType::Public;
-    if (bool(fieldDescriptor->flags() & lyo1::FieldFlags::InheritVisibility))
-        return AccessType::Protected;
-    return AccessType::Private;
+    if (bool(fieldDescriptor->flags() & lyo1::FieldFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
 }
 
 lyric_common::SymbolPath

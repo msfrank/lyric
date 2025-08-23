@@ -14,7 +14,7 @@ namespace lyric_importer {
 
         bool isDeclOnly();
         lyric_object::DeriveType getDerive();
-        lyric_object::AccessType getAccess();
+        bool isHidden();
 
         TypeImport *getExistentialType();
         TemplateImport *getExistentialTemplate();

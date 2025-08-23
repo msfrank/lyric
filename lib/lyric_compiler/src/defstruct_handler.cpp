@@ -55,8 +55,8 @@ lyric_compiler::DefStructHandler::before(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // get struct access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // get struct derive type
     lyric_parser::DeriveType derive;
@@ -129,7 +129,7 @@ lyric_compiler::DefStructHandler::before(
 
     // declare the struct
     TU_ASSIGN_OR_RETURN (m_defstruct.structSymbol, block->declareStruct(
-        identifier, m_defstruct.superstructSymbol, lyric_compiler::convert_access_type(access),
+        identifier, m_defstruct.superstructSymbol, isHidden,
         lyric_compiler::convert_derive_type(derive), isAbstract));
 
     // add struct to the current namespace if specified

@@ -36,7 +36,7 @@ lyric_archiver::copy_instance(
             "cannot archive {}; symbol is already defined", importUrl.toString());
     }
 
-    auto access = instanceImport->getAccess();
+    auto isHidden = instanceImport->isHidden();
     auto derive = instanceImport->getDerive();
     auto isAbstract = instanceImport->isAbstract();
 
@@ -58,7 +58,7 @@ lyric_archiver::copy_instance(
     // declare the instance
     std::unique_ptr<lyric_assembler::InstanceSymbol> instanceSymbol;
     instanceSymbol = std::make_unique<lyric_assembler::InstanceSymbol>(
-            instanceUrl, access, derive, isAbstract, instanceType, superInstance,
+            instanceUrl, isHidden, derive, isAbstract, instanceType, superInstance,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     // append the instance to the object
@@ -79,7 +79,7 @@ lyric_archiver::copy_instance(
             fieldImport->getFieldType(), importHash, targetNamespace, symbolReferenceSet, archiverState));
         lyric_assembler::FieldSymbol *fieldSymbol;
         TU_ASSIGN_OR_RETURN (fieldSymbol, instanceSymbolPtr->declareMember(
-            name, memberTypeHandle->getTypeDef(), fieldImport->isVariable(), fieldImport->getAccess()));
+            name, memberTypeHandle->getTypeDef(), fieldImport->isVariable(), fieldImport->isHidden()));
         TU_RETURN_IF_NOT_OK (archiverState.putSymbol(fieldImport->getSymbolUrl(), fieldSymbol));
 
         auto initializerUrl = fieldImport->getInitializer();
@@ -124,7 +124,7 @@ lyric_archiver::copy_instance(
             TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
         }
         lyric_assembler::CallSymbol *callSymbol;
-        TU_ASSIGN_OR_RETURN (callSymbol, instanceSymbolPtr->declareMethod(name, callImport->getAccess()));
+        TU_ASSIGN_OR_RETURN (callSymbol, instanceSymbolPtr->declareMethod(name, callImport->isHidden()));
         TU_RETURN_IF_NOT_OK (archiverState.putSymbol(it->second, callSymbol));
         TU_RETURN_IF_NOT_OK (define_call(
             callImport, callSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));
@@ -146,7 +146,7 @@ lyric_archiver::copy_instance(
     TU_ASSIGN_OR_RETURN (ctorImport, archiverState.importCall(ctorUrl));
 
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbolPtr->declareCtor(ctorImport->getAccess(), instanceImport->getAllocator()));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbolPtr->declareCtor(ctorImport->isHidden(), instanceImport->getAllocator()));
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(ctorImport->getSymbolUrl(), ctorSymbol));
     TU_RETURN_IF_NOT_OK (define_call(
         ctorImport, ctorSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));

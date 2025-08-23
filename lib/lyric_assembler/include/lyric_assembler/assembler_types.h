@@ -320,12 +320,12 @@ namespace lyric_assembler {
 
     struct BoundMethod {
         lyric_common::SymbolUrl methodCall;
-        lyric_object::AccessType access;
+        bool hidden;
         bool final;
         BoundMethod();
         BoundMethod(
             const lyric_common::SymbolUrl &methodCall,
-            lyric_object::AccessType access,
+            bool hidden,
             bool final);
     };
 

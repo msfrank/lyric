@@ -45,8 +45,8 @@ lyric_compiler::VariableHandler::after(
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // resolve the declaration type if it is present
     lyric_common::TypeDef declarationType;
@@ -76,8 +76,7 @@ lyric_compiler::VariableHandler::after(
             expressionType.toString(), declarationType.toString());
 
     lyric_assembler::DataReference var;
-    TU_ASSIGN_OR_RETURN (var, block->declareVariable(
-        identifier, convert_access_type(access), declarationType, m_isVariable));
+    TU_ASSIGN_OR_RETURN (var, block->declareVariable(identifier, isHidden, declarationType, m_isVariable));
 
     TU_RETURN_IF_NOT_OK (m_fragment->storeRef(var, /* initialStore= */ true));
 

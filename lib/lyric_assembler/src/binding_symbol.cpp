@@ -7,7 +7,7 @@
 
 lyric_assembler::BindingSymbol::BindingSymbol(
     const lyric_common::SymbolUrl &bindingUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     TypeHandle *bindingType,
     BlockHandle *parentBlock,
     ObjectState *state)
@@ -19,7 +19,7 @@ lyric_assembler::BindingSymbol::BindingSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->access = access;
+    priv->isHidden = isHidden;
     priv->bindingType = bindingType;
     TU_ASSERT (priv->bindingType != nullptr);
     priv->parentBlock = parentBlock;
@@ -28,7 +28,7 @@ lyric_assembler::BindingSymbol::BindingSymbol(
 
 lyric_assembler::BindingSymbol::BindingSymbol(
     const lyric_common::SymbolUrl &bindingUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     TypeHandle *bindingType,
     TemplateHandle *bindingTemplate,
     BlockHandle *parentBlock,
@@ -41,7 +41,7 @@ lyric_assembler::BindingSymbol::BindingSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->access = access;
+    priv->isHidden = isHidden;
     priv->bindingType = bindingType;
     TU_ASSERT (priv->bindingType != nullptr);
     priv->bindingTemplate = bindingTemplate;
@@ -71,7 +71,8 @@ lyric_assembler::BindingSymbol::load()
     auto *typeCache = m_state->typeCache();
 
     auto priv = std::make_unique<BindingSymbolPriv>();
-    priv->access = m_bindingImport->getAccess();
+
+    priv->isHidden = m_bindingImport->isHidden();
 
     auto *bindingType = m_bindingImport->getBindingType();
     TU_ASSIGN_OR_RAISE (priv->bindingType, typeCache->importType(bindingType));
@@ -117,11 +118,11 @@ lyric_assembler::BindingSymbol::getName() const
     return m_bindingUrl.getSymbolPath().getName();
 }
 
-lyric_object::AccessType
-lyric_assembler::BindingSymbol::getAccessType() const
+bool
+lyric_assembler::BindingSymbol::isHidden() const
 {
     auto *priv = getPriv();
-    return priv->access;
+    return priv->isHidden;
 }
 
 lyric_assembler::TypeHandle *

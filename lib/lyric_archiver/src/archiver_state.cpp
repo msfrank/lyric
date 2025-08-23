@@ -334,11 +334,11 @@ lyric_archiver::ArchiverState::copyPendingProcs()
 tempo_utils::Result<lyric_assembler::BindingSymbol *>
 lyric_archiver::ArchiverState::declareBinding(
     const std::string &name,
-    lyric_object::AccessType access,
+    bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters)
 {
     auto *globalNamespace = m_objectRoot->globalNamespace();
-    return globalNamespace->declareBinding(name, access, templateParameters);
+    return globalNamespace->declareBinding(name, isHidden, templateParameters);
 }
 
 tempo_utils::Result<lyric_object::LyricObject>

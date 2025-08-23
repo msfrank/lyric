@@ -8,7 +8,7 @@ namespace lyric_importer {
         lyric_common::SymbolUrl symbolUrl;
         bool isVariable;
         bool isDeclOnly;
-        lyric_object::AccessType access;
+        bool isHidden;
         TypeImport *staticType;
         lyric_common::SymbolUrl initializer;
     };
@@ -35,10 +35,10 @@ lyric_importer::StaticImport::isVariable()
     return m_priv->isVariable;
 }
 
-lyric_object::AccessType
-lyric_importer::StaticImport::getAccess()
+bool
+lyric_importer::StaticImport::isHidden()
 {
-    return m_priv->access;
+    return m_priv->isHidden;
 }
 
 lyric_importer::TypeImport *
@@ -80,13 +80,20 @@ lyric_importer::StaticImport::load()
     priv->isVariable = staticWalker.isVariable();
     priv->isDeclOnly = staticWalker.isDeclOnly();
 
-    priv->access = staticWalker.getAccess();
-    if (priv->access == lyric_object::AccessType::Invalid)
-        throw tempo_utils::StatusException(
-            ImporterStatus::forCondition(
-                ImporterCondition::kImportError,
-                "cannot import static at index {} in module {}; invalid access type",
-                m_staticOffset, objectLocation.toString()));
+    switch (staticWalker.getAccess()) {
+        case lyric_object::AccessType::Hidden:
+            priv->isHidden = true;
+            break;
+        case lyric_object::AccessType::Public:
+            priv->isHidden = false;
+            break;
+        default:
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import static at index {} in module {}; invalid access type",
+                    m_staticOffset, objectLocation.toString()));
+    }
 
     priv->staticType = moduleImport->getType(staticWalker.getStaticType().getDescriptorOffset());
 

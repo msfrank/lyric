@@ -80,10 +80,16 @@ write_class(
     }
 
     lyo1::ClassFlags classFlags = lyo1::ClassFlags::NONE;
-    if (classSymbol->isDeclOnly())
+    if (classSymbol->isDeclOnly()) {
         classFlags |= lyo1::ClassFlags::DeclOnly;
-    if (classSymbol->isAbstract())
+    }
+    if (classSymbol->isHidden()) {
+        classFlags |= lyo1::ClassFlags::Hidden;
+    }
+    if (classSymbol->isAbstract()) {
         classFlags |= lyo1::ClassFlags::Abstract;
+    }
+
     switch (classSymbol->getDeriveType()) {
         case lyric_object::DeriveType::Final:
             classFlags |= lyo1::ClassFlags::Final;
@@ -93,20 +99,6 @@ write_class(
             break;
         default:
             break;
-    }
-    switch (classSymbol->getAccessType()) {
-        case lyric_object::AccessType::Public:
-            classFlags |= lyo1::ClassFlags::GlobalVisibility;
-            break;
-        case lyric_object::AccessType::Protected:
-            classFlags |= lyo1::ClassFlags::InheritVisibility;
-            break;
-        case lyric_object::AccessType::Private:
-            break;
-        default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                "invalid class access");
     }
 
     // serialize array of members

@@ -8,7 +8,7 @@ namespace lyric_importer {
         lyric_common::SymbolUrl symbolUrl;
         lyric_common::SymbolUrl receiverUrl;
         bool isDeclOnly;
-        lyric_object::AccessType access;
+        bool isHidden;
         TemplateImport *actionTemplate;
         TypeImport *returnType;
         std::vector<Parameter> listParameters;
@@ -41,11 +41,11 @@ lyric_importer::ActionImport::isDeclOnly()
     return m_priv->isDeclOnly;
 }
 
-lyric_object::AccessType
-lyric_importer::ActionImport::getAccess()
+bool
+lyric_importer::ActionImport::isHidden()
 {
     load();
-    return m_priv->access;
+    return m_priv->isHidden;
 }
 
 lyric_common::SymbolUrl
@@ -190,13 +190,20 @@ lyric_importer::ActionImport::load()
 
     priv->isDeclOnly = actionWalker.isDeclOnly();
 
-    priv->access = actionWalker.getAccess();
-    if (priv->access == lyric_object::AccessType::Invalid)
-        throw tempo_utils::StatusException(
-            ImporterStatus::forCondition(
-                ImporterCondition::kImportError,
-                "cannot import action at index {} in module {}; invalid access type",
-                m_actionOffset, objectLocation.toString()));
+    switch (actionWalker.getAccess()) {
+        case lyric_object::AccessType::Hidden:
+            priv->isHidden = true;
+            break;
+        case lyric_object::AccessType::Public:
+            priv->isHidden = false;
+            break;
+        default:
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import action at index {} in module {}; invalid access type",
+                    m_actionOffset, objectLocation.toString()));
+    }
 
     auto receiver = actionWalker.getReceiver();
     switch (receiver.getLinkageSection()) {

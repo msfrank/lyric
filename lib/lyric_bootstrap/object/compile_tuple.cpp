@@ -26,7 +26,7 @@ build_core_TupleN(BuilderState &state, int arity, const CoreClass *ObjectClass)
         auto name = absl::StrCat("Element", i);
         auto *TType = TupleTemplate->types[TupleTemplate->names[i]];
         auto *TupleField = state.addClassMember(name, TupleClass,
-            lyo1::FieldFlags::GlobalVisibility, TType);
+            lyo1::FieldFlags::NONE, TType);
         tupleFields[i] = TupleField->field_index;
     }
 

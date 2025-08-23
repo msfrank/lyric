@@ -63,18 +63,18 @@ lyric_archiver::copy_call(
         TU_ASSIGN_OR_RETURN (callTemplate, copy_template(templateImport, callUrl, objectState));
     }
 
-    auto access = callImport->getAccess();
+    auto isHidden = callImport->isHidden();
 
     // declare the function
     std::unique_ptr<lyric_assembler::CallSymbol> callSymbol;
 
     if (callTemplate != nullptr) {
         callSymbol = std::make_unique<lyric_assembler::CallSymbol>(
-            callUrl, access, callMode, callTemplate, /* isDeclOnly= */ false, namespaceBlock, objectState);
+            callUrl, isHidden, callMode, callTemplate, /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     } else {
         callSymbol = std::make_unique<lyric_assembler::CallSymbol>(
-            callUrl, access, callMode, /* isDeclOnly= */ false, namespaceBlock, objectState);
+            callUrl, isHidden, callMode, /* isDeclOnly= */ false, namespaceBlock, objectState);
     }
 
     // define the call

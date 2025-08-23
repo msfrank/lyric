@@ -229,11 +229,9 @@ lyric_object::ClassWalker::getAccess() const
     if (classDescriptor == nullptr)
         return AccessType::Invalid;
 
-    if (bool(classDescriptor->flags() & lyo1::ClassFlags::GlobalVisibility))
-        return AccessType::Public;
-    if (bool(classDescriptor->flags() & lyo1::ClassFlags::InheritVisibility))
-        return AccessType::Protected;
-    return AccessType::Private;
+    if (bool(classDescriptor->flags() & lyo1::ClassFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
 }
 
 bool

@@ -148,11 +148,9 @@ lyric_object::ConceptWalker::getAccess() const
     if (conceptDescriptor == nullptr)
         return AccessType::Invalid;
 
-    if (bool(conceptDescriptor->flags() & lyo1::ConceptFlags::GlobalVisibility))
-        return AccessType::Public;
-    if (bool(conceptDescriptor->flags() & lyo1::ConceptFlags::InheritVisibility))
-        return AccessType::Protected;
-    return AccessType::Private;
+    if (bool(conceptDescriptor->flags() & lyo1::ConceptFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
 }
 
 bool

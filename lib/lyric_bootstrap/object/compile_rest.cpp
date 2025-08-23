@@ -34,7 +34,7 @@ build_core_Rest(
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Size",
             RestExistential,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {},
             code, IntType);
     }
@@ -44,7 +44,7 @@ build_core_Rest(
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addExistentialMethod("Get",
             RestExistential,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {
                 make_list_param("index", IntType),
             },

@@ -47,12 +47,12 @@ lyric_compiler::TypenameHandler::decide(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // get global access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // declare static symbol
     lyric_assembler::TypenameSymbol *typenameSymbol;
-    TU_ASSIGN_OR_RETURN (typenameSymbol, block->declareTypename(identifier, convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (typenameSymbol, block->declareTypename(identifier, isHidden));
 
     // add global to the current namespace if specified
     if (m_currentNamespace != nullptr) {

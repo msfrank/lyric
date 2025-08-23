@@ -290,20 +290,16 @@ lyric_parser::internal::make_Generic_node(
     return genericNode;
 }
 
-lyric_parser::AccessType
-lyric_parser::internal::parse_access_type(std::string_view identifier)
+bool
+lyric_parser::internal::identifier_is_hidden(std::string_view identifier)
 {
     TU_ASSERT (!identifier.empty());
     auto init = tempo_utils::get_utf8_char(identifier, 0);
 
     if (init < 128) {
-        auto ch = (char8_t ) init;
-        if (std::isupper(ch))
-            return AccessType::Public;
-        if (std::islower(ch))
-            return AccessType::Protected;
+        auto ch = (char8_t) init;
         if (ch == '_')
-            return AccessType::Private;
+            return true;
     }
-    return AccessType::Private;
+    return false;
 }

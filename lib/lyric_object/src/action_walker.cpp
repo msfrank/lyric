@@ -53,11 +53,9 @@ lyric_object::ActionWalker::getAccess() const
     if (actionDescriptor == nullptr)
         return AccessType::Invalid;
 
-    if (bool(actionDescriptor->flags() & lyo1::ActionFlags::GlobalVisibility))
-        return AccessType::Public;
-    if (bool(actionDescriptor->flags() & lyo1::ActionFlags::InheritVisibility))
-        return AccessType::Protected;
-    return AccessType::Private;
+    if (bool(actionDescriptor->flags() & lyo1::ActionFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
 }
 
 lyric_common::SymbolPath

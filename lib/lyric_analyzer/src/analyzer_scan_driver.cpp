@@ -119,14 +119,13 @@ lyric_analyzer::AnalyzerScanDriver::declareTypename(
     lyric_assembler::BlockHandle *block)
 {
     std::string identifier;
-    lyric_parser::AccessType access;
-
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_assembler::TypenameSymbol *typenameSymbol;
-    TU_ASSIGN_OR_RETURN (typenameSymbol, block->declareTypename(
-        identifier, internal::convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (typenameSymbol, block->declareTypename(identifier, isHidden));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
@@ -143,12 +142,12 @@ lyric_analyzer::AnalyzerScanDriver::declareBinding(
     lyric_assembler::BlockHandle *block)
 {
     std::string identifier;
-    lyric_parser::AccessType access;
-    lyric_typing::TemplateSpec templateSpec;
-
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
 
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
+
+    lyric_typing::TemplateSpec templateSpec;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         lyric_parser::ArchetypeNode *genericNode = nullptr;
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
@@ -162,8 +161,7 @@ lyric_analyzer::AnalyzerScanDriver::declareBinding(
     TU_ASSIGN_OR_RETURN (targetSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
 
     lyric_assembler::BindingSymbol *bindingSymbol;
-    TU_ASSIGN_OR_RETURN (bindingSymbol, block->declareBinding(
-        identifier, internal::convert_access_type(access), templateSpec.templateParameters));
+    TU_ASSIGN_OR_RETURN (bindingSymbol, block->declareBinding(identifier, isHidden, templateSpec.templateParameters));
 
     auto *resolver = bindingSymbol->bindingResolver();
 
@@ -191,8 +189,8 @@ lyric_analyzer::AnalyzerScanDriver::declareStatic(
     lyric_schema::LyricAstId astId;
     TU_RETURN_IF_NOT_OK (walker.parseId(lyric_schema::kLyricAstVocabulary, astId));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     bool isVariable;
     TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIsVariable, isVariable));
@@ -208,7 +206,7 @@ lyric_analyzer::AnalyzerScanDriver::declareStatic(
 
     lyric_assembler::DataReference ref;
     TU_ASSIGN_OR_RETURN (ref, block->declareStatic(
-        identifier, internal::convert_access_type(access), staticType, isVariable, /* declOnly= */ true));
+        identifier, isHidden, staticType, isVariable, /* declOnly= */ true));
 
     // add class to the current namespace if specified
     auto *currentNamespace = m_namespaces.top();
@@ -228,8 +226,8 @@ lyric_analyzer::AnalyzerScanDriver::pushFunction(
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_parser::ArchetypeNode *genericNode = nullptr;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
@@ -243,7 +241,7 @@ lyric_analyzer::AnalyzerScanDriver::pushFunction(
 
     lyric_assembler::CallSymbol *callSymbol;
     TU_ASSIGN_OR_RETURN (callSymbol, block->declareFunction(
-        identifier, internal::convert_access_type(access), spec.templateParameters, /* declOnly= */ true));
+        identifier, isHidden, spec.templateParameters, /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
@@ -291,8 +289,8 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
@@ -337,7 +335,7 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
 
     lyric_assembler::ClassSymbol *classSymbol;
     TU_ASSIGN_OR_RETURN (classSymbol, block->declareClass(
-        identifier, superClass, internal::convert_access_type(access), templateSpec.templateParameters,
+        identifier, superClass, isHidden, templateSpec.templateParameters,
         internal::convert_derive_type(derive), isAbstract, /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
@@ -362,8 +360,8 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
@@ -384,7 +382,7 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
 
     lyric_assembler::ConceptSymbol *conceptSymbol;
     TU_ASSIGN_OR_RETURN (conceptSymbol, block->declareConcept(
-        identifier, superConcept, internal::convert_access_type(access), templateSpec.templateParameters,
+        identifier, superConcept, isHidden, templateSpec.templateParameters,
         internal::convert_derive_type(derive), /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
@@ -410,8 +408,8 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_parser::ArchetypeNode *initNode = nullptr;
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
@@ -435,8 +433,7 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
 
     lyric_assembler::EnumSymbol *enumSymbol;
     TU_ASSIGN_OR_RETURN (enumSymbol, block->declareEnum(
-        identifier, superEnum, internal::convert_access_type(access),
-        derive, isAbstract, /* declOnly= */ true));
+        identifier, superEnum, isHidden, derive, isAbstract, /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
@@ -461,8 +458,8 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_parser::ArchetypeNode *initNode = nullptr;
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
@@ -486,8 +483,7 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
 
     lyric_assembler::InstanceSymbol *instanceSymbol;
     TU_ASSIGN_OR_RETURN (instanceSymbol, block->declareInstance(
-        identifier, superInstance, internal::convert_access_type(access),
-        derive, isAbstract, /* declOnly= */ true));
+        identifier, superInstance, isHidden, derive, isAbstract, /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
@@ -511,8 +507,8 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
@@ -551,8 +547,8 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
 
     lyric_assembler::StructSymbol *structSymbol;
     TU_ASSIGN_OR_RETURN (structSymbol, block->declareStruct(
-        identifier, superStruct, internal::convert_access_type(access),
-        internal::convert_derive_type(derive), isAbstract, /* declOnly= */ true));
+        identifier, superStruct, isHidden, internal::convert_derive_type(derive),
+        isAbstract, /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
@@ -573,8 +569,8 @@ lyric_analyzer::AnalyzerScanDriver::pushNamespace(
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     if (m_namespaces.empty())
         return AnalyzerStatus::forCondition(AnalyzerCondition::kAnalyzerInvariant,
@@ -582,8 +578,7 @@ lyric_analyzer::AnalyzerScanDriver::pushNamespace(
     auto *currentNamespace = m_namespaces.top();
 
     lyric_assembler::NamespaceSymbol *namespaceSymbol;
-    TU_ASSIGN_OR_RETURN (namespaceSymbol, currentNamespace->declareSubspace(
-        identifier, internal::convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (namespaceSymbol, currentNamespace->declareSubspace(identifier, isHidden));
 
     // push the namespace context
     auto ctx = std::make_unique<NamespaceAnalyzerContext>(this, namespaceSymbol);

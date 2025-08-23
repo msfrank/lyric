@@ -53,8 +53,8 @@ lyric_compiler::DefEnumHandler::before(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // get enum access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // get allocator trap
     std::string allocatorTrap;
@@ -117,8 +117,7 @@ lyric_compiler::DefEnumHandler::before(
 
     // declare the enum
     TU_ASSIGN_OR_RETURN (m_defenum.enumSymbol, block->declareEnum(
-        identifier, m_defenum.superenumSymbol, lyric_compiler::convert_access_type(access),
-        lyric_object::DeriveType::Sealed, isAbstract));
+        identifier, m_defenum.superenumSymbol, isHidden, lyric_object::DeriveType::Sealed, isAbstract));
 
     // add enum to the current namespace if specified
     if (m_currentNamespace != nullptr) {
@@ -274,7 +273,7 @@ lyric_compiler::EnumCase::decide(
 
     // declare the case ctor
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, m_enumcase->declareCtor(lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, m_enumcase->declareCtor(/* isHidden= */ false));
 
     // define the ctor
     lyric_assembler::ProcHandle *procHandle;

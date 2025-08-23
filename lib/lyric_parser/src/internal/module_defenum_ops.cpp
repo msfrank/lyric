@@ -125,7 +125,7 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumVal(ModuleParser::EnumValConte
     state->popSymbolAndCheck(id);
 
     // get the visibility
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     // get the member type
     auto *memberTypeNode = make_Type_node(state, ctx->assignableType());
@@ -144,7 +144,7 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumVal(ModuleParser::EnumValConte
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the member type
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
@@ -192,7 +192,7 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumDef(ModuleParser::EnumDefConte
     state->popSymbolAndCheck(id);
 
     // get the visibility
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     // get the return type
     ArchetypeNode *returnTypeNode;
@@ -225,7 +225,7 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumDef(ModuleParser::EnumDefConte
     TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the return type
     TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
@@ -268,7 +268,7 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
     state->popSymbolAndCheck(id);
 
     // get the visibility
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     if (hasError())
         return;
@@ -316,7 +316,7 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumCase(ModuleParser::EnumCaseCon
     TU_RAISE_IF_NOT_OK (caseNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (caseNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (caseNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // peek node on stack, verify it is defenum
     ArchetypeNode *defenumNode;
@@ -394,7 +394,7 @@ lyric_parser::internal::ModuleDefenumOps::exitDefenumStatement(ModuleParser::Def
     state->popSymbolAndCheck(id);
 
     // get the visibility
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     if (hasError())
         return;
@@ -407,5 +407,5 @@ lyric_parser::internal::ModuleDefenumOps::exitDefenumStatement(ModuleParser::Def
     TU_RAISE_IF_NOT_OK (defenumNode->putAttr(kLyricAstIdentifier, id));
 
     // set the enum visibility
-    TU_RAISE_IF_NOT_OK (defenumNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (defenumNode->putAttr(kLyricAstIsHidden, isHidden));
 }

@@ -20,7 +20,7 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->access = lyric_object::AccessType::Public;
+    priv->isHidden = false;
     priv->isDeclOnly = false;
     priv->namespaceType = namespaceType;
     priv->superNamespace = nullptr;
@@ -31,7 +31,7 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
 
 lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     const lyric_common::SymbolUrl &namespaceUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     TypeHandle *namespaceType,
     NamespaceSymbol *superNamespace,
     bool isDeclOnly,
@@ -45,7 +45,7 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->access = access;
+    priv->isHidden = isHidden;
     priv->isDeclOnly = isDeclOnly;
     priv->namespaceType = namespaceType;
     priv->superNamespace = superNamespace;
@@ -79,7 +79,7 @@ lyric_assembler::NamespaceSymbol::load()
 
     auto priv = std::make_unique<NamespaceSymbolPriv>();
 
-    priv->access = lyric_object::AccessType::Public;
+    priv->isHidden = m_namespaceImport->isHidden();
     priv->isDeclOnly = m_namespaceImport->isDeclOnly();
 
     TU_ASSIGN_OR_RAISE (priv->namespaceType, typeCache->getOrMakeType(
@@ -125,11 +125,11 @@ lyric_assembler::NamespaceSymbol::getTypeDef() const
     return priv->namespaceType->getTypeDef();
 }
 
-lyric_object::AccessType
-lyric_assembler::NamespaceSymbol::getAccessType() const
+bool
+lyric_assembler::NamespaceSymbol::isHidden() const
 {
     auto *priv = getPriv();
-    return priv->access;
+    return priv->isHidden;
 }
 
 bool
@@ -216,7 +216,7 @@ lyric_assembler::NamespaceSymbol::putTarget(const lyric_common::SymbolUrl &targe
 tempo_utils::Result<lyric_assembler::BindingSymbol *>
 lyric_assembler::NamespaceSymbol::declareBinding(
     const std::string &name,
-    lyric_object::AccessType access,
+    bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters)
 {
     auto *priv = getPriv();
@@ -225,7 +225,7 @@ lyric_assembler::NamespaceSymbol::declareBinding(
             "cannot put namespace binding {}; symbol is already defined", name);
 
     BindingSymbol *bindingSymbol;
-    TU_ASSIGN_OR_RETURN (bindingSymbol, priv->namespaceBlock->declareBinding(name, access, templateParameters));
+    TU_ASSIGN_OR_RETURN (bindingSymbol, priv->namespaceBlock->declareBinding(name, isHidden, templateParameters));
 
     priv->targets[name] = bindingSymbol->getSymbolUrl();
 
@@ -235,7 +235,7 @@ lyric_assembler::NamespaceSymbol::declareBinding(
 tempo_utils::Result<lyric_assembler::NamespaceSymbol *>
 lyric_assembler::NamespaceSymbol::declareSubspace(
     const std::string &name,
-    lyric_object::AccessType access)
+    bool isHidden)
 {
     auto *priv = getPriv();
     if (priv->targets.contains(name))
@@ -248,7 +248,7 @@ lyric_assembler::NamespaceSymbol::declareSubspace(
     lyric_common::SymbolUrl namespaceUrl(m_namespaceUrl.getModuleLocation(), namespacePath);
 
     auto namespaceSymbol = std::make_unique<NamespaceSymbol>(
-        namespaceUrl, access, priv->namespaceType, this, priv->isDeclOnly,
+        namespaceUrl, isHidden, priv->namespaceType, this, priv->isDeclOnly,
         priv->namespaceBlock.get(), m_state);
 
     NamespaceSymbol *nsPtr;

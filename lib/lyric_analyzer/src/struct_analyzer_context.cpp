@@ -71,11 +71,11 @@ lyric_analyzer::StructAnalyzerContext::exit(
             lyric_assembler::ParameterPack parameterPack;
             TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(block, packSpec));
             lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_structSymbol->declareCtor(lyric_object::AccessType::Public));
+            TU_ASSIGN_OR_RETURN (ctorSymbol, m_structSymbol->declareCtor(/* isHidden= */ false));
             TU_RETURN_IF_STATUS (ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
         } else {
             lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_structSymbol->declareCtor(lyric_object::AccessType::Public));
+            TU_ASSIGN_OR_RETURN (ctorSymbol, m_structSymbol->declareCtor(/* isHidden= */ false));
             TU_RETURN_IF_STATUS (ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
         }
         return m_driver->popContext();
@@ -90,8 +90,8 @@ lyric_analyzer::StructAnalyzerContext::declareMember(const lyric_parser::Archety
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     auto walker = node->getArchetypeNode();
     auto *block = getBlock();
@@ -104,8 +104,7 @@ lyric_analyzer::StructAnalyzerContext::declareMember(const lyric_parser::Archety
     lyric_common::TypeDef memberType;
     TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(block, memberSpec));
 
-    TU_RETURN_IF_STATUS(m_structSymbol->declareMember(
-        identifier, memberType, internal::convert_access_type(access)));
+    TU_RETURN_IF_STATUS(m_structSymbol->declareMember(identifier, memberType, isHidden));
 
     TU_LOG_V << "declared member " << identifier << " on " << m_structSymbol->getSymbolUrl();
 
@@ -118,8 +117,8 @@ lyric_analyzer::StructAnalyzerContext::declareMethod(const lyric_parser::Archety
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_parser::ArchetypeNode *genericNode = nullptr;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
@@ -135,8 +134,7 @@ lyric_analyzer::StructAnalyzerContext::declareMethod(const lyric_parser::Archety
     }
 
     lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, m_structSymbol->declareMethod(
-        identifier, internal::convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (callSymbol, m_structSymbol->declareMethod(identifier, isHidden));
 
     auto *resolver = callSymbol->callResolver();
 

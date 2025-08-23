@@ -51,18 +51,18 @@ lyric_archiver::copy_action(
         TU_ASSIGN_OR_RETURN (actionTemplate, copy_template(templateImport, actionUrl, objectState));
     }
 
-    auto access = actionImport->getAccess();
+    auto isHidden = actionImport->isHidden();
 
     // declare the action
     std::unique_ptr<lyric_assembler::ActionSymbol> actionSymbol;
 
     if (actionTemplate != nullptr) {
         actionSymbol = std::make_unique<lyric_assembler::ActionSymbol>(
-            actionUrl, receiverUrl, access, actionTemplate, /* isDeclOnly= */ false, namespaceBlock, objectState);
+            actionUrl, receiverUrl, isHidden, actionTemplate, /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     } else {
         actionSymbol = std::make_unique<lyric_assembler::ActionSymbol>(
-            actionUrl, receiverUrl, access, /* isDeclOnly= */ false, namespaceBlock, objectState);
+            actionUrl, receiverUrl, isHidden, /* isDeclOnly= */ false, namespaceBlock, objectState);
     }
 
     // define the action

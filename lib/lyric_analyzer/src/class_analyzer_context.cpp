@@ -73,11 +73,11 @@ lyric_analyzer::ClassAnalyzerContext::exit(
             lyric_assembler::ParameterPack parameterPack;
             TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(block, packSpec));
             lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_classSymbol->declareCtor(lyric_object::AccessType::Public));
+            TU_ASSIGN_OR_RETURN (ctorSymbol, m_classSymbol->declareCtor(/* isHidden= */ false));
             TU_RETURN_IF_STATUS (ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
         } else {
             lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_classSymbol->declareCtor(lyric_object::AccessType::Public));
+            TU_ASSIGN_OR_RETURN (ctorSymbol, m_classSymbol->declareCtor(/* isHidden= */ false));
             TU_RETURN_IF_STATUS (ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
         }
         return m_driver->popContext();
@@ -92,8 +92,8 @@ lyric_analyzer::ClassAnalyzerContext::declareMember(const lyric_parser::Archetyp
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     auto walker = node->getArchetypeNode();
     auto *block = getBlock();
@@ -106,8 +106,7 @@ lyric_analyzer::ClassAnalyzerContext::declareMember(const lyric_parser::Archetyp
     lyric_common::TypeDef memberType;
     TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(block, memberSpec));
 
-    TU_RETURN_IF_STATUS(m_classSymbol->declareMember(
-        identifier, memberType, isVariable, internal::convert_access_type(access)));
+    TU_RETURN_IF_STATUS(m_classSymbol->declareMember(identifier, memberType, isVariable, isHidden));
 
     TU_LOG_V << "declared member " << identifier << " on " << m_classSymbol->getSymbolUrl();
 
@@ -120,8 +119,8 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_parser::ArchetypeNode *genericNode = nullptr;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
@@ -137,8 +136,7 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
     }
 
     lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, m_classSymbol->declareMethod(
-        identifier, internal::convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (callSymbol, m_classSymbol->declareMethod(identifier, isHidden));
 
     auto *resolver = callSymbol->callResolver();
 

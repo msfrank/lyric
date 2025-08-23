@@ -46,11 +46,11 @@ lyric_compiler::NamespaceHandler::before(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // get namespace access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // declare the namespace
-    TU_ASSIGN_OR_RETURN (m_namespace, m_parentNamespace->declareSubspace(identifier, convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (m_namespace, m_parentNamespace->declareSubspace(identifier, isHidden));
 
     // handle the namespace definitions
     for (int i = 0; i < node->numChildren(); i++) {

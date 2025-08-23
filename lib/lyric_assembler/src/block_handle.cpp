@@ -619,7 +619,7 @@ lyric_assembler::BlockHandle::resolveFunction(const std::string &name)
 tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::BlockHandle::declareVariable(
     const std::string &name,
-    lyric_object::AccessType access,
+    bool isHidden,
     const lyric_common::TypeDef &assignableType,
     bool isVariable)
 {
@@ -640,7 +640,7 @@ lyric_assembler::BlockHandle::declareVariable(
     auto localUrl = makeSymbolUrl(name);
     auto address = m_blockProc->allocateLocal();
     auto localVariable = std::make_unique<LocalVariable>(
-        localUrl, access, assignableType, address);
+        localUrl, isHidden, assignableType, address);
     TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(localUrl, localVariable.get()));
     localVariable.release();
 
@@ -677,7 +677,7 @@ lyric_assembler::BlockHandle::declareTemporary(
     auto localUrl = makeSymbolUrl(name);
     auto address = m_blockProc->allocateLocal();
     auto localVariable = std::make_unique<LocalVariable>(
-        localUrl, lyric_object::AccessType::Private, assignableType, address);
+        localUrl, /* isHidden= */ true, assignableType, address);
     TU_RETURN_IF_NOT_OK (symbolCache->insertSymbol(localUrl, localVariable.get()));
     localVariable.release();
 
@@ -693,7 +693,7 @@ lyric_assembler::BlockHandle::declareTemporary(
 tempo_utils::Result<lyric_assembler::DataReference>
 lyric_assembler::BlockHandle::declareStatic(
     const std::string &name,
-    lyric_object::AccessType access,
+    bool isHidden,
     const lyric_common::TypeDef &assignableType,
     bool isVariable,
     bool declOnly)
@@ -716,7 +716,7 @@ lyric_assembler::BlockHandle::declareStatic(
     TU_ASSIGN_OR_RETURN (staticType, typeCache->getOrMakeType(assignableType));
 
     auto staticSymbol = std::make_unique<StaticSymbol>(
-        staticUrl, access, isVariable, staticType, declOnly, this, m_state);
+        staticUrl, isHidden, isVariable, staticType, declOnly, this, m_state);
 
     TU_RETURN_IF_STATUS (m_state->appendStatic(std::move(staticSymbol), existingTypename));
 
@@ -848,7 +848,7 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
                 // found a local in a parent proc
                 case SymbolType::LOCAL: {
                     auto *local = static_cast<LocalVariable *>(symbol);
-                    if (local->getAccessType() == lyric_object::AccessType::Private)
+                    if (local->isHidden())
                         return AssemblerStatus::forCondition(AssemblerCondition::kInvalidBinding,
                             "variable {} is not visible from the current scope", name);
                     lexicalTarget = LexicalTarget::Local;
@@ -882,7 +882,7 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
 
             auto activation = block->blockProc()->getActivationUrl();
             TU_ASSERT (m_state->symbolCache()->hasSymbol(activation));
-            lyric_assembler::AbstractSymbol *activationSymbol;
+            AbstractSymbol *activationSymbol;
             TU_ASSIGN_OR_RETURN (activationSymbol, symbolCache->getOrImportSymbol(activation));
             auto *activationCall = cast_symbol_to_call(activationSymbol);
 
@@ -941,7 +941,7 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::BlockHandle::declareFunction(
     const std::string &name,
-    lyric_object::AccessType access,
+    bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     bool declOnly)
 {
@@ -961,10 +961,10 @@ lyric_assembler::BlockHandle::declareFunction(
     // create the call
     std::unique_ptr<CallSymbol> callSymbol;
     if (functionTemplate) {
-        callSymbol = std::make_unique<CallSymbol>(functionUrl, access, lyric_object::CallMode::Normal,
+        callSymbol = std::make_unique<CallSymbol>(functionUrl, isHidden, lyric_object::CallMode::Normal,
             functionTemplate, declOnly, this, m_state);
     } else {
-        callSymbol = std::make_unique<CallSymbol>(functionUrl, access, lyric_object::CallMode::Normal,
+        callSymbol = std::make_unique<CallSymbol>(functionUrl, isHidden, lyric_object::CallMode::Normal,
             declOnly, this, m_state);
     }
 
@@ -1001,7 +1001,7 @@ tempo_utils::Result<lyric_assembler::ClassSymbol *>
 lyric_assembler::BlockHandle::declareClass(
     const std::string &name,
     ClassSymbol *superClass,
-    lyric_object::AccessType access,
+    bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     lyric_object::DeriveType derive,
     bool isAbstract,
@@ -1043,10 +1043,10 @@ lyric_assembler::BlockHandle::declareClass(
     // create the class
     std::unique_ptr<ClassSymbol> classSymbol;
     if (classTemplate) {
-        classSymbol = std::make_unique<ClassSymbol>(classUrl, access, derive, isAbstract, typeHandle,
+        classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, derive, isAbstract, typeHandle,
             classTemplate, superClass, declOnly, this, m_state);
     } else {
-        classSymbol = std::make_unique<ClassSymbol>(classUrl, access, derive, isAbstract,
+        classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, derive, isAbstract,
             typeHandle, superClass, declOnly, this, m_state);
     }
 
@@ -1086,7 +1086,7 @@ tempo_utils::Result<lyric_assembler::ConceptSymbol *>
 lyric_assembler::BlockHandle::declareConcept(
     const std::string &name,
     ConceptSymbol *superConcept,
-    lyric_object::AccessType access,
+    bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     lyric_object::DeriveType derive,
     bool declOnly)
@@ -1117,10 +1117,10 @@ lyric_assembler::BlockHandle::declareConcept(
     // create the concept
     std::unique_ptr<ConceptSymbol> conceptSymbol;
     if (conceptTemplate) {
-        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, access, derive, typeHandle,
+        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, isHidden, derive, typeHandle,
             conceptTemplate, superConcept, declOnly, this, m_state);
     } else {
-        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, access, derive, typeHandle,
+        conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, isHidden, derive, typeHandle,
             superConcept, declOnly, this, m_state);
     }
 
@@ -1160,7 +1160,7 @@ tempo_utils::Result<lyric_assembler::EnumSymbol *>
 lyric_assembler::BlockHandle::declareEnum(
     const std::string &name,
     EnumSymbol *superEnum,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::DeriveType derive,
     bool isAbstract,
     bool declOnly)
@@ -1188,7 +1188,7 @@ lyric_assembler::BlockHandle::declareEnum(
         enumUrl, {}, superEnum->getTypeDef()));
 
     // create the enum
-    auto enumSymbol = std::make_unique<EnumSymbol>(enumUrl, access, derive,
+    auto enumSymbol = std::make_unique<EnumSymbol>(enumUrl, isHidden, derive,
         isAbstract, typeHandle, superEnum, declOnly, this, m_state);
 
     EnumSymbol *enumPtr;
@@ -1227,7 +1227,7 @@ tempo_utils::Result<lyric_assembler::InstanceSymbol *>
 lyric_assembler::BlockHandle::declareInstance(
     const std::string &name,
     InstanceSymbol *superInstance,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::DeriveType derive,
     bool isAbstract,
     bool declOnly)
@@ -1255,7 +1255,7 @@ lyric_assembler::BlockHandle::declareInstance(
         instanceUrl, {}, superInstance->getTypeDef()));
 
     // create the instance
-    auto instanceSymbol = std::make_unique<InstanceSymbol>(instanceUrl, access, derive,
+    auto instanceSymbol = std::make_unique<InstanceSymbol>(instanceUrl, isHidden, derive,
         isAbstract, typeHandle, superInstance, declOnly, this, m_state);
 
     InstanceSymbol *instancePtr;
@@ -1294,7 +1294,7 @@ tempo_utils::Result<lyric_assembler::StructSymbol *>
 lyric_assembler::BlockHandle::declareStruct(
     const std::string &name,
     StructSymbol *superStruct,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::DeriveType derive,
     bool isAbstract,
     bool declOnly)
@@ -1322,7 +1322,7 @@ lyric_assembler::BlockHandle::declareStruct(
         structUrl, {}, superStruct->getTypeDef()));
 
     // create the struct
-    auto structSymbol = std::make_unique<StructSymbol>(structUrl, access, derive,
+    auto structSymbol = std::make_unique<StructSymbol>(structUrl, isHidden, derive,
         isAbstract, typeHandle, superStruct, declOnly, this, m_state);
 
     StructSymbol *structPtr;
@@ -1514,7 +1514,7 @@ lyric_assembler::BlockHandle::resolveImpl(
 tempo_utils::Result<lyric_assembler::BindingSymbol *>
 lyric_assembler::BlockHandle::declareBinding(
     const std::string &name,
-    lyric_object::AccessType access,
+    bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters)
 {
     auto *fundamentalCache = m_state->fundamentalCache();
@@ -1546,10 +1546,10 @@ lyric_assembler::BlockHandle::declareBinding(
     // create the binding
     std::unique_ptr<BindingSymbol> bindingSymbol;
     if (bindingTemplate) {
-        bindingSymbol = std::make_unique<BindingSymbol>(bindingUrl, access, typeHandle,
+        bindingSymbol = std::make_unique<BindingSymbol>(bindingUrl, isHidden, typeHandle,
             bindingTemplate, this, m_state);
     } else {
-        bindingSymbol = std::make_unique<BindingSymbol>(bindingUrl, access, typeHandle,
+        bindingSymbol = std::make_unique<BindingSymbol>(bindingUrl, isHidden, typeHandle,
             this, m_state);
     }
 
@@ -1566,9 +1566,7 @@ lyric_assembler::BlockHandle::declareBinding(
 }
 
 tempo_utils::Result<lyric_assembler::TypenameSymbol *>
-lyric_assembler::BlockHandle::declareTypename(
-    const std::string &name,
-    lyric_object::AccessType access)
+lyric_assembler::BlockHandle::declareTypename(const std::string &name, bool isHidden)
 {
     auto *fundamentalCache = m_state->fundamentalCache();
     auto *symbolCache = m_state->symbolCache();

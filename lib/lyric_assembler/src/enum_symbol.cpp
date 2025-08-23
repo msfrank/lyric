@@ -18,7 +18,7 @@
 
 lyric_assembler::EnumSymbol::EnumSymbol(
     const lyric_common::SymbolUrl &enumUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::DeriveType derive,
     bool isAbstract,
     TypeHandle *enumType,
@@ -34,7 +34,7 @@ lyric_assembler::EnumSymbol::EnumSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->access = access;
+    priv->isHidden = isHidden;
     priv->derive = derive;
     priv->isAbstract = isAbstract;
     priv->isDeclOnly = isDeclOnly;
@@ -72,7 +72,7 @@ lyric_assembler::EnumSymbol::load()
     priv->enumBlock = std::make_unique<BlockHandle>(
         m_enumUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
 
-    priv->access = lyric_object::AccessType::Public;
+    priv->isHidden = m_enumImport->isHidden();
     priv->derive = m_enumImport->getDerive();
     priv->isAbstract = m_enumImport->isAbstract();
     priv->isDeclOnly = m_enumImport->isDeclOnly();
@@ -104,7 +104,7 @@ lyric_assembler::EnumSymbol::load()
 
         BoundMethod methodBinding;
         methodBinding.methodCall = iterator->second;
-        methodBinding.access = callSymbol->getAccessType();
+        methodBinding.hidden = callSymbol->isHidden();
         methodBinding.final = false;    // FIXME: this should come from the call symbol
         priv->methods[iterator->first] = methodBinding;
     }
@@ -151,11 +151,11 @@ lyric_assembler::EnumSymbol::getTypeDef() const
     return priv->enumType->getTypeDef();
 }
 
-lyric_object::AccessType
-lyric_assembler::EnumSymbol::getAccessType() const
+bool
+lyric_assembler::EnumSymbol::isHidden() const
 {
     auto *priv = getPriv();
-    return priv->access;
+    return priv->isHidden;
 }
 
 lyric_object::DeriveType
@@ -242,7 +242,7 @@ lyric_assembler::EnumSymbol::declareMember(
     const std::string &name,
     const lyric_common::TypeDef &memberType,
     bool isVariable,
-    lyric_object::AccessType access)
+    bool isHidden)
 {
     if (isImported())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
@@ -262,7 +262,7 @@ lyric_assembler::EnumSymbol::declareMember(
     auto memberUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(memberPath));
 
     // construct the field symbol
-    auto fieldSymbol = std::make_unique<FieldSymbol>(memberUrl, access, isVariable,
+    auto fieldSymbol = std::make_unique<FieldSymbol>(memberUrl, isHidden, isVariable,
         fieldType, priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
     FieldSymbol *fieldPtr;
@@ -294,24 +294,18 @@ lyric_assembler::EnumSymbol::resolveMember(
         return priv->superEnum->resolveMember(name, reifier, receiverType, thisReceiver);
     }
     const auto &member = priv->members.at(name);
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(member.symbolUrl));
     if (symbol->getSymbolType() != SymbolType::FIELD)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid field symbol {}", member.symbolUrl.toString());
     auto *fieldSymbol = cast_symbol_to_field(symbol);
-    auto access = fieldSymbol->getAccessType();
 
-    bool thisSymbol = receiverType.getConcreteUrl() == m_enumUrl;
-
-    if (thisReceiver) {
-        if (access == lyric_object::AccessType::Private && !thisSymbol)
+    if (fieldSymbol->isHidden()) {
+        bool thisSymbol = receiverType.getConcreteUrl() == m_enumUrl;
+        if (!(thisReceiver && thisSymbol))
             return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-                "access to private member {} is not allowed", name);
-    } else {
-        if (access != lyric_object::AccessType::Public)
-            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-                "access to protected member {} is not allowed", name);
+                "access to hidden member {} is not allowed", name);
     }
 
     return reifier.reifyMember(name, fieldSymbol);
@@ -367,7 +361,7 @@ lyric_assembler::EnumSymbol::getAllocatorTrap() const
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::EnumSymbol::declareCtor(
-    lyric_object::AccessType access,
+    bool isHidden,
     std::string allocatorTrap)
 {
     if (isImported())
@@ -385,7 +379,7 @@ lyric_assembler::EnumSymbol::declareCtor(
             "ctor already defined for enum {}", m_enumUrl.toString());
 
     // construct call symbol
-    auto ctorSymbol = std::make_unique<CallSymbol>(ctorUrl, m_enumUrl, access,
+    auto ctorSymbol = std::make_unique<CallSymbol>(ctorUrl, m_enumUrl, isHidden,
         lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
     CallSymbol *ctorPtr;
@@ -395,7 +389,7 @@ lyric_assembler::EnumSymbol::declareCtor(
     // add bound method
     BoundMethod method;
     method.methodCall = ctorUrl;
-    method.access = access;
+    method.hidden = isHidden;
     method.final = false;
     priv->methods["$ctor"] = method;
 
@@ -462,7 +456,7 @@ lyric_assembler::EnumSymbol::numMethods() const
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::EnumSymbol::declareMethod(
     const std::string &name,
-    lyric_object::AccessType access)
+    bool isHidden)
 {
     if (isImported())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
@@ -480,7 +474,7 @@ lyric_assembler::EnumSymbol::declareMethod(
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
 
     // construct call symbol
-    auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_enumUrl, access,
+    auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_enumUrl, isHidden,
         lyric_object::CallMode::Normal, priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
     CallSymbol *callPtr;
@@ -488,7 +482,7 @@ lyric_assembler::EnumSymbol::declareMethod(
     TU_RAISE_IF_NOT_OK (priv->enumBlock->putBinding(callPtr));
 
     // add bound method
-    priv->methods[name] = { methodUrl, access, true /* final */ };
+    priv->methods[name] = { methodUrl, isHidden, true /* final */ };
 
     return callPtr;
 }
@@ -510,25 +504,17 @@ lyric_assembler::EnumSymbol::prepareMethod(
     }
 
     const auto &method = priv->methods.at(name);
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(method.methodCall));
     if (symbol->getSymbolType() != SymbolType::CALL)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid call symbol {}", method.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
 
-    auto access = callSymbol->getAccessType();
-
-    bool thisSymbol = receiverType.getConcreteUrl() == m_enumUrl;
-
-    if (thisReceiver) {
-        if (access == lyric_object::AccessType::Private && !thisSymbol)
+    if (callSymbol->isHidden()) {
+        if (!thisReceiver)
             return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-                "cannot access private method {} on {}", name, m_enumUrl.toString());
-    } else {
-        if (access != lyric_object::AccessType::Public)
-            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-                "cannot access protected method {} on {}", name, m_enumUrl.toString());
+                "cannot access hidden method {} on {}", name, m_enumUrl.toString());
     }
 
     if (callSymbol->isInline()) {

@@ -45,21 +45,6 @@ namespace lyric_parser {
             NotationType &value) const override;
     };
 
-    class AccessTypeAttr : public tempo_schema::AttrSerde<AccessType> {
-
-        using SerdeType = AccessType;
-
-    public:
-        explicit AccessTypeAttr(const tempo_schema::ComparableResource *resource);
-        tempo_utils::Result<tu_uint32> writeAttr(
-            tempo_schema::AbstractAttrWriter *writer,
-            const AccessType &value) const override;
-        tempo_utils::Status parseAttr(
-            tu_uint32 index,
-            tempo_schema::AbstractAttrParser *parser,
-            AccessType &value) const override;
-    };
-
     class BoundTypeAttr : public tempo_schema::AttrSerde<BoundType> {
 
         using SerdeType = BoundType;
@@ -125,7 +110,6 @@ namespace lyric_parser {
 
     extern const BaseTypeAttr kLyricAstBaseType;
     extern const NotationTypeAttr kLyricAstNotationType;
-    extern const AccessTypeAttr kLyricAstAccessType;
     extern const BoundTypeAttr kLyricAstBoundType;
     extern const VarianceTypeAttr kLyricAstVarianceType;
     extern const DeriveTypeAttr kLyricAstDeriveType;
@@ -135,6 +119,7 @@ namespace lyric_parser {
     extern const lyric_common::SymbolPathAttr kLyricAstSymbolPath;
     extern const tempo_schema::StringAttr kLyricAstIdentifier;
     extern const tempo_schema::StringAttr kLyricAstLabel;
+    extern const tempo_schema::BoolAttr kLyricAstIsHidden;
     extern const tempo_schema::BoolAttr kLyricAstIsVariable;
 
     extern const NodeAttr kLyricAstTypeOffset;

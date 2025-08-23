@@ -77,7 +77,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<DataReference> declareVariable(
             const std::string &name,
-            lyric_object::AccessType access,
+            bool isHidden,
             const lyric_common::TypeDef &assignableType,
             bool isVariable);
 
@@ -87,7 +87,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<DataReference> declareStatic(
             const std::string &name,
-            lyric_object::AccessType access,
+            bool isHidden,
             const lyric_common::TypeDef &assignableType,
             bool isVariable,
             bool declOnly = false);
@@ -97,7 +97,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<CallSymbol *> declareFunction(
             const std::string &name,
-            lyric_object::AccessType access,
+            bool isHidden,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             bool declOnly = false);
 
@@ -106,7 +106,7 @@ namespace lyric_assembler {
         tempo_utils::Result<ClassSymbol *> declareClass(
             const std::string &name,
             ClassSymbol *superClass,
-            lyric_object::AccessType access,
+            bool isHidden,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool isAbstract = false,
@@ -117,7 +117,7 @@ namespace lyric_assembler {
         tempo_utils::Result<ConceptSymbol *> declareConcept(
             const std::string &name,
             ConceptSymbol *superConcept,
-            lyric_object::AccessType access,
+            bool isHidden,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool declOnly = false);
@@ -127,7 +127,7 @@ namespace lyric_assembler {
         tempo_utils::Result<EnumSymbol *> declareEnum(
             const std::string &name,
             EnumSymbol *superEnum,
-            lyric_object::AccessType access,
+            bool isHidden,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool isAbstract = false,
             bool declOnly = false);
@@ -137,7 +137,7 @@ namespace lyric_assembler {
         tempo_utils::Result<InstanceSymbol *> declareInstance(
             const std::string &name,
             InstanceSymbol *superInstance,
-            lyric_object::AccessType access,
+            bool isHidden,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool isAbstract = false,
             bool declOnly = false);
@@ -147,7 +147,7 @@ namespace lyric_assembler {
         tempo_utils::Result<StructSymbol *> declareStruct(
             const std::string &name,
             StructSymbol *superStruct,
-            lyric_object::AccessType access,
+            bool isHidden,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
             bool isAbstract = false,
             bool declOnly = false);
@@ -169,12 +169,10 @@ namespace lyric_assembler {
 
         tempo_utils::Result<BindingSymbol *> declareBinding(
             const std::string &name,
-            lyric_object::AccessType access,
+            bool isHidden,
             const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
-        tempo_utils::Result<TypenameSymbol *> declareTypename(
-            const std::string &name,
-            lyric_object::AccessType access);
+        tempo_utils::Result<TypenameSymbol *> declareTypename(const std::string &name, bool isHidden);
 
         tempo_utils::Result<SymbolBinding> declareAlias(
             const std::string &alias,

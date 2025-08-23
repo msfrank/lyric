@@ -54,8 +54,8 @@ lyric_compiler::DefClassHandler::before(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // get class access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // get class derive type
     lyric_parser::DeriveType derive;
@@ -140,7 +140,7 @@ lyric_compiler::DefClassHandler::before(
 
     // declare the class
     TU_ASSIGN_OR_RETURN (m_defclass.classSymbol, block->declareClass(
-        identifier, m_defclass.superclassSymbol, lyric_compiler::convert_access_type(access),
+        identifier, m_defclass.superclassSymbol, isHidden,
         m_defclass.templateSpec.templateParameters, lyric_compiler::convert_derive_type(derive),
         isAbstract));
 

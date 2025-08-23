@@ -70,8 +70,13 @@ write_enum(
     }
 
     lyo1::EnumFlags enumFlags = lyo1::EnumFlags::NONE;
-    if (enumSymbol->isDeclOnly())
+    if (enumSymbol->isDeclOnly()) {
         enumFlags |= lyo1::EnumFlags::DeclOnly;
+    }
+    if (enumSymbol->isHidden()) {
+        enumFlags |= lyo1::EnumFlags::Hidden;
+    }
+
     switch (enumSymbol->getDeriveType()) {
         case lyric_object::DeriveType::Final:
             enumFlags |= lyo1::EnumFlags::Final;
@@ -81,20 +86,6 @@ write_enum(
             break;
         default:
             break;
-    }
-    switch (enumSymbol->getAccessType()) {
-        case lyric_object::AccessType::Public:
-            enumFlags |= lyo1::EnumFlags::GlobalVisibility;
-            break;
-        case lyric_object::AccessType::Protected:
-            enumFlags |= lyo1::EnumFlags::InheritVisibility;
-            break;
-        case lyric_object::AccessType::Private:
-            break;
-        default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                "invalid enum access");
     }
 
     // serialize array of members

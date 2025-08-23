@@ -62,7 +62,7 @@ lyric_parser::internal::ModuleSymbolOps::exitNamespaceStatement(ModuleParser::Na
     state->popSymbolAndCheck(id);
 
     // get the namespace identifier
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     if (hasError())
         return;
@@ -71,7 +71,7 @@ lyric_parser::internal::ModuleSymbolOps::exitNamespaceStatement(ModuleParser::Na
     TU_ASSIGN_OR_RAISE (namespaceNode, state->peekNode(lyric_schema::kLyricAstNamespaceClass));
 
     TU_RAISE_IF_NOT_OK (namespaceNode->putAttr(kLyricAstIdentifier, id));
-    TU_RAISE_IF_NOT_OK (namespaceNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (namespaceNode->putAttr(kLyricAstIsHidden, isHidden));
 }
 
 void

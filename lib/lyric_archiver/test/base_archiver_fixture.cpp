@@ -73,10 +73,10 @@ BaseArchiverFixture::archiveSymbol(
 tempo_utils::Result<lyric_assembler::BindingSymbol *>
 BaseArchiverFixture::declareBinding(
     const std::string &name,
-    lyric_object::AccessType access,
+    bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters)
 {
-    return m_archiver->declareBinding(name, access, templateParameters);
+    return m_archiver->declareBinding(name, isHidden, templateParameters);
 }
 
 tempo_utils::Status

@@ -20,7 +20,7 @@ lyric_compiler::declare_struct_init(
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbol->declareCtor(lyric_object::AccessType::Public, allocatorTrap));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
 
     lyric_typing::PackSpec packSpec;
     lyric_assembler::ParameterPack parameterPack;
@@ -60,7 +60,7 @@ lyric_compiler::declare_struct_default_init(
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbol->declareCtor(lyric_object::AccessType::Public, allocatorTrap));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
 
     lyric_assembler::ParameterPack parameterPack;
     absl::flat_hash_map<std::string,lyric_common::SymbolUrl> paramInitializers;
@@ -187,13 +187,12 @@ lyric_compiler::declare_struct_member(
     lyric_common::TypeDef memberType;
     TU_ASSIGN_OR_RETURN (memberType, typeSystem->resolveAssignable(structBlock, memberSpec));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     Member member;
 
-    TU_ASSIGN_OR_RETURN (member.fieldSymbol, structSymbol->declareMember(
-        identifier, memberType, convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (member.fieldSymbol, structSymbol->declareMember(identifier, memberType, isHidden));
 
     TU_LOG_V << "declared member " << identifier << " for " << structSymbol->getSymbolUrl();
 
@@ -293,8 +292,8 @@ lyric_compiler::declare_struct_method(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // determine the access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // parse the return type
     lyric_parser::ArchetypeNode *typeNode;
@@ -318,8 +317,7 @@ lyric_compiler::declare_struct_method(
     Method method;
 
     // declare the method
-    TU_ASSIGN_OR_RETURN (method.callSymbol, structSymbol->declareMethod(
-        identifier, convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (method.callSymbol, structSymbol->declareMethod(identifier, isHidden));
 
     TU_LOG_V << "declared method " << identifier << " for " << structSymbol->getSymbolUrl();
 

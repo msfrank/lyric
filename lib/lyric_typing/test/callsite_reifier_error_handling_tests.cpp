@@ -36,7 +36,7 @@ TEST_F(CallsiteReifierErrorHandling, ParametricParameterReificationFailsGivenNon
     auto *rootBlock = m_objectRoot->rootBlock();
     auto *ObjectClass = rootBlock->resolveClass(ObjectType).orElseThrow();
     auto *FooClass = rootBlock->declareClass(
-        "Foo", ObjectClass, lyric_object::AccessType::Public, templateParameters).orElseThrow();
+        "Foo", ObjectClass, /* isHidden= */ false, templateParameters).orElseThrow();
 
     lyric_assembler::Parameter p0;
     p0.index = 0;

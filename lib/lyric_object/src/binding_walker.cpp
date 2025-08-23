@@ -51,11 +51,9 @@ lyric_object::BindingWalker::getAccess() const
     if (bindingDescriptor == nullptr)
         return AccessType::Invalid;
 
-    if (bool(bindingDescriptor->flags() & lyo1::BindingFlags::GlobalVisibility))
-        return AccessType::Public;
-    if (bool(bindingDescriptor->flags() & lyo1::BindingFlags::InheritVisibility))
-        return AccessType::Protected;
-    return AccessType::Private;
+    if (bool(bindingDescriptor->flags() & lyo1::BindingFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
 }
 
 lyric_object::TypeWalker

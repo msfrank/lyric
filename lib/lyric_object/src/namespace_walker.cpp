@@ -63,11 +63,9 @@ lyric_object::NamespaceWalker::getAccess() const
     if (namespaceDescriptor == nullptr)
         return AccessType::Invalid;
 
-    if (bool(namespaceDescriptor->flags() & lyo1::NamespaceFlags::GlobalVisibility))
-        return AccessType::Public;
-    if (bool(namespaceDescriptor->flags() & lyo1::NamespaceFlags::InheritVisibility))
-        return AccessType::Protected;
-    return AccessType::Private;
+    if (bool(namespaceDescriptor->flags() & lyo1::NamespaceFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
 }
 
 bool

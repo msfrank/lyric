@@ -10,7 +10,7 @@ namespace lyric_importer {
         TemplateImport *callTemplate;
         TypeImport *returnType;
         bool isDeclOnly;
-        lyric_object::AccessType access;
+        bool isHidden;
         lyric_object::CallMode callMode;
         std::vector<Parameter> listParameters;
         std::vector<Parameter> namedParameters;
@@ -47,11 +47,11 @@ lyric_importer::CallImport::isDeclOnly()
     return m_priv->isDeclOnly;
 }
 
-lyric_object::AccessType
-lyric_importer::CallImport::getAccess()
+bool
+lyric_importer::CallImport::isHidden()
 {
     load();
-    return m_priv->access;
+    return m_priv->isHidden;
 }
 
 lyric_object::CallMode
@@ -395,14 +395,20 @@ lyric_importer::CallImport::load()
                 "cannot import call at index {} in module {}; invalid access type",
                 m_callOffset, objectLocation.toString()));
 
-    priv->access = callWalker.getAccess();
-
-    if (callWalker.getMode() == lyric_object::CallMode::Invalid)
-        throw tempo_utils::StatusException(
-            ImporterStatus::forCondition(
-                ImporterCondition::kImportError,
-                "cannot import call at index {} in module {}; invalid call mode",
-                m_callOffset, objectLocation.toString()));
+    switch (callWalker.getAccess()) {
+        case lyric_object::AccessType::Hidden:
+            priv->isHidden = true;
+            break;
+        case lyric_object::AccessType::Public:
+            priv->isHidden = false;
+            break;
+        default:
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import call at index {} in module {}; invalid call mode",
+                    m_callOffset, objectLocation.toString()));
+    }
 
     priv->callMode = callWalker.getMode();
 

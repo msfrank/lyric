@@ -55,8 +55,8 @@ lyric_compiler::DefInstanceHandler::before(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
     // get instance access level
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // get instance derive type
     lyric_parser::DeriveType derive;
@@ -123,7 +123,7 @@ lyric_compiler::DefInstanceHandler::before(
 
     // declare the instance
     TU_ASSIGN_OR_RETURN (m_definstance.instanceSymbol, block->declareInstance(
-        identifier, m_definstance.superinstanceSymbol, lyric_compiler::convert_access_type(access),
+        identifier, m_definstance.superinstanceSymbol, isHidden,
         lyric_compiler::convert_derive_type(derive), isAbstract));
 
     // add instance to the current namespace if specified

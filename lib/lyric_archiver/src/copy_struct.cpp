@@ -36,7 +36,7 @@ lyric_archiver::copy_struct(
             "cannot archive {}; symbol is already defined", importUrl.toString());
     }
 
-    auto access = structImport->getAccess();
+    auto isHidden = structImport->isHidden();
     auto derive = structImport->getDerive();
     auto isAbstract = structImport->isAbstract();
 
@@ -58,7 +58,7 @@ lyric_archiver::copy_struct(
     // declare the struct
     std::unique_ptr<lyric_assembler::StructSymbol> structSymbol;
     structSymbol = std::make_unique<lyric_assembler::StructSymbol>(
-            structUrl, access, derive, isAbstract, structType, superStruct,
+            structUrl, isHidden, derive, isAbstract, structType, superStruct,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     // append the struct to the object
@@ -79,7 +79,7 @@ lyric_archiver::copy_struct(
             fieldImport->getFieldType(), importHash, targetNamespace, symbolReferenceSet, archiverState));
         lyric_assembler::FieldSymbol *fieldSymbol;
         TU_ASSIGN_OR_RETURN (fieldSymbol, structSymbolPtr->declareMember(
-            name, memberTypeHandle->getTypeDef(), fieldImport->getAccess()));
+            name, memberTypeHandle->getTypeDef(), fieldImport->isHidden()));
         TU_RETURN_IF_NOT_OK (archiverState.putSymbol(fieldImport->getSymbolUrl(), fieldSymbol));
 
         auto initializerUrl = fieldImport->getInitializer();
@@ -124,7 +124,7 @@ lyric_archiver::copy_struct(
             TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
         }
         lyric_assembler::CallSymbol *callSymbol;
-        TU_ASSIGN_OR_RETURN (callSymbol, structSymbolPtr->declareMethod(name, callImport->getAccess()));
+        TU_ASSIGN_OR_RETURN (callSymbol, structSymbolPtr->declareMethod(name, callImport->isHidden()));
         TU_RETURN_IF_NOT_OK (archiverState.putSymbol(it->second, callSymbol));
         TU_RETURN_IF_NOT_OK (define_call(
             callImport, callSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));
@@ -146,7 +146,7 @@ lyric_archiver::copy_struct(
     TU_ASSIGN_OR_RETURN (ctorImport, archiverState.importCall(ctorUrl));
 
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbolPtr->declareCtor(ctorImport->getAccess(), structImport->getAllocator()));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbolPtr->declareCtor(ctorImport->isHidden(), structImport->getAllocator()));
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(ctorImport->getSymbolUrl(), ctorSymbol));
     TU_RETURN_IF_NOT_OK (define_call(
         ctorImport, ctorSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));

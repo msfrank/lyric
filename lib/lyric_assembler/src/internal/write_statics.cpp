@@ -53,20 +53,8 @@ write_static(
     if (staticSymbol->isVariable()) {
         staticFlags |= lyo1::StaticFlags::Var;
     }
-
-    switch (staticSymbol->getAccessType()) {
-        case lyric_object::AccessType::Public:
-            staticFlags |= lyo1::StaticFlags::GlobalVisibility;
-            break;
-        case lyric_object::AccessType::Protected:
-            staticFlags |= lyo1::StaticFlags::InheritVisibility;
-            break;
-        case lyric_object::AccessType::Private:
-            break;
-        default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                "invalid static access");
+    if (staticSymbol->isHidden()) {
+        staticFlags |= lyo1::StaticFlags::Hidden;
     }
 
     tu_uint32 initCall = lyric_object::INVALID_ADDRESS_U32;

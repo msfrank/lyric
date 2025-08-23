@@ -18,7 +18,7 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string,Parameter> parametersMap;
         lyric_common::TypeDef returnType;
         lyric_common::SymbolUrl receiverUrl;
-        lyric_object::AccessType access;
+        bool isHidden;
         lyric_object::CallMode mode;
         bool isNoReturn;
         bool isDeclOnly;
@@ -49,7 +49,7 @@ namespace lyric_assembler {
         CallSymbol(
             const lyric_common::SymbolUrl &callUrl,
             const lyric_common::SymbolUrl &receiverUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             lyric_object::CallMode mode,
             TemplateHandle *callTemplate,
             bool isDeclOnly,
@@ -59,7 +59,7 @@ namespace lyric_assembler {
         CallSymbol(
             const lyric_common::SymbolUrl &callUrl,
             const lyric_common::SymbolUrl &receiverUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             lyric_object::CallMode mode,
             bool isDeclOnly,
             BlockHandle *parentBlock,
@@ -67,7 +67,7 @@ namespace lyric_assembler {
 
         CallSymbol(
             const lyric_common::SymbolUrl &callUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             lyric_object::CallMode mode,
             TemplateHandle *callTemplate,
             bool isDeclOnly,
@@ -76,7 +76,7 @@ namespace lyric_assembler {
 
         CallSymbol(
             const lyric_common::SymbolUrl &callUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             lyric_object::CallMode mode,
             bool isDeclOnly,
             BlockHandle *parentBlock,
@@ -101,7 +101,7 @@ namespace lyric_assembler {
         std::string getName() const;
         lyric_common::TypeDef getReturnType() const;
         lyric_common::SymbolUrl getReceiverUrl() const;
-        lyric_object::AccessType getAccessType() const;
+        bool isHidden() const;
         lyric_object::CallMode getMode() const;
 
         bool isBound() const;
@@ -142,12 +142,12 @@ namespace lyric_assembler {
         CallSymbolPriv *load() override;
     };
 
-    static inline const CallSymbol *cast_symbol_to_call(const AbstractSymbol *sym) {
+    inline const CallSymbol *cast_symbol_to_call(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::CALL);
         return static_cast<const CallSymbol *>(sym);    // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline CallSymbol *cast_symbol_to_call(AbstractSymbol *sym) {
+    inline CallSymbol *cast_symbol_to_call(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::CALL);
         return static_cast<CallSymbol *>(sym);          // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

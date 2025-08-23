@@ -3,11 +3,11 @@
 
 lyric_assembler::LocalVariable::LocalVariable(
     const lyric_common::SymbolUrl &localUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     const lyric_common::TypeDef &assignableType,
     LocalOffset offset)
     : m_localUrl(localUrl),
-      m_access(access),
+      m_isHidden(isHidden),
       m_assignableType(assignableType),
       m_offset(offset)
 {
@@ -49,10 +49,10 @@ lyric_assembler::LocalVariable::getName() const
     return m_localUrl.getSymbolPath().getName();
 }
 
-lyric_object::AccessType
-lyric_assembler::LocalVariable::getAccessType() const
+bool
+lyric_assembler::LocalVariable::isHidden() const
 {
-    return m_access;
+    return m_isHidden;
 }
 
 lyric_assembler::LocalOffset

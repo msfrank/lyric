@@ -42,11 +42,11 @@ BaseOptimizerFixture::configure()
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 BaseOptimizerFixture::declareFunction(
     const std::string &name,
-    lyric_object::AccessType access,
+    bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters)
 {
     auto *rootBlock = m_objectRoot->rootBlock();
-    return rootBlock->declareFunction(name, access, templateParameters);
+    return rootBlock->declareFunction(name, isHidden, templateParameters);
 }
 
 lyric_optimizer::ControlFlowGraph

@@ -190,18 +190,17 @@ lyric_assembler::ImplHandle::defineExtension(
     auto methodPath = priv->receiverUrl.getSymbolPath().getPath();
     methodPath.push_back(absl::StrCat(priv->name, "$", name));
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
-    auto access = lyric_object::AccessType::Public;
 
     TemplateHandle *conceptTemplate = priv->implConcept->conceptTemplate();
 
     // construct call symbol
     std::unique_ptr<CallSymbol> callSymbol;
     if (conceptTemplate != nullptr) {
-        callSymbol = std::make_unique<CallSymbol>(methodUrl, priv->receiverUrl, access,
+        callSymbol = std::make_unique<CallSymbol>(methodUrl, priv->receiverUrl, /* isHidden= */ false,
             lyric_object::CallMode::Normal, conceptTemplate, priv->isDeclOnly,
             priv->implBlock.get(), m_state);
     } else {
-        callSymbol = std::make_unique<CallSymbol>(methodUrl, priv->receiverUrl, access,
+        callSymbol = std::make_unique<CallSymbol>(methodUrl, priv->receiverUrl, /* isHidden= */ false,
             lyric_object::CallMode::Normal, priv->isDeclOnly, priv->implBlock.get(), m_state);
     }
 
@@ -248,9 +247,8 @@ lyric_assembler::ImplHandle::prepareExtension(
             "invalid call symbol {}", extension.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
 
-    auto access = callSymbol->getAccessType();
-
-    if (access != lyric_object::AccessType::Public)
+    auto isHidden = callSymbol->isHidden();
+    if (isHidden)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "extension method {} must be public", name);
 

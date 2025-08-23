@@ -23,7 +23,7 @@ TEST_F(ParseProcTests, ParseSingleBasicBlock)
 
     lyric_assembler::CallSymbol *callSymbol;
     TU_ASSIGN_OR_RAISE (callSymbol, declareFunction(
-        "test", lyric_object::AccessType::Public, {}));
+        "test", /* isHidden= */ false, {}));
 
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RAISE (procHandle, callSymbol->defineCall({}));
@@ -49,7 +49,7 @@ TEST_F(ParseProcTests, ParseConditionalWithPhiFunction)
 
     lyric_assembler::CallSymbol *callSymbol;
     TU_ASSIGN_OR_RAISE (callSymbol, declareFunction(
-        "test", lyric_object::AccessType::Public, {}));
+        "test", /* isHidden= */ false, {}));
 
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RAISE (procHandle, callSymbol->defineCall({}));

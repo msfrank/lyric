@@ -150,11 +150,9 @@ lyric_object::ExistentialWalker::getAccess() const
     if (existentialDescriptor == nullptr)
         return AccessType::Invalid;
 
-    if (bool(existentialDescriptor->flags() & lyo1::ExistentialFlags::GlobalVisibility))
-        return AccessType::Public;
-    if (bool(existentialDescriptor->flags() & lyo1::ExistentialFlags::InheritVisibility))
-        return AccessType::Protected;
-    return AccessType::Private;
+    if (bool(existentialDescriptor->flags() & lyo1::ExistentialFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
 }
 
 bool

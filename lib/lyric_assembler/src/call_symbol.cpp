@@ -14,7 +14,7 @@
 #include "lyric_assembler/local_variable.h"
 
 /**
- * @brief Construct a call symbol for the $entry call.
+ * Construct a call symbol for the $entry call.
  */
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &entryUrl,
@@ -29,7 +29,7 @@ lyric_assembler::CallSymbol::CallSymbol(
 
     auto *priv = getPriv();
     priv->returnType = lyric_common::TypeDef::noReturn();
-    priv->access = lyric_object::AccessType::Public;
+    priv->isHidden = false;
     priv->mode = lyric_object::CallMode::Normal;
     priv->isNoReturn =  true;
     priv->callType = nullptr;
@@ -39,7 +39,8 @@ lyric_assembler::CallSymbol::CallSymbol(
 }
 
 /**
- * @brief Construct a CallSymbol for a generic bound method.
+ * Construct a CallSymbol for a generic bound method.
+ *
  * @param callUrl The fully qualified symbol url.
  * @param parameters A vector of positional, named, and context call parameters.
  * @param rest The rest parameter, or an empty Option<Parameter> if there is no
@@ -47,7 +48,7 @@ lyric_assembler::CallSymbol::CallSymbol(
  * @param returnType The return type of the call.
  * @param receiverUrl The class or instance receiver bound to the method, or empty
  *   SymbolUrl if there is no receiver.
- * @param access
+ * @param isHidden
  * @param callType
  * @param callTemplate
  * @param parentBlock
@@ -56,7 +57,7 @@ lyric_assembler::CallSymbol::CallSymbol(
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
     const lyric_common::SymbolUrl &receiverUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::CallMode mode,
     bool isDeclOnly,
     BlockHandle *parentBlock,
@@ -70,7 +71,7 @@ lyric_assembler::CallSymbol::CallSymbol(
 
     auto *priv = getPriv();
     priv->receiverUrl = receiverUrl;
-    priv->access = access;
+    priv->isHidden = isHidden;
     priv->isDeclOnly = isDeclOnly;
     priv->mode = mode;
     priv->callType = nullptr;
@@ -78,19 +79,17 @@ lyric_assembler::CallSymbol::CallSymbol(
     priv->parentBlock = parentBlock;
 
     TU_ASSERT (priv->receiverUrl.isValid());
-    TU_ASSERT (priv->access != lyric_object::AccessType::Invalid);
     TU_ASSERT (priv->mode != lyric_object::CallMode::Invalid);
     TU_ASSERT (priv->parentBlock != nullptr);
 }
 
 /**
- * @brief Construct a CallSymbol for a bound method.
- *
+ * Construct a CallSymbol for a bound method.
  */
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
     const lyric_common::SymbolUrl &receiverUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::CallMode mode,
     TemplateHandle *callTemplate,
     bool isDeclOnly,
@@ -99,7 +98,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     : CallSymbol(
         callUrl,
         receiverUrl,
-        access,
+        isHidden,
         mode,
         isDeclOnly,
         parentBlock,
@@ -111,21 +110,18 @@ lyric_assembler::CallSymbol::CallSymbol(
 }
 
 /**
- * @brief Construct a CallSymbol for a generic free function.
+ * Construct a CallSymbol for a generic free function.
+ *
  * @param callUrl The fully qualified symbol url.
- * @param parameters A vector of positional, named, and context call parameters.
- * @param rest The rest parameter, or an empty Option<Parameter> if there is no
- *   rest parameter.
- * @param returnType The return type of the call.
- * @param access
- * @param callType
- * @param callTemplate
+ * @param isHidden
+ * @param mode
+ * @param isDeclOnly
  * @param parentBlock
  * @param state
  */
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::CallMode mode,
     bool isDeclOnly,
     BlockHandle *parentBlock,
@@ -138,25 +134,23 @@ lyric_assembler::CallSymbol::CallSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->access = access;
+    priv->isHidden = isHidden;
     priv->isDeclOnly = isDeclOnly;
     priv->mode = mode;
     priv->callType = nullptr;
     priv->callTemplate = nullptr;
     priv->parentBlock = parentBlock;
 
-    TU_ASSERT (priv->access != lyric_object::AccessType::Invalid);
     TU_ASSERT (priv->mode != lyric_object::CallMode::Invalid);
     TU_ASSERT (priv->parentBlock != nullptr);
 }
 
 /**
- * @brief Construct a CallSymbol for a free function.
- *
+ * Construct a CallSymbol for a free function.
  */
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::CallMode mode,
     TemplateHandle *callTemplate,
     bool isDeclOnly,
@@ -164,7 +158,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     ObjectState *state)
     : CallSymbol(
         callUrl,
-        access,
+        isHidden,
         mode,
         isDeclOnly,
         parentBlock,
@@ -176,7 +170,7 @@ lyric_assembler::CallSymbol::CallSymbol(
 }
 
 /**
- * @brief Construct a CallSymbol for an imported call.
+ * Construct a CallSymbol for an imported call.
  *
  */
 lyric_assembler::CallSymbol::CallSymbol(
@@ -251,7 +245,7 @@ lyric_assembler::CallSymbol::load()
         priv->parametersMap[p.name] = p;
     }
 
-    priv->access = m_callImport->getAccess();
+    priv->isHidden = m_callImport->isHidden();
     priv->mode = m_callImport->getCallMode();
     priv->receiverUrl = m_callImport->getReceiverUrl();
 
@@ -459,7 +453,7 @@ lyric_assembler::CallSymbol::defineCall(
 
         auto *procBlock = priv->proc->procBlock();
         DataReference restVar;
-        TU_ASSIGN_OR_RETURN (restVar, procBlock->declareVariable(restParamName, lyric_object::AccessType::Public,
+        TU_ASSIGN_OR_RETURN (restVar, procBlock->declareVariable(restParamName, /* isHidden= */ false,
             restOfParamType->getTypeDef(), /* isVariable= */ false));
     }
 
@@ -486,11 +480,11 @@ lyric_assembler::CallSymbol::getReceiverUrl() const
     return priv->receiverUrl;
 }
 
-lyric_object::AccessType
-lyric_assembler::CallSymbol::getAccessType() const
+bool
+lyric_assembler::CallSymbol::isHidden() const
 {
     auto *priv = getPriv();
-    return priv->access;
+    return priv->isHidden;
 }
 
 lyric_object::CallMode
@@ -731,7 +725,7 @@ lyric_assembler::CallSymbol::defineInitializer(const std::string &name)
     // declare the initializer call
     lyric_assembler::CallSymbol *callSymbol;
     TU_ASSIGN_OR_RETURN (callSymbol, priv->parentBlock->declareFunction(
-        identifier, lyric_object::AccessType::Public, templateParameters, priv->isDeclOnly));
+        identifier, /* isHidden= */ false, templateParameters, priv->isDeclOnly));
 
     // define the initializer with no parameters
     TU_RETURN_IF_STATUS (callSymbol->defineCall({}));

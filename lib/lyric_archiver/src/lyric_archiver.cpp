@@ -95,14 +95,14 @@ lyric_archiver::LyricArchiver::archiveSymbol(const lyric_common::SymbolUrl &symb
 tempo_utils::Result<lyric_assembler::BindingSymbol *>
 lyric_archiver::LyricArchiver::declareBinding(
     const std::string &name,
-    lyric_object::AccessType access,
+    bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters)
 {
     if (m_archiverState == nullptr)
         return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
             "archiver is not initialized");
 
-    return m_archiverState->declareBinding(name, access, templateParameters);
+    return m_archiverState->declareBinding(name, isHidden, templateParameters);
 }
 
 tempo_utils::Result<lyric_object::LyricObject>

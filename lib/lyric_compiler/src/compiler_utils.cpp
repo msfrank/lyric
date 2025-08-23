@@ -2,21 +2,6 @@
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/compiler_utils.h>
 
-lyric_object::AccessType
-lyric_compiler::convert_access_type(lyric_parser::AccessType access)
-{
-    switch (access) {
-        case lyric_parser::AccessType::Public:
-            return lyric_object::AccessType::Public;
-        case lyric_parser::AccessType::Protected:
-            return lyric_object::AccessType::Protected;
-        case lyric_parser::AccessType::Private:
-            return lyric_object::AccessType::Private;
-        default:
-            return lyric_object::AccessType::Invalid;
-    }
-}
-
 lyric_object::DeriveType
 lyric_compiler::convert_derive_type(lyric_parser::DeriveType derive)
 {

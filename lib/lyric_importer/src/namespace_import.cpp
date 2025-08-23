@@ -6,7 +6,7 @@ namespace lyric_importer {
     struct NamespaceImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
         bool isDeclOnly;
-        lyric_object::AccessType access;
+        bool isHidden;
         lyric_common::SymbolUrl superNamespace;
         absl::flat_hash_set<lyric_common::SymbolUrl> symbols;
     };
@@ -35,11 +35,11 @@ lyric_importer::NamespaceImport::isDeclOnly()
     return m_priv->isDeclOnly;
 }
 
-lyric_object::AccessType
-lyric_importer::NamespaceImport::getAccess()
+bool
+lyric_importer::NamespaceImport::isHidden()
 {
     load();
-    return m_priv->access;
+    return m_priv->isHidden;
 }
 
 lyric_common::SymbolUrl
@@ -87,13 +87,20 @@ lyric_importer::NamespaceImport::load()
 
     priv->isDeclOnly = namespaceWalker.isDeclOnly();
 
-    priv->access = namespaceWalker.getAccess();
-    if (priv->access == lyric_object::AccessType::Invalid)
-        throw tempo_utils::StatusException(
-            ImporterStatus::forCondition(
-                ImporterCondition::kImportError,
-                "cannot import namespace at index {} in module {}; invalid access type",
-                m_namespaceOffset, objectLocation.toString()));
+    switch (namespaceWalker.getAccess()) {
+        case lyric_object::AccessType::Hidden:
+            priv->isHidden = true;
+            break;
+        case lyric_object::AccessType::Public:
+            priv->isHidden = false;
+            break;
+        default:
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import namespace at index {} in module {}; invalid access type",
+                    m_namespaceOffset, objectLocation.toString()));
+    }
 
     if (namespaceWalker.hasSuperNamespace()) {
         switch (namespaceWalker.superNamespaceAddressType()) {

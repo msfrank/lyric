@@ -12,7 +12,7 @@
 namespace lyric_assembler {
 
     struct StaticSymbolPriv {
-        lyric_object::AccessType access;
+        bool isHidden;
         bool isVariable;
         TypeHandle *staticType;
         BlockHandle *parentBlock;
@@ -26,7 +26,7 @@ namespace lyric_assembler {
     public:
         StaticSymbol(
             const lyric_common::SymbolUrl &staticUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             bool isVariable,
             TypeHandle *staticType,
             bool isDeclOnly,
@@ -45,7 +45,7 @@ namespace lyric_assembler {
         lyric_common::TypeDef getTypeDef() const override;
 
         std::string getName() const;
-        lyric_object::AccessType getAccessType() const;
+        bool isHidden() const;
         bool isVariable() const;
         bool isDeclOnly() const;
 

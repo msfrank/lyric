@@ -36,7 +36,7 @@ lyric_archiver::copy_enum(
             "cannot archive {}; symbol is already defined", importUrl.toString());
     }
 
-    auto access = enumImport->getAccess();
+    auto isHidden = enumImport->isHidden();
     auto derive = enumImport->getDerive();
     auto isAbstract = enumImport->isAbstract();
 
@@ -58,7 +58,7 @@ lyric_archiver::copy_enum(
     // declare the enum
     std::unique_ptr<lyric_assembler::EnumSymbol> enumSymbol;
     enumSymbol = std::make_unique<lyric_assembler::EnumSymbol>(
-            enumUrl, access, derive, isAbstract, enumType, superEnum,
+            enumUrl, isHidden, derive, isAbstract, enumType, superEnum,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     // append the enum to the object
@@ -79,7 +79,7 @@ lyric_archiver::copy_enum(
             fieldImport->getFieldType(), importHash, targetNamespace, symbolReferenceSet, archiverState));
         lyric_assembler::FieldSymbol *fieldSymbol;
         TU_ASSIGN_OR_RETURN (fieldSymbol, enumSymbolPtr->declareMember(
-            name, memberTypeHandle->getTypeDef(), fieldImport->isVariable(), fieldImport->getAccess()));
+            name, memberTypeHandle->getTypeDef(), fieldImport->isVariable(), fieldImport->isHidden()));
         TU_RETURN_IF_NOT_OK (archiverState.putSymbol(fieldImport->getSymbolUrl(), fieldSymbol));
 
         auto initializerUrl = fieldImport->getInitializer();
@@ -124,7 +124,7 @@ lyric_archiver::copy_enum(
             TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
         }
         lyric_assembler::CallSymbol *callSymbol;
-        TU_ASSIGN_OR_RETURN (callSymbol, enumSymbolPtr->declareMethod(name, callImport->getAccess()));
+        TU_ASSIGN_OR_RETURN (callSymbol, enumSymbolPtr->declareMethod(name, callImport->isHidden()));
         TU_RETURN_IF_NOT_OK (archiverState.putSymbol(it->second, callSymbol));
         TU_RETURN_IF_NOT_OK (define_call(
             callImport, callSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));
@@ -146,7 +146,7 @@ lyric_archiver::copy_enum(
     TU_ASSIGN_OR_RETURN (ctorImport, archiverState.importCall(ctorUrl));
 
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, enumSymbolPtr->declareCtor(ctorImport->getAccess(), enumImport->getAllocator()));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, enumSymbolPtr->declareCtor(ctorImport->isHidden(), enumImport->getAllocator()));
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(ctorImport->getSymbolUrl(), ctorSymbol));
     TU_RETURN_IF_NOT_OK (define_call(
         ctorImport, ctorSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));

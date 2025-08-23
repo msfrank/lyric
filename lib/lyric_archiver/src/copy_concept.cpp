@@ -38,7 +38,7 @@ lyric_archiver::copy_concept(
             "cannot archive {}; symbol is already defined", importUrl.toString());
     }
 
-    auto access = conceptImport->getAccess();
+    auto isHidden = conceptImport->isHidden();
     auto derive = conceptImport->getDerive();
 
     auto *conceptTemplateImport = conceptImport->getConceptTemplate();
@@ -73,11 +73,11 @@ lyric_archiver::copy_concept(
 
     if (conceptTemplate != nullptr) {
         conceptSymbol = std::make_unique<lyric_assembler::ConceptSymbol>(
-            conceptUrl, access, derive, conceptType, conceptTemplate, superConcept,
+            conceptUrl, isHidden, derive, conceptType, conceptTemplate, superConcept,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
     } else {
         conceptSymbol = std::make_unique<lyric_assembler::ConceptSymbol>(
-            conceptUrl, access, derive, conceptType, superConcept,
+            conceptUrl, isHidden, derive, conceptType, superConcept,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
     }
 
@@ -100,7 +100,7 @@ lyric_archiver::copy_concept(
             TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
         }
         lyric_assembler::ActionSymbol *actionSymbol;
-        TU_ASSIGN_OR_RETURN (actionSymbol, conceptSymbolPtr->declareAction(name, actionImport->getAccess()));
+        TU_ASSIGN_OR_RETURN (actionSymbol, conceptSymbolPtr->declareAction(name, actionImport->isHidden()));
         TU_RETURN_IF_NOT_OK (archiverState.putSymbol(it->second, actionSymbol));
         TU_RETURN_IF_NOT_OK (define_action(
             actionImport, actionSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));

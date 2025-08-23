@@ -36,7 +36,7 @@ build_core_Seq(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Size",
             SeqStruct,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {},
             code,
             IntegerType);
@@ -47,7 +47,7 @@ build_core_Seq(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("GetOrElse",
             SeqStruct,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {
                 make_list_param("index", IntegerType),
                 make_list_param("default", DataType),
@@ -61,7 +61,7 @@ build_core_Seq(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Append",
             SeqStruct,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {
                 make_list_param("first", DataType),
                 make_rest_param(DataType),
@@ -75,7 +75,7 @@ build_core_Seq(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Extend",
             SeqStruct,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {
                 make_list_param("other", SeqStruct->structType),
             },
@@ -88,7 +88,7 @@ build_core_Seq(
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Slice",
             SeqStruct,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {
                 make_list_param("start", IntegerType),
                 make_list_param("length", IntegerType),

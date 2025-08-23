@@ -48,23 +48,14 @@ write_field(
     TU_ASSIGN_OR_RETURN (fieldType, writer.getTypeOffset(fieldSymbol->getTypeDef()));
 
     lyo1::FieldFlags fieldFlags = lyo1::FieldFlags::NONE;
-    if (fieldSymbol->isVariable())
+    if (fieldSymbol->isVariable()) {
         fieldFlags |= lyo1::FieldFlags::Var;
-    if (fieldSymbol->isDeclOnly())
+    }
+    if (fieldSymbol->isHidden()) {
+        fieldFlags |= lyo1::FieldFlags::Hidden;
+    }
+    if (fieldSymbol->isDeclOnly()) {
         fieldFlags |= lyo1::FieldFlags::DeclOnly;
-    switch (fieldSymbol->getAccessType()) {
-        case lyric_object::AccessType::Public:
-            fieldFlags |= lyo1::FieldFlags::GlobalVisibility;
-            break;
-        case lyric_object::AccessType::Protected:
-            fieldFlags |= lyo1::FieldFlags::InheritVisibility;
-            break;
-        case lyric_object::AccessType::Private:
-            break;
-        default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                "invalid field access");
     }
 
     tu_uint32 initIndex = lyric_object::INVALID_ADDRESS_U32;

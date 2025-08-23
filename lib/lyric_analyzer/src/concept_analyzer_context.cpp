@@ -66,8 +66,8 @@ lyric_analyzer::ConceptAnalyzerContext::declareAction(const lyric_parser::Archet
     std::string identifier;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
-    lyric_parser::AccessType access;
-    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstAccessType, access));
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     lyric_parser::ArchetypeNode *genericNode = nullptr;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
@@ -83,8 +83,7 @@ lyric_analyzer::ConceptAnalyzerContext::declareAction(const lyric_parser::Archet
     }
 
     lyric_assembler::ActionSymbol *actionSymbol;
-    TU_ASSIGN_OR_RETURN (actionSymbol, m_conceptSymbol->declareAction(
-        identifier, internal::convert_access_type(access)));
+    TU_ASSIGN_OR_RETURN (actionSymbol, m_conceptSymbol->declareAction(identifier, isHidden));
 
     auto *resolver = actionSymbol->actionResolver();
 

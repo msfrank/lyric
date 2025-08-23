@@ -8,7 +8,7 @@
 
 lyric_assembler::StaticSymbol::StaticSymbol(
     const lyric_common::SymbolUrl &staticUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     bool isVariable,
     TypeHandle *staticType,
     bool isDeclOnly,
@@ -22,7 +22,7 @@ lyric_assembler::StaticSymbol::StaticSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->access = access;
+    priv->isHidden = isHidden;
     priv->isVariable = isVariable;
     priv->staticType = staticType;
     priv->parentBlock = parentBlock;
@@ -56,7 +56,7 @@ lyric_assembler::StaticSymbol::load()
     auto priv = std::make_unique<StaticSymbolPriv>();
 
     priv->parentBlock = nullptr;
-    priv->access = m_staticImport->getAccess();
+    priv->isHidden = m_staticImport->isHidden();
     priv->isVariable = m_staticImport->isVariable();
     priv->isDeclOnly = m_staticImport->isDeclOnly();
 
@@ -109,11 +109,11 @@ lyric_assembler::StaticSymbol::getName() const
     return m_staticUrl.getSymbolPath().getName();
 }
 
-lyric_object::AccessType
-lyric_assembler::StaticSymbol::getAccessType() const
+bool
+lyric_assembler::StaticSymbol::isHidden() const
 {
     auto *priv = getPriv();
-    return priv->access;
+    return priv->isHidden;
 }
 
 bool
@@ -160,7 +160,7 @@ lyric_assembler::StaticSymbol::defineInitializer()
     // declare the initializer call
     CallSymbol *callSymbol;
     TU_ASSIGN_OR_RETURN (callSymbol, priv->parentBlock->declareFunction(
-        identifier, lyric_object::AccessType::Public, {}, priv->isDeclOnly));
+        identifier, /* isHidden= */ false, {}, priv->isDeclOnly));
 
     // define the initializer with no parameters
     TU_RETURN_IF_STATUS (callSymbol->defineCall({}));

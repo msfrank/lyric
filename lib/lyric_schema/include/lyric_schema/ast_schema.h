@@ -130,7 +130,6 @@ namespace lyric_schema {
 
         BaseEnum,
         NotationEnum,
-        AccessEnum,
         BoundEnum,
         VarianceEnum,
         DeriveEnum,
@@ -141,6 +140,7 @@ namespace lyric_schema {
         SymbolUrl,
         Identifier,
         Label,
+        IsHidden,
         IsVariable,
 
         TypeOffset,
@@ -365,10 +365,6 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::NotationEnum, "NotationEnum", tempo_schema::PropertyType::kUInt32);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
-    kLyricAstAccessEnumProperty(
-        &kLyricAstNs, LyricAstId::AccessEnum, "AccessEnum", tempo_schema::PropertyType::kUInt32);
-
-    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstBoundEnumProperty(
         &kLyricAstNs, LyricAstId::BoundEnum, "BoundEnum", tempo_schema::PropertyType::kUInt32);
 
@@ -403,6 +399,10 @@ namespace lyric_schema {
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstLabelProperty(
         &kLyricAstNs, LyricAstId::Label, "Label", tempo_schema::PropertyType::kString);
+
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
+    kLyricAstIsHiddenProperty(
+        &kLyricAstNs, LyricAstId::IsHidden, "IsHidden", tempo_schema::PropertyType::kBool);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
         kLyricAstIsVariableProperty(
@@ -551,7 +551,6 @@ namespace lyric_schema {
 
         &kLyricAstBaseEnumProperty,
         &kLyricAstNotationEnumProperty,
-        &kLyricAstAccessEnumProperty,
         &kLyricAstBoundEnumProperty,
         &kLyricAstVarianceEnumProperty,
         &kLyricAstDeriveEnumProperty,
@@ -562,6 +561,7 @@ namespace lyric_schema {
         &kLyricAstSymbolUrlProperty,
         &kLyricAstIdentifierProperty,
         &kLyricAstLabelProperty,
+        &kLyricAstIsHiddenProperty,
         &kLyricAstIsVariableProperty,
 
         &kLyricAstTypeOffsetProperty,

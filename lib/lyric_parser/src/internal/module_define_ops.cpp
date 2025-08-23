@@ -29,7 +29,7 @@ lyric_parser::internal::ModuleDefineOps::exitTypenameStatement(ModuleParser::Typ
     auto id = ctx->symbolIdentifier()->getText();
     state->popSymbolAndCheck(id);
 
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -42,7 +42,7 @@ lyric_parser::internal::ModuleDefineOps::exitTypenameStatement(ModuleParser::Typ
     TU_RAISE_IF_NOT_OK (state->pushNode(typenameNode));
 
     TU_RAISE_IF_NOT_OK (typenameNode->putAttr(kLyricAstIdentifier, id));
-    TU_RAISE_IF_NOT_OK (typenameNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (typenameNode->putAttr(kLyricAstIsHidden, isHidden));
 }
 
 void
@@ -66,7 +66,7 @@ lyric_parser::internal::ModuleDefineOps::exitDefStatement(ModuleParser::DefState
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     if (hasError())
         return;
@@ -93,7 +93,7 @@ lyric_parser::internal::ModuleDefineOps::exitDefStatement(ModuleParser::DefState
     TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIdentifier, id));
 
     // the function visibility
-    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // the return type
     if (ctx->returnSpec()) {
@@ -135,7 +135,7 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
     auto id = ctx->symbolIdentifier()->getText();
     state->popSymbolAndCheck(id);
 
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -164,7 +164,7 @@ lyric_parser::internal::ModuleDefineOps::exitImplDef(ModuleParser::ImplDefContex
     TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIdentifier, id));
 
     // the function visibility
-    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // the return type
     if (ctx->returnSpec()) {
@@ -202,7 +202,7 @@ lyric_parser::internal::ModuleDefineOps::exitDefaliasStatement(ModuleParser::Def
     auto id = ctx->symbolIdentifier()->getText();
     state->popSymbolAndCheck(id);
 
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
     auto *typeNode = make_Type_node(state, ctx->assignableType());
 
     auto *token = ctx->getStart();
@@ -216,7 +216,7 @@ lyric_parser::internal::ModuleDefineOps::exitDefaliasStatement(ModuleParser::Def
     TU_RAISE_IF_NOT_OK (state->pushNode(defaliasNode));
 
     TU_RAISE_IF_NOT_OK (defaliasNode->putAttr(kLyricAstIdentifier, id));
-    TU_RAISE_IF_NOT_OK (defaliasNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (defaliasNode->putAttr(kLyricAstIsHidden, isHidden));
     TU_RAISE_IF_NOT_OK (defaliasNode->putAttr(kLyricAstTypeOffset, typeNode));
 
     // generic information

@@ -70,10 +70,16 @@ write_struct(
     }
 
     lyo1::StructFlags structFlags = lyo1::StructFlags::NONE;
-    if (structSymbol->isDeclOnly())
+    if (structSymbol->isDeclOnly()) {
         structFlags |= lyo1::StructFlags::DeclOnly;
-    if (structSymbol->isAbstract())
+    }
+    if (structSymbol->isAbstract()) {
         structFlags |= lyo1::StructFlags::Abstract;
+    }
+    if (structSymbol->isHidden()) {
+        structFlags |= lyo1::StructFlags::Hidden;
+    }
+
     switch (structSymbol->getDeriveType()) {
         case lyric_object::DeriveType::Final:
             structFlags |= lyo1::StructFlags::Final;
@@ -83,20 +89,6 @@ write_struct(
             break;
         default:
             break;
-    }
-    switch (structSymbol->getAccessType()) {
-        case lyric_object::AccessType::Public:
-            structFlags |= lyo1::StructFlags::GlobalVisibility;
-            break;
-        case lyric_object::AccessType::Protected:
-            structFlags |= lyo1::StructFlags::InheritVisibility;
-            break;
-        case lyric_object::AccessType::Private:
-            break;
-        default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                "invalid struct access");
     }
 
     // serialize array of members

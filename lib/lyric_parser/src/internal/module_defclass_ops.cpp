@@ -187,7 +187,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVal(ModuleParser::ClassValCo
     state->popSymbolAndCheck(id);
 
     // get the visibility
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     // get the member type
     auto *memberTypeNode = make_Type_node(state, ctx->assignableType());
@@ -206,7 +206,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVal(ModuleParser::ClassValCo
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the member type
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
@@ -247,7 +247,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVar(ModuleParser::ClassVarCo
     state->popSymbolAndCheck(id);
 
     // get the visibility
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     // get the member type
     auto *memberTypeNode = make_Type_node(state, ctx->assignableType());
@@ -266,7 +266,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVar(ModuleParser::ClassVarCo
     TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIdentifier, id));
 
     // seet the visibility
-    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the member type
     TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
@@ -314,7 +314,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDef(ModuleParser::ClassDefCo
     state->popSymbolAndCheck(id);
 
     // get the visibility
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     // get the return type
     ArchetypeNode *returnTypeNode;
@@ -353,7 +353,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDef(ModuleParser::ClassDefCo
     TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the return type
     TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
@@ -445,7 +445,7 @@ lyric_parser::internal::ModuleDefclassOps::exitDefclassStatement(ModuleParser::D
     state->popSymbolAndCheck(id);
 
     // get the visibility
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     // get the derive type
     DeriveType derive = DeriveType::Any;
@@ -475,7 +475,7 @@ lyric_parser::internal::ModuleDefclassOps::exitDefclassStatement(ModuleParser::D
     TU_RAISE_IF_NOT_OK (defclassNode->putAttr(kLyricAstIdentifier, id));
 
     // set the visibility
-    TU_RAISE_IF_NOT_OK (defclassNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (defclassNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // set the derive type
     TU_RAISE_IF_NOT_OK (defclassNode->putAttr(kLyricAstDeriveType, derive));

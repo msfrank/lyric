@@ -62,7 +62,7 @@ build_core_FunctionN(BuilderState &state, int arity, const CoreClass *FunctionNC
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
 
         state.addClassMethod("Apply", FunctionNClass,
-            lyo1::CallFlags::GlobalVisibility, applyParams,
+            lyo1::CallFlags::NONE, applyParams,
             code, RType);
     }
 }

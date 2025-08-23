@@ -39,7 +39,7 @@ TEST_F(ArchiveConceptTests, ArchiveConceptAndCheckMethod)
     lyric_common::SymbolUrl archivedUrl;
     TU_ASSIGN_OR_RAISE (archivedUrl, archiveSymbol(mod1location, "FooConcept"));
     lyric_assembler::BindingSymbol *bindingSymbol;
-    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooConceptAlias", lyric_object::AccessType::Public));
+    TU_ASSIGN_OR_RAISE (bindingSymbol, declareBinding("FooConceptAlias", /* isHidden= */ false));
     ASSERT_THAT (bindingSymbol->defineTarget(lyric_common::TypeDef::forConcrete(archivedUrl)), tempo_test::IsOk());
 
     ASSERT_THAT (build(), tempo_test::IsOk());

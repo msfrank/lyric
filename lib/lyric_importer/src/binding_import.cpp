@@ -6,7 +6,7 @@
 namespace lyric_importer {
     struct BindingImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
-        lyric_object::AccessType access;
+        bool isHidden;
         TypeImport *bindingType;
         TemplateImport *bindingTemplate;
         TypeImport *targetType;
@@ -27,11 +27,11 @@ lyric_importer::BindingImport::getSymbolUrl()
     return m_priv->symbolUrl;
 }
 
-lyric_object::AccessType
-lyric_importer::BindingImport::getAccess()
+bool
+lyric_importer::BindingImport::isHidden()
 {
     load();
-    return m_priv->access;
+    return m_priv->isHidden;
 }
 
 lyric_importer::TypeImport *
@@ -70,13 +70,20 @@ lyric_importer::BindingImport::load()
     auto bindingWalker = moduleImport->getObject().getObject().getBinding(m_bindingOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, bindingWalker.getSymbolPath());
 
-    priv->access = bindingWalker.getAccess();
-    if (priv->access == lyric_object::AccessType::Invalid)
-        throw tempo_utils::StatusException(
-            ImporterStatus::forCondition(
-                ImporterCondition::kImportError,
-                "cannot import binding at index {} in module {}; invalid access type",
-                m_bindingOffset, objectLocation.toString()));
+    switch (bindingWalker.getAccess()) {
+        case lyric_object::AccessType::Hidden:
+            priv->isHidden = true;
+            break;
+        case lyric_object::AccessType::Public:
+            priv->isHidden = false;
+            break;
+        default:
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import binding at index {} in module {}; invalid access type",
+                    m_bindingOffset, objectLocation.toString()));
+    }
 
     priv->bindingType = moduleImport->getType(
         bindingWalker.getBindingType().getDescriptorOffset());

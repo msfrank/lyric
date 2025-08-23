@@ -28,7 +28,7 @@ build_core_Pair(BuilderState &state, const CoreStruct *RecordStruct, const CoreT
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("First",
             PairStruct,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {},
             code,
             DataType);
@@ -39,7 +39,7 @@ build_core_Pair(BuilderState &state, const CoreStruct *RecordStruct, const CoreT
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.addStructMethod("Second",
             PairStruct,
-            lyo1::CallFlags::GlobalVisibility,
+            lyo1::CallFlags::NONE,
             {},
             code,
             DataType);

@@ -18,9 +18,11 @@
 #include <lyric_assembler/type_cache.h>
 #include <lyric_importer/struct_import.h>
 
+#include "lyric_parser/ast_attrs.h"
+
 lyric_assembler::StructSymbol::StructSymbol(
     const lyric_common::SymbolUrl &structUrl,
-    lyric_object::AccessType access,
+    bool isHidden,
     lyric_object::DeriveType derive,
     bool isAbstract,
     TypeHandle *structType,
@@ -36,7 +38,7 @@ lyric_assembler::StructSymbol::StructSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
-    priv->access = access;
+    priv->isHidden = isHidden;
     priv->derive = derive;
     priv->isAbstract = isAbstract;
     priv->isDeclOnly = isDeclOnly;
@@ -74,7 +76,7 @@ lyric_assembler::StructSymbol::load()
     priv->structBlock = std::make_unique<BlockHandle>(
         m_structUrl, absl::flat_hash_map<std::string, SymbolBinding>(), m_state);
 
-    priv->access = lyric_object::AccessType::Public;
+    priv->isHidden = m_structImport->isHidden();
     priv->derive = m_structImport->getDerive();
     priv->isAbstract = m_structImport->isAbstract();
     priv->isDeclOnly = m_structImport->isDeclOnly();
@@ -106,7 +108,7 @@ lyric_assembler::StructSymbol::load()
 
         BoundMethod methodBinding;
         methodBinding.methodCall = iterator->second;
-        methodBinding.access = callSymbol->getAccessType();
+        methodBinding.hidden = callSymbol->isHidden();
         methodBinding.final = false;    // FIXME: this should come from the call symbol
         priv->methods[iterator->first] = methodBinding;
     }
@@ -153,11 +155,11 @@ lyric_assembler::StructSymbol::getTypeDef() const
     return priv->structType->getTypeDef();
 }
 
-lyric_object::AccessType
-lyric_assembler::StructSymbol::getAccessType() const
+bool
+lyric_assembler::StructSymbol::isHidden() const
 {
     auto *priv = getPriv();
-    return priv->access;
+    return priv->isHidden;
 }
 
 lyric_object::DeriveType
@@ -243,7 +245,7 @@ tempo_utils::Result<lyric_assembler::FieldSymbol *>
 lyric_assembler::StructSymbol::declareMember(
     const std::string &name,
     const lyric_common::TypeDef &memberType,
-    lyric_object::AccessType access)
+    bool isHidden)
 {
     if (isImported())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
@@ -263,7 +265,7 @@ lyric_assembler::StructSymbol::declareMember(
     auto memberUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(memberPath));
 
     // construct the field symbol
-    auto fieldSymbol = std::make_unique<FieldSymbol>(memberUrl, access, /* isVariable= */ false,
+    auto fieldSymbol = std::make_unique<FieldSymbol>(memberUrl, isHidden, /* isVariable= */ false,
         fieldType, priv->isDeclOnly, priv->structBlock.get(), m_state);
 
     FieldSymbol *fieldPtr;
@@ -296,24 +298,18 @@ lyric_assembler::StructSymbol::resolveMember(
     }
 
     const auto &member = priv->members.at(name);
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(member.symbolUrl));
     if (symbol->getSymbolType() != SymbolType::FIELD)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid field symbol {}", member.symbolUrl.toString());
     auto *fieldSymbol = cast_symbol_to_field(symbol);
-    auto access = fieldSymbol->getAccessType();
 
-    bool thisSymbol = receiverType.getConcreteUrl() == m_structUrl;
-
-    if (thisReceiver) {
-        if (access == lyric_object::AccessType::Private && !thisSymbol)
+    if (fieldSymbol->isHidden()) {
+        bool thisSymbol = receiverType.getConcreteUrl() == m_structUrl;
+        if (!(thisReceiver && thisSymbol))
             return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-                "access to private member {} is not allowed", name);
-    } else {
-        if (access != lyric_object::AccessType::Public)
-            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
-                "access to protected member {} is not allowed", name);
+                "access to hidden member {} is not allowed", name);
     }
 
     return reifier.reifyMember(name, fieldSymbol);
@@ -369,7 +365,7 @@ lyric_assembler::StructSymbol::getAllocatorTrap() const
 
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::StructSymbol::declareCtor(
-    lyric_object::AccessType access,
+    bool isHidden,
     std::string allocatorTrap)
 {
     if (isImported())
@@ -387,7 +383,7 @@ lyric_assembler::StructSymbol::declareCtor(
             "ctor already defined for struct {}", m_structUrl.toString());
 
     // construct call symbol
-    auto ctorSymbol = std::make_unique<CallSymbol>(ctorUrl, m_structUrl, access,
+    auto ctorSymbol = std::make_unique<CallSymbol>(ctorUrl, m_structUrl, isHidden,
         lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->structBlock.get(), m_state);
 
     CallSymbol *ctorPtr;
@@ -397,7 +393,7 @@ lyric_assembler::StructSymbol::declareCtor(
     // add bound method
     BoundMethod method;
     method.methodCall = ctorUrl;
-    method.access = access;
+    method.hidden = isHidden;
     method.final = false;
     priv->methods["$ctor"] = method;
 
@@ -464,7 +460,7 @@ lyric_assembler::StructSymbol::numMethods() const
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::StructSymbol::declareMethod(
     const std::string &name,
-    lyric_object::AccessType acccess)
+    bool isHidden)
 {
     if (isImported())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
@@ -482,7 +478,7 @@ lyric_assembler::StructSymbol::declareMethod(
     auto methodUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(methodPath));
 
     // construct call symbol
-    auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_structUrl, acccess,
+    auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_structUrl, isHidden,
         lyric_object::CallMode::Normal, priv->isDeclOnly, priv->structBlock.get(), m_state);
 
     CallSymbol *callPtr;
@@ -490,7 +486,7 @@ lyric_assembler::StructSymbol::declareMethod(
     TU_RAISE_IF_NOT_OK (priv->structBlock->putBinding(callPtr));
 
     // add bound method
-    priv->methods[name] = { methodUrl, lyric_object::AccessType::Public, false /* final */ };
+    priv->methods[name] = { methodUrl, isHidden, false /* final */ };
 
     return callPtr;
 }
@@ -512,12 +508,18 @@ lyric_assembler::StructSymbol::prepareMethod(
     }
 
     const auto &method = priv->methods.at(name);
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(method.methodCall));
     if (symbol->getSymbolType() != SymbolType::CALL)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "invalid call symbol {}", method.methodCall.toString());
     auto *callSymbol = cast_symbol_to_call(symbol);
+
+    if (callSymbol->isHidden()) {
+        if (!thisReceiver)
+            return AssemblerStatus::forCondition(AssemblerCondition::kInvalidAccess,
+                "cannot access hidden method {} on {}", name, m_structUrl.toString());
+    }
 
     if (callSymbol->isInline()) {
         auto callable = std::make_unique<MethodCallable>(callSymbol, callSymbol->callProc());

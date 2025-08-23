@@ -14,15 +14,11 @@
 #include <lyric_assembler/linkage_symbol.h>
 
 inline bool
-is_in_scope(lyric_object::AccessType access, bool includeUnusedPrivateSymbols)
+is_in_scope(bool isHidden, bool includeUnusedPrivateSymbols)
 {
-    switch (access) {
-        case lyric_object::AccessType::Public:
-        case lyric_object::AccessType::Protected:
-            return true;
-        default:
-            return includeUnusedPrivateSymbols;
-    }
+    if (!isHidden)
+        return true;
+    return includeUnusedPrivateSymbols;
 }
 
 tempo_utils::Status
@@ -62,63 +58,63 @@ lyric_assembler::internal::touch_namespace(
 
             case SymbolType::CALL: {
                 auto *callSymbol = cast_symbol_to_call(symbol);
-                if (is_in_scope(callSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                if (is_in_scope(callSymbol->isHidden(), includeUnusedPrivateSymbols)) {
                     TU_RETURN_IF_NOT_OK (writer.touchCall(callSymbol));
                 }
                 break;
             }
             case SymbolType::BINDING: {
                 auto *bindingSymbol = cast_symbol_to_binding(symbol);
-                if (is_in_scope(bindingSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                if (is_in_scope(bindingSymbol->isHidden(), includeUnusedPrivateSymbols)) {
                     TU_RETURN_IF_NOT_OK (writer.touchBinding(bindingSymbol));
                 }
                 break;
             }
             case SymbolType::CLASS: {
                 auto *classSymbol = cast_symbol_to_class(symbol);
-                if (is_in_scope(classSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                if (is_in_scope(classSymbol->isHidden(), includeUnusedPrivateSymbols)) {
                     TU_RETURN_IF_NOT_OK (writer.touchClass(classSymbol));
                 }
                 break;
             }
             case SymbolType::CONCEPT: {
                 auto *conceptSymbol = cast_symbol_to_concept(symbol);
-                if (is_in_scope(conceptSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                if (is_in_scope(conceptSymbol->isHidden(), includeUnusedPrivateSymbols)) {
                     TU_RETURN_IF_NOT_OK (writer.touchConcept(conceptSymbol));
                 }
                 break;
             }
             case SymbolType::ENUM: {
                 auto *enumSymbol = cast_symbol_to_enum(symbol);
-                if (is_in_scope(enumSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                if (is_in_scope(enumSymbol->isHidden(), includeUnusedPrivateSymbols)) {
                     TU_RETURN_IF_NOT_OK (writer.touchEnum(enumSymbol));
                 }
                 break;
             }
             case SymbolType::INSTANCE: {
                 auto *instanceSymbol = cast_symbol_to_instance(symbol);
-                if (is_in_scope(instanceSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                if (is_in_scope(instanceSymbol->isHidden(), includeUnusedPrivateSymbols)) {
                     TU_RETURN_IF_NOT_OK (writer.touchInstance(instanceSymbol));
                 }
                 break;
             }
             case SymbolType::NAMESPACE: {
                 auto *nsSymbol = cast_symbol_to_namespace(symbol);
-                if (is_in_scope(nsSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                if (is_in_scope(nsSymbol->isHidden(), includeUnusedPrivateSymbols)) {
                     TU_RETURN_IF_NOT_OK (writer.touchNamespace(nsSymbol));
                 }
                 break;
             }
             case SymbolType::STATIC: {
                 auto *staticSymbol = cast_symbol_to_static(symbol);
-                if (is_in_scope(staticSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                if (is_in_scope(staticSymbol->isHidden(), includeUnusedPrivateSymbols)) {
                     TU_RETURN_IF_NOT_OK (writer.touchStatic(staticSymbol));
                 }
                 break;
             }
             case SymbolType::STRUCT: {
                 auto *structSymbol = cast_symbol_to_struct(symbol);
-                if (is_in_scope(structSymbol->getAccessType(), includeUnusedPrivateSymbols)) {
+                if (is_in_scope(structSymbol->isHidden(), includeUnusedPrivateSymbols)) {
                     TU_RETURN_IF_NOT_OK (writer.touchStruct(structSymbol));
                 }
                 break;
@@ -155,21 +151,11 @@ write_namespace(
     }
 
     lyo1::NamespaceFlags namespaceFlags = lyo1::NamespaceFlags::NONE;
-    if (namespaceSymbol->isDeclOnly())
+    if (namespaceSymbol->isDeclOnly()) {
         namespaceFlags |= lyo1::NamespaceFlags::DeclOnly;
-    switch (namespaceSymbol->getAccessType()) {
-        case lyric_object::AccessType::Public:
-            namespaceFlags |= lyo1::NamespaceFlags::GlobalVisibility;
-            break;
-        case lyric_object::AccessType::Protected:
-            namespaceFlags |= lyo1::NamespaceFlags::InheritVisibility;
-            break;
-        case lyric_object::AccessType::Private:
-            break;
-        default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant,
-                "invalid namespace access");
+    }
+    if (namespaceSymbol->isHidden()) {
+        namespaceFlags |= lyo1::NamespaceFlags::Hidden;
     }
 
     // serialize array of symbols

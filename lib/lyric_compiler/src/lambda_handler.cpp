@@ -43,7 +43,7 @@ lyric_compiler::LambdaHandler::before(
 
     // declare the function call
     TU_ASSIGN_OR_RETURN (m_lambda.callSymbol, block->declareFunction(lambdaIdentifier,
-        lyric_object::AccessType::Public, m_lambda.templateSpec.templateParameters));
+        /* isHidden= */ false, m_lambda.templateSpec.templateParameters));
 
     auto *resolver = m_lambda.callSymbol->callResolver();
     auto *packNode = node->getChild(0);

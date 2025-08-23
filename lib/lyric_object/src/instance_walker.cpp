@@ -231,11 +231,9 @@ lyric_object::InstanceWalker::getAccess() const
     if (instanceDescriptor == nullptr)
         return AccessType::Invalid;
 
-    if (bool(instanceDescriptor->flags() & lyo1::InstanceFlags::GlobalVisibility))
-        return AccessType::Public;
-    if (bool(instanceDescriptor->flags() & lyo1::InstanceFlags::InheritVisibility))
-        return AccessType::Protected;
-    return AccessType::Private;
+    if (bool(instanceDescriptor->flags() & lyo1::InstanceFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
 }
 
 bool

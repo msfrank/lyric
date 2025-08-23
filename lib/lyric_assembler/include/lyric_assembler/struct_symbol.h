@@ -15,7 +15,7 @@
 namespace lyric_assembler {
 
     struct StructSymbolPriv {
-        lyric_object::AccessType access = lyric_object::AccessType::Invalid;
+        bool isHidden = false;
         lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
         bool isAbstract = false;
         bool isDeclOnly = false;
@@ -35,7 +35,7 @@ namespace lyric_assembler {
     public:
         StructSymbol(
             const lyric_common::SymbolUrl &structUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             lyric_object::DeriveType derive,
             bool isAbstract,
             TypeHandle *structType,
@@ -55,7 +55,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;
 
-        lyric_object::AccessType getAccessType() const;
+        bool isHidden() const;
         lyric_object::DeriveType getDeriveType() const;
         bool isAbstract() const;
         bool isDeclOnly() const;
@@ -76,7 +76,7 @@ namespace lyric_assembler {
         tempo_utils::Result<FieldSymbol *> declareMember(
             const std::string &name,
             const lyric_common::TypeDef &memberType,
-            lyric_object::AccessType access);
+            bool isHidden);
 
         tempo_utils::Result<DataReference> resolveMember(
             const std::string &name,
@@ -94,7 +94,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl getCtor() const;
         std::string getAllocatorTrap() const;
         tempo_utils::Result<CallSymbol *> declareCtor(
-            lyric_object::AccessType access,
+            bool isHidden,
             std::string allocatorTrap = {});
         tempo_utils::Status prepareCtor(ConstructableInvoker &invoker);
 
@@ -109,7 +109,7 @@ namespace lyric_assembler {
 
         tempo_utils::Result<CallSymbol *> declareMethod(
             const std::string &name,
-            lyric_object::AccessType access);
+            bool isHidden);
         tempo_utils::Status prepareMethod(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,

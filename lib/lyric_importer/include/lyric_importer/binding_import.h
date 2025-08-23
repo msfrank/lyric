@@ -12,7 +12,7 @@ namespace lyric_importer {
 
         lyric_common::SymbolUrl getSymbolUrl();
 
-        lyric_object::AccessType getAccess();
+        bool isHidden();
         TypeImport *getBindingType();
         TemplateImport *getBindingTemplate();
         TypeImport *getTargetType();

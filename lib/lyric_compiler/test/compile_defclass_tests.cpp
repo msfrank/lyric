@@ -112,48 +112,6 @@ TEST_F(CompileDefclass, EvaluateDerefPublicVarDefaultInitializedMember)
                      DataCellInt(100))));
 }
 
-TEST_F(CompileDefclass, EvaluateDerefThisProtectedVarMember)
-{
-    auto result = m_tester->runModule(R"(
-        defclass Foo {
-            var index: Int
-            init(i: Int) from Object() {
-                set this.index = i
-            }
-        }
-        defclass Bar {
-            init(i: Int) from Foo(i) {}
-            def Add(i: Int): Int {
-                i + this.index
-            }
-        }
-        var bar: Bar = Bar{100}
-        bar.Add(100)
-    )");
-
-    ASSERT_THAT (result,
-                 tempo_test::ContainsResult(RunModule(
-                     DataCellInt(200))));
-}
-
-TEST_F(CompileDefclass, CompileDerefProtectedVarMemberFails)
-{
-    auto result = m_tester->compileModule(R"(
-        defclass Foo {
-            var index: Int
-            init(i: Int) from Object() {
-                set this.index = i
-            }
-        }
-        var foo: Foo = Foo{100}
-        foo.index
-    )");
-
-    ASSERT_THAT (result, tempo_test::ContainsResult(
-        CompileModule(
-            tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidAccess))));
-}
-
 TEST_F(CompileDefclass, EvaluateDerefThisPrivateVarMember)
 {
     auto result = m_tester->runModule(R"(

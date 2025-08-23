@@ -1340,7 +1340,7 @@ BuilderState::addImplExtension(
     auto *FunctionClass = classcache[functionclasspaths[parameters.size()]];
     auto *MutableImpl = impls.at(receiver->impl_index);
 
-    auto callFlags = lyo1::CallFlags::Bound | lyo1::CallFlags::GlobalVisibility;
+    auto callFlags = lyo1::CallFlags::Bound;
 
     if (isInline) {
         callFlags |= lyo1::CallFlags::Inline;

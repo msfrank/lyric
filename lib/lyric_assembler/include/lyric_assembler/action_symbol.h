@@ -14,7 +14,7 @@ namespace lyric_assembler {
         Option<Parameter> restParameter;
         lyric_common::TypeDef returnType;
         lyric_common::SymbolUrl receiverUrl;
-        lyric_object::AccessType access;
+        bool isHidden;
         TemplateHandle *actionTemplate;
         bool isDeclOnly;
         BlockHandle *parentBlock;
@@ -26,7 +26,7 @@ namespace lyric_assembler {
         ActionSymbol(
             const lyric_common::SymbolUrl &actionUrl,
             const lyric_common::SymbolUrl &receiverUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             TemplateHandle *actionTemplate,
             bool isDeclOnly,
             BlockHandle *parentBlock,
@@ -35,7 +35,7 @@ namespace lyric_assembler {
         ActionSymbol(
             const lyric_common::SymbolUrl &actionUrl,
             const lyric_common::SymbolUrl &receiverUrl,
-            lyric_object::AccessType access,
+            bool isHidden,
             bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
@@ -60,7 +60,7 @@ namespace lyric_assembler {
 
         lyric_common::TypeDef getReturnType() const;
         lyric_common::SymbolUrl getReceiverUrl() const;
-        lyric_object::AccessType getAccessType() const;
+        bool isHidden() const;
 
         AbstractResolver *actionResolver() const;
         TemplateHandle *actionTemplate() const;
@@ -83,12 +83,12 @@ namespace lyric_assembler {
         ActionSymbolPriv *load() override;
     };
 
-    static inline const ActionSymbol *cast_symbol_to_action(const AbstractSymbol *sym) {
+    inline const ActionSymbol *cast_symbol_to_action(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::ACTION);
         return static_cast<const ActionSymbol *>(sym);      // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline ActionSymbol *cast_symbol_to_action(AbstractSymbol *sym) {
+    inline ActionSymbol *cast_symbol_to_action(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::ACTION);
         return static_cast<ActionSymbol *>(sym);            // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

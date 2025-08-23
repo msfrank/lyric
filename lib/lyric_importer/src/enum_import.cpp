@@ -10,7 +10,7 @@ namespace lyric_importer {
         bool isAbstract;
         bool isDeclOnly;
         lyric_object::DeriveType derive;
-        lyric_object::AccessType access;
+        bool isHidden;
         TypeImport *enumType;
         lyric_common::SymbolUrl superEnum;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
@@ -58,11 +58,11 @@ lyric_importer::EnumImport::getDerive()
     return m_priv->derive;
 }
 
-lyric_object::AccessType
-lyric_importer::EnumImport::getAccess()
+bool
+lyric_importer::EnumImport::isHidden()
 {
     load();
-    return m_priv->access;
+    return m_priv->isHidden;
 }
 
 lyric_importer::TypeImport *
@@ -219,13 +219,20 @@ lyric_importer::EnumImport::load()
                 "cannot import enum at index {} in module {}; invalid derive type",
                 m_enumOffset, objectLocation.toString()));
 
-    priv->access = enumWalker.getAccess();
-    if (priv->access == lyric_object::AccessType::Invalid)
-        throw tempo_utils::StatusException(
-            ImporterStatus::forCondition(
-                ImporterCondition::kImportError,
-                "cannot import enum at index {} in module {}; invalid access type",
-                m_enumOffset, objectLocation.toString()));
+    switch (enumWalker.getAccess()) {
+        case lyric_object::AccessType::Hidden:
+            priv->isHidden = true;
+            break;
+        case lyric_object::AccessType::Public:
+            priv->isHidden = false;
+            break;
+        default:
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import enum at index {} in module {}; invalid access type",
+                    m_enumOffset, objectLocation.toString()));
+    }
 
     priv->enumType = moduleImport->getType(
         enumWalker.getEnumType().getDescriptorOffset());

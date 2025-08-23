@@ -228,11 +228,9 @@ lyric_object::StructWalker::getAccess() const
     if (structDescriptor == nullptr)
         return AccessType::Invalid;
 
-    if (bool(structDescriptor->flags() & lyo1::StructFlags::GlobalVisibility))
-        return AccessType::Public;
-    if (bool(structDescriptor->flags() & lyo1::StructFlags::InheritVisibility))
-        return AccessType::Protected;
-    return AccessType::Private;
+    if (bool(structDescriptor->flags() & lyo1::StructFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
 }
 
 bool

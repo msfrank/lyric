@@ -34,7 +34,7 @@ lyric_parser::internal::ModuleAssignOps::exitGlobalStatement(ModuleParser::Globa
     auto id = ctx->symbolIdentifier()->getText();
     state->popSymbolAndCheck(id);
 
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
     bool isVariable = ctx->VarKeyword()? true : false;
     auto *typeNode = make_Type_node(state, ctx->assignableType());
 
@@ -51,7 +51,7 @@ lyric_parser::internal::ModuleAssignOps::exitGlobalStatement(ModuleParser::Globa
     TU_ASSIGN_OR_RAISE (defstaticNode, state->appendNode(lyric_schema::kLyricAstDefStaticClass, location));
     TU_RAISE_IF_NOT_OK (defstaticNode->appendChild(p1));
     TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstIdentifier, id));
-    TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstIsHidden, isHidden));
     TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstIsVariable, isVariable));
     TU_RAISE_IF_NOT_OK (defstaticNode->putAttr(kLyricAstTypeOffset, typeNode));
     TU_RAISE_IF_NOT_OK (state->pushNode(defstaticNode));
@@ -75,7 +75,7 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVal(ModuleParser::UntypedVal
     auto id = ctx->symbolIdentifier()->getText();
     state->popSymbolAndCheck(id);
 
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -90,7 +90,7 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVal(ModuleParser::UntypedVal
     TU_ASSIGN_OR_RAISE (valNode, state->appendNode(lyric_schema::kLyricAstValClass, location));
     TU_RAISE_IF_NOT_OK (valNode->appendChild(p1));
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIsHidden, isHidden));
     TU_RAISE_IF_NOT_OK (state->pushNode(valNode));
 }
 
@@ -112,7 +112,7 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVal(ModuleParser::TypedValCont
     auto id = ctx->symbolIdentifier()->getText();
     state->popSymbolAndCheck(id);
 
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
     auto *typeNode = make_Type_node(state, ctx->assignableType());
 
     auto *token = ctx->getStart();
@@ -128,7 +128,7 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVal(ModuleParser::TypedValCont
     TU_ASSIGN_OR_RAISE (valNode, state->appendNode(lyric_schema::kLyricAstValClass, location));
     TU_RAISE_IF_NOT_OK (valNode->appendChild(p1));
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIdentifier, id));
-    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstIsHidden, isHidden));
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, typeNode));
     TU_RAISE_IF_NOT_OK (state->pushNode(valNode));
 }
@@ -151,7 +151,7 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVar(ModuleParser::UntypedVar
     auto id = ctx->symbolIdentifier()->getText();
     state->popSymbolAndCheck(id);
 
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -166,7 +166,7 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVar(ModuleParser::UntypedVar
     TU_ASSIGN_OR_RAISE (varNode, state->appendNode(lyric_schema::kLyricAstVarClass, location));
     TU_RAISE_IF_NOT_OK (varNode->appendChild(p1));
     TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIdentifier, id));
-    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIsHidden, isHidden));
     TU_RAISE_IF_NOT_OK (state->pushNode(varNode));
 }
 
@@ -188,7 +188,7 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVar(ModuleParser::TypedVarCont
     auto id = ctx->symbolIdentifier()->getText();
     state->popSymbolAndCheck(id);
 
-    auto access = parse_access_type(id);
+    auto isHidden = identifier_is_hidden(id);
     auto *typeNode = make_Type_node(state, ctx->assignableType());
 
     auto *token = ctx->getStart();
@@ -204,7 +204,7 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVar(ModuleParser::TypedVarCont
     TU_ASSIGN_OR_RAISE (varNode, state->appendNode(lyric_schema::kLyricAstVarClass, location));
     TU_RAISE_IF_NOT_OK (varNode->appendChild(p1));
     TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIdentifier, id));
-    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstAccessType, access));
+    TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstIsHidden, isHidden));
     TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstTypeOffset, typeNode));
     TU_RAISE_IF_NOT_OK (state->pushNode(varNode));
 }
