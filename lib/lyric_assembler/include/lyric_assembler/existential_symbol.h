@@ -75,7 +75,7 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string, BoundMethod>::const_iterator methodsEnd() const;
         tu_uint32 numMethods() const;
 
-        tempo_utils::Result<lyric_assembler::CallSymbol *> declareMethod(
+        tempo_utils::Result<CallSymbol *> declareMethod(
             const std::string &name,
             bool isHidden);
 
@@ -114,12 +114,12 @@ namespace lyric_assembler {
         ExistentialSymbolPriv *load() override;
     };
 
-    static inline const ExistentialSymbol *cast_symbol_to_existential(const AbstractSymbol *sym) {
+    inline const ExistentialSymbol *cast_symbol_to_existential(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::EXISTENTIAL);
         return static_cast<const ExistentialSymbol *>(sym);   // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline ExistentialSymbol *cast_symbol_to_existential(AbstractSymbol *sym) {
+    inline ExistentialSymbol *cast_symbol_to_existential(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::EXISTENTIAL);
         return static_cast<ExistentialSymbol *>(sym);         // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

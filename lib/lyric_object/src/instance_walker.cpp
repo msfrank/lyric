@@ -186,17 +186,6 @@ lyric_object::InstanceWalker::getSymbolPath() const
 }
 
 bool
-lyric_object::InstanceWalker::isAbstract() const
-{
-    if (!isValid())
-        return false;
-    auto *instanceDescriptor = m_reader->getInstance(m_instanceOffset);
-    if (instanceDescriptor == nullptr)
-        return false;
-    return bool(instanceDescriptor->flags() & lyo1::InstanceFlags::Abstract);
-}
-
-bool
 lyric_object::InstanceWalker::isDeclOnly() const
 {
     if (!isValid())

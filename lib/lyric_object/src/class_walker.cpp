@@ -1,4 +1,5 @@
 
+#include <lyric_object/action_walker.h>
 #include <lyric_object/call_walker.h>
 #include <lyric_object/class_walker.h>
 #include <lyric_object/field_walker.h>
@@ -9,7 +10,8 @@
 #include <lyric_object/type_walker.h>
 
 lyric_object::ClassMember::ClassMember()
-    : m_classDescriptor(nullptr)
+    : m_classDescriptor(nullptr),
+      m_fieldOffset(INVALID_OFFSET_U8)
 {
 }
 
@@ -17,12 +19,13 @@ lyric_object::ClassMember::ClassMember(
     std::shared_ptr<const internal::ObjectReader> reader,
     void *classDescriptor,
     tu_uint8 fieldOffset)
-    : m_reader(reader),
+    : m_reader(std::move(reader)),
       m_classDescriptor(classDescriptor),
       m_fieldOffset(fieldOffset)
 {
     TU_ASSERT (m_reader != nullptr);
     TU_ASSERT (m_classDescriptor != nullptr);
+    TU_ASSERT (m_fieldOffset != INVALID_OFFSET_U8);
 }
 
 lyric_object::ClassMember::ClassMember(const ClassMember &other)
@@ -78,7 +81,8 @@ lyric_object::ClassMember::getFarField() const
 }
 
 lyric_object::ClassMethod::ClassMethod()
-    : m_classDescriptor(nullptr)
+    : m_classDescriptor(nullptr),
+      m_callOffset(INVALID_OFFSET_U8)
 {
 }
 
@@ -86,12 +90,13 @@ lyric_object::ClassMethod::ClassMethod(
     std::shared_ptr<const internal::ObjectReader> reader,
     void *classDescriptor,
     tu_uint8 callOffset)
-    : m_reader(reader),
+    : m_reader(std::move(reader)),
       m_classDescriptor(classDescriptor),
       m_callOffset(callOffset)
 {
     TU_ASSERT (m_reader != nullptr);
     TU_ASSERT (m_classDescriptor != nullptr);
+    TU_ASSERT (m_callOffset != INVALID_OFFSET_U8);
 }
 
 lyric_object::ClassMethod::ClassMethod(const ClassMethod &other)
@@ -152,10 +157,11 @@ lyric_object::ClassWalker::ClassWalker()
 }
 
 lyric_object::ClassWalker::ClassWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 classOffset)
-    : m_reader(reader),
+    : m_reader(std::move(reader)),
       m_classOffset(classOffset)
 {
     TU_ASSERT (m_reader != nullptr);
+    TU_ASSERT (m_classOffset != INVALID_ADDRESS_U32);
 }
 
 lyric_object::ClassWalker::ClassWalker(const ClassWalker &other)
@@ -181,17 +187,6 @@ lyric_object::ClassWalker::getSymbolPath() const
     if (classDescriptor->fqsn() == nullptr)
         return {};
     return lyric_common::SymbolPath::fromString(classDescriptor->fqsn()->str());
-}
-
-bool
-lyric_object::ClassWalker::isAbstract() const
-{
-    if (!isValid())
-        return false;
-    auto *classDescriptor = m_reader->getClass(m_classOffset);
-    if (classDescriptor == nullptr)
-        return false;
-    return bool(classDescriptor->flags() & lyo1::ClassFlags::Abstract);
 }
 
 bool

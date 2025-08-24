@@ -82,6 +82,7 @@ lyric_compiler::DefClassHandler::before(
     std::vector<lyric_parser::ArchetypeNode *> valNodes;
     std::vector<lyric_parser::ArchetypeNode *> varNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
+    std::vector<lyric_parser::ArchetypeNode *> declNodes;
     std::vector<lyric_parser::ArchetypeNode *> implNodes;
 
     for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
@@ -106,6 +107,10 @@ lyric_compiler::DefClassHandler::before(
             }
             case lyric_schema::LyricAstId::Def: {
                 defNodes.push_back(child);
+                break;
+            }
+            case lyric_schema::LyricAstId::Decl: {
+                declNodes.push_back(child);
                 break;
             }
             case lyric_schema::LyricAstId::Impl: {
@@ -173,6 +178,14 @@ lyric_compiler::DefClassHandler::before(
         TU_ASSIGN_OR_RETURN (m_defclass.initCall, declare_class_default_init(
             m_defclass.classSymbol, allocatorTrap));
         m_defclass.defaultInit = true;
+    }
+
+    // declare abstract methods
+    for (auto &declNode : declNodes) {
+        Method method;
+        TU_ASSIGN_OR_RETURN (method, declare_class_abstract_method(
+            declNode, m_defclass.classSymbol, typeSystem));
+        m_defclass.methods[declNode] = method;
     }
 
     // declare methods
@@ -251,6 +264,12 @@ lyric_compiler::ClassDefinition::decide(
         case lyric_schema::LyricAstId::Var: {
             auto member = m_defclass->members.at(node);
             auto handler = std::make_unique<MemberHandler>(member, block, driver);
+            ctx.setGrouping(std::move(handler));
+            return {};
+        }
+        case lyric_schema::LyricAstId::Decl: {
+            auto method = m_defclass->methods.at(node);
+            auto handler = std::make_unique<AbstractMethodHandler>(method, block, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }

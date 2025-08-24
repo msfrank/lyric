@@ -14,7 +14,6 @@ namespace lyric_importer {
 
         lyric_common::SymbolUrl getSymbolUrl();
 
-        bool isAbstract();
         bool isDeclOnly();
         lyric_object::DeriveType getDerive();
         bool isHidden();

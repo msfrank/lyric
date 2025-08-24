@@ -4,6 +4,7 @@
 #include <lyric_analyzer/impl_analyzer_context.h>
 #include <lyric_analyzer/internal/analyzer_utils.h>
 #include <lyric_analyzer/proc_analyzer_context.h>
+#include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/ast_schema.h>
@@ -43,6 +44,8 @@ lyric_analyzer::ClassAnalyzerContext::enter(
             return declareMember(node, /* isVariable= */ true);
         case lyric_schema::LyricAstId::Def:
             return declareMethod(node);
+        case lyric_schema::LyricAstId::Decl:
+            return declareAbstract(node);
         case lyric_schema::LyricAstId::Impl:
             return declareImpl(node);
         default:
@@ -122,6 +125,10 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
+    bool noOverride;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstNoOverride, noOverride));
+    auto dispatch = noOverride? lyric_assembler::DispatchType::Final : lyric_assembler::DispatchType::Virtual;
+
     lyric_parser::ArchetypeNode *genericNode = nullptr;
     if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
         TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
@@ -136,7 +143,8 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
     }
 
     lyric_assembler::CallSymbol *callSymbol;
-    TU_ASSIGN_OR_RETURN (callSymbol, m_classSymbol->declareMethod(identifier, isHidden));
+    TU_ASSIGN_OR_RETURN (callSymbol, m_classSymbol->declareMethod(
+        identifier, isHidden, dispatch, spec.templateParameters));
 
     auto *resolver = callSymbol->callResolver();
 
@@ -166,6 +174,59 @@ lyric_analyzer::ClassAnalyzerContext::declareMethod(const lyric_parser::Archetyp
     // push the proc context
     auto ctx = std::make_unique<ProcAnalyzerContext>(m_driver, procHandle);
     return m_driver->pushContext(std::move(ctx));
+}
+
+tempo_utils::Status
+lyric_analyzer::ClassAnalyzerContext::declareAbstract(const lyric_parser::ArchetypeNode *node)
+{
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
+
+    lyric_parser::ArchetypeNode *genericNode = nullptr;
+    if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
+    }
+
+    auto *block = getBlock();
+    auto *typeSystem = m_driver->getTypeSystem();
+
+    lyric_typing::TemplateSpec spec;
+    if (genericNode != nullptr) {
+        TU_ASSIGN_OR_RETURN (spec, typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
+    }
+
+    lyric_assembler::CallSymbol *callSymbol;
+    TU_ASSIGN_OR_RETURN (callSymbol, m_classSymbol->declareMethod(
+        identifier, isHidden, lyric_assembler::DispatchType::Abstract, spec.templateParameters));
+
+    auto *resolver = callSymbol->callResolver();
+
+    // determine the return type
+    lyric_common::TypeDef returnType;
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        lyric_parser::ArchetypeNode *returnTypeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, returnTypeNode));
+        lyric_typing::TypeSpec returnTypeSpec;
+        TU_ASSIGN_OR_RETURN (returnTypeSpec, typeSystem->parseAssignable(block, returnTypeNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, returnTypeSpec));
+    }
+
+    // determine the parameter list
+    auto *packNode = node->getChild(0);
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(block, packNode->getArchetypeNode()));
+    lyric_assembler::ParameterPack parameterPack;
+    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
+
+    // define the action
+    TU_RETURN_IF_NOT_OK (callSymbol->defineAbstract(parameterPack, returnType));
+
+    TU_LOG_V << "declared abstract method " << callSymbol->getSymbolUrl() << " for " << m_classSymbol->getSymbolUrl();
+
+    return {};
 }
 
 tempo_utils::Status

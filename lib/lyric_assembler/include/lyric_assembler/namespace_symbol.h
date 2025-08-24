@@ -78,12 +78,12 @@ namespace lyric_assembler {
         NamespaceSymbolPriv *load() override;
     };
 
-    static inline const NamespaceSymbol *cast_symbol_to_namespace(const AbstractSymbol *sym) {
+    inline const NamespaceSymbol *cast_symbol_to_namespace(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::NAMESPACE);
         return static_cast<const NamespaceSymbol *>(sym);    // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline NamespaceSymbol *cast_symbol_to_namespace(AbstractSymbol *sym) {
+    inline NamespaceSymbol *cast_symbol_to_namespace(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::NAMESPACE);
         return static_cast<NamespaceSymbol *>(sym);          // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

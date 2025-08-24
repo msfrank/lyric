@@ -28,12 +28,12 @@ namespace lyric_assembler {
         lyric_common::TypeDef m_assignableType;
     };
 
-    static inline const SyntheticSymbol *cast_symbol_to_synthetic(const AbstractSymbol *sym) {
+    inline const SyntheticSymbol *cast_symbol_to_synthetic(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::SYNTHETIC);
         return static_cast<const SyntheticSymbol *>(sym);   // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline SyntheticSymbol *cast_symbol_to_synthetic(AbstractSymbol *sym) {
+    inline SyntheticSymbol *cast_symbol_to_synthetic(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::SYNTHETIC);
         return static_cast<SyntheticSymbol *>(sym);         // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

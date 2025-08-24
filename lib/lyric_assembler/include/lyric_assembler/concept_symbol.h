@@ -117,12 +117,12 @@ namespace lyric_assembler {
         ConceptSymbolPriv *load() override;
     };
 
-    static inline const ConceptSymbol *cast_symbol_to_concept(const AbstractSymbol *sym) {
+    inline const ConceptSymbol *cast_symbol_to_concept(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::CONCEPT);
         return static_cast<const ConceptSymbol *>(sym);     // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline ConceptSymbol *cast_symbol_to_concept(AbstractSymbol *sym) {
+    inline ConceptSymbol *cast_symbol_to_concept(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::CONCEPT);
         return static_cast<ConceptSymbol *>(sym);           // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

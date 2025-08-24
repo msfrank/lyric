@@ -45,7 +45,7 @@ tempo_utils::Status
 lyric_compiler::MethodHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     TU_LOG_VV << "after MethodHandler@" << this;
 
@@ -58,5 +58,36 @@ lyric_compiler::MethodHandler::after(
     // finalize the call
     TU_RETURN_IF_STATUS (m_method.callSymbol->finalizeCall());
 
+    return {};
+}
+
+lyric_compiler::AbstractMethodHandler::AbstractMethodHandler(
+    Method method,
+    lyric_assembler::BlockHandle *block,
+    CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_method(method)
+{
+    TU_ASSERT (m_method.callSymbol != nullptr);
+}
+
+tempo_utils::Status
+lyric_compiler::AbstractMethodHandler::before(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    BeforeContext &ctx)
+{
+    TU_LOG_VV << "before AbstractMethodHandler@" << this;
+    ctx.setSkipChildren(true);
+    return {};
+}
+
+tempo_utils::Status
+lyric_compiler::AbstractMethodHandler::after(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    AfterContext &ctx)
+{
+    TU_LOG_VV << "after AbstractMethodHandler@" << this;
     return {};
 }

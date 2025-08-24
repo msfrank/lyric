@@ -18,13 +18,15 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string,Parameter> parametersMap;
         lyric_common::TypeDef returnType;
         lyric_common::SymbolUrl receiverUrl;
-        bool isHidden;
-        lyric_object::CallMode mode;
-        bool isNoReturn;
-        bool isDeclOnly;
-        TypeHandle *callType;
-        TemplateHandle *callTemplate;
-        BlockHandle *parentBlock;
+        CallSymbol *virtualCall = nullptr;
+        bool isHidden = false;
+        lyric_object::CallMode mode = lyric_object::CallMode::Invalid;
+        bool isFinal = false;
+        bool isNoReturn = false;
+        bool isDeclOnly = false;
+        TypeHandle *callType = nullptr;
+        TemplateHandle *callTemplate = nullptr;
+        BlockHandle *parentBlock = nullptr;
         std::unique_ptr<ProcHandle> proc;
         absl::flat_hash_map<std::string,std::unique_ptr<InitializerHandle>> initializers;
     };
@@ -51,6 +53,7 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &receiverUrl,
             bool isHidden,
             lyric_object::CallMode mode,
+            bool isFinal,
             TemplateHandle *callTemplate,
             bool isDeclOnly,
             BlockHandle *parentBlock,
@@ -61,6 +64,28 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &receiverUrl,
             bool isHidden,
             lyric_object::CallMode mode,
+            bool isFinal,
+            bool isDeclOnly,
+            BlockHandle *parentBlock,
+            ObjectState *state);
+
+        CallSymbol(
+            const lyric_common::SymbolUrl &callUrl,
+            const lyric_common::SymbolUrl &receiverUrl,
+            bool isHidden,
+            CallSymbol *virtualCall,
+            bool isFinal,
+            TemplateHandle *callTemplate,
+            bool isDeclOnly,
+            BlockHandle *parentBlock,
+            ObjectState *state);
+
+        CallSymbol(
+            const lyric_common::SymbolUrl &callUrl,
+            const lyric_common::SymbolUrl &receiverUrl,
+            bool isHidden,
+            CallSymbol *virtualCall,
+            bool isFinal,
             bool isDeclOnly,
             BlockHandle *parentBlock,
             ObjectState *state);
@@ -98,16 +123,23 @@ namespace lyric_assembler {
             const ParameterPack &parameterPack,
             const lyric_common::TypeDef &returnType = {});
 
+        tempo_utils::Status defineAbstract(
+            const ParameterPack &parameterPack,
+            const lyric_common::TypeDef &returnType);
+
         std::string getName() const;
         lyric_common::TypeDef getReturnType() const;
         lyric_common::SymbolUrl getReceiverUrl() const;
         bool isHidden() const;
         lyric_object::CallMode getMode() const;
 
+        const CallSymbol *virtualCall() const;
+
         bool isBound() const;
         bool isInline() const;
         bool isCtor() const;
         bool isNoReturn() const;
+        bool isFinal() const;
         bool isDeclOnly() const;
 
         AbstractResolver *callResolver() const;

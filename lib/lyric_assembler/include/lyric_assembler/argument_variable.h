@@ -31,12 +31,12 @@ namespace lyric_assembler {
         ArgumentOffset m_offset;
     };
 
-    static inline const ArgumentVariable *cast_symbol_to_argument(const AbstractSymbol *sym) {
+    inline const ArgumentVariable *cast_symbol_to_argument(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::ARGUMENT);
         return static_cast<const ArgumentVariable *>(sym);      // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline ArgumentVariable *cast_symbol_to_argument(AbstractSymbol *sym) {
+    inline ArgumentVariable *cast_symbol_to_argument(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::ARGUMENT);
         return static_cast<ArgumentVariable *>(sym);            // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

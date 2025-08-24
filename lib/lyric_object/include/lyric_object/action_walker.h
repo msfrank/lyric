@@ -52,6 +52,8 @@ namespace lyric_object {
 
         ActionWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 actionOffset);
 
+        friend class ClassAction;
+        friend class ClassWalker;
         friend class ConceptAction;
         friend class ConceptWalker;
         friend class ExtensionWalker;

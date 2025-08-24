@@ -285,7 +285,6 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
     std::string identifier;
     lyric_typing::TemplateSpec templateSpec;
     lyric_assembler::ClassSymbol *superClass = nullptr;
-    bool isAbstract = false;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
@@ -336,7 +335,7 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
     lyric_assembler::ClassSymbol *classSymbol;
     TU_ASSIGN_OR_RETURN (classSymbol, block->declareClass(
         identifier, superClass, isHidden, templateSpec.templateParameters,
-        internal::convert_derive_type(derive), isAbstract, /* declOnly= */ true));
+        internal::convert_derive_type(derive), /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
@@ -404,7 +403,6 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
     std::string identifier;
     lyric_assembler::EnumSymbol *superEnum = nullptr;
     lyric_object::DeriveType derive = lyric_object::DeriveType::Sealed;
-    bool isAbstract = false;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
@@ -433,7 +431,7 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
 
     lyric_assembler::EnumSymbol *enumSymbol;
     TU_ASSIGN_OR_RETURN (enumSymbol, block->declareEnum(
-        identifier, superEnum, isHidden, derive, isAbstract, /* declOnly= */ true));
+        identifier, superEnum, isHidden, derive, /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
@@ -454,7 +452,6 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
     std::string identifier;
     lyric_assembler::InstanceSymbol *superInstance = nullptr;
     lyric_object::DeriveType derive = lyric_object::DeriveType::Any;
-    bool isAbstract = false;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
@@ -483,7 +480,7 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
 
     lyric_assembler::InstanceSymbol *instanceSymbol;
     TU_ASSIGN_OR_RETURN (instanceSymbol, block->declareInstance(
-        identifier, superInstance, isHidden, derive, isAbstract, /* declOnly= */ true));
+        identifier, superInstance, isHidden, derive, /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);
@@ -503,7 +500,6 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
 {
     std::string identifier;
     lyric_assembler::StructSymbol *superStruct = nullptr;
-    bool isAbstract = false;
 
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
 
@@ -547,8 +543,7 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
 
     lyric_assembler::StructSymbol *structSymbol;
     TU_ASSIGN_OR_RETURN (structSymbol, block->declareStruct(
-        identifier, superStruct, isHidden, internal::convert_derive_type(derive),
-        isAbstract, /* declOnly= */ true));
+        identifier, superStruct, isHidden, internal::convert_derive_type(derive), /* declOnly= */ true));
 
     auto *currentNamespace = m_namespaces.top();
     TU_ASSERT (currentNamespace != nullptr);

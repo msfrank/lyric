@@ -17,7 +17,6 @@ namespace lyric_assembler {
     struct StructSymbolPriv {
         bool isHidden = false;
         lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
-        bool isAbstract = false;
         bool isDeclOnly = false;
         TypeHandle *structType = nullptr;
         StructSymbol *superStruct = nullptr;
@@ -37,7 +36,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &structUrl,
             bool isHidden,
             lyric_object::DeriveType derive,
-            bool isAbstract,
             TypeHandle *structType,
             StructSymbol *superStruct,
             bool isDeclOnly,
@@ -57,7 +55,6 @@ namespace lyric_assembler {
 
         bool isHidden() const;
         lyric_object::DeriveType getDeriveType() const;
-        bool isAbstract() const;
         bool isDeclOnly() const;
 
         TypeHandle *structType() const;
@@ -109,7 +106,8 @@ namespace lyric_assembler {
 
         tempo_utils::Result<CallSymbol *> declareMethod(
             const std::string &name,
-            bool isHidden);
+            bool isHidden,
+            bool isFinal = false);
         tempo_utils::Status prepareMethod(
             const std::string &name,
             const lyric_common::TypeDef &receiverType,
@@ -145,12 +143,12 @@ namespace lyric_assembler {
         StructSymbolPriv *load() override;
     };
 
-    static inline const StructSymbol *cast_symbol_to_struct(const AbstractSymbol *sym) {
+    inline const StructSymbol *cast_symbol_to_struct(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::STRUCT);
         return static_cast<const StructSymbol *>(sym);      // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline StructSymbol *cast_symbol_to_struct(AbstractSymbol *sym) {
+    inline StructSymbol *cast_symbol_to_struct(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::STRUCT);
         return static_cast<StructSymbol *>(sym);            // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

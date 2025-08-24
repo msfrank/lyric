@@ -922,6 +922,18 @@ void lyric_parser::internal::ModuleArchetype::exitClassDef(ModuleParser::ClassDe
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitClassDef(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::enterClassDecl(ModuleParser::ClassDeclContext *ctx)
+{
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterClassDecl(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitClassDecl(ModuleParser::ClassDeclContext *ctx)
+{
+    ModuleDefclassOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitClassDecl(ctx));
+}
+
 void lyric_parser::internal::ModuleArchetype::enterClassImpl(ModuleParser::ClassImplContext *ctx)
 {
     ModuleDefclassOps ops(this);

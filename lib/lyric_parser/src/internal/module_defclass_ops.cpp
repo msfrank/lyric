@@ -316,6 +316,9 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDef(ModuleParser::ClassDefCo
     // get the visibility
     auto isHidden = identifier_is_hidden(id);
 
+    // check for final
+    auto noOverride = ctx->FinalKeyword() != nullptr;
+
     // get the return type
     ArchetypeNode *returnTypeNode;
     if (ctx->returnSpec()) {
@@ -355,6 +358,9 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDef(ModuleParser::ClassDefCo
     // set the visibility
     TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstIsHidden, isHidden));
 
+    // set final
+    TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstNoOverride, noOverride));
+
     // set the return type
     TU_RAISE_IF_NOT_OK (defNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
 
@@ -376,6 +382,76 @@ lyric_parser::internal::ModuleDefclassOps::exitClassDef(ModuleParser::ClassDefCo
     // append def node to defclass
     TU_RAISE_IF_NOT_OK (defclassNode->appendChild(defNode));
 }
+
+void
+lyric_parser::internal::ModuleDefclassOps::enterClassDecl(ModuleParser::ClassDeclContext *ctx)
+{
+    tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefclassOps::enterClassDecl");
+}
+
+void
+lyric_parser::internal::ModuleDefclassOps::exitClassDecl(ModuleParser::ClassDeclContext *ctx)
+{
+    tempo_tracing::ExitScope scope;
+
+    auto *state = getState();
+    scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
+    scope.putTag(kLyricParserLineNumber, location.lineNumber);
+    scope.putTag(kLyricParserColumnNumber, location.columnNumber);
+    scope.putTag(kLyricParserFileOffset, location.fileOffset);
+
+    // get the identifier
+    auto id = ctx->symbolIdentifier()->getText();
+
+    // pop the top of the symbol stack and verify that the identifier matches
+    state->popSymbolAndCheck(id);
+
+    // get the visibility
+    auto isHidden = identifier_is_hidden(id);
+
+    // get the return type
+    ArchetypeNode *returnTypeNode = nullptr;
+    if (ctx->returnSpec()) {
+        returnTypeNode = make_Type_node(state, ctx->returnSpec()->assignableType());
+    } else {
+        TU_ASSIGN_OR_RAISE (returnTypeNode, state->appendNode(lyric_schema::kLyricAstXTypeClass, location));
+    }
+
+    if (hasError())
+        return;
+
+    // pop the pack node from stack
+    ArchetypeNode *packNode;
+    TU_ASSIGN_OR_RAISE (packNode, state->popNode());
+
+    // allocate decl node
+    ArchetypeNode *declNode;
+    TU_ASSIGN_OR_RAISE (declNode, state->appendNode(lyric_schema::kLyricAstDeclClass, location));
+
+    // set the action name
+    TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstIdentifier, id));
+
+    // set the visibility
+    TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstIsHidden, isHidden));
+
+    // set the return type
+    TU_RAISE_IF_NOT_OK (declNode->putAttr(kLyricAstTypeOffset, returnTypeNode));
+
+    // append pack node to decl
+    TU_RAISE_IF_NOT_OK (declNode->appendChild(packNode));
+
+    // peek node on stack, verify it is defclass
+    ArchetypeNode *defclassNode;
+    TU_ASSIGN_OR_RAISE (defclassNode, state->peekNode(lyric_schema::kLyricAstDefClassClass));
+
+    // append decl node to defconcept
+    TU_RAISE_IF_NOT_OK (defclassNode->appendChild(declNode));
+}
+
 
 void
 lyric_parser::internal::ModuleDefclassOps::enterClassImpl(ModuleParser::ClassImplContext *ctx)

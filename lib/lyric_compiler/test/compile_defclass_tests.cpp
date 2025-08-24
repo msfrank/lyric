@@ -155,7 +155,7 @@ TEST_F(CompileDefclass, CompileDerefPrivateVarMemberFails)
             tempo_test::SpansetContainsError(lyric_assembler::AssemblerCondition::kInvalidAccess))));
 }
 
-TEST_F(CompileDefclass, EvaluateInvokeMethod)
+TEST_F(CompileDefclass, EvaluateInvokePublicMethod)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {

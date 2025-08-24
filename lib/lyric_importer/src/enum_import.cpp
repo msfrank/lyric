@@ -7,7 +7,6 @@
 namespace lyric_importer {
     struct EnumImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
-        bool isAbstract;
         bool isDeclOnly;
         lyric_object::DeriveType derive;
         bool isHidden;
@@ -35,13 +34,6 @@ lyric_importer::EnumImport::getSymbolUrl()
 {
     load();
     return m_priv->symbolUrl;
-}
-
-bool
-lyric_importer::EnumImport::isAbstract()
-{
-    load();
-    return m_priv->isAbstract;
 }
 
 bool
@@ -208,7 +200,6 @@ lyric_importer::EnumImport::load()
     auto enumWalker = moduleImport->getObject().getObject().getEnum(m_enumOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, enumWalker.getSymbolPath());
 
-    priv->isAbstract = enumWalker.isAbstract();
     priv->isDeclOnly = enumWalker.isDeclOnly();
 
     priv->derive = enumWalker.getDeriveType();

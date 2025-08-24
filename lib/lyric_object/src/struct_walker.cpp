@@ -183,17 +183,6 @@ lyric_object::StructWalker::getSymbolPath() const
 }
 
 bool
-lyric_object::StructWalker::isAbstract() const
-{
-    if (!isValid())
-        return false;
-    auto *structDescriptor = m_reader->getStruct(m_structOffset);
-    if (structDescriptor == nullptr)
-        return false;
-    return bool(structDescriptor->flags() & lyo1::StructFlags::Abstract);
-}
-
-bool
 lyric_object::StructWalker::isDeclOnly() const
 {
     if (!isValid())

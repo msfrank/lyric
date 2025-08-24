@@ -1,5 +1,6 @@
 #include <absl/container/flat_hash_set.h>
 
+#include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/block_handle.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
@@ -19,7 +20,6 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     const lyric_common::SymbolUrl &classUrl,
     bool isHidden,
     lyric_object::DeriveType derive,
-    bool isAbstract,
     TypeHandle *classType,
     ClassSymbol *superClass,
     bool isDeclOnly,
@@ -35,7 +35,6 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     auto *priv = getPriv();
     priv->isHidden = isHidden;
     priv->derive = derive;
-    priv->isAbstract = isAbstract;
     priv->isDeclOnly = isDeclOnly;
     priv->classType = classType;
     priv->classTemplate = nullptr;
@@ -50,7 +49,6 @@ lyric_assembler::ClassSymbol::ClassSymbol(
     const lyric_common::SymbolUrl &classUrl,
     bool isHidden,
     lyric_object::DeriveType derive,
-    bool isAbstract,
     TypeHandle *classType,
     TemplateHandle *classTemplate,
     ClassSymbol *superClass,
@@ -61,7 +59,6 @@ lyric_assembler::ClassSymbol::ClassSymbol(
         classUrl,
         isHidden,
         derive,
-        isAbstract,
         classType,
         superClass,
         isDeclOnly,
@@ -105,7 +102,6 @@ lyric_assembler::ClassSymbol::load()
 
     priv->isHidden = m_classImport->isHidden();
     priv->derive = m_classImport->getDerive();
-    priv->isAbstract = m_classImport->isAbstract();
     priv->isDeclOnly = m_classImport->isDeclOnly();
 
     auto *classType = m_classImport->getClassType();
@@ -202,13 +198,6 @@ lyric_assembler::ClassSymbol::getDeriveType() const
 }
 
 bool
-lyric_assembler::ClassSymbol::isAbstract() const
-{
-    auto *priv = getPriv();
-    return priv->isAbstract;
-}
-
-bool
 lyric_assembler::ClassSymbol::isDeclOnly() const
 {
     auto *priv = getPriv();
@@ -280,6 +269,34 @@ lyric_assembler::ClassSymbol::numMembers() const
     return static_cast<tu_uint32>(priv->members.size());
 }
 
+static const lyric_assembler::AbstractSymbol *
+find_existing_or_overridden_class_binding(
+    const lyric_assembler::ClassSymbol *classSymbol,
+    const std::string &name)
+{
+    // if class contains the named binding then return the ClassSymbol pointer
+    auto *block = classSymbol->classBlock();
+    if (block->hasBinding(name))
+        return classSymbol;
+
+    // otherwise if a superclass contains the named binding then return pointer to the binding symbol
+    for (auto *currClass = classSymbol->superClass(); currClass != nullptr; currClass = currClass->superClass()) {
+        block = currClass->classBlock();
+        if (!block->hasBinding(name))
+            continue;
+
+        auto binding = block->getBinding(name);
+        if (binding.bindingType == lyric_assembler::BindingType::Descriptor) {
+            auto *state = block->blockState();
+            auto *symbolCache = state->symbolCache();
+            return symbolCache->getSymbolOrNull(binding.symbolUrl);
+        }
+    }
+
+    // otherwise no binding exists in any superclass
+    return nullptr;
+}
+
 tempo_utils::Result<lyric_assembler::FieldSymbol *>
 lyric_assembler::ClassSymbol::declareMember(
     const std::string &name,
@@ -293,11 +310,16 @@ lyric_assembler::ClassSymbol::declareMember(
 
     auto *priv = getPriv();
 
-    if (priv->members.contains(name))
+    auto *existingOrOverridden = find_existing_or_overridden_class_binding(this, name);
+    if (existingOrOverridden == this)
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-            "member {} already defined for class {}", name, m_classUrl.toString());
+            "'{}' is already defined for class {}", name, m_classUrl.toString());
+    if (existingOrOverridden != nullptr)
+        return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+            "{} cannot be overridden by class {}",
+            existingOrOverridden->getSymbolUrl().toString(), m_classUrl.toString());
 
-    lyric_assembler::TypeHandle *fieldType;
+    TypeHandle *fieldType;
     TU_ASSIGN_OR_RETURN (fieldType, m_state->typeCache()->getOrMakeType(memberType));
 
     auto memberPath = m_classUrl.getSymbolPath().getPath();
@@ -316,7 +338,7 @@ lyric_assembler::ClassSymbol::declareMember(
     ref.symbolUrl = memberUrl;
     ref.typeDef = memberType;
     ref.referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
-    priv->members[name] = ref;
+    priv->members[name] = std::move(ref);
 
     return fieldPtr;
 }
@@ -426,11 +448,12 @@ lyric_assembler::ClassSymbol::declareCtor(
     std::unique_ptr<CallSymbol> ctorSymbol;
     if (priv->classTemplate != nullptr) {
         ctorSymbol = std::make_unique<CallSymbol>(ctorUrl, m_classUrl, isHidden,
-            lyric_object::CallMode::Constructor, priv->classTemplate, priv->isDeclOnly,
-            priv->classBlock.get(), m_state);
+            lyric_object::CallMode::Constructor, /* isFinal= */ false, priv->classTemplate,
+            priv->isDeclOnly, priv->classBlock.get(), m_state);
     } else {
         ctorSymbol = std::make_unique<CallSymbol>(ctorUrl, m_classUrl, isHidden,
-            lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->classBlock.get(), m_state);
+            lyric_object::CallMode::Constructor, /* isFinal= */ false, priv->isDeclOnly,
+            priv->classBlock.get(), m_state);
     }
 
     CallSymbol *ctorPtr;
@@ -442,7 +465,7 @@ lyric_assembler::ClassSymbol::declareCtor(
     method.methodCall = ctorUrl;
     method.hidden = isHidden;
     method.final = false;
-    priv->methods["$ctor"] = method;
+    priv->methods["$ctor"] = std::move(method);
 
     // set allocator trap
     priv->allocatorTrap = std::move(allocatorTrap);
@@ -508,6 +531,7 @@ tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::ClassSymbol::declareMethod(
     const std::string &name,
     bool isHidden,
+    DispatchType dispatch,
     const std::vector<lyric_object::TemplateParameter> &templateParameters)
 {
     if (isImported())
@@ -516,9 +540,45 @@ lyric_assembler::ClassSymbol::declareMethod(
 
     auto *priv = getPriv();
 
-    if (priv->methods.contains(name))
+    lyric_object::CallMode callMode;
+    bool isFinal;
+    switch (dispatch) {
+        case DispatchType::Abstract:
+            callMode = lyric_object::CallMode::Abstract;
+            isFinal = false;
+            break;
+        case DispatchType::Virtual:
+            callMode = lyric_object::CallMode::Normal;
+            isFinal = false;
+            break;
+        case DispatchType::Final:
+            callMode = lyric_object::CallMode::Normal;
+            isFinal = true;
+            break;
+    }
+
+    auto *existingOrOverridden = find_existing_or_overridden_class_binding(this, name);
+    if (existingOrOverridden == this)
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-            "method {} already defined for class {}", name, m_classUrl.toString());
+            "{} already defined for class {}", name, m_classUrl.toString());
+    if (existingOrOverridden != nullptr) {
+        switch (existingOrOverridden->getSymbolType()) {
+            case SymbolType::ACTION:
+                break;
+            case SymbolType::CALL: {
+                auto *callSymbol = cast_symbol_to_call(existingOrOverridden);
+                if (callSymbol->isFinal())
+                    return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                        "final method {} cannot be overridden by class {}",
+                        existingOrOverridden->getSymbolUrl().toString(), m_classUrl.toString());
+                break;
+            }
+            default:
+                return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                    "{} cannot be overridden by class {}",
+                    existingOrOverridden->getSymbolUrl().toString(), m_classUrl.toString());
+        }
+    }
 
     // build reference path to function
     auto methodPath = m_classUrl.getSymbolPath().getPath();
@@ -545,11 +605,11 @@ lyric_assembler::ClassSymbol::declareMethod(
     std::unique_ptr<CallSymbol> callSymbol;
     if (methodTemplate != nullptr) {
         callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden,
-            lyric_object::CallMode::Normal, methodTemplate, priv->isDeclOnly,
+            callMode, isFinal, methodTemplate, priv->isDeclOnly,
             priv->classBlock.get(), m_state);
     } else {
-        callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden,
-            lyric_object::CallMode::Normal, priv->isDeclOnly, priv->classBlock.get(), m_state);
+        callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, callMode,
+            isFinal, priv->isDeclOnly, priv->classBlock.get(), m_state);
     }
 
     CallSymbol *callPtr;
@@ -560,8 +620,8 @@ lyric_assembler::ClassSymbol::declareMethod(
     BoundMethod method;
     method.methodCall = methodUrl;
     method.hidden = isHidden;
-    method.final = false;
-    priv->methods[name] = method;
+    method.final = isFinal;
+    priv->methods[name] = std::move(method);
 
     return callPtr;
 }

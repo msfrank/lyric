@@ -177,6 +177,8 @@ namespace lyric_parser::internal {
         void exitClassVar(ModuleParser::ClassVarContext *ctx) override;
         void enterClassDef(ModuleParser::ClassDefContext *ctx) override;
         void exitClassDef(ModuleParser::ClassDefContext *ctx) override;
+        void enterClassDecl(ModuleParser::ClassDeclContext *ctx) override;
+        void exitClassDecl(ModuleParser::ClassDeclContext *ctx) override;
         void enterClassImpl(ModuleParser::ClassImplContext *ctx) override;
         void exitClassImpl(ModuleParser::ClassImplContext *ctx) override;
         void exitDefclassStatement(ModuleParser::DefclassStatementContext *ctx) override;

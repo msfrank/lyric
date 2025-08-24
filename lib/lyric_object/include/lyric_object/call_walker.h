@@ -10,6 +10,7 @@
 namespace lyric_object {
 
     // forward declarations
+    class LinkWalker;
     class ParameterWalker;
     class SymbolWalker;
     class TypeWalker;
@@ -24,6 +25,9 @@ namespace lyric_object {
         bool isConstructor() const;
         bool isBound() const;
         bool isNoReturn() const;
+        bool isAbstract() const;
+        bool isOverride() const;
+        bool isFinal() const;
         bool isDeclOnly() const;
 
         lyric_common::SymbolPath getSymbolPath() const;
@@ -36,6 +40,10 @@ namespace lyric_object {
 
         bool hasReceiver() const;
         SymbolWalker getReceiver() const;
+
+        AddressType virtualCallAddressType() const;
+        CallWalker getNearVirtualCall() const;
+        LinkWalker getFarVirtualCall() const;
 
         tu_uint8 numListParameters() const;
         ParameterWalker getListParameter(tu_uint8 index) const;

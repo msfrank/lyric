@@ -1004,7 +1004,6 @@ lyric_assembler::BlockHandle::declareClass(
     bool isHidden,
     const std::vector<lyric_object::TemplateParameter> &templateParameters,
     lyric_object::DeriveType derive,
-    bool isAbstract,
     bool declOnly)
 {
     auto *fundamentalCache = m_state->fundamentalCache();
@@ -1043,10 +1042,10 @@ lyric_assembler::BlockHandle::declareClass(
     // create the class
     std::unique_ptr<ClassSymbol> classSymbol;
     if (classTemplate) {
-        classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, derive, isAbstract, typeHandle,
+        classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, derive, typeHandle,
             classTemplate, superClass, declOnly, this, m_state);
     } else {
-        classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, derive, isAbstract,
+        classSymbol = std::make_unique<ClassSymbol>(classUrl, isHidden, derive,
             typeHandle, superClass, declOnly, this, m_state);
     }
 
@@ -1162,7 +1161,6 @@ lyric_assembler::BlockHandle::declareEnum(
     EnumSymbol *superEnum,
     bool isHidden,
     lyric_object::DeriveType derive,
-    bool isAbstract,
     bool declOnly)
 {
     auto *fundamentalCache = m_state->fundamentalCache();
@@ -1189,7 +1187,7 @@ lyric_assembler::BlockHandle::declareEnum(
 
     // create the enum
     auto enumSymbol = std::make_unique<EnumSymbol>(enumUrl, isHidden, derive,
-        isAbstract, typeHandle, superEnum, declOnly, this, m_state);
+        typeHandle, superEnum, declOnly, this, m_state);
 
     EnumSymbol *enumPtr;
     TU_ASSIGN_OR_RETURN (enumPtr, m_state->appendEnum(std::move(enumSymbol), existingTypename));
@@ -1229,7 +1227,6 @@ lyric_assembler::BlockHandle::declareInstance(
     InstanceSymbol *superInstance,
     bool isHidden,
     lyric_object::DeriveType derive,
-    bool isAbstract,
     bool declOnly)
 {
     auto *fundamentalCache = m_state->fundamentalCache();
@@ -1256,7 +1253,7 @@ lyric_assembler::BlockHandle::declareInstance(
 
     // create the instance
     auto instanceSymbol = std::make_unique<InstanceSymbol>(instanceUrl, isHidden, derive,
-        isAbstract, typeHandle, superInstance, declOnly, this, m_state);
+        typeHandle, superInstance, declOnly, this, m_state);
 
     InstanceSymbol *instancePtr;
     TU_ASSIGN_OR_RETURN (instancePtr, m_state->appendInstance(std::move(instanceSymbol), existingTypename));
@@ -1296,7 +1293,6 @@ lyric_assembler::BlockHandle::declareStruct(
     StructSymbol *superStruct,
     bool isHidden,
     lyric_object::DeriveType derive,
-    bool isAbstract,
     bool declOnly)
 {
     auto *fundamentalCache = m_state->fundamentalCache();
@@ -1323,7 +1319,7 @@ lyric_assembler::BlockHandle::declareStruct(
 
     // create the struct
     auto structSymbol = std::make_unique<StructSymbol>(structUrl, isHidden, derive,
-        isAbstract, typeHandle, superStruct, declOnly, this, m_state);
+        typeHandle, superStruct, declOnly, this, m_state);
 
     StructSymbol *structPtr;
     TU_ASSIGN_OR_RETURN (structPtr, m_state->appendStruct(std::move(structSymbol), existingTypename));

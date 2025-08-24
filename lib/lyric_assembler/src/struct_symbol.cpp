@@ -24,7 +24,6 @@ lyric_assembler::StructSymbol::StructSymbol(
     const lyric_common::SymbolUrl &structUrl,
     bool isHidden,
     lyric_object::DeriveType derive,
-    bool isAbstract,
     TypeHandle *structType,
     StructSymbol *superStruct,
     bool isDeclOnly,
@@ -40,7 +39,6 @@ lyric_assembler::StructSymbol::StructSymbol(
     auto *priv = getPriv();
     priv->isHidden = isHidden;
     priv->derive = derive;
-    priv->isAbstract = isAbstract;
     priv->isDeclOnly = isDeclOnly;
     priv->structType = structType;
     priv->superStruct = superStruct;
@@ -78,7 +76,6 @@ lyric_assembler::StructSymbol::load()
 
     priv->isHidden = m_structImport->isHidden();
     priv->derive = m_structImport->getDerive();
-    priv->isAbstract = m_structImport->isAbstract();
     priv->isDeclOnly = m_structImport->isDeclOnly();
 
     auto *structType = m_structImport->getStructType();
@@ -167,13 +164,6 @@ lyric_assembler::StructSymbol::getDeriveType() const
 {
     auto *priv = getPriv();
     return priv->derive;
-}
-
-bool
-lyric_assembler::StructSymbol::isAbstract() const
-{
-    auto *priv = getPriv();
-    return priv->isAbstract;
 }
 
 bool
@@ -276,7 +266,7 @@ lyric_assembler::StructSymbol::declareMember(
     ref.symbolUrl = memberUrl;
     ref.typeDef = memberType;
     ref.referenceType = ReferenceType::Value;
-    priv->members[name] = ref;
+    priv->members[name] = std::move(ref);
 
     return fieldPtr;
 }
@@ -384,7 +374,8 @@ lyric_assembler::StructSymbol::declareCtor(
 
     // construct call symbol
     auto ctorSymbol = std::make_unique<CallSymbol>(ctorUrl, m_structUrl, isHidden,
-        lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->structBlock.get(), m_state);
+        lyric_object::CallMode::Constructor, /* isFinal= */ false, priv->isDeclOnly,
+        priv->structBlock.get(), m_state);
 
     CallSymbol *ctorPtr;
     TU_ASSIGN_OR_RETURN (ctorPtr, m_state->appendCall(std::move(ctorSymbol)));
@@ -395,7 +386,7 @@ lyric_assembler::StructSymbol::declareCtor(
     method.methodCall = ctorUrl;
     method.hidden = isHidden;
     method.final = false;
-    priv->methods["$ctor"] = method;
+    priv->methods["$ctor"] = std::move(method);
 
     // set allocator trap
     priv->allocatorTrap = std::move(allocatorTrap);
@@ -406,7 +397,8 @@ lyric_assembler::StructSymbol::declareCtor(
 tempo_utils::Status
 lyric_assembler::StructSymbol::prepareCtor(ConstructableInvoker &invoker)
 {
-    lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(m_structUrl.getSymbolPath().getPath(), "$ctor");
+    lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(
+        m_structUrl.getSymbolPath().getPath(), "$ctor");
     auto ctorUrl = lyric_common::SymbolUrl(m_structUrl.getModuleLocation(), ctorPath);
 
     lyric_assembler::AbstractSymbol *symbol;
@@ -460,7 +452,8 @@ lyric_assembler::StructSymbol::numMethods() const
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::StructSymbol::declareMethod(
     const std::string &name,
-    bool isHidden)
+    bool isHidden,
+    bool isFinal)
 {
     if (isImported())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
@@ -479,14 +472,18 @@ lyric_assembler::StructSymbol::declareMethod(
 
     // construct call symbol
     auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_structUrl, isHidden,
-        lyric_object::CallMode::Normal, priv->isDeclOnly, priv->structBlock.get(), m_state);
+        lyric_object::CallMode::Normal, isFinal, priv->isDeclOnly, priv->structBlock.get(), m_state);
 
     CallSymbol *callPtr;
     TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
     TU_RAISE_IF_NOT_OK (priv->structBlock->putBinding(callPtr));
 
     // add bound method
-    priv->methods[name] = { methodUrl, isHidden, false /* final */ };
+    BoundMethod method;
+    method.methodCall = methodUrl;
+    method.hidden = isHidden;
+    method.final = isFinal;
+    priv->methods[name] = std::move(method);
 
     return callPtr;
 }

@@ -1,6 +1,7 @@
 
 #include <lyric_object/call_walker.h>
 #include <lyric_object/internal/object_reader.h>
+#include <lyric_object/link_walker.h>
 #include <lyric_object/parameter_walker.h>
 #include <lyric_object/symbol_walker.h>
 #include <tempo_utils/big_endian.h>
@@ -77,6 +78,39 @@ lyric_object::CallWalker::isNoReturn() const
 }
 
 bool
+lyric_object::CallWalker::isAbstract() const
+{
+    if (!isValid())
+        return false;
+    auto *callDescriptor = m_reader->getCall(m_callOffset);
+    if (callDescriptor == nullptr)
+        return false;
+    return bool(callDescriptor->flags() & lyo1::CallFlags::Abstract);
+}
+
+bool
+lyric_object::CallWalker::isOverride() const
+{
+    if (!hasReceiver())
+        return {};
+    auto *callDescriptor = m_reader->getCall(m_callOffset);
+    if (callDescriptor == nullptr)
+        return {};
+    return callDescriptor->virtual_call() != INVALID_ADDRESS_U32;
+}
+
+bool
+lyric_object::CallWalker::isFinal() const
+{
+    if (!isValid())
+        return false;
+    auto *callDescriptor = m_reader->getCall(m_callOffset);
+    if (callDescriptor == nullptr)
+        return false;
+    return bool(callDescriptor->flags() & lyo1::CallFlags::Final);
+}
+
+bool
 lyric_object::CallWalker::isDeclOnly() const
 {
     if (!isValid())
@@ -112,6 +146,8 @@ lyric_object::CallWalker::getMode() const
 
     if (bool(callDescriptor->flags() & lyo1::CallFlags::Ctor))
         return CallMode::Constructor;
+    if (bool(callDescriptor->flags() & lyo1::CallFlags::Abstract))
+        return CallMode::Abstract;
     if (bool(callDescriptor->flags() & lyo1::CallFlags::Inline))
         return CallMode::Inline;
     return CallMode::Normal;
@@ -160,6 +196,39 @@ lyric_object::CallWalker::getReceiver() const
     if (callDescriptor == nullptr)
         return {};
     return SymbolWalker(m_reader, callDescriptor->receiver_symbol());
+}
+
+lyric_object::AddressType
+lyric_object::CallWalker::virtualCallAddressType() const
+{
+    if (!isValid())
+        return AddressType::Invalid;
+    auto *callDescriptor = m_reader->getCall(m_callOffset);
+    if (callDescriptor == nullptr)
+        return AddressType::Invalid;
+    return GET_ADDRESS_TYPE(callDescriptor->virtual_call());
+}
+
+lyric_object::CallWalker
+lyric_object::CallWalker::getNearVirtualCall() const
+{
+    if (!isValid())
+        return {};
+    auto *callDescriptor = m_reader->getCall(m_callOffset);
+    if (callDescriptor == nullptr)
+        return {};
+    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(callDescriptor->virtual_call()));
+}
+
+lyric_object::LinkWalker
+lyric_object::CallWalker::getFarVirtualCall() const
+{
+    if (!isValid())
+        return {};
+    auto *callDescriptor = m_reader->getCall(m_callOffset);
+    if (callDescriptor == nullptr)
+        return {};
+    return LinkWalker(m_reader, GET_LINK_OFFSET(callDescriptor->virtual_call()));
 }
 
 tu_uint8

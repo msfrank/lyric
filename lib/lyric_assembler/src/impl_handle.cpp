@@ -197,11 +197,12 @@ lyric_assembler::ImplHandle::defineExtension(
     std::unique_ptr<CallSymbol> callSymbol;
     if (conceptTemplate != nullptr) {
         callSymbol = std::make_unique<CallSymbol>(methodUrl, priv->receiverUrl, /* isHidden= */ false,
-            lyric_object::CallMode::Normal, conceptTemplate, priv->isDeclOnly,
+            lyric_object::CallMode::Normal, /* isFinal= */ true, conceptTemplate, priv->isDeclOnly,
             priv->implBlock.get(), m_state);
     } else {
         callSymbol = std::make_unique<CallSymbol>(methodUrl, priv->receiverUrl, /* isHidden= */ false,
-            lyric_object::CallMode::Normal, priv->isDeclOnly, priv->implBlock.get(), m_state);
+            lyric_object::CallMode::Normal, /* isFinal= */ true, priv->isDeclOnly,
+            priv->implBlock.get(), m_state);
     }
 
     CallSymbol *callPtr;
@@ -216,7 +217,7 @@ lyric_assembler::ImplHandle::defineExtension(
     ExtensionMethod extension;
     extension.methodAction = actionUrl;
     extension.methodCall = methodUrl;
-    priv->extensions[name] = extension;
+    priv->extensions[name] = std::move(extension);
 
     return extensionProc;
 }

@@ -145,6 +145,9 @@ write_call(
     if (callSymbol->isHidden()) {
         callFlags |= lyo1::CallFlags::Hidden;
     }
+    if (callSymbol->isFinal()) {
+        callFlags |= lyo1::CallFlags::Final;
+    }
 
     tu_uint32 callTemplate = lyric_runtime::INVALID_ADDRESS_U32;
     if (callSymbol->callTemplate() != nullptr) {
@@ -175,12 +178,21 @@ write_call(
         callFlags |= lyo1::CallFlags::Bound;
     }
 
+    tu_uint32 virtualCallIndex = lyric_object::INVALID_ADDRESS_U32;
+    auto *virtualCall = callSymbol->virtualCall();
+    if (virtualCall != nullptr) {
+        TU_ASSIGN_OR_RETURN (virtualCallIndex, writer.getSymbolAddress(virtualCall->getSymbolUrl()));
+    }
+
     switch (callSymbol->getMode()) {
         case lyric_object::CallMode::Inline:
             callFlags |= lyo1::CallFlags::Inline;
             break;
         case lyric_object::CallMode::Constructor:
             callFlags |= lyo1::CallFlags::Ctor;
+            break;
+        case lyric_object::CallMode::Abstract:
+            callFlags |= lyo1::CallFlags::Abstract;
             break;
         default:
             break;
@@ -289,8 +301,8 @@ write_call(
 
     // add call descriptor
     calls_vector.push_back(lyo1::CreateCallDescriptor(buffer,
-        fullyQualifiedName, callTemplate, receiverSymbolIndex, bytecodeOffset, callFlags,
-        fb_listParameters, fb_namedParameters, fb_restParameter, returnType));
+        fullyQualifiedName, callTemplate, receiverSymbolIndex, virtualCallIndex, bytecodeOffset,
+        callFlags, fb_listParameters, fb_namedParameters, fb_restParameter, returnType));
 
     return {};
 }

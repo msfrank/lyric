@@ -19,7 +19,6 @@ namespace lyric_assembler {
     struct EnumSymbolPriv {
         bool isHidden = false;
         lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
-        bool isAbstract = false;
         bool isDeclOnly = false;
         TypeHandle *enumType = nullptr;
         EnumSymbol *superEnum = nullptr;
@@ -39,7 +38,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &enumUrl,
             bool isHidden,
             lyric_object::DeriveType derive,
-            bool isAbstract,
             TypeHandle *enumType,
             EnumSymbol *superEnum,
             bool isDeclOnly,
@@ -59,7 +57,6 @@ namespace lyric_assembler {
 
         bool isHidden() const;
         lyric_object::DeriveType getDeriveType() const;
-        bool isAbstract() const;
         bool isDeclOnly() const;
 
         TypeHandle *enumType() const;
@@ -112,7 +109,8 @@ namespace lyric_assembler {
 
         tempo_utils::Result<CallSymbol *> declareMethod(
             const std::string &name,
-            bool isHidden);
+            bool isHidden,
+            bool isFinal = false);
 
         tempo_utils::Status prepareMethod(
             const std::string &name,
@@ -149,12 +147,12 @@ namespace lyric_assembler {
         EnumSymbolPriv *load() override;
     };
 
-    static inline const EnumSymbol *cast_symbol_to_enum(const AbstractSymbol *sym) {
+    inline const EnumSymbol *cast_symbol_to_enum(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::ENUM);
         return static_cast<const EnumSymbol *>(sym);    // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline EnumSymbol *cast_symbol_to_enum(AbstractSymbol *sym) {
+    inline EnumSymbol *cast_symbol_to_enum(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::ENUM);
         return static_cast<EnumSymbol *>(sym);          // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

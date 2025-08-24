@@ -29,12 +29,12 @@ namespace lyric_assembler {
         LexicalOffset m_offset;
     };
 
-    static inline const LexicalVariable *cast_symbol_to_lexical(const AbstractSymbol *sym) {
+    inline const LexicalVariable *cast_symbol_to_lexical(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::LEXICAL);
         return static_cast<const LexicalVariable *>(sym);   // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline LexicalVariable *cast_symbol_to_lexical(AbstractSymbol *sym) {
+    inline LexicalVariable *cast_symbol_to_lexical(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::LEXICAL);
         return static_cast<LexicalVariable *>(sym);         // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

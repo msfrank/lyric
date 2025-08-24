@@ -22,7 +22,6 @@ lyric_assembler::InstanceSymbol::InstanceSymbol(
     const lyric_common::SymbolUrl &instanceUrl,
     bool isHidden,
     lyric_object::DeriveType derive,
-    bool isAbstract,
     TypeHandle *instanceType,
     InstanceSymbol *superInstance,
     bool isDeclOnly,
@@ -38,7 +37,6 @@ lyric_assembler::InstanceSymbol::InstanceSymbol(
     auto *priv = getPriv();
     priv->isHidden = isHidden;
     priv->derive = derive;
-    priv->isAbstract = isAbstract;
     priv->isDeclOnly = isDeclOnly;
     priv->instanceType = instanceType;
     priv->superInstance = superInstance;
@@ -76,7 +74,6 @@ lyric_assembler::InstanceSymbol::load()
 
     priv->isHidden = m_instanceImport->isHidden();
     priv->derive = m_instanceImport->getDerive();
-    priv->isAbstract = m_instanceImport->isAbstract();
     priv->isDeclOnly = m_instanceImport->isDeclOnly();
 
     auto *instanceType = m_instanceImport->getInstanceType();
@@ -165,13 +162,6 @@ lyric_assembler::InstanceSymbol::getDeriveType() const
 {
     auto *priv = getPriv();
     return priv->derive;
-}
-
-bool
-lyric_assembler::InstanceSymbol::isAbstract() const
-{
-    auto *priv = getPriv();
-    return priv->isAbstract;
 }
 
 bool
@@ -275,7 +265,7 @@ lyric_assembler::InstanceSymbol::declareMember(
     ref.symbolUrl = memberUrl;
     ref.typeDef = memberType;
     ref.referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
-    priv->members[name] = ref;
+    priv->members[name] = std::move(ref);
 
     return fieldPtr;
 }
@@ -384,7 +374,8 @@ lyric_assembler::InstanceSymbol::declareCtor(
 
     // construct call symbol
     auto ctorSymbol = std::make_unique<CallSymbol>(ctorUrl, m_instanceUrl, isHidden,
-        lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->instanceBlock.get(), m_state);
+        lyric_object::CallMode::Constructor, /* isFinal = */ false, priv->isDeclOnly,
+        priv->instanceBlock.get(), m_state);
 
     CallSymbol *ctorPtr;
     TU_ASSIGN_OR_RETURN (ctorPtr, m_state->appendCall(std::move(ctorSymbol)));
@@ -395,7 +386,7 @@ lyric_assembler::InstanceSymbol::declareCtor(
     method.methodCall = ctorUrl;
     method.hidden = isHidden;
     method.final = false;
-    priv->methods["$ctor"] = method;
+    priv->methods["$ctor"] = std::move(method);
 
     // set allocator trap
     priv->allocatorTrap = std::move(allocatorTrap);
@@ -406,7 +397,8 @@ lyric_assembler::InstanceSymbol::declareCtor(
 tempo_utils::Status
 lyric_assembler::InstanceSymbol::prepareCtor(ConstructableInvoker &invoker)
 {
-    lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(m_instanceUrl.getSymbolPath().getPath(), "$ctor");
+    lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(
+        m_instanceUrl.getSymbolPath().getPath(), "$ctor");
     auto ctorUrl = lyric_common::SymbolUrl(m_instanceUrl.getModuleLocation(), ctorPath);
 
     lyric_assembler::AbstractSymbol *symbol;
@@ -460,7 +452,8 @@ lyric_assembler::InstanceSymbol::numMethods() const
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::InstanceSymbol::declareMethod(
     const std::string &name,
-    bool isHidden)
+    bool isHidden,
+    bool isFinal)
 {
     if (isImported())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
@@ -479,14 +472,19 @@ lyric_assembler::InstanceSymbol::declareMethod(
 
     // construct call symbol
     auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_instanceUrl,
-        isHidden, lyric_object::CallMode::Normal, priv->isDeclOnly, priv->instanceBlock.get(), m_state);
+        isHidden, lyric_object::CallMode::Normal, isFinal, priv->isDeclOnly,
+        priv->instanceBlock.get(), m_state);
 
     CallSymbol *callPtr;
     TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
     TU_RAISE_IF_NOT_OK (priv->instanceBlock->putBinding(callPtr));
 
     // add bound method
-    priv->methods[name] = { methodUrl, isHidden, true /* final */ };
+    BoundMethod method;
+    method.methodCall = methodUrl;
+    method.hidden = isHidden;
+    method.final = isFinal;
+    priv->methods[name] = std::move(method);
 
     return callPtr;
 }

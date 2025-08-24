@@ -11,8 +11,6 @@
 #include <lyric_assembler/type_cache.h>
 #include <lyric_assembler/type_set.h>
 
-#include "lyric_assembler/local_variable.h"
-
 /**
  * Construct a call symbol for the $entry call.
  */
@@ -31,6 +29,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     priv->returnType = lyric_common::TypeDef::noReturn();
     priv->isHidden = false;
     priv->mode = lyric_object::CallMode::Normal;
+    priv->isFinal = false;
     priv->isNoReturn =  true;
     priv->callType = nullptr;
     priv->callTemplate = nullptr;
@@ -39,18 +38,14 @@ lyric_assembler::CallSymbol::CallSymbol(
 }
 
 /**
- * Construct a CallSymbol for a generic bound method.
+ * Construct a CallSymbol for a bound method.
  *
  * @param callUrl The fully qualified symbol url.
- * @param parameters A vector of positional, named, and context call parameters.
- * @param rest The rest parameter, or an empty Option<Parameter> if there is no
- *   rest parameter.
- * @param returnType The return type of the call.
- * @param receiverUrl The class or instance receiver bound to the method, or empty
- *   SymbolUrl if there is no receiver.
+ * @param receiverUrl The receiver symbol bound to the method.
  * @param isHidden
- * @param callType
- * @param callTemplate
+ * @param mode
+ * @param isFinal
+ * @param isDeclOnly
  * @param parentBlock
  * @param state
  */
@@ -59,6 +54,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &receiverUrl,
     bool isHidden,
     lyric_object::CallMode mode,
+    bool isFinal,
     bool isDeclOnly,
     BlockHandle *parentBlock,
     ObjectState *state)
@@ -74,6 +70,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     priv->isHidden = isHidden;
     priv->isDeclOnly = isDeclOnly;
     priv->mode = mode;
+    priv->isFinal = isFinal;
     priv->callType = nullptr;
     priv->callTemplate = nullptr;
     priv->parentBlock = parentBlock;
@@ -84,13 +81,24 @@ lyric_assembler::CallSymbol::CallSymbol(
 }
 
 /**
- * Construct a CallSymbol for a bound method.
+ * Construct a CallSymbol for a generic bound method.
+*
+ * @param callUrl The fully qualified symbol url.
+ * @param receiverUrl The receiver symbol bound to the method
+ * @param isHidden
+ * @param mode
+ * @param isFinal
+ * @param callTemplate
+ * @param isDeclOnly
+ * @param parentBlock
+ * @param state
  */
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
     const lyric_common::SymbolUrl &receiverUrl,
     bool isHidden,
     lyric_object::CallMode mode,
+    bool isFinal,
     TemplateHandle *callTemplate,
     bool isDeclOnly,
     BlockHandle *parentBlock,
@@ -100,6 +108,7 @@ lyric_assembler::CallSymbol::CallSymbol(
         receiverUrl,
         isHidden,
         mode,
+        isFinal,
         isDeclOnly,
         parentBlock,
         state)
@@ -110,7 +119,81 @@ lyric_assembler::CallSymbol::CallSymbol(
 }
 
 /**
- * Construct a CallSymbol for a generic free function.
+ * Construct a CallSymbol for a method override.
+ *
+ * @param callUrl The fully qualified symbol url.
+ * @param receiverUrl The receiver symbol bound to the method.
+ * @param isHidden
+ * @param virtualUrl The virtual call symbol.
+ * @param isFinal
+ * @param isDeclOnly
+ * @param parentBlock
+ * @param state
+ */
+lyric_assembler::CallSymbol::CallSymbol(
+    const lyric_common::SymbolUrl &callUrl,
+    const lyric_common::SymbolUrl &receiverUrl,
+    bool isHidden,
+    CallSymbol *virtualCall,
+    bool isFinal,
+    bool isDeclOnly,
+    BlockHandle *parentBlock,
+    ObjectState *state)
+    : CallSymbol(
+        callUrl,
+        receiverUrl,
+        isHidden,
+        lyric_object::CallMode::Normal,
+        isFinal,
+        isDeclOnly,
+        parentBlock,
+        state)
+{
+    auto *priv = getPriv();
+    priv->virtualCall = virtualCall;
+    TU_ASSERT (priv->virtualCall != nullptr);
+}
+
+/**
+ * Construct a CallSymbol for a generic method override.
+*
+ * @param callUrl The fully qualified symbol url.
+ * @param receiverUrl The receiver symbol bound to the method.
+ * @param isHidden
+ * @param virtualUrl The virtual call symbol.
+ * @param isFinal
+ * @param callTemplate
+ * @param isDeclOnly
+ * @param parentBlock
+ * @param state
+ */
+lyric_assembler::CallSymbol::CallSymbol(
+    const lyric_common::SymbolUrl &callUrl,
+    const lyric_common::SymbolUrl &receiverUrl,
+    bool isHidden,
+    CallSymbol *virtualCall,
+    bool isFinal,
+    TemplateHandle *callTemplate,
+    bool isDeclOnly,
+    BlockHandle *parentBlock,
+    ObjectState *state)
+    : CallSymbol(
+        callUrl,
+        receiverUrl,
+        isHidden,
+        virtualCall,
+        isFinal,
+        isDeclOnly,
+        parentBlock,
+        state)
+{
+    auto *priv = getPriv();
+    priv->callTemplate = callTemplate;
+    TU_ASSERT (priv->callTemplate != nullptr);
+}
+
+/**
+ * Construct a CallSymbol for a free function.
  *
  * @param callUrl The fully qualified symbol url.
  * @param isHidden
@@ -137,6 +220,7 @@ lyric_assembler::CallSymbol::CallSymbol(
     priv->isHidden = isHidden;
     priv->isDeclOnly = isDeclOnly;
     priv->mode = mode;
+    priv->isFinal = false;
     priv->callType = nullptr;
     priv->callTemplate = nullptr;
     priv->parentBlock = parentBlock;
@@ -146,7 +230,14 @@ lyric_assembler::CallSymbol::CallSymbol(
 }
 
 /**
- * Construct a CallSymbol for a free function.
+ * Construct a CallSymbol for a generic free function.
+ *
+ * @param callUrl The fully qualified symbol url.
+ * @param isHidden
+ * @param mode
+ * @param isDeclOnly
+ * @param parentBlock
+ * @param state
  */
 lyric_assembler::CallSymbol::CallSymbol(
     const lyric_common::SymbolUrl &callUrl,
@@ -191,6 +282,7 @@ lyric_assembler::CallSymbol::CallSymbol(
 lyric_assembler::CallSymbolPriv *
 lyric_assembler::CallSymbol::load()
 {
+    auto *importCache = m_state->importCache();
     auto *typeCache = m_state->typeCache();
     auto *options = m_state->getOptions();
 
@@ -249,8 +341,16 @@ lyric_assembler::CallSymbol::load()
     priv->mode = m_callImport->getCallMode();
     priv->receiverUrl = m_callImport->getReceiverUrl();
 
-//    auto *callType = m_callImport->getCallType();
-//    TU_ASSIGN_OR_RAISE (priv->callType, typeCache->importType(callType));
+    if (priv->receiverUrl.isValid()) {
+        priv->isFinal = m_callImport->isFinal();
+    } else {
+        priv->isFinal = false;
+    }
+
+    auto virtualUrl = m_callImport->getVirtualUrl();
+    if (virtualUrl.isValid()) {
+        TU_ASSIGN_OR_RAISE (priv->virtualCall, importCache->importCall(virtualUrl));
+    }
 
     auto *callTemplate = m_callImport->getCallTemplate();
     if (callTemplate != nullptr) {
@@ -278,7 +378,7 @@ lyric_assembler::CallSymbol::load()
             importProc = priv->mode == lyric_object::CallMode::Inline;
             break;
         case ProcImportMode::All:
-            importProc = true;
+            importProc = priv->mode != lyric_object::CallMode::Abstract;
             break;
         default:
             break;
@@ -325,12 +425,15 @@ lyric_assembler::CallSymbol::defineCall(
 {
     if (isImported())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "can't put initializer on imported call {}", m_callUrl.toString());
+            "cannot define imported call {}", m_callUrl.toString());
     auto *priv = getPriv();
 
     if (priv->proc != nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "cannot redefine call {}", m_callUrl.toString());
+    if (priv->mode == lyric_object::CallMode::Abstract)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "cannot define abstract call {}", m_callUrl.toString());
 
     auto *symbolCache = m_state->symbolCache();
     auto *typeCache = m_state->typeCache();
@@ -460,6 +563,80 @@ lyric_assembler::CallSymbol::defineCall(
     return priv->proc.get();
 }
 
+tempo_utils::Status
+lyric_assembler::CallSymbol::defineAbstract(
+    const ParameterPack &parameterPack,
+    const lyric_common::TypeDef &returnType)
+{
+    if (isImported())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "cannot define imported call {}", m_callUrl.toString());
+    auto *priv = getPriv();
+
+    if (priv->mode != lyric_object::CallMode::Abstract)
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "cannot define call {}; expected abstract call", m_callUrl.toString());
+
+    // if return type was explicitly declared then touch it
+    if (!returnType.isValid())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "cannot define call {}; invalid return type", m_callUrl.toString());
+
+    auto *symbolCache = m_state->symbolCache();
+    auto *typeCache = m_state->typeCache();
+
+    priv->listParameters = parameterPack.listParameters;
+    priv->namedParameters = parameterPack.namedParameters;
+    priv->restParameter = parameterPack.restParameter;
+    priv->returnType = returnType;
+
+    // create bindings for list parameters
+    for (const auto &param : priv->listParameters) {
+        auto paramPath = m_callUrl.getSymbolPath().getPath();
+        paramPath.push_back(param.name);
+        auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
+        auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
+        ArgumentOffset offset(static_cast<tu_uint32>(param.index));
+        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
+        symbolCache->insertSymbol(paramUrl, paramSymbol);
+        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
+        priv->parametersMap[param.name] = param;
+    }
+
+    // create bindings for named parameters
+    for (const auto &param : priv->namedParameters) {
+        auto paramPath = m_callUrl.getSymbolPath().getPath();
+        paramPath.push_back(param.name);
+        auto paramUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(paramPath));
+        auto bindingType = param.isVariable? BindingType::Variable : BindingType::Value;
+        ArgumentOffset offset(static_cast<tu_uint32>(param.index));
+        auto *paramSymbol = new ArgumentVariable(paramUrl, param.typeDef, bindingType, offset);
+        symbolCache->insertSymbol(paramUrl, paramSymbol);
+        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
+        priv->parametersMap[param.name] = param;
+    }
+
+    // if there is a rest param then ensure the rest param type exists in the type cache
+    std::string restParamName;
+    if (!priv->restParameter.isEmpty()) {
+        auto &param = priv->restParameter.peekValue();
+        restParamName = param.name;
+        TU_RETURN_IF_STATUS (typeCache->getOrMakeType(param.typeDef));
+        // add the rest param to the parameters map, even if the param name is empty
+        priv->parametersMap[restParamName] = param;
+    }
+
+    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(priv->returnType));
+    if (priv->returnType == lyric_common::TypeDef::noReturn()) {
+        priv->isNoReturn = true;
+    }
+
+    // define a proc which is used only to indicate that the call definition has completed
+    priv->proc = std::make_unique<ProcHandle>(m_callUrl, m_state);
+
+    return {};
+}
+
 std::string
 lyric_assembler::CallSymbol::getName() const
 {
@@ -494,6 +671,13 @@ lyric_assembler::CallSymbol::getMode() const
     return priv->mode;
 }
 
+const lyric_assembler::CallSymbol *
+lyric_assembler::CallSymbol::virtualCall() const
+{
+    auto *priv = getPriv();
+    return priv->virtualCall;
+}
+
 bool
 lyric_assembler::CallSymbol::isBound() const
 {
@@ -520,6 +704,13 @@ lyric_assembler::CallSymbol::isNoReturn() const
 {
     auto *priv = getPriv();
     return priv->isNoReturn;
+}
+
+bool
+lyric_assembler::CallSymbol::isFinal() const
+{
+    auto *priv = getPriv();
+    return priv->isFinal;
 }
 
 bool

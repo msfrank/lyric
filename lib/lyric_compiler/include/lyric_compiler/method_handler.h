@@ -11,6 +11,7 @@
 namespace lyric_compiler {
 
     struct Method {
+        lyric_assembler::DispatchType dispatch = lyric_assembler::DispatchType::Virtual;
         lyric_assembler::CallSymbol *callSymbol = nullptr;
         lyric_assembler::ProcHandle *procHandle = nullptr;
     };
@@ -18,6 +19,27 @@ namespace lyric_compiler {
     class MethodHandler : public BaseGrouping {
     public:
         MethodHandler(
+            Method method,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
+
+        tempo_utils::Status before(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            BeforeContext &ctx) override;
+
+        tempo_utils::Status after(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            AfterContext &ctx) override;
+
+    private:
+        Method m_method;
+    };
+
+    class AbstractMethodHandler : public BaseGrouping {
+    public:
+        AbstractMethodHandler(
             Method method,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);

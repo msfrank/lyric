@@ -6,6 +6,7 @@
 namespace lyric_object {
 
     // forward declarations
+    class ActionWalker;
     class CallWalker;
     class FieldWalker;
     class ImplWalker;
@@ -78,7 +79,6 @@ namespace lyric_object {
 
         lyric_common::SymbolPath getSymbolPath() const;
 
-        bool isAbstract() const;
         bool isDeclOnly() const;
         DeriveType getDeriveType() const;
         AccessType getAccess() const;

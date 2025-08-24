@@ -38,7 +38,6 @@ lyric_archiver::copy_instance(
 
     auto isHidden = instanceImport->isHidden();
     auto derive = instanceImport->getDerive();
-    auto isAbstract = instanceImport->isAbstract();
 
     auto superInstanceUrl = instanceImport->getSuperInstance();
     lyric_assembler::InstanceSymbol *superInstance = nullptr;
@@ -58,7 +57,7 @@ lyric_archiver::copy_instance(
     // declare the instance
     std::unique_ptr<lyric_assembler::InstanceSymbol> instanceSymbol;
     instanceSymbol = std::make_unique<lyric_assembler::InstanceSymbol>(
-            instanceUrl, isHidden, derive, isAbstract, instanceType, superInstance,
+            instanceUrl, isHidden, derive, instanceType, superInstance,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     // append the instance to the object

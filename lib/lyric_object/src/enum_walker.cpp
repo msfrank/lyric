@@ -183,17 +183,6 @@ lyric_object::EnumWalker::getSymbolPath() const
 }
 
 bool
-lyric_object::EnumWalker::isAbstract() const
-{
-    if (!isValid())
-        return false;
-    auto *enumDescriptor = m_reader->getEnum(m_enumOffset);
-    if (enumDescriptor == nullptr)
-        return false;
-    return bool(enumDescriptor->flags() & lyo1::EnumFlags::Abstract);
-}
-
-bool
 lyric_object::EnumWalker::isDeclOnly() const
 {
     if (!isValid())

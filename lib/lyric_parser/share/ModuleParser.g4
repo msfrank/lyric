@@ -244,12 +244,13 @@ classImpl           : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose 
 classVal            : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 classVar            : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 classDef            : DefKeyword symbolIdentifier
-                        placeholderSpec? paramSpec returnSpec? constraintSpec?
+                        placeholderSpec? paramSpec returnSpec? constraintSpec? FinalKeyword?
                         procBlock ;
+classDecl           : DeclKeyword symbolIdentifier paramSpec returnSpec? ;
 classInit           : InitKeyword paramSpec classSuper? procBlock ;
 genericClass        : placeholderSpec constraintSpec? ;
 classDerives        : ( SealedKeyword | FinalKeyword ) ;
-classSpec           : classInit | classVal | classVar | classDef | classImpl ;
+classSpec           : classInit | classVal | classVar | classDef | classDecl | classImpl ;
 defclassStatement   : definitionMacro? DefClassKeyword
                         symbolIdentifier genericClass? classDerives?
                         CurlyOpen classSpec* CurlyClose ;

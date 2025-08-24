@@ -7,7 +7,6 @@
 namespace lyric_importer {
     struct StructImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
-        bool isAbstract;
         bool isDeclOnly;
         lyric_object::DeriveType derive;
         bool isHidden;
@@ -35,13 +34,6 @@ lyric_importer::StructImport::getSymbolUrl()
 {
     load();
     return m_priv->symbolUrl;
-}
-
-bool
-lyric_importer::StructImport::isAbstract()
-{
-    load();
-    return m_priv->isAbstract;
 }
 
 bool
@@ -208,7 +200,6 @@ lyric_importer::StructImport::load()
     auto structWalker = moduleImport->getObject().getObject().getStruct(m_structOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, structWalker.getSymbolPath());
 
-    priv->isAbstract = structWalker.isAbstract();
     priv->isDeclOnly = structWalker.isDeclOnly();
 
     priv->derive = structWalker.getDeriveType();

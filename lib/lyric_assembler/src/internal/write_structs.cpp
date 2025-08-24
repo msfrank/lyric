@@ -73,9 +73,6 @@ write_struct(
     if (structSymbol->isDeclOnly()) {
         structFlags |= lyo1::StructFlags::DeclOnly;
     }
-    if (structSymbol->isAbstract()) {
-        structFlags |= lyo1::StructFlags::Abstract;
-    }
     if (structSymbol->isHidden()) {
         structFlags |= lyo1::StructFlags::Hidden;
     }

@@ -19,7 +19,6 @@ namespace lyric_assembler {
     struct ClassSymbolPriv {
         bool isHidden = false;
         lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
-        bool isAbstract = false;
         bool isDeclOnly = false;
         TypeHandle *classType = nullptr;
         TemplateHandle *classTemplate = nullptr;
@@ -39,7 +38,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &classUrl,
             bool isHidden,
             lyric_object::DeriveType derive,
-            bool isAbstract,
             TypeHandle *classType,
             ClassSymbol *superClass,
             bool isDeclOnly,
@@ -50,7 +48,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &classUrl,
             bool isHidden,
             lyric_object::DeriveType derive,
-            bool isAbstract,
             TypeHandle *classType,
             TemplateHandle *classTemplate,
             ClassSymbol *superClass,
@@ -72,7 +69,6 @@ namespace lyric_assembler {
 
         bool isHidden() const;
         lyric_object::DeriveType getDeriveType() const;
-        bool isAbstract() const;
         bool isDeclOnly() const;
 
         ClassSymbol *superClass() const;
@@ -127,6 +123,7 @@ namespace lyric_assembler {
         tempo_utils::Result<CallSymbol *> declareMethod(
             const std::string &name,
             bool isHidden,
+            DispatchType dispatch = DispatchType::Virtual,
             const std::vector<lyric_object::TemplateParameter> &templateParameters = {});
 
         tempo_utils::Status prepareMethod(

@@ -144,6 +144,12 @@ namespace lyric_assembler {
         Final,
     };
 
+    enum class DispatchType {
+        Abstract,
+        Virtual,
+        Final,
+    };
+
     enum class SyntheticType {
         This,
         Rest,

@@ -7,11 +7,14 @@ namespace lyric_importer {
     struct CallImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
         lyric_common::SymbolUrl receiverUrl;
+        lyric_common::SymbolUrl virtualUrl;
         TemplateImport *callTemplate;
         TypeImport *returnType;
         bool isDeclOnly;
         bool isHidden;
         lyric_object::CallMode callMode;
+        bool isAbstract;
+        bool isFinal;
         std::vector<Parameter> listParameters;
         std::vector<Parameter> namedParameters;
         Option<Parameter> restParameter;
@@ -61,11 +64,25 @@ lyric_importer::CallImport::getCallMode()
     return m_priv->callMode;
 }
 
-lyric_common::SymbolUrl
-lyric_importer::CallImport::getReceiverUrl()
+bool
+lyric_importer::CallImport::isAbstract()
 {
     load();
-    return m_priv->receiverUrl;
+    return m_priv->isAbstract;
+}
+
+bool
+lyric_importer::CallImport::isOverride()
+{
+    load();
+    return m_priv->virtualUrl.isValid();
+}
+
+bool
+lyric_importer::CallImport::isFinal()
+{
+    load();
+    return m_priv->isFinal;
 }
 
 lyric_importer::TemplateImport *
@@ -80,6 +97,20 @@ lyric_importer::CallImport::getReturnType()
 {
     load();
     return m_priv->returnType;
+}
+
+lyric_common::SymbolUrl
+lyric_importer::CallImport::getReceiverUrl()
+{
+    load();
+    return m_priv->receiverUrl;
+}
+
+lyric_common::SymbolUrl
+lyric_importer::CallImport::getVirtualUrl()
+{
+    load();
+    return m_priv->virtualUrl;
 }
 
 lyric_importer::Parameter
@@ -229,6 +260,38 @@ lyric_importer::CallImport::load()
                         "cannot import call at index {} in module {}; invalid receiver",
                         callWalker.getDescriptorOffset(), objectLocation.toString()));
         }
+
+        switch (callWalker.virtualCallAddressType()) {
+            case lyric_object::AddressType::Near: {
+                auto virtualCall = callWalker.getNearVirtualCall();
+                if (!virtualCall.isValid())
+                    throw tempo_utils::StatusException(
+                        ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                            "cannot import call at index {} in module {}; invalid virtual call",
+                            callWalker.getDescriptorOffset(), objectLocation.toString()));
+                priv->virtualUrl = lyric_common::SymbolUrl(objectLocation, virtualCall.getSymbolPath());
+                break;
+            }
+            case lyric_object::AddressType::Far: {
+                auto virtualCall = callWalker.getFarVirtualCall();
+                if (!virtualCall.isValid())
+                    throw tempo_utils::StatusException(
+                        ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                            "cannot import call at index {} in module {}; invalid virtual call",
+                            callWalker.getDescriptorOffset(), objectLocation.toString()));
+                priv->virtualUrl = virtualCall.getLinkUrl(objectLocation);
+                break;
+            }
+            default:
+                // call is not a method override
+                break;
+        }
+
+        priv->isAbstract = callWalker.isAbstract();
+        priv->isFinal = callWalker.isFinal();
+    } else {
+        priv->isAbstract = false;
+        priv->isFinal = false;
     }
 
     if (callWalker.hasTemplate()) {

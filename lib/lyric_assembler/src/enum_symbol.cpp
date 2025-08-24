@@ -20,7 +20,6 @@ lyric_assembler::EnumSymbol::EnumSymbol(
     const lyric_common::SymbolUrl &enumUrl,
     bool isHidden,
     lyric_object::DeriveType derive,
-    bool isAbstract,
     TypeHandle *enumType,
     EnumSymbol *superEnum,
     bool isDeclOnly,
@@ -36,7 +35,6 @@ lyric_assembler::EnumSymbol::EnumSymbol(
     auto *priv = getPriv();
     priv->isHidden = isHidden;
     priv->derive = derive;
-    priv->isAbstract = isAbstract;
     priv->isDeclOnly = isDeclOnly;
     priv->enumType = enumType;
     priv->superEnum = superEnum;
@@ -74,7 +72,6 @@ lyric_assembler::EnumSymbol::load()
 
     priv->isHidden = m_enumImport->isHidden();
     priv->derive = m_enumImport->getDerive();
-    priv->isAbstract = m_enumImport->isAbstract();
     priv->isDeclOnly = m_enumImport->isDeclOnly();
 
     auto *enumType = m_enumImport->getEnumType();
@@ -163,13 +160,6 @@ lyric_assembler::EnumSymbol::getDeriveType() const
 {
     auto *priv = getPriv();
     return priv->derive;
-}
-
-bool
-lyric_assembler::EnumSymbol::isAbstract() const
-{
-    auto *priv = getPriv();
-    return priv->isAbstract;
 }
 
 bool
@@ -273,7 +263,7 @@ lyric_assembler::EnumSymbol::declareMember(
     ref.symbolUrl = memberUrl;
     ref.typeDef = memberType;
     ref.referenceType = isVariable? ReferenceType::Variable : ReferenceType::Value;
-    priv->members[name] = ref;
+    priv->members[name] = std::move(ref);
 
     return fieldPtr;
 }
@@ -380,7 +370,8 @@ lyric_assembler::EnumSymbol::declareCtor(
 
     // construct call symbol
     auto ctorSymbol = std::make_unique<CallSymbol>(ctorUrl, m_enumUrl, isHidden,
-        lyric_object::CallMode::Constructor, priv->isDeclOnly, priv->enumBlock.get(), m_state);
+        lyric_object::CallMode::Constructor, /* isFinal= */ false, priv->isDeclOnly,
+        priv->enumBlock.get(), m_state);
 
     CallSymbol *ctorPtr;
     TU_ASSIGN_OR_RETURN (ctorPtr, m_state->appendCall(std::move(ctorSymbol)));
@@ -391,7 +382,7 @@ lyric_assembler::EnumSymbol::declareCtor(
     method.methodCall = ctorUrl;
     method.hidden = isHidden;
     method.final = false;
-    priv->methods["$ctor"] = method;
+    priv->methods["$ctor"] = std::move(method);
 
     // set allocator trap
     priv->allocatorTrap = std::move(allocatorTrap);
@@ -456,7 +447,8 @@ lyric_assembler::EnumSymbol::numMethods() const
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::EnumSymbol::declareMethod(
     const std::string &name,
-    bool isHidden)
+    bool isHidden,
+    bool isFinal)
 {
     if (isImported())
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
@@ -475,14 +467,18 @@ lyric_assembler::EnumSymbol::declareMethod(
 
     // construct call symbol
     auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_enumUrl, isHidden,
-        lyric_object::CallMode::Normal, priv->isDeclOnly, priv->enumBlock.get(), m_state);
+        lyric_object::CallMode::Normal, isFinal, priv->isDeclOnly, priv->enumBlock.get(), m_state);
 
     CallSymbol *callPtr;
     TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
     TU_RAISE_IF_NOT_OK (priv->enumBlock->putBinding(callPtr));
 
     // add bound method
-    priv->methods[name] = { methodUrl, isHidden, true /* final */ };
+    BoundMethod method;
+    method.methodCall = methodUrl;
+    method.hidden = isHidden;
+    method.final = isFinal;
+    priv->methods[name] = std::move(method);
 
     return callPtr;
 }

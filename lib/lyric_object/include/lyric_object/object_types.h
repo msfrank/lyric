@@ -211,6 +211,7 @@ namespace lyric_object {
         Normal,
         Constructor,
         Inline,
+        Abstract,
     };
 
     enum class HashType {

@@ -109,7 +109,6 @@ namespace lyric_assembler {
             bool isHidden,
             const std::vector<lyric_object::TemplateParameter> &templateParameters,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
-            bool isAbstract = false,
             bool declOnly = false);
 
         tempo_utils::Result<ClassSymbol *> resolveClass(const lyric_common::TypeDef &classType);
@@ -129,7 +128,6 @@ namespace lyric_assembler {
             EnumSymbol *superEnum,
             bool isHidden,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
-            bool isAbstract = false,
             bool declOnly = false);
 
         tempo_utils::Result<EnumSymbol *> resolveEnum(const lyric_common::TypeDef &enumType);
@@ -139,7 +137,6 @@ namespace lyric_assembler {
             InstanceSymbol *superInstance,
             bool isHidden,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
-            bool isAbstract = false,
             bool declOnly = false);
 
         tempo_utils::Result<InstanceSymbol *> resolveInstance(const lyric_common::TypeDef &instanceType);
@@ -149,7 +146,6 @@ namespace lyric_assembler {
             StructSymbol *superStruct,
             bool isHidden,
             lyric_object::DeriveType derive = lyric_object::DeriveType::Any,
-            bool isAbstract = false,
             bool declOnly = false);
 
         tempo_utils::Result<StructSymbol *> resolveStruct(const lyric_common::TypeDef &structType);

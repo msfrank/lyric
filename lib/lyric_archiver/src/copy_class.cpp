@@ -38,7 +38,6 @@ lyric_archiver::copy_class(
 
     auto isHidden = classImport->isHidden();
     auto derive = classImport->getDerive();
-    auto isAbstract = classImport->isAbstract();
 
     auto *classTemplateImport = classImport->getClassTemplate();
     lyric_assembler::TemplateHandle *classTemplate = nullptr;
@@ -72,11 +71,11 @@ lyric_archiver::copy_class(
 
     if (classTemplate != nullptr) {
         classSymbol = std::make_unique<lyric_assembler::ClassSymbol>(
-            classUrl, isHidden, derive, isAbstract, classType, classTemplate, superClass,
+            classUrl, isHidden, derive, classType, classTemplate, superClass,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
     } else {
         classSymbol = std::make_unique<lyric_assembler::ClassSymbol>(
-            classUrl, isHidden, derive, isAbstract, classType, superClass,
+            classUrl, isHidden, derive, classType, superClass,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
     }
 
@@ -142,9 +141,15 @@ lyric_archiver::copy_class(
         if (templateImport != nullptr) {
             TU_ASSIGN_OR_RETURN (templateParameters, parse_template_parameters(templateImport));
         }
+        lyric_assembler::DispatchType dispatch = lyric_assembler::DispatchType::Virtual;
+        if (callImport->getCallMode() == lyric_object::CallMode::Abstract) {
+            dispatch = lyric_assembler::DispatchType::Abstract;
+        } else if (callImport->isFinal()) {
+            dispatch = lyric_assembler::DispatchType::Final;
+        }
         lyric_assembler::CallSymbol *callSymbol;
         TU_ASSIGN_OR_RETURN (callSymbol, classSymbolPtr->declareMethod(
-            name, callImport->isHidden(), templateParameters));
+            name, callImport->isHidden(), dispatch, templateParameters));
         TU_RETURN_IF_NOT_OK (archiverState.putSymbol(it->second, callSymbol));
         TU_RETURN_IF_NOT_OK (define_call(
             callImport, callSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));

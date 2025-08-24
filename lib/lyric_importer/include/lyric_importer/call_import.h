@@ -18,10 +18,15 @@ namespace lyric_importer {
         bool isDeclOnly();
         bool isHidden();
         lyric_object::CallMode getCallMode();
+        bool isAbstract();
+        bool isOverride();
+        bool isFinal();
 
-        lyric_common::SymbolUrl getReceiverUrl();
         TemplateImport *getCallTemplate();
         TypeImport *getReturnType();
+
+        lyric_common::SymbolUrl getReceiverUrl();
+        lyric_common::SymbolUrl getVirtualUrl();
 
         Parameter getListParameter(tu_uint8 index);
         std::vector<Parameter>::const_iterator listParametersBegin();

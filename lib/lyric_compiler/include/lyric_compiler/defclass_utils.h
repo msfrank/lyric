@@ -44,6 +44,12 @@ namespace lyric_compiler {
         lyric_assembler::ClassSymbol *classSymbol,
         lyric_typing::TypeSystem *typeSystem);
 
+    tempo_utils::Result<Method>
+    declare_class_abstract_method(
+        const lyric_parser::ArchetypeNode *node,
+        lyric_assembler::ClassSymbol *classSymbol,
+        lyric_typing::TypeSystem *typeSystem);
+
     tempo_utils::Result<Impl>
     declare_class_impl(
         const lyric_parser::ArchetypeNode *node,

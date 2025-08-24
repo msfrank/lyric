@@ -201,6 +201,11 @@ lyric_compiler::declare_class_method(
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
+    // determine if final
+    bool noOverride;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstNoOverride, noOverride));
+    auto dispatch = noOverride? lyric_assembler::DispatchType::Final : lyric_assembler::DispatchType::Virtual;
+
     // parse the return type
     lyric_parser::ArchetypeNode *typeNode;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
@@ -221,10 +226,11 @@ lyric_compiler::declare_class_method(
     }
 
     Method method;
+    method.dispatch = dispatch;
 
     // declare the method
     TU_ASSIGN_OR_RETURN (method.callSymbol, classSymbol->declareMethod(
-        identifier, isHidden, templateSpec.templateParameters));
+        identifier, isHidden, dispatch, templateSpec.templateParameters));
 
     TU_LOG_V << "declared method " << identifier << " for " << classSymbol->getSymbolUrl();
 
@@ -240,6 +246,69 @@ lyric_compiler::declare_class_method(
 
     // define the method
     TU_ASSIGN_OR_RETURN (method.procHandle, method.callSymbol->defineCall(parameterPack, returnType));
+
+    return method;
+}
+
+tempo_utils::Result<lyric_compiler::Method>
+lyric_compiler::declare_class_abstract_method(
+    const lyric_parser::ArchetypeNode *node,
+    lyric_assembler::ClassSymbol *classSymbol,
+    lyric_typing::TypeSystem *typeSystem)
+{
+    TU_ASSERT (node != nullptr);
+    TU_ASSERT (classSymbol != nullptr);
+    auto *classBlock = classSymbol->classBlock();
+
+    // get method name
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    // determine the access level
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
+
+    // parse the return type
+    lyric_parser::ArchetypeNode *typeNode;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+    lyric_typing::TypeSpec returnSpec;
+    TU_ASSIGN_OR_RETURN (returnSpec, typeSystem->parseAssignable(classBlock, typeNode->getArchetypeNode()));
+
+    // parse the parameter list
+    auto *packNode = node->getChild(0);
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(classBlock, packNode->getArchetypeNode()));
+
+    // if method is generic, then parse the template parameter list
+    lyric_typing::TemplateSpec templateSpec;
+    if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
+        lyric_parser::ArchetypeNode *genericNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
+        TU_ASSIGN_OR_RETURN (templateSpec, typeSystem->parseTemplate(classBlock, genericNode->getArchetypeNode()));
+    }
+
+    Method method;
+    method.dispatch = lyric_assembler::DispatchType::Abstract;
+    method.procHandle = nullptr;
+
+    // declare the method
+    TU_ASSIGN_OR_RETURN (method.callSymbol, classSymbol->declareMethod(
+        identifier, isHidden, lyric_assembler::DispatchType::Abstract, templateSpec.templateParameters));
+
+    TU_LOG_V << "declared method " << identifier << " for " << classSymbol->getSymbolUrl();
+
+    auto *resolver = method.callSymbol->callResolver();
+
+    // resolve the parameter pack
+    lyric_assembler::ParameterPack parameterPack;
+    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
+
+    // resolve the return type
+    lyric_common::TypeDef returnType;
+    TU_ASSIGN_OR_RETURN (returnType, typeSystem->resolveAssignable(resolver, returnSpec));
+
+    // define the method
+    TU_RETURN_IF_NOT_OK (method.callSymbol->defineAbstract(parameterPack, returnType));
 
     return method;
 }

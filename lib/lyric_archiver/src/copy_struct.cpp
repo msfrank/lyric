@@ -38,7 +38,6 @@ lyric_archiver::copy_struct(
 
     auto isHidden = structImport->isHidden();
     auto derive = structImport->getDerive();
-    auto isAbstract = structImport->isAbstract();
 
     auto superStructUrl = structImport->getSuperStruct();
     lyric_assembler::StructSymbol *superStruct = nullptr;
@@ -58,7 +57,7 @@ lyric_archiver::copy_struct(
     // declare the struct
     std::unique_ptr<lyric_assembler::StructSymbol> structSymbol;
     structSymbol = std::make_unique<lyric_assembler::StructSymbol>(
-            structUrl, isHidden, derive, isAbstract, structType, superStruct,
+            structUrl, isHidden, derive, structType, superStruct,
             /* isDeclOnly= */ false, namespaceBlock, objectState);
 
     // append the struct to the object

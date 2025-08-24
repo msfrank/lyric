@@ -86,9 +86,6 @@ write_class(
     if (classSymbol->isHidden()) {
         classFlags |= lyo1::ClassFlags::Hidden;
     }
-    if (classSymbol->isAbstract()) {
-        classFlags |= lyo1::ClassFlags::Abstract;
-    }
 
     switch (classSymbol->getDeriveType()) {
         case lyric_object::DeriveType::Final:
@@ -152,8 +149,9 @@ write_class(
     // add class descriptor
     classes_vector.push_back(lyo1::CreateClassDescriptor(buffer, fullyQualifiedName,
         superclassIndex, classTemplate, classType, classFlags,
-        buffer.CreateVector(members), buffer.CreateVector(methods), buffer.CreateVector(impls),
-        allocatorTrap, ctorCall, buffer.CreateVector(sealedSubtypes)));
+        buffer.CreateVector(members), buffer.CreateVector(methods),
+        buffer.CreateVector(impls), allocatorTrap, ctorCall,
+        buffer.CreateVector(sealedSubtypes)));
 
     return {};
 }

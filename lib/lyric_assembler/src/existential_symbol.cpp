@@ -262,14 +262,19 @@ lyric_assembler::ExistentialSymbol::declareMethod(
 
     // construct call symbol
     auto callSymbol = std::make_unique<CallSymbol>(methodUrl, m_existentialUrl, isHidden,
-        lyric_object::CallMode::Normal, priv->isDeclOnly, priv->existentialBlock.get(), m_state);
+        lyric_object::CallMode::Normal, /* isFinal= */ true, priv->isDeclOnly,
+        priv->existentialBlock.get(), m_state);
 
     CallSymbol *callPtr;
     TU_ASSIGN_OR_RETURN (callPtr, m_state->appendCall(std::move(callSymbol)));
     TU_RAISE_IF_NOT_OK (priv->existentialBlock->putBinding(callPtr));
 
     // add bound method
-    priv->methods[name] = { methodUrl, isHidden, false /* final */ };
+    BoundMethod method;
+    method.methodCall = methodUrl;
+    method.hidden = isHidden;
+    method.final = true;
+    priv->methods[name] = std::move(method);
 
     return callPtr;
 }

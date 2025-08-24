@@ -14,10 +14,10 @@ namespace lyric_assembler {
         Option<Parameter> restParameter;
         lyric_common::TypeDef returnType;
         lyric_common::SymbolUrl receiverUrl;
-        bool isHidden;
-        TemplateHandle *actionTemplate;
-        bool isDeclOnly;
-        BlockHandle *parentBlock;
+        bool isHidden = false;
+        TemplateHandle *actionTemplate = nullptr;
+        bool isDeclOnly = false;
+        BlockHandle *parentBlock = nullptr;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
     };
 

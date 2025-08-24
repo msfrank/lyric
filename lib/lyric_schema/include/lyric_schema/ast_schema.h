@@ -142,6 +142,7 @@ namespace lyric_schema {
         Label,
         IsHidden,
         IsVariable,
+        NoOverride,
 
         TypeOffset,
         DefaultOffset,
@@ -407,6 +408,10 @@ namespace lyric_schema {
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
         kLyricAstIsVariableProperty(
         &kLyricAstNs, LyricAstId::IsVariable, "IsVariable", tempo_schema::PropertyType::kBool);
+
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
+        kLyricAstNoOverrideProperty(
+        &kLyricAstNs, LyricAstId::NoOverride, "NoOverride", tempo_schema::PropertyType::kBool);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstTypeOffsetProperty(

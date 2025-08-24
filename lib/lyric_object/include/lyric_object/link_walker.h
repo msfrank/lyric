@@ -35,6 +35,8 @@ namespace lyric_object {
 
         friend class ActionWalker;
         friend class BindingWalker;
+        friend class CallWalker;
+        friend class ClassAction;
         friend class ClassMember;
         friend class ClassMethod;
         friend class ClassWalker;

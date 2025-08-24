@@ -25,12 +25,12 @@ namespace lyric_assembler {
         lyric_object::LinkageSection m_linkageSection;
     };
 
-    static inline const LinkageSymbol *cast_symbol_to_linkage(const AbstractSymbol *sym) {
+    inline const LinkageSymbol *cast_symbol_to_linkage(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::LINKAGE);
         return static_cast<const LinkageSymbol *>(sym);    // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline LinkageSymbol *cast_symbol_to_linkage(AbstractSymbol *sym) {
+    inline LinkageSymbol *cast_symbol_to_linkage(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::LINKAGE);
         return static_cast<LinkageSymbol *>(sym);          // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }

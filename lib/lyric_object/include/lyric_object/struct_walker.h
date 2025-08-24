@@ -78,7 +78,6 @@ namespace lyric_object {
 
         lyric_common::SymbolPath getSymbolPath() const;
 
-        bool isAbstract() const;
         bool isDeclOnly() const;
         DeriveType getDeriveType() const;
         AccessType getAccess() const;

@@ -209,8 +209,10 @@ enum CallFlags : uint16 (bit_flags) {
     Bound,                                      // call is a bound method
     Inline,                                     // call can be inlined
     Ctor,                                       // call is a constructor
-    Hidden,                                     // if bound, then visible to the receiver symbol and its derived symbols only (protected),
+    Hidden,                                     // if bound then visible to the receiver symbol and its derived symbols only (protected),
                                                 // otherwise if free then visible to the enclosing namespace and its child namespace only
+    Abstract,                                   // if bound then the call is abstract, otherwise does nothing
+    Final,                                      // if bound then the call cannot be overridden, otherwise does nothing
     DeclOnly,                                   // call descriptor is only a declaration
 }
 
@@ -221,6 +223,7 @@ table CallDescriptor {
     fqsn: string;                               // fully qualified call name
     call_template: uint32 = 0xFFFFFFFF;         // offset of the template in the templates section, or 0xFFFFFFFF if not generic
     receiver_symbol: uint32 = 0xFFFFFFFF;       // index of the receiver in the symbols section
+    virtual_call: uint32 = 0xFFFFFFFF;          // index of the virtual call if method is an override
     bytecode_offset: uint32 = 0xFFFFFFFF;       // offset of the start of the proc in the bytecode section
     flags: CallFlags;                           // bitfield containing call flags
     list_parameters: [Parameter];               // array of list parameters
@@ -342,7 +345,6 @@ table ImplDescriptor {
 // flags which apply to a ClassDescriptor
 
 enum ClassFlags : uint16 (bit_flags) {
-    Abstract,                                   // class is abstract (cannot be instantiated)
     Sealed,                                     // class can only be inherited from in the current object
     Final,                                      // class cannot be inherited from
     Hidden,                                     // visible to the enclosing namespace and its child namespaces
@@ -370,7 +372,6 @@ table ClassDescriptor {
 // flags which apply to the StructDescriptor
 
 enum StructFlags : uint16 (bit_flags) {
-    Abstract,                                   // struct is abstract (cannot be instantiated)
     Sealed,                                     // struct can only be inherited from in the current object
     Final,                                      // struct cannot be inherited from
     Hidden,                                     // visible to the enclosing namespace and its child namespaces
@@ -397,7 +398,6 @@ table StructDescriptor {
 // flags which apply to the InstanceDecriptor
 
 enum InstanceFlags : uint16 (bit_flags) {
-    Abstract,                                   // instance is abstract (cannot be instantiated)
     Sealed,                                     // instance can only be inherited from in the current object
     Final,                                      // instance cannot be inherited from
     Hidden,                                     // visible to the enclosing namespace and its child namespaces
@@ -424,7 +424,6 @@ table InstanceDescriptor {
 // flags which apply to the EnumDecriptor
 
 enum EnumFlags : uint16 (bit_flags) {
-    Abstract,                                   // enum is abstract (cannot be instantiated directly)
     Sealed,                                     // enum can only be inherited from in the current object
     Final,                                      // enum cannot be inherited from
     Hidden,                                     // visible to the enclosing namespace and its child namespaces

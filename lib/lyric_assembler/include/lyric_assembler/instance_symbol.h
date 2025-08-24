@@ -19,7 +19,6 @@ namespace lyric_assembler {
     struct InstanceSymbolPriv {
         bool isHidden = false;
         lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
-        bool isAbstract = false;
         bool isDeclOnly = false;
         TypeHandle *instanceType = nullptr;
         InstanceSymbol *superInstance = nullptr;
@@ -39,7 +38,6 @@ namespace lyric_assembler {
             const lyric_common::SymbolUrl &instanceUrl,
             bool isHidden,
             lyric_object::DeriveType derive,
-            bool isAbstract,
             TypeHandle *instanceType,
             InstanceSymbol *superInstance,
             bool isDeclOnly,
@@ -59,7 +57,6 @@ namespace lyric_assembler {
 
         bool isHidden() const;
         lyric_object::DeriveType getDeriveType() const;
-        bool isAbstract() const;
         bool isDeclOnly() const;
 
         TypeHandle *instanceType() const;
@@ -112,7 +109,8 @@ namespace lyric_assembler {
 
         tempo_utils::Result<CallSymbol *> declareMethod(
             const std::string &name,
-            bool isHidden);
+            bool isHidden,
+            bool isFinal = false);
 
         tempo_utils::Status prepareMethod(
             const std::string &name,
@@ -149,12 +147,12 @@ namespace lyric_assembler {
         InstanceSymbolPriv *load() override;
     };
 
-    static inline const InstanceSymbol *cast_symbol_to_instance(const AbstractSymbol *sym) {
+    inline const InstanceSymbol *cast_symbol_to_instance(const AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::INSTANCE);
         return static_cast<const InstanceSymbol *>(sym);    // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
 
-    static inline InstanceSymbol *cast_symbol_to_instance(AbstractSymbol *sym) {
+    inline InstanceSymbol *cast_symbol_to_instance(AbstractSymbol *sym) {
         TU_ASSERT (sym->getSymbolType() == SymbolType::INSTANCE);
         return static_cast<InstanceSymbol *>(sym);          // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     }
