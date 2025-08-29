@@ -295,10 +295,17 @@ lyric_importer::ClassImport::load()
     }
 
     for (tu_uint8 i = 0; i < classWalker.numImpls(); i++) {
-        auto implWalker = classWalker.getImpl(i);
+        auto impl = classWalker.getImpl(i);
+        if (!impl.isValid()) {
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import class at index {} in module {}; invalid impl at index {}",
+                    m_classOffset, objectLocation.toString(), i));
+        }
 
-        auto *implType = moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
-        auto *implImport = moduleImport->getImpl(implWalker.getDescriptorOffset());
+        auto *implType = moduleImport->getType(impl.getImplType().getDescriptorOffset());
+        auto *implImport = moduleImport->getImpl(impl.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 

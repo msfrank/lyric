@@ -7,144 +7,6 @@
 #include <lyric_object/link_walker.h>
 #include <lyric_object/type_walker.h>
 
-lyric_object::EnumMember::EnumMember()
-    : m_enumDescriptor(nullptr)
-{
-}
-
-lyric_object::EnumMember::EnumMember(
-    std::shared_ptr<const internal::ObjectReader> reader,
-    void *enumDescriptor,
-    tu_uint8 fieldOffset)
-    : m_reader(reader),
-      m_enumDescriptor(enumDescriptor),
-      m_fieldOffset(fieldOffset)
-{
-    TU_ASSERT (m_reader != nullptr);
-    TU_ASSERT (m_enumDescriptor != nullptr);
-}
-
-lyric_object::EnumMember::EnumMember(const EnumMember &other)
-    : m_reader(other.m_reader),
-      m_enumDescriptor(other.m_enumDescriptor),
-      m_fieldOffset(other.m_fieldOffset)
-{
-}
-
-bool
-lyric_object::EnumMember::isValid() const
-{
-    return m_reader && m_reader->isValid() && m_enumDescriptor;
-}
-
-lyric_object::AddressType
-lyric_object::EnumMember::memberAddressType() const
-{
-    if (!isValid())
-        return AddressType::Invalid;
-    auto *enumDescriptor = static_cast<const lyo1::EnumDescriptor *>(m_enumDescriptor);
-    if (enumDescriptor->members() == nullptr)
-        return AddressType::Invalid;
-    if (enumDescriptor->members()->size() <= m_fieldOffset)
-        return AddressType::Invalid;
-    return GET_ADDRESS_TYPE(enumDescriptor->members()->Get(m_fieldOffset));
-}
-
-lyric_object::FieldWalker
-lyric_object::EnumMember::getNearField() const
-{
-    if (!isValid())
-        return {};
-    auto *enumDescriptor = static_cast<const lyo1::EnumDescriptor *>(m_enumDescriptor);
-    if (enumDescriptor->members() == nullptr)
-        return {};
-    if (enumDescriptor->members()->size() <= m_fieldOffset)
-        return {};
-    return FieldWalker(m_reader, GET_DESCRIPTOR_OFFSET(enumDescriptor->members()->Get(m_fieldOffset)));
-}
-
-lyric_object::LinkWalker
-lyric_object::EnumMember::getFarField() const
-{
-    if (!isValid())
-        return {};
-    auto *enumDescriptor = static_cast<const lyo1::EnumDescriptor *>(m_enumDescriptor);
-    if (enumDescriptor->members() == nullptr)
-        return {};
-    if (enumDescriptor->members()->size() <= m_fieldOffset)
-        return {};
-    return LinkWalker(m_reader, GET_LINK_OFFSET(enumDescriptor->members()->Get(m_fieldOffset)));
-}
-
-lyric_object::EnumMethod::EnumMethod()
-    : m_enumDescriptor(nullptr)
-{
-}
-
-lyric_object::EnumMethod::EnumMethod(
-    std::shared_ptr<const internal::ObjectReader> reader,
-    void *enumDescriptor,
-    tu_uint8 callOffset)
-    : m_reader(reader),
-      m_enumDescriptor(enumDescriptor),
-      m_callOffset(callOffset)
-{
-    TU_ASSERT (m_reader != nullptr);
-    TU_ASSERT (m_enumDescriptor != nullptr);
-}
-
-lyric_object::EnumMethod::EnumMethod(const EnumMethod &other)
-    : m_reader(other.m_reader),
-      m_enumDescriptor(other.m_enumDescriptor),
-      m_callOffset(other.m_callOffset)
-{
-}
-
-bool
-lyric_object::EnumMethod::isValid() const
-{
-    return m_reader && m_reader->isValid() && m_enumDescriptor;
-}
-
-lyric_object::AddressType
-lyric_object::EnumMethod::methodAddressType() const
-{
-    if (!isValid())
-        return AddressType::Invalid;
-    auto *enumDescriptor = static_cast<const lyo1::EnumDescriptor *>(m_enumDescriptor);
-    if (enumDescriptor->methods() == nullptr)
-        return AddressType::Invalid;
-    if (enumDescriptor->methods()->size() <= m_callOffset)
-        return AddressType::Invalid;
-    return GET_ADDRESS_TYPE(enumDescriptor->methods()->Get(m_callOffset));
-}
-
-lyric_object::CallWalker
-lyric_object::EnumMethod::getNearCall() const
-{
-    if (!isValid())
-        return {};
-    auto *enumDescriptor = static_cast<const lyo1::EnumDescriptor *>(m_enumDescriptor);
-    if (enumDescriptor->methods() == nullptr)
-        return {};
-    if (enumDescriptor->methods()->size() <= m_callOffset)
-        return {};
-    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(enumDescriptor->methods()->Get(m_callOffset)));
-}
-
-lyric_object::LinkWalker
-lyric_object::EnumMethod::getFarCall() const
-{
-    if (!isValid())
-        return {};
-    auto *enumDescriptor = static_cast<const lyo1::EnumDescriptor *>(m_enumDescriptor);
-    if (enumDescriptor->methods() == nullptr)
-        return {};
-    if (enumDescriptor->methods()->size() <= m_callOffset)
-        return {};
-    return LinkWalker(m_reader, GET_LINK_OFFSET(enumDescriptor->methods()->Get(m_callOffset)));
-}
-
 lyric_object::EnumWalker::EnumWalker()
     : m_enumOffset(INVALID_ADDRESS_U32)
 {
@@ -312,7 +174,7 @@ lyric_object::EnumWalker::numMembers() const
     return enumDescriptor->members()->size();
 }
 
-lyric_object::EnumMember
+lyric_object::FieldWalker
 lyric_object::EnumWalker::getMember(tu_uint8 index) const
 {
     if (!isValid())
@@ -324,7 +186,7 @@ lyric_object::EnumWalker::getMember(tu_uint8 index) const
         return {};
     if (enumDescriptor->members()->size() <= index)
         return {};
-    return EnumMember(m_reader, (void *) enumDescriptor, index);
+    return FieldWalker(m_reader, GET_DESCRIPTOR_OFFSET(enumDescriptor->members()->Get(index)));
 }
 
 tu_uint8
@@ -340,7 +202,7 @@ lyric_object::EnumWalker::numMethods() const
     return enumDescriptor->methods()->size();
 }
 
-lyric_object::EnumMethod
+lyric_object::CallWalker
 lyric_object::EnumWalker::getMethod(tu_uint8 index) const
 {
     if (!isValid())
@@ -352,7 +214,7 @@ lyric_object::EnumWalker::getMethod(tu_uint8 index) const
         return {};
     if (enumDescriptor->methods()->size() <= index)
         return {};
-    return EnumMethod(m_reader, (void *) enumDescriptor, index);
+    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(enumDescriptor->methods()->Get(index)));
 }
 
 tu_uint8

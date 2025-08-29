@@ -7,144 +7,6 @@
 #include <lyric_object/struct_walker.h>
 #include <lyric_object/type_walker.h>
 
-lyric_object::StructMember::StructMember()
-    : m_structDescriptor(nullptr)
-{
-}
-
-lyric_object::StructMember::StructMember(
-    std::shared_ptr<const internal::ObjectReader> reader,
-    void *structDescriptor,
-    tu_uint8 fieldOffset)
-    : m_reader(reader),
-      m_structDescriptor(structDescriptor),
-      m_fieldOffset(fieldOffset)
-{
-    TU_ASSERT (m_reader != nullptr);
-    TU_ASSERT (m_structDescriptor != nullptr);
-}
-
-lyric_object::StructMember::StructMember(const StructMember &other)
-    : m_reader(other.m_reader),
-      m_structDescriptor(other.m_structDescriptor),
-      m_fieldOffset(other.m_fieldOffset)
-{
-}
-
-bool
-lyric_object::StructMember::isValid() const
-{
-    return m_reader && m_reader->isValid() && m_structDescriptor;
-}
-
-lyric_object::AddressType
-lyric_object::StructMember::memberAddressType() const
-{
-    if (!isValid())
-        return AddressType::Invalid;
-    auto *structDescriptor = static_cast<const lyo1::StructDescriptor *>(m_structDescriptor);
-    if (structDescriptor->members() == nullptr)
-        return AddressType::Invalid;
-    if (structDescriptor->members()->size() <= m_fieldOffset)
-        return AddressType::Invalid;
-    return GET_ADDRESS_TYPE(structDescriptor->members()->Get(m_fieldOffset));
-}
-
-lyric_object::FieldWalker
-lyric_object::StructMember::getNearField() const
-{
-    if (!isValid())
-        return {};
-    auto *structDescriptor = static_cast<const lyo1::StructDescriptor *>(m_structDescriptor);
-    if (structDescriptor->members() == nullptr)
-        return {};
-    if (structDescriptor->members()->size() <= m_fieldOffset)
-        return {};
-    return FieldWalker(m_reader, GET_DESCRIPTOR_OFFSET(structDescriptor->members()->Get(m_fieldOffset)));
-}
-
-lyric_object::LinkWalker
-lyric_object::StructMember::getFarField() const
-{
-    if (!isValid())
-        return {};
-    auto *structDescriptor = static_cast<const lyo1::StructDescriptor *>(m_structDescriptor);
-    if (structDescriptor->members() == nullptr)
-        return {};
-    if (structDescriptor->members()->size() <= m_fieldOffset)
-        return {};
-    return LinkWalker(m_reader, GET_LINK_OFFSET(structDescriptor->members()->Get(m_fieldOffset)));
-}
-
-lyric_object::StructMethod::StructMethod()
-    : m_structDescriptor(nullptr)
-{
-}
-
-lyric_object::StructMethod::StructMethod(
-    std::shared_ptr<const internal::ObjectReader> reader,
-    void *structDescriptor,
-    tu_uint8 callOffset)
-    : m_reader(reader),
-      m_structDescriptor(structDescriptor),
-      m_callOffset(callOffset)
-{
-    TU_ASSERT (m_reader != nullptr);
-    TU_ASSERT (m_structDescriptor != nullptr);
-}
-
-lyric_object::StructMethod::StructMethod(const StructMethod &other)
-    : m_reader(other.m_reader),
-      m_structDescriptor(other.m_structDescriptor),
-      m_callOffset(other.m_callOffset)
-{
-}
-
-bool
-lyric_object::StructMethod::isValid() const
-{
-    return m_reader && m_reader->isValid() && m_structDescriptor;
-}
-
-lyric_object::AddressType
-lyric_object::StructMethod::methodAddressType() const
-{
-    if (!isValid())
-        return AddressType::Invalid;
-    auto *structDescriptor = static_cast<const lyo1::StructDescriptor *>(m_structDescriptor);
-    if (structDescriptor->methods() == nullptr)
-        return AddressType::Invalid;
-    if (structDescriptor->methods()->size() <= m_callOffset)
-        return AddressType::Invalid;
-    return GET_ADDRESS_TYPE(structDescriptor->methods()->Get(m_callOffset));
-}
-
-lyric_object::CallWalker
-lyric_object::StructMethod::getNearCall() const
-{
-    if (!isValid())
-        return {};
-    auto *structDescriptor = static_cast<const lyo1::StructDescriptor *>(m_structDescriptor);
-    if (structDescriptor->methods() == nullptr)
-        return {};
-    if (structDescriptor->methods()->size() <= m_callOffset)
-        return {};
-    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(structDescriptor->methods()->Get(m_callOffset)));
-}
-
-lyric_object::LinkWalker
-lyric_object::StructMethod::getFarCall() const
-{
-    if (!isValid())
-        return {};
-    auto *structDescriptor = static_cast<const lyo1::StructDescriptor *>(m_structDescriptor);
-    if (structDescriptor->methods() == nullptr)
-        return {};
-    if (structDescriptor->methods()->size() <= m_callOffset)
-        return {};
-    return LinkWalker(m_reader, GET_LINK_OFFSET(structDescriptor->methods()->Get(m_callOffset)));
-}
-
 lyric_object::StructWalker::StructWalker()
     : m_structOffset(INVALID_ADDRESS_U32)
 {
@@ -312,7 +174,7 @@ lyric_object::StructWalker::numMembers() const
     return structDescriptor->members()->size();
 }
 
-lyric_object::StructMember
+lyric_object::FieldWalker
 lyric_object::StructWalker::getMember(tu_uint8 index) const
 {
     if (!isValid())
@@ -324,7 +186,7 @@ lyric_object::StructWalker::getMember(tu_uint8 index) const
         return {};
     if (structDescriptor->members()->size() <= index)
         return {};
-    return StructMember(m_reader, (void *) structDescriptor, index);
+    return FieldWalker(m_reader, GET_DESCRIPTOR_OFFSET(structDescriptor->members()->Get(index)));
 }
 
 tu_uint8
@@ -340,7 +202,7 @@ lyric_object::StructWalker::numMethods() const
     return structDescriptor->methods()->size();
 }
 
-lyric_object::StructMethod
+lyric_object::CallWalker
 lyric_object::StructWalker::getMethod(tu_uint8 index) const
 {
     if (!isValid())
@@ -352,7 +214,7 @@ lyric_object::StructWalker::getMethod(tu_uint8 index) const
         return {};
     if (structDescriptor->methods()->size() <= index)
         return {};
-    return StructMethod(m_reader, (void *) structDescriptor, index);
+    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(structDescriptor->methods()->Get(index)));
 }
 
 tu_uint8

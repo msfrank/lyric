@@ -17,58 +17,6 @@ namespace lyric_object {
     /**
      *
      */
-    class EnumMember {
-    public:
-        EnumMember();
-        EnumMember(const EnumMember &other);
-
-        bool isValid() const;
-        AddressType memberAddressType() const;
-        FieldWalker getNearField() const;
-        LinkWalker getFarField() const;
-
-    private:
-        std::shared_ptr<const internal::ObjectReader> m_reader;
-        void *m_enumDescriptor;
-        tu_uint8 m_fieldOffset;
-
-        EnumMember(
-            std::shared_ptr<const internal::ObjectReader> reader,
-            void *enumDescriptor,
-            tu_uint8 fieldOffset);
-
-        friend class EnumWalker;
-    };
-
-    /**
-     *
-     */
-    class EnumMethod {
-    public:
-        EnumMethod();
-        EnumMethod(const EnumMethod &other);
-
-        bool isValid() const;
-        AddressType methodAddressType() const;
-        CallWalker getNearCall() const;
-        LinkWalker getFarCall() const;
-
-    private:
-        std::shared_ptr<const internal::ObjectReader> m_reader;
-        void *m_enumDescriptor;
-        tu_uint8 m_callOffset;
-
-        EnumMethod(
-            std::shared_ptr<const internal::ObjectReader> reader,
-            void *enumDescriptor,
-            tu_uint8 callOffset);
-
-        friend class EnumWalker;
-    };
-
-    /**
-     *
-     */
     class EnumWalker {
     public:
         EnumWalker();
@@ -93,10 +41,10 @@ namespace lyric_object {
         LinkWalker getFarSuperEnum() const;
 
         tu_uint8 numMembers() const;
-        EnumMember getMember(tu_uint8 index) const;
+        FieldWalker getMember(tu_uint8 index) const;
 
         tu_uint8 numMethods() const;
-        EnumMethod getMethod(tu_uint8 index) const;
+        CallWalker getMethod(tu_uint8 index) const;
 
         tu_uint8 numImpls() const;
         ImplWalker getImpl(tu_uint8 index) const;

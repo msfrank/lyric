@@ -74,21 +74,13 @@ lyric_runtime::internal::get_struct_virtual_table(
 
     for (tu_uint8 i = 0; i < structDescriptor.numMembers(); i++) {
         auto member = structDescriptor.getMember(i);
-
-        tu_uint32 fieldAddress;
-
-        switch (member.memberAddressType()) {
-            case lyric_object::AddressType::Far:
-                fieldAddress = member.getFarField().getLinkAddress();
-                break;
-            case lyric_object::AddressType::Near:
-                fieldAddress = member.getNearField().getDescriptorOffset();
-                break;
-            default:
-                status = InterpreterStatus::forCondition(
-                    InterpreterCondition::kRuntimeInvariant, "invalid struct member linkage");
-                return nullptr;
+        if (!member.isValid()) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid struct member linkage");
+            return nullptr;
         }
+
+        tu_uint32 fieldAddress = member.getDescriptorOffset();
 
         auto structField = resolve_descriptor(structSegment,
             lyric_object::LinkageSection::Field,
@@ -107,19 +99,11 @@ lyric_runtime::internal::get_struct_virtual_table(
     for (tu_uint8 i = 0; i < structDescriptor.numMethods(); i++) {
         auto method = structDescriptor.getMethod(i);
 
-        tu_uint32 callAddress;
-
-        switch (method.methodAddressType()) {
-            case lyric_object::AddressType::Far:
-                callAddress = method.getFarCall().getLinkAddress();
-                break;
-            case lyric_object::AddressType::Near:
-                callAddress = method.getNearCall().getDescriptorOffset();
-                break;
-            default:
-                status = InterpreterStatus::forCondition(
-                    InterpreterCondition::kRuntimeInvariant, "invalid struct method linkage");
-                return nullptr;
+        tu_uint32 callAddress = method.getDescriptorOffset();
+        if (!method.isValid() || callAddress == INVALID_ADDRESS_U32) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid struct method linkage");
+            return nullptr;
         }
 
         auto structCall = resolve_descriptor(structSegment,
@@ -135,6 +119,29 @@ lyric_runtime::internal::get_struct_virtual_table(
         auto returnsValue = !call.isNoReturn();
 
         methods.try_emplace(structCall, callSegment, callIndex, procOffset, returnsValue);
+
+        // check for existence of a virtual call
+        tu_uint32 virtualAddress = INVALID_ADDRESS_U32;
+        switch (method.virtualCallAddressType()) {
+            case lyric_object::AddressType::Far:
+                virtualAddress = method.getFarVirtualCall().getLinkAddress();
+                break;
+            case lyric_object::AddressType::Near:
+                virtualAddress = method.getNearVirtualCall().getDescriptorOffset();
+                break;
+            default:
+                break;
+        }
+
+        // if virtual call exists then add key for the virtual call as well
+        if (virtualAddress != INVALID_ADDRESS_U32) {
+            auto structVirtual = resolve_descriptor(structSegment,
+                lyric_object::LinkageSection::Call,
+                virtualAddress, segmentManagerData, status);
+            if (status.notOk())
+                return nullptr;
+            methods.try_emplace(structVirtual, callSegment, callIndex, procOffset, returnsValue);
+        }
     }
 
     // resolve extensions for each impl

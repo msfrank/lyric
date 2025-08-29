@@ -65,7 +65,7 @@ TEST_F(AnalyzeEnum, DeclareEnumWithExplicitInit)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
 
     ASSERT_EQ (1, enum0.numMembers());
-    auto field0 = enum0.getMember(0).getNearField();
+    auto field0 = enum0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
@@ -130,7 +130,7 @@ TEST_F(AnalyzeEnum, DeclareEnumMemberVal)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
 
     ASSERT_EQ (1, enum0.numMembers());
-    auto field0 = enum0.getMember(0).getNearField();
+    auto field0 = enum0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
@@ -162,8 +162,7 @@ TEST_F(AnalyzeEnum, DeclareEnumMethod)
     absl::flat_hash_map<std::string,lyric_object::CallWalker> enumMethods;
     for (int i = 0; i < enum0.numMethods(); i++) {
         auto method = enum0.getMethod(i);
-        auto call = method.getNearCall();
-        enumMethods[call.getSymbolPath().getName()] = call;
+        enumMethods[method.getSymbolPath().getName()] = method;
     }
 
     ASSERT_TRUE (enumMethods.contains("Identity"));

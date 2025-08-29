@@ -65,7 +65,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceWithExplicitInit)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), instance0.getSymbolPath());
 
     ASSERT_EQ (1, instance0.numMembers());
-    auto field0 = instance0.getMember(0).getNearField();
+    auto field0 = instance0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
@@ -95,7 +95,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceMemberVal)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), instance0.getSymbolPath());
 
     ASSERT_EQ (1, instance0.numMembers());
-    auto field0 = instance0.getMember(0).getNearField();
+    auto field0 = instance0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
@@ -124,7 +124,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceMemberVar)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), instance0.getSymbolPath());
 
     ASSERT_EQ (1, instance0.numMembers());
-    auto field0 = instance0.getMember(0).getNearField();
+    auto field0 = instance0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
@@ -156,8 +156,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceMethod)
     absl::flat_hash_map<std::string,lyric_object::CallWalker> instanceMethods;
     for (int i = 0; i < instance0.numMethods(); i++) {
         auto method = instance0.getMethod(i);
-        auto call = method.getNearCall();
-        instanceMethods[call.getSymbolPath().getName()] = call;
+        instanceMethods[method.getSymbolPath().getName()] = method;
     }
 
     ASSERT_TRUE (instanceMethods.contains("Identity"));

@@ -98,13 +98,13 @@ lyric_runtime::internal::get_class_virtual_table(
 
     for (tu_uint8 i = 0; i < classDescriptor.numMethods(); i++) {
         auto method = classDescriptor.getMethod(i);
-        if (!method.isValid()) {
+
+        tu_uint32 callAddress = method.getDescriptorOffset();
+        if (!method.isValid() || callAddress == INVALID_ADDRESS_U32) {
             status = InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "invalid class method linkage");
             return nullptr;
         }
-
-        tu_uint32 callAddress = method.getDescriptorOffset();
 
         auto classCall = resolve_descriptor(classSegment,
             lyric_object::LinkageSection::Call,

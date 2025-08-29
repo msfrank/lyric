@@ -248,51 +248,48 @@ lyric_importer::EnumImport::load()
 
     for (tu_uint8 i = 0; i < enumWalker.numMembers(); i++) {
         auto member = enumWalker.getMember(i);
-        lyric_common::SymbolUrl fieldUrl;
-        switch (member.memberAddressType()) {
-            case lyric_object::AddressType::Near:
-                fieldUrl = lyric_common::SymbolUrl(objectLocation, member.getNearField().getSymbolPath());
-                break;
-            case lyric_object::AddressType::Far:
-                fieldUrl = member.getFarField().getLinkUrl(objectLocation);
-                break;
-            default:
-                throw tempo_utils::StatusException(
-                    ImporterStatus::forCondition(
-                        ImporterCondition::kImportError,
-                        "cannot import enum at index {} in module {}; invalid member at index {}",
-                        m_enumOffset, objectLocation.toString(), i));
+        if (!member.isValid()) {
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import enum at index {} in module {}; invalid member at index {}",
+                    m_enumOffset, objectLocation.toString(), i));
         }
+
+        lyric_common::SymbolUrl fieldUrl(objectLocation, member.getSymbolPath());
+
         auto name = fieldUrl.getSymbolName();
         priv->members[name] = fieldUrl;
     }
 
     for (tu_uint8 i = 0; i < enumWalker.numMethods(); i++) {
         auto method = enumWalker.getMethod(i);
-        lyric_common::SymbolUrl callUrl;
-        switch (method.methodAddressType()) {
-            case lyric_object::AddressType::Near:
-                callUrl = lyric_common::SymbolUrl(objectLocation, method.getNearCall().getSymbolPath());
-                break;
-            case lyric_object::AddressType::Far:
-                callUrl = method.getFarCall().getLinkUrl(objectLocation);
-                break;
-            default:
-                throw tempo_utils::StatusException(
-                    ImporterStatus::forCondition(
-                        ImporterCondition::kImportError,
-                        "cannot import enum at index {} in module {}; invalid method at index {}",
-                        m_enumOffset, objectLocation.toString(), i));
+        if (!method.isValid()) {
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import enum at index {} in module {}; invalid method at index {}",
+                    m_enumOffset, objectLocation.toString(), i));
         }
+
+        lyric_common::SymbolUrl callUrl(objectLocation, method.getSymbolPath());
+
         auto name = callUrl.getSymbolName();
         priv->methods[name] = callUrl;
     }
 
     for (tu_uint8 i = 0; i < enumWalker.numImpls(); i++) {
-        auto implWalker = enumWalker.getImpl(i);
+        auto impl = enumWalker.getImpl(i);
+        if (!impl.isValid()) {
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import enum at index {} in module {}; invalid impl at index {}",
+                    m_enumOffset, objectLocation.toString(), i));
+        }
 
-        auto *implType = moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
-        auto *implImport = moduleImport->getImpl(implWalker.getDescriptorOffset());
+        auto *implType = moduleImport->getType(impl.getImplType().getDescriptorOffset());
+        auto *implImport = moduleImport->getImpl(impl.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 

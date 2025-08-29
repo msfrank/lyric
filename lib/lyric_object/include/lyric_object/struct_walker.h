@@ -17,58 +17,6 @@ namespace lyric_object {
     /**
      *
      */
-    class StructMember {
-    public:
-        StructMember();
-        StructMember(const StructMember &other);
-
-        bool isValid() const;
-        AddressType memberAddressType() const;
-        FieldWalker getNearField() const;
-        LinkWalker getFarField() const;
-
-    private:
-        std::shared_ptr<const internal::ObjectReader> m_reader;
-        void *m_structDescriptor;
-        tu_uint8 m_fieldOffset;
-
-        StructMember(
-            std::shared_ptr<const internal::ObjectReader> reader,
-            void *structDescriptor,
-            tu_uint8 fieldOffset);
-
-        friend class StructWalker;
-    };
-
-    /**
-     *
-     */
-    class StructMethod {
-    public:
-        StructMethod();
-        StructMethod(const StructMethod &other);
-
-        bool isValid() const;
-        AddressType methodAddressType() const;
-        CallWalker getNearCall() const;
-        LinkWalker getFarCall() const;
-
-    private:
-        std::shared_ptr<const internal::ObjectReader> m_reader;
-        void *m_structDescriptor;
-        tu_uint8 m_callOffset;
-
-        StructMethod(
-            std::shared_ptr<const internal::ObjectReader> reader,
-            void *structDescriptor,
-            tu_uint8 callOffset);
-
-        friend class StructWalker;
-    };
-
-    /**
-     *
-     */
     class StructWalker {
     public:
         StructWalker();
@@ -93,10 +41,10 @@ namespace lyric_object {
         LinkWalker getFarSuperStruct() const;
 
         tu_uint8 numMembers() const;
-        StructMember getMember(tu_uint8 index) const;
+        FieldWalker getMember(tu_uint8 index) const;
 
         tu_uint8 numMethods() const;
-        StructMethod getMethod(tu_uint8 index) const;
+        CallWalker getMethod(tu_uint8 index) const;
 
         tu_uint8 numImpls() const;
         ImplWalker getImpl(tu_uint8 index) const;

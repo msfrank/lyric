@@ -41,10 +41,10 @@ namespace lyric_object {
         FieldWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 fieldOffset);
 
         friend class ClassWalker;
-        friend class EnumMember;
-        friend class InstanceMember;
+        friend class EnumWalker;
+        friend class InstanceWalker;
         friend class ObjectWalker;
-        friend class StructMember;
+        friend class StructWalker;
     };
 }
 

@@ -61,7 +61,7 @@ TEST_F(AnalyzeStruct, DeclareStructMemberVal)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), struct0.getSymbolPath());
 
     ASSERT_EQ (1, struct0.numMembers());
-    auto field0 = struct0.getMember(0).getNearField();
+    auto field0 = struct0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
@@ -93,8 +93,7 @@ TEST_F(AnalyzeStruct, DeclareStructMethod)
     absl::flat_hash_map<std::string,lyric_object::CallWalker> structMethods;
     for (int i = 0; i < struct0.numMethods(); i++) {
         auto method = struct0.getMethod(i);
-        auto call = method.getNearCall();
-        structMethods[call.getSymbolPath().getName()] = call;
+        structMethods[method.getSymbolPath().getName()] = method;
     }
 
     ASSERT_TRUE (structMethods.contains("Identity"));
