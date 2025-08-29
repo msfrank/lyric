@@ -9,148 +9,6 @@
 #include <lyric_object/template_walker.h>
 #include <lyric_object/type_walker.h>
 
-lyric_object::ClassMember::ClassMember()
-    : m_classDescriptor(nullptr),
-      m_fieldOffset(INVALID_OFFSET_U8)
-{
-}
-
-lyric_object::ClassMember::ClassMember(
-    std::shared_ptr<const internal::ObjectReader> reader,
-    void *classDescriptor,
-    tu_uint8 fieldOffset)
-    : m_reader(std::move(reader)),
-      m_classDescriptor(classDescriptor),
-      m_fieldOffset(fieldOffset)
-{
-    TU_ASSERT (m_reader != nullptr);
-    TU_ASSERT (m_classDescriptor != nullptr);
-    TU_ASSERT (m_fieldOffset != INVALID_OFFSET_U8);
-}
-
-lyric_object::ClassMember::ClassMember(const ClassMember &other)
-    : m_reader(other.m_reader),
-      m_classDescriptor(other.m_classDescriptor),
-      m_fieldOffset(other.m_fieldOffset)
-{
-}
-
-bool
-lyric_object::ClassMember::isValid() const
-{
-    return m_reader && m_reader->isValid() && m_classDescriptor;
-}
-
-lyric_object::AddressType
-lyric_object::ClassMember::memberAddressType() const
-{
-    if (!isValid())
-        return AddressType::Invalid;
-    auto *classDescriptor = static_cast<const lyo1::ClassDescriptor *>(m_classDescriptor);
-    if (classDescriptor->members() == nullptr)
-        return AddressType::Invalid;
-    if (classDescriptor->members()->size() <= m_fieldOffset)
-        return AddressType::Invalid;
-    return GET_ADDRESS_TYPE(classDescriptor->members()->Get(m_fieldOffset));
-}
-
-lyric_object::FieldWalker
-lyric_object::ClassMember::getNearField() const
-{
-    if (!isValid())
-        return {};
-    auto *classDescriptor = static_cast<const lyo1::ClassDescriptor *>(m_classDescriptor);
-    if (classDescriptor->members() == nullptr)
-        return {};
-    if (classDescriptor->members()->size() <= m_fieldOffset)
-        return {};
-    return FieldWalker(m_reader, GET_DESCRIPTOR_OFFSET(classDescriptor->members()->Get(m_fieldOffset)));
-}
-
-lyric_object::LinkWalker
-lyric_object::ClassMember::getFarField() const
-{
-    if (!isValid())
-        return {};
-    auto *classDescriptor = static_cast<const lyo1::ClassDescriptor *>(m_classDescriptor);
-    if (classDescriptor->members() == nullptr)
-        return {};
-    if (classDescriptor->members()->size() <= m_fieldOffset)
-        return {};
-    return LinkWalker(m_reader, GET_LINK_OFFSET(classDescriptor->members()->Get(m_fieldOffset)));
-}
-
-lyric_object::ClassMethod::ClassMethod()
-    : m_classDescriptor(nullptr),
-      m_callOffset(INVALID_OFFSET_U8)
-{
-}
-
-lyric_object::ClassMethod::ClassMethod(
-    std::shared_ptr<const internal::ObjectReader> reader,
-    void *classDescriptor,
-    tu_uint8 callOffset)
-    : m_reader(std::move(reader)),
-      m_classDescriptor(classDescriptor),
-      m_callOffset(callOffset)
-{
-    TU_ASSERT (m_reader != nullptr);
-    TU_ASSERT (m_classDescriptor != nullptr);
-    TU_ASSERT (m_callOffset != INVALID_OFFSET_U8);
-}
-
-lyric_object::ClassMethod::ClassMethod(const ClassMethod &other)
-    : m_reader(other.m_reader),
-      m_classDescriptor(other.m_classDescriptor),
-      m_callOffset(other.m_callOffset)
-{
-}
-
-bool
-lyric_object::ClassMethod::isValid() const
-{
-    return m_reader && m_reader->isValid() && m_classDescriptor;
-}
-
-lyric_object::AddressType
-lyric_object::ClassMethod::methodAddressType() const
-{
-    if (!isValid())
-        return AddressType::Invalid;
-    auto *classDescriptor = static_cast<const lyo1::ClassDescriptor *>(m_classDescriptor);
-    if (classDescriptor->methods() == nullptr)
-        return AddressType::Invalid;
-    if (classDescriptor->methods()->size() <= m_callOffset)
-        return AddressType::Invalid;
-    return GET_ADDRESS_TYPE(classDescriptor->methods()->Get(m_callOffset));
-}
-
-lyric_object::CallWalker
-lyric_object::ClassMethod::getNearCall() const
-{
-    if (!isValid())
-        return {};
-    auto *classDescriptor = static_cast<const lyo1::ClassDescriptor *>(m_classDescriptor);
-    if (classDescriptor->methods() == nullptr)
-        return {};
-    if (classDescriptor->methods()->size() <= m_callOffset)
-        return {};
-    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(classDescriptor->methods()->Get(m_callOffset)));
-}
-
-lyric_object::LinkWalker
-lyric_object::ClassMethod::getFarCall() const
-{
-    if (!isValid())
-        return {};
-    auto *classDescriptor = static_cast<const lyo1::ClassDescriptor *>(m_classDescriptor);
-    if (classDescriptor->methods() == nullptr)
-        return {};
-    if (classDescriptor->methods()->size() <= m_callOffset)
-        return {};
-    return LinkWalker(m_reader, GET_LINK_OFFSET(classDescriptor->methods()->Get(m_callOffset)));
-}
-
 lyric_object::ClassWalker::ClassWalker()
     : m_classOffset(INVALID_ADDRESS_U32)
 {
@@ -341,7 +199,7 @@ lyric_object::ClassWalker::numMembers() const
     return classDescriptor->members()->size();
 }
 
-lyric_object::ClassMember
+lyric_object::FieldWalker
 lyric_object::ClassWalker::getMember(tu_uint8 index) const
 {
     if (!isValid())
@@ -353,7 +211,7 @@ lyric_object::ClassWalker::getMember(tu_uint8 index) const
         return {};
     if (classDescriptor->members()->size() <= index)
         return {};
-    return ClassMember(m_reader, (void *) classDescriptor, index);
+    return FieldWalker(m_reader, GET_DESCRIPTOR_OFFSET(classDescriptor->members()->Get(index)));
 }
 
 tu_uint8
@@ -369,7 +227,7 @@ lyric_object::ClassWalker::numMethods() const
     return classDescriptor->methods()->size();
 }
 
-lyric_object::ClassMethod
+lyric_object::CallWalker
 lyric_object::ClassWalker::getMethod(tu_uint8 index) const
 {
     if (!isValid())
@@ -381,7 +239,7 @@ lyric_object::ClassWalker::getMethod(tu_uint8 index) const
         return {};
     if (classDescriptor->methods()->size() <= index)
         return {};
-    return ClassMethod(m_reader, (void *) classDescriptor, index);
+    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(classDescriptor->methods()->Get(index)));
 }
 
 tu_uint8

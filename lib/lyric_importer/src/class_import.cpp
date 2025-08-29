@@ -264,42 +264,32 @@ lyric_importer::ClassImport::load()
 
     for (tu_uint8 i = 0; i < classWalker.numMembers(); i++) {
         auto member = classWalker.getMember(i);
-        lyric_common::SymbolUrl fieldUrl;
-        switch (member.memberAddressType()) {
-            case lyric_object::AddressType::Near:
-                fieldUrl = lyric_common::SymbolUrl(objectLocation, member.getNearField().getSymbolPath());
-                break;
-            case lyric_object::AddressType::Far:
-                fieldUrl = member.getFarField().getLinkUrl(objectLocation);
-                break;
-            default:
-                throw tempo_utils::StatusException(
-                    ImporterStatus::forCondition(
-                        ImporterCondition::kImportError,
-                        "cannot import class at index {} in module {}; invalid member at index {}",
-                        m_classOffset, objectLocation.toString(), i));
+        if (!member.isValid()) {
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import class at index {} in module {}; invalid member at index {}",
+                    m_classOffset, objectLocation.toString(), i));
         }
+
+        lyric_common::SymbolUrl fieldUrl(objectLocation, member.getSymbolPath());
+
         auto name = fieldUrl.getSymbolName();
         priv->members[name] = fieldUrl;
     }
 
     for (tu_uint8 i = 0; i < classWalker.numMethods(); i++) {
         auto method = classWalker.getMethod(i);
-        lyric_common::SymbolUrl callUrl;
-        switch (method.methodAddressType()) {
-            case lyric_object::AddressType::Near:
-                callUrl = lyric_common::SymbolUrl(objectLocation, method.getNearCall().getSymbolPath());
-                break;
-            case lyric_object::AddressType::Far:
-                callUrl = method.getFarCall().getLinkUrl(objectLocation);
-                break;
-            default:
-                throw tempo_utils::StatusException(
-                    ImporterStatus::forCondition(
-                        ImporterCondition::kImportError,
-                        "cannot import class at index {} in module {}; invalid method at index {}",
-                        m_classOffset, objectLocation.toString(), i));
+        if (!method.isValid()) {
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import class at index {} in module {}; invalid method at index {}",
+                    m_classOffset, objectLocation.toString(), i));
         }
+
+        lyric_common::SymbolUrl callUrl(objectLocation, method.getSymbolPath());
+
         auto name = callUrl.getSymbolName();
         priv->methods[name] = callUrl;
     }

@@ -74,21 +74,13 @@ lyric_runtime::internal::get_class_virtual_table(
 
     for (tu_uint8 i = 0; i < classDescriptor.numMembers(); i++) {
         auto member = classDescriptor.getMember(i);
-
-        tu_uint32 fieldAddress;
-
-        switch (member.memberAddressType()) {
-            case lyric_object::AddressType::Far:
-                fieldAddress = member.getFarField().getLinkAddress();
-                break;
-            case lyric_object::AddressType::Near:
-                fieldAddress = member.getNearField().getDescriptorOffset();
-                break;
-            default:
-                status = InterpreterStatus::forCondition(
-                    InterpreterCondition::kRuntimeInvariant, "invalid class member linkage");
-                return nullptr;
+        if (!member.isValid()) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid class member linkage");
+            return nullptr;
         }
+
+        tu_uint32 fieldAddress = member.getDescriptorOffset();
 
         auto classField = resolve_descriptor(classSegment,
             lyric_object::LinkageSection::Field,
@@ -106,21 +98,13 @@ lyric_runtime::internal::get_class_virtual_table(
 
     for (tu_uint8 i = 0; i < classDescriptor.numMethods(); i++) {
         auto method = classDescriptor.getMethod(i);
-
-        tu_uint32 callAddress;
-
-        switch (method.methodAddressType()) {
-            case lyric_object::AddressType::Far:
-                callAddress = method.getFarCall().getLinkAddress();
-                break;
-            case lyric_object::AddressType::Near:
-                callAddress = method.getNearCall().getDescriptorOffset();
-                break;
-            default:
-                status = InterpreterStatus::forCondition(
-                    InterpreterCondition::kRuntimeInvariant, "invalid class method linkage");
-                return nullptr;
+        if (!method.isValid()) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid class method linkage");
+            return nullptr;
         }
+
+        tu_uint32 callAddress = method.getDescriptorOffset();
 
         auto classCall = resolve_descriptor(classSegment,
             lyric_object::LinkageSection::Call,
@@ -135,6 +119,29 @@ lyric_runtime::internal::get_class_virtual_table(
         auto returnsValue = !call.isNoReturn();
 
         methods.try_emplace(classCall, callSegment, callIndex, procOffset, returnsValue);
+
+        // check for existence of a virtual call
+        tu_uint32 virtualAddress = INVALID_ADDRESS_U32;
+        switch (method.virtualCallAddressType()) {
+            case lyric_object::AddressType::Far:
+                virtualAddress = method.getFarVirtualCall().getLinkAddress();
+                break;
+            case lyric_object::AddressType::Near:
+                virtualAddress = method.getNearVirtualCall().getDescriptorOffset();
+                break;
+            default:
+                break;
+        }
+
+        // if virtual call exists then add key for the virtual call as well
+        if (virtualAddress != INVALID_ADDRESS_U32) {
+            auto classVirtual = resolve_descriptor(classSegment,
+                lyric_object::LinkageSection::Call,
+                virtualAddress, segmentManagerData, status);
+            if (status.notOk())
+                return nullptr;
+            methods.try_emplace(classVirtual, callSegment, callIndex, procOffset, returnsValue);
+        }
     }
 
     // resolve extensions for each impl

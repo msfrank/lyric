@@ -269,9 +269,9 @@ lyric_assembler::ClassSymbol::numMembers() const
     return static_cast<tu_uint32>(priv->members.size());
 }
 
-static const lyric_assembler::AbstractSymbol *
+static lyric_assembler::AbstractSymbol *
 find_existing_or_overridden_class_binding(
-    const lyric_assembler::ClassSymbol *classSymbol,
+    lyric_assembler::ClassSymbol *classSymbol,
     const std::string &name)
 {
     // if class contains the named binding then return the ClassSymbol pointer
@@ -561,23 +561,24 @@ lyric_assembler::ClassSymbol::declareMethod(
     if (existingOrOverridden == this)
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "{} already defined for class {}", name, m_classUrl.toString());
+
+    // determine the virtual call if it exists
+    CallSymbol *virtualCall = nullptr;
     if (existingOrOverridden != nullptr) {
-        switch (existingOrOverridden->getSymbolType()) {
-            case SymbolType::ACTION:
-                break;
-            case SymbolType::CALL: {
-                auto *callSymbol = cast_symbol_to_call(existingOrOverridden);
-                if (callSymbol->isFinal())
-                    return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-                        "final method {} cannot be overridden by class {}",
-                        existingOrOverridden->getSymbolUrl().toString(), m_classUrl.toString());
-                break;
-            }
-            default:
-                return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-                    "{} cannot be overridden by class {}",
-                    existingOrOverridden->getSymbolUrl().toString(), m_classUrl.toString());
-        }
+        if (existingOrOverridden->getSymbolType() != SymbolType::CALL)
+            return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                "{} cannot be overridden by class {}",
+                existingOrOverridden->getSymbolUrl().toString(), m_classUrl.toString());
+        virtualCall = cast_symbol_to_call(existingOrOverridden);
+
+        if (virtualCall->isFinal())
+            return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                "final method {} cannot be overridden by class {}",
+                existingOrOverridden->getSymbolUrl().toString(), m_classUrl.toString());
+        if (dispatch == DispatchType::Abstract)
+            return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                "{} cannot be overridden by abstract method",
+                existingOrOverridden->getSymbolUrl().toString());
     }
 
     // build reference path to function
@@ -604,12 +605,23 @@ lyric_assembler::ClassSymbol::declareMethod(
     // construct call symbol
     std::unique_ptr<CallSymbol> callSymbol;
     if (methodTemplate != nullptr) {
-        callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden,
-            callMode, isFinal, methodTemplate, priv->isDeclOnly,
-            priv->classBlock.get(), m_state);
+        if (virtualCall != nullptr) {
+            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden,
+                virtualCall, isFinal, methodTemplate, priv->isDeclOnly,
+                priv->classBlock.get(), m_state);
+        } else {
+            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden,
+                callMode, isFinal, methodTemplate, priv->isDeclOnly,
+                priv->classBlock.get(), m_state);
+        }
     } else {
-        callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, callMode,
-            isFinal, priv->isDeclOnly, priv->classBlock.get(), m_state);
+        if (virtualCall != nullptr) {
+            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, virtualCall,
+                isFinal, priv->isDeclOnly, priv->classBlock.get(), m_state);
+        } else {
+            callSymbol = std::make_unique<CallSymbol>(methodUrl, m_classUrl, isHidden, callMode,
+                isFinal, priv->isDeclOnly, priv->classBlock.get(), m_state);
+        }
     }
 
     CallSymbol *callPtr;

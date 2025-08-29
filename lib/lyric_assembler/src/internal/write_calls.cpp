@@ -181,7 +181,8 @@ write_call(
     tu_uint32 virtualCallIndex = lyric_object::INVALID_ADDRESS_U32;
     auto *virtualCall = callSymbol->virtualCall();
     if (virtualCall != nullptr) {
-        TU_ASSIGN_OR_RETURN (virtualCallIndex, writer.getSymbolAddress(virtualCall->getSymbolUrl()));
+        TU_ASSIGN_OR_RETURN (virtualCallIndex, writer.getSectionAddress(
+            virtualCall->getSymbolUrl(), lyric_object::LinkageSection::Call));
     }
 
     switch (callSymbol->getMode()) {

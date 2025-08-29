@@ -1312,9 +1312,20 @@ lyric_assembler::CallInstruction::apply(
     tu_uint32 address;
 
     switch (m_opcode) {
-        case lyric_object::Opcode::OP_CALL_EXISTENTIAL:
-        case lyric_object::Opcode::OP_CALL_STATIC:
         case lyric_object::Opcode::OP_CALL_VIRTUAL: {
+            auto *callSymbol = cast_symbol_to_call(m_symbol);
+            auto *virtualCall = callSymbol->virtualCall();
+            if (virtualCall != nullptr) {
+                TU_ASSIGN_OR_RETURN (address,
+                    writer.getSectionAddress(virtualCall->getSymbolUrl(), lyric_object::LinkageSection::Call));
+            } else {
+                TU_ASSIGN_OR_RETURN (address,
+                    writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
+            }
+            break;
+        }
+        case lyric_object::Opcode::OP_CALL_EXISTENTIAL:
+        case lyric_object::Opcode::OP_CALL_STATIC: {
             TU_ASSIGN_OR_RETURN (address,
                 writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
             break;

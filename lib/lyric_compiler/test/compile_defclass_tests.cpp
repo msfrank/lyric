@@ -196,6 +196,27 @@ TEST_F(CompileDefclass, EvaluateInvokeMethodWithNoReturnType)
                      MatchesDataCellType(lyric_runtime::DataCellType::INVALID))));
 }
 
+TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseMethod)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Foo {
+            def Index(): Int {
+                1
+            }
+        }
+        defclass Bar {
+            init() from Foo() {}
+            def Index(): Int {
+                2
+            }
+        }
+        val foo: Foo = Bar{}
+        foo.Index()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
+}
+
 TEST_F(CompileDefclass, EvaluateDefGenericClass)
 {
     auto result = m_tester->runModule(R"(

@@ -18,58 +18,6 @@ namespace lyric_object {
     /**
      *
      */
-    class ClassMember {
-    public:
-        ClassMember();
-        ClassMember(const ClassMember &other);
-
-        bool isValid() const;
-        AddressType memberAddressType() const;
-        FieldWalker getNearField() const;
-        LinkWalker getFarField() const;
-
-    private:
-        std::shared_ptr<const internal::ObjectReader> m_reader;
-        void *m_classDescriptor;
-        tu_uint8 m_fieldOffset;
-
-        ClassMember(
-            std::shared_ptr<const internal::ObjectReader> reader,
-            void *classDescriptor,
-            tu_uint8 fieldOffset);
-
-        friend class ClassWalker;
-    };
-
-    /**
-     *
-     */
-    class ClassMethod {
-    public:
-        ClassMethod();
-        ClassMethod(const ClassMethod &other);
-
-        bool isValid() const;
-        AddressType methodAddressType() const;
-        CallWalker getNearCall() const;
-        LinkWalker getFarCall() const;
-
-    private:
-        std::shared_ptr<const internal::ObjectReader> m_reader;
-        void *m_classDescriptor;
-        tu_uint8 m_callOffset;
-
-        ClassMethod(
-            std::shared_ptr<const internal::ObjectReader> reader,
-            void *classDescriptor,
-            tu_uint8 callOffset);
-
-        friend class ClassWalker;
-    };
-
-    /**
-     *
-     */
     class ClassWalker {
     public:
         ClassWalker();
@@ -97,10 +45,10 @@ namespace lyric_object {
         TemplateWalker getTemplate() const;
 
         tu_uint8 numMembers() const;
-        ClassMember getMember(tu_uint8 index) const;
+        FieldWalker getMember(tu_uint8 index) const;
 
         tu_uint8 numMethods() const;
-        ClassMethod getMethod(tu_uint8 index) const;
+        CallWalker getMethod(tu_uint8 index) const;
 
         tu_uint8 numImpls() const;
         ImplWalker getImpl(tu_uint8 index) const;

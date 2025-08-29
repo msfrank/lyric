@@ -63,7 +63,7 @@ TEST_F(AnalyzeClass, DeclareClassMemberVal)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), class0.getSymbolPath());
 
     ASSERT_EQ (1, class0.numMembers());
-    auto field0 = class0.getMember(0).getNearField();
+    auto field0 = class0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
@@ -92,7 +92,7 @@ TEST_F(AnalyzeClass, DeclareClassMemberVar)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), class0.getSymbolPath());
 
     ASSERT_EQ (1, class0.numMembers());
-    auto field0 = class0.getMember(0).getNearField();
+    auto field0 = class0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
@@ -124,8 +124,7 @@ TEST_F(AnalyzeClass, DeclareClassMethod)
     absl::flat_hash_map<std::string,lyric_object::CallWalker> classMethods;
     for (int i = 0; i < class0.numMethods(); i++) {
         auto method = class0.getMethod(i);
-        auto call = method.getNearCall();
-        classMethods[call.getSymbolPath().getName()] = call;
+        classMethods[method.getSymbolPath().getName()] = method;
     }
 
     ASSERT_TRUE (classMethods.contains("Identity"));
