@@ -34,8 +34,8 @@ namespace lyric_object {
 
     public:
         LyricObject();
-        LyricObject(std::shared_ptr<const tempo_utils::ImmutableBytes> immutableBytes);
-        LyricObject(std::span<const tu_uint8> unownedBytes);
+        explicit LyricObject(std::shared_ptr<const tempo_utils::ImmutableBytes> immutableBytes);
+        explicit LyricObject(std::span<const tu_uint8> unownedBytes);
         LyricObject(const LyricObject &other);
 
         bool isValid() const;

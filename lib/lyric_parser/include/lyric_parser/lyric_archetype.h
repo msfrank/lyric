@@ -14,8 +14,8 @@ namespace lyric_parser {
 
     public:
         LyricArchetype();
-        LyricArchetype(std::shared_ptr<const tempo_utils::ImmutableBytes> immutableBytes);
-        LyricArchetype(std::span<const tu_uint8> unownedBytes);
+        explicit LyricArchetype(std::shared_ptr<const tempo_utils::ImmutableBytes> immutableBytes);
+        explicit LyricArchetype(std::span<const tu_uint8> unownedBytes);
         LyricArchetype(const LyricArchetype &other);
 
         bool isValid() const;

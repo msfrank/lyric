@@ -16,8 +16,8 @@ namespace lyric_build {
 
     public:
         LyricMetadata();
-        LyricMetadata(std::shared_ptr<const tempo_utils::ImmutableBytes> immutableBytes);
-        LyricMetadata(std::span<const tu_uint8> unownedBytes);
+        explicit LyricMetadata(std::shared_ptr<const tempo_utils::ImmutableBytes> immutableBytes);
+        explicit LyricMetadata(std::span<const tu_uint8> unownedBytes);
         LyricMetadata(const LyricMetadata &other);
 
         bool isValid() const;
