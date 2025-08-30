@@ -158,15 +158,14 @@ archive_symbols(
         for (const auto &artifactId : targetArtifacts) {
             lyric_build::LyricMetadata metadata;
             TU_ASSIGN_OR_RETURN (metadata, cache->loadMetadataFollowingLinks(artifactId));
-            auto root = metadata.getMetadata();
 
             // ignore artifact if there is no module location
-            if (!root.hasAttr(lyric_build::kLyricBuildModuleLocation))
+            if (!metadata.hasAttr(lyric_build::kLyricBuildModuleLocation))
                 continue;
 
             // get the module location
             lyric_common::ModuleLocation moduleLocation;
-            TU_RETURN_IF_NOT_OK (root.parseAttr(lyric_build::kLyricBuildModuleLocation, moduleLocation));
+            TU_RETURN_IF_NOT_OK (metadata.parseAttr(lyric_build::kLyricBuildModuleLocation, moduleLocation));
 
             // get the module content
             std::shared_ptr<const tempo_utils::ImmutableBytes> contentBytes;

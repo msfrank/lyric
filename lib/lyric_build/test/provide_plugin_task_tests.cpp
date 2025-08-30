@@ -56,9 +56,8 @@ TEST_F(ProvidePluginTask, RunSucceedsWhenProvidedExternalPluginFile)
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
     auto metadata = loadMetadataResult.getResult();
 
-    auto walker = metadata.getMetadata();
     std::string contentType;
-    walker.parseAttr(lyric_build::kLyricBuildContentType, contentType);
+    metadata.parseAttr(lyric_build::kLyricBuildContentType, contentType);
     ASSERT_EQ (lyric_common::kPluginContentType, contentType);
 
     auto loadContentResult = cache->loadContent(artifactId);

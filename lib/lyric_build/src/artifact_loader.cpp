@@ -60,9 +60,8 @@ lyric_build::ArtifactLoader::hasModule(const lyric_common::ModuleLocation &locat
     }
 
     auto metadata = loadMetadataResult.getResult();
-    auto walker = metadata.getMetadata();
     std::string contentType;
-    TU_RETURN_IF_NOT_OK (walker.parseAttr(kLyricBuildContentType, contentType));
+    TU_RETURN_IF_NOT_OK (metadata.parseAttr(kLyricBuildContentType, contentType));
     return contentType == lyric_common::kObjectContentType;
 }
 

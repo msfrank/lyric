@@ -47,9 +47,8 @@ TEST_F(ParseModuleTask, ConfigureTask)
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
     auto metadata = loadMetadataResult.getResult();
 
-    auto walker = metadata.getMetadata();
     std::string contentType;
-    walker.parseAttr(lyric_build::kLyricBuildContentType, contentType);
+    metadata.parseAttr(lyric_build::kLyricBuildContentType, contentType);
     ASSERT_EQ (lyric_common::kIntermezzoContentType, contentType);
 
     auto loadContentResult = cache->loadContent(artifactId);

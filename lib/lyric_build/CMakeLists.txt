@@ -58,7 +58,6 @@ set(LYRIC_BUILD_INCLUDES
     include/lyric_build/metadata_matcher.h
     include/lyric_build/metadata_namespace.h
     include/lyric_build/metadata_state.h
-    include/lyric_build/metadata_walker.h
     include/lyric_build/metadata_writer.h
     include/lyric_build/rocksdb_cache.h
     include/lyric_build/target_computation.h
@@ -91,7 +90,6 @@ target_sources(lyric_build PRIVATE
     src/metadata_matcher.cpp
     src/metadata_namespace.cpp
     src/metadata_state.cpp
-    src/metadata_walker.cpp
     src/metadata_writer.cpp
     src/rocksdb_cache.cpp
     src/target_computation.cpp

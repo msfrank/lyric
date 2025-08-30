@@ -71,9 +71,8 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFile)
     auto metadata = loadMetadataResult.getResult();
 
     // if contentType is not specified then it should default to application/octet-stream
-    auto walker = metadata.getMetadata();
     std::string contentType;
-    walker.parseAttr(lyric_build::kLyricBuildContentType, contentType);
+    metadata.parseAttr(lyric_build::kLyricBuildContentType, contentType);
     ASSERT_EQ ("application/octet-stream", contentType);
 
     auto loadContentResult = cache->loadContent(artifactId);
@@ -113,9 +112,8 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFileAndArtifactPath
     auto metadata = loadMetadataResult.getResult();
 
     // if contentType is not specified then it should default to application/octet-stream
-    auto walker = metadata.getMetadata();
     std::string contentType;
-    walker.parseAttr(lyric_build::kLyricBuildContentType, contentType);
+    metadata.parseAttr(lyric_build::kLyricBuildContentType, contentType);
     ASSERT_EQ ("application/octet-stream", contentType);
 
     auto loadContentResult = cache->loadContent(artifactId);
@@ -154,9 +152,8 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFileAndContentType)
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
     auto metadata = loadMetadataResult.getResult();
 
-    auto walker = metadata.getMetadata();
     std::string contentType;
-    walker.parseAttr(lyric_build::kLyricBuildContentType, contentType);
+    metadata.parseAttr(lyric_build::kLyricBuildContentType, contentType);
     ASSERT_EQ ("foo/bar", contentType);
 
     auto loadContentResult = cache->loadContent(artifactId);

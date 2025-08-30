@@ -139,10 +139,9 @@ lyric_build::DependencyLoader::create(
         for (const auto &artifactId : artifactsFound) {
             LyricMetadata metadata;
             TU_ASSIGN_OR_RETURN (metadata, cache->loadMetadataFollowingLinks(artifactId));
-            auto objectMetadata = metadata.getMetadata();
 
             lyric_common::ModuleLocation location;
-            TU_RETURN_IF_NOT_OK (objectMetadata.parseAttr(kLyricBuildModuleLocation, location));
+            TU_RETURN_IF_NOT_OK (metadata.parseAttr(kLyricBuildModuleLocation, location));
 
             if (!location.isValid())
                 return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
@@ -182,10 +181,9 @@ lyric_build::DependencyLoader::create(
         for (const auto &artifactId : artifactsFound) {
             LyricMetadata metadata;
             TU_ASSIGN_OR_RETURN (metadata, cache->loadMetadataFollowingLinks(artifactId));
-            auto pluginMetadata = metadata.getMetadata();
 
             lyric_common::ModuleLocation location;
-            TU_RETURN_IF_NOT_OK (pluginMetadata.parseAttr(kLyricBuildModuleLocation, location));
+            TU_RETURN_IF_NOT_OK (metadata.parseAttr(kLyricBuildModuleLocation, location));
             if (!location.isValid())
                 return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                     "invalid module location for artifact {}", artifactId.toString());

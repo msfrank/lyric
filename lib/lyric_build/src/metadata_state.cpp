@@ -20,9 +20,8 @@ lyric_build::MetadataState::load(const LyricMetadata &metadata)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "metadata state is already initialized");
 
-    auto root = metadata.getMetadata();
-    for (tu_uint32 i = 0; i < root.numAttrs(); i++) {
-        auto attr = root.getAttr(i);
+    for (tu_uint32 i = 0; i < metadata.numAttrs(); i++) {
+        auto attr = metadata.getAttr(i);
         if (!attr.second.isValid())
             return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                 "invalid metadata attr");
