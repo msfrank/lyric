@@ -23,10 +23,9 @@ TEST_F(CompileTypename, CompileTypenameResolvedToStruct)
 
     auto compileModule = compileModuleResult.getResult();
     auto object = compileModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (4, root.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
 
-    auto symbol1 = root.findSymbol(lyric_common::SymbolPath::fromString("Foo"));
+    auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Foo"));
     ASSERT_TRUE (symbol1.isValid());
     ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Struct);
     ASSERT_EQ (symbol1.getLinkageIndex(), 0);

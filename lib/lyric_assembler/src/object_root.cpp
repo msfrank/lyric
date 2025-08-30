@@ -42,7 +42,7 @@ lyric_assembler::ObjectRoot::initialize(
     std::shared_ptr<lyric_importer::ModuleImport> preludeImport;
     TU_ASSIGN_OR_RETURN (preludeImport, importCache->importModule(
         preludeLocation, ImportFlags::SystemBootstrap));
-    auto preludeObject = preludeImport->getObject().getObject();
+    auto preludeObject = preludeImport->getObject();
 
     // resolve the Namespace type
     auto namespaceType = fundamentalCache->getFundamentalType(FundamentalSymbol::Namespace);
@@ -145,7 +145,7 @@ lyric_assembler::ObjectRoot::initialize(
         std::shared_ptr<lyric_importer::ModuleImport> environmentImport;
         TU_ASSIGN_OR_RETURN (environmentImport, importCache->importModule(
             environmentLocation, ImportFlags::ApiLinkage));
-        auto environmentObject = environmentImport->getObject().getObject();
+        auto environmentObject = environmentImport->getObject();
 
         // import all environment symbols into the environment block
         for (int i = 0; i < environmentObject.numSymbols(); i++) {

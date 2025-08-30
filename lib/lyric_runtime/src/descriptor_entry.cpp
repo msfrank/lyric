@@ -41,7 +41,7 @@ lyric_runtime::DescriptorEntry::getSymbolUrl() const
 {
     auto *segment = m_descriptorTable->getSegment();
     auto objectLocation = segment->getObjectLocation();
-    auto object = segment->getObject().getObject();
+    auto object = segment->getObject();
     auto symbolPath = object.getSymbolPath(m_descriptorTable->getLinkageSection(), m_index);
     return lyric_common::SymbolUrl(objectLocation, symbolPath);
 }
@@ -83,7 +83,7 @@ lyric_runtime::DescriptorEntry *
 lyric_runtime::DescriptorTable::lookupDescriptor(tu_uint32 index)
 {
     if (m_numDescriptors == INVALID_ADDRESS_U32) {
-        auto object = m_segment->getObject().getObject();
+        auto object = m_segment->getObject();
 
         tu_uint32 numDescriptors;
         switch (m_section) {

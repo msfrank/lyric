@@ -84,7 +84,7 @@ frame_to_symbol_url(const lyric_runtime::CallCell &frame, lyric_runtime::Interpr
     if (segment == nullptr)
         return {};
     auto objectLocation = segment->getObjectLocation();
-    auto object = segment->getObject().getObject();
+    auto object = segment->getObject();
     auto call = object.getCall(frame.getCallIndex());
     if (!call.isValid())
         return {};

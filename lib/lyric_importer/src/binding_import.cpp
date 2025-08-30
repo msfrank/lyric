@@ -67,7 +67,7 @@ lyric_importer::BindingImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto bindingWalker = moduleImport->getObject().getObject().getBinding(m_bindingOffset);
+    auto bindingWalker = moduleImport->getObject().getBinding(m_bindingOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, bindingWalker.getSymbolPath());
 
     switch (bindingWalker.getAccess()) {

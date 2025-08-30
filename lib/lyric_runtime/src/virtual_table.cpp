@@ -121,7 +121,7 @@ lyric_common::SymbolUrl
 lyric_runtime::ImplTable::getSymbolUrl() const
 {
     auto objectLocation = m_segment->getObjectLocation();
-    auto object = m_segment->getObject().getObject();
+    auto object = m_segment->getObject();
 
     lyric_object::LinkageSection section;
     switch (m_descriptor.type) {
@@ -230,7 +230,7 @@ lyric_common::SymbolUrl
 lyric_runtime::ExistentialTable::getSymbolUrl() const
 {
     auto objectLocation = m_segment->getObjectLocation();
-    auto object = m_segment->getObject().getObject();
+    auto object = m_segment->getObject();
 
     lyric_object::LinkageSection section;
     switch (m_descriptor.type) {
@@ -329,7 +329,7 @@ lyric_common::SymbolUrl
 lyric_runtime::ConceptTable::getSymbolUrl() const
 {
     auto objectLocation = m_segment->getObjectLocation();
-    auto object = m_segment->getObject().getObject();
+    auto object = m_segment->getObject();
 
     lyric_object::LinkageSection section;
     switch (m_descriptor.type) {
@@ -406,7 +406,7 @@ lyric_common::SymbolUrl
 lyric_runtime::VirtualTable::getSymbolUrl() const
 {
     auto objectLocation = m_segment->getObjectLocation();
-    auto object = m_segment->getObject().getObject();
+    auto object = m_segment->getObject();
 
     lyric_object::LinkageSection section;
     switch (m_descriptor.type) {

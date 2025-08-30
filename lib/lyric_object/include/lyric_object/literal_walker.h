@@ -30,7 +30,7 @@ namespace lyric_object {
 
         LiteralWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 literalOffset);
 
-        friend class ObjectWalker;
+        friend class LyricObject;
     };
 }
 

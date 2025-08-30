@@ -162,7 +162,7 @@ lyric_importer::ExistentialImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto existentialWalker = moduleImport->getObject().getObject().getExistential(m_existentialOffset);
+    auto existentialWalker = moduleImport->getObject().getExistential(m_existentialOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, existentialWalker.getSymbolPath());
 
     priv->isDeclOnly = existentialWalker.isDeclOnly();

@@ -197,7 +197,7 @@ lyric_importer::InstanceImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto instanceWalker = moduleImport->getObject().getObject().getInstance(m_instanceOffset);
+    auto instanceWalker = moduleImport->getObject().getInstance(m_instanceOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, instanceWalker.getSymbolPath());
 
     priv->isDeclOnly = instanceWalker.isDeclOnly();

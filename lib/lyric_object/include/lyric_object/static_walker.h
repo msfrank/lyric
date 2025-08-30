@@ -39,7 +39,7 @@ namespace lyric_object {
 
         StaticWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 staticOffset);
 
-        friend class ObjectWalker;
+        friend class LyricObject;
     };
 }
 

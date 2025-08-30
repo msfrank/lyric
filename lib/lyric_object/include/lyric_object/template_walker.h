@@ -38,7 +38,7 @@ namespace lyric_object {
         friend class ClassWalker;
         friend class ConceptWalker;
         friend class ExistentialWalker;
-        friend class ObjectWalker;
+        friend class LyricObject;
         friend class PlaceholderTypeWalker;
     };
 }

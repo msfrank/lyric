@@ -24,11 +24,10 @@ TEST_F(AnalyzeStatic, DeclareStaticVal)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (3, root.numSymbols());
-    ASSERT_EQ (1, root.numStatics());
+    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (1, object.numStatics());
 
-    auto static0 = root.getStatic(0);
+    auto static0 = object.getStatic(0);
     ASSERT_EQ (lyric_common::SymbolPath({"Static"}), static0.getSymbolPath());
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), static0.getStaticType().getTypeDef());
     ASSERT_FALSE (static0.isVariable());
@@ -44,15 +43,14 @@ TEST_F(AnalyzeStatic, DeclareStaticVar)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    for (int i = 0; i < root.numSymbols(); i++) {
-        auto symbol = root.getSymbol(i);
+    for (int i = 0; i < object.numSymbols(); i++) {
+        auto symbol = object.getSymbol(i);
         TU_LOG_INFO << "symbol " << symbol.getSymbolPath().toString();
     }
-    ASSERT_EQ (3, root.numSymbols());
-    ASSERT_EQ (1, root.numStatics());
+    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (1, object.numStatics());
 
-    auto static0 = root.getStatic(0);
+    auto static0 = object.getStatic(0);
     ASSERT_TRUE (static0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Static"}), static0.getSymbolPath());
     ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), static0.getStaticType().getTypeDef());

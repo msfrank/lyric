@@ -54,8 +54,7 @@ lyric_runtime::internal::get_or_load_segment(
     }
 
     auto object = objectOption.getValue();
-    auto root = object.getObject();
-    if (!root.isValid()) {
+    if (!object.isValid()) {
         TU_LOG_V << "failed to load " << objectLocation << ": object is invalid";
         return nullptr;                                 // failed to load assembly from location
     }
@@ -63,8 +62,8 @@ lyric_runtime::internal::get_or_load_segment(
     // if module has a plugin then load it
     lyric_common::ModuleLocation pluginLocation;
     std::shared_ptr<const AbstractPlugin> plugin;
-    if (root.hasPlugin()) {
-        auto walker = root.getPlugin();
+    if (object.hasPlugin()) {
+        auto walker = object.getPlugin();
 
         pluginLocation = walker.getPluginLocation();
         if (pluginLocation.isValid()) {
@@ -137,7 +136,7 @@ lyric_runtime::internal::resolve_link(
         return linkageEntry;
 
     // get the link descriptor in the segment assembly
-    auto currentObject = sp->getObject().getObject();
+    auto currentObject = sp->getObject();
     TU_ASSERT (currentObject.isValid());
     auto currentLink = currentObject.getLink(index);
     TU_ASSERT (currentLink.isValid());
@@ -159,7 +158,7 @@ lyric_runtime::internal::resolve_link(
     }
 
     // get the symbol from the target assembly
-    const auto targetObject = segment->getObject().getObject();
+    const auto targetObject = segment->getObject();
     TU_ASSERT (targetObject.isValid());
     auto symbolPath = referenceUrl.getSymbolPath();
     TU_LOG_V << "searching for " << symbolPath << " in " << location;
@@ -251,11 +250,11 @@ lyric_runtime::internal::resolve_literal(
 {
     TU_ASSERT (sp != nullptr);
 
-    lyric_object::ObjectWalker literalObject;
+    lyric_object::LyricObject literalObject;
     tu_uint32 literalIndex;
 
     if (lyric_object::IS_NEAR(address)) {
-        literalObject = sp->getObject().getObject();
+        literalObject = sp->getObject();
         literalIndex = lyric_object::GET_DESCRIPTOR_OFFSET(address);
     } else {
         auto index = lyric_object::GET_LINK_OFFSET(address);
@@ -268,7 +267,7 @@ lyric_runtime::internal::resolve_literal(
             return {};          // wrong descriptor type
         }
         auto *segment = segmentManagerData->segments[linkage->object];
-        literalObject = segment->getObject().getObject();
+        literalObject = segment->getObject();
         literalIndex = linkage->value;
     }
 

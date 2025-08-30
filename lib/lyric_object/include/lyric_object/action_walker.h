@@ -57,7 +57,7 @@ namespace lyric_object {
         friend class ConceptAction;
         friend class ConceptWalker;
         friend class ExtensionWalker;
-        friend class ObjectWalker;
+        friend class LyricObject;
         friend class ParameterWalker;
     };
 }

@@ -153,12 +153,10 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
     TU_ASSIGN_OR_RETURN (symbolizeContent, cache->loadContentFollowingLinks(symbolizeArtifact));
     lyric_object::LyricObject object(symbolizeContent);
 
-    auto root = object.getObject();
-
     // check for any imports from modules in the src directory
     absl::flat_hash_set<TaskKey> analyzeTargets;
-    for (int i = 0; i < root.numImports(); i++) {
-        auto import_ = root.getImport(i);
+    for (int i = 0; i < object.numImports(); i++) {
+        auto import_ = object.getImport(i);
         auto location = import_.getImportLocation();
         if (!location.isValid())
             return BuildStatus::forCondition(BuildCondition::kTaskFailure,

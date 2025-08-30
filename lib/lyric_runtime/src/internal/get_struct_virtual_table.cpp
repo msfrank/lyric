@@ -1,4 +1,6 @@
 
+#include <lyric_object/concrete_type_walker.h>
+#include <lyric_object/extension_walker.h>
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_segment.h>
 #include <lyric_runtime/data_cell.h>
@@ -27,7 +29,7 @@ lyric_runtime::internal::get_struct_virtual_table(
 
     auto *entry = descriptor.data.descriptor;
     auto *structSegment = entry->getSegment();
-    auto structObject = structSegment->getObject().getObject();
+    auto structObject = structSegment->getObject();
     auto structIndex = entry->getDescriptorIndex();
     auto structDescriptor = structObject.getStruct(structIndex);
     auto structType = DataCell::forType(
@@ -114,7 +116,7 @@ lyric_runtime::internal::get_struct_virtual_table(
 
         auto *callSegment = structCall.data.descriptor->getSegment();
         auto callIndex = structCall.data.descriptor->getDescriptorIndex();
-        auto call = callSegment->getObject().getObject().getCall(callIndex);
+        auto call = callSegment->getObject().getCall(callIndex);
         auto procOffset = call.getProcOffset();
         auto returnsValue = !call.isNoReturn();
 
@@ -198,7 +200,7 @@ lyric_runtime::internal::get_struct_virtual_table(
 
             auto *callSegment = implCall.data.descriptor->getSegment();
             auto callIndex = implCall.data.descriptor->getDescriptorIndex();
-            auto call = callSegment->getObject().getObject().getCall(callIndex);
+            auto call = callSegment->getObject().getCall(callIndex);
             auto procOffset = call.getProcOffset();
             auto returnsValue = !call.isNoReturn();
 

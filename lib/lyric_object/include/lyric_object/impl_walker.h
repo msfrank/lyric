@@ -49,7 +49,7 @@ namespace lyric_object {
         friend class ExistentialWalker;
         friend class FieldWalker;
         friend class InstanceWalker;
-        friend class ObjectWalker;
+        friend class LyricObject;
         friend class ParameterWalker;
         friend class StaticWalker;
         friend class StructWalker;

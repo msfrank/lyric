@@ -162,7 +162,7 @@ lyric_archiver::define_call(
     for (auto it = callImport->initializersBegin(); it != callImport->initializersEnd(); it++) {
         const auto &name = it->first;
         auto initializerPath = it->second.getSymbolPath();
-        auto initializer = object.getObject().findSymbol(initializerPath);
+        auto initializer = object.findSymbol(initializerPath);
         if (!initializer.isValid() || initializer.getLinkageSection() != lyric_object::LinkageSection::Call)
             return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
                 "'{}' parameter has invalid initializer", name);
@@ -190,7 +190,7 @@ lyric_archiver::put_pending_proc(
     auto location = moduleImport->getObjectLocation();
     auto object = moduleImport->getObject();
     auto plugin = moduleImport->getPlugin();
-    auto call = object.getObject().getCall(callImport->getCallOffset());
+    auto call = object.getCall(callImport->getCallOffset());
     auto header = call.getProcHeader();
     auto code = call.getBytecodeIterator();
 

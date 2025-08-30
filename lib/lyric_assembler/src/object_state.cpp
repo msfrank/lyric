@@ -182,7 +182,7 @@ lyric_assembler::ObjectState::load()
 
     // import module from the location specified in the object state
     TU_ASSIGN_OR_RETURN (moduleImport, m_localModuleCache->importModule(m_location));
-    auto root = moduleImport->getObject().getObject();
+    auto root = moduleImport->getObject();
 
     // determine the prelude location from the object
     lyric_common::ModuleLocation preludeLocation;

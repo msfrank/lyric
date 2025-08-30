@@ -41,7 +41,7 @@ namespace lyric_object {
         BindingWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 bindingOffset);
 
         friend class NamespaceWalker;
-        friend class ObjectWalker;
+        friend class LyricObject;
     };
 }
 

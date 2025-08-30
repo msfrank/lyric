@@ -80,7 +80,7 @@ resolve_type_to_descriptor(
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid segment");
 
-    auto object = segment->getObject().getObject();
+    auto object = segment->getObject();
     auto descriptorType = object.getType(entry->getDescriptorIndex());
     if (!descriptorType.isValid())
         return lyric_runtime::InterpreterStatus::forCondition(
@@ -134,7 +134,7 @@ resolve_super_type(
     if (segment == nullptr)
         return lyric_runtime::InterpreterStatus::forCondition(
             lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid segment");
-    auto object = segment->getObject().getObject();
+    auto object = segment->getObject();
 
     auto descriptorType = object.getType(entry->getDescriptorIndex());
     if (!descriptorType.isValid())

@@ -197,7 +197,7 @@ lyric_importer::StructImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto structWalker = moduleImport->getObject().getObject().getStruct(m_structOffset);
+    auto structWalker = moduleImport->getObject().getStruct(m_structOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, structWalker.getSymbolPath());
 
     priv->isDeclOnly = structWalker.isDeclOnly();

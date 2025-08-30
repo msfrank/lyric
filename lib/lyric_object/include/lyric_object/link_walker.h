@@ -53,8 +53,8 @@ namespace lyric_object {
         friend class InstanceMember;
         friend class InstanceMethod;
         friend class InstanceWalker;
+        friend class LyricObject;
         friend class NamespaceWalker;
-        friend class ObjectWalker;
         friend class ParameterWalker;
         friend class PlaceholderTypeWalker;
         friend class StaticWalker;

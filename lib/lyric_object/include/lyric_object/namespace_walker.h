@@ -40,7 +40,7 @@ namespace lyric_object {
 
         NamespaceWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 namespaceOffset);
 
-        friend class ObjectWalker;
+        friend class LyricObject;
     };
 }
 

@@ -129,7 +129,7 @@ lyric_archiver::ArchiverState::importAction(const lyric_common::SymbolUrl &actio
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN (moduleImport, get_module_import(actionUrl, m_moduleImports, m_objectState.get()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbol = object.findSymbol(actionUrl.getSymbolPath());
     return moduleImport->getAction(symbol.getLinkageIndex());
 }
@@ -140,7 +140,7 @@ lyric_archiver::ArchiverState::importCall(const lyric_common::SymbolUrl &callUrl
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN (moduleImport, get_module_import(callUrl, m_moduleImports, m_objectState.get()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbol = object.findSymbol(callUrl.getSymbolPath());
     return moduleImport->getCall(symbol.getLinkageIndex());
 }
@@ -151,7 +151,7 @@ lyric_archiver::ArchiverState::importField(const lyric_common::SymbolUrl &fieldU
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN (moduleImport, get_module_import(fieldUrl, m_moduleImports, m_objectState.get()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbol = object.findSymbol(fieldUrl.getSymbolPath());
     return moduleImport->getField(symbol.getLinkageIndex());
 }
@@ -217,7 +217,7 @@ lyric_archiver::ArchiverState::archiveSymbol(
         importHash = hashEntry->second;
     }
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbol = object.findSymbol(symbolUrl.getSymbolPath());
     auto *globalNamespace = m_objectRoot->globalNamespace();
 
@@ -321,7 +321,7 @@ lyric_archiver::ArchiverState::copyPendingProcs()
         const auto &importUrl = it->first;
         auto &pendingProc = it->second;
         auto objectLocation = importUrl.getModuleLocation();
-        auto pluginLocation = pendingProc->object.getObject().getPlugin().getPluginLocation();
+        auto pluginLocation = pendingProc->object.getPlugin().getPluginLocation();
         TU_RETURN_IF_NOT_OK (copy_proc(objectLocation, pendingProc->object, pluginLocation,
             pendingProc->plugin, pendingProc->header, &m_copiedSymbols, pendingProc->code,
             pendingProc->procHandle, m_objectState.get()));

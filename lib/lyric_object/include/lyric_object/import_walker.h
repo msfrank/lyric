@@ -31,7 +31,7 @@ namespace lyric_object {
         ImportWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 importOffset);
 
         friend class LinkWalker;
-        friend class ObjectWalker;
+        friend class LyricObject;
     };
 }
 

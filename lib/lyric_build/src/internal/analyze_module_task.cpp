@@ -114,11 +114,10 @@ lyric_build::internal::AnalyzeModuleTask::symbolizeImports(
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
     TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(symbolizeArtifact));
-    lyric_object::LyricObject module(content);
+    lyric_object::LyricObject object(content);
 
     // check for any imports from modules in the src directory
     absl::flat_hash_set<TaskKey> symbolizeTargets;
-    auto object = module.getObject();
     for (int i = 0; i < object.numImports(); i++) {
         auto import_ = object.getImport(i);
         auto location = import_.getImportLocation();

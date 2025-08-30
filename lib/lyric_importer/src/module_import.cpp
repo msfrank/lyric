@@ -48,80 +48,78 @@ lyric_importer::ModuleImport::create(
 tempo_utils::Status
 lyric_importer::ModuleImport::initialize()
 {
-    auto object = m_object.getObject();
-
-    m_importedActions.resize(object.numActions());
-    for (int i = 0; i < object.numActions(); i++) {
+    m_importedActions.resize(m_object.numActions());
+    for (int i = 0; i < m_object.numActions(); i++) {
         m_importedActions[i] = new ActionImport(shared_from_this(), i);
     }
 
-    m_importedBindings.resize(object.numBindings());
-    for (int i = 0; i < object.numBindings(); i++) {
+    m_importedBindings.resize(m_object.numBindings());
+    for (int i = 0; i < m_object.numBindings(); i++) {
         m_importedBindings[i] = new BindingImport(shared_from_this(), i);
     }
 
-    m_importedCalls.resize(object.numCalls());
-    for (int i = 0; i < object.numCalls(); i++) {
+    m_importedCalls.resize(m_object.numCalls());
+    for (int i = 0; i < m_object.numCalls(); i++) {
         m_importedCalls[i] = new CallImport(shared_from_this(), i);
     }
 
-    m_importedClasses.resize(object.numClasses());
-    for (int i = 0; i < object.numClasses(); i++) {
+    m_importedClasses.resize(m_object.numClasses());
+    for (int i = 0; i < m_object.numClasses(); i++) {
         m_importedClasses[i] = new ClassImport(shared_from_this(), i);
     }
 
-    m_importedConcepts.resize(object.numConcepts());
-    for (int i = 0; i < object.numConcepts(); i++) {
+    m_importedConcepts.resize(m_object.numConcepts());
+    for (int i = 0; i < m_object.numConcepts(); i++) {
         m_importedConcepts[i] = new ConceptImport(shared_from_this(), i);
     }
 
-    m_importedEnums.resize(object.numEnums());
-    for (int i = 0; i < object.numEnums(); i++) {
+    m_importedEnums.resize(m_object.numEnums());
+    for (int i = 0; i < m_object.numEnums(); i++) {
         m_importedEnums[i] = new EnumImport(shared_from_this(), i);
     }
 
-    m_importedExistentials.resize(object.numExistentials());
-    for (int i = 0; i < object.numExistentials(); i++) {
+    m_importedExistentials.resize(m_object.numExistentials());
+    for (int i = 0; i < m_object.numExistentials(); i++) {
         m_importedExistentials[i] = new ExistentialImport(shared_from_this(), i);
     }
 
-    m_importedFields.resize(object.numFields());
-    for (int i = 0; i < object.numFields(); i++) {
+    m_importedFields.resize(m_object.numFields());
+    for (int i = 0; i < m_object.numFields(); i++) {
         m_importedFields[i] = new FieldImport(shared_from_this(), i);
     }
 
-    m_importedImpls.resize(object.numImpls());
-    for (int i = 0; i < object.numImpls(); i++) {
+    m_importedImpls.resize(m_object.numImpls());
+    for (int i = 0; i < m_object.numImpls(); i++) {
         m_importedImpls[i] = new ImplImport(shared_from_this(), i);
     }
 
-    m_importedInstances.resize(object.numInstances());
-    for (int i = 0; i < object.numInstances(); i++) {
+    m_importedInstances.resize(m_object.numInstances());
+    for (int i = 0; i < m_object.numInstances(); i++) {
         m_importedInstances[i] = new InstanceImport(shared_from_this(), i);
     }
 
-    m_importedNamespaces.resize(object.numNamespaces());
-    for (int i = 0; i < object.numNamespaces(); i++) {
+    m_importedNamespaces.resize(m_object.numNamespaces());
+    for (int i = 0; i < m_object.numNamespaces(); i++) {
         m_importedNamespaces[i] = new NamespaceImport(shared_from_this(), i);
     }
 
-    m_importedStatics.resize(object.numStatics());
-    for (int i = 0; i < object.numStatics(); i++) {
+    m_importedStatics.resize(m_object.numStatics());
+    for (int i = 0; i < m_object.numStatics(); i++) {
         m_importedStatics[i] = new StaticImport(shared_from_this(), i);
     }
 
-    m_importedStructs.resize(object.numStructs());
-    for (int i = 0; i < object.numStructs(); i++) {
+    m_importedStructs.resize(m_object.numStructs());
+    for (int i = 0; i < m_object.numStructs(); i++) {
         m_importedStructs[i] = new StructImport(shared_from_this(), i);
     }
 
-    m_importedTemplates.resize(object.numTemplates());
-    for (int i = 0; i < object.numTemplates(); i++) {
+    m_importedTemplates.resize(m_object.numTemplates());
+    for (int i = 0; i < m_object.numTemplates(); i++) {
         m_importedTemplates[i] = new TemplateImport(shared_from_this(), i);
     }
 
-    m_importedTypes.resize(object.numTypes());
-    for (int i = 0; i < object.numTypes(); i++) {
+    m_importedTypes.resize(m_object.numTypes());
+    for (int i = 0; i < m_object.numTypes(); i++) {
         m_importedTypes[i] = new TypeImport(shared_from_this(), i);
     }
 

@@ -25,11 +25,10 @@ TEST_F(AnalyzeNamespace, DeclareNamespace)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (3, root.numSymbols());
-    ASSERT_EQ (2, root.numNamespaces());
+    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (2, object.numNamespaces());
 
-    auto ns1 = root.getNamespace(1);
+    auto ns1 = object.getNamespace(1);
     ASSERT_FALSE (ns1.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), ns1.getSymbolPath());
     ASSERT_EQ (lyric_object::AccessType::Public, ns1.getAccess());

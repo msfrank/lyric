@@ -103,9 +103,7 @@ archive_symbols_for_module(
     lyric_common::ModuleLocation &moduleLocation,
     lyric_object::LyricObject &object)
 {
-    auto root = object.getObject();
-
-    auto globalSymbol = root.findSymbol(lyric_common::SymbolPath({"$global"}));
+    auto globalSymbol = object.findSymbol(lyric_common::SymbolPath({"$global"}));
     if (!globalSymbol.isValid())
         return {};
     if (globalSymbol.getLinkageSection() != lyric_object::LinkageSection::Namespace)
@@ -113,7 +111,7 @@ archive_symbols_for_module(
             lyric_build::BuildCondition::kTaskFailure,
             "module {} has invalid $global symbol", moduleLocation.toString());
 
-    auto globalNamespace = root.getNamespace(globalSymbol.getLinkageIndex());
+    auto globalNamespace = object.getNamespace(globalSymbol.getLinkageIndex());
     if (!globalNamespace.isValid())
         return lyric_build::BuildStatus::forCondition(
             lyric_build::BuildCondition::kTaskFailure,

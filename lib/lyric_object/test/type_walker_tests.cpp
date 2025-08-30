@@ -37,11 +37,10 @@ TEST(TypeWalker, ParseConcreteType)
     lyric_object::LyricObject object(bytes);
     ASSERT_TRUE (lyric_object::LyricObject::verify(bytes));
 
-    auto objectWalker = object.getObject();
-    ASSERT_TRUE (objectWalker.isValid());
-    ASSERT_EQ (1, objectWalker.numTypes());
+    ASSERT_TRUE (object.isValid());
+    ASSERT_EQ (1, object.numTypes());
 
-    auto typeWalker = objectWalker.getType(0);
+    auto typeWalker = object.getType(0);
     ASSERT_TRUE (typeWalker.isValid());
     ASSERT_EQ (lyric_common::TypeDefType::Concrete, typeWalker.getTypeDefType());
 
@@ -91,11 +90,10 @@ TEST(TypeWalker, ParsePlaceholderType)
     lyric_object::LyricObject object(bytes);
     ASSERT_TRUE (lyric_object::LyricObject::verify(bytes));
 
-    auto objectWalker = object.getObject();
-    ASSERT_TRUE (objectWalker.isValid());
-    ASSERT_EQ (1, objectWalker.numTypes());
+    ASSERT_TRUE (object.isValid());
+    ASSERT_EQ (1, object.numTypes());
 
-    auto typeWalker = objectWalker.getType(0);
+    auto typeWalker = object.getType(0);
     ASSERT_TRUE (typeWalker.isValid());
     ASSERT_EQ (lyric_common::TypeDefType::Placeholder, typeWalker.getTypeDefType());
 
@@ -172,11 +170,10 @@ TEST(TypeWalker, ParseIntersectionType)
     lyric_object::LyricObject object(bytes);
     ASSERT_TRUE (lyric_object::LyricObject::verify(bytes));
 
-    auto objectWalker = object.getObject();
-    ASSERT_TRUE (objectWalker.isValid());
-    ASSERT_EQ (4, objectWalker.numTypes());
+    ASSERT_TRUE (object.isValid());
+    ASSERT_EQ (4, object.numTypes());
 
-    auto typeWalker = objectWalker.getType(3);
+    auto typeWalker = object.getType(3);
     ASSERT_TRUE (typeWalker.isValid());
     ASSERT_EQ (lyric_common::TypeDefType::Intersection, typeWalker.getTypeDefType());
 
@@ -259,11 +256,10 @@ TEST(TypeWalker, ParseUnionType)
     lyric_object::LyricObject object(bytes);
     ASSERT_TRUE (lyric_object::LyricObject::verify(bytes));
 
-    auto objectWalker = object.getObject();
-    ASSERT_TRUE (objectWalker.isValid());
-    ASSERT_EQ (4, objectWalker.numTypes());
+    ASSERT_TRUE (object.isValid());
+    ASSERT_EQ (4, object.numTypes());
 
-    auto typeWalker = objectWalker.getType(3);
+    auto typeWalker = object.getType(3);
     ASSERT_TRUE (typeWalker.isValid());
     ASSERT_EQ (lyric_common::TypeDefType::Union, typeWalker.getTypeDefType());
 

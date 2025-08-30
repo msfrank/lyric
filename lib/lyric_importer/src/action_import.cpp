@@ -2,6 +2,7 @@
 #include <lyric_importer/action_import.h>
 #include <lyric_importer/importer_result.h>
 #include <lyric_importer/type_import.h>
+#include <lyric_object/parameter_walker.h>
 
 namespace lyric_importer {
     struct ActionImport::Priv {
@@ -185,7 +186,7 @@ lyric_importer::ActionImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto actionWalker = moduleImport->getObject().getObject().getAction(m_actionOffset);
+    auto actionWalker = moduleImport->getObject().getAction(m_actionOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, actionWalker.getSymbolPath());
 
     priv->isDeclOnly = actionWalker.isDeclOnly();

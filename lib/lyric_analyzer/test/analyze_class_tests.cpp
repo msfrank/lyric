@@ -3,6 +3,8 @@
 
 #include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_bootstrap/bootstrap_loader.h>
+#include <lyric_object/extension_walker.h>
+#include <lyric_object/parameter_walker.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
@@ -27,11 +29,10 @@ TEST_F(AnalyzeClass, DeclareClass)
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
     TU_LOG_INFO << object.dumpJson();
-    auto root = object.getObject();
-    ASSERT_EQ (4, root.numSymbols());
-    ASSERT_EQ (1, root.numClasses());
+    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (1, object.numClasses());
 
-    auto class0 = root.getClass(0);
+    auto class0 = object.getClass(0);
     ASSERT_TRUE (class0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), class0.getSymbolPath());
     ASSERT_EQ (lyric_object::AccessType::Public, class0.getAccess());
@@ -53,12 +54,11 @@ TEST_F(AnalyzeClass, DeclareClassMemberVal)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (5, root.numSymbols());
-    ASSERT_EQ (1, root.numClasses());
-    ASSERT_EQ (1, root.numFields());
+    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (1, object.numClasses());
+    ASSERT_EQ (1, object.numFields());
 
-    auto class0 = root.getClass(0);
+    auto class0 = object.getClass(0);
     ASSERT_TRUE (class0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), class0.getSymbolPath());
 
@@ -82,12 +82,11 @@ TEST_F(AnalyzeClass, DeclareClassMemberVar)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (5, root.numSymbols());
-    ASSERT_EQ (1, root.numClasses());
-    ASSERT_EQ (1, root.numFields());
+    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (1, object.numClasses());
+    ASSERT_EQ (1, object.numFields());
 
-    auto class0 = root.getClass(0);
+    auto class0 = object.getClass(0);
     ASSERT_TRUE (class0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), class0.getSymbolPath());
 
@@ -111,12 +110,11 @@ TEST_F(AnalyzeClass, DeclareClassMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (5, root.numSymbols());
-    ASSERT_EQ (1, root.numClasses());
-    ASSERT_EQ (3, root.numCalls());
+    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (1, object.numClasses());
+    ASSERT_EQ (3, object.numCalls());
 
-    auto class0 = root.getClass(0);
+    auto class0 = object.getClass(0);
     ASSERT_TRUE (class0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), class0.getSymbolPath());
     ASSERT_EQ (2, class0.numMethods());
@@ -160,12 +158,11 @@ TEST_F(AnalyzeClass, DeclareClassImplMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (5, root.numSymbols());
-    ASSERT_EQ (1, root.numClasses());
-    ASSERT_EQ (3, root.numCalls());
+    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (1, object.numClasses());
+    ASSERT_EQ (3, object.numCalls());
 
-    auto class0 = root.getClass(0);
+    auto class0 = object.getClass(0);
     ASSERT_TRUE (class0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), class0.getSymbolPath());
     ASSERT_EQ (1, class0.numImpls());

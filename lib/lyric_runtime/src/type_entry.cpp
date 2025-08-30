@@ -34,7 +34,7 @@ lyric_common::TypeDef
 lyric_runtime::TypeEntry::getTypeDef() const
 {
     auto *segment = m_typeTable->getSegment();
-    auto object = segment->getObject().getObject();
+    auto object = segment->getObject();
     auto type = object.getType(m_index);
     return type.getTypeDef();
 }
@@ -68,7 +68,7 @@ lyric_runtime::TypeEntry *
 lyric_runtime::TypeTable::lookupType(tu_uint32 index)
 {
     if (m_numTypes == INVALID_ADDRESS_U32) {
-        auto object = m_segment->getObject().getObject();
+        auto object = m_segment->getObject();
         tu_uint32 numTypes = object.numTypes();
 
         if (numTypes <= index)

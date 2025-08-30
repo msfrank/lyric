@@ -22,11 +22,10 @@ TEST_F(SymbolizeStatic, DeclareStaticVal)
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (3, root.numSymbols());
-    ASSERT_EQ (1, root.numImports());
+    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (1, object.numImports());
 
-    auto symbol1 = root.findSymbol(lyric_common::SymbolPath::fromString("Static"));
+    auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Static"));
     ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Static);
     ASSERT_EQ (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
 }
@@ -41,11 +40,10 @@ TEST_F(SymbolizeStatic, DeclareStaticVar)
 
     auto symbolizeModule = symbolizeModuleResult.getResult();
     auto object = symbolizeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (3, root.numSymbols());
-    ASSERT_EQ (1, root.numImports());
+    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (1, object.numImports());
 
-    auto symbol1 = root.findSymbol(lyric_common::SymbolPath::fromString("Static"));
+    auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Static"));
     ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Static);
     ASSERT_EQ (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
 }

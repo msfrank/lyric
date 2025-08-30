@@ -206,7 +206,7 @@ lyric_importer::ClassImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto classWalker = moduleImport->getObject().getObject().getClass(m_classOffset);
+    auto classWalker = moduleImport->getObject().getClass(m_classOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, classWalker.getSymbolPath());
 
     priv->isDeclOnly = classWalker.isDeclOnly();

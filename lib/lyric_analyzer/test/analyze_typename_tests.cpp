@@ -24,10 +24,9 @@ TEST_F(AnalyzeTypename, DeclareTypename)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (4, root.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
 
-    auto symbol1 = root.findSymbol(lyric_common::SymbolPath::fromString("Foo"));
+    auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Foo"));
     ASSERT_TRUE (symbol1.isValid());
     ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Struct);
     ASSERT_EQ (symbol1.getLinkageIndex(), 0);
@@ -48,21 +47,20 @@ TEST_F(AnalyzeTypename, DeclareAliasWithTypenames)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (7, root.numSymbols());
-    ASSERT_EQ (1, root.numImports());
+    ASSERT_EQ (7, object.numSymbols());
+    ASSERT_EQ (1, object.numImports());
 
-    auto symbol1 = root.findSymbol(lyric_common::SymbolPath::fromString("Foo"));
+    auto symbol1 = object.findSymbol(lyric_common::SymbolPath::fromString("Foo"));
     ASSERT_TRUE (symbol1.isValid());
     ASSERT_EQ (symbol1.getLinkageSection(), lyric_object::LinkageSection::Struct);
     ASSERT_NE (symbol1.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
 
-    auto symbol2 = root.findSymbol(lyric_common::SymbolPath::fromString("Bar"));
+    auto symbol2 = object.findSymbol(lyric_common::SymbolPath::fromString("Bar"));
     ASSERT_TRUE (symbol2.isValid());
     ASSERT_EQ (symbol2.getLinkageSection(), lyric_object::LinkageSection::Struct);
     ASSERT_NE (symbol2.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);
 
-    auto symbol3 = root.findSymbol(lyric_common::SymbolPath::fromString("FooOrBar"));
+    auto symbol3 = object.findSymbol(lyric_common::SymbolPath::fromString("FooOrBar"));
     ASSERT_TRUE (symbol3.isValid());
     ASSERT_EQ (symbol3.getLinkageSection(), lyric_object::LinkageSection::Binding);
     ASSERT_NE (symbol3.getLinkageIndex(), lyric_object::INVALID_ADDRESS_U32);

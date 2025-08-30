@@ -2,6 +2,7 @@
 #include <lyric_importer/call_import.h>
 #include <lyric_importer/importer_result.h>
 #include <lyric_importer/type_import.h>
+#include <lyric_object/parameter_walker.h>
 
 namespace lyric_importer {
     struct CallImport::Priv {
@@ -236,7 +237,7 @@ lyric_importer::CallImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto callWalker = moduleImport->getObject().getObject().getCall(m_callOffset);
+    auto callWalker = moduleImport->getObject().getCall(m_callOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, callWalker.getSymbolPath());
 
     priv->isDeclOnly = callWalker.isDeclOnly();

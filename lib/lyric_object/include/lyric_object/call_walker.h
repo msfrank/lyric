@@ -78,7 +78,7 @@ namespace lyric_object {
         friend class FieldWalker;
         friend class InstanceMethod;
         friend class InstanceWalker;
-        friend class ObjectWalker;
+        friend class LyricObject;
         friend class ParameterWalker;
         friend class StaticWalker;
         friend class StructMethod;

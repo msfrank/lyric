@@ -3,6 +3,8 @@
 
 #include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_bootstrap/bootstrap_loader.h>
+#include <lyric_object/extension_walker.h>
+#include <lyric_object/parameter_walker.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
@@ -26,11 +28,10 @@ TEST_F(AnalyzeStruct, DeclareStruct)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (4, root.numSymbols());
-    ASSERT_EQ (1, root.numStructs());
+    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (1, object.numStructs());
 
-    auto struct0 = root.getStruct(0);
+    auto struct0 = object.getStruct(0);
     ASSERT_TRUE (struct0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), struct0.getSymbolPath());
 
@@ -51,12 +52,11 @@ TEST_F(AnalyzeStruct, DeclareStructMemberVal)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (5, root.numSymbols());
-    ASSERT_EQ (1, root.numStructs());
-    ASSERT_EQ (1, root.numFields());
+    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (1, object.numStructs());
+    ASSERT_EQ (1, object.numFields());
 
-    auto struct0 = root.getStruct(0);
+    auto struct0 = object.getStruct(0);
     ASSERT_TRUE (struct0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), struct0.getSymbolPath());
 
@@ -80,12 +80,11 @@ TEST_F(AnalyzeStruct, DeclareStructMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (5, root.numSymbols());
-    ASSERT_EQ (1, root.numStructs());
-    ASSERT_EQ (3, root.numCalls());
+    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (1, object.numStructs());
+    ASSERT_EQ (3, object.numCalls());
 
-    auto struct0 = root.getStruct(0);
+    auto struct0 = object.getStruct(0);
     ASSERT_TRUE (struct0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), struct0.getSymbolPath());
     ASSERT_EQ (2, struct0.numMethods());
@@ -129,12 +128,11 @@ TEST_F(AnalyzeStruct, DeclareStructImplMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (5, root.numSymbols());
-    ASSERT_EQ (1, root.numStructs());
-    ASSERT_EQ (3, root.numCalls());
+    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (1, object.numStructs());
+    ASSERT_EQ (3, object.numCalls());
 
-    auto struct0 = root.getStruct(0);
+    auto struct0 = object.getStruct(0);
     ASSERT_TRUE (struct0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), struct0.getSymbolPath());
     ASSERT_EQ (1, struct0.numImpls());

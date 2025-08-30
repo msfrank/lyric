@@ -161,7 +161,7 @@ lyric_importer::ConceptImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto conceptWalker = moduleImport->getObject().getObject().getConcept(m_conceptOffset);
+    auto conceptWalker = moduleImport->getObject().getConcept(m_conceptOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, conceptWalker.getSymbolPath());
 
     priv->isDeclOnly = conceptWalker.isDeclOnly();

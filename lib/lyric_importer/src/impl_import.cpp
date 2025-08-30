@@ -1,6 +1,7 @@
 
 #include <lyric_importer/impl_import.h>
 #include <lyric_importer/importer_result.h>
+#include <lyric_object/extension_walker.h>
 
 namespace lyric_importer {
     struct ImplImport::Priv {
@@ -80,7 +81,7 @@ lyric_importer::ImplImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto implWalker = moduleImport->getObject().getObject().getImpl(m_implOffset);
+    auto implWalker = moduleImport->getObject().getImpl(m_implOffset);
 
     priv->isDeclOnly = implWalker.isDeclOnly();
     priv->receiverUrl = lyric_common::SymbolUrl(objectLocation, implWalker.getReceiver().getSymbolPath());

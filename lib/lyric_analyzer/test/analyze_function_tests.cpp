@@ -3,6 +3,7 @@
 
 #include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_bootstrap/bootstrap_loader.h>
+#include <lyric_object/parameter_walker.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
@@ -24,11 +25,10 @@ TEST_F(AnalyzeFunction, DeclareFunction)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (3, root.numSymbols());
-    ASSERT_EQ (2, root.numCalls());
+    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (2, object.numCalls());
 
-    auto call1 = root.getCall(1);
+    auto call1 = object.getCall(1);
     ASSERT_TRUE (call1.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Identity"}), call1.getSymbolPath());
     ASSERT_EQ (lyric_object::AccessType::Public, call1.getAccess());
@@ -51,11 +51,10 @@ TEST_F(AnalyzeFunction, DeclareGenericFunction)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (3, root.numSymbols());
-    ASSERT_EQ (2, root.numCalls());
+    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (2, object.numCalls());
 
-    auto call1 = root.getCall(1);
+    auto call1 = object.getCall(1);
     ASSERT_TRUE (call1.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Identity"}), call1.getSymbolPath());
     ASSERT_EQ (lyric_object::AccessType::Public, call1.getAccess());

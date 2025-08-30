@@ -85,7 +85,7 @@ namespace lyric_object {
 
         ExistentialWalker(std::shared_ptr<const internal::ObjectReader> reader, tu_uint32 existentialOffset);
 
-        friend class ObjectWalker;
+        friend class LyricObject;
     };
 }
 

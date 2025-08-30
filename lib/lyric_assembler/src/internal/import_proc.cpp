@@ -36,8 +36,7 @@ apply_string(const lyric_object::OpCell &op, ImportProcData &data)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
 
-    auto root = data.object.getObject();
-    auto literal = root.getLiteral(op.operands.address_u32.address);
+    auto literal = data.object.getLiteral(op.operands.address_u32.address);
     if (literal.getValueType() != lyric_object::ValueType::String)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid string literal");
@@ -53,8 +52,7 @@ apply_url(const lyric_object::OpCell &op, ImportProcData &data)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
 
-    auto root = data.object.getObject();
-    auto literal = root.getLiteral(op.operands.address_u32.address);
+    auto literal = data.object.getLiteral(op.operands.address_u32.address);
     if (literal.getValueType() != lyric_object::ValueType::Url)
         return lyric_assembler::AssemblerStatus::forCondition(
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid url literal");
@@ -72,8 +70,7 @@ apply_literal(const lyric_object::OpCell &op, ImportProcData &data)
 
     auto *literalCache = data.state->literalCache();
 
-    auto root = data.object.getObject();
-    auto literal = root.getLiteral(op.operands.address_u32.address);
+    auto literal = data.object.getLiteral(op.operands.address_u32.address);
 
     lyric_assembler::LiteralHandle *literalHandle;
 
@@ -131,14 +128,13 @@ lookup_symbol(
     lyric_object::LinkageSection section,
     ImportProcData &data)
 {
-    auto root = data.object.getObject();
     if (lyric_object::IS_NEAR(address)) {
-        auto symbolPath = root.getSymbolPath(section, address);
+        auto symbolPath = data.object.getSymbolPath(section, address);
         if (!symbolPath.isValid())
             return {};
         return {data.objectLocation, symbolPath};
     } else {
-        auto link = root.getLink(address);
+        auto link = data.object.getLink(address);
         if (link.getLinkageSection() != section)
             return {};
         return link.getLinkUrl(data.objectLocation);
@@ -431,8 +427,7 @@ static tempo_utils::Status
 apply_call(const lyric_object::OpCell &op, ImportProcData &data)
 {
     const auto &operands = op.operands.flags_u8_address_u32_placement_u16;
-    auto root = data.object.getObject();
-    auto call = root.getCall(operands.address);
+    auto call = data.object.getCall(operands.address);
 
     auto *importCache = data.state->importCache();
     lyric_common::SymbolUrl callUrl(data.objectLocation, call.getSymbolPath());
@@ -461,8 +456,7 @@ apply_action(const lyric_object::OpCell &op, ImportProcData &data)
             lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid opcode");
 
     const auto &operands = op.operands.flags_u8_address_u32_placement_u16;
-    auto root = data.object.getObject();
-    auto action = root.getAction(operands.address);
+    auto action = data.object.getAction(operands.address);
 
     auto *importCache = data.state->importCache();
     lyric_common::SymbolUrl actionUrl(data.objectLocation, action.getSymbolPath());
@@ -482,27 +476,26 @@ apply_new(const lyric_object::OpCell &op, ImportProcData &data)
 
     const auto &operands = op.operands.flags_u8_address_u32_placement_u16;
     auto *importCache = data.state->importCache();
-    auto root = data.object.getObject();
 
     lyric_common::SymbolUrl newUrl;
     switch (lyric_object::GET_NEW_TYPE(operands.flags)) {
         case lyric_object::NEW_CLASS: {
-            auto walker = root.getClass(operands.address);
+            auto walker = data.object.getClass(operands.address);
             newUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
             break;
         }
         case lyric_object::NEW_ENUM: {
-            auto walker = root.getEnum(operands.address);
+            auto walker = data.object.getEnum(operands.address);
             newUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
             break;
         }
         case lyric_object::NEW_INSTANCE: {
-            auto walker = root.getInstance(operands.address);
+            auto walker = data.object.getInstance(operands.address);
             newUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
             break;
         }
         case lyric_object::NEW_STRUCT: {
-            auto walker = root.getStruct(operands.address);
+            auto walker = data.object.getStruct(operands.address);
             newUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
             break;
         }

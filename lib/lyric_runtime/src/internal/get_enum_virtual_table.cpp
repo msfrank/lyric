@@ -1,4 +1,6 @@
 
+#include <lyric_object/concrete_type_walker.h>
+#include <lyric_object/extension_walker.h>
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_segment.h>
 #include <lyric_runtime/data_cell.h>
@@ -27,7 +29,7 @@ lyric_runtime::internal::get_enum_virtual_table(
 
     auto *entry = descriptor.data.descriptor;
     auto *enumSegment = entry->getSegment();
-    auto enumObject = enumSegment->getObject().getObject();
+    auto enumObject = enumSegment->getObject();
     auto enumIndex = entry->getDescriptorIndex();
     auto enumDescriptor = enumObject.getEnum(enumIndex);
     auto enumType = DataCell::forType(
@@ -117,7 +119,7 @@ lyric_runtime::internal::get_enum_virtual_table(
 
         auto *callSegment = enumCall.data.descriptor->getSegment();
         auto callIndex = enumCall.data.descriptor->getDescriptorIndex();
-        auto call = callSegment->getObject().getObject().getCall(callIndex);
+        auto call = callSegment->getObject().getCall(callIndex);
         auto procOffset = call.getProcOffset();
         auto returnsValue = !call.isNoReturn();
 
@@ -201,7 +203,7 @@ lyric_runtime::internal::get_enum_virtual_table(
 
             auto *callSegment = implCall.data.descriptor->getSegment();
             auto callIndex = implCall.data.descriptor->getDescriptorIndex();
-            auto call = callSegment->getObject().getObject().getCall(callIndex);
+            auto call = callSegment->getObject().getCall(callIndex);
             auto procOffset = call.getProcOffset();
             auto returnsValue = !call.isNoReturn();
 

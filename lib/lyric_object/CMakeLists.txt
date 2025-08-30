@@ -29,7 +29,6 @@ set(LYRIC_OBJECT_INCLUDES
     include/lyric_object/namespace_walker.h
     include/lyric_object/object_result.h
     include/lyric_object/object_types.h
-    include/lyric_object/object_walker.h
     include/lyric_object/parameter_walker.h
     include/lyric_object/placeholder_type_walker.h
     include/lyric_object/plugin_specifier.h
@@ -96,7 +95,6 @@ target_sources(lyric_object PRIVATE
     src/namespace_walker.cpp
     src/object_result.cpp
     src/object_types.cpp
-    src/object_walker.cpp
     src/parameter_walker.cpp
     src/placeholder_type_walker.cpp
     src/plugin_specifier.cpp

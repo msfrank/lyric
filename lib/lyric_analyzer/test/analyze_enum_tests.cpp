@@ -3,6 +3,8 @@
 
 #include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_bootstrap/bootstrap_loader.h>
+#include <lyric_object/extension_walker.h>
+#include <lyric_object/parameter_walker.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
@@ -26,11 +28,10 @@ TEST_F(AnalyzeEnum, DeclareEnum)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (4, root.numSymbols());
-    ASSERT_EQ (1, root.numEnums());
+    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (1, object.numEnums());
 
-    auto enum0 = root.getEnum(0);
+    auto enum0 = object.getEnum(0);
     ASSERT_TRUE (enum0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
     ASSERT_EQ (lyric_object::AccessType::Public, enum0.getAccess());
@@ -55,12 +56,11 @@ TEST_F(AnalyzeEnum, DeclareEnumWithExplicitInit)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (5, root.numSymbols());
-    ASSERT_EQ (1, root.numEnums());
-    ASSERT_EQ (1, root.numFields());
+    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (1, object.numEnums());
+    ASSERT_EQ (1, object.numFields());
 
-    auto enum0 = root.getEnum(0);
+    auto enum0 = object.getEnum(0);
     ASSERT_TRUE (enum0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
 
@@ -84,11 +84,10 @@ TEST_F(AnalyzeEnum, DeclareEnumCase)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (6, root.numSymbols());
-    ASSERT_EQ (2, root.numEnums());
+    ASSERT_EQ (6, object.numSymbols());
+    ASSERT_EQ (2, object.numEnums());
 
-    auto FooEnum = root.getEnum(root.findSymbol(lyric_common::SymbolPath({"Foo"})).getLinkageIndex());
+    auto FooEnum = object.getEnum(object.findSymbol(lyric_common::SymbolPath({"Foo"})).getLinkageIndex());
     ASSERT_TRUE (FooEnum.isValid());
     ASSERT_TRUE (FooEnum.isDeclOnly());
 
@@ -96,7 +95,7 @@ TEST_F(AnalyzeEnum, DeclareEnumCase)
     ASSERT_TRUE (ctor0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "$ctor"}), ctor0.getSymbolPath());
 
-    auto BarEnum = root.getEnum(root.findSymbol(lyric_common::SymbolPath({"Bar"})).getLinkageIndex());
+    auto BarEnum = object.getEnum(object.findSymbol(lyric_common::SymbolPath({"Bar"})).getLinkageIndex());
     ASSERT_TRUE (BarEnum.isValid());
     ASSERT_TRUE (BarEnum.isDeclOnly());
 
@@ -120,12 +119,11 @@ TEST_F(AnalyzeEnum, DeclareEnumMemberVal)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (5, root.numSymbols());
-    ASSERT_EQ (1, root.numEnums());
-    ASSERT_EQ (1, root.numFields());
+    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (1, object.numEnums());
+    ASSERT_EQ (1, object.numFields());
 
-    auto enum0 = root.getEnum(0);
+    auto enum0 = object.getEnum(0);
     ASSERT_TRUE (enum0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
 
@@ -149,12 +147,11 @@ TEST_F(AnalyzeEnum, DeclareEnumMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (5, root.numSymbols());
-    ASSERT_EQ (1, root.numEnums());
-    ASSERT_EQ (3, root.numCalls());
+    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (1, object.numEnums());
+    ASSERT_EQ (3, object.numCalls());
 
-    auto enum0 = root.getEnum(0);
+    auto enum0 = object.getEnum(0);
     ASSERT_TRUE (enum0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
     ASSERT_EQ (2, enum0.numMethods());
@@ -198,12 +195,11 @@ TEST_F(AnalyzeEnum, DeclareEnumImplMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (5, root.numSymbols());
-    ASSERT_EQ (1, root.numEnums());
-    ASSERT_EQ (3, root.numCalls());
+    ASSERT_EQ (5, object.numSymbols());
+    ASSERT_EQ (1, object.numEnums());
+    ASSERT_EQ (3, object.numCalls());
 
-    auto enum0 = root.getEnum(0);
+    auto enum0 = object.getEnum(0);
     ASSERT_TRUE (enum0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
     ASSERT_EQ (1, enum0.numImpls());

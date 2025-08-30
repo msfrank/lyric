@@ -53,9 +53,8 @@ apply_synthetic(const lyric_object::OpCell &op, CopyProcData &data)
 static tempo_utils::Result<lyric_assembler::AbstractSymbol *>
 resolve_symbol(lyric_object::LinkageSection section, tu_uint32 address, CopyProcData &data)
 {
-    auto root = data.object.getObject();
     if (lyric_object::IS_NEAR(address)) {
-        auto symbolPath = root.getSymbolPath(section, lyric_object::GET_DESCRIPTOR_OFFSET(address));
+        auto symbolPath = data.object.getSymbolPath(section, lyric_object::GET_DESCRIPTOR_OFFSET(address));
         lyric_common::SymbolUrl symbolUrl(data.objectLocation, symbolPath);
         auto entry = data.copiedSymbols->find(symbolUrl);
         if (entry == data.copiedSymbols->cend())
@@ -63,7 +62,7 @@ resolve_symbol(lyric_object::LinkageSection section, tu_uint32 address, CopyProc
                 lyric_archiver::ArchiverCondition::kArchiverInvariant, "no such symbol");
         return entry->second;
     } else if (lyric_object::IS_FAR(address)) {
-        auto link = root.getLink(lyric_object::GET_LINK_OFFSET(address));
+        auto link = data.object.getLink(lyric_object::GET_LINK_OFFSET(address));
         if (link.getLinkageSection() != section)
             return lyric_archiver::ArchiverStatus::forCondition(
                 lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid symbol");

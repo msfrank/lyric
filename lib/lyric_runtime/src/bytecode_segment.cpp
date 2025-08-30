@@ -34,15 +34,13 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
     m_bytecodeSize = m_object.getBytecodeSize();
     m_bytecode = m_object.getBytecodeData();
 
-    auto reader = m_object.getObject();
-    TU_ASSERT (reader.isValid());
-    m_numLinks = reader.numLinks();
+    m_numLinks = m_object.numLinks();
     m_links = m_numLinks > 0 ? new LinkEntry[m_numLinks] : nullptr;
-    m_numStatics = reader.numStatics();
+    m_numStatics = m_object.numStatics();
     m_statics = m_numStatics > 0 ? new DataCell[m_numStatics] : nullptr;
-    m_numInstances = reader.numInstances();
+    m_numInstances = m_object.numInstances();
     m_instances = m_numInstances > 0 ? new DataCell[m_numInstances] : nullptr;
-    m_numEnums = reader.numEnums();
+    m_numEnums = m_object.numEnums();
     m_enums = m_numEnums > 0 ? new DataCell[m_numEnums] : nullptr;
 }
 

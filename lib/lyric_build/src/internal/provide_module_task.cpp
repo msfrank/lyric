@@ -175,9 +175,8 @@ lyric_build::internal::ProvideModuleTask::provideModule(
         TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(objectSrcId));
         lyric_object::LyricObject object(content);
 
-        auto root = object.getObject();
-        if (root.hasPlugin()) {
-            auto pluginLocation = root.getPlugin().getPluginLocation();
+        if (object.hasPlugin()) {
+            auto pluginLocation = object.getPlugin().getPluginLocation();
 
             tempo_utils::UrlPath pluginArtifactPath;
             TU_ASSIGN_OR_RETURN (pluginArtifactPath, convert_module_location_to_artifact_path(
@@ -234,13 +233,12 @@ lyric_build::internal::ProvideModuleTask::provideModule(
 
     logInfo("stored object at {}", objectArtifact.toString());
 
-    auto root = object.getObject();
-    if (root.hasPlugin()) {
+    if (object.hasPlugin()) {
         if (!m_existingPluginPath.isValid())
             return BuildStatus::forCondition(BuildCondition::kTaskFailure,
                 "existing object {} has plugin but no existing plugin is specified",
                 m_existingObjectPath.toString());
-        auto pluginLocation = root.getPlugin().getPluginLocation();
+        auto pluginLocation = object.getPlugin().getPluginLocation();
 
         TU_ASSIGN_OR_RETURN (resourceOption, vfs->fetchResource(m_existingPluginPath));
         if (resourceOption.isEmpty())

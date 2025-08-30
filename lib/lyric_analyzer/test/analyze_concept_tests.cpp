@@ -3,6 +3,8 @@
 
 #include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_bootstrap/bootstrap_loader.h>
+#include <lyric_object/extension_walker.h>
+#include <lyric_object/parameter_walker.h>
 #include <lyric_parser/lyric_parser.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
@@ -25,11 +27,10 @@ TEST_F(AnalyzeConcept, DeclareConcept)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (3, root.numSymbols());
-    ASSERT_EQ (1, root.numConcepts());
+    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (1, object.numConcepts());
 
-    auto concept0 = root.getConcept(0);
+    auto concept0 = object.getConcept(0);
     ASSERT_TRUE (concept0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), concept0.getSymbolPath());
     ASSERT_EQ (lyric_object::AccessType::Public, concept0.getAccess());
@@ -47,12 +48,11 @@ TEST_F(AnalyzeConcept, DeclareConceptAction)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (4, root.numSymbols());
-    ASSERT_EQ (1, root.numConcepts());
-    ASSERT_EQ (1, root.numActions());
+    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (1, object.numConcepts());
+    ASSERT_EQ (1, object.numActions());
 
-    auto concept0 = root.getConcept(0);
+    auto concept0 = object.getConcept(0);
     ASSERT_TRUE (concept0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), concept0.getSymbolPath());
 
@@ -83,12 +83,11 @@ TEST_F(AnalyzeConcept, DeclareConceptImplMethod)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    auto root = object.getObject();
-    ASSERT_EQ (4, root.numSymbols());
-    ASSERT_EQ (1, root.numConcepts());
-    ASSERT_EQ (2, root.numCalls());
+    ASSERT_EQ (4, object.numSymbols());
+    ASSERT_EQ (1, object.numConcepts());
+    ASSERT_EQ (2, object.numCalls());
 
-    auto concept0 = root.getConcept(0);
+    auto concept0 = object.getConcept(0);
     ASSERT_TRUE (concept0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), concept0.getSymbolPath());
     ASSERT_EQ (1, concept0.numImpls());

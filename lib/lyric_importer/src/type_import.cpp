@@ -1,6 +1,10 @@
 
 #include <lyric_importer/importer_result.h>
 #include <lyric_importer/type_import.h>
+#include <lyric_object/concrete_type_walker.h>
+#include <lyric_object/intersection_type_walker.h>
+#include <lyric_object/placeholder_type_walker.h>
+#include <lyric_object/union_type_walker.h>
 #include <lyric_object/type_walker.h>
 
 namespace lyric_importer {
@@ -61,7 +65,7 @@ lyric_importer::TypeImport::getTypeOffset() const
 
 static lyric_common::SymbolUrl
 import_type_symbol(
-    const lyric_object::ObjectWalker &object,
+    const lyric_object::LyricObject &object,
     const lyric_object::ConcreteTypeWalker &concreteTypeWalker,
     const lyric_common::ModuleLocation &objectLocation)
 {
@@ -127,7 +131,7 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
         case lyric_common::TypeDefType::Concrete: {
             auto concreteTypeWalker = typeWalker.concreteType();
 
-            auto object = moduleImport->getObject().getObject();
+            auto object = moduleImport->getObject();
             auto concreteUrl = import_type_symbol(object, concreteTypeWalker, objectLocation);
 
             std::vector<lyric_common::TypeDef> concreteParameters;
@@ -345,7 +349,7 @@ lyric_importer::TypeImport::load()
     auto priv = std::make_unique<Priv>();
 
     auto moduleImport = getModuleImport();
-    auto typeWalker = moduleImport->getObject().getObject().getType(m_typeOffset);
+    auto typeWalker = moduleImport->getObject().getType(m_typeOffset);
     priv->typeDef = import_assignable_type(typeWalker, moduleImport.get());
     priv->typeArguments = import_type_arguments(typeWalker, moduleImport.get());
 

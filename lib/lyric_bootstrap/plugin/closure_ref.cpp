@@ -245,7 +245,7 @@ closure_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
     // fetch the proc offset for the call descriptor
     auto *segment = state->segmentManager()->getSegment(arg0.data.descriptor->getSegmentIndex());
     TU_ASSERT (segment != nullptr);
-    auto object = segment->getObject().getObject();
+    auto object = segment->getObject();
     auto descriptor = object.getCall(arg0.data.descriptor->getDescriptorIndex());
     auto procOffset = descriptor.getProcOffset();
 

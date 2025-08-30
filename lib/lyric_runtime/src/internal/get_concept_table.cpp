@@ -1,4 +1,6 @@
 
+#include <lyric_object/concrete_type_walker.h>
+#include <lyric_object/extension_walker.h>
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_segment.h>
 #include <lyric_runtime/data_cell.h>
@@ -27,7 +29,7 @@ lyric_runtime::internal::get_concept_table(
 
     auto *entry = descriptor.data.descriptor;
     auto *conceptSegment = entry->getSegment();
-    auto conceptObject = conceptSegment->getObject().getObject();
+    auto conceptObject = conceptSegment->getObject();
     auto conceptIndex = entry->getDescriptorIndex();
     auto conceptDescriptor = conceptObject.getConcept(conceptIndex);
     auto conceptType = DataCell::forType(
@@ -125,7 +127,7 @@ lyric_runtime::internal::get_concept_table(
 
             auto *callSegment = implCall.data.descriptor->getSegment();
             auto callIndex = implCall.data.descriptor->getDescriptorIndex();
-            auto call = callSegment->getObject().getObject().getCall(callIndex);
+            auto call = callSegment->getObject().getCall(callIndex);
             auto procOffset = call.getProcOffset();
             auto returnsValue = !call.isNoReturn();
 

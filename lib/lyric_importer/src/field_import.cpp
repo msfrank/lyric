@@ -77,7 +77,7 @@ lyric_importer::FieldImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto fieldWalker = moduleImport->getObject().getObject().getField(m_fieldOffset);
+    auto fieldWalker = moduleImport->getObject().getField(m_fieldOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, fieldWalker.getSymbolPath());
 
     switch (fieldWalker.getAccess()) {

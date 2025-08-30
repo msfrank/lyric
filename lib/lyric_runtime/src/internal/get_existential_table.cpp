@@ -1,4 +1,6 @@
 
+#include <lyric_object/concrete_type_walker.h>
+#include <lyric_object/extension_walker.h>
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_segment.h>
 #include <lyric_runtime/data_cell.h>
@@ -27,7 +29,7 @@ lyric_runtime::internal::get_existential_table(
 
     auto *entry = descriptor.data.descriptor;
     auto *existentialSegment = entry->getSegment();
-    auto existentialObject = existentialSegment->getObject().getObject();
+    auto existentialObject = existentialSegment->getObject();
     auto existentialIndex = entry->getDescriptorIndex();
     auto existentialDescriptor = existentialObject.getExistential(existentialIndex);
     auto existentialType = DataCell::forType(
@@ -97,7 +99,7 @@ lyric_runtime::internal::get_existential_table(
 
         auto *callSegment = existentialCall.data.descriptor->getSegment();
         auto callIndex = existentialCall.data.descriptor->getDescriptorIndex();
-        auto call = callSegment->getObject().getObject().getCall(callIndex);
+        auto call = callSegment->getObject().getCall(callIndex);
         auto procOffset = call.getProcOffset();
         auto returnsValue = !call.isNoReturn();
 
@@ -158,7 +160,7 @@ lyric_runtime::internal::get_existential_table(
 
             auto *callSegment = implCall.data.descriptor->getSegment();
             auto callIndex = implCall.data.descriptor->getDescriptorIndex();
-            auto call = callSegment->getObject().getObject().getCall(callIndex);
+            auto call = callSegment->getObject().getCall(callIndex);
             auto procOffset = call.getProcOffset();
             auto returnsValue = !call.isNoReturn();
 

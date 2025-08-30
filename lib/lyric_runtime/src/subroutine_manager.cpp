@@ -268,7 +268,7 @@ lyric_runtime::SubroutineManager::callStatic(
     // resolve the segment and call proc
     if (lyric_object::IS_NEAR(address)) {
         segment = sp;
-        auto object = segment->getObject().getObject();
+        auto object = segment->getObject();
         call = object.getCall(address);
         if (!call.isValid()) {
             status = InterpreterStatus::forCondition(
@@ -285,7 +285,7 @@ lyric_runtime::SubroutineManager::callStatic(
             return false;
         }
         segment = m_segmentManager->getSegment(linkage->object);
-        auto object = segment->getObject().getObject();
+        auto object = segment->getObject();
         call = object.getCall(linkage->value);
         if (!call.isValid()) {
             status = InterpreterStatus::forCondition(
@@ -310,7 +310,7 @@ lyric_runtime::SubroutineManager::callStatic(
 
     auto *segment = descriptor.data.descriptor->getSegment();
     auto callIndex = descriptor.data.descriptor->getDescriptorIndex();
-    auto object = segment->getObject().getObject();
+    auto object = segment->getObject();
     auto call = object.getCall(callIndex);
     if (!call.isValid()) {
         status = InterpreterStatus::forCondition(
@@ -754,14 +754,14 @@ lyric_runtime::SubroutineManager::initStatic(
     tempo_utils::Status &status)
 {
     BytecodeSegment *segment = nullptr;
-    lyric_object::ObjectWalker object;
+    lyric_object::LyricObject object;
     lyric_object::StaticWalker static_;
 
     auto *sp = currentCoro->peekSP();
 
     if (lyric_object::IS_NEAR(address)) {
         segment = sp;
-        object = sp->getObject().getObject();
+        object = sp->getObject();
         static_ = object.getStatic(address);
     } else {
         const auto *linkage = m_segmentManager->resolveLink(
@@ -774,7 +774,7 @@ lyric_runtime::SubroutineManager::initStatic(
             return false;
         }
         segment = m_segmentManager->getSegment(linkage->object);
-        object = segment->getObject().getObject();
+        object = segment->getObject();
         static_ = object.getStatic(linkage->value);
     }
 

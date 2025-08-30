@@ -3,6 +3,7 @@
 #include <lyric_importer/template_import.h>
 #include <lyric_importer/type_import.h>
 #include <lyric_object/template_walker.h>
+#include <lyric_object/template_parameter_walker.h>
 
 namespace lyric_importer {
     struct TemplateImport::Priv {
@@ -75,7 +76,7 @@ lyric_importer::TemplateImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto templateWalker = moduleImport->getObject().getObject().getTemplate(m_templateOffset);
+    auto templateWalker = moduleImport->getObject().getTemplate(m_templateOffset);
     priv->templateUrl = lyric_common::SymbolUrl(objectLocation, templateWalker.getSymbolPath());
 
     if (templateWalker.hasSuperTemplate()) {

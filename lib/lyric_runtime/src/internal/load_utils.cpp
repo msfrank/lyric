@@ -46,7 +46,7 @@ lyric_runtime::internal::push_symbol_descriptor_onto_stack(
     if (segment == nullptr)
         return InterpreterStatus::forCondition(
             InterpreterCondition::kMissingObject, symbolUrl.getModuleLocation().toString());
-    auto object = segment->getObject().getObject();
+    auto object = segment->getObject();
     auto symbol = object.findSymbol(symbolUrl.getSymbolPath());
     if (!symbol.isValid())
         return InterpreterStatus::forCondition(

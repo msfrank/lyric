@@ -197,7 +197,7 @@ lyric_importer::EnumImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto enumWalker = moduleImport->getObject().getObject().getEnum(m_enumOffset);
+    auto enumWalker = moduleImport->getObject().getEnum(m_enumOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, enumWalker.getSymbolPath());
 
     priv->isDeclOnly = enumWalker.isDeclOnly();

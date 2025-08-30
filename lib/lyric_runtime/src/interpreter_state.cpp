@@ -124,7 +124,7 @@ detect_bootstrap(
             lyric_runtime::InterpreterCondition::kMissingObject,
              "missing object {}", mainLocation.toString());
 
-    auto mainObject = segment->getObject().getObject();
+    auto mainObject = segment->getObject();
 
     // find the system bootstrap module
     lyric_object::ImportWalker bootstrapImport;;
@@ -156,7 +156,7 @@ static tempo_utils::Status
 allocate_type_manager(
     lyric_runtime::SegmentManager *segmentManager,
     lyric_runtime::BytecodeSegment *preludeSegment,
-    const lyric_object::ObjectWalker &preludeObject,
+    const lyric_object::LyricObject &preludeObject,
     std::unique_ptr<lyric_runtime::TypeManager> &typeManagerPtr)
 {
     TU_ASSERT (segmentManager != nullptr);
@@ -196,7 +196,7 @@ static const lyric_runtime::ExistentialTable *
 resolve_bootstrap_existential_table(
     lyric_runtime::SegmentManager *segmentManager,
     lyric_runtime::BytecodeSegment *preludeSegment,
-    const lyric_object::ObjectWalker &preludeObject,
+    const lyric_object::LyricObject &preludeObject,
     lyric_common::SymbolPath existentialPath,
     tempo_utils::Status &status)
 {
@@ -211,7 +211,7 @@ allocate_heap_manager(
     lyric_runtime::SegmentManager *segmentManager,
     lyric_runtime::SystemScheduler *systemScheduler,
     lyric_runtime::BytecodeSegment *preludeSegment,
-    const lyric_object::ObjectWalker &preludeObject,
+    const lyric_object::LyricObject &preludeObject,
     std::shared_ptr<lyric_runtime::AbstractHeap> heap,
     std::unique_ptr<lyric_runtime::HeapManager> &heapManagerPtr)
 {
@@ -363,7 +363,7 @@ lyric_runtime::InterpreterState::initialize(const lyric_common::ModuleLocation &
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             "failed to load prelude {}", preludeLocation.toString());
 
-    auto preludeObject = preludeSegment->getObject().getObject();
+    auto preludeObject = preludeSegment->getObject();
     if (!preludeObject.isValid())
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             "prelude {} is invalid", preludeLocation.toString());
@@ -424,7 +424,7 @@ lyric_runtime::InterpreterState::load(
     // update the origin
     TU_RETURN_IF_NOT_OK (m_segmentManager->setOrigin(mainLocation));
 
-    auto mainObject = segment->getObject().getObject();
+    auto mainObject = segment->getObject();
 
     // set *IP to the entry proc of the main module
     auto symbol = mainObject.findSymbol(lyric_common::SymbolPath::entrySymbol());

@@ -174,7 +174,7 @@ import_module_symbols(
 {
     auto *state = block->blockState();
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
 
     for (const auto &importRef : importSymbols) {
         auto symbolPath = importRef.getPath();
@@ -226,7 +226,7 @@ import_module(
 {
     auto *state = block->blockState();
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
 
     for (int i = 0; i < object.numSymbols(); i++) {
         auto symbolWalker = object.getSymbol(i);
@@ -409,7 +409,7 @@ lyric_assembler::ImportCache::importSymbol(const lyric_common::SymbolUrl &symbol
 
     auto objectLocation = moduleImport->getObjectLocation();
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolPath = symbolUrl.getSymbolPath();
     auto symbolWalker = object.findSymbol(symbolPath);
     if (!symbolWalker.isValid())

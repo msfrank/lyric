@@ -41,6 +41,5 @@ TEST(AnalyzeBlock, NoDefinitions)
     lyric_object::LyricObject object;
     TU_ASSIGN_OR_RAISE (object, analyzer.analyzeModule(location, archetype, objectStateOptions, recorder));
 
-    auto root = object.getObject();
-    ASSERT_EQ (2, root.numSymbols());
+    ASSERT_EQ (2, object.numSymbols());
 }

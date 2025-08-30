@@ -74,7 +74,7 @@ lyric_importer::StaticImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto staticWalker = moduleImport->getObject().getObject().getStatic(m_staticOffset);
+    auto staticWalker = moduleImport->getObject().getStatic(m_staticOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, staticWalker.getSymbolPath());
 
     priv->isVariable = staticWalker.isVariable();

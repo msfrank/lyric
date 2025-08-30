@@ -23,7 +23,7 @@ namespace lyric_object {
 
         PluginWalker(std::shared_ptr<const internal::ObjectReader> reader, void *pluginDescriptor);
 
-        friend class ObjectWalker;
+        friend class LyricObject;
     };
 }
 

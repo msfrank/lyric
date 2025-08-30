@@ -82,7 +82,7 @@ lyric_importer::NamespaceImport::load()
 
     auto moduleImport = getModuleImport();
     auto objectLocation = moduleImport->getObjectLocation();
-    auto namespaceWalker = moduleImport->getObject().getObject().getNamespace(m_namespaceOffset);
+    auto namespaceWalker = moduleImport->getObject().getNamespace(m_namespaceOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, namespaceWalker.getSymbolPath());
 
     priv->isDeclOnly = namespaceWalker.isDeclOnly();

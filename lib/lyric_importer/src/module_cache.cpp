@@ -84,12 +84,11 @@ lyric_importer::ModuleCache::importModule(const lyric_common::ModuleLocation &ob
             ImporterCondition::kModuleNotFound, "module {} not found",
             objectLocation.toString());
     auto object = objectOption.getValue();
-    auto root = object.getObject();
 
     lyric_common::ModuleLocation pluginLocation;
     std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin;
-    if (root.hasPlugin()) {
-        auto walker = root.getPlugin();
+    if (object.hasPlugin()) {
+        auto walker = object.getPlugin();
 
         pluginLocation = walker.getPluginLocation();
         if (!pluginLocation.isValid())
@@ -124,7 +123,7 @@ lyric_importer::ModuleCache::getAction(const lyric_common::SymbolUrl &actionUrl)
     std::shared_ptr<ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN(moduleImport, importModule(actionUrl.getModuleLocation()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolWalker = object.findSymbol(actionUrl.getSymbolPath());
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Action)
@@ -141,7 +140,7 @@ lyric_importer::ModuleCache::getBinding(const lyric_common::SymbolUrl &bindingUr
     std::shared_ptr<ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN(moduleImport, importModule(bindingUrl.getModuleLocation()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolWalker = object.findSymbol(bindingUrl.getSymbolPath());
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Binding)
@@ -158,7 +157,7 @@ lyric_importer::ModuleCache::getCall(const lyric_common::SymbolUrl &callUrl)
     std::shared_ptr<ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN(moduleImport, importModule(callUrl.getModuleLocation()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolWalker = object.findSymbol(callUrl.getSymbolPath());
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Call)
@@ -175,7 +174,7 @@ lyric_importer::ModuleCache::getClass(const lyric_common::SymbolUrl &classUrl)
     std::shared_ptr<ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN(moduleImport, importModule(classUrl.getModuleLocation()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolWalker = object.findSymbol(classUrl.getSymbolPath());
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Class)
@@ -192,7 +191,7 @@ lyric_importer::ModuleCache::getConcept(const lyric_common::SymbolUrl &conceptUr
     std::shared_ptr<ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN(moduleImport, importModule(conceptUrl.getModuleLocation()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolWalker = object.findSymbol(conceptUrl.getSymbolPath());
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Concept)
@@ -209,7 +208,7 @@ lyric_importer::ModuleCache::getEnum(const lyric_common::SymbolUrl &enumUrl)
     std::shared_ptr<ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN(moduleImport, importModule(enumUrl.getModuleLocation()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolWalker = object.findSymbol(enumUrl.getSymbolPath());
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Enum)
@@ -226,7 +225,7 @@ lyric_importer::ModuleCache::getExistential(const lyric_common::SymbolUrl &exist
     std::shared_ptr<ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN(moduleImport, importModule(existentialUrl.getModuleLocation()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolWalker = object.findSymbol(existentialUrl.getSymbolPath());
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Existential)
@@ -243,7 +242,7 @@ lyric_importer::ModuleCache::getField(const lyric_common::SymbolUrl &fieldUrl)
     std::shared_ptr<ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN(moduleImport, importModule(fieldUrl.getModuleLocation()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolWalker = object.findSymbol(fieldUrl.getSymbolPath());
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Field)
@@ -260,7 +259,7 @@ lyric_importer::ModuleCache::getInstance(const lyric_common::SymbolUrl &instance
     std::shared_ptr<ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN(moduleImport, importModule(instanceUrl.getModuleLocation()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolWalker = object.findSymbol(instanceUrl.getSymbolPath());
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Instance)
@@ -277,7 +276,7 @@ lyric_importer::ModuleCache::getNamespace(const lyric_common::SymbolUrl &namespa
     std::shared_ptr<ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN(moduleImport, importModule(namespaceUrl.getModuleLocation()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolWalker = object.findSymbol(namespaceUrl.getSymbolPath());
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Namespace)
@@ -294,7 +293,7 @@ lyric_importer::ModuleCache::getStatic(const lyric_common::SymbolUrl &staticUrl)
     std::shared_ptr<ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN(moduleImport, importModule(staticUrl.getModuleLocation()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolWalker = object.findSymbol(staticUrl.getSymbolPath());
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Static)
@@ -311,7 +310,7 @@ lyric_importer::ModuleCache::getStruct(const lyric_common::SymbolUrl &structUrl)
     std::shared_ptr<ModuleImport> moduleImport;
     TU_ASSIGN_OR_RETURN(moduleImport, importModule(structUrl.getModuleLocation()));
 
-    auto object = moduleImport->getObject().getObject();
+    auto object = moduleImport->getObject();
     auto symbolWalker = object.findSymbol(structUrl.getSymbolPath());
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Struct)
