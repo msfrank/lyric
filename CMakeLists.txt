@@ -173,7 +173,7 @@ find_package(flatbuffers REQUIRED)
 find_package(rocksdb REQUIRED)
 
 # find required Openssl dependency
-find_package(openssl REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 # find required Uv dependency
 find_package(uv REQUIRED)

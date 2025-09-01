@@ -56,7 +56,7 @@ class Lyric(ConanFile):
         'fmt/9.1.0@timbre',
         'flatbuffers/23.5.26@timbre',
         'gtest/1.14.0@timbre',
-        'openssl/3.2.0@timbre',
+        'openssl/3.5.2@timbre',
         'rocksdb/10.4.2@timbre',
         'utfcpp/4.0.6@timbre',
         'uv/1.51.0@timbre',

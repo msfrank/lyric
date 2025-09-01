@@ -179,7 +179,7 @@ target_link_libraries(lyric_build
     rocksdb::rocksdb
     PRIVATE
     flatbuffers::flatbuffers
-    openssl::openssl
+    OpenSSL::Crypto
     uv::uv
     )
 
