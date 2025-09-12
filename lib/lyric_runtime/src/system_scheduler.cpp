@@ -1,6 +1,8 @@
 
 #include <lyric_runtime/system_scheduler.h>
 
+#include "lyric_runtime/interpreter_state.h"
+
 lyric_runtime::SystemScheduler::SystemScheduler(uv_loop_t *loop)
     : m_loop(loop),
       m_readyQueue(nullptr),
@@ -12,10 +14,8 @@ lyric_runtime::SystemScheduler::SystemScheduler(uv_loop_t *loop)
 {
     TU_ASSERT (m_loop != nullptr);
 
-    m_loop->data = this;
-
-    m_mainTask = new Task(TaskType::Main, this);
-    m_mainTask->setTaskState(TaskState::Waiting);
+    m_mainTask = new Task(/* isMainTask= */ true, this);
+    m_mainTask->setState(Task::State::Waiting);
 
     // attach main task to the end of the wait queue
     m_mainTask->attach(&m_waitQueue);
@@ -105,7 +105,7 @@ lyric_runtime::SystemScheduler::selectNextReady()
         m_currentTask = m_readyQueue;
         if (m_currentTask) {
             // if ready queue has an available task then set it to running state
-            m_currentTask->setTaskState(TaskState::Running);
+            m_currentTask->setState(Task::State::Running);
         }
         // return the current task, which may be null!
         return m_currentTask;
@@ -116,11 +116,11 @@ lyric_runtime::SystemScheduler::selectNextReady()
         return m_currentTask;
 
     // otherwise switch current task state to ready
-    m_currentTask->setTaskState(TaskState::Ready);
+    m_currentTask->setState(Task::State::Ready);
 
     // then select the next task
     auto *selected = m_currentTask->nextTask();
-    selected->setTaskState(TaskState::Running);
+    selected->setState(Task::State::Running);
     m_currentTask = selected;
     return m_currentTask;
 }
@@ -129,8 +129,8 @@ lyric_runtime::Task *
 lyric_runtime::SystemScheduler::createTask()
 {
     // create new worker task and attach it to the end of the wait queue
-    auto *task = new Task(TaskType::Worker, this);
-    task->setTaskState(TaskState::Waiting);
+    auto *task = new Task(/* isMainTask= */ false, this);
+    task->setState(Task::State::Waiting);
     task->attach(&m_waitQueue);
     return task;
 }
@@ -140,11 +140,11 @@ lyric_runtime::SystemScheduler::suspendTask(Task *task)
 {
     TU_ASSERT (task != nullptr);
 
-    switch (task->getTaskState()) {
-        case TaskState::Waiting:
+    switch (task->getState()) {
+        case Task::State::Waiting:
             return;     // if task is already suspended, then do nothing
-        case TaskState::Ready:
-        case TaskState::Running:
+        case Task::State::Ready:
+        case Task::State::Running:
             break;
         default:
             TU_LOG_FATAL << "task " << task << " cannot be suspended; unexpected state";
@@ -160,7 +160,7 @@ lyric_runtime::SystemScheduler::suspendTask(Task *task)
     }
 
     // set the task state to Waiting
-    task->setTaskState(TaskState::Waiting);
+    task->setState(Task::State::Waiting);
 
     // attach task to the end of the wait queue
     task->attach(&m_waitQueue);
@@ -171,11 +171,11 @@ lyric_runtime::SystemScheduler::resumeTask(Task *task)
 {
     TU_ASSERT (task != nullptr);
 
-    switch (task->getTaskState()) {
-        case TaskState::Ready:
-        case TaskState::Running:
+    switch (task->getState()) {
+        case Task::State::Ready:
+        case Task::State::Running:
             return;     // if task is ready or running, then do nothing
-        case TaskState::Waiting:
+        case Task::State::Waiting:
             break;
         default:
             TU_LOG_FATAL << "task " << task << " cannot be resumed; unexpected state";
@@ -186,7 +186,7 @@ lyric_runtime::SystemScheduler::resumeTask(Task *task)
     task->detach(&m_waitQueue);
 
     // set the task state to Ready
-    task->setTaskState(TaskState::Ready);
+    task->setState(Task::State::Ready);
 
     // attach task to the end of the ready queue
     task->attach(&m_readyQueue);
@@ -197,17 +197,17 @@ lyric_runtime::SystemScheduler::terminateTask(Task *task)
 {
     TU_ASSERT (task != nullptr);
 
-    switch (task->getTaskState()) {
-        case TaskState::Initial:
+    switch (task->getState()) {
+        case Task::State::Initial:
             return;
-        case TaskState::Running:
+        case Task::State::Running:
             m_currentTask = nullptr;
             task->detach(&m_readyQueue);
             break;
-        case TaskState::Ready:
+        case Task::State::Ready:
             task->detach(&m_readyQueue);
             break;
-        case TaskState::Waiting:
+        case Task::State::Waiting:
             task->detach(&m_waitQueue);
             break;
         default:
@@ -216,7 +216,7 @@ lyric_runtime::SystemScheduler::terminateTask(Task *task)
     }
 
     // set the task state to Done
-    task->setTaskState(TaskState::Done);
+    task->setState(Task::State::Done);
 
     // attach task to the end of the done queue
     task->attach(&m_doneQueue);
@@ -229,7 +229,7 @@ void
 lyric_runtime::SystemScheduler::destroyTask(Task *task)
 {
     TU_ASSERT (task != nullptr);
-    TU_ASSERT (task->getTaskState() == TaskState::Done);
+    TU_ASSERT (task->getState() == Task::State::Done);
 
     // detach task from the done queue and deallocate it
     task->detach(&m_doneQueue);
@@ -248,10 +248,13 @@ on_worker_complete(uv_async_t *monitor)
         waiter->task->resume();
     }
 
+    auto *state = static_cast<lyric_runtime::InterpreterState *>(monitor->loop->data);
+    auto *systemScheduler = state->systemScheduler();
+
     // if the waiter has an attached promise, then run the accept callback
     if (waiter->promise) {
         auto promise = waiter->promise;
-        promise->accept();
+        promise->accept(waiter, state);
 
         // if the promise has an adapt callback, then schedule it to be called before the task resumes
         if (promise->needsAdapt()) {
@@ -262,15 +265,14 @@ on_worker_complete(uv_async_t *monitor)
     }
 
     // free the completed waiter
-    auto *scheduler = static_cast<lyric_runtime::SystemScheduler *>(monitor->loop->data);
-    scheduler->destroyWaiter(waiter);
+    systemScheduler->destroyWaiter(waiter);
 }
 
 void
 lyric_runtime::SystemScheduler::registerWorker(Task *workerTask, std::shared_ptr<Promise> promise)
 {
     TU_ASSERT (promise != nullptr);
-    TU_ASSERT (promise->getPromiseState() == PromiseState::Initial);
+    TU_ASSERT (promise->getState() == Promise::State::Initial);
 
     // initialize the async handle
     auto *monitor = (uv_async_t *) malloc(sizeof(uv_async_t));
@@ -305,10 +307,13 @@ on_timer_complete(uv_timer_t *timer)
         waiter->task->resume();
     }
 
+    auto *state = static_cast<lyric_runtime::InterpreterState *>(timer->loop->data);
+    auto *systemScheduler = state->systemScheduler();
+
     // if the waiter has an attached promise, then run the accept callback
     if (waiter->promise) {
         auto promise = waiter->promise;
-        promise->accept();
+        promise->accept(waiter, state);
 
         // if the promise has an adapt callback, then schedule it to be called before the task resumes
         if (promise->needsAdapt()) {
@@ -319,15 +324,14 @@ on_timer_complete(uv_timer_t *timer)
     }
 
     // free the completed waiter
-    auto *scheduler = static_cast<lyric_runtime::SystemScheduler *>(timer->loop->data);
-    scheduler->destroyWaiter(waiter);
+    systemScheduler->destroyWaiter(waiter);
 }
 
 void
 lyric_runtime::SystemScheduler::registerTimer(tu_uint64 deadline, std::shared_ptr<Promise> promise)
 {
     TU_ASSERT (promise != nullptr);
-    TU_ASSERT (promise->getPromiseState() == PromiseState::Initial);
+    TU_ASSERT (promise->getState() == Promise::State::Initial);
 
     // initialize the timer handle
     auto *timer = (uv_timer_t *) malloc(sizeof(uv_timer_t));
@@ -362,10 +366,13 @@ on_async_complete(uv_async_t *async)
         waiter->task->resume();
     }
 
+    auto *state = static_cast<lyric_runtime::InterpreterState *>(async->loop->data);
+    auto *systemScheduler = state->systemScheduler();
+
     // if the waiter has an attached promise, then run the accept callback
     if (waiter->promise) {
         auto promise = waiter->promise;
-        promise->accept();
+        promise->accept(waiter, state);
 
         // if the promise has an adapt callback, then schedule it to be called before the task resumes
         if (promise->needsAdapt()) {
@@ -376,8 +383,7 @@ on_async_complete(uv_async_t *async)
     }
 
     // free the completed waiter
-    auto *scheduler = static_cast<lyric_runtime::SystemScheduler *>(async->loop->data);
-    scheduler->destroyWaiter(waiter);
+    systemScheduler->destroyWaiter(waiter);
 }
 
 void
@@ -388,7 +394,7 @@ lyric_runtime::SystemScheduler::registerAsync(
 {
     TU_ASSERT (asyncptr != nullptr);
     TU_ASSERT (promise != nullptr);
-    TU_ASSERT (promise->getPromiseState() == PromiseState::Initial);
+    TU_ASSERT (promise->getState() == Promise::State::Initial);
 
     // initialize the async handle
     auto *async = (uv_async_t *) malloc(sizeof(uv_async_t));
@@ -409,6 +415,82 @@ lyric_runtime::SystemScheduler::registerAsync(
 
     // pass async handle back via the out parameter
     *asyncptr = async;
+}
+
+static void
+on_read_complete(uv_fs_t *req)
+{
+    auto *waiter = static_cast<lyric_runtime::Waiter *>(req->data);
+
+    // if there is a task associated with the waiter, then resume the suspended task.
+    // we do this before running the waiter callback so that there will be a coroutine
+    // available to the callback.
+    if (waiter->task) {
+        waiter->task->resume();
+    }
+
+    auto *state = static_cast<lyric_runtime::InterpreterState *>(req->loop->data);
+    auto *systemScheduler = state->systemScheduler();
+
+    // if the waiter has an attached promise, then run the accept callback
+    if (waiter->promise) {
+        auto promise = waiter->promise;
+        promise->accept(waiter, state);
+
+        // if the promise has an adapt callback, then schedule it to be called before the task resumes
+        if (promise->needsAdapt()) {
+            auto *task = waiter->task;
+            TU_ASSERT (task != nullptr);
+            task->appendPromise(promise);
+        }
+    }
+
+    // free the completed waiter
+    systemScheduler->destroyWaiter(waiter);
+}
+
+tempo_utils::Status
+lyric_runtime::SystemScheduler::registerRead(
+    uv_file file,
+    uv_buf_t buf,
+    std::shared_ptr<Promise> promise,
+    tu_int64 offset)
+{
+    TU_ASSERT (promise != nullptr);
+    TU_ASSERT (promise->getState() == Promise::State::Initial);
+
+    auto *req = (uv_fs_t *) malloc(sizeof(uv_fs_t));
+    memset(req, 0, sizeof(uv_fs_t));
+
+    auto ret = uv_fs_read(m_loop, req, file, &buf, 1, offset, on_read_complete);
+    if (ret < 0)
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "failed to schedule read: {}", uv_strerror(ret));
+
+    // allocate a new waiter
+    auto *waiter = new Waiter(req);
+    waiter->promise = promise;
+
+    // link the waiter to the promise and set the promise state to Pending
+    promise->attach(waiter);
+
+    // link the waiter to the fs request
+    req->data = waiter;
+
+    // attach waiter to the end of the global waiters list
+    attachWaiter(waiter);
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_runtime::SystemScheduler::registerWrite(
+    uv_file file,
+    uv_buf_t buf,
+    std::shared_ptr<Promise> promise,
+    tu_int64 offset)
+{
+    return {};
 }
 
 void
@@ -450,8 +532,13 @@ on_handle_close(uv_handle_t *handle)
 void
 lyric_runtime::SystemScheduler::destroyWaiter(Waiter *waiter)
 {
-    // close the handle, deferring resource deallocation to the specified callback
-    uv_close(waiter->handle, on_handle_close);
+    if (waiter->handle) {
+        // close the handle and defer deallocation to the specified callback
+        uv_close(waiter->handle, on_handle_close);
+    } else if (waiter->req) {
+        // clean up the fs request immediately
+        uv_fs_req_cleanup(waiter->req);
+    }
 
     auto *prev = waiter->prev;
     auto *next = waiter->next;

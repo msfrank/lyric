@@ -100,6 +100,9 @@ lyric_runtime::InterpreterState::create(
     auto state = std::shared_ptr<InterpreterState>(new InterpreterState(loop, options.preludeLocation,
         std::move(systemLoader), std::move(applicationLoader), std::move(heap)));
 
+    // capture pointer to interpreter state in the loop data field
+    loop->data = state.get();
+
     // if main location was specified then load it
     if (options.mainLocation.isValid()) {
         TU_RETURN_IF_NOT_OK(state->load(options.mainLocation, options.mainArguments));

@@ -21,11 +21,16 @@ namespace lyric_runtime {
         Waiter *prev = nullptr;
         Waiter *next = nullptr;
         friend class SystemScheduler;
+
     public:
-        uv_handle_t * const handle;
+        uv_handle_t * const handle = nullptr;
+        uv_fs_t * const req = nullptr;
         Task *task = nullptr;
         std::shared_ptr<Promise> promise;
+
         explicit Waiter(uv_handle_t *handle): handle(handle) {};
+        explicit Waiter(uv_fs_t *req): req(req) {};
+
         Waiter *prevWaiter() const { return prev; };
         Waiter *nextWaiter() const { return next; };
     };
@@ -59,6 +64,17 @@ namespace lyric_runtime {
         void registerWorker(Task *workerTask, std::shared_ptr<Promise> promise);
         void registerTimer(tu_uint64 deadline, std::shared_ptr<Promise> promise);
         void registerAsync(uv_async_t **asyncptr, std::shared_ptr<Promise> promise, tu_uint64 deadline = 0);
+        tempo_utils::Status registerRead(
+            uv_file file,
+            uv_buf_t buf,
+            std::shared_ptr<Promise> promise,
+            tu_int64 offset = -1);
+        tempo_utils::Status registerWrite(
+            uv_file file,
+            uv_buf_t buf,
+            std::shared_ptr<Promise> promise,
+            tu_int64 offset = -1);
+
         void destroyWaiter(Waiter *waiter);
 
         Waiter *firstWaiter() const;

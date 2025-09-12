@@ -3,9 +3,9 @@
 #include <lyric_runtime/system_scheduler.h>
 #include <lyric_runtime/task.h>
 
-lyric_runtime::Task::Task(TaskType type, SystemScheduler *scheduler)
-    : m_type(type),
-      m_state(TaskState::Initial),
+lyric_runtime::Task::Task(bool isMainTask, SystemScheduler *scheduler)
+    : m_isMainTask(isMainTask),
+      m_state(State::Initial),
       m_scheduler(scheduler),
       m_monitor(nullptr),
       m_prev(nullptr),
@@ -14,10 +14,10 @@ lyric_runtime::Task::Task(TaskType type, SystemScheduler *scheduler)
     TU_ASSERT (m_scheduler != nullptr);
 }
 
-lyric_runtime::TaskType
-lyric_runtime::Task::getTaskType() const
+bool
+lyric_runtime::Task::isMainTask() const
 {
-    return m_type;
+    return m_isMainTask;
 }
 
 lyric_runtime::SystemScheduler *
@@ -32,14 +32,14 @@ lyric_runtime::Task::stackfulCoroutine()
     return &m_coro;
 }
 
-lyric_runtime::TaskState
-lyric_runtime::Task::getTaskState() const
+lyric_runtime::Task::State
+lyric_runtime::Task::getState() const
 {
     return m_state;
 }
 
 void
-lyric_runtime::Task::setTaskState(TaskState state)
+lyric_runtime::Task::setState(State state)
 {
     m_state = state;
 }
@@ -150,7 +150,7 @@ lyric_runtime::Task::resume()
 void
 lyric_runtime::Task::appendPromise(std::shared_ptr<Promise> promise)
 {
-    TU_ASSERT (promise->getPromiseState() == PromiseState::Pending);
+    TU_ASSERT (promise->getState() == Promise::State::Pending);
     m_promises.push(promise);
 }
 
@@ -159,9 +159,9 @@ lyric_runtime::Task::adaptPromises(BytecodeInterpreter *interp, InterpreterState
 {
     while (!m_promises.empty()) {
         auto promise = m_promises.front();
-        TU_ASSERT (promise->getPromiseState() == PromiseState::Pending);
+        TU_ASSERT (promise->getState() == Promise::State::Pending);
         promise->adapt(interp, state);
-        TU_ASSERT (promise->getPromiseState() == PromiseState::Completed || promise->getPromiseState() == PromiseState::Rejected);
+        TU_ASSERT (promise->getState() == Promise::State::Completed || promise->getState() == Promise::State::Rejected);
         m_promises.pop();
     }
 }

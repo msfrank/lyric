@@ -3,7 +3,7 @@
 #include <lyric_runtime/interpreter_state.h>
 #include <lyric_runtime/promise.h>
 
-lyric_runtime::Promise::Promise(PromiseState state, const DataCell &result)
+lyric_runtime::Promise::Promise(State state, const DataCell &result)
     : m_accept(nullptr),
       m_state(state),
       m_result(result)
@@ -13,7 +13,7 @@ lyric_runtime::Promise::Promise(PromiseState state, const DataCell &result)
 lyric_runtime::Promise::Promise(AcceptCallback accept, const PromiseOptions &options)
     : m_accept(accept),
       m_options(options),
-      m_state(PromiseState::Initial),
+      m_state(State::Initial),
       m_waiter(nullptr)
 {
 }
@@ -47,7 +47,7 @@ lyric_runtime::Promise::create(AcceptCallback accept, const PromiseOptions &opti
 std::shared_ptr<lyric_runtime::Promise>
 lyric_runtime::Promise::completed(const DataCell &result)
 {
-    return std::shared_ptr<Promise>(new Promise(PromiseState::Completed, result));
+    return std::shared_ptr<Promise>(new Promise(State::Completed, result));
 }
 
 /**
@@ -60,11 +60,11 @@ lyric_runtime::Promise::completed(const DataCell &result)
 std::shared_ptr<lyric_runtime::Promise>
 lyric_runtime::Promise::rejected(const DataCell &result)
 {
-    return std::shared_ptr<Promise>(new Promise(PromiseState::Rejected, result));
+    return std::shared_ptr<Promise>(new Promise(State::Rejected, result));
 }
 
-lyric_runtime::PromiseState
-lyric_runtime::Promise::getPromiseState() const
+lyric_runtime::Promise::State
+lyric_runtime::Promise::getState() const
 {
     return m_state;
 }
@@ -85,17 +85,17 @@ void
 lyric_runtime::Promise::attach(Waiter *waiter)
 {
     TU_ASSERT (waiter != nullptr);
-    TU_ASSERT (m_state == PromiseState::Initial);
+    TU_ASSERT (m_state == State::Initial);
     TU_ASSERT (m_waiter == nullptr);
     m_waiter = waiter;
-    m_state = PromiseState::Pending;
+    m_state = State::Pending;
 }
 
 void
 lyric_runtime::Promise::await(SystemScheduler *systemScheduler)
 {
     TU_ASSERT (m_waiter != nullptr);
-    TU_ASSERT (m_state == PromiseState::Pending);
+    TU_ASSERT (m_state == State::Pending);
     TU_ASSERT (m_waiter->task == nullptr);
 
     // associate waiter with the current task
@@ -108,10 +108,10 @@ lyric_runtime::Promise::await(SystemScheduler *systemScheduler)
 }
 
 void
-lyric_runtime::Promise::accept()
+lyric_runtime::Promise::accept(const Waiter *waiter, InterpreterState *state)
 {
     if (m_accept) {
-        m_accept(this);
+        m_accept(this, waiter, state);
     }
 }
 
@@ -141,12 +141,12 @@ void
 lyric_runtime::Promise::complete(const DataCell &result)
 {
     m_result = result;
-    m_state = PromiseState::Completed;
+    m_state = State::Completed;
 }
 
 void
 lyric_runtime::Promise::reject(const DataCell &result)
 {
     m_result = result;
-    m_state = PromiseState::Rejected;
+    m_state = State::Rejected;
 }

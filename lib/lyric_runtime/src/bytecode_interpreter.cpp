@@ -142,7 +142,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             Task *currentTask = systemScheduler->currentTask();
 
             // if current task is the main task then halt
-            if (currentTask->getTaskType() == TaskType::Main)
+            if (currentTask->isMainTask())
                 return onHalt(op);
 
             // otherwise this is a worker task, get the result and terminate the task
@@ -1187,7 +1187,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                     if (status.notOk())
                         return onError(op, status);
                     // if we're executing the main task and we have no return address then halt
-                    if (systemScheduler->currentTask()->getTaskType() == TaskType::Main)
+                    if (systemScheduler->currentTask()->isMainTask())
                         return onHalt(op);
                     // otherwise we're executing a worker task, so we do nothing
                     break;

@@ -15,7 +15,7 @@ namespace lyric_runtime {
     struct Waiter;
 
     /** Callback invoked to accept the event data from a waiter. */
-    typedef void (*AcceptCallback)(Promise *);
+    typedef void (*AcceptCallback)(Promise *, const Waiter *, InterpreterState *);
 
     /** Callback invoked to resolve the result of the future. */
     typedef void (*AdaptCallback)(Promise *, BytecodeInterpreter *, InterpreterState *);
@@ -25,16 +25,6 @@ namespace lyric_runtime {
 
     /** Callback invoked to set reachable during GC any refs held in the void *data member */
     typedef void (*ReachableCallback)(void *);
-
-    /**
-     * The promise state.
-     */
-    enum class PromiseState {
-        Initial,    /**< The initial state of a promise before it is attached to a waiter. */
-        Pending,    /**< The promise is pending a result. */
-        Completed,  /**< The promise was completed. */
-        Rejected,   /**< The promise was rejected. */
-    };
 
     /**
      *
@@ -56,13 +46,20 @@ namespace lyric_runtime {
         static std::shared_ptr<Promise> rejected(const DataCell &result);
         ~Promise();
 
-        PromiseState getPromiseState() const;
+        enum class State {
+            Initial,    /**< The initial state of a promise before it is attached to a waiter. */
+            Pending,    /**< The promise is pending a result. */
+            Completed,  /**< The promise was completed. */
+            Rejected,   /**< The promise was rejected. */
+        };
+
+        State getState() const;
         DataCell getResult() const;
         void *getData() const;
 
         void attach(Waiter *waiter);
         void await(SystemScheduler *systemScheduler);
-        void accept();
+        void accept(const Waiter *waiter, InterpreterState *state);
         void adapt(BytecodeInterpreter *interp, InterpreterState *state);
         bool needsAdapt() const;
         void setReachable();
@@ -73,11 +70,11 @@ namespace lyric_runtime {
         AcceptCallback m_accept;
         PromiseOptions m_options;
 
-        PromiseState m_state;
+        State m_state;
         Waiter *m_waiter;
         DataCell m_result;  // FIXME: ensure result is reachable during GC
 
-        Promise(PromiseState state, const DataCell &result);
+        Promise(State state, const DataCell &result);
         Promise(AcceptCallback accept, const PromiseOptions &options);
     };
 }
