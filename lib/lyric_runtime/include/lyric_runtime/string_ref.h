@@ -21,6 +21,7 @@ namespace lyric_runtime {
         bool utf8Value(std::string &utf8) const override;
         bool hashValue(absl::HashState state) override;
         tempo_utils::StatusCode errorStatusCode() override;
+        std::string errorMessage() override;
         std::string toString() const override;
 
         DataCell stringAt(int index) const;

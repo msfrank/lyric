@@ -8,10 +8,25 @@
 namespace lyric_runtime {
 
     struct PreludeTables {
-        const ExistentialTable *bytesTable = nullptr;
-        const ExistentialTable *restTable = nullptr;
-        const ExistentialTable *stringTable = nullptr;
-        const ExistentialTable *urlTable = nullptr;
+        const ExistentialTable *BytesTable = nullptr;
+        const ExistentialTable *RestTable = nullptr;
+        const ExistentialTable *StringTable = nullptr;
+        const ExistentialTable *UrlTable = nullptr;
+        const VirtualTable *CancelledTable = nullptr;
+        const VirtualTable *InvalidArgumentTable = nullptr;
+        const VirtualTable *DeadlineExceededTable = nullptr;
+        const VirtualTable *NotFoundTable = nullptr;
+        const VirtualTable *AlreadyExistsTable = nullptr;
+        const VirtualTable *PermissionDeniedTable = nullptr;
+        const VirtualTable *UnauthenticatedTable = nullptr;
+        const VirtualTable *ResourceExhaustedTable = nullptr;
+        const VirtualTable *FailedPreconditionTable = nullptr;
+        const VirtualTable *AbortedTable = nullptr;
+        const VirtualTable *UnavailableTable = nullptr;
+        const VirtualTable *OutOfRangeTable = nullptr;
+        const VirtualTable *UnimplementedTable = nullptr;
+        const VirtualTable *InternalTable = nullptr;
+        const VirtualTable *UnknownTable = nullptr;
     };
 
     class HeapManager {
@@ -34,6 +49,14 @@ namespace lyric_runtime {
         virtual DataCell allocateBytes(std::span<const tu_uint8> bytes);
         virtual tempo_utils::Status loadLiteralBytesOntoStack(tu_uint32 address);
         virtual tempo_utils::Status loadBytesOntoStack(std::span<const tu_uint8> bytes);
+
+        virtual DataCell allocateStatus(const VirtualTable *vtable);
+        virtual DataCell allocateStatus(
+            tempo_utils::StatusCode statusCode,
+            std::string_view message = {});
+        virtual tempo_utils::Status loadStatusOntoStack(
+            tempo_utils::StatusCode statusCode,
+            std::string_view message = {});
 
         virtual DataCell allocateRest(const CallCell &frame);
         virtual tempo_utils::Status loadRestOntoStack(const CallCell &frame);

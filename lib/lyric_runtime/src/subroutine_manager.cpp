@@ -6,8 +6,9 @@
 #include <tempo_utils/big_endian.h>
 
 #include <lyric_runtime/bytes_ref.h>
-#include <lyric_runtime/string_ref.h>
 #include <lyric_runtime/rest_ref.h>
+#include <lyric_runtime/status_ref.h>
+#include <lyric_runtime/string_ref.h>
 #include <lyric_runtime/url_ref.h>
 
 lyric_runtime::SubroutineManager::SubroutineManager(SegmentManager *segmentManager)
@@ -340,7 +341,6 @@ lyric_runtime::SubroutineManager::callVirtual(
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
-    TU_ASSERT (receiver.type == DataCellType::REF);
     TU_ASSERT (currentCoro != nullptr);
 
     auto *sp = currentCoro->peekSP();
@@ -356,6 +356,9 @@ lyric_runtime::SubroutineManager::callVirtual(
             break;
         case DataCellType::REST:
             resolver = receiver.data.rest->getMethodResolver();
+            break;
+        case DataCellType::STATUS:
+            resolver = receiver.data.status->getMethodResolver();
             break;
         case DataCellType::STRING:
             resolver = receiver.data.str->getMethodResolver();

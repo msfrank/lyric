@@ -14,11 +14,11 @@
 #include "rest_traps.h"
 #include "seq_ref.h"
 #include "singleton_ref.h"
-#include "status_ref.h"
+#include "status_traps.h"
 #include "string_traps.h"
 #include "url_traps.h"
 
-std::array<lyric_runtime::NativeTrap,53> kPreludeTraps = {{
+std::array<lyric_runtime::NativeTrap,55> kPreludeTraps = {{
     {bytes_at, "BytesAt", 0},
     { bytes_compare, "BytesCompare", 0 },
     { bytes_length, "BytesLength", 0 },
@@ -67,6 +67,8 @@ std::array<lyric_runtime::NativeTrap,53> kPreludeTraps = {{
     { singleton_alloc, "SingletonAlloc", 0 },
     { status_alloc, "StatusAlloc", 0 },
     { status_ctor, "StatusCtor", 0 },
+    { status_get_code, "StatusGetCode", 0 },
+    { status_get_message, "StatusGetMessage", 0 },
     { string_at, "StringAt", 0 },
     { string_compare, "StringCompare", 0 },
     { string_length, "StringLength", 0 },

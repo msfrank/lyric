@@ -1,23 +1,35 @@
 #include <absl/strings/substitute.h>
 
 #include <lyric_runtime/interpreter_state.h>
+#include <lyric_runtime/status_ref.h>
+#include <lyric_runtime/string_ref.h>
 #include <tempo_utils/log_stream.h>
 
-#include "status_ref.h"
-
-StatusRef::StatusRef(const lyric_runtime::VirtualTable *vtable)
-    : BaseRef(vtable)
+lyric_runtime::StatusRef::StatusRef(const VirtualTable *vtable)
+    : BaseRef(vtable),
+      m_statusCode(tempo_utils::StatusCode::kUnknown)
 {
     m_fields.resize(vtable->getLayoutTotal());
 }
 
-StatusRef::~StatusRef()
+lyric_runtime::StatusRef::StatusRef(
+    const VirtualTable *vtable,
+    tempo_utils::StatusCode statusCode,
+    StringRef *message)
+    : BaseRef(vtable),
+      m_statusCode(statusCode),
+      m_message(message)
+{
+    TU_ASSERT (m_message != nullptr);
+}
+
+lyric_runtime::StatusRef::~StatusRef()
 {
     TU_LOG_VV << "free" << StatusRef::toString();
 }
 
 lyric_runtime::DataCell
-StatusRef::getField(const lyric_runtime::DataCell &field) const
+lyric_runtime::StatusRef::getField(const DataCell &field) const
 {
     auto *vtable = getVirtualTable();
     auto *member = vtable->getMember(field);
@@ -30,7 +42,7 @@ StatusRef::getField(const lyric_runtime::DataCell &field) const
 }
 
 lyric_runtime::DataCell
-StatusRef::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
+lyric_runtime::StatusRef::setField(const DataCell &field, const DataCell &value)
 {
     auto *vtable = getVirtualTable();
     auto *member = vtable->getMember(field);
@@ -45,22 +57,19 @@ StatusRef::setField(const lyric_runtime::DataCell &field, const lyric_runtime::D
 }
 
 tempo_utils::StatusCode
-StatusRef::errorStatusCode()
+lyric_runtime::StatusRef::errorStatusCode()
 {
     return m_statusCode;
 }
 
-std::string
-StatusRef::toString() const
+lyric_runtime::DataCell
+lyric_runtime::StatusRef::getStatusCode() const
 {
-    return absl::Substitute("<$0: StatusRef $1 vtable=$2>",
-        this,
-        lyric_runtime::BaseRef::getVirtualTable()->getSymbolUrl().toString(),
-        m_vtable);
+    return DataCell(static_cast<tu_int64>(m_statusCode));
 }
 
 void
-StatusRef::setStatusCode(tempo_utils::StatusCode statusCode)
+lyric_runtime::StatusRef::setStatusCode(tempo_utils::StatusCode statusCode)
 {
     switch (statusCode) {
         case tempo_utils::StatusCode::kCancelled:
@@ -86,11 +95,48 @@ StatusRef::setStatusCode(tempo_utils::StatusCode statusCode)
     }
 }
 
-void
-StatusRef::setMembersReachable()
+std::string
+lyric_runtime::StatusRef::errorMessage()
 {
+    std::string message;
+    m_message->utf8Value(message);
+    return message;
+}
+
+lyric_runtime::DataCell
+lyric_runtime::StatusRef::getMessage() const
+{
+    return DataCell::forString(m_message);
+}
+
+void
+lyric_runtime::StatusRef::setMessage(const DataCell &message)
+{
+    TU_ASSERT (message.type == DataCellType::STRING);
+    m_message = message.data.str;
+}
+
+std::string
+lyric_runtime::StatusRef::toString() const
+{
+    std::string_view message;
+    if (m_message != nullptr) {
+        message = std::string_view(m_message->getStringData(), m_message->getStringSize());
+    }
+    return absl::Substitute("<$0: StatusRef $1 message=\"$2\">",
+        this,
+        BaseRef::getVirtualTable()->getSymbolUrl().toString(),
+        message);
+}
+
+void
+lyric_runtime::StatusRef::setMembersReachable()
+{
+    if (m_message != nullptr) {
+        m_message->setReachable();
+    }
     for (auto &cell : m_fields) {
-        if (cell.type == lyric_runtime::DataCellType::REF) {
+        if (cell.type == DataCellType::REF) {
             TU_ASSERT (cell.data.ref != nullptr);
             cell.data.ref->setReachable();
         }
@@ -98,47 +144,15 @@ StatusRef::setMembersReachable()
 }
 
 void
-StatusRef::clearMembersReachable()
+lyric_runtime::StatusRef::clearMembersReachable()
 {
+    if (m_message != nullptr) {
+        m_message->clearReachable();
+    }
     for (auto &cell : m_fields) {
-        if (cell.type == lyric_runtime::DataCellType::REF) {
+        if (cell.type == DataCellType::REF) {
             TU_ASSERT (cell.data.ref != nullptr);
             cell.data.ref->clearReachable();
         }
     }
-}
-
-tempo_utils::Status
-status_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
-{
-    auto *currentCoro = state->currentCoro();
-
-    auto &frame = currentCoro->currentCallOrThrow();
-    const auto *vtable = frame.getVirtualTable();
-    TU_ASSERT(vtable != nullptr);
-
-    auto ref = state->heapManager()->allocateRef<StatusRef>(vtable);
-    currentCoro->pushData(ref);
-
-    return {};
-}
-
-tempo_utils::Status
-status_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
-{
-    auto *currentCoro = state->currentCoro();
-
-    auto &frame = currentCoro->currentCallOrThrow();
-    auto receiver = frame.getReceiver();
-    TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);
-    auto *instance = static_cast<StatusRef *>(receiver.data.ref);
-
-    TU_ASSERT (frame.numArguments() > 0);
-    const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT (arg0.type == lyric_runtime::DataCellType::I64);
-    auto statusCode = static_cast<tempo_utils::StatusCode>(arg0.data.i64);
-
-    instance->setStatusCode(statusCode);
-
-    return {};
 }

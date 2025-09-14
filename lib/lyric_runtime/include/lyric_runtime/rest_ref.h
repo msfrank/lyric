@@ -36,6 +36,7 @@ namespace lyric_runtime {
         bool utf8Value(std::string &utf8) const override;
         bool hashValue(absl::HashState state) override;
         tempo_utils::StatusCode errorStatusCode() override;
+        std::string errorMessage() override;
         bool uriValue(tempo_utils::Url &url) const override;
         bool iteratorValid() override;
         bool iteratorNext(DataCell &next) override;

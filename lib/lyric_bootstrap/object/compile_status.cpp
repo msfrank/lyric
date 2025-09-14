@@ -27,21 +27,8 @@ build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *
     TU_ASSERT (!state.symboltable.contains(StatusStruct->structPath));
     state.symboltable[StatusStruct->structPath] = symbol_index;
 
-    auto *CodeField = state.addStructMember("Code", StatusStruct,
-        lyo1::FieldFlags::NONE, IntType);
-    auto *MessageField = state.addStructMember("Message", StatusStruct,
-        lyo1::FieldFlags::NONE, StringType);
-
     {
         lyric_object::BytecodeBuilder code;
-        code.loadReceiver();
-        // load the code argument and store it in member
-        code.loadArgument(0);
-        code.storeField(CodeField->field_index);
-        code.loadReceiver();
-        // load the message argument and store it in member
-        code.loadArgument(1);
-        code.storeField(MessageField->field_index);
         state.writeTrap(code, "StatusCtor");
         code.writeOpcode(lyric_object::Opcode::OP_RETURN);
         state.setStructAllocator(StatusStruct, "StatusAlloc");
@@ -51,6 +38,18 @@ build_core_Status(BuilderState &state, const CoreType *IntType, const CoreType *
                 make_list_param("message", StringType),
             },
             code);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "StatusGetCode");
+        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
+        state.addStructMethod("GetCode", StatusStruct, lyo1::CallFlags::NONE, {}, code, IntType);
+    }
+    {
+        lyric_object::BytecodeBuilder code;
+        state.writeTrap(code, "StatusGetMessage");
+        code.writeOpcode(lyric_object::Opcode::OP_RETURN);
+        state.addStructMethod("GetMessage", StatusStruct, lyo1::CallFlags::NONE, {}, code, StringType);
     }
 
     return StatusStruct;
@@ -66,7 +65,7 @@ build_core_Status_code(
 {
     lyric_common::SymbolPath structPath({std::string(statusName)});
 
-    auto *StatusCodeStruct = state.addStruct(structPath, lyo1::StructFlags::Final, StatusStruct);
+    auto *StatusCodeStruct = state.addStruct(structPath, lyo1::StructFlags::NONE, StatusStruct);
     state.addStructSealedSubtype(StatusStruct, StatusCodeStruct);
 
     {

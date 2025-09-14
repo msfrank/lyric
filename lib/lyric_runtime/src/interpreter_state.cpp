@@ -200,13 +200,38 @@ resolve_bootstrap_existential_table(
     lyric_runtime::SegmentManager *segmentManager,
     lyric_runtime::BytecodeSegment *preludeSegment,
     const lyric_object::LyricObject &preludeObject,
-    lyric_common::SymbolPath existentialPath,
+    const lyric_common::SymbolPath &symbolPath,
     tempo_utils::Status &status)
 {
-    auto bytesSymbol = preludeObject.findSymbol(existentialPath);
-    auto bytesDescriptor = segmentManager->resolveDescriptor(preludeSegment,
-        bytesSymbol.getLinkageSection(), bytesSymbol.getLinkageIndex(), status);
-    return segmentManager->resolveExistentialTable(bytesDescriptor, status);
+    auto symbol = preludeObject.findSymbol(symbolPath);
+    auto descriptor = segmentManager->resolveDescriptor(preludeSegment,
+        symbol.getLinkageSection(), symbol.getLinkageIndex(), status);
+    return segmentManager->resolveExistentialTable(descriptor, status);
+}
+
+static const lyric_runtime::VirtualTable *
+resolve_bootstrap_virtual_table(
+    lyric_runtime::SegmentManager *segmentManager,
+    lyric_runtime::BytecodeSegment *preludeSegment,
+    const lyric_object::LyricObject &preludeObject,
+    lyric_common::SymbolPath symbolPath,
+    tempo_utils::Status &status)
+{
+    auto symbol = preludeObject.findSymbol(symbolPath);
+    auto descriptor = segmentManager->resolveDescriptor(preludeSegment,
+        symbol.getLinkageSection(), symbol.getLinkageIndex(), status);
+    switch (descriptor.type) {
+        case lyric_runtime::DataCellType::CLASS:
+            return segmentManager->resolveClassVirtualTable(descriptor, status);
+        case lyric_runtime::DataCellType::ENUM:
+            return segmentManager->resolveEnumVirtualTable(descriptor, status);
+        case lyric_runtime::DataCellType::INSTANCE:
+            return segmentManager->resolveInstanceVirtualTable(descriptor, status);
+        case lyric_runtime::DataCellType::STRUCT:
+            return segmentManager->resolveStructVirtualTable(descriptor, status);
+        default:
+            return nullptr;
+    }
 }
 
 static tempo_utils::Status
@@ -226,17 +251,65 @@ allocate_heap_manager(
     lyric_runtime::PreludeTables preludeTables;
     tempo_utils::Status status;
 
-    preludeTables.bytesTable = resolve_bootstrap_existential_table(segmentManager,
+    // resolve existential tables
+    preludeTables.BytesTable = resolve_bootstrap_existential_table(segmentManager,
         preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Bytes"), status);
     TU_RETURN_IF_NOT_OK (status);
-    preludeTables.restTable = resolve_bootstrap_existential_table(segmentManager,
+    preludeTables.RestTable = resolve_bootstrap_existential_table(segmentManager,
         preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Rest"), status);
     TU_RETURN_IF_NOT_OK (status);
-    preludeTables.stringTable = resolve_bootstrap_existential_table(segmentManager,
+    preludeTables.StringTable = resolve_bootstrap_existential_table(segmentManager,
         preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("String"), status);
     TU_RETURN_IF_NOT_OK (status);
-    preludeTables.urlTable = resolve_bootstrap_existential_table(segmentManager,
+    preludeTables.UrlTable = resolve_bootstrap_existential_table(segmentManager,
         preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Url"), status);
+    TU_RETURN_IF_NOT_OK (status);
+
+    // resolve virtual tables
+    preludeTables.CancelledTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Cancelled"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.InvalidArgumentTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("InvalidArgument"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.DeadlineExceededTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("DeadlineExceeded"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.NotFoundTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("NotFound"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.AlreadyExistsTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("AlreadyExists"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.PermissionDeniedTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("PermissionDenied"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.UnauthenticatedTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Unauthenticated"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.ResourceExhaustedTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("ResourceExhausted"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.FailedPreconditionTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("FailedPrecondition"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.AbortedTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Aborted"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.UnavailableTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Unavailable"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.OutOfRangeTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("OutOfRange"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.UnimplementedTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Unimplemented"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.InternalTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Internal"), status);
+    TU_RETURN_IF_NOT_OK (status);
+    preludeTables.UnknownTable = resolve_bootstrap_virtual_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Unknown"), status);
     TU_RETURN_IF_NOT_OK (status);
 
     heapManagerPtr = std::make_unique<lyric_runtime::HeapManager>(

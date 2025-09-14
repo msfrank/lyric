@@ -147,6 +147,12 @@ lyric_runtime::StringRef::errorStatusCode()
 }
 
 std::string
+lyric_runtime::StringRef::errorMessage()
+{
+    return {};
+}
+
+std::string
 lyric_runtime::StringRef::toString() const
 {
     std::string s;

@@ -14,38 +14,30 @@ TEST(CoreStatus, TestEvaluateNewStatus)
     )");
 
     ASSERT_THAT (result,
-                 tempo_test::ContainsResult(
-                     RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Cancelled")))));
+        tempo_test::ContainsResult(
+            RunModule(StatusRef(lyric_bootstrap::preludeSymbol("Cancelled")))));
 }
 
 TEST(CoreStatus, TestEvaluateStatusCode)
 {
     auto result = runModule(R"(
         val status: Status = Cancelled{message = "operation was cancelled"}
-        match status {
-            when s: Status
-                s.Code
-            else nil
-        }
+        status.GetCode()
     )");
 
     ASSERT_THAT (result,
-                 tempo_test::ContainsResult(
-                     RunModule(DataCellInt(1))));
+        tempo_test::ContainsResult(
+            RunModule(DataCellInt(1))));
 }
 
 TEST(CoreStatus, TestEvaluateStatusMessage)
 {
     auto result = runModule(R"(
         val status: Status = Cancelled{message = "operation was cancelled"}
-        match status {
-            when s: Status
-                s.Message
-            else nil
-        }
+        status.GetMessage()
     )");
 
     ASSERT_THAT (result,
-                 tempo_test::ContainsResult(
-                     RunModule(DataCellString("operation was cancelled"))));
+        tempo_test::ContainsResult(
+            RunModule(DataCellString("operation was cancelled"))));
 }

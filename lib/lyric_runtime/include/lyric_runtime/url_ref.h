@@ -22,9 +22,10 @@ namespace lyric_runtime {
         bool utf8Value(std::string &utf8) const override;
         bool hashValue(absl::HashState state) override;
         tempo_utils::StatusCode errorStatusCode() override;
+        std::string errorMessage() override;
         std::string toString() const override;
 
-        lyric_runtime::DataCell uriEquals(UrlRef *other) const;
+        DataCell uriEquals(UrlRef *other) const;
 
         tempo_utils::Url getUrl() const;
 
@@ -37,14 +38,14 @@ namespace lyric_runtime {
          * methods below have the default no-op implementation
          */
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
-        lyric_runtime::DataCell setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value) override;
+        DataCell getField(const DataCell &field) const override;
+        DataCell setField(const DataCell &field, const DataCell &value) override;
         bool iteratorValid() override;
         bool iteratorNext(DataCell &next) override;
         bool prepareFuture(std::shared_ptr<Promise> promise) override;
         bool awaitFuture(SystemScheduler *systemScheduler) override;
         bool resolveFuture(DataCell &result) override;
-        bool applyClosure(Task *task, std::vector<DataCell> &args, lyric_runtime::InterpreterState *state) override;
+        bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) override;
 
     private:
         const ExistentialTable *m_etable;

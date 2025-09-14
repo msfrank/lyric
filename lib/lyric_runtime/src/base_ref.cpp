@@ -119,6 +119,12 @@ lyric_runtime::BaseRef::errorStatusCode()
     return tempo_utils::StatusCode::kOk;
 }
 
+std::string
+lyric_runtime::BaseRef::errorMessage()
+{
+    return {};
+}
+
 bool
 lyric_runtime::BaseRef::isReachable() const
 {

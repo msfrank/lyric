@@ -3,6 +3,7 @@
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/interpreter_result.h>
 #include <lyric_runtime/segment_manager.h>
+#include <lyric_runtime/status_ref.h>
 #include <lyric_runtime/type_manager.h>
 
 lyric_runtime::TypeManager::TypeManager(
@@ -56,6 +57,8 @@ lyric_runtime::TypeManager::typeOf(const DataCell &value)
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Url)];
         case DataCellType::REF:
             return value.data.ref->getVirtualTable()->getType();
+        case DataCellType::STATUS:
+            return value.data.status->getVirtualTable()->getType();
         case DataCellType::TYPE:
             return InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "type descriptor has no type");

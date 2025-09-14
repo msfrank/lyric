@@ -182,6 +182,7 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
                 case lyric_runtime::DataCellType::BYTES:       *os << "cell contains bytes cell"; break;
                 case lyric_runtime::DataCellType::STRING:      *os << "cell contains string cell"; break;
                 case lyric_runtime::DataCellType::URL:         *os << "cell contains url cell"; break;
+                case lyric_runtime::DataCellType::STATUS:      *os << "cell contains status cell"; break;
                 case lyric_runtime::DataCellType::REST:        *os << "cell contains rest cell"; break;
                 case lyric_runtime::DataCellType::REF:         *os << "cell contains ref cell"; break;
                 case lyric_runtime::DataCellType::TYPE:        *os << "cell contains type cell"; break;

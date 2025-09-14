@@ -47,5 +47,5 @@ TEST_F(CompileExpect, EvaluateExpectReturnsStatus)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(
-            DataCellRef(lyric_bootstrap::preludeSymbol({"OutOfRange"})))));
+            StatusRef(lyric_bootstrap::preludeSymbol({"OutOfRange"})))));
 }

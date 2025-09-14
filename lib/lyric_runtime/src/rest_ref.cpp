@@ -123,6 +123,12 @@ lyric_runtime::RestRef::errorStatusCode()
     return tempo_utils::StatusCode::kOk;
 }
 
+std::string
+lyric_runtime::RestRef::errorMessage()
+{
+    return {};
+}
+
 lyric_runtime::DataCell
 lyric_runtime::RestRef::getField(const DataCell &field) const
 {

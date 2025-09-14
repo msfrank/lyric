@@ -369,7 +369,6 @@ BuilderState::addExistentialSealedSubtype(const CoreExistential *receiver, const
     auto *ReceiverExistential = existentialcache[receiver->existentialPath];
     TU_ASSERT (bool(ReceiverExistential->flags & lyo1::ExistentialFlags::Sealed));
     auto *SubTypeExistential = existentialcache[subtypeExistential->existentialPath];
-    TU_ASSERT (bool(SubTypeExistential->flags & lyo1::ExistentialFlags::Final));
     TU_ASSERT (SubTypeExistential->superExistential == ReceiverExistential);
     ReceiverExistential->sealedSubtypes.push_back(SubTypeExistential->existentialType->type_index);
 }
@@ -593,7 +592,6 @@ BuilderState::addConceptSealedSubtype(const CoreConcept *receiver, const CoreCon
     auto *ReceiverConcept = conceptcache[receiver->conceptPath];
     TU_ASSERT (bool(ReceiverConcept->flags & lyo1::ConceptFlags::Sealed));
     auto *SubTypeConcept = conceptcache[subtypeConcept->conceptPath];
-    TU_ASSERT (bool(SubTypeConcept->flags & lyo1::ConceptFlags::Final));
     TU_ASSERT (SubTypeConcept->superConcept == ReceiverConcept);
     ReceiverConcept->sealedSubtypes.push_back(SubTypeConcept->conceptType->type_index);
 }
@@ -838,7 +836,6 @@ BuilderState::addClassSealedSubtype(const CoreClass *receiver, const CoreClass *
     auto *ReceiverClass = classcache[receiver->classPath];
     TU_ASSERT (bool(ReceiverClass->flags & lyo1::ClassFlags::Sealed));
     auto *SubTypeClass = classcache[subtypeClass->classPath];
-    TU_ASSERT (bool(SubTypeClass->flags & lyo1::ClassFlags::Final));
     TU_ASSERT (SubTypeClass->superClass == ReceiverClass);
     ReceiverClass->sealedSubtypes.push_back(SubTypeClass->classType->type_index);
 }
@@ -1039,7 +1036,6 @@ BuilderState::addStructSealedSubtype(const CoreStruct *receiver, const CoreStruc
     auto *ReceiverStruct = structcache[receiver->structPath];
     TU_ASSERT (bool(ReceiverStruct->flags & lyo1::StructFlags::Sealed));
     auto *SubTypeStruct = structcache[subtypeStruct->structPath];
-    TU_ASSERT (bool(SubTypeStruct->flags & lyo1::StructFlags::Final));
     TU_ASSERT (SubTypeStruct->superStruct == ReceiverStruct);
     ReceiverStruct->sealedSubtypes.push_back(SubTypeStruct->structType->type_index);
 }
@@ -1242,7 +1238,6 @@ BuilderState::addInstanceSealedSubtype(const CoreInstance *receiver, const CoreI
     auto *ReceiverInstance = instancecache[receiver->instancePath];
     TU_ASSERT (bool(ReceiverInstance->flags & lyo1::InstanceFlags::Sealed));
     auto *SubTypeInstance = instancecache[subtypeInstance->instancePath];
-    TU_ASSERT (bool(SubTypeInstance->flags & lyo1::InstanceFlags::Final));
     TU_ASSERT (SubTypeInstance->superInstance == ReceiverInstance);
     ReceiverInstance->sealedSubtypes.push_back(SubTypeInstance->instanceType->type_index);
 }
@@ -1581,7 +1576,6 @@ BuilderState::addEnumSealedSubtype(const CoreEnum *receiver, const CoreEnum *sub
     auto *ReceiverEnum = enumcache[receiver->enumPath];
     TU_ASSERT (bool(ReceiverEnum->flags & lyo1::EnumFlags::Sealed));
     auto *SubTypeEnum = enumcache[subtypeEnum->enumPath];
-    TU_ASSERT (bool(SubTypeEnum->flags & lyo1::EnumFlags::Final));
     TU_ASSERT (SubTypeEnum->superEnum == ReceiverEnum);
     ReceiverEnum->sealedSubtypes.push_back(SubTypeEnum->enumType->type_index);
 }

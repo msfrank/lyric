@@ -120,6 +120,12 @@ lyric_runtime::BytesRef::errorStatusCode()
 }
 
 std::string
+lyric_runtime::BytesRef::errorMessage()
+{
+    return {};
+}
+
+std::string
 lyric_runtime::BytesRef::toString() const
 {
     return absl::Substitute("<$0: BytesRef size=$1>", this, m_size);

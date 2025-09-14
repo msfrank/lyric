@@ -100,6 +100,12 @@ lyric_runtime::UrlRef::errorStatusCode()
 }
 
 std::string
+lyric_runtime::UrlRef::errorMessage()
+{
+    return {};
+}
+
+std::string
 lyric_runtime::UrlRef::toString() const
 {
     return absl::Substitute("<$0: UrlRef `$1`>", this, m_url.toString());

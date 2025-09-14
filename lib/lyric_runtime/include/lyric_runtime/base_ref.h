@@ -34,6 +34,7 @@ namespace lyric_runtime {
         bool resolveFuture(DataCell &result) override;
         bool applyClosure(Task *task, std::vector<DataCell> &args, InterpreterState *state) override;
         tempo_utils::StatusCode errorStatusCode() override;
+        std::string errorMessage() override;
         bool isReachable() const override;
         void setReachable() override;
         void clearReachable() override;

@@ -70,7 +70,7 @@ namespace lyric_test {
 }
 
 namespace lyric_runtime {
-    void PrintTo(const lyric_runtime::DataCell &cell, std::ostream *os);
+    void PrintTo(const DataCell &cell, std::ostream *os);
     std::ostream& operator<<(std::ostream& os, const DataCell &cell);
 }
 

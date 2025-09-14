@@ -8,6 +8,7 @@
 #include <tempo_utils/big_endian.h>
 
 #include "lyric_runtime/rest_ref.h"
+#include "lyric_runtime/status_ref.h"
 
 lyric_runtime::HeapManager::HeapManager(
     PreludeTables preludeTables,
@@ -25,7 +26,7 @@ lyric_runtime::HeapManager::HeapManager(
 lyric_runtime::DataCell
 lyric_runtime::HeapManager::allocateString(std::string_view string)
 {
-    auto *instance = new StringRef(m_preludeTables.stringTable, string.data(), string.size());
+    auto *instance = new StringRef(m_preludeTables.StringTable, string.data(), string.size());
     m_heap->insertInstance(instance);
     return DataCell::forString(instance);
 }
@@ -43,7 +44,7 @@ lyric_runtime::HeapManager::loadLiteralStringOntoStack(tu_uint32 address)
     literal = m_segmentManager->resolveLiteral(sp, address, status);
     TU_RETURN_IF_NOT_OK (status);
 
-    auto *instance = new StringRef(m_preludeTables.stringTable, literal);
+    auto *instance = new StringRef(m_preludeTables.StringTable, literal);
     m_heap->insertInstance(instance);
     auto cell = DataCell::forString(instance);
     currentCoro->pushData(cell);
@@ -57,7 +58,7 @@ lyric_runtime::HeapManager::loadStringOntoStack(std::string_view string)
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
 
-    auto *instance = new StringRef(m_preludeTables.stringTable, string.data(), string.size());
+    auto *instance = new StringRef(m_preludeTables.StringTable, string.data(), string.size());
     m_heap->insertInstance(instance);
     auto cell = DataCell::forString(instance);
     currentCoro->pushData(cell);
@@ -68,7 +69,7 @@ lyric_runtime::HeapManager::loadStringOntoStack(std::string_view string)
 lyric_runtime::DataCell
 lyric_runtime::HeapManager::allocateUrl(const tempo_utils::Url &url)
 {
-    auto *instance = new UrlRef(m_preludeTables.urlTable, url);
+    auto *instance = new UrlRef(m_preludeTables.UrlTable, url);
     m_heap->insertInstance(instance);
     return DataCell::forUrl(instance);
 }
@@ -86,7 +87,7 @@ lyric_runtime::HeapManager::loadLiteralUrlOntoStack(tu_uint32 address)
     literal = m_segmentManager->resolveLiteral(sp, address, status);
     TU_RETURN_IF_NOT_OK (status);
 
-    auto *instance = new UrlRef(m_preludeTables.urlTable, literal);
+    auto *instance = new UrlRef(m_preludeTables.UrlTable, literal);
     m_heap->insertInstance(instance);
     auto cell = DataCell::forUrl(instance);
     currentCoro->pushData(cell);
@@ -100,7 +101,7 @@ lyric_runtime::HeapManager::loadUrlOntoStack(const tempo_utils::Url &url)
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
 
-    auto *instance = new UrlRef(m_preludeTables.urlTable, url);
+    auto *instance = new UrlRef(m_preludeTables.UrlTable, url);
     m_heap->insertInstance(instance);
     auto cell = DataCell::forUrl(instance);
     currentCoro->pushData(cell);
@@ -111,7 +112,7 @@ lyric_runtime::HeapManager::loadUrlOntoStack(const tempo_utils::Url &url)
 lyric_runtime::DataCell
 lyric_runtime::HeapManager::allocateBytes(std::span<const tu_uint8> bytes)
 {
-    auto *instance = new BytesRef(m_preludeTables.bytesTable, bytes.data(), bytes.size());
+    auto *instance = new BytesRef(m_preludeTables.BytesTable, bytes.data(), bytes.size());
     m_heap->insertInstance(instance);
     return DataCell::forBytes(instance);
 }
@@ -129,7 +130,7 @@ lyric_runtime::HeapManager::loadLiteralBytesOntoStack(tu_uint32 address)
     literal = m_segmentManager->resolveLiteral(sp, address, status);
     TU_RETURN_IF_NOT_OK (status);
 
-    auto *instance = new BytesRef(m_preludeTables.bytesTable, literal);
+    auto *instance = new BytesRef(m_preludeTables.BytesTable, literal);
     m_heap->insertInstance(instance);
     auto cell = DataCell::forBytes(instance);
     currentCoro->pushData(cell);
@@ -143,9 +144,82 @@ lyric_runtime::HeapManager::loadBytesOntoStack(std::span<const tu_uint8> bytes)
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
 
-    auto *instance = new BytesRef(m_preludeTables.bytesTable, bytes.data(), bytes.size());
+    auto *instance = new BytesRef(m_preludeTables.BytesTable, bytes.data(), bytes.size());
     m_heap->insertInstance(instance);
     auto cell = DataCell::forBytes(instance);
+    currentCoro->pushData(cell);
+
+    return {};
+}
+
+inline const lyric_runtime::VirtualTable *
+status_code_to_vtable(tempo_utils::StatusCode statusCode, const lyric_runtime::PreludeTables &preludeTables)
+{
+    switch (statusCode) {
+        case tempo_utils::StatusCode::kCancelled:
+            return preludeTables.CancelledTable;
+        case tempo_utils::StatusCode::kInvalidArgument:
+            return preludeTables.InvalidArgumentTable;
+        case tempo_utils::StatusCode::kDeadlineExceeded:
+            return preludeTables.DeadlineExceededTable;
+        case tempo_utils::StatusCode::kNotFound:
+            return preludeTables.NotFoundTable;
+        case tempo_utils::StatusCode::kAlreadyExists:
+            return preludeTables.AlreadyExistsTable;
+        case tempo_utils::StatusCode::kPermissionDenied:
+            return preludeTables.PermissionDeniedTable;
+        case tempo_utils::StatusCode::kUnauthenticated:
+            return preludeTables.UnauthenticatedTable;
+        case tempo_utils::StatusCode::kResourceExhausted:
+            return preludeTables.ResourceExhaustedTable;
+        case tempo_utils::StatusCode::kFailedPrecondition:
+            return preludeTables.FailedPreconditionTable;
+        case tempo_utils::StatusCode::kAborted:
+            return preludeTables.AbortedTable;
+        case tempo_utils::StatusCode::kUnavailable:
+            return preludeTables.UnavailableTable;
+        case tempo_utils::StatusCode::kOutOfRange:
+            return preludeTables.OutOfRangeTable;
+        case tempo_utils::StatusCode::kUnimplemented:
+            return preludeTables.UnimplementedTable;
+        case tempo_utils::StatusCode::kInternal:
+            return preludeTables.InternalTable;
+        case tempo_utils::StatusCode::kUnknown:
+            return preludeTables.UnknownTable;
+        default:
+            return nullptr;
+    }
+}
+
+lyric_runtime::DataCell
+lyric_runtime::HeapManager::allocateStatus(const VirtualTable *vtable)
+{
+    auto *instance = new StatusRef(vtable);
+    m_heap->insertInstance(instance);
+    return DataCell::forStatus(instance);
+}
+
+lyric_runtime::DataCell
+lyric_runtime::HeapManager::allocateStatus(tempo_utils::StatusCode statusCode, std::string_view message)
+{
+    const VirtualTable *vtable = status_code_to_vtable(statusCode, m_preludeTables);
+    auto str = allocateString(message);
+    auto *instance = new StatusRef(vtable, statusCode, str.data.str);
+    m_heap->insertInstance(instance);
+    return DataCell::forStatus(instance);
+}
+
+tempo_utils::Status
+lyric_runtime::HeapManager::loadStatusOntoStack(tempo_utils::StatusCode statusCode, std::string_view message)
+{
+    auto *currentCoro = m_systemScheduler->currentCoro();
+    TU_ASSERT(currentCoro != nullptr);
+
+    const VirtualTable *vtable = status_code_to_vtable(statusCode, m_preludeTables);
+    auto str = allocateString(message);
+    auto *instance = new StatusRef(vtable, statusCode, str.data.str);
+    m_heap->insertInstance(instance);
+    auto cell = DataCell::forStatus(instance);
     currentCoro->pushData(cell);
 
     return {};
@@ -158,7 +232,7 @@ lyric_runtime::HeapManager::allocateRest(const CallCell &frame)
     for (int i = 0; i < frame.numRest(); i++) {
         restArgs.push_back(frame.getRest(i));
     }
-    auto *instance = new RestRef(m_preludeTables.restTable, std::move(restArgs));
+    auto *instance = new RestRef(m_preludeTables.RestTable, std::move(restArgs));
     m_heap->insertInstance(instance);
     return DataCell::forRest(instance);
 }
@@ -277,14 +351,21 @@ lyric_runtime::HeapManager::constructNew(std::vector<DataCell> &args, tempo_util
     if (status.notOk())
         return false;
 
-    if (receiver->type != DataCellType::REF) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kInvalidReceiver, "invalid data cell");
-        return false;
+    const VirtualTable *vtable;
+    switch (receiver->type) {
+        case DataCellType::REF:
+            vtable = receiver->data.ref->getVirtualTable();
+            break;
+        case DataCellType::STATUS:
+            vtable = receiver->data.status->getVirtualTable();
+            break;
+        default:
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kInvalidReceiver, "invalid data cell");
+            return false;
     }
 
     // get the ctor method
-    const auto *vtable = receiver->data.ref->getVirtualTable();
     if (vtable == nullptr) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "missing vtable");

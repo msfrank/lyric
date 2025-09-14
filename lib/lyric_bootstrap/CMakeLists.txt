@@ -157,8 +157,8 @@ add_library(prelude-plugin SHARED
     plugin/seq_ref.h
     plugin/singleton_ref.cpp
     plugin/singleton_ref.h
-    plugin/status_ref.cpp
-    plugin/status_ref.h
+    plugin/status_traps.cpp
+    plugin/status_traps.h
     plugin/string_traps.cpp
     plugin/string_traps.h
     plugin/url_traps.cpp

@@ -19,6 +19,7 @@ set(LYRIC_TEST_INCLUDES
     include/lyric_test/mock_receive.h
     include/lyric_test/mock_send.h
     include/lyric_test/ref_handle_matchers.h
+    include/lyric_test/status_ref_matchers.h
     include/lyric_test/test_inspector.h
     include/lyric_test/test_result.h
     include/lyric_test/test_run.h
@@ -38,6 +39,7 @@ target_sources(lyric_test PRIVATE
     src/mock_receive.cpp
     src/mock_send.cpp
     src/ref_handle_matchers.cpp
+    src/status_ref_matchers.cpp
     src/test_inspector.cpp
     src/test_result.cpp
     src/test_run.cpp
