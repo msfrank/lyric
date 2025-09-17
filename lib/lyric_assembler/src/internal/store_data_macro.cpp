@@ -51,11 +51,13 @@ lyric_assembler::internal::StoreDataMacro::rewriteBlock(
         case lyric_schema::LyricAstId::Name:
             break;
         case lyric_schema::LyricAstId::DataDeref: {
-            if (arg0->numChildren() > 1)
-                return lyric_rewriter::RewriterStatus::forCondition(
-                    lyric_rewriter::RewriterCondition::kSyntaxError,
-                    "only assignment to proc local variables is allowed for StoreData macro");
-            arg0 = arg0->getChild(0);
+            // rewrite DataDeref as Target
+            lyric_parser::ArchetypeNode *targetNode;
+            TU_ASSIGN_OR_RETURN (targetNode, state->appendNode(lyric_schema::kLyricAstTargetClass, {}));
+            for (auto it = arg0->childrenBegin(); it != arg0->childrenEnd(); it++) {
+                targetNode->appendChild(*it);
+            }
+            arg0 = targetNode;
             break;
         }
         default:

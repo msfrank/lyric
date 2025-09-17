@@ -41,3 +41,33 @@ TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInDef)
         RunModule(
             DataCellInt(15))));
 }
+
+TEST_F(CompileLoadAndStoreMacro, EvaluateMacroLoadAndStoreInMember)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Foo {
+
+            var Value: Int = 0
+
+            init(initial: Int) {
+                set this.Value = initial
+            }
+
+            def Add(x: Int): Int {
+                @{
+                    LoadData(this.Value)
+                    LoadData(x)
+                    I64Add()
+                    StoreData(this.Value)
+                }
+                this.Value
+            }
+        }
+        val foo: Foo = Foo{10}
+        foo.Add(5)
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(
+            DataCellInt(15))));
+}

@@ -2,12 +2,16 @@
 #include <lyric_assembler/assembler_attrs.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/object_plugin.h>
+#include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/assembler_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/data_deref_handler.h>
 #include <lyric_compiler/symbol_deref_handler.h>
+#include <lyric_compiler/target_handler.h>
 #include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
+
+#include "lyric_compiler/resolve_utils.h"
 
 lyric_compiler::AssemblerChoice::AssemblerChoice(
     lyric_assembler::CodeFragment *fragment,
@@ -19,15 +23,16 @@ lyric_compiler::AssemblerChoice::AssemblerChoice(
     TU_ASSERT (m_fragment != nullptr);
 }
 
-class Op : public lyric_compiler::BaseGrouping {
+class OpHandler : public lyric_compiler::BaseGrouping {
 public:
-    Op(
+    OpHandler(
         lyric_assembler::CodeFragment *fragment,
         lyric_assembler::BlockHandle *block,
         lyric_compiler::CompilerScanDriver *driver)
         : BaseGrouping(block, driver),
           m_fragment(fragment)
     {}
+
     tempo_utils::Status updateResultStack(int numOperands, const lyric_common::TypeDef &result = {})
     {
         auto *driver = getDriver();
@@ -39,6 +44,7 @@ public:
         }
         return {};
     }
+
     tempo_utils::Status before(
         const lyric_parser::ArchetypeState *state,
         const lyric_parser::ArchetypeNode *node,
@@ -168,6 +174,7 @@ public:
             }
         }
     }
+
     tempo_utils::Status after(
         const lyric_parser::ArchetypeState *state,
         const lyric_parser::ArchetypeNode *node,
@@ -175,19 +182,21 @@ public:
     {
         return {};
     }
+
 private:
     lyric_assembler::CodeFragment *m_fragment;
 };
 
-class LoadData : public lyric_compiler::BaseGrouping {
+class LoadDataHandler : public lyric_compiler::BaseGrouping {
 public:
-    LoadData(
+    LoadDataHandler(
         lyric_assembler::CodeFragment *fragment,
         lyric_assembler::BlockHandle *block,
         lyric_compiler::CompilerScanDriver *driver)
         : BaseGrouping(block, driver),
           m_fragment(fragment)
     {}
+
     tempo_utils::Status before(
         const lyric_parser::ArchetypeState *state,
         const lyric_parser::ArchetypeNode *node,
@@ -249,6 +258,7 @@ public:
                     lyric_compiler::CompilerCondition::kCompilerInvariant, "invalid AST node");
         }
     }
+
     tempo_utils::Status after(
         const lyric_parser::ArchetypeState *state,
         const lyric_parser::ArchetypeNode *node,
@@ -256,80 +266,154 @@ public:
     {
         return {};
     }
+
 private:
     lyric_assembler::CodeFragment *m_fragment;
+};
+
+struct StoreData {
+    lyric_compiler::Target target;
+    lyric_common::TypeDef rvalueType;
+    std::unique_ptr<lyric_assembler::CodeFragment> loadTemporary;
+    lyric_assembler::CodeFragment *fragment = nullptr;
+};
+
+class StoreDataTarget : public lyric_compiler::BaseChoice {
+public:
+    StoreDataTarget(
+        StoreData *storeData,
+        lyric_assembler::BlockHandle *block,
+        lyric_compiler::CompilerScanDriver *driver)
+        : BaseChoice(block, driver),
+          m_storeData(storeData)
+    {
+        TU_ASSERT (m_storeData != nullptr);
+    }
+
+    tempo_utils::Status decide(
+        const lyric_parser::ArchetypeState *state,
+        const lyric_parser::ArchetypeNode *node,
+        lyric_compiler::DecideContext &ctx) override
+    {
+        if (!node->isNamespace(lyric_schema::kLyricAstNs))
+            return {};
+        auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
+
+        auto *block = getBlock();
+        auto *driver = getDriver();
+
+        // pop rvalue type from the top of the results stack
+        auto rvalueType = driver->peekResult();
+        m_storeData->rvalueType = rvalueType;
+        TU_RETURN_IF_NOT_OK (driver->popResult());
+
+        auto astId = resource->getId();
+        switch (astId) {
+
+            case lyric_schema::LyricAstId::Target: {
+                auto *fragment = m_storeData->fragment;
+                auto &loadTemporary = m_storeData->loadTemporary;
+
+                // store top of stack in temp variable
+                lyric_assembler::DataReference tmpVar;
+                TU_ASSIGN_OR_RETURN (tmpVar, block->declareTemporary(rvalueType, /* isVariable= */ false));
+                TU_RETURN_IF_NOT_OK (fragment->storeRef(tmpVar, /* initialStore= */ true));
+
+                // add code to load temp variable
+                loadTemporary = fragment->makeFragment();
+                TU_RETURN_IF_NOT_OK (loadTemporary->loadRef(tmpVar));
+
+                // process the Target node
+                auto target = std::make_unique<lyric_compiler::TargetHandler>(
+                    &m_storeData->target, fragment, block, driver);
+                ctx.setGrouping(std::move(target));
+                return {};
+            }
+
+            case lyric_schema::LyricAstId::Name: {
+                return resolve_name(node, block, m_storeData->target.targetRef, driver);
+            }
+
+            default:
+                return lyric_compiler::CompilerStatus::forCondition(
+                    lyric_compiler::CompilerCondition::kCompilerInvariant, "invalid target node");
+        }
+    }
+
+private:
+    StoreData *m_storeData;
 };
 
 /**
  *
  */
-class StoreData : public lyric_compiler::BaseGrouping {
+class StoreDataHandler : public lyric_compiler::BaseGrouping {
 public:
-    StoreData(
+    StoreDataHandler(
         lyric_assembler::CodeFragment *fragment,
         lyric_assembler::BlockHandle *block,
         lyric_compiler::CompilerScanDriver *driver)
-        : BaseGrouping(block, driver),
-          m_fragment(fragment)
-    {}
+        : BaseGrouping(block, driver)
+    {
+        m_storeData.fragment = fragment;
+    }
+
     tempo_utils::Status before(
         const lyric_parser::ArchetypeState *state,
         const lyric_parser::ArchetypeNode *node,
         lyric_compiler::BeforeContext &ctx) override
     {
-        ctx.setSkipChildren(true);
-
-        auto numChildren = node->numChildren();
-        if (numChildren != 1)
-            return lyric_compiler::CompilerStatus::forCondition(
-                lyric_compiler::CompilerCondition::kCompilerInvariant,
-                "expected 1 argument to StoreData but encountered {}", numChildren);
-        auto *child = node->getChild(0);
-
-        if (!child->isNamespace(lyric_schema::kLyricAstNs))
-            return lyric_compiler::CompilerStatus::forCondition(
-                lyric_compiler::CompilerCondition::kCompilerInvariant, "invalid form");
-
-        auto *resource = lyric_schema::kLyricAstVocabulary.getResource(child->getIdValue());
-        auto astId = resource->getId();
-
-        TU_LOG_VV << "before StoreData@" << this << ": "
-            << resource->getNsUrl() << "#" << resource->getName();
-
         auto *block = getBlock();
         auto *driver = getDriver();
 
-        switch (astId) {
-            case lyric_schema::LyricAstId::Name:
-            {
-                std::string identifier;
-                TU_RETURN_IF_NOT_OK (child->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-                lyric_assembler::DataReference ref;
-                TU_ASSIGN_OR_RETURN (ref, block->resolveReference(identifier));
-                auto resultType = driver->peekResult();
+        auto target = std::make_unique<StoreDataTarget>(&m_storeData, block, driver);
+        ctx.appendChoice(std::move(target));
 
-                // check that the result type is assignable to the ref type
-                auto *typeSystem = driver->getTypeSystem();
-                bool isAssignable;
-                TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(ref.typeDef, resultType));
-                if (!isAssignable)
-                    return lyric_compiler::CompilerStatus::forCondition(
-                        lyric_compiler::CompilerCondition::kIncompatibleType,
-                        "StoreData target {} is incompatible with result type {}",
-                        identifier, resultType.toString());
-
-                // store result in ref
-                TU_RETURN_IF_NOT_OK (m_fragment->storeRef(ref, /* initialStore= */ true));
-
-                return {};
-            }
-            default:
-                return lyric_compiler::CompilerStatus::forCondition(
-                    lyric_compiler::CompilerCondition::kCompilerInvariant, "invalid AST node");
-        }
+        return {};
     }
+
+    tempo_utils::Status after(
+        const lyric_parser::ArchetypeState *state,
+        const lyric_parser::ArchetypeNode *node,
+        lyric_compiler::AfterContext &ctx) override
+    {
+        TU_LOG_VV << "after AssignmentHandler@" << this;
+
+        auto *block = BaseGrouping::getBlock();
+        auto *driver = getDriver();
+        auto *symbolCache = driver->getSymbolCache();
+        auto *typeSystem = driver->getTypeSystem();
+
+        // load temporary back onto stack if necessary
+        if (m_storeData.loadTemporary) {
+            TU_RETURN_IF_NOT_OK (m_storeData.fragment->appendFragment(std::move(m_storeData.loadTemporary)));
+        }
+
+        bool isAssignable;
+
+        // check that the rhs is assignable to the target type
+        TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(
+            m_storeData.target.targetRef.typeDef, m_storeData.rvalueType));
+        if (!isAssignable)
+            return lyric_compiler::CompilerStatus::forCondition(
+                lyric_compiler::CompilerCondition::kIncompatibleType,
+                "target does not match rvalue type {}", m_storeData.rvalueType.toString());
+
+        // check if we are in a constructor
+        auto definition = block->getDefinition();
+        lyric_assembler::AbstractSymbol *symbol;
+        TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(definition));
+        auto *definitionCall = cast_symbol_to_call(symbol);
+        bool initialStore = definitionCall->isCtor();
+
+        // store expression result in target
+        TU_RETURN_IF_NOT_OK (m_storeData.fragment->storeRef(m_storeData.target.targetRef, initialStore));
+
+        return {};
+    }
+
 private:
-    lyric_assembler::CodeFragment *m_fragment;
+    StoreData m_storeData;
 };
 
 tempo_utils::Status
@@ -348,6 +432,12 @@ lyric_compiler::AssemblerChoice::decide(
 
     switch (astId) {
 
+        case lyric_schema::LyricAssemblerId::Op: {
+            auto handler = std::make_unique<OpHandler>(m_fragment, getBlock(), getDriver());
+            ctx.setGrouping(std::move(handler));
+            return {};
+        }
+
         case lyric_schema::LyricAssemblerId::Trap: {
             auto *objectPlugin = getDriver()->getState()->objectPlugin();
             if (objectPlugin == nullptr)
@@ -361,13 +451,13 @@ lyric_compiler::AssemblerChoice::decide(
         }
 
         case lyric_schema::LyricAssemblerId::LoadData: {
-            auto handler = std::make_unique<LoadData>(m_fragment, getBlock(), getDriver());
+            auto handler = std::make_unique<LoadDataHandler>(m_fragment, getBlock(), getDriver());
             ctx.setGrouping(std::move(handler));
             return {};
         }
 
         case lyric_schema::LyricAssemblerId::StoreData: {
-            auto handler = std::make_unique<StoreData>(m_fragment, getBlock(), getDriver());
+            auto handler = std::make_unique<StoreDataHandler>(m_fragment, getBlock(), getDriver());
             ctx.setGrouping(std::move(handler));
             return {};
         }

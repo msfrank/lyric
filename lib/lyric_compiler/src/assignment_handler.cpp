@@ -4,8 +4,10 @@
 #include <lyric_compiler/assignment_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/deref_utils.h>
+#include <lyric_compiler/form_handler.h>
 #include <lyric_compiler/operator_utils.h>
 #include <lyric_compiler/resolve_utils.h>
+#include <lyric_compiler/target_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
 lyric_compiler::AssignmentHandler::AssignmentHandler(
@@ -107,12 +109,12 @@ lyric_compiler::AssignmentHandler::after(
         rvalueType = m_assignment.expressionType;
     } else {
         // if we are modifying a member then we need to duplicate the receiver because the next load consumes it
-        if (m_assignment.receiverType.isValid()) {
+        if (m_assignment.target.receiverType.isValid()) {
             TU_RETURN_IF_NOT_OK (m_fragment->dupValue());
         }
         // load the target (lhs) onto the stack
-        TU_RETURN_IF_NOT_OK (m_fragment->loadRef(m_assignment.targetRef));
-        TU_RETURN_IF_NOT_OK (driver->pushResult(m_assignment.targetRef.typeDef));
+        TU_RETURN_IF_NOT_OK (m_fragment->loadRef(m_assignment.target.targetRef));
+        TU_RETURN_IF_NOT_OK (driver->pushResult(m_assignment.target.targetRef.typeDef));
         // load the expression (rhs) onto the stack
         TU_RETURN_IF_NOT_OK (m_fragment->appendFragment(std::move(m_assignment.evaluateExpression)));
         TU_RETURN_IF_NOT_OK (driver->pushResult(m_assignment.expressionType));
@@ -126,7 +128,7 @@ lyric_compiler::AssignmentHandler::after(
     bool isAssignable;
 
     // check that the rhs is assignable to the target type
-    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(m_assignment.targetRef.typeDef, rvalueType));
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(m_assignment.target.targetRef.typeDef, rvalueType));
     if (!isAssignable)
         return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "target does not match rvalue type {}", rvalueType.toString());
@@ -139,7 +141,7 @@ lyric_compiler::AssignmentHandler::after(
     bool initialStore = definitionCall->isCtor();
 
     // store expression result in target
-    TU_RETURN_IF_NOT_OK (m_fragment->storeRef(m_assignment.targetRef, initialStore));
+    TU_RETURN_IF_NOT_OK (m_fragment->storeRef(m_assignment.target.targetRef, initialStore));
 
     if (!m_isSideEffect) {
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));
@@ -175,205 +177,18 @@ lyric_compiler::AssignmentTarget::decide(
     switch (astId) {
 
         case lyric_schema::LyricAstId::Target: {
-            auto target = std::make_unique<AssignmentTargetHandler>(block, m_assignment, driver);
+            auto target = std::make_unique<TargetHandler>(
+                &m_assignment->target, m_assignment->resolveTarget.get(), block, driver);
             ctx.setGrouping(std::move(target));
             return {};
         }
 
         case lyric_schema::LyricAstId::Name: {
-            return resolve_name(node, block, m_assignment->targetRef, driver);
+            return resolve_name(node, block, m_assignment->target.targetRef, driver);
         }
 
         default:
             return CompilerStatus::forCondition(
-                CompilerCondition::kCompilerInvariant, "invlid assignment target node");
+                CompilerCondition::kCompilerInvariant, "invalid assignment target node");
     }
-}
-
-lyric_compiler::AssignmentTargetHandler::AssignmentTargetHandler(
-    lyric_assembler::BlockHandle *block,
-    Assignment *assignment,
-    CompilerScanDriver *driver)
-    : BaseGrouping(block, driver),
-      m_assignment(assignment)
-{
-    TU_ASSERT (m_assignment != nullptr);
-}
-
-tempo_utils::Status
-lyric_compiler::AssignmentTargetHandler::before(
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    BeforeContext &ctx)
-{
-    auto numChildren = node->numChildren();
-    TU_ASSERT (numChildren > 0);
-
-    if (numChildren > 1) {
-        auto initial = std::make_unique<InitialTarget>(m_assignment);
-        ctx.appendBehavior(std::move(initial));
-        if (numChildren > 2) {
-            for (int i = 0; i < numChildren - 2; i++) {
-                auto member = std::make_unique<ResolveMember>(m_assignment);
-                ctx.appendBehavior(std::move(member));
-            }
-        }
-    }
-    auto resolve = std::make_unique<ResolveTarget>(m_assignment);
-    ctx.appendBehavior(std::move(resolve));
-
-    return {};
-}
-
-tempo_utils::Status
-lyric_compiler::AssignmentTargetHandler::after(
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    AfterContext &ctx)
-{
-    return {};
-}
-
-lyric_compiler::InitialTarget::InitialTarget(Assignment *assignment)
-    : m_assignment(assignment)
-{
-    TU_ASSERT (m_assignment != nullptr);
-}
-
-tempo_utils::Status lyric_compiler::InitialTarget::enter(
-    CompilerScanDriver *driver,
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::BlockHandle *block,
-    EnterContext &ctx)
-{
-    if (!node->isNamespace(lyric_schema::kLyricAstNs))
-        return {};
-    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
-    auto astId = resource->getId();
-
-    switch (astId) {
-
-        case lyric_schema::LyricAstId::This: {
-            m_assignment->thisReceiver = true;
-            TU_RETURN_IF_NOT_OK (deref_this(m_assignment->targetRef, block, m_assignment->resolveTarget.get(), driver));
-            m_assignment->receiverType = driver->peekResult();
-            return driver->popResult();
-        }
-
-        case lyric_schema::LyricAstId::Name: {
-            m_assignment->bindingBlock = block;
-            TU_RETURN_IF_NOT_OK (deref_name(
-                node, m_assignment->targetRef, &m_assignment->bindingBlock, m_assignment->resolveTarget.get(), driver));
-            m_assignment->receiverType = driver->peekResult();
-            return driver->popResult();
-        }
-
-        default:
-            return CompilerStatus::forCondition(
-                CompilerCondition::kCompilerInvariant, "invlid assignment target node");
-    }
-}
-
-tempo_utils::Status lyric_compiler::InitialTarget::exit(
-    CompilerScanDriver *driver,
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::BlockHandle *block,
-    ExitContext &ctx)
-{
-    return {};
-}
-
-lyric_compiler::ResolveMember::ResolveMember(Assignment *assignment)
-    : m_assignment(assignment)
-{
-    TU_ASSERT (m_assignment != nullptr);
-}
-
-tempo_utils::Status lyric_compiler::ResolveMember::enter(
-    CompilerScanDriver *driver,
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::BlockHandle *block,
-    EnterContext &ctx)
-{
-    if (!node->isNamespace(lyric_schema::kLyricAstNs))
-        return {};
-    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
-
-    auto astId = resource->getId();
-    switch (astId) {
-
-        case lyric_schema::LyricAstId::Name: {
-            if (!m_assignment->receiverType.isValid())
-                return CompilerStatus::forCondition(
-                    CompilerCondition::kCompilerInvariant, "missing receiver type");
-            TU_RETURN_IF_NOT_OK (deref_member(
-                node, m_assignment->targetRef, m_assignment->receiverType, m_assignment->thisReceiver,
-                m_assignment->bindingBlock, m_assignment->resolveTarget.get(), driver));
-            m_assignment->receiverType = driver->peekResult();
-            return driver->popResult();
-        }
-
-        default:
-            return CompilerStatus::forCondition(
-                CompilerCondition::kCompilerInvariant, "invlid assignment target node");
-    }
-}
-
-tempo_utils::Status lyric_compiler::ResolveMember::exit(
-    CompilerScanDriver *driver,
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::BlockHandle *block,
-    ExitContext &ctx)
-{
-    return {};
-}
-
-lyric_compiler::ResolveTarget::ResolveTarget(Assignment *assignment)
-    : m_assignment(assignment)
-{
-    TU_ASSERT (m_assignment != nullptr);
-}
-
-tempo_utils::Status lyric_compiler::ResolveTarget::enter(
-    CompilerScanDriver *driver,
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::BlockHandle *block,
-    EnterContext &ctx)
-{
-    if (!node->isNamespace(lyric_schema::kLyricAstNs))
-        return {};
-    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
-
-    auto astId = resource->getId();
-    switch (astId) {
-
-        case lyric_schema::LyricAstId::Name: {
-            if (m_assignment->receiverType.isValid()) {
-                TU_RETURN_IF_NOT_OK (resolve_member(node, block, m_assignment->receiverType,
-                    m_assignment->thisReceiver, m_assignment->targetRef, driver));
-            } else {
-                TU_RETURN_IF_NOT_OK (resolve_name(node, block, m_assignment->targetRef, driver));
-            }
-            return {};
-        }
-
-        default:
-            return CompilerStatus::forCondition(
-                CompilerCondition::kCompilerInvariant, "invlid assignment target node");
-    }
-}
-
-tempo_utils::Status lyric_compiler::ResolveTarget::exit(
-    CompilerScanDriver *driver,
-    const lyric_parser::ArchetypeState *state,
-    const lyric_parser::ArchetypeNode *node,
-    lyric_assembler::BlockHandle *block,
-    ExitContext &ctx)
-{
-    return {};
 }

@@ -53,6 +53,7 @@ lyric_assembler::make_assembler_visitor(
         case lyric_schema::LyricAssemblerId::Plugin:
         case lyric_schema::LyricAssemblerId::LoadData:
         case lyric_schema::LyricAssemblerId::StoreData:
+        case lyric_schema::LyricAssemblerId::Op:
         case lyric_schema::LyricAssemblerId::Trap:
             return std::make_shared<AssemblerMacroVisitor>(state);
         default:
