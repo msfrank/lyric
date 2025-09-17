@@ -622,6 +622,51 @@ lyric_assembler::CodeFragment::logicalNot()
     return {};
 }
 
+tempo_utils::Status
+lyric_assembler::CodeFragment::bitwiseAnd()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<BitwiseOperationInstruction>(lyric_object::Opcode::OP_BITWISE_AND);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::bitwiseOr()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<BitwiseOperationInstruction>(lyric_object::Opcode::OP_BITWISE_OR);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::bitwiseXor()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<BitwiseOperationInstruction>(lyric_object::Opcode::OP_BITWISE_XOR);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::bitwiseLeftShift()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<BitwiseOperationInstruction>(lyric_object::Opcode::OP_BITWISE_LEFT_SHIFT);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::CodeFragment::bitwiseRightShift()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<BitwiseOperationInstruction>(lyric_object::Opcode::OP_BITWISE_RIGHT_SHIFT);
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
 tempo_utils::Result<lyric_assembler::JumpTarget>
 lyric_assembler::CodeFragment::makeJump(lyric_object::Opcode opcode)
 {

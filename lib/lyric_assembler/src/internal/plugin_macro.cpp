@@ -18,12 +18,12 @@ lyric_assembler::internal::PluginMacro::rewritePragma(
     lyric_rewriter::PragmaContext &ctx,
     lyric_parser::ArchetypeState *state)
 {
-    TU_LOG_VV << "rewrite PluginLocation macro";
+    TU_LOG_VV << "rewrite Plugin macro";
 
     if (pragmaNode->numChildren() != 1)
         return lyric_rewriter::RewriterStatus::forCondition(
             lyric_rewriter::RewriterCondition::kSyntaxError,
-            "expected 1 argument for PluginLocation macro");
+            "expected 1 argument for Plugin macro");
     auto *arg0 = pragmaNode->getChild(0);
 
     std::string pathString;
@@ -33,7 +33,7 @@ lyric_assembler::internal::PluginMacro::rewritePragma(
     if (!pluginLocation.isValid() || !pluginLocation.isRelative())
         return lyric_rewriter::RewriterStatus::forCondition(
             lyric_rewriter::RewriterCondition::kSyntaxError,
-            "invalid location '{}' for PluginLocation macro", pathString);
+            "invalid location '{}' for Plugin macro", pathString);
 
     lyric_parser::ArchetypeNode *pluginNode;
     TU_ASSIGN_OR_RETURN (pluginNode, state->appendNode(lyric_schema::kLyricAssemblerPluginClass, {}));
@@ -50,7 +50,7 @@ lyric_assembler::internal::PluginMacro::rewriteDefinition(
 {
     return lyric_rewriter::RewriterStatus::forCondition(
         lyric_rewriter::RewriterCondition::kRewriterInvariant,
-        "PluginLocation macro is not valid in definition context");
+        "Plugin macro is not valid in definition context");
 }
 
 tempo_utils::Status
@@ -61,5 +61,5 @@ lyric_assembler::internal::PluginMacro::rewriteBlock(
 {
     return lyric_rewriter::RewriterStatus::forCondition(
         lyric_rewriter::RewriterCondition::kRewriterInvariant,
-        "PluginLocation macro is not valid in block context");
+        "Plugin macro is not valid in block context");
 }

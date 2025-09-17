@@ -674,6 +674,21 @@ lyric_assembler::internal::import_proc(
             case lyric_object::Opcode::OP_LOGICAL_NOT:
                 TU_RETURN_IF_NOT_OK (data.fragment->logicalNot());
                 break;
+            case lyric_object::Opcode::OP_BITWISE_AND:
+                TU_RETURN_IF_NOT_OK (data.fragment->bitwiseAnd());
+                break;
+            case lyric_object::Opcode::OP_BITWISE_OR:
+                TU_RETURN_IF_NOT_OK (data.fragment->bitwiseOr());
+                break;
+            case lyric_object::Opcode::OP_BITWISE_XOR:
+                TU_RETURN_IF_NOT_OK (data.fragment->bitwiseXor());
+                break;
+            case lyric_object::Opcode::OP_BITWISE_LEFT_SHIFT:
+                TU_RETURN_IF_NOT_OK (data.fragment->bitwiseLeftShift());
+                break;
+            case lyric_object::Opcode::OP_BITWISE_RIGHT_SHIFT:
+                TU_RETURN_IF_NOT_OK (data.fragment->bitwiseRightShift());
+                break;
 
             case lyric_object::Opcode::OP_IF_NIL:
             case lyric_object::Opcode::OP_IF_NOTNIL:

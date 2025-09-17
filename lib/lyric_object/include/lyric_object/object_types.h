@@ -285,6 +285,13 @@ namespace lyric_object {
         OP_LOGICAL_OR,
         OP_LOGICAL_NOT,
 
+        // bitwise operations
+        OP_BITWISE_AND,
+        OP_BITWISE_OR,
+        OP_BITWISE_XOR,
+        OP_BITWISE_RIGHT_SHIFT,
+        OP_BITWISE_LEFT_SHIFT,
+
         // branching
         OP_IF_NIL,
         OP_IF_NOTNIL,

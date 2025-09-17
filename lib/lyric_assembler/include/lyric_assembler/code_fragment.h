@@ -93,6 +93,13 @@ namespace lyric_assembler {
         tempo_utils::Status logicalOr();
         tempo_utils::Status logicalNot();
 
+        // bitwise operations
+        tempo_utils::Status bitwiseAnd();
+        tempo_utils::Status bitwiseOr();
+        tempo_utils::Status bitwiseXor();
+        tempo_utils::Status bitwiseLeftShift();
+        tempo_utils::Status bitwiseRightShift();
+
         // branching instructions
         tempo_utils::Result<JumpTarget> unconditionalJump();
         tempo_utils::Result<JumpTarget> jumpIfNil();

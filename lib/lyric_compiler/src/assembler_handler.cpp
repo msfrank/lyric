@@ -1,14 +1,13 @@
 
 #include <lyric_assembler/assembler_attrs.h>
+#include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/object_plugin.h>
 #include <lyric_compiler/assembler_handler.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/data_deref_handler.h>
+#include <lyric_compiler/symbol_deref_handler.h>
+#include <lyric_parser/ast_attrs.h>
 #include <lyric_schema/assembler_schema.h>
-
-#include "lyric_compiler/form_handler.h"
-#include "lyric_compiler/symbol_deref_handler.h"
-#include "lyric_parser/ast_attrs.h"
 
 lyric_compiler::AssemblerChoice::AssemblerChoice(
     lyric_assembler::CodeFragment *fragment,
@@ -19,6 +18,166 @@ lyric_compiler::AssemblerChoice::AssemblerChoice(
 {
     TU_ASSERT (m_fragment != nullptr);
 }
+
+class Op : public lyric_compiler::BaseGrouping {
+public:
+    Op(
+        lyric_assembler::CodeFragment *fragment,
+        lyric_assembler::BlockHandle *block,
+        lyric_compiler::CompilerScanDriver *driver)
+        : BaseGrouping(block, driver),
+          m_fragment(fragment)
+    {}
+    tempo_utils::Status updateResultStack(int numOperands, const lyric_common::TypeDef &result = {})
+    {
+        auto *driver = getDriver();
+        for (; 0 < numOperands; numOperands--) {
+            TU_RETURN_IF_NOT_OK (driver->popResult());
+        }
+        if (result.isValid()) {
+            TU_RETURN_IF_NOT_OK (driver->pushResult(result));
+        }
+        return {};
+    }
+    tempo_utils::Status before(
+        const lyric_parser::ArchetypeState *state,
+        const lyric_parser::ArchetypeNode *node,
+        lyric_compiler::BeforeContext &ctx) override
+    {
+        lyric_object::Opcode opcode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_assembler::kLyricAssemblerOpcodeEnum, opcode));
+        auto *name = lyric_object::opcode_to_name(opcode);
+
+        bool hasStackOffset = node->hasAttr(lyric_assembler::kLyricAssemblerStackOffset);
+        tu_uint16 stackOffset;
+        if (hasStackOffset) {
+            TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_assembler::kLyricAssemblerStackOffset, stackOffset));
+        }
+
+        auto *driver = getDriver();
+        auto *fundamentalCache = driver->getFundamentalCache();
+        auto BoolType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Bool);
+        auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
+        auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
+
+        switch (opcode) {
+            case lyric_object::Opcode::OP_NOOP:
+                return m_fragment->noOperation();
+
+            // stack manipulation
+            case lyric_object::Opcode::OP_POP:
+                TU_RETURN_IF_NOT_OK (m_fragment->popValue());
+                return driver->popResult();
+            case lyric_object::Opcode::OP_DUP: {
+                TU_RETURN_IF_NOT_OK (m_fragment->dupValue());
+                auto peek = driver->peekResult();
+                return driver->pushResult(peek);
+            }
+            case lyric_object::Opcode::OP_PICK:
+            case lyric_object::Opcode::OP_DROP:
+            case lyric_object::Opcode::OP_RPICK:
+            case lyric_object::Opcode::OP_RDROP:
+
+            // integer math
+            case lyric_object::Opcode::OP_I64_ADD:
+                TU_RETURN_IF_NOT_OK (m_fragment->intAdd());
+                return updateResultStack(2, IntType);
+            case lyric_object::Opcode::OP_I64_SUB:
+                TU_RETURN_IF_NOT_OK (m_fragment->intSubtract());
+                return updateResultStack(2, IntType);
+            case lyric_object::Opcode::OP_I64_MUL:
+                TU_RETURN_IF_NOT_OK (m_fragment->intMultiply());
+                return updateResultStack(2, IntType);
+            case lyric_object::Opcode::OP_I64_DIV:
+                TU_RETURN_IF_NOT_OK (m_fragment->intDivide());
+                return updateResultStack(2, IntType);
+            case lyric_object::Opcode::OP_I64_NEG:
+                TU_RETURN_IF_NOT_OK (m_fragment->intNegate());
+                return updateResultStack(1, IntType);
+
+            // rational math
+            case lyric_object::Opcode::OP_DBL_ADD:
+                TU_RETURN_IF_NOT_OK (m_fragment->floatAdd());
+                return updateResultStack(2, FloatType);
+            case lyric_object::Opcode::OP_DBL_SUB:
+                TU_RETURN_IF_NOT_OK (m_fragment->floatSubtract());
+                return updateResultStack(2, FloatType);
+            case lyric_object::Opcode::OP_DBL_MUL:
+                TU_RETURN_IF_NOT_OK (m_fragment->floatMultiply());
+                return updateResultStack(2, FloatType);
+            case lyric_object::Opcode::OP_DBL_DIV:
+                TU_RETURN_IF_NOT_OK (m_fragment->floatDivide());
+                return updateResultStack(2, FloatType);
+            case lyric_object::Opcode::OP_DBL_NEG:
+                TU_RETURN_IF_NOT_OK (m_fragment->floatNegate());
+                return updateResultStack(1, FloatType);
+
+            // comparisons
+            case lyric_object::Opcode::OP_BOOL_CMP:
+                TU_RETURN_IF_NOT_OK (m_fragment->boolCompare());
+                return updateResultStack(2, BoolType);
+            case lyric_object::Opcode::OP_I64_CMP:
+                TU_RETURN_IF_NOT_OK (m_fragment->intCompare());
+                return updateResultStack(2, BoolType);
+            case lyric_object::Opcode::OP_DBL_CMP:
+                TU_RETURN_IF_NOT_OK (m_fragment->floatCompare());
+                return updateResultStack(2, BoolType);
+            case lyric_object::Opcode::OP_CHR_CMP:
+                TU_RETURN_IF_NOT_OK (m_fragment->charCompare());
+                return updateResultStack(2, BoolType);
+            case lyric_object::Opcode::OP_TYPE_CMP:
+                TU_RETURN_IF_NOT_OK (m_fragment->typeCompare());
+                return updateResultStack(2, BoolType);
+
+            // logical operations
+            case lyric_object::Opcode::OP_LOGICAL_AND:
+                TU_RETURN_IF_NOT_OK (m_fragment->logicalAnd());
+                return updateResultStack(2, BoolType);
+            case lyric_object::Opcode::OP_LOGICAL_OR:
+                TU_RETURN_IF_NOT_OK (m_fragment->logicalOr());
+                return updateResultStack(2, BoolType);
+            case lyric_object::Opcode::OP_LOGICAL_NOT:
+                TU_RETURN_IF_NOT_OK (m_fragment->logicalNot());
+                return updateResultStack(1, BoolType);
+
+            // bitwise operations
+            case lyric_object::Opcode::OP_BITWISE_AND:
+                TU_RETURN_IF_NOT_OK (m_fragment->bitwiseAnd());
+                return updateResultStack(2, IntType);
+            case lyric_object::Opcode::OP_BITWISE_OR:
+                TU_RETURN_IF_NOT_OK (m_fragment->bitwiseOr());
+                return updateResultStack(2, IntType);
+            case lyric_object::Opcode::OP_BITWISE_XOR:
+                TU_RETURN_IF_NOT_OK (m_fragment->bitwiseXor());
+                return updateResultStack(2, IntType);
+            case lyric_object::Opcode::OP_BITWISE_RIGHT_SHIFT:
+                TU_RETURN_IF_NOT_OK (m_fragment->bitwiseRightShift());
+                return updateResultStack(2, IntType);
+            case lyric_object::Opcode::OP_BITWISE_LEFT_SHIFT:
+                TU_RETURN_IF_NOT_OK (m_fragment->bitwiseLeftShift());
+                return updateResultStack(2, IntType);
+
+            default: {
+                if (name == nullptr)
+                    return lyric_assembler::AssemblerStatus::forCondition(
+                        lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                        "invalid opcode {}", static_cast<tu_uint32>(opcode));
+                return lyric_assembler::AssemblerStatus::forCondition(
+                    lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                    "unsupported opcode {}", name);
+            }
+        }
+    }
+    tempo_utils::Status after(
+        const lyric_parser::ArchetypeState *state,
+        const lyric_parser::ArchetypeNode *node,
+        lyric_compiler::AfterContext &ctx) override
+    {
+        return {};
+    }
+private:
+    lyric_assembler::CodeFragment *m_fragment;
+};
 
 class LoadData : public lyric_compiler::BaseGrouping {
 public:

@@ -297,6 +297,9 @@ lyric_compiler::CompilerScanDriver::peekResult()
 tempo_utils::Status
 lyric_compiler::CompilerScanDriver::pushResult(const lyric_common::TypeDef &result)
 {
+    if (!result.isValid())
+        return CompilerStatus::forCondition(
+            CompilerCondition::kCompilerInvariant, "cannot push invalid result onto stack");
     m_results.push(result);
     TU_LOG_VV << "push result " << result.toString() << " (" << (int) m_results.size() << " total)";
     return {};

@@ -9,6 +9,7 @@ set(TEST_CASES
     block_handle_tests.cpp
     code_fragment_tests.cpp
     load_data_macro_tests.cpp
+    opcode_macro_tests.cpp
     plugin_macro_tests.cpp
     trap_macro_tests.cpp
     )

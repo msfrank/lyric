@@ -46,23 +46,23 @@ lyric_compiler::MatchHandler::before(
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "empty match expression");
 
-    auto consequent = std::make_unique<MatchConsequent>();
-    consequent->block = std::make_unique<lyric_assembler::BlockHandle>(
+    auto firstConsequent = std::make_unique<MatchConsequent>();
+    firstConsequent->block = std::make_unique<lyric_assembler::BlockHandle>(
         block->blockProc(), block, block->blockState());
 
     auto initial = std::make_unique<MatchInitial>(
-        &m_match, consequent.get(), m_fragment, /* requiresResult= */ true, block, driver);
-    m_match.consequents.push_back(std::move(consequent));
+        &m_match, firstConsequent.get(), m_fragment, /* requiresResult= */ true, block, driver);
+    m_match.consequents.push_back(std::move(firstConsequent));
     ctx.appendChoice(std::move(initial));
     numChildren--;
 
     for (int i = 0; i < numChildren; i++) {
-        consequent = std::make_unique<MatchConsequent>();
-        consequent->block = std::make_unique<lyric_assembler::BlockHandle>(
+        auto nextConsequent = std::make_unique<MatchConsequent>();
+        nextConsequent->block = std::make_unique<lyric_assembler::BlockHandle>(
             block->blockProc(), block, block->blockState());
         auto when = std::make_unique<MatchWhen>(
-            &m_match, consequent.get(), m_fragment, /* requiresResult= */ true, block, driver);
-        m_match.consequents.push_back(std::move(consequent));
+            &m_match, nextConsequent.get(), m_fragment, /* requiresResult= */ true, block, driver);
+        m_match.consequents.push_back(std::move(nextConsequent));
         ctx.appendGrouping(std::move(when));
     }
 
@@ -121,9 +121,8 @@ lyric_compiler::MatchHandler::after(
     lyric_assembler::UnifiedTypeSet resultSet(block->blockState());
 
     // unify the set of consequent types
-    for (int i = 1; i < consequents.size(); i++) {
-        auto &consequentType = consequents[i]->consequentType;
-        TU_RETURN_IF_NOT_OK (resultSet.putType(consequentType));
+    for (const auto &consequent : consequents) {
+        TU_RETURN_IF_NOT_OK (resultSet.putType(consequent->consequentType));
     }
 
     // if alternative exists then add the result to the type set. if there is no alternative clause

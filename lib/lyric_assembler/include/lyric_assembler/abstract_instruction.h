@@ -21,6 +21,7 @@ namespace lyric_assembler {
         FloatOperation,
         CharOperation,
         LogicalOperation,
+        BitwiseOperation,
         TypeOperation,
         StackOperation,
         LoadLiteral,

@@ -215,6 +215,24 @@ namespace lyric_assembler {
         lyric_object::Opcode m_opcode;
     };
 
+    class BitwiseOperationInstruction: public AbstractInstruction {
+    public:
+        explicit BitwiseOperationInstruction(lyric_object::Opcode opcode);
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+        lyric_object::Opcode getOpcode() const;
+    private:
+        lyric_object::Opcode m_opcode;
+    };
+
     class TypeOperationInstruction: public AbstractInstruction {
     public:
         explicit TypeOperationInstruction(lyric_object::Opcode opcode);

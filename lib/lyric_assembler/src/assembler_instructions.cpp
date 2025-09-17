@@ -535,6 +535,59 @@ lyric_assembler::LogicalOperationInstruction::getOpcode() const
     return m_opcode;
 }
 
+lyric_assembler::BitwiseOperationInstruction::BitwiseOperationInstruction(lyric_object::Opcode opcode)
+    : m_opcode(opcode)
+{
+    TU_ASSERT (m_opcode != lyric_object::Opcode::OP_UNKNOWN);
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::BitwiseOperationInstruction::getType() const
+{
+    return InstructionType::BitwiseOperation;
+}
+
+tempo_utils::Status
+lyric_assembler::BitwiseOperationInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::BitwiseOperationInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    switch (m_opcode) {
+        case lyric_object::Opcode::OP_BITWISE_AND:
+        case lyric_object::Opcode::OP_BITWISE_OR:
+        case lyric_object::Opcode::OP_BITWISE_XOR:
+        case lyric_object::Opcode::OP_BITWISE_LEFT_SHIFT:
+        case lyric_object::Opcode::OP_BITWISE_RIGHT_SHIFT:
+            return bytecodeBuilder.writeOpcode(m_opcode);
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid opcode");
+    }
+}
+
+std::string
+lyric_assembler::BitwiseOperationInstruction::toString() const
+{
+    return absl::StrCat("Logical Operation: opcode=",
+        lyric_object::opcode_to_name(m_opcode));
+}
+
+lyric_object::Opcode
+lyric_assembler::BitwiseOperationInstruction::getOpcode() const
+{
+    return m_opcode;
+}
+
 lyric_assembler::TypeOperationInstruction::TypeOperationInstruction(lyric_object::Opcode opcode)
     : m_opcode(opcode)
 {

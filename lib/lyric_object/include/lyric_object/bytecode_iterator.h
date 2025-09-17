@@ -20,8 +20,8 @@ namespace lyric_object {
     };
 
     struct OpInfo {
-        Opcode opcode;
-        OpInfoType type;
+        Opcode opcode;              /**< The Opcode id. */
+        OpInfoType type;            /**< The Opcode type. */
     };
 
     struct OpCell {
