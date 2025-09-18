@@ -34,5 +34,5 @@ lyric_assembler::TypenameSymbol::getSymbolUrl() const
 lyric_common::TypeDef
 lyric_assembler::TypenameSymbol::getTypeDef() const
 {
-    return lyric_common::TypeDef::forConcrete(m_typenameUrl);
+    return lyric_common::TypeDef::forConcrete(m_typenameUrl).orElseThrow();
 }

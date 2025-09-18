@@ -5,10 +5,9 @@
 #include <string>
 #include <vector>
 
-#include <absl/hash/hash.h>
-
 #include <lyric_common/symbol_url.h>
 #include <tempo_utils/log_message.h>
+#include <tempo_utils/result.h>
 
 namespace lyric_common {
 
@@ -62,15 +61,15 @@ namespace lyric_common {
         bool operator==(const TypeDef &other) const;
         bool operator!=(const TypeDef &other) const;
 
-        static TypeDef forConcrete(
+        static tempo_utils::Result<TypeDef> forConcrete(
             const SymbolUrl &concreteUrl,
             const std::vector<TypeDef> &concreteArguments = {});
-        static TypeDef forPlaceholder(
+        static tempo_utils::Result<TypeDef> forPlaceholder(
             int placeholderIndex,
             const SymbolUrl &placeholderTemplateUrl,
             const std::vector<TypeDef> &placeholderArguments = {});
-        static TypeDef forIntersection(const std::vector<TypeDef> &intersectionMembers);
-        static TypeDef forUnion(const std::vector<TypeDef> &unionMembers);
+        static tempo_utils::Result<TypeDef> forIntersection(const std::vector<TypeDef> &intersectionMembers);
+        static tempo_utils::Result<TypeDef> forUnion(const std::vector<TypeDef> &unionMembers);
 
         static TypeDef noReturn();
 

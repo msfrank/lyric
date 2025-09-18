@@ -95,8 +95,9 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returns
             {"T", 0, AnyType, lyric_object::VarianceType::Invariant, lyric_object::BoundType::None},
         }));
     auto collectionUrl = collectionClass->getSymbolUrl();
-    auto CollectionOfTType = lyric_common::TypeDef::forConcrete(
-        collectionUrl, {templateHandle->getPlaceholder(0)});
+    lyric_common::TypeDef CollectionOfTType;
+    TU_ASSIGN_OR_RAISE (CollectionOfTType, lyric_common::TypeDef::forConcrete(
+        collectionUrl, {templateHandle->getPlaceholder(0)}));
 
     lyric_assembler::Parameter p0;
     p0.index = 0;
@@ -112,7 +113,8 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesCollectionOfT_returns
     ASSERT_TRUE (reifier.initialize(invoker).isOk());
 
     // apply Collection[Int] argument
-    auto CollectionOfIntType = lyric_common::TypeDef::forConcrete(collectionUrl, {IntType});
+    lyric_common::TypeDef CollectionOfIntType;
+    TU_ASSIGN_OR_RAISE (CollectionOfIntType, lyric_common::TypeDef::forConcrete(collectionUrl, {IntType}));
     ASSERT_TRUE (reifier.reifyNextArgument(CollectionOfIntType).isOk());
 
     // result type should be Int
@@ -150,7 +152,7 @@ TEST_F(CallsiteReifierTP0InOut, UnaryFunctionGivenT_P0takesUnionOfTandNil_return
 
     lyric_assembler::Parameter p0;
     p0.index = 0;
-    p0.typeDef = lyric_common::TypeDef::forUnion({templateHandle->getPlaceholder(0), NilType});
+    TU_ASSIGN_OR_RAISE (p0.typeDef, lyric_common::TypeDef::forUnion({templateHandle->getPlaceholder(0), NilType}));
     p0.placement = lyric_object::PlacementType::List;
 
     lyric_assembler::CallableInvoker invoker;

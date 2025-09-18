@@ -51,7 +51,8 @@ lyric_object::UnionTypeWalker::getTypeDef() const
         }
     }
 
-    return lyric_common::TypeDef::forUnion(parameters);
+    auto result = lyric_common::TypeDef::forUnion(parameters);
+    return result.orElse({});
 }
 
 std::vector<lyric_object::TypeWalker>

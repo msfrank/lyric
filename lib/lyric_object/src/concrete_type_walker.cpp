@@ -57,7 +57,8 @@ lyric_object::ConcreteTypeWalker::getTypeDef() const
         }
     }
 
-    return lyric_common::TypeDef::forConcrete(concreteUrl, parameters);
+    auto result = lyric_common::TypeDef::forConcrete(concreteUrl, parameters);
+    return result.orElse({});
 }
 
 lyric_object::LinkageSection

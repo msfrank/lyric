@@ -209,11 +209,14 @@ get_or_construct_iterator(
 {
     // if target type is specified then the iterator type must conform to Iterator[targetType]
     if (targetType.isValid()) {
-        auto iteratorType = lyric_common::TypeDef::forConcrete(iteratorConcept->getSymbolUrl(), {targetType});
+        lyric_common::TypeDef iteratorType;
+        TU_ASSIGN_OR_RETURN (iteratorType, lyric_common::TypeDef::forConcrete(
+            iteratorConcept->getSymbolUrl(), {targetType}));
 
         // if generatorType implements iteratorType then we are done
         bool implementsIterator;
-        TU_ASSIGN_OR_RETURN (implementsIterator, typeSystem->isImplementable(iteratorType, generatorType));
+        TU_ASSIGN_OR_RETURN (implementsIterator, typeSystem->isImplementable(
+            iteratorType, generatorType));
         if (implementsIterator)
             return iteratorType;
 
@@ -221,11 +224,15 @@ get_or_construct_iterator(
     }
 
     // otherwise check if generatorType implements Iterable[targetType]
-    auto iterableType = lyric_common::TypeDef::forConcrete(iterableConcept->getSymbolUrl(), {targetType});
+    lyric_common::TypeDef iterableType;
+    TU_ASSIGN_OR_RETURN (iterableType, lyric_common::TypeDef::forConcrete(
+        iterableConcept->getSymbolUrl(), {targetType}));
     bool implementsIterable;
-    TU_ASSIGN_OR_RETURN (implementsIterable, typeSystem->isImplementable(iterableType, generatorType));
+    TU_ASSIGN_OR_RETURN (implementsIterable, typeSystem->isImplementable(
+        iterableType, generatorType));
     if (!implementsIterable)
-        return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kIncompatibleType,
+        return lyric_compiler::CompilerStatus::forCondition(
+            lyric_compiler::CompilerCondition::kIncompatibleType,
             "generator type {} is not iterable", generatorType.toString());
 
     // resolve the Iterate impl method

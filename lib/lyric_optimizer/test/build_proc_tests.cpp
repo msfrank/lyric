@@ -84,10 +84,12 @@ TEST_F(BuildProcTests, BuildConditionalWithPhiFunction)
 
     lyric_assembler::DataReference cond;
     TU_ASSIGN_OR_RAISE (cond, inputBlock->declareTemporary(
-        lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Bool")), true));
+        lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Bool")).orElseThrow(),
+        true));
     lyric_assembler::DataReference result;
     TU_ASSIGN_OR_RAISE (result, inputBlock->declareTemporary(
-        lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), true));
+        lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow(),
+        true));
 
     inputRoot->immediateBool(true);
     inputRoot->storeRef(cond);

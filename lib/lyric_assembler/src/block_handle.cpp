@@ -419,7 +419,7 @@ lyric_assembler::BlockHandle::resolveSingular(
     lyric_common::TypeDef typeDef;
     switch (binding.bindingType) {
         case BindingType::Descriptor:
-            typeDef = lyric_common::TypeDef::forConcrete(binding.symbolUrl, typeArguments);
+            TU_ASSIGN_OR_RETURN (typeDef, lyric_common::TypeDef::forConcrete(binding.symbolUrl, typeArguments));
             break;
         case BindingType::Placeholder:
             typeDef = binding.typeDef;
@@ -1791,7 +1791,7 @@ lyric_assembler::BlockHandle::declareAlias(
             "cannot declare alias {}; missing template for {}", alias, templateUrl.toString());
 
     SymbolBinding binding;
-    binding.typeDef = lyric_common::TypeDef::forPlaceholder(placeholderIndex, templateUrl);
+    TU_ASSIGN_OR_RETURN (binding.typeDef, lyric_common::TypeDef::forPlaceholder(placeholderIndex, templateUrl));
     binding.bindingType = BindingType::Placeholder;
 
     m_bindings[alias] = binding;

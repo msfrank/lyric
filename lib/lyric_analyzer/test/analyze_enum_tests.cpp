@@ -64,11 +64,13 @@ TEST_F(AnalyzeEnum, DeclareEnumWithExplicitInit)
     ASSERT_TRUE (enum0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
 
+    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+
     ASSERT_EQ (1, enum0.numMembers());
     auto field0 = enum0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
-    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
+    ASSERT_EQ (IntType, field0.getFieldType().getTypeDef());
     ASSERT_FALSE (field0.isVariable());
 }
 
@@ -127,11 +129,13 @@ TEST_F(AnalyzeEnum, DeclareEnumMemberVal)
     ASSERT_TRUE (enum0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
 
+    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+
     ASSERT_EQ (1, enum0.numMembers());
     auto field0 = enum0.getMember(0);
     ASSERT_TRUE (field0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "answer"}), field0.getSymbolPath());
-    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), field0.getFieldType().getTypeDef());
+    ASSERT_EQ (IntType, field0.getFieldType().getTypeDef());
     ASSERT_FALSE (field0.isVariable());
 }
 
@@ -162,17 +166,19 @@ TEST_F(AnalyzeEnum, DeclareEnumMethod)
         enumMethods[method.getSymbolPath().getName()] = method;
     }
 
+    auto IntType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow();
+
     ASSERT_TRUE (enumMethods.contains("Identity"));
     auto identity = enumMethods.at("Identity");
     ASSERT_TRUE (identity.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "Identity"}), identity.getSymbolPath());
-    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), identity.getResultType().getTypeDef());
+    ASSERT_EQ (IntType, identity.getResultType().getTypeDef());
 
     ASSERT_EQ (1, identity.numListParameters());
     ASSERT_EQ (0, identity.numNamedParameters());
     auto param0 = identity.getListParameter(0);
     ASSERT_EQ ("x", param0.getParameterName());
-    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")), param0.getParameterType().getTypeDef());
+    ASSERT_EQ (IntType, param0.getParameterType().getTypeDef());
 
     ASSERT_TRUE (enumMethods.contains("$ctor"));
     auto ctor = enumMethods.at("$ctor");
@@ -204,14 +210,17 @@ TEST_F(AnalyzeEnum, DeclareEnumImplMethod)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
     ASSERT_EQ (1, enum0.numImpls());
 
+    auto BoolType = lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Bool")).orElseThrow();
+
+    auto FooUrl = lyric_common::SymbolUrl::fromString("#Foo");
+    auto FooType = lyric_common::TypeDef::forConcrete(FooUrl).orElseThrow();
+
     auto impl0 = enum0.getImpl(0);
     ASSERT_TRUE (impl0.isValid());
-    ASSERT_EQ (lyric_common::TypeDef::forConcrete(
-        lyric_bootstrap::preludeSymbol("Equality"), {
-            lyric_common::TypeDef::forConcrete(lyric_common::SymbolUrl::fromString("#Foo")),
-            lyric_common::TypeDef::forConcrete(lyric_common::SymbolUrl::fromString("#Foo")),
-        }),
-               impl0.getImplType().getTypeDef());
+    auto EqualityOfFooFooType = lyric_common::TypeDef::forConcrete(
+        lyric_bootstrap::preludeSymbol("Equality"), {FooType, FooType})
+        .orElseThrow();
+    ASSERT_EQ (EqualityOfFooFooType, impl0.getImplType().getTypeDef());
 
     auto extension0 = impl0.getExtension(0);
     ASSERT_TRUE (extension0.isValid());
@@ -221,14 +230,14 @@ TEST_F(AnalyzeEnum, DeclareEnumImplMethod)
 
     auto equals = extension0.getNearCall();
     ASSERT_TRUE (equals.isDeclOnly());
-    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Bool")), equals.getResultType().getTypeDef());
+    ASSERT_EQ (BoolType, equals.getResultType().getTypeDef());
 
     ASSERT_EQ (2, equals.numListParameters());
     ASSERT_EQ (0, equals.numNamedParameters());
     auto param0 = equals.getListParameter(0);
     ASSERT_EQ ("lhs", param0.getParameterName());
-    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_common::SymbolUrl::fromString("#Foo")), param0.getParameterType().getTypeDef());
+    ASSERT_EQ (FooType, param0.getParameterType().getTypeDef());
     auto param1 = equals.getListParameter(1);
     ASSERT_EQ ("rhs", param1.getParameterName());
-    ASSERT_EQ (lyric_common::TypeDef::forConcrete(lyric_common::SymbolUrl::fromString("#Foo")), param1.getParameterType().getTypeDef());
+    ASSERT_EQ (FooType, param1.getParameterType().getTypeDef());
 }

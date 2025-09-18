@@ -142,11 +142,12 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
-                            "type at index {} not found in module {}", p.getDescriptorOffset(), objectLocation.toString()));
+                            "type at index {} not found in module {}",
+                            p.getDescriptorOffset(), objectLocation.toString()));
                 concreteParameters.push_back(parameterType->getTypeDef());
             }
 
-            return lyric_common::TypeDef::forConcrete(concreteUrl, concreteParameters);
+            return lyric_common::TypeDef::forConcrete(concreteUrl, concreteParameters).orElseThrow();
         }
 
         case lyric_common::TypeDefType::Placeholder: {
@@ -176,12 +177,13 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
-                            "type at index {} not found in module {}", p.getDescriptorOffset(), objectLocation.toString()));
+                            "type at index {} not found in module {}",
+                            p.getDescriptorOffset(), objectLocation.toString()));
                 placeholderParameters.push_back(parameterType->getTypeDef());
             }
 
             return lyric_common::TypeDef::forPlaceholder(
-                placeholderTypeWalker.getPlaceholderIndex(), templateUrl, placeholderParameters);
+                placeholderTypeWalker.getPlaceholderIndex(), templateUrl, placeholderParameters).orElseThrow();
         }
 
         case lyric_common::TypeDefType::Union: {
@@ -194,16 +196,18 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
                 if (memberType == nullptr)
                     throw tempo_utils::StatusException(lyric_importer::ImporterStatus::forCondition(
                         lyric_importer::ImporterCondition::kImportError,
-                        "type at index {} not found in module {}", m.getDescriptorOffset(), objectLocation.toString()));
+                        "type at index {} not found in module {}",
+                        m.getDescriptorOffset(), objectLocation.toString()));
                 unionMembers.push_back(memberType->getTypeDef());
             }
             if (unionMembers.empty())
                 throw tempo_utils::StatusException(
                     lyric_importer::ImporterStatus::forCondition(
                         lyric_importer::ImporterCondition::kImportError,
-                        "type at index {} in module {} has no union members", typeOffset, objectLocation.toString()));
+                        "type at index {} in module {} has no union members",
+                        typeOffset, objectLocation.toString()));
 
-            return lyric_common::TypeDef::forUnion(unionMembers);
+            return lyric_common::TypeDef::forUnion(unionMembers).orElseThrow();
         }
 
         case lyric_common::TypeDefType::Intersection: {
@@ -217,7 +221,8 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
-                            "type at index {} not found in module {}", m.getDescriptorOffset(), objectLocation.toString()));
+                            "type at index {} not found in module {}",
+                            m.getDescriptorOffset(), objectLocation.toString()));
                 intersectionMembers.push_back(memberType->getTypeDef());
             }
             if (intersectionMembers.empty())
@@ -227,7 +232,7 @@ import_assignable_type(const lyric_object::TypeWalker &typeWalker, lyric_importe
                         "type at index {} in module {} has no intersection members",
                         typeOffset, objectLocation.toString()));
 
-            return lyric_common::TypeDef::forIntersection(intersectionMembers);
+            return lyric_common::TypeDef::forIntersection(intersectionMembers).orElseThrow();
         }
 
         // special type: NoReturn
@@ -265,7 +270,8 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
-                            "type at index {} not found in module {}", p.getDescriptorOffset(), objectLocation.toString()));
+                            "type at index {} not found in module {}",
+                            p.getDescriptorOffset(), objectLocation.toString()));
                 typeArguments.push_back(parameterType);
             }
 
@@ -282,7 +288,8 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
-                            "type at index {} not found in module {}", p.getDescriptorOffset(), objectLocation.toString()));
+                            "type at index {} not found in module {}",
+                            p.getDescriptorOffset(), objectLocation.toString()));
                 typeArguments.push_back(parameterType);
             }
 
@@ -298,7 +305,8 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
                 if (memberType == nullptr)
                     throw tempo_utils::StatusException(lyric_importer::ImporterStatus::forCondition(
                         lyric_importer::ImporterCondition::kImportError,
-                        "type at index {} not found in module {}", m.getDescriptorOffset(), objectLocation.toString()));
+                        "type at index {} not found in module {}",
+                        m.getDescriptorOffset(), objectLocation.toString()));
                 typeArguments.push_back(memberType);
             }
 
@@ -315,7 +323,8 @@ import_type_arguments(const lyric_object::TypeWalker &typeWalker, lyric_importer
                     throw tempo_utils::StatusException(
                         lyric_importer::ImporterStatus::forCondition(
                             lyric_importer::ImporterCondition::kImportError,
-                            "type at index {} not found in module {}", m.getDescriptorOffset(), objectLocation.toString()));
+                            "type at index {} not found in module {}",
+                            m.getDescriptorOffset(), objectLocation.toString()));
                 typeArguments.push_back(memberType);
             }
 

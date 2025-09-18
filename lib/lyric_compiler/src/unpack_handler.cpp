@@ -65,32 +65,37 @@ resolve_unwrap_impl(
     if (!fundamentalTuple.isValid())
         return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kCompilerInvariant,
             "tuple arity is too large");
-    auto tupleType = lyric_common::TypeDef::forConcrete(fundamentalTuple, tupleTypeArguments);
+    lyric_common::TypeDef tupleType;
+    TU_ASSIGN_OR_RETURN (tupleType, lyric_common::TypeDef::forConcrete(fundamentalTuple, tupleTypeArguments));
 
     // resolve the instance implementing unwrap() for the specified unwrap type and tuple type
     auto fundamentalUnwrap = fundamentalCache->getFundamentalUrl(lyric_assembler::FundamentalSymbol::Unwrap);
-    auto concreteReceiverType = lyric_common::TypeDef::forConcrete(
-        fundamentalUnwrap, {unwrapType, tupleType});
+    lyric_common::TypeDef concreteReceiverType;
+    TU_ASSIGN_OR_RETURN (concreteReceiverType, lyric_common::TypeDef::forConcrete(
+        fundamentalUnwrap, {unwrapType, tupleType}));
 
     // resolve the instance for a generic unwrap type with a concrete tuple type
     lyric_assembler::AbstractSymbol *unwrapSym;
     TU_ASSIGN_OR_RETURN (unwrapSym, symbolCache->getOrImportSymbol(unwrapType.getConcreteUrl()));
     auto genericUnwrapType = unwrapSym->getTypeDef();
-    auto genericConcreteReceiverType = lyric_common::TypeDef::forConcrete(
-        fundamentalUnwrap, {genericUnwrapType, tupleType});
+    lyric_common::TypeDef genericConcreteReceiverType;
+    TU_ASSIGN_OR_RETURN (genericConcreteReceiverType, lyric_common::TypeDef::forConcrete(
+        fundamentalUnwrap, {genericUnwrapType, tupleType}));
 
     // resolve the instance for a generic unwrap type with a generic tuple type of the same arity
     auto genericUnwrapTypeArguments = genericUnwrapType.getConcreteArguments();
     int genericTupleTypeArity = genericUnwrapTypeArguments.size();
     auto genericTupleUrl = fundamentalCache->getTupleUrl(genericTupleTypeArity);
     if (!genericTupleUrl.isValid())
-        return lyric_compiler::CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kCompilerInvariant,
-            "tuple arity is too large");
-    auto genericTupleType = lyric_common::TypeDef::forConcrete(
+        return lyric_compiler::CompilerStatus::forCondition(
+            lyric_compiler::CompilerCondition::kCompilerInvariant, "tuple arity is too large");
+    lyric_common::TypeDef genericTupleType;
+    TU_ASSIGN_OR_RETURN (genericTupleType, lyric_common::TypeDef::forConcrete(
         genericTupleUrl, std::vector<lyric_common::TypeDef>(
-            genericUnwrapTypeArguments.begin(), genericUnwrapTypeArguments.end()));
-    auto genericGenericReceiverType = lyric_common::TypeDef::forConcrete(
-        fundamentalUnwrap, {genericUnwrapType, genericTupleType});
+            genericUnwrapTypeArguments.begin(), genericUnwrapTypeArguments.end())));
+    lyric_common::TypeDef genericGenericReceiverType;
+    TU_ASSIGN_OR_RETURN (genericGenericReceiverType, lyric_common::TypeDef::forConcrete(
+        fundamentalUnwrap, {genericUnwrapType, genericTupleType}));
 
     return block->resolveImpl(concreteReceiverType,
         { genericConcreteReceiverType, genericGenericReceiverType});

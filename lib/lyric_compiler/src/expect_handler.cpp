@@ -66,7 +66,7 @@ lyric_compiler::ExpectHandler::after(
         if (!canReturnStatus || resultMembers.empty())
             return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
                 "incompatible operand type {} for expect expression", resultOrStatusType.toString());
-        resultType = lyric_common::TypeDef::forUnion(resultMembers);
+        TU_ASSIGN_OR_RETURN (resultType, lyric_common::TypeDef::forUnion(resultMembers));
     } else {
         return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "incompatible operand type {} for expect expression", resultOrStatusType.toString());

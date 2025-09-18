@@ -208,7 +208,7 @@ lyric_typing::CallsiteReifier::reifySingular(
                 return lyric_common::TypeDef::forConcrete(
                     paramType.getConcreteUrl(), argTypeArguments);
             // otherwise set the base type to the concrete url without type arguments
-            baseType = lyric_common::TypeDef::forConcrete(paramType.getConcreteUrl());
+            TU_ASSIGN_OR_RETURN (baseType, lyric_common::TypeDef::forConcrete(paramType.getConcreteUrl()));
             paramTypeArguments = std::vector<lyric_common::TypeDef>(
                 paramType.concreteArgumentsBegin(), paramType.concreteArgumentsEnd());
             break;
@@ -231,8 +231,8 @@ lyric_typing::CallsiteReifier::reifySingular(
                     return m_reifiedPlaceholders[index];
                 baseType = m_reifiedPlaceholders[index];
             } else {
-                baseType = lyric_common::TypeDef::forPlaceholder(
-                    paramType.getPlaceholderIndex(), paramType.getPlaceholderTemplateUrl());
+                TU_ASSIGN_OR_RETURN (baseType, lyric_common::TypeDef::forPlaceholder(
+                    paramType.getPlaceholderIndex(), paramType.getPlaceholderTemplateUrl()));
             }
             paramTypeArguments = std::vector<lyric_common::TypeDef>(
                 paramType.placeholderArgumentsBegin(), paramType.placeholderArgumentsEnd());
@@ -415,10 +415,11 @@ lyric_typing::CallsiteReifier::reifyUnion(
         // find the parameter member which maps to the argument member
         lyric_common::SymbolUrl paramBaseUrl;
         for (const auto &paramBase : paramBaseUrlToParamTypeMap) {
+            lyric_common::TypeDef fromType, toType;
             lyric_runtime::TypeComparison cmp;
-            TU_ASSIGN_OR_RETURN (cmp, m_typeSystem->compareAssignable(
-                lyric_common::TypeDef::forConcrete(paramBase.first),
-                lyric_common::TypeDef::forConcrete(argBaseUrl)));
+            TU_ASSIGN_OR_RETURN (fromType, lyric_common::TypeDef::forConcrete(argBaseUrl));
+            TU_ASSIGN_OR_RETURN (toType, lyric_common::TypeDef::forConcrete(paramBase.first));
+            TU_ASSIGN_OR_RETURN (cmp, m_typeSystem->compareAssignable(toType, fromType));
             if (cmp == lyric_runtime::TypeComparison::EQUAL || cmp == lyric_runtime::TypeComparison::EXTENDS) {
                 paramBaseUrl = paramBase.first;
                 break;
@@ -629,8 +630,9 @@ lyric_typing::CallsiteReifier::reifyNextContext()
         reifiedParameters.push_back(reifyReturnResult.getResult());
     }
 
-    auto reifiedType = lyric_common::TypeDef::forConcrete(
-        reifiedUrl, reifiedParameters);
+    lyric_common::TypeDef reifiedType;
+    TU_ASSIGN_OR_RETURN (reifiedType, lyric_common::TypeDef::forConcrete(
+        reifiedUrl, reifiedParameters));
     m_argumentTypes.push_back(reifiedType);
 
     // if there is no type handle for type, then create it
@@ -657,7 +659,7 @@ lyric_typing::CallsiteReifier::reifyResult(const lyric_common::TypeDef &returnTy
             if (returnType.numConcreteArguments() == 0)
                 return returnType;
             // otherwise set the base type to the concrete url without type parameters
-            baseType = lyric_common::TypeDef::forConcrete(returnType.getConcreteUrl());
+            TU_ASSIGN_OR_RETURN (baseType, lyric_common::TypeDef::forConcrete(returnType.getConcreteUrl()));
             returnTypeParameters = std::vector<lyric_common::TypeDef>(
                 returnType.concreteArgumentsBegin(), returnType.concreteArgumentsEnd());
             break;
@@ -676,8 +678,8 @@ lyric_typing::CallsiteReifier::reifyResult(const lyric_common::TypeDef &returnTy
                     return m_reifiedPlaceholders[index];
                 baseType = m_reifiedPlaceholders[index];
             } else {
-                baseType = lyric_common::TypeDef::forPlaceholder(
-                    returnType.getPlaceholderIndex(), returnType.getPlaceholderTemplateUrl());
+                TU_ASSIGN_OR_RETURN (baseType, lyric_common::TypeDef::forPlaceholder(
+                    returnType.getPlaceholderIndex(), returnType.getPlaceholderTemplateUrl()));
             }
             returnTypeParameters = std::vector<lyric_common::TypeDef>(
                 returnType.placeholderArgumentsBegin(), returnType.placeholderArgumentsEnd());
@@ -719,22 +721,23 @@ lyric_typing::CallsiteReifier::reifyResult(const lyric_common::TypeDef &returnTy
     // construct the complete reified type
     switch (returnType.getType()) {
         case lyric_common::TypeDefType::Union: {
-            reifiedType = lyric_common::TypeDef::forUnion(reifiedParameters);
+            TU_ASSIGN_OR_RETURN (reifiedType, lyric_common::TypeDef::forUnion(reifiedParameters));
             break;
         }
         case lyric_common::TypeDefType::Intersection: {
-            reifiedType = lyric_common::TypeDef::forIntersection(reifiedParameters);
+            TU_ASSIGN_OR_RETURN (reifiedType, lyric_common::TypeDef::forIntersection(reifiedParameters));
             break;
         }
 
         default: {
             switch (baseType.getType()) {
                 case lyric_common::TypeDefType::Concrete:
-                    reifiedType = lyric_common::TypeDef::forConcrete(baseType.getConcreteUrl(), reifiedParameters);
+                    TU_ASSIGN_OR_RETURN (reifiedType, lyric_common::TypeDef::forConcrete(
+                        baseType.getConcreteUrl(), reifiedParameters));
                     break;
                 case lyric_common::TypeDefType::Placeholder:
-                    reifiedType = lyric_common::TypeDef::forPlaceholder(baseType.getPlaceholderIndex(),
-                        baseType.getPlaceholderTemplateUrl(), reifiedParameters);
+                    TU_ASSIGN_OR_RETURN (reifiedType, lyric_common::TypeDef::forPlaceholder(
+                        baseType.getPlaceholderIndex(), baseType.getPlaceholderTemplateUrl(), reifiedParameters));
                     break;
                 default:
                     return TypingStatus::forCondition(TypingCondition::kTypingInvariant,

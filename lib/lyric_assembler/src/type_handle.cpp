@@ -28,7 +28,7 @@ lyric_assembler::TypeHandle::TypeHandle(
     : m_superType(superType),
       m_specificSymbol(nullptr)
 {
-    m_typeDef = lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments);
+    m_typeDef = lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments).orElseThrow();
     TU_ASSERT (m_superType != nullptr);
 }
 
@@ -39,7 +39,7 @@ lyric_assembler::TypeHandle::TypeHandle(
     : m_superType(nullptr),
       m_specificSymbol(nullptr)
 {
-    m_typeDef = lyric_common::TypeDef::forPlaceholder(placeholderIndex, templateUrl, typeArguments);
+    m_typeDef = lyric_common::TypeDef::forPlaceholder(placeholderIndex, templateUrl, typeArguments).orElseThrow();
 }
 
 lyric_assembler::TypeHandle::TypeHandle(
@@ -49,7 +49,7 @@ lyric_assembler::TypeHandle::TypeHandle(
     : m_superType(nullptr),
       m_specificSymbol(specificSymbol)
 {
-    m_typeDef = lyric_common::TypeDef::forConcrete(specificUrl, typeArguments);
+    m_typeDef = lyric_common::TypeDef::forConcrete(specificUrl, typeArguments).orElseThrow();
     TU_ASSERT (m_specificSymbol != nullptr);
 }
 
@@ -115,7 +115,7 @@ lyric_assembler::TypeHandle::defineType(
             "type {} is already defined", m_typeDef.toString());
 
     auto concreteUrl = m_typeDef.getConcreteUrl();
-    m_typeDef = lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments);
+    TU_ASSIGN_OR_RETURN (m_typeDef, lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments));
     m_superType = superType;
     m_specificSymbol = nullptr;
     return {};

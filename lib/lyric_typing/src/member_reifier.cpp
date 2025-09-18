@@ -176,7 +176,7 @@ lyric_typing::MemberReifier::reifySingular(
             if (paramType.numConcreteArguments() == 0)
                 return paramType;
             // otherwise set the base type to the concrete url without type parameters
-            baseType = lyric_common::TypeDef::forConcrete(paramType.getConcreteUrl());
+            TU_ASSIGN_OR_RETURN (baseType, lyric_common::TypeDef::forConcrete(paramType.getConcreteUrl()));
             paramTypeParameters = std::vector<lyric_common::TypeDef>(
                 paramType.concreteArgumentsBegin(), paramType.concreteArgumentsEnd());
             break;
@@ -191,8 +191,8 @@ lyric_typing::MemberReifier::reifySingular(
                     return m_reifiedPlaceholders[index];
                 baseType = m_reifiedPlaceholders[index];
             } else {
-                baseType = lyric_common::TypeDef::forPlaceholder(
-                    paramType.getPlaceholderIndex(), paramType.getPlaceholderTemplateUrl());
+                TU_ASSIGN_OR_RETURN (baseType, lyric_common::TypeDef::forPlaceholder(
+                    paramType.getPlaceholderIndex(), paramType.getPlaceholderTemplateUrl()));
             }
             paramTypeParameters = std::vector<lyric_common::TypeDef>(
                 paramType.placeholderArgumentsBegin(), paramType.placeholderArgumentsEnd());

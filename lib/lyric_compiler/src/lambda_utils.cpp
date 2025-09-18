@@ -34,8 +34,9 @@ lyric_compiler::define_lambda_builder(
         builderTypeArguments.push_back(it->typeDef);
     }
 
-    auto builderReturnType = lyric_common::TypeDef::forConcrete(
-        lambdaFunctionUrl, builderTypeArguments);
+    lyric_common::TypeDef builderReturnType;
+    TU_ASSIGN_OR_RETURN (builderReturnType, lyric_common::TypeDef::forConcrete(
+        lambdaFunctionUrl, builderTypeArguments));
 
     // name of the builder function is the lambda function name + "$builder"
     auto builderName = absl::StrCat(lambdaCall->getName() + "$builder");

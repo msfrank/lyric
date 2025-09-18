@@ -181,9 +181,12 @@ TEST(TypeWalker, ParseIntersectionType)
     ASSERT_EQ (lyric_common::TypeDefType::Intersection, typeDef.getType());
     ASSERT_EQ (
         std::vector({
-            lyric_common::TypeDef::forConcrete(lyric_common::SymbolUrl(lyric_common::SymbolPath({"A"}))),
-            lyric_common::TypeDef::forConcrete(lyric_common::SymbolUrl(lyric_common::SymbolPath({"B"}))),
-            lyric_common::TypeDef::forConcrete(lyric_common::SymbolUrl(lyric_common::SymbolPath({"C"}))),
+            lyric_common::TypeDef::forConcrete(
+                lyric_common::SymbolUrl(lyric_common::SymbolPath({"A"}))).orElseThrow(),
+            lyric_common::TypeDef::forConcrete(
+                lyric_common::SymbolUrl(lyric_common::SymbolPath({"B"}))).orElseThrow(),
+            lyric_common::TypeDef::forConcrete(
+                lyric_common::SymbolUrl(lyric_common::SymbolPath({"C"}))).orElseThrow(),
         }),
         std::vector<lyric_common::TypeDef>(
             typeDef.intersectionMembersBegin(), typeDef.intersectionMembersEnd()));
@@ -267,9 +270,12 @@ TEST(TypeWalker, ParseUnionType)
     ASSERT_EQ (lyric_common::TypeDefType::Union, typeDef.getType());
     ASSERT_EQ (
         std::vector({
-            lyric_common::TypeDef::forConcrete(lyric_common::SymbolUrl(lyric_common::SymbolPath({"A"}))),
-            lyric_common::TypeDef::forConcrete(lyric_common::SymbolUrl(lyric_common::SymbolPath({"B"}))),
-            lyric_common::TypeDef::forConcrete(lyric_common::SymbolUrl(lyric_common::SymbolPath({"C"}))),
+            lyric_common::TypeDef::forConcrete(
+                lyric_common::SymbolUrl(lyric_common::SymbolPath({"A"}))).orElseThrow(),
+            lyric_common::TypeDef::forConcrete(
+                lyric_common::SymbolUrl(lyric_common::SymbolPath({"B"}))).orElseThrow(),
+            lyric_common::TypeDef::forConcrete(
+                lyric_common::SymbolUrl(lyric_common::SymbolPath({"C"}))).orElseThrow(),
         }),
         std::vector<lyric_common::TypeDef>(
             typeDef.unionMembersBegin(), typeDef.unionMembersEnd()));

@@ -10,6 +10,7 @@ set(LYRIC_COMMON_INCLUDES
     include/lyric_common/module_location.h
     include/lyric_common/common_conversions.h
     include/lyric_common/common_serde.h
+    include/lyric_common/common_status.h
     include/lyric_common/common_types.h
     include/lyric_common/plugin.h
     include/lyric_common/runtime_policy.h
@@ -24,6 +25,7 @@ target_sources(lyric_common
     src/module_location.cpp
     src/common_conversions.cpp
     src/common_serde.cpp
+    src/common_status.cpp
     src/common_types.cpp
     src/plugin.cpp
     src/runtime_policy.cpp

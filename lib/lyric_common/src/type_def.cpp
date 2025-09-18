@@ -6,6 +6,8 @@
 #include <tempo_utils/log_message.h>
 #include <tempo_utils/log_stream.h>
 
+#include "lyric_common/common_status.h"
+
 lyric_common::TypeDef::TypeDef()
     : m_priv(std::make_shared<Priv>(TypeDefType::Invalid, lyric_common::SymbolUrl{}, std::vector<TypeDef>{}, -1))
 {
@@ -48,48 +50,60 @@ lyric_common::TypeDef::operator=(TypeDef &&other) noexcept
     return *this;
 }
 
-lyric_common::TypeDef
+tempo_utils::Result<lyric_common::TypeDef>
 lyric_common::TypeDef::forConcrete(
     const SymbolUrl &concreteUrl,
     const std::vector<TypeDef> &typeParameters)
 {
-    TU_ASSERT (concreteUrl.isValid());
+    if (!concreteUrl.isValid())
+        return CommonStatus::forCondition(CommonCondition::kCommonInvariant,
+            "invalid concrete url");
     return TypeDef(TypeDefType::Concrete, concreteUrl, typeParameters, -1);
 }
 
-lyric_common::TypeDef
+tempo_utils::Result<lyric_common::TypeDef>
 lyric_common::TypeDef::forPlaceholder(
     int placeholderIndex,
     const SymbolUrl &templateUrl,
     const std::vector<TypeDef> &typeParameters)
 {
-    TU_ASSERT (0 <= placeholderIndex);
-    TU_ASSERT (templateUrl.isValid());
+    if (placeholderIndex < 0)
+        return CommonStatus::forCondition(CommonCondition::kCommonInvariant,
+            "invalid placeholder index");
+    if (!templateUrl.isValid())
+        return CommonStatus::forCondition(CommonCondition::kCommonInvariant,
+            "invalid template url");
     return TypeDef(TypeDefType::Placeholder, templateUrl, typeParameters, placeholderIndex);
 }
 
 bool
-lyric_common::member_cmp(const lyric_common::TypeDef &lhs, const lyric_common::TypeDef &rhs)
+lyric_common::member_cmp(const TypeDef &lhs, const TypeDef &rhs)
 {
     return lhs.toString() < rhs.toString();
 }
 
-lyric_common::TypeDef
+tempo_utils::Result<lyric_common::TypeDef>
 lyric_common::TypeDef::forIntersection(const std::vector<TypeDef> &members)
 {
-    TU_ASSERT (!members.empty());
+    if (members.empty())
+        return CommonStatus::forCondition(CommonCondition::kCommonInvariant,
+            "empty intersection");
 
     // copy members to new array and verify each member is concrete or placeholder
     std::vector<TypeDef> sortedMembers;
     sortedMembers.reserve(members.size());
     for (const auto &member : members) {
+        if (!member.isValid())
+            return CommonStatus::forCondition(CommonCondition::kCommonInvariant,
+                "intersection contains invalid member");
         switch (member.getType()) {
             case TypeDefType::Concrete:
             case TypeDefType::Placeholder:
                 sortedMembers.push_back(member);
                 break;
             default:
-                TU_UNREACHABLE();
+                return CommonStatus::forCondition(CommonCondition::kCommonInvariant,
+                    "invalid intersection member {}", member.toString());
         }
     }
 
@@ -99,22 +113,41 @@ lyric_common::TypeDef::forIntersection(const std::vector<TypeDef> &members)
     return TypeDef(TypeDefType::Intersection, {}, sortedMembers, -1);
 }
 
-lyric_common::TypeDef
+tempo_utils::Result<lyric_common::TypeDef>
 lyric_common::TypeDef::forUnion(const std::vector<TypeDef> &members)
 {
-    TU_ASSERT (!members.empty());
+    if (members.empty())
+        return CommonStatus::forCondition(CommonCondition::kCommonInvariant,
+            "empty union");
 
     // copy members to new array and verify each member is concrete or placeholder
     std::vector<TypeDef> sortedMembers;
-    sortedMembers.reserve(members.size());
+    absl::flat_hash_set<TypeDef> seen;
     for (const auto &member : members) {
+        if (!member.isValid())
+            return CommonStatus::forCondition(CommonCondition::kCommonInvariant,
+                "union contains invalid member");
         switch (member.getType()) {
             case TypeDefType::Concrete:
             case TypeDefType::Placeholder:
-                sortedMembers.push_back(member);
+            case TypeDefType::Intersection:
+                if (!seen.contains(member)) {
+                    sortedMembers.push_back(member);
+                    seen.insert(member);
+                }
                 break;
+            case TypeDefType::Union: {
+                for (const auto &submember : member.getUnionMembers()) {
+                    if (!seen.contains(submember)) {
+                        sortedMembers.push_back(submember);
+                        seen.insert(submember);
+                    }
+                }
+                break;
+            }
             default:
-                TU_UNREACHABLE();
+                return CommonStatus::forCondition(CommonCondition::kCommonInvariant,
+                    "invalid union member {}", member.toString());
         }
     }
 

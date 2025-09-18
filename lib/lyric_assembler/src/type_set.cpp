@@ -151,7 +151,7 @@ lyric_assembler::UnifiedTypeSet::getUnifiedType() const
         return {};
     if (size == 1)
         return unifiedSet.front();
-    return lyric_common::TypeDef::forUnion(unifiedSet);
+    return lyric_common::TypeDef::forUnion(unifiedSet).orElse({});
 }
 
 lyric_assembler::TypeLevel::~TypeLevel()

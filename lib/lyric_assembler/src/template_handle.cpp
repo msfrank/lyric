@@ -46,7 +46,8 @@ lyric_assembler::TemplateHandle::TemplateHandle(
 
     for (const auto &tp : m_templateParameters) {
         TU_ASSERT (tp.typeDef.isValid());
-        m_placeholders.push_back(lyric_common::TypeDef::forPlaceholder(tp.index, templateUrl));
+        auto placeholderType = lyric_common::TypeDef::forPlaceholder(tp.index, templateUrl).orElseThrow();
+        m_placeholders.push_back(placeholderType);
         m_parameterIndex[tp.name] = tp.index;
     }
 }
@@ -67,7 +68,8 @@ lyric_assembler::TemplateHandle::TemplateHandle(
     TU_ASSERT (m_state != nullptr);
 
     for (const auto &tp : m_templateParameters) {
-        m_placeholders.push_back(lyric_common::TypeDef::forPlaceholder(tp.index, templateUrl));
+        auto placeholderType = lyric_common::TypeDef::forPlaceholder(tp.index, templateUrl).orElseThrow();
+        m_placeholders.push_back(placeholderType);
         m_parameterIndex[tp.name] = tp.index;
     }
 }
@@ -88,8 +90,9 @@ lyric_assembler::TemplateHandle::resolvePlaceholder(
         if (typeArguments.empty())
             return m_placeholders[entry->second];       // use memoized instance
         auto placeholder = m_placeholders[entry->second];
-        return lyric_common::TypeDef::forPlaceholder(placeholder.getPlaceholderIndex(),
+        auto result = lyric_common::TypeDef::forPlaceholder(placeholder.getPlaceholderIndex(),
             placeholder.getPlaceholderTemplateUrl(), typeArguments);
+        return result.orElse({});
     }
     if (m_superTemplate != nullptr)
         return m_superTemplate->resolvePlaceholder(name, typeArguments);
@@ -116,7 +119,7 @@ lyric_assembler::TemplateHandle::resolveSingular(
     if (!assignableType.isValid()) {
         lyric_common::SymbolUrl concreteUrl;
         TU_ASSIGN_OR_RETURN (concreteUrl, m_parentBlock->resolveDefinition(typePath));
-        assignableType = lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments);
+        TU_ASSIGN_OR_RETURN (assignableType, lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments));
     }
 
     // if there is no type handle for type, then create it

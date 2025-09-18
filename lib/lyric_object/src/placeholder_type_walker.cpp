@@ -62,8 +62,9 @@ lyric_object::PlaceholderTypeWalker::getTypeDef() const
         }
     }
 
-    return lyric_common::TypeDef::forPlaceholder(
+    auto result = lyric_common::TypeDef::forPlaceholder(
         placeholderAssignable->placeholder_index(), templateUrl, parameters);
+    return result.orElse({});
 }
 
 lyric_object::AddressType

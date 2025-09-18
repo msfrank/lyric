@@ -348,7 +348,8 @@ lyric_assembler::TypeCache::declareSubType(
         TU_RETURN_IF_STATUS (getOrMakeType(placeholderType));
     }
 
-    auto subTypeDef = lyric_common::TypeDef::forConcrete(subTypeUrl, subTypePlaceholders);
+    lyric_common::TypeDef subTypeDef;
+    TU_ASSIGN_OR_RETURN (subTypeDef, lyric_common::TypeDef::forConcrete(subTypeUrl, subTypePlaceholders));
     auto subEntry = m_typecache.find(subTypeDef);
 
     TypeHandle *typeHandle;
@@ -376,7 +377,8 @@ lyric_assembler::TypeCache::declareParameterizedType(
     TU_ASSERT (!typeArguments.empty());
 
     // if type already exists in cache then return it
-    auto parameterizedType = lyric_common::TypeDef::forConcrete(baseUrl, typeArguments);
+    lyric_common::TypeDef parameterizedType;
+    TU_ASSIGN_OR_RETURN (parameterizedType, lyric_common::TypeDef::forConcrete(baseUrl, typeArguments));
     auto piterator = m_typecache.find(parameterizedType);
     if (piterator != m_typecache.cend()) {
         return piterator->second;
@@ -645,10 +647,11 @@ lyric_assembler::TypeCache::resolveConcrete(
     const lyric_common::SymbolUrl &concreteUrl,
     const std::vector<lyric_common::TypeDef> &typeArguments)
 {
-    auto assignable = lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments);
+    lyric_common::TypeDef concreteType;
+    TU_ASSIGN_OR_RETURN (concreteType, lyric_common::TypeDef::forConcrete(concreteUrl, typeArguments));
     // if the concrete type does not exist in the typecache, then create it
-    TU_RETURN_IF_STATUS (getOrMakeType(assignable));
-    return assignable;
+    TU_RETURN_IF_STATUS (getOrMakeType(concreteType));
+    return concreteType;
 }
 
 inline tempo_utils::Result<lyric_common::SymbolUrl>
@@ -706,7 +709,9 @@ lyric_assembler::TypeCache::resolveUnion(const std::vector<lyric_common::TypeDef
         }
 
         // all union members must be disjoint
-        TU_RETURN_IF_NOT_OK (disjointTypeSet.putType(lyric_common::TypeDef::forConcrete(memberBase)));
+        lyric_common::TypeDef memberBaseType;
+        TU_ASSIGN_OR_RETURN (memberBaseType, lyric_common::TypeDef::forConcrete(memberBase));
+        TU_RETURN_IF_NOT_OK (disjointTypeSet.putType(memberBaseType));
 
         // member symbol must exist in the cache
         lyric_assembler::AbstractSymbol *symbol;
@@ -727,10 +732,11 @@ lyric_assembler::TypeCache::resolveUnion(const std::vector<lyric_common::TypeDef
         }
     }
 
-    auto assignable = lyric_common::TypeDef::forUnion(unionMembers);
+    lyric_common::TypeDef unionType;
+    TU_ASSIGN_OR_RETURN (unionType, lyric_common::TypeDef::forUnion(unionMembers));
     // if the union type does not exist in the typecache, then create it
-    TU_RETURN_IF_STATUS (getOrMakeType(assignable));
-    return assignable;
+    TU_RETURN_IF_STATUS (getOrMakeType(unionType));
+    return unionType;
 }
 
 tempo_utils::Result<lyric_common::TypeDef>
@@ -785,10 +791,11 @@ lyric_assembler::TypeCache::resolveIntersection(const std::vector<lyric_common::
         }
     }
 
-    auto assignable = lyric_common::TypeDef::forIntersection(intersectionMembers);
+    lyric_common::TypeDef intersectionType;
+    TU_ASSIGN_OR_RETURN (intersectionType, lyric_common::TypeDef::forIntersection(intersectionMembers));
     // if the intersection type does not exist in the typecache, then create it
-    TU_RETURN_IF_STATUS (getOrMakeType(assignable));
-    return assignable;
+    TU_RETURN_IF_STATUS (getOrMakeType(intersectionType));
+    return intersectionType;
 }
 
 tempo_utils::Result<lyric_assembler::TypeSignature>
@@ -818,7 +825,8 @@ lyric_assembler::TypeCache::resolveSignature(const lyric_common::SymbolUrl &symb
 {
     TU_ASSERT (symbolUrl.isValid());
 
-    auto typeDef = lyric_common::TypeDef::forConcrete(symbolUrl);
+    lyric_common::TypeDef typeDef;
+    TU_ASSIGN_OR_RETURN (typeDef, lyric_common::TypeDef::forConcrete(symbolUrl));
     auto iterator = m_signaturecache.find(typeDef);
     if (iterator != m_signaturecache.cend())
         return iterator->second;

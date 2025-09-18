@@ -82,7 +82,7 @@ TEST_F(CompareAssignable, CompareSingularMemberToTypeUnion)
     auto *fundamentalCache = m_objectState->fundamentalCache();
     auto IntType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Int);
     auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
-    auto IntOrFloatType = lyric_common::TypeDef::forUnion({IntType, FloatType});
+    auto IntOrFloatType = lyric_common::TypeDef::forUnion({IntType, FloatType}).orElseThrow();
     auto cmp = m_typeSystem->compareAssignable(IntOrFloatType, IntType).orElseThrow();
 
     // Int is a direct member of IntOrFloat, so comparison must be equal
@@ -95,7 +95,7 @@ TEST_F(CompareAssignable, CompareSingularMemberSubtypeToTypeUnion)
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     auto IntrinsicType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Intrinsic);
     auto FloatType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Float);
-    auto ObjectOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, IntrinsicType});
+    auto ObjectOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, IntrinsicType}).orElseThrow();
     auto cmp = m_typeSystem->compareAssignable(ObjectOrIntrinsicType, FloatType).orElseThrow();
 
     // Int is a subtype of a member of ObjectOrIntrinsic, so comparison must be extends
@@ -107,7 +107,7 @@ TEST_F(CompareAssignable, CompareTypeUnionToTypeUnion)
     auto *fundamentalCache = m_objectState->fundamentalCache();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     auto IntrinsicType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Intrinsic);
-    auto ObjectOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, IntrinsicType});
+    auto ObjectOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, IntrinsicType}).orElseThrow();
     auto cmp = m_typeSystem->compareAssignable(ObjectOrIntrinsicType, ObjectOrIntrinsicType).orElseThrow();
     ASSERT_EQ (lyric_runtime::TypeComparison::EQUAL, cmp);
 }
@@ -118,8 +118,8 @@ TEST_F(CompareAssignable, CompareTypeUnionToWidenedTypeUnion)
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     auto RecordType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
     auto IntrinsicType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Intrinsic);
-    auto ObjectOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, IntrinsicType});
-    auto ObjectOrRecordOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, RecordType, IntrinsicType});
+    auto ObjectOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, IntrinsicType}).orElseThrow();
+    auto ObjectOrRecordOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, RecordType, IntrinsicType}).orElseThrow();
     auto cmp = m_typeSystem->compareAssignable(ObjectOrRecordOrIntrinsicType, ObjectOrIntrinsicType).orElseThrow();
     ASSERT_EQ (lyric_runtime::TypeComparison::EQUAL, cmp);
 }
@@ -130,8 +130,8 @@ TEST_F(CompareAssignable, CompareTypeUnionToNarrowedTypeUnion)
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     auto RecordType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
     auto IntrinsicType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Intrinsic);
-    auto ObjectOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, IntrinsicType});
-    auto ObjectOrRecordOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, RecordType, IntrinsicType});
+    auto ObjectOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, IntrinsicType}).orElseThrow();
+    auto ObjectOrRecordOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, RecordType, IntrinsicType}).orElseThrow();
     auto cmp = m_typeSystem->compareAssignable(ObjectOrIntrinsicType, ObjectOrRecordOrIntrinsicType).orElseThrow();
     ASSERT_EQ (lyric_runtime::TypeComparison::DISJOINT, cmp);
 }
@@ -141,7 +141,7 @@ TEST_F(CompareAssignable, CompareTypeUnionToSingularMember)
     auto *fundamentalCache = m_objectState->fundamentalCache();
     auto ObjectType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     auto IntrinsicType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Intrinsic);
-    auto ObjectOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, IntrinsicType});
+    auto ObjectOrIntrinsicType = lyric_common::TypeDef::forUnion({ObjectType, IntrinsicType}).orElseThrow();
     auto AnyType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Any);
     auto cmp = m_typeSystem->compareAssignable(AnyType, ObjectOrIntrinsicType).orElseThrow();
     ASSERT_EQ (lyric_runtime::TypeComparison::EQUAL, cmp);

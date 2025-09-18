@@ -51,7 +51,8 @@ lyric_object::IntersectionTypeWalker::getTypeDef() const
         }
     }
 
-    return lyric_common::TypeDef::forIntersection(parameters);
+    auto result = lyric_common::TypeDef::forIntersection(parameters);
+    return result.orElse({});
 }
 
 std::vector<lyric_object::TypeWalker>

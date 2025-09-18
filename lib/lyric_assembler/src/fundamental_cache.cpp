@@ -204,7 +204,7 @@ lyric_assembler::FundamentalCache::getFundamentalType(FundamentalSymbol fundamen
     auto fundamentalUrl = getFundamentalUrl(fundamental);
     if (!fundamentalUrl.isValid())
         return {};
-    return lyric_common::TypeDef::forConcrete(fundamentalUrl);
+    return lyric_common::TypeDef::forConcrete(fundamentalUrl).orElseThrow();
 }
 
 lyric_common::SymbolUrl
