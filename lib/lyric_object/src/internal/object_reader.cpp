@@ -447,7 +447,7 @@ lyric_object::internal::ObjectReader::getSymbolIndex(const lyric_common::SymbolP
             if (sortedSymbolTable == nullptr)
                 return INVALID_ADDRESS_U32;
             auto fullyQualifiedName = symbolPath.toString();
-            auto *identifier = sortedSymbolTable->identifiers()->LookupByKey(fullyQualifiedName.data());
+            auto *identifier = sortedSymbolTable->identifiers()->LookupByKey(fullyQualifiedName);
             if (identifier == nullptr)
                 return INVALID_ADDRESS_U32;
             return identifier->symbol_index();

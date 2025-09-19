@@ -14,13 +14,13 @@ namespace lyric_parser::internal {
         explicit ModuleControlOps(ModuleArchetype *listener);
 
         void exitIfStatement(ModuleParser::IfStatementContext *ctx);
-        void exitIfThenElseExpression(ModuleParser::IfThenElseExpressionContext *ctx);
+        void exitTernaryExpression(ModuleParser::TernaryExpressionContext *ctx);
         void enterCondExpression(ModuleParser::CondExpressionContext *ctx);
         void exitCondWhen(ModuleParser::CondWhenContext *ctx);
         void exitCondElse(ModuleParser::CondElseContext *ctx);
-        void enterCondIfStatement(ModuleParser::CondIfStatementContext *ctx);
-        void exitCondIfWhen(ModuleParser::CondIfWhenContext *ctx);
-        void exitCondIfElse(ModuleParser::CondIfElseContext *ctx);
+        void enterDoStatement(ModuleParser::DoStatementContext *ctx);
+        void exitDoWhen(ModuleParser::DoWhenContext *ctx);
+        void exitDoElse(ModuleParser::DoElseContext *ctx);
         void enterWhileStatement(ModuleParser::WhileStatementContext *ctx);
         void exitWhileStatement(ModuleParser::WhileStatementContext *ctx);
         void enterForStatement(ModuleParser::ForStatementContext *ctx);

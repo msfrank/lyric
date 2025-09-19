@@ -502,10 +502,10 @@ void lyric_parser::internal::ModuleArchetype::exitIfStatement(ModuleParser::IfSt
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitIfStatement(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitIfThenElseExpression(ModuleParser::IfThenElseExpressionContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitTernaryExpression(ModuleParser::TernaryExpressionContext *ctx)
 {
     ModuleControlOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitIfThenElseExpression(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTernaryExpression(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterCondExpression(ModuleParser::CondExpressionContext *ctx)
@@ -526,22 +526,22 @@ void lyric_parser::internal::ModuleArchetype::exitCondElse(ModuleParser::CondEls
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCondElse(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::enterCondIfStatement(ModuleParser::CondIfStatementContext *ctx)
+void lyric_parser::internal::ModuleArchetype::enterDoStatement(ModuleParser::DoStatementContext *ctx)
 {
     ModuleControlOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterCondIfStatement(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDoStatement(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitCondIfWhen(ModuleParser::CondIfWhenContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitDoWhen(ModuleParser::DoWhenContext *ctx)
 {
     ModuleControlOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCondIfWhen(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDoWhen(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitCondIfElse(ModuleParser::CondIfElseContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitDoElse(ModuleParser::DoElseContext *ctx)
 {
     ModuleControlOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCondIfElse(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitDoElse(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterWhileStatement(ModuleParser::WhileStatementContext *ctx)

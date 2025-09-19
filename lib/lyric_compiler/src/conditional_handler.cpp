@@ -265,7 +265,7 @@ lyric_compiler::ConditionalWhen::after(
     TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(boolType, m_consequent->predicateType));
     if (!isAssignable)
         return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
-            "case predicate must return Boolean");
+            "conditional predicate must return Bool");
 
     // if consequent is a statement and returns a result then pop the value
     if (!m_isExpression) {

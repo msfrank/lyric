@@ -3,22 +3,15 @@ parser grammar ModuleParser;
 options { tokenVocab = ModuleLexer; }
 
 
-root                : pragmaMacro* block ;
-
+root                : pragmaMacro* block EOF ;
 block               : form+ ;
-form                : statement | expression | blockMacro ;
 
-expression          : basicExpression
-                    | lambdaFromExpression
-                    | lambdaExpression
-                    | ifThenElseExpression
-                    | matchExpression
-                    | condExpression
-                    | expectExpression
-                    | raiseExpression
-                    ;
 
-statement           : typenameStatement
+// a form is an individually parseable unit of code
+
+form                : blockMacro
+                    | expression
+                    | typenameStatement
                     | valStatement
                     | varStatement
                     | defStatement
@@ -32,15 +25,32 @@ statement           : typenameStatement
                     | namespaceStatement
                     | setStatement
                     | ifStatement
-                    | condIfStatement
+                    | doStatement
                     | whileStatement
                     | forStatement
                     | tryStatement
                     | returnStatement
                     | importStatement
                     | usingStatement
+                    | basicExpression
                     ;
 
+
+// forms which return a value
+
+expression          : <assoc=right> expression
+                        ThenKeyword expression ElseKeyword expression               # ternaryExpression
+                    | namedExpression                                               # namedLabel
+                    | basicExpression                                               # basicLabel
+                    ;
+
+namedExpression     : condExpression
+                    | matchExpression
+                    | lambdaFromExpression
+                    | lambdaExpression
+                    | expectExpression
+                    | raiseExpression
+                    ;
 
 // symbols
 
@@ -376,9 +386,11 @@ returnStatement     : ReturnKeyword expression ;
 ifStatement         : IfKeyword basicExpression CurlyOpen block CurlyClose ;
 
 
-// if-then-else expression
+// do statement
 
-ifThenElseExpression: IfKeyword basicExpression ThenKeyword basicExpression ElseKeyword basicExpression ;
+doWhen              : WhenKeyword expression block ;
+doElse              : ElseKeyword block ;
+doStatement         : DoKeyword CurlyOpen doWhen+ doElse? CurlyClose ;
 
 
 // cond expression
@@ -386,13 +398,6 @@ ifThenElseExpression: IfKeyword basicExpression ThenKeyword basicExpression Else
 condWhen            : WhenKeyword expression block ;
 condElse            : ElseKeyword block ;
 condExpression      : CondKeyword CurlyOpen condWhen+ condElse CurlyClose ;
-
-
-// cond-if statement
-
-condIfWhen          : WhenKeyword expression block ;
-condIfElse          : ElseKeyword block ;
-condIfStatement     : CondKeyword IfKeyword CurlyOpen condIfWhen+ condIfElse? CurlyClose ;
 
 
 // match expression
@@ -408,6 +413,12 @@ matchWhen           : WhenKeyword ( Identifier ColonOperator )? unwrapSpec block
                     ;
 matchElse           : ElseKeyword block ;
 matchExpression     : MatchKeyword matchTarget CurlyOpen matchWhen+ matchElse? CurlyClose ;
+
+
+// ternary expression
+
+//ternaryExpression   : <assoc=right> expression ThenKeyword expression ElseKeyword expression ;
+
 
 
 // while statement

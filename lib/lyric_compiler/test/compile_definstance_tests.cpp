@@ -92,7 +92,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceApplication)
         }
 
         def max[T](x1: T, x2: T, using ord: Ordered[T]): T {
-            if ord.Compare(x1, x2) >= 0 then x1 else x2
+            ord.Compare(x1, x2) >= 0 then x1 else x2
         }
 
         max(1, 2, ord = IntReverseOrdering)
@@ -117,7 +117,7 @@ TEST_F(CompileDefinstance, EvaluateUsingInstanceApplication)
         }
 
         def max[T](x1: T, x2: T, using ord: Ordered[T]): T {
-            if ord.Compare(x1, x2) >= 0 then x1 else x2
+            ord.Compare(x1, x2) >= 0 then x1 else x2
         }
 
         using IntReverseOrdering

@@ -18,12 +18,12 @@ TEST_F(CompileConditional, EvaluateIf)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
-TEST_F(CompileConditional, EvaluateCondIf)
+TEST_F(CompileConditional, EvaluateDo)
 {
     auto result = m_tester->runModule(R"(
         var x: String = "two"
         var y: Int = 0
-        cond if {
+        do {
           when x == "one"
             set y = 1
           when x == "two"
@@ -37,10 +37,11 @@ TEST_F(CompileConditional, EvaluateCondIf)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(2))));
 }
 
-TEST_F(CompileConditional, EvaluateIfThenElse)
+TEST_F(CompileConditional, EvaluateWhenElse)
 {
     auto result = m_tester->runModule(R"(
-        if false then 1 else 0
+        val x: Bool = false
+        x == true then 1 else 0
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(0))));

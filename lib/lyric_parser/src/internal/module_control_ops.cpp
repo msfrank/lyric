@@ -42,7 +42,7 @@ lyric_parser::internal::ModuleControlOps::exitIfStatement(ModuleParser::IfStatem
 }
 
 void
-lyric_parser::internal::ModuleControlOps::exitIfThenElseExpression(ModuleParser::IfThenElseExpressionContext *ctx)
+lyric_parser::internal::ModuleControlOps::exitTernaryExpression(ModuleParser::TernaryExpressionContext *ctx)
 {
     auto *state = getState();
     if (hasError())
@@ -133,7 +133,7 @@ lyric_parser::internal::ModuleControlOps::exitCondElse(ModuleParser::CondElseCon
 }
 
 void
-lyric_parser::internal::ModuleControlOps::enterCondIfStatement(ModuleParser::CondIfStatementContext *ctx)
+lyric_parser::internal::ModuleControlOps::enterDoStatement(ModuleParser::DoStatementContext *ctx)
 {
     auto *state = getState();
     if (hasError())
@@ -147,7 +147,7 @@ lyric_parser::internal::ModuleControlOps::enterCondIfStatement(ModuleParser::Con
 }
 
 void
-lyric_parser::internal::ModuleControlOps::exitCondIfWhen(ModuleParser::CondIfWhenContext *ctx)
+lyric_parser::internal::ModuleControlOps::exitDoWhen(ModuleParser::DoWhenContext *ctx)
 {
     auto *state = getState();
     if (hasError())
@@ -175,7 +175,7 @@ lyric_parser::internal::ModuleControlOps::exitCondIfWhen(ModuleParser::CondIfWhe
 }
 
 void
-lyric_parser::internal::ModuleControlOps::exitCondIfElse(ModuleParser::CondIfElseContext *ctx)
+lyric_parser::internal::ModuleControlOps::exitDoElse(ModuleParser::DoElseContext *ctx)
 {
     auto *state = getState();
     if (hasError())

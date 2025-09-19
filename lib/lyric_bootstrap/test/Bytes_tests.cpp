@@ -22,7 +22,7 @@ TEST(CoreBytes, TestEvaluateBytesLength)
     auto result = runModule(R"(
         val string: String = "Hello, world!"
         val bytes: Bytes = string.ToBytes()
-        bytes.Length();
+        bytes.Length()
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(13))));

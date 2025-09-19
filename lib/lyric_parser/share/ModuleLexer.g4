@@ -153,6 +153,7 @@ SetKeyword              : 'set' ;
 LetKeyword              : 'let' ;
 CondKeyword             : 'cond' ;
 MatchKeyword            : 'match' ;
+DoKeyword               : 'do' ;
 WhenKeyword             : 'when' ;
 CaseKeyword             : 'case' ;
 IfKeyword               : 'if' ;
