@@ -212,13 +212,13 @@ ClosureRef::clearMembersReachable()
 }
 
 tempo_utils::Status
-closure_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+closure_alloc(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
-    auto *currentCoro = state->currentCoro();
-
-    auto &frame = currentCoro->currentCallOrThrow();
-    const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
+    auto *currentCoro = state->currentCoro();
 
     auto ref = state->heapManager()->allocateRef<ClosureRef>(vtable);
     currentCoro->pushData(ref);
@@ -227,7 +227,10 @@ closure_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
 }
 
 tempo_utils::Status
-closure_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+closure_ctor(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -312,7 +315,10 @@ closure_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
 }
 
 tempo_utils::Status
-closure_apply(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+closure_apply(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 

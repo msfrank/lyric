@@ -63,16 +63,11 @@ lyric_compiler::DefInstanceHandler::before(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
 
     // get allocator trap
-    std::string allocatorTrap;
     if (node->hasAttr(lyric_assembler::kLyricAssemblerTrapName)) {
         TU_RETURN_IF_NOT_OK (node->parseAttr(
-            lyric_assembler::kLyricAssemblerTrapName, allocatorTrap));
+            lyric_assembler::kLyricAssemblerTrapName, m_allocatorTrapName));
     }
 
-    // FIXME: get abstract flag from node
-    bool isAbstract = false;
-
-    lyric_parser::ArchetypeNode *initNode = nullptr;
     std::vector<lyric_parser::ArchetypeNode *> valNodes;
     std::vector<lyric_parser::ArchetypeNode *> varNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
@@ -84,12 +79,6 @@ lyric_compiler::DefInstanceHandler::before(
         lyric_schema::LyricAstId astId;
         TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, astId));
         switch (astId) {
-            case lyric_schema::LyricAstId::Init:
-                if (initNode != nullptr)
-                    return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
-                        "duplicate instance init declaration");
-                initNode = child;
-                break;
             case lyric_schema::LyricAstId::Val: {
                 valNodes.push_back(child);
                 break;
@@ -115,8 +104,18 @@ lyric_compiler::DefInstanceHandler::before(
         ctx.appendChoice(std::move(definition));
     }
 
+    lyric_common::TypeDef superInstanceType;
+
     // resolve the super instance type if specified, otherwise derive from Singleton
-    auto superInstanceType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Singleton);
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        lyric_parser::ArchetypeNode *typeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+        lyric_typing::TypeSpec superInstanceSpec;
+        TU_ASSIGN_OR_RETURN (superInstanceSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (superInstanceType, typeSystem->resolveAssignable(block, superInstanceSpec));
+    } else {
+        superInstanceType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Singleton);
+    }
 
     // resolve the super instance symbol
     TU_ASSIGN_OR_RETURN (m_definstance.superinstanceSymbol, block->resolveInstance(superInstanceType));
@@ -124,7 +123,7 @@ lyric_compiler::DefInstanceHandler::before(
     // declare the instance
     TU_ASSIGN_OR_RETURN (m_definstance.instanceSymbol, block->declareInstance(
         identifier, m_definstance.superinstanceSymbol, isHidden,
-        lyric_compiler::convert_derive_type(derive), isAbstract));
+        lyric_compiler::convert_derive_type(derive)));
 
     // add instance to the current namespace if specified
     if (m_currentNamespace != nullptr) {
@@ -145,13 +144,6 @@ lyric_compiler::DefInstanceHandler::before(
         TU_ASSIGN_OR_RETURN (member, declare_instance_member(
             varNode, /* isVariable= */ true, m_definstance.instanceSymbol, typeSystem));
         m_definstance.members[varNode] = member;
-    }
-
-    // declare instance init
-    TU_ASSIGN_OR_RETURN (m_definstance.initCall, declare_instance_init(
-        m_definstance.instanceSymbol, allocatorTrap));
-    if (initNode == nullptr) {
-        m_definstance.defaultInit = true;
     }
 
     // declare methods
@@ -182,12 +174,11 @@ lyric_compiler::DefInstanceHandler::after(
     TU_LOG_VV << "after DefInstanceHandler@" << this;
 
     auto *driver = getDriver();
+    auto *symbolCache = driver->getSymbolCache();
+    auto *typeSystem = driver->getTypeSystem();
 
-    if (m_definstance.defaultInit) {
-        auto *symbolCache = driver->getSymbolCache();
-        auto *typeSystem = driver->getTypeSystem();
-        TU_RETURN_IF_NOT_OK (define_instance_default_init(&m_definstance, symbolCache, typeSystem));
-    }
+    // define the constructor
+    TU_RETURN_IF_NOT_OK (define_instance_default_init(&m_definstance, m_allocatorTrapName, symbolCache, typeSystem));
 
     if (!m_isSideEffect) {
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));
@@ -218,14 +209,6 @@ lyric_compiler::InstanceDefinition::decide(
     lyric_schema::LyricAstId astId;
     TU_RETURN_IF_NOT_OK (node->parseId(lyric_schema::kLyricAstVocabulary, astId));
     switch (astId) {
-        case lyric_schema::LyricAstId::Init: {
-            auto superInvoker = std::make_unique<lyric_assembler::ConstructableInvoker>();
-            TU_RETURN_IF_NOT_OK (m_definstance->superinstanceSymbol->prepareCtor(*superInvoker));
-            auto handler = std::make_unique<ConstructorHandler>(
-                std::move(superInvoker), m_definstance->initCall, block, driver);
-            ctx.setGrouping(std::move(handler));
-            return {};
-        }
         case lyric_schema::LyricAstId::Val:
         case lyric_schema::LyricAstId::Var: {
             auto member = m_definstance->members.at(node);

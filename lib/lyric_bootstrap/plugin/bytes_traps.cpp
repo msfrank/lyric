@@ -6,7 +6,10 @@
 #include "bytes_traps.h"
 
 tempo_utils::Status
-bytes_at(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+bytes_at(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -23,7 +26,10 @@ bytes_at(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 }
 
 tempo_utils::Status
-bytes_compare(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+bytes_compare(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -42,7 +48,10 @@ bytes_compare(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpr
 }
 
 tempo_utils::Status
-bytes_length(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+bytes_length(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -56,7 +65,10 @@ bytes_length(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
 }
 
 tempo_utils::Status
-bytes_to_string(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+bytes_to_string(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *heapManager = state->heapManager();
 

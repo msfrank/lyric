@@ -104,19 +104,21 @@ lyric_archiver::copy_struct(
         }
     }
 
-    lyric_common::SymbolUrl ctorUrl;
+    absl::flat_hash_map<std::string,lyric_importer::CallImport *> ctors;
 
     // define the struct methods
 
     for (auto it = structImport->methodsBegin(); it != structImport->methodsEnd(); it++) {
         auto &name = it->first;
-        // delay constructor definition until the end
-        if (name == "$ctor") {
-            ctorUrl = it->second;
-            continue;
-        }
+
         lyric_importer::CallImport *callImport;
         TU_ASSIGN_OR_RETURN (callImport, archiverState.importCall(it->second));
+        if (callImport->getCallMode() == lyric_object::CallMode::Constructor) {
+            ctors[name] = callImport;
+            // delay constructor definition until the end
+            continue;
+        }
+
         std::vector<lyric_object::TemplateParameter> templateParameters;
         auto *templateImport = callImport->getCallTemplate();
         if (templateImport != nullptr) {
@@ -130,6 +132,7 @@ lyric_archiver::copy_struct(
     }
 
     // define the struct impls
+
     for (auto it = structImport->implsBegin(); it != structImport->implsEnd(); it++) {
         auto *implImport = it->second;
         lyric_assembler::TypeHandle *implType;
@@ -141,16 +144,22 @@ lyric_archiver::copy_struct(
             implImport, implHandle, importHash, targetNamespace, symbolReferenceSet, archiverState));
     }
 
-    lyric_importer::CallImport *ctorImport;
-    TU_ASSIGN_OR_RETURN (ctorImport, archiverState.importCall(ctorUrl));
+    // define struct ctors
 
-    lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbolPtr->declareCtor(ctorImport->isHidden(), structImport->getAllocator()));
-    TU_RETURN_IF_NOT_OK (archiverState.putSymbol(ctorImport->getSymbolUrl(), ctorSymbol));
-    TU_RETURN_IF_NOT_OK (define_call(
-        ctorImport, ctorSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));
+    for (auto it = ctors.cbegin(); it != ctors.cend(); it++) {
+        auto &name = it->first;
+        auto *ctorImport = it->second;
+
+        lyric_assembler::CallSymbol *ctorSymbol;
+        TU_ASSIGN_OR_RETURN (ctorSymbol, structSymbolPtr->declareCtor(
+            name, ctorImport->isHidden(), structImport->getAllocator()));
+        TU_RETURN_IF_NOT_OK (archiverState.putSymbol(ctorImport->getSymbolUrl(), ctorSymbol));
+        TU_RETURN_IF_NOT_OK (define_call(
+            ctorImport, ctorSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));
+    }
 
     // put sealed substructs
+
     for (auto it = structImport->sealedTypesBegin(); it != structImport->sealedTypesEnd(); it++) {
         auto substructUrl = it->getConcreteUrl();
         TU_ASSIGN_OR_RETURN (substructUrl, archiverState.archiveSymbol(substructUrl, symbolReferenceSet));

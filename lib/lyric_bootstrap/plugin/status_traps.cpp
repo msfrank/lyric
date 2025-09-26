@@ -5,14 +5,14 @@
 #include "status_traps.h"
 
 tempo_utils::Status
-status_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+status_alloc(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
+    TU_ASSERT(vtable != nullptr);
     auto *currentCoro = state->currentCoro();
     auto *heapManager = state->heapManager();
-
-    auto &frame = currentCoro->currentCallOrThrow();
-    const auto *vtable = frame.getVirtualTable();
-    TU_ASSERT(vtable != nullptr);
 
     auto status = heapManager->allocateStatus(vtable);
     currentCoro->pushData(status);
@@ -21,7 +21,10 @@ status_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
 }
 
 tempo_utils::Status
-status_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+status_ctor(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -45,7 +48,10 @@ status_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
 }
 
 tempo_utils::Status
-status_get_code(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+status_get_code(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -59,7 +65,10 @@ status_get_code(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Inter
 }
 
 tempo_utils::Status
-status_get_message(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+status_get_message(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 

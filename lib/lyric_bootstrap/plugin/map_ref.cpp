@@ -733,13 +733,13 @@ MapIterator::clearMembersReachable()
 }
 
 tempo_utils::Status
-map_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+map_alloc(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
-    auto *currentCoro = state->currentCoro();
-
-    auto &frame = currentCoro->currentCallOrThrow();
-    const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
+    auto *currentCoro = state->currentCoro();
 
     auto ref = state->heapManager()->allocateRef<MapRef>(vtable);
     currentCoro->pushData(ref);
@@ -748,7 +748,10 @@ map_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
 }
 
 tempo_utils::Status
-map_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+map_ctor(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -787,7 +790,10 @@ map_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 }
 
 tempo_utils::Status
-map_size(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+map_size(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -803,7 +809,10 @@ map_size(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 }
 
 tempo_utils::Status
-map_contains(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+map_contains(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -819,7 +828,10 @@ map_contains(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
 }
 
 tempo_utils::Status
-map_get(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+map_get(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -840,7 +852,10 @@ map_get(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterSt
 }
 
 tempo_utils::Status
-map_update(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+map_update(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -864,7 +879,10 @@ map_update(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
 }
 
 tempo_utils::Status
-map_remove(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+map_remove(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -892,7 +910,10 @@ map_remove(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
 }
 
 tempo_utils::Status
-map_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+map_iterate(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -907,7 +928,7 @@ map_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
     auto *instance = static_cast<MapRef *>(receiver.data.ref);
 
     lyric_runtime::InterpreterStatus status;
-    const auto *vtable = state->segmentManager()->resolveClassVirtualTable(cell, status);
+    vtable = state->segmentManager()->resolveClassVirtualTable(cell, status);
     if (vtable == nullptr)
         return status;
 
@@ -918,13 +939,13 @@ map_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
 }
 
 tempo_utils::Status
-map_iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+map_iterator_alloc(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
-    auto *currentCoro = state->currentCoro();
-
-    auto &frame = currentCoro->currentCallOrThrow();
-    const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
+    auto *currentCoro = state->currentCoro();
 
     auto ref = state->heapManager()->allocateRef<MapIterator>(vtable);
     currentCoro->pushData(ref);
@@ -933,7 +954,10 @@ map_iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::In
 }
 
 tempo_utils::Status
-map_iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+map_iterator_valid(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -950,7 +974,10 @@ map_iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::In
 }
 
 tempo_utils::Status
-map_iterator_next(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+map_iterator_next(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 

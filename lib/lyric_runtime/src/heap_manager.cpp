@@ -252,56 +252,46 @@ lyric_runtime::HeapManager::loadRestOntoStack(const CallCell &frame)
 lyric_runtime::NativeFunc
 lyric_runtime::HeapManager::prepareNew(uint8_t newType, tu_uint32 address, tempo_utils::Status &status)
 {
-    const VirtualTable *vtable;
-
     auto *currentCoro = m_systemScheduler->currentCoro();
     TU_ASSERT(currentCoro != nullptr);
     auto *sp = currentCoro->peekSP();
     TU_ASSERT (sp != nullptr);
 
-    // resolve the virtual table
-    switch (newType) {
-        case lyric_object::NEW_CLASS: {
-            auto descriptor = m_segmentManager->resolveDescriptor(
-                sp, lyric_object::LinkageSection::Class, address, status);
-            if (!descriptor.isValid())
-                return nullptr;
+    // determine the constructor receiver
+    auto descriptor = m_segmentManager->resolveReceiver(sp, address, status);
+    if (!descriptor.isValid())
+        return nullptr;
+
+    // resolve the vtable for the receiver
+    const VirtualTable *vtable;
+    switch (descriptor.type) {
+        case DataCellType::CLASS: {
             vtable = m_segmentManager->resolveClassVirtualTable(descriptor, status);
             if (vtable == nullptr)
                 return nullptr;
             break;
         }
-        case lyric_object::NEW_ENUM: {
-            auto descriptor = m_segmentManager->resolveDescriptor(
-                sp, lyric_object::LinkageSection::Enum, address, status);
-            if (!descriptor.isValid())
-                return nullptr;
+        case DataCellType::ENUM: {
             vtable = m_segmentManager->resolveEnumVirtualTable(descriptor, status);
             if (vtable == nullptr)
                 return nullptr;
             break;
         }
-        case lyric_object::NEW_INSTANCE: {
-            auto descriptor = m_segmentManager->resolveDescriptor(
-                sp, lyric_object::LinkageSection::Instance, address, status);
-            if (!descriptor.isValid())
-                return nullptr;
+        case DataCellType::INSTANCE: {
             vtable = m_segmentManager->resolveInstanceVirtualTable(descriptor, status);
             if (vtable == nullptr)
                 return nullptr;
             break;
         }
-        case lyric_object::NEW_STRUCT: {
-            auto descriptor = m_segmentManager->resolveDescriptor(
-                sp, lyric_object::LinkageSection::Struct, address, status);
-            if (!descriptor.isValid())
-                return nullptr;
+        case DataCellType::STRUCT: {
             vtable = m_segmentManager->resolveStructVirtualTable(descriptor, status);
             if (vtable == nullptr)
                 return nullptr;
             break;
         }
         default:
+            status = InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
+                "invalid constructor receiver");
             return nullptr;
     }
 

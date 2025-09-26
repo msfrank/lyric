@@ -679,11 +679,26 @@ lyric_assembler::ObjectWriter::touchConstructor(const lyric_common::SymbolUrl &c
     if (symbol->getSymbolType() != SymbolType::CALL)
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid symbol for constructor");
-    auto *callSymbol = cast_symbol_to_call(symbol);
-    if (!callSymbol->isCtor())
+    auto *ctorSymbol = cast_symbol_to_call(symbol);
+    if (!ctorSymbol->isCtor())
         return AssemblerStatus::forCondition(
             AssemblerCondition::kAssemblerInvariant, "invalid symbol for constructor");
-    return touchCall(callSymbol);
+    TU_RETURN_IF_NOT_OK (touchCall(ctorSymbol));
+    auto receiver = ctorSymbol->getReceiverUrl();
+    TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(receiver));
+    switch (symbol->getSymbolType()) {
+        case SymbolType::CLASS:
+            return touchClass(cast_symbol_to_class(symbol));
+        case SymbolType::ENUM:
+            return touchEnum(cast_symbol_to_enum(symbol));
+        case SymbolType::INSTANCE:
+            return touchInstance(cast_symbol_to_instance(symbol));
+        case SymbolType::STRUCT:
+            return touchStruct(cast_symbol_to_struct(symbol));
+        default:
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "invalid receiver for constructor");
+    }
 }
 
 tempo_utils::Status

@@ -24,6 +24,9 @@ private:
     std::vector<lyric_runtime::DataCell> m_fields;
 };
 
-tempo_utils::Status object_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
+tempo_utils::Status object_alloc(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable);
 
 #endif // ZURI_CORE_OBJECT_REF_H

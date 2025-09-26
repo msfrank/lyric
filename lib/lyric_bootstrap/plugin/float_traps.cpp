@@ -2,7 +2,10 @@
 #include "float_traps.h"
 
 tempo_utils::Status
-float_ceil(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+float_ceil(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -17,7 +20,10 @@ float_ceil(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
 }
 
 tempo_utils::Status
-float_floor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+float_floor(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -32,7 +38,10 @@ float_floor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
 }
 
 tempo_utils::Status
-float_trunc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+float_trunc(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 

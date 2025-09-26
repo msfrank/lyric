@@ -24,46 +24,31 @@ lyric_compiler::declare_class_default_init(
     return ctorSymbol;
 }
 
-tempo_utils::Result<lyric_assembler::CallSymbol *>
-lyric_compiler::declare_class_init(
-    const lyric_parser::ArchetypeNode *initNode,
-    lyric_assembler::ClassSymbol *classSymbol,
-    const std::string &allocatorTrap,
-    lyric_typing::TypeSystem *typeSystem)
-{
-    TU_ASSERT (initNode != nullptr);
-    TU_ASSERT (classSymbol != nullptr);
-    auto *classBlock = classSymbol->classBlock();
-
-    // declare the constructor
-    lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, classSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
-
-    lyric_typing::PackSpec packSpec;
-    lyric_assembler::ParameterPack parameterPack;
-
-    // compile the parameter list if specified, otherwise default to an empty list
-    if (initNode != nullptr) {
-        auto *packNode = initNode->getChild(0);
-        TU_ASSERT (packNode != nullptr);
-        TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(classBlock, packNode->getArchetypeNode()));
-        TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(classBlock, packSpec));
-    }
-
-    TU_RETURN_IF_STATUS(ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
-
-    return ctorSymbol;
-}
-
 tempo_utils::Status
 lyric_compiler::define_class_default_init(
     const DefClass *defclass,
+    const std::string &allocatorTrap,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_typing::TypeSystem *typeSystem)
 {
     TU_ASSERT (defclass != nullptr);
 
-    auto *procHandle = defclass->initCall->callProc();
+    auto *classSymbol = defclass->classSymbol;
+    TU_ASSERT (classSymbol != nullptr);
+    auto *ctorSymbol = defclass->defaultCtor;
+    TU_ASSERT (ctorSymbol != nullptr);
+
+    // verify that super ctor takes no arguments
+    auto *superClass = classSymbol->superClass();
+    auto superCtorUrl = superClass->getCtor();
+    lyric_assembler::AbstractSymbol *superCtorSymbol;
+    TU_ASSIGN_OR_RETURN (superCtorSymbol, symbolCache->getOrImportSymbol(superCtorUrl));
+    auto *superCtorCall = cast_symbol_to_call(superCtorSymbol);
+    if (superCtorCall->numParameters() > 0)
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+            "super class {} is not default-constructable", superCtorUrl.toString());
+
+    auto *procHandle = ctorSymbol->callProc();
     auto *ctorBlock = procHandle->procBlock();
     auto *procBuilder = procHandle->procCode();
     auto *fragment = procBuilder->rootFragment();
@@ -128,8 +113,8 @@ lyric_compiler::define_class_default_init(
         TU_RETURN_IF_NOT_OK (defclass->classSymbol->setMemberInitialized(memberName));
     }
 
-    TU_LOG_V << "defined default ctor " << defclass->initCall->getSymbolUrl()
-                << " for " << defclass->classSymbol->getSymbolUrl();
+    TU_LOG_V << "defined default ctor " << ctorSymbol->getSymbolUrl()
+        << " for " << defclass->classSymbol->getSymbolUrl();
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
@@ -140,6 +125,52 @@ lyric_compiler::define_class_default_init(
             defclass->classSymbol->getSymbolUrl().toString());
 
     return {};
+}
+
+tempo_utils::Result<lyric_compiler::Constructor>
+lyric_compiler::declare_class_init(
+    const lyric_parser::ArchetypeNode *initNode,
+    lyric_assembler::ClassSymbol *classSymbol,
+    const std::string &allocatorTrap,
+    lyric_typing::TypeSystem *typeSystem)
+{
+    TU_ASSERT (initNode != nullptr);
+    TU_ASSERT (classSymbol != nullptr);
+    auto *classBlock = classSymbol->classBlock();
+
+    // std::string identifier;
+    // if (initNode->hasAttr(lyric_parser::kLyricAstIdentifier)) {
+    //     TU_RETURN_IF_NOT_OK (initNode->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+    // } else {
+    //     identifier = lyric_object::kCtorSpecialSymbol;
+    // }
+
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (initNode->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
+
+    // declare the constructor
+    lyric_assembler::CallSymbol *ctorSymbol;
+    TU_ASSIGN_OR_RETURN (ctorSymbol, classSymbol->declareCtor(isHidden, allocatorTrap));
+
+    lyric_typing::PackSpec packSpec;
+    lyric_assembler::ParameterPack parameterPack;
+
+    // compile the parameter list if specified, otherwise default to an empty list
+    if (initNode != nullptr) {
+        auto *packNode = initNode->getChild(0);
+        TU_ASSERT (packNode != nullptr);
+        TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(classBlock, packNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(classBlock, packSpec));
+    }
+
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
+
+    Constructor constructor;
+    constructor.superSymbol = classSymbol->superClass();
+    constructor.callSymbol = ctorSymbol;
+    constructor.procHandle = procHandle;
+    return constructor;
 }
 
 tempo_utils::Result<lyric_compiler::Member>

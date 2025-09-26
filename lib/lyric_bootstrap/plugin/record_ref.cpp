@@ -76,13 +76,13 @@ RecordRef::clearMembersReachable()
 }
 
 tempo_utils::Status
-record_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+record_alloc(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
-    auto *currentCoro = state->currentCoro();
-
-    auto &frame = currentCoro->currentCallOrThrow();
-    const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
+    auto *currentCoro = state->currentCoro();
 
     auto ref = state->heapManager()->allocateRef<RecordRef>(vtable);
     currentCoro->pushData(ref);

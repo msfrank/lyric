@@ -4,8 +4,17 @@
 #include <lyric_runtime/bytecode_interpreter.h>
 #include <lyric_runtime/interpreter_state.h>
 
-tempo_utils::Status float_ceil(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
-tempo_utils::Status float_floor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
-tempo_utils::Status float_trunc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state);
+tempo_utils::Status float_ceil(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable);
+tempo_utils::Status float_floor(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable);
+tempo_utils::Status float_trunc(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable);
 
 #endif // LYRIC_BOOTSTRAP_FLOAT_TRAPS_H

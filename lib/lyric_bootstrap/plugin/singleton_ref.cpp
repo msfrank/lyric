@@ -76,13 +76,13 @@ SingletonRef::clearMembersReachable()
 }
 
 tempo_utils::Status
-singleton_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+singleton_alloc(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
-    auto *currentCoro = state->currentCoro();
-
-    auto &frame = currentCoro->currentCallOrThrow();
-    const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
+    auto *currentCoro = state->currentCoro();
 
     auto ref = state->heapManager()->allocateRef<SingletonRef>(vtable);
     currentCoro->pushData(ref);

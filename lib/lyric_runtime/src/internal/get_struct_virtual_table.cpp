@@ -227,20 +227,6 @@ lyric_runtime::internal::get_struct_virtual_table(
         impls.try_emplace(implConcept, structSegment, implConcept, structType, extensions);
     }
 
-    auto constructor = structDescriptor.getConstructor();
-
-    // validate ctor descriptor
-    if (constructor.getMode() != lyric_object::CallMode::Constructor || !constructor.isBound()) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid struct ctor flags");
-        return nullptr;
-    }
-
-    // define the ctor virtual method
-    tu_uint32 ctorIndex = constructor.getDescriptorOffset();
-    tu_uint32 procOffset = constructor.getProcOffset();
-    VirtualMethod ctor(structSegment, ctorIndex, procOffset, true);
-
     // get the function pointer for the allocator trap if specified
     NativeFunc allocator = nullptr;
     if (structDescriptor.hasAllocator()) {
@@ -253,7 +239,7 @@ lyric_runtime::internal::get_struct_virtual_table(
     }
 
     auto *vtable = new VirtualTable(structSegment, descriptor, structType, parentTable,
-        allocator, ctor, members, methods, impls);
+        allocator, {}, members, methods, impls);
     segmentManagerData->vtablecache[descriptor] = vtable;
 
     return vtable;

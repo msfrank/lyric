@@ -1443,14 +1443,14 @@ lyric_assembler::ReturnInstruction::toString() const
 }
 
 lyric_assembler::NewInstruction::NewInstruction(
-    AbstractSymbol *symbol,
+    CallSymbol *ctorSymbol,
     tu_uint16 placement,
     tu_uint8 flags)
-    : m_symbol(symbol),
+    : m_ctorSymbol(ctorSymbol),
       m_placement(placement),
       m_flags(flags)
 {
-    TU_ASSERT (m_symbol != nullptr);
+    TU_ASSERT (m_ctorSymbol != nullptr);
 }
 
 lyric_assembler::InstructionType
@@ -1462,18 +1462,7 @@ lyric_assembler::NewInstruction::getType() const
 tempo_utils::Status
 lyric_assembler::NewInstruction::touch(ObjectWriter &writer) const
 {
-    switch (m_symbol->getSymbolType()) {
-        case SymbolType::CLASS:
-            return writer.touchClass(cast_symbol_to_class(m_symbol));
-        case SymbolType::ENUM:
-            return writer.touchEnum(cast_symbol_to_enum(m_symbol));
-        case SymbolType::INSTANCE:
-            return writer.touchInstance(cast_symbol_to_instance(m_symbol));
-        case SymbolType::STRUCT:
-            return writer.touchStruct(cast_symbol_to_struct(m_symbol));
-        default:
-            return {};
-    }
+    return writer.touchConstructor(m_ctorSymbol->getSymbolUrl());
 }
 
 tempo_utils::Status
@@ -1485,34 +1474,11 @@ lyric_assembler::NewInstruction::apply(
     tu_uint32 &targetId,
     tu_uint16 &patchOffset) const
 {
-    tu_uint32 address;
-    tu_uint8 newType;
+    tu_uint8 newType = 0;
 
-    switch (m_symbol->getSymbolType()) {
-        case SymbolType::CLASS:
-            TU_ASSIGN_OR_RETURN (address,
-                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Class));
-            newType = lyric_object::NEW_CLASS;
-            break;
-        case SymbolType::ENUM:
-            TU_ASSIGN_OR_RETURN (address,
-                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Enum));
-            newType = lyric_object::NEW_ENUM;
-            break;
-        case SymbolType::INSTANCE:
-            TU_ASSIGN_OR_RETURN (address,
-                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
-            newType = lyric_object::NEW_INSTANCE;
-            break;
-        case SymbolType::STRUCT:
-            TU_ASSIGN_OR_RETURN (address,
-                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Struct));
-            newType = lyric_object::NEW_STRUCT;
-            break;
-        default:
-            return AssemblerStatus::forCondition(
-                AssemblerCondition::kAssemblerInvariant, "invalid new symbol");
-    }
+    tu_uint32 address;
+    TU_ASSIGN_OR_RETURN (address, writer.getSectionAddress(
+        m_ctorSymbol->getSymbolUrl(), lyric_object::LinkageSection::Call));
 
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_NEW));
     TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeU8((newType << 4u) | m_flags));
@@ -1523,7 +1489,7 @@ lyric_assembler::NewInstruction::apply(
 std::string
 lyric_assembler::NewInstruction::toString() const
 {
-    return absl::StrCat("New: symbol=", m_symbol->getSymbolUrl().toString(),
+    return absl::StrCat("New: ctor=", m_ctorSymbol->getSymbolUrl().toString(),
         " placement=", m_placement,
         " flags=", m_flags);
 }

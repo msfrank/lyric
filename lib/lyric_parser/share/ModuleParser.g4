@@ -249,74 +249,78 @@ implSpec            : implDef ;
 
 // defclass statement
 
+defclassStatement   : definitionMacro? DefClassKeyword symbolIdentifier
+                        genericClass? classDerives? classBase?
+                        CurlyOpen classSpec* CurlyClose ;
+genericClass        : placeholderSpec constraintSpec? ;
+classDerives        : ( SealedKeyword | FinalKeyword ) ;
+classBase           : FromKeyword assignableType ;
 classSuper          : FromKeyword assignableType callArguments? ;
-classImpl           : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
+classInit           : InitKeyword symbolIdentifier? paramSpec classSuper? procBlock ;
 classVal            : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 classVar            : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 classDef            : DefKeyword symbolIdentifier
                         placeholderSpec? paramSpec returnSpec? constraintSpec? FinalKeyword?
                         procBlock ;
 classDecl           : DeclKeyword symbolIdentifier paramSpec returnSpec? ;
-classInit           : InitKeyword paramSpec classSuper? procBlock ;
-genericClass        : placeholderSpec constraintSpec? ;
-classDerives        : ( SealedKeyword | FinalKeyword ) ;
+classImpl           : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 classSpec           : classInit | classVal | classVar | classDef | classDecl | classImpl ;
-defclassStatement   : definitionMacro? DefClassKeyword
-                        symbolIdentifier genericClass? classDerives?
-                        CurlyOpen classSpec* CurlyClose ;
 
 
 // defconcept statement
 
-conceptDecl         : DeclKeyword symbolIdentifier paramSpec returnSpec? ;
-conceptImpl         : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
+defconceptStatement : definitionMacro? DefConceptKeyword symbolIdentifier
+                        genericConcept? conceptDerives? conceptBase?
+                        CurlyOpen conceptSpec* CurlyClose ;
 genericConcept      : placeholderSpec constraintSpec? ;
 conceptDerives      : ( SealedKeyword | FinalKeyword ) ;
+conceptBase         : FromKeyword assignableType ;
+conceptDecl         : DeclKeyword symbolIdentifier paramSpec returnSpec? ;
+conceptImpl         : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 conceptSpec         : conceptDecl | conceptImpl ;
-defconceptStatement : definitionMacro? DefConceptKeyword
-                        symbolIdentifier genericConcept? conceptDerives?
-                        CurlyOpen conceptSpec* CurlyClose ;
 
 
 // definstance statement
 
-instanceInit        : InitKeyword procBlock ;
+definstanceStatement: definitionMacro? DefInstanceKeyword symbolIdentifier
+                        instanceDerives? instanceBase?
+                        CurlyOpen instanceSpec* CurlyClose ;
+instanceDerives     : ( SealedKeyword | FinalKeyword ) ;
+instanceBase        : FromKeyword assignableType ;
 instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
-instanceDerives     : ( SealedKeyword | FinalKeyword ) ;
-instanceSpec        : instanceInit | instanceVal | instanceVar | instanceDef | instanceImpl ;
-definstanceStatement: definitionMacro? DefInstanceKeyword
-                        symbolIdentifier instanceDerives?
-                        CurlyOpen instanceSpec* CurlyClose ;
+instanceSpec        : instanceVal | instanceVar | instanceDef | instanceImpl ;
 
 
 // defenum statement
 
+defenumStatement    : definitionMacro? DefEnumKeyword symbolIdentifier
+                        enumBase?
+                        CurlyOpen enumSpec* CurlyClose ;
+enumBase            : FromKeyword assignableType ;
 enumInit            : InitKeyword paramSpec procBlock ;
 enumVal             : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 enumCase            : CaseKeyword symbolIdentifier callArguments? ;
 enumImpl            : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 enumSpec            : enumInit | enumVal | enumDef | enumCase | enumImpl ;
-defenumStatement    : definitionMacro? DefEnumKeyword
-                        symbolIdentifier
-                        CurlyOpen enumSpec* CurlyClose ;
 
 
 // defstruct statement
 
+defstructStatement  : definitionMacro? DefStructKeyword symbolIdentifier
+                        structDerives? structBase?
+                        CurlyOpen structSpec* CurlyClose ;
+structDerives       : ( SealedKeyword | FinalKeyword ) ;
+structBase          : FromKeyword assignableType ;
+structInit          : InitKeyword symbolIdentifier? paramSpec structSuper? procBlock ;
 structSuper         : FromKeyword assignableType callArguments ;
-structInit          : InitKeyword paramSpec structSuper? procBlock ;
 structVal           : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 structDef           : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
-structDerives       : ( SealedKeyword | FinalKeyword ) ;
 structSpec          : structInit | structVal | structDef | structImpl ;
-defstructStatement  : definitionMacro? DefStructKeyword
-                        symbolIdentifier structDerives?
-                        CurlyOpen structSpec* CurlyClose ;
 
 
 // global statement

@@ -37,6 +37,12 @@ lyric_parser::internal::ModuleDefstructOps::enterDefstructStatement(ModuleParser
     ArchetypeNode *defstructNode;
     TU_ASSIGN_OR_RAISE (defstructNode, state->appendNode(lyric_schema::kLyricAstDefStructClass, location));
 
+    // set the struct super type if specified
+    if (ctx->structBase()) {
+        auto *superTypeNode = make_Type_node(state, ctx->structBase()->assignableType());
+        TU_RAISE_IF_NOT_OK (defstructNode->putAttr(kLyricAstTypeOffset, superTypeNode));
+    }
+
     // push defstruct onto the stack
     TU_RAISE_IF_NOT_OK (state->pushNode(defstructNode));
 }
@@ -48,18 +54,12 @@ lyric_parser::internal::ModuleDefstructOps::exitStructSuper(ModuleParser::Struct
     auto location = get_token_location(token);
     auto *state = getState();
 
-    // struct super type
-    auto *superTypeNode = make_Type_node(state, ctx->assignableType());
-
     if (hasError())
         return;
 
     // allocate super node
     ArchetypeNode *superNode;
     TU_ASSIGN_OR_RAISE (superNode, state->appendNode(lyric_schema::kLyricAstSuperClass, location));
-
-    // set the super type
-    TU_RAISE_IF_NOT_OK (superNode->putAttr(kLyricAstTypeOffset, superTypeNode));
 
     if (ctx->callArguments()->argumentList()) {
         auto *argList = ctx->callArguments()->argumentList();
@@ -104,7 +104,11 @@ lyric_parser::internal::ModuleDefstructOps::enterStructInit(ModuleParser::Struct
 {
     tempo_tracing::EnterScope scope("lyric_parser::internal::ModuleDefstructOps::enterStructInit");
     auto *state = getState();
-    state->pushSymbol("$ctor");
+
+    // push the default constructor name if identifier is not specified
+    if (ctx->symbolIdentifier() == nullptr) {
+        state->pushSymbol("$ctor");
+    }
 }
 
 void
@@ -116,7 +120,16 @@ lyric_parser::internal::ModuleDefstructOps::exitStructInit(ModuleParser::StructI
     scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
     // pop the top of the symbol stack and verify that the identifier matches
-    state->popSymbolAndCheck("$ctor");
+    std::string id;
+    if (ctx->symbolIdentifier() != nullptr) {
+        id = ctx->symbolIdentifier()->getText();
+    } else {
+        id = "$ctor";
+    }
+    state->popSymbolAndCheck(id);
+
+    // get the visibility
+    auto isHidden = identifier_is_hidden(id);
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
@@ -147,6 +160,12 @@ lyric_parser::internal::ModuleDefstructOps::exitStructInit(ModuleParser::StructI
     // create the init node
     ArchetypeNode *initNode;
     TU_ASSIGN_OR_RAISE (initNode, state->appendNode(lyric_schema::kLyricAstInitClass, location));
+
+    // set the constructor name
+    TU_RAISE_IF_NOT_OK (initNode->putAttr(kLyricAstIdentifier, id));
+
+    // set the visibility
+    TU_RAISE_IF_NOT_OK (initNode->putAttr(kLyricAstIsHidden, isHidden));
 
     // append pack node to init
     TU_RAISE_IF_NOT_OK (initNode->appendChild(packNode));

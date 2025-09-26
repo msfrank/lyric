@@ -477,37 +477,14 @@ apply_new(const lyric_object::OpCell &op, ImportProcData &data)
     const auto &operands = op.operands.flags_u8_address_u32_placement_u16;
     auto *importCache = data.state->importCache();
 
-    lyric_common::SymbolUrl newUrl;
-    switch (lyric_object::GET_NEW_TYPE(operands.flags)) {
-        case lyric_object::NEW_CLASS: {
-            auto walker = data.object.getClass(operands.address);
-            newUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
-            break;
-        }
-        case lyric_object::NEW_ENUM: {
-            auto walker = data.object.getEnum(operands.address);
-            newUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
-            break;
-        }
-        case lyric_object::NEW_INSTANCE: {
-            auto walker = data.object.getInstance(operands.address);
-            newUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
-            break;
-        }
-        case lyric_object::NEW_STRUCT: {
-            auto walker = data.object.getStruct(operands.address);
-            newUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
-            break;
-        }
-        default:
-            return lyric_assembler::AssemblerStatus::forCondition(
-                lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid new type");
-    }
+    lyric_common::SymbolUrl ctorUrl;
+    auto walker = data.object.getCall(operands.address);
+    ctorUrl = lyric_common::SymbolUrl(data.objectLocation, walker.getSymbolPath());
 
-    lyric_assembler::AbstractSymbol *newSymbol;
-    TU_ASSIGN_OR_RETURN (newSymbol, importCache->importSymbol(newUrl));
+    lyric_assembler::CallSymbol *ctorSymbol;
+    TU_ASSIGN_OR_RETURN (ctorSymbol, importCache->importCall(ctorUrl));
 
-    return data.fragment->constructNew(newSymbol, operands.placement, operands.flags);
+    return data.fragment->constructNew(ctorSymbol, operands.placement, operands.flags);
 }
 
 static tempo_utils::Status

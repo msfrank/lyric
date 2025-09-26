@@ -28,6 +28,7 @@ private:
 
 tempo_utils::Status record_alloc(
     lyric_runtime::BytecodeInterpreter *interp,
-    lyric_runtime::InterpreterState *state);
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable);
 
 #endif // ZURI_CORE_RECORD_REF_H

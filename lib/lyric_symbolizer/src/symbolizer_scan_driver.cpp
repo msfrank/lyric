@@ -33,6 +33,7 @@ lyric_symbolizer::SymbolizerScanDriver::enter(
             return pushDefinition(node, lyric_object::LinkageSection::Action);
         case lyric_schema::LyricAstId::DefAlias:
             return pushDefinition(node, lyric_object::LinkageSection::Binding);
+        case lyric_schema::LyricAstId::Init:
         case lyric_schema::LyricAstId::Def:
             return pushDefinition(node, lyric_object::LinkageSection::Call);
         case lyric_schema::LyricAstId::DefClass:
@@ -78,6 +79,7 @@ lyric_symbolizer::SymbolizerScanDriver::exit(
         case lyric_schema::LyricAstId::DefEnum:
         case lyric_schema::LyricAstId::DefInstance:
         case lyric_schema::LyricAstId::DefStruct:
+        case lyric_schema::LyricAstId::Init:
             return popDefinition();
         case lyric_schema::LyricAstId::Namespace:
             return popNamespace();
@@ -135,6 +137,33 @@ lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::Archet
     TU_LOG_V << "declared static " << symbolUrl;
 
     return putNamespaceTarget(symbolUrl);
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::pushConstructor(const lyric_parser::ArchetypeNode *node)
+{
+    std::string identifier;
+    if (node->hasAttr(lyric_parser::kLyricAstIdentifier)) {
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+    } else {
+        identifier = lyric_object::kCtorSpecialSymbol;
+    }
+    m_symbolPath.push_back(identifier);
+
+    lyric_common::SymbolPath symbolPath(m_symbolPath);
+    lyric_common::SymbolUrl symbolUrl(symbolPath);
+    auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(symbolUrl, lyric_object::LinkageSection::Call);
+
+    TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
+    TU_LOG_V << "declared definition " << symbolUrl;
+
+    auto *currentNamespace = m_namespaces.top();
+    auto namespacePath = currentNamespace->getSymbolUrl().getSymbolPath();
+    if (symbolPath.getEnclosure() == namespacePath.getPath()) {
+        TU_RETURN_IF_NOT_OK (putNamespaceTarget(symbolUrl));
+    }
+
+    return {};
 }
 
 tempo_utils::Status

@@ -6,18 +6,20 @@
 #include <lyric_compiler/proc_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
+#include "lyric_assembler/class_symbol.h"
+#include "lyric_assembler/enum_symbol.h"
+#include "lyric_assembler/instance_symbol.h"
+#include "lyric_assembler/struct_symbol.h"
+
 lyric_compiler::ConstructorHandler::ConstructorHandler(
-    std::unique_ptr<lyric_assembler::ConstructableInvoker> &&superInvoker,
-    lyric_assembler::CallSymbol *callSymbol,
+    Constructor constructor,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
-    : BaseGrouping(block, driver)
+    : BaseGrouping(block, driver),
+      m_constructor(std::move(constructor))
 {
-    m_constructor.superInvoker = std::move(superInvoker);
-    TU_ASSERT (m_constructor.superInvoker != nullptr);
-    m_constructor.callSymbol = callSymbol;
+    TU_ASSERT (m_constructor.superSymbol != nullptr);
     TU_ASSERT (m_constructor.callSymbol != nullptr);
-    m_constructor.procHandle = callSymbol->callProc();
     TU_ASSERT (m_constructor.procHandle != nullptr);
 }
 
@@ -52,7 +54,7 @@ tempo_utils::Status
 lyric_compiler::ConstructorHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     TU_LOG_VV << "after ConstructorHandler@" << this;
 
@@ -85,12 +87,35 @@ lyric_compiler::InitSuper::before(
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
-    auto *driver = getDriver();
-    auto *typeSystem = driver->getTypeSystem();
     auto *fragment = getFragment();
 
-    lyric_typing::CallsiteReifier reifier(typeSystem);
-    TU_RETURN_IF_NOT_OK (reifier.initialize(*m_constructor->superInvoker));
+    m_invoker = std::make_unique<lyric_assembler::ConstructableInvoker>();
+
+    switch (m_constructor->superSymbol->getSymbolType()) {
+        case lyric_assembler::SymbolType::CLASS: {
+            auto *superClass = lyric_assembler::cast_symbol_to_class(m_constructor->superSymbol);
+            TU_RETURN_IF_NOT_OK (superClass->prepareCtor(*m_invoker));
+            break;
+        }
+        case lyric_assembler::SymbolType::ENUM: {
+            auto *superEnum = lyric_assembler::cast_symbol_to_enum(m_constructor->superSymbol);
+            TU_RETURN_IF_NOT_OK (superEnum->prepareCtor(*m_invoker));
+            break;
+        }
+        case lyric_assembler::SymbolType::INSTANCE: {
+            auto *superInstance = lyric_assembler::cast_symbol_to_instance(m_constructor->superSymbol);
+            TU_RETURN_IF_NOT_OK (superInstance->prepareCtor(*m_invoker));
+            break;
+        }
+        case lyric_assembler::SymbolType::STRUCT: {
+            auto *superStruct = lyric_assembler::cast_symbol_to_struct(m_constructor->superSymbol);
+            TU_RETURN_IF_NOT_OK (superStruct->prepareCtor(lyric_object::kCtorSpecialSymbol, *m_invoker));
+            break;
+        }
+        default:
+            return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+                "invalid super symbol");
+    }
 
     // load the uninitialized receiver onto the top of the stack
     TU_RETURN_IF_NOT_OK (fragment->loadThis());
@@ -110,14 +135,13 @@ lyric_compiler::InitSuper::after(
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
 
-    auto *invoker = m_constructor->superInvoker.get();
-    TU_RETURN_IF_NOT_OK (reifier.initialize(*invoker));
+    TU_RETURN_IF_NOT_OK (reifier.initialize(*m_invoker));
 
-    auto *constructable = invoker->getConstructable();
+    auto *constructable = m_invoker->getConstructable();
     TU_RETURN_IF_NOT_OK (placeArguments(constructable, reifier, fragment));
 
     lyric_common::TypeDef returnType;
-    TU_ASSIGN_OR_RETURN (returnType, invoker->invoke(getInvokeBlock(), reifier, fragment, /* flags= */ 0));
+    TU_ASSIGN_OR_RETURN (returnType, m_invoker->invoke(getInvokeBlock(), reifier, fragment, /* flags= */ 0));
 
     return driver->pushResult(returnType);
 }

@@ -92,6 +92,12 @@ target_sources(lyric_runtime PRIVATE
     src/url_ref.cpp
     src/virtual_table.cpp
 
+    include/lyric_runtime/internal/construct_enum.h
+    src/internal/construct_enum.cpp
+    include/lyric_runtime/internal/construct_instance.h
+    src/internal/construct_instance.cpp
+    include/lyric_runtime/internal/construct_new.h
+    src/internal/construct_new.cpp
     include/lyric_runtime/internal/get_class_virtual_table.h
     src/internal/get_class_virtual_table.cpp
     include/lyric_runtime/internal/get_concept_table.h

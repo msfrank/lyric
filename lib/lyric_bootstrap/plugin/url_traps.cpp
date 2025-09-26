@@ -6,7 +6,10 @@
 #include "url_traps.h"
 
 tempo_utils::Status
-url_equals(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+url_equals(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 

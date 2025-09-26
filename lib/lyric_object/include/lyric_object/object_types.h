@@ -10,6 +10,8 @@
 
 namespace lyric_object {
 
+    constexpr const char *kCtorSpecialSymbol        = "$ctor";
+
     constexpr tu_uint32 INVALID_ADDRESS_U32         = 0xFFFFFFFF;
     constexpr tu_uint16 INVALID_OFFSET_U16          = 0xFFFF;
     constexpr tu_uint8 INVALID_OFFSET_U8            = 0xFF;

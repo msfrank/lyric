@@ -509,33 +509,18 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
 
-    lyric_parser::ArchetypeNode *initNode = nullptr;
-    for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
-        auto *child = *it;
-        lyric_schema::LyricAstId childId;
-        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
-        if (childId == lyric_schema::LyricAstId::Init) {
-            if (initNode != nullptr)
-                return AnalyzerStatus::forCondition(AnalyzerCondition::kSyntaxError);
-            initNode = child;
-        }
-    }
-
-    auto *fundamentalCache = m_state->fundamentalCache();
+    lyric_common::TypeDef superStructType;
 
     // determine the superstruct type
-    auto superStructType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
-    if (initNode != nullptr) {
-        auto *superNode = initNode->getChild(1);
-        TU_ASSERT (superNode != nullptr);
-        TU_ASSERT (superNode->isClass(lyric_schema::kLyricAstSuperClass));
-        if (superNode->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
-            lyric_parser::ArchetypeNode *typeNode;
-            TU_RETURN_IF_NOT_OK (superNode->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
-            lyric_typing::TypeSpec superStructSpec;
-            TU_ASSIGN_OR_RETURN (superStructSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-            TU_ASSIGN_OR_RETURN (superStructType, m_typeSystem->resolveAssignable(block, superStructSpec));
-        }
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        lyric_parser::ArchetypeNode *typeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+        lyric_typing::TypeSpec superStructSpec;
+        TU_ASSIGN_OR_RETURN (superStructSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (superStructType, m_typeSystem->resolveAssignable(block, superStructSpec));
+    } else {
+        auto *fundamentalCache = m_state->fundamentalCache();
+        superStructType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
     }
 
     // resolve the superstruct
@@ -552,7 +537,7 @@ lyric_analyzer::AnalyzerScanDriver::pushStruct(
     TU_LOG_V << "declared struct " << structSymbol->getSymbolUrl() << " from " << superStruct->getSymbolUrl();
 
     // push the struct context
-    auto ctx = std::make_unique<StructAnalyzerContext>(this, structSymbol, initNode);
+    auto ctx = std::make_unique<StructAnalyzerContext>(this, structSymbol);
     return pushContext(std::move(ctx));
 }
 

@@ -9,6 +9,7 @@
 #include "base_choice.h"
 #include "base_grouping.h"
 #include "compiler_scan_driver.h"
+#include "constructor_handler.h"
 #include "impl_handler.h"
 #include "member_handler.h"
 #include "method_handler.h"
@@ -18,8 +19,8 @@ namespace lyric_compiler {
     struct DefEnum {
         lyric_assembler::EnumSymbol *enumSymbol = nullptr;
         lyric_assembler::EnumSymbol *superenumSymbol = nullptr;
-        lyric_assembler::CallSymbol *initCall = nullptr;
-        bool defaultInit = false;
+        lyric_assembler::CallSymbol *defaultCtor = nullptr;
+        absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Constructor> ctors;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Member> members;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Method> methods;
         absl::flat_hash_map<const lyric_parser::ArchetypeNode *,Impl> impls;
@@ -47,6 +48,7 @@ namespace lyric_compiler {
 
     private:
         DefEnum m_defenum;
+        std::string m_allocatorTrapName;
         bool m_isSideEffect;
         lyric_assembler::NamespaceSymbol *m_currentNamespace;
     };

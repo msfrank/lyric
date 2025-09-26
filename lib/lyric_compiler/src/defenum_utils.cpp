@@ -24,47 +24,31 @@ lyric_compiler::declare_enum_default_init(
     return ctorSymbol;
 }
 
-tempo_utils::Result<lyric_assembler::CallSymbol *>
-lyric_compiler::declare_enum_init(
-    const lyric_parser::ArchetypeNode *initNode,
-    lyric_assembler::EnumSymbol *enumSymbol,
-    const std::string &allocatorTrap,
-    lyric_typing::TypeSystem *typeSystem)
-{
-    TU_ASSERT (initNode != nullptr);
-    TU_ASSERT (enumSymbol != nullptr);
-    auto *enumBlock = enumSymbol->enumBlock();
-
-    // declare the constructor
-    lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, enumSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
-
-    lyric_typing::PackSpec packSpec;
-    lyric_assembler::ParameterPack parameterPack;
-
-    // compile the parameter list if specified, otherwise default to an empty list
-    if (initNode != nullptr) {
-        auto *packNode = initNode->getChild(0);
-        TU_ASSERT (packNode != nullptr);
-        TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(enumBlock, packNode->getArchetypeNode()));
-        TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(enumBlock, packSpec));
-    }
-
-    TU_RETURN_IF_STATUS(ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
-
-    return ctorSymbol;
-}
-
-
 tempo_utils::Status
 lyric_compiler::define_enum_default_init(
     const DefEnum *defenum,
+    const std::string &allocatorTrap,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_typing::TypeSystem *typeSystem)
 {
     TU_ASSERT (defenum != nullptr);
 
-    auto *procHandle = defenum->initCall->callProc();
+    auto *enumSymbol = defenum->enumSymbol;
+    TU_ASSERT (enumSymbol != nullptr);
+    auto *ctorSymbol = defenum->defaultCtor;
+    TU_ASSERT (ctorSymbol != nullptr);
+
+    // verify that super ctor takes no arguments
+    auto *superEnum = enumSymbol->superEnum();
+    auto superCtorUrl = superEnum->getCtor();
+    lyric_assembler::AbstractSymbol *superCtorSymbol;
+    TU_ASSIGN_OR_RETURN (superCtorSymbol, symbolCache->getOrImportSymbol(superCtorUrl));
+    auto *superCtorCall = cast_symbol_to_call(superCtorSymbol);
+    if (superCtorCall->numParameters() > 0)
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+            "super enum {} is not default-constructable", superCtorUrl.toString());
+
+    auto *procHandle = ctorSymbol->callProc();
     auto *ctorBlock = procHandle->procBlock();
     auto *procBuilder = procHandle->procCode();
     auto *fragment = procBuilder->rootFragment();
@@ -129,8 +113,8 @@ lyric_compiler::define_enum_default_init(
         TU_RETURN_IF_NOT_OK (defenum->enumSymbol->setMemberInitialized(memberName));
     }
 
-    TU_LOG_V << "declared ctor " << defenum->initCall->getSymbolUrl()
-                << " for " << defenum->enumSymbol->getSymbolUrl();
+    TU_LOG_V << "declared ctor " << ctorSymbol->getSymbolUrl()
+        << " for " << defenum->enumSymbol->getSymbolUrl();
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
@@ -141,6 +125,42 @@ lyric_compiler::define_enum_default_init(
             defenum->enumSymbol->getSymbolUrl().toString());
 
     return {};
+}
+
+tempo_utils::Result<lyric_compiler::Constructor>
+lyric_compiler::declare_enum_init(
+    const lyric_parser::ArchetypeNode *initNode,
+    lyric_assembler::EnumSymbol *enumSymbol,
+    const std::string &allocatorTrap,
+    lyric_typing::TypeSystem *typeSystem)
+{
+    TU_ASSERT (initNode != nullptr);
+    TU_ASSERT (enumSymbol != nullptr);
+    auto *enumBlock = enumSymbol->enumBlock();
+
+    // declare the constructor
+    lyric_assembler::CallSymbol *ctorSymbol;
+    TU_ASSIGN_OR_RETURN (ctorSymbol, enumSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
+
+    lyric_typing::PackSpec packSpec;
+    lyric_assembler::ParameterPack parameterPack;
+
+    // compile the parameter list if specified, otherwise default to an empty list
+    if (initNode != nullptr) {
+        auto *packNode = initNode->getChild(0);
+        TU_ASSERT (packNode != nullptr);
+        TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(enumBlock, packNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(enumBlock, packSpec));
+    }
+
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
+
+    Constructor constructor;
+    constructor.superSymbol = enumSymbol->superEnum();
+    constructor.callSymbol = ctorSymbol;
+    constructor.procHandle = procHandle;
+    return constructor;
 }
 
 tempo_utils::Result<lyric_compiler::Member>

@@ -9,6 +9,7 @@ set(TEST_CASES
     symbolize_def_tests.cpp
     symbolize_defclass_tests.cpp
     symbolize_defconcept_tests.cpp
+    symbolize_defstruct_tests.cpp
     symbolize_namespace_tests.cpp
     symbolize_static_tests.cpp
     symbolize_typename_tests.cpp

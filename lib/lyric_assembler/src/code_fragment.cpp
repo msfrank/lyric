@@ -830,25 +830,16 @@ lyric_assembler::CodeFragment::callExistential(
 }
 
 tempo_utils::Status
-lyric_assembler::CodeFragment::constructNew(AbstractSymbol *newSymbol, tu_uint16 placement, tu_uint8 flags)
+lyric_assembler::CodeFragment::constructNew(CallSymbol *ctorSymbol, tu_uint16 placement, tu_uint8 flags)
 {
-    TU_ASSERT (newSymbol != nullptr);
+    TU_ASSERT (ctorSymbol != nullptr);
+
+    if (!ctorSymbol->isCtor())
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid ctor symbol");
 
     Statement statement;
-
-    switch (newSymbol->getSymbolType()) {
-        case SymbolType::CLASS:
-        case SymbolType::ENUM:
-        case SymbolType::INSTANCE:
-        case SymbolType::STRUCT: {
-            statement.instruction = std::make_shared<NewInstruction>(newSymbol, placement, flags);
-            break;
-        }
-        default:
-            return AssemblerStatus::forCondition(
-                AssemblerCondition::kAssemblerInvariant, "invalid new symbol");
-    }
-
+    statement.instruction = std::make_shared<NewInstruction>(ctorSymbol, placement, flags);
     m_statements.push_back(std::move(statement));
     return {};
 }

@@ -106,17 +106,6 @@ lyric_object::StructWalker::getAllocator() const
     return structDescriptor->allocator_trap();
 }
 
-lyric_object::CallWalker
-lyric_object::StructWalker::getConstructor() const
-{
-    if (!isValid())
-        return {};
-    auto *structDescriptor = m_reader->getStruct(m_structOffset);
-    if (structDescriptor == nullptr)
-        return {};
-    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(structDescriptor->ctor_call()));
-}
-
 bool
 lyric_object::StructWalker::hasSuperStruct() const
 {

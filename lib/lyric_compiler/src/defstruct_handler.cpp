@@ -13,7 +13,7 @@
 lyric_compiler::DefStructHandler::DefStructHandler(
     bool isSideEffect,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_isSideEffect(isSideEffect),
       m_currentNamespace(nullptr)
@@ -24,7 +24,7 @@ lyric_compiler::DefStructHandler::DefStructHandler(
     bool isSideEffect,
     lyric_assembler::NamespaceSymbol *currentNamespace,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_isSideEffect(isSideEffect),
       m_currentNamespace(currentNamespace)
@@ -36,14 +36,13 @@ tempo_utils::Status
 lyric_compiler::DefStructHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     TU_LOG_VV << "before DefStructHandler@" << this;
 
     auto *block = getBlock();
     auto *driver = getDriver();
     auto *fundamentalCache = driver->getFundamentalCache();
-    auto *symbolCache = driver->getSymbolCache();
     auto *typeSystem = driver->getTypeSystem();
 
     if (!node->isClass(lyric_schema::kLyricAstDefStructClass))
@@ -62,17 +61,13 @@ lyric_compiler::DefStructHandler::before(
     lyric_parser::DeriveType derive;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDeriveType, derive));
 
-    // get allocator trap
-    std::string allocatorTrap;
+    // get allocator trap name
     if (node->hasAttr(lyric_assembler::kLyricAssemblerTrapName)) {
         TU_RETURN_IF_NOT_OK (node->parseAttr(
-            lyric_assembler::kLyricAssemblerTrapName, allocatorTrap));
+            lyric_assembler::kLyricAssemblerTrapName, m_allocatorTrapName));
     }
 
-    // FIXME: get abstract flag from node
-    bool isAbstract = false;
-
-    lyric_parser::ArchetypeNode *initNode = nullptr;
+    std::vector<lyric_parser::ArchetypeNode *> initNodes;
     std::vector<lyric_parser::ArchetypeNode *> valNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
     std::vector<lyric_parser::ArchetypeNode *> implNodes;
@@ -83,12 +78,10 @@ lyric_compiler::DefStructHandler::before(
         lyric_schema::LyricAstId astId;
         TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, astId));
         switch (astId) {
-            case lyric_schema::LyricAstId::Init:
-                if (initNode != nullptr)
-                    return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
-                        "duplicate struct init declaration");
-                initNode = child;
+            case lyric_schema::LyricAstId::Init: {
+                initNodes.push_back(child);
                 break;
+            }
             case lyric_schema::LyricAstId::Val: {
                 valNodes.push_back(child);
                 break;
@@ -110,18 +103,17 @@ lyric_compiler::DefStructHandler::before(
         ctx.appendChoice(std::move(definition));
     }
 
+    lyric_common::TypeDef superStructType;
+
     // resolve the super struct type if specified, otherwise derive from Record
-    auto superStructType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
-    if (initNode) {
-        auto *superNode = initNode->getChild(1);
-        TU_ASSERT (superNode != nullptr);
-        if (superNode->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
-            lyric_parser::ArchetypeNode *typeNode;
-            TU_RETURN_IF_NOT_OK (superNode->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
-            lyric_typing::TypeSpec superStructSpec;
-            TU_ASSIGN_OR_RETURN (superStructSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-            TU_ASSIGN_OR_RETURN (superStructType, typeSystem->resolveAssignable(block, superStructSpec));
-        }
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        lyric_parser::ArchetypeNode *typeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+        lyric_typing::TypeSpec superStructSpec;
+        TU_ASSIGN_OR_RETURN (superStructSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (superStructType, typeSystem->resolveAssignable(block, superStructSpec));
+    } else {
+        superStructType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Record);
     }
 
     // resolve the super struct symbol
@@ -130,7 +122,7 @@ lyric_compiler::DefStructHandler::before(
     // declare the struct
     TU_ASSIGN_OR_RETURN (m_defstruct.structSymbol, block->declareStruct(
         identifier, m_defstruct.superstructSymbol, isHidden,
-        lyric_compiler::convert_derive_type(derive), isAbstract));
+        lyric_compiler::convert_derive_type(derive)));
 
     // add struct to the current namespace if specified
     if (m_currentNamespace != nullptr) {
@@ -142,15 +134,6 @@ lyric_compiler::DefStructHandler::before(
         Member member;
         TU_ASSIGN_OR_RETURN (member, declare_struct_member(valNode, m_defstruct.structSymbol, typeSystem));
         m_defstruct.members[valNode] = member;
-    }
-
-    // declare struct init
-    if (initNode != nullptr) {
-        TU_ASSIGN_OR_RETURN (m_defstruct.initCall, declare_struct_init(
-            initNode, m_defstruct.structSymbol, allocatorTrap, typeSystem));
-    } else {
-        TU_ASSIGN_OR_RETURN (m_defstruct.initCall, declare_struct_default_init(
-            &m_defstruct, m_defstruct.structSymbol, allocatorTrap, symbolCache, typeSystem));
     }
 
     // declare methods
@@ -169,6 +152,20 @@ lyric_compiler::DefStructHandler::before(
         m_defstruct.impls[implNode] = impl;
     }
 
+    // declare constructors if any are specified, otherwise declare a default constructor
+    if (!initNodes.empty()) {
+        for (auto &initNode : initNodes) {
+            Constructor constructor;
+            TU_ASSIGN_OR_RETURN (constructor, declare_struct_init(
+                initNode, m_defstruct.structSymbol, m_allocatorTrapName, typeSystem));
+            m_defstruct.ctors[initNode] = constructor;
+        }
+    } else {
+        auto *symbolCache = driver->getSymbolCache();
+        TU_ASSIGN_OR_RETURN (m_defstruct.defaultCtor, declare_struct_default_init(
+            m_defstruct.structSymbol, m_allocatorTrapName, symbolCache));
+    }
+
     return {};
 }
 
@@ -176,12 +173,18 @@ tempo_utils::Status
 lyric_compiler::DefStructHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     TU_LOG_VV << "after DefStructHandler@" << this;
 
+    auto *driver = getDriver();
+
+    if (m_defstruct.defaultCtor != nullptr) {
+        auto *symbolCache = driver->getSymbolCache();
+        auto *typeSystem = driver->getTypeSystem();
+        TU_RETURN_IF_NOT_OK (define_struct_default_init(&m_defstruct, m_allocatorTrapName, symbolCache, typeSystem));
+    }
     if (!m_isSideEffect) {
-        auto *driver = getDriver();
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));
     }
 
@@ -211,10 +214,8 @@ lyric_compiler::StructDefinition::decide(
     TU_RETURN_IF_NOT_OK (node->parseId(lyric_schema::kLyricAstVocabulary, astId));
     switch (astId) {
         case lyric_schema::LyricAstId::Init: {
-            auto superInvoker = std::make_unique<lyric_assembler::ConstructableInvoker>();
-            TU_RETURN_IF_NOT_OK (m_defstruct->superstructSymbol->prepareCtor(*superInvoker));
-            auto handler = std::make_unique<ConstructorHandler>(
-                std::move(superInvoker), m_defstruct->initCall, block, driver);
+            auto constructor = m_defstruct->ctors.at(node);
+            auto handler = std::make_unique<ConstructorHandler>(constructor, block, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }

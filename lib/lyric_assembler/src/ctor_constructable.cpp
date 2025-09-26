@@ -140,6 +140,6 @@ lyric_assembler::CtorConstructable::invokeNew(
         return AssemblerStatus::forCondition(AssemblerCondition::kSyntaxError,
             "too many call arguments");
 
-    TU_RETURN_IF_NOT_OK (fragment->constructNew(m_newSymbol, placementSize, callFlags));
+    TU_RETURN_IF_NOT_OK (fragment->constructNew(m_ctorSymbol, placementSize, callFlags));
     return reifier.reifyResult(m_newSymbol->getTypeDef());
 }

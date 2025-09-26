@@ -37,6 +37,12 @@ lyric_parser::internal::ModuleDefenumOps::enterDefenumStatement(ModuleParser::De
     ArchetypeNode *defenumNode;
     TU_ASSIGN_OR_RAISE (defenumNode, state->appendNode(lyric_schema::kLyricAstDefEnumClass, location));
 
+    // set the enum super type if specified
+    if (ctx->enumBase()) {
+        auto *superTypeNode = make_Type_node(state, ctx->enumBase()->assignableType());
+        TU_RAISE_IF_NOT_OK (defenumNode->putAttr(kLyricAstTypeOffset, superTypeNode));
+    }
+
     // push defenum onto the stack
     TU_RAISE_IF_NOT_OK (state->pushNode(defenumNode));
 }
@@ -82,6 +88,12 @@ lyric_parser::internal::ModuleDefenumOps::exitEnumInit(ModuleParser::EnumInitCon
     // create the init node
     ArchetypeNode *initNode;
     TU_ASSIGN_OR_RAISE (initNode, state->appendNode(lyric_schema::kLyricAstInitClass, location));
+
+    // set the constructor name
+    TU_RAISE_IF_NOT_OK (initNode->putAttr(kLyricAstIdentifier, std::string("$ctor")));
+
+    // set the visibility
+    TU_RAISE_IF_NOT_OK (initNode->putAttr(kLyricAstIsHidden, false));
 
     // append pack node to init
     TU_RAISE_IF_NOT_OK (initNode->appendChild(packNode));

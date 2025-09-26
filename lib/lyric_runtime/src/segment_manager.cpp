@@ -100,6 +100,15 @@ lyric_runtime::SegmentManager::resolveLiteral(
     return internal::resolve_literal(sp, address, &m_data, status);
 }
 
+lyric_runtime::DataCell
+lyric_runtime::SegmentManager::resolveReceiver(
+    const BytecodeSegment *sp,
+    tu_uint32 address,
+    tempo_utils::Status &status)
+{
+    return internal::resolve_receiver(sp, address, &m_data, status);
+}
+
 const lyric_runtime::VirtualTable *
 lyric_runtime::SegmentManager::resolveClassVirtualTable(
     const DataCell &descriptor,

@@ -297,3 +297,63 @@ lyric_runtime::internal::resolve_literal(
             return {};
     }
 }
+
+/**
+ * Resolves the receiver descriptor for the call at the specified `address`.
+ *
+ * @param sp
+ * @param address
+ * @param segmentManagerData
+ * @param status
+ * @return
+ */
+lyric_runtime::DataCell
+lyric_runtime::internal::resolve_receiver(
+    const BytecodeSegment *sp,
+    tu_uint32 address,
+    SegmentManagerData *segmentManagerData,
+    tempo_utils::Status &status)
+{
+    TU_ASSERT (sp != nullptr);
+
+    const BytecodeSegment *segment = nullptr;
+    lyric_object::CallWalker call;
+
+    // resolve the segment and call descriptor
+    if (lyric_object::IS_NEAR(address)) {
+        segment = sp;
+        auto object = segment->getObject();
+        call = object.getCall(address);
+        if (!call.isValid()) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "missing call");
+            return {};
+        }
+    } else {
+        const auto *linkage = resolve_link(
+            sp, lyric_object::GET_LINK_OFFSET(address), segmentManagerData, status);
+        if (!linkage || linkage->linkage != lyric_object::LinkageSection::Call) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "invalid call linkage");
+            return {};
+        }
+        segment = segmentManagerData->segments[linkage->object];
+        auto object = segment->getObject();
+        call = object.getCall(linkage->value);
+        if (!call.isValid()) {
+            status = InterpreterStatus::forCondition(
+                InterpreterCondition::kRuntimeInvariant, "missing call");
+            return {};
+        }
+    }
+
+    auto receiver = call.getReceiver();
+    if (!receiver.isValid()) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "invalid call");
+        return {};
+    }
+
+    return resolve_descriptor(segment, receiver.getLinkageSection(),
+        receiver.getLinkageIndex(), segmentManagerData, status);
+}

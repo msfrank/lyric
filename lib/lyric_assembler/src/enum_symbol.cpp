@@ -102,7 +102,8 @@ lyric_assembler::EnumSymbol::load()
         BoundMethod methodBinding;
         methodBinding.methodCall = iterator->second;
         methodBinding.hidden = callSymbol->isHidden();
-        methodBinding.final = false;    // FIXME: this should come from the call symbol
+        methodBinding.ctor = callSymbol->isCtor();
+        methodBinding.final = callSymbol->isFinal();
         priv->methods[iterator->first] = methodBinding;
     }
 

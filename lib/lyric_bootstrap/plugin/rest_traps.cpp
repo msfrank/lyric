@@ -6,7 +6,10 @@
 #include "rest_traps.h"
 
 tempo_utils::Status
-rest_size(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+rest_size(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -20,7 +23,10 @@ rest_size(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
 }
 
 tempo_utils::Status
-rest_get(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+rest_get(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -37,7 +43,10 @@ rest_get(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 }
 
 tempo_utils::Status
-rest_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+rest_iterate(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -52,7 +61,7 @@ rest_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpre
     auto *instance = receiver.data.rest;
 
     lyric_runtime::InterpreterStatus status;
-    const auto *vtable = state->segmentManager()->resolveClassVirtualTable(cell, status);
+    vtable = state->segmentManager()->resolveClassVirtualTable(cell, status);
     if (vtable == nullptr)
         return status;
 

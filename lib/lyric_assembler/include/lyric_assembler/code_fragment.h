@@ -123,7 +123,7 @@ namespace lyric_assembler {
         tempo_utils::Status callExistential(CallSymbol *callSymbol, tu_uint16 placement, tu_uint8 flags);
 
         // new instruction
-        tempo_utils::Status constructNew(AbstractSymbol *newSymbol, tu_uint16 placement, tu_uint8 flags);
+        tempo_utils::Status constructNew(CallSymbol *ctorSymbol, tu_uint16 placement, tu_uint8 flags);
 
         // trap instruction
         tempo_utils::Status trap(

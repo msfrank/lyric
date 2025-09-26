@@ -2,6 +2,9 @@
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytecode_interpreter.h>
 #include <lyric_runtime/data_cell.h>
+#include <lyric_runtime/internal/construct_enum.h>
+#include <lyric_runtime/internal/construct_instance.h>
+#include <lyric_runtime/internal/construct_new.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <tempo_utils/log_stream.h>
 
@@ -324,81 +327,13 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         break;
                     }
                     case lyric_object::LOAD_INSTANCE: {
-                        tempo_utils::Status status;
-                        auto existing = segmentManager->loadInstance(index, currentCoro, status);
-                        if (existing.type == DataCellType::INVALID) {
-                            if (status.notOk())
-                                return onError(op, status);
-                            // invoke the allocator
-                            auto *allocator = heapManager->prepareNew(
-                                lyric_object::NEW_INSTANCE, index, status);
-                            if (allocator == nullptr)
-                                return onError(op, status);
-                            status = allocator(this, m_state.get());
-                            if (status.notOk())
-                                return onError(op, status);
-                            if (!subroutineManager->returnToCaller(currentCoro, status))
-                                return onError(op, status);
-                            // capture the uninitialized instance
-                            const DataCell *instanceptr;
-                            ON_ERROR_IF_NOT_OK (currentCoro->peekData(&instanceptr));
-                            auto constructed = *instanceptr;
-                            // push the ctor frame onto the call stack
-                            std::vector<DataCell> noArguments;
-                            if (!heapManager->constructNew(noArguments, status))
-                                return onError(op, status);
-                            // reenter the interpreter to invoke the instance ctor
-                            auto initInstanceResult = runSubinterpreter();
-                            if (initInstanceResult.isStatus())
-                                return initInstanceResult;
-                            // store the instance
-                            if (!segmentManager->storeInstance(index, constructed, currentCoro, status))
-                                return onError(op, status);
-                            TU_LOG_V << "constructed instance " << constructed << " at instance address " << index;
-                            ON_ERROR_IF_NOT_OK (currentCoro->pushData(constructed));
-                        } else {
-                            TU_LOG_V << "loaded instance " << existing << " at instance address " << index;
-                            ON_ERROR_IF_NOT_OK (currentCoro->pushData(existing));
-                        }
+                        ON_ERROR_IF_NOT_OK (internal::construct_instance(
+                            index, flags, currentCoro, segmentManager, this, m_state.get()));
                         break;
                     }
                     case lyric_object::LOAD_ENUM: {
-                        tempo_utils::Status status;
-                        auto existing = segmentManager->loadEnum(index, currentCoro, status);
-                        if (existing.type == DataCellType::INVALID) {
-                            if (status.notOk())
-                                return onError(op, status);
-                            // invoke the allocator
-                            auto *allocator = heapManager->prepareNew(
-                                lyric_object::NEW_ENUM, index, status);
-                            if (allocator == nullptr)
-                                return onError(op, status);
-                            status = allocator(this, m_state.get());
-                            if (status.notOk())
-                                return onError(op, status);
-                            if (!subroutineManager->returnToCaller(currentCoro, status))
-                                return onError(op, status);
-                            // capture the uninitialized enum
-                            const DataCell *enumptr;
-                            ON_ERROR_IF_NOT_OK (currentCoro->peekData(&enumptr));
-                            auto constructed = *enumptr;
-                            // push the ctor frame onto the call stack
-                            std::vector<DataCell> noArguments;
-                            if (!heapManager->constructNew(noArguments, status))
-                                return onError(op, status);
-                            // reenter the interpreter to invoke the enum ctor
-                            auto initEnumResult = runSubinterpreter();
-                            if (initEnumResult.isStatus())
-                                return initEnumResult;
-                            // store the enum
-                            if (!segmentManager->storeEnum(index, constructed, currentCoro, status))
-                                return onError(op, status);
-                            TU_LOG_V << "constructed enum " << constructed << " at enum address " << index;
-                            ON_ERROR_IF_NOT_OK (currentCoro->pushData(constructed));
-                        } else {
-                            TU_LOG_V << "loaded enum " << existing << " at enum address " << index;
-                            ON_ERROR_IF_NOT_OK (currentCoro->pushData(existing));
-                        }
+                        ON_ERROR_IF_NOT_OK (internal::construct_enum(
+                            index, flags, currentCoro, segmentManager, this, m_state.get()));
                         break;
                     }
                     default:
@@ -1314,7 +1249,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 if (trap == nullptr)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kRuntimeInvariant, "no trap found"));
-                auto status = trap(this, m_state.get());  // invoke the trap
+                auto status = trap(this, m_state.get(), nullptr);  // invoke the trap
                 if (!status.isOk())
                     return onError(op, status);
                 // ensure currentCoro is up to date
@@ -1322,39 +1257,15 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 break;
             }
 
-            // invoke the constructor specified by the static address operand
+            // invoke the constructor specified by the address operand
             case lyric_object::Opcode::OP_NEW: {
-                auto flags = op.operands.flags_u8_address_u32_placement_u16.flags;
                 auto address = op.operands.flags_u8_address_u32_placement_u16.address;
-                auto placementSize = op.operands.flags_u8_address_u32_placement_u16.placement;
-                std::vector<DataCell> placement;
+                auto placement = op.operands.flags_u8_address_u32_placement_u16.placement;
+                auto flags = op.operands.flags_u8_address_u32_placement_u16.flags;
 
-                ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
-
-                // invoke the allocator
-                tempo_utils::Status status;
-                auto *allocator = heapManager->prepareNew(
-                    lyric_object::GET_NEW_TYPE(flags), address, status);
-                if (allocator == nullptr)
-                    return onError(op, status);
-                status = allocator(this, m_state.get());
+                auto status = internal::construct_new(
+                    address, placement, flags, currentCoro, segmentManager, this, m_state.get());
                 if (status.notOk())
-                    return onError(op, status);
-                if (!subroutineManager->returnToCaller(currentCoro, status))
-                    return onError(op, status);
-
-                auto callFlags = lyric_object::GET_CALL_FLAGS(flags);
-
-                if (callFlags & lyric_object::CALL_FORWARD_REST) {
-                    CallCell *call;
-                    ON_ERROR_IF_NOT_OK (currentCoro->peekCall(&call));
-                    for (int i = 0; i < call->numRest(); i++) {
-                        placement.push_back(call->getRest(i));
-                    }
-                }
-
-                // invoke the constructor
-                if (!heapManager->constructNew(placement, status))
                     return onError(op, status);
                 break;
             }

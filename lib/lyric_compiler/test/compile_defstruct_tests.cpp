@@ -104,8 +104,7 @@ TEST_F(CompileDefstruct, CompileDefineSubstructOfFinalStructFails)
     auto result = m_tester->compileModule(R"(
         defstruct Foo final {
         }
-        defstruct Bar {
-            init() from Foo() {}
+        defstruct Bar from Foo {
         }
     )");
 

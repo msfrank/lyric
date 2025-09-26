@@ -6,6 +6,7 @@
 #include <lyric_parser/archetype_node.h>
 #include <lyric_typing/type_system.h>
 
+#include "constructor_handler.h"
 #include "defstruct_handler.h"
 #include "impl_handler.h"
 #include "member_handler.h"
@@ -13,16 +14,18 @@
 
 namespace lyric_compiler {
 
-    tempo_utils::Result<lyric_assembler::CallSymbol *>
-    declare_struct_default_init(
-        const DefStruct *defstruct,
+    tempo_utils::Result<lyric_assembler::CallSymbol *> declare_struct_default_init(
         lyric_assembler::StructSymbol *structSymbol,
+        const std::string &allocatorTrap,
+        lyric_assembler::SymbolCache *symbolCache);
+
+    tempo_utils::Status define_struct_default_init(
+        const DefStruct *defstruct,
         const std::string &allocatorTrap,
         lyric_assembler::SymbolCache *symbolCache,
         lyric_typing::TypeSystem *typeSystem);
 
-    tempo_utils::Result<lyric_assembler::CallSymbol *>
-    declare_struct_init(
+    tempo_utils::Result<Constructor> declare_struct_init(
         const lyric_parser::ArchetypeNode *node,
         lyric_assembler::StructSymbol *structSymbol,
         const std::string &allocatorTrap,

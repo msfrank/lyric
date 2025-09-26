@@ -28,8 +28,6 @@ lyric_assembler::internal::touch_struct(
 
     TU_RETURN_IF_NOT_OK (writer.touchType(structSymbol->structType()));
 
-    TU_RETURN_IF_NOT_OK (writer.touchConstructor(structSymbol->getCtor()));
-
     for (auto it = structSymbol->membersBegin(); it != structSymbol->membersEnd(); it++) {
         TU_RETURN_IF_NOT_OK (writer.touchMember(it->second));
     }
@@ -118,9 +116,7 @@ write_struct(
     }
 
     // get struct ctor
-    tu_uint32 ctorCall;
-    TU_ASSIGN_OR_RETURN (ctorCall,
-        writer.getSectionAddress(structSymbol->getCtor(), lyric_object::LinkageSection::Call));
+    tu_uint32 ctorCall = lyric_runtime::INVALID_ADDRESS_U32;
 
     // serialize the sealed subtypes
     std::vector<tu_uint32> sealedSubtypes;

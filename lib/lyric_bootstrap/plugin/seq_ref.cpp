@@ -335,13 +335,13 @@ SeqIterator::clearMembersReachable()
 }
 
 tempo_utils::Status
-seq_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+seq_alloc(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
-    auto *currentCoro = state->currentCoro();
-
-    auto &frame = currentCoro->currentCallOrThrow();
-    const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
+    auto *currentCoro = state->currentCoro();
 
     auto ref = state->heapManager()->allocateRef<SeqRef>(vtable);
     currentCoro->pushData(ref);
@@ -350,7 +350,10 @@ seq_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
 }
 
 tempo_utils::Status
-seq_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+seq_ctor(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -375,7 +378,10 @@ seq_ctor(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 }
 
 tempo_utils::Status
-seq_size(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+seq_size(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -390,7 +396,10 @@ seq_size(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterS
 }
 
 tempo_utils::Status
-seq_get(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+seq_get(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -413,7 +422,10 @@ seq_get(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterSt
 }
 
 tempo_utils::Status
-seq_append(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+seq_append(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -441,7 +453,7 @@ seq_append(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
         right->values[i+1] = frame.getRest(i);
     }
 
-    const auto *vtable = seq->getVirtualTable();
+    vtable = seq->getVirtualTable();
     TU_ASSERT(vtable != nullptr);
 
     auto *node = new ConcatSeqNode();
@@ -461,7 +473,10 @@ seq_append(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
 }
 
 tempo_utils::Status
-seq_extend(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+seq_extend(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -485,7 +500,7 @@ seq_extend(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
     right->refcount++;
     int rheight = right->type == SeqNodeType::CONCAT? static_cast<ConcatSeqNode *>(right)->height : 1;
 
-    const auto *vtable = seq->getVirtualTable();
+    vtable = seq->getVirtualTable();
     TU_ASSERT(vtable != nullptr);
 
     auto *node = new ConcatSeqNode();
@@ -505,7 +520,10 @@ seq_extend(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interprete
 }
 
 tempo_utils::Status
-seq_slice(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+seq_slice(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -522,7 +540,7 @@ seq_slice(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
 
     auto *node = seq->seqSlice(arg0, arg1);
     if (node != nullptr) {
-        const auto *vtable = seq->getVirtualTable();
+        vtable = seq->getVirtualTable();
         node->refcount++;
         auto ref = state->heapManager()->allocateRef<SeqRef>(vtable);
         auto *instance = static_cast<SeqRef *>(ref.data.ref);
@@ -536,7 +554,10 @@ seq_slice(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpreter
 }
 
 tempo_utils::Status
-seq_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+seq_iterate(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -551,7 +572,7 @@ seq_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
     auto *instance = static_cast<SeqRef *>(receiver.data.ref);
 
     lyric_runtime::InterpreterStatus status;
-    const auto *vtable = state->segmentManager()->resolveClassVirtualTable(cell, status);
+    vtable = state->segmentManager()->resolveClassVirtualTable(cell, status);
     if (vtable == nullptr)
         return status;
 
@@ -562,13 +583,13 @@ seq_iterate(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::Interpret
 }
 
 tempo_utils::Status
-seq_iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+seq_iterator_alloc(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
-    auto *currentCoro = state->currentCoro();
-
-    auto &frame = currentCoro->currentCallOrThrow();
-    const auto *vtable = frame.getVirtualTable();
     TU_ASSERT(vtable != nullptr);
+    auto *currentCoro = state->currentCoro();
 
     auto ref = state->heapManager()->allocateRef<SeqIterator>(vtable);
     currentCoro->pushData(ref);
@@ -577,7 +598,10 @@ seq_iterator_alloc(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::In
 }
 
 tempo_utils::Status
-seq_iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+seq_iterator_valid(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 
@@ -594,7 +618,10 @@ seq_iterator_valid(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::In
 }
 
 tempo_utils::Status
-seq_iterator_next(lyric_runtime::BytecodeInterpreter *interp, lyric_runtime::InterpreterState *state)
+seq_iterator_next(
+    lyric_runtime::BytecodeInterpreter *interp,
+    lyric_runtime::InterpreterState *state,
+    const lyric_runtime::VirtualTable *vtable)
 {
     auto *currentCoro = state->currentCoro();
 

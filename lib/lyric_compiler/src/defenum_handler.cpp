@@ -57,16 +57,12 @@ lyric_compiler::DefEnumHandler::before(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // get allocator trap
-    std::string allocatorTrap;
     if (node->hasAttr(lyric_assembler::kLyricAssemblerTrapName)) {
         TU_RETURN_IF_NOT_OK (node->parseAttr(
-            lyric_assembler::kLyricAssemblerTrapName, allocatorTrap));
+            lyric_assembler::kLyricAssemblerTrapName, m_allocatorTrapName));
     }
 
-    // FIXME: get abstract flag from node
-    bool isAbstract = false;
-
-    lyric_parser::ArchetypeNode *initNode = nullptr;
+    std::vector<lyric_parser::ArchetypeNode *> initNodes;
     std::vector<lyric_parser::ArchetypeNode *> valNodes;
     std::vector<lyric_parser::ArchetypeNode *> caseNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
@@ -78,12 +74,10 @@ lyric_compiler::DefEnumHandler::before(
         lyric_schema::LyricAstId astId;
         TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, astId));
         switch (astId) {
-            case lyric_schema::LyricAstId::Init:
-                if (initNode != nullptr)
-                    return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
-                        "duplicate enum init declaration");
-                initNode = child;
+            case lyric_schema::LyricAstId::Init: {
+                initNodes.push_back(child);
                 break;
+            }
             case lyric_schema::LyricAstId::Val: {
                 valNodes.push_back(child);
                 break;
@@ -109,15 +103,25 @@ lyric_compiler::DefEnumHandler::before(
         ctx.appendChoice(std::move(definition));
     }
 
-    // resolve the super enum type if specified, otherwise derive from Singleton
-    auto superEnumType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Category);
+    lyric_common::TypeDef superEnumType;
+
+    // resolve the super enum type if specified, otherwise derive from Category
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        lyric_parser::ArchetypeNode *typeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+        lyric_typing::TypeSpec superEnumSpec;
+        TU_ASSIGN_OR_RETURN (superEnumSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (superEnumType, typeSystem->resolveAssignable(block, superEnumSpec));
+    } else {
+        superEnumType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Category);
+    }
 
     // resolve the super enum symbol
     TU_ASSIGN_OR_RETURN (m_defenum.superenumSymbol, block->resolveEnum(superEnumType));
 
     // declare the enum
     TU_ASSIGN_OR_RETURN (m_defenum.enumSymbol, block->declareEnum(
-        identifier, m_defenum.superenumSymbol, isHidden, lyric_object::DeriveType::Sealed, isAbstract));
+        identifier, m_defenum.superenumSymbol, isHidden, lyric_object::DeriveType::Sealed));
 
     // add enum to the current namespace if specified
     if (m_currentNamespace != nullptr) {
@@ -130,16 +134,6 @@ lyric_compiler::DefEnumHandler::before(
         TU_ASSIGN_OR_RETURN (member, declare_enum_member(
             valNode, /* isVariable= */ false, m_defenum.enumSymbol, typeSystem));
         m_defenum.members[valNode] = member;
-    }
-
-    // declare enum init
-    if (initNode != nullptr) {
-        TU_ASSIGN_OR_RETURN (m_defenum.initCall, declare_enum_init(
-            initNode, m_defenum.enumSymbol, allocatorTrap, typeSystem));
-    } else {
-        TU_ASSIGN_OR_RETURN (m_defenum.initCall, declare_enum_default_init(
-            m_defenum.enumSymbol, allocatorTrap));
-        m_defenum.defaultInit = true;
     }
 
     // declare methods
@@ -156,6 +150,19 @@ lyric_compiler::DefEnumHandler::before(
         TU_ASSIGN_OR_RETURN (impl, declare_enum_impl(
             implNode, m_defenum.enumSymbol, typeSystem));
         m_defenum.impls[implNode] = impl;
+    }
+
+    // declare constructors if any are specified, otherwise declare a default constructor
+    if (!initNodes.empty()) {
+        for (auto &initNode : initNodes) {
+            Constructor constructor;
+            TU_ASSIGN_OR_RETURN (constructor, declare_enum_init(
+                initNode, m_defenum.enumSymbol, m_allocatorTrapName, typeSystem));
+            m_defenum.ctors[initNode] = constructor;
+        }
+    } else {
+        TU_ASSIGN_OR_RETURN (m_defenum.defaultCtor, declare_enum_default_init(
+            m_defenum.enumSymbol, m_allocatorTrapName));
     }
 
     // FIXME: declare enum cases
@@ -179,10 +186,10 @@ lyric_compiler::DefEnumHandler::after(
 
     auto *driver = getDriver();
 
-    if (m_defenum.defaultInit) {
+    if (m_defenum.defaultCtor != nullptr) {
         auto *symbolCache = driver->getSymbolCache();
         auto *typeSystem = driver->getTypeSystem();
-        TU_RETURN_IF_NOT_OK (define_enum_default_init(&m_defenum, symbolCache, typeSystem));
+        TU_RETURN_IF_NOT_OK (define_enum_default_init(&m_defenum, m_allocatorTrapName, symbolCache, typeSystem));
     }
 
     if (!m_isSideEffect) {
@@ -215,10 +222,8 @@ lyric_compiler::EnumDefinition::decide(
     TU_RETURN_IF_NOT_OK (node->parseId(lyric_schema::kLyricAstVocabulary, astId));
     switch (astId) {
         case lyric_schema::LyricAstId::Init: {
-            auto superInvoker = std::make_unique<lyric_assembler::ConstructableInvoker>();
-            TU_RETURN_IF_NOT_OK (m_defenum->superenumSymbol->prepareCtor(*superInvoker));
-            auto handler = std::make_unique<ConstructorHandler>(
-                std::move(superInvoker), m_defenum->initCall, block, driver);
+            auto constructor = m_defenum->ctors.at(node);
+            auto handler = std::make_unique<ConstructorHandler>(constructor, block, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }

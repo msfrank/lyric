@@ -460,38 +460,19 @@ apply_new(const lyric_object::OpCell &op, CopyProcData &data)
 {
     if (op.opcode != lyric_object::Opcode::OP_NEW)
         return lyric_archiver::ArchiverStatus::forCondition(
-            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid call opcode");
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid opcode");
 
     auto &operands = op.operands.flags_u8_address_u32_placement_u16;
 
-    lyric_assembler::AbstractSymbol *newSymbol;
-    switch (lyric_object::GET_NEW_TYPE(operands.flags)) {
-        case lyric_object::NEW_CLASS: {
-            TU_ASSIGN_OR_RETURN (newSymbol, resolve_symbol(
-                lyric_object::LinkageSection::Class, operands.address, data));
-            break;
-        }
-        case lyric_object::NEW_ENUM: {
-            TU_ASSIGN_OR_RETURN (newSymbol, resolve_symbol(
-                lyric_object::LinkageSection::Enum, operands.address, data));
-            break;
-        }
-        case lyric_object::NEW_INSTANCE: {
-            TU_ASSIGN_OR_RETURN (newSymbol, resolve_symbol(
-                lyric_object::LinkageSection::Instance, operands.address, data));
-            break;
-        }
-        case lyric_object::NEW_STRUCT: {
-            TU_ASSIGN_OR_RETURN (newSymbol, resolve_symbol(
-                lyric_object::LinkageSection::Struct, operands.address, data));
-            break;
-        }
-        default:
-            return lyric_archiver::ArchiverStatus::forCondition(
-                lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid new type");
-    }
+    lyric_assembler::AbstractSymbol *sym;
+    TU_ASSIGN_OR_RETURN (sym, resolve_symbol(
+        lyric_object::LinkageSection::Call, operands.address, data));
+    if (!sym || sym->getSymbolType() != lyric_assembler::SymbolType::CALL)
+        return lyric_archiver::ArchiverStatus::forCondition(
+            lyric_archiver::ArchiverCondition::kArchiverInvariant, "invalid ctor call");
+    auto *ctorSymbol = lyric_assembler::cast_symbol_to_call(sym);
 
-    return data.fragment->constructNew(newSymbol, operands.placement, operands.flags);
+    return data.fragment->constructNew(ctorSymbol, operands.placement, operands.flags);
 }
 
 static tempo_utils::Status

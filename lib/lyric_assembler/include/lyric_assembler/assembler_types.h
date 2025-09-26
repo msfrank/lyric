@@ -327,11 +327,13 @@ namespace lyric_assembler {
     struct BoundMethod {
         lyric_common::SymbolUrl methodCall;
         bool hidden;
+        bool ctor;
         bool final;
         BoundMethod();
         BoundMethod(
             const lyric_common::SymbolUrl &methodCall,
             bool hidden,
+            bool ctor,
             bool final);
     };
 

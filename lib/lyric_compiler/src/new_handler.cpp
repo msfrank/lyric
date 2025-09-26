@@ -56,7 +56,7 @@ lyric_compiler::NewHandler::before(
     }
 
     if (newType.getType() != lyric_common::TypeDefType::Concrete)
-        return CompilerStatus::forCondition(lyric_compiler::CompilerCondition::kIncompatibleType,
+        return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "new type {} is not constructable", newType.toString());
 
     // resolve the symbol ctor
@@ -73,7 +73,7 @@ lyric_compiler::NewHandler::before(
         }
         case lyric_assembler::SymbolType::STRUCT: {
             auto *structSymbol = cast_symbol_to_struct(symbol);
-            TU_RETURN_IF_NOT_OK (structSymbol->prepareCtor(m_invoker));
+            TU_RETURN_IF_NOT_OK (structSymbol->prepareCtor(lyric_object::kCtorSpecialSymbol, m_invoker));
             break;
         }
         default:

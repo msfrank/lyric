@@ -476,7 +476,7 @@ namespace lyric_assembler {
     class NewInstruction: public AbstractInstruction {
     public:
         NewInstruction(
-            AbstractSymbol *symbol,
+            CallSymbol *ctorSymbol,
             tu_uint16 placement,
             tu_uint8 flags);
         InstructionType getType() const override;
@@ -490,7 +490,7 @@ namespace lyric_assembler {
             tu_uint16 &patchOffset) const override;
         std::string toString() const override;
     private:
-        AbstractSymbol *m_symbol;
+        CallSymbol *m_ctorSymbol;
         tu_uint16 m_placement;
         tu_uint8 m_flags;
     };

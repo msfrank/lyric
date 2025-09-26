@@ -314,8 +314,8 @@ lyric_assembler::ActionMethod::ActionMethod(const lyric_common::SymbolUrl &metho
 }
 
 lyric_assembler::BoundMethod::BoundMethod()
-    : methodCall(),
-      hidden(false),
+    : hidden(false),
+      ctor(false),
       final(false)
 {
 }
@@ -323,9 +323,11 @@ lyric_assembler::BoundMethod::BoundMethod()
 lyric_assembler::BoundMethod::BoundMethod(
     const lyric_common::SymbolUrl &methodCall,
     bool hidden,
+    bool ctor,
     bool final)
     : methodCall(methodCall),
       hidden(hidden),
+      ctor(ctor),
       final(final)
 {
     TU_ASSERT (methodCall.isValid());

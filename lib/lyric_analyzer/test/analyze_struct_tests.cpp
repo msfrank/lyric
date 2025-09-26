@@ -35,7 +35,8 @@ TEST_F(AnalyzeStruct, DeclareStruct)
     ASSERT_TRUE (struct0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), struct0.getSymbolPath());
 
-    auto ctor = struct0.getConstructor();
+    ASSERT_EQ (1, struct0.numMethods());
+    auto ctor = struct0.getMethod(0);
     ASSERT_TRUE (ctor.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "$ctor"}), ctor.getSymbolPath());
 }

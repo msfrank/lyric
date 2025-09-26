@@ -11,7 +11,8 @@
 namespace lyric_compiler {
 
     struct Constructor {
-        std::unique_ptr<lyric_assembler::ConstructableInvoker> superInvoker;
+        //std::unique_ptr<lyric_assembler::ConstructableInvoker> superInvoker;
+        lyric_assembler::AbstractSymbol *superSymbol = nullptr;
         lyric_assembler::CallSymbol *callSymbol = nullptr;
         lyric_assembler::ProcHandle *procHandle = nullptr;
     };
@@ -19,8 +20,7 @@ namespace lyric_compiler {
     class ConstructorHandler : public BaseGrouping {
     public:
         ConstructorHandler(
-            std::unique_ptr<lyric_assembler::ConstructableInvoker> &&superInvoker,
-            lyric_assembler::CallSymbol *initCall,
+            Constructor constructor,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
 
@@ -58,6 +58,7 @@ namespace lyric_compiler {
 
     private:
         Constructor *m_constructor;
+        std::unique_ptr<lyric_assembler::ConstructableInvoker> m_invoker;
     };
 }
 

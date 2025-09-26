@@ -13,8 +13,6 @@ namespace lyric_parser::internal {
         explicit ModuleDefinstanceOps(ModuleArchetype *listener);
 
         void enterDefinstanceStatement(ModuleParser::DefinstanceStatementContext *ctx);
-        void enterInstanceInit(ModuleParser::InstanceInitContext *ctx);
-        void exitInstanceInit(ModuleParser::InstanceInitContext *ctx);
         void enterInstanceVal(ModuleParser::InstanceValContext *ctx);
         void exitInstanceVal(ModuleParser::InstanceValContext *ctx);
         void enterInstanceVar(ModuleParser::InstanceVarContext *ctx);

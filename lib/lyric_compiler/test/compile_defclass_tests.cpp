@@ -124,7 +124,7 @@ TEST_F(CompileDefclass, EvaluateDerefThisPrivateVarMember)
                 this._index
             }
         }
-        defclass Bar {
+        defclass Bar from Foo {
             init(i: Int) from Foo(i) {}
             def Add(i: Int): Int {
                 i + this.index()
@@ -204,7 +204,7 @@ TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseMethod)
                 1
             }
         }
-        defclass Bar {
+        defclass Bar from Foo {
             init() from Foo() {}
             def Index(): Int {
                 2
@@ -300,7 +300,7 @@ TEST_F(CompileDefclass, CompileDefineSubclassOfFinalClassFails)
     auto result = m_tester->compileModule(R"(
         defclass Foo final {
         }
-        defclass Bar {
+        defclass Bar from Foo {
             init() from Foo() {}
         }
     )");

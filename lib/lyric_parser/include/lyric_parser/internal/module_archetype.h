@@ -207,8 +207,6 @@ namespace lyric_parser::internal {
 
         // implemented by ModuleDefinstanceOps
         void enterDefinstanceStatement(ModuleParser::DefinstanceStatementContext *ctx) override;
-        void enterInstanceInit(ModuleParser::InstanceInitContext *ctx) override;
-        void exitInstanceInit(ModuleParser::InstanceInitContext *ctx) override;
         void enterInstanceVal(ModuleParser::InstanceValContext *ctx) override;
         void exitInstanceVal(ModuleParser::InstanceValContext *ctx) override;
         void enterInstanceVar(ModuleParser::InstanceVarContext *ctx) override;

@@ -69,16 +69,12 @@ lyric_compiler::DefClassHandler::before(
     }
 
     // get allocator trap
-    std::string allocatorTrap;
     if (node->hasAttr(lyric_assembler::kLyricAssemblerTrapName)) {
         TU_RETURN_IF_NOT_OK (node->parseAttr(
-            lyric_assembler::kLyricAssemblerTrapName, allocatorTrap));
+            lyric_assembler::kLyricAssemblerTrapName, m_allocatorTrapName));
     }
 
-    // FIXME: get abstract flag from node
-    bool isAbstract = false;
-
-    lyric_parser::ArchetypeNode *initNode = nullptr;
+    std::vector<lyric_parser::ArchetypeNode *> initNodes;
     std::vector<lyric_parser::ArchetypeNode *> valNodes;
     std::vector<lyric_parser::ArchetypeNode *> varNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
@@ -91,12 +87,10 @@ lyric_compiler::DefClassHandler::before(
         lyric_schema::LyricAstId astId;
         TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, astId));
         switch (astId) {
-            case lyric_schema::LyricAstId::Init:
-                if (initNode != nullptr)
-                    return CompilerStatus::forCondition(CompilerCondition::kSyntaxError,
-                        "duplicate class init declaration");
-                initNode = child;
+            case lyric_schema::LyricAstId::Init: {
+                initNodes.push_back(child);
                 break;
+            }
             case lyric_schema::LyricAstId::Val: {
                 valNodes.push_back(child);
                 break;
@@ -126,18 +120,17 @@ lyric_compiler::DefClassHandler::before(
         ctx.appendChoice(std::move(definition));
     }
 
+    lyric_common::TypeDef superClassType;
+
     // resolve the super class type if specified, otherwise derive from Object
-    auto superClassType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-    if (initNode) {
-        auto *superNode = initNode->getChild(1);
-        TU_ASSERT (superNode != nullptr);
-        if (superNode->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
-            lyric_parser::ArchetypeNode *typeNode;
-            TU_RETURN_IF_NOT_OK (superNode->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
-            lyric_typing::TypeSpec superClassSpec;
-            TU_ASSIGN_OR_RETURN (superClassSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-            TU_ASSIGN_OR_RETURN (superClassType, typeSystem->resolveAssignable(block, superClassSpec));
-        }
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        lyric_parser::ArchetypeNode *typeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+        lyric_typing::TypeSpec superClassSpec;
+        TU_ASSIGN_OR_RETURN (superClassSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (superClassType, typeSystem->resolveAssignable(block, superClassSpec));
+    } else {
+        superClassType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     }
 
     // resolve the super class symbol
@@ -146,8 +139,7 @@ lyric_compiler::DefClassHandler::before(
     // declare the class
     TU_ASSIGN_OR_RETURN (m_defclass.classSymbol, block->declareClass(
         identifier, m_defclass.superclassSymbol, isHidden,
-        m_defclass.templateSpec.templateParameters, lyric_compiler::convert_derive_type(derive),
-        isAbstract));
+        m_defclass.templateSpec.templateParameters, lyric_compiler::convert_derive_type(derive)));
 
     // add class to the current namespace if specified
     if (m_currentNamespace != nullptr) {
@@ -168,16 +160,6 @@ lyric_compiler::DefClassHandler::before(
         TU_ASSIGN_OR_RETURN (member, declare_class_member(
             varNode, /* isVariable= */ true, m_defclass.classSymbol, typeSystem));
         m_defclass.members[varNode] = member;
-    }
-
-    // declare class init
-    if (initNode != nullptr) {
-        TU_ASSIGN_OR_RETURN (m_defclass.initCall, declare_class_init(
-            initNode, m_defclass.classSymbol, allocatorTrap, typeSystem));
-    } else {
-        TU_ASSIGN_OR_RETURN (m_defclass.initCall, declare_class_default_init(
-            m_defclass.classSymbol, allocatorTrap));
-        m_defclass.defaultInit = true;
     }
 
     // declare abstract methods
@@ -204,6 +186,19 @@ lyric_compiler::DefClassHandler::before(
         m_defclass.impls[implNode] = impl;
     }
 
+    // declare constructors if any are specified, otherwise declare a default constructor
+    if (!initNodes.empty()) {
+        for (auto &initNode : initNodes) {
+            Constructor constructor;
+            TU_ASSIGN_OR_RETURN (constructor, declare_class_init(
+                initNode, m_defclass.classSymbol, m_allocatorTrapName, typeSystem));
+            m_defclass.ctors[initNode] = constructor;
+        }
+    } else {
+        TU_ASSIGN_OR_RETURN (m_defclass.defaultCtor, declare_class_default_init(
+            m_defclass.classSymbol, m_allocatorTrapName));
+    }
+
     return {};
 }
 
@@ -217,12 +212,11 @@ lyric_compiler::DefClassHandler::after(
 
     auto *driver = getDriver();
 
-    if (m_defclass.defaultInit) {
+    if (m_defclass.defaultCtor != nullptr) {
         auto *symbolCache = driver->getSymbolCache();
         auto *typeSystem = driver->getTypeSystem();
-        TU_RETURN_IF_NOT_OK (define_class_default_init(&m_defclass, symbolCache, typeSystem));
+        TU_RETURN_IF_NOT_OK (define_class_default_init(&m_defclass, m_allocatorTrapName, symbolCache, typeSystem));
     }
-
     if (!m_isSideEffect) {
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));
     }
@@ -253,10 +247,8 @@ lyric_compiler::ClassDefinition::decide(
     TU_RETURN_IF_NOT_OK (node->parseId(lyric_schema::kLyricAstVocabulary, astId));
     switch (astId) {
         case lyric_schema::LyricAstId::Init: {
-            auto superInvoker = std::make_unique<lyric_assembler::ConstructableInvoker>();
-            TU_RETURN_IF_NOT_OK (m_defclass->superclassSymbol->prepareCtor(*superInvoker));
-            auto handler = std::make_unique<ConstructorHandler>(
-                std::move(superInvoker), m_defclass->initCall, block, driver);
+            auto constructor = m_defclass->ctors.at(node);
+            auto handler = std::make_unique<ConstructorHandler>(constructor, block, driver);
             ctx.setGrouping(std::move(handler));
             return {};
         }

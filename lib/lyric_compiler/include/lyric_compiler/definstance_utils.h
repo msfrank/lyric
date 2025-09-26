@@ -13,14 +13,10 @@
 
 namespace lyric_compiler {
 
-    tempo_utils::Result<lyric_assembler::CallSymbol *>
-    declare_instance_init(
-        lyric_assembler::InstanceSymbol *instanceSymbol,
-        const std::string &allocatorTrap);
-
     tempo_utils::Status
     define_instance_default_init(
         const DefInstance *definstance,
+        const std::string &allocatorTrap,
         lyric_assembler::SymbolCache *symbolCache,
         lyric_typing::TypeSystem *typeSystem);
 

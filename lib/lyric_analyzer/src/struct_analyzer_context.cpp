@@ -10,11 +10,10 @@
 
 lyric_analyzer::StructAnalyzerContext::StructAnalyzerContext(
     AnalyzerScanDriver *driver,
-    lyric_assembler::StructSymbol *structSymbol,
-    const lyric_parser::ArchetypeNode *initNode)
+    lyric_assembler::StructSymbol *structSymbol)
     : m_driver(driver),
       m_structSymbol(structSymbol),
-      m_initNode(initNode)
+      m_missingInit(true)
 {
     TU_ASSERT (m_driver != nullptr);
     TU_ASSERT (m_structSymbol != nullptr);
@@ -37,6 +36,9 @@ lyric_analyzer::StructAnalyzerContext::enter(
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
     switch (resource->getId()) {
+        case lyric_schema::LyricAstId::Init:
+            m_missingInit = false;
+            return declareCtor(node);
         case lyric_schema::LyricAstId::Val:
             return declareMember(node);
         case lyric_schema::LyricAstId::Def:
@@ -44,10 +46,9 @@ lyric_analyzer::StructAnalyzerContext::enter(
         case lyric_schema::LyricAstId::Impl:
             return declareImpl(node);
         default:
-            break;
+            ctx.setSkipChildren(true);
+            return {};
     }
-
-    return {};
 }
 
 tempo_utils::Status
@@ -62,26 +63,60 @@ lyric_analyzer::StructAnalyzerContext::exit(
 
     if (resource->getId() == lyric_schema::LyricAstId::DefStruct) {
         // define the constructor
-        if (m_initNode != nullptr) {
-            auto *block = getBlock();
-            auto *typeSystem = m_driver->getTypeSystem();
-            auto *packNode = m_initNode->getChild(0);
-            lyric_typing::PackSpec packSpec;
-            TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(block, packNode->getArchetypeNode()));
-            lyric_assembler::ParameterPack parameterPack;
-            TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(block, packSpec));
+        if (m_missingInit) {
             lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_structSymbol->declareCtor(/* isHidden= */ false));
-            TU_RETURN_IF_STATUS (ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
-        } else {
-            lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_structSymbol->declareCtor(/* isHidden= */ false));
+            TU_ASSIGN_OR_RETURN (ctorSymbol, m_structSymbol->declareCtor(
+                lyric_object::kCtorSpecialSymbol, false));
             TU_RETURN_IF_STATUS (ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
         }
         return m_driver->popContext();
     }
 
     return {};
+}
+
+tempo_utils::Status
+lyric_analyzer::StructAnalyzerContext::declareCtor(const lyric_parser::ArchetypeNode *node)
+{
+    std::string identifier;
+    if (node->hasAttr(lyric_parser::kLyricAstIdentifier)) {
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+    } else {
+        identifier = lyric_object::kCtorSpecialSymbol;
+    }
+
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
+
+    lyric_parser::ArchetypeNode *genericNode = nullptr;
+    if (node->hasAttr(lyric_parser::kLyricAstGenericOffset)) {
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstGenericOffset, genericNode));
+    }
+
+    auto *block = getBlock();
+    auto *typeSystem = m_driver->getTypeSystem();
+
+    lyric_assembler::CallSymbol *ctorSymbol;
+    TU_ASSIGN_OR_RETURN (ctorSymbol, m_structSymbol->declareCtor(identifier, isHidden));
+
+    auto *resolver = ctorSymbol->callResolver();
+
+    // determine the parameter list
+    auto *packNode = node->getChild(0);
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(block, packNode->getArchetypeNode()));
+    lyric_assembler::ParameterPack parameterPack;
+    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
+
+    // define the method
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
+
+    TU_LOG_V << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << m_structSymbol->getSymbolUrl();
+
+    // push the proc context
+    auto ctx = std::make_unique<ProcAnalyzerContext>(m_driver, procHandle);
+    return m_driver->pushContext(std::move(ctx));
 }
 
 tempo_utils::Status

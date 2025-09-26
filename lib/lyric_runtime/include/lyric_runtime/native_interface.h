@@ -11,6 +11,7 @@ namespace lyric_runtime {
     class InterpreterState;
     class NativeInterface;
     class SegmentManager;
+    class VirtualTable;
 
     /**
      *
@@ -20,7 +21,7 @@ namespace lyric_runtime {
     /**
      *
      */
-    typedef tempo_utils::Status (*NativeFunc)(BytecodeInterpreter *, InterpreterState *);
+    typedef tempo_utils::Status (*NativeFunc)(BytecodeInterpreter *, InterpreterState *, const VirtualTable *);
 
     struct NativeTrap {
         NativeFunc func;

@@ -7,32 +7,53 @@
 #include <lyric_compiler/definstance_utils.h>
 #include <lyric_parser/ast_attrs.h>
 
-tempo_utils::Result<lyric_assembler::CallSymbol *>
-lyric_compiler::declare_instance_init(
-    lyric_assembler::InstanceSymbol *instanceSymbol,
-    const std::string &allocatorTrap)
+// tempo_utils::Result<lyric_assembler::CallSymbol *>
+// lyric_compiler::declare_instance_init(
+//     lyric_assembler::InstanceSymbol *instanceSymbol,
+//     const std::string &allocatorTrap)
+// {
+//     TU_ASSERT (instanceSymbol != nullptr);
+//
+//     // declare the constructor
+//     lyric_assembler::CallSymbol *ctorSymbol;
+//     TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
+//
+//     // define 0-arity constructor
+//     TU_RETURN_IF_STATUS(ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
+//
+//     return ctorSymbol;
+// }
+
+tempo_utils::Status
+lyric_compiler::define_instance_default_init(
+    const DefInstance *definstance,
+    const std::string &allocatorTrap,
+    lyric_assembler::SymbolCache *symbolCache,
+    lyric_typing::TypeSystem *typeSystem)
 {
+    TU_ASSERT (definstance != nullptr);
+
+    auto *instanceSymbol = definstance->instanceSymbol;
     TU_ASSERT (instanceSymbol != nullptr);
+
+    // verify that super ctor takes no arguments
+    auto *superInstance = instanceSymbol->superInstance();
+    auto superCtorUrl = superInstance->getCtor();
+    lyric_assembler::AbstractSymbol *superCtorSymbol;
+    TU_ASSIGN_OR_RETURN (superCtorSymbol, symbolCache->getOrImportSymbol(superCtorUrl));
+    auto *superCtorCall = cast_symbol_to_call(superCtorSymbol);
+    if (superCtorCall->numParameters() > 0)
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+            "super instance {} is not default-constructable", superCtorUrl.toString());
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
     TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
 
     // define 0-arity constructor
-    TU_RETURN_IF_STATUS(ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
 
-    return ctorSymbol;
-}
-
-tempo_utils::Status
-lyric_compiler::define_instance_default_init(
-    const DefInstance *definstance,
-    lyric_assembler::SymbolCache *symbolCache,
-    lyric_typing::TypeSystem *typeSystem)
-{
-    TU_ASSERT (definstance != nullptr);
-
-    auto *procHandle = definstance->initCall->callProc();
     auto *ctorBlock = procHandle->procBlock();
     auto *procBuilder = procHandle->procCode();
     auto *fragment = procBuilder->rootFragment();
@@ -97,8 +118,8 @@ lyric_compiler::define_instance_default_init(
         TU_RETURN_IF_NOT_OK (definstance->instanceSymbol->setMemberInitialized(memberName));
     }
 
-    TU_LOG_V << "declared ctor " << definstance->initCall->getSymbolUrl()
-                << " for " << definstance->instanceSymbol->getSymbolUrl();
+    TU_LOG_V << "declared ctor " << ctorSymbol->getSymbolUrl()
+        << " for " << definstance->instanceSymbol->getSymbolUrl();
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());

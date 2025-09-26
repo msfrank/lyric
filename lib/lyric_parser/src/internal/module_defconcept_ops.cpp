@@ -37,6 +37,12 @@ lyric_parser::internal::ModuleDefconceptOps::enterDefconceptStatement(ModulePars
     ArchetypeNode *defconceptNode;
     TU_ASSIGN_OR_RAISE (defconceptNode, state->appendNode(lyric_schema::kLyricAstDefConceptClass, location));
 
+    // set the concept super type if specified
+    if (ctx->conceptBase()) {
+        auto *superTypeNode = make_Type_node(state, ctx->conceptBase()->assignableType());
+        TU_RAISE_IF_NOT_OK (defconceptNode->putAttr(kLyricAstTypeOffset, superTypeNode));
+    }
+
     // push defconcept onto stack
     TU_RAISE_IF_NOT_OK (state->pushNode(defconceptNode));
 }
