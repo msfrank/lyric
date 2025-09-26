@@ -249,217 +249,217 @@ lyric_runtime::HeapManager::loadRestOntoStack(const CallCell &frame)
     return {};
 }
 
-lyric_runtime::NativeFunc
-lyric_runtime::HeapManager::prepareNew(uint8_t newType, tu_uint32 address, tempo_utils::Status &status)
-{
-    auto *currentCoro = m_systemScheduler->currentCoro();
-    TU_ASSERT(currentCoro != nullptr);
-    auto *sp = currentCoro->peekSP();
-    TU_ASSERT (sp != nullptr);
-
-    // determine the constructor receiver
-    auto descriptor = m_segmentManager->resolveReceiver(sp, address, status);
-    if (!descriptor.isValid())
-        return nullptr;
-
-    // resolve the vtable for the receiver
-    const VirtualTable *vtable;
-    switch (descriptor.type) {
-        case DataCellType::CLASS: {
-            vtable = m_segmentManager->resolveClassVirtualTable(descriptor, status);
-            if (vtable == nullptr)
-                return nullptr;
-            break;
-        }
-        case DataCellType::ENUM: {
-            vtable = m_segmentManager->resolveEnumVirtualTable(descriptor, status);
-            if (vtable == nullptr)
-                return nullptr;
-            break;
-        }
-        case DataCellType::INSTANCE: {
-            vtable = m_segmentManager->resolveInstanceVirtualTable(descriptor, status);
-            if (vtable == nullptr)
-                return nullptr;
-            break;
-        }
-        case DataCellType::STRUCT: {
-            vtable = m_segmentManager->resolveStructVirtualTable(descriptor, status);
-            if (vtable == nullptr)
-                return nullptr;
-            break;
-        }
-        default:
-            status = InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
-                "invalid constructor receiver");
-            return nullptr;
-    }
-
-    // find the allocator and the segment which contains it
-    BytecodeSegment *segment = nullptr;
-    NativeFunc allocator = nullptr;
-    for (auto *curr = vtable; curr != nullptr; curr = curr->getParent()) {
-        segment = curr->getSegment();
-        allocator = curr->getAllocator();
-        if (allocator)
-            break;
-    }
-
-    if (allocator == nullptr) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "missing allocator");
-        return nullptr;
-    }
-
-    TU_ASSERT (segment != nullptr);
-
-    auto callSegment = segment->getSegmentIndex();
-
-    // determine the return IP and SP so returnToCaller will restore correctly
-    auto returnSegment = currentCoro->peekSP()->getSegmentIndex();
-    auto returnIP = currentCoro->peekIP();
-
-    // construct a minimal activation frame just to pass the vtable to the allocator
-    CallCell allocatorFrame(INVALID_ADDRESS_U32, callSegment,
-        INVALID_ADDRESS_U32, returnSegment, returnIP, true,
-        currentCoro->dataStackSize(), 0, 0, 0, 0, {}, vtable);
-
-    // the stack is now prepared to invoke the allocator
-    currentCoro->pushCall(allocatorFrame, lyric_object::BytecodeIterator(), nullptr);
-
-    return allocator;
-}
-
-bool
-lyric_runtime::HeapManager::constructNew(std::vector<DataCell> &args, tempo_utils::Status &status)
-{
-    auto *currentCoro = m_systemScheduler->currentCoro();
-    TU_ASSERT(currentCoro != nullptr);
-
-    DataCell *receiver;
-    status = currentCoro->peekData(&receiver);
-    if (status.notOk())
-        return false;
-
-    const VirtualTable *vtable;
-    switch (receiver->type) {
-        case DataCellType::REF:
-            vtable = receiver->data.ref->getVirtualTable();
-            break;
-        case DataCellType::STATUS:
-            vtable = receiver->data.status->getVirtualTable();
-            break;
-        default:
-            status = InterpreterStatus::forCondition(
-                InterpreterCondition::kInvalidReceiver, "invalid data cell");
-            return false;
-    }
-
-    // get the ctor method
-    if (vtable == nullptr) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "missing vtable");
-        return false;
-    }
-    const auto *ctor = vtable->getCtor();
-    if (ctor == nullptr) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "missing ctor");
-        return false;
-    }
-
-    auto *segment = ctor->getSegment();
-    const auto callIndex = ctor->getCallIndex();
-    const auto procOffset = ctor->getProcOffset();
-
-    // proc offset must be within the segment bytecode
-    auto *bytecodeData = segment->getBytecodeData();
-    auto bytecodeSize = segment->getBytecodeSize();
-    if (bytecodeSize <= procOffset) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
-        return false;
-    }
-
-    const uint8_t *header = bytecodeData + procOffset;
-    const BytecodeSegment *returnSP = currentCoro->peekSP();
-    const lyric_object::BytecodeIterator returnIP = currentCoro->peekIP();
-    auto stackGuard = currentCoro->dataStackSize();
-
-    // read the call proc header
-    auto procSize = tempo_utils::read_u32_and_advance(header);
-    auto numArguments = tempo_utils::read_u16_and_advance(header);
-    auto numLocals = tempo_utils::read_u16_and_advance(header);
-    auto numLexicals = tempo_utils::read_u16_and_advance(header);
-    auto codeSize = procSize - 6;
-
-    // maximum number of args is 2^16
-    if (std::numeric_limits<uint16_t>::max() <= args.size()) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "too many arguments");
-        return false;
-    }
-
-    // all required args must be present
-    if (args.size() < numArguments) {
-        status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "not enough arguments");
-        return false;
-    }
-
-    auto numRest = static_cast<uint16_t>(args.size()) - numArguments;
-
-    // construct the activation call frame
-    CallCell frame(callIndex, segment->getSegmentIndex(),
-        procOffset, returnSP->getSegmentIndex(), returnIP, true,
-        stackGuard, numArguments, numRest, numLocals, numLexicals,
-        args, *receiver);
-
-    // import each lexical from the latest activation and push it onto the stack
-    for (uint16_t i = 0; i < numLexicals; i++) {
-
-        // read the call proc lexical
-        auto activationCall = tempo_utils::read_u32_and_advance(header);
-        auto targetOffset = tempo_utils::read_u32_and_advance(header);
-        auto lexicalTarget = tempo_utils::read_u8_and_advance(header);
-        codeSize -= 9;
-
-        bool found = false;
-        for (auto iterator = currentCoro->callsBegin(); iterator != currentCoro->callsEnd(); iterator++) {
-            const auto &ancestor = *iterator;
-
-            if (ancestor.getCallSegment() != segment->getSegmentIndex())    // lexical must exist in callee segment
-                continue;
-            if (ancestor.getCallIndex() != activationCall)                  // frame does not match activation call
-                continue;
-            switch (lexicalTarget) {
-                case lyric_object::LEXICAL_ARGUMENT:
-                    frame.setLexical(i, ancestor.getArgument(targetOffset));
-                    break;
-                case lyric_object::LEXICAL_LOCAL:
-                    frame.setLexical(i, ancestor.getLocal(targetOffset));
-                    break;
-                default:
-                    status = InterpreterStatus::forCondition(
-                        InterpreterCondition::kRuntimeInvariant, "invalid lexical target");
-                    return false;
-            }
-            found = true;                       // we found the lexical, break loop early
-            break;
-        }
-        if (!found) {
-            status = InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "missing lexical");
-            return false;
-        }
-    }
-
-    lyric_object::BytecodeIterator ip(header, codeSize);
-    currentCoro->pushCall(frame, ip, segment);               // push the activation onto the call stack
-    TU_LOG_V << "moved ip to " << ip;
-
-    return true;
-}
+// lyric_runtime::NativeFunc
+// lyric_runtime::HeapManager::prepareNew(uint8_t newType, tu_uint32 address, tempo_utils::Status &status)
+// {
+//     auto *currentCoro = m_systemScheduler->currentCoro();
+//     TU_ASSERT(currentCoro != nullptr);
+//     auto *sp = currentCoro->peekSP();
+//     TU_ASSERT (sp != nullptr);
+//
+//     // determine the constructor receiver
+//     auto descriptor = m_segmentManager->resolveReceiver(sp, address, status);
+//     if (!descriptor.isValid())
+//         return nullptr;
+//
+//     // resolve the vtable for the receiver
+//     const VirtualTable *vtable;
+//     switch (descriptor.type) {
+//         case DataCellType::CLASS: {
+//             vtable = m_segmentManager->resolveClassVirtualTable(descriptor, status);
+//             if (vtable == nullptr)
+//                 return nullptr;
+//             break;
+//         }
+//         case DataCellType::ENUM: {
+//             vtable = m_segmentManager->resolveEnumVirtualTable(descriptor, status);
+//             if (vtable == nullptr)
+//                 return nullptr;
+//             break;
+//         }
+//         case DataCellType::INSTANCE: {
+//             vtable = m_segmentManager->resolveInstanceVirtualTable(descriptor, status);
+//             if (vtable == nullptr)
+//                 return nullptr;
+//             break;
+//         }
+//         case DataCellType::STRUCT: {
+//             vtable = m_segmentManager->resolveStructVirtualTable(descriptor, status);
+//             if (vtable == nullptr)
+//                 return nullptr;
+//             break;
+//         }
+//         default:
+//             status = InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
+//                 "invalid constructor receiver");
+//             return nullptr;
+//     }
+//
+//     // find the allocator and the segment which contains it
+//     BytecodeSegment *segment = nullptr;
+//     NativeFunc allocator = nullptr;
+//     for (auto *curr = vtable; curr != nullptr; curr = curr->getParent()) {
+//         segment = curr->getSegment();
+//         allocator = curr->getAllocator();
+//         if (allocator)
+//             break;
+//     }
+//
+//     if (allocator == nullptr) {
+//         status = InterpreterStatus::forCondition(
+//             InterpreterCondition::kRuntimeInvariant, "missing allocator");
+//         return nullptr;
+//     }
+//
+//     TU_ASSERT (segment != nullptr);
+//
+//     auto callSegment = segment->getSegmentIndex();
+//
+//     // determine the return IP and SP so returnToCaller will restore correctly
+//     auto returnSegment = currentCoro->peekSP()->getSegmentIndex();
+//     auto returnIP = currentCoro->peekIP();
+//
+//     // construct a minimal activation frame just to pass the vtable to the allocator
+//     CallCell allocatorFrame(INVALID_ADDRESS_U32, callSegment,
+//         INVALID_ADDRESS_U32, returnSegment, returnIP, true,
+//         currentCoro->dataStackSize(), 0, 0, 0, 0, {}, vtable);
+//
+//     // the stack is now prepared to invoke the allocator
+//     currentCoro->pushCall(allocatorFrame, lyric_object::BytecodeIterator(), nullptr);
+//
+//     return allocator;
+// }
+//
+// bool
+// lyric_runtime::HeapManager::constructNew(std::vector<DataCell> &args, tempo_utils::Status &status)
+// {
+//     auto *currentCoro = m_systemScheduler->currentCoro();
+//     TU_ASSERT(currentCoro != nullptr);
+//
+//     DataCell *receiver;
+//     status = currentCoro->peekData(&receiver);
+//     if (status.notOk())
+//         return false;
+//
+//     const VirtualTable *vtable;
+//     switch (receiver->type) {
+//         case DataCellType::REF:
+//             vtable = receiver->data.ref->getVirtualTable();
+//             break;
+//         case DataCellType::STATUS:
+//             vtable = receiver->data.status->getVirtualTable();
+//             break;
+//         default:
+//             status = InterpreterStatus::forCondition(
+//                 InterpreterCondition::kInvalidReceiver, "invalid data cell");
+//             return false;
+//     }
+//
+//     // get the ctor method
+//     if (vtable == nullptr) {
+//         status = InterpreterStatus::forCondition(
+//             InterpreterCondition::kRuntimeInvariant, "missing vtable");
+//         return false;
+//     }
+//     const auto *ctor = vtable->getCtor();
+//     if (ctor == nullptr) {
+//         status = InterpreterStatus::forCondition(
+//             InterpreterCondition::kRuntimeInvariant, "missing ctor");
+//         return false;
+//     }
+//
+//     auto *segment = ctor->getSegment();
+//     const auto callIndex = ctor->getCallIndex();
+//     const auto procOffset = ctor->getProcOffset();
+//
+//     // proc offset must be within the segment bytecode
+//     auto *bytecodeData = segment->getBytecodeData();
+//     auto bytecodeSize = segment->getBytecodeSize();
+//     if (bytecodeSize <= procOffset) {
+//         status = InterpreterStatus::forCondition(
+//             InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
+//         return false;
+//     }
+//
+//     const uint8_t *header = bytecodeData + procOffset;
+//     const BytecodeSegment *returnSP = currentCoro->peekSP();
+//     const lyric_object::BytecodeIterator returnIP = currentCoro->peekIP();
+//     auto stackGuard = currentCoro->dataStackSize();
+//
+//     // read the call proc header
+//     auto procSize = tempo_utils::read_u32_and_advance(header);
+//     auto numArguments = tempo_utils::read_u16_and_advance(header);
+//     auto numLocals = tempo_utils::read_u16_and_advance(header);
+//     auto numLexicals = tempo_utils::read_u16_and_advance(header);
+//     auto codeSize = procSize - 6;
+//
+//     // maximum number of args is 2^16
+//     if (std::numeric_limits<uint16_t>::max() <= args.size()) {
+//         status = InterpreterStatus::forCondition(
+//             InterpreterCondition::kRuntimeInvariant, "too many arguments");
+//         return false;
+//     }
+//
+//     // all required args must be present
+//     if (args.size() < numArguments) {
+//         status = InterpreterStatus::forCondition(
+//             InterpreterCondition::kRuntimeInvariant, "not enough arguments");
+//         return false;
+//     }
+//
+//     auto numRest = static_cast<uint16_t>(args.size()) - numArguments;
+//
+//     // construct the activation call frame
+//     CallCell frame(callIndex, segment->getSegmentIndex(),
+//         procOffset, returnSP->getSegmentIndex(), returnIP, true,
+//         stackGuard, numArguments, numRest, numLocals, numLexicals,
+//         args, *receiver);
+//
+//     // import each lexical from the latest activation and push it onto the stack
+//     for (uint16_t i = 0; i < numLexicals; i++) {
+//
+//         // read the call proc lexical
+//         auto activationCall = tempo_utils::read_u32_and_advance(header);
+//         auto targetOffset = tempo_utils::read_u32_and_advance(header);
+//         auto lexicalTarget = tempo_utils::read_u8_and_advance(header);
+//         codeSize -= 9;
+//
+//         bool found = false;
+//         for (auto iterator = currentCoro->callsBegin(); iterator != currentCoro->callsEnd(); iterator++) {
+//             const auto &ancestor = *iterator;
+//
+//             if (ancestor.getCallSegment() != segment->getSegmentIndex())    // lexical must exist in callee segment
+//                 continue;
+//             if (ancestor.getCallIndex() != activationCall)                  // frame does not match activation call
+//                 continue;
+//             switch (lexicalTarget) {
+//                 case lyric_object::LEXICAL_ARGUMENT:
+//                     frame.setLexical(i, ancestor.getArgument(targetOffset));
+//                     break;
+//                 case lyric_object::LEXICAL_LOCAL:
+//                     frame.setLexical(i, ancestor.getLocal(targetOffset));
+//                     break;
+//                 default:
+//                     status = InterpreterStatus::forCondition(
+//                         InterpreterCondition::kRuntimeInvariant, "invalid lexical target");
+//                     return false;
+//             }
+//             found = true;                       // we found the lexical, break loop early
+//             break;
+//         }
+//         if (!found) {
+//             status = InterpreterStatus::forCondition(
+//                 InterpreterCondition::kRuntimeInvariant, "missing lexical");
+//             return false;
+//         }
+//     }
+//
+//     lyric_object::BytecodeIterator ip(header, codeSize);
+//     currentCoro->pushCall(frame, ip, segment);               // push the activation onto the call stack
+//     TU_LOG_V << "moved ip to " << ip;
+//
+//     return true;
+// }
 
 static void
 set_reachable_for_task(lyric_runtime::Task *task)

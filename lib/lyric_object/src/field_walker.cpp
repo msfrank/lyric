@@ -97,7 +97,7 @@ lyric_object::FieldWalker::hasInitializer() const
     auto *fieldDescriptor = m_reader->getField(m_fieldOffset);
     if (fieldDescriptor == nullptr)
         return false;
-    return fieldDescriptor->default_call() != INVALID_ADDRESS_U32;
+    return fieldDescriptor->initializer_call() != INVALID_ADDRESS_U32;
 }
 
 lyric_object::AddressType
@@ -108,7 +108,7 @@ lyric_object::FieldWalker::initializerAddressType() const
     auto *fieldDescriptor = m_reader->getField(m_fieldOffset);
     if (fieldDescriptor == nullptr)
         return AddressType::Invalid;
-    return GET_ADDRESS_TYPE(fieldDescriptor->default_call());
+    return GET_ADDRESS_TYPE(fieldDescriptor->initializer_call());
 }
 
 lyric_object::CallWalker
@@ -119,7 +119,7 @@ lyric_object::FieldWalker::getNearInitializer() const
     auto *fieldDescriptor = m_reader->getField(m_fieldOffset);
     if (fieldDescriptor == nullptr)
         return {};
-    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(fieldDescriptor->default_call()));
+    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(fieldDescriptor->initializer_call()));
 }
 
 lyric_object::LinkWalker
@@ -130,7 +130,7 @@ lyric_object::FieldWalker::getFarInitializer() const
     auto *fieldDescriptor = m_reader->getField(m_fieldOffset);
     if (fieldDescriptor == nullptr)
         return {};
-    return LinkWalker(m_reader, GET_LINK_OFFSET(fieldDescriptor->default_call()));
+    return LinkWalker(m_reader, GET_LINK_OFFSET(fieldDescriptor->initializer_call()));
 }
 
 tu_uint32

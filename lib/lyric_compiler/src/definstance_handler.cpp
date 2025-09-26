@@ -68,6 +68,7 @@ lyric_compiler::DefInstanceHandler::before(
             lyric_assembler::kLyricAssemblerTrapName, m_allocatorTrapName));
     }
 
+    std::vector<lyric_parser::ArchetypeNode *> initNodes;
     std::vector<lyric_parser::ArchetypeNode *> valNodes;
     std::vector<lyric_parser::ArchetypeNode *> varNodes;
     std::vector<lyric_parser::ArchetypeNode *> defNodes;
@@ -79,6 +80,10 @@ lyric_compiler::DefInstanceHandler::before(
         lyric_schema::LyricAstId astId;
         TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, astId));
         switch (astId) {
+            case lyric_schema::LyricAstId::Init: {
+                initNodes.push_back(child);
+                break;
+            }
             case lyric_schema::LyricAstId::Val: {
                 valNodes.push_back(child);
                 break;
@@ -162,6 +167,19 @@ lyric_compiler::DefInstanceHandler::before(
         m_definstance.impls[implNode] = impl;
     }
 
+    // declare constructors if any are specified, otherwise declare a default constructor
+    if (!initNodes.empty()) {
+        for (auto &initNode : initNodes) {
+            Constructor constructor;
+            TU_ASSIGN_OR_RETURN (constructor, declare_instance_init(
+                initNode, m_definstance.instanceSymbol, m_allocatorTrapName, typeSystem));
+            m_definstance.ctors[initNode] = constructor;
+        }
+    } else {
+        TU_ASSIGN_OR_RETURN (m_definstance.defaultCtor, declare_instance_default_init(
+            m_definstance.instanceSymbol, m_allocatorTrapName));
+    }
+
     return {};
 }
 
@@ -174,11 +192,12 @@ lyric_compiler::DefInstanceHandler::after(
     TU_LOG_VV << "after DefInstanceHandler@" << this;
 
     auto *driver = getDriver();
-    auto *symbolCache = driver->getSymbolCache();
-    auto *typeSystem = driver->getTypeSystem();
 
-    // define the constructor
-    TU_RETURN_IF_NOT_OK (define_instance_default_init(&m_definstance, m_allocatorTrapName, symbolCache, typeSystem));
+    if (m_definstance.defaultCtor != nullptr) {
+        auto *symbolCache = driver->getSymbolCache();
+        auto *typeSystem = driver->getTypeSystem();
+        TU_RETURN_IF_NOT_OK (define_instance_default_init(&m_definstance, symbolCache, typeSystem));
+    }
 
     if (!m_isSideEffect) {
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));
@@ -209,6 +228,12 @@ lyric_compiler::InstanceDefinition::decide(
     lyric_schema::LyricAstId astId;
     TU_RETURN_IF_NOT_OK (node->parseId(lyric_schema::kLyricAstVocabulary, astId));
     switch (astId) {
+        case lyric_schema::LyricAstId::Init: {
+            auto constructor = m_definstance->ctors.at(node);
+            auto handler = std::make_unique<ConstructorHandler>(constructor, block, driver);
+            ctx.setGrouping(std::move(handler));
+            return {};
+        }
         case lyric_schema::LyricAstId::Val:
         case lyric_schema::LyricAstId::Var: {
             auto member = m_definstance->members.at(node);

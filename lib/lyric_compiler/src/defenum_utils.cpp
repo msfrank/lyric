@@ -27,7 +27,6 @@ lyric_compiler::declare_enum_default_init(
 tempo_utils::Status
 lyric_compiler::define_enum_default_init(
     const DefEnum *defenum,
-    const std::string &allocatorTrap,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_typing::TypeSystem *typeSystem)
 {

@@ -21,6 +21,19 @@ lyric_runtime::VirtualMember::VirtualMember(
     TU_ASSERT (m_segment != nullptr);
 }
 
+lyric_runtime::VirtualMember::VirtualMember(const VirtualMember &other)
+    : m_segment(other.m_segment),
+      m_memberIndex(other.m_memberIndex),
+      m_layoutOffset(other.m_layoutOffset)
+{
+}
+
+bool
+lyric_runtime::VirtualMember::isValid() const
+{
+    return m_segment != nullptr;
+}
+
 lyric_runtime::BytecodeSegment *
 lyric_runtime::VirtualMember::getSegment() const
 {
@@ -58,6 +71,20 @@ lyric_runtime::VirtualMethod::VirtualMethod(
       m_returnsValue(returnsValue)
 {
     TU_ASSERT (m_segment != nullptr);
+}
+
+lyric_runtime::VirtualMethod::VirtualMethod(const VirtualMethod &other)
+    : m_segment(other.m_segment),
+      m_callIndex(other.m_callIndex),
+      m_procOffset(other.m_procOffset),
+      m_returnsValue(other.m_returnsValue)
+{
+}
+
+bool
+lyric_runtime::VirtualMethod::isValid() const
+{
+    return m_segment != nullptr;
 }
 
 lyric_runtime::BytecodeSegment *
@@ -377,7 +404,6 @@ lyric_runtime::VirtualTable::VirtualTable(
     const DataCell &type,
     const VirtualTable *parentTable,
     NativeFunc allocator,
-    const VirtualMethod &ctor,
     absl::flat_hash_map<DataCell,VirtualMember> &members,
     absl::flat_hash_map<DataCell,VirtualMethod> &methods,
     absl::flat_hash_map<DataCell,ImplTable> &impls)
@@ -386,7 +412,6 @@ lyric_runtime::VirtualTable::VirtualTable(
       m_type(type),
       m_parent(parentTable),
       m_allocator(allocator),
-      m_ctor(ctor),
       m_members(std::move(members)),
       m_methods(std::move(methods)),
       m_impls(std::move(impls))
@@ -394,6 +419,32 @@ lyric_runtime::VirtualTable::VirtualTable(
     TU_ASSERT (m_segment != nullptr);
     TU_ASSERT (m_descriptor.isValid());
     TU_ASSERT (m_type.isValid());
+}
+
+lyric_runtime::VirtualTable::VirtualTable(
+    BytecodeSegment *segment,
+    const DataCell &descriptor,
+    const DataCell &type,
+    const VirtualTable *parentTable,
+    NativeFunc allocator,
+    const VirtualMethod &initializer,
+    absl::flat_hash_map<DataCell,VirtualMember> &members,
+    absl::flat_hash_map<DataCell,VirtualMethod> &methods,
+    absl::flat_hash_map<DataCell,ImplTable> &impls)
+    : m_segment(segment),
+      m_descriptor(descriptor),
+      m_type(type),
+      m_parent(parentTable),
+      m_allocator(allocator),
+      m_initializer(initializer),
+      m_members(std::move(members)),
+      m_methods(std::move(methods)),
+      m_impls(std::move(impls))
+{
+    TU_ASSERT (m_segment != nullptr);
+    TU_ASSERT (m_descriptor.isValid());
+    TU_ASSERT (m_type.isValid());
+    TU_ASSERT (m_initializer.isValid());
 }
 
 lyric_runtime::BytecodeSegment *
@@ -497,10 +548,18 @@ lyric_runtime::VirtualTable::getAllocator() const
     return m_allocator;
 }
 
-const lyric_runtime::VirtualMethod *
-lyric_runtime::VirtualTable::getCtor() const
+bool
+lyric_runtime::VirtualTable::hasInitializer() const
 {
-    return &m_ctor;
+    return m_initializer.isValid();
+}
+
+const lyric_runtime::VirtualMethod *
+lyric_runtime::VirtualTable::getInitializer() const
+{
+    if (m_initializer.isValid())
+        return &m_initializer;
+    return nullptr;
 }
 
 const lyric_runtime::VirtualMember *

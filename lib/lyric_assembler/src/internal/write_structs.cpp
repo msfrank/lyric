@@ -115,9 +115,6 @@ write_struct(
         impls.push_back(implIndex);
     }
 
-    // get struct ctor
-    tu_uint32 ctorCall = lyric_runtime::INVALID_ADDRESS_U32;
-
     // serialize the sealed subtypes
     std::vector<tu_uint32> sealedSubtypes;
     for (auto iterator = structSymbol->sealedTypesBegin(); iterator != structSymbol->sealedTypesEnd(); iterator++) {
@@ -136,7 +133,7 @@ write_struct(
     structs_vector.push_back(lyo1::CreateStructDescriptor(buffer, fullyQualifiedName,
         superstructIndex, structType, structFlags,
         buffer.CreateVector(members), buffer.CreateVector(methods), buffer.CreateVector(impls),
-        allocatorTrap, ctorCall, buffer.CreateVector(sealedSubtypes)));
+        allocatorTrap, buffer.CreateVector(sealedSubtypes)));
 
     return {};
 }

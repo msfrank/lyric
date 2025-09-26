@@ -12,7 +12,7 @@ TEST_F(CompileDefinstance, EvaluateInstanceWithExplicitInit)
     auto result = m_tester->runModule(R"(
         definstance Foo {
             val Index: Int
-            init {
+            init() {
                 set this.Index = 100
             }
         }

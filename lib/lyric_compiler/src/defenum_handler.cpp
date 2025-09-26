@@ -189,7 +189,7 @@ lyric_compiler::DefEnumHandler::after(
     if (m_defenum.defaultCtor != nullptr) {
         auto *symbolCache = driver->getSymbolCache();
         auto *typeSystem = driver->getTypeSystem();
-        TU_RETURN_IF_NOT_OK (define_enum_default_init(&m_defenum, m_allocatorTrapName, symbolCache, typeSystem));
+        TU_RETURN_IF_NOT_OK (define_enum_default_init(&m_defenum, symbolCache, typeSystem));
     }
 
     if (!m_isSideEffect) {

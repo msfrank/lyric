@@ -37,7 +37,8 @@ TEST_F(AnalyzeClass, DeclareClass)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), class0.getSymbolPath());
     ASSERT_EQ (lyric_object::AccessType::Public, class0.getAccess());
 
-    auto ctor = class0.getConstructor();
+    ASSERT_EQ (1, class0.numMethods());
+    auto ctor = class0.getMethod(0);
     ASSERT_TRUE (ctor.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "$ctor"}), ctor.getSymbolPath());
 }

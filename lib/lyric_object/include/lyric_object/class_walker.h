@@ -34,8 +34,6 @@ namespace lyric_object {
         bool hasAllocator() const;
         tu_uint32 getAllocator() const;
 
-        CallWalker getConstructor() const;
-
         bool hasSuperClass() const;
         AddressType superClassAddressType() const;
         ClassWalker getNearSuperClass() const;

@@ -33,7 +33,7 @@ namespace lyric_object {
         bool hasAllocator() const;
         tu_uint32 getAllocator() const;
 
-        CallWalker getConstructor() const;
+        CallWalker getInitializer() const;
 
         bool hasSuperEnum() const;
         AddressType superEnumAddressType() const;

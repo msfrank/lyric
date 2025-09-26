@@ -36,7 +36,7 @@ TEST_F(AnalyzeEnum, DeclareEnum)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), enum0.getSymbolPath());
     ASSERT_EQ (lyric_object::AccessType::Public, enum0.getAccess());
 
-    auto ctor = enum0.getConstructor();
+    auto ctor = enum0.getInitializer();
     ASSERT_TRUE (ctor.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "$ctor"}), ctor.getSymbolPath());
 }
@@ -93,7 +93,7 @@ TEST_F(AnalyzeEnum, DeclareEnumCase)
     ASSERT_TRUE (FooEnum.isValid());
     ASSERT_TRUE (FooEnum.isDeclOnly());
 
-    auto ctor0 = FooEnum.getConstructor();
+    auto ctor0 = FooEnum.getInitializer();
     ASSERT_TRUE (ctor0.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "$ctor"}), ctor0.getSymbolPath());
 
@@ -101,7 +101,7 @@ TEST_F(AnalyzeEnum, DeclareEnumCase)
     ASSERT_TRUE (BarEnum.isValid());
     ASSERT_TRUE (BarEnum.isDeclOnly());
 
-    auto ctor1 = BarEnum.getConstructor();
+    auto ctor1 = BarEnum.getInitializer();
     ASSERT_TRUE (ctor1.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Bar", "$ctor"}), ctor1.getSymbolPath());
 

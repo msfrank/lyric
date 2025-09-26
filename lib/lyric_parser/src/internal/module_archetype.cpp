@@ -1075,6 +1075,18 @@ void lyric_parser::internal::ModuleArchetype::enterDefinstanceStatement(ModulePa
     LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefinstanceStatement(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::enterInstanceInit(ModuleParser::InstanceInitContext *ctx)
+{
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterInstanceInit(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitInstanceInit(ModuleParser::InstanceInitContext *ctx)
+{
+    ModuleDefinstanceOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitInstanceInit(ctx));
+}
+
 void lyric_parser::internal::ModuleArchetype::enterInstanceVal(ModuleParser::InstanceValContext *ctx)
 {
     ModuleDefinstanceOps ops(this);

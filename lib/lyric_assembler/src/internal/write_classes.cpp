@@ -127,11 +127,6 @@ write_class(
         impls.push_back(implIndex);
     }
 
-    // get class ctor
-    tu_uint32 ctorCall;
-    TU_ASSIGN_OR_RETURN (ctorCall,
-        writer.getSectionAddress(classSymbol->getCtor(), lyric_object::LinkageSection::Call));
-
     // serialize the sealed subtypes
     std::vector<tu_uint32> sealedSubtypes;
     for (auto iterator = classSymbol->sealedTypesBegin(); iterator != classSymbol->sealedTypesEnd(); iterator++) {
@@ -150,7 +145,7 @@ write_class(
     classes_vector.push_back(lyo1::CreateClassDescriptor(buffer, fullyQualifiedName,
         superclassIndex, classTemplate, classType, classFlags,
         buffer.CreateVector(members), buffer.CreateVector(methods),
-        buffer.CreateVector(impls), allocatorTrap, ctorCall,
+        buffer.CreateVector(impls), allocatorTrap,
         buffer.CreateVector(sealedSubtypes)));
 
     return {};

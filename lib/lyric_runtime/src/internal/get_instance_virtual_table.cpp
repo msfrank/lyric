@@ -228,19 +228,19 @@ lyric_runtime::internal::get_instance_virtual_table(
         impls.try_emplace(implConcept, instanceSegment, implConcept, instanceType, extensions);
     }
 
-    auto constructor = instanceDescriptor.getConstructor();
+    auto initializer = instanceDescriptor.getInitializer();
 
-    // validate ctor descriptor
-    if (constructor.getMode() != lyric_object::CallMode::Constructor || !constructor.isBound()) {
+    // validate initializer descriptor
+    if (initializer.getMode() != lyric_object::CallMode::Constructor || !initializer.isBound()) {
         status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid instance ctor flags");
+            InterpreterCondition::kRuntimeInvariant, "invalid instance initializer flags");
         return nullptr;
     }
 
-    // define the ctor virtual method
-    tu_uint32 ctorIndex = constructor.getDescriptorOffset();
-    tu_uint32 procOffset = constructor.getProcOffset();
-    VirtualMethod ctor(instanceSegment, ctorIndex, procOffset, true);
+    // define the initializer virtual method
+    tu_uint32 initIndex = initializer.getDescriptorOffset();
+    tu_uint32 procOffset = initializer.getProcOffset();
+    VirtualMethod ctor(instanceSegment, initIndex, procOffset, true);
 
     // get the function pointer for the allocator trap if specified
     NativeFunc allocator = nullptr;

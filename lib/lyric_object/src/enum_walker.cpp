@@ -107,14 +107,14 @@ lyric_object::EnumWalker::getAllocator() const
 }
 
 lyric_object::CallWalker
-lyric_object::EnumWalker::getConstructor() const
+lyric_object::EnumWalker::getInitializer() const
 {
     if (!isValid())
         return {};
     auto *enumDescriptor = m_reader->getEnum(m_enumOffset);
     if (enumDescriptor == nullptr)
         return {};
-    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(enumDescriptor->ctor_call()));
+    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(enumDescriptor->initializer_call()));
 }
 
 bool

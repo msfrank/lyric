@@ -287,11 +287,12 @@ definstanceStatement: definitionMacro? DefInstanceKeyword symbolIdentifier
                         CurlyOpen instanceSpec* CurlyClose ;
 instanceDerives     : ( SealedKeyword | FinalKeyword ) ;
 instanceBase        : FromKeyword assignableType ;
+instanceInit        : InitKeyword paramSpec procBlock ;
 instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
-instanceSpec        : instanceVal | instanceVar | instanceDef | instanceImpl ;
+instanceSpec        : instanceInit | instanceVal | instanceVar | instanceDef | instanceImpl ;
 
 
 // defenum statement

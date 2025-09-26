@@ -314,7 +314,7 @@ table FieldDescriptor {
     fqsn: string;                               // fully qualified field name
     field_type: uint32 = 0xFFFFFFFF;            // offset of the field type in the types section
     flags: FieldFlags;                          // bitfield containing field flags
-    default_call: uint32 = 0xFFFFFFFF;          // offset of the initializer call in the calls section, or 0xFFFFFFFF if no initializer
+    initializer_call: uint32 = 0xFFFFFFFF;      // offset of the initializer call in the calls section, or 0xFFFFFFFF if no initializer
 }
 
 //
@@ -365,7 +365,6 @@ table ClassDescriptor {
     methods: [uint32];                          // array of methods in the calls section
     impls: [uint32];                            // array of impls in the impls section
     allocator_trap: uint32 = 0xFFFFFFFF;        // index of the allocator trap in the current object, or 0xFFFFFFFF if delegating to parent
-    ctor_call: uint32 = 0xFFFFFFFF;             // offset of the class constructor in the calls section
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
 
@@ -391,7 +390,6 @@ table StructDescriptor {
     methods: [uint32];                          // array of methods in the calls section
     impls: [uint32];                            // array of impls in the impls section
     allocator_trap: uint32 = 0xFFFFFFFF;        // index of the allocator trap in the current object, or 0xFFFFFFFF if delegating to parent
-    ctor_call: uint32 = 0xFFFFFFFF;             // offset of  the struct constructor in the calls section
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
 
@@ -417,7 +415,7 @@ table InstanceDescriptor {
     methods: [uint32];                          // array of methods in the calls section
     impls: [uint32];                            // array of impls in the impls section
     allocator_trap: uint32 = 0xFFFFFFFF;        // index of the allocator trap in the current object, or 0xFFFFFFFF if delegating to parent
-    ctor_call: uint32 = 0xFFFFFFFF;             // offset of  the instance constructor in the calls section
+    initializer_call: uint32 = 0xFFFFFFFF;      // offset of the instance initializer in the calls section
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
 
@@ -443,7 +441,7 @@ table EnumDescriptor {
     methods: [uint32];                          // array of methods in the calls section
     impls: [uint32];                            // array of impls in the impls section
     allocator_trap: uint32 = 0xFFFFFFFF;        // index of the allocator trap in the current object, or 0xFFFFFFFF if delegating to parent
-    ctor_call: uint32 = 0xFFFFFFFF;             // offset of  the enum constructor in the calls section
+    initializer_call: uint32 = 0xFFFFFFFF;      // offset of the enum initializer in the calls section
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
 

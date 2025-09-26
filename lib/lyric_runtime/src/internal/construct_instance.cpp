@@ -61,7 +61,11 @@ lyric_runtime::internal::construct_instance(
     TU_RETURN_IF_NOT_OK (currentCoro->peekData(&top));
     auto ref = *top;
 
-    auto *ctor = vtable->getCtor();
+    auto *ctor = vtable->getInitializer();
+    if (ctor == nullptr)
+        return InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "missing initializer");
+
     auto ctorIndex = ctor->getCallIndex();
     auto *ctorSegment = ctor->getSegment();
     auto procOffset = ctor->getProcOffset();

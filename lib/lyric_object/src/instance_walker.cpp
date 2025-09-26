@@ -110,14 +110,14 @@ lyric_object::InstanceWalker::getAllocator() const
 }
 
 lyric_object::CallWalker
-lyric_object::InstanceWalker::getConstructor() const
+lyric_object::InstanceWalker::getInitializer() const
 {
     if (!isValid())
         return {};
     auto *instanceDescriptor = m_reader->getInstance(m_instanceOffset);
     if (instanceDescriptor == nullptr)
         return {};
-    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(instanceDescriptor->ctor_call()));
+    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(instanceDescriptor->initializer_call()));
 }
 
 bool

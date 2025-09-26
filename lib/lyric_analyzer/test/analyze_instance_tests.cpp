@@ -36,7 +36,7 @@ TEST_F(AnalyzeInstance, DeclareInstance)
     ASSERT_EQ (lyric_common::SymbolPath({"Foo"}), instance0.getSymbolPath());
     ASSERT_EQ (lyric_object::AccessType::Public, instance0.getAccess());
 
-    auto ctor = instance0.getConstructor();
+    auto ctor = instance0.getInitializer();
     ASSERT_TRUE (ctor.isDeclOnly());
     ASSERT_EQ (lyric_common::SymbolPath({"Foo", "$ctor"}), ctor.getSymbolPath());
 }
@@ -46,7 +46,7 @@ TEST_F(AnalyzeInstance, DeclareInstanceWithExplicitInit)
     auto analyzeModuleResult = m_tester->analyzeModule(R"(
         definstance Foo {
             var answer: Int
-            init {
+            init() {
                 set this.answer = 42
             }
         }

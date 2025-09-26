@@ -7,27 +7,26 @@
 #include <lyric_compiler/definstance_utils.h>
 #include <lyric_parser/ast_attrs.h>
 
-// tempo_utils::Result<lyric_assembler::CallSymbol *>
-// lyric_compiler::declare_instance_init(
-//     lyric_assembler::InstanceSymbol *instanceSymbol,
-//     const std::string &allocatorTrap)
-// {
-//     TU_ASSERT (instanceSymbol != nullptr);
-//
-//     // declare the constructor
-//     lyric_assembler::CallSymbol *ctorSymbol;
-//     TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
-//
-//     // define 0-arity constructor
-//     TU_RETURN_IF_STATUS(ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
-//
-//     return ctorSymbol;
-// }
+tempo_utils::Result<lyric_assembler::CallSymbol *>
+lyric_compiler::declare_instance_default_init(
+    lyric_assembler::InstanceSymbol *instanceSymbol,
+    const std::string &allocatorTrap)
+{
+    TU_ASSERT (instanceSymbol != nullptr);
+
+    // declare the constructor
+    lyric_assembler::CallSymbol *ctorSymbol;
+    TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
+
+    // define 0-arity constructor
+    TU_RETURN_IF_STATUS(ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
+
+    return ctorSymbol;
+}
 
 tempo_utils::Status
 lyric_compiler::define_instance_default_init(
     const DefInstance *definstance,
-    const std::string &allocatorTrap,
     lyric_assembler::SymbolCache *symbolCache,
     lyric_typing::TypeSystem *typeSystem)
 {
@@ -35,6 +34,8 @@ lyric_compiler::define_instance_default_init(
 
     auto *instanceSymbol = definstance->instanceSymbol;
     TU_ASSERT (instanceSymbol != nullptr);
+    auto *ctorSymbol = definstance->defaultCtor;
+    TU_ASSERT (ctorSymbol != nullptr);
 
     // verify that super ctor takes no arguments
     auto *superInstance = instanceSymbol->superInstance();
@@ -46,14 +47,7 @@ lyric_compiler::define_instance_default_init(
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "super instance {} is not default-constructable", superCtorUrl.toString());
 
-    // declare the constructor
-    lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
-
-    // define 0-arity constructor
-    lyric_assembler::ProcHandle *procHandle;
-    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
-
+    auto *procHandle = ctorSymbol->callProc();
     auto *ctorBlock = procHandle->procBlock();
     auto *procBuilder = procHandle->procCode();
     auto *fragment = procBuilder->rootFragment();
@@ -130,6 +124,42 @@ lyric_compiler::define_instance_default_init(
             definstance->instanceSymbol->getSymbolUrl().toString());
 
     return {};
+}
+
+tempo_utils::Result<lyric_compiler::Constructor>
+lyric_compiler::declare_instance_init(
+    const lyric_parser::ArchetypeNode *initNode,
+    lyric_assembler::InstanceSymbol *instanceSymbol,
+    const std::string &allocatorTrap,
+    lyric_typing::TypeSystem *typeSystem)
+{
+    TU_ASSERT (initNode != nullptr);
+    TU_ASSERT (instanceSymbol != nullptr);
+    auto *instanceBlock = instanceSymbol->instanceBlock();
+
+    // declare the constructor
+    lyric_assembler::CallSymbol *ctorSymbol;
+    TU_ASSIGN_OR_RETURN (ctorSymbol, instanceSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
+
+    lyric_typing::PackSpec packSpec;
+    lyric_assembler::ParameterPack parameterPack;
+
+    // compile the parameter list if specified, otherwise default to an empty list
+    if (initNode != nullptr) {
+        auto *packNode = initNode->getChild(0);
+        TU_ASSERT (packNode != nullptr);
+        TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(instanceBlock, packNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(instanceBlock, packSpec));
+    }
+
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
+
+    Constructor constructor;
+    constructor.superSymbol = instanceSymbol->superInstance();
+    constructor.callSymbol = ctorSymbol;
+    constructor.procHandle = procHandle;
+    return constructor;
 }
 
 tempo_utils::Result<lyric_compiler::Member>

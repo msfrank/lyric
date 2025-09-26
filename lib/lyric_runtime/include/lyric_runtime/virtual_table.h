@@ -17,7 +17,9 @@ namespace lyric_runtime {
     public:
         VirtualMember();
         VirtualMember(BytecodeSegment *segment, tu_uint32 memberIndex, tu_uint32 layoutOffset);
+        VirtualMember(const VirtualMember &other);
 
+        bool isValid() const;
         BytecodeSegment *getSegment() const;
         tu_uint32 getMemberIndex() const;
         tu_uint32 getLayoutOffset() const;
@@ -32,7 +34,9 @@ namespace lyric_runtime {
     public:
         VirtualMethod();
         VirtualMethod(BytecodeSegment *segment, tu_uint32 callIndex, tu_uint32 procOffset, bool returnsValue);
+        VirtualMethod(const VirtualMethod &other);
 
+        bool isValid() const;
         BytecodeSegment *getSegment() const;
         tu_uint32 getCallIndex() const;
         tu_uint32 getProcOffset() const;
@@ -165,7 +169,16 @@ namespace lyric_runtime {
             const DataCell &type,
             const VirtualTable *parentTable,
             NativeFunc allocator,
-            const VirtualMethod &ctor,
+            absl::flat_hash_map<DataCell,VirtualMember> &members,
+            absl::flat_hash_map<DataCell,VirtualMethod> &methods,
+            absl::flat_hash_map<DataCell,ImplTable> &impls);
+        VirtualTable(
+            BytecodeSegment *segment,
+            const DataCell &descriptor,
+            const DataCell &type,
+            const VirtualTable *parentTable,
+            NativeFunc allocator,
+            const VirtualMethod &initializer,
             absl::flat_hash_map<DataCell,VirtualMember> &members,
             absl::flat_hash_map<DataCell,VirtualMethod> &methods,
             absl::flat_hash_map<DataCell,ImplTable> &impls);
@@ -182,7 +195,9 @@ namespace lyric_runtime {
         tu_uint32 getLayoutTotal() const;
 
         NativeFunc getAllocator() const;
-        const VirtualMethod *getCtor() const;
+
+        bool hasInitializer() const;
+        const VirtualMethod *getInitializer() const;
 
         const VirtualMember *getMember(const DataCell &descriptor) const override;
         const VirtualMethod *getMethod(const DataCell &descriptor) const override;
@@ -196,7 +211,7 @@ namespace lyric_runtime {
         const DataCell m_type;
         const VirtualTable *m_parent;
         const NativeFunc m_allocator;
-        const VirtualMethod m_ctor;
+        VirtualMethod m_initializer;
         const absl::flat_hash_map<DataCell,VirtualMember> m_members;
         const absl::flat_hash_map<DataCell,VirtualMethod> m_methods;
         const absl::flat_hash_map<DataCell,ImplTable> m_impls;

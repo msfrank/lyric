@@ -239,7 +239,7 @@ lyric_runtime::internal::get_struct_virtual_table(
     }
 
     auto *vtable = new VirtualTable(structSegment, descriptor, structType, parentTable,
-        allocator, {}, members, methods, impls);
+        allocator, members, methods, impls);
     segmentManagerData->vtablecache[descriptor] = vtable;
 
     return vtable;

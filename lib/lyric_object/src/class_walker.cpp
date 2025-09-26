@@ -109,17 +109,6 @@ lyric_object::ClassWalker::getAllocator() const
     return classDescriptor->allocator_trap();
 }
 
-lyric_object::CallWalker
-lyric_object::ClassWalker::getConstructor() const
-{
-    if (!isValid())
-        return {};
-    auto *classDescriptor = m_reader->getClass(m_classOffset);
-    if (classDescriptor == nullptr)
-        return {};
-    return CallWalker(m_reader, GET_DESCRIPTOR_OFFSET(classDescriptor->ctor_call()));
-}
-
 bool
 lyric_object::ClassWalker::hasSuperClass() const
 {

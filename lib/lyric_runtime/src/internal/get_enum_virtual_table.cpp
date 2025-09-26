@@ -230,19 +230,19 @@ lyric_runtime::internal::get_enum_virtual_table(
         impls.try_emplace(implConcept, enumSegment, implConcept, enumType, extensions);
     }
 
-    auto constructor = enumDescriptor.getConstructor();
+    auto initializer = enumDescriptor.getInitializer();
 
-    // validate ctor descriptor
-    if (constructor.getMode() != lyric_object::CallMode::Constructor || !constructor.isBound()) {
+    // validate initializer descriptor
+    if (initializer.getMode() != lyric_object::CallMode::Constructor || !initializer.isBound()) {
         status = InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid enum ctor flags");
+            InterpreterCondition::kRuntimeInvariant, "invalid enum initializer flags");
         return nullptr;
     }
 
-    // define the ctor virtual method
-    tu_uint32 ctorIndex = constructor.getDescriptorOffset();
-    tu_uint32 procOffset = constructor.getProcOffset();
-    VirtualMethod ctor(enumSegment, ctorIndex, procOffset, true);
+    // define the initializer virtual method
+    tu_uint32 initIndex = initializer.getDescriptorOffset();
+    tu_uint32 procOffset = initializer.getProcOffset();
+    VirtualMethod init(enumSegment, initIndex, procOffset, true);
 
     // get the function pointer for the allocator trap if specified
     NativeFunc allocator = nullptr;
@@ -256,7 +256,7 @@ lyric_runtime::internal::get_enum_virtual_table(
     }
 
     auto *vtable = new VirtualTable(enumSegment, descriptor, enumType, parentTable,
-        allocator, ctor, members, methods, impls);
+        allocator, init, members, methods, impls);
     segmentManagerData->vtablecache[descriptor] = vtable;
 
     return vtable;

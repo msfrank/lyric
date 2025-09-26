@@ -1822,11 +1822,10 @@ BuilderState::toBytes() const
             : lyric_object::INVALID_ADDRESS_U32;
         tu_uint32 classTemplate = Class->classTemplate? Class->classTemplate->template_index
             : lyric_object::INVALID_ADDRESS_U32;
-        tu_uint32 classCtor = Class->classCtor->call_index;
 
         classes_vector.push_back(lyo1::CreateClassDescriptor(buffer,
             fb_fullyQualifiedName, superClass, classTemplate, Class->classType->type_index, Class->flags,
-            fb_members, fb_methods, fb_impls, Class->allocatorTrap, classCtor, fb_sealedSubtypes));
+            fb_members, fb_methods, fb_impls, Class->allocatorTrap, fb_sealedSubtypes));
     }
 
     // write the struct descriptors
@@ -1839,11 +1838,10 @@ BuilderState::toBytes() const
 
         tu_uint32 superStruct = Struct->superStruct? Struct->superStruct->struct_index
             : lyric_object::INVALID_ADDRESS_U32;
-        tu_uint32 structCtor = Struct->structCtor->call_index;
 
         structs_vector.push_back(lyo1::CreateStructDescriptor(buffer,
             fb_fullyQualifiedName, superStruct, Struct->structType->type_index, Struct->flags,
-            fb_members, fb_methods, fb_impls, Struct->allocatorTrap, structCtor, fb_sealedSubtypes));
+            fb_members, fb_methods, fb_impls, Struct->allocatorTrap, fb_sealedSubtypes));
     }
 
     // write the concept descriptors
