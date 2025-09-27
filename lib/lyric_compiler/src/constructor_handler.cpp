@@ -94,7 +94,7 @@ lyric_compiler::InitSuper::before(
     switch (m_constructor->superSymbol->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {
             auto *superClass = lyric_assembler::cast_symbol_to_class(m_constructor->superSymbol);
-            TU_RETURN_IF_NOT_OK (superClass->prepareCtor(*m_invoker));
+            TU_RETURN_IF_NOT_OK (superClass->prepareCtor(lyric_object::kCtorSpecialSymbol, *m_invoker));
             break;
         }
         case lyric_assembler::SymbolType::ENUM: {

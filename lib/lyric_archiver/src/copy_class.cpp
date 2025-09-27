@@ -171,7 +171,8 @@ lyric_archiver::copy_class(
     TU_ASSIGN_OR_RETURN (ctorImport, archiverState.importCall(ctorUrl));
 
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, classSymbolPtr->declareCtor(ctorImport->isHidden(), classImport->getAllocator()));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, classSymbolPtr->declareCtor(
+        ctorUrl.getSymbolName(), ctorImport->isHidden(), classImport->getAllocator()));
     TU_RETURN_IF_NOT_OK (archiverState.putSymbol(ctorImport->getSymbolUrl(), ctorSymbol));
     TU_RETURN_IF_NOT_OK (define_call(
         ctorImport, ctorSymbol, importHash, targetNamespace, symbolReferenceSet, archiverState));

@@ -411,14 +411,6 @@ lyric_assembler::ClassSymbol::isCompletelyInitialized() const
     return true;
 }
 
-lyric_common::SymbolUrl
-lyric_assembler::ClassSymbol::getCtor() const
-{
-    auto location = m_classUrl.getModuleLocation();
-    auto path = m_classUrl.getSymbolPath();
-    return lyric_common::SymbolUrl(location, lyric_common::SymbolPath(path.getPath(), "$ctor"));
-}
-
 std::string
 lyric_assembler::ClassSymbol::getAllocatorTrap() const
 {
@@ -426,8 +418,33 @@ lyric_assembler::ClassSymbol::getAllocatorTrap() const
     return priv->allocatorTrap;
 }
 
+bool
+lyric_assembler::ClassSymbol::hasCtor(const std::string &name) const
+{
+    auto *priv = getPriv();
+    auto entry = priv->methods.find(name);
+    if (entry == priv->methods.cend())
+        return false;
+    const auto &method = entry->second;
+    return method.ctor;
+}
+
+lyric_common::SymbolUrl
+lyric_assembler::ClassSymbol::getCtor(const std::string &name) const
+{
+    auto *priv = getPriv();
+    auto entry = priv->methods.find(name);
+    if (entry == priv->methods.cend())
+        return {};
+    const auto &method = entry->second;
+    if (!method.ctor)
+        return {};
+    return method.methodCall;
+}
+
 tempo_utils::Result<lyric_assembler::CallSymbol *>
 lyric_assembler::ClassSymbol::declareCtor(
+    const std::string &name,
     bool isHidden,
     std::string allocatorTrap)
 {
@@ -438,12 +455,24 @@ lyric_assembler::ClassSymbol::declareCtor(
     auto *priv = getPriv();
 
     auto path = m_classUrl.getSymbolPath().getPath();
-    path.emplace_back("$ctor");
+    path.emplace_back(name);
     auto ctorUrl = lyric_common::SymbolUrl(lyric_common::SymbolPath(path));
 
-    if (m_state->symbolCache()->hasSymbol(ctorUrl))
+    auto *existingSymbol = m_state->symbolCache()->getSymbolOrNull(ctorUrl);
+    if (existingSymbol != nullptr) {
+        if (existingSymbol->getSymbolType() == SymbolType::CALL) {
+            auto existingCall = cast_symbol_to_call(existingSymbol);
+            if (existingCall->isCtor()) {
+                auto friendlyName = name == lyric_object::kCtorSpecialSymbol?
+                    "default" : absl::StrCat("'", name, "'");
+                return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
+                    "{} constructor already defined for class {}",
+                    friendlyName, m_classUrl.toString());
+            }
+        }
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
-            "ctor already defined for class {}", m_classUrl.toString());
+            "'{}' already defined for class {}", name, m_classUrl.toString());
+    }
 
     // construct call symbol
     std::unique_ptr<CallSymbol> ctorSymbol;
@@ -465,8 +494,9 @@ lyric_assembler::ClassSymbol::declareCtor(
     BoundMethod method;
     method.methodCall = ctorUrl;
     method.hidden = isHidden;
-    method.final = false;
-    priv->methods["$ctor"] = std::move(method);
+    method.ctor = true;
+    method.final = true;
+    priv->methods[name] = std::move(method);
 
     // set allocator trap
     priv->allocatorTrap = std::move(allocatorTrap);
@@ -475,12 +505,13 @@ lyric_assembler::ClassSymbol::declareCtor(
 }
 
 tempo_utils::Status
-lyric_assembler::ClassSymbol::prepareCtor(ConstructableInvoker &invoker)
+lyric_assembler::ClassSymbol::prepareCtor(const std::string &name, ConstructableInvoker &invoker)
 {
-    lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(m_classUrl.getSymbolPath().getPath(), "$ctor");
+    lyric_common::SymbolPath ctorPath = lyric_common::SymbolPath(
+        m_classUrl.getSymbolPath().getPath(), name);
     auto ctorUrl = lyric_common::SymbolUrl(m_classUrl.getModuleLocation(), ctorPath);
 
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_state->symbolCache()->getOrImportSymbol(ctorUrl));
     if (symbol->getSymbolType() != SymbolType::CALL)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,

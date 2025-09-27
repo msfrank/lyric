@@ -43,14 +43,21 @@ lyric_parser::internal::ModuleConstructOps::parseDerefNew(ModuleParser::DerefNew
     if (hasError())
         return;
 
-    auto *typeNode = make_Type_node(state, ctx->assignableType());
-
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     ArchetypeNode *newNode;
     TU_ASSIGN_OR_RAISE (newNode, state->appendNode(lyric_schema::kLyricAstNewClass, location));
-    TU_RAISE_IF_NOT_OK (newNode->putAttr(kLyricAstTypeOffset, typeNode));
+
+    // set the path to the constructor symbol
+    auto symbolPath = make_symbol_path(ctx->symbolPath());
+    TU_RAISE_IF_NOT_OK (newNode->putAttr(kLyricAstSymbolPath, symbolPath));
+
+    // set the type arguments if present
+    if (ctx->typeArguments()) {
+        auto *typeArgumentsNode = make_TypeArguments_node(state, ctx->typeArguments());
+        TU_RAISE_IF_NOT_OK (newNode->putAttr(kLyricAstTypeArgumentsOffset, typeArgumentsNode));
+    }
 
     if (ctx->newArguments()->argumentList()) {
         auto *argList = ctx->newArguments()->argumentList();

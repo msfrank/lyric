@@ -59,7 +59,7 @@ lyric_compiler::define_lambda_builder(
 
     // invoke the closure ctor
     lyric_assembler::ConstructableInvoker closureCtor;
-    TU_RETURN_IF_NOT_OK (closureClass->prepareCtor(closureCtor));
+    TU_RETURN_IF_NOT_OK (closureClass->prepareCtor(lyric_object::kCtorSpecialSymbol, closureCtor));
 
     lyric_typing::CallsiteReifier closureReifier(typeSystem);
     TU_RETURN_IF_NOT_OK (closureReifier.initialize(closureCtor, builderTypeArguments));

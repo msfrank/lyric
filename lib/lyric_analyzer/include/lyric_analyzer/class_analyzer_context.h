@@ -27,6 +27,7 @@ namespace lyric_analyzer {
             const lyric_parser::ArchetypeNode *node,
             const lyric_rewriter::VisitorContext &ctx) override;
 
+        tempo_utils::Status declareCtor(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareMember(const lyric_parser::ArchetypeNode *node, bool isVariable);
         tempo_utils::Status declareMethod(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareAbstract(const lyric_parser::ArchetypeNode *node);
@@ -35,7 +36,7 @@ namespace lyric_analyzer {
     private:
         AnalyzerScanDriver *m_driver;
         lyric_assembler::ClassSymbol *m_classSymbol;
-        const lyric_parser::ArchetypeNode *m_initNode;
+        bool m_missingInit;
     };
 }
 

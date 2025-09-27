@@ -16,6 +16,19 @@ lyric_parser::internal::get_token_location(const antlr4::Token *token)
         static_cast<tu_int64>(token->getStopIndex() - token->getStartIndex()));
 }
 
+lyric_common::SymbolPath
+lyric_parser::internal::make_symbol_path(ModuleParser::SymbolPathContext *ctx)
+{
+    std::vector<std::string> parts;
+    for (size_t i = 0; i < ctx->getRuleIndex(); i++) {
+        auto *identifier = ctx->Identifier(i);
+        if (identifier == nullptr)
+            continue;
+        parts.push_back(identifier->getText());
+    }
+    return lyric_common::SymbolPath(parts);
+}
+
 lyric_parser::ArchetypeNode *
 lyric_parser::internal::make_SType_node(
     ArchetypeState *state,

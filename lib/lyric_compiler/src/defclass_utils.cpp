@@ -16,7 +16,8 @@ lyric_compiler::declare_class_default_init(
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, classSymbol->declareCtor(/* isHidden= */ false, allocatorTrap));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, classSymbol->declareCtor(
+        lyric_object::kCtorSpecialSymbol, /* isHidden= */ false, allocatorTrap));
 
     // define 0-arity constructor
     TU_RETURN_IF_STATUS(ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
@@ -40,7 +41,7 @@ lyric_compiler::define_class_default_init(
 
     // verify that super ctor takes no arguments
     auto *superClass = classSymbol->superClass();
-    auto superCtorUrl = superClass->getCtor();
+    auto superCtorUrl = superClass->getCtor(lyric_object::kCtorSpecialSymbol);
     lyric_assembler::AbstractSymbol *superCtorSymbol;
     TU_ASSIGN_OR_RETURN (superCtorSymbol, symbolCache->getOrImportSymbol(superCtorUrl));
     auto *superCtorCall = cast_symbol_to_call(superCtorSymbol);
@@ -55,7 +56,7 @@ lyric_compiler::define_class_default_init(
 
     // find the superclass ctor
     lyric_assembler::ConstructableInvoker superCtor;
-    TU_RETURN_IF_NOT_OK (defclass->superclassSymbol->prepareCtor(superCtor));
+    TU_RETURN_IF_NOT_OK (superClass->prepareCtor(lyric_object::kCtorSpecialSymbol, superCtor));
 
     lyric_typing::CallsiteReifier reifier(typeSystem);
     TU_RETURN_IF_NOT_OK (reifier.initialize(superCtor));
@@ -138,19 +139,19 @@ lyric_compiler::declare_class_init(
     TU_ASSERT (classSymbol != nullptr);
     auto *classBlock = classSymbol->classBlock();
 
-    // std::string identifier;
-    // if (initNode->hasAttr(lyric_parser::kLyricAstIdentifier)) {
-    //     TU_RETURN_IF_NOT_OK (initNode->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
-    // } else {
-    //     identifier = lyric_object::kCtorSpecialSymbol;
-    // }
+    std::string identifier;
+    if (initNode->hasAttr(lyric_parser::kLyricAstIdentifier)) {
+        TU_RETURN_IF_NOT_OK (initNode->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+    } else {
+        identifier = lyric_object::kCtorSpecialSymbol;
+    }
 
     bool isHidden;
     TU_RETURN_IF_NOT_OK (initNode->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
     // declare the constructor
     lyric_assembler::CallSymbol *ctorSymbol;
-    TU_ASSIGN_OR_RETURN (ctorSymbol, classSymbol->declareCtor(isHidden, allocatorTrap));
+    TU_ASSIGN_OR_RETURN (ctorSymbol, classSymbol->declareCtor(identifier, isHidden, allocatorTrap));
 
     lyric_typing::PackSpec packSpec;
     lyric_assembler::ParameterPack parameterPack;

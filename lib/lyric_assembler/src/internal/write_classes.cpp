@@ -33,8 +33,6 @@ lyric_assembler::internal::touch_class(
         TU_RETURN_IF_NOT_OK (writer.touchTemplate(templateHandle));
     }
 
-    TU_RETURN_IF_NOT_OK (writer.touchConstructor(classSymbol->getCtor()));
-
     for (auto it = classSymbol->membersBegin(); it != classSymbol->membersEnd(); it++) {
         TU_RETURN_IF_NOT_OK (writer.touchMember(it->second));
     }

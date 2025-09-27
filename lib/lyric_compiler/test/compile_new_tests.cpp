@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
@@ -8,13 +7,62 @@
 
 class CompileNew : public BaseCompilerFixture {};
 
-TEST_F(CompileNew, EvaluateNewObject)
+TEST_F(CompileNew, EvaluateNewClassUsingDefaultConstructor)
 {
     auto result = m_tester->runModule(R"(
-        Object{}
+        defclass Foo {
+        }
+        Foo{}
     )");
 
     ASSERT_THAT (result,
-                 tempo_test::ContainsResult(
-                     RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Object")))));
+        tempo_test::ContainsResult(
+            RunModule(DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+}
+
+TEST_F(CompileNew, EvaluateNewStructUsingDefaultConstructor)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+        }
+        Foo{}
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(
+            RunModule(DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+}
+
+TEST_F(CompileNew, EvaluateNewClassUsingNamedConstructor)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            val Value: Int
+            init Named(value: Int) {
+                set this.Value = value
+            }
+        }
+        Foo.Named{42}
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(
+            RunModule(DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+}
+
+TEST_F(CompileNew, EvaluateNewStructUsingNamedConstructor)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            val Value: Int
+            init Named(value: Int) {
+                set this.Value = value
+            }
+        }
+        Foo.Named{42}
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(
+            RunModule(DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }

@@ -104,12 +104,14 @@ namespace lyric_assembler {
         /*
          * class constructor management
          */
-        lyric_common::SymbolUrl getCtor() const;
         std::string getAllocatorTrap() const;
+        bool hasCtor(const std::string &name) const;
+        lyric_common::SymbolUrl getCtor(const std::string &name) const;
         tempo_utils::Result<CallSymbol *> declareCtor(
+            const std::string &name,
             bool isHidden,
             std::string allocatorTrap = {});
-        tempo_utils::Status prepareCtor(ConstructableInvoker &invoker);
+        tempo_utils::Status prepareCtor(const std::string &name, ConstructableInvoker &invoker);
 
         /*
          * class method management

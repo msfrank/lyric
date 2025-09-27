@@ -7,12 +7,17 @@
 #include <ModuleParser.h>
 #include <ModuleParserBaseListener.h>
 
+#include <lyric_common/symbol_path.h>
+
+#include "ModuleParser.h"
 #include "../archetype_node.h"
 #include "../parser_types.h"
 
 namespace lyric_parser::internal {
 
     ParseLocation get_token_location(const antlr4::Token *token);
+
+    lyric_common::SymbolPath make_symbol_path(ModuleParser::SymbolPathContext *ctx);
 
     ArchetypeNode *make_SType_node(ArchetypeState *state, ModuleParser::SimpleTypeContext *ctx);
     ArchetypeNode *make_PType_node(ArchetypeState *state, ModuleParser::ParametricTypeContext *ctx);
@@ -25,6 +30,7 @@ namespace lyric_parser::internal {
         ArchetypeState *state,
         ModuleParser::PlaceholderSpecContext *pctx,
         ModuleParser::ConstraintSpecContext *cctx = nullptr);
+
     bool identifier_is_hidden(std::string_view identifier);
 }
 

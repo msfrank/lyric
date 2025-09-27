@@ -508,7 +508,7 @@ newOrDeref          : derefLiteral derefSpec*                                   
 
 derefLiteral        : literal ;
 derefGrouping       : ParenOpen expression ParenClose ;
-derefNew            : assignableType newArguments ;
+derefNew            : symbolPath typeArguments? newArguments ;
 thisSpec            : ThisKeyword ;
 callSpec            : Identifier typeArguments? callArguments ;
 nameSpec            : Identifier ;
