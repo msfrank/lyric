@@ -37,6 +37,236 @@ lyric_parser::internal::ModuleConstructOps::parsePairExpression(ModuleParser::Pa
 }
 
 void
+lyric_parser::internal::ModuleConstructOps::parseDefaultThisBase(ModuleParser::DefaultThisBaseContext *ctx)
+{
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+    auto *state = getState();
+
+    if (hasError())
+        return;
+
+    // allocate base node
+    ArchetypeNode *baseNode;
+    TU_ASSIGN_OR_RAISE (baseNode, state->appendNode(lyric_schema::kLyricAstBaseClass, location));
+
+    // set this base
+    TU_RAISE_IF_NOT_OK (baseNode->putAttr(kLyricAstThisBase, true));
+
+    if (ctx->callArguments()->argumentList()) {
+        auto *argList = ctx->callArguments()->argumentList();
+        for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
+            auto *argSpec = argList->argument(i);
+            if (argSpec == nullptr)
+                continue;
+
+            // pop argument off the stack
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, state->popNode());
+
+            if (argSpec->Identifier() != nullptr) {
+                auto label = argSpec->Identifier()->getText();
+
+                token = argSpec->getStart();
+                location = get_token_location(token);
+
+                // allocate keyword node
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+
+                // set keyword name
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+
+                // append arg node to keyword
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
+                argNode = keywordNode;
+            }
+
+            // prepend arg node to the base
+            TU_RAISE_IF_NOT_OK (baseNode->prependChild(argNode));
+        }
+    }
+
+    // push the base onto stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(baseNode));
+}
+
+void
+lyric_parser::internal::ModuleConstructOps::parseNamedThisBase(ModuleParser::NamedThisBaseContext *ctx)
+{
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+    auto *state = getState();
+
+    auto identifier = ctx->Identifier()->getText();
+
+    if (hasError())
+        return;
+
+    // allocate base node
+    ArchetypeNode *baseNode;
+    TU_ASSIGN_OR_RAISE (baseNode, state->appendNode(lyric_schema::kLyricAstBaseClass, location));
+
+    // set base ctor name
+    TU_RAISE_IF_NOT_OK (baseNode->putAttr(kLyricAstIdentifier, identifier));
+
+    // set this base
+    TU_RAISE_IF_NOT_OK (baseNode->putAttr(kLyricAstThisBase, true));
+
+    if (ctx->callArguments()->argumentList()) {
+        auto *argList = ctx->callArguments()->argumentList();
+        for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
+            auto *argSpec = argList->argument(i);
+            if (argSpec == nullptr)
+                continue;
+
+            // pop argument off the stack
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, state->popNode());
+
+            if (argSpec->Identifier() != nullptr) {
+                auto label = argSpec->Identifier()->getText();
+
+                token = argSpec->getStart();
+                location = get_token_location(token);
+
+                // allocate keyword node
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+
+                // set keyword name
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+
+                // append arg node to keyword
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
+                argNode = keywordNode;
+            }
+
+            // prepend arg node to the base
+            TU_RAISE_IF_NOT_OK (baseNode->prependChild(argNode));
+        }
+    }
+
+    // push the base onto stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(baseNode));
+}
+
+void
+lyric_parser::internal::ModuleConstructOps::parseDefaultSuperBase(ModuleParser::DefaultSuperBaseContext *ctx)
+{
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+    auto *state = getState();
+
+    if (hasError())
+        return;
+
+    // allocate base node
+    ArchetypeNode *baseNode;
+    TU_ASSIGN_OR_RAISE (baseNode, state->appendNode(lyric_schema::kLyricAstBaseClass, location));
+
+    // set this base
+    TU_RAISE_IF_NOT_OK (baseNode->putAttr(kLyricAstThisBase, false));
+
+    if (ctx->callArguments()->argumentList()) {
+        auto *argList = ctx->callArguments()->argumentList();
+        for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
+            auto *argSpec = argList->argument(i);
+            if (argSpec == nullptr)
+                continue;
+
+            // pop argument off the stack
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, state->popNode());
+
+            if (argSpec->Identifier() != nullptr) {
+                auto label = argSpec->Identifier()->getText();
+
+                token = argSpec->getStart();
+                location = get_token_location(token);
+
+                // allocate keyword node
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+
+                // set keyword name
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+
+                // append arg node to keyword
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
+                argNode = keywordNode;
+            }
+
+            // prepend arg node to the base
+            TU_RAISE_IF_NOT_OK (baseNode->prependChild(argNode));
+        }
+    }
+
+    // push the base onto stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(baseNode));
+}
+
+void
+lyric_parser::internal::ModuleConstructOps::parseNamedSuperBase(ModuleParser::NamedSuperBaseContext *ctx)
+{
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+    auto *state = getState();
+
+    auto identifier = ctx->Identifier()->getText();
+
+    if (hasError())
+        return;
+
+    // allocate base node
+    ArchetypeNode *baseNode;
+    TU_ASSIGN_OR_RAISE (baseNode, state->appendNode(lyric_schema::kLyricAstBaseClass, location));
+
+    // set base ctor name
+    TU_RAISE_IF_NOT_OK (baseNode->putAttr(kLyricAstIdentifier, identifier));
+
+    // set this base
+    TU_RAISE_IF_NOT_OK (baseNode->putAttr(kLyricAstThisBase, false));
+
+    if (ctx->callArguments()->argumentList()) {
+        auto *argList = ctx->callArguments()->argumentList();
+        for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
+            auto *argSpec = argList->argument(i);
+            if (argSpec == nullptr)
+                continue;
+
+            // pop argument off the stack
+            ArchetypeNode *argNode;
+            TU_ASSIGN_OR_RAISE (argNode, state->popNode());
+
+            if (argSpec->Identifier() != nullptr) {
+                auto label = argSpec->Identifier()->getText();
+
+                token = argSpec->getStart();
+                location = get_token_location(token);
+
+                // allocate keyword node
+                ArchetypeNode *keywordNode;
+                TU_ASSIGN_OR_RAISE (keywordNode, state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+
+                // set keyword name
+                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+
+                // append arg node to keyword
+                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
+                argNode = keywordNode;
+            }
+
+            // prepend arg node to the base
+            TU_RAISE_IF_NOT_OK (baseNode->prependChild(argNode));
+        }
+    }
+
+    // push the base onto stack
+    TU_RAISE_IF_NOT_OK (state->pushNode(baseNode));
+}
+
+void
 lyric_parser::internal::ModuleConstructOps::parseDerefNew(ModuleParser::DerefNewContext *ctx)
 {
     auto *state = getState();
@@ -86,7 +316,11 @@ lyric_parser::internal::ModuleConstructOps::parseDerefNew(ModuleParser::DerefNew
         }
     }
 
-    TU_RAISE_IF_NOT_OK (state->pushNode(newNode));
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, state->peekNode(lyric_schema::kLyricAstDataDerefClass));
+
+    // append new to the deref
+    TU_RAISE_IF_NOT_OK (derefNode->appendChild(newNode));
 }
 
 void

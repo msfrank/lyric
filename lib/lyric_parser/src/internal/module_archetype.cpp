@@ -679,6 +679,12 @@ void lyric_parser::internal::ModuleArchetype::enterGroupingExpression(ModulePars
     LOG_ERROR_ON_EXCEPTION (ctx, ops.enterGroupingExpression(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::enterNewExpression(ModuleParser::NewExpressionContext *ctx)
+{
+    ModuleDerefOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterNewExpression(ctx));
+}
+
 void lyric_parser::internal::ModuleArchetype::enterThisExpression(ModuleParser::ThisExpressionContext *ctx)
 {
     ModuleDerefOps ops(this);
@@ -790,6 +796,30 @@ void lyric_parser::internal::ModuleArchetype::exitPairExpression(ModuleParser::P
     LOG_ERROR_ON_EXCEPTION (ctx, ops.parsePairExpression(ctx));
 }
 
+void lyric_parser::internal::ModuleArchetype::exitDefaultThisBase(ModuleParser::DefaultThisBaseContext *ctx)
+{
+    ModuleConstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseDefaultThisBase(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitNamedThisBase(ModuleParser::NamedThisBaseContext *ctx)
+{
+    ModuleConstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseNamedThisBase(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitDefaultSuperBase(ModuleParser::DefaultSuperBaseContext *ctx)
+{
+    ModuleConstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseDefaultSuperBase(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitNamedSuperBase(ModuleParser::NamedSuperBaseContext *ctx)
+{
+    ModuleConstructOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseNamedSuperBase(ctx));
+}
+
 void lyric_parser::internal::ModuleArchetype::exitDerefNew(ModuleParser::DerefNewContext *ctx)
 {
     ModuleConstructOps ops(this);
@@ -866,12 +896,6 @@ void lyric_parser::internal::ModuleArchetype::enterDefclassStatement(ModuleParse
 {
     ModuleDefclassOps ops(this);
     LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefclassStatement(ctx));
-}
-
-void lyric_parser::internal::ModuleArchetype::exitClassSuper(ModuleParser::ClassSuperContext *ctx)
-{
-    ModuleDefclassOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitClassSuper(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterClassInit(ModuleParser::ClassInitContext *ctx)
@@ -1148,12 +1172,6 @@ void lyric_parser::internal::ModuleArchetype::enterDefstructStatement(ModulePars
 {
     ModuleDefstructOps ops(this);
     LOG_ERROR_ON_EXCEPTION (ctx, ops.enterDefstructStatement(ctx));
-}
-
-void lyric_parser::internal::ModuleArchetype::exitStructSuper(ModuleParser::StructSuperContext *ctx)
-{
-    ModuleDefstructOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitStructSuper(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::enterStructInit(ModuleParser::StructInitContext *ctx)

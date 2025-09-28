@@ -43,6 +43,20 @@ lyric_parser::internal::ModuleDerefOps::enterGroupingExpression(ModuleParser::Gr
 }
 
 void
+lyric_parser::internal::ModuleDerefOps::enterNewExpression(ModuleParser::NewExpressionContext *ctx)
+{
+    auto *state = getState();
+    if (hasError())
+        return;
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+    ArchetypeNode *derefNode;
+    TU_ASSIGN_OR_RAISE (derefNode, state->appendNode(lyric_schema::kLyricAstDataDerefClass, location));
+    TU_RAISE_IF_NOT_OK (state->pushNode(derefNode));
+}
+
+void
 lyric_parser::internal::ModuleDerefOps::enterThisExpression(ModuleParser::ThisExpressionContext *ctx)
 {
     auto *state = getState();
@@ -97,7 +111,7 @@ lyric_parser::internal::ModuleDerefOps::exitDerefLiteral(ModuleParser::DerefLite
     ArchetypeNode *derefNode;
     TU_ASSIGN_OR_RAISE (derefNode, state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
-    // otherwise append literal to the deref
+    // append literal to the deref
     TU_RAISE_IF_NOT_OK (derefNode->appendChild(literalNode));
 }
 
@@ -117,7 +131,7 @@ lyric_parser::internal::ModuleDerefOps::exitDerefGrouping(ModuleParser::DerefGro
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
-    // otherwise wrap expression in a block and append to the deref
+    // wrap expression in a block and append to the deref
     ArchetypeNode *blockNode;
     TU_ASSIGN_OR_RAISE (blockNode, state->appendNode(lyric_schema::kLyricAstBlockClass, location));
     TU_RAISE_IF_NOT_OK (blockNode->appendChild(expressionNode));
@@ -140,7 +154,7 @@ lyric_parser::internal::ModuleDerefOps::exitThisSpec(ModuleParser::ThisSpecConte
     ArchetypeNode *derefNode;
     TU_ASSIGN_OR_RAISE (derefNode, state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
-    // otherwise append this to the deref
+    // append this to the deref
     TU_RAISE_IF_NOT_OK (derefNode->appendChild(thisNode));
 }
 
@@ -163,7 +177,7 @@ lyric_parser::internal::ModuleDerefOps::exitNameSpec(ModuleParser::NameSpecConte
     ArchetypeNode *derefNode;
     TU_ASSIGN_OR_RAISE (derefNode, state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
-    // otherwise append name to the deref
+    // append name to the deref
     TU_RAISE_IF_NOT_OK (derefNode->appendChild(nameNode));
 }
 
@@ -219,7 +233,7 @@ lyric_parser::internal::ModuleDerefOps::exitCallSpec(ModuleParser::CallSpecConte
     ArchetypeNode *derefNode;
     TU_ASSIGN_OR_RAISE (derefNode, state->peekNode(lyric_schema::kLyricAstDataDerefClass));
 
-    // otherwise append call to the deref
+    // append call to the deref
     TU_RAISE_IF_NOT_OK (derefNode->appendChild(callNode));
 }
 

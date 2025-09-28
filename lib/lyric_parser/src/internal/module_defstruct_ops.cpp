@@ -47,57 +47,57 @@ lyric_parser::internal::ModuleDefstructOps::enterDefstructStatement(ModuleParser
     TU_RAISE_IF_NOT_OK (state->pushNode(defstructNode));
 }
 
-void
-lyric_parser::internal::ModuleDefstructOps::exitStructSuper(ModuleParser::StructSuperContext *ctx)
-{
-    auto *token = ctx->getStart();
-    auto location = get_token_location(token);
-    auto *state = getState();
-
-    if (hasError())
-        return;
-
-    // allocate super node
-    ArchetypeNode *superNode;
-    TU_ASSIGN_OR_RAISE (superNode, state->appendNode(lyric_schema::kLyricAstSuperClass, location));
-
-    if (ctx->callArguments()->argumentList()) {
-        auto *argList = ctx->callArguments()->argumentList();
-        for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
-            auto *argSpec = argList->argument(i);
-            if (argSpec == nullptr)
-                continue;
-
-            // pop argument off of the stack
-            ArchetypeNode *argNode;
-            TU_ASSIGN_OR_RAISE (argNode, state->popNode());
-
-            if (argSpec->Identifier() != nullptr) {
-                auto label = argSpec->Identifier()->getText();
-
-                token = argSpec->getStart();
-                location = get_token_location(token);
-
-                // allocate keyword node
-                ArchetypeNode *keywordNode;
-                TU_ASSIGN_OR_RAISE (keywordNode, state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
-
-                // set keyword name
-                TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
-
-                // append arg node to keyword
-                TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
-                argNode = keywordNode;
-            }
-
-            // prepend arg node to the super
-            TU_RAISE_IF_NOT_OK (superNode->prependChild(argNode));
-        }
-    }
-
-    // push super onto the stack
-    TU_RAISE_IF_NOT_OK (state->pushNode(superNode));
-}
+// void
+// lyric_parser::internal::ModuleDefstructOps::exitStructSuper(ModuleParser::StructSuperContext *ctx)
+// {
+//     auto *token = ctx->getStart();
+//     auto location = get_token_location(token);
+//     auto *state = getState();
+//
+//     if (hasError())
+//         return;
+//
+//     // allocate super node
+//     ArchetypeNode *superNode;
+//     TU_ASSIGN_OR_RAISE (superNode, state->appendNode(lyric_schema::kLyricAstSuperClass, location));
+//
+//     if (ctx->callArguments()->argumentList()) {
+//         auto *argList = ctx->callArguments()->argumentList();
+//         for (auto i = static_cast<int>(argList->getRuleIndex()) - 1; 0 <= i; i--) {
+//             auto *argSpec = argList->argument(i);
+//             if (argSpec == nullptr)
+//                 continue;
+//
+//             // pop argument off of the stack
+//             ArchetypeNode *argNode;
+//             TU_ASSIGN_OR_RAISE (argNode, state->popNode());
+//
+//             if (argSpec->Identifier() != nullptr) {
+//                 auto label = argSpec->Identifier()->getText();
+//
+//                 token = argSpec->getStart();
+//                 location = get_token_location(token);
+//
+//                 // allocate keyword node
+//                 ArchetypeNode *keywordNode;
+//                 TU_ASSIGN_OR_RAISE (keywordNode, state->appendNode(lyric_schema::kLyricAstKeywordClass, location));
+//
+//                 // set keyword name
+//                 TU_RAISE_IF_NOT_OK (keywordNode->putAttr(kLyricAstIdentifier, label));
+//
+//                 // append arg node to keyword
+//                 TU_RAISE_IF_NOT_OK (keywordNode->appendChild(argNode));
+//                 argNode = keywordNode;
+//             }
+//
+//             // prepend arg node to the super
+//             TU_RAISE_IF_NOT_OK (superNode->prependChild(argNode));
+//         }
+//     }
+//
+//     // push super onto the stack
+//     TU_RAISE_IF_NOT_OK (state->pushNode(superNode));
+// }
 
 void
 lyric_parser::internal::ModuleDefstructOps::enterStructInit(ModuleParser::StructInitContext *ctx)
@@ -145,12 +145,12 @@ lyric_parser::internal::ModuleDefstructOps::exitStructInit(ModuleParser::StructI
         TU_ASSIGN_OR_RAISE (blockNode, state->appendNode(lyric_schema::kLyricAstBlockClass, {}));
     }
 
-    // if init statement has superstruct then super is top of the stack, otherwise synthesize an empty node
-    ArchetypeNode *superNode;
-    if (ctx->structSuper()) {
-        TU_ASSIGN_OR_RAISE (superNode, state->popNode(lyric_schema::kLyricAstSuperClass));
+    // if init statement has base constructor then base is top of the stack, otherwise synthesize an empty node
+    ArchetypeNode *baseNode;
+    if (ctx->initBase()) {
+        TU_ASSIGN_OR_RAISE (baseNode, state->popNode(lyric_schema::kLyricAstBaseClass));
     } else {
-        TU_ASSIGN_OR_RAISE (superNode, state->appendNode(lyric_schema::kLyricAstSuperClass, {}));
+        TU_ASSIGN_OR_RAISE (baseNode, state->appendNode(lyric_schema::kLyricAstBaseClass, {}));
     }
 
     // the parameter list
@@ -170,8 +170,8 @@ lyric_parser::internal::ModuleDefstructOps::exitStructInit(ModuleParser::StructI
     // append pack node to init
     TU_RAISE_IF_NOT_OK (initNode->appendChild(packNode));
 
-    // append super node to init
-    TU_RAISE_IF_NOT_OK (initNode->appendChild(superNode));
+    // append base node to init
+    TU_RAISE_IF_NOT_OK (initNode->appendChild(baseNode));
 
     // append block node to init
     TU_RAISE_IF_NOT_OK (initNode->appendChild(blockNode));

@@ -300,33 +300,18 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
         TU_ASSIGN_OR_RETURN (templateSpec, m_typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
     }
 
-    lyric_parser::ArchetypeNode *initNode = nullptr;
-    for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
-        auto *child = *it;
-        lyric_schema::LyricAstId childId;
-        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
-        if (childId == lyric_schema::LyricAstId::Init) {
-            if (initNode != nullptr)
-                return AnalyzerStatus::forCondition(AnalyzerCondition::kSyntaxError);
-            initNode = child;
-        }
-    }
-
-    auto *fundamentalCache = m_state->fundamentalCache();
+    lyric_common::TypeDef superClassType;
 
     // determine the superclass type
-    auto superClassType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
-    if (initNode != nullptr) {
-        auto *superNode = initNode->getChild(1);
-        TU_ASSERT (superNode != nullptr);
-        TU_ASSERT (superNode->isClass(lyric_schema::kLyricAstSuperClass));
-        if (superNode->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
-            lyric_parser::ArchetypeNode *typeNode;
-            TU_RETURN_IF_NOT_OK (superNode->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
-            lyric_typing::TypeSpec superClassSpec;
-            TU_ASSIGN_OR_RETURN (superClassSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-            TU_ASSIGN_OR_RETURN (superClassType, m_typeSystem->resolveAssignable(block, superClassSpec));
-        }
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        lyric_parser::ArchetypeNode *typeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+        lyric_typing::TypeSpec superClassSpec;
+        TU_ASSIGN_OR_RETURN (superClassSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (superClassType, m_typeSystem->resolveAssignable(block, superClassSpec));
+    } else {
+        auto *fundamentalCache = m_state->fundamentalCache();
+        superClassType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Object);
     }
 
     // resolve the superclass
@@ -344,7 +329,7 @@ lyric_analyzer::AnalyzerScanDriver::pushClass(
     TU_LOG_V << "declared class " << classSymbol->getSymbolUrl() << " from " << superClass->getSymbolUrl();
 
     // push the class context
-    auto ctx = std::make_unique<ClassAnalyzerContext>(this, classSymbol, initNode);
+    auto ctx = std::make_unique<ClassAnalyzerContext>(this, classSymbol);
     return pushContext(std::move(ctx));
 }
 
@@ -371,10 +356,19 @@ lyric_analyzer::AnalyzerScanDriver::pushConcept(
         TU_ASSIGN_OR_RETURN (templateSpec, m_typeSystem->parseTemplate(block, genericNode->getArchetypeNode()));
     }
 
-    auto *fundamentalCache = m_state->fundamentalCache();
+    lyric_common::TypeDef superConceptType;
 
     // determine the superconcept type
-    auto superConceptType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        lyric_parser::ArchetypeNode *typeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+        lyric_typing::TypeSpec superConceptSpec;
+        TU_ASSIGN_OR_RETURN (superConceptSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (superConceptType, m_typeSystem->resolveAssignable(block, superConceptSpec));
+    } else {
+        auto *fundamentalCache = m_state->fundamentalCache();
+        superConceptType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Idea);
+    }
 
     // resolve the superconcept
     TU_ASSIGN_OR_RETURN (superConcept, block->resolveConcept(superConceptType));
@@ -409,22 +403,19 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
-    lyric_parser::ArchetypeNode *initNode = nullptr;
-    for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
-        auto *child = *it;
-        lyric_schema::LyricAstId childId;
-        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
-        if (childId == lyric_schema::LyricAstId::Init) {
-            if (initNode != nullptr)
-                return AnalyzerStatus::forCondition(AnalyzerCondition::kSyntaxError);
-            initNode = child;
-        }
-    }
-
-    auto *fundamentalCache = m_state->fundamentalCache();
+    lyric_common::TypeDef superEnumType;
 
     // determine the superenum type
-    auto superEnumType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Category);
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        lyric_parser::ArchetypeNode *typeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+        lyric_typing::TypeSpec superEnumSpec;
+        TU_ASSIGN_OR_RETURN (superEnumSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (superEnumType, m_typeSystem->resolveAssignable(block, superEnumSpec));
+    } else {
+        auto *fundamentalCache = m_state->fundamentalCache();
+        superEnumType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Category);
+    }
 
     // resolve the superenum
     TU_ASSIGN_OR_RETURN (superEnum, block->resolveEnum(superEnumType));
@@ -440,7 +431,7 @@ lyric_analyzer::AnalyzerScanDriver::pushEnum(
     TU_LOG_V << "declared enum " << enumSymbol->getSymbolUrl() << " from " << superEnum->getSymbolUrl();
 
     // push the enum context
-    auto ctx = std::make_unique<EnumAnalyzerContext>(this, enumSymbol, initNode);
+    auto ctx = std::make_unique<EnumAnalyzerContext>(this, enumSymbol);
     return pushContext(std::move(ctx));
 }
 
@@ -458,22 +449,19 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
-    lyric_parser::ArchetypeNode *initNode = nullptr;
-    for (auto it = node->childrenBegin(); it != node->childrenEnd(); it++) {
-        auto *child = *it;
-        lyric_schema::LyricAstId childId;
-        TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
-        if (childId == lyric_schema::LyricAstId::Init) {
-            if (initNode != nullptr)
-                return AnalyzerStatus::forCondition(AnalyzerCondition::kSyntaxError);
-            initNode = child;
-        }
-    }
-
-    auto *fundamentalCache = m_state->fundamentalCache();
+    lyric_common::TypeDef superInstanceType;
 
     // determine the superinstance type
-    auto superInstanceType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Singleton);
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        lyric_parser::ArchetypeNode *typeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+        lyric_typing::TypeSpec superInstanceSpec;
+        TU_ASSIGN_OR_RETURN (superInstanceSpec, m_typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (superInstanceType, m_typeSystem->resolveAssignable(block, superInstanceSpec));
+    } else {
+        auto *fundamentalCache = m_state->fundamentalCache();
+        superInstanceType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Singleton);
+    }
 
     // resolve the superinstance
     TU_ASSIGN_OR_RETURN (superInstance, block->resolveInstance(superInstanceType));
@@ -489,7 +477,7 @@ lyric_analyzer::AnalyzerScanDriver::pushInstance(
     TU_LOG_V << "declared instance " << instanceSymbol->getSymbolUrl() << " from " << superInstance->getSymbolUrl();
 
     // push the instance context
-    auto ctx = std::make_unique<InstanceAnalyzerContext>(this, instanceSymbol, initNode);
+    auto ctx = std::make_unique<InstanceAnalyzerContext>(this, instanceSymbol);
     return pushContext(std::move(ctx));
 }
 

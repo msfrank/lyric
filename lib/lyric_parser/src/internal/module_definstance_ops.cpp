@@ -98,12 +98,12 @@ lyric_parser::internal::ModuleDefinstanceOps::exitInstanceInit(ModuleParser::Ins
     // append pack node to init
     TU_RAISE_IF_NOT_OK (initNode->appendChild(packNode));
 
-    // synthesize an empty super node
-    ArchetypeNode *superNode;
-    TU_ASSIGN_OR_RAISE (superNode, state->appendNode(lyric_schema::kLyricAstSuperClass, {}));
+    // synthesize an empty base node
+    ArchetypeNode *baseNode;
+    TU_ASSIGN_OR_RAISE (baseNode, state->appendNode(lyric_schema::kLyricAstBaseClass, {}));
 
-    // append super node to the init
-    TU_RAISE_IF_NOT_OK (initNode->appendChild(superNode));
+    // append base node to the init
+    TU_RAISE_IF_NOT_OK (initNode->appendChild(baseNode));
 
     // append block node to the init
     TU_RAISE_IF_NOT_OK (initNode->appendChild(blockNode));

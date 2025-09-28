@@ -22,6 +22,90 @@ TEST_F(CompileDefstruct, EvaluateNewInstanceWithDefaultConstructor)
                      RunModule(DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
+TEST_F(CompileDefstruct, EvaluateNewInstanceWithDefaultSuperInit)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            init() {}
+        }
+        Foo{}
+    )");
+
+    ASSERT_THAT (result,
+                 tempo_test::ContainsResult(RunModule(
+                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+}
+
+TEST_F(CompileDefstruct, EvaluateNewInstanceWithExplicitSuperInit)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            init() {}
+        }
+        defstruct Bar {
+            init() from super() {}
+        }
+        Bar{}
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(RunModule(
+            DataCellRef(lyric_common::SymbolPath({"Bar"})))));
+}
+
+TEST_F(CompileDefstruct, EvaluateNewInstanceWithExplicitNamedSuperInit)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            init Named() {}
+        }
+        defstruct Bar from Foo {
+            init() from super.Named() {}
+        }
+        Bar{}
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(RunModule(
+            DataCellRef(lyric_common::SymbolPath({"Bar"})))));
+}
+
+TEST_F(CompileDefstruct, EvaluateNewInstanceWithExplicitThisInit)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            val Value: Int
+            init(i: Int) {
+                set this.Value = i
+            }
+            init Named() from this(42) {}
+        }
+        Foo.Named{}.Value
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(RunModule(
+            DataCellInt(42))));
+}
+
+TEST_F(CompileDefstruct, EvaluateNewInstanceWithExplicitNamedThisInit)
+{
+    auto result = m_tester->runModule(R"(
+        defstruct Foo {
+            val Value: Int
+            init Named(i: Int) {
+                set this.Value = i
+            }
+            init() from this.Named(42) {}
+        }
+        Foo{}.Value
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(RunModule(
+            DataCellInt(42))));
+}
+
 TEST_F(CompileDefstruct, EvaluateNewInstanceWithConstructor)
 {
     auto result = m_tester->runModule(R"(

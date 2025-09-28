@@ -587,7 +587,9 @@ lyric_compiler::DataDerefLast::decide(
 
         case lyric_assembler::ReferenceType::Descriptor:
         case lyric_assembler::ReferenceType::Value:
-        case lyric_assembler::ReferenceType::Variable: {
+        case lyric_assembler::ReferenceType::Variable:
+        case lyric_assembler::ReferenceType::Invalid:
+        {
             auto receiverType = driver->peekResult();
             TU_ASSERT (receiverType.isValid());
             switch (astId) {
@@ -601,13 +603,6 @@ lyric_compiler::DataDerefLast::decide(
                     return CompilerStatus::forCondition(
                         CompilerCondition::kCompilerInvariant, "invalid deref target node");
             }
-        }
-
-        case lyric_assembler::ReferenceType::Invalid: {
-            auto receiverType = driver->peekResult();
-            TU_ASSERT (receiverType.isValid());
-            return invoke_method(node, m_deref->invokeBlock, m_deref->bindingBlock,
-                receiverType, thisReceiver, fragment, driver, ctx);
         }
 
         default:

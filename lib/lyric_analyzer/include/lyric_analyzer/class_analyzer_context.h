@@ -12,8 +12,7 @@ namespace lyric_analyzer {
     public:
         ClassAnalyzerContext(
             AnalyzerScanDriver *driver,
-            lyric_assembler::ClassSymbol *classSymbol,
-            const lyric_parser::ArchetypeNode *initNode);
+            lyric_assembler::ClassSymbol *classSymbol);
 
         lyric_assembler::BlockHandle *getBlock() const override;
 

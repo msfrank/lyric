@@ -22,7 +22,7 @@ TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultConstructor)
                      DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
-TEST_F(CompileDefclass, EvaluateNewInstanceFromDefaultSuperclass)
+TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultSuperInit)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
@@ -36,18 +36,74 @@ TEST_F(CompileDefclass, EvaluateNewInstanceFromDefaultSuperclass)
                      DataCellRef(lyric_common::SymbolPath({"Foo"})))));
 }
 
-TEST_F(CompileDefclass, EvaluateNewInstanceFromSuperclass)
+TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitSuperInit)
 {
     auto result = m_tester->runModule(R"(
         defclass Foo {
-            init() from Object() {}
+            init() {}
         }
-        Foo{}
+        defclass Bar {
+            init() from super() {}
+        }
+        Bar{}
     )");
 
     ASSERT_THAT (result,
-                 tempo_test::ContainsResult(RunModule(
-                     DataCellRef(lyric_common::SymbolPath({"Foo"})))));
+        tempo_test::ContainsResult(RunModule(
+            DataCellRef(lyric_common::SymbolPath({"Bar"})))));
+}
+
+TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitNamedSuperInit)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Foo {
+            init Named() {}
+        }
+        defclass Bar from Foo {
+            init() from super.Named() {}
+        }
+        Bar{}
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(RunModule(
+            DataCellRef(lyric_common::SymbolPath({"Bar"})))));
+}
+
+TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitThisInit)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Foo {
+            val Value: Int
+            init(i: Int) {
+                set this.Value = i
+            }
+            init Named() from this(42) {}
+        }
+        Foo.Named{}.Value
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(RunModule(
+            DataCellInt(42))));
+}
+
+TEST_F(CompileDefclass, EvaluateNewInstanceWithExplicitNamedThisInit)
+{
+    auto result = m_tester->runModule(R"(
+        defclass Foo {
+            val Value: Int
+            init Named(i: Int) {
+                set this.Value = i
+            }
+            init() from this.Named(42) {}
+        }
+        Foo{}.Value
+    )");
+
+    ASSERT_THAT (result,
+        tempo_test::ContainsResult(RunModule(
+            DataCellInt(42))));
 }
 
 TEST_F(CompileDefclass, EvaluateNewInstanceWithDefaultInitializedMember)
@@ -84,7 +140,7 @@ TEST_F(CompileDefclass, EvaluateDerefPublicVarMember)
     auto result = m_tester->runModule(R"(
         defclass Foo {
             var Index: Int
-            init(i: Int) from Object() {
+            init(i: Int) {
                 set this.Index = i
             }
         }
@@ -117,7 +173,7 @@ TEST_F(CompileDefclass, EvaluateDerefThisPrivateVarMember)
     auto result = m_tester->runModule(R"(
         defclass Foo {
             var _index: Int
-            init(i: Int) from Object() {
+            init(i: Int) {
                 set this._index = i
             }
             def index(): Int {
@@ -125,7 +181,7 @@ TEST_F(CompileDefclass, EvaluateDerefThisPrivateVarMember)
             }
         }
         defclass Bar from Foo {
-            init(i: Int) from Foo(i) {}
+            init(i: Int) from super(i) {}
             def Add(i: Int): Int {
                 i + this.index()
             }
@@ -142,7 +198,7 @@ TEST_F(CompileDefclass, CompileDerefPrivateVarMemberFails)
     auto result = m_tester->compileModule(R"(
         defclass Foo {
             var _index: Int
-            init(i: Int) from Object() {
+            init(i: Int) {
                 set this._index = i
             }
         }
@@ -160,7 +216,7 @@ TEST_F(CompileDefclass, EvaluateInvokePublicMethod)
     auto result = m_tester->runModule(R"(
         defclass Foo {
             var _index: Int
-            init(i: Int) from Object() {
+            init(i: Int) {
                 set this._index = i
             }
             def Index(): Int {
@@ -180,7 +236,7 @@ TEST_F(CompileDefclass, EvaluateInvokeMethodWithNoReturnType)
     auto result = m_tester->runModule(R"(
         defclass Foo {
             var _index: Int
-            init(i: Int) from Object() {
+            init(i: Int) {
                 set this._index = i
             }
             def NoReturn() {
@@ -205,7 +261,7 @@ TEST_F(CompileDefclass, EvaluateInvokeVirtualMethodOverridingBaseMethod)
             }
         }
         defclass Bar from Foo {
-            init() from Foo() {}
+            init() {}
             def Index(): Int {
                 2
             }
@@ -222,7 +278,7 @@ TEST_F(CompileDefclass, EvaluateDefGenericClass)
     auto result = m_tester->runModule(R"(
         defclass Foo[A] {
             var _index: A
-            init(i: A) from Object() {
+            init(i: A) {
                 set this._index = i
             }
             def Index(): A {
@@ -244,7 +300,7 @@ TEST_F(CompileDefclass, EvaluateInvokeGenericMethod)
     auto result = m_tester->runModule(R"(
         defclass Foo {
             var _index: Int
-            init(i: Int) from Object() {
+            init(i: Int) {
                 set this._index = i
             }
             def Tuple[T](t: T): Tuple2[T,Int] {
@@ -265,7 +321,7 @@ TEST_F(CompileDefclass, EvaluateInvokeGenericMethodForGenericClass)
     auto result = m_tester->runModule(R"(
         defclass Foo[S] {
             var _s: S
-            init(s: S) from Object() {
+            init(s: S) {
                 set this._s = s
             }
             def Tuple[T](t: T): Tuple2[T,S] {
@@ -301,7 +357,7 @@ TEST_F(CompileDefclass, CompileDefineSubclassOfFinalClassFails)
         defclass Foo final {
         }
         defclass Bar from Foo {
-            init() from Foo() {}
+            init() {}
         }
     )");
 

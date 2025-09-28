@@ -10,11 +10,10 @@
 
 lyric_analyzer::EnumAnalyzerContext::EnumAnalyzerContext(
     AnalyzerScanDriver *driver,
-    lyric_assembler::EnumSymbol *enumSymbol,
-    const lyric_parser::ArchetypeNode *initNode)
+    lyric_assembler::EnumSymbol *enumSymbol)
     : m_driver(driver),
       m_enumSymbol(enumSymbol),
-      m_initNode(initNode)
+      m_missingInit(true)
 {
     TU_ASSERT (m_driver != nullptr);
     TU_ASSERT (m_enumSymbol != nullptr);
@@ -37,14 +36,17 @@ lyric_analyzer::EnumAnalyzerContext::enter(
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
     switch (resource->getId()) {
-        case lyric_schema::LyricAstId::Case:
-            return declareCase(node);
+        case lyric_schema::LyricAstId::Init:
+            m_missingInit = false;
+            return declareCtor(node);
         case lyric_schema::LyricAstId::Val:
             return declareMember(node);
         case lyric_schema::LyricAstId::Def:
             return declareMethod(node);
         case lyric_schema::LyricAstId::Impl:
             return declareImpl(node);
+        case lyric_schema::LyricAstId::Case:
+            return declareCase(node);
         default:
             break;
     }
@@ -63,19 +65,8 @@ lyric_analyzer::EnumAnalyzerContext::exit(
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
     if (resource->getId() == lyric_schema::LyricAstId::DefEnum) {
-        // define the constructor
-        if (m_initNode != nullptr) {
-            auto *block = getBlock();
-            auto *typeSystem = m_driver->getTypeSystem();
-            auto *packNode = m_initNode->getChild(0);
-            lyric_typing::PackSpec packSpec;
-            TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(block, packNode->getArchetypeNode()));
-            lyric_assembler::ParameterPack parameterPack;
-            TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(block, packSpec));
-            lyric_assembler::CallSymbol *ctorSymbol;
-            TU_ASSIGN_OR_RETURN (ctorSymbol, m_enumSymbol->declareCtor(/* isHidden= */ false));
-            TU_RETURN_IF_STATUS (ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
-        } else {
+        // define the default constructor if no constructors were defined
+        if (m_missingInit) {
             lyric_assembler::CallSymbol *ctorSymbol;
             TU_ASSIGN_OR_RETURN (ctorSymbol, m_enumSymbol->declareCtor(/* isHidden= */ false));
             TU_RETURN_IF_STATUS (ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
@@ -84,6 +75,35 @@ lyric_analyzer::EnumAnalyzerContext::exit(
     }
 
     return {};
+}
+
+tempo_utils::Status
+lyric_analyzer::EnumAnalyzerContext::declareCtor(const lyric_parser::ArchetypeNode *node)
+{
+    auto *block = getBlock();
+    auto *typeSystem = m_driver->getTypeSystem();
+
+    lyric_assembler::CallSymbol *ctorSymbol;
+    TU_ASSIGN_OR_RETURN (ctorSymbol, m_enumSymbol->declareCtor(/* isHidden= */ false));
+
+    auto *resolver = ctorSymbol->callResolver();
+
+    // determine the parameter list
+    auto *packNode = node->getChild(0);
+    lyric_typing::PackSpec packSpec;
+    TU_ASSIGN_OR_RETURN (packSpec, typeSystem->parsePack(block, packNode->getArchetypeNode()));
+    lyric_assembler::ParameterPack parameterPack;
+    TU_ASSIGN_OR_RETURN (parameterPack, typeSystem->resolvePack(resolver, packSpec));
+
+    // define the method
+    lyric_assembler::ProcHandle *procHandle;
+    TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
+
+    TU_LOG_V << "declared ctor " << ctorSymbol->getSymbolUrl() << " for " << m_enumSymbol->getSymbolUrl();
+
+    // push the proc context
+    auto ctx = std::make_unique<ProcAnalyzerContext>(m_driver, procHandle);
+    return m_driver->pushContext(std::move(ctx));
 }
 
 tempo_utils::Status

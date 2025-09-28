@@ -19,7 +19,7 @@ lyric_rewriter::AstDefstructVisitor::enter(lyric_parser::ArchetypeNode *node, Vi
     if (ctx.skipChildren())
         return {};
 
-    Option<std::pair<lyric_parser::ArchetypeNode *,int>> initNodeOption;
+    std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> initNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> memberNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> methodNodes;
     std::vector<std::pair<lyric_parser::ArchetypeNode *,int>> implNodes;
@@ -30,9 +30,7 @@ lyric_rewriter::AstDefstructVisitor::enter(lyric_parser::ArchetypeNode *node, Vi
         TU_RETURN_IF_NOT_OK (child->parseId(lyric_schema::kLyricAstVocabulary, childId));
         switch (childId) {
             case lyric_schema::LyricAstId::Init:
-                if (initNodeOption.hasValue())
-                    return RewriterStatus::forCondition(RewriterCondition::kSyntaxError);
-                initNodeOption = Option(std::pair{child, i});
+                initNodes.push_back(std::pair{child, i});
                 break;
             case lyric_schema::LyricAstId::Val:
                 memberNodes.push_back(std::pair{child, i});
@@ -44,15 +42,15 @@ lyric_rewriter::AstDefstructVisitor::enter(lyric_parser::ArchetypeNode *node, Vi
                 implNodes.push_back(std::pair{child, i});
                 break;
             default:
-                return RewriterStatus::forCondition(RewriterCondition::kSyntaxError);
+                return RewriterStatus::forCondition(RewriterCondition::kSyntaxError,
+                    "unexpected defstruct child node");
         }
     }
 
-    if (initNodeOption.hasValue()) {
-        auto &pair = initNodeOption.peekValue();
+    for (auto it = initNodes.rbegin(); it != initNodes.rend(); it++) {
         std::shared_ptr<AbstractNodeVisitor> visitor;
-        TU_ASSIGN_OR_RETURN (visitor, makeVisitor(pair.first));
-        ctx.push(node, pair.second, pair.first, visitor);
+        TU_ASSIGN_OR_RETURN (visitor, makeVisitor(it->first));
+        ctx.push(node, it->second, it->first, visitor);
     }
 
     for (auto it = implNodes.rbegin(); it != implNodes.rend(); it++) {

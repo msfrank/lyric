@@ -156,6 +156,7 @@ lyric_compiler::declare_instance_init(
     TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
 
     Constructor constructor;
+    constructor.thisSymbol = instanceSymbol;
     constructor.superSymbol = instanceSymbol->superInstance();
     constructor.callSymbol = ctorSymbol;
     constructor.procHandle = procHandle;

@@ -40,7 +40,7 @@ lyric_compiler::ConstructorHandler::before(
     auto pack = std::make_unique<PackHandler>(m_constructor.callSymbol, classBlock, driver);
     ctx.appendGrouping(std::move(pack));
 
-    auto super = std::make_unique<InitSuper>(&m_constructor, fragment, ctorBlock, driver);
+    auto super = std::make_unique<InitBase>(&m_constructor, fragment, ctorBlock, driver);
     ctx.appendGrouping(std::move(super));
 
     auto proc = std::make_unique<ProcHandler>(
@@ -70,7 +70,7 @@ lyric_compiler::ConstructorHandler::after(
     return {};
 }
 
-lyric_compiler::InitSuper::InitSuper(
+lyric_compiler::InitBase::InitBase(
     Constructor *constructor,
     lyric_assembler::CodeFragment *fragment,
     lyric_assembler::BlockHandle *block,
@@ -82,34 +82,68 @@ lyric_compiler::InitSuper::InitSuper(
 }
 
 tempo_utils::Status
-lyric_compiler::InitSuper::before(
+lyric_compiler::InitBase::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
 {
     auto *fragment = getFragment();
 
+    std::string ctorName;
+    if (node->hasAttr(lyric_parser::kLyricAstIdentifier)) {
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, ctorName));
+    } else {
+        ctorName = lyric_object::kCtorSpecialSymbol;
+    }
+
+    bool thisBase;
+    if (node->hasAttr(lyric_parser::kLyricAstThisBase)) {
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstThisBase, thisBase));
+    } else {
+        thisBase = false;
+    }
+
     m_invoker = std::make_unique<lyric_assembler::ConstructableInvoker>();
 
     switch (m_constructor->superSymbol->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {
-            auto *superClass = lyric_assembler::cast_symbol_to_class(m_constructor->superSymbol);
-            TU_RETURN_IF_NOT_OK (superClass->prepareCtor(lyric_object::kCtorSpecialSymbol, *m_invoker));
+            lyric_assembler::ClassSymbol *baseClass;
+            if (thisBase) {
+                baseClass = lyric_assembler::cast_symbol_to_class(m_constructor->thisSymbol);
+            } else {
+                baseClass = lyric_assembler::cast_symbol_to_class(m_constructor->superSymbol);
+            }
+            TU_RETURN_IF_NOT_OK (baseClass->prepareCtor(ctorName, *m_invoker));
             break;
         }
         case lyric_assembler::SymbolType::ENUM: {
-            auto *superEnum = lyric_assembler::cast_symbol_to_enum(m_constructor->superSymbol);
-            TU_RETURN_IF_NOT_OK (superEnum->prepareCtor(*m_invoker));
+            lyric_assembler::EnumSymbol *baseEnum;
+            if (thisBase) {
+                baseEnum = lyric_assembler::cast_symbol_to_enum(m_constructor->thisSymbol);
+            } else {
+                baseEnum = lyric_assembler::cast_symbol_to_enum(m_constructor->superSymbol);
+            }
+            TU_RETURN_IF_NOT_OK (baseEnum->prepareCtor(*m_invoker));
             break;
         }
         case lyric_assembler::SymbolType::INSTANCE: {
-            auto *superInstance = lyric_assembler::cast_symbol_to_instance(m_constructor->superSymbol);
-            TU_RETURN_IF_NOT_OK (superInstance->prepareCtor(*m_invoker));
+            lyric_assembler::InstanceSymbol *baseInstance;
+            if (thisBase) {
+                baseInstance = lyric_assembler::cast_symbol_to_instance(m_constructor->thisSymbol);
+            } else {
+                baseInstance = lyric_assembler::cast_symbol_to_instance(m_constructor->superSymbol);
+            }
+            TU_RETURN_IF_NOT_OK (baseInstance->prepareCtor(*m_invoker));
             break;
         }
         case lyric_assembler::SymbolType::STRUCT: {
-            auto *superStruct = lyric_assembler::cast_symbol_to_struct(m_constructor->superSymbol);
-            TU_RETURN_IF_NOT_OK (superStruct->prepareCtor(lyric_object::kCtorSpecialSymbol, *m_invoker));
+            lyric_assembler::StructSymbol *baseStruct;
+            if (thisBase) {
+                baseStruct = lyric_assembler::cast_symbol_to_struct(m_constructor->thisSymbol);
+            } else {
+                baseStruct = lyric_assembler::cast_symbol_to_struct(m_constructor->superSymbol);
+            }
+            TU_RETURN_IF_NOT_OK (baseStruct->prepareCtor(ctorName, *m_invoker));
             break;
         }
         default:
@@ -124,7 +158,7 @@ lyric_compiler::InitSuper::before(
 }
 
 tempo_utils::Status
-lyric_compiler::InitSuper::after(
+lyric_compiler::InitBase::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)

@@ -34,7 +34,8 @@ lyric_rewriter::AstDefconceptVisitor::enter(lyric_parser::ArchetypeNode *node, V
                 implNodes.push_back(std::pair{child, i});
                 break;
             default:
-                return RewriterStatus::forCondition(RewriterCondition::kSyntaxError);
+                return RewriterStatus::forCondition(RewriterCondition::kSyntaxError,
+                    "unexpected defconcept child node");
         }
     }
 

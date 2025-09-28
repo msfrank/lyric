@@ -14,6 +14,7 @@ namespace lyric_parser::internal {
 
         void enterLiteralExpression(ModuleParser::LiteralExpressionContext *ctx);
         void enterGroupingExpression(ModuleParser::GroupingExpressionContext *ctx);
+        void enterNewExpression(ModuleParser::NewExpressionContext *ctx);
         void enterThisExpression(ModuleParser::ThisExpressionContext *ctx);
         void enterNameExpression(ModuleParser::NameExpressionContext *ctx);
         void enterCallExpression(ModuleParser::CallExpressionContext *ctx);

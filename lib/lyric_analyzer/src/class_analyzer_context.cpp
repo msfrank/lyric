@@ -11,8 +11,7 @@
 
 lyric_analyzer::ClassAnalyzerContext::ClassAnalyzerContext(
     AnalyzerScanDriver *driver,
-    lyric_assembler::ClassSymbol *classSymbol,
-    const lyric_parser::ArchetypeNode *initNode)
+    lyric_assembler::ClassSymbol *classSymbol)
     : m_driver(driver),
       m_classSymbol(classSymbol),
       m_missingInit(true)
@@ -69,7 +68,7 @@ lyric_analyzer::ClassAnalyzerContext::exit(
     auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
 
     if (resource->getId() == lyric_schema::LyricAstId::DefClass) {
-        // define the constructor
+        // define the default constructor if no constructors were defined
         if (m_missingInit) {
             lyric_assembler::CallSymbol *ctorSymbol;
             TU_ASSIGN_OR_RETURN (ctorSymbol, m_classSymbol->declareCtor(

@@ -12,6 +12,11 @@ namespace lyric_parser::internal {
     public:
         explicit ModuleConstructOps(ModuleArchetype *listener);
 
+        void parseDefaultThisBase(ModuleParser::DefaultThisBaseContext *ctx);
+        void parseNamedThisBase(ModuleParser::NamedThisBaseContext *ctx);
+        void parseDefaultSuperBase(ModuleParser::DefaultSuperBaseContext *ctx);
+        void parseNamedSuperBase(ModuleParser::NamedSuperBaseContext *ctx);
+
         void parseDerefNew(ModuleParser::DerefNewContext *ctx);
 
         void parsePairExpression(ModuleParser::PairExpressionContext *ctx);

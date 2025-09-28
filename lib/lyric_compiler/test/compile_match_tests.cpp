@@ -37,7 +37,6 @@ TEST_F(CompileMatch, EvaluateNoMatchDisjointType)
 {
     auto result = m_tester->runModule(R"(
         defclass Test {
-            init() from Object() {}
         }
         match Object{} {
             when x: Test            true
@@ -162,13 +161,10 @@ TEST_F(CompileMatch, EvaluateMatchClass)
 {
     auto result = m_tester->runModule(R"(
         defclass Test1 {
-            init() from Object() {}
         }
         defclass Test2 {
-            init() from Object() {}
         }
         defclass Test3 {
-            init() from Object() {}
         }
 
         val x: Any = Test3{}
@@ -211,7 +207,7 @@ TEST_F(CompileMatch, EvaluateMatchDerefAlias)
     auto result = m_tester->runModule(R"(
         defclass Test1 {
             val x: Int
-            init(x: Int) from Object() {
+            init(x: Int) {
                 set this.x = x
             }
             def GetX(): Int {

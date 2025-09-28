@@ -152,6 +152,7 @@ make_ast_visitor(
         case lyric_schema::LyricAstId::Url:
         case lyric_schema::LyricAstId::SymbolRef:
         case lyric_schema::LyricAstId::This:
+        case lyric_schema::LyricAstId::Super:
         case lyric_schema::LyricAstId::Name:
         case lyric_schema::LyricAstId::Ctx:
         case lyric_schema::LyricAstId::TypeOf:
@@ -251,7 +252,7 @@ make_ast_visitor(
         // dynamic forms
         case lyric_schema::LyricAstId::Call:
         case lyric_schema::LyricAstId::Case:
-        case lyric_schema::LyricAstId::Super:
+        case lyric_schema::LyricAstId::Base:
             return std::make_shared<lyric_rewriter::AstReverseSequenceVisitor>(astId, state);
 
         default: {

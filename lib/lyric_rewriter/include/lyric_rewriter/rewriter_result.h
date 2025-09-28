@@ -21,13 +21,24 @@ namespace lyric_rewriter {
     class RewriterStatus : public tempo_utils::TypedStatus<RewriterCondition> {
     public:
         using TypedStatus::TypedStatus;
-        static RewriterStatus ok();
         static bool convert(RewriterStatus &dstStatus, const tempo_utils::Status &srcStatus);
 
     private:
         RewriterStatus(tempo_utils::StatusCode statusCode, std::shared_ptr<const tempo_utils::Detail> detail);
 
     public:
+        /**
+         *
+         * @param condition
+         * @param message
+         * @return
+         */
+        static RewriterStatus forCondition(
+            RewriterCondition condition,
+            std::string_view message)
+        {
+            return RewriterStatus(condition, message);
+        }
         /**
          *
          * @tparam Args

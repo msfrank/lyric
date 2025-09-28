@@ -225,6 +225,15 @@ assignmentOp        : AssignOperator
 setStatement        : SetKeyword assignmentSpec assignmentOp expression ;
 
 
+//
+
+initBase            : FromKeyword ThisKeyword callArguments                             # defaultThisBase
+                    | FromKeyword ThisKeyword DotOperator Identifier callArguments      # namedThisBase
+                    | FromKeyword SuperKeyword callArguments                            # defaultSuperBase
+                    | FromKeyword SuperKeyword DotOperator Identifier callArguments     # namedSuperBase
+                    ;
+
+
 // proc block
 
 procBlock           : CurlyOpen block? CurlyClose
@@ -255,8 +264,7 @@ defclassStatement   : definitionMacro? DefClassKeyword symbolIdentifier
 genericClass        : placeholderSpec constraintSpec? ;
 classDerives        : ( SealedKeyword | FinalKeyword ) ;
 classBase           : FromKeyword assignableType ;
-classSuper          : FromKeyword assignableType callArguments? ;
-classInit           : InitKeyword symbolIdentifier? paramSpec classSuper? procBlock ;
+classInit           : InitKeyword symbolIdentifier? paramSpec initBase? procBlock ;
 classVal            : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 classVar            : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 classDef            : DefKeyword symbolIdentifier
@@ -316,8 +324,7 @@ defstructStatement  : definitionMacro? DefStructKeyword symbolIdentifier
                         CurlyOpen structSpec* CurlyClose ;
 structDerives       : ( SealedKeyword | FinalKeyword ) ;
 structBase          : FromKeyword assignableType ;
-structInit          : InitKeyword symbolIdentifier? paramSpec structSuper? procBlock ;
-structSuper         : FromKeyword assignableType callArguments ;
+structInit          : InitKeyword symbolIdentifier? paramSpec initBase? procBlock ;
 structVal           : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
 structDef           : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;

@@ -101,7 +101,6 @@ lyric_compiler::NewHandler::before(
         ctorName = lyric_object::kCtorSpecialSymbol;
     }
 
-
     // prepare the ctor invoker
     switch (receiverSymbol->getSymbolType()) {
         case lyric_assembler::SymbolType::CLASS: {

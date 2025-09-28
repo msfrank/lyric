@@ -13,7 +13,6 @@ namespace lyric_parser::internal {
         explicit ModuleDefstructOps(ModuleArchetype *listener);
 
         void enterDefstructStatement(ModuleParser::DefstructStatementContext *ctx);
-        void exitStructSuper(ModuleParser::StructSuperContext *ctx);
         void enterStructInit(ModuleParser::StructInitContext *ctx);
         void exitStructInit(ModuleParser::StructInitContext *ctx);
         void enterStructVal(ModuleParser::StructValContext *ctx);

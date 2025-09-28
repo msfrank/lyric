@@ -9,12 +9,6 @@ lyric_rewriter::RewriterStatus::RewriterStatus(
 {
 }
 
-lyric_rewriter::RewriterStatus
-lyric_rewriter::RewriterStatus::ok()
-{
-    return RewriterStatus();
-}
-
 bool
 lyric_rewriter::RewriterStatus::convert(RewriterStatus &dstStatus, const tempo_utils::Status &srcStatus)
 {

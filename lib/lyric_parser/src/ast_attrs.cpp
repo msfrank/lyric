@@ -280,6 +280,7 @@ const tempo_schema::StringAttr lyric_parser::kLyricAstLabel(&lyric_schema::kLyri
 const tempo_schema::BoolAttr lyric_parser::kLyricAstIsHidden(&lyric_schema::kLyricAstIsHiddenProperty);
 const tempo_schema::BoolAttr lyric_parser::kLyricAstIsVariable(&lyric_schema::kLyricAstIsVariableProperty);
 const tempo_schema::BoolAttr lyric_parser::kLyricAstNoOverride(&lyric_schema::kLyricAstNoOverrideProperty);
+const tempo_schema::BoolAttr lyric_parser::kLyricAstThisBase(&lyric_schema::kLyricAstThisBaseProperty);
 
 const lyric_parser::NodeAttr lyric_parser::kLyricAstTypeOffset(&lyric_schema::kLyricAstTypeOffsetProperty);
 const lyric_parser::NodeAttr lyric_parser::kLyricAstDefaultOffset(&lyric_schema::kLyricAstDefaultOffsetProperty);

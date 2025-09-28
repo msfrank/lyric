@@ -156,6 +156,7 @@ lyric_compiler::declare_enum_init(
     TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
 
     Constructor constructor;
+    constructor.thisSymbol = enumSymbol;
     constructor.superSymbol = enumSymbol->superEnum();
     constructor.callSymbol = ctorSymbol;
     constructor.procHandle = procHandle;

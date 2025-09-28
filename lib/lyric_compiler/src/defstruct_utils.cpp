@@ -190,6 +190,7 @@ lyric_compiler::declare_struct_init(
     TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall(parameterPack, lyric_common::TypeDef::noReturn()));
 
     Constructor constructor;
+    constructor.thisSymbol = structSymbol;
     constructor.superSymbol = structSymbol->superStruct();
     constructor.callSymbol = ctorSymbol;
     constructor.procHandle = procHandle;

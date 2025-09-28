@@ -12,8 +12,7 @@ namespace lyric_analyzer {
     public:
         InstanceAnalyzerContext(
             AnalyzerScanDriver *driver,
-            lyric_assembler::InstanceSymbol *instanceSymbol,
-            const lyric_parser::ArchetypeNode *initNode);
+            lyric_assembler::InstanceSymbol *instanceSymbol);
 
         lyric_assembler::BlockHandle *getBlock() const override;
 
@@ -27,6 +26,7 @@ namespace lyric_analyzer {
             const lyric_parser::ArchetypeNode *node,
             const lyric_rewriter::VisitorContext &ctx) override;
 
+        tempo_utils::Status declareCtor(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareMember(const lyric_parser::ArchetypeNode *node, bool isVariable);
         tempo_utils::Status declareMethod(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareImpl(const lyric_parser::ArchetypeNode *node);
@@ -34,6 +34,7 @@ namespace lyric_analyzer {
     private:
         AnalyzerScanDriver *m_driver;
         lyric_assembler::InstanceSymbol *m_instanceSymbol;
+        bool m_missingInit;
     };
 }
 

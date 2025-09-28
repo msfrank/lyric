@@ -11,7 +11,7 @@
 namespace lyric_compiler {
 
     struct Constructor {
-        //std::unique_ptr<lyric_assembler::ConstructableInvoker> superInvoker;
+        lyric_assembler::AbstractSymbol *thisSymbol = nullptr;
         lyric_assembler::AbstractSymbol *superSymbol = nullptr;
         lyric_assembler::CallSymbol *callSymbol = nullptr;
         lyric_assembler::ProcHandle *procHandle = nullptr;
@@ -38,9 +38,9 @@ namespace lyric_compiler {
         Constructor m_constructor;
     };
 
-    class InitSuper : public BaseInvokableHandler {
+    class InitBase : public BaseInvokableHandler {
     public:
-        InitSuper(
+        InitBase(
             Constructor *constructor,
             lyric_assembler::CodeFragment *fragment,
             lyric_assembler::BlockHandle *block,

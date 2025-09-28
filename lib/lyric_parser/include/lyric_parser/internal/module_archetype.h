@@ -132,6 +132,7 @@ namespace lyric_parser::internal {
         // implemented by ModuleDerefOps
         void enterLiteralExpression(ModuleParser::LiteralExpressionContext *ctx) override;
         void enterGroupingExpression(ModuleParser::GroupingExpressionContext *ctx) override;
+        void enterNewExpression(ModuleParser::NewExpressionContext *ctx) override;
         void enterThisExpression(ModuleParser::ThisExpressionContext *ctx) override;
         void enterNameExpression(ModuleParser::NameExpressionContext *ctx) override;
         void enterCallExpression(ModuleParser::CallExpressionContext *ctx) override;
@@ -152,6 +153,10 @@ namespace lyric_parser::internal {
 
         // implemented by ModuleConstructOps
         void exitDerefNew(ModuleParser::DerefNewContext *ctx) override;
+        void exitDefaultThisBase(ModuleParser::DefaultThisBaseContext *ctx) override;
+        void exitNamedThisBase(ModuleParser::NamedThisBaseContext *ctx) override;
+        void exitDefaultSuperBase(ModuleParser::DefaultSuperBaseContext *ctx) override;
+        void exitNamedSuperBase(ModuleParser::NamedSuperBaseContext *ctx) override;
         void exitPairExpression(ModuleParser::PairExpressionContext *ctx) override;
         void exitLambdaExpression(ModuleParser::LambdaExpressionContext *ctx) override;
         void exitLambdaFromExpression(ModuleParser::LambdaFromExpressionContext *ctx) override;
@@ -168,7 +173,6 @@ namespace lyric_parser::internal {
 
         // implemented by ModuleDefclassOps
         void enterDefclassStatement(ModuleParser::DefclassStatementContext *ctx) override;
-        void exitClassSuper(ModuleParser::ClassSuperContext *ctx) override;
         void enterClassInit(ModuleParser::ClassInitContext *ctx) override;
         void exitClassInit(ModuleParser::ClassInitContext *ctx) override;
         void enterClassVal(ModuleParser::ClassValContext *ctx) override;
@@ -221,7 +225,6 @@ namespace lyric_parser::internal {
 
         // implemented by ModuleDefstructOps
         void enterDefstructStatement(ModuleParser::DefstructStatementContext *ctx) override;
-        void exitStructSuper(ModuleParser::StructSuperContext *ctx) override;
         void enterStructInit(ModuleParser::StructInitContext *ctx) override;
         void exitStructInit(ModuleParser::StructInitContext *ctx) override;
         void enterStructVal(ModuleParser::StructValContext *ctx) override;

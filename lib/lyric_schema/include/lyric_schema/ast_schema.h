@@ -63,6 +63,7 @@ namespace lyric_schema {
         DataDeref,                 // data dereference expression
         SymbolDeref,               // symbol dereference expression
         This,                      // resolve this reference
+        Super,                     // resolve super reference
         Name,                      // resolve symbol
         Call,                      // call named function or method
         Keyword,                   // keyword argument
@@ -107,8 +108,8 @@ namespace lyric_schema {
         DefStatic,                 // define static
         Namespace,                 // define namespace
 
-        Super,                     // super statement
         Init,                      // init statement
+        Base,                      // base constructor
         Impl,                      // impl statement
 
         ImportAll,                 // import all module symbols into environment
@@ -143,6 +144,7 @@ namespace lyric_schema {
         IsHidden,
         IsVariable,
         NoOverride,
+        ThisBase,
 
         TypeOffset,
         DefaultOffset,
@@ -240,6 +242,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::SymbolDeref, "SymbolDeref");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstThisClass(
         &kLyricAstNs, LyricAstId::This, "This");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSuperClass(
+        &kLyricAstNs, LyricAstId::Super, "Super");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNameClass(
         &kLyricAstNs, LyricAstId::Name, "Name");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCallClass(
@@ -322,10 +326,10 @@ namespace lyric_schema {
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNamespaceClass(
         &kLyricAstNs, LyricAstId::Namespace, "Namespace");
 
-    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstSuperClass(
-        &kLyricAstNs, LyricAstId::Super, "Super");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInitClass(
         &kLyricAstNs, LyricAstId::Init, "Init");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstBaseClass(
+        &kLyricAstNs, LyricAstId::Base, "Base");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstImplClass(
         &kLyricAstNs, LyricAstId::Impl, "Impl");
 
@@ -414,6 +418,10 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::NoOverride, "NoOverride", tempo_schema::PropertyType::kBool);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
+        kLyricAstThisBaseProperty(
+        &kLyricAstNs, LyricAstId::ThisBase, "ThisBase", tempo_schema::PropertyType::kBool);
+
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstTypeOffsetProperty(
         &kLyricAstNs, LyricAstId::TypeOffset, "TypeOffset", tempo_schema::PropertyType::kUInt32);
 
@@ -491,6 +499,7 @@ namespace lyric_schema {
         &kLyricAstDataDerefClass,
         &kLyricAstSymbolDerefClass,
         &kLyricAstThisClass,
+        &kLyricAstSuperClass,
         &kLyricAstNameClass,
         &kLyricAstCallClass,
         &kLyricAstKeywordClass,
@@ -535,8 +544,8 @@ namespace lyric_schema {
         &kLyricAstDefStaticClass,
         &kLyricAstNamespaceClass,
 
-        &kLyricAstSuperClass,
         &kLyricAstInitClass,
+        &kLyricAstBaseClass,
         &kLyricAstImplClass,
 
         &kLyricAstImportAllClass,
@@ -568,6 +577,8 @@ namespace lyric_schema {
         &kLyricAstLabelProperty,
         &kLyricAstIsHiddenProperty,
         &kLyricAstIsVariableProperty,
+        &kLyricAstNoOverrideProperty,
+        &kLyricAstThisBaseProperty,
 
         &kLyricAstTypeOffsetProperty,
         &kLyricAstDefaultOffsetProperty,

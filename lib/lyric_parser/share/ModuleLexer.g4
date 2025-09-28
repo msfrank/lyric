@@ -130,6 +130,7 @@ NamedKeyword            : 'named' ;
 DefKeyword              : 'def' ;
 DeclKeyword             : 'decl' ;
 ThisKeyword             : 'this' ;
+SuperKeyword            : 'super' ;
 GlobalKeyword           : 'global' ;
 DefConceptKeyword       : 'defconcept' ;
 DefClassKeyword         : 'defclass' ;
