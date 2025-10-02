@@ -127,6 +127,7 @@ lyric_rewriter::VisitorRegistry::makeVisitor(
 #include <lyric_rewriter/ast_reverse_sequence_visitor.h>
 #include <lyric_rewriter/ast_sequence_visitor.h>
 #include <lyric_rewriter/ast_terminal_visitor.h>
+#include <lyric_rewriter/ast_try_visitor.h>
 #include <lyric_rewriter/ast_unary_visitor.h>
 #include <lyric_rewriter/ast_while_visitor.h>
 
@@ -232,6 +233,8 @@ make_ast_visitor(
             return std::make_shared<lyric_rewriter::AstWhileVisitor>(astId, state);
         case lyric_schema::LyricAstId::For:
             return std::make_shared<lyric_rewriter::AstForVisitor>(astId, state);
+        case lyric_schema::LyricAstId::Try:
+            return std::make_shared<lyric_rewriter::AstTryVisitor>(astId, state);
 
         // definition forms
         case lyric_schema::LyricAstId::DefClass:

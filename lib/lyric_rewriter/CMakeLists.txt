@@ -21,6 +21,7 @@ set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/ast_param_visitor.h
     include/lyric_rewriter/ast_sequence_visitor.h
     include/lyric_rewriter/ast_terminal_visitor.h
+    include/lyric_rewriter/ast_try_visitor.h
     include/lyric_rewriter/ast_unary_visitor.h
     include/lyric_rewriter/ast_while_visitor.h
     include/lyric_rewriter/fail_unknown_visitor.h
@@ -55,6 +56,7 @@ target_sources(lyric_rewriter PRIVATE
     src/ast_param_visitor.cpp
     src/ast_sequence_visitor.cpp
     src/ast_terminal_visitor.cpp
+    src/ast_try_visitor.cpp
     src/ast_unary_visitor.cpp
     src/ast_while_visitor.cpp
     src/fail_unknown_visitor.cpp

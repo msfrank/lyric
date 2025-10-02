@@ -427,12 +427,6 @@ matchElse           : ElseKeyword block ;
 matchExpression     : MatchKeyword matchTarget CurlyOpen matchWhen+ matchElse? CurlyClose ;
 
 
-// ternary expression
-
-//ternaryExpression   : <assoc=right> expression ThenKeyword expression ElseKeyword expression ;
-
-
-
 // while statement
 
 whileStatement      : WhileKeyword expression CurlyOpen block CurlyClose ;

@@ -3,11 +3,16 @@
 
 #include <lyric_common/symbol_url.h>
 
+#include "check_handle.h"
+#include "cleanup_handle.h"
 #include "object_state.h"
 #include "block_handle.h"
 #include "proc_builder.h"
 
 namespace lyric_assembler {
+
+    class CheckHandle;
+    class CleanupHandle;
 
     enum class LexicalTarget {
         Invalid,
@@ -25,7 +30,6 @@ namespace lyric_assembler {
     class ProcHandle {
 
     public:
-        //explicit ProcHandle(const lyric_common::SymbolUrl &activation);
         ProcHandle(const lyric_common::SymbolUrl &activation, ObjectState *state);
         ProcHandle(
             const lyric_common::SymbolUrl &activation,
@@ -49,11 +53,13 @@ namespace lyric_assembler {
         const CallSymbol *getActivationCall() const;
 
         int getArity() const;
-        LocalOffset allocateLocal();
-        int numLocals() const;
+
         int numListParameters() const;
         int numNamedParameters() const;
         bool hasRestParameter() const;
+
+        LocalOffset allocateLocal();
+        int numLocals() const;
 
         LexicalOffset allocateLexical(
             LexicalTarget lexicalTarget,
@@ -62,6 +68,12 @@ namespace lyric_assembler {
         std::vector<ProcLexical>::const_iterator lexicalsBegin() const;
         std::vector<ProcLexical>::const_iterator lexicalsEnd() const;
         int numLexicals() const;
+
+        tempo_utils::Result<CheckHandle *> declareCheck(const JumpLabel &checkStart);
+        int numChecks() const;
+
+        tempo_utils::Result<CleanupHandle *> declareCleanup(const JumpLabel &cleanupStart);
+        int numCleanups() const;
 
         void putExitType(const lyric_common::TypeDef &exitType);
         absl::flat_hash_set<lyric_common::TypeDef>::const_iterator exitTypesBegin() const;
@@ -76,6 +88,8 @@ namespace lyric_assembler {
         std::unique_ptr<BlockHandle> m_block;
         int m_numLocals;
         std::vector<ProcLexical> m_lexicals;
+        std::vector<std::unique_ptr<CheckHandle>> m_checks;
+        std::vector<std::unique_ptr<CleanupHandle>> m_cleanups;
         absl::flat_hash_set<lyric_common::TypeDef> m_exitTypes;
         ObjectState *m_state;
     };

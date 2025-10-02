@@ -1,9 +1,9 @@
 
+#include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/check_handle.h>
 #include <lyric_assembler/proc_handle.h>
+#include <lyric_assembler/symbol_cache.h>
 #include <tempo_utils/log_stream.h>
-
-#include "lyric_assembler/call_symbol.h"
-#include "lyric_assembler/symbol_cache.h"
 
 /**
  * Allocate a new empty ProcHandle.  This is used during compilation to create
@@ -183,6 +183,36 @@ int
 lyric_assembler::ProcHandle::numLexicals() const
 {
     return m_lexicals.size();
+}
+
+tempo_utils::Result<lyric_assembler::CheckHandle *>
+lyric_assembler::ProcHandle::declareCheck(const JumpLabel &checkStart)
+{
+    auto check = std::make_unique<CheckHandle>(checkStart, this, m_state);
+    auto *checkPtr = check.get();
+    m_checks.push_back(std::move(check));
+    return checkPtr;
+}
+
+int
+lyric_assembler::ProcHandle::numChecks() const
+{
+    return m_checks.size();
+}
+
+tempo_utils::Result<lyric_assembler::CleanupHandle *>
+lyric_assembler::ProcHandle::declareCleanup(const JumpLabel &cleanupStart)
+{
+    auto cleanup = std::make_unique<CleanupHandle>(cleanupStart, m_state);
+    auto *cleanupPtr = cleanup.get();
+    m_cleanups.push_back(std::move(cleanup));
+    return cleanupPtr;
+}
+
+int
+lyric_assembler::ProcHandle::numCleanups() const
+{
+    return m_cleanups.size();
 }
 
 void

@@ -388,7 +388,6 @@ namespace lyric_assembler {
         JumpTarget m_predicateJump;
         JumpTarget m_consequentJump;
         lyric_common::TypeDef m_consequentType;
-
     };
 
     /**

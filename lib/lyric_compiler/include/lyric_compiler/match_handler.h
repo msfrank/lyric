@@ -203,4 +203,5 @@ namespace lyric_compiler {
         bool m_isExpression;
     };
 }
+
 #endif // LYRIC_COMPILER_MATCH_HANDLER_H
