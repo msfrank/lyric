@@ -156,8 +156,7 @@ lyric_optimizer::build_proc(const ControlFlowGraph &cfg, lyric_assembler::ProcHa
 {
     TU_ASSERT (procHandle != nullptr);
 
-    auto *procBuilder = procHandle->procCode();
-    auto *codeFragment = procBuilder->rootFragment();
+    auto *procFragment = procHandle->procFragment();
 
     absl::flat_hash_map<std::string, lyric_assembler::JumpLabel> blockJumpLabels;
     absl::flat_hash_map<std::string, lyric_assembler::JumpTarget> blockJumpTargets;
@@ -177,13 +176,13 @@ lyric_optimizer::build_proc(const ControlFlowGraph &cfg, lyric_assembler::ProcHa
             if (currBlock.hasLabel()) {
                 auto labelName = currBlock.getLabel();
                 lyric_assembler::JumpLabel jumpLabel;
-                TU_ASSIGN_OR_RETURN (jumpLabel, codeFragment->appendLabel(labelName));
+                TU_ASSIGN_OR_RETURN (jumpLabel, procFragment->appendLabel(labelName));
                 blockJumpLabels[labelName] = jumpLabel;
             }
 
             for (int i = 0; i < currBlock.numDirectives(); i++) {
                 auto directive = currBlock.getDirective(i);
-                TU_RETURN_IF_NOT_OK (directive->buildCode(codeFragment, procHandle));
+                TU_RETURN_IF_NOT_OK (directive->buildCode(procFragment, procHandle));
             }
 
             // apply phi functions from successor blocks
@@ -193,10 +192,10 @@ lyric_optimizer::build_proc(const ControlFlowGraph &cfg, lyric_assembler::ProcHa
             lyric_assembler::JumpTarget transferTarget;
             BasicBlock transferBlock;
             if (currBlock.hasJumpEdge()) {
-                TU_ASSIGN_OR_RETURN (transferTarget, codeFragment->unconditionalJump());
+                TU_ASSIGN_OR_RETURN (transferTarget, procFragment->unconditionalJump());
                 transferBlock = currBlock.getJumpBlock();
             } else if (currBlock.hasBranchEdge()) {
-                TU_ASSIGN_OR_RETURN (transferTarget, write_branch(currBlock.getBranchType(), codeFragment));
+                TU_ASSIGN_OR_RETURN (transferTarget, write_branch(currBlock.getBranchType(), procFragment));
                 transferBlock = currBlock.getBranchBlock();
             }
 
@@ -212,7 +211,7 @@ lyric_optimizer::build_proc(const ControlFlowGraph &cfg, lyric_assembler::ProcHa
 
             // if block has a return edge then add the return instruction and break from the loop
             if (currBlock.hasReturnEdge()) {
-                TU_RETURN_IF_NOT_OK (codeFragment->returnToCaller());
+                TU_RETURN_IF_NOT_OK (procFragment->returnToCaller());
                 break;
             }
 
@@ -226,7 +225,7 @@ lyric_optimizer::build_proc(const ControlFlowGraph &cfg, lyric_assembler::ProcHa
         auto targetEntry = blockJumpTargets.find(labelEntry.first);
         if (targetEntry == blockJumpTargets.cend())
             return OptimizerStatus::forCondition(OptimizerCondition::kOptimizerInvariant);
-        TU_RETURN_IF_NOT_OK (codeFragment->patchTarget(targetEntry->second, labelEntry.second));
+        TU_RETURN_IF_NOT_OK (procFragment->patchTarget(targetEntry->second, labelEntry.second));
     }
 
     return {};

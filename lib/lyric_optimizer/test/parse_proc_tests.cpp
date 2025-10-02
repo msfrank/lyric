@@ -28,11 +28,10 @@ TEST_F(ParseProcTests, ParseSingleBasicBlock)
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RAISE (procHandle, callSymbol->defineCall({}));
 
-    auto *code = procHandle->procCode();
-    auto *root = code->rootFragment();
+    auto *fragment = procHandle->procFragment();
 
-    root->immediateBool(true);
-    root->returnToCaller();
+    fragment->immediateBool(true);
+    fragment->returnToCaller();
 
     auto cfg = parseProc(procHandle);
 
@@ -54,9 +53,8 @@ TEST_F(ParseProcTests, ParseConditionalWithPhiFunction)
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RAISE (procHandle, callSymbol->defineCall({}));
 
-    auto *code = procHandle->procCode();
     auto *block = procHandle->procBlock();
-    auto *root = code->rootFragment();
+    auto fragment = procHandle->procFragment();
 
     lyric_assembler::DataReference cond;
     TU_ASSIGN_OR_RAISE (cond, block->declareTemporary(
@@ -67,27 +65,27 @@ TEST_F(ParseProcTests, ParseConditionalWithPhiFunction)
         lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow(),
         true));
 
-    root->immediateBool(true);
-    root->storeRef(cond);
-    root->loadRef(cond);
+    fragment->immediateBool(true);
+    fragment->storeRef(cond);
+    fragment->loadRef(cond);
     lyric_assembler::JumpTarget targetIfFalse;
-    TU_ASSIGN_OR_RAISE (targetIfFalse, root->jumpIfFalse());
-    root->immediateInt(1);
-    root->immediateInt(2);
-    root->intAdd();
-    root->storeRef(result);
+    TU_ASSIGN_OR_RAISE (targetIfFalse, fragment->jumpIfFalse());
+    fragment->immediateInt(1);
+    fragment->immediateInt(2);
+    fragment->intAdd();
+    fragment->storeRef(result);
     lyric_assembler::JumpTarget targetJoin;
-    TU_ASSIGN_OR_RAISE (targetJoin, root->unconditionalJump());
+    TU_ASSIGN_OR_RAISE (targetJoin, fragment->unconditionalJump());
     lyric_assembler::JumpLabel labelIfFalse;
-    TU_ASSIGN_OR_RAISE (labelIfFalse, root->appendLabel("ifFalse"));
-    root->immediateInt(0);
-    root->storeRef(result);
+    TU_ASSIGN_OR_RAISE (labelIfFalse, fragment->appendLabel("ifFalse"));
+    fragment->immediateInt(0);
+    fragment->storeRef(result);
     lyric_assembler::JumpLabel labelJoin;
-    TU_ASSIGN_OR_RAISE (labelJoin, root->appendLabel("join"));
-    root->loadRef(result);
-    root->patchTarget(targetIfFalse, labelIfFalse);
-    root->patchTarget(targetJoin, labelJoin);
-    root->returnToCaller();
+    TU_ASSIGN_OR_RAISE (labelJoin, fragment->appendLabel("join"));
+    fragment->loadRef(result);
+    fragment->patchTarget(targetIfFalse, labelIfFalse);
+    fragment->patchTarget(targetJoin, labelJoin);
+    fragment->returnToCaller();
 
     auto cfg = parseProc(procHandle);
 

@@ -22,9 +22,8 @@ lyric_assembler::CheckHandle::declareException(const lyric_common::TypeDef &exce
     if (m_exceptions.contains(exceptionType))
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "exception handler for {} is already declared", exceptionType.toString());
-    auto *procCode = m_procHandle->procCode();
-    auto *rootFragment = procCode->rootFragment();
-    auto fragment = rootFragment->makeFragment();
+    auto *procFragment = m_procHandle->procFragment();
+    auto fragment = procFragment->makeFragment();
     auto *fragmentPtr = fragment.get();
     m_exceptions[exceptionType] = std::move(fragment);
     return fragmentPtr;

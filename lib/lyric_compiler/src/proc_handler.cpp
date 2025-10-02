@@ -27,8 +27,7 @@ lyric_compiler::ProcHandler::before(
 {
     auto *block = m_procHandle->procBlock();
     auto *driver = getDriver();
-    auto *codeBuilder = m_procHandle->procCode();
-    auto *fragment = codeBuilder->rootFragment();
+    auto *fragment = m_procHandle->procFragment();
 
     auto numChildren = node->numChildren();
 

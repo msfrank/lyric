@@ -128,8 +128,7 @@ lyric_compiler::ImplDef::after(
 {
     TU_LOG_VV << "after ImplDef@" << this;
 
-    auto *procBuilder = m_procHandle->procCode();
-    auto *fragment = procBuilder->rootFragment();
+    auto *fragment = m_procHandle->procFragment();
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());

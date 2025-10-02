@@ -5,7 +5,6 @@
 #include <lyric_assembler/lexical_variable.h>
 #include <lyric_assembler/local_variable.h>
 #include <lyric_assembler/import_cache.h>
-#include <lyric_assembler/proc_builder.h>
 #include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
@@ -506,8 +505,6 @@ lyric_archiver::copy_proc(
     lyric_assembler::ProcHandle *procHandle,
     lyric_assembler::ObjectState *state)
 {
-    auto *procCode = procHandle->procCode();
-
     CopyProcData data;
     data.objectLocation = objectLocation;
     data.object = object;
@@ -515,7 +512,7 @@ lyric_archiver::copy_proc(
     data.plugin = plugin;
     data.activation = procHandle->getActivationUrl();
     data.state = state;
-    data.fragment = procCode->rootFragment();
+    data.fragment = procHandle->procFragment();
     data.copiedSymbols = copiedSymbols;
 
     lyric_object::OpCell op;

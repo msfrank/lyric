@@ -29,15 +29,14 @@ TEST_F(BuildProcTests, Build)
     lyric_assembler::ProcHandle *inputProc;
     TU_ASSIGN_OR_RAISE (inputProc, inputCall->defineCall({}));
 
-    auto *inputCode = inputProc->procCode();
-    auto *inputRoot = inputCode->rootFragment();
+    auto *inputFragment = inputProc->procFragment();
 
-    inputRoot->immediateBool(true);
-    inputRoot->returnToCaller();
+    inputFragment->immediateBool(true);
+    inputFragment->returnToCaller();
 
     TU_LOG_INFO;
     TU_LOG_INFO << "input proc:";
-    for (auto it = inputRoot->statementsBegin(); it != inputRoot->statementsEnd(); it++) {
+    for (auto it = inputFragment->statementsBegin(); it != inputFragment->statementsEnd(); it++) {
         const auto &instruction = it->instruction;
         TU_LOG_INFO << "  " << instruction->toString();
     }
@@ -56,12 +55,11 @@ TEST_F(BuildProcTests, Build)
     TU_ASSIGN_OR_RAISE (outputProc, outputCall->defineCall({}));
 
     ASSERT_THAT (lyric_optimizer::build_proc(cfg, outputProc), tempo_test::IsOk());
-    auto *outputCode = outputProc->procCode();
-    auto *outputRoot = outputCode->rootFragment();
+    auto *outputFragment = outputProc->procFragment();
 
     TU_LOG_INFO;
     TU_LOG_INFO << "output proc:";
-    for (auto it = outputRoot->statementsBegin(); it != outputRoot->statementsEnd(); it++) {
+    for (auto it = outputFragment->statementsBegin(); it != outputFragment->statementsEnd(); it++) {
         const auto &instruction = it->instruction;
         TU_LOG_INFO << "  " << instruction->toString();
     }
@@ -78,9 +76,8 @@ TEST_F(BuildProcTests, BuildConditionalWithPhiFunction)
     lyric_assembler::ProcHandle *inputProc;
     TU_ASSIGN_OR_RAISE (inputProc, inputCall->defineCall({}));
 
-    auto *inputCode = inputProc->procCode();
-    auto *inputRoot = inputCode->rootFragment();
     auto *inputBlock = inputProc->procBlock();
+    auto *inputFragment = inputProc->procFragment();
 
     lyric_assembler::DataReference cond;
     TU_ASSIGN_OR_RAISE (cond, inputBlock->declareTemporary(
@@ -91,31 +88,31 @@ TEST_F(BuildProcTests, BuildConditionalWithPhiFunction)
         lyric_common::TypeDef::forConcrete(lyric_bootstrap::preludeSymbol("Int")).orElseThrow(),
         true));
 
-    inputRoot->immediateBool(true);
-    inputRoot->storeRef(cond);
-    inputRoot->loadRef(cond);
+    inputFragment->immediateBool(true);
+    inputFragment->storeRef(cond);
+    inputFragment->loadRef(cond);
     lyric_assembler::JumpTarget targetIfFalse;
-    TU_ASSIGN_OR_RAISE (targetIfFalse, inputRoot->jumpIfFalse());
-    inputRoot->immediateInt(1);
-    inputRoot->immediateInt(2);
-    inputRoot->intAdd();
-    inputRoot->storeRef(result);
+    TU_ASSIGN_OR_RAISE (targetIfFalse, inputFragment->jumpIfFalse());
+    inputFragment->immediateInt(1);
+    inputFragment->immediateInt(2);
+    inputFragment->intAdd();
+    inputFragment->storeRef(result);
     lyric_assembler::JumpTarget targetJoin;
-    TU_ASSIGN_OR_RAISE (targetJoin, inputRoot->unconditionalJump());
+    TU_ASSIGN_OR_RAISE (targetJoin, inputFragment->unconditionalJump());
     lyric_assembler::JumpLabel labelIfFalse;
-    TU_ASSIGN_OR_RAISE (labelIfFalse, inputRoot->appendLabel("ifFalse"));
-    inputRoot->immediateInt(0);
-    inputRoot->storeRef(result);
+    TU_ASSIGN_OR_RAISE (labelIfFalse, inputFragment->appendLabel("ifFalse"));
+    inputFragment->immediateInt(0);
+    inputFragment->storeRef(result);
     lyric_assembler::JumpLabel labelJoin;
-    TU_ASSIGN_OR_RAISE (labelJoin, inputRoot->appendLabel("join"));
-    inputRoot->loadRef(result);
-    inputRoot->patchTarget(targetIfFalse, labelIfFalse);
-    inputRoot->patchTarget(targetJoin, labelJoin);
-    inputRoot->returnToCaller();
+    TU_ASSIGN_OR_RAISE (labelJoin, inputFragment->appendLabel("join"));
+    inputFragment->loadRef(result);
+    inputFragment->patchTarget(targetIfFalse, labelIfFalse);
+    inputFragment->patchTarget(targetJoin, labelJoin);
+    inputFragment->returnToCaller();
 
     TU_LOG_INFO;
     TU_LOG_INFO << "input proc:";
-    for (auto it = inputRoot->statementsBegin(); it != inputRoot->statementsEnd(); it++) {
+    for (auto it = inputFragment->statementsBegin(); it != inputFragment->statementsEnd(); it++) {
         const auto &instruction = it->instruction;
         TU_LOG_INFO << "  " << instruction->toString();
     }
@@ -134,12 +131,11 @@ TEST_F(BuildProcTests, BuildConditionalWithPhiFunction)
     TU_ASSIGN_OR_RAISE (outputProc, outputCall->defineCall({}));
 
     ASSERT_THAT (lyric_optimizer::build_proc(cfg, outputProc), tempo_test::IsOk());
-    auto *outputCode = outputProc->procCode();
-    auto *outputRoot = outputCode->rootFragment();
+    auto *outputFragment = outputProc->procFragment();
 
     TU_LOG_INFO;
     TU_LOG_INFO << "output proc:";
-    for (auto it = outputRoot->statementsBegin(); it != outputRoot->statementsEnd(); it++) {
+    for (auto it = outputFragment->statementsBegin(); it != outputFragment->statementsEnd(); it++) {
         const auto &instruction = it->instruction;
         TU_LOG_INFO << "  " << instruction->toString();
     }

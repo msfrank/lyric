@@ -1,7 +1,6 @@
 
 #include <absl/container/btree_set.h>
 
-#include <lyric_assembler/proc_builder.h>
 #include <lyric_optimizer/activation_state.h>
 #include <lyric_optimizer/operand_stack.h>
 #include <lyric_optimizer/optimizer_result.h>
@@ -165,7 +164,7 @@ static lyric_optimizer::BranchType opcode_to_branch_type(lyric_object::Opcode op
 
 static tempo_utils::Status
 apply_control_flow(
-    const lyric_assembler::ProcBuilder *code,
+    const lyric_assembler::ProcHandle *procHandle,
     std::vector<std::unique_ptr<ProposedBlock>> &proposedBlocks,
     const absl::flat_hash_map<std::string, lyric_optimizer::BasicBlock> &labelBlocks,
     lyric_optimizer::ControlFlowGraph &cfg)
@@ -195,7 +194,7 @@ apply_control_flow(
                 case lyric_assembler::InstructionType::Branch: {
                     auto branchInstruction = std::static_pointer_cast<lyric_assembler::BranchInstruction>(instruction);
                     auto targetId = branchInstruction->getTargetId();
-                    auto labelName = code->getLabelForTarget(targetId);
+                    auto labelName = procHandle->getLabelForTarget(targetId);
                     trailer->targetBlock = labelBlocks.at(labelName);
                     prevProposed = currProposed.get();
                     break;
@@ -204,7 +203,7 @@ apply_control_flow(
                 case lyric_assembler::InstructionType::Jump: {
                     auto jumpInstruction = std::static_pointer_cast<lyric_assembler::JumpInstruction>(instruction);
                     auto targetId = jumpInstruction->getTargetId();
-                    auto labelName = code->getLabelForTarget(targetId);
+                    auto labelName = procHandle->getLabelForTarget(targetId);
                     trailer->targetBlock = labelBlocks.at(labelName);
                     break;
                 }
@@ -420,7 +419,7 @@ translate_block_trailer(
 
 static tempo_utils::Status
 translate_block_instructions(
-    const lyric_assembler::ProcBuilder *code,
+    const lyric_assembler::ProcHandle *procHandle,
     std::vector<std::unique_ptr<ProposedBlock>> &proposedBlocks,
     lyric_optimizer::ControlFlowGraph &cfg)
 {
@@ -609,8 +608,7 @@ minimize_phi_functions(
 tempo_utils::Result<lyric_optimizer::ControlFlowGraph>
 lyric_optimizer::parse_proc(const lyric_assembler::ProcHandle *procHandle)
 {
-    auto *code = procHandle->procCode();
-    auto *fragment = code->rootFragment();
+    auto *fragment = procHandle->procFragment();
 
     auto numArguments = procHandle->numListParameters() + procHandle->numNamedParameters();
     auto numLocals = procHandle->numLocals();
@@ -621,8 +619,8 @@ lyric_optimizer::parse_proc(const lyric_assembler::ProcHandle *procHandle)
     std::vector<std::unique_ptr<ProposedBlock>> proposedBlocks;
     absl::flat_hash_map<std::string, BasicBlock> labelBlocks;
     TU_RETURN_IF_NOT_OK (scan_for_basic_blocks(fragment, proposedBlocks, labelBlocks, cfg));
-    TU_RETURN_IF_NOT_OK (apply_control_flow(code, proposedBlocks, labelBlocks, cfg));
-    TU_RETURN_IF_NOT_OK (translate_block_instructions(code, proposedBlocks, cfg));
+    TU_RETURN_IF_NOT_OK (apply_control_flow(procHandle, proposedBlocks, labelBlocks, cfg));
+    TU_RETURN_IF_NOT_OK (translate_block_instructions(procHandle, proposedBlocks, cfg));
     TU_RETURN_IF_NOT_OK (link_activation_states(proposedBlocks, cfg));
     TU_RETURN_IF_NOT_OK (minimize_phi_functions(proposedBlocks, cfg));
 

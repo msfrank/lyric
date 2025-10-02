@@ -49,8 +49,7 @@ lyric_compiler::MethodHandler::after(
 {
     TU_LOG_VV << "after MethodHandler@" << this;
 
-    auto *procBuilder = m_method.procHandle->procCode();
-    auto *fragment = procBuilder->rootFragment();
+    auto *fragment = m_method.procHandle->procFragment();
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());

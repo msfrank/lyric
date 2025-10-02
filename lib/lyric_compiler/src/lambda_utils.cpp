@@ -54,8 +54,7 @@ lyric_compiler::define_lambda_builder(
         procHandle->allocateLexical(lexical->lexicalTarget, lexical->targetOffset, lexical->activationCall);
     }
 
-    auto *procBuilder = procHandle->procCode();
-    auto *fragment = procBuilder->rootFragment();
+    auto *fragment = procHandle->procFragment();
 
     // invoke the closure ctor
     lyric_assembler::ConstructableInvoker closureCtor;

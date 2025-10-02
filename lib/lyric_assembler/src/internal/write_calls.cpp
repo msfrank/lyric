@@ -91,7 +91,7 @@ lyric_assembler::internal::touch_call(
         TU_RETURN_IF_NOT_OK (writer.touchTemplate(templateHandle));
     }
 
-    auto *proc = callSymbol->callProc()->procCode();
+    auto *proc = callSymbol->callProc();
     return proc->touch(writer);
 }
 
@@ -106,10 +106,9 @@ write_call(
     auto bytecodeOffset = static_cast<tu_uint32>(bytecode.size());
 
     auto *proc = callSymbol->callProc();
-    auto *code = proc->procCode();
 
     lyric_object::BytecodeBuilder bytecodeBuilder;
-    TU_RETURN_IF_NOT_OK (code->build(writer, bytecodeBuilder));
+    TU_RETURN_IF_NOT_OK (proc->build(writer, bytecodeBuilder));
 
     // build the proc prologue
     tempo_utils::BytesAppender prologue;

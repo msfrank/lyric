@@ -85,8 +85,7 @@ lyric_compiler::DefStaticHandler::before(
     //
     TU_ASSIGN_OR_RETURN (m_initializerHandle, m_staticSymbol->defineInitializer());
     auto *procHandle = m_initializerHandle->initializerProc();
-    auto *code = procHandle->procCode();
-    auto *fragment = code->rootFragment();
+    auto *fragment = procHandle->procFragment();
 
     auto expression = std::make_unique<FormChoice>(
         FormType::Expression, fragment, block, driver);
@@ -106,8 +105,7 @@ lyric_compiler::DefStaticHandler::after(
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
     auto *procHandle = m_initializerHandle->initializerProc();
-    auto *code = procHandle->procCode();
-    auto *fragment = code->rootFragment();
+    auto *fragment = procHandle->procFragment();
 
     auto initializerType = driver->peekResult();
     TU_RETURN_IF_NOT_OK (driver->popResult());

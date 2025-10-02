@@ -4,7 +4,6 @@
 #include <lyric_assembler/local_variable.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/internal/import_proc.h>
-#include <lyric_assembler/proc_builder.h>
 #include <lyric_assembler/action_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
@@ -515,7 +514,6 @@ lyric_assembler::internal::import_proc(
     ObjectState *state)
 {
     auto importedProc = std::make_unique<ProcHandle>(activation, state);
-    auto *procCode = importedProc->procCode();
 
     ImportProcData data;
     data.objectLocation = moduleImport->getObjectLocation();
@@ -524,7 +522,7 @@ lyric_assembler::internal::import_proc(
     data.plugin = moduleImport->getPlugin();
     data.activation = activation;
     data.state = state;
-    data.fragment = procCode->rootFragment();
+    data.fragment = importedProc->procFragment();
 
     lyric_object::OpCell op;
 

@@ -6,7 +6,6 @@
 #include <lyric_assembler/assembler_result.h>
 #include <lyric_assembler/code_fragment.h>
 #include <lyric_assembler/internal/call_inline.h>
-#include <lyric_assembler/proc_builder.h>
 
 tempo_utils::Status
 lyric_assembler::internal::call_inline(
@@ -57,8 +56,7 @@ lyric_assembler::internal::call_inline(
     }
 
     auto *srcProc = callSymbol->callProc();
-    auto *srcCode = srcProc->procCode();
-    auto *srcFragment = srcCode->rootFragment();
+    auto *srcFragment = srcProc->procFragment();
 
     absl::flat_hash_map<std::string,JumpLabel> labels;
     absl::flat_hash_map<tu_uint32,JumpTarget> targets;
@@ -183,7 +181,7 @@ lyric_assembler::internal::call_inline(
     for (const auto &entry: targets) {
         auto srcTargetId = entry.first;
         auto &dstTarget = entry.second;
-        auto srcLabel = srcCode->getLabelForTarget(srcTargetId);
+        auto srcLabel = srcProc->getLabelForTarget(srcTargetId);
         auto &dstLabel = labels.at(srcLabel);
         TU_RETURN_IF_NOT_OK (dstFragment->patchTarget(dstTarget, dstLabel));
     }

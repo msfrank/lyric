@@ -18,15 +18,14 @@
 #include <lyric_assembler/lexical_variable.h>
 #include <lyric_assembler/local_variable.h>
 #include <lyric_assembler/namespace_symbol.h>
-#include <lyric_assembler/proc_builder.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/synthetic_symbol.h>
 
-lyric_assembler::CodeFragment::CodeFragment(ProcBuilder *procBuilder)
-    : m_procBuilder(procBuilder)
+lyric_assembler::CodeFragment::CodeFragment(ProcHandle *procHandle)
+    : m_procHandle(procHandle)
 {
-    TU_ASSERT (m_procBuilder != nullptr);
+    TU_ASSERT (m_procHandle != nullptr);
 }
 
 tempo_utils::Status
@@ -60,7 +59,7 @@ lyric_assembler::CodeFragment::insertLabel(int index, std::string_view userLabel
         return appendLabel(userLabel);
 
     std::string labelName;
-    TU_ASSIGN_OR_RETURN (labelName, m_procBuilder->makeLabel(userLabel));
+    TU_ASSIGN_OR_RETURN (labelName, m_procHandle->makeLabel(userLabel));
 
     auto it = m_statements.begin();
     std::advance(it, index);
@@ -75,7 +74,7 @@ tempo_utils::Result<lyric_assembler::JumpLabel>
 lyric_assembler::CodeFragment::appendLabel(std::string_view userLabel)
 {
     std::string labelName;
-    TU_ASSIGN_OR_RETURN (labelName, m_procBuilder->makeLabel(userLabel));
+    TU_ASSIGN_OR_RETURN (labelName, m_procHandle->makeLabel(userLabel));
 
     Statement statement;
     statement.instruction = std::make_shared<LabelInstruction>(labelName);
@@ -86,7 +85,7 @@ lyric_assembler::CodeFragment::appendLabel(std::string_view userLabel)
 std::unique_ptr<lyric_assembler::CodeFragment>
 lyric_assembler::CodeFragment::makeFragment()
 {
-    return std::unique_ptr<CodeFragment>(new CodeFragment(m_procBuilder));
+    return std::unique_ptr<CodeFragment>(new CodeFragment(m_procHandle));
 }
 
 tempo_utils::Status
@@ -215,7 +214,7 @@ lyric_assembler::CodeFragment::immediateChar(char32_t chr)
 tempo_utils::Status
 lyric_assembler::CodeFragment::loadString(const std::string &str)
 {
-    auto *state = m_procBuilder->objectState();
+    auto *state = m_procHandle->objectState();
     auto *literalCache = state->literalCache();
     LiteralHandle *literal;
     TU_ASSIGN_OR_RETURN (literal, literalCache->makeUtf8(str));
@@ -229,7 +228,7 @@ lyric_assembler::CodeFragment::loadString(const std::string &str)
 tempo_utils::Status
 lyric_assembler::CodeFragment::loadUrl(const tempo_utils::Url &url)
 {
-    auto *state = m_procBuilder->objectState();
+    auto *state = m_procHandle->objectState();
     auto *literalCache = state->literalCache();
     LiteralHandle *literal;
     TU_ASSIGN_OR_RETURN (literal, literalCache->makeUtf8(url.toString()));
@@ -270,7 +269,7 @@ lyric_assembler::CodeFragment::loadDescriptor(AbstractSymbol *symbol)
 tempo_utils::Status
 lyric_assembler::CodeFragment::loadRef(const DataReference &ref)
 {
-    auto *state = m_procBuilder->objectState();
+    auto *state = m_procHandle->objectState();
     auto *symbolCache = state->symbolCache();
 
     Statement statement;
@@ -310,7 +309,7 @@ lyric_assembler::CodeFragment::loadRef(const DataReference &ref)
 tempo_utils::Status
 lyric_assembler::CodeFragment::loadRef(const ImplReference &ref)
 {
-    auto *state = m_procBuilder->objectState();
+    auto *state = m_procHandle->objectState();
     auto *symbolCache = state->symbolCache();
 
     Statement statement;
@@ -350,7 +349,7 @@ lyric_assembler::CodeFragment::loadRest()
 tempo_utils::Status
 lyric_assembler::CodeFragment::loadType(const lyric_common::TypeDef &loadType)
 {
-    auto *state = m_procBuilder->objectState();
+    auto *state = m_procHandle->objectState();
     auto *typeCache = state->typeCache();
 
     TypeHandle *typeHandle;
@@ -374,7 +373,7 @@ lyric_assembler::CodeFragment::storeData(AbstractSymbol *symbol)
 tempo_utils::Status
 lyric_assembler::CodeFragment::storeRef(const DataReference &ref, bool initialStore)
 {
-    auto *state = m_procBuilder->objectState();
+    auto *state = m_procHandle->objectState();
     auto *symbolCache = state->symbolCache();
 
     Statement statement;
@@ -671,7 +670,7 @@ tempo_utils::Result<lyric_assembler::JumpTarget>
 lyric_assembler::CodeFragment::makeJump(lyric_object::Opcode opcode)
 {
     tu_uint32 targetId;
-    TU_ASSIGN_OR_RETURN (targetId, m_procBuilder->makeJump());
+    TU_ASSIGN_OR_RETURN (targetId, m_procHandle->makeJump());
 
     Statement statement;
     switch (opcode) {
@@ -769,7 +768,7 @@ lyric_assembler::CodeFragment::patchTarget(JumpTarget jumpTarget, JumpLabel jump
 {
     TU_ASSERT (jumpTarget.isValid());
     TU_ASSERT (jumpLabel.isValid());
-    return m_procBuilder->patchTarget(jumpTarget.getId(), jumpLabel.labelView());
+    return m_procHandle->patchTarget(jumpTarget.getId(), jumpLabel.labelView());
 }
 
 tempo_utils::Status

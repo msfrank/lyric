@@ -10,7 +10,8 @@
 #include <tempo_tracing/trace_recorder.h>
 #include <tempo_utils/uuid.h>
 
-TEST(CodeFragment, ImmediateNil) {
+TEST(CodeFragment, ImmediateNil)
+{
     auto location = lyric_common::ModuleLocation::fromString("/test");
     auto staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
     auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
@@ -29,14 +30,13 @@ TEST(CodeFragment, ImmediateNil) {
 
     auto activationUrl = lyric_common::SymbolUrl::fromString("#sym");
     lyric_assembler::ProcHandle procHandle(activationUrl, root->rootBlock(), &objectState);
-    auto *procCode = procHandle.procCode();
-    auto *fragment = procCode->rootFragment();
+    auto *fragment = procHandle.procFragment();
 
     ASSERT_THAT (fragment->immediateNil(), tempo_test::IsOk());
 
     lyric_assembler::ObjectWriter objectWriter(&objectState);
     lyric_object::BytecodeBuilder bytecodeBuilder;
-    ASSERT_THAT (procCode->build(objectWriter, bytecodeBuilder), tempo_test::IsOk());
+    ASSERT_THAT (procHandle.build(objectWriter, bytecodeBuilder), tempo_test::IsOk());
 
     auto bytecode = bytecodeBuilder.getBytecode();
     lyric_object::BytecodeIterator it(bytecode.data(), bytecode.size());
@@ -68,8 +68,7 @@ TEST(CodeFragment, UnconditionalJump)
 
     auto activationUrl = lyric_common::SymbolUrl::fromString("#sym");
     lyric_assembler::ProcHandle procHandle(activationUrl, root->rootBlock(), &objectState);
-    auto *procCode = procHandle.procCode();
-    auto *fragment = procCode->rootFragment();
+    auto *fragment = procHandle.procFragment();
 
     lyric_assembler::JumpLabel label;
     TU_ASSIGN_OR_RAISE (label, fragment->appendLabel("top"));
@@ -81,7 +80,7 @@ TEST(CodeFragment, UnconditionalJump)
 
     lyric_assembler::ObjectWriter objectWriter(&objectState);
     lyric_object::BytecodeBuilder bytecodeBuilder;
-    ASSERT_THAT (procCode->build(objectWriter, bytecodeBuilder), tempo_test::IsOk());
+    ASSERT_THAT (procHandle.build(objectWriter, bytecodeBuilder), tempo_test::IsOk());
 
     auto bytecode = bytecodeBuilder.getBytecode();
     lyric_object::BytecodeIterator it(bytecode.data(), bytecode.size());

@@ -283,8 +283,7 @@ lyric_compiler::EnumCase::decide(
     // define the ctor
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, ctorSymbol->defineCall({}, lyric_common::TypeDef::noReturn()));
-    auto *procBuilder = procHandle->procCode();
-    auto *fragment = procBuilder->rootFragment();
+    auto *fragment = procHandle->procFragment();
 
     // find the superenum ctor
     auto superInvoker = std::make_unique<lyric_assembler::ConstructableInvoker>();

@@ -97,8 +97,7 @@ lyric_compiler::define_struct_default_init(
 
     auto *procHandle = ctorSymbol->callProc();
     auto *ctorBlock = procHandle->procBlock();
-    auto *procBuilder = procHandle->procCode();
-    auto *fragment = procBuilder->rootFragment();
+    auto *fragment = procHandle->procFragment();
 
     // find the superstruct ctor
     lyric_assembler::ConstructableInvoker superCtor;
@@ -249,8 +248,7 @@ lyric_compiler::default_initialize_struct_members(
     TU_ASSERT (typeSystem != nullptr);
     auto *procHandle = ctorSymbol->callProc();
     auto *ctorBlock = procHandle->procBlock();
-    auto *procBuilder = procHandle->procCode();
-    auto *fragment = procBuilder->rootFragment();
+    auto *fragment = procHandle->procFragment();
 
     // default-initialize all members
     for (auto it = structSymbol->membersBegin();

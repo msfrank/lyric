@@ -55,8 +55,7 @@ lyric_compiler::MemberHandler::after(
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
     auto *procHandle = m_member.initializerHandle->initializerProc();
-    auto *code = procHandle->procCode();
-    auto *fragment = code->rootFragment();
+    auto *fragment = procHandle->procFragment();
 
     auto initializerType = driver->peekResult();
     TU_RETURN_IF_NOT_OK (driver->popResult());
@@ -111,7 +110,7 @@ lyric_compiler::MemberInit::decide(
     auto *block = getBlock();
     auto *driver = getDriver();
     auto *procHandle = m_initializerHandle->initializerProc();
-    auto *fragment = procHandle->procCode()->rootFragment();
+    auto *fragment = procHandle->procFragment();
 
     switch (astId) {
 

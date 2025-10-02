@@ -7,7 +7,6 @@
 #include "cleanup_handle.h"
 #include "object_state.h"
 #include "block_handle.h"
-#include "proc_builder.h"
 
 namespace lyric_assembler {
 
@@ -46,17 +45,25 @@ namespace lyric_assembler {
 
         const BlockHandle *procBlock() const;
         BlockHandle *procBlock();
-        const ProcBuilder *procCode() const;
-        ProcBuilder *procCode();
+        const CodeFragment *procFragment() const;
+        CodeFragment *procFragment();
+        ObjectState *objectState() const;
 
         lyric_common::SymbolUrl getActivationUrl() const;
         const CallSymbol *getActivationCall() const;
 
-        int getArity() const;
+        /*
+         * proc parameters
+         */
 
         int numListParameters() const;
         int numNamedParameters() const;
         bool hasRestParameter() const;
+        int getArity() const;
+
+        /*
+         * proc variables
+         */
 
         LocalOffset allocateLocal();
         int numLocals() const;
@@ -69,29 +76,64 @@ namespace lyric_assembler {
         std::vector<ProcLexical>::const_iterator lexicalsEnd() const;
         int numLexicals() const;
 
+        /*
+         * labels and jumps
+         */
+
+        tempo_utils::Result<std::string> makeLabel(std::string_view userLabel = {});
+        tempo_utils::Result<tu_uint32> makeJump();
+        absl::flat_hash_set<tu_uint32> getTargetsForLabel(std::string_view labelName) const;
+        std::string getLabelForTarget(tu_uint32 targetId) const;
+        tempo_utils::Status patchTarget(tu_uint32 targetId, std::string_view labelName);
+
+        /*
+         * exceptions and cleanup
+         */
+
         tempo_utils::Result<CheckHandle *> declareCheck(const JumpLabel &checkStart);
         int numChecks() const;
 
         tempo_utils::Result<CleanupHandle *> declareCleanup(const JumpLabel &cleanupStart);
         int numCleanups() const;
 
+        /*
+         * proc exit
+         */
+
         void putExitType(const lyric_common::TypeDef &exitType);
         absl::flat_hash_set<lyric_common::TypeDef>::const_iterator exitTypesBegin() const;
         absl::flat_hash_set<lyric_common::TypeDef>::const_iterator exitTypesEnd() const;
+
+        /*
+         * serialization
+         */
+
+        tempo_utils::Status touch(ObjectWriter &writer) const;
+        tempo_utils::Status build(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder) const;
 
     private:
         lyric_common::SymbolUrl m_activation;
         tu_uint8 m_numListParameters;
         tu_uint8 m_numNamedParameters;
         bool m_hasRestParameter;
-        std::unique_ptr<ProcBuilder> m_code;
         std::unique_ptr<BlockHandle> m_block;
+        std::unique_ptr<CodeFragment> m_fragment;
+        ObjectState *m_state;
+
         int m_numLocals;
         std::vector<ProcLexical> m_lexicals;
+
         std::vector<std::unique_ptr<CheckHandle>> m_checks;
         std::vector<std::unique_ptr<CleanupHandle>> m_cleanups;
+
         absl::flat_hash_set<lyric_common::TypeDef> m_exitTypes;
-        ObjectState *m_state;
+
+        tu_uint32 m_nextId;
+        absl::flat_hash_map<std::string, absl::flat_hash_set<tu_uint32>> m_labelTargets;
+        absl::flat_hash_map<tu_uint32,std::string> m_jumpLabels;
+
     };
 }
 

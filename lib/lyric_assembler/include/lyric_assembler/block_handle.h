@@ -14,7 +14,6 @@
 #include "callable_invoker.h"
 #include "function_callable.h"
 #include "namespace_symbol.h"
-#include "proc_builder.h"
 #include "type_handle.h"
 
 namespace lyric_assembler {

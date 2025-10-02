@@ -59,7 +59,6 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/object_state.h
     include/lyric_assembler/object_writer.h
     include/lyric_assembler/pack_builder.h
-    include/lyric_assembler/proc_builder.h
     include/lyric_assembler/proc_handle.h
     include/lyric_assembler/static_symbol.h
     include/lyric_assembler/struct_symbol.h
@@ -117,7 +116,6 @@ target_sources(lyric_assembler PRIVATE
     src/object_state.cpp
     src/object_writer.cpp
     src/pack_builder.cpp
-    src/proc_builder.cpp
     src/proc_handle.cpp
     src/static_symbol.cpp
     src/struct_symbol.cpp

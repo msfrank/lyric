@@ -90,8 +90,7 @@ lyric_compiler::LambdaHandler::after(
     auto *fundamentalCache = driver->getFundamentalCache();
     auto *symbolCache = driver->getSymbolCache();
     auto *typeSystem = driver->getTypeSystem();
-    auto *procBuilder = m_lambda.procHandle->procCode();
-    auto *lambdaFragment = procBuilder->rootFragment();
+    auto *lambdaFragment = m_lambda.procHandle->procFragment();
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (lambdaFragment->returnToCaller());

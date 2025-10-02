@@ -16,11 +16,12 @@ lyric_assembler::ProcHandle::ProcHandle(
       m_numListParameters(0),
       m_numNamedParameters(0),
       m_hasRestParameter(false),
+      m_state(state),
       m_numLocals(0),
-      m_state(state)
+      m_nextId(0)
 {
     TU_ASSERT (state != nullptr);
-    m_code = std::make_unique<ProcBuilder>(this, state);
+    m_fragment = std::unique_ptr<CodeFragment>(new CodeFragment(this));
 }
 
 /**
@@ -38,19 +39,25 @@ lyric_assembler::ProcHandle::ProcHandle(
       m_numListParameters(0),
       m_numNamedParameters(0),
       m_hasRestParameter(false),
+      m_state(state),
       m_numLocals(0),
-      m_state(state)
+      m_nextId(0)
 {
     TU_ASSERT (state != nullptr);
     TU_ASSERT (parent != nullptr);
-    m_code = std::make_unique<ProcBuilder>(this, state);
     absl::flat_hash_map<std::string,SymbolBinding> initialBindings;
     m_block = std::make_unique<BlockHandle>(initialBindings, this, parent, state);
+    m_fragment = std::unique_ptr<CodeFragment>(new CodeFragment(this));
 }
 
 /**
+ * Allocate a new ProcHandle for a normal call.
  *
- * @param parameters
+ * @param activation
+ * @param initialBindings
+ * @param numListParameters
+ * @param numNamedParameters
+ * @param hasRestParameter
  * @param state
  * @param parent
  */
@@ -66,13 +73,14 @@ lyric_assembler::ProcHandle::ProcHandle(
       m_numListParameters(numListParameters),
       m_numNamedParameters(numNamedParameters),
       m_hasRestParameter(hasRestParameter),
+      m_state(state),
       m_numLocals(0),
-      m_state(state)
+      m_nextId(0)
 {
     TU_ASSERT (state != nullptr);
     TU_ASSERT (parent != nullptr);
-    m_code = std::make_unique<ProcBuilder>(this, state);
     m_block = std::make_unique<BlockHandle>(initialBindings, this, parent, state);
+    m_fragment = std::unique_ptr<CodeFragment>(new CodeFragment(this));
 }
 
 lyric_assembler::BlockHandle *
@@ -87,16 +95,22 @@ lyric_assembler::ProcHandle::procBlock() const
     return m_block.get();
 }
 
-lyric_assembler::ProcBuilder *
-lyric_assembler::ProcHandle::procCode()
+lyric_assembler::CodeFragment *
+lyric_assembler::ProcHandle::procFragment()
 {
-    return m_code.get();
+    return m_fragment.get();
 }
 
-const lyric_assembler::ProcBuilder *
-lyric_assembler::ProcHandle::procCode() const
+const lyric_assembler::CodeFragment *
+lyric_assembler::ProcHandle::procFragment() const
 {
-    return m_code.get();
+    return m_fragment.get();
+}
+
+lyric_assembler::ObjectState *
+lyric_assembler::ProcHandle::objectState() const
+{
+    return m_state;
 }
 
 lyric_common::SymbolUrl
@@ -232,4 +246,125 @@ absl::flat_hash_set<lyric_common::TypeDef>::const_iterator
 lyric_assembler::ProcHandle::exitTypesEnd() const
 {
     return m_exitTypes.cend();
+}
+
+absl::flat_hash_set<tu_uint32>
+lyric_assembler::ProcHandle::getTargetsForLabel(std::string_view labelName) const
+{
+    auto entry = m_labelTargets.find(labelName);
+    if (entry != m_labelTargets.cend())
+        return entry->second;
+    return {};
+}
+
+std::string
+lyric_assembler::ProcHandle::getLabelForTarget(tu_uint32 targetId) const
+{
+    auto entry = m_jumpLabels.find(targetId);
+    if (entry != m_jumpLabels.cend())
+        return entry->second;
+    return {};
+}
+
+tempo_utils::Result<std::string>
+lyric_assembler::ProcHandle::makeLabel(std::string_view userLabel)
+{
+    std::string labelName(userLabel);
+    if (labelName.empty()) {
+        if (m_nextId == std::numeric_limits<tu_uint32>::max())
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "too many ids");
+        labelName = absl::StrCat("label", m_nextId);
+        if (m_labelTargets.contains(labelName))
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "assembly label {} already exists", labelName);
+        m_nextId++;
+    } else {
+        if (m_labelTargets.contains(labelName))
+            return AssemblerStatus::forCondition(
+                AssemblerCondition::kAssemblerInvariant, "assembly label {} already exists", labelName);
+    }
+
+    m_labelTargets[labelName] = {};
+    TU_LOG_VV << "proc " << this << " makes label " << labelName;
+    return labelName;
+}
+
+tempo_utils::Result<tu_uint32>
+lyric_assembler::ProcHandle::makeJump()
+{
+    if (m_nextId == std::numeric_limits<tu_uint32>::max())
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "too many ids");
+
+    auto targetId = m_nextId++;
+    m_jumpLabels[targetId] = {};
+    TU_LOG_VV << "proc " << this << " makes jump " << targetId;
+    return targetId;
+}
+
+tempo_utils::Status
+lyric_assembler::ProcHandle::patchTarget(tu_uint32 targetId, std::string_view labelName)
+{
+    TU_ASSERT (!labelName.empty());
+
+    auto labelTargetEntry = m_labelTargets.find(labelName);
+    if (labelTargetEntry == m_labelTargets.cend())
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "missing assembly label {}", labelName);
+    auto &labelTargetSet = labelTargetEntry->second;
+
+    auto jumpLabelEntry = m_jumpLabels.find(targetId);
+    if (jumpLabelEntry == m_jumpLabels.cend())
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "missing jump target");
+    auto &jumpLabel = jumpLabelEntry->second;
+
+    labelTargetSet.insert(targetId);
+    jumpLabel = labelName;
+
+    TU_LOG_VV << "proc " << this << " patches target " << targetId << " to label " << std::string(labelName);
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::ProcHandle::touch(ObjectWriter &writer) const
+{
+    return m_fragment->touch(writer);
+}
+
+tempo_utils::Status
+lyric_assembler::ProcHandle::build(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder) const
+{
+    absl::flat_hash_map<std::string,tu_uint16> labelOffsets;
+    absl::flat_hash_map<tu_uint32,tu_uint16> patchOffsets;
+
+    TU_RETURN_IF_NOT_OK (m_fragment->build(writer, bytecodeBuilder, labelOffsets, patchOffsets));
+
+    TU_LOG_VV << "label targets:";
+    for (const auto &entry : m_labelTargets) {
+        TU_LOG_VV << "  label " << entry.first;
+        for (const auto &target : entry.second) {
+            TU_LOG_VV << "    target " << target;
+        }
+    }
+    TU_LOG_VV << "jump labels:";
+    for (const auto &entry : m_jumpLabels) {
+        TU_LOG_VV << "  target " << entry.first << " -> " << entry.second;
+    }
+
+    for (const auto &entry : patchOffsets) {
+        auto targetId = entry.first;
+        auto patchOffset = entry.second;
+        const auto &jumpLabel = m_jumpLabels.at(targetId);
+        auto labelOffset = labelOffsets.find(jumpLabel);
+        if (labelOffset == labelOffsets.cend())
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "missing label '{}' for patch target {}", jumpLabel, targetId);
+        TU_RETURN_IF_NOT_OK (bytecodeBuilder.patch(patchOffset, labelOffset->second));
+    }
+
+    return {};
 }

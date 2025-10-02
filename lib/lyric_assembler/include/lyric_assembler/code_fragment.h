@@ -10,7 +10,7 @@
 namespace lyric_assembler {
 
     // forward declarations
-    class ProcBuilder;
+    class ProcHandle;
     class CodeFragment;
 
     struct Statement {
@@ -143,7 +143,7 @@ namespace lyric_assembler {
         tempo_utils::Status invokeAbort();
 
     private:
-        ProcBuilder *m_procBuilder;
+        ProcHandle *m_procHandle;
         std::vector<Statement> m_statements;
 
         tempo_utils::Result<JumpTarget> makeJump(lyric_object::Opcode opcode);
@@ -154,8 +154,8 @@ namespace lyric_assembler {
             absl::flat_hash_map<std::string,tu_uint16> &labelOffsets,
             absl::flat_hash_map<tu_uint32,tu_uint16> &patchOffsets) const;
 
-        explicit CodeFragment(ProcBuilder *procBuilder);
-        friend class ProcBuilder;
+        explicit CodeFragment(ProcHandle *procHandle);
+        friend class ProcHandle;
         friend class MacroInstruction;
     };
 }

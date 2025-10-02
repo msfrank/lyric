@@ -8,7 +8,7 @@
 lyric_compiler::DefHandler::DefHandler(
     bool isSideEffect,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_isSideEffect(isSideEffect),
       m_currentNamespace(nullptr)
@@ -19,7 +19,7 @@ lyric_compiler::DefHandler::DefHandler(
     bool isSideEffect,
     lyric_assembler::NamespaceSymbol *currentNamespace,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
       m_isSideEffect(isSideEffect),
       m_currentNamespace(currentNamespace)
@@ -31,7 +31,7 @@ tempo_utils::Status
 lyric_compiler::DefHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     TU_LOG_VV << "before DefHandler@" << this;
 
@@ -103,14 +103,12 @@ tempo_utils::Status
 lyric_compiler::DefHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     TU_LOG_VV << "after DefHandler@" << this;
 
     auto *driver = getDriver();
-
-    auto *procBuilder = m_function.procHandle->procCode();
-    auto *fragment = procBuilder->rootFragment();
+    auto *fragment = m_function.procHandle->procFragment();
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
@@ -126,9 +124,9 @@ lyric_compiler::DefHandler::after(
 }
 
 lyric_compiler::DefProc::DefProc(
-    lyric_compiler::Function *function,
+    Function *function,
     lyric_assembler::BlockHandle *block,
-    lyric_compiler::CompilerScanDriver *driver)
+    CompilerScanDriver *driver)
     : BaseChoice(block, driver),
       m_function(function)
 {

@@ -41,8 +41,7 @@ lyric_compiler::EntryHandler::before(
 
     auto *entryProc = entryCall->callProc();
     auto *entryBlock = entryProc->procBlock();
-    auto *entryCode = entryProc->procCode();
-    auto *fragment = entryCode->rootFragment();
+    auto *fragment = entryProc->procFragment();
 
     auto numChildren = node->numChildren();
     TU_ASSERT (numChildren > 0);

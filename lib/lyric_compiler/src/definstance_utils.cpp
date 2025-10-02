@@ -49,8 +49,7 @@ lyric_compiler::define_instance_default_init(
 
     auto *procHandle = ctorSymbol->callProc();
     auto *ctorBlock = procHandle->procBlock();
-    auto *procBuilder = procHandle->procCode();
-    auto *fragment = procBuilder->rootFragment();
+    auto *fragment = procHandle->procFragment();
 
     // find the superinstance ctor
     lyric_assembler::ConstructableInvoker superCtor;

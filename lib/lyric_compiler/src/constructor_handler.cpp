@@ -34,8 +34,7 @@ lyric_compiler::ConstructorHandler::before(
     auto *classBlock = getBlock();
     auto *driver = getDriver();
     auto *ctorBlock = m_constructor.procHandle->procBlock();
-    auto *procBuilder = m_constructor.procHandle->procCode();
-    auto *fragment = procBuilder->rootFragment();
+    auto *fragment = m_constructor.procHandle->procFragment();
 
     auto pack = std::make_unique<PackHandler>(m_constructor.callSymbol, classBlock, driver);
     ctx.appendGrouping(std::move(pack));
@@ -58,8 +57,7 @@ lyric_compiler::ConstructorHandler::after(
 {
     TU_LOG_VV << "after ConstructorHandler@" << this;
 
-    auto *procBuilder = m_constructor.procHandle->procCode();
-    auto *fragment = procBuilder->rootFragment();
+    auto *fragment = m_constructor.procHandle->procFragment();
 
     // add return instruction
     TU_RETURN_IF_NOT_OK (fragment->returnToCaller());

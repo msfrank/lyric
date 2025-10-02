@@ -52,12 +52,11 @@ BaseOptimizerFixture::declareFunction(
 lyric_optimizer::ControlFlowGraph
 BaseOptimizerFixture::parseProc(lyric_assembler::ProcHandle *procHandle)
 {
-    auto *code = procHandle->procCode();
-    auto *root = code->rootFragment();
+    auto *fragment = procHandle->procFragment();
 
     TU_LOG_INFO;
     TU_LOG_INFO << "parsing proc:";
-    for (auto it = root->statementsBegin(); it != root->statementsEnd(); it++) {
+    for (auto it = fragment->statementsBegin(); it != fragment->statementsEnd(); it++) {
         const auto &instruction = it->instruction;
         TU_LOG_INFO << "  " << instruction->toString();
     }
