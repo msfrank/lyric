@@ -191,10 +191,11 @@ lyric_archiver::put_pending_proc(
     auto object = moduleImport->getObject();
     auto plugin = moduleImport->getPlugin();
     auto call = object.getCall(callImport->getCallOffset());
-    auto header = call.getProcHeader();
-    auto code = call.getBytecodeIterator();
 
-    TU_RETURN_IF_NOT_OK (scan_proc(location, object, code, symbolReferenceSet, archiverState));
+    lyric_object::ProcInfo procInfo;
+    TU_ASSIGN_OR_RETURN (procInfo, call.getProcInfo());
 
-    return archiverState.putPendingProc(importUrl, object, plugin, header, code, procHandle);
+    TU_RETURN_IF_NOT_OK (scan_proc(location, object, procInfo, symbolReferenceSet, archiverState));
+
+    return archiverState.putPendingProc(importUrl, object, plugin, procInfo, procHandle);
 }

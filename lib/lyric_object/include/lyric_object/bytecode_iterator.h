@@ -71,6 +71,7 @@ namespace lyric_object {
 
     public:
         BytecodeIterator();
+        explicit BytecodeIterator(std::span<const tu_uint8> bytecode);
         BytecodeIterator(const tu_uint8 *bytecode, size_t size);
 
         bool isValid() const;

@@ -115,6 +115,7 @@ write_call(
     prologue.appendU16(static_cast<tu_uint16>(proc->getArity()));
     prologue.appendU16(static_cast<tu_uint16>(proc->numLocals()));
     prologue.appendU16(static_cast<tu_uint16>(proc->numLexicals()));
+    prologue.appendU32(0);
     for (auto lexical = proc->lexicalsBegin(); lexical != proc->lexicalsEnd(); lexical++) {
         tu_uint32 address;
         TU_ASSIGN_OR_RETURN (address,

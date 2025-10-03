@@ -12,7 +12,7 @@ namespace lyric_archiver {
     tempo_utils::Status scan_proc(
         const lyric_common::ModuleLocation &location,
         const lyric_object::LyricObject &object,
-        lyric_object::BytecodeIterator code,
+        const lyric_object::ProcInfo &procInfo,
         SymbolReferenceSet &symbolReferenceSet,
         ArchiverState &archiverState);
 }

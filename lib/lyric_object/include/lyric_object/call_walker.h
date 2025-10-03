@@ -5,6 +5,7 @@
 
 #include "bytecode_iterator.h"
 #include "object_types.h"
+#include "proc_utils.h"
 #include "template_walker.h"
 
 namespace lyric_object {
@@ -54,10 +55,11 @@ namespace lyric_object {
         bool hasRestParameter() const;
         ParameterWalker getRestParameter() const;
 
-        std::span<const tu_uint8> getProc() const;
-        ProcHeader getProcHeader() const;
         tu_uint32 getProcOffset() const;
-        BytecodeIterator getBytecodeIterator() const;
+
+        tempo_utils::Result<ProcInfo> getProcInfo() const;
+        tempo_utils::Result<TrailerInfo> getProcTrailer() const;
+        tempo_utils::Result<BytecodeIterator> getBytecodeIterator() const;
 
         TypeWalker getResultType() const;
 

@@ -518,37 +518,23 @@ lyric_runtime::InterpreterState::load(
             InterpreterCondition::kRuntimeInvariant, "invalid entry symbol");
     TU_LOG_V << "entry symbol is " << call.getSymbolPath().toString();
 
-    //auto procOffset = call->bytecode_offset();
+    // parse the proc
     auto procOffset = call.getProcOffset();
+    auto bytecode = segment->getBytecode();
+    lyric_object::ProcInfo procInfo;
+    TU_RETURN_IF_NOT_OK (lyric_object::parse_proc_info(bytecode, procOffset, procInfo));
 
-    // proc offset must be within the segment bytecode
-    auto *bytecodeData = segment->getBytecodeData();
-    auto bytecodeSize = segment->getBytecodeSize();
-    if (bytecodeSize <= procOffset)
-        return InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
-
-    const uint8_t *header = bytecodeData + procOffset;
-    auto stackGuard = 0;
-
-    // read the call proc header
-    tempo_utils::read_u32_and_advance(header);  // procSize
-    auto numArguments = tempo_utils::read_u16_and_advance(header);
-    auto numLocals = tempo_utils::read_u16_and_advance(header);
-    auto numLexicals = tempo_utils::read_u16_and_advance(header);
-
-    // the entry symbol must not accept any arguments
-    if (numArguments != 0)
+    // the entry symbol must not expect any arguments or lexicals
+    if (procInfo.num_arguments != 0 || procInfo.num_lexicals != 0)
         return InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid proc header");
 
     // construct the entry activation call frame
     CallCell frame(callIndex, segment->getSegmentIndex(),
         procOffset, segment->getSegmentIndex(), {}, true,
-        stackGuard, 0, 0, numLocals, numLexicals, {});
+        0, 0, 0, procInfo.num_locals, 0, {});
 
-    //lyric_object::BytecodeIterator ip(header, codeSize);
-    auto ip = call.getBytecodeIterator();
+    lyric_object::BytecodeIterator ip(procInfo.code);
 
     // reset the main task and initialize it with the new entry call
     auto *mainTask = m_systemScheduler->mainTask();

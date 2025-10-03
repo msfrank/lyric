@@ -11,9 +11,8 @@ namespace lyric_archiver {
         const lyric_object::LyricObject &object,
         const lyric_common::ModuleLocation &pluginLocation,
         std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin,
-        const lyric_object::ProcHeader &header,
+        const lyric_object::ProcInfo &procInfo,
         const absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::AbstractSymbol *> *copiedSymbols,
-        lyric_object::BytecodeIterator it,
         lyric_assembler::ProcHandle *procHandle,
         lyric_assembler::ObjectState *state);
 }

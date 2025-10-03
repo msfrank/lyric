@@ -499,9 +499,8 @@ lyric_archiver::copy_proc(
     const lyric_object::LyricObject &object,
     const lyric_common::ModuleLocation &pluginLocation,
     std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin,
-    const lyric_object::ProcHeader &header,
+    const lyric_object::ProcInfo &procInfo,
     const absl::flat_hash_map<lyric_common::SymbolUrl,lyric_assembler::AbstractSymbol *> *copiedSymbols,
-    lyric_object::BytecodeIterator it,
     lyric_assembler::ProcHandle *procHandle,
     lyric_assembler::ObjectState *state)
 {
@@ -515,10 +514,11 @@ lyric_archiver::copy_proc(
     data.fragment = procHandle->procFragment();
     data.copiedSymbols = copiedSymbols;
 
+    lyric_object::BytecodeIterator ip(procInfo.code.data(), procInfo.code.size());
     lyric_object::OpCell op;
 
     // append each instruction to the proc
-    while (it.getNext(op)) {
+    while (ip.getNext(op)) {
         switch (op.opcode) {
 
             case lyric_object::Opcode::OP_NOOP:

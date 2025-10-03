@@ -93,6 +93,12 @@ lyric_object::BytecodeIterator::BytecodeIterator()
 {
 }
 
+lyric_object::BytecodeIterator::BytecodeIterator(std::span<const tu_uint8> bytecode)
+    : m_bytecode(bytecode.data()), m_size(bytecode.size()), m_curr(0)
+{
+    TU_ASSERT (m_bytecode != nullptr);
+}
+
 lyric_object::BytecodeIterator::BytecodeIterator(const tu_uint8 *bytecode, size_t size)
     : m_bytecode(bytecode), m_size(size), m_curr(0)
 {

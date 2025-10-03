@@ -61,8 +61,7 @@ namespace lyric_archiver {
             const lyric_common::SymbolUrl &importUrl,
             const lyric_object::LyricObject &object,
             std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin,
-            const lyric_object::ProcHeader &header,
-            const lyric_object::BytecodeIterator &code,
+            const lyric_object::ProcInfo &procInfo,
             lyric_assembler::ProcHandle *procHandle);
 
         tempo_utils::Status copyPendingProcs();
@@ -92,8 +91,7 @@ namespace lyric_archiver {
         struct PendingProc {
             lyric_object::LyricObject object;
             std::shared_ptr<const lyric_runtime::AbstractPlugin> plugin;
-            lyric_object::ProcHeader header;
-            lyric_object::BytecodeIterator code;
+            lyric_object::ProcInfo procInfo;
             lyric_assembler::ProcHandle *procHandle;
         };
         absl::flat_hash_map<

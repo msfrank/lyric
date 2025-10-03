@@ -36,6 +36,7 @@ namespace lyric_runtime {
 
         const tu_uint8 *getBytecodeData() const;
         tu_uint32 getBytecodeSize() const;
+        std::span<const tu_uint8> getBytecode() const;
 
         DescriptorEntry *lookupDescriptor(lyric_object::LinkageSection section, tu_uint32 index);
         TypeEntry *lookupType(tu_uint32 index);

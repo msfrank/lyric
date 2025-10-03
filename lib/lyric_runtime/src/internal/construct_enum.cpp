@@ -70,38 +70,27 @@ lyric_runtime::internal::construct_enum(
     auto *ctorSegment = ctor->getSegment();
     auto procOffset = ctor->getProcOffset();
 
-    // verify the proc offset is within the segment bytecode
-    auto *bytecodeData = ctorSegment->getBytecodeData();
-    auto bytecodeSize = ctorSegment->getBytecodeSize();
-    if (bytecodeSize <= procOffset)
-        return InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
+    // parse the proc
+    auto bytecode = ctorSegment->getBytecode();
+    lyric_object::ProcInfo procInfo;
+    TU_RETURN_IF_NOT_OK (lyric_object::parse_proc_info(bytecode, procOffset, procInfo));
 
     // calculate the stack guard
     auto stackGuard = currentCoro->dataStackSize();
 
-    // read the call proc header
-    const uint8_t *header = bytecodeData + procOffset;
-    auto procSize = tempo_utils::read_u32_and_advance(header);
-    auto numArguments = tempo_utils::read_u16_and_advance(header);
-    auto numLocals = tempo_utils::read_u16_and_advance(header);
-    auto numLexicals = tempo_utils::read_u16_and_advance(header);
-    auto codeSize = procSize - 6;
-
-    if (numArguments != 0)
+    if (procInfo.num_arguments != 0)
         return InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "unexpected arguments for enum ctor");
-    if (numLexicals != 0)
+    if (procInfo.num_lexicals != 0)
         return InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "unexpected lexicals for enum ctor");
 
     // construct the activation call frame
     CallCell frame(ctorIndex, ctorSegment->getSegmentIndex(),
-        procOffset, returnSegmentIndex, returnIP, true,
-        stackGuard, 0, 0, numLocals, 0,
-        {}, ref);
+        procOffset, returnSegmentIndex, returnIP, true, stackGuard,
+        0, 0, procInfo.num_locals, 0, {}, ref);
 
-    lyric_object::BytecodeIterator ip(header, codeSize);
+    lyric_object::BytecodeIterator ip(procInfo.code);
     currentCoro->pushCall(frame, ip, ctorSegment);               // push the activation onto the call stack
     TU_LOG_V << "moved ip to " << ip;
 

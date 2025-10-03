@@ -110,79 +110,29 @@ lyric_runtime::internal::construct_new(
     auto ctor = ctorObject.getCall(ctorIndex);
     const auto procOffset = ctor.getProcOffset();
 
-    // verify the proc offset is within the segment bytecode
-    auto *bytecodeData = ctorSegment->getBytecodeData();
-    auto bytecodeSize = ctorSegment->getBytecodeSize();
-    if (bytecodeSize <= procOffset)
-        return InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
+    // parse the proc
+    auto bytecode = ctorSegment->getBytecode();
+    lyric_object::ProcInfo procInfo;
+    TU_RETURN_IF_NOT_OK (lyric_object::parse_proc_info(bytecode, procOffset, procInfo));
 
     // calculate the stack guard
     auto stackGuard = currentCoro->dataStackSize();
 
-    // read the call proc header
-    const uint8_t *header = bytecodeData + procOffset;
-    auto procSize = tempo_utils::read_u32_and_advance(header);
-    auto numArguments = tempo_utils::read_u16_and_advance(header);
-    auto numLocals = tempo_utils::read_u16_and_advance(header);
-    auto numLexicals = tempo_utils::read_u16_and_advance(header);
-    auto codeSize = procSize - 6;
-
-    // maximum number of args is 2^16
-    if (std::numeric_limits<uint16_t>::max() <= args.size())
-        return InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "too many arguments");
-
-    // all required args must be present
-    if (args.size() < numArguments)
-        return InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "not enough arguments");
-
-    auto numRest = static_cast<uint16_t>(args.size()) - numArguments;
+    // process the arguments array
+    tu_uint16 numRest;
+    TU_RETURN_IF_NOT_OK (process_arguments(procInfo, args, numRest));
 
     // construct the activation call frame
     CallCell frame(ctorIndex, ctorSegment->getSegmentIndex(),
-        procOffset, returnSegmentIndex, returnIP, true,
-        stackGuard, numArguments, numRest, numLocals, numLexicals,
-        args, ref);
+        procOffset, returnSegmentIndex, returnIP, true, stackGuard,
+        procInfo.num_arguments, numRest, procInfo.num_locals, procInfo.num_lexicals, args, ref);
 
-    // import each lexical from the latest activation and push it onto the stack
-    for (uint16_t i = 0; i < numLexicals; i++) {
-
-        // read the call proc lexical
-        auto activationCall = tempo_utils::read_u32_and_advance(header);
-        auto targetOffset = tempo_utils::read_u32_and_advance(header);
-        auto lexicalTarget = tempo_utils::read_u8_and_advance(header);
-        codeSize -= 9;
-
-        bool found = false;
-        for (auto iterator = currentCoro->callsBegin(); iterator != currentCoro->callsEnd(); iterator++) {
-            const auto &ancestor = *iterator;
-
-            if (ancestor.getCallSegment() != ctorSegment->getSegmentIndex())    // lexical must exist in callee segment
-                continue;
-            if (ancestor.getCallIndex() != activationCall)                  // frame does not match activation call
-                continue;
-            switch (lexicalTarget) {
-                case lyric_object::LEXICAL_ARGUMENT:
-                    frame.setLexical(i, ancestor.getArgument(targetOffset));
-                    break;
-                case lyric_object::LEXICAL_LOCAL:
-                    frame.setLexical(i, ancestor.getLocal(targetOffset));
-                    break;
-                default:
-                    return InterpreterStatus::forCondition(
-                        InterpreterCondition::kRuntimeInvariant, "invalid lexical target");
-            }
-            found = true;                       // we found the lexical, break loop early
-            break;
-        }
-        if (!found)
-            return InterpreterStatus::forCondition(
-                InterpreterCondition::kRuntimeInvariant, "missing lexical");
+    // if any lexicals are present then import them
+    if (procInfo.num_lexicals > 0) {
+        TU_RETURN_IF_NOT_OK (import_lexicals_into_frame(procInfo, currentCoro, ctorSegment, frame));
     }
 
-    lyric_object::BytecodeIterator ip(header, codeSize);
+    lyric_object::BytecodeIterator ip(procInfo.code);
     currentCoro->pushCall(frame, ip, ctorSegment);               // push the activation onto the call stack
     TU_LOG_V << "moved ip to " << ip;
 

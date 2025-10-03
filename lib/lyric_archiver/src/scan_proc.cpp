@@ -217,7 +217,7 @@ tempo_utils::Status
 lyric_archiver::scan_proc(
     const lyric_common::ModuleLocation &location,
     const lyric_object::LyricObject &object,
-    lyric_object::BytecodeIterator code,
+    const lyric_object::ProcInfo &procInfo,
     SymbolReferenceSet &symbolReferenceSet,
     ArchiverState &archiverState)
 {
@@ -226,10 +226,11 @@ lyric_archiver::scan_proc(
     data.object = object;
     data.symbolReferenceSet = &symbolReferenceSet;
 
+    lyric_object::BytecodeIterator ip(procInfo.code.data(), procInfo.code.size());
     lyric_object::OpCell op;
 
     // append each instruction to the proc
-    while (code.getNext(op)) {
+    while (ip.getNext(op)) {
         switch (op.opcode) {
 
             case lyric_object::Opcode::OP_NOOP:

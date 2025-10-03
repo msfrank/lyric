@@ -252,32 +252,23 @@ closure_ctor(
     auto descriptor = object.getCall(arg0.data.descriptor->getDescriptorIndex());
     auto procOffset = descriptor.getProcOffset();
 
-    // verify that proc offset is within the segment bytecode
-    auto *bytecodeData = segment->getBytecodeData();
-    auto bytecodeSize = segment->getBytecodeSize();
-    if (bytecodeSize <= procOffset)
-        return lyric_runtime::InterpreterStatus::forCondition(
-            lyric_runtime::InterpreterCondition::kRuntimeInvariant, "invalid proc offset");
+    // parse the proc
+    auto bytecode = segment->getBytecode();
+    lyric_object::ProcInfo procInfo;
+    TU_RETURN_IF_NOT_OK (lyric_object::parse_proc_info(bytecode, procOffset, procInfo));
+
+    // set the proc offset
     instance->setProcOffset(procOffset);
 
     // set returnsValue flag
     instance->setReturnsValue(!descriptor.isNoReturn());
 
-    // read the call proc header
-    const tu_uint8 *header = bytecodeData + procOffset;
-    auto procSize = tempo_utils::read_u32_and_advance(header);          // read procSize
-    header += 4;                                                        // skip over numArguments and numLocals
-    auto numLexicals = tempo_utils::read_u16_and_advance(header);       // read numLexicals
-    auto codeSize = procSize - 6;
+    std::vector<lyric_object::ProcLexical> lexicals;
+    TU_RETURN_IF_NOT_OK (lyric_object::parse_lexicals_table(procInfo, lexicals));
 
     // import each lexical from the latest activation and add it to the closure instance
-    for (tu_uint16 i = 0; i < numLexicals; i++) {
-
-        // read the call proc lexical
-        auto activationCall = tempo_utils::read_u32_and_advance(header);
-        auto targetOffset = tempo_utils::read_u32_and_advance(header);
-        auto lexicalTarget = tempo_utils::read_u8_and_advance(header);
-        codeSize -= 9;
+    for (int i = 0; i < lexicals.size(); i++) {
+        const auto &lexical = lexicals.at(i);
 
         // starting from the top of the stack, work our way down until we find the activation
         bool found = false;
@@ -286,14 +277,14 @@ closure_ctor(
 
             if (ancestor.getCallSegment() != segment->getSegmentIndex())    // frame does not match the segment index
                 continue;
-            if (ancestor.getCallIndex() != activationCall)                  // frame does not match activation call
+            if (ancestor.getCallIndex() != lexical.activation_call)         // frame does not match activation call
                 continue;
-            switch (lexicalTarget) {
+            switch (lexical.lexical_target) {
                 case lyric_object::LEXICAL_ARGUMENT:
-                    instance->lexicalAppend(ancestor.getArgument(targetOffset));
+                    instance->lexicalAppend(ancestor.getArgument(lexical.target_offset));
                     break;
                 case lyric_object::LEXICAL_LOCAL:
-                    instance->lexicalAppend(ancestor.getLocal(targetOffset));
+                    instance->lexicalAppend(ancestor.getLocal(lexical.target_offset));
                     break;
                 default:
                     return lyric_runtime::InterpreterStatus::forCondition(
@@ -308,7 +299,7 @@ closure_ctor(
     }
 
     // push the lambda onto the call stack
-    lyric_object::BytecodeIterator ip(header, codeSize);
+    lyric_object::BytecodeIterator ip(procInfo.code);
     instance->setIP(ip);
 
     return {};

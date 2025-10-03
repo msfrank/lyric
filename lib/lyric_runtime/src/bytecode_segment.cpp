@@ -106,6 +106,12 @@ lyric_runtime::BytecodeSegment::getBytecodeSize() const
     return m_bytecodeSize;
 }
 
+std::span<const tu_uint8>
+lyric_runtime::BytecodeSegment::getBytecode() const
+{
+    return std::span(m_bytecode, m_bytecodeSize);
+}
+
 lyric_runtime::DescriptorEntry *
 lyric_runtime::BytecodeSegment::lookupDescriptor(lyric_object::LinkageSection section, tu_uint32 index)
 {

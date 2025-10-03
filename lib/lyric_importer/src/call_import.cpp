@@ -477,21 +477,22 @@ lyric_importer::CallImport::load()
     priv->callMode = callWalker.getMode();
 
     if (priv->callMode == lyric_object::CallMode::Inline) {
-        auto procHeader = callWalker.getProcHeader();
+        lyric_object::ProcInfo procInfo;
+        TU_ASSIGN_OR_RAISE (procInfo, callWalker.getProcInfo());
 
-        if (procHeader.numLocals != 0)
+        if (procInfo.num_locals != 0)
             throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(ImporterCondition::kImportError,
                     "cannot import call at index {} in module {}; invalid inline proc",
                     callWalker.getDescriptorOffset(), objectLocation.toString()));
-        if (procHeader.numLexicals != 0)
+        if (procInfo.num_lexicals != 0)
             throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(ImporterCondition::kImportError,
                     "cannot import call at index {} in module {}; invalid inline proc",
                     callWalker.getDescriptorOffset(), objectLocation.toString()));
-        auto it = callWalker.getBytecodeIterator();
+        lyric_object::BytecodeIterator ip(procInfo.code.data(), procInfo.code.size());
         lyric_object::OpCell cell;
-        while (it.getNext(cell)) {
+        while (ip.getNext(cell)) {
             if (cell.opcode == lyric_object::Opcode::OP_RETURN)
                 throw tempo_utils::StatusException(
                     ImporterStatus::forCondition(ImporterCondition::kImportError,
@@ -499,7 +500,7 @@ lyric_importer::CallImport::load()
                         callWalker.getDescriptorOffset(), objectLocation.toString()));
         }
 
-        priv->inlineBytecode = std::vector<tu_uint8>(it.getBase(), it.getCanary());
+        priv->inlineBytecode = std::vector(ip.getBase(), ip.getCanary());
     }
 
     m_priv = std::move(priv);

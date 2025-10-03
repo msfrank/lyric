@@ -1785,6 +1785,7 @@ BuilderState::toBytes() const
         prologue.appendU16(numArguments);                                       // append numArguments
         prologue.appendU16(0);                                                  // append numLocals
         prologue.appendU16(0);                                                  // append numLexicals
+        prologue.appendU32(0);                                                  // append trailerSize
 
         // build the proc header
         tempo_utils::BytesAppender header;

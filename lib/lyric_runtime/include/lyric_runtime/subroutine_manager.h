@@ -72,6 +72,18 @@ namespace lyric_runtime {
     private:
         SegmentManager *m_segmentManager;
     };
+
+    tempo_utils::Status process_arguments(
+        const lyric_object::ProcInfo &procInfo,
+        const std::vector<DataCell> &args,
+        tu_uint16 &numRest);
+
+    tempo_utils::Status import_lexicals_into_frame(
+        const lyric_object::ProcInfo &procInfo,
+        const StackfulCoroutine *currentCoro,
+        const BytecodeSegment *segment,
+        CallCell &frame);
+
 }
 
 #endif // LYRIC_RUNTIME_SUBROUTINE_MANAGER_H

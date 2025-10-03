@@ -6,6 +6,8 @@
 #include <lyric_object/symbol_walker.h>
 #include <tempo_utils/big_endian.h>
 
+#include "lyric_object/object_result.h"
+
 lyric_object::CallWalker::CallWalker()
     : m_callOffset(INVALID_ADDRESS_U32)
 {
@@ -331,74 +333,74 @@ lyric_object::CallWalker::getRestParameter() const
     return ParameterWalker(m_reader, (void *) parameter, 0, PlacementType::Rest);
 }
 
-inline void
-read_proc_header(const tu_uint8 * const header, lyric_object::ProcHeader &procHeader)
-{
-    const tu_uint8 *bytes = header;
-    procHeader.procSize = tempo_utils::read_u32_and_advance(bytes);
-    procHeader.numArguments = tempo_utils::read_u16_and_advance(bytes);
-    procHeader.numLocals = tempo_utils::read_u16_and_advance(bytes);
-    procHeader.numLexicals = tempo_utils::read_u16_and_advance(bytes);
-    procHeader.headerSize = 10 + (procHeader.numLexicals * 9);
-}
-
-std::span<const tu_uint8>
-lyric_object::CallWalker::getProc() const
-{
-    if (!isValid())
-        return {};
-    auto *callDescriptor = m_reader->getCall(m_callOffset);
-    if (callDescriptor == nullptr)
-        return {};
-
-    std::span<const tu_uint8> bytecode(m_reader->getBytecodeData(), m_reader->getBytecodeSize());
-
-    // verify that proc offset is within the segment bytecode
-    auto procOffset = callDescriptor->bytecode_offset();
-    if (bytecode.size() <= procOffset)
-        return {};
-
-    // verify that proc is large enough to fit header
-    if (bytecode.size() - procOffset < 10)
-        return {};
-
-    auto *start = bytecode.data() + procOffset;
-
-    // read the call proc header
-    ProcHeader procHeader;
-    read_proc_header(start, procHeader);
-
-    // return a span containing the header and bytecode
-    return std::span<const tu_uint8>(start, procHeader.procSize + 4);
-}
-
-lyric_object::ProcHeader
-lyric_object::CallWalker::getProcHeader() const
-{
-    if (!isValid())
-        return {};
-    auto *callDescriptor = m_reader->getCall(m_callOffset);
-    if (callDescriptor == nullptr)
-        return {};
-
-    std::span<const tu_uint8> bytecode(m_reader->getBytecodeData(), m_reader->getBytecodeSize());
-
-    // verify that proc offset is within the segment bytecode
-    auto procOffset = callDescriptor->bytecode_offset();
-    if (bytecode.size() <= procOffset)
-        return {};
-
-    // verify that proc is large enough to fit header
-    if (bytecode.size() - procOffset < 10)
-        return {};
-
-    auto *start = bytecode.data() + procOffset;
-
-    // read the call proc header
-    ProcHeader procHeader;
-    read_proc_header(start, procHeader);
-    return procHeader;
-}
+// inline void
+// read_proc_header(const tu_uint8 * const header, lyric_object::ProcHeader &procHeader)
+// {
+//     const tu_uint8 *bytes = header;
+//     procHeader.procSize = tempo_utils::read_u32_and_advance(bytes);
+//     procHeader.numArguments = tempo_utils::read_u16_and_advance(bytes);
+//     procHeader.numLocals = tempo_utils::read_u16_and_advance(bytes);
+//     procHeader.numLexicals = tempo_utils::read_u16_and_advance(bytes);
+//     procHeader.headerSize = 10 + (procHeader.numLexicals * 9);
+// }
+//
+// std::span<const tu_uint8>
+// lyric_object::CallWalker::getProc() const
+// {
+//     if (!isValid())
+//         return {};
+//     auto *callDescriptor = m_reader->getCall(m_callOffset);
+//     if (callDescriptor == nullptr)
+//         return {};
+//
+//     std::span<const tu_uint8> bytecode(m_reader->getBytecodeData(), m_reader->getBytecodeSize());
+//
+//     // verify that proc offset is within the segment bytecode
+//     auto procOffset = callDescriptor->bytecode_offset();
+//     if (bytecode.size() <= procOffset)
+//         return {};
+//
+//     // verify that proc is large enough to fit header
+//     if (bytecode.size() - procOffset < 10)
+//         return {};
+//
+//     auto *start = bytecode.data() + procOffset;
+//
+//     // read the call proc header
+//     ProcHeader procHeader;
+//     read_proc_header(start, procHeader);
+//
+//     // return a span containing the header and bytecode
+//     return std::span<const tu_uint8>(start, procHeader.procSize + 4);
+// }
+//
+// lyric_object::ProcHeader
+// lyric_object::CallWalker::getProcHeader() const
+// {
+//     if (!isValid())
+//         return {};
+//     auto *callDescriptor = m_reader->getCall(m_callOffset);
+//     if (callDescriptor == nullptr)
+//         return {};
+//
+//     std::span<const tu_uint8> bytecode(m_reader->getBytecodeData(), m_reader->getBytecodeSize());
+//
+//     // verify that proc offset is within the segment bytecode
+//     auto procOffset = callDescriptor->bytecode_offset();
+//     if (bytecode.size() <= procOffset)
+//         return {};
+//
+//     // verify that proc is large enough to fit header
+//     if (bytecode.size() - procOffset < 10)
+//         return {};
+//
+//     auto *start = bytecode.data() + procOffset;
+//
+//     // read the call proc header
+//     ProcHeader procHeader;
+//     read_proc_header(start, procHeader);
+//     return procHeader;
+// }
 
 tu_uint32
 lyric_object::CallWalker::getProcOffset() const
@@ -411,20 +413,42 @@ lyric_object::CallWalker::getProcOffset() const
     return callDescriptor->bytecode_offset();
 }
 
-lyric_object::BytecodeIterator
+tempo_utils::Result<lyric_object::ProcInfo>
+lyric_object::CallWalker::getProcInfo() const
+{
+    if (!isValid())
+        return ObjectStatus::forCondition(ObjectCondition::kObjectInvariant,
+            "invalid object reader");
+    auto *callDescriptor = m_reader->getCall(m_callOffset);
+    if (callDescriptor == nullptr)
+        return ObjectStatus::forCondition(ObjectCondition::kObjectInvariant,
+            "invalid call at offset {}", m_callOffset);
+    std::span bytecode(m_reader->getBytecodeData(), m_reader->getBytecodeSize());
+    auto bytecodeOffset = callDescriptor->bytecode_offset();
+    ProcInfo procInfo;
+    TU_RETURN_IF_NOT_OK (parse_proc_info(bytecode, bytecodeOffset, procInfo));
+    return procInfo;
+}
+
+tempo_utils::Result<lyric_object::TrailerInfo>
+lyric_object::CallWalker::getProcTrailer() const
+{
+    ProcInfo procInfo;
+    TU_ASSIGN_OR_RETURN (procInfo, getProcInfo());
+    TrailerInfo trailerInfo;
+    TU_RETURN_IF_NOT_OK (parse_proc_trailer(procInfo, trailerInfo));
+    return trailerInfo;
+}
+
+tempo_utils::Result<lyric_object::BytecodeIterator>
 lyric_object::CallWalker::getBytecodeIterator() const
 {
     if (!isValid())
-        return {};
-
-    auto procHeader = getProcHeader();
-    if (procHeader.procSize == 0)
-        return {};
-
-    auto proc = getProc();
-    if (proc.empty())
-        return {};
-    return BytecodeIterator(proc.data() + procHeader.headerSize, proc.size() - procHeader.headerSize);
+        return ObjectStatus::forCondition(ObjectCondition::kObjectInvariant,
+            "invalid object reader");
+    ProcInfo procInfo;
+    TU_ASSIGN_OR_RETURN (procInfo, getProcInfo());
+    return BytecodeIterator(procInfo.code.data(), procInfo.code.size());
 }
 
 lyric_object::TypeWalker
