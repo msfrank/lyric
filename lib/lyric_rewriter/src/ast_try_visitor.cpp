@@ -14,29 +14,13 @@ lyric_rewriter::AstTryVisitor::AstTryVisitor(
 tempo_utils::Status
 lyric_rewriter::AstTryVisitor::enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx)
 {
-    if (node->numChildren() < 2)
+    if (node->numChildren() < 2 || node->numChildren() > 3)
         return RewriterStatus::forCondition(RewriterCondition::kSyntaxError, "invalid Try node");
 
     TU_RETURN_IF_NOT_OK (invokeEnter(m_astId, node, ctx));
 
     if (ctx.skipChildren())
         return {};
-
-    if (node->hasAttr(lyric_parser::kLyricAstFinallyOffset)) {
-        lyric_parser::ArchetypeNode *finallyNode;
-        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstFinallyOffset, finallyNode));
-        std::shared_ptr<AbstractNodeVisitor> visitor;
-        TU_ASSIGN_OR_RETURN (visitor, makeVisitor(finallyNode));
-        ctx.push(node, -1, finallyNode, visitor);
-    }
-
-    if (node->hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
-        lyric_parser::ArchetypeNode *defaultNode;
-        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstDefaultOffset, defaultNode));
-        std::shared_ptr<AbstractNodeVisitor> visitor;
-        TU_ASSIGN_OR_RETURN (visitor, makeVisitor(defaultNode));
-        ctx.push(node, -1, defaultNode, visitor);
-    }
 
     auto index = node->numChildren();
     while (0 < index) {

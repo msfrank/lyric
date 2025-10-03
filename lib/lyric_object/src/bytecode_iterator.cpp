@@ -72,6 +72,7 @@ lyric_object::OpInfo ops[] = {
     { lyric_object::Opcode::OP_CALL_EXISTENTIAL,    lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32_PLACEMENT_U16 },
     { lyric_object::Opcode::OP_TRAP,                lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32 },
     { lyric_object::Opcode::OP_RETURN,              lyric_object::OpInfoType::NO_OPERANDS },
+    { lyric_object::Opcode::OP_RAISE,               lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_NEW,                 lyric_object::OpInfoType::FLAGS_U8_ADDRESS_U32_PLACEMENT_U16 },
     { lyric_object::Opcode::OP_TYPE_OF,             lyric_object::OpInfoType::NO_OPERANDS },
     { lyric_object::Opcode::OP_INTERRUPT,           lyric_object::OpInfoType::NO_OPERANDS },

@@ -64,6 +64,11 @@ namespace lyric_runtime {
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
+        bool raiseException(
+            const DataCell &exc,
+            StackfulCoroutine *currentCoro,
+            tempo_utils::Status &status);
+
     private:
         SegmentManager *m_segmentManager;
     };

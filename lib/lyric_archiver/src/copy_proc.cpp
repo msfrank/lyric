@@ -681,6 +681,10 @@ lyric_archiver::copy_proc(
                 TU_RETURN_IF_NOT_OK (data.fragment->returnToCaller());
                 break;
 
+            case lyric_object::Opcode::OP_RAISE:
+                TU_RETURN_IF_NOT_OK (data.fragment->raiseException());
+                break;
+
             case lyric_object::Opcode::OP_TRAP:
                 TU_RETURN_IF_NOT_OK (apply_trap(op, data));
                 break;

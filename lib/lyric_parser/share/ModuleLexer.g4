@@ -166,6 +166,7 @@ InKeyword               : 'in' ;
 BreakKeyword            : 'break' ;
 ContinueKeyword         : 'continue' ;
 TryKeyword              : 'try' ;
+CatchKeyword            : 'catch' ;
 FinallyKeyword          : 'finally' ;
 ExpectKeyword           : 'expect' ;
 RaiseKeyword            : 'raise' ;

@@ -126,7 +126,6 @@ namespace lyric_parser {
 
     extern const NodeAttr kLyricAstTypeOffset;
     extern const NodeAttr kLyricAstDefaultOffset;
-    extern const NodeAttr kLyricAstFinallyOffset;
     extern const NodeAttr kLyricAstRestOffset;
     extern const NodeAttr kLyricAstGenericOffset;
     extern const NodeAttr kLyricAstTypeArgumentsOffset;

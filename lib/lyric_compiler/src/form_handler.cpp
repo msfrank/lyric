@@ -24,6 +24,7 @@
 #include <lyric_compiler/lambda_handler.h>
 #include <lyric_compiler/match_handler.h>
 #include <lyric_compiler/new_handler.h>
+#include <lyric_compiler/raise_handler.h>
 #include <lyric_compiler/symbol_deref_handler.h>
 #include <lyric_compiler/typename_handler.h>
 #include <lyric_compiler/type_utils.h>
@@ -406,6 +407,14 @@ lyric_compiler::FormChoice::decide(
         // expect form
         case lyric_schema::LyricAstId::Expect: {
             auto handler = std::make_unique<ExpectHandler>(
+                isSideEffect, m_fragment, block, driver);
+            ctx.setGrouping(std::move(handler));
+            break;
+        }
+
+        // expect form
+        case lyric_schema::LyricAstId::Raise: {
+            auto handler = std::make_unique<RaiseHandler>(
                 isSideEffect, m_fragment, block, driver);
             ctx.setGrouping(std::move(handler));
             break;

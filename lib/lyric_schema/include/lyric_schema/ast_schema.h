@@ -80,6 +80,8 @@ namespace lyric_schema {
         While,                     // while statement
         For,                       // for statement
         Try,                       // try statement
+        Catch,                     // catch clause
+        Finally,                   // finally clause
         Return,                    // return immediately from call
         Expect,                    // return immediately if expression returns status
         Raise,                     // raise status as exception if expression returns status
@@ -148,7 +150,6 @@ namespace lyric_schema {
 
         TypeOffset,
         DefaultOffset,
-        FinallyOffset,
         RestOffset,
         GenericOffset,
         TypeArgumentsOffset,
@@ -274,6 +275,10 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::For, "For");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstTryClass(
         &kLyricAstNs, LyricAstId::Try, "Try");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstCatchClass(
+        &kLyricAstNs, LyricAstId::Catch, "Catch");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstFinallyClass(
+        &kLyricAstNs, LyricAstId::Finally, "Finally");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstReturnClass(
         &kLyricAstNs, LyricAstId::Return, "Return");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstExpectClass(
@@ -430,10 +435,6 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::DefaultOffset, "DefaultOffset", tempo_schema::PropertyType::kUInt32);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
-    kLyricAstFinallyOffsetProperty(
-        &kLyricAstNs, LyricAstId::FinallyOffset, "FinallyOffset", tempo_schema::PropertyType::kUInt32);
-
-    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstRestOffsetProperty(
         &kLyricAstNs, LyricAstId::RestOffset, "RestOffset", tempo_schema::PropertyType::kUInt32);
 
@@ -516,6 +517,8 @@ namespace lyric_schema {
         &kLyricAstWhileClass,
         &kLyricAstForClass,
         &kLyricAstTryClass,
+        &kLyricAstCatchClass,
+        &kLyricAstFinallyClass,
         &kLyricAstReturnClass,
         &kLyricAstExpectClass,
         &kLyricAstRaiseClass,
@@ -582,7 +585,6 @@ namespace lyric_schema {
 
         &kLyricAstTypeOffsetProperty,
         &kLyricAstDefaultOffsetProperty,
-        &kLyricAstFinallyOffsetProperty,
         &kLyricAstRestOffsetProperty,
         &kLyricAstGenericOffsetProperty,
         &kLyricAstTypeArgumentsOffsetProperty,

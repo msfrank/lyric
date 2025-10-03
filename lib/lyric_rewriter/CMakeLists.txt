@@ -8,6 +8,7 @@ set(LYRIC_REWRITER_INCLUDES
     include/lyric_rewriter/abstract_rewrite_driver.h
     include/lyric_rewriter/ast_base_visitor.h
     include/lyric_rewriter/ast_binary_visitor.h
+    include/lyric_rewriter/ast_catch_visitor.h
     include/lyric_rewriter/ast_cond_visitor.h
     include/lyric_rewriter/ast_defclass_visitor.h
     include/lyric_rewriter/ast_defconcept_visitor.h
@@ -43,6 +44,7 @@ set_target_properties(lyric_rewriter PROPERTIES PUBLIC_HEADER "${LYRIC_REWRITER_
 target_sources(lyric_rewriter PRIVATE
     src/ast_base_visitor.cpp
     src/ast_binary_visitor.cpp
+    src/ast_catch_visitor.cpp
     src/ast_cond_visitor.cpp
     src/ast_defclass_visitor.cpp
     src/ast_defconcept_visitor.cpp

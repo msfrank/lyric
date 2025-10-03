@@ -13,11 +13,17 @@ namespace lyric_parser::internal {
         explicit ModuleExceptionOps(ModuleArchetype *listener);
 
         void enterTryStatement(ModuleParser::TryStatementContext *ctx);
-        void exitTryTarget(ModuleParser::TryTargetContext *ctx);
+        void exitTryBlock(ModuleParser::TryBlockContext *ctx);
+
+        void enterTryCatch(ModuleParser::TryCatchContext *ctx);
         void exitCatchOnUnwrap(ModuleParser::CatchOnUnwrapContext *ctx);
         void exitCatchOnType(ModuleParser::CatchOnTypeContext *ctx);
         void exitCatchElse(ModuleParser::CatchElseContext *ctx);
-        void exitCatchFinally(ModuleParser::CatchFinallyContext *ctx);
+        void exitTryCatch(ModuleParser::TryCatchContext *ctx);
+
+        void enterTryFinally(ModuleParser::TryFinallyContext *ctx);
+        void exitTryFinally(ModuleParser::TryFinallyContext *ctx);
+
         void exitExpectExpression(ModuleParser::ExpectExpressionContext *ctx);
         void exitRaiseExpression(ModuleParser::RaiseExpressionContext *ctx);
     };

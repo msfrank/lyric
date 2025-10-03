@@ -280,6 +280,7 @@ lyric_archiver::scan_proc(
             case lyric_object::Opcode::OP_IF_LE:
             case lyric_object::Opcode::OP_JUMP:
             case lyric_object::Opcode::OP_RETURN:
+            case lyric_object::Opcode::OP_RAISE:
             case lyric_object::Opcode::OP_TRAP:
             case lyric_object::Opcode::OP_TYPE_OF:
             case lyric_object::Opcode::OP_INTERRUPT:

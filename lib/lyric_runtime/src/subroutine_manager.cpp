@@ -856,3 +856,12 @@ lyric_runtime::SubroutineManager::returnToCaller(
 
     return true;
 }
+
+bool
+lyric_runtime::SubroutineManager::raiseException(
+    const DataCell &exc,
+    StackfulCoroutine *currentCoro,
+    tempo_utils::Status &status)
+{
+    return {};
+}

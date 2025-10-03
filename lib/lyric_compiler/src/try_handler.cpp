@@ -17,10 +17,10 @@ lyric_compiler::TryHandler::TryHandler(
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_isSideEffect(isSideEffect),
-      m_fragment(fragment)
+      m_isSideEffect(isSideEffect)
 {
-    TU_ASSERT (m_fragment != nullptr);
+    m_tryCatchFinally.fragment = fragment;
+    TU_ASSERT (m_tryCatchFinally.fragment != nullptr);
 }
 
 tempo_utils::Status
@@ -32,55 +32,39 @@ lyric_compiler::TryHandler::before(
     auto *block = getBlock();
     auto *driver = getDriver();
     auto *fundamentalCache = driver->getFundamentalCache();
+    auto *procHandle = block->blockProc();
+    auto *fragment = m_tryCatchFinally.fragment;
 
     auto numChildren = node->numChildren();
-    if (numChildren == 0)
+    if (numChildren < 2 || numChildren > 3)
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-            "missing target for try statement");
-
-    auto *procHandle = block->blockProc();
+            "invalid Try node");
 
     // create label indicating the beginning of the try block
     lyric_assembler::JumpLabel checkStart;
-    TU_ASSIGN_OR_RETURN (checkStart, m_fragment->appendLabel());
+    TU_ASSIGN_OR_RETURN (checkStart, fragment->appendLabel());
 
     // declare the check
-    TU_ASSIGN_OR_RETURN (m_tryCatch.checkHandle, procHandle->declareCheck(checkStart));
+    TU_ASSIGN_OR_RETURN (m_tryCatchFinally.checkHandle, procHandle->declareCheck(checkStart));
 
     // exception must derive from Status
     auto StatusType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Status);
 
     // declare a temporary to hold the raised exception
-    TU_ASSIGN_OR_RETURN (m_tryCatch.caughtRef, block->declareTemporary(StatusType, /* isVariable= */ false));
+    TU_ASSIGN_OR_RETURN (m_tryCatchFinally.caughtRef, block->declareTemporary(StatusType, /* isVariable= */ false));
 
     // compile the try block
-    auto expression = std::make_unique<FormChoice>(FormType::SideEffect, m_fragment, block, driver);
-    ctx.appendChoice(std::move(expression));
-    numChildren--;
+    auto tryBlock = std::make_unique<FormChoice>(FormType::SideEffect, fragment, block, driver);
+    ctx.appendChoice(std::move(tryBlock));
 
-    // there must be at least one catch
-    if (numChildren == 0)
-        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-            "empty try statement");
+    // compile the catch clause
+    auto tryCatch = std::make_unique<TryCatch>(&m_tryCatchFinally, block, driver);
+    ctx.appendGrouping(std::move(tryCatch));
 
-    for (int i = 0; i < numChildren; i++) {
-        auto exception = std::make_unique<Exception>();
-        exception->block = std::make_unique<lyric_assembler::BlockHandle>(
-            block->blockProc(), block, block->blockState());
-        auto when = std::make_unique<CatchWhen>(
-            &m_tryCatch, exception.get(), block, driver);
-        m_tryCatch.exceptions.push_back(std::move(exception));
-        ctx.appendGrouping(std::move(when));
-    }
-
-    if (node->hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
-        auto alternative = std::make_unique<CatchAlternative>(&m_tryCatch, m_fragment, block, driver);
-        ctx.appendChoice(std::move(alternative));
-    }
-
-    if (node->hasAttr(lyric_parser::kLyricAstFinallyOffset)) {
-        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
-            "finally clause unsupported for try statement");
+    // compile the finally clause if present
+    if (numChildren == 3) {
+        auto tryFinally = std::make_unique<TryFinally>(&m_tryCatchFinally, block, driver);
+        ctx.appendGrouping(std::move(tryCatch));
     }
 
     return {};
@@ -93,9 +77,10 @@ lyric_compiler::TryHandler::after(
     AfterContext &ctx)
 {
     auto *driver = getDriver();
+    auto *fragment = m_tryCatchFinally.fragment;
 
     lyric_assembler::JumpLabel exitLabel;
-    TU_ASSIGN_OR_RETURN (exitLabel, m_fragment->appendLabel());
+    TU_ASSIGN_OR_RETURN (exitLabel, fragment->appendLabel());
 
     // if try catch is not a side effect then push a NoReturn result
     if (!m_isSideEffect) {
@@ -105,16 +90,118 @@ lyric_compiler::TryHandler::after(
     return {};
 }
 
+lyric_compiler::TryCatch::TryCatch(
+    TryCatchFinally *tryCatchFinally,
+    lyric_assembler::BlockHandle *block,
+    CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_tryCatchFinally(tryCatchFinally)
+{
+    TU_ASSERT (m_tryCatchFinally != nullptr);
+}
+
+tempo_utils::Status
+lyric_compiler::TryCatch::before(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    BeforeContext &ctx)
+{
+    auto *block = getBlock();
+    auto *driver = getDriver();
+    auto *fragment = m_tryCatchFinally->fragment;
+
+    if (!node->isClass(lyric_schema::kLyricAstCatchClass))
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+            "expected Catch node");
+
+    auto numChildren = node->numChildren();
+
+    // there must be at least one catch
+    if (numChildren == 0)
+        return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
+            "empty catch clause");
+
+    for (int i = 0; i < numChildren; i++) {
+        auto exception = std::make_unique<Exception>();
+        exception->block = std::make_unique<lyric_assembler::BlockHandle>(
+            block->blockProc(), block, block->blockState());
+        auto when = std::make_unique<CatchWhen>(
+            m_tryCatchFinally, exception.get(), block, driver);
+        m_tryCatchFinally->exceptions.push_back(std::move(exception));
+        ctx.appendGrouping(std::move(when));
+    }
+
+    if (node->hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
+        auto alternative = std::make_unique<CatchElse>(m_tryCatchFinally, fragment, block, driver);
+        ctx.appendChoice(std::move(alternative));
+    }
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_compiler::TryCatch::after(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    AfterContext &ctx)
+{
+    return {};
+}
+
+lyric_compiler::TryFinally::TryFinally(
+    TryCatchFinally *tryCatchFinally,
+    lyric_assembler::BlockHandle *block,
+    CompilerScanDriver *driver)
+    : BaseGrouping(block, driver),
+      m_tryCatchFinally(tryCatchFinally)
+{
+    TU_ASSERT (m_tryCatchFinally != nullptr);
+}
+
+tempo_utils::Status
+lyric_compiler::TryFinally::before(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    BeforeContext &ctx)
+{
+    auto *block = getBlock();
+    auto *driver = getDriver();
+    auto *fragment = m_tryCatchFinally->fragment;
+
+    // create label indicating the beginning of the finally clause
+    TU_ASSIGN_OR_RETURN (m_tryCatchFinally->finallyStart, fragment->appendLabel());
+
+    // compile the finally block
+    auto tryBlock = std::make_unique<FormChoice>(FormType::SideEffect, fragment, block, driver);
+    ctx.appendChoice(std::move(tryBlock));
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_compiler::TryFinally::after(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    AfterContext &ctx)
+{
+    auto *fragment = m_tryCatchFinally->fragment;
+
+    // create label indicating the end of the finally clause
+    TU_ASSIGN_OR_RETURN (m_tryCatchFinally->finallyEnd, fragment->appendLabel());
+
+    return {};
+}
+
 lyric_compiler::CatchWhen::CatchWhen(
-    TryCatch *tryCatch,
+    TryCatchFinally *tryCatchFinally,
     Exception *exception,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_tryCatch(tryCatch),
+      m_tryCatchFinally(tryCatchFinally),
       m_exception(exception)
 {
-    TU_ASSERT (m_tryCatch != nullptr);
+    TU_ASSERT (m_tryCatchFinally != nullptr);
     TU_ASSERT (m_exception != nullptr);
 }
 
@@ -128,7 +215,7 @@ lyric_compiler::CatchWhen::before(
     auto *driver = getDriver();
 
     auto predicate = std::make_unique<CatchPredicate>(
-        m_tryCatch, m_exception, block, driver);
+        m_tryCatchFinally, m_exception, block, driver);
     ctx.appendChoice(std::move(predicate));
 
     auto body = std::make_unique<CatchBody>(m_exception, block, driver);
@@ -148,12 +235,12 @@ lyric_compiler::CatchWhen::after(
 }
 
 lyric_compiler::CatchPredicate::CatchPredicate(
-    TryCatch *tryCatch,
+    TryCatchFinally *tryCatchFinally,
     Exception *exception,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseChoice(block, driver),
-      m_tryCatch(tryCatch),
+      m_tryCatchFinally(tryCatchFinally),
       m_exception(exception)
 {
     TU_ASSERT (m_exception != nullptr);
@@ -178,7 +265,7 @@ lyric_compiler::CatchPredicate::decide(
 
     switch (astId) {
         case lyric_schema::LyricAstId::Unpack: {
-            auto unpack = std::make_unique<CatchUnpackPredicate>(m_tryCatch, m_exception, block, driver);
+            auto unpack = std::make_unique<CatchUnpackPredicate>(m_tryCatchFinally, m_exception, block, driver);
             ctx.setChoice(std::move(unpack));
             return {};
         }
@@ -189,12 +276,12 @@ lyric_compiler::CatchPredicate::decide(
 }
 
 lyric_compiler::CatchUnpackPredicate::CatchUnpackPredicate(
-    TryCatch *tryCatch,
+    TryCatchFinally *tryCatchFinally,
     Exception *exception,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseChoice(block, driver),
-      m_tryCatch(tryCatch),
+      m_tryCatchFinally(tryCatchFinally),
       m_exception(exception)
 {
     TU_ASSERT (m_exception != nullptr);
@@ -209,7 +296,7 @@ lyric_compiler::CatchUnpackPredicate::decide(
     auto *block = getBlock();
     auto *driver = getDriver();
     auto *typeSystem = driver->getTypeSystem();
-    auto *checkHandle = m_tryCatch->checkHandle;
+    auto *checkHandle = m_tryCatchFinally->checkHandle;
 
     // resolve the exception type
     lyric_parser::ArchetypeNode *typeNode;
@@ -221,7 +308,7 @@ lyric_compiler::CatchUnpackPredicate::decide(
     // allocate a fragment for the catch body
     TU_ASSIGN_OR_RETURN (m_exception->fragment, checkHandle->declareException(m_exception->exceptionType));
 
-    auto unpack = std::make_unique<UnpackHandler>(m_exception->exceptionType, m_tryCatch->caughtRef,
+    auto unpack = std::make_unique<UnpackHandler>(m_exception->exceptionType, m_tryCatchFinally->caughtRef,
         m_exception->fragment, m_exception->block.get(), driver);
     ctx.setGrouping(std::move(unpack));
 
@@ -251,21 +338,21 @@ lyric_compiler::CatchBody::decide(
     return {};
 }
 
-lyric_compiler::CatchAlternative::CatchAlternative(
-    TryCatch *tryCatch,
+lyric_compiler::CatchElse::CatchElse(
+    TryCatchFinally *tryCatchFinally,
     lyric_assembler::CodeFragment *fragment,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseChoice(block, driver),
-      m_tryCatch(tryCatch),
+      m_tryCatchFinally(tryCatchFinally),
       m_fragment(fragment)
 {
-    TU_ASSERT (m_tryCatch != nullptr);
+    TU_ASSERT (m_tryCatchFinally != nullptr);
     TU_ASSERT (m_fragment != nullptr);
 }
 
 tempo_utils::Status
-lyric_compiler::CatchAlternative::decide(
+lyric_compiler::CatchElse::decide(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     DecideContext &ctx)

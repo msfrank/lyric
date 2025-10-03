@@ -125,6 +125,9 @@ scan_for_basic_blocks(
                 break;
             }
 
+            case lyric_assembler::InstructionType::Raise:
+                return lyric_optimizer::OptimizerStatus::forCondition(
+                    lyric_optimizer::OptimizerCondition::kOptimizerInvariant, "unsupported Raise instruction");
             case lyric_assembler::InstructionType::Invalid:
                 return lyric_optimizer::OptimizerStatus::forCondition(
                     lyric_optimizer::OptimizerCondition::kOptimizerInvariant, "invalid instruction");

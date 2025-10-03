@@ -622,10 +622,16 @@ void lyric_parser::internal::ModuleArchetype::enterTryStatement(ModuleParser::Tr
     LOG_ERROR_ON_EXCEPTION (ctx, ops.enterTryStatement(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitTryTarget(ModuleParser::TryTargetContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitTryBlock(ModuleParser::TryBlockContext *ctx)
 {
     ModuleExceptionOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTryTarget(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTryBlock(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::enterTryCatch(ModuleParser::TryCatchContext *ctx)
+{
+    ModuleExceptionOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterTryCatch(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitCatchOnUnwrap(ModuleParser::CatchOnUnwrapContext *ctx)
@@ -646,10 +652,22 @@ void lyric_parser::internal::ModuleArchetype::exitCatchElse(ModuleParser::CatchE
     LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCatchElse(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitCatchFinally(ModuleParser::CatchFinallyContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitTryCatch(ModuleParser::TryCatchContext *ctx)
 {
     ModuleExceptionOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitCatchFinally(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTryCatch(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::enterTryFinally(ModuleParser::TryFinallyContext *ctx)
+{
+    ModuleExceptionOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.enterTryFinally(ctx));
+}
+
+void lyric_parser::internal::ModuleArchetype::exitTryFinally(ModuleParser::TryFinallyContext *ctx)
+{
+    ModuleExceptionOps ops(this);
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.exitTryFinally(ctx));
 }
 
 void lyric_parser::internal::ModuleArchetype::exitExpectExpression(ModuleParser::ExpectExpressionContext *ctx)

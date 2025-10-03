@@ -1,14 +1,14 @@
-#ifndef LYRIC_COMPILER_EXPECT_HANDLER_H
-#define LYRIC_COMPILER_EXPECT_HANDLER_H
+#ifndef LYRIC_ASSEMBLER_RAISE_HANDLER_H
+#define LYRIC_ASSEMBLER_RAISE_HANDLER_H
 
 #include "base_grouping.h"
 #include "compiler_scan_driver.h"
 
 namespace lyric_compiler {
 
-    class ExpectHandler : public BaseGrouping {
+    class RaiseHandler : public BaseGrouping {
     public:
-        ExpectHandler(
+        RaiseHandler(
             bool isSideEffect,
             lyric_assembler::CodeFragment *fragment,
             lyric_assembler::BlockHandle *block,
@@ -30,4 +30,4 @@ namespace lyric_compiler {
     };
 }
 
-#endif // LYRIC_COMPILER_EXPECT_HANDLER_H
+#endif // LYRIC_ASSEMBLER_RAISE_HANDLER_H

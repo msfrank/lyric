@@ -865,6 +865,15 @@ lyric_assembler::CodeFragment::returnToCaller()
 }
 
 tempo_utils::Status
+lyric_assembler::CodeFragment::raiseException()
+{
+    Statement statement;
+    statement.instruction = std::make_shared<RaiseInstruction>();
+    m_statements.push_back(std::move(statement));
+    return {};
+}
+
+tempo_utils::Status
 lyric_assembler::CodeFragment::invokeVaLoad()
 {
     Statement statement;

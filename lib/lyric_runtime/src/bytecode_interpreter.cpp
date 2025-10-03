@@ -120,7 +120,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
             // if there is no next op but there is a guard then we have reached the end of the current
             // call but possibly not the end of the current task, so try returning to the caller
             if (currentCoro->guardStackSize() > 0) {
-                InterpreterStatus status;
+                tempo_utils::Status status;
 
                 // if we reached the call stack guard then pop the guard
                 bool reachedGuard = currentCoro->peekGuard() == currentCoro->callStackSize();
@@ -289,7 +289,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         break;
                     }
                     case lyric_object::LOAD_FIELD: {
-                        InterpreterStatus status;
+                        tempo_utils::Status status;
                         auto field = segmentManager->resolveDescriptor(currentCoro->peekSP(),
                             lyric_object::LinkageSection::Field, index, status);
                         if (!field.isValid())
@@ -306,7 +306,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         break;
                     }
                     case lyric_object::LOAD_STATIC: {
-                        InterpreterStatus status;
+                        tempo_utils::Status status;
                         auto value = segmentManager->loadStatic(index, currentCoro, status);
                         if (value.type == DataCellType::INVALID) {
                             if (status.notOk())
@@ -368,7 +368,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         break;
                     }
                     case lyric_object::STORE_FIELD: {
-                        InterpreterStatus status;
+                        tempo_utils::Status status;
                         auto field = segmentManager->resolveDescriptor(currentCoro->peekSP(),
                             lyric_object::LinkageSection::Field, index, status);
                         if (!field.isValid())
@@ -384,7 +384,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                         break;
                     }
                     case lyric_object::STORE_STATIC: {
-                        InterpreterStatus status;
+                        tempo_utils::Status status;
                         if (!segmentManager->storeStatic(index, value, currentCoro, status))
                             return onError(op, status);
                         TU_LOG_V << "stored value " << value << " at static address " << index;
@@ -1090,7 +1090,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(placementSize, placement));
 
                 // construct the activation call frame
-                InterpreterStatus status;
+                tempo_utils::Status status;
                 if (!subroutineManager->callStatic(address, placement, currentCoro, status))
                     return onError(op, status);
                 break;
@@ -1131,7 +1131,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 }
 
                 // construct the activation call frame
-                InterpreterStatus status;
+                tempo_utils::Status status;
                 if (!subroutineManager->callVirtual(receiver, callAddress, placement, currentCoro, status))
                     return onError(op, status);
                 break;
@@ -1167,7 +1167,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 }
 
                 // construct the activation call frame
-                InterpreterStatus status;
+                tempo_utils::Status status;
                 if (!subroutineManager->callConcept(
                     receiver, conceptDescriptor, actionAddress, placement, currentCoro, status))
                     return onError(op, status);
@@ -1190,7 +1190,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(receiver));
 
                 // construct the activation call frame
-                InterpreterStatus status;
+                tempo_utils::Status status;
                 if (!subroutineManager->callExistential(
                     receiver, existentialDescriptor, callAddress, placement, currentCoro, status))
                     return onError(op, status);
@@ -1203,7 +1203,7 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 bool reachedGuard = currentCoro->peekGuard() == currentCoro->callStackSize();
                 if (reachedGuard)
                     currentCoro->popGuard();
-                InterpreterStatus status;
+                tempo_utils::Status status;
                 // check if we reached the bottom of the call stack
                 if (!subroutineManager->returnToCaller(currentCoro, status)) {
                     if (status.notOk())
@@ -1222,6 +1222,18 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                     }
                     return result;
                 }
+                break;
+            }
+            case lyric_object::Opcode::OP_RAISE: {
+                DataCell exc;
+                ON_ERROR_IF_NOT_OK (currentCoro->popData(exc));
+                if (exc.type != DataCellType::STATUS)
+                    return onError(op, InterpreterStatus::forCondition(
+                        InterpreterCondition::kInvalidDataStackV1, "invalid exception"));
+
+                tempo_utils::Status status;
+                if (!subroutineManager->raiseException(exc, currentCoro, status))
+                    return onError(op, status);
                 break;
             }
 

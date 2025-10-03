@@ -317,6 +317,7 @@ namespace lyric_object {
         OP_CALL_EXISTENTIAL,
         OP_TRAP,
         OP_RETURN,
+        OP_RAISE,
 
         // heap allocation
         OP_NEW,

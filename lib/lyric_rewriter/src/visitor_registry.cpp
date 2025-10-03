@@ -114,6 +114,7 @@ lyric_rewriter::VisitorRegistry::makeVisitor(
 }
 
 #include <lyric_rewriter/ast_binary_visitor.h>
+#include <lyric_rewriter/ast_catch_visitor.h>
 #include <lyric_rewriter/ast_cond_visitor.h>
 #include <lyric_rewriter/ast_defclass_visitor.h>
 #include <lyric_rewriter/ast_defconcept_visitor.h>
@@ -164,6 +165,7 @@ make_ast_visitor(
 
         // unary forms
         case lyric_schema::LyricAstId::Expect:
+        case lyric_schema::LyricAstId::Finally:
         case lyric_schema::LyricAstId::Keyword:
         case lyric_schema::LyricAstId::Neg:
         case lyric_schema::LyricAstId::Not:
@@ -235,6 +237,8 @@ make_ast_visitor(
             return std::make_shared<lyric_rewriter::AstForVisitor>(astId, state);
         case lyric_schema::LyricAstId::Try:
             return std::make_shared<lyric_rewriter::AstTryVisitor>(astId, state);
+        case lyric_schema::LyricAstId::Catch:
+            return std::make_shared<lyric_rewriter::AstCatchVisitor>(astId, state);
 
         // definition forms
         case lyric_schema::LyricAstId::DefClass:

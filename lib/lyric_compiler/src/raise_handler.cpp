@@ -1,10 +1,10 @@
 
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_compiler/compiler_result.h>
-#include <lyric_compiler/expect_handler.h>
 #include <lyric_compiler/form_handler.h>
+#include <lyric_compiler/raise_handler.h>
 
-lyric_compiler::ExpectHandler::ExpectHandler(
+lyric_compiler::RaiseHandler::RaiseHandler(
     bool isSideEffect,
     lyric_assembler::CodeFragment *fragment,
     lyric_assembler::BlockHandle *block,
@@ -17,7 +17,7 @@ lyric_compiler::ExpectHandler::ExpectHandler(
 }
 
 tempo_utils::Status
-lyric_compiler::ExpectHandler::before(
+lyric_compiler::RaiseHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     BeforeContext &ctx)
@@ -30,7 +30,7 @@ lyric_compiler::ExpectHandler::before(
 }
 
 tempo_utils::Status
-lyric_compiler::ExpectHandler::after(
+lyric_compiler::RaiseHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
@@ -90,7 +90,7 @@ lyric_compiler::ExpectHandler::after(
     lyric_assembler::JumpTarget jumpTarget;
     TU_ASSIGN_OR_RETURN (jumpTarget, m_fragment->jumpIfGreaterThan());
     TU_RETURN_IF_NOT_OK (m_fragment->loadRef(resultVar));
-    TU_RETURN_IF_NOT_OK (m_fragment->returnToCaller());
+    TU_RETURN_IF_NOT_OK (m_fragment->raiseException());
 
     // otherwise result type > StatusType (i.e. result is super or disjoint)
     lyric_assembler::JumpLabel jumpLabel;

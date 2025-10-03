@@ -440,13 +440,14 @@ forStatement        : ForKeyword Identifier ( ColonOperator assignableType )?
 
 // try statement
 
-tryTarget           : block ;
+tryBlock            : TryKeyword CurlyOpen block CurlyClose ;
+tryCatch            : CatchKeyword CurlyOpen catchWhen* catchElse? CurlyClose ;
+tryFinally          : FinallyKeyword CurlyOpen block CurlyClose ;
 catchWhen           : WhenKeyword ( Identifier ColonOperator )? unwrapSpec block        # catchOnUnwrap
                     | WhenKeyword Identifier ColonOperator assignableType block         # catchOnType
                     ;
 catchElse           : ElseKeyword block ;
-catchFinally        : FinallyKeyword block ;
-tryStatement        : TryKeyword CurlyOpen tryTarget catchWhen* catchElse? catchFinally? CurlyClose ;
+tryStatement        : tryBlock tryCatch tryFinally? ;
 
 
 // expect expression

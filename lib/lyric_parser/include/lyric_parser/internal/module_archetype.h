@@ -121,11 +121,14 @@ namespace lyric_parser::internal {
 
         // implemented by ModuleExceptionOps
         void enterTryStatement(ModuleParser::TryStatementContext *ctx) override;
-        void exitTryTarget(ModuleParser::TryTargetContext *ctx) override;
+        void exitTryBlock(ModuleParser::TryBlockContext *ctx) override;
+        void enterTryCatch(ModuleParser::TryCatchContext *ctx) override;
         void exitCatchOnUnwrap(ModuleParser::CatchOnUnwrapContext *ctx) override;
         void exitCatchOnType(ModuleParser::CatchOnTypeContext *ctx) override;
         void exitCatchElse(ModuleParser::CatchElseContext *ctx) override;
-        void exitCatchFinally(ModuleParser::CatchFinallyContext *ctx) override;
+        void exitTryCatch(ModuleParser::TryCatchContext *ctx) override;
+        void enterTryFinally(ModuleParser::TryFinallyContext *ctx) override;
+        void exitTryFinally(ModuleParser::TryFinallyContext *ctx) override;
         void exitExpectExpression(ModuleParser::ExpectExpressionContext *ctx) override;
         void exitRaiseExpression(ModuleParser::RaiseExpressionContext *ctx) override;
 

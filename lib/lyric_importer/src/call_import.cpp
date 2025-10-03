@@ -481,12 +481,12 @@ lyric_importer::CallImport::load()
 
         if (procHeader.numLocals != 0)
             throw tempo_utils::StatusException(
-                ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                ImporterStatus::forCondition(ImporterCondition::kImportError,
                     "cannot import call at index {} in module {}; invalid inline proc",
                     callWalker.getDescriptorOffset(), objectLocation.toString()));
         if (procHeader.numLexicals != 0)
             throw tempo_utils::StatusException(
-                ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                ImporterStatus::forCondition(ImporterCondition::kImportError,
                     "cannot import call at index {} in module {}; invalid inline proc",
                     callWalker.getDescriptorOffset(), objectLocation.toString()));
         auto it = callWalker.getBytecodeIterator();
@@ -494,7 +494,7 @@ lyric_importer::CallImport::load()
         while (it.getNext(cell)) {
             if (cell.opcode == lyric_object::Opcode::OP_RETURN)
                 throw tempo_utils::StatusException(
-                    ImporterStatus::forCondition(lyric_importer::ImporterCondition::kImportError,
+                    ImporterStatus::forCondition(ImporterCondition::kImportError,
                         "cannot import call at index {} in module {}; invalid inline proc",
                         callWalker.getDescriptorOffset(), objectLocation.toString()));
         }

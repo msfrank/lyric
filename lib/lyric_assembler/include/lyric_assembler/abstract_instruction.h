@@ -35,6 +35,7 @@ namespace lyric_assembler {
         Branch,
         Call,
         Return,
+        Raise,
         New,
         Trap,
         VaLoad,

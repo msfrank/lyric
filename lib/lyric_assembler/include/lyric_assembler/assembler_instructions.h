@@ -473,6 +473,21 @@ namespace lyric_assembler {
         std::string toString() const override;
     };
 
+    class RaiseInstruction: public AbstractInstruction {
+    public:
+        RaiseInstruction();
+        InstructionType getType() const override;
+        tempo_utils::Status touch(ObjectWriter &writer) const override;
+        tempo_utils::Status apply(
+            const ObjectWriter &writer,
+            lyric_object::BytecodeBuilder &bytecodeBuilder,
+            std::string &labelName,
+            tu_uint16 &labelOffset,
+            tu_uint32 &targetId,
+            tu_uint16 &patchOffset) const override;
+        std::string toString() const override;
+    };
+
     class NewInstruction: public AbstractInstruction {
     public:
         NewInstruction(

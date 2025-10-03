@@ -1442,6 +1442,40 @@ lyric_assembler::ReturnInstruction::toString() const
     return "Return";
 }
 
+lyric_assembler::RaiseInstruction::RaiseInstruction()
+{
+}
+
+lyric_assembler::InstructionType
+lyric_assembler::RaiseInstruction::getType() const
+{
+    return InstructionType::Raise;
+}
+
+tempo_utils::Status
+lyric_assembler::RaiseInstruction::touch(ObjectWriter &writer) const
+{
+    return {};
+}
+
+tempo_utils::Status
+lyric_assembler::RaiseInstruction::apply(
+    const ObjectWriter &writer,
+    lyric_object::BytecodeBuilder &bytecodeBuilder,
+    std::string &labelName,
+    tu_uint16 &labelOffset,
+    tu_uint32 &targetId,
+    tu_uint16 &patchOffset) const
+{
+    return bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_RAISE);
+}
+
+std::string
+lyric_assembler::RaiseInstruction::toString() const
+{
+    return "Raise";
+}
+
 lyric_assembler::NewInstruction::NewInstruction(
     CallSymbol *ctorSymbol,
     tu_uint16 placement,

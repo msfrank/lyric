@@ -14,14 +14,13 @@ namespace lyric_compiler {
         lyric_assembler::JumpTarget exceptionExit;
     };
 
-    struct TryCatch {
+    struct TryCatchFinally {
+        lyric_assembler::CodeFragment *fragment = nullptr;
         lyric_assembler::CheckHandle *checkHandle = nullptr;
         lyric_assembler::DataReference caughtRef;
         std::vector<std::unique_ptr<Exception>> exceptions;
-        lyric_assembler::JumpLabel alternativeLabel;
-        lyric_assembler::JumpTarget alternativeJump;
-        lyric_assembler::JumpLabel finallyLabel;
-        lyric_assembler::JumpTarget finallyJump;
+        lyric_assembler::JumpLabel finallyStart;
+        lyric_assembler::JumpLabel finallyEnd;
     };
 
     class TryHandler : public BaseGrouping {
@@ -44,14 +43,55 @@ namespace lyric_compiler {
 
     private:
         bool m_isSideEffect;
-        lyric_assembler::CodeFragment *m_fragment;
-        TryCatch m_tryCatch;
+        TryCatchFinally m_tryCatchFinally;
+    };
+
+    class TryCatch : public BaseGrouping {
+    public:
+        TryCatch(
+            TryCatchFinally *tryCatchFinally,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
+
+        tempo_utils::Status before(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            BeforeContext &ctx) override;
+
+        tempo_utils::Status after(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            AfterContext &ctx) override;
+
+    private:
+        TryCatchFinally *m_tryCatchFinally;
+    };
+
+    class TryFinally : public BaseGrouping {
+    public:
+        TryFinally(
+            TryCatchFinally *tryCatchFinally,
+            lyric_assembler::BlockHandle *block,
+            CompilerScanDriver *driver);
+
+        tempo_utils::Status before(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            BeforeContext &ctx) override;
+
+        tempo_utils::Status after(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            AfterContext &ctx) override;
+
+    private:
+        TryCatchFinally *m_tryCatchFinally;
     };
 
     class CatchWhen : public BaseGrouping {
     public:
         CatchWhen(
-            TryCatch *tryCatch,
+            TryCatchFinally *tryCatchFinally,
             Exception *exception,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
@@ -67,14 +107,14 @@ namespace lyric_compiler {
             AfterContext &ctx) override;
 
     private:
-        TryCatch *m_tryCatch;
+        TryCatchFinally *m_tryCatchFinally;
         Exception *m_exception;
     };
 
     class CatchPredicate : public BaseChoice {
     public:
         CatchPredicate(
-            TryCatch *tryCatch,
+            TryCatchFinally *tryCatchFinally,
             Exception *exception,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
@@ -85,14 +125,14 @@ namespace lyric_compiler {
             DecideContext &ctx) override;
 
     private:
-        TryCatch *m_tryCatch;
+        TryCatchFinally *m_tryCatchFinally;
         Exception *m_exception;
     };
 
     class CatchUnpackPredicate : public BaseChoice {
     public:
         CatchUnpackPredicate(
-            TryCatch *tryCatch,
+            TryCatchFinally *tryCatchFinally,
             Exception *exception,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
@@ -103,7 +143,7 @@ namespace lyric_compiler {
             DecideContext &ctx) override;
 
     private:
-        TryCatch *m_tryCatch;
+        TryCatchFinally *m_tryCatchFinally;
         Exception *m_exception;
     };
 
@@ -123,10 +163,10 @@ namespace lyric_compiler {
         Exception *m_exception;
     };
 
-    class CatchAlternative : public BaseChoice {
+    class CatchElse : public BaseChoice {
     public:
-        CatchAlternative(
-            TryCatch *tryCatch,
+        CatchElse(
+            TryCatchFinally *tryCatchFinally,
             lyric_assembler::CodeFragment *fragment,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
@@ -137,7 +177,7 @@ namespace lyric_compiler {
             DecideContext &ctx) override;
 
     private:
-        TryCatch *m_tryCatch;
+        TryCatchFinally *m_tryCatchFinally;
         lyric_assembler::CodeFragment *m_fragment;
     };
 }

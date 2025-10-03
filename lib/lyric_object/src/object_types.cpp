@@ -82,6 +82,7 @@ static const char *OP_CALL_CONCEPT_name        = "OP_CALL_CONCEPT";
 static const char *OP_CALL_EXISTENTIAL_name    = "OP_CALL_EXISTENTIAL";
 static const char *OP_TRAP_name                = "OP_TRAP";
 static const char *OP_RETURN_name              = "OP_RETURN";
+static const char *OP_RAISE_name               = "OP_RAISE";
 static const char *OP_NEW_name                 = "OP_NEW";
 static const char *OP_TYPE_OF_name             = "OP_TYPE_OF";
 static const char *OP_INTERRUPT_name           = "OP_INTERRUPT";
@@ -221,6 +222,8 @@ const char *lyric_object::opcode_to_name(Opcode opcode)
             return OP_TRAP_name;
         case Opcode::OP_RETURN:
             return OP_RETURN_name;
+        case Opcode::OP_RAISE:
+            return OP_RAISE_name;
         case Opcode::OP_NEW:
             return OP_NEW_name;
         case Opcode::OP_TYPE_OF:

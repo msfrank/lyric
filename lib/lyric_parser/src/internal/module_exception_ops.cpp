@@ -32,20 +32,34 @@ lyric_parser::internal::ModuleExceptionOps::enterTryStatement(ModuleParser::TryS
 }
 
 void
-lyric_parser::internal::ModuleExceptionOps::exitTryTarget(ModuleParser::TryTargetContext *ctx)
+lyric_parser::internal::ModuleExceptionOps::exitTryBlock(ModuleParser::TryBlockContext *ctx)
 {
     auto *state = getState();
     if (hasError())
         return;
 
-    ArchetypeNode *targetNode;
-    TU_ASSIGN_OR_RAISE (targetNode, state->popNode());
+    ArchetypeNode *blockNode;
+    TU_ASSIGN_OR_RAISE (blockNode, state->popNode(lyric_schema::kLyricAstBlockClass));
 
     ArchetypeNode *tryNode;
     TU_ASSIGN_OR_RAISE (tryNode, state->peekNode(lyric_schema::kLyricAstTryClass));
 
-    // otherwise append target to the try
-    TU_RAISE_IF_NOT_OK (tryNode->appendChild(targetNode));
+    // append block to the try
+    TU_RAISE_IF_NOT_OK (tryNode->appendChild(blockNode));
+}
+
+void
+lyric_parser::internal::ModuleExceptionOps::enterTryCatch(ModuleParser::TryCatchContext *ctx)
+{
+    auto *state = getState();
+    if (hasError())
+        return;
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+    ArchetypeNode *catchNode;
+    TU_ASSIGN_OR_RAISE (catchNode, state->appendNode(lyric_schema::kLyricAstCatchClass, location));
+    TU_RAISE_IF_NOT_OK (state->pushNode(catchNode));
 }
 
 void
@@ -70,16 +84,16 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchOnType(ModuleParser::CatchO
     TU_RAISE_IF_NOT_OK (unpackNode->putAttr(kLyricAstIdentifier, id));
     TU_RAISE_IF_NOT_OK (unpackNode->putAttr(kLyricAstTypeOffset, typeNode));
 
-    ArchetypeNode *caseNode;
-    TU_ASSIGN_OR_RAISE (caseNode, state->appendNode(lyric_schema::kLyricAstCaseClass, location));
-    TU_RAISE_IF_NOT_OK (caseNode->appendChild(unpackNode));
-    TU_RAISE_IF_NOT_OK (caseNode->appendChild(consequentNode));
+    ArchetypeNode *whenNode;
+    TU_ASSIGN_OR_RAISE (whenNode, state->appendNode(lyric_schema::kLyricAstWhenClass, location));
+    TU_RAISE_IF_NOT_OK (whenNode->appendChild(unpackNode));
+    TU_RAISE_IF_NOT_OK (whenNode->appendChild(consequentNode));
 
-    ArchetypeNode *tryNode;
-    TU_ASSIGN_OR_RAISE (tryNode, state->peekNode(lyric_schema::kLyricAstTryClass));
+    ArchetypeNode *catchNode;
+    TU_ASSIGN_OR_RAISE (catchNode, state->peekNode(lyric_schema::kLyricAstCatchClass));
 
-    // otherwise append case to the match
-    TU_RAISE_IF_NOT_OK (tryNode->appendChild(caseNode));
+    // append when to the catch
+    TU_RAISE_IF_NOT_OK (catchNode->appendChild(whenNode));
 }
 
 void
@@ -134,16 +148,16 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchOnUnwrap(ModuleParser::Catc
         TU_RAISE_IF_NOT_OK (unwrapNode->appendChild(paramNode));
     }
 
-    ArchetypeNode *caseNode;
-    TU_ASSIGN_OR_RAISE (caseNode, state->appendNode(lyric_schema::kLyricAstCaseClass, location));
-    TU_RAISE_IF_NOT_OK (caseNode->appendChild(unwrapNode));
-    TU_RAISE_IF_NOT_OK (caseNode->appendChild(consequentNode));
+    ArchetypeNode *whenNode;
+    TU_ASSIGN_OR_RAISE (whenNode, state->appendNode(lyric_schema::kLyricAstWhenClass, location));
+    TU_RAISE_IF_NOT_OK (whenNode->appendChild(unwrapNode));
+    TU_RAISE_IF_NOT_OK (whenNode->appendChild(consequentNode));
 
-    ArchetypeNode *tryNode;
-    TU_ASSIGN_OR_RAISE (tryNode, state->peekNode(lyric_schema::kLyricAstTryClass));
+    ArchetypeNode *catchNode;
+    TU_ASSIGN_OR_RAISE (catchNode, state->peekNode(lyric_schema::kLyricAstCatchClass));
 
-    // otherwise append case to the match
-    TU_RAISE_IF_NOT_OK (tryNode->appendChild(caseNode));
+    // append when to the catch
+    TU_RAISE_IF_NOT_OK (catchNode->appendChild(whenNode));
 }
 
 void
@@ -156,28 +170,59 @@ lyric_parser::internal::ModuleExceptionOps::exitCatchElse(ModuleParser::CatchEls
     ArchetypeNode *alternativeNode;
     TU_ASSIGN_OR_RAISE (alternativeNode, state->popNode());
 
-    ArchetypeNode *tryNode;
-    TU_ASSIGN_OR_RAISE (tryNode, state->peekNode(lyric_schema::kLyricAstTryClass));
+    ArchetypeNode *catchNode;
+    TU_ASSIGN_OR_RAISE (catchNode, state->peekNode(lyric_schema::kLyricAstCatchClass));
 
-    // otherwise add defaultOffset attribute to the match
-    TU_RAISE_IF_NOT_OK (tryNode->putAttr(kLyricAstDefaultOffset, alternativeNode));
+    // add defaultOffset attribute to the catch
+    TU_RAISE_IF_NOT_OK (catchNode->putAttr(kLyricAstDefaultOffset, alternativeNode));
 }
 
 void
-lyric_parser::internal::ModuleExceptionOps::exitCatchFinally(ModuleParser::CatchFinallyContext *ctx)
+lyric_parser::internal::ModuleExceptionOps::exitTryCatch(ModuleParser::TryCatchContext *ctx)
 {
     auto *state = getState();
     if (hasError())
         return;
 
-    ArchetypeNode *alwaysNode;
-    TU_ASSIGN_OR_RAISE (alwaysNode, state->popNode());
+    ArchetypeNode *catchNode;
+    TU_ASSIGN_OR_RAISE (catchNode, state->popNode(lyric_schema::kLyricAstCatchClass));
 
     ArchetypeNode *tryNode;
     TU_ASSIGN_OR_RAISE (tryNode, state->peekNode(lyric_schema::kLyricAstTryClass));
 
-    // otherwise add finallyOffset attribute to the match
-    TU_RAISE_IF_NOT_OK (tryNode->putAttr(kLyricAstFinallyOffset, alwaysNode));
+    // append catch to the try
+    TU_RAISE_IF_NOT_OK (tryNode->appendChild(catchNode));
+}
+
+void
+lyric_parser::internal::ModuleExceptionOps::enterTryFinally(ModuleParser::TryFinallyContext *ctx)
+{
+    auto *state = getState();
+    if (hasError())
+        return;
+
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+    ArchetypeNode *finallyNode;
+    TU_ASSIGN_OR_RAISE (finallyNode, state->appendNode(lyric_schema::kLyricAstFinallyClass, location));
+    TU_RAISE_IF_NOT_OK (state->pushNode(finallyNode));
+}
+
+void
+lyric_parser::internal::ModuleExceptionOps::exitTryFinally(ModuleParser::TryFinallyContext *ctx)
+{
+    auto *state = getState();
+    if (hasError())
+        return;
+
+    ArchetypeNode *finallyNode;
+    TU_ASSIGN_OR_RAISE (finallyNode, state->popNode(lyric_schema::kLyricAstFinallyClass));
+
+    ArchetypeNode *tryNode;
+    TU_ASSIGN_OR_RAISE (tryNode, state->peekNode(lyric_schema::kLyricAstTryClass));
+
+    // append finally to the try
+    TU_RAISE_IF_NOT_OK (tryNode->appendChild(finallyNode));
 }
 
 void
