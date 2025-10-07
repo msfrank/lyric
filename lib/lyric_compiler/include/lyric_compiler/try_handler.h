@@ -7,20 +7,11 @@
 
 namespace lyric_compiler {
 
-    struct Exception {
-        lyric_common::TypeDef exceptionType;
-        lyric_assembler::CodeFragment *fragment;
-        std::unique_ptr<lyric_assembler::BlockHandle> block;
-        lyric_assembler::JumpTarget exceptionExit;
-    };
-
     struct TryCatchFinally {
-        lyric_assembler::CodeFragment *fragment = nullptr;
         lyric_assembler::CheckHandle *checkHandle = nullptr;
+        lyric_assembler::CleanupHandle *cleanupHandle = nullptr;
+        lyric_assembler::CodeFragment *fragment = nullptr;
         lyric_assembler::DataReference caughtRef;
-        std::vector<std::unique_ptr<Exception>> exceptions;
-        lyric_assembler::JumpLabel finallyStart;
-        lyric_assembler::JumpLabel finallyEnd;
     };
 
     class TryHandler : public BaseGrouping {
@@ -88,11 +79,15 @@ namespace lyric_compiler {
         TryCatchFinally *m_tryCatchFinally;
     };
 
+    struct Exception {
+        lyric_assembler::CatchHandle *catchHandle = nullptr;
+        std::unique_ptr<lyric_assembler::BlockHandle> block;
+    };
+
     class CatchWhen : public BaseGrouping {
     public:
         CatchWhen(
             TryCatchFinally *tryCatchFinally,
-            Exception *exception,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
 
@@ -108,7 +103,7 @@ namespace lyric_compiler {
 
     private:
         TryCatchFinally *m_tryCatchFinally;
-        Exception *m_exception;
+        Exception m_exception;
     };
 
     class CatchPredicate : public BaseChoice {

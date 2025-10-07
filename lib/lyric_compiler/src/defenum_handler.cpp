@@ -340,5 +340,9 @@ lyric_compiler::CaseInit::after(
     lyric_common::TypeDef returnType;
     TU_ASSIGN_OR_RETURN (returnType, m_invoker->invoke(getInvokeBlock(), reifier, fragment, /* flags= */ 0));
 
-    return driver->pushResult(returnType);
+    TU_RETURN_IF_NOT_OK (driver->pushResult(returnType));
+
+    TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
+
+    return {};
 }

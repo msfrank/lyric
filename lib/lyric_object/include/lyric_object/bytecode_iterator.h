@@ -24,7 +24,7 @@ namespace lyric_object {
         OpInfoType type;            /**< The Opcode type. */
     };
 
-    struct OpCell {
+    struct OpCell final {
         Opcode opcode;
         tu_uint32 offset;
         OpInfoType type;

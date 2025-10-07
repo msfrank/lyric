@@ -33,18 +33,23 @@ TEST(CodeFragment, ImmediateNil)
     auto *fragment = procHandle.procFragment();
 
     ASSERT_THAT (fragment->immediateNil(), tempo_test::IsOk());
+    ASSERT_THAT (fragment->returnToCaller(), tempo_test::IsOk());
 
     lyric_assembler::ObjectWriter objectWriter(&objectState);
     lyric_object::BytecodeBuilder bytecodeBuilder;
-    ASSERT_THAT (procHandle.build(objectWriter, bytecodeBuilder), tempo_test::IsOk());
+    tempo_utils::BytesAppender bytesAppender;
+    ASSERT_THAT (procHandle.build(objectWriter, bytesAppender), tempo_test::IsOk());
+    auto bytecode = bytesAppender.finish();
 
-    auto bytecode = bytecodeBuilder.getBytecode();
-    lyric_object::BytecodeIterator it(bytecode.data(), bytecode.size());
+    lyric_object::ProcInfo procInfo;
+    ASSERT_THAT (lyric_object::parse_proc_info(bytecode->getSpan(), 0, procInfo), tempo_test::IsOk());
+    lyric_object::BytecodeIterator it(procInfo.code);
     lyric_object::OpCell op;
 
     ASSERT_TRUE (it.getNext(op));
     ASSERT_EQ (lyric_object::Opcode::OP_NIL, op.opcode);
-    ASSERT_EQ (lyric_object::OpInfoType::NO_OPERANDS, op.type);
+    ASSERT_TRUE (it.getNext(op));
+    ASSERT_EQ (lyric_object::Opcode::OP_RETURN, op.opcode);
     ASSERT_FALSE (it.hasNext());
 }
 
@@ -77,23 +82,26 @@ TEST(CodeFragment, UnconditionalJump)
     lyric_assembler::JumpTarget target;
     TU_ASSIGN_OR_RAISE (target, fragment->unconditionalJump());
     ASSERT_THAT (fragment->patchTarget(target, label), tempo_test::IsOk());
+    ASSERT_THAT (fragment->returnToCaller(), tempo_test::IsOk());
 
     lyric_assembler::ObjectWriter objectWriter(&objectState);
-    lyric_object::BytecodeBuilder bytecodeBuilder;
-    ASSERT_THAT (procHandle.build(objectWriter, bytecodeBuilder), tempo_test::IsOk());
+    tempo_utils::BytesAppender bytesAppender;
+    ASSERT_THAT (procHandle.build(objectWriter, bytesAppender), tempo_test::IsOk());
+    auto bytecode = bytesAppender.finish();
 
-    auto bytecode = bytecodeBuilder.getBytecode();
-    lyric_object::BytecodeIterator it(bytecode.data(), bytecode.size());
+    lyric_object::ProcInfo procInfo;
+    ASSERT_THAT (lyric_object::parse_proc_info(bytecode->getSpan(), 0, procInfo), tempo_test::IsOk());
+    lyric_object::BytecodeIterator it(procInfo.code);
     lyric_object::OpCell op;
 
     ASSERT_TRUE (it.getNext(op));
     ASSERT_EQ (lyric_object::Opcode::OP_NOOP, op.opcode);
-    ASSERT_EQ (lyric_object::OpInfoType::NO_OPERANDS, op.type);
-
     ASSERT_TRUE (it.getNext(op));
     ASSERT_EQ (lyric_object::Opcode::OP_JUMP, op.opcode);
     ASSERT_EQ (lyric_object::OpInfoType::JUMP_I16, op.type);
     ASSERT_EQ (-4, op.operands.jump_i16.jump);
+    ASSERT_TRUE (it.getNext(op));
+    ASSERT_EQ (lyric_object::Opcode::OP_RETURN, op.opcode);
 
     ASSERT_FALSE (it.hasNext());
 }

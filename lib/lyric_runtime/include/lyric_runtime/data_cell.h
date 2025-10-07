@@ -47,7 +47,7 @@ namespace lyric_runtime {
         STATIC,
     };
 
-    struct DataCell {
+    struct DataCell final {
 
         DataCell();
         explicit DataCell(bool b);

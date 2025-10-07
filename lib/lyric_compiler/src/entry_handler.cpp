@@ -149,5 +149,34 @@ lyric_compiler::EntryHandler::after(
     AfterContext &ctx)
 {
     TU_LOG_VV << "after EntryHandler@" << this;
+
+    auto *driver = getDriver();
+    auto *root = driver->getObjectRoot();
+    auto *entryCall = root->entryCall();
+    auto *entryProc = entryCall->callProc();
+    auto *fragment = entryProc->procFragment();
+    auto numStatements = fragment->numStatements();
+    bool unfinished = true;
+
+    if (numStatements > 0) {
+        auto lastStatement = fragment->getStatement(fragment->numStatements() - 1);
+        switch (lastStatement.instruction->getType()) {
+            case lyric_assembler::InstructionType::Jump:
+            case lyric_assembler::InstructionType::Return:
+            case lyric_assembler::InstructionType::Interrupt:
+            case lyric_assembler::InstructionType::Abort:
+            case lyric_assembler::InstructionType::Halt:
+                unfinished = false;
+                break;
+            default:
+                unfinished = true;
+        }
+    }
+
+    // add RETURN op if the last statement does not unconditionally transfer control or terminate
+    if (unfinished) {
+        TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
+    }
+
     return {};
 }

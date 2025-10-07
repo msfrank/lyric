@@ -371,6 +371,34 @@ lyric_runtime::CallCell::numLexicals() const
     return m_numLexicals;
 }
 
+bool
+lyric_runtime::CallCell::hasSavedIP() const
+{
+    return m_savedIP.isValid();
+}
+
+lyric_object::BytecodeIterator
+lyric_runtime::CallCell::getSavedIP() const
+{
+    return m_savedIP;
+}
+
+void
+lyric_runtime::CallCell::setSavedIP(const lyric_object::BytecodeIterator &ip)
+{
+    m_savedIP = ip;
+}
+
+bool
+lyric_runtime::CallCell::clearSavedIP()
+{
+    if (m_savedIP.isValid()) {
+        m_savedIP = {};
+        return true;
+    }
+    return false;
+}
+
 std::string
 lyric_runtime::CallCell::toString() const
 {

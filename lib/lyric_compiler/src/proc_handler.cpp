@@ -75,5 +75,29 @@ lyric_compiler::ProcHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
+    auto *fragment = m_procHandle->procFragment();
+    auto numStatements = fragment->numStatements();
+    bool unfinished = true;
+
+    if (numStatements > 0) {
+        auto lastStatement = fragment->getStatement(fragment->numStatements() - 1);
+        switch (lastStatement.instruction->getType()) {
+            case lyric_assembler::InstructionType::Jump:
+            case lyric_assembler::InstructionType::Return:
+            case lyric_assembler::InstructionType::Interrupt:
+            case lyric_assembler::InstructionType::Abort:
+            case lyric_assembler::InstructionType::Halt:
+                unfinished = false;
+                break;
+            default:
+                unfinished = true;
+        }
+    }
+
+    // add RETURN op if the last statement does not unconditionally transfer control or terminate
+    if (unfinished) {
+        TU_RETURN_IF_NOT_OK (fragment->returnToCaller());
+    }
+
     return {};
 }

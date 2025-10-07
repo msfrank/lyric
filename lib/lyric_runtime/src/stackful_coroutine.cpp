@@ -54,7 +54,9 @@ void
 lyric_runtime::StackfulCoroutine::transferControl(const lyric_object::BytecodeIterator &ip, BytecodeSegment *sp)
 {
     m_IP = ip;
-    m_SP = sp;
+    if (sp != nullptr) {
+        m_SP = sp;
+    }
 }
 
 /**

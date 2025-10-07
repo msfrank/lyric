@@ -2,7 +2,9 @@
 #define LYRIC_ASSEMBLER_PROC_HANDLE_H
 
 #include <lyric_common/symbol_url.h>
+#include <tempo_utils/bytes_appender.h>
 
+#include "catch_handle.h"
 #include "check_handle.h"
 #include "cleanup_handle.h"
 #include "object_state.h"
@@ -93,6 +95,9 @@ namespace lyric_assembler {
         tempo_utils::Result<CheckHandle *> declareCheck(const JumpLabel &checkStart);
         int numChecks() const;
 
+        tempo_utils::Result<CatchHandle *> declareCatch(const lyric_common::TypeDef &exceptionType);
+        int numCatches() const;
+
         tempo_utils::Result<CleanupHandle *> declareCleanup(const JumpLabel &cleanupStart);
         int numCleanups() const;
 
@@ -111,7 +116,7 @@ namespace lyric_assembler {
         tempo_utils::Status touch(ObjectWriter &writer) const;
         tempo_utils::Status build(
             const ObjectWriter &writer,
-            lyric_object::BytecodeBuilder &bytecodeBuilder) const;
+            tempo_utils::BytesAppender &procBytecode) const;
 
     private:
         lyric_common::SymbolUrl m_activation;
@@ -126,6 +131,7 @@ namespace lyric_assembler {
         std::vector<ProcLexical> m_lexicals;
 
         std::vector<std::unique_ptr<CheckHandle>> m_checks;
+        std::vector<std::pair<std::unique_ptr<CodeFragment>,std::unique_ptr<CatchHandle>>> m_catches;
         std::vector<std::unique_ptr<CleanupHandle>> m_cleanups;
 
         absl::flat_hash_set<lyric_common::TypeDef> m_exitTypes;

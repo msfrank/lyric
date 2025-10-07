@@ -103,36 +103,17 @@ write_call(
     std::vector<flatbuffers::Offset<lyo1::CallDescriptor>> &calls_vector,
     std::vector<uint8_t> &bytecode)
 {
-    auto bytecodeOffset = static_cast<tu_uint32>(bytecode.size());
+    tu_uint32 bytecodeOffset;
 
-    auto *proc = callSymbol->callProc();
-
-    lyric_object::BytecodeBuilder bytecodeBuilder;
-    TU_RETURN_IF_NOT_OK (proc->build(writer, bytecodeBuilder));
-
-    // build the proc prologue
-    tempo_utils::BytesAppender prologue;
-    prologue.appendU16(static_cast<tu_uint16>(proc->getArity()));
-    prologue.appendU16(static_cast<tu_uint16>(proc->numLocals()));
-    prologue.appendU16(static_cast<tu_uint16>(proc->numLexicals()));
-    prologue.appendU32(0);
-    for (auto lexical = proc->lexicalsBegin(); lexical != proc->lexicalsEnd(); lexical++) {
-        tu_uint32 address;
-        TU_ASSIGN_OR_RETURN (address,
-            writer.getSectionAddress(lexical->activationCall->getSymbolUrl(), lyric_object::LinkageSection::Call));
-        prologue.appendU32(address);
-        prologue.appendU32(lexical->targetOffset);
-        prologue.appendU8(static_cast<tu_uint8>(lexical->lexicalTarget));
+    if (!callSymbol->isDeclOnly()) {
+        tempo_utils::BytesAppender procBytecode;
+        auto *proc = callSymbol->callProc();
+        bytecodeOffset = static_cast<tu_uint32>(bytecode.size());
+        TU_RETURN_IF_NOT_OK (proc->build(writer, procBytecode));
+        bytecode.insert(bytecode.cend(), procBytecode.bytesBegin(), procBytecode.bytesEnd());
+    } else {
+        bytecodeOffset = lyric_runtime::INVALID_ADDRESS_U32;
     }
-
-    // build the proc header
-    tempo_utils::BytesAppender header;
-    header.appendU32(prologue.getSize() + bytecodeBuilder.bytecodeSize());
-
-    // write the proc to the bytecode
-    bytecode.insert(bytecode.cend(), header.bytesBegin(), header.bytesEnd());
-    bytecode.insert(bytecode.cend(), prologue.bytesBegin(), prologue.bytesEnd());
-    bytecode.insert(bytecode.cend(), bytecodeBuilder.bytecodeBegin(), bytecodeBuilder.bytecodeEnd());
 
     // add call descriptor
     auto callPathString = callSymbol->getSymbolUrl().getSymbolPath().toString();

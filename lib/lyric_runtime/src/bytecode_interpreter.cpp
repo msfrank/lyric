@@ -5,6 +5,7 @@
 #include <lyric_runtime/internal/construct_enum.h>
 #include <lyric_runtime/internal/construct_instance.h>
 #include <lyric_runtime/internal/construct_new.h>
+#include <lyric_runtime/internal/raise_exception.h>
 #include <lyric_runtime/interpreter_state.h>
 #include <tempo_utils/log_stream.h>
 
@@ -115,7 +116,21 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
 
         // read the next bytecode op
         lyric_object::OpCell op;
-        if (!currentCoro->nextOp(op)) {
+        bool iteratorExhausted = !currentCoro->nextOp(op);
+
+        // if iterator is exhausted then check for a saved IP in the current frame
+        if (iteratorExhausted) {
+            CallCell *frame;
+            TU_RETURN_IF_NOT_OK (currentCoro->peekCall(&frame));
+            if (frame->hasSavedIP()) {
+                auto savedIP = frame->getSavedIP();
+                currentCoro->transferControl(savedIP);
+                frame->clearSavedIP();
+                iteratorExhausted = !currentCoro->nextOp(op);
+            }
+        }
+
+        if (iteratorExhausted) {
 
             // if there is no next op but there is a guard then we have reached the end of the current
             // call but possibly not the end of the current task, so try returning to the caller
@@ -1230,10 +1245,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 if (exc.type != DataCellType::STATUS)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "invalid exception"));
-
-                tempo_utils::Status status;
-                if (!subroutineManager->raiseException(exc, currentCoro, status))
-                    return onError(op, status);
+                ON_ERROR_IF_NOT_OK (internal::raise_exception(
+                    op, exc, currentCoro, segmentManager, subroutineManager, typeManager));
                 break;
             }
 

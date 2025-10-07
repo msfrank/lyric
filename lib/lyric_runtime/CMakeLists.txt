@@ -112,6 +112,8 @@ target_sources(lyric_runtime PRIVATE
     src/internal/get_struct_virtual_table.cpp
     include/lyric_runtime/internal/load_utils.h
     src/internal/load_utils.cpp
+    include/lyric_runtime/internal/raise_exception.h
+    src/internal/raise_exception.cpp
     include/lyric_runtime/internal/resolve_link.h
     src/internal/resolve_link.cpp
     )

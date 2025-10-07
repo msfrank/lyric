@@ -3,6 +3,9 @@
 #include <lyric_archiver/archiver_state.h>
 #include <lyric_archiver/lyric_archiver.h>
 #include <lyric_archiver/symbol_reference_set.h>
+#include <lyric_assembler/call_symbol.h>
+#include <lyric_assembler/object_root.h>
+#include <lyric_assembler/proc_handle.h>
 
 lyric_archiver::LyricArchiver::LyricArchiver(
     const lyric_common::ModuleLocation &location,
@@ -38,6 +41,12 @@ lyric_archiver::LyricArchiver::initialize()
 
     lyric_assembler::ObjectRoot *objectRoot;
     TU_ASSIGN_OR_RETURN (objectRoot, objectState->defineRoot());
+
+    auto *entryCall = objectRoot->entryCall();
+    auto *entryProc = entryCall->callProc();
+    auto *entryFragment = entryProc->procFragment();
+
+    TU_RETURN_IF_NOT_OK (entryFragment->returnToCaller());
 
     auto archiverState = std::make_unique<ArchiverState>(
         std::move(objectState), m_systemModuleCache, objectRoot);

@@ -590,6 +590,13 @@ lyric_analyzer::AnalyzerScanDriverBuilder::makeScanDriver()
     lyric_assembler::ObjectRoot *root;
     TU_ASSIGN_OR_RETURN (root, m_state->defineRoot());
 
+    auto *entryCall = root->entryCall();
+    auto *entryProc = entryCall->callProc();
+    auto *entryFragment = entryProc->procFragment();
+
+    // analyzer output is not meant to be executed
+    TU_RETURN_IF_NOT_OK (entryFragment->invokeAbort());
+
     // initialize the driver
     auto driver = std::make_shared<AnalyzerScanDriver>(root, m_state.get());
     TU_RETURN_IF_NOT_OK (driver->initialize());

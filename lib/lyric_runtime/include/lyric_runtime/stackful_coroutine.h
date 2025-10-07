@@ -18,7 +18,7 @@ namespace lyric_runtime {
         BytecodeSegment *peekSP() const;
         lyric_object::BytecodeIterator peekIP() const;
 
-        void transferControl(const lyric_object::BytecodeIterator &ip, BytecodeSegment *sp);
+        void transferControl(const lyric_object::BytecodeIterator &ip, BytecodeSegment *sp = nullptr);
 
         CallCell& currentCallOrThrow();
         const CallCell& currentCallOrThrow() const;

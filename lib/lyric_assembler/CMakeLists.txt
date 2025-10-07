@@ -29,6 +29,7 @@ set(LYRIC_ASSEMBLER_INCLUDES
     include/lyric_assembler/block_handle.h
     include/lyric_assembler/callable_invoker.h
     include/lyric_assembler/call_symbol.h
+    include/lyric_assembler/catch_handle.h
     include/lyric_assembler/check_handle.h
     include/lyric_assembler/class_symbol.h
     include/lyric_assembler/cleanup_handle.h
@@ -86,6 +87,7 @@ target_sources(lyric_assembler PRIVATE
     src/block_handle.cpp
     src/callable_invoker.cpp
     src/call_symbol.cpp
+    src/catch_handle.cpp
     src/check_handle.cpp
     src/class_symbol.cpp
     src/cleanup_handle.cpp

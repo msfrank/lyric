@@ -167,3 +167,85 @@ lyric_object::parse_proc_trailer(const ProcInfo &procInfo, TrailerInfo &trailerI
 
     return {};
 }
+
+tempo_utils::Status
+lyric_object::parse_checks_table(const TrailerInfo &trailerInfo, std::vector<ProcCheck> &checks)
+{
+    const tu_uint8 *ptr = trailerInfo.checks.data();
+    auto nleft = trailerInfo.checks.size();
+
+    checks.resize(trailerInfo.num_checks);
+
+    for (int i = 0; i < trailerInfo.num_checks; i++) {
+        if (nleft < kProcCheckSizeInBytes)
+            return ObjectStatus::forCondition(
+                ObjectCondition::kObjectInvariant, "invalid proc check");
+        ProcCheck &check = checks.at(i);
+        check.interval_offset = tempo_utils::read_u32_and_advance(ptr);
+        check.interval_size = tempo_utils::read_u32_and_advance(ptr);
+        check.parent_check = tempo_utils::read_u16_and_advance(ptr);
+        check.first_exception = tempo_utils::read_u16_and_advance(ptr);
+        check.num_exceptions = tempo_utils::read_u16_and_advance(ptr);
+        nleft -= kProcCheckSizeInBytes;
+    }
+
+    // assert that we have read all bytes in the checks table
+    TU_ASSERT (ptr == trailerInfo.checks.data() + trailerInfo.checks.size());
+    TU_ASSERT (nleft == 0);
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_object::parse_exceptions_table(const TrailerInfo &trailerInfo, std::vector<ProcException> &exceptions)
+{
+    const tu_uint8 *ptr = trailerInfo.exceptions.data();
+    auto nleft = trailerInfo.exceptions.size();
+
+    exceptions.resize(trailerInfo.num_exceptions);
+
+    for (int i = 0; i < trailerInfo.num_exceptions; i++) {
+        if (nleft < kProcExceptionSizeInBytes)
+            return ObjectStatus::forCondition(
+                ObjectCondition::kObjectInvariant, "invalid proc exception");
+        ProcException &exc = exceptions.at(i);
+        exc.exception_type = tempo_utils::read_u32_and_advance(ptr);
+        exc.catch_offset = tempo_utils::read_u32_and_advance(ptr);
+        exc.catch_size = tempo_utils::read_u32_and_advance(ptr);
+        nleft -= kProcExceptionSizeInBytes;
+    }
+
+    // assert that we have read all bytes in the checks table
+    TU_ASSERT (ptr == trailerInfo.exceptions.data() + trailerInfo.exceptions.size());
+    TU_ASSERT (nleft == 0);
+
+    return {};
+}
+
+tempo_utils::Status
+lyric_object::parse_cleanups_table(const TrailerInfo &trailerInfo, std::vector<ProcCleanup> &cleanups)
+{
+    const tu_uint8 *ptr = trailerInfo.cleanups.data();
+    auto nleft = trailerInfo.cleanups.size();
+
+    cleanups.resize(trailerInfo.num_cleanups);
+
+    for (int i = 0; i < trailerInfo.num_cleanups; i++) {
+        if (nleft < kProcCleanupSizeInBytes)
+            return ObjectStatus::forCondition(
+                ObjectCondition::kObjectInvariant, "invalid proc cleanup");
+        ProcCleanup &cleanup = cleanups.at(i);
+        cleanup.interval_offset = tempo_utils::read_u32_and_advance(ptr);
+        cleanup.interval_size = tempo_utils::read_u32_and_advance(ptr);
+        cleanup.parent_cleanup = tempo_utils::read_u16_and_advance(ptr);
+        cleanup.cleanup_offset = tempo_utils::read_u32_and_advance(ptr);
+        cleanup.cleanup_size = tempo_utils::read_u32_and_advance(ptr);
+        nleft -= kProcCleanupSizeInBytes;
+    }
+
+    // assert that we have read all bytes in the checks table
+    TU_ASSERT (ptr == trailerInfo.cleanups.data() + trailerInfo.cleanups.size());
+    TU_ASSERT (nleft == 0);
+
+    return {};
+}

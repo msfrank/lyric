@@ -10,6 +10,8 @@ namespace lyric_assembler {
     public:
         CleanupHandle(const JumpLabel &startInclusive, ObjectState *state);
 
+        tempo_utils::Status finalizeCleanup(const JumpLabel &endExclusive);
+
     private:
         JumpLabel m_startInclusive;
         JumpLabel m_endExclusive;

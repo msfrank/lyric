@@ -76,14 +76,9 @@ lyric_compiler::TryHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    auto *driver = getDriver();
-    auto *fragment = m_tryCatchFinally.fragment;
-
-    lyric_assembler::JumpLabel exitLabel;
-    TU_ASSIGN_OR_RETURN (exitLabel, fragment->appendLabel());
-
     // if try catch is not a side effect then push a NoReturn result
     if (!m_isSideEffect) {
+        auto *driver = getDriver();
         TU_RETURN_IF_NOT_OK (driver->pushResult(lyric_common::TypeDef::noReturn()));
     }
 
@@ -121,16 +116,20 @@ lyric_compiler::TryCatch::before(
         return CompilerStatus::forCondition(CompilerCondition::kCompilerInvariant,
             "empty catch clause");
 
+    // create label indicating the end of the try block
+    lyric_assembler::JumpLabel checkEnd;
+    TU_ASSIGN_OR_RETURN (checkEnd, fragment->appendLabel());
+
+    // finalize the check
+    TU_RETURN_IF_NOT_OK (m_tryCatchFinally->checkHandle->finalizeCheck(checkEnd));
+
+    // append handler for each when clause
     for (int i = 0; i < numChildren; i++) {
-        auto exception = std::make_unique<Exception>();
-        exception->block = std::make_unique<lyric_assembler::BlockHandle>(
-            block->blockProc(), block, block->blockState());
-        auto when = std::make_unique<CatchWhen>(
-            m_tryCatchFinally, exception.get(), block, driver);
-        m_tryCatchFinally->exceptions.push_back(std::move(exception));
+        auto when = std::make_unique<CatchWhen>(m_tryCatchFinally, block, driver);
         ctx.appendGrouping(std::move(when));
     }
 
+    // append handler for else clause if present
     if (node->hasAttr(lyric_parser::kLyricAstDefaultOffset)) {
         auto alternative = std::make_unique<CatchElse>(m_tryCatchFinally, fragment, block, driver);
         ctx.appendChoice(std::move(alternative));
@@ -167,9 +166,14 @@ lyric_compiler::TryFinally::before(
     auto *block = getBlock();
     auto *driver = getDriver();
     auto *fragment = m_tryCatchFinally->fragment;
+    auto *procHandle = block->blockProc();
 
     // create label indicating the beginning of the finally clause
-    TU_ASSIGN_OR_RETURN (m_tryCatchFinally->finallyStart, fragment->appendLabel());
+    lyric_assembler::JumpLabel cleanupStart;
+    TU_ASSIGN_OR_RETURN (cleanupStart, fragment->appendLabel());
+
+    // declare the cleanup
+    TU_ASSIGN_OR_RETURN (m_tryCatchFinally->cleanupHandle, procHandle->declareCleanup(cleanupStart));
 
     // compile the finally block
     auto tryBlock = std::make_unique<FormChoice>(FormType::SideEffect, fragment, block, driver);
@@ -187,22 +191,23 @@ lyric_compiler::TryFinally::after(
     auto *fragment = m_tryCatchFinally->fragment;
 
     // create label indicating the end of the finally clause
-    TU_ASSIGN_OR_RETURN (m_tryCatchFinally->finallyEnd, fragment->appendLabel());
+    lyric_assembler::JumpLabel cleanupEnd;
+    TU_ASSIGN_OR_RETURN (cleanupEnd, fragment->appendLabel());
+
+    // finalize the cleanup
+    TU_RETURN_IF_NOT_OK (m_tryCatchFinally->cleanupHandle->finalizeCleanup(cleanupEnd));
 
     return {};
 }
 
 lyric_compiler::CatchWhen::CatchWhen(
     TryCatchFinally *tryCatchFinally,
-    Exception *exception,
     lyric_assembler::BlockHandle *block,
     CompilerScanDriver *driver)
     : BaseGrouping(block, driver),
-      m_tryCatchFinally(tryCatchFinally),
-      m_exception(exception)
+      m_tryCatchFinally(tryCatchFinally)
 {
     TU_ASSERT (m_tryCatchFinally != nullptr);
-    TU_ASSERT (m_exception != nullptr);
 }
 
 tempo_utils::Status
@@ -214,11 +219,15 @@ lyric_compiler::CatchWhen::before(
     auto *block = getBlock();
     auto *driver = getDriver();
 
+    //
+    m_exception.block = std::make_unique<lyric_assembler::BlockHandle>(
+        block->blockProc(), block, block->blockState());
+
     auto predicate = std::make_unique<CatchPredicate>(
-        m_tryCatchFinally, m_exception, block, driver);
+        m_tryCatchFinally, &m_exception, block, driver);
     ctx.appendChoice(std::move(predicate));
 
-    auto body = std::make_unique<CatchBody>(m_exception, block, driver);
+    auto body = std::make_unique<CatchBody>(&m_exception, block, driver);
     ctx.appendChoice(std::move(body));
 
     return {};
@@ -230,7 +239,6 @@ lyric_compiler::CatchWhen::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
-    TU_ASSIGN_OR_RETURN (m_exception->exceptionExit, m_exception->fragment->unconditionalJump());
     return {};
 }
 
@@ -303,13 +311,14 @@ lyric_compiler::CatchUnpackPredicate::decide(
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
     lyric_typing::TypeSpec exceptionSpec;
     TU_ASSIGN_OR_RETURN (exceptionSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-    TU_ASSIGN_OR_RETURN (m_exception->exceptionType, typeSystem->resolveAssignable(block, exceptionSpec));
+    lyric_common::TypeDef exceptionType;
+    TU_ASSIGN_OR_RETURN (exceptionType, typeSystem->resolveAssignable(block, exceptionSpec));
 
     // allocate a fragment for the catch body
-    TU_ASSIGN_OR_RETURN (m_exception->fragment, checkHandle->declareException(m_exception->exceptionType));
+    TU_ASSIGN_OR_RETURN (m_exception->catchHandle, checkHandle->declareException(exceptionType));
 
-    auto unpack = std::make_unique<UnpackHandler>(m_exception->exceptionType, m_tryCatchFinally->caughtRef,
-        m_exception->fragment, m_exception->block.get(), driver);
+    auto unpack = std::make_unique<UnpackHandler>(exceptionType, m_tryCatchFinally->caughtRef,
+        m_exception->catchHandle->catchFragment(), m_exception->block.get(), driver);
     ctx.setGrouping(std::move(unpack));
 
     return {};
@@ -332,8 +341,8 @@ lyric_compiler::CatchBody::decide(
     DecideContext &ctx)
 {
     auto *driver = getDriver();
-    auto body = std::make_unique<FormChoice>(
-        FormType::SideEffect, m_exception->fragment, m_exception->block.get(), driver);
+    auto body = std::make_unique<FormChoice>(FormType::SideEffect,
+        m_exception->catchHandle->catchFragment(), m_exception->block.get(), driver);
     ctx.setChoice(std::move(body));
     return {};
 }

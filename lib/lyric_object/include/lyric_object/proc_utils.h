@@ -12,26 +12,26 @@ namespace lyric_object {
 
     /**
      * The size of the proc header in bytes. The proc header consists of:
-     *   numArguments:      uint16 (2 bytes)
-     *   numLocals:         uint16 (2 bytes)
-     *   numLexicals:       uint16 (2 bytes)
-     *   trailerSize:       uint32 (4 bytes)
+     *   num_arguments:     uint16 (2 bytes)
+     *   num_locals:        uint16 (2 bytes)
+     *   num_lexicals:      uint16 (2 bytes)
+     *   trailer_size:      uint32 (4 bytes)
      */
     constexpr tu_uint32 kProcHeaderSizeInBytes = 10;
 
     /**
      * The size of a proc lexical in bytes. A proc lexical consists of:
-     *   activationCall:    uint32 (4 bytes)
-     *   targetOffset:      uint32 (4 bytes)
-     *   lexicalTarget:     uint8 (1 byte)
+     *   activation_call:   uint32 (4 bytes)
+     *   target_offset:     uint32 (4 bytes)
+     *   lexical_target:    uint8 (1 byte)
      */
     constexpr tu_uint32 kProcLexicalSizeInBytes = 9;
 
     /**
      * The size of a proc trailer in bytes. A proc trailer consists of:
-     *   numChecks:         uint16 (2 bytes)
-     *   numExceptions:     uint16 (2 bytes)
-     *   numCleanups:       uint16 (2 bytes)
+     *   num_checks:        uint16 (2 bytes)
+     *   num_exceptions:    uint16 (2 bytes)
+     *   num_cleanups:      uint16 (2 bytes)
      */
     constexpr tu_uint32 kProcTrailerSizeInBytes = 6;
 
@@ -115,6 +115,11 @@ namespace lyric_object {
 
     tempo_utils::Status parse_proc_trailer(const ProcInfo &procInfo, TrailerInfo &trailerInfo);
 
+    tempo_utils::Status parse_checks_table(const TrailerInfo &trailerInfo, std::vector<ProcCheck> &checks);
+
+    tempo_utils::Status parse_exceptions_table(const TrailerInfo &trailerInfo, std::vector<ProcException> &exceptions);
+
+    tempo_utils::Status parse_cleanups_table(const TrailerInfo &trailerInfo, std::vector<ProcCleanup> &cleanups);
 }
 
 #endif // LYRIC_OBJECT_PROC_UTILS_H

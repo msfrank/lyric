@@ -11,7 +11,7 @@
 
 namespace lyric_runtime {
 
-    class CallCell {
+    class CallCell final {
 
     public:
         CallCell();
@@ -90,6 +90,11 @@ namespace lyric_runtime {
         void setRest(int index, const DataCell &cell);
         tu_uint16 numRest() const;
 
+        bool hasSavedIP() const;
+        lyric_object::BytecodeIterator getSavedIP() const;
+        void setSavedIP(const lyric_object::BytecodeIterator &ip);
+        bool clearSavedIP();
+
         std::string toString() const;
 
     private:
@@ -98,6 +103,7 @@ namespace lyric_runtime {
         tu_uint32 m_procOffset;
         tu_uint32 m_returnSegment;
         lyric_object::BytecodeIterator m_returnIP;
+        lyric_object::BytecodeIterator m_savedIP;
         bool m_returnsValue;
         int m_stackGuard;
         tu_uint16 m_numArguments;

@@ -6,6 +6,8 @@
 #include <lyric_symbolizer/symbolizer_scan_driver.h>
 #include <lyric_symbolizer/symbolizer_result.h>
 
+#include "lyric_assembler/call_symbol.h"
+
 lyric_symbolizer::SymbolizerScanDriver::SymbolizerScanDriver(
     lyric_assembler::ObjectRoot *root,
     lyric_assembler::ObjectState *state)
@@ -294,6 +296,13 @@ lyric_symbolizer::SymbolizerScanDriverBuilder::makeScanDriver()
     // define the object root
     lyric_assembler::ObjectRoot *root;
     TU_ASSIGN_OR_RETURN (root, m_state->defineRoot());
+
+    auto *entryCall = root->entryCall();
+    auto *entryProc = entryCall->callProc();
+    auto *entryFragment = entryProc->procFragment();
+
+    // symbolizer output is not meant to be executed
+    TU_RETURN_IF_NOT_OK (entryFragment->invokeAbort());
 
     auto driver = std::make_shared<SymbolizerScanDriver>(root, m_state.get());
 
