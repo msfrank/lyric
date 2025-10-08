@@ -12,6 +12,7 @@ namespace lyric_compiler {
         lyric_assembler::CleanupHandle *cleanupHandle = nullptr;
         lyric_assembler::CodeFragment *fragment = nullptr;
         lyric_assembler::DataReference caughtRef;
+        lyric_assembler::JumpLabel catchExit;
     };
 
     class TryHandler : public BaseGrouping {

@@ -45,30 +45,43 @@ lyric_compiler::RaiseHandler::after(
     //
     auto *fundamentalCache = driver->getFundamentalCache();
     auto StatusType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Status);
-
     auto *typeSystem = driver->getTypeSystem();
 
     // determine the result type
     lyric_common::TypeDef resultType;
-    if (resultOrStatusType.getType() == lyric_common::TypeDefType::Union) {
-        std::vector<lyric_common::TypeDef> resultMembers;
-        bool canReturnStatus = false;
-        for (const auto &memberType : resultOrStatusType.getUnionMembers()) {
+    switch (resultOrStatusType.getType()) {
+
+        case lyric_common::TypeDefType::Concrete: {
             bool isAssignable;
-            TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(StatusType, memberType));
-            if (isAssignable) {
-                canReturnStatus = true;
-            } else {
-                resultMembers.push_back(memberType);
-            }
+            TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(StatusType, resultOrStatusType));
+            if (!isAssignable)
+                return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
+                    "incompatible operand type {} for raise expression", resultOrStatusType.toString());
+            break;
         }
-        if (!canReturnStatus || resultMembers.empty())
+
+        case lyric_common::TypeDefType::Union: {
+            std::vector<lyric_common::TypeDef> resultMembers;
+            bool canReturnStatus = false;
+            for (const auto &memberType : resultOrStatusType.getUnionMembers()) {
+                bool isAssignable;
+                TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(StatusType, memberType));
+                if (isAssignable) {
+                    canReturnStatus = true;
+                } else {
+                    resultMembers.push_back(memberType);
+                }
+            }
+            if (!canReturnStatus || resultMembers.empty())
+                return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
+                    "incompatible operand type {} for raise expression", resultOrStatusType.toString());
+            TU_ASSIGN_OR_RETURN (resultType, lyric_common::TypeDef::forUnion(resultMembers));
+            break;
+        }
+
+        default:
             return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
-                "incompatible operand type {} for expect expression", resultOrStatusType.toString());
-        TU_ASSIGN_OR_RETURN (resultType, lyric_common::TypeDef::forUnion(resultMembers));
-    } else {
-        return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
-            "incompatible operand type {} for expect expression", resultOrStatusType.toString());
+                "incompatible operand type {} for raise expression", resultOrStatusType.toString());
     }
 
     // add Status as an exit type for the proc

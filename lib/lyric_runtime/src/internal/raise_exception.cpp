@@ -77,15 +77,12 @@ lyric_runtime::internal::raise_exception(
         return InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "no handler found for exception");
 
-    // otherwise construct iterator spanning the exception catch code
+    // otherwise construct a new iterator starting at the exception catch and transfer control
     auto &exception = exceptions.at(exception_match);
-    auto *catch_start = segment->getBytecodeData() + call.getProcOffset() + exception.catch_offset;
-    lyric_object::BytecodeIterator exceptionIP(catch_start, exception.catch_size);
-    TU_ASSERT (exceptionIP.isValid());
-
-    // save the current IP and transfer control to the exception catch
-    frame->setSavedIP(currentCoro->peekIP());
-    currentCoro->transferControl(exceptionIP);
+    auto ip = currentCoro->peekIP();
+    ip.reset(exception.catch_offset);
+    TU_ASSERT (ip.isValid());
+    currentCoro->transferControl(ip);
 
     return {};
 }

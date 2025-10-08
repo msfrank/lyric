@@ -15,14 +15,18 @@ namespace lyric_assembler {
             ObjectState *state);
 
         lyric_common::TypeDef getExceptionType() const;
+        JumpTarget getResumeTarget() const;
 
         CodeFragment *catchFragment() const;
         ObjectState *objectState() const;
+
+        tempo_utils::Status finalizeCatch();
 
     private:
         lyric_common::TypeDef m_exceptionType;
         CodeFragment *m_fragment;
         ObjectState *m_state;
+        JumpTarget m_resumeTarget;
     };
 }
 

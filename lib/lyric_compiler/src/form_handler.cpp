@@ -26,6 +26,7 @@
 #include <lyric_compiler/new_handler.h>
 #include <lyric_compiler/raise_handler.h>
 #include <lyric_compiler/symbol_deref_handler.h>
+#include <lyric_compiler/try_handler.h>
 #include <lyric_compiler/typename_handler.h>
 #include <lyric_compiler/type_utils.h>
 #include <lyric_compiler/unary_operation_handler.h>
@@ -209,6 +210,7 @@ node_is_valid_for_phrase(
         case lyric_schema::LyricAstId::If:
         case lyric_schema::LyricAstId::While:
         case lyric_schema::LyricAstId::For:
+        case lyric_schema::LyricAstId::Try:
         case lyric_schema::LyricAstId::Return:
         case lyric_schema::LyricAstId::ImportModule:
         case lyric_schema::LyricAstId::ImportSymbols:
@@ -399,6 +401,14 @@ lyric_compiler::FormChoice::decide(
         // match form
         case lyric_schema::LyricAstId::Match: {
             auto handler = std::make_unique<MatchHandler>(
+                isSideEffect, m_fragment, block, driver);
+            ctx.setGrouping(std::move(handler));
+            break;
+        }
+
+        // try form
+        case lyric_schema::LyricAstId::Try: {
+            auto handler = std::make_unique<TryHandler>(
                 isSideEffect, m_fragment, block, driver);
             ctx.setGrouping(std::move(handler));
             break;

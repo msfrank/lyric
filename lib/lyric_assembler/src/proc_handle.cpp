@@ -351,6 +351,7 @@ lyric_assembler::ProcHandle::touch(ObjectWriter &writer) const
     TU_RETURN_IF_NOT_OK (m_fragment->touch(writer));
     for (const auto &entry : m_catches) {
         auto &catchHandle = entry.second;
+        TU_RETURN_IF_NOT_OK (writer.touchType(catchHandle->getExceptionType()));
         auto *catchFragment = catchHandle->catchFragment();
         TU_RETURN_IF_NOT_OK (catchFragment->touch(writer));
     }
@@ -358,7 +359,7 @@ lyric_assembler::ProcHandle::touch(ObjectWriter &writer) const
 }
 
 inline tempo_utils::Status
-validate_fragment(const std::unique_ptr<lyric_assembler::CodeFragment> &fragment)
+validate_fragment(const lyric_assembler::CodeFragment *fragment)
 {
     TU_ASSERT (fragment != nullptr);
 
@@ -396,7 +397,7 @@ lyric_assembler::ProcHandle::build(
     absl::flat_hash_map<tu_uint32,tu_uint16> patchOffsets;
 
     // ensure fragment is valid
-    TU_RETURN_IF_NOT_OK (validate_fragment(m_fragment));
+    TU_RETURN_IF_NOT_OK (validate_fragment(m_fragment.get()));
 
     // write the main bytecode
     TU_RETURN_IF_NOT_OK (m_fragment->build(writer, bytecodeBuilder, labelOffsets, patchOffsets));
@@ -405,19 +406,26 @@ lyric_assembler::ProcHandle::build(
     std::vector<lyric_object::ProcException> exceptions;
     std::vector<lyric_object::ProcCleanup> cleanups;
 
-    // write each catch
-    for (const auto &entry : m_catches) {
-        auto &catchFragment = entry.first;
-        auto &catchHandle = entry.second;
-        TU_RETURN_IF_NOT_OK (validate_fragment(catchFragment));
-        lyric_object::ProcException exception;
-        TU_ASSIGN_OR_RETURN (exception.exception_type, writer.getTypeOffset(catchHandle->getExceptionType()));
-        TU_RETURN_IF_NOT_OK (bytecodeBuilder.writeOpcode(lyric_object::Opcode::OP_ABORT));
-        exception.catch_offset = bytecodeBuilder.bytecodeSize();
-        TU_RETURN_IF_NOT_OK (catchFragment->build(writer, bytecodeBuilder, labelOffsets, patchOffsets));
-        auto endExclusive = bytecodeBuilder.bytecodeSize();
-        exception.catch_size = endExclusive - exception.catch_offset;
-        exceptions.push_back(exception);
+    // declare each check
+    for (const auto &checkHandle : m_checks) {
+        lyric_object::ProcCheck check;
+        check.first_exception = exceptions.size();
+        check.num_exceptions = checkHandle->numExceptions();
+        checks.push_back(check);
+
+        // define each catch
+        for (auto it = checkHandle->exceptionsBegin(); it != checkHandle->exceptionsEnd(); it++) {
+            auto *catchHandle = it->second;
+            auto *catchFragment = catchHandle->catchFragment();
+            lyric_object::ProcException exception;
+            TU_RETURN_IF_NOT_OK (validate_fragment(catchFragment));
+            TU_ASSIGN_OR_RETURN (exception.exception_type, writer.getTypeOffset(catchHandle->getExceptionType()));
+            exception.catch_offset = bytecodeBuilder.bytecodeSize();
+            TU_RETURN_IF_NOT_OK (catchFragment->build(writer, bytecodeBuilder, labelOffsets, patchOffsets));
+            auto endExclusive = bytecodeBuilder.bytecodeSize();
+            exception.catch_size = endExclusive - exception.catch_offset;
+            exceptions.push_back(exception);
+        }
     }
 
     TU_LOG_VV << "label targets:";
@@ -442,6 +450,21 @@ lyric_assembler::ProcHandle::build(
             return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                 "missing label '{}' for patch target {}", jumpLabel, targetId);
         TU_RETURN_IF_NOT_OK (bytecodeBuilder.patch(patchOffset, labelOffset->second));
+    }
+
+    // finish defining each check
+    for (int i = 0; i < checks.size(); i++) {
+        auto &check = checks.at(i);
+        auto &checkHandle = m_checks.at(i);
+        check.parent_check = 0; // FIXME
+        auto startInclusive = checkHandle->getStartInclusive();
+        TU_ASSERT (startInclusive.isValid());
+        auto endExclusive = checkHandle->getEndexclusive();
+        TU_ASSERT (endExclusive.isValid());
+        auto startOffset = labelOffsets.find(startInclusive.getLabel());
+        check.interval_offset = startOffset->second;
+        auto endOffset = labelOffsets.find(endExclusive.getLabel());
+        check.interval_size = endOffset->second - check.interval_offset;
     }
 
     // build the trailer if needed

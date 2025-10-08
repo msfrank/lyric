@@ -23,6 +23,7 @@ set(TEST_CASES
     compile_match_tests.cpp
     compile_namespace_tests.cpp
     compile_new_tests.cpp
+    compile_try_tests.cpp
     compile_typename_tests.cpp
     compile_val_tests.cpp
     compile_var_tests.cpp

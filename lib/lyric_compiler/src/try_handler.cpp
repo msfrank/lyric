@@ -76,6 +76,19 @@ lyric_compiler::TryHandler::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
+    auto *fragment = m_tryCatchFinally.fragment;
+    auto *checkHandle = m_tryCatchFinally.checkHandle;
+    auto catchExit = m_tryCatchFinally.catchExit;
+
+    // patch catch resume targets
+    for (auto it = checkHandle->exceptionsBegin(); it != checkHandle->exceptionsEnd(); it++) {
+        auto *catchHandle = it->second;
+        auto resumeTarget = catchHandle->getResumeTarget();
+        if (resumeTarget.isValid()) {
+            TU_RETURN_IF_NOT_OK (fragment->patchTarget(resumeTarget, catchExit));
+        }
+    }
+
     // if try catch is not a side effect then push a NoReturn result
     if (!m_isSideEffect) {
         auto *driver = getDriver();
@@ -144,6 +157,8 @@ lyric_compiler::TryCatch::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
+    auto *fragment = m_tryCatchFinally->fragment;
+    TU_ASSIGN_OR_RETURN (m_tryCatchFinally->catchExit, fragment->appendLabel());
     return {};
 }
 
@@ -239,6 +254,8 @@ lyric_compiler::CatchWhen::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
+    auto *catchHandle = m_exception.catchHandle;
+    TU_RETURN_IF_NOT_OK (catchHandle->finalizeCatch());
     return {};
 }
 

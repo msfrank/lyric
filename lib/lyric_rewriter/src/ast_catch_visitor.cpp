@@ -14,7 +14,7 @@ lyric_rewriter::AstCatchVisitor::AstCatchVisitor(
 tempo_utils::Status
 lyric_rewriter::AstCatchVisitor::enter(lyric_parser::ArchetypeNode *node, VisitorContext &ctx)
 {
-    if (node->numChildren() < 2)
+    if (node->numChildren() == 0)
         return RewriterStatus::forCondition(RewriterCondition::kSyntaxError, "invalid Catch node");
 
     TU_RETURN_IF_NOT_OK (invokeEnter(m_astId, node, ctx));

@@ -16,6 +16,18 @@ lyric_assembler::CheckHandle::CheckHandle(
     TU_ASSERT (m_state != nullptr);
 }
 
+lyric_assembler::JumpLabel
+lyric_assembler::CheckHandle::getStartInclusive() const
+{
+    return m_startInclusive;
+}
+
+lyric_assembler::JumpLabel
+lyric_assembler::CheckHandle::getEndexclusive() const
+{
+    return m_endExclusive;
+}
+
 tempo_utils::Result<lyric_assembler::CatchHandle *>
 lyric_assembler::CheckHandle::declareException(const lyric_common::TypeDef &exceptionType)
 {
