@@ -1,10 +1,14 @@
 
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/check_handle.h>
+#include <lyric_assembler/fundamental_cache.h>
+#include <lyric_assembler/local_variable.h>
 #include <lyric_assembler/proc_handle.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <tempo_utils/bytes_appender.h>
 #include <tempo_utils/log_stream.h>
+
+#include "lyric_assembler/local_variable.h"
 
 /**
  * Allocate a new empty ProcHandle.  This is used during compilation to create
@@ -203,7 +207,14 @@ lyric_assembler::ProcHandle::numLexicals() const
 tempo_utils::Result<lyric_assembler::CheckHandle *>
 lyric_assembler::ProcHandle::declareCheck(const JumpLabel &checkStart)
 {
-    auto checkHandle = std::make_unique<CheckHandle>(checkStart, this, m_state);
+    auto *fundamentalCache = m_state->fundamentalCache();
+    auto StatusType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Status);
+
+    // declare a temporary to hold the raised exception
+    DataReference caughtRef;
+    TU_ASSIGN_OR_RETURN (caughtRef, m_block->declareTemporary(StatusType, /* isVariable= */ false));
+
+    auto checkHandle = std::make_unique<CheckHandle>(checkStart, caughtRef, this, m_state);
     auto *checkPtr = checkHandle.get();
     m_checks.push_back(std::move(checkHandle));
     return checkPtr;
@@ -387,6 +398,21 @@ validate_fragment(const lyric_assembler::CodeFragment *fragment)
     }
 }
 
+inline tempo_utils::Status
+get_caught_ref_local_offset(
+    const lyric_assembler::DataReference &caughtRef,
+    const lyric_assembler::ProcHandle *procHandle,
+    lyric_assembler::LocalOffset &localOffset)
+{
+    auto *state = procHandle->objectState();
+    auto *symbolCache = state->symbolCache();
+    auto *sym = symbolCache->getSymbolOrNull(caughtRef.symbolUrl);
+    TU_ASSERT (sym != nullptr && sym->getSymbolType() == lyric_assembler::SymbolType::LOCAL);
+    auto *localVariable = lyric_assembler::cast_symbol_to_local(sym);
+    localOffset = localVariable->getOffset();
+    return {};
+}
+
 tempo_utils::Status
 lyric_assembler::ProcHandle::build(
     const ObjectWriter &writer,
@@ -411,6 +437,10 @@ lyric_assembler::ProcHandle::build(
         lyric_object::ProcCheck check;
         check.first_exception = exceptions.size();
         check.num_exceptions = checkHandle->numExceptions();
+        LocalOffset caughtLocal;
+        TU_RETURN_IF_NOT_OK (get_caught_ref_local_offset(
+            checkHandle->getCaughtReference(), this, caughtLocal));
+        check.exception_local = caughtLocal.getOffset();
         checks.push_back(check);
 
         // define each catch
@@ -456,7 +486,6 @@ lyric_assembler::ProcHandle::build(
     for (int i = 0; i < checks.size(); i++) {
         auto &check = checks.at(i);
         auto &checkHandle = m_checks.at(i);
-        check.parent_check = 0; // FIXME
         auto startInclusive = checkHandle->getStartInclusive();
         TU_ASSERT (startInclusive.isValid());
         auto endExclusive = checkHandle->getEndexclusive();
@@ -478,9 +507,9 @@ lyric_assembler::ProcHandle::build(
         for (const auto &check : checks) {
             trailer.appendU32(check.interval_offset);
             trailer.appendU32(check.interval_size);
-            trailer.appendU16(check.parent_check);
             trailer.appendU16(check.first_exception);
             trailer.appendU16(check.num_exceptions);
+            trailer.appendU16(check.exception_local);
         }
 
         for (const auto &exception : exceptions) {

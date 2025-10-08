@@ -12,33 +12,55 @@ namespace lyric_object {
 
     /**
      * The size of the proc header in bytes. The proc header consists of:
-     *   num_arguments:     uint16 (2 bytes)
-     *   num_locals:        uint16 (2 bytes)
-     *   num_lexicals:      uint16 (2 bytes)
-     *   trailer_size:      uint32 (4 bytes)
+     *   num_arguments:     uint16
+     *   num_locals:        uint16
+     *   num_lexicals:      uint16
+     *   trailer_size:      uint32
      */
     constexpr tu_uint32 kProcHeaderSizeInBytes = 10;
 
     /**
      * The size of a proc lexical in bytes. A proc lexical consists of:
-     *   activation_call:   uint32 (4 bytes)
-     *   target_offset:     uint32 (4 bytes)
-     *   lexical_target:    uint8 (1 byte)
+     *   activation_call:   uint32
+     *   target_offset:     uint32
+     *   lexical_target:    uint8
      */
     constexpr tu_uint32 kProcLexicalSizeInBytes = 9;
 
     /**
      * The size of a proc trailer in bytes. A proc trailer consists of:
-     *   num_checks:        uint16 (2 bytes)
-     *   num_exceptions:    uint16 (2 bytes)
-     *   num_cleanups:      uint16 (2 bytes)
+     *   num_checks:        uint16
+     *   num_exceptions:    uint16
+     *   num_cleanups:      uint16
      */
     constexpr tu_uint32 kProcTrailerSizeInBytes = 6;
 
+    /**
+     * The size of a proc check in bytes. A proc check consists of:
+     *   interval_offset:   uint32
+     *   interval_size:     uint32
+     *   first_exception:   uint16
+     *   num_exceptions:    uint16
+     *   exception_local:   uint16
+    */
     constexpr tu_uint32 kProcCheckSizeInBytes = 14;
 
+    /**
+     * The size of a proc exception in bytes. A proc exception consists of:
+     *   exception_type:    uint32
+     *   catch_offset:      uint32
+     *   catch_size:        uint32
+    */
     constexpr tu_uint32 kProcExceptionSizeInBytes = 12;
 
+    /**
+     * The size of a proc cleanup in bytes. A proc cleanup consists of:
+     *   interval_offset:   uint32
+     *   interval_size:     uint32
+     *   parent_cleanup:    uint16
+     *   cleanup_offset:    uint32
+     *   cleanup_size:      uint32
+    */
     constexpr tu_uint32 kProcCleanupSizeInBytes = 18;
 
     /**
@@ -82,9 +104,9 @@ namespace lyric_object {
     struct ProcCheck {
         tu_uint32 interval_offset;      /**< offset from the start of the bytecode marking the start of the interval. */
         tu_uint32 interval_size;        /**< the size of the interval in bytes. */
-        tu_uint16 parent_check;         /**< index of the enclosing check, otherwise invalid offset if there is no parent. */
         tu_uint16 first_exception;      /**< index of the first exception to check. */
         tu_uint16 num_exceptions;       /**< the number of exceptions associated with the check. */
+        tu_uint16 exception_local;      /**< offset of the local variable in the proc where the exception ref should be stored. */
     };
 
     /**

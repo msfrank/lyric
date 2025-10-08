@@ -183,9 +183,9 @@ lyric_object::parse_checks_table(const TrailerInfo &trailerInfo, std::vector<Pro
         ProcCheck &check = checks.at(i);
         check.interval_offset = tempo_utils::read_u32_and_advance(ptr);
         check.interval_size = tempo_utils::read_u32_and_advance(ptr);
-        check.parent_check = tempo_utils::read_u16_and_advance(ptr);
         check.first_exception = tempo_utils::read_u16_and_advance(ptr);
         check.num_exceptions = tempo_utils::read_u16_and_advance(ptr);
+        check.exception_local = tempo_utils::read_u16_and_advance(ptr);
         nleft -= kProcCheckSizeInBytes;
     }
 

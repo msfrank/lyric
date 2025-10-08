@@ -31,7 +31,6 @@ lyric_compiler::TryHandler::before(
 {
     auto *block = getBlock();
     auto *driver = getDriver();
-    auto *fundamentalCache = driver->getFundamentalCache();
     auto *procHandle = block->blockProc();
     auto *fragment = m_tryCatchFinally.fragment;
 
@@ -46,12 +45,6 @@ lyric_compiler::TryHandler::before(
 
     // declare the check
     TU_ASSIGN_OR_RETURN (m_tryCatchFinally.checkHandle, procHandle->declareCheck(checkStart));
-
-    // exception must derive from Status
-    auto StatusType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Status);
-
-    // declare a temporary to hold the raised exception
-    TU_ASSIGN_OR_RETURN (m_tryCatchFinally.caughtRef, block->declareTemporary(StatusType, /* isVariable= */ false));
 
     // compile the try block
     auto tryBlock = std::make_unique<FormChoice>(FormType::SideEffect, fragment, block, driver);
@@ -334,7 +327,7 @@ lyric_compiler::CatchUnpackPredicate::decide(
     // allocate a fragment for the catch body
     TU_ASSIGN_OR_RETURN (m_exception->catchHandle, checkHandle->declareException(exceptionType));
 
-    auto unpack = std::make_unique<UnpackHandler>(exceptionType, m_tryCatchFinally->caughtRef,
+    auto unpack = std::make_unique<UnpackHandler>(exceptionType, checkHandle->getCaughtReference(),
         m_exception->catchHandle->catchFragment(), m_exception->block.get(), driver);
     ctx.setGrouping(std::move(unpack));
 

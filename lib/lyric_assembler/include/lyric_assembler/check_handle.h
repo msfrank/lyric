@@ -10,10 +10,15 @@ namespace lyric_assembler {
 
     class CheckHandle {
     public:
-        CheckHandle(const JumpLabel &startInclusive, ProcHandle *procHandle, ObjectState *state);
+        CheckHandle(
+            const JumpLabel &startInclusive,
+            const DataReference &caughtRef,
+            ProcHandle *procHandle,
+            ObjectState *state);
 
         JumpLabel getStartInclusive() const;
         JumpLabel getEndexclusive() const;
+        DataReference getCaughtReference() const;
 
         tempo_utils::Result<CatchHandle *> declareException(const lyric_common::TypeDef &exceptionType);
         absl::flat_hash_map<lyric_common::TypeDef,CatchHandle *>::const_iterator exceptionsBegin() const;
@@ -25,6 +30,7 @@ namespace lyric_assembler {
     private:
         JumpLabel m_startInclusive;
         JumpLabel m_endExclusive;
+        DataReference m_caughtRef;
         ProcHandle *m_procHandle;
         absl::flat_hash_map<lyric_common::TypeDef,CatchHandle *> m_exceptions;
         ObjectState *m_state;

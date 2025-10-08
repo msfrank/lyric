@@ -11,7 +11,6 @@ namespace lyric_compiler {
         lyric_assembler::CheckHandle *checkHandle = nullptr;
         lyric_assembler::CleanupHandle *cleanupHandle = nullptr;
         lyric_assembler::CodeFragment *fragment = nullptr;
-        lyric_assembler::DataReference caughtRef;
         lyric_assembler::JumpLabel catchExit;
     };
 

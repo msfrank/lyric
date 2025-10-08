@@ -15,6 +15,7 @@ lyric_runtime::internal::raise_exception(
     std::vector<lyric_object::ProcCheck> checks;
     std::vector<lyric_object::ProcException> exceptions;
     lyric_object::CallWalker call;
+    int check_match = -1;
     int exception_match = -1;
 
     // get the runtime type of the exception
@@ -53,6 +54,7 @@ lyric_runtime::internal::raise_exception(
                     switch (cmp) {
                         case TypeComparison::EQUAL:
                         case TypeComparison::EXTENDS:
+                            check_match = i;
                             exception_match = check.first_exception + j;
                             break;
                         default:
@@ -77,7 +79,11 @@ lyric_runtime::internal::raise_exception(
         return InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "no handler found for exception");
 
-    // otherwise construct a new iterator starting at the exception catch and transfer control
+    // store the exception ref in the assigned local variable
+    auto &check = checks.at(check_match);
+    frame->setLocal(check.exception_local, exc);
+
+    // construct a new iterator starting at the exception catch and transfer control
     auto &exception = exceptions.at(exception_match);
     auto ip = currentCoro->peekIP();
     ip.reset(exception.catch_offset);

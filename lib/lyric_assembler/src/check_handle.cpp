@@ -5,13 +5,16 @@
 
 lyric_assembler::CheckHandle::CheckHandle(
     const JumpLabel &startInclusive,
+    const DataReference &caughtRef,
     ProcHandle *procHandle,
     ObjectState *state)
     : m_startInclusive(startInclusive),
+      m_caughtRef(caughtRef),
       m_procHandle(procHandle),
       m_state(state)
 {
     TU_ASSERT (m_startInclusive.isValid());
+    TU_ASSERT (m_caughtRef.referenceType == ReferenceType::Value);
     TU_ASSERT (m_procHandle != nullptr);
     TU_ASSERT (m_state != nullptr);
 }
@@ -26,6 +29,12 @@ lyric_assembler::JumpLabel
 lyric_assembler::CheckHandle::getEndexclusive() const
 {
     return m_endExclusive;
+}
+
+lyric_assembler::DataReference
+lyric_assembler::CheckHandle::getCaughtReference() const
+{
+    return m_caughtRef;
 }
 
 tempo_utils::Result<lyric_assembler::CatchHandle *>

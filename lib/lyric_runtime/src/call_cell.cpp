@@ -292,7 +292,7 @@ lyric_runtime::CallCell::getArgument(int index) const
 {
     if (0 <= index && index < m_numArguments)
         return m_data[index];
-    return DataCell();
+    return {};
 }
 
 void
@@ -313,7 +313,7 @@ lyric_runtime::CallCell::getRest(int index) const
 {
     if (0 <= index && index < m_numRest)
         return m_data[m_numArguments + index];
-    return DataCell();
+    return {};
 }
 
 void
@@ -334,14 +334,15 @@ lyric_runtime::CallCell::getLocal(int index) const
 {
     if (0 <= index && index < m_numLocals)
         return m_data[m_numArguments + m_numRest + index];
-    return DataCell();
+    return {};
 }
 
 void
 lyric_runtime::CallCell::setLocal(int index, const DataCell &cell)
 {
-    if (0 <= index && index < m_numLocals)
+    if (0 <= index && index < m_numLocals) {
         m_data[m_numArguments + m_numRest + index] = cell;
+    }
 }
 
 tu_uint16
@@ -355,7 +356,7 @@ lyric_runtime::CallCell::getLexical(int index) const
 {
     if (0 <= index && index < m_numLexicals)
         return m_data[m_numArguments + m_numRest + m_numLocals + index];
-    return DataCell();
+    return {};
 }
 
 void
