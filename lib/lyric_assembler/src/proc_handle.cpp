@@ -23,6 +23,7 @@ lyric_assembler::ProcHandle::ProcHandle(
       m_hasRestParameter(false),
       m_state(state),
       m_numLocals(0),
+      m_checkDepth(0),
       m_nextId(0)
 {
     TU_ASSERT (state != nullptr);
@@ -46,6 +47,7 @@ lyric_assembler::ProcHandle::ProcHandle(
       m_hasRestParameter(false),
       m_state(state),
       m_numLocals(0),
+      m_checkDepth(0),
       m_nextId(0)
 {
     TU_ASSERT (state != nullptr);
@@ -80,6 +82,7 @@ lyric_assembler::ProcHandle::ProcHandle(
       m_hasRestParameter(hasRestParameter),
       m_state(state),
       m_numLocals(0),
+      m_checkDepth(0),
       m_nextId(0)
 {
     TU_ASSERT (state != nullptr);
@@ -208,7 +211,7 @@ tempo_utils::Result<lyric_assembler::CheckHandle *>
 lyric_assembler::ProcHandle::declareCheck(const JumpLabel &checkStart)
 {
     auto *fundamentalCache = m_state->fundamentalCache();
-    auto StatusType = fundamentalCache->getFundamentalType(lyric_assembler::FundamentalSymbol::Status);
+    auto StatusType = fundamentalCache->getFundamentalType(FundamentalSymbol::Status);
 
     // declare a temporary to hold the raised exception
     DataReference caughtRef;
@@ -217,7 +220,29 @@ lyric_assembler::ProcHandle::declareCheck(const JumpLabel &checkStart)
     auto checkHandle = std::make_unique<CheckHandle>(checkStart, caughtRef, this, m_state);
     auto *checkPtr = checkHandle.get();
     m_checks.push_back(std::move(checkHandle));
+
+    if (m_checkStack.empty()) {
+        m_checkRoots.push_back(checkPtr);
+    } else {
+        auto *checkParent = m_checkStack.top();
+        checkParent->appendChild(checkPtr);
+    }
+    m_checkStack.push(checkPtr);
+
+    // maintain the maximum depth of the checks tree
+    m_checkDepth = std::max(m_checkDepth, (int) m_checkStack.size());
+
     return checkPtr;
+}
+
+tempo_utils::Status
+lyric_assembler::ProcHandle::popCheck()
+{
+    if (m_checkStack.empty())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "check stack is empty");
+    m_checkStack.pop();
+    return {};
 }
 
 int
@@ -227,13 +252,11 @@ lyric_assembler::ProcHandle::numChecks() const
 }
 
 tempo_utils::Result<lyric_assembler::CatchHandle *>
-lyric_assembler::ProcHandle::declareCatch(const lyric_common::TypeDef &exceptionType)
+lyric_assembler::ProcHandle::declareCatch(const JumpLabel &catchStart)
 {
-    auto fragment = m_fragment->makeFragment();
-    auto catchHandle = std::make_unique<CatchHandle>(exceptionType, fragment.get(), m_state);
+    auto catchHandle = std::make_unique<CatchHandle>(catchStart, m_state);
     auto *catchPtr = catchHandle.get();
-    std::pair entry(std::move(fragment), std::move(catchHandle));
-    m_catches.push_back(std::move(entry));
+    m_catches.push_back(std::move(catchHandle));
     return catchPtr;
 }
 
@@ -360,11 +383,8 @@ tempo_utils::Status
 lyric_assembler::ProcHandle::touch(ObjectWriter &writer) const
 {
     TU_RETURN_IF_NOT_OK (m_fragment->touch(writer));
-    for (const auto &entry : m_catches) {
-        auto &catchHandle = entry.second;
+    for (const auto &catchHandle : m_catches) {
         TU_RETURN_IF_NOT_OK (writer.touchType(catchHandle->getExceptionType()));
-        auto *catchFragment = catchHandle->catchFragment();
-        TU_RETURN_IF_NOT_OK (catchFragment->touch(writer));
     }
     return {};
 }
@@ -413,6 +433,37 @@ get_caught_ref_local_offset(
     return {};
 }
 
+static void
+build_check_level(
+    const lyric_assembler::CheckHandle *checkHandle,
+    int level,
+    std::vector<const lyric_assembler::CheckHandle *> &checkLevels)
+{
+    if (level < 0)
+        return;
+    if (level > 0) {
+        for (auto it = checkHandle->childrenBegin(); it != checkHandle->childrenEnd(); it++) {
+            build_check_level(*it, level - 1, checkLevels);
+        }
+    } else {
+        checkLevels.push_back(checkHandle);
+    }
+}
+
+inline void
+build_check_levels(
+    const std::vector<lyric_assembler::CheckHandle *> &checkRoots,
+    int checkDepth,
+    std::vector<const lyric_assembler::CheckHandle *> &checkLevels)
+{
+    while (checkDepth > 0) {
+        --checkDepth;
+        for (const auto *checkRoot : checkRoots) {
+            build_check_level(checkRoot, checkDepth, checkLevels);
+        }
+    }
+}
+
 tempo_utils::Status
 lyric_assembler::ProcHandle::build(
     const ObjectWriter &writer,
@@ -421,42 +472,16 @@ lyric_assembler::ProcHandle::build(
     lyric_object::BytecodeBuilder bytecodeBuilder;
     absl::flat_hash_map<std::string,tu_uint16> labelOffsets;
     absl::flat_hash_map<tu_uint32,tu_uint16> patchOffsets;
+    std::vector<const CheckHandle *> checkLevels;
+    std::vector<lyric_object::ProcCheck> checks;
+    std::vector<lyric_object::ProcException> exceptions;
+    std::vector<lyric_object::ProcCleanup> cleanups;
 
     // ensure fragment is valid
     TU_RETURN_IF_NOT_OK (validate_fragment(m_fragment.get()));
 
     // write the main bytecode
     TU_RETURN_IF_NOT_OK (m_fragment->build(writer, bytecodeBuilder, labelOffsets, patchOffsets));
-
-    std::vector<lyric_object::ProcCheck> checks;
-    std::vector<lyric_object::ProcException> exceptions;
-    std::vector<lyric_object::ProcCleanup> cleanups;
-
-    // declare each check
-    for (const auto &checkHandle : m_checks) {
-        lyric_object::ProcCheck check;
-        check.first_exception = exceptions.size();
-        check.num_exceptions = checkHandle->numExceptions();
-        LocalOffset caughtLocal;
-        TU_RETURN_IF_NOT_OK (get_caught_ref_local_offset(
-            checkHandle->getCaughtReference(), this, caughtLocal));
-        check.exception_local = caughtLocal.getOffset();
-        checks.push_back(check);
-
-        // define each catch
-        for (auto it = checkHandle->exceptionsBegin(); it != checkHandle->exceptionsEnd(); it++) {
-            auto *catchHandle = it->second;
-            auto *catchFragment = catchHandle->catchFragment();
-            lyric_object::ProcException exception;
-            TU_RETURN_IF_NOT_OK (validate_fragment(catchFragment));
-            TU_ASSIGN_OR_RETURN (exception.exception_type, writer.getTypeOffset(catchHandle->getExceptionType()));
-            exception.catch_offset = bytecodeBuilder.bytecodeSize();
-            TU_RETURN_IF_NOT_OK (catchFragment->build(writer, bytecodeBuilder, labelOffsets, patchOffsets));
-            auto endExclusive = bytecodeBuilder.bytecodeSize();
-            exception.catch_size = endExclusive - exception.catch_offset;
-            exceptions.push_back(exception);
-        }
-    }
 
     TU_LOG_VV << "label targets:";
     for (const auto &entry : m_labelTargets) {
@@ -482,18 +507,47 @@ lyric_assembler::ProcHandle::build(
         TU_RETURN_IF_NOT_OK (bytecodeBuilder.patch(patchOffset, labelOffset->second));
     }
 
-    // finish defining each check
-    for (int i = 0; i < checks.size(); i++) {
-        auto &check = checks.at(i);
-        auto &checkHandle = m_checks.at(i);
+    // build the check levels
+    build_check_levels(m_checkRoots, m_checkDepth, checkLevels);
+
+    // define each check
+    for (const auto &checkHandle : checkLevels) {
+        LocalOffset caughtLocal;
+        TU_RETURN_IF_NOT_OK (get_caught_ref_local_offset(
+            checkHandle->getCaughtReference(), this, caughtLocal));
+
         auto startInclusive = checkHandle->getStartInclusive();
         TU_ASSERT (startInclusive.isValid());
-        auto endExclusive = checkHandle->getEndexclusive();
+        auto endExclusive = checkHandle->getEndExclusive();
         TU_ASSERT (endExclusive.isValid());
         auto startOffset = labelOffsets.find(startInclusive.getLabel());
-        check.interval_offset = startOffset->second;
         auto endOffset = labelOffsets.find(endExclusive.getLabel());
+
+        lyric_object::ProcCheck check;
+        check.interval_offset = startOffset->second;
         check.interval_size = endOffset->second - check.interval_offset;
+        check.exception_local = caughtLocal.getOffset();
+        check.first_exception = exceptions.size();
+        check.num_exceptions = checkHandle->numCatches();
+        checks.push_back(check);
+
+        // define each catch
+        for (auto it = checkHandle->catchesBegin(); it != checkHandle->catchesEnd(); it++) {
+            auto *catchHandle = *it;
+
+            startInclusive = catchHandle->getStartInclusive();
+            TU_ASSERT (startInclusive.isValid());
+            endExclusive = catchHandle->getEndExclusive();
+            TU_ASSERT (endExclusive.isValid());
+            startOffset = labelOffsets.find(startInclusive.getLabel());
+            endOffset = labelOffsets.find(endExclusive.getLabel());
+
+            lyric_object::ProcException exception;
+            TU_ASSIGN_OR_RETURN (exception.exception_type, writer.getTypeOffset(catchHandle->getExceptionType()));
+            exception.catch_offset = startOffset->second;
+            exception.catch_size = endOffset->second - exception.catch_offset;
+            exceptions.push_back(exception);
+        }
     }
 
     // build the trailer if needed

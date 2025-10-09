@@ -17,13 +17,18 @@ namespace lyric_assembler {
             ObjectState *state);
 
         JumpLabel getStartInclusive() const;
-        JumpLabel getEndexclusive() const;
+        JumpLabel getEndExclusive() const;
         DataReference getCaughtReference() const;
 
-        tempo_utils::Result<CatchHandle *> declareException(const lyric_common::TypeDef &exceptionType);
-        absl::flat_hash_map<lyric_common::TypeDef,CatchHandle *>::const_iterator exceptionsBegin() const;
-        absl::flat_hash_map<lyric_common::TypeDef,CatchHandle *>::const_iterator exceptionsEnd() const;
-        int numExceptions() const;
+        tempo_utils::Result<CatchHandle *> declareCatch(const JumpLabel &startInclusive);
+        std::vector<CatchHandle *>::const_iterator catchesBegin() const;
+        std::vector<CatchHandle *>::const_iterator catchesEnd() const;
+        int numCatches() const;
+
+        void appendChild(CheckHandle *child);
+        std::vector<CheckHandle *>::const_iterator childrenBegin() const;
+        std::vector<CheckHandle *>::const_iterator childrenEnd() const;
+        int numChildren() const;
 
         tempo_utils::Status finalizeCheck(const JumpLabel &endExclusive);
 
@@ -32,7 +37,8 @@ namespace lyric_assembler {
         JumpLabel m_endExclusive;
         DataReference m_caughtRef;
         ProcHandle *m_procHandle;
-        absl::flat_hash_map<lyric_common::TypeDef,CatchHandle *> m_exceptions;
+        std::vector<CatchHandle *> m_catches;
+        std::vector<CheckHandle *> m_children;
         ObjectState *m_state;
     };
 }

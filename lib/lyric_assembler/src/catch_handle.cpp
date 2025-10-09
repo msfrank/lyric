@@ -1,17 +1,24 @@
 
 #include <lyric_assembler/catch_handle.h>
 
-lyric_assembler::CatchHandle::CatchHandle(
-    const lyric_common::TypeDef &exceptionType,
-    CodeFragment *fragment,
-    ObjectState *state)
-    : m_exceptionType(exceptionType),
-      m_fragment(std::move(fragment)),
+lyric_assembler::CatchHandle::CatchHandle(const JumpLabel &startInclusive, ObjectState *state)
+    : m_startInclusive(startInclusive),
       m_state(state)
 {
-    TU_ASSERT (m_exceptionType.isValid());
-    TU_ASSERT (m_fragment != nullptr);
+    TU_ASSERT (m_startInclusive.isValid());
     TU_ASSERT (m_state != nullptr);
+}
+
+lyric_assembler::JumpLabel
+lyric_assembler::CatchHandle::getStartInclusive() const
+{
+    return m_startInclusive;
+}
+
+lyric_assembler::JumpLabel
+lyric_assembler::CatchHandle::getEndExclusive() const
+{
+    return m_endExclusive;
 }
 
 lyric_common::TypeDef
@@ -20,16 +27,30 @@ lyric_assembler::CatchHandle::getExceptionType() const
     return m_exceptionType;
 }
 
+tempo_utils::Status
+lyric_assembler::CatchHandle::setExceptionType(const lyric_common::TypeDef &exceptionType)
+{
+    if (!exceptionType.isValid())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid catch exception type");
+    m_exceptionType = exceptionType;
+    return {};
+}
+
 lyric_assembler::JumpTarget
 lyric_assembler::CatchHandle::getResumeTarget() const
 {
     return m_resumeTarget;
 }
 
-lyric_assembler::CodeFragment *
-lyric_assembler::CatchHandle::catchFragment() const
+tempo_utils::Status
+lyric_assembler::CatchHandle::setResumeTarget(const JumpTarget &resumeTarget)
 {
-    return m_fragment;
+    if (!resumeTarget.isValid())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "invalid catch resume target");
+    m_resumeTarget = resumeTarget;
+    return {};
 }
 
 lyric_assembler::ObjectState *
@@ -39,29 +60,13 @@ lyric_assembler::CatchHandle::objectState() const
 }
 
 tempo_utils::Status
-lyric_assembler::CatchHandle::finalizeCatch()
+lyric_assembler::CatchHandle::finalizeCatch(const JumpLabel &endExclusive)
 {
-    auto numStatements = m_fragment->numStatements();
-    bool unfinished = true;
-
-    if (numStatements > 0) {
-        auto lastStatement = m_fragment->getStatement(numStatements - 1);
-        switch (lastStatement.instruction->getType()) {
-            case InstructionType::Jump:
-            case InstructionType::Return:
-            case InstructionType::Interrupt:
-            case InstructionType::Abort:
-            case InstructionType::Halt:
-                unfinished = false;
-                break;
-            default:
-                break;
-        }
-    }
-
-    if (unfinished) {
-        TU_ASSIGN_OR_RETURN (m_resumeTarget, m_fragment->unconditionalJump());
-    }
-
+    if (m_endExclusive.isValid())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "check handle is already finalized");
+    m_endExclusive = endExclusive;
+    TU_ASSERT (m_endExclusive.isValid());
     return {};
+
 }

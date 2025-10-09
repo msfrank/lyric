@@ -11,7 +11,8 @@ namespace lyric_compiler {
         lyric_assembler::CheckHandle *checkHandle = nullptr;
         lyric_assembler::CleanupHandle *cleanupHandle = nullptr;
         lyric_assembler::CodeFragment *fragment = nullptr;
-        lyric_assembler::JumpLabel catchExit;
+        lyric_assembler::JumpTarget checkExit;
+        lyric_assembler::JumpLabel afterCatch;
     };
 
     class TryHandler : public BaseGrouping {
@@ -146,6 +147,7 @@ namespace lyric_compiler {
     public:
         CatchBody(
             Exception *exception,
+            lyric_assembler::CodeFragment *fragment,
             lyric_assembler::BlockHandle *block,
             CompilerScanDriver *driver);
 
@@ -156,6 +158,7 @@ namespace lyric_compiler {
 
     private:
         Exception *m_exception;
+        lyric_assembler::CodeFragment *m_fragment;
     };
 
     class CatchElse : public BaseChoice {

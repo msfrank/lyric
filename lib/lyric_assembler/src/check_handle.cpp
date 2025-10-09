@@ -26,7 +26,7 @@ lyric_assembler::CheckHandle::getStartInclusive() const
 }
 
 lyric_assembler::JumpLabel
-lyric_assembler::CheckHandle::getEndexclusive() const
+lyric_assembler::CheckHandle::getEndExclusive() const
 {
     return m_endExclusive;
 }
@@ -38,33 +38,54 @@ lyric_assembler::CheckHandle::getCaughtReference() const
 }
 
 tempo_utils::Result<lyric_assembler::CatchHandle *>
-lyric_assembler::CheckHandle::declareException(const lyric_common::TypeDef &exceptionType)
+lyric_assembler::CheckHandle::declareCatch(const JumpLabel &startInclusive)
 {
-    if (m_exceptions.contains(exceptionType))
-        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
-            "exception handler for {} is already declared", exceptionType.toString());
-    CatchHandle *catchHandle;
-    TU_ASSIGN_OR_RETURN (catchHandle, m_procHandle->declareCatch(exceptionType));
-    m_exceptions[exceptionType] = catchHandle;
-    return catchHandle;
+    CatchHandle *catchPtr;
+    TU_ASSIGN_OR_RETURN (catchPtr, m_procHandle->declareCatch(startInclusive));
+    m_catches.push_back(catchPtr);
+    return catchPtr;
 }
 
-absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::CatchHandle *>::const_iterator
-lyric_assembler::CheckHandle::exceptionsBegin() const
+std::vector<lyric_assembler::CatchHandle *>::const_iterator
+lyric_assembler::CheckHandle::catchesBegin() const
 {
-    return m_exceptions.cbegin();
+    return m_catches.cbegin();
 }
 
-absl::flat_hash_map<lyric_common::TypeDef,lyric_assembler::CatchHandle *>::const_iterator
-lyric_assembler::CheckHandle::exceptionsEnd() const
+std::vector<lyric_assembler::CatchHandle *>::const_iterator
+lyric_assembler::CheckHandle::catchesEnd() const
 {
-    return m_exceptions.cend();
+    return m_catches.cend();
 }
 
 int
-lyric_assembler::CheckHandle::numExceptions() const
+lyric_assembler::CheckHandle::numCatches() const
 {
-    return m_exceptions.size();
+    return m_catches.size();
+}
+
+void
+lyric_assembler::CheckHandle::appendChild(CheckHandle *child)
+{
+    m_children.push_back(child);
+}
+
+std::vector<lyric_assembler::CheckHandle *>::const_iterator
+lyric_assembler::CheckHandle::childrenBegin() const
+{
+    return m_children.cbegin();
+}
+
+std::vector<lyric_assembler::CheckHandle *>::const_iterator
+lyric_assembler::CheckHandle::childrenEnd() const
+{
+    return m_children.cend();
+}
+
+int
+lyric_assembler::CheckHandle::numChildren() const
+{
+    return m_children.size();
 }
 
 tempo_utils::Status
@@ -74,5 +95,9 @@ lyric_assembler::CheckHandle::finalizeCheck(const JumpLabel &endExclusive)
         return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
             "check handle is already finalized");
     m_endExclusive = endExclusive;
+    TU_ASSERT (m_endExclusive.isValid());
+
+    TU_RETURN_IF_NOT_OK (m_procHandle->popCheck());
+
     return {};
 }

@@ -9,23 +9,26 @@ namespace lyric_assembler {
 
     class CatchHandle {
     public:
-        CatchHandle(
-            const lyric_common::TypeDef &exceptionType,
-            CodeFragment *fragment,
-            ObjectState *state);
+        CatchHandle(const JumpLabel &startInclusive, ObjectState *state);
+
+        JumpLabel getStartInclusive() const;
+        JumpLabel getEndExclusive() const;
 
         lyric_common::TypeDef getExceptionType() const;
-        JumpTarget getResumeTarget() const;
+        tempo_utils::Status setExceptionType(const lyric_common::TypeDef &exceptionType);
 
-        CodeFragment *catchFragment() const;
+        JumpTarget getResumeTarget() const;
+        tempo_utils::Status setResumeTarget(const JumpTarget &resumeTarget);
+
         ObjectState *objectState() const;
 
-        tempo_utils::Status finalizeCatch();
+        tempo_utils::Status finalizeCatch(const JumpLabel &endExclusive);
 
     private:
-        lyric_common::TypeDef m_exceptionType;
-        CodeFragment *m_fragment;
+        JumpLabel m_startInclusive;
+        JumpLabel m_endExclusive;
         ObjectState *m_state;
+        lyric_common::TypeDef m_exceptionType;
         JumpTarget m_resumeTarget;
     };
 }

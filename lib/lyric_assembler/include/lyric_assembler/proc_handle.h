@@ -1,6 +1,8 @@
 #ifndef LYRIC_ASSEMBLER_PROC_HANDLE_H
 #define LYRIC_ASSEMBLER_PROC_HANDLE_H
 
+#include <stack>
+
 #include <lyric_common/symbol_url.h>
 #include <tempo_utils/bytes_appender.h>
 
@@ -95,7 +97,7 @@ namespace lyric_assembler {
         tempo_utils::Result<CheckHandle *> declareCheck(const JumpLabel &checkStart);
         int numChecks() const;
 
-        tempo_utils::Result<CatchHandle *> declareCatch(const lyric_common::TypeDef &exceptionType);
+        tempo_utils::Result<CatchHandle *> declareCatch(const JumpLabel &catchStart);
         int numCatches() const;
 
         tempo_utils::Result<CleanupHandle *> declareCleanup(const JumpLabel &cleanupStart);
@@ -131,7 +133,10 @@ namespace lyric_assembler {
         std::vector<ProcLexical> m_lexicals;
 
         std::vector<std::unique_ptr<CheckHandle>> m_checks;
-        std::vector<std::pair<std::unique_ptr<CodeFragment>,std::unique_ptr<CatchHandle>>> m_catches;
+        std::stack<CheckHandle *> m_checkStack;
+        std::vector<CheckHandle *> m_checkRoots;
+        int m_checkDepth;
+        std::vector<std::unique_ptr<CatchHandle>> m_catches;
         std::vector<std::unique_ptr<CleanupHandle>> m_cleanups;
 
         absl::flat_hash_set<lyric_common::TypeDef> m_exitTypes;
@@ -140,6 +145,9 @@ namespace lyric_assembler {
         absl::flat_hash_map<std::string, absl::flat_hash_set<tu_uint32>> m_labelTargets;
         absl::flat_hash_map<tu_uint32,std::string> m_jumpLabels;
 
+        friend class CheckHandle;
+
+        tempo_utils::Status popCheck();
     };
 }
 

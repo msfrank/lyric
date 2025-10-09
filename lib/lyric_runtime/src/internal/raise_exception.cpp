@@ -15,17 +15,26 @@ lyric_runtime::internal::raise_exception(
     std::vector<lyric_object::ProcCheck> checks;
     std::vector<lyric_object::ProcException> exceptions;
     lyric_object::CallWalker call;
-    int check_match = -1;
     int exception_match = -1;
+    int exception_local = -1;
 
     // get the runtime type of the exception
     DataCell excType;
     TU_ASSIGN_OR_RETURN (excType, typeManager->typeOf(exc));
 
-    while (!currentCoro->callStackEmpty()) {
-        TU_RETURN_IF_NOT_OK (currentCoro->peekCall(&frame));
+    // get the initial frame and the initial segment index
+    if (currentCoro->callStackEmpty())
+        return InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "no handler found for exception");
+    TU_RETURN_IF_NOT_OK (currentCoro->peekCall(&frame));
+    auto initialSegmentIndex = frame->getCallSegment();
 
+    for (;;) {
         auto segmentIndex = frame->getCallSegment();
+        if (segmentIndex != initialSegmentIndex)
+            return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                "exception cannot cross the segment boundary");
+
         segment = segmentManager->getSegment(segmentIndex);
         TU_ASSERT (segment != nullptr);
 
@@ -44,6 +53,7 @@ lyric_runtime::internal::raise_exception(
         // find the most specific exception entry in the current activation which matches the exception
         for (int i = 0; exception_match < 0 &&  i < checks.size(); i++) {
             const auto &check = checks.at(i);
+
             if (check.interval_offset <= op.offset && op.offset < (check.interval_offset + check.interval_size)) {
                 for (int j = 0; exception_match < 0 && j < check.num_exceptions; j++) {
                     const auto &exception = exceptions.at(check.first_exception + j);
@@ -54,7 +64,7 @@ lyric_runtime::internal::raise_exception(
                     switch (cmp) {
                         case TypeComparison::EQUAL:
                         case TypeComparison::EXTENDS:
-                            check_match = i;
+                            exception_local = check.exception_local;
                             exception_match = check.first_exception + j;
                             break;
                         default:
@@ -72,16 +82,12 @@ lyric_runtime::internal::raise_exception(
         tempo_utils::Status status;
         if (!subroutineManager->returnToCaller(currentCoro, status))
             return status;
+
+        TU_RETURN_IF_NOT_OK (currentCoro->peekCall(&frame));
     }
 
-    // if no catch handler was found then halt the interpreter
-    if (exception_match < 0)
-        return InterpreterStatus::forCondition(
-            InterpreterCondition::kRuntimeInvariant, "no handler found for exception");
-
     // store the exception ref in the assigned local variable
-    auto &check = checks.at(check_match);
-    frame->setLocal(check.exception_local, exc);
+    frame->setLocal(exception_local, exc);
 
     // construct a new iterator starting at the exception catch and transfer control
     auto &exception = exceptions.at(exception_match);

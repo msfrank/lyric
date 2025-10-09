@@ -85,3 +85,54 @@ TEST_F(CompileTry, EvaluateNestedTryCatchOuter)
     ASSERT_THAT (result, tempo_test::ContainsResult(
         RunModule(DataCellString("outer"))));
 }
+
+
+TEST_F(CompileTry, EvaluateRaiseNewExceptionInCatch)
+{
+    auto result = m_tester->runModule(R"(
+        var x: Int = 0
+        try {
+            set x += 1
+            try {
+                set x += 1
+                raise Internal{message="something failed"}
+            } catch {
+                when ex: Internal
+                  set x += 1
+                  raise Aborted{message="aborted"}
+            }
+        } catch {
+            when ex: Aborted
+              set x += 1
+        }
+        x
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(DataCellInt(4))));
+}
+
+TEST_F(CompileTry, EvaluateReraiseExceptionInCatch)
+{
+    auto result = m_tester->runModule(R"(
+        var x: Int = 0
+        try {
+            set x += 1
+            try {
+                set x += 1
+                raise Internal{message="something failed"}
+            } catch {
+                when ex: Internal
+                  set x += 1
+                  raise ex
+            }
+        } catch {
+            when ex: Internal
+              set x += 1
+        }
+        x
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(
+        RunModule(DataCellInt(4))));
+}
