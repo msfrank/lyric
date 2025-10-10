@@ -79,6 +79,7 @@ build_core_TupleNInstance(
     {
         lyric_object::BytecodeBuilder code;
         code.loadArgument(0);
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Unwrap", TupleUnwrapImpl,
             {
                 make_list_param("wrapped", TupleNClass->classType),

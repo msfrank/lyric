@@ -37,6 +37,7 @@ build_core_UrlInstance(
     {
         lyric_object::BytecodeBuilder code;
         state.writeTrap(code, "UrlEquals");
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Equals", UrlEqualityImpl,
             {
                 make_list_param("lhs", UrlType),

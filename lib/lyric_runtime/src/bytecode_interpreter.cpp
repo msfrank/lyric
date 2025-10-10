@@ -117,59 +117,9 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
         // read the next bytecode op
         lyric_object::OpCell op;
         bool iteratorExhausted = !currentCoro->nextOp(op);
-
-        // if iterator is exhausted then check for a saved IP in the current frame
-        if (iteratorExhausted) {
-            CallCell *frame;
-            TU_RETURN_IF_NOT_OK (currentCoro->peekCall(&frame));
-            if (frame->hasSavedIP()) {
-                auto savedIP = frame->getSavedIP();
-                currentCoro->transferControl(savedIP);
-                frame->clearSavedIP();
-                iteratorExhausted = !currentCoro->nextOp(op);
-            }
-        }
-
-        if (iteratorExhausted) {
-
-            // if there is no next op but there is a guard then we have reached the end of the current
-            // call but possibly not the end of the current task, so try returning to the caller
-            if (currentCoro->guardStackSize() > 0) {
-                tempo_utils::Status status;
-
-                // if we reached the call stack guard then pop the guard
-                bool reachedGuard = currentCoro->peekGuard() == currentCoro->callStackSize();
-                if (reachedGuard)
-                    currentCoro->popGuard();
-
-                // the end of the iterator means we return to the caller
-                if (subroutineManager->returnToCaller(currentCoro, status)) {
-                    // if we did not reach a guard then jump back to the top of the interpreter loop
-                    if (!reachedGuard)
-                        continue;
-                    // otherwise fall through
-                }
-
-                // if result is false and status is not ok, then return error
-                if (status.notOk())
-                    return status;
-            }
-
-            // at this point we know the current task is finished. we behave differently depending
-            // on whether the current task is the main task or a worker task.
-            Task *currentTask = systemScheduler->currentTask();
-
-            // if current task is the main task then halt
-            if (currentTask->isMainTask())
-                return onHalt(op);
-
-            // otherwise this is a worker task, get the result and terminate the task
-            systemScheduler->terminateTask(currentTask);
-
-            // clear the current coro and jump back to the top of the loop
-            currentCoro = nullptr;
-            continue;
-        }
+        if (iteratorExhausted)
+            return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                "no instruction available");
 
         // run inspector hook after processing op
         if (m_inspector) {
@@ -1223,10 +1173,14 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 if (!subroutineManager->returnToCaller(currentCoro, status)) {
                     if (status.notOk())
                         return onError(op, status);
+                    auto *currentTask = systemScheduler->currentTask();
                     // if we're executing the main task and we have no return address then halt
-                    if (systemScheduler->currentTask()->isMainTask())
+                    if (currentTask->isMainTask())
                         return onHalt(op);
-                    // otherwise we're executing a worker task, so we do nothing
+                    // otherwise this is a worker task so terminate the task
+                    systemScheduler->terminateTask(currentTask);
+                    // clear the current coro so we select the next ready task
+                    currentCoro = nullptr;
                     break;
                 }
                 // if the call stack is still valid and we reached a guard then return from the subinterpreter

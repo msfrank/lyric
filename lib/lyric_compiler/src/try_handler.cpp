@@ -157,6 +157,17 @@ lyric_compiler::TryCatch::after(
     const lyric_parser::ArchetypeNode *node,
     AfterContext &ctx)
 {
+    auto *driver = getDriver();
+    auto *checkHandle = m_tryCatchFinally->checkHandle;
+
+    // validate all exception types are disjoint
+    lyric_assembler::DisjointTypeSet typeSet(driver->getState());
+    for (auto it = checkHandle->catchesBegin(); it != checkHandle->catchesEnd(); it++) {
+        auto *catchHandle = *it;
+        auto exceptionType = catchHandle->getExceptionType();
+        TU_RETURN_IF_NOT_OK (typeSet.putType(exceptionType));
+    }
+
     auto *fragment = m_tryCatchFinally->fragment;
     TU_ASSIGN_OR_RETURN (m_tryCatchFinally->afterCatch, fragment->appendLabel(tempo_utils::generate_name("afterCatch.XXXXXXXX")));
     return {};

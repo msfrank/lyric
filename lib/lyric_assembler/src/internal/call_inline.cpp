@@ -60,6 +60,7 @@ lyric_assembler::internal::call_inline(
 
     absl::flat_hash_map<std::string,JumpLabel> labels;
     absl::flat_hash_map<tu_uint32,JumpTarget> targets;
+    std::vector<JumpTarget> exits;
 
     // copy instructions from src proc to dst proc
     for (auto it = srcFragment->statementsBegin(); it != srcFragment->statementsEnd(); it++) {
@@ -171,10 +172,27 @@ lyric_assembler::internal::call_inline(
                 break;
             }
 
+            case InstructionType::Return: {
+                // if return is the last statement in the proc then skip it
+                if (it + 1 == srcFragment->statementsEnd())
+                    break;
+                // otherwise rewrite as a jump to the end of the proc
+                JumpTarget exitTarget;
+                TU_ASSIGN_OR_RETURN (exitTarget, dstFragment->unconditionalJump());
+                exits.push_back(std::move(exitTarget));
+                break;
+            }
+
             default:
                 dstFragment->appendInstruction(statement.instruction);
                 break;
         }
+    }
+
+    // if any exit targets were created then create the exit label
+    JumpLabel exitLabel;
+    if (!exits.empty()) {
+        TU_ASSIGN_OR_RETURN (exitLabel, dstFragment->appendLabel());
     }
 
     // patch jump targets
@@ -184,6 +202,11 @@ lyric_assembler::internal::call_inline(
         auto srcLabel = srcProc->getLabelForTarget(srcTargetId);
         auto &dstLabel = labels.at(srcLabel);
         TU_RETURN_IF_NOT_OK (dstFragment->patchTarget(dstTarget, dstLabel));
+    }
+
+    // patch exit targets
+    for (const auto &exitTarget : exits) {
+        TU_RETURN_IF_NOT_OK (dstFragment->patchTarget(exitTarget, exitLabel));
     }
 
     return {};

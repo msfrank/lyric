@@ -58,6 +58,7 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.loadBool(true));
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("LessThan", CharComparisonImpl,
             {
                 make_list_param("lhs", CharType),
@@ -79,6 +80,7 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.loadBool(true));
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("GreaterThan", CharComparisonImpl,
             {
                 make_list_param("lhs", CharType),
@@ -100,6 +102,7 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.loadBool(true));
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("LessEquals", CharComparisonImpl,
             {
                 make_list_param("lhs", CharType),
@@ -121,6 +124,7 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.loadBool(true));
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("GreaterEquals", CharComparisonImpl,
             {
                 make_list_param("lhs", CharType),
@@ -142,6 +146,7 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.loadBool(true));
         TU_RAISE_IF_NOT_OK(code.makeLabel(nomatchSrc));
         TU_RAISE_IF_NOT_OK(code.patch(joinDst, nomatchSrc));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Equals", CharEqualityImpl,
             {
                 make_list_param("lhs", CharType),
@@ -154,6 +159,7 @@ build_core_CharInstance(
         TU_RAISE_IF_NOT_OK(code.loadArgument(0));
         TU_RAISE_IF_NOT_OK(code.loadArgument(1));
         TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_CHR_CMP));
+        TU_RAISE_IF_NOT_OK(code.writeOpcode(lyric_object::Opcode::OP_RETURN));
         state.addImplExtension("Compare", CharOrderedImpl,
             {
                 make_list_param("lhs", CharType),

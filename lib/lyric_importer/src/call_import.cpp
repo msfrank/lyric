@@ -480,26 +480,13 @@ lyric_importer::CallImport::load()
         lyric_object::ProcInfo procInfo;
         TU_ASSIGN_OR_RAISE (procInfo, callWalker.getProcInfo());
 
-        if (procInfo.num_locals != 0)
-            throw tempo_utils::StatusException(
-                ImporterStatus::forCondition(ImporterCondition::kImportError,
-                    "cannot import call at index {} in module {}; invalid inline proc",
-                    callWalker.getDescriptorOffset(), objectLocation.toString()));
         if (procInfo.num_lexicals != 0)
             throw tempo_utils::StatusException(
                 ImporterStatus::forCondition(ImporterCondition::kImportError,
-                    "cannot import call at index {} in module {}; invalid inline proc",
+                    "cannot import call at index {} in module {}; proc with lexicals cannot be inlined",
                     callWalker.getDescriptorOffset(), objectLocation.toString()));
-        lyric_object::BytecodeIterator ip(procInfo.code.data(), procInfo.code.size());
-        lyric_object::OpCell cell;
-        while (ip.getNext(cell)) {
-            if (cell.opcode == lyric_object::Opcode::OP_RETURN)
-                throw tempo_utils::StatusException(
-                    ImporterStatus::forCondition(ImporterCondition::kImportError,
-                        "cannot import call at index {} in module {}; invalid inline proc",
-                        callWalker.getDescriptorOffset(), objectLocation.toString()));
-        }
 
+        lyric_object::BytecodeIterator ip(procInfo.code.data(), procInfo.code.size());
         priv->inlineBytecode = std::vector(ip.getBase(), ip.getCanary());
     }
 
