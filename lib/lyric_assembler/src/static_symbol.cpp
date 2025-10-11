@@ -148,9 +148,6 @@ lyric_assembler::StaticSymbol::defineInitializer()
 
     auto *priv = getPriv();
 
-    lyric_common::SymbolPath path(m_staticUrl.getSymbolPath().getPath(), "$init");
-    lyric_common::SymbolUrl initializerUrl(path);
-
     if (priv->initializerHandle != nullptr)
         return AssemblerStatus::forCondition(AssemblerCondition::kSymbolAlreadyDefined,
             "initializer already defined for static {}", m_staticUrl.toString());

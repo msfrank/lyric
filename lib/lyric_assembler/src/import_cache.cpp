@@ -60,12 +60,9 @@ lyric_assembler::ImportCache::resolveImportLocation(const tempo_utils::Url &impo
     if (importLocation.isRelative() || importLocation.isWithinOrigin(origin))
         return origin.resolve(importLocation);
 
-    // any fields in the authority other than host are invalid
+    // otherwise the import url authority is a shortcut
     auto authority = importUrl.toAuthority();
-    if (authority.hasCredentials() || authority.hasPort())
-        return AssemblerStatus::forCondition(AssemblerCondition::kImportError,
-            "invalid shortcut for import location '{}'", importLocation.toString());
-    auto shortcut = authority.getHost();
+    auto shortcut = authority.toString();
 
     tempo_utils::Url urlBase;
     TU_ASSIGN_OR_RETURN (urlBase, m_shortcutResolver->resolveShortcut(shortcut));

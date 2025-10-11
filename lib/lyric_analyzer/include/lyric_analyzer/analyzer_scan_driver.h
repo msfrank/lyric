@@ -45,6 +45,7 @@ namespace lyric_analyzer {
         tempo_utils::Status pushEnum(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
         tempo_utils::Status pushInstance(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
         tempo_utils::Status pushStruct(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
+        tempo_utils::Status importSymbols(const lyric_parser::ArchetypeNode *node, lyric_assembler::BlockHandle *block);
 
     private:
         lyric_assembler::ObjectRoot *m_root;

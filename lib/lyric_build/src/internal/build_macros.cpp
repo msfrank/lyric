@@ -1,20 +1,19 @@
 
 #include <lyric_build/internal/build_macros.h>
+#include <lyric_assembler/assembler_macro_visitor.h>
 #include <lyric_assembler/internal/allocator_trap_macro.h>
 #include <lyric_assembler/internal/load_data_macro.h>
 #include <lyric_assembler/internal/opcode_macro.h>
 #include <lyric_assembler/internal/plugin_macro.h>
 #include <lyric_assembler/internal/store_data_macro.h>
 #include <lyric_assembler/internal/trap_macro.h>
+#include <lyric_compiler/compiler_macro_visitor.h>
+#include <lyric_compiler/internal/pop_result_macro.h>
 #include <lyric_compiler/internal/push_result_macro.h>
 #include <lyric_rewriter/lyric_rewriter.h>
 #include <lyric_rewriter/macro_registry.h>
-
-#include "lyric_assembler/assembler_macro_visitor.h"
-#include "lyric_assembler/internal/opcode_macro.h"
-#include "lyric_compiler/compiler_macro_visitor.h"
-#include "lyric_schema/assembler_schema.h"
-#include "lyric_schema/compiler_schema.h"
+#include <lyric_schema/assembler_schema.h>
+#include <lyric_schema/compiler_schema.h>
 
 tempo_utils::Result<std::shared_ptr<lyric_rewriter::MacroRegistry>>
 lyric_build::internal::make_build_macros()
@@ -133,6 +132,9 @@ lyric_build::internal::make_build_macros()
 
     macroRegistry->registerMacroName("PushResult", []() {
         return std::make_shared<lyric_compiler::internal::PushResultMacro>();
+    });
+    macroRegistry->registerMacroName("PopResult", []() {
+        return std::make_shared<lyric_compiler::internal::PopResultMacro>();
     });
 
     return macroRegistry;

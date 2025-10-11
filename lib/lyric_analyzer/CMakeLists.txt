@@ -15,6 +15,7 @@ set(LYRIC_ANALYZER_INCLUDES
     include/lyric_analyzer/entry_analyzer_context.h
     include/lyric_analyzer/enum_analyzer_context.h
     include/lyric_analyzer/impl_analyzer_context.h
+    include/lyric_analyzer/import_analyzer_context.h
     include/lyric_analyzer/instance_analyzer_context.h
     include/lyric_analyzer/lyric_analyzer.h
     include/lyric_analyzer/namespace_analyzer_context.h
@@ -31,6 +32,7 @@ target_sources(lyric_analyzer PRIVATE
     src/entry_analyzer_context.cpp
     src/enum_analyzer_context.cpp
     src/impl_analyzer_context.cpp
+    src/import_analyzer_context.cpp
     src/instance_analyzer_context.cpp
     src/lyric_analyzer.cpp
     src/namespace_analyzer_context.cpp

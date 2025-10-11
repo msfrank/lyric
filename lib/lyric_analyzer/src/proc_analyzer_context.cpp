@@ -31,6 +31,10 @@ lyric_analyzer::ProcAnalyzerContext::enter(
 
     auto astId = resource->getId();
     switch (astId) {
+        case lyric_schema::LyricAstId::ImportAll:
+        case lyric_schema::LyricAstId::ImportModule:
+        case lyric_schema::LyricAstId::ImportSymbols:
+            return m_driver->importSymbols(node, getBlock());
         case lyric_schema::LyricAstId::Def:
             return m_driver->pushFunction(node, getBlock());
         case lyric_schema::LyricAstId::DefClass:

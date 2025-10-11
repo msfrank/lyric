@@ -137,6 +137,8 @@ target_sources(lyric_compiler PRIVATE
     src/variable_handler.cpp
     src/visitor_context.cpp
 
+    include/lyric_compiler/internal/pop_result_macro.h
+    src/internal/pop_result_macro.cpp
     include/lyric_compiler/internal/push_result_macro.h
     src/internal/push_result_macro.cpp
     )

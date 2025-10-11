@@ -5,6 +5,7 @@
 #include <lyric_analyzer/concept_analyzer_context.h>
 #include <lyric_analyzer/entry_analyzer_context.h>
 #include <lyric_analyzer/enum_analyzer_context.h>
+#include <lyric_analyzer/import_analyzer_context.h>
 #include <lyric_analyzer/instance_analyzer_context.h>
 #include <lyric_analyzer/internal/analyzer_utils.h>
 #include <lyric_analyzer/namespace_analyzer_context.h>
@@ -550,6 +551,39 @@ lyric_analyzer::AnalyzerScanDriver::pushNamespace(
 
     // push the namespace context
     auto ctx = std::make_unique<NamespaceAnalyzerContext>(this, namespaceSymbol);
+    return pushContext(std::move(ctx));
+}
+
+tempo_utils::Status
+lyric_analyzer::AnalyzerScanDriver::importSymbols(
+    const lyric_parser::ArchetypeNode *node,
+    lyric_assembler::BlockHandle *block)
+{
+    tempo_utils::Url importLocation;
+    lyric_assembler::BlockHandle *importBlock;
+
+    if (m_namespaces.empty())
+        return AnalyzerStatus::forCondition(AnalyzerCondition::kAnalyzerInvariant,
+            "namespace stack is empty");
+    auto *currentNamespace = m_namespaces.top();
+
+    // resolve module to absolute location
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstImportLocation, importLocation));
+
+    // if identifier is present then declare a child namespace
+    if (node->hasAttr(lyric_parser::kLyricAstIdentifier)) {
+        std::string namespaceIdentifier;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, namespaceIdentifier));
+        lyric_assembler::NamespaceSymbol *importNamespace;
+        TU_ASSIGN_OR_RETURN (importNamespace, currentNamespace->declareSubspace(
+            namespaceIdentifier, /* isHidden= */ false));
+        importBlock = importNamespace->namespaceBlock();
+    } else {
+        importBlock = block;
+    }
+
+    // push the import context
+    auto ctx = std::make_unique<ImportAnalyzerContext>(this, importBlock, importLocation);
     return pushContext(std::move(ctx));
 }
 

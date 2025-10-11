@@ -25,7 +25,7 @@ TEST_F(AnalyzeNamespace, DeclareNamespace)
 
     auto analyzeModule = analyzeModuleResult.getResult();
     auto object = analyzeModule.getModule();
-    ASSERT_EQ (3, object.numSymbols());
+    ASSERT_EQ (4, object.numSymbols());
     ASSERT_EQ (2, object.numNamespaces());
 
     auto ns1 = object.getNamespace(1);
