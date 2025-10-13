@@ -1,14 +1,17 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+
 #include <absl/strings/str_split.h>
 
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/string_ref.h>
 #include <lyric_runtime/url_ref.h>
 #include <lyric_test/data_cell_matchers.h>
-#include <lyric_test/test_result.h>
+#include <tempo_utils/memory_bytes.h>
 #include <tempo_utils/unicode.h>
+
+#include "lyric_runtime/bytes_ref.h"
 
 lyric_test::matchers::DataCellMatcher::DataCellMatcher()
     : m_type(MatcherType::INVALID)
@@ -30,6 +33,12 @@ lyric_test::matchers::DataCellMatcher::DataCellMatcher(const std::string &str)
 lyric_test::matchers::DataCellMatcher::DataCellMatcher(const tempo_utils::Url &url)
     : m_type(MatcherType::DATA_CELL_URL),
       m_url(url)
+{
+}
+
+lyric_test::matchers::DataCellMatcher::DataCellMatcher(std::shared_ptr<const tempo_utils::ImmutableBytes> bytes)
+    : m_type(MatcherType::DATA_CELL_BYTES),
+      m_bytes(bytes)
 {
 }
 
@@ -89,6 +98,7 @@ lyric_test::matchers::DataCellMatcher::DataCellMatcher(const DataCellMatcher &ot
       m_cell(other.m_cell),
       m_str(other.m_str),
       m_url(other.m_url),
+      m_bytes(other.m_bytes),
       m_sym(other.m_sym)
 {
 }
@@ -119,6 +129,12 @@ lyric_test::matchers::DataCellMatcher::MatchAndExplain(
                 return false;
             return m_url == url;
         }
+        case MatcherType::DATA_CELL_BYTES: {
+            if (cell.type != lyric_runtime::DataCellType::BYTES)
+                return false;
+            std::span bytes(cell.data.bytes->getBytesData(), cell.data.bytes->getBytesSize());
+            return std::equal(bytes.begin(), bytes.end(), m_bytes->getSpan().begin());
+        }
         case MatcherType::DATA_CELL_SYMBOL: {
             if (cell.type != lyric_runtime::DataCellType::REF)
                 return false;
@@ -145,10 +161,13 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
             *os << m_cell.toString();
             break;
         case MatcherType::DATA_CELL_STRING:
-            *os << "cell contains string " << m_str;
+            *os << "cell contains string \"" << m_str << "\"";
             break;
         case MatcherType::DATA_CELL_URL:
             *os << "cell contains url " << m_url.toString();
+            break;
+        case MatcherType::DATA_CELL_BYTES:
+            *os << "cell contains bytes of length " << m_bytes->getSize();
             break;
         case MatcherType::DATA_CELL_SYMBOL:
             *os << "cell contains instance of " << m_sym.toString();
@@ -264,6 +283,24 @@ testing::Matcher<lyric_runtime::DataCell>
 lyric_test::matchers::DataCellUrl(std::string_view str)
 {
     return DataCellMatcher(tempo_utils::Url::fromString(str));
+}
+
+testing::Matcher<lyric_runtime::DataCell>
+lyric_test::matchers::DataCellBytes(std::string_view bytes)
+{
+    return DataCellMatcher(tempo_utils::MemoryBytes::copy(bytes));
+}
+
+testing::Matcher<lyric_runtime::DataCell>
+lyric_test::matchers::DataCellBytes(std::span<const tu_uint8> bytes)
+{
+    return DataCellMatcher(tempo_utils::MemoryBytes::copy(bytes));
+}
+
+testing::Matcher<lyric_runtime::DataCell>
+lyric_test::matchers::DataCellBytes(std::shared_ptr<const tempo_utils::ImmutableBytes> bytes)
+{
+    return DataCellMatcher(bytes);
 }
 
 testing::Matcher<lyric_runtime::DataCell>

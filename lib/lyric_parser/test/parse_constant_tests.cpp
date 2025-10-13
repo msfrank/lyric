@@ -38,6 +38,126 @@ TEST_F(ParseConstant, ParseDecimalInteger) {
     ASSERT_EQ (lyric_parser::NotationType::Integral, notation);
 }
 
+TEST_F(ParseConstant, ParseNegativeDecimalInteger) {
+
+    auto parseResult = parseModule(R"(
+        -123
+    )");
+
+    ASSERT_THAT (parseResult, tempo_test::IsResult());
+    auto archetype = parseResult.getResult();
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+
+    auto child1 = root.getChild(0);
+    ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstIntegerClass));
+    std::string literalValue;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
+    ASSERT_EQ ("-123", literalValue);
+    lyric_parser::BaseType base;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::BaseType::Decimal, base);
+    lyric_parser::NotationType notation;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::NotationType::Integral, notation);
+}
+
+TEST_F(ParseConstant, ParseDecimalFixedFloat) {
+
+    auto parseResult = parseModule(R"(
+        123.456
+    )");
+
+    ASSERT_THAT (parseResult, tempo_test::IsResult());
+    auto archetype = parseResult.getResult();
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+
+    auto child1 = root.getChild(0);
+    ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstFloatClass));
+    std::string literalValue;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
+    ASSERT_EQ ("123.456", literalValue);
+    lyric_parser::BaseType base;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::BaseType::Decimal, base);
+    lyric_parser::NotationType notation;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::NotationType::Fixed, notation);
+}
+
+TEST_F(ParseConstant, ParseNegativeDecimalFixedFloat) {
+
+    auto parseResult = parseModule(R"(
+        -123.456
+    )");
+
+    ASSERT_THAT (parseResult, tempo_test::IsResult());
+    auto archetype = parseResult.getResult();
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+
+    auto child1 = root.getChild(0);
+    ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstFloatClass));
+    std::string literalValue;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
+    ASSERT_EQ ("-123.456", literalValue);
+    lyric_parser::BaseType base;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::BaseType::Decimal, base);
+    lyric_parser::NotationType notation;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::NotationType::Fixed, notation);
+}
+
+TEST_F(ParseConstant, ParseDecimalScientificFloat) {
+
+    auto parseResult = parseModule(R"(
+        123.456e7
+    )");
+
+    ASSERT_THAT (parseResult, tempo_test::IsResult());
+    auto archetype = parseResult.getResult();
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+
+    auto child1 = root.getChild(0);
+    ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstFloatClass));
+    std::string literalValue;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
+    ASSERT_EQ ("123.456e7", literalValue);
+    lyric_parser::BaseType base;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::BaseType::Decimal, base);
+    lyric_parser::NotationType notation;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::NotationType::Scientific, notation);
+}
+
+TEST_F(ParseConstant, ParseNegativeDecimalScientificFloat) {
+
+    auto parseResult = parseModule(R"(
+        -123.456e7
+    )");
+
+    ASSERT_THAT (parseResult, tempo_test::IsResult());
+    auto archetype = parseResult.getResult();
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+
+    auto child1 = root.getChild(0);
+    ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstFloatClass));
+    std::string literalValue;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
+    ASSERT_EQ ("-123.456e7", literalValue);
+    lyric_parser::BaseType base;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::BaseType::Decimal, base);
+    lyric_parser::NotationType notation;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::NotationType::Scientific, notation);
+}
+
 TEST_F(ParseConstant, ParseHexInteger) {
 
     auto parseResult = parseModule(R"(
@@ -62,6 +182,30 @@ TEST_F(ParseConstant, ParseHexInteger) {
     ASSERT_EQ (lyric_parser::NotationType::Integral, notation);
 }
 
+TEST_F(ParseConstant, ParseNegativeHexInteger) {
+
+    auto parseResult = parseModule(R"(
+        -0x123
+    )");
+
+    ASSERT_THAT (parseResult, tempo_test::IsResult());
+    auto archetype = parseResult.getResult();
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+
+    auto child1 = root.getChild(0);
+    ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstIntegerClass));
+    std::string literalValue;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
+    ASSERT_EQ ("-123", literalValue);
+    lyric_parser::BaseType base;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::BaseType::Hex, base);
+    lyric_parser::NotationType notation;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::NotationType::Integral, notation);
+}
+
 TEST_F(ParseConstant, ParseOctalInteger) {
 
     auto parseResult = parseModule(R"(
@@ -78,6 +222,30 @@ TEST_F(ParseConstant, ParseOctalInteger) {
     std::string literalValue;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
     ASSERT_EQ ("123", literalValue);
+    lyric_parser::BaseType base;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::BaseType::Octal, base);
+    lyric_parser::NotationType notation;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstNotationType, notation), tempo_test::IsOk());
+    ASSERT_EQ (lyric_parser::NotationType::Integral, notation);
+}
+
+TEST_F(ParseConstant, ParseNegativeOctalInteger) {
+
+    auto parseResult = parseModule(R"(
+        -0o123
+    )");
+
+    ASSERT_THAT (parseResult, tempo_test::IsResult());
+    auto archetype = parseResult.getResult();
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+
+    auto child1 = root.getChild(0);
+    ASSERT_TRUE (child1.isClass(lyric_schema::kLyricAstIntegerClass));
+    std::string literalValue;
+    ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstLiteralValue, literalValue), tempo_test::IsOk());
+    ASSERT_EQ ("-123", literalValue);
     lyric_parser::BaseType base;
     ASSERT_THAT (child1.parseAttr(lyric_parser::kLyricAstBaseType, base), tempo_test::IsOk());
     ASSERT_EQ (lyric_parser::BaseType::Octal, base);

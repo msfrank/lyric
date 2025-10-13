@@ -477,17 +477,13 @@ equality            : equality IsEqOperator equality                            
                     | plusOrMinus                                                           # plusOrMinusRule
                     ;
 
-plusOrMinus         : plusOrMinus PlusOperator multOrDiv                                    # addExpression
-                    | plusOrMinus MinusOperator multOrDiv                                   # subExpression
-                    | multOrDiv                                                             # mulOrDivRule
+plusOrMinus         : plusOrMinus PlusOperator plusOrMinus                                  # addExpression
+                    | plusOrMinus MinusOperator plusOrMinus                                 # subExpression
+                    | starOrSlash                                                           # mulOrDivRule
                     ;
 
-multOrDiv           : multOrDiv StarOperator negation                                       # mulExpression
-                    | multOrDiv SlashOperator negation                                      # divExpression
-                    | negation                                                              # negationRule
-                    ;
-
-negation            : MinusOperator negation                                                # negExpression
+starOrSlash         : starOrSlash StarOperator starOrSlash                                  # mulExpression
+                    | starOrSlash SlashOperator starOrSlash                                 # divExpression
                     | symbol                                                                # symbolRule
                     ;
 
@@ -496,11 +492,15 @@ symbol              : HashOperator Identifier ( DotOperator Identifier)*        
                     ;
 
 typeof              : TypeOfKeyword assignableType                                          # typeofExpression
+                    | literalOrNeg                                                          # literalOrNegRule
+                    ;
+
+literalOrNeg        : derefLiteral derefSpec*                                               # literalExpression
+                    | MinusOperator literalOrNeg                                            # negExpression
                     | newOrDeref                                                            # newOrDerefRule
                     ;
 
-newOrDeref          : derefLiteral derefSpec*                                               # literalExpression
-                    | derefGrouping derefSpec*                                              # groupingExpression
+newOrDeref          : derefGrouping derefSpec*                                              # groupingExpression
                     | derefNew derefSpec*                                                   # newExpression
                     | thisSpec derefSpec*                                                   # thisExpression
                     | callSpec derefSpec*                                                   # callExpression
@@ -524,17 +524,18 @@ derefSpec           : DotOperator Identifier typeArguments? callArguments       
 
 literal             : numberLiteral | textLiteral | keywordLiteral ;
 
-decimalInteger          : DecimalInteger ;
-decimalFixedFloat       : DecimalFixedFloat ;
-decimalScientificFloat  : CoefficientLeadingPeriod DecimalExponent
-                        | CoefficientTrailingPeriod DecimalExponent
-                        | CoefficientNoPeriod DecimalExponent
+decimalInteger          : MinusOperator? DecimalInteger ;
+decimalFixedFloat       : MinusOperator? DecimalFixedFloat ;
+decimalScientificFloat  : MinusOperator? CoefficientLeadingPeriod DecimalExponent
+                        | MinusOperator? CoefficientWithPeriod DecimalExponent
+                        | MinusOperator? CoefficientNoPeriod DecimalExponent
                         ;
-hexInteger              : HexPrefix HexInteger ;
-hexFloat                : HexPrefix ( HexFloatTrailingPeriod | HexFloatLeadingPeriod | HexFloatNoPeriod );
-octalInteger            : OctPrefix OctalInteger ;
+hexInteger              : MinusOperator? HexPrefix HexInteger ;
+hexFloat                : MinusOperator? HexPrefix ( HexFloatTrailingPeriod | HexFloatLeadingPeriod | HexFloatNoPeriod );
+octalInteger            : MinusOperator? OctPrefix OctalInteger ;
+
 invalidNumber           : CoefficientLeadingPeriod InvalidExponent
-                        | CoefficientTrailingPeriod InvalidExponent
+                        | CoefficientWithPeriod InvalidExponent
                         | CoefficientNoPeriod InvalidExponent
                         | OctPrefix InvalidOctalLiteral
                         | HexPrefix InvalidHexLiteral

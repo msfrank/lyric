@@ -42,7 +42,7 @@ fragment
 ENotation                   : 'e'|'E' ;
 
 CoefficientLeadingPeriod    : '.' DecimalDigit+ ENotation -> pushMode(EXPONENT) ;
-CoefficientTrailingPeriod   : DecimalWholeNumber '.' DecimalDigit+ ENotation -> pushMode(EXPONENT) ;
+CoefficientWithPeriod       : DecimalWholeNumber '.' DecimalDigit* ENotation -> pushMode(EXPONENT) ;
 CoefficientNoPeriod         : DecimalWholeNumber ENotation -> pushMode(EXPONENT) ;
 DecimalFixedFloat           : DecimalWholeNumber '.' DecimalDigit* | '.' DecimalDigit+ ;
 DecimalInteger              : DecimalWholeNumber ;

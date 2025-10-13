@@ -463,9 +463,12 @@ lyric_runtime::SystemScheduler::registerRead(
     memset(req, 0, sizeof(uv_fs_t));
 
     auto ret = uv_fs_read(m_loop, req, file, &buf, 1, offset, on_read_complete);
-    if (ret < 0)
+    if (ret < 0) {
+        uv_fs_req_cleanup(req);
+        free(req);
         return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
             "failed to schedule read: {}", uv_strerror(ret));
+    }
 
     // allocate a new waiter
     auto *waiter = new Waiter(req);
@@ -483,6 +486,38 @@ lyric_runtime::SystemScheduler::registerRead(
     return {};
 }
 
+static void
+on_write_complete(uv_fs_t *req)
+{
+    auto *waiter = static_cast<lyric_runtime::Waiter *>(req->data);
+
+    // if there is a task associated with the waiter, then resume the suspended task.
+    // we do this before running the waiter callback so that there will be a coroutine
+    // available to the callback.
+    if (waiter->task) {
+        waiter->task->resume();
+    }
+
+    auto *state = static_cast<lyric_runtime::InterpreterState *>(req->loop->data);
+    auto *systemScheduler = state->systemScheduler();
+
+    // if the waiter has an attached promise, then run the accept callback
+    if (waiter->promise) {
+        auto promise = waiter->promise;
+        promise->accept(waiter, state);
+
+        // if the promise has an adapt callback, then schedule it to be called before the task resumes
+        if (promise->needsAdapt()) {
+            auto *task = waiter->task;
+            TU_ASSERT (task != nullptr);
+            task->appendPromise(promise);
+        }
+    }
+
+    // free the completed waiter
+    systemScheduler->destroyWaiter(waiter);
+}
+
 tempo_utils::Status
 lyric_runtime::SystemScheduler::registerWrite(
     uv_file file,
@@ -490,6 +525,33 @@ lyric_runtime::SystemScheduler::registerWrite(
     std::shared_ptr<Promise> promise,
     tu_int64 offset)
 {
+    TU_ASSERT (promise != nullptr);
+    TU_ASSERT (promise->getState() == Promise::State::Initial);
+
+    auto *req = (uv_fs_t *) malloc(sizeof(uv_fs_t));
+    memset(req, 0, sizeof(uv_fs_t));
+
+    auto ret = uv_fs_write(m_loop, req, file, &buf, 1, offset, on_write_complete);
+    if (ret < 0) {
+        uv_fs_req_cleanup(req);
+        free(req);
+        return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+            "failed to schedule write: {}", uv_strerror(ret));
+    }
+
+    // allocate a new waiter
+    auto *waiter = new Waiter(req);
+    waiter->promise = promise;
+
+    // link the waiter to the promise and set the promise state to Pending
+    promise->attach(waiter);
+
+    // link the waiter to the fs request
+    req->data = waiter;
+
+    // attach waiter to the end of the global waiters list
+    attachWaiter(waiter);
+
     return {};
 }
 

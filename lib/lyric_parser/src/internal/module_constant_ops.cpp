@@ -83,12 +83,11 @@ void
 lyric_parser::internal::ModuleConstantOps::parseDecimalInteger(ModuleParser::DecimalIntegerContext *ctx)
 {
     auto *state = getState();
-    auto *token = ctx->DecimalInteger()->getSymbol();
-    auto location = get_token_location(token);
+    auto location = get_token_location(ctx->getStart());
 
-    auto value = token->getText();
+    auto value = ctx->getText();
     if (value.empty()) {
-        throw SemanticException(token, "invalid decimal integer ''");
+        logErrorOrThrow(ctx->getStart(), "invalid decimal integer ''");
     }
 
     if (hasError())
@@ -106,12 +105,16 @@ void
 lyric_parser::internal::ModuleConstantOps::parseHexInteger(ModuleParser::HexIntegerContext *ctx)
 {
     auto *state = getState();
-    auto *token = ctx->HexInteger()->getSymbol();
-    auto location = get_token_location(token);
+    auto location = get_token_location(ctx->getStart());
 
-    auto value = token->getText();
+    std::string value;
+    if (ctx->MinusOperator() != nullptr) {
+        value.append("-");
+    }
+    value.append(ctx->HexInteger()->getText());
+
     if (value.empty()) {
-        throw SemanticException(token, "invalid hex integer ''");
+        logErrorOrThrow(ctx->getStart(), "invalid hex integer ''");
     }
 
     if (hasError())
@@ -129,12 +132,16 @@ void
 lyric_parser::internal::ModuleConstantOps::parseOctalInteger(ModuleParser::OctalIntegerContext *ctx)
 {
     auto *state = getState();
-    auto *token = ctx->OctalInteger()->getSymbol();
-    auto location = get_token_location(token);
+    auto location = get_token_location(ctx->getStart());
 
-    auto value = token->getText();
+    std::string value;
+    if (ctx->MinusOperator() != nullptr) {
+        value.append("-");
+    }
+    value.append(ctx->OctalInteger()->getText());
+
     if (value.empty()) {
-        throw SemanticException(token, "invalid octal integer ''");
+        logErrorOrThrow(ctx->getStart(), "invalid octal integer ''");
     }
 
     if (hasError())
@@ -152,12 +159,11 @@ void
 lyric_parser::internal::ModuleConstantOps::parseDecimalFixedFloat(ModuleParser::DecimalFixedFloatContext *ctx)
 {
     auto *state = getState();
-    auto *token = ctx->DecimalFixedFloat()->getSymbol();
-    auto location = get_token_location(token);
+    auto location = get_token_location(ctx->getStart());
 
-    auto value = token->getText();
+    auto value = ctx->getText();
     if (value.empty()) {
-        throw SemanticException(token, "invalid decimal fixed float ''");
+        logErrorOrThrow(ctx->getStart(), "invalid decimal fixed float ''");
     }
 
     if (hasError())
@@ -175,12 +181,11 @@ void
 lyric_parser::internal::ModuleConstantOps::parseDecimalScientificFloat(ModuleParser::DecimalScientificFloatContext *ctx)
 {
     auto *state = getState();
-    auto *token = ctx->getStart();
-    auto location = get_token_location(token);
+    auto location = get_token_location(ctx->getStart());
 
-    auto value = absl::StrCat(token->getText(), ctx->DecimalExponent()->getText());
+    auto value = ctx->getText();
     if (value.empty()) {
-        throw SemanticException(token, "invalid decimal scientific float ''");
+        logErrorOrThrow(ctx->getStart(), "invalid decimal scientific float ''");
     }
 
     if (hasError())
@@ -198,20 +203,27 @@ void
 lyric_parser::internal::ModuleConstantOps::parseHexFloat(ModuleParser::HexFloatContext *ctx)
 {
     auto *state = getState();
-    auto *token = ctx->getStart();
-    auto location = get_token_location(token);
+    auto location = get_token_location(ctx->getStart());
 
     std::string value;
-    if (ctx->HexFloatLeadingPeriod()) {
-        value = ctx->HexFloatLeadingPeriod()->getText();
-    } else if (ctx->HexFloatTrailingPeriod()) {
-        value = ctx->HexFloatTrailingPeriod()->getText();
-    } else if (ctx->HexFloatNoPeriod()) {
-        value = ctx->HexFloatNoPeriod()->getText();
+    if (ctx->MinusOperator() != nullptr) {
+        value.append("-");
     }
 
+    antlr4::tree::TerminalNode *term;
+    if (ctx->HexFloatLeadingPeriod()) {
+        term = ctx->HexFloatLeadingPeriod();
+    } else if (ctx->HexFloatTrailingPeriod()) {
+        term = ctx->HexFloatTrailingPeriod();
+    } else if (ctx->HexFloatNoPeriod()) {
+        term = ctx->HexFloatNoPeriod();
+    } else {
+        throw SemanticException(ctx->getStart(), "invalid hex float ''");
+    }
+    value.append(term->getText());
+
     if (value.empty()) {
-        throw SemanticException(token, "invalid hex float ''");
+        logErrorOrThrow(ctx->getStart(), "invalid hex float '{}'", ctx->getText());
     }
 
     if (hasError())
