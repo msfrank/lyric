@@ -1,6 +1,7 @@
 
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/compiler_utils.h>
+#include <lyric_compiler/new_handler.h>
 #include <lyric_compiler/variable_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
@@ -22,13 +23,41 @@ tempo_utils::Status
 lyric_compiler::VariableHandler::before(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::BeforeContext &ctx)
+    BeforeContext &ctx)
 {
     auto *block = getBlock();
     auto *driver = getDriver();
-    auto expression = std::make_unique<FormChoice>(
-        FormType::Expression, m_fragment, block, driver);
-    ctx.appendChoice(std::move(expression));
+
+    // resolve the declaration type if present
+    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
+        auto *typeSystem = driver->getTypeSystem();
+        lyric_parser::ArchetypeNode *typeNode;
+        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+        lyric_typing::TypeSpec typeSpec;
+        TU_ASSIGN_OR_RETURN (typeSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
+        TU_ASSIGN_OR_RETURN (m_typeHint, typeSystem->resolveAssignable(block, typeSpec));
+    }
+
+    if (node->numChildren() != 1)
+        return CompilerStatus::forCondition(
+            CompilerCondition::kCompilerInvariant, "invalid variable node");
+    auto *assignNode = node->getChild(0);
+
+    if (!assignNode->isNamespace(lyric_schema::kLyricAstNs))
+        return {};
+    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(assignNode->getIdValue());
+    auto astId = resource->getId();
+
+    if (astId == lyric_schema::LyricAstId::New) {
+        auto expression = std::make_unique<NewHandler>(
+            m_typeHint, /* isSideEffect= */ false, m_fragment, block, driver);
+        ctx.appendGrouping(std::move(expression));
+    } else {
+        auto expression = std::make_unique<FormChoice>(
+            FormType::Expression, m_fragment, block, driver);
+        ctx.appendChoice(std::move(expression));
+    }
+
     return {};
 }
 
@@ -36,7 +65,7 @@ tempo_utils::Status
 lyric_compiler::VariableHandler::after(
     const lyric_parser::ArchetypeState *state,
     const lyric_parser::ArchetypeNode *node,
-    lyric_compiler::AfterContext &ctx)
+    AfterContext &ctx)
 {
     auto *block = BaseGrouping::getBlock();
     auto *driver = getDriver();
@@ -48,35 +77,25 @@ lyric_compiler::VariableHandler::after(
     bool isHidden;
     TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
 
-    // resolve the declaration type if it is present
-    lyric_common::TypeDef declarationType;
-    if (node->hasAttr(lyric_parser::kLyricAstTypeOffset)) {
-        lyric_parser::ArchetypeNode *typeNode;
-        TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
-        lyric_typing::TypeSpec declarationSpec;
-        TU_ASSIGN_OR_RETURN (declarationSpec, typeSystem->parseAssignable(block, typeNode->getArchetypeNode()));
-        TU_ASSIGN_OR_RETURN (declarationType, typeSystem->resolveAssignable(block, declarationSpec));
-    }
-
     // pop the expression result type
     auto expressionType = driver->peekResult();
     TU_RETURN_IF_NOT_OK (driver->popResult());
 
     // if val type is not explicitly declared, then use the derived type
-    if (!declarationType.isValid()) {
-        declarationType = expressionType;
+    if (!m_typeHint.isValid()) {
+        m_typeHint = expressionType;
     }
 
     // val type was explicitly declared and is disjoint from rvalue type
     bool isAssignable;
-    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(declarationType, expressionType));
+    TU_ASSIGN_OR_RETURN (isAssignable, typeSystem->isAssignable(m_typeHint, expressionType));
     if (!isAssignable)
         return CompilerStatus::forCondition(CompilerCondition::kIncompatibleType,
             "expression {} is incompatible with declared type {}",
-            expressionType.toString(), declarationType.toString());
+            expressionType.toString(), m_typeHint.toString());
 
     lyric_assembler::DataReference var;
-    TU_ASSIGN_OR_RETURN (var, block->declareVariable(identifier, isHidden, declarationType, m_isVariable));
+    TU_ASSIGN_OR_RETURN (var, block->declareVariable(identifier, isHidden, m_typeHint, m_isVariable));
 
     TU_RETURN_IF_NOT_OK (m_fragment->storeRef(var, /* initialStore= */ true));
 

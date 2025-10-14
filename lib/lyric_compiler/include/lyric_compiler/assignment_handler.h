@@ -54,6 +54,19 @@ namespace lyric_compiler {
     private:
         Assignment *m_assignment;
     };
+
+    class AssignmentExpression : public BaseChoice {
+    public:
+        AssignmentExpression(Assignment *assignment, lyric_assembler::BlockHandle *block, CompilerScanDriver *driver);
+
+        tempo_utils::Status decide(
+            const lyric_parser::ArchetypeState *state,
+            const lyric_parser::ArchetypeNode *node,
+            DecideContext &ctx) override;
+
+    private:
+        Assignment *m_assignment;
+    };
 }
 
 #endif // LYRIC_COMPILER_ASSIGNMENT_HANDLER_H

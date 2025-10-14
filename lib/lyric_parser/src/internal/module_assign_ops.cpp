@@ -68,6 +68,9 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVal(ModuleParser::UntypedVal
 {
     tempo_tracing::ExitScope scope;
 
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
     auto *state = getState();
     scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
@@ -76,9 +79,6 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVal(ModuleParser::UntypedVal
     state->popSymbolAndCheck(id);
 
     auto isHidden = identifier_is_hidden(id);
-
-    auto *token = ctx->getStart();
-    auto location = get_token_location(token);
 
     if (hasError())
         return;
@@ -105,18 +105,19 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVal(ModuleParser::TypedValCont
 {
     tempo_tracing::ExitScope scope;
 
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
     auto *state = getState();
     scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
     // pop the top of the symbol stack and verify that the identifier matches
-    auto id = ctx->symbolIdentifier()->getText();
+    auto *symbolAndType = ctx->symbolAndType();
+    auto id = symbolAndType->symbolIdentifier()->getText();
     state->popSymbolAndCheck(id);
 
     auto isHidden = identifier_is_hidden(id);
-    auto *typeNode = make_Type_node(state, ctx->assignableType());
-
-    auto *token = ctx->getStart();
-    auto location = get_token_location(token);
+    auto *typeNode = make_Type_node(state, symbolAndType->assignableType());
 
     if (hasError())
         return;
@@ -144,6 +145,9 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVar(ModuleParser::UntypedVar
 {
     tempo_tracing::ExitScope scope;
 
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
     auto *state = getState();
     scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
@@ -152,9 +156,6 @@ lyric_parser::internal::ModuleAssignOps::exitUntypedVar(ModuleParser::UntypedVar
     state->popSymbolAndCheck(id);
 
     auto isHidden = identifier_is_hidden(id);
-
-    auto *token = ctx->getStart();
-    auto location = get_token_location(token);
 
     if (hasError())
         return;
@@ -181,18 +182,19 @@ lyric_parser::internal::ModuleAssignOps::exitTypedVar(ModuleParser::TypedVarCont
 {
     tempo_tracing::ExitScope scope;
 
+    auto *token = ctx->getStart();
+    auto location = get_token_location(token);
+
     auto *state = getState();
     scope.putTag(kLyricParserIdentifier, state->currentSymbolString());
 
     // pop the top of the symbol stack and verify that the identifier matches
-    auto id = ctx->symbolIdentifier()->getText();
+    auto *symbolAndType = ctx->symbolAndType();
+    auto id = symbolAndType->symbolIdentifier()->getText();
     state->popSymbolAndCheck(id);
 
     auto isHidden = identifier_is_hidden(id);
-    auto *typeNode = make_Type_node(state, ctx->assignableType());
-
-    auto *token = ctx->getStart();
-    auto location = get_token_location(token);
+    auto *typeNode = make_Type_node(state, symbolAndType->assignableType());
 
     if (hasError())
         return;

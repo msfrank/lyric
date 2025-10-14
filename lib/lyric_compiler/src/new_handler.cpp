@@ -1,12 +1,11 @@
 
+#include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/class_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/compiler_result.h>
 #include <lyric_compiler/new_handler.h>
 #include <lyric_parser/ast_attrs.h>
-
-#include "lyric_assembler/binding_symbol.h"
 
 lyric_compiler::NewHandler::NewHandler(
     bool isSideEffect,

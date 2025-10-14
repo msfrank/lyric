@@ -7,6 +7,8 @@
 #include <lyric_compiler/defstatic_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
+#include "lyric_compiler/new_handler.h"
+
 lyric_compiler::DefStaticHandler::DefStaticHandler(
     bool isSideEffect,
     lyric_assembler::BlockHandle *block,
@@ -87,9 +89,25 @@ lyric_compiler::DefStaticHandler::before(
     auto *procHandle = m_initializerHandle->initializerProc();
     auto *fragment = procHandle->procFragment();
 
-    auto expression = std::make_unique<FormChoice>(
-        FormType::Expression, fragment, block, driver);
-    ctx.appendChoice(std::move(expression));
+    if (node->numChildren() != 1)
+        return CompilerStatus::forCondition(
+            CompilerCondition::kCompilerInvariant, "invalid defstatic node");
+    auto *assignNode = node->getChild(0);
+
+    if (!assignNode->isNamespace(lyric_schema::kLyricAstNs))
+        return {};
+    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(assignNode->getIdValue());
+    auto astId = resource->getId();
+
+    if (astId == lyric_schema::LyricAstId::New) {
+        auto expression = std::make_unique<NewHandler>(
+            declarationType, /* isSideEffect= */ false, fragment, block, driver);
+        ctx.appendGrouping(std::move(expression));
+    } else {
+        auto expression = std::make_unique<FormChoice>(
+            FormType::Expression, fragment, block, driver);
+        ctx.appendChoice(std::move(expression));
+    }
 
     return {};
 }

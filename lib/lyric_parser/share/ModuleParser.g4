@@ -193,19 +193,17 @@ returnSpec          : ColonOperator assignableType
 typenameStatement   : TypeNameKeyword symbolIdentifier ;
 
 
-// val statement
+// assignment
 
-valStatement        : ValKeyword symbolIdentifier ColonOperator assignableType
-                        AssignOperator expression                                       # typedVal
-                    | ValKeyword symbolIdentifier AssignOperator expression             # untypedVal
+symbolAndType       : symbolIdentifier ColonOperator assignableType ;
+assignExpression    : initializerDefaultNew | expression ;
+
+valStatement        : ValKeyword symbolAndType AssignOperator assignExpression          # typedVal
+                    | ValKeyword symbolIdentifier AssignOperator assignExpression       # untypedVal
                     ;
 
-
-// var statement
-
-varStatement        : VarKeyword symbolIdentifier ColonOperator assignableType
-                        AssignOperator expression                                       # typedVar
-                    | VarKeyword symbolIdentifier AssignOperator expression             # untypedVar
+varStatement        : VarKeyword symbolAndType AssignOperator assignExpression          # typedVar
+                    | VarKeyword symbolIdentifier AssignOperator assignExpression       # untypedVar
                     ;
 
 
@@ -221,7 +219,7 @@ assignmentOp        : AssignOperator
                     | StarAssignOperator
                     | SlashAssignOperator
                     ;
-setStatement        : SetKeyword assignmentSpec assignmentOp expression ;
+setStatement        : SetKeyword assignmentSpec assignmentOp assignExpression ;
 
 
 //

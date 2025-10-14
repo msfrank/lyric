@@ -10,6 +10,8 @@
 #include <lyric_compiler/target_handler.h>
 #include <lyric_parser/ast_attrs.h>
 
+#include "lyric_compiler/new_handler.h"
+
 lyric_compiler::AssignmentHandler::AssignmentHandler(
     bool isSideEffect,
     lyric_assembler::CodeFragment *fragment,
@@ -71,8 +73,7 @@ lyric_compiler::AssignmentHandler::before(
     ctx.appendChoice(std::move(target));
 
     m_assignment.evaluateExpression = m_fragment->makeFragment();
-    auto expression = std::make_unique<FormChoice>(
-        FormType::Expression, m_assignment.evaluateExpression.get(), block, driver);
+    auto expression = std::make_unique<AssignmentExpression>(&m_assignment, block, driver);
     ctx.appendChoice(std::move(expression));
 
     return {};
@@ -191,4 +192,42 @@ lyric_compiler::AssignmentTarget::decide(
             return CompilerStatus::forCondition(
                 CompilerCondition::kCompilerInvariant, "invalid assignment target node");
     }
+}
+
+lyric_compiler::AssignmentExpression::AssignmentExpression(
+    Assignment *assignment,
+    lyric_assembler::BlockHandle *block,
+    CompilerScanDriver *driver)
+    : BaseChoice(block, driver),
+      m_assignment(assignment)
+{
+    TU_ASSERT (m_assignment != nullptr);
+}
+
+tempo_utils::Status
+lyric_compiler::AssignmentExpression::decide(
+    const lyric_parser::ArchetypeState *state,
+    const lyric_parser::ArchetypeNode *node,
+    DecideContext &ctx)
+{
+    if (!node->isNamespace(lyric_schema::kLyricAstNs))
+        return {};
+    auto *resource = lyric_schema::kLyricAstVocabulary.getResource(node->getIdValue());
+
+    auto *block = getBlock();
+    auto *driver = getDriver();
+
+    auto astId = resource->getId();
+    if (astId == lyric_schema::LyricAstId::New) {
+        auto typeHint = m_assignment->target.targetRef.typeDef;
+        auto expression = std::make_unique<NewHandler>(
+            typeHint, /* isSideEffect= */ false, m_assignment->evaluateExpression.get(), block, driver);
+        ctx.setGrouping(std::move(expression));
+    } else {
+        auto expression = std::make_unique<FormChoice>(
+            FormType::Expression, m_assignment->evaluateExpression.get(), block, driver);
+        ctx.setChoice(std::move(expression));
+    }
+
+    return {};
 }

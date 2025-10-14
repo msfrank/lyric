@@ -32,6 +32,7 @@ namespace lyric_compiler {
         bool m_isVariable;
         bool m_isSideEffect;
         lyric_assembler::CodeFragment *m_fragment;
+        lyric_common::TypeDef m_typeHint;
     };
 }
 

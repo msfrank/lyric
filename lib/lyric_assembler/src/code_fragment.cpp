@@ -370,6 +370,15 @@ lyric_assembler::CodeFragment::storeData(AbstractSymbol *symbol)
     return {};
 }
 
+inline bool
+symbol_is_mutable_static(lyric_assembler::AbstractSymbol *sym)
+{
+    if (sym->getSymbolType() != lyric_assembler::SymbolType::STATIC)
+        return false;
+    auto *staticSymbol = lyric_assembler::cast_symbol_to_static(sym);
+    return staticSymbol->isVariable();
+}
+
 tempo_utils::Status
 lyric_assembler::CodeFragment::storeRef(const DataReference &ref, bool initialStore)
 {
@@ -378,22 +387,22 @@ lyric_assembler::CodeFragment::storeRef(const DataReference &ref, bool initialSt
 
     Statement statement;
 
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.symbolUrl));
     switch (ref.referenceType) {
         case ReferenceType::Value:
             if (!initialStore)
-                return AssemblerStatus::forCondition(
-                    AssemblerCondition::kInvalidBinding, "cannot store to value {}", ref.symbolUrl.toString());
+                return AssemblerStatus::forCondition(AssemblerCondition::kInvalidBinding,
+                    "cannot store to value {}", ref.symbolUrl.toString());
             statement.instruction = std::make_shared<StoreDataInstruction>(symbol);
             break;
         case ReferenceType::Variable:
             statement.instruction = std::make_shared<StoreDataInstruction>(symbol);
             break;
         case ReferenceType::Descriptor:
-            if (symbol->getSymbolType() != SymbolType::STATIC)
-                return AssemblerStatus::forCondition(
-                    AssemblerCondition::kInvalidBinding, "cannot store to descriptor {}", ref.symbolUrl.toString());
+            if (!symbol_is_mutable_static(symbol))
+                return AssemblerStatus::forCondition(AssemblerCondition::kInvalidBinding,
+                    "cannot store to {}", ref.symbolUrl.toString());
             statement.instruction = std::make_shared<StoreDataInstruction>(symbol);
             break;
         default:
