@@ -11,8 +11,8 @@
 
 class ParseParameterSpec : public BaseParserFixture {};
 
-TEST_F(ParseParameterSpec, ParseEmptyParameterList) {
-
+TEST_F(ParseParameterSpec, ParseEmptyParameterList)
+{
     auto parseResult = parseModule(R"(
         def Foo() {}
     )");
@@ -29,8 +29,8 @@ TEST_F(ParseParameterSpec, ParseEmptyParameterList) {
     ASSERT_EQ (0, packNode.numChildren());
 }
 
-TEST_F(ParseParameterSpec, ParseSinglePositionalParameter) {
-
+TEST_F(ParseParameterSpec, ParseSinglePositionalParameter)
+{
     auto parseResult = parseModule(R"(
         def Foo(bar: Int) {}
     )");
@@ -56,8 +56,8 @@ TEST_F(ParseParameterSpec, ParseSinglePositionalParameter) {
     ASSERT_FALSE (isVariable);
 }
 
-TEST_F(ParseParameterSpec, ParseSingleNamedParameter) {
-
+TEST_F(ParseParameterSpec, ParseSingleNamedParameter)
+{
     auto parseResult = parseModule(R"(
         def Foo(named bar: Int) {}
     )");
@@ -86,8 +86,8 @@ TEST_F(ParseParameterSpec, ParseSingleNamedParameter) {
     ASSERT_FALSE (isVariable);
 }
 
-TEST_F(ParseParameterSpec, ParseSingleCtxParameter) {
-
+TEST_F(ParseParameterSpec, ParseSingleCtxParameter)
+{
     auto parseResult = parseModule(R"(
         def Foo(using bar: Equality[Int]) {}
     )");
@@ -113,8 +113,8 @@ TEST_F(ParseParameterSpec, ParseSingleCtxParameter) {
     ASSERT_EQ (name1, label1);
 }
 
-TEST_F(ParseParameterSpec, ParseRestParameter) {
-
+TEST_F(ParseParameterSpec, ParseRestParameter)
+{
     auto parseResult = parseModule(R"(
         def Foo(bar: ...Int) {}
     )");
@@ -138,8 +138,8 @@ TEST_F(ParseParameterSpec, ParseRestParameter) {
     ASSERT_EQ ("bar", name1);
 }
 
-TEST_F(ParseParameterSpec, ParsePositionalParameterWithLiteralInitializer) {
-
+TEST_F(ParseParameterSpec, ParsePositionalParameterWithLiteralInitializer)
+{
     auto parseResult = parseModule(R"(
         def Foo(bar: Int = 42) {}
     )");
@@ -166,8 +166,8 @@ TEST_F(ParseParameterSpec, ParsePositionalParameterWithLiteralInitializer) {
     ASSERT_TRUE (defaultNode.isClass(lyric_schema::kLyricAstIntegerClass));
 }
 
-TEST_F(ParseParameterSpec, ParsePositionalParameterWithNewInitializer) {
-
+TEST_F(ParseParameterSpec, ParsePositionalParameterWithNewInitializer)
+{
     auto parseResult = parseModule(R"(
         def Foo(bar: Bar = {1, 2, 3}) {}
     )");
@@ -195,8 +195,40 @@ TEST_F(ParseParameterSpec, ParsePositionalParameterWithNewInitializer) {
     ASSERT_EQ (3, defaultNode.numChildren());
 }
 
-TEST_F(ParseParameterSpec, ParsePositionalParameterWithTypedNewInitializer) {
+TEST_F(ParseParameterSpec, ParsePositionalParameterWithDefaultNewInitializer)
+{
+    auto parseResult = parseModule(R"(
+        def Foo(bar: Bar = {1, 2, 3}) {}
+    )");
 
+    ASSERT_THAT (parseResult, tempo_test::IsResult());
+    auto archetype = parseResult.getResult();
+    auto root = archetype.getRoot();
+    ASSERT_TRUE (root.isClass(lyric_schema::kLyricAstBlockClass));
+    auto defNode = root.getChild(0);
+    ASSERT_TRUE (defNode.isClass(lyric_schema::kLyricAstDefClass));
+    ASSERT_LE (1, defNode.numChildren());
+
+    auto packNode = defNode.getChild(0);
+    ASSERT_EQ (1, packNode.numChildren());
+
+    auto param1 = packNode.getChild(0);
+    ASSERT_TRUE (param1.isClass(lyric_schema::kLyricAstParamClass));
+    std::string name1;
+    ASSERT_THAT (param1.parseAttr(lyric_parser::kLyricAstIdentifier, name1), tempo_test::IsOk());
+    ASSERT_EQ ("bar", name1);
+
+    lyric_parser::NodeWalker newNode;
+    ASSERT_THAT (param1.parseAttr(lyric_parser::kLyricAstDefaultOffset, newNode), tempo_test::IsOk());
+    ASSERT_TRUE (newNode.isClass(lyric_schema::kLyricAstNewClass));
+    ASSERT_EQ (3, newNode.numChildren());
+
+    ASSERT_FALSE (newNode.hasAttr(lyric_parser::kLyricAstSymbolPath));
+    ASSERT_FALSE (newNode.hasAttr(lyric_parser::kLyricAstTypeArgumentsOffset));
+}
+
+TEST_F(ParseParameterSpec, ParsePositionalParameterWithNamedNewInitializer)
+{
     auto parseResult = parseModule(R"(
         def Foo(bar: Bar = Bar{1, 2, 3}) {}
     )");
@@ -218,18 +250,20 @@ TEST_F(ParseParameterSpec, ParsePositionalParameterWithTypedNewInitializer) {
     ASSERT_THAT (param1.parseAttr(lyric_parser::kLyricAstIdentifier, name1), tempo_test::IsOk());
     ASSERT_EQ ("bar", name1);
 
-    lyric_parser::NodeWalker defaultNode;
-    ASSERT_THAT (param1.parseAttr(lyric_parser::kLyricAstDefaultOffset, defaultNode), tempo_test::IsOk());
-    ASSERT_TRUE (defaultNode.isClass(lyric_schema::kLyricAstNewClass));
-    ASSERT_EQ (3, defaultNode.numChildren());
+    lyric_parser::NodeWalker newNode;
+    ASSERT_THAT (param1.parseAttr(lyric_parser::kLyricAstDefaultOffset, newNode), tempo_test::IsOk());
+    ASSERT_TRUE (newNode.isClass(lyric_schema::kLyricAstNewClass));
+    ASSERT_EQ (3, newNode.numChildren());
 
-    lyric_parser::NodeWalker typeNode;
-    ASSERT_THAT (defaultNode.parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode), tempo_test::IsOk());
-    ASSERT_TRUE (typeNode.isClass(lyric_schema::kLyricAstSTypeClass));
+    ASSERT_FALSE (newNode.hasAttr(lyric_parser::kLyricAstTypeArgumentsOffset));
+
+    lyric_common::SymbolPath symbolPath;
+    ASSERT_THAT (newNode.parseAttr(lyric_parser::kLyricAstSymbolPath, symbolPath), tempo_test::IsOk());
+    ASSERT_EQ (lyric_common::SymbolPath::fromString("Bar"), symbolPath);
 }
 
-TEST_F(ParseParameterSpec, ParseFailsExtraCommaBetweenParameters) {
-
+TEST_F(ParseParameterSpec, ParseFailsExtraCommaBetweenParameters)
+{
     auto parseResult = parseModule(R"(
         def Foo(foo: Int, bar: Int,, baz: Int) {}
     )");
@@ -239,8 +273,8 @@ TEST_F(ParseParameterSpec, ParseFailsExtraCommaBetweenParameters) {
     ASSERT_THAT (statusMessage, ::testing::ContainsRegex("Extra ',' after parameter in the parameter list"));
 }
 
-TEST_F(ParseParameterSpec, ParseFailsExtraCommaBeforeFirstParameter) {
-
+TEST_F(ParseParameterSpec, ParseFailsExtraCommaBeforeFirstParameter)
+{
     auto parseResult = parseModule(R"(
         def Foo(, foo: Int) {}
     )");
@@ -250,8 +284,8 @@ TEST_F(ParseParameterSpec, ParseFailsExtraCommaBeforeFirstParameter) {
     ASSERT_THAT (statusMessage, ::testing::ContainsRegex("Extra ',' before parameter in the parameter list"));
 }
 
-TEST_F(ParseParameterSpec, ParseFailsRestParameterIsNotLast) {
-
+TEST_F(ParseParameterSpec, ParseFailsRestParameterIsNotLast)
+{
     auto parseResult = parseModule(R"(
         def Foo(foo: ...Int, bar: Int) {}
     )");
@@ -261,8 +295,8 @@ TEST_F(ParseParameterSpec, ParseFailsRestParameterIsNotLast) {
     ASSERT_THAT (statusMessage, ::testing::ContainsRegex("Rest parameter must be the last parameter in the parameter list"));
 }
 
-TEST_F(ParseParameterSpec, ParseFailsExtraParenAfterParameterList) {
-
+TEST_F(ParseParameterSpec, ParseFailsExtraParenAfterParameterList)
+{
     auto parseResult = parseModule(R"(
         def Foo(bar: Int)) {}
     )");
@@ -272,8 +306,8 @@ TEST_F(ParseParameterSpec, ParseFailsExtraParenAfterParameterList) {
     ASSERT_THAT (statusMessage, ::testing::ContainsRegex("Extra ')' closing parameter list"));
 }
 
-TEST_F(ParseParameterSpec, ParseFailsMissingParenAfterParameterList) {
-
+TEST_F(ParseParameterSpec, ParseFailsMissingParenAfterParameterList)
+{
     auto parseResult = parseModule(R"(
         def Foo(bar: Int {}
     )");

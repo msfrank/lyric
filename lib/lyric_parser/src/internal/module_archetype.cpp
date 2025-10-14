@@ -856,16 +856,16 @@ void lyric_parser::internal::ModuleArchetype::exitLambdaFromExpression(ModulePar
     LOG_ERROR_ON_EXCEPTION (ctx, ops.parseLambdaFromExpression(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitInitializerDefaultNew(ModuleParser::InitializerDefaultNewContext *ctx)
 {
     ModuleConstructOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseDefaultInitializerTypedNew(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseInitializerDefaultNew(ctx));
 }
 
-void lyric_parser::internal::ModuleArchetype::exitDefaultInitializerNew(ModuleParser::DefaultInitializerNewContext *ctx)
+void lyric_parser::internal::ModuleArchetype::exitInitializerNamedNew(ModuleParser::InitializerNamedNewContext *ctx)
 {
     ModuleConstructOps ops(this);
-    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseDefaultInitializerNew(ctx));
+    LOG_ERROR_ON_EXCEPTION (ctx, ops.parseInitializerNamedNew(ctx));
 }
 
 /*

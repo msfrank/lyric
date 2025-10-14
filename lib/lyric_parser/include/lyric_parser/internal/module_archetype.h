@@ -163,8 +163,8 @@ namespace lyric_parser::internal {
         void exitPairExpression(ModuleParser::PairExpressionContext *ctx) override;
         void exitLambdaExpression(ModuleParser::LambdaExpressionContext *ctx) override;
         void exitLambdaFromExpression(ModuleParser::LambdaFromExpressionContext *ctx) override;
-        void exitDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx) override;
-        void exitDefaultInitializerNew(ModuleParser::DefaultInitializerNewContext *ctx) override;
+        void exitInitializerDefaultNew(ModuleParser::InitializerDefaultNewContext *ctx) override;
+        void exitInitializerNamedNew(ModuleParser::InitializerNamedNewContext *ctx) override;
 
         // implemented by ModuleDefineOps
         void exitTypenameStatement(ModuleParser::TypenameStatementContext *ctx) override;

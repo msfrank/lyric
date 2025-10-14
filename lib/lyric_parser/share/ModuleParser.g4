@@ -126,33 +126,32 @@ callArguments       : ParenOpen argumentList? ParenClose
 newArguments        : CurlyOpen argumentList? CurlyClose
                     ;
 
-// initializer
+// initializers
 
-defaultInitializerTypedNew      : assignableType CurlyOpen argumentList? CurlyClose
-                                | assignableType CurlyOpen argumentList? CurlyClose CurlyClose
+initializerNamedNew             : symbolPath typeArguments? CurlyOpen argumentList? CurlyClose
+                                | symbolPath typeArguments? CurlyOpen argumentList? CurlyClose CurlyClose
                                     { notifyErrorListeners("Extra '}' closing default initializer"); }
-                                | assignableType CurlyOpen argumentList?
+                                | symbolPath typeArguments? CurlyOpen argumentList?
                                     { notifyErrorListeners("Missing '}' closing default initializer"); }
-                                | assignableType
+                                | symbolPath typeArguments?
                                     { notifyErrorListeners("Missing default initializer argument list"); }
                                 ;
-defaultInitializerNew           : CurlyOpen argumentList? CurlyClose
+initializerDefaultNew           : CurlyOpen argumentList? CurlyClose
                                 | CurlyOpen argumentList? CurlyClose CurlyClose
                                     { notifyErrorListeners("Extra '}' closing default initializer"); }
                                 | CurlyOpen argumentList?
                                     { notifyErrorListeners("Missing '}' closing default initializer"); }
                                 ;
-defaultInitializerLiteral       : literal ;
-defaultInitializer              : defaultInitializerTypedNew
-                                | defaultInitializerNew
-                                | defaultInitializerLiteral
+initializer                     : literal
+                                | initializerDefaultNew
+                                | initializerNamedNew
                                 ;
 
 
 // parameter lists
 
 paramType           : ColonOperator assignableType ;
-paramDefault        : AssignOperator defaultInitializer ;
+paramDefault        : AssignOperator initializer ;
 positionalParam     : VarKeyword? Identifier paramType paramDefault? ;
 namedParam          : VarKeyword? NamedKeyword Identifier paramType paramDefault? ;
 renamedParam        : VarKeyword? Identifier NamedKeyword Identifier paramType paramDefault? ;
@@ -265,8 +264,8 @@ genericClass        : placeholderSpec constraintSpec? ;
 classDerives        : ( SealedKeyword | FinalKeyword ) ;
 classBase           : FromKeyword assignableType ;
 classInit           : InitKeyword symbolIdentifier? paramSpec initBase? procBlock ;
-classVal            : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
-classVar            : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
+classVal            : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
+classVar            : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
 classDef            : DefKeyword symbolIdentifier
                         placeholderSpec? paramSpec returnSpec? constraintSpec? FinalKeyword?
                         procBlock ;
@@ -296,8 +295,8 @@ definstanceStatement: definitionMacro? DefInstanceKeyword symbolIdentifier
 instanceDerives     : ( SealedKeyword | FinalKeyword ) ;
 instanceBase        : FromKeyword assignableType ;
 instanceInit        : InitKeyword paramSpec procBlock ;
-instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
-instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
+instanceVal         : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
+instanceVar         : VarKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
 instanceDef         : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 instanceImpl        : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 instanceSpec        : instanceInit | instanceVal | instanceVar | instanceDef | instanceImpl ;
@@ -310,7 +309,7 @@ defenumStatement    : definitionMacro? DefEnumKeyword symbolIdentifier
                         CurlyOpen enumSpec* CurlyClose ;
 enumBase            : FromKeyword assignableType ;
 enumInit            : InitKeyword paramSpec procBlock ;
-enumVal             : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
+enumVal             : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
 enumDef             : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 enumCase            : CaseKeyword symbolIdentifier callArguments? ;
 enumImpl            : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
@@ -325,7 +324,7 @@ defstructStatement  : definitionMacro? DefStructKeyword symbolIdentifier
 structDerives       : ( SealedKeyword | FinalKeyword ) ;
 structBase          : FromKeyword assignableType ;
 structInit          : InitKeyword symbolIdentifier? paramSpec initBase? procBlock ;
-structVal           : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator defaultInitializer )? ;
+structVal           : ValKeyword symbolIdentifier ColonOperator assignableType ( AssignOperator initializer )? ;
 structDef           : DefKeyword symbolIdentifier paramSpec returnSpec? procBlock ;
 structImpl          : ImplKeyword assignableType CurlyOpen implSpec* CurlyClose ;
 structSpec          : structInit | structVal | structDef | structImpl ;
@@ -334,7 +333,7 @@ structSpec          : structInit | structVal | structDef | structImpl ;
 // global statement
 
 globalStatement     : definitionMacro? GlobalKeyword ( ValKeyword | VarKeyword )
-                        symbolIdentifier ColonOperator assignableType AssignOperator defaultInitializer ;
+                        symbolIdentifier ColonOperator assignableType AssignOperator initializer ;
 
 
 // defalias statement

@@ -23,8 +23,8 @@ namespace lyric_parser::internal {
         void parseLambdaExpression(ModuleParser::LambdaExpressionContext *ctx);
         void parseLambdaFromExpression(ModuleParser::LambdaFromExpressionContext *ctx);
 
-        void parseDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx);
-        void parseDefaultInitializerNew(ModuleParser::DefaultInitializerNewContext *ctx);
+        void parseInitializerDefaultNew(ModuleParser::InitializerDefaultNewContext *ctx);
+        void parseInitializerNamedNew(ModuleParser::InitializerNamedNewContext *ctx);
     };
 }
 

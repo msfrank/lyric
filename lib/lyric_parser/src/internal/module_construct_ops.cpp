@@ -380,20 +380,27 @@ lyric_parser::internal::ModuleConstructOps::parseLambdaFromExpression(ModulePars
 }
 
 void
-lyric_parser::internal::ModuleConstructOps::parseDefaultInitializerTypedNew(ModuleParser::DefaultInitializerTypedNewContext *ctx)
+lyric_parser::internal::ModuleConstructOps::parseInitializerNamedNew(ModuleParser::InitializerNamedNewContext *ctx)
 {
     auto *state = getState();
     if (hasError())
         return;
-
-    auto *typeNode = make_Type_node(state, ctx->assignableType());
 
     auto *token = ctx->getStart();
     auto location = get_token_location(token);
 
     ArchetypeNode *newNode;
     TU_ASSIGN_OR_RAISE (newNode, state->appendNode(lyric_schema::kLyricAstNewClass, location));
-    TU_RAISE_IF_NOT_OK (newNode->putAttr(kLyricAstTypeOffset, typeNode));
+
+    // set the path to the constructor symbol
+    auto symbolPath = make_symbol_path(ctx->symbolPath());
+    TU_RAISE_IF_NOT_OK (newNode->putAttr(kLyricAstSymbolPath, symbolPath));
+
+    // set the type arguments if present
+    if (ctx->typeArguments()) {
+        auto *typeArgumentsNode = make_TypeArguments_node(state, ctx->typeArguments());
+        TU_RAISE_IF_NOT_OK (newNode->putAttr(kLyricAstTypeArgumentsOffset, typeArgumentsNode));
+    }
 
     if (ctx->argumentList()) {
         auto *argList = ctx->argumentList();
@@ -426,7 +433,7 @@ lyric_parser::internal::ModuleConstructOps::parseDefaultInitializerTypedNew(Modu
 }
 
 void
-lyric_parser::internal::ModuleConstructOps::parseDefaultInitializerNew(ModuleParser::DefaultInitializerNewContext *ctx)
+lyric_parser::internal::ModuleConstructOps::parseInitializerDefaultNew(ModuleParser::InitializerDefaultNewContext *ctx)
 {
     auto *state = getState();
     if (hasError())

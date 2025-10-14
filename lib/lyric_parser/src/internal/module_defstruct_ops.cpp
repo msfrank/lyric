@@ -230,7 +230,7 @@ lyric_parser::internal::ModuleDefstructOps::exitStructVal(ModuleParser::StructVa
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
-    if (ctx->defaultInitializer() != nullptr) {
+    if (ctx->initializer() != nullptr) {
         ArchetypeNode *defaultNode;
         TU_ASSIGN_OR_RAISE (defaultNode, state->popNode());
         TU_RAISE_IF_NOT_OK (valNode->appendChild(defaultNode));

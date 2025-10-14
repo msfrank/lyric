@@ -236,7 +236,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVal(ModuleParser::ClassValCo
     TU_RAISE_IF_NOT_OK (valNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
-    if (ctx->defaultInitializer() != nullptr) {
+    if (ctx->initializer() != nullptr) {
         ArchetypeNode *defaultNode;
         TU_ASSIGN_OR_RAISE (defaultNode, state->popNode());
         TU_RAISE_IF_NOT_OK (valNode->appendChild(defaultNode));
@@ -296,7 +296,7 @@ lyric_parser::internal::ModuleDefclassOps::exitClassVar(ModuleParser::ClassVarCo
     TU_RAISE_IF_NOT_OK (varNode->putAttr(kLyricAstTypeOffset, memberTypeNode));
 
     // if member initializer is specified then set dfl
-    if (ctx->defaultInitializer() != nullptr) {
+    if (ctx->initializer() != nullptr) {
         ArchetypeNode *defaultNode;
         TU_ASSIGN_OR_RAISE (defaultNode, state->popNode());
         TU_RAISE_IF_NOT_OK (varNode->appendChild(defaultNode));
