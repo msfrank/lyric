@@ -21,6 +21,8 @@ namespace lyric_runtime {
         const AbstractMethodResolver *getMethodResolver() const override;
         const AbstractExtensionResolver *getExtensionResolver() const override;
 
+        DataCell getField(const DataCell &field) const override;
+        DataCell setField(const DataCell &field, const DataCell &value) override;
         bool equals(const AbstractRef *other) const override;
         bool rawSize(tu_int32 &size) const override;
         tu_int32 rawCopy(tu_int32 offset, char *dst, tu_int32 size) override;
@@ -47,8 +49,8 @@ namespace lyric_runtime {
     protected:
         const VirtualTable *m_vtable;
 
-        virtual void setMembersReachable() = 0;
-        virtual void clearMembersReachable() = 0;
+        virtual void setMembersReachable();
+        virtual void clearMembersReachable();
 
     private:
         absl::flat_hash_map<DataCell,DataCell> m_fields;

@@ -41,6 +41,18 @@ lyric_runtime::BaseRef::getSymbolUrl() const
     return m_vtable->getSymbolUrl();
 }
 
+lyric_runtime::DataCell
+lyric_runtime::BaseRef::getField(const DataCell &field) const
+{
+    return {};
+}
+
+lyric_runtime::DataCell
+lyric_runtime::BaseRef::setField(const DataCell &field, const DataCell &value)
+{
+    return {};
+}
+
 bool
 lyric_runtime::BaseRef::equals(const AbstractRef *other) const
 {
@@ -129,6 +141,16 @@ bool
 lyric_runtime::BaseRef::isReachable() const
 {
     return m_reachable;
+}
+
+void
+lyric_runtime::BaseRef::setMembersReachable()
+{
+}
+
+void
+lyric_runtime::BaseRef::clearMembersReachable()
+{
 }
 
 void

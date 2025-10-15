@@ -131,7 +131,6 @@ lyric_compiler::MemberInit::decide(
             return {};
         }
 
-            // FIXME: handle new expression
         case lyric_schema::LyricAstId::New: {
             auto new_ = std::make_unique<NewHandler>(
                 m_memberType, /* isSideEffect */ false, fragment, block, driver);
