@@ -16,17 +16,6 @@ IteratorRef::~IteratorRef()
     TU_LOG_VV << "free" << IteratorRef::toString();
 }
 
-lyric_runtime::DataCell IteratorRef::getField(const lyric_runtime::DataCell &field) const
-{
-    return lyric_runtime::DataCell();
-}
-
-lyric_runtime::DataCell
-IteratorRef::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
-{
-    return lyric_runtime::DataCell();
-}
-
 std::string
 IteratorRef::toString() const
 {
@@ -34,16 +23,6 @@ IteratorRef::toString() const
         this,
         lyric_runtime::BaseRef::getVirtualTable()->getSymbolUrl().toString(),
         m_vtable);
-}
-
-void
-IteratorRef::setMembersReachable()
-{
-}
-
-void
-IteratorRef::clearMembersReachable()
-{
 }
 
 tempo_utils::Status

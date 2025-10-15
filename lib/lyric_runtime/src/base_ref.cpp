@@ -41,16 +41,16 @@ lyric_runtime::BaseRef::getSymbolUrl() const
     return m_vtable->getSymbolUrl();
 }
 
-lyric_runtime::DataCell
-lyric_runtime::BaseRef::getField(const DataCell &field) const
+bool
+lyric_runtime::BaseRef::getField(const DataCell &field, DataCell &value) const
 {
-    return {};
+    return false;
 }
 
-lyric_runtime::DataCell
-lyric_runtime::BaseRef::setField(const DataCell &field, const DataCell &value)
+bool
+lyric_runtime::BaseRef::setField(const DataCell &field, const DataCell &value, DataCell *prev)
 {
-    return {};
+    return false;
 }
 
 bool

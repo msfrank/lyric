@@ -13,8 +13,8 @@ namespace lyric_runtime {
         StatusRef(const VirtualTable *vtable, tempo_utils::StatusCode statusCode, StringRef *message);
         ~StatusRef() override;
 
-        DataCell getField(const DataCell &field) const override;
-        DataCell setField(const DataCell &field, const DataCell &value) override;
+        bool getField(const DataCell &field, DataCell &value) const override;
+        bool setField(const DataCell &field, const DataCell &value, DataCell *prev) override;
         std::string toString() const override;
 
         tempo_utils::StatusCode errorStatusCode() override;

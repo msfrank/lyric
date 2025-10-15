@@ -129,16 +129,16 @@ lyric_runtime::RestRef::errorMessage()
     return {};
 }
 
-lyric_runtime::DataCell
-lyric_runtime::RestRef::getField(const DataCell &field) const
+bool
+lyric_runtime::RestRef::getField(const DataCell &field, DataCell &value) const
 {
-    return {};
+    return false;
 }
 
-lyric_runtime::DataCell
-lyric_runtime::RestRef::setField(const DataCell &field, const DataCell &value)
+bool
+lyric_runtime::RestRef::setField(const DataCell &field, const DataCell &value, DataCell *prev)
 {
-    return {};
+    return false;
 }
 
 bool

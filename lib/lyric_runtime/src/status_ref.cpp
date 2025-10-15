@@ -28,32 +28,35 @@ lyric_runtime::StatusRef::~StatusRef()
     TU_LOG_VV << "free" << StatusRef::toString();
 }
 
-lyric_runtime::DataCell
-lyric_runtime::StatusRef::getField(const DataCell &field) const
+bool
+lyric_runtime::StatusRef::getField(const DataCell &field, DataCell &value) const
 {
     auto *vtable = getVirtualTable();
     auto *member = vtable->getMember(field);
     if (member == nullptr)
-        return {};
+        return false;
     auto offset = member->getLayoutOffset();
     if (m_fields.size() <= offset)
-        return {};
-    return m_fields.at(offset);
+        return false;
+    value = m_fields.at(offset);
+    return true;
 }
 
-lyric_runtime::DataCell
-lyric_runtime::StatusRef::setField(const DataCell &field, const DataCell &value)
+bool
+lyric_runtime::StatusRef::setField(const DataCell &field, const DataCell &value, DataCell *prev)
 {
     auto *vtable = getVirtualTable();
     auto *member = vtable->getMember(field);
     if (member == nullptr)
-        return {};
+        return false;
     auto offset = member->getLayoutOffset();
     if (m_fields.size() <= offset)
-        return {};
-    auto prev = m_fields.at(offset);
+        return false;
+    if (prev != nullptr) {
+        *prev = m_fields.at(offset);
+    }
     m_fields[offset] = value;
-    return prev;
+    return true;
 }
 
 tempo_utils::StatusCode

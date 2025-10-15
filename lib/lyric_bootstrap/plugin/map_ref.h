@@ -56,8 +56,6 @@ public:
     explicit MapRef(const lyric_runtime::VirtualTable *vtable);
     ~MapRef() override;
 
-    lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
-    lyric_runtime::DataCell setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value) override;
     std::string toString() const override;
 
     MapNode *getNode() const;
@@ -85,10 +83,6 @@ public:
     explicit MapIterator(const lyric_runtime::VirtualTable *vtable);
     MapIterator(const lyric_runtime::VirtualTable *vtable, MapRef *map);
 
-    lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
-    lyric_runtime::DataCell setField(
-        const lyric_runtime::DataCell &field,
-        const lyric_runtime::DataCell &value) override;
     std::string toString() const override;
 
     bool iteratorValid() override;

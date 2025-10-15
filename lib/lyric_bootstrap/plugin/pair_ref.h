@@ -11,8 +11,6 @@ public:
     explicit PairRef(const lyric_runtime::VirtualTable *vtable);
     ~PairRef() override;
 
-    lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
-    lyric_runtime::DataCell setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value) override;
     bool hashValue(absl::HashState state) override;
     std::string toString() const override;
 

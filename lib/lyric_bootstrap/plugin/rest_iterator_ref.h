@@ -12,10 +12,6 @@ public:
     explicit RestIterator(const lyric_runtime::VirtualTable *vtable);
     RestIterator(const lyric_runtime::VirtualTable *vtable, lyric_runtime::RestRef *rest);
 
-    lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
-    lyric_runtime::DataCell setField(
-        const lyric_runtime::DataCell &field,
-        const lyric_runtime::DataCell &value) override;
     std::string toString() const override;
 
     bool iteratorValid() override;

@@ -23,18 +23,6 @@ RestIterator::RestIterator(const lyric_runtime::VirtualTable *vtable, lyric_runt
     m_size = size.data.i64;
 }
 
-lyric_runtime::DataCell
-RestIterator::getField(const lyric_runtime::DataCell &field) const
-{
-    return {};
-}
-
-lyric_runtime::DataCell
-RestIterator::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
-{
-    return {};
-}
-
 std::string
 RestIterator::toString() const
 {

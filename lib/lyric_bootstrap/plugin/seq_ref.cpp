@@ -49,18 +49,6 @@ SeqRef::~SeqRef()
     }
 }
 
-lyric_runtime::DataCell
-SeqRef::getField(const lyric_runtime::DataCell &field) const
-{
-    return {};
-}
-
-lyric_runtime::DataCell
-SeqRef::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
-{
-    return {};
-}
-
 std::string
 SeqRef::toString() const
 {
@@ -284,18 +272,6 @@ SeqIterator::SeqIterator(const lyric_runtime::VirtualTable *vtable, SeqRef *seq)
     auto size = m_seq->seqSize();
     TU_ASSERT (size.type == lyric_runtime::DataCellType::I64);
     m_size = size.data.i64;
-}
-
-lyric_runtime::DataCell
-SeqIterator::getField(const lyric_runtime::DataCell &field) const
-{
-    return {};
-}
-
-lyric_runtime::DataCell
-SeqIterator::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
-{
-    return {};
 }
 
 std::string

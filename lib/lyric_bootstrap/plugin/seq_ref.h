@@ -33,8 +33,6 @@ public:
     explicit SeqRef(const lyric_runtime::VirtualTable *vtable);
     ~SeqRef() override;
 
-    lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
-    lyric_runtime::DataCell setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value) override;
     std::string toString() const override;
 
     SeqNode *getNode() const;
@@ -58,10 +56,6 @@ public:
     explicit SeqIterator(const lyric_runtime::VirtualTable *vtable);
     SeqIterator(const lyric_runtime::VirtualTable *vtable, SeqRef *seq);
 
-    lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
-    lyric_runtime::DataCell setField(
-        const lyric_runtime::DataCell &field,
-        const lyric_runtime::DataCell &value) override;
     std::string toString() const override;
 
     bool iteratorValid() override;

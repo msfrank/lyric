@@ -374,18 +374,6 @@ MapRef::~MapRef()
     }
 }
 
-lyric_runtime::DataCell
-MapRef::getField(const lyric_runtime::DataCell &field) const
-{
-    return {};
-}
-
-lyric_runtime::DataCell
-MapRef::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
-{
-    return {};
-}
-
 std::string
 MapRef::toString() const
 {
@@ -676,18 +664,6 @@ MapIterator::MapIterator(const lyric_runtime::VirtualTable *vtable, MapRef *map)
 {
     TU_ASSERT (m_map != nullptr);
     init_node_pointer_stack(m_stack, m_map);
-}
-
-lyric_runtime::DataCell
-MapIterator::getField(const lyric_runtime::DataCell &field) const
-{
-    return {};
-}
-
-lyric_runtime::DataCell
-MapIterator::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
-{
-    return {};
 }
 
 std::string

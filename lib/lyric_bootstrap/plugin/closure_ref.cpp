@@ -22,18 +22,6 @@ ClosureRef::~ClosureRef()
     m_lexicals.clear();
 }
 
-lyric_runtime::DataCell
-ClosureRef::getField(const lyric_runtime::DataCell &field) const
-{
-    return {};
-}
-
-lyric_runtime::DataCell
-ClosureRef::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
-{
-    return {};
-}
-
 bool
 ClosureRef::applyClosure(
     lyric_runtime::Task *task,

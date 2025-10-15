@@ -265,7 +265,10 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             return onError(op, InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
                                 "invalid receiver for LOAD"));
                         auto *instance = receiver.data.ref;
-                        auto member = instance->getField(field);
+                        DataCell member;
+                        if (!instance->getField(field, member))
+                            return onError(op, InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
+                                "field access failed"));
                         TU_LOG_V << "loaded value " << member << " in field " << field << " of receiver " << receiver;
                         ON_ERROR_IF_NOT_OK (currentCoro->pushData(member));
                         break;
@@ -344,7 +347,9 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                             return onError(op, InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
                                 "invalid receiver for STORE"));
                         auto *instance = receiver.data.ref;
-                        instance->setField(field, value);
+                        if (!instance->setField(field, value, nullptr))
+                            return onError(op, InterpreterStatus::forCondition(InterpreterCondition::kInvalidReceiver,
+                                "field update failed"));
                         TU_LOG_V << "stored value " << value << " in field " << field << " of receiver " << receiver;
                         break;
                     }

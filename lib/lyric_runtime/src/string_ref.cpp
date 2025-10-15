@@ -260,16 +260,16 @@ lyric_runtime::StringRef::clearReachable()
     m_reachable = false;
 }
 
-lyric_runtime::DataCell
-lyric_runtime::StringRef::getField(const DataCell &field) const
+bool
+lyric_runtime::StringRef::getField(const DataCell &field, DataCell &value) const
 {
-    return {};
+    return false;
 }
 
-lyric_runtime::DataCell
-lyric_runtime::StringRef::setField(const DataCell &field, const DataCell &value)
+bool
+lyric_runtime::StringRef::setField(const DataCell &field, const DataCell &value, DataCell *prev)
 {
-    return {};
+    return false;
 }
 
 bool

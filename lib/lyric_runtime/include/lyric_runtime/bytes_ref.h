@@ -40,8 +40,8 @@ namespace lyric_runtime {
          * methods below have the default no-op implementation
          */
         lyric_common::SymbolUrl getSymbolUrl() const override;
-        DataCell getField(const DataCell &field) const override;
-        DataCell setField(const DataCell &field, const DataCell &value) override;
+        bool getField(const DataCell &field, DataCell &value) const override;
+        bool setField(const DataCell &field, const DataCell &value, DataCell *prev) override;
         bool uriValue(tempo_utils::Url &url) const override;
         bool iteratorValid() override;
         bool iteratorNext(DataCell &next) override;

@@ -44,24 +44,26 @@ namespace lyric_runtime {
         /**
          * returns a data cell containing the value stored in the specified field. If `field` does not
          * contain a valid field descriptor, or if there is no such field for the ref, or if the ref type
-         * does not support accessing fields, then the method must return an invalid data cell.
+         * does not support accessing fields, then the method must return false, otherwise returns true.
          *
          * @param field A data cell containing a field descriptor.
-         * @return A data cell containing the field value, or an invalid data cell if there was an error.
+         * @param value Out param where the field value will be stored.
+         * @return true if the field value was retrieved, otherwise false.
          */
-        virtual DataCell getField(const DataCell &field) const = 0;
+        virtual bool getField(const DataCell &field, DataCell &value) const = 0;
 
         /**
-         * Sets the value of the field specified by `field` to `value`, and returns a data cell containing
-         * the previous value of the field. If `field` does not contain a valid field descriptor, or if
-         * there is no such field for the ref, of if the ref type does not support updating fields, then
-         * the method must return an invalid data cell.
+         * Sets the value of the field specified by `field` to `value`. If `prev` is not nullptr then the
+         * previous value of the field is stored in the dereferenced pointer. If `field` does not contain
+         * a valid field descriptor, or if there is no such field for the ref, of if the ref type does not
+         * support updating fields, then the method must return false.
          *
          * @param field A data cell containing the field descriptor.
          * @param value A data cell containing the new field value.
-         * @return A data cell containing the previous value, or an invalid data cell if there was an error.
+         * @param prev Pointer to a data cell where the previous value will be stored.
+         * @return true if the field value was updated, otherwise false.
          */
-        virtual DataCell setField(const DataCell &field, const DataCell &value) = 0;
+        virtual bool setField(const DataCell &field, const DataCell &value, DataCell *prev) = 0;
 
         /**
          * Returns whether the value of the ref equals the value of other.

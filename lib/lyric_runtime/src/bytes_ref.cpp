@@ -202,16 +202,16 @@ lyric_runtime::BytesRef::clearReachable()
     m_reachable = false;
 }
 
-lyric_runtime::DataCell
-lyric_runtime::BytesRef::getField(const DataCell &field) const
+bool
+lyric_runtime::BytesRef::getField(const DataCell &field, DataCell &value) const
 {
-    return {};
+    return false;
 }
 
-lyric_runtime::DataCell
-lyric_runtime::BytesRef::setField(const DataCell &field, const DataCell &value)
+bool
+lyric_runtime::BytesRef::setField(const DataCell &field, const DataCell &value, DataCell *prev)
 {
-    return {};
+    return false;
 }
 
 bool

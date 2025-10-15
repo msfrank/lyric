@@ -16,32 +16,38 @@ SingletonRef::~SingletonRef()
     TU_LOG_VV << "free" << SingletonRef::toString();
 }
 
-lyric_runtime::DataCell
-SingletonRef::getField(const lyric_runtime::DataCell &field) const
+bool
+SingletonRef::getField(const lyric_runtime::DataCell &field, lyric_runtime::DataCell &value) const
 {
     auto *vtable = getVirtualTable();
     auto *member = vtable->getMember(field);
     if (member == nullptr)
-        return {};
+        return false;
     auto offset = member->getLayoutOffset();
     if (m_fields.size() <= offset)
-        return {};
-    return m_fields.at(offset);
+        return false;
+    value = m_fields.at(offset);
+    return true;
 }
 
-lyric_runtime::DataCell
-SingletonRef::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
+bool
+SingletonRef::setField(
+    const lyric_runtime::DataCell &field,
+    const lyric_runtime::DataCell &value,
+    lyric_runtime::DataCell *prev)
 {
     auto *vtable = getVirtualTable();
     auto *member = vtable->getMember(field);
     if (member == nullptr)
-        return {};
+        return false;
     auto offset = member->getLayoutOffset();
     if (m_fields.size() <= offset)
-        return {};
-    auto prev = m_fields.at(offset);
+        return false;
+    if (prev != nullptr) {
+        *prev = m_fields.at(offset);
+    }
     m_fields[offset] = value;
-    return prev;
+    return true;
 }
 
 std::string

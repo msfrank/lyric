@@ -15,18 +15,6 @@ PairRef::~PairRef()
     TU_LOG_VV << "free " << PairRef::toString();
 }
 
-lyric_runtime::DataCell
-PairRef::getField(const lyric_runtime::DataCell &field) const
-{
-    return {};
-}
-
-lyric_runtime::DataCell
-PairRef::setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value)
-{
-    return {};
-}
-
 bool
 PairRef::hashValue(absl::HashState state)
 {

@@ -12,8 +12,11 @@ public:
     CategoryRef(const lyric_runtime::VirtualTable *vtable);
     ~CategoryRef() override;
 
-    lyric_runtime::DataCell getField(const lyric_runtime::DataCell &field) const override;
-    lyric_runtime::DataCell setField(const lyric_runtime::DataCell &field, const lyric_runtime::DataCell &value) override;
+    bool getField(const lyric_runtime::DataCell &field, lyric_runtime::DataCell &value) const override;
+    bool setField(
+        const lyric_runtime::DataCell &field,
+        const lyric_runtime::DataCell &value,
+        lyric_runtime::DataCell *prev) override;
     std::string toString() const override;
 
 protected:
