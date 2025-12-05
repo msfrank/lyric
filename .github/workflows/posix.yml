@@ -18,12 +18,12 @@ jobs:
             conan_profile: "Ubuntu24.04-armv8-Debug",
             install_dependencies_script: "sudo apt-get install clang"
           },
-          #{ # ubuntu2404-x86_64-debug
-          #  build_type: "Debug",
-          #  build_runner: "ubuntu-24.04",
-          #  conan_profile: "Ubuntu24.04-x86_64-Debug",
-          #  install_dependencies_script: "sudo apt-get install clang"
-          #},
+          { # ubuntu2404-x86_64-debug
+            build_type: "Debug",
+            build_runner: "ubuntu-24.04",
+            conan_profile: "Ubuntu24.04-x86_64-Debug",
+            install_dependencies_script: "sudo apt-get install clang"
+          },
           { # macos-arm64-debug
             build_type: "Debug",
             build_runner: "macos-15",
