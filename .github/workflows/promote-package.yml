@@ -1,18 +1,12 @@
-name: build-package.yml
+name: promote-package.yml
 on:
   workflow_call:
     inputs:
-      build_type:
-        required: true
-        type: string
       build_runner:
         required: true
         type: string
       conan_profile:
         required: true
-        type: string
-      install_dependencies_script:
-        required: false
         type: string
     secrets:
       CONAN_CLIENT_CERT:
@@ -33,16 +27,12 @@ env:
 jobs:
 
   build-package:
-    name: Build Lyric package
+    name: Promote Lyric package
     runs-on: ${{ inputs.build_runner }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Install Dependencies
-        if: ${{ inputs.install_dependencies_script != '' }}
-        run: ${{ inputs.install_dependencies_script }}
 
       - name: Setup Conan
         uses: conan-io/setup-conan@v1
@@ -69,16 +59,27 @@ jobs:
             --conan-home ${{ steps.setup-conan.outputs.conan-home }} \
             ${{ steps.configure-conan-storage.outputs.storage-path }}
 
-      - name: Create package
+      - name: Get recipe parameters
+        id: get-parameters
         run: |
-          conan remote enable develop
-          conan remote enable build
-          conan create -cc core:non_interactive=True --profile ${{ inputs.conan_profile }} -b missing:lyric .
+          RECIPE=$(conan inspect -cc core:non_interactive=True -f json .)
+          NAME=$(echo $RECIPE | jq -Mr '.name')
+          VERSION=$(echo $RECIPE | jq -Mr '.version')
+          echo "package-name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "package-version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "package-ref=$NAME/$VERSION#latest" >> "$GITHUB_OUTPUT"
 
-      - name: Upload package
+      - name: Download package from build remote
         run: |
-          conan upload -cc core:non_interactive=True --remote build -c 'lyric/*:*'
+          conan remote enable build
+          conan download -cc core:non_interactive=True --remote build '${{ steps.get-parameters.outputs.package-ref }}'
+
+
+      - name: Upload package to integ remote
+        run: |
+          conan remote enable integ
+          conan upload -cc core:non_interactive=True --remote integ -c '${{ steps.get-parameters.outputs.package-ref }}'
 
       - name: Remove outdated revisions
         run: |
-          conan remove -cc core:non_interactive=True --remote build -c 'lyric/*:*#!latest'
+          conan remove -cc core:non_interactive=True --remote integ -c 'lyric/*:*#!latest'
