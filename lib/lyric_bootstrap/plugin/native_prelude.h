@@ -1,8 +1,6 @@
 #ifndef ZURI_CORE_NATIVE_CORE_H
 #define ZURI_CORE_NATIVE_CORE_H
 
-#include <boost/predef.h>
-
 #include <lyric_runtime/native_interface.h>
 
 class NativeCore : public lyric_runtime::NativeInterface {
@@ -15,14 +13,6 @@ public:
     tu_uint32 numTraps() const override;
 };
 
-#if defined(BOOST_OS_LINUX) || defined(BOOST_OS_MACOS)
-
-extern "C" const lyric_runtime::NativeInterface *native_init();
-
-#elif defined(BOOST_OS_WINDOWS)
-
-__declspec(dllexport) const lyric_runtime::NativeInterface *native_init();
-
-#endif
+const NativeCore kPreludeInterface;
 
 #endif // ZURI_CORE_NATIVE_CORE_H

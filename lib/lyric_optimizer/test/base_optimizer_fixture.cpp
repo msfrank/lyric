@@ -11,7 +11,7 @@
 BaseOptimizerFixture::BaseOptimizerFixture()
 {
     m_staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
-    m_testerOptions.bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
+    m_testerOptions.bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
     m_testerOptions.fallbackLoader = m_staticLoader;
 }
 

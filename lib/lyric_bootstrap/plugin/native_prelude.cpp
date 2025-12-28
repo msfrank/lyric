@@ -1,6 +1,4 @@
 
-#include <lyric_bootstrap/internal/bootstrap_types.h>
-
 #include "bytes_traps.h"
 #include "category_ref.h"
 #include "closure_ref.h"
@@ -99,11 +97,4 @@ uint32_t
 NativeCore::numTraps() const
 {
     return kPreludeTraps.size();
-}
-
-static const NativeCore iface;
-
-const lyric_runtime::NativeInterface *native_init()
-{
-    return &iface;
 }

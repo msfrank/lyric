@@ -1,11 +1,49 @@
 
-set(PRELUDE_NAME                "prelude")
-set(PRELUDE_OBJECT_NAME         "${PRELUDE_NAME}.lyo")
-set(PRELUDE_PLUGIN_BASENAME     "${PRELUDE_NAME}.${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
-set(PRELUDE_PLUGIN_NAME         "${PRELUDE_PLUGIN_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+# build prelude plugin as a static library
+add_library(prelude-plugin STATIC
+    plugin/bytes_traps.cpp
+    plugin/bytes_traps.h
+    plugin/category_ref.cpp
+    plugin/category_ref.h
+    plugin/closure_ref.cpp
+    plugin/closure_ref.h
+    plugin/float_traps.cpp
+    plugin/float_traps.h
+    plugin/iterator_ref.cpp
+    plugin/iterator_ref.h
+    plugin/map_key.h
+    plugin/map_ref.cpp
+    plugin/map_ref.h
+    plugin/native_prelude.cpp
+    plugin/native_prelude.h
+    plugin/object_ref.cpp
+    plugin/object_ref.h
+    plugin/pair_ref.cpp
+    plugin/pair_ref.h
+    plugin/rest_iterator_ref.cpp
+    plugin/rest_iterator_ref.h
+    plugin/rest_traps.cpp
+    plugin/rest_traps.h
+    plugin/record_ref.cpp
+    plugin/record_ref.h
+    plugin/seq_ref.cpp
+    plugin/seq_ref.h
+    plugin/singleton_ref.cpp
+    plugin/singleton_ref.h
+    plugin/status_traps.cpp
+    plugin/status_traps.h
+    plugin/string_traps.cpp
+    plugin/string_traps.h
+    plugin/url_traps.cpp
+    plugin/url_traps.h
+    )
 
-set(PRELUDE_OBJECT_PATH         "${LYRIC_BUILD_BOOTSTRAP_DIR}/${PRELUDE_OBJECT_NAME}")
-set(PRELUDE_PLUGIN_PATH         "${LYRIC_BUILD_BOOTSTRAP_DIR}/${PRELUDE_PLUGIN_NAME}")
+target_link_libraries(prelude-plugin PRIVATE
+    lyric::lyric_runtime
+    lyric::lyric_schema
+    Boost::headers
+    flatbuffers::flatbuffers
+    )
 
 add_executable(prelude-builder
     object/builder_state.cpp
@@ -97,116 +135,67 @@ add_executable(prelude-builder
     object/compile_varargs.cpp
     object/compile_varargs.h
     object/lib_builder.cpp
-    include/lyric_bootstrap/internal/bootstrap_types.h
     )
 
-target_include_directories(prelude-builder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_definitions(prelude-builder PRIVATE "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\"")
 
-target_compile_definitions(prelude-builder PRIVATE
-    "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
-    "PRELUDE_PLUGIN_PATH=\"${PRELUDE_PLUGIN_PATH}\""
+target_include_directories(prelude-builder PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugin
     )
 
 target_link_libraries(prelude-builder PRIVATE
     lyric::lyric_runtime
     tempo::tempo_utils
+    Boost::headers
     flatbuffers::flatbuffers
+    prelude-plugin
     )
 
-#
-add_dependencies(prelude-builder prelude-plugin)
-
 # build prelude object file
+set(PRELUDE_OBJECT_PATH "${CMAKE_CURRENT_BINARY_DIR}/prelude.lyo")
 add_custom_command (
     OUTPUT ${PRELUDE_OBJECT_PATH}
     COMMAND prelude-builder ${PRELUDE_OBJECT_PATH}
-    COMMENT "generating ${PRELUDE_OBJECT_NAME}"
+    COMMENT "generating prelude.lyo"
     DEPENDS prelude-builder prelude-plugin
     )
 add_custom_target(prelude-object DEPENDS ${PRELUDE_OBJECT_PATH})
 
-# build prelude plugin as a shared library
-add_library(prelude-plugin SHARED
-    include/lyric_bootstrap/internal/bootstrap_types.h
-    plugin/bytes_traps.cpp
-    plugin/bytes_traps.h
-    plugin/category_ref.cpp
-    plugin/category_ref.h
-    plugin/closure_ref.cpp
-    plugin/closure_ref.h
-    plugin/float_traps.cpp
-    plugin/float_traps.h
-    plugin/iterator_ref.cpp
-    plugin/iterator_ref.h
-    plugin/map_key.h
-    plugin/map_ref.cpp
-    plugin/map_ref.h
-    plugin/native_prelude.cpp
-    plugin/native_prelude.h
-    plugin/object_ref.cpp
-    plugin/object_ref.h
-    plugin/pair_ref.cpp
-    plugin/pair_ref.h
-    plugin/rest_iterator_ref.cpp
-    plugin/rest_iterator_ref.h
-    plugin/rest_traps.cpp
-    plugin/rest_traps.h
-    plugin/record_ref.cpp
-    plugin/record_ref.h
-    plugin/seq_ref.cpp
-    plugin/seq_ref.h
-    plugin/singleton_ref.cpp
-    plugin/singleton_ref.h
-    plugin/status_traps.cpp
-    plugin/status_traps.h
-    plugin/string_traps.cpp
-    plugin/string_traps.h
-    plugin/url_traps.cpp
-    plugin/url_traps.h
-)
-
-target_include_directories(prelude-plugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-# set properties to omit the 'lib' prefix and write the plugin into the bootstrap directory
-set_target_properties(prelude-plugin PROPERTIES
-    LIBRARY_OUTPUT_NAME ${PRELUDE_PLUGIN_BASENAME}
-    LIBRARY_OUTPUT_DIRECTORY ${LYRIC_BUILD_BOOTSTRAP_DIR}
-    PREFIX ""
-    )
-
-# set the RPATH if on OS X
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set_target_properties(prelude-plugin PROPERTIES MACOSX_RPATH TRUE)
-endif()
-
-set_target_properties(prelude-plugin PROPERTIES
-    INSTALL_RPATH_USE_LINK_PATH TRUE
-    INSTALL_RPATH ${BOOTSTRAP_RPATH}
-    )
-
-target_link_libraries(prelude-plugin PRIVATE
-    lyric::lyric_runtime
-    lyric::lyric_schema
-    Boost::headers
-    flatbuffers::flatbuffers
-    )
-
 # build lyric_bootstrap as a shared library
 add_library(lyric_bootstrap SHARED)
 add_library(lyric::lyric_bootstrap ALIAS lyric_bootstrap)
-add_dependencies(lyric_bootstrap prelude-object prelude-plugin)
+
+# generate header containing the object schema
+add_custom_command(
+    OUTPUT
+      ${CMAKE_CURRENT_BINARY_DIR}/include/lyric_bootstrap/generated/prelude_object.h
+    COMMAND
+      cmake -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/include/lyric_bootstrap/generated
+    COMMAND
+      tempo::tempo-bytes2code
+      -g LYRIC_BOOTSTRAP_GENERATED_PRELUDE_OBJECT_H -n lyric_bootstrap::prelude::object
+      ${PRELUDE_OBJECT_PATH}
+      ${CMAKE_CURRENT_BINARY_DIR}/include/lyric_bootstrap/generated/prelude_object.h
+    DEPENDS
+      ${PRELUDE_OBJECT_PATH}
+    )
 
 set(LYRIC_BOOTSTRAP_INCLUDES
     include/lyric_bootstrap/bootstrap_helpers.h
     include/lyric_bootstrap/bootstrap_loader.h
+    include/lyric_bootstrap/bootstrap_plugin.h
     include/lyric_bootstrap/bootstrap_result.h
-)
+    )
 set_target_properties(lyric_bootstrap PROPERTIES PUBLIC_HEADER "${LYRIC_BOOTSTRAP_INCLUDES}")
 
 target_sources(lyric_bootstrap PRIVATE
     src/bootstrap_helpers.cpp
     src/bootstrap_loader.cpp
+    src/bootstrap_plugin.cpp
     src/bootstrap_result.cpp
+
+    ${CMAKE_CURRENT_BINARY_DIR}/include/lyric_bootstrap/generated/prelude_object.h
     )
 
 # set the library version
@@ -226,8 +215,10 @@ set_target_properties(lyric_bootstrap PROPERTIES
 # set the public header include path differently on the target depending on the interface
 target_include_directories(lyric_bootstrap PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/plugin>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
+    )
 
 target_compile_definitions(lyric_bootstrap PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
@@ -235,7 +226,7 @@ target_compile_definitions(lyric_bootstrap PRIVATE
     "PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""
     "PLUGIN_ARCHITECTURE=\"${CMAKE_SYSTEM_PROCESSOR}\""
     "PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
-)
+    )
 
 target_link_libraries(lyric_bootstrap
     PUBLIC
@@ -244,14 +235,10 @@ target_link_libraries(lyric_bootstrap
     tempo::tempo_utils
     PRIVATE
     flatbuffers::flatbuffers
-)
-
-# install object and plugin
-install(FILES
-    ${PRELUDE_OBJECT_PATH}
-    ${PRELUDE_PLUGIN_PATH}
-    DESTINATION ${BOOTSTRAP_DIR_PREFIX}
+    prelude-plugin
     )
+
+# install library
 install(TARGETS lyric_bootstrap EXPORT lyric-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/lyric_bootstrap

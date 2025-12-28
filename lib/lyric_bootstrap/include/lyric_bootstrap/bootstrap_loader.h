@@ -5,12 +5,13 @@
 
 #include <lyric_runtime/abstract_loader.h>
 
+#include "bootstrap_plugin.h"
+
 namespace lyric_bootstrap {
 
     class BootstrapLoader : public lyric_runtime::AbstractLoader {
     public:
         BootstrapLoader();
-        explicit BootstrapLoader(const std::filesystem::path &directoryPath);
 
         tempo_utils::Result<bool> hasModule(
             const lyric_common::ModuleLocation &location) const override;
@@ -21,13 +22,14 @@ namespace lyric_bootstrap {
             const lyric_object::PluginSpecifier &specifier) override;
 
     private:
-        std::filesystem::path m_directoryPath;
+        absl::flat_hash_map<
+            tempo_utils::UrlPath,
+            std::pair<lyric_object::LyricObject,std::shared_ptr<BootstrapPlugin>>
+        > m_modules;
 
-        std::filesystem::path findModule(const lyric_common::ModuleLocation &location) const;
-        std::filesystem::path moduleLocationToFilePath(
-            const std::filesystem::path &packagesPath,
+        tempo_utils::Status loadModules();
+        std::pair<lyric_object::LyricObject,std::shared_ptr<BootstrapPlugin>> findModule(
             const lyric_common::ModuleLocation &location) const;
-        bool fileInfoIsValid(const std::filesystem::path &path) const;
     };
 }
 

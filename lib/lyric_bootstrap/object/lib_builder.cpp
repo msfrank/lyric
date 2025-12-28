@@ -1,6 +1,7 @@
 #include <tempo_utils/file_writer.h>
 #include <tempo_utils/log_stream.h>
 
+#include <lyric_runtime/library_plugin.h>
 #include <lyric_runtime/trap_index.h>
 
 #include "builder_state.h"
@@ -47,7 +48,8 @@
 #include "compile_url.h"
 #include "compile_varargs.h"
 #include "compile_status.h"
-#include "lyric_runtime/library_plugin.h"
+
+#include "native_prelude.h"
 
 #define NUM_FUNCTION_CLASSES        8
 #define NUM_TUPLE_CLASSES           8
@@ -60,13 +62,10 @@ main(int argc, char *argv[])
         return -1;
     std::filesystem::path destinationPath(argv[1]);
 
-    auto location = lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
-    auto preludeLib = std::make_shared<tempo_utils::LibraryLoader>(PRELUDE_PLUGIN_PATH, "native_init");
-    auto native_init = (lyric_runtime::NativeInitFunc) preludeLib->symbolPointer();
-    auto preludePlugin = std::make_shared<lyric_runtime::LibraryPlugin>(preludeLib, native_init());
-    auto trapIndex = std::make_shared<lyric_runtime::TrapIndex>(preludePlugin);
+    auto trapIndex = std::make_shared<lyric_runtime::TrapIndex>(&kPreludeInterface);
     TU_RAISE_IF_NOT_OK (trapIndex->initialize());
 
+    auto location = lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
     BuilderState state(location, trapIndex);
 
     // define the Any existential, which is the top of the type hierarchy
@@ -256,7 +255,7 @@ main(int argc, char *argv[])
 
     auto bytes = state.toBytes();
 
-    // write assembly to file
+    // write object to file
     tempo_utils::FileWriter writer(destinationPath, *bytes,
         tempo_utils::FileWriterMode::CREATE_OR_OVERWRITE);
     if (!writer.isValid()) {

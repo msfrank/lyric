@@ -121,11 +121,7 @@ lyric_build::LyricBuilder::configure()
     if (m_options.bootstrapLoader != nullptr) {
         m_bootstrapLoader = m_options.bootstrapLoader;
     } else {
-        if (!m_options.bootstrapDirectory.empty()) {
-            m_bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(m_options.bootstrapDirectory);
-        } else {
-            m_bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
-        }
+        m_bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
     }
 
     // set the fallback loader if one is specified

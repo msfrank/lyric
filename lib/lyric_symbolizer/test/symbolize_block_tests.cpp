@@ -36,7 +36,7 @@ TEST_F(SymbolizeBlock, NoDefinitionsOrImports)
 TEST_F(SymbolizeBlock, DeclareImport)
 {
     lyric_test::TesterOptions testerOptions;
-    testerOptions.bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
+    testerOptions.bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
     lyric_test::LyricTester tester(testerOptions);
     ASSERT_TRUE (tester.configure().isOk());
 

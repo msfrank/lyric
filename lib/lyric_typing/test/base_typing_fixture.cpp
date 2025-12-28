@@ -15,7 +15,7 @@ BaseTypingFixture::SetUp()
 {
     m_location = lyric_common::ModuleLocation::fromString("/test");
     auto staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
-    auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
+    auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
     auto localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
     auto sharedModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
     auto shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();

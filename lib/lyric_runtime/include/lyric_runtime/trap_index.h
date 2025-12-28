@@ -9,7 +9,8 @@ namespace lyric_runtime {
 
     class TrapIndex {
     public:
-        TrapIndex(std::shared_ptr<const AbstractPlugin> plugin);
+        explicit TrapIndex(std::shared_ptr<const AbstractPlugin> plugin);
+        explicit TrapIndex(const NativeInterface *iface);
 
         tempo_utils::Status initialize();
 
@@ -17,6 +18,7 @@ namespace lyric_runtime {
 
     private:
         std::shared_ptr<const AbstractPlugin> m_plugin;
+        const NativeInterface *m_iface;
         absl::flat_hash_map<std::string, tu_uint32> m_traps;
     };
 }

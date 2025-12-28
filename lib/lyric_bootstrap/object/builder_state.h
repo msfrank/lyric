@@ -6,7 +6,6 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 
-#include <lyric_bootstrap/internal/bootstrap_types.h>
 #include <lyric_common/symbol_url.h>
 #include <lyric_object/generated/object.h>
 #include <lyric_object/bytecode_builder.h>

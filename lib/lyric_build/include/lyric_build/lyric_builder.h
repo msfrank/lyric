@@ -73,12 +73,6 @@ namespace lyric_build {
          */
         std::shared_ptr<lyric_runtime::AbstractLoader> bootstrapLoader = {};
         /**
-         * If the bootstrapLoader is not explicitly specified then pass the bootstrapDirectory path as the
-         * constructor argument when allocating the internal BootstrapLoader. If not specified then the
-         * hardcoded default is used.
-         */
-        std::filesystem::path bootstrapDirectory = {};
-        /**
          * Loader which is added to the end of the loader chain. If not specified then no fallback loader
          * is appended to the loader chain.
          */

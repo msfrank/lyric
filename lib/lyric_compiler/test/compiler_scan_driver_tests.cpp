@@ -30,7 +30,7 @@ protected:
         location = lyric_common::ModuleLocation::fromString("/test");
         origin = lyric_common::ModuleLocation::fromString("test://");
         staticLoader = std::make_shared<lyric_runtime::StaticLoader>();
-        bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>(LYRIC_BUILD_BOOTSTRAP_DIR);
+        bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
         localModuleCache = lyric_importer::ModuleCache::create(staticLoader);
         systemModuleCache = lyric_importer::ModuleCache::create(bootstrapLoader);
         shortcutResolver = std::make_shared<lyric_importer::ShortcutResolver>();
