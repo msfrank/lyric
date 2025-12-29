@@ -237,17 +237,10 @@ message(STATUS "full platform is ${FULL_PLATFORM}")
 
 set(BOOTSTRAP_PRELUDE_LOCATION      "dev.zuri.bootstrap:/prelude")
 
-# install paths
-set(BOOTSTRAP_DIR_PREFIX            "${CMAKE_INSTALL_LIBDIR}/lyric-bootstrap-${PROJECT_VERSION}")
-
 # build paths
 set(LYRIC_BUILD_OUTPUT_ROOT         "${CMAKE_BINARY_DIR}/output")
 set(LYRIC_BUILD_BIN_DIR             "${LYRIC_BUILD_OUTPUT_ROOT}/${CMAKE_INSTALL_BINDIR}")
 set(LYRIC_BUILD_LIB_DIR             "${LYRIC_BUILD_OUTPUT_ROOT}/${CMAKE_INSTALL_LIBDIR}")
-set(LYRIC_BUILD_BOOTSTRAP_DIR       "${LYRIC_BUILD_OUTPUT_ROOT}/${BOOTSTRAP_DIR_PREFIX}")
-
-# runtime paths
-set(LYRIC_RUNTIME_BOOTSTRAP_DIR     "${RUNTIME_DISTRIBUTION_ROOT}/${BOOTSTRAP_DIR_PREFIX}")
 
 
 #######################################################################
@@ -271,8 +264,6 @@ configure_package_config_file(
     cmake/lyric-config.cmake.in
     lyric-config.cmake
     INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/lyric"
-    PATH_VARS
-        BOOTSTRAP_DIR_PREFIX
     )
 
 write_basic_package_version_file(lyric-config-version.cmake

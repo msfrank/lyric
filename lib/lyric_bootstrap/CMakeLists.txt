@@ -222,10 +222,6 @@ target_include_directories(lyric_bootstrap PUBLIC
 
 target_compile_definitions(lyric_bootstrap PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
-    "LYRIC_RUNTIME_BOOTSTRAP_DIR=\"${LYRIC_RUNTIME_BOOTSTRAP_DIR}\""
-    "PLUGIN_SYSTEM_NAME=\"${CMAKE_SYSTEM_NAME}\""
-    "PLUGIN_ARCHITECTURE=\"${CMAKE_SYSTEM_PROCESSOR}\""
-    "PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\""
     )
 
 target_link_libraries(lyric_bootstrap
