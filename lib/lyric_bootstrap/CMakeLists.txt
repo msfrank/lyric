@@ -38,6 +38,8 @@ add_library(prelude-plugin STATIC
     plugin/url_traps.h
     )
 
+set_target_properties(prelude-plugin PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 target_link_libraries(prelude-plugin PRIVATE
     lyric::lyric_runtime
     lyric::lyric_schema
