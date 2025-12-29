@@ -30,48 +30,6 @@ lyric_bootstrap::BootstrapLoader::BootstrapLoader()
     TU_RAISE_IF_NOT_OK (loadModules());
 }
 
-// std::filesystem::path
-// lyric_bootstrap::BootstrapLoader::moduleLocationToFilePath(
-//     const std::filesystem::path &directoryPath,
-//     const lyric_common::ModuleLocation &location) const
-// {
-//     if (!directoryPath.is_absolute() || !is_directory(directoryPath))
-//         return {};
-//     if (!location.isValid())
-//         return {};
-//     if (!location.getAuthority().isEmpty())
-//         return {};
-//
-//     // build the module path
-//     auto modulePath = location.getPath().toFilesystemPath(directoryPath);
-//     modulePath.replace_extension(lyric_common::kObjectFileSuffix);
-//
-//     auto modulePathString = modulePath.string();
-//     auto directoryPathString = directoryPath.string();
-//
-//     // validate that the absolute path does not escape the package path
-//     if (!absl::StartsWith(modulePathString, directoryPathString))
-//         return {};
-//
-//     // special case: if packagesPathString does not end with a '/', then
-//     // modulePathString must start with a '/'
-//     if (directoryPathString.back() != '/' && modulePathString.front() != '/')
-//         return {};
-//
-//     return modulePath;
-// }
-//
-// bool
-// lyric_bootstrap::BootstrapLoader::fileInfoIsValid(const std::filesystem::path &path) const
-// {
-//     if (!std::filesystem::exists(path))
-//         return false;
-//     if (!std::filesystem::is_regular_file(path))
-//         return false;
-//
-//     return true;
-// }
-
 tempo_utils::Status
 lyric_bootstrap::BootstrapLoader::loadModules()
 {
