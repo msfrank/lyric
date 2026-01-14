@@ -20,6 +20,9 @@ namespace lyric_build {
         tempo_utils::Status initialize();
 
         tempo_utils::Result<std::filesystem::path> makeDirectory(const tempo_utils::UrlPath &path);
+        tempo_utils::Result<std::filesystem::path> makeSymlink(
+            const tempo_utils::UrlPath &path,
+            const std::filesystem::path &target);
         tempo_utils::Result<std::filesystem::path> putContent(
             const tempo_utils::UrlPath &path,
             std::shared_ptr<const tempo_utils::ImmutableBytes> content);

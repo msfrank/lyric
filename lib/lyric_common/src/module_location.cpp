@@ -122,6 +122,15 @@ lyric_common::ModuleLocation::getModuleName() const
     return m_location->toPath().getLast().getPart();
 }
 
+std::filesystem::path
+lyric_common::ModuleLocation::getModuleDirectory() const
+{
+    auto modulePath = m_location->toPath();
+    auto moduleInit = modulePath.getInit();
+    auto moduleDir = moduleInit.pathView();
+    return std::filesystem::path(moduleDir);
+}
+
 lyric_common::ModuleLocation
 lyric_common::ModuleLocation::resolve(const ModuleLocation &rel) const
 {

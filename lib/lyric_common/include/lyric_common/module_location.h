@@ -32,7 +32,9 @@ namespace lyric_common {
         tempo_utils::UrlOrigin getOrigin() const;
         tempo_utils::UrlAuthority getAuthority() const;
         tempo_utils::UrlPath getPath() const;
+
         std::string getModuleName() const;
+        std::filesystem::path getModuleDirectory() const;
 
         ModuleLocation resolve(const ModuleLocation &rel) const;
         bool isWithinOrigin(const ModuleLocation &origin) const;

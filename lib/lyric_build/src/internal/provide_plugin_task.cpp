@@ -35,6 +35,11 @@ lyric_build::internal::ProvidePluginTask::configure(const TaskSettings *config)
 
     m_moduleLocation = lyric_common::ModuleLocation::fromString(modulePath.toString());
 
+    // parse the runtime lib directory
+    tempo_config::PathParser runtimeLibDirectoryParser(std::filesystem::path{});
+    TU_RETURN_IF_NOT_OK(parse_config(m_runtimeLibDirectory, runtimeLibDirectoryParser,
+        config, taskId, "runtimeLibDirectory"));
+
     //
     // config below comes only from the task section, it is not resolved from domain or global sections
     //
@@ -65,6 +70,11 @@ lyric_build::internal::ProvidePluginTask::configure(const TaskSettings *config)
     } else {
         m_buildTarget = TaskKey("compile_plugin", taskId.getId());
     }
+
+    // parse the plugin lib directory
+    tempo_config::PathParser libDirectoryParser(std::filesystem::path{});
+    TU_RETURN_IF_NOT_OK(tempo_config::parse_config(m_libDirectory, libDirectoryParser,
+        taskSection, "libDirectory"));
 
     return {};
 }
@@ -149,8 +159,14 @@ lyric_build::internal::ProvidePluginTask::providePlugin(
 
         MetadataWriter writer;
         TU_RETURN_IF_NOT_OK (writer.configure());
-        writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
-        writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
+        TU_RETURN_IF_NOT_OK (writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType)));
+        TU_RETURN_IF_NOT_OK (writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation));
+        if (!m_runtimeLibDirectory.empty()) {
+            TU_RETURN_IF_NOT_OK (writer.putAttr(kLyricBuildRuntimeLibDirectory, m_runtimeLibDirectory));
+        }
+        if (!m_libDirectory.empty()) {
+            TU_RETURN_IF_NOT_OK (writer.putAttr(kLyricBuildLibDirectory, m_libDirectory));
+        }
         LyricMetadata metadata;
         TU_ASSIGN_OR_RETURN (metadata, writer.toMetadata());
 
@@ -177,8 +193,14 @@ lyric_build::internal::ProvidePluginTask::providePlugin(
     // serialize the plugin metadata
     MetadataWriter writer;
     TU_RETURN_IF_NOT_OK (writer.configure());
-    writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType));
-    writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation);
+    TU_RETURN_IF_NOT_OK (writer.putAttr(kLyricBuildContentType, std::string(lyric_common::kPluginContentType)));
+    TU_RETURN_IF_NOT_OK (writer.putAttr(kLyricBuildModuleLocation, m_moduleLocation));
+    if (!m_runtimeLibDirectory.empty()) {
+        TU_RETURN_IF_NOT_OK (writer.putAttr(kLyricBuildRuntimeLibDirectory, m_runtimeLibDirectory));
+    }
+    if (!m_libDirectory.empty()) {
+        TU_RETURN_IF_NOT_OK (writer.putAttr(kLyricBuildLibDirectory, m_libDirectory));
+    }
     LyricMetadata metadata;
     TU_ASSIGN_OR_RETURN (metadata, writer.toMetadata());
 

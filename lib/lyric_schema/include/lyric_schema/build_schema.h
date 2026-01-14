@@ -24,6 +24,8 @@ namespace lyric_schema {
         InstallPath,
         TaskHash,
         TaskParams,
+        RuntimeLibDirectory,
+        LibDirectory,
         NUM_IDS,
     };
 
@@ -59,6 +61,14 @@ namespace lyric_schema {
     kLyricBuildTaskParamsProperty(
         &kLyricBuildNs, LyricBuildId::TaskParams, "TaskParams", tempo_schema::PropertyType::kString);
 
+    constexpr tempo_schema::SchemaProperty<LyricBuildNs,LyricBuildId>
+    kLyricBuildRuntimeLibDirectoryProperty(
+        &kLyricBuildNs, LyricBuildId::RuntimeLibDirectory, "RuntimeLibDirectory", tempo_schema::PropertyType::kString);
+
+    constexpr tempo_schema::SchemaProperty<LyricBuildNs,LyricBuildId>
+    kLyricBuildLibDirectoryProperty(
+        &kLyricBuildNs, LyricBuildId::LibDirectory, "LibDirectory", tempo_schema::PropertyType::kString);
+
     constexpr std::array<
         const tempo_schema::SchemaResource<LyricBuildNs,LyricBuildId> *,
         static_cast<std::size_t>(LyricBuildId::NUM_IDS)>
@@ -71,6 +81,8 @@ namespace lyric_schema {
         &kLyricBuildInstallPathProperty,
         &kLyricBuildTaskHashProperty,
         &kLyricBuildTaskParamsProperty,
+        &kLyricBuildRuntimeLibDirectoryProperty,
+        &kLyricBuildLibDirectoryProperty,
     };
 
     constexpr tempo_schema::SchemaVocabulary<LyricBuildNs, LyricBuildId>

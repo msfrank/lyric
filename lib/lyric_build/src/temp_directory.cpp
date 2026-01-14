@@ -97,6 +97,37 @@ lyric_build::TempDirectory::makeDirectory(const tempo_utils::UrlPath &path)
 }
 
 tempo_utils::Result<std::filesystem::path>
+lyric_build::TempDirectory::makeSymlink(const tempo_utils::UrlPath &path, const std::filesystem::path &target)
+{
+    TU_RETURN_IF_NOT_OK (initialize());
+    auto fullPath = internal::to_absolute_path_within_base(m_baseDirectory, path);
+    if (fullPath.empty())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "content path {} is outside of the base directory {}",
+            path.toString(), m_baseDirectory.string());
+
+    // create intermediate directories
+    auto parentDir = fullPath.parent_path();
+    std::error_code ec;
+    std::filesystem::create_directories(parentDir, ec);
+    if (ec)
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "failed to create parent directory {}: {}", parentDir.string(), ec.message());
+
+    // create symlink to target
+    if (std::filesystem::is_directory(target)) {
+        std::filesystem::create_directory_symlink(target, fullPath, ec);
+    } else {
+        std::filesystem::create_symlink(target, fullPath, ec);
+    }
+    if (ec)
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "failed to create symlink {}: {}", fullPath.string(), ec.message());
+
+    return fullPath;
+}
+
+tempo_utils::Result<std::filesystem::path>
 lyric_build::TempDirectory::putContent(
     const tempo_utils::UrlPath &path,
     std::shared_ptr<const tempo_utils::ImmutableBytes> content)
@@ -111,7 +142,7 @@ lyric_build::TempDirectory::putContent(
     // create intermediate directories
     auto parentDir = fullPath.parent_path();
     std::error_code ec;
-    std::filesystem::create_directory(parentDir, ec);
+    std::filesystem::create_directories(parentDir, ec);
     if (ec)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "failed to create parent directory {}: {}", parentDir.string(), ec.message());

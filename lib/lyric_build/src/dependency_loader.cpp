@@ -14,16 +14,16 @@
  * @param objects A map containing objects loaded from the cache.
  */
 lyric_build::DependencyLoader::DependencyLoader(
+    std::shared_ptr<AbstractCache> cache,
     TempDirectory *tempDirectory,
     const absl::flat_hash_map<lyric_common::ModuleLocation, lyric_object::LyricObject> &objects,
-    const absl::flat_hash_map<
-        lyric_common::ModuleLocation,
-        std::shared_ptr<const tempo_utils::ImmutableBytes>
-    > &plugins)
-    : m_tempDirectory(tempDirectory),
+    const absl::flat_hash_map<lyric_common::ModuleLocation, ArtifactId> &plugins)
+    : m_cache(std::move(cache)),
+      m_tempDirectory(tempDirectory),
       m_objects(objects),
       m_plugins(plugins)
 {
+    TU_ASSERT (m_cache != nullptr);
     TU_ASSERT (m_tempDirectory != nullptr);
 }
 
@@ -58,15 +58,41 @@ lyric_build::DependencyLoader::loadPlugin(
     if (pluginEntry == m_plugins.cend())
         return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>();
 
-    // write the plugin to a file in the temp directory
-    auto content = pluginEntry->second;
-    auto moduleName = location.getModuleName();
-    auto fileName = tempo_utils::generate_name(absl::StrCat(moduleName, ".XXXXXXXX"));
-    auto pluginFilename = lyric_common::pluginFilename(fileName);
-    auto pluginPath = tempo_utils::UrlPath::fromString(pluginFilename).toAbsolute();
+    // construct the plugin path
+    auto pluginRoot = tempo_utils::UrlPath::fromString("/")
+        .traverse(
+            tempo_utils::UrlPathPart(tempo_utils::generate_name("XXXXXXXX")));
+    auto pluginFilename = lyric_common::pluginFilename(location.getModuleName());
+    auto pluginPath = pluginRoot.traverse(
+        tempo_utils::UrlPathPart("modules"),
+        location.getPath().getInit().toRelative(),
+        tempo_utils::UrlPathPart(pluginFilename));
 
+    // write the plugin to a file in the temp directory
+    std::shared_ptr<const tempo_utils::ImmutableBytes> content;
+    TU_ASSIGN_OR_RETURN (content, m_cache->loadContentFollowingLinks(pluginEntry->second));
     std::filesystem::path absolutePath;
     TU_ASSIGN_OR_RETURN (absolutePath, m_tempDirectory->putContent(pluginPath, content));
+
+    //
+    LyricMetadata metadata;
+    TU_ASSIGN_OR_RETURN (metadata, m_cache->loadMetadataFollowingLinks(pluginEntry->second));
+
+    // if runtime lib directory attr is present then create directory symlink to it
+    if (metadata.hasAttr(kLyricBuildRuntimeLibDirectory)) {
+        std::filesystem::path runtimeLibDirectory;
+        TU_RETURN_IF_NOT_OK (metadata.parseAttr(kLyricBuildRuntimeLibDirectory, runtimeLibDirectory));
+        auto linkPath = pluginRoot.traverse(tempo_utils::UrlPathPart("runtime-lib"));
+        TU_RETURN_IF_STATUS (m_tempDirectory->makeSymlink(linkPath, runtimeLibDirectory));
+    }
+
+    // if lib directory attr is present then create directory symlink to it
+    if (metadata.hasAttr(kLyricBuildLibDirectory)) {
+        std::filesystem::path LibDirectory;
+        TU_RETURN_IF_NOT_OK (metadata.parseAttr(kLyricBuildLibDirectory, LibDirectory));
+        auto linkPath = pluginRoot.traverse(tempo_utils::UrlPathPart("lib"));
+        TU_RETURN_IF_STATUS (m_tempDirectory->makeSymlink(linkPath, LibDirectory));
+    }
 
     // attempt to load the plugin
     auto loader = std::make_shared<tempo_utils::LibraryLoader>(absolutePath, "native_init");
@@ -113,10 +139,7 @@ lyric_build::DependencyLoader::create(
     absl::flat_hash_set<lyric_common::ModuleLocation> pluginLocations;
 
     absl::flat_hash_map<lyric_common::ModuleLocation,lyric_object::LyricObject> objects;
-    absl::flat_hash_map<
-        lyric_common::ModuleLocation,
-        std::shared_ptr<const tempo_utils::ImmutableBytes>
-    > plugins;
+    absl::flat_hash_map<lyric_common::ModuleLocation,ArtifactId> plugins;
 
     for (const auto &entry : depStates) {
         const auto &taskKey = entry.first;
@@ -197,10 +220,10 @@ lyric_build::DependencyLoader::create(
                 return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                     "loader found duplicate plugin {}", location.toString());
 
-            std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-            TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(artifactId));
+            //std::shared_ptr<const tempo_utils::ImmutableBytes> content;
+            //TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(artifactId));
 
-            plugins[location] = content;
+            plugins[location] = artifactId;
             pluginLocations.insert(location);
         }
 
@@ -212,7 +235,7 @@ lyric_build::DependencyLoader::create(
         << " plugins=" << pluginLocations;
 
     return std::shared_ptr<DependencyLoader>(
-        new DependencyLoader(tempDirectory, objects, plugins));
+        new DependencyLoader(std::move(cache), tempDirectory, objects, plugins));
 }
 
 tempo_utils::Result<std::shared_ptr<lyric_build::DependencyLoader>>

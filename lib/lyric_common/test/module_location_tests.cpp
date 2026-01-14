@@ -24,3 +24,15 @@ TEST(ModuleLocation, ConstructRelativeModuleLocation)
     ASSERT_TRUE (moduleLocation.hasPathParts());
     ASSERT_EQ ("/foo/bar", moduleLocation.toString());
 }
+
+TEST(ModuleLocation, GetModuleName)
+{
+    auto moduleLocation = lyric_common::ModuleLocation::fromString("/foo/bar");
+    ASSERT_EQ ("bar", moduleLocation.getModuleName());
+}
+
+TEST(ModuleLocation, GetModuleDirectory)
+{
+    auto moduleLocation = lyric_common::ModuleLocation::fromString("/foo/bar");
+    ASSERT_EQ (std::filesystem::path{"/foo"}, moduleLocation.getModuleDirectory());
+}

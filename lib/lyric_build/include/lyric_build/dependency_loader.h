@@ -40,25 +40,27 @@ namespace lyric_build {
 
     private:
         lyric_common::ModuleLocation m_origin;
+        std::shared_ptr<AbstractCache> m_cache;
         TempDirectory *m_tempDirectory;
         absl::flat_hash_map<
             lyric_common::ModuleLocation,
             lyric_object::LyricObject> m_objects;
         absl::flat_hash_map<
             lyric_common::ModuleLocation,
-            std::shared_ptr<const tempo_utils::ImmutableBytes>> m_plugins;
+            ArtifactId> m_plugins;
         absl::flat_hash_map<
             lyric_common::ModuleLocation,
             std::shared_ptr<const lyric_runtime::LibraryPlugin>> m_libraries;
 
         DependencyLoader(
+            std::shared_ptr<AbstractCache> cache,
             TempDirectory *tempDirectory,
             const absl::flat_hash_map<
                 lyric_common::ModuleLocation,
                 lyric_object::LyricObject> &objects,
             const absl::flat_hash_map<
                 lyric_common::ModuleLocation,
-                std::shared_ptr<const tempo_utils::ImmutableBytes>> &plugins);
+                ArtifactId> &plugins);
     };
 }
 

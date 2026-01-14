@@ -30,6 +30,8 @@ namespace lyric_build::internal {
         lyric_common::ModuleLocation m_moduleLocation;
         TaskKey m_buildTarget;
         tempo_utils::UrlPath m_existingPluginPath;
+        std::filesystem::path m_runtimeLibDirectory;
+        std::filesystem::path m_libDirectory;
 
         tempo_utils::Status configure(const lyric_build::TaskSettings *config);
         tempo_utils::Status providePlugin(
