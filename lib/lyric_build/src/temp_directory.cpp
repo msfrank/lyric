@@ -82,7 +82,7 @@ tempo_utils::Result<std::filesystem::path>
 lyric_build::TempDirectory::makeDirectory(const tempo_utils::UrlPath &path)
 {
     TU_RETURN_IF_NOT_OK (initialize());
-    auto fullPath = internal::to_absolute_path_within_base(m_baseDirectory, path);
+    auto fullPath = internal::to_absolute_path(m_baseDirectory, path, false);
     if (fullPath.empty())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "directory path {} is outside of the base directory {}",
@@ -100,7 +100,7 @@ tempo_utils::Result<std::filesystem::path>
 lyric_build::TempDirectory::makeSymlink(const tempo_utils::UrlPath &path, const std::filesystem::path &target)
 {
     TU_RETURN_IF_NOT_OK (initialize());
-    auto fullPath = internal::to_absolute_path_within_base(m_baseDirectory, path);
+    auto fullPath = internal::to_absolute_path(m_baseDirectory, path, false);
     if (fullPath.empty())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "content path {} is outside of the base directory {}",
@@ -133,7 +133,7 @@ lyric_build::TempDirectory::putContent(
     std::shared_ptr<const tempo_utils::ImmutableBytes> content)
 {
     TU_RETURN_IF_NOT_OK (initialize());
-    auto fullPath = internal::to_absolute_path_within_base(m_baseDirectory, path);
+    auto fullPath = internal::to_absolute_path(m_baseDirectory, path, false);
     if (fullPath.empty())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "content path {} is outside of the base directory {}",
@@ -158,7 +158,7 @@ tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>>
 lyric_build::TempDirectory::getContent(tempo_utils::UrlPath &path)
 {
     TU_RETURN_IF_NOT_OK (initialize());
-    auto fullPath = internal::to_absolute_path_within_base(m_baseDirectory, path);
+    auto fullPath = internal::to_absolute_path(m_baseDirectory, path, false);
     if (fullPath.empty())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "content path {} is outside of the base directory {}",

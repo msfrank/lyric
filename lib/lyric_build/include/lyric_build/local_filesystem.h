@@ -7,7 +7,9 @@ namespace lyric_build {
 
     class LocalFilesystem: public AbstractFilesystem {
     public:
-        static tempo_utils::Result<std::shared_ptr<LocalFilesystem>> create(const std::filesystem::path &baseDirectory);
+        static tempo_utils::Result<std::shared_ptr<LocalFilesystem>> create(
+            const std::filesystem::path &baseDirectory,
+            bool allowSymlinksOutsideBase = false);
 
         bool supportsScheme(std::string_view scheme);
         bool supportsScheme(const tempo_utils::Url &url);
@@ -28,8 +30,9 @@ namespace lyric_build {
 
     private:
         std::filesystem::path m_baseDirectory;
+        bool m_allowSymlinksOutsideBase;
 
-        explicit LocalFilesystem(const std::filesystem::path &baseDirectory);
+        explicit LocalFilesystem(const std::filesystem::path &baseDirectory, bool allowSymlinksOutsideBase);
     };
 }
 

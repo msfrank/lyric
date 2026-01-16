@@ -5,11 +5,11 @@ include(GoogleTest)
 # define unit tests
 
 set(TEST_CASES
+    abstract_cache_tests.cpp
     #builder_tests.cpp
     build_runner_tests.cpp
     compile_plugin_task_tests.cpp
     fetch_external_file_task_tests.cpp
-    memory_cache_tests.cpp
     parse_module_task_tests.cpp
     provide_plugin_task_tests.cpp
     )

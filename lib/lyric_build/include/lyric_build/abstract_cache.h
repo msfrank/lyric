@@ -15,7 +15,11 @@ namespace lyric_build {
     public:
         virtual ~AbstractCache() = default;
 
+        virtual tempo_utils::Status initializeCache() = 0;
+
         virtual tempo_utils::Status declareArtifact(const ArtifactId &artifactId) = 0;
+
+        virtual bool hasArtifact(const ArtifactId &artifactId) = 0;
 
         /**
          *

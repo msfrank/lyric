@@ -23,7 +23,6 @@ namespace lyric_build {
     enum class EntryType {
         Unknown,
         File,
-        Directory,
         Link,
         LinkOverride,
     };

@@ -14,9 +14,11 @@
 namespace lyric_build {
 
     class RocksdbContent : public tempo_utils::ImmutableBytes {
+        struct Private{ explicit Private() = default; };
     public:
-        RocksdbContent(rocksdb::PinnableSlice *slice);
+        RocksdbContent(rocksdb::PinnableSlice *slice, Private p);
         ~RocksdbContent();
+        static std::shared_ptr<const ImmutableBytes> acquireOrCopy(rocksdb::PinnableSlice *slice, bool copy);
         const tu_uint8 *getData() const override;
         tu_uint32 getSize() const override;
     private:
@@ -26,14 +28,14 @@ namespace lyric_build {
     class RocksdbCache : public AbstractCache {
 
     public:
-        explicit RocksdbCache(const std::filesystem::path &dbPath);
+        RocksdbCache(const std::filesystem::path &dbPath, bool copyReadBuffers);
         ~RocksdbCache() override;
 
-        tempo_utils::Status initializeCache();
+        tempo_utils::Status initializeCache() override;
 
         tempo_utils::Status declareArtifact(const ArtifactId &artifactId) override;
 
-        bool hasArtifact(const ArtifactId &artifactId);
+        bool hasArtifact(const ArtifactId &artifactId) override;
 
         tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>> loadContent(
             const ArtifactId &artifactId) override;
@@ -74,6 +76,7 @@ namespace lyric_build {
 
     private:
         std::filesystem::path m_dbPath;
+        bool m_copyReadBuffers;
 
         // db and column family config
         rocksdb::Options m_dbopts;

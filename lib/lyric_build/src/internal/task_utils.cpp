@@ -20,11 +20,14 @@ lyric_build::internal::build_full_path(
 }
 
 std::filesystem::path
-lyric_build::internal::to_absolute_path_within_base(
+lyric_build::internal::to_absolute_path(
     const std::filesystem::path &baseDirectory,
-    const tempo_utils::UrlPath &path)
+    const tempo_utils::UrlPath &path,
+    bool allowSymlinksOutsideBase)
 {
     auto absolutePath = path.toFilesystemPath(baseDirectory);
+    if (allowSymlinksOutsideBase)
+        return absolutePath;
     if (std::filesystem::relative(absolutePath, baseDirectory).string().starts_with(".."))
         return {};
     return absolutePath;

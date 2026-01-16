@@ -16,6 +16,12 @@ lyric_build::MemoryCache::MemoryCache()
 }
 
 tempo_utils::Status
+lyric_build::MemoryCache::initializeCache()
+{
+    return {};
+}
+
+tempo_utils::Status
 lyric_build::MemoryCache::declareArtifact(const ArtifactId &artifactId)
 {
     absl::MutexLock locker(&m_lock);
@@ -32,6 +38,13 @@ lyric_build::MemoryCache::declareArtifact(const ArtifactId &artifactId)
     m_metadata[artifactId] = std::move(metadataEntry);
 
     return {};
+}
+
+bool
+lyric_build::MemoryCache::hasArtifact(const ArtifactId &artifactId)
+{
+    absl::MutexLock locker(&m_lock);
+    return m_metadata.contains(artifactId);
 }
 
 tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>>

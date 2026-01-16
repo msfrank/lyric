@@ -15,8 +15,9 @@
 #include <tempo_utils/slice.h>
 #include <tempo_utils/unicode.h>
 
-lyric_build::RocksdbCache::RocksdbCache(const std::filesystem::path &dbPath)
-    : m_dbPath(dbPath)
+lyric_build::RocksdbCache::RocksdbCache(const std::filesystem::path &dbPath, bool copyReadBuffers)
+    : m_dbPath(dbPath),
+      m_copyReadBuffers(copyReadBuffers)
 {
     // configure db options
     m_dbopts.create_if_missing = true;
@@ -36,6 +37,11 @@ lyric_build::RocksdbCache::~RocksdbCache()
     delete m_metadata;
     delete m_traces;
     delete m_diagnostics;
+
+    if (m_db) {
+        auto status = m_db->Close();
+        TU_LOG_V << "DB close returned " << status.ToString();
+    }
     delete m_db;
 }
 
@@ -133,11 +139,11 @@ read_trace_id(const std::string &v)
 {
     std::vector<std::string> parts = absl::StrSplit(v, ":");
     if (parts.size() != 3)
-        return lyric_build::TraceId();
+        return {};
 
     std::string hash;
     if (!absl::WebSafeBase64Unescape(parts[0], &hash))
-        return lyric_build::TraceId();
+        return {};
     auto taskDomain = tempo_utils::percent_decode_utf8(parts[1]);
     auto taskId = tempo_utils::percent_decode_utf8(parts[2]);
 
@@ -246,7 +252,7 @@ write_artifact_meta(const MetadataEntry &metadataEntry)
 {
     if (metadataEntry.type == lyric_build::EntryType::Unknown)
         return {};
-    if (metadataEntry.metadata.isValid())
+    if (!metadataEntry.metadata.isValid())
         return {};
 
     tempo_utils::BytesAppender appender;
@@ -263,6 +269,7 @@ lyric_build::RocksdbCache::declareArtifact(const ArtifactId &artifactId)
     rocksdb::Status status;
 
     std::string id = write_artifact_id(artifactId);
+    TU_ASSERT (!id.empty());
     rocksdb::Slice k(id);
 
     MetadataEntry metadataEntry;
@@ -271,6 +278,7 @@ lyric_build::RocksdbCache::declareArtifact(const ArtifactId &artifactId)
     TU_RETURN_IF_NOT_OK (writer.configure());
     TU_ASSIGN_OR_RETURN (metadataEntry.metadata, writer.toMetadata());
     auto metaBytes = write_artifact_meta(metadataEntry);
+    TU_ASSERT (!metaBytes.empty());
     rocksdb::Slice v(metaBytes);
 
     status = m_db->Put(options, m_metadata, k, v);
@@ -289,11 +297,12 @@ lyric_build::RocksdbCache::hasArtifact(const ArtifactId &artifactId)
     rocksdb::Status status;
 
     std::string id = write_artifact_id(artifactId);
+    TU_ASSERT (!id.empty());
     rocksdb::Slice k(id);
 
     auto metaBytes = std::make_unique<rocksdb::PinnableSlice>();
     status = m_db->Get(options, m_metadata, k, metaBytes.get());
-    return status.IsNotFound();
+    return status.ok();
 }
 
 tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>>
@@ -305,6 +314,7 @@ lyric_build::RocksdbCache::loadContent(const ArtifactId &artifactId)
     rocksdb::Status status;
 
     std::string id = write_artifact_id(artifactId);
+    TU_ASSERT (!id.empty());
     rocksdb::Slice k(id);
 
     auto contentSlice = std::make_unique<rocksdb::PinnableSlice>();
@@ -316,8 +326,7 @@ lyric_build::RocksdbCache::loadContent(const ArtifactId &artifactId)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "Get failed: {}", status.ToString());
 
-    auto content = std::make_shared<const RocksdbContent>(contentSlice.release());
-    return std::static_pointer_cast<const tempo_utils::ImmutableBytes>(content);
+    return RocksdbContent::acquireOrCopy(contentSlice.release(), m_copyReadBuffers);
 }
 
 tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>>
@@ -329,6 +338,7 @@ lyric_build::RocksdbCache::loadContentFollowingLinks(const ArtifactId &artifactI
     rocksdb::Status status;
 
     std::string id = write_artifact_id(artifactId);
+    TU_ASSERT (!id.empty());
     rocksdb::Slice k(id);
 
     auto metaSlice = std::make_unique<rocksdb::PinnableSlice>();
@@ -339,7 +349,7 @@ lyric_build::RocksdbCache::loadContentFollowingLinks(const ArtifactId &artifactI
     if (!status.ok())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "Get failed: {}", status.ToString());
-    auto meta = std::make_shared<const RocksdbContent>(metaSlice.release());
+    auto meta = RocksdbContent::acquireOrCopy(metaSlice.release(), m_copyReadBuffers);
 
     auto metadataEntry = read_artifact_meta(meta);
     if (metadataEntry.type == EntryType::Unknown)
@@ -356,7 +366,7 @@ lyric_build::RocksdbCache::loadContentFollowingLinks(const ArtifactId &artifactI
             "Get failed: {}", status.ToString());
 
     // if metadata entry type is Link then follow the link
-    if (metadataEntry.type == EntryType::Link) {
+    if (metadataEntry.type == EntryType::Link || metadataEntry.type == EntryType::LinkOverride) {
         auto linkId = read_artifact_id(contentSlice->ToString());
         if (linkId.isValid())
             return loadContentFollowingLinks(linkId);
@@ -364,8 +374,7 @@ lyric_build::RocksdbCache::loadContentFollowingLinks(const ArtifactId &artifactI
             "missing artifact {}", artifactId.toString());
     }
 
-    auto content = std::make_shared<const RocksdbContent>(contentSlice.release());
-    return std::static_pointer_cast<const tempo_utils::ImmutableBytes>(content);
+    return RocksdbContent::acquireOrCopy(contentSlice.release(), m_copyReadBuffers);
 }
 
 tempo_utils::Status
@@ -379,6 +388,7 @@ lyric_build::RocksdbCache::storeContent(
     rocksdb::Status status;
 
     std::string id = write_artifact_id(artifactId);
+    TU_ASSERT (!id.empty());
     rocksdb::Slice k(id);
 
     rocksdb::Slice v((const char *) bytes->getData(), bytes->getSize());
@@ -398,6 +408,7 @@ lyric_build::RocksdbCache::storeContent(const ArtifactId &artifactId, std::span<
     rocksdb::Status status;
 
     std::string id = write_artifact_id(artifactId);
+    TU_ASSERT (!id.empty());
     rocksdb::Slice k(id);
 
     rocksdb::Slice v((const char *) bytes.data(), bytes.size());
@@ -417,6 +428,7 @@ lyric_build::RocksdbCache::loadMetadata(const ArtifactId &artifactId)
     rocksdb::Status status;
 
     std::string id = write_artifact_id(artifactId);
+    TU_ASSERT (!id.empty());
     rocksdb::Slice k(id);
 
     auto metaBytes = std::make_unique<rocksdb::PinnableSlice>();
@@ -427,7 +439,7 @@ lyric_build::RocksdbCache::loadMetadata(const ArtifactId &artifactId)
     if (!status.ok())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "Get failed: {}",status.ToString());
-    auto meta = std::make_shared<const RocksdbContent>(metaBytes.release());
+    auto meta = RocksdbContent::acquireOrCopy(metaBytes.release(), m_copyReadBuffers);
 
     auto metadataEntry = read_artifact_meta(meta);
     if (metadataEntry.type == EntryType::Unknown)
@@ -435,6 +447,28 @@ lyric_build::RocksdbCache::loadMetadata(const ArtifactId &artifactId)
             "invalid metadata for artifact {}", artifactId.toString());
 
     return metadataEntry.metadata;
+}
+
+static tempo_utils::Status
+read_link_id(
+    const rocksdb::Slice &k,
+    rocksdb::DB *db,
+    rocksdb::ColumnFamilyHandle *content,
+    lyric_build::ArtifactId &linkId)
+{
+    rocksdb::ReadOptions options;
+    rocksdb::Status status;
+    std::string contentString;
+    status = db->Get(options, content, k, &contentString);
+    if (status.IsNotFound())
+        return lyric_build::BuildStatus::forCondition(lyric_build::BuildCondition::kBuildInvariant,
+            "missing link entry '{}'", k.ToString());
+    if (!status.ok())
+        return lyric_build::BuildStatus::forCondition(lyric_build::BuildCondition::kBuildInvariant,
+            "Get failed: {}", status.ToString());
+
+    linkId = read_artifact_id(contentString);
+    return {};
 }
 
 tempo_utils::Result<lyric_build::LyricMetadata>
@@ -446,6 +480,7 @@ lyric_build::RocksdbCache::loadMetadataFollowingLinks(const ArtifactId &artifact
     rocksdb::Status status;
 
     std::string id = write_artifact_id(artifactId);
+    TU_ASSERT (!id.empty());
     rocksdb::Slice k(id);
 
     auto metaBytes = std::make_unique<rocksdb::PinnableSlice>();
@@ -456,7 +491,7 @@ lyric_build::RocksdbCache::loadMetadataFollowingLinks(const ArtifactId &artifact
     if (!status.ok())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "Get failed: {}", status.ToString());
-    auto meta = std::make_shared<const RocksdbContent>(metaBytes.release());
+    auto meta = RocksdbContent::acquireOrCopy(metaBytes.release(), m_copyReadBuffers);
 
     auto metadataEntry = read_artifact_meta(meta);
     if (metadataEntry.type == EntryType::Unknown)
@@ -467,20 +502,23 @@ lyric_build::RocksdbCache::loadMetadataFollowingLinks(const ArtifactId &artifact
         return metadataEntry.metadata;
 
     // if metadata entry type is LINK_ENTRY, then follow the link
-    std::string contentString;
-    status = m_db->Get(options, m_content, k, &contentString);
-    if (status.IsNotFound())
+
+    // std::string contentString;
+    // status = m_db->Get(options, m_content, k, &contentString);
+    // if (status.IsNotFound())
+    //     return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
+    //         "missing artifact {}", artifactId.toString());
+    // if (!status.ok())
+    //     return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+    //         "Get failed: {}", status.ToString());
+    //
+    // auto linkId = read_artifact_id(contentString);
+    ArtifactId linkId;
+    read_link_id(k, m_db, m_content, linkId);
+    if (!linkId.isValid())
         return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
             "missing artifact {}", artifactId.toString());
-    if (!status.ok())
-        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-            "Get failed: {}", status.ToString());
-
-    auto linkId = read_artifact_id(contentString);
-    if (linkId.isValid())
-        return loadMetadataFollowingLinks(linkId);
-    return BuildStatus::forCondition(BuildCondition::kArtifactNotFound,
-        "missing artifact {}", artifactId.toString());
+    return loadMetadataFollowingLinks(linkId);
 }
 
 tempo_utils::Status
@@ -492,6 +530,7 @@ lyric_build::RocksdbCache::storeMetadata(const ArtifactId &artifactId, const Lyr
     rocksdb::Status status;
 
     std::string id = write_artifact_id(artifactId);
+    TU_ASSERT (!id.empty());
     rocksdb::Slice k(id);
 
     MetadataEntry metadataEntry;
@@ -521,6 +560,7 @@ lyric_build::RocksdbCache::linkArtifact(const ArtifactId &dstId, const ArtifactI
     rocksdb::Status status;
 
     std::string id = write_artifact_id(dstId);
+    TU_ASSERT (!id.empty());
     rocksdb::Slice k(id);
 
     MetadataEntry metadataEntry;
@@ -557,13 +597,12 @@ lyric_build::RocksdbCache::linkArtifactOverridingMetadata(
     rocksdb::Status status;
 
     std::string id = write_artifact_id(dstId);
+    TU_ASSERT (!id.empty());
     rocksdb::Slice k(id);
 
     MetadataEntry metadataEntry;
     metadataEntry.type = EntryType::LinkOverride;
-    MetadataWriter writer;
-    TU_RETURN_IF_NOT_OK (writer.configure());
-    TU_ASSIGN_OR_RETURN (metadataEntry.metadata, writer.toMetadata());
+    metadataEntry.metadata = metadata;
     auto metaBytes = write_artifact_meta(metadataEntry);
     rocksdb::Slice v(metaBytes);
 
@@ -592,7 +631,10 @@ lyric_build::RocksdbCache::findArtifacts(
 
     rocksdb::ReadOptions options;
     rocksdb::Slice k(base);
-    rocksdb::Iterator* it = m_db->NewIterator(options, m_metadata);
+
+    // NOTE: iterator must be deleted manually
+    rocksdb::Iterator *it = m_db->NewIterator(options, m_metadata);
+
     for (it->Seek(k); it->Valid(); it->Next()) {
         const auto curr = it->key().ToString();
         if (!absl::StartsWith(curr, base))
@@ -608,11 +650,21 @@ lyric_build::RocksdbCache::findArtifacts(
         if (applyFilters) {
             auto meta = tempo_utils::MemoryBytes::copy(it->value().ToStringView());
             auto metadataEntry = read_artifact_meta(meta);
-            if (!metadata_matches_all_filters(metadataEntry.metadata, filters))
+            LyricMetadata metadata;
+            if (metadataEntry.type == EntryType::Link) {
+                ArtifactId linkId;
+                TU_RETURN_IF_NOT_OK (read_link_id(it->key(), m_db, m_content, linkId));
+                TU_ASSIGN_OR_RETURN (metadata, loadMetadataFollowingLinks(linkId));
+            } else {
+                metadata = metadataEntry.metadata;
+            }
+            if (!metadata_matches_all_filters(metadata, filters))
                 continue;
         }
         matches.push_back(artifactId);
     }
+
+    delete it;
 
     return matches;
 }
@@ -741,7 +793,7 @@ lyric_build::RocksdbCache::storeDiagnostics(const TraceId &traceId, const tempo_
     TU_ASSERT (status.ok());
 }
 
-lyric_build::RocksdbContent::RocksdbContent(rocksdb::PinnableSlice *slice)
+lyric_build::RocksdbContent::RocksdbContent(rocksdb::PinnableSlice *slice, Private p)
     : m_slice(slice)
 {
     TU_ASSERT (m_slice != nullptr);
@@ -762,4 +814,12 @@ tu_uint32
 lyric_build::RocksdbContent::getSize() const
 {
     return m_slice->size();
+}
+
+std::shared_ptr<const tempo_utils::ImmutableBytes>
+lyric_build::RocksdbContent::acquireOrCopy(rocksdb::PinnableSlice *slice, bool copy)
+{
+    if (copy)
+        return tempo_utils::MemoryBytes::copy(std::span((const tu_uint8 *) slice->data(), slice->size()));
+    return std::make_shared<RocksdbContent>(slice, Private{});
 }

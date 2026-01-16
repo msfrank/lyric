@@ -45,6 +45,19 @@ lyric_build::LyricBuilder::LyricBuilder(
     TU_ASSERT (!m_workspaceRoot.empty());
 }
 
+lyric_build::LyricBuilder::~LyricBuilder()
+{
+    m_bootstrapLoader.reset();
+    m_fallbackLoader.reset();
+    m_sharedModuleCache.reset();
+    m_shortcutResolver.reset();
+    m_taskRegistry.reset();
+    m_virtualFilesystem.reset();
+    m_options = {};
+
+    m_cache.reset();
+}
+
 std::filesystem::path
 lyric_build::LyricBuilder::getWorkspaceRoot() const
 {
@@ -170,23 +183,26 @@ lyric_build::LyricBuilder::configure()
     }
 
     // create the build cache
-    if (cacheMode == CacheMode::InMemory) {
-        m_cache = std::make_shared<MemoryCache>();
-    } else if (cacheMode == CacheMode::Persistent) {
-        std::filesystem::path cacheDirectoryPath = m_buildRoot / "cache";
-        if (!std::filesystem::exists(cacheDirectoryPath)) {
-            if (!std::filesystem::create_directories(cacheDirectoryPath))
-                return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                    "failed to create cache directory {}", cacheDirectoryPath.string());
+    switch (cacheMode) {
+        case CacheMode::InMemory: {
+            m_cache = std::make_shared<MemoryCache>();
+            break;
         }
-        auto cache = std::make_shared<RocksdbCache>(cacheDirectoryPath);
-        auto status = cache->initializeCache();
-        if (!status.isOk())
-            return status;
-        m_cache = cache;
-    } else {
-        return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
-            "invalid global configuration for cache mode");
+        case CacheMode::Persistent: {
+            std::filesystem::path cacheDirectoryPath = m_buildRoot / "cache";
+            if (!std::filesystem::exists(cacheDirectoryPath)) {
+                if (!std::filesystem::create_directories(cacheDirectoryPath))
+                    return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                        "failed to create cache directory {}", cacheDirectoryPath.string());
+            }
+            auto cache = std::make_shared<RocksdbCache>(cacheDirectoryPath, /* copyReadBuffers= */ false);
+            TU_RETURN_IF_NOT_OK (cache->initializeCache());
+            m_cache = std::move(cache);
+            break;
+        }
+        default:
+            return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
+                "invalid global configuration for cache mode");
     }
 
     // create the temp root

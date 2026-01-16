@@ -94,6 +94,7 @@ namespace lyric_build {
             const std::filesystem::path &workspaceRoot,
             const TaskSettings &taskSettings,
             const BuilderOptions &options = {});
+        ~LyricBuilder();
 
         std::filesystem::path getWorkspaceRoot() const;
         TaskSettings getTasksettings() const;

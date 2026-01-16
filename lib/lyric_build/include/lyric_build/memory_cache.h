@@ -13,7 +13,11 @@ namespace lyric_build {
     public:
         MemoryCache();
 
+        tempo_utils::Status initializeCache() override;
+
         tempo_utils::Status declareArtifact(const ArtifactId &artifactId) override;
+
+        bool hasArtifact(const ArtifactId &artifactId) override;
 
         tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>> loadContent(
             const ArtifactId &artifactId) override;
