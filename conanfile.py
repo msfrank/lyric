@@ -8,7 +8,7 @@ from conan.tools.files import copy, load
 class Lyric(ConanFile):
     name = 'lyric'
 
-    # enforce full mode when resolving dependencies
+    revision_mode = "scm"
     package_id_non_embed_mode = "full_mode"
     package_id_unknown_mode = "full_mode"
 
