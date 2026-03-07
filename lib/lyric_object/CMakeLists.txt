@@ -34,6 +34,7 @@ set(LYRIC_OBJECT_INCLUDES
     include/lyric_object/plugin_specifier.h
     include/lyric_object/plugin_walker.h
     include/lyric_object/proc_utils.h
+    include/lyric_object/protocol_walker.h
     include/lyric_object/static_walker.h
     include/lyric_object/struct_walker.h
     include/lyric_object/symbol_walker.h
@@ -101,6 +102,7 @@ target_sources(lyric_object PRIVATE
     src/plugin_specifier.cpp
     src/plugin_walker.cpp
     src/proc_utils.cpp
+    src/protocol_walker.cpp
     src/struct_walker.cpp
     src/static_walker.cpp
     src/symbol_walker.cpp

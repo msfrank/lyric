@@ -12,6 +12,7 @@
 #include <lyric_importer/instance_import.h>
 #include <lyric_importer/module_import.h>
 #include <lyric_importer/namespace_import.h>
+#include <lyric_importer/protocol_import.h>
 #include <lyric_importer/static_import.h>
 #include <lyric_importer/struct_import.h>
 #include <lyric_importer/template_import.h>
@@ -101,6 +102,11 @@ lyric_importer::ModuleImport::initialize()
     m_importedNamespaces.resize(m_object.numNamespaces());
     for (int i = 0; i < m_object.numNamespaces(); i++) {
         m_importedNamespaces[i] = new NamespaceImport(shared_from_this(), i);
+    }
+
+    m_importedProtocols.resize(m_object.numProtocols());
+    for (int i = 0; i < m_object.numProtocols(); i++) {
+        m_importedProtocols[i] = new ProtocolImport(shared_from_this(), i);
     }
 
     m_importedStatics.resize(m_object.numStatics());
@@ -235,6 +241,14 @@ lyric_importer::ModuleImport::getNamespace(tu_uint32 offset) const
 {
     if (offset < m_importedNamespaces.size())
         return m_importedNamespaces.at(offset);
+    return nullptr;
+}
+
+lyric_importer::ProtocolImport *
+lyric_importer::ModuleImport::getProtocol(tu_uint32 offset) const
+{
+    if (offset < m_importedProtocols.size())
+        return m_importedProtocols.at(offset);
     return nullptr;
 }
 

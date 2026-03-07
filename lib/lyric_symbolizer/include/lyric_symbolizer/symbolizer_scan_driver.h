@@ -35,6 +35,7 @@ namespace lyric_symbolizer {
 
         tempo_utils::Status declareTypename(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareStatic(const lyric_parser::ArchetypeNode *node);
+        tempo_utils::Status declareProtocol(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status declareImport(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status pushConstructor(const lyric_parser::ArchetypeNode *node);
         tempo_utils::Status pushDefinition(

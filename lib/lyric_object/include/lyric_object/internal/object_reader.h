@@ -66,6 +66,9 @@ namespace lyric_object::internal {
         const lyo1::EnumDescriptor *getEnum(tu_uint32 index) const;
         tu_uint32 numEnums() const;
 
+        const lyo1::ProtocolDescriptor *getProtocol(tu_uint32 index) const;
+        tu_uint32 numProtocols() const;
+
         const lyo1::NamespaceDescriptor *getNamespace(tu_uint32 index) const;
         tu_uint32 numNamespaces() const;
 
@@ -127,6 +130,8 @@ namespace lyric_object::internal {
                 return lyric_object::LinkageSection::Literal;
             case lyo1::DescriptorSection::Namespace:
                 return lyric_object::LinkageSection::Namespace;
+            case lyo1::DescriptorSection::Protocol:
+                return lyric_object::LinkageSection::Protocol;
             case lyo1::DescriptorSection::Static:
                 return lyric_object::LinkageSection::Static;
             case lyo1::DescriptorSection::Struct:
@@ -165,6 +170,8 @@ namespace lyric_object::internal {
                 return lyo1::DescriptorSection::Literal;
             case LinkageSection::Namespace:
                 return lyo1::DescriptorSection::Namespace;
+            case LinkageSection::Protocol:
+                return lyo1::DescriptorSection::Protocol;
             case LinkageSection::Static:
                 return lyo1::DescriptorSection::Static;
             case LinkageSection::Struct:

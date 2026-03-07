@@ -23,6 +23,7 @@ set(LYRIC_IMPORTER_INCLUDES
     include/lyric_importer/module_cache.h
     include/lyric_importer/module_import.h
     include/lyric_importer/namespace_import.h
+    include/lyric_importer/protocol_import.h
     include/lyric_importer/shortcut_resolver.h
     include/lyric_importer/static_import.h
     include/lyric_importer/struct_import.h
@@ -48,6 +49,7 @@ target_sources(lyric_importer PRIVATE
     src/module_cache.cpp
     src/module_import.cpp
     src/namespace_import.cpp
+    src/protocol_import.cpp
     src/shortcut_resolver.cpp
     src/static_import.cpp
     src/struct_import.cpp

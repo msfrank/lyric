@@ -281,10 +281,27 @@ lyric_importer::ModuleCache::getNamespace(const lyric_common::SymbolUrl &namespa
 
     if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Namespace)
         return ImporterStatus::forCondition(
-            ImporterCondition::kImportError, "symbol {} is not a field",
+            ImporterCondition::kImportError, "symbol {} is not a namespace",
             namespaceUrl.toString());
 
     return moduleImport->getNamespace(symbolWalker.getLinkageIndex());
+}
+
+tempo_utils::Result<lyric_importer::ProtocolImport *>
+lyric_importer::ModuleCache::getProtocol(const lyric_common::SymbolUrl &protocolUrl)
+{
+    std::shared_ptr<ModuleImport> moduleImport;
+    TU_ASSIGN_OR_RETURN(moduleImport, importModule(protocolUrl.getModuleLocation()));
+
+    auto object = moduleImport->getObject();
+    auto symbolWalker = object.findSymbol(protocolUrl.getSymbolPath());
+
+    if (symbolWalker.getLinkageSection() != lyric_object::LinkageSection::Protocol)
+        return ImporterStatus::forCondition(
+            ImporterCondition::kImportError, "symbol {} is not a protocol",
+            protocolUrl.toString());
+
+    return moduleImport->getProtocol(symbolWalker.getLinkageIndex());
 }
 
 tempo_utils::Result<lyric_importer::StaticImport *>

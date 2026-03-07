@@ -203,9 +203,22 @@ struct CoreStruct {
     std::vector<tu_uint32> sealedSubtypes;
 };
 
+struct CoreProtocol {
+    tu_uint32 protocol_index;
+    lyric_common::SymbolPath protocolPath;
+    const CoreType *sendType;
+    const CoreType *recvType;
+    lyo1::PortType port;
+    lyo1::CommunicationType comm;
+    lyo1::ProtocolFlags flags;
+};
+
 struct BuilderState {
 
     lyric_common::ModuleLocation location;
+    tu_uint32 major;
+    tu_uint32 minor;
+    tu_uint32 patch;
 
     std::vector<CoreType *> types;
     std::vector<CoreTemplate *> templates;
@@ -220,6 +233,7 @@ struct BuilderState {
     std::vector<CoreStruct *> structs;
     std::vector<CoreEnum *> enums;
     std::vector<CoreInstance *> instances;
+    std::vector<CoreProtocol *> protocols;
     std::vector<CoreSymbol *> symbols;
 
     absl::flat_hash_map<lyric_common::SymbolPath,tu_uint32> symboltable;
@@ -452,6 +466,18 @@ struct BuilderState {
         const CoreType *returnType,
         bool isInline = false);
     void addEnumSealedSubtype(const CoreEnum *receiver, const CoreEnum *subtypeEnum);
+
+    /*
+     * protocol definitions
+     */
+
+    CoreProtocol *addProtocol(
+        const lyric_common::SymbolPath &protocolPath,
+        const CoreType *sendType,
+        const CoreType *recvType,
+        lyo1::PortType port,
+        lyo1::CommunicationType comm,
+        lyo1::ProtocolFlags protocolFlags);
 
     //CoreSymbol *addSymbol()
     tu_uint32 getSymbolIndex(const lyric_common::SymbolPath &symbolPath) const;

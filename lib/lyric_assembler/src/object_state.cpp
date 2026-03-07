@@ -19,15 +19,13 @@
 #include <lyric_assembler/namespace_symbol.h>
 #include <lyric_assembler/object_plugin.h>
 #include <lyric_assembler/object_root.h>
+#include <lyric_assembler/protocol_symbol.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_assembler/linkage_symbol.h>
 #include <lyric_runtime/trap_index.h>
-#include <tempo_utils/big_endian.h>
-#include <tempo_utils/bytes_appender.h>
-#include <tempo_utils/log_stream.h>
 
 lyric_assembler::ObjectState::ObjectState(
     const lyric_common::ModuleLocation &location,
@@ -619,6 +617,39 @@ int
 lyric_assembler::ObjectState::numNamespaces() const
 {
     return m_namespaces.size();
+}
+
+tempo_utils::Result<lyric_assembler::ProtocolSymbol *>
+lyric_assembler::ObjectState::appendProtocol(
+    std::unique_ptr<ProtocolSymbol> &&protocolSymbol,
+    TypenameSymbol *existingTypename)
+{
+    if (protocolSymbol == nullptr)
+        return AssemblerStatus::forCondition(
+            AssemblerCondition::kAssemblerInvariant, "invalid protocol symbol");
+    auto symbolUrl = protocolSymbol->getSymbolUrl();
+    TU_RETURN_IF_NOT_OK (m_symbolcache->insertSymbol(symbolUrl, protocolSymbol.get(), existingTypename));
+    auto *protocolPtr = protocolSymbol.release();
+    m_protocols.push_back(protocolPtr);
+    return protocolPtr;
+}
+
+std::vector<lyric_assembler::ProtocolSymbol *>::const_iterator
+lyric_assembler::ObjectState::protocolsBegin() const
+{
+    return m_protocols.cbegin();
+}
+
+std::vector<lyric_assembler::ProtocolSymbol *>::const_iterator
+lyric_assembler::ObjectState::protocolsEnd() const
+{
+    return m_protocols.cend();
+}
+
+int
+lyric_assembler::ObjectState::numProtocols() const
+{
+    return m_protocols.size();
 }
 
 tempo_utils::Result<lyric_assembler::StaticSymbol *>

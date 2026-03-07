@@ -22,6 +22,7 @@ namespace lyric_importer {
     class ImplImport;
     class InstanceImport;
     class NamespaceImport;
+    class ProtocolImport;
     class StaticImport;
     class StructImport;
     class TemplateImport;
@@ -56,6 +57,7 @@ namespace lyric_importer {
         ImplImport *getImpl(tu_uint32 offset) const;
         InstanceImport *getInstance(tu_uint32 offset) const;
         NamespaceImport *getNamespace(tu_uint32 offset) const;
+        ProtocolImport *getProtocol(tu_uint32 offset) const;
         StaticImport *getStatic(tu_uint32 offset) const;
         StructImport *getStruct(tu_uint32 offset) const;
         TypeImport *getType(tu_uint32 offset) const;
@@ -80,6 +82,7 @@ namespace lyric_importer {
         std::vector<ImplImport *> m_importedImpls;
         std::vector<InstanceImport *> m_importedInstances;
         std::vector<NamespaceImport *> m_importedNamespaces;
+        std::vector<ProtocolImport *> m_importedProtocols;
         std::vector<StaticImport *> m_importedStatics;
         std::vector<StructImport *> m_importedStructs;
         std::vector<TemplateImport *> m_importedTemplates;

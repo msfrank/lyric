@@ -22,6 +22,7 @@
 #include "namespace_walker.h"
 #include "object_types.h"
 #include "plugin_walker.h"
+#include "protocol_walker.h"
 #include "static_walker.h"
 #include "struct_walker.h"
 #include "symbol_walker.h"
@@ -83,6 +84,9 @@ namespace lyric_object {
 
         NamespaceWalker getNamespace(tu_uint32 index) const;
         int numNamespaces() const;
+
+        ProtocolWalker getProtocol(tu_uint32 index) const;
+        int numProtocols() const;
 
         StaticWalker getStatic(tu_uint32 index) const;
         int numStatics() const;

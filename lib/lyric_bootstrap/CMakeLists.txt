@@ -76,6 +76,8 @@ add_executable(prelude-builder
     object/compile_intrinsic.h
     object/compile_descriptor.cpp
     object/compile_descriptor.h
+    object/compile_discard_protocol.cpp
+    object/compile_discard_protocol.h
     object/compile_nil.cpp
     object/compile_nil.h
     object/compile_enum.cpp
@@ -110,6 +112,8 @@ add_executable(prelude-builder
     object/compile_pair.h
     object/compile_prelude.cpp
     object/compile_prelude.h
+    object/compile_protocol.cpp
+    object/compile_protocol.h
     object/compile_proposition.cpp
     object/compile_proposition.h
     object/compile_record.cpp
@@ -139,7 +143,12 @@ add_executable(prelude-builder
     object/lib_builder.cpp
     )
 
-target_compile_definitions(prelude-builder PRIVATE "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\"")
+target_compile_definitions(prelude-builder PRIVATE
+    "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
+    "BOOTSTRAP_MAJOR_VERSION=\"${PROJECT_VERSION_MAJOR}\""
+    "BOOTSTRAP_MINOR_VERSION=\"${PROJECT_VERSION_MINOR}\""
+    "BOOTSTRAP_PATCH_VERSION=\"${PROJECT_VERSION_PATCH}\""
+    )
 
 target_include_directories(prelude-builder PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include

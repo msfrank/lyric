@@ -18,124 +18,127 @@ namespace lyric_schema {
 
         // AST classes
 
-        Nil,                       // nil literal
-        Undef,                     // undef literal
-        False,                     // false literal
-        True,                      // true literal
-        Integer,                   // integer literal
-        Float,                     // float literal
-        Char,                      // char literal
-        String,                    // string literal
-        Url,                       // url literal
-        Pair,                      // pair container
+        Nil,                        // nil literal
+        Undef,                      // undef literal
+        False,                      // false literal
+        True,                       // true literal
+        Integer,                    // integer literal
+        Float,                      // float literal
+        Char,                       // char literal
+        String,                     // string literal
+        Url,                        // url literal
+        Pair,                       // pair container
 
-        Add,                       // addition operator
-        Sub,                       // subtraction operator
-        Mul,                       // multiplication operator
-        Div,                       // division operator
-        Neg,                       // additive inverse operator
-        IsEq,                      // equals operator
-        IsLt,                      // less-than operator
-        IsLe,                      // less-than-or-equals operator
-        IsGt,                      // greater-than operator
-        IsGe,                      // greater-than-or-equals operator
+        Add,                        // addition operator
+        Sub,                        // subtraction operator
+        Mul,                        // multiplication operator
+        Div,                        // division operator
+        Neg,                        // additive inverse operator
+        IsEq,                       // equals operator
+        IsLt,                       // less-than operator
+        IsLe,                       // less-than-or-equals operator
+        IsGt,                       // greater-than operator
+        IsGe,                       // greater-than-or-equals operator
 
-        And,                       // logical conjunction operator
-        Or,                        // logical disjunction operator
-        Not,                       // logical negation operator
+        And,                        // logical conjunction operator
+        Or,                         // logical disjunction operator
+        Not,                        // logical negation operator
 
-        SType,                     // simple type
-        PType,                     // parameterized type
-        IType,                     // intersection type
-        UType,                     // union type
-        XType,                     // NoReturn type
-        TypeArguments,             // type arguments
-        TypeOf,                    // typeof expression
-        TypeName,                  // declare type
+        SType,                      // simple type
+        PType,                      // parameterized type
+        IType,                      // intersection type
+        UType,                      // union type
+        XType,                      // NoReturn type
+        TypeArguments,              // type arguments
+        TypeOf,                     // typeof expression
+        TypeName,                   // declare type
 
-        Set,                       // value assignment
-        Target,                    // assignment target
-        InplaceAdd,                // inplace add assignment
-        InplaceSub,                // inplace subtract assignment
-        InplaceMul,                // inplace multiply assignment
-        InplaceDiv,                // inplace divide assignment
+        Set,                        // value assignment
+        Target,                     // assignment target
+        InplaceAdd,                 // inplace add assignment
+        InplaceSub,                 // inplace subtract assignment
+        InplaceMul,                 // inplace multiply assignment
+        InplaceDiv,                 // inplace divide assignment
 
-        DataDeref,                 // data dereference expression
-        SymbolDeref,               // symbol dereference expression
-        This,                      // resolve this reference
-        Super,                     // resolve super reference
-        Name,                      // resolve symbol
-        Call,                      // call named function or method
-        Keyword,                   // keyword argument
+        DataDeref,                  // data dereference expression
+        SymbolDeref,                // symbol dereference expression
+        This,                       // resolve this reference
+        Super,                      // resolve super reference
+        Name,                       // resolve symbol
+        Call,                       // call named function or method
+        Keyword,                    // keyword argument
 
-        New,                       // create object
-        Lambda,                    // anonymous function
-        LambdaFrom,                // anonymous function from an existing function
+        New,                        // create object
+        Lambda,                     // anonymous function
+        LambdaFrom,                 // anonymous function from an existing function
 
-        Block,                     // list of forms evaluated in order
-        If,                        // if statement
-        Cond,                      // conditional expression
-        Match,                     // match expression
-        When,                      // when clause
-        While,                     // while statement
-        For,                       // for statement
-        Try,                       // try statement
-        Catch,                     // catch clause
-        Finally,                   // finally clause
-        Return,                    // return immediately from call
-        Expect,                    // return immediately if expression returns status
-        Raise,                     // raise status as exception if expression returns status
+        Block,                      // list of forms evaluated in order
+        If,                         // if statement
+        Cond,                       // conditional expression
+        Match,                      // match expression
+        When,                       // when clause
+        While,                      // while statement
+        For,                        // for statement
+        Try,                        // try statement
+        Catch,                      // catch clause
+        Finally,                    // finally clause
+        Return,                     // return immediately from call
+        Expect,                     // return immediately if expression returns status
+        Raise,                      // raise status as exception if expression returns status
 
-        Val,                       // define val
-        Var,                       // define var
-        Case,                      // define case
-        Unpack,                    // variable unpack
-        Pack,                      // parameter pack
-        Param,                     // function parameter
-        Rest,                      // variadic parameter
-        Ctx,                       // ctx parameter
+        Val,                        // define val
+        Var,                        // define var
+        Case,                       // define case
+        Unpack,                     // variable unpack
+        Pack,                       // parameter pack
+        Param,                      // function parameter
+        Rest,                       // variadic parameter
+        Ctx,                        // ctx parameter
 
-        Generic,                   // generic type specification
-        Placeholder,               // type placeholder
-        Constraint,                // type constraint
+        Generic,                    // generic type specification
+        Placeholder,                // type placeholder
+        Constraint,                 // type constraint
 
-        Decl,                      // declare action
-        Def,                       // define function
-        DefAlias,                  // define alias
-        DefClass,                  // define class
-        DefConcept,                // define concept
-        DefEnum,                   // define enumeration
-        DefInstance,               // define instance
-        DefStruct,                 // define struct
-        DefStatic,                 // define static
-        Namespace,                 // define namespace
+        Decl,                       // declare action
+        Def,                        // define function or method
+        DefAlias,                   // define alias
+        DefClass,                   // define class
+        DefConcept,                 // define concept
+        DefEnum,                    // define enumeration
+        DefInstance,                // define instance
+        DefStruct,                  // define struct
+        DefStatic,                  // define static
+        Namespace,                  // define namespace
+        Protocol,                   // define protocol
 
-        Init,                      // init statement
-        Base,                      // base constructor
-        Impl,                      // impl statement
+        Init,                       // init statement
+        Base,                       // base constructor
+        Impl,                       // impl statement
 
-        ImportAll,                 // import all module symbols into environment
-        ImportSymbols,             // import specified module symbols into environment
-        ImportModule,              // import specified module symbols into environment
-        ExportAll,                 // export all module symbols from environment
-        ExportSymbols,             // export specified module symbols from environment
-        ExportModule,              // export specified module symbols from environment
-        Using,                     // insert impls into the current environment
-        SymbolRef,                 // symbol reference
+        ImportAll,                  // import all module symbols into environment
+        ImportSymbols,              // import specified module symbols into environment
+        ImportModule,               // import specified module symbols into environment
+        ExportAll,                  // export all module symbols from environment
+        ExportSymbols,              // export specified module symbols from environment
+        ExportModule,               // export specified module symbols from environment
+        Using,                      // insert impls into the current environment
+        SymbolRef,                  // symbol reference
 
-        MacroCall,                 // macro invocation
-        MacroList,                 // sequence of macro invocations
-        Pragma,                    // compiler pragma
+        MacroCall,                  // macro invocation
+        MacroList,                  // sequence of macro invocations
+        Pragma,                     // compiler pragma
 
         // AST properties
 
         LiteralValue,
 
-        BaseEnum,
-        NotationEnum,
-        BoundEnum,
-        VarianceEnum,
-        DeriveEnum,
+        BaseEnum,                   // enum identifying the literal number base
+        NotationEnum,               // enum identifying the literal floating point notation
+        BoundEnum,                  // enum identifying the type bound
+        VarianceEnum,               // enum identifying the type variance
+        DeriveEnum,                 // enum identifying the definition derive
+        PortEnum,                   // enum identifying the protocol port type
+        CommunicationEnum,          // enum identifying the protocol communication type
 
         ImportLocation,
         ModuleLocation,
@@ -148,11 +151,13 @@ namespace lyric_schema {
         NoOverride,
         ThisBase,
 
-        TypeOffset,
+        TypeOffset,                 // type descriptor offset
         DefaultOffset,
         RestOffset,
         GenericOffset,
         TypeArgumentsOffset,
+        SendTypeOffset,             // protocol send type offset
+        ReceiveTypeOffset,          // protocol receive type offset
         MacroListOffset,
 
         NUM_IDS,                    // must be last
@@ -330,6 +335,8 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::DefStatic, "DefStatic");
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstNamespaceClass(
         &kLyricAstNs, LyricAstId::Namespace, "Namespace");
+    constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstProtocolClass(
+        &kLyricAstNs, LyricAstId::Protocol, "Protocol");
 
     constexpr tempo_schema::SchemaClass<LyricAstNs,LyricAstId> kLyricAstInitClass(
         &kLyricAstNs, LyricAstId::Init, "Init");
@@ -383,8 +390,16 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::VarianceEnum, "VarianceEnum", tempo_schema::PropertyType::kUInt32);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
-        kLyricAstDeriveEnumProperty(
+    kLyricAstDeriveEnumProperty(
         &kLyricAstNs, LyricAstId::DeriveEnum, "DeriveEnum", tempo_schema::PropertyType::kUInt32);
+
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
+    kLyricAstPortEnumProperty(
+        &kLyricAstNs, LyricAstId::PortEnum, "PortEnum", tempo_schema::PropertyType::kUInt32);
+
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
+    kLyricAstCommunicationEnumProperty(
+        &kLyricAstNs, LyricAstId::CommunicationEnum, "CommunicationEnum", tempo_schema::PropertyType::kUInt32);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstImportLocationProperty(
@@ -415,15 +430,15 @@ namespace lyric_schema {
         &kLyricAstNs, LyricAstId::IsHidden, "IsHidden", tempo_schema::PropertyType::kBool);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
-        kLyricAstIsVariableProperty(
+    kLyricAstIsVariableProperty(
         &kLyricAstNs, LyricAstId::IsVariable, "IsVariable", tempo_schema::PropertyType::kBool);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
-        kLyricAstNoOverrideProperty(
+    kLyricAstNoOverrideProperty(
         &kLyricAstNs, LyricAstId::NoOverride, "NoOverride", tempo_schema::PropertyType::kBool);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
-        kLyricAstThisBaseProperty(
+    kLyricAstThisBaseProperty(
         &kLyricAstNs, LyricAstId::ThisBase, "ThisBase", tempo_schema::PropertyType::kBool);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
@@ -445,6 +460,14 @@ namespace lyric_schema {
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstTypeArgumentsOffsetProperty(
         &kLyricAstNs, LyricAstId::TypeArgumentsOffset, "TypeArgumentsOffset", tempo_schema::PropertyType::kUInt32);
+
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
+    kLyricAstSendTypeOffsetProperty(
+        &kLyricAstNs, LyricAstId::SendTypeOffset, "SendTypeOffset", tempo_schema::PropertyType::kUInt32);
+
+    constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
+    kLyricAstReceiveTypeOffsetProperty(
+        &kLyricAstNs, LyricAstId::ReceiveTypeOffset, "ReceiveTypeOffset", tempo_schema::PropertyType::kUInt32);
 
     constexpr tempo_schema::SchemaProperty<LyricAstNs,LyricAstId>
     kLyricAstMacroListOffsetProperty(
@@ -546,6 +569,7 @@ namespace lyric_schema {
         &kLyricAstDefStructClass,
         &kLyricAstDefStaticClass,
         &kLyricAstNamespaceClass,
+        &kLyricAstProtocolClass,
 
         &kLyricAstInitClass,
         &kLyricAstBaseClass,
@@ -571,6 +595,8 @@ namespace lyric_schema {
         &kLyricAstBoundEnumProperty,
         &kLyricAstVarianceEnumProperty,
         &kLyricAstDeriveEnumProperty,
+        &kLyricAstPortEnumProperty,
+        &kLyricAstCommunicationEnumProperty,
 
         &kLyricAstImportLocationProperty,
         &kLyricAstModuleLocationProperty,
@@ -588,6 +614,8 @@ namespace lyric_schema {
         &kLyricAstRestOffsetProperty,
         &kLyricAstGenericOffsetProperty,
         &kLyricAstTypeArgumentsOffsetProperty,
+        &kLyricAstSendTypeOffsetProperty,
+        &kLyricAstReceiveTypeOffsetProperty,
         &kLyricAstMacroListOffsetProperty,
     };
 

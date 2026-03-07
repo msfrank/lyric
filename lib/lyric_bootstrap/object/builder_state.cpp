@@ -126,6 +126,13 @@ BuilderState::BuilderState(
     TU_ASSERT (this->location.isValid());
     TU_ASSERT (this->trapIndex != nullptr);
 
+    TU_LOG_FATAL_IF (!absl::SimpleAtoi(BOOTSTRAP_MAJOR_VERSION, &major))
+        << "invalid major version " << BOOTSTRAP_MAJOR_VERSION;
+    TU_LOG_FATAL_IF (!absl::SimpleAtoi(BOOTSTRAP_MINOR_VERSION, &minor))
+        << "invalid minor version " << BOOTSTRAP_MINOR_VERSION;
+    TU_LOG_FATAL_IF (!absl::SimpleAtoi(BOOTSTRAP_PATCH_VERSION, &patch))
+        << "invalid patch version " << BOOTSTRAP_PATCH_VERSION;
+
     noReturnType = new CoreType();
     noReturnType->type_index = types.size();
     noReturnType->superType = nullptr;
@@ -1383,7 +1390,7 @@ BuilderState::addImplExtension(
 CoreEnum *
 BuilderState::addEnum(
     const lyric_common::SymbolPath &enumPath,
-    lyo1::EnumFlags instanceFlags,
+    lyo1::EnumFlags enumFlags,
     const CoreEnum *superEnum)
 {
     TU_ASSERT (!symboltable.contains(enumPath));
@@ -1397,7 +1404,7 @@ BuilderState::addEnum(
 
     Enum->enum_index = enum_index;
     Enum->enumPath = enumPath;
-    Enum->flags = instanceFlags;
+    Enum->flags = enumFlags;
     Enum->enumType = Type;
     Enum->superEnum = superEnum;
     Enum->allocatorTrap = lyric_object::INVALID_ADDRESS_U32;
@@ -1580,6 +1587,39 @@ BuilderState::addEnumSealedSubtype(const CoreEnum *receiver, const CoreEnum *sub
     ReceiverEnum->sealedSubtypes.push_back(SubTypeEnum->enumType->type_index);
 }
 
+CoreProtocol *
+BuilderState::addProtocol(
+    const lyric_common::SymbolPath &protocolPath,
+    const CoreType *sendType,
+    const CoreType *recvType,
+    lyo1::PortType port,
+    lyo1::CommunicationType comm,
+    lyo1::ProtocolFlags protocolFlags)
+{
+    TU_ASSERT (!symboltable.contains(protocolPath));
+
+    tu_uint32 protocol_index = protocols.size();
+    auto *Protocol = new CoreProtocol();
+    protocols.push_back(Protocol);
+
+    Protocol->protocol_index = protocol_index;
+    Protocol->protocolPath = protocolPath;
+    Protocol->sendType = sendType;
+    Protocol->recvType = recvType;
+    Protocol->port = port;
+    Protocol->comm = comm;
+    Protocol->flags = protocolFlags;
+
+    tu_uint32 symbol_index = symbols.size();
+    auto *Symbol = new CoreSymbol();
+    Symbol->section = lyo1::DescriptorSection::Protocol;
+    Symbol->index = Protocol->protocol_index;
+    symbols.push_back(Symbol);
+    symboltable[Protocol->protocolPath] = symbol_index;
+
+    return Protocol;
+}
+
 tu_uint32
 BuilderState::getSymbolIndex(const lyric_common::SymbolPath &symbolPath) const
 {
@@ -1646,6 +1686,7 @@ BuilderState::toBytes() const
     std::vector<flatbuffers::Offset<lyo1::InstanceDescriptor>> instances_vector;
     std::vector<flatbuffers::Offset<lyo1::EnumDescriptor>> enums_vector;
     std::vector<flatbuffers::Offset<lyo1::StaticDescriptor>> statics_vector;
+    std::vector<flatbuffers::Offset<lyo1::ProtocolDescriptor>> protocols_vector;
     std::vector<flatbuffers::Offset<lyo1::SymbolDescriptor>> symbols_vector;
     std::vector<flatbuffers::Offset<lyo1::SortedSymbolIdentifier>> sorted_symbol_identifiers_vector;
     std::vector<uint8_t> bytecode;
@@ -1904,6 +1945,19 @@ BuilderState::toBytes() const
             fb_members, fb_methods, fb_impls, Enum->allocatorTrap, enumCtor, fb_sealedSubtypes));
     }
 
+    // write the protocol descriptors
+    for (const auto *Protocol : protocols) {
+        auto fb_fullyQualifiedName = buffer.CreateSharedString(Protocol->protocolPath.toString());
+
+        tu_uint32 sendType = Protocol->sendType?
+            Protocol->sendType->type_index : lyric_object::INVALID_ADDRESS_U32;
+        tu_uint32 recvType = Protocol->recvType?
+            Protocol->recvType->type_index : lyric_object::INVALID_ADDRESS_U32;
+        protocols_vector.push_back(lyo1::CreateProtocolDescriptor(buffer,
+            fb_fullyQualifiedName, Protocol->port, Protocol->comm,
+            sendType, recvType, Protocol->flags));
+    }
+
     // write the symbol descriptors
     for (auto iterator = symbols.cbegin(); iterator != symbols.cend(); iterator++) {
         const auto *symbol = *iterator;
@@ -1939,6 +1993,7 @@ BuilderState::toBytes() const
     auto structsOffset = buffer.CreateVector(structs_vector);
     auto instancesOffset = buffer.CreateVector(instances_vector);
     auto enumsOffset = buffer.CreateVector(enums_vector);
+    auto protocolsOffset = buffer.CreateVector(protocols_vector);
     auto symbolsOffset = buffer.CreateVector(symbols_vector);
     auto bytecodeOffset = buffer.CreateVector(bytecode);
 
@@ -1951,9 +2006,9 @@ BuilderState::toBytes() const
     // serialize object and mark the buffer as finished
     lyo1::ObjectBuilder objectBuilder(buffer);
     objectBuilder.add_abi(lyo1::ObjectVersion::Version1);
-    objectBuilder.add_version_major(1);
-    objectBuilder.add_version_minor(0);
-    objectBuilder.add_version_patch(0);
+    objectBuilder.add_version_major(major);
+    objectBuilder.add_version_minor(minor);
+    objectBuilder.add_version_patch(patch);
     objectBuilder.add_types(typesOffset);
     objectBuilder.add_templates(templatesOffset);
     objectBuilder.add_existentials(existentialsOffset);
@@ -1967,6 +2022,7 @@ BuilderState::toBytes() const
     objectBuilder.add_structs(structsOffset);
     objectBuilder.add_instances(instancesOffset);
     objectBuilder.add_enums(enumsOffset);
+    objectBuilder.add_protocols(protocolsOffset);
     objectBuilder.add_symbols(symbolsOffset);
     objectBuilder.add_plugin(optionalPluginOffset);
     objectBuilder.add_symbol_table_type(lyo1::SymbolTable::SortedSymbolTable);

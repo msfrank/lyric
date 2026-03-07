@@ -1,8 +1,6 @@
 #ifndef LYRIC_ASSEMBLER_ASSEMBLER_TYPES_H
 #define LYRIC_ASSEMBLER_ASSEMBLER_TYPES_H
 
-#include <absl/container/flat_hash_map.h>
-
 #include <lyric_common/module_location.h>
 #include <lyric_common/symbol_path.h>
 #include <lyric_common/symbol_url.h>
@@ -47,6 +45,7 @@ namespace lyric_assembler {
         Ordered,
         Pair,
         Proposition,
+        Protocol,
         Record,
         Rest,
         Seq,

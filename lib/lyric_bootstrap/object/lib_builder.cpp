@@ -17,6 +17,7 @@
 #include "compile_comparison.h"
 #include "compile_concept.h"
 #include "compile_descriptor.h"
+#include "compile_discard_protocol.h"
 #include "compile_enum.h"
 #include "compile_equality.h"
 #include "compile_float.h"
@@ -36,6 +37,7 @@
 #include "compile_pair.h"
 #include "compile_prelude.h"
 #include "compile_proposition.h"
+#include "compile_protocol.h"
 #include "compile_record.h"
 #include "compile_rest.h"
 #include "compile_seq.h"
@@ -99,6 +101,7 @@ main(int argc, char *argv[])
     // define descriptor existentials
     build_core_Binding(state, DescriptorExistential);
     build_core_Namespace(state, DescriptorExistential);
+    build_core_Protocol(state, DescriptorExistential);
     build_core_Class(state, DescriptorExistential);
     build_core_Struct(state, DescriptorExistential);
     build_core_Instance(state, DescriptorExistential);
@@ -247,6 +250,9 @@ main(int argc, char *argv[])
         DataIteratorType, BoolExistential->existentialType);
     build_core_Map(state, RecordStruct, IteratorConcept, IterableConcept, MapIteratorClass, DataUnionType,
         DataIteratorType, DataIterableType, BoolExistential->existentialType, IntExistential->existentialType);
+
+    // define DiscardProtocol
+    build_core_DiscardProtocol(state, AnyExistential->existentialType, NilExistential->existentialType);
 
     // define prelude functions
     build_core_prelude_trap(state, IntExistential->existentialType, state.noReturnType);

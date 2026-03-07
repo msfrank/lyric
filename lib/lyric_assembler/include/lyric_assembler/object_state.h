@@ -43,6 +43,7 @@ namespace lyric_assembler {
     class ObjectPlugin;
     class ObjectRoot;
     class ProcHandle;
+    class ProtocolSymbol;
     class StaticSymbol;
     class StructSymbol;
     class SymbolCache;
@@ -202,6 +203,13 @@ namespace lyric_assembler {
         std::vector<NamespaceSymbol *>::const_iterator namespacesEnd() const;
         int numNamespaces() const;
 
+        tempo_utils::Result<ProtocolSymbol *> appendProtocol(
+            std::unique_ptr<ProtocolSymbol> &&protocolSymbol,
+            TypenameSymbol *existingTypename = nullptr);
+        std::vector<ProtocolSymbol *>::const_iterator protocolsBegin() const;
+        std::vector<ProtocolSymbol *>::const_iterator protocolsEnd() const;
+        int numProtocols() const;
+
         tempo_utils::Result<StaticSymbol *> appendStatic(
             std::unique_ptr<StaticSymbol> &&staticSymbol,
             TypenameSymbol *existingTypename = nullptr);
@@ -247,6 +255,7 @@ namespace lyric_assembler {
         std::vector<InstanceSymbol *> m_instances;
         std::vector<LinkageSymbol *> m_linkages;
         std::vector<NamespaceSymbol *> m_namespaces;
+        std::vector<ProtocolSymbol *> m_protocols;
         std::vector<StaticSymbol *> m_statics;
         std::vector<StructSymbol *> m_structs;
 

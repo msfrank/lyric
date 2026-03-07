@@ -5,6 +5,7 @@ include(GoogleTest)
 # define unit tests
 
 set(TEST_CASES
+    protocol_walker_tests.cpp
     type_walker_tests.cpp
     )
 

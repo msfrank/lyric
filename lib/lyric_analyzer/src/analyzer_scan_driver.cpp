@@ -220,6 +220,45 @@ lyric_analyzer::AnalyzerScanDriver::declareStatic(
 }
 
 tempo_utils::Status
+lyric_analyzer::AnalyzerScanDriver::declareProtocol(
+    const lyric_parser::ArchetypeNode *node,
+    lyric_assembler::BlockHandle *block)
+{
+    auto walker = node->getArchetypeNode();
+
+    lyric_schema::LyricAstId astId;
+    TU_RETURN_IF_NOT_OK (walker.parseId(lyric_schema::kLyricAstVocabulary, astId));
+
+    bool isHidden;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIsHidden, isHidden));
+
+    bool isVariable;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIsVariable, isVariable));
+
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+    lyric_parser::NodeWalker typeNode;
+    TU_RETURN_IF_NOT_OK (walker.parseAttr(lyric_parser::kLyricAstTypeOffset, typeNode));
+    lyric_typing::TypeSpec staticSpec;
+    TU_ASSIGN_OR_RETURN (staticSpec, m_typeSystem->parseAssignable(block, typeNode));
+    lyric_common::TypeDef staticType;
+    TU_ASSIGN_OR_RETURN (staticType, m_typeSystem->resolveAssignable(block, staticSpec));
+
+    lyric_assembler::DataReference ref;
+    TU_ASSIGN_OR_RETURN (ref, block->declareStatic(
+        identifier, isHidden, staticType, isVariable, /* declOnly= */ true));
+
+    // add class to the current namespace if specified
+    auto *currentNamespace = m_namespaces.top();
+    TU_ASSERT (currentNamespace != nullptr);
+    TU_RETURN_IF_NOT_OK (currentNamespace->putTarget(ref.symbolUrl));
+
+    TU_LOG_V << "declared protocol " << ref.symbolUrl;
+
+    return {};
+}
+
+tempo_utils::Status
 lyric_analyzer::AnalyzerScanDriver::pushFunction(
     const lyric_parser::ArchetypeNode *node,
     lyric_assembler::BlockHandle *block)

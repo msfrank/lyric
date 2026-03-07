@@ -14,6 +14,7 @@
 #include "importer_types.h"
 #include "module_import.h"
 #include "namespace_import.h"
+#include "protocol_import.h"
 #include "static_import.h"
 
 namespace lyric_importer {
@@ -50,6 +51,7 @@ namespace lyric_importer {
         tempo_utils::Result<FieldImport *> getField(const lyric_common::SymbolUrl &fieldUrl);
         tempo_utils::Result<InstanceImport *> getInstance(const lyric_common::SymbolUrl &instanceUrl);
         tempo_utils::Result<NamespaceImport *> getNamespace(const lyric_common::SymbolUrl &namespaceUrl);
+        tempo_utils::Result<ProtocolImport *> getProtocol(const lyric_common::SymbolUrl &protocolUrl);
         tempo_utils::Result<StaticImport *> getStatic(const lyric_common::SymbolUrl &staticUrl);
         tempo_utils::Result<StructImport *> getStruct(const lyric_common::SymbolUrl &structUrl);
 

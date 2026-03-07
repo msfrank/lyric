@@ -12,6 +12,7 @@
 #include <lyric_assembler/local_variable.h>
 #include <lyric_assembler/namespace_symbol.h>
 #include <lyric_assembler/object_state.h>
+#include <lyric_assembler/protocol_symbol.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
@@ -130,8 +131,8 @@ make_function_type(
  * url identifies the static symbol entry for the global variable. A global type does not have a supertype.
  *
  * @param typeDef
+ * @param staticSymbol
  * @param typecache
- * @param state
  * @return
  */
 static tempo_utils::Result<lyric_assembler::TypeHandle *>
@@ -149,7 +150,7 @@ make_global_type(
 /**
  *
  * @param typeDef
- * @param linkageSymbol
+ * @param typenameSymbol
  * @param typecache
  * @return
  */
@@ -164,7 +165,6 @@ make_typename_type(
     typecache[typeDef] = typeHandle;
     return typeHandle;
 }
-
 
 /**
  * Creates a type handle for the specified type if it does not exist in the type cache. The resulting
@@ -568,7 +568,7 @@ lyric_assembler::TypeCache::makeTemplate(
 }
 
 tempo_utils::Status
-lyric_assembler::TypeCache::appendTemplate(lyric_assembler::TemplateHandle *templateHandle)
+lyric_assembler::TypeCache::appendTemplate(TemplateHandle *templateHandle)
 {
     TU_ASSERT (templateHandle != nullptr);
     auto templateUrl = templateHandle->getTemplateUrl();
@@ -831,7 +831,7 @@ lyric_assembler::TypeCache::resolveSignature(const lyric_common::SymbolUrl &symb
     if (iterator != m_signaturecache.cend())
         return iterator->second;
 
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_objectState->symbolCache()->getOrImportSymbol(symbolUrl));
 
     TypeHandle *typeHandle;

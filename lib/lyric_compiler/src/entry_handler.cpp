@@ -61,6 +61,7 @@ lyric_compiler::EntryHandler::before(
 
         auto *resource = lyric_schema::kLyricAstVocabulary.getResource(child->getIdValue());
 
+        // ensure that definitions are placed in the global namespace
         auto astId = resource->getId();
         switch (astId) {
             case lyric_schema::LyricAstId::Namespace: {

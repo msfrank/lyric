@@ -22,6 +22,7 @@ namespace lyric_assembler {
         INSTANCE,
         STRUCT,
         ENUM,
+        PROTOCOL,
         NAMESPACE,
         BINDING,
         LINKAGE,

@@ -208,6 +208,19 @@ namespace lyric_object {
         Final,
     };
 
+    enum class PortType {
+        Invalid,
+        Connect,
+        Accept,
+    };
+
+    enum class CommunicationType {
+        Invalid,
+        Receive,
+        Send,
+        SendAndReceive,
+    };
+
     enum class CallMode {
         Invalid,
         Normal,
@@ -352,6 +365,7 @@ namespace lyric_object {
         Instance,
         Concept,
         Enum,
+        Protocol,
         Namespace,
         Binding,
     };

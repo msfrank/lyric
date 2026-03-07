@@ -51,6 +51,7 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalOrdered;
         lyric_common::SymbolUrl m_fundamentalPair;
         lyric_common::SymbolUrl m_fundamentalProposition;
+        lyric_common::SymbolUrl m_fundamentalProtocol;
         lyric_common::SymbolUrl m_fundamentalRecord;
         lyric_common::SymbolUrl m_fundamentalRest;
         lyric_common::SymbolUrl m_fundamentalSeq;

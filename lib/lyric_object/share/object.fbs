@@ -21,6 +21,7 @@ enum DescriptorSection : uint8 {
     Instance,
     Concept,
     Enum,
+    Protocol,
     Namespace,
     Binding,
 }
@@ -70,6 +71,7 @@ enum IntrinsicType : uint8 {
     Existential,
     Namespace,
     Binding,
+    Protocol,
 }
 
 enum TypeSection : uint8 {
@@ -445,6 +447,38 @@ table EnumDescriptor {
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
 
+// protocol port type
+
+enum PortType : uint8 {
+    Invalid = 0,                                // invalid port type
+    Connect = 1,                                // the protocol initiates connections
+    Accept = 2,                                 // the protocol accepts connections
+}
+
+// protocol communication type
+
+enum CommunicationType : uint8 {
+    Invalid = 0,                                // invalid communication type
+    Receive = 1,                                // the protocol only receives messages
+    Send = 2,                                   // the protocol only sends messages
+    SendAndReceive = 3,                         // the protocol sends and receives messages
+}
+
+// flags which apply to the ProtocolDescriptor
+
+enum ProtocolFlags : uint16 (bit_flags) {
+    DeclOnly,                                   // enum descriptor is only a declaration
+}
+
+table ProtocolDescriptor {
+    fqsn: string;                               // fully qualified protocol name
+    protocol_port: PortType = Invalid;          // whether the protocol is the connector or acceptor
+    protocol_comm: CommunicationType = Invalid; // direction of messages, either send, receive, or bidirectional
+    send_type: uint32 = 0xffffffff;             // offset of the send message type in the types section
+	receive_type: uint32 = 0xffffffff;          // offset of the receive message type in the types section
+    flags: ProtocolFlags;                       // bitfield containing protocol flags
+}
+
 // flags which apply to the BindingDecriptor
 
 enum BindingFlags : uint16 (bit_flags) {
@@ -583,6 +617,7 @@ table Object {
     structs: [StructDescriptor];                // array of struct descriptors
     instances: [InstanceDescriptor];            // array of instance descriptors
     enums: [EnumDescriptor];                    // array of enum descriptors
+    protocols: [ProtocolDescriptor];            // array of protocol descriptors
     bindings: [BindingDescriptor];              // array of binding descriptors
     namespaces: [NamespaceDescriptor];          // array of namespace descriptors
     symbols: [SymbolDescriptor];                // sorted array mapping symbol name to location in object

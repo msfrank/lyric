@@ -71,6 +71,8 @@ lyric_symbolizer::SymbolizerScanDriver::exit(
     switch (astId) {
         case lyric_schema::LyricAstId::TypeName:
             return declareTypename(node);
+        case lyric_schema::LyricAstId::Protocol:
+            return declareProtocol(node);
         case lyric_schema::LyricAstId::DefStatic:
             return declareStatic(node);
         case lyric_schema::LyricAstId::Decl:
@@ -137,6 +139,26 @@ lyric_symbolizer::SymbolizerScanDriver::declareStatic(const lyric_parser::Archet
 
     TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
     TU_LOG_V << "declared static " << symbolUrl;
+
+    return putNamespaceTarget(symbolUrl);
+}
+
+tempo_utils::Status
+lyric_symbolizer::SymbolizerScanDriver::declareProtocol(const lyric_parser::ArchetypeNode *node)
+{
+    if (!m_symbolPath.empty())
+        return {};
+
+    std::string identifier;
+    TU_RETURN_IF_NOT_OK (node->parseAttr(lyric_parser::kLyricAstIdentifier, identifier));
+
+    lyric_common::SymbolPath symbolPath({identifier});
+    lyric_common::SymbolUrl symbolUrl(symbolPath);
+    auto linkage = std::make_unique<lyric_assembler::LinkageSymbol>(
+        symbolUrl, lyric_object::LinkageSection::Protocol);
+
+    TU_RETURN_IF_STATUS (m_state->appendLinkage(std::move(linkage)));
+    TU_LOG_V << "declared protocol " << symbolUrl;
 
     return putNamespaceTarget(symbolUrl);
 }

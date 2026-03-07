@@ -276,6 +276,22 @@ lyric_object::LyricObject::numNamespaces() const
     return m_reader->numNamespaces();
 }
 
+lyric_object::ProtocolWalker
+lyric_object::LyricObject::getProtocol(tu_uint32 index) const
+{
+    if (m_reader == nullptr)
+        return {};
+    return ProtocolWalker(m_reader, index);
+}
+
+int
+lyric_object::LyricObject::numProtocols() const
+{
+    if (m_reader == nullptr)
+        return {};
+    return m_reader->numProtocols();
+}
+
 lyric_object::StaticWalker
 lyric_object::LyricObject::getStatic(tu_uint32 index) const
 {

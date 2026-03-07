@@ -118,6 +118,11 @@ lyric_object::internal::ObjectReader::getSymbolPath(lyo1::DescriptorSection sect
             fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
             break;
         }
+        case lyo1::DescriptorSection::Protocol: {
+            auto *descriptor = getProtocol(index);
+            fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
+            break;
+        }
         case lyo1::DescriptorSection::Static: {
             auto *descriptor = getStatic(index);
             fullyQualifiedName = descriptor? descriptor->fqsn()->c_str() : nullptr;
@@ -388,6 +393,24 @@ lyric_object::internal::ObjectReader::numEnums() const
     if (m_object == nullptr)
         return 0;
     return m_object->enums() ? m_object->enums()->size() : 0;
+}
+
+const lyo1::ProtocolDescriptor *
+lyric_object::internal::ObjectReader::getProtocol(tu_uint32 index) const
+{
+    if (m_object == nullptr)
+        return nullptr;
+    if (m_object->protocols() && index < m_object->protocols()->size())
+        return m_object->protocols()->Get(index);
+    return nullptr;
+}
+
+tu_uint32
+lyric_object::internal::ObjectReader::numProtocols() const
+{
+    if (m_object == nullptr)
+        return 0;
+    return m_object->protocols() ? m_object->protocols()->size() : 0;
 }
 
 const lyo1::NamespaceDescriptor *
