@@ -33,6 +33,7 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/native_interface.h
     include/lyric_runtime/port_multiplexer.h
     include/lyric_runtime/promise.h
+    include/lyric_runtime/protocol_ref.h
     include/lyric_runtime/ref_handle.h
     include/lyric_runtime/rest_ref.h
     include/lyric_runtime/runtime_options.h
@@ -73,6 +74,7 @@ target_sources(lyric_runtime PRIVATE
     src/native_interface.cpp
     src/port_multiplexer.cpp
     src/promise.cpp
+    src/protocol_ref.cpp
     src/ref_handle.cpp
     src/rest_ref.cpp
     src/runtime_options.cpp
@@ -98,6 +100,8 @@ target_sources(lyric_runtime PRIVATE
     src/internal/construct_instance.cpp
     include/lyric_runtime/internal/construct_new.h
     src/internal/construct_new.cpp
+    include/lyric_runtime/internal/construct_protocol.h
+    src/internal/construct_protocol.cpp
     include/lyric_runtime/internal/get_class_virtual_table.h
     src/internal/get_class_virtual_table.cpp
     include/lyric_runtime/internal/get_concept_table.h

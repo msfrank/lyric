@@ -12,6 +12,7 @@ namespace lyric_runtime {
         const ExistentialTable *RestTable = nullptr;
         const ExistentialTable *StringTable = nullptr;
         const ExistentialTable *UrlTable = nullptr;
+        const ExistentialTable *ProtocolTable = nullptr;
         const VirtualTable *CancelledTable = nullptr;
         const VirtualTable *InvalidArgumentTable = nullptr;
         const VirtualTable *DeadlineExceededTable = nullptr;
@@ -53,16 +54,17 @@ namespace lyric_runtime {
         virtual DataCell allocateStatus(const VirtualTable *vtable);
         virtual DataCell allocateStatus(
             tempo_utils::StatusCode statusCode,
-            std::string_view message = {});
+            std::string_view message);
         virtual tempo_utils::Status loadStatusOntoStack(
             tempo_utils::StatusCode statusCode,
-            std::string_view message = {});
+            std::string_view message);
 
         virtual DataCell allocateRest(const CallCell &frame);
         virtual tempo_utils::Status loadRestOntoStack(const CallCell &frame);
 
-        // virtual NativeFunc prepareNew(tu_uint8 newType, tu_uint32 address, tempo_utils::Status &status);
-        // virtual bool constructNew(std::vector<DataCell> &args, tempo_utils::Status &status);
+        virtual DataCell allocateProtocol(const DataCell &descriptor);
+        virtual tempo_utils::Status loadProtocolOntoStack(const DataCell &descriptor);
+
         virtual tempo_utils::Status collectGarbage();
 
     private:

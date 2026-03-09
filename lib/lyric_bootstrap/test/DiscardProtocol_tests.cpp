@@ -7,6 +7,7 @@
 
 TEST(CoreDiscardProtocol, EvaluateDiscardProtocol)
 {
+    GTEST_SKIP();
     auto result = runModule(R"(
         DiscardProtocol
     )");

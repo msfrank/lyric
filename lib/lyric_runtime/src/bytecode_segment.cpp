@@ -25,6 +25,7 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
       m_fieldDescriptors(this, lyric_object::LinkageSection::Field),
       m_instanceDescriptors(this, lyric_object::LinkageSection::Instance),
       m_namespaceDescriptors(this, lyric_object::LinkageSection::Namespace),
+      m_protocolDescriptors(this, lyric_object::LinkageSection::Protocol),
       m_staticDescriptors(this, lyric_object::LinkageSection::Static),
       m_structDescriptors(this, lyric_object::LinkageSection::Struct),
       m_types(this)
@@ -42,6 +43,8 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
     m_instances = m_numInstances > 0 ? new DataCell[m_numInstances] : nullptr;
     m_numEnums = m_object.numEnums();
     m_enums = m_numEnums > 0 ? new DataCell[m_numEnums] : nullptr;
+    m_numProtocols = m_object.numProtocols();
+    m_protocols = m_numProtocols > 0 ? new DataCell[m_numProtocols] : nullptr;
 }
 
 lyric_runtime::BytecodeSegment::~BytecodeSegment()
@@ -56,6 +59,7 @@ lyric_runtime::BytecodeSegment::~BytecodeSegment()
     delete[] m_statics;
     delete[] m_instances;
     delete[] m_enums;
+    delete[] m_protocols;
 }
 
 uint32_t
@@ -134,6 +138,8 @@ lyric_runtime::BytecodeSegment::lookupDescriptor(lyric_object::LinkageSection se
             return m_instanceDescriptors.lookupDescriptor(index);
         case lyric_object::LinkageSection::Namespace:
             return m_namespaceDescriptors.lookupDescriptor(index);
+        case lyric_object::LinkageSection::Protocol:
+            return m_protocolDescriptors.lookupDescriptor(index);
         case lyric_object::LinkageSection::Static:
             return m_staticDescriptors.lookupDescriptor(index);
         case lyric_object::LinkageSection::Struct:
@@ -214,6 +220,23 @@ lyric_runtime::BytecodeSegment::setEnum(uint32_t index, const DataCell &value)
     if (m_numEnums <= index)
         return false;
     m_enums[index] = value;
+    return true;
+}
+
+lyric_runtime::DataCell
+lyric_runtime::BytecodeSegment::getProtocol(uint32_t index) const
+{
+    if (m_numProtocols <= index)
+        return {};
+    return m_protocols[index];
+}
+
+bool
+lyric_runtime::BytecodeSegment::setProtocol(uint32_t index, const DataCell &value)
+{
+    if (m_numProtocols <= index)
+        return false;
+    m_protocols[index] = value;
     return true;
 }
 

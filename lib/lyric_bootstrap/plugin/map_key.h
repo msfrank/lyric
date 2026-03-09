@@ -4,9 +4,10 @@
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/bytes_ref.h>
 #include <lyric_runtime/data_cell.h>
+#include <lyric_runtime/protocol_ref.h>
+#include <lyric_runtime/rest_ref.h>
 #include <lyric_runtime/status_ref.h>
 #include <lyric_runtime/string_ref.h>
-#include <lyric_runtime/rest_ref.h>
 #include <lyric_runtime/url_ref.h>
 
 struct MapKey {
@@ -50,6 +51,9 @@ H AbslHashValue(H state, const MapKey &key) {
             return std::move(state);
         case lyric_runtime::DataCellType::BYTES:
             cell.data.bytes->hashValue(absl::HashState::Create(&state));
+            return std::move(state);
+        case lyric_runtime::DataCellType::PROTOCOL:
+            cell.data.protocol->hashValue(absl::HashState::Create(&state));
             return std::move(state);
         case lyric_runtime::DataCellType::REST:
             cell.data.rest->hashValue(absl::HashState::Create(&state));

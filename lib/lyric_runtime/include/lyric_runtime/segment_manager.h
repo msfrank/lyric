@@ -122,6 +122,16 @@ namespace lyric_runtime {
             StackfulCoroutine *currentCoro,
             tempo_utils::Status &status);
 
+        virtual DataCell loadProtocol(
+            tu_uint32 address,
+            StackfulCoroutine *currentCoro,
+            tempo_utils::Status &status);
+        virtual bool storeProtocol(
+            tu_uint32 address,
+            const DataCell &value,
+            StackfulCoroutine *currentCoro,
+            tempo_utils::Status &status);
+
     private:
         SegmentManagerData m_data;
     };

@@ -325,3 +325,50 @@ lyric_runtime::SegmentManager::storeEnum(
     auto *segment = getSegment(linkage->object);
     return segment->setEnum(linkage->value, value);
 }
+
+lyric_runtime::DataCell
+lyric_runtime::SegmentManager::loadProtocol(
+    tu_uint32 address,
+    StackfulCoroutine *currentCoro,
+    tempo_utils::Status &status)
+{
+    auto *sp = currentCoro->peekSP();
+
+    if (lyric_object::IS_NEAR(address))
+        return sp->getProtocol(address);
+
+    const auto *linkage = resolveLink(sp, lyric_object::GET_LINK_OFFSET(address), status);
+    if (linkage == nullptr)
+        return {};               // failed to resolve dynamic link
+    if (linkage->linkage != lyric_object::LinkageSection::Protocol) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "invalid protocol linkage");
+        return {};
+    }
+    auto *segment = getSegment(linkage->object);
+    return segment->getProtocol(linkage->value);
+}
+
+bool
+lyric_runtime::SegmentManager::storeProtocol(
+    tu_uint32 address,
+    const DataCell &value,
+    StackfulCoroutine *currentCoro,
+    tempo_utils::Status &status)
+{
+    auto *sp = currentCoro->peekSP();
+
+    if (lyric_object::IS_NEAR(address))
+        return sp->setProtocol(address, value);
+
+    const auto *linkage = resolveLink(sp, lyric_object::GET_LINK_OFFSET(address), status);
+    if (linkage == nullptr)
+        return false;                   // failed to resolve dynamic link
+    if (linkage->linkage != lyric_object::LinkageSection::Protocol) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "invalid protocol linkage");
+        return false;
+    }
+    auto *segment = getSegment(linkage->object);
+    return segment->setProtocol(linkage->value, value);
+}

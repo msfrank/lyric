@@ -114,6 +114,9 @@ lyric_runtime::DescriptorTable::lookupDescriptor(tu_uint32 index)
             case lyric_object::LinkageSection::Namespace:
                 numDescriptors = object.numNamespaces();
                 break;
+            case lyric_object::LinkageSection::Protocol:
+                numDescriptors = object.numProtocols();
+                break;
             case lyric_object::LinkageSection::Static:
                 numDescriptors = object.numStatics();
                 break;

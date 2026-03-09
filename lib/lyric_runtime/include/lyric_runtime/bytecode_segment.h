@@ -53,6 +53,9 @@ namespace lyric_runtime {
         DataCell getEnum(tu_uint32 index) const;
         bool setEnum(tu_uint32 index, const DataCell &value);
 
+        DataCell getProtocol(tu_uint32 index) const;
+        bool setProtocol(tu_uint32 index, const DataCell &value);
+
         NativeFunc getTrap(tu_uint32 address) const;
 
         void *getData() const;
@@ -82,6 +85,9 @@ namespace lyric_runtime {
         DataCell *m_enums;
         tu_uint32 m_numEnums;
 
+        DataCell *m_protocols;
+        tu_uint32 m_numProtocols;
+
         DescriptorTable m_actionDescriptors;
         DescriptorTable m_callDescriptors;
         DescriptorTable m_classDescriptors;
@@ -91,6 +97,7 @@ namespace lyric_runtime {
         DescriptorTable m_fieldDescriptors;
         DescriptorTable m_instanceDescriptors;
         DescriptorTable m_namespaceDescriptors;
+        DescriptorTable m_protocolDescriptors;
         DescriptorTable m_staticDescriptors;
         DescriptorTable m_structDescriptors;
         TypeTable m_types;
