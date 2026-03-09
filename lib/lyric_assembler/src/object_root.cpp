@@ -49,6 +49,9 @@ lyric_assembler::ObjectRoot::initialize(
     TypeHandle *namespaceTypeHandle;
     TU_ASSIGN_OR_RETURN (namespaceTypeHandle, typeCache->getOrMakeType(namespaceType));
 
+    // resolve the Protocol url
+    auto protocolUrl = fundamentalCache->getFundamentalUrl(FundamentalSymbol::Protocol);
+
     // create the $global namespace
     lyric_common::SymbolUrl globalUrl(location, lyric_common::SymbolPath({"$global"}));
     auto globalNamespace = std::make_unique<NamespaceSymbol>(
@@ -117,6 +120,20 @@ lyric_assembler::ObjectRoot::initialize(
                 InstanceSymbol *instanceSymbol;
                 TU_ASSIGN_OR_RETURN (instanceSymbol, importCache->importInstance(symbolUrl));
                 TU_RETURN_IF_NOT_OK (m_preludeBlock->useImpls(instanceSymbol));
+                break;
+            }
+            case lyric_object::LinkageSection::Namespace: {
+                binding.typeDef = namespaceType;
+                TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
+                break;
+            }
+            case lyric_object::LinkageSection::Protocol: {
+                auto *protocolImport = preludeImport->getProtocol(symbolWalker.getLinkageIndex());
+                auto sendType = protocolImport->getSendType()->getTypeDef();
+                auto receiveType = protocolImport->getReceiveType()->getTypeDef();
+                TU_ASSIGN_OR_RETURN (binding.typeDef, lyric_common::TypeDef::forConcrete(
+                    protocolUrl, {sendType, receiveType}));
+                TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
             case lyric_object::LinkageSection::Static: {
@@ -207,6 +224,20 @@ lyric_assembler::ObjectRoot::initialize(
                     InstanceSymbol *instanceSymbol;
                     TU_ASSIGN_OR_RETURN(instanceSymbol, importCache->importInstance(symbolUrl));
                     TU_RETURN_IF_NOT_OK(m_environmentBlock->useImpls(instanceSymbol));
+                    break;
+                }
+                case lyric_object::LinkageSection::Namespace: {
+                    binding.typeDef = namespaceType;
+                    TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
+                    break;
+                }
+                case lyric_object::LinkageSection::Protocol: {
+                    auto *protocolImport = preludeImport->getProtocol(symbolWalker.getLinkageIndex());
+                    auto sendType = protocolImport->getSendType()->getTypeDef();
+                    auto receiveType = protocolImport->getReceiveType()->getTypeDef();
+                    TU_ASSIGN_OR_RETURN (binding.typeDef, lyric_common::TypeDef::forConcrete(
+                        protocolUrl, {sendType, receiveType}));
+                    TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                     break;
                 }
                 case lyric_object::LinkageSection::Static: {

@@ -93,6 +93,7 @@ deref_descriptor_if_allowed(
     switch (symbol->getSymbolType()) {
         case lyric_assembler::SymbolType::ENUM:
         case lyric_assembler::SymbolType::INSTANCE:
+        case lyric_assembler::SymbolType::PROTOCOL:
         case lyric_assembler::SymbolType::STATIC:
             TU_RETURN_IF_NOT_OK (fragment->loadData(symbol));
             return symbol->getTypeDef();

@@ -24,19 +24,20 @@
 #include <lyric_assembler/internal/write_links.h>
 #include <lyric_assembler/internal/write_literals.h>
 #include <lyric_assembler/internal/write_namespaces.h>
+#include <lyric_assembler/internal/write_protocols.h>
 #include <lyric_assembler/internal/write_statics.h>
 #include <lyric_assembler/internal/write_structs.h>
 #include <lyric_assembler/internal/write_templates.h>
 #include <lyric_assembler/internal/write_types.h>
 #include <lyric_assembler/namespace_symbol.h>
+#include <lyric_assembler/object_plugin.h>
 #include <lyric_assembler/object_writer.h>
+#include <lyric_assembler/protocol_symbol.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/type_cache.h>
 #include <lyric_assembler/linkage_symbol.h>
 #include <tempo_utils/memory_bytes.h>
-
-#include "lyric_assembler/object_plugin.h"
 
 lyric_assembler::ObjectWriter::ObjectWriter(const ObjectState *state)
     : m_state(state),
@@ -491,6 +492,12 @@ lyric_assembler::ObjectWriter::insertSymbol(
             break;
         }
 
+        case SymbolType::PROTOCOL: {
+            TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_protocol(symbol),
+                m_protocols, m_symbols, m_links, m_symbolEntries, this));
+            break;
+        }
+
         case SymbolType::STATIC: {
             TU_RETURN_IF_NOT_OK (insert_symbol(cast_symbol_to_static(symbol),
                 m_statics, m_symbols, m_links, m_symbolEntries, this));
@@ -644,6 +651,12 @@ tempo_utils::Status
 lyric_assembler::ObjectWriter::touchNamespace(const NamespaceSymbol *namespaceSymbol)
 {
     return internal::touch_namespace(namespaceSymbol, m_state, *this, m_includeUnusedPrivateSymbols);
+}
+
+tempo_utils::Status
+lyric_assembler::ObjectWriter::touchProtocol(const ProtocolSymbol *protocolSymbol)
+{
+    return internal::touch_protocol(protocolSymbol, m_state, *this);
 }
 
 tempo_utils::Status
@@ -857,6 +870,10 @@ lyric_assembler::ObjectWriter::toObject() const
     TU_RETURN_IF_NOT_OK (internal::write_namespaces(
         m_namespaces, *this, m_state->getLocation(), buffer, namespacesOffset));
 
+    // serialize array of protocol descriptors
+    internal::ProtocolsOffset protocolsOffset;
+    TU_RETURN_IF_NOT_OK (internal::write_protocols(m_protocols, *this, buffer, protocolsOffset));
+
     // serialize array of static descriptors
     internal::StaticsOffset staticsOffset;
     TU_RETURN_IF_NOT_OK (internal::write_statics(m_statics, *this, buffer, staticsOffset));
@@ -917,6 +934,7 @@ lyric_assembler::ObjectWriter::toObject() const
     objectBuilder.add_links(linksOffset);
     objectBuilder.add_literals(literalsOffset);
     objectBuilder.add_namespaces(namespacesOffset);
+    objectBuilder.add_protocols(protocolsOffset);
     objectBuilder.add_statics(staticsOffset);
     objectBuilder.add_structs(structsOffset);
     objectBuilder.add_symbols(symbolsOffset);

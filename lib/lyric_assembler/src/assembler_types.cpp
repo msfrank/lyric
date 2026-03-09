@@ -182,6 +182,9 @@ lyric_assembler::fundamentalTypeToString(FundamentalSymbol fundamentalType)
         case FundamentalSymbol::Tuple7Instance:
             return "Tuple7Instance";
 
+        case FundamentalSymbol::DiscardProtocol:
+            return "DiscardProtocol";
+
         default:
             TU_UNREACHABLE();
     }

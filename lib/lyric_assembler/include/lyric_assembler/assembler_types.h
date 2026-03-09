@@ -113,6 +113,9 @@ namespace lyric_assembler {
         Tuple6Instance,
         Tuple7Instance,
 
+        // protocols
+        DiscardProtocol,
+
         // sentinel, must be last
         NUM_SYMBOLS,
     };

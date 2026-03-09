@@ -9,6 +9,7 @@
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/internal/load_object.h>
 #include <lyric_assembler/namespace_symbol.h>
+#include <lyric_assembler/protocol_symbol.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 
@@ -121,6 +122,14 @@ lyric_assembler::internal::load_object_symbols(
         auto *namespaceImport = moduleImport->getNamespace(i);
         auto namespaceSymbol = std::make_unique<NamespaceSymbol>(namespaceUrl, namespaceImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendNamespace(std::move(namespaceSymbol)));
+    }
+
+    for (int i = 0; i < object.numProtocols(); i++) {
+        auto walker = object.getProtocol(i);
+        lyric_common::SymbolUrl protocolUrl(walker.getSymbolPath());
+        auto *protocolImport = moduleImport->getProtocol(i);
+        auto protocolSymbol = std::make_unique<ProtocolSymbol>(protocolUrl, protocolImport, /* isCopied= */ true, state);
+        TU_RETURN_IF_STATUS (state->appendProtocol(std::move(protocolSymbol)));
     }
 
     for (int i = 0; i < object.numStatics(); i++) {

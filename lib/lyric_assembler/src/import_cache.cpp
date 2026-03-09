@@ -16,6 +16,8 @@
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 
+#include "lyric_assembler/protocol_symbol.h"
+
 lyric_assembler::ImportCache::ImportCache(
     ObjectState *state,
     std::shared_ptr<lyric_importer::ModuleCache> localModuleCache,
@@ -132,6 +134,11 @@ insert_symbol_into_cache(
         case lyric_object::LinkageSection::Namespace: {
             auto *namespaceImport = moduleImport->getNamespace(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::NamespaceSymbol(symbolUrl, namespaceImport, /* isCopied= */ false, state);
+            break;
+        }
+        case lyric_object::LinkageSection::Protocol: {
+            auto *protocolImport = moduleImport->getProtocol(symbolWalker.getLinkageIndex());
+            symbolPtr = new lyric_assembler::ProtocolSymbol(symbolUrl, protocolImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Static: {

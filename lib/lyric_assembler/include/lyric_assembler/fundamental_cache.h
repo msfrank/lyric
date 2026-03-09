@@ -92,6 +92,8 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl m_fundamentalStringInstance;
         lyric_common::SymbolUrl m_fundamentalUrlInstance;
         std::vector<lyric_common::SymbolUrl> m_fundamentalTupleInstance;
+
+        lyric_common::SymbolUrl m_fundamentalDiscardProtocol;
     };
 }
 

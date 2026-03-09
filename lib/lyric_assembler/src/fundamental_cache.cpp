@@ -192,6 +192,10 @@ lyric_assembler::FundamentalCache::FundamentalCache(const lyric_common::ModuleLo
         preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple6Instance));
     m_fundamentalTupleInstance[7] = lyric_common::SymbolUrl(
         preludeLocation, fundamentalTypeToSymbolPath(FundamentalSymbol::Tuple7Instance));
+
+    //
+    m_fundamentalDiscardProtocol = lyric_common::SymbolUrl(preludeLocation,
+        fundamentalTypeToSymbolPath(FundamentalSymbol::DiscardProtocol));
 }
 
 lyric_common::ModuleLocation
@@ -389,6 +393,9 @@ lyric_assembler::FundamentalCache::getFundamentalUrl(FundamentalSymbol fundament
             return m_fundamentalTupleInstance.at(6);
         case FundamentalSymbol::Tuple7Instance:
             return m_fundamentalTupleInstance.at(7);
+
+        case FundamentalSymbol::DiscardProtocol:
+            return m_fundamentalDiscardProtocol;
 
         default:
             return {};

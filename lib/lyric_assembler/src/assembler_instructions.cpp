@@ -19,10 +19,13 @@
 #include <lyric_assembler/lexical_variable.h>
 #include <lyric_assembler/local_variable.h>
 #include <lyric_assembler/namespace_symbol.h>
+#include <lyric_assembler/protocol_symbol.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/synthetic_symbol.h>
 #include <tempo_utils/unicode.h>
+
+#include "lyric_assembler/protocol_symbol.h"
 
 lyric_assembler::InstructionType
 lyric_assembler::NoopInstruction::getType() const
@@ -772,6 +775,8 @@ lyric_assembler::LoadDataInstruction::touch(ObjectWriter &writer) const
             return writer.touchField(cast_symbol_to_field(m_symbol));
         case SymbolType::INSTANCE:
             return writer.touchInstance(cast_symbol_to_instance(m_symbol));
+        case SymbolType::PROTOCOL:
+            return writer.touchProtocol(cast_symbol_to_protocol(m_symbol));
         case SymbolType::STATIC:
             return writer.touchStatic(cast_symbol_to_static(m_symbol));
         default:
@@ -818,6 +823,11 @@ lyric_assembler::LoadDataInstruction::apply(
             TU_ASSIGN_OR_RETURN (address,
                 writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
             flags = lyric_object::LOAD_INSTANCE;
+            break;
+        case SymbolType::PROTOCOL:
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Protocol));
+            flags = lyric_object::LOAD_PROTOCOL;
             break;
         case SymbolType::STATIC:
             TU_ASSIGN_OR_RETURN (address,
@@ -881,6 +891,8 @@ lyric_assembler::LoadDescriptorInstruction::touch(ObjectWriter &writer) const
             return writer.touchInstance(cast_symbol_to_instance(m_symbol));
         case SymbolType::NAMESPACE:
             return writer.touchNamespace(cast_symbol_to_namespace(m_symbol));
+        case SymbolType::PROTOCOL:
+            return writer.touchProtocol(cast_symbol_to_protocol(m_symbol));
         case SymbolType::STRUCT:
             return writer.touchStruct(cast_symbol_to_struct(m_symbol));
         default:

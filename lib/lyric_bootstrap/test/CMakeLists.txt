@@ -8,6 +8,7 @@ set(TEST_CASES
     Bool_tests.cpp
     Bytes_tests.cpp
     Char_tests.cpp
+    DiscardProtocol_tests.cpp
     Float_tests.cpp
     Int_tests.cpp
     Iterator_tests.cpp

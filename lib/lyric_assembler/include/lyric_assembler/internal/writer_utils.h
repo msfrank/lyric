@@ -32,6 +32,8 @@ namespace lyric_assembler::internal {
                 return lyo1::DescriptorSection::Literal;
             case lyric_object::LinkageSection::Namespace:
                 return lyo1::DescriptorSection::Namespace;
+            case lyric_object::LinkageSection::Protocol:
+                return lyo1::DescriptorSection::Protocol;
             case lyric_object::LinkageSection::Static:
                 return lyo1::DescriptorSection::Static;
             case lyric_object::LinkageSection::Struct:

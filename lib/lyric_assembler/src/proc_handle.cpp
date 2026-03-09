@@ -8,8 +8,6 @@
 #include <tempo_utils/bytes_appender.h>
 #include <tempo_utils/log_stream.h>
 
-#include "lyric_assembler/local_variable.h"
-
 /**
  * Allocate a new empty ProcHandle.  This is used during compilation to create
  * a placeholder proc when importing a call from another assembly.

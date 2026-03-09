@@ -274,7 +274,7 @@ lyric_assembler::CodeFragment::loadRef(const DataReference &ref)
 
     Statement statement;
 
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, symbolCache->getOrImportSymbol(ref.symbolUrl));
 
     if (symbol->getSymbolType() == SymbolType::SYNTHETIC) {
@@ -289,13 +289,18 @@ lyric_assembler::CodeFragment::loadRef(const DataReference &ref)
             case ReferenceType::Variable:
                 statement.instruction = std::make_shared<LoadDataInstruction>(symbol);
                 break;
-            case ReferenceType::Descriptor:
-                if (symbol->getSymbolType() == SymbolType::STATIC) {
-                    statement.instruction = std::make_shared<LoadDataInstruction>(symbol);
-                } else {
-                    statement.instruction = std::make_shared<LoadDescriptorInstruction>(symbol);
+            case ReferenceType::Descriptor: {
+                switch (symbol->getSymbolType()) {
+                    case SymbolType::STATIC:
+                    case SymbolType::PROTOCOL:
+                        statement.instruction = std::make_shared<LoadDataInstruction>(symbol);
+                        break;
+                    default:
+                        statement.instruction = std::make_shared<LoadDescriptorInstruction>(symbol);
+                        break;
                 }
                 break;
+            }
             default:
                 return AssemblerStatus::forCondition(
                     AssemblerCondition::kAssemblerInvariant, "invalid data reference");

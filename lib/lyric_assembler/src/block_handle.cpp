@@ -346,6 +346,7 @@ resolve_binding_tail_recursive(
             case lyric_assembler::SymbolType::ENUM:
             case lyric_assembler::SymbolType::EXISTENTIAL:
             case lyric_assembler::SymbolType::INSTANCE:
+            case lyric_assembler::SymbolType::PROTOCOL:
             case lyric_assembler::SymbolType::STATIC:
             case lyric_assembler::SymbolType::STRUCT:
                 symbolBinding.typeDef = symbol->getTypeDef();
@@ -542,6 +543,7 @@ lyric_assembler::BlockHandle::resolveDefinition(const std::vector<std::string> &
                 case SymbolType::EXISTENTIAL:
                 case SymbolType::INSTANCE:
                 case SymbolType::NAMESPACE:
+                case SymbolType::PROTOCOL:
                 case SymbolType::STRUCT:
                     return resolve_definition_tail_recursive(symbol, symbolPath, 1, symbolCache);
 
@@ -572,6 +574,7 @@ lyric_assembler::BlockHandle::resolveDefinition(const std::vector<std::string> &
             case SymbolType::EXISTENTIAL:
             case SymbolType::INSTANCE:
             case SymbolType::NAMESPACE:
+            case SymbolType::PROTOCOL:
             case SymbolType::STRUCT:
                 return resolve_definition_tail_recursive(symbol, symbolPath, 1, symbolCache);
 
@@ -818,6 +821,7 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
                 case SymbolType::LEXICAL:
                 case SymbolType::LOCAL:
                 case SymbolType::NAMESPACE:
+                case SymbolType::PROTOCOL:
                 case SymbolType::STATIC:
                 case SymbolType::STRUCT:
                 case SymbolType::SYNTHETIC:
@@ -865,6 +869,7 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
                 case SymbolType::EXISTENTIAL:
                 case SymbolType::INSTANCE:
                 case SymbolType::NAMESPACE:
+                case SymbolType::PROTOCOL:
                 case SymbolType::STATIC:
                 case SymbolType::STRUCT:
                     return symbol_binding_to_data_reference(binding);
@@ -919,6 +924,7 @@ lyric_assembler::BlockHandle::resolveReference(const std::string &name)
             case SymbolType::EXISTENTIAL:
             case SymbolType::INSTANCE:
             case SymbolType::NAMESPACE:
+            case SymbolType::PROTOCOL:
             case SymbolType::STATIC:
             case SymbolType::STRUCT:
                 return symbol_binding_to_data_reference(binding);
@@ -1640,6 +1646,7 @@ lyric_assembler::BlockHandle::declareAlias(
         case SymbolType::ENUM:
         case SymbolType::EXISTENTIAL:
         case SymbolType::INSTANCE:
+        case SymbolType::PROTOCOL:
         case SymbolType::STATIC:
         case SymbolType::STRUCT:
             binding.bindingType = BindingType::Descriptor;

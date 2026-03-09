@@ -37,6 +37,7 @@ namespace lyric_assembler {
         tempo_utils::Status touchInstance(const InstanceSymbol *instanceSymbol);
         tempo_utils::Status touchLiteral(const LiteralHandle *literalHandle);
         tempo_utils::Status touchNamespace(const NamespaceSymbol *namespaceSymbol);
+        tempo_utils::Status touchProtocol(const ProtocolSymbol *protocolSymbol);
         tempo_utils::Status touchStatic(const StaticSymbol *staticSymbol);
         tempo_utils::Status touchStruct(const StructSymbol *structSymbol);
         tempo_utils::Status touchTemplate(const TemplateHandle *templateHandle);
@@ -116,6 +117,7 @@ namespace lyric_assembler {
         std::vector<const InstanceSymbol *> m_instances;
         std::vector<const LiteralHandle *> m_literals;
         std::vector<const NamespaceSymbol *> m_namespaces;
+        std::vector<const ProtocolSymbol *> m_protocols;
         std::vector<const StaticSymbol *> m_statics;
         std::vector<const StructSymbol *> m_structs;
         std::vector<const TemplateHandle *> m_templates;
