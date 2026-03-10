@@ -51,29 +51,30 @@ lyric_runtime::internal::construct_new(
     auto receiver = segmentManager->resolveReceiver(sp, address, status);
     if (!receiver.isValid())
         return status;
+    auto section = receiver.data.descriptor->getLinkageSection();
 
     // resolve the vtable for the receiver
     const VirtualTable *vtable;
-    switch (receiver.type) {
-        case DataCellType::CLASS: {
+    switch (section) {
+        case lyric_object::LinkageSection::Class: {
             vtable = segmentManager->resolveClassVirtualTable(receiver, status);
             if (vtable == nullptr)
                 return status;
             break;
         }
-        case DataCellType::ENUM: {
+        case lyric_object::LinkageSection::Enum: {
             vtable = segmentManager->resolveEnumVirtualTable(receiver, status);
             if (vtable == nullptr)
                 return status;
             break;
         }
-        case DataCellType::INSTANCE: {
+        case lyric_object::LinkageSection::Instance: {
             vtable = segmentManager->resolveInstanceVirtualTable(receiver, status);
             if (vtable == nullptr)
                 return status;
             break;
         }
-        case DataCellType::STRUCT: {
+        case lyric_object::LinkageSection::Struct: {
             vtable = segmentManager->resolveStructVirtualTable(receiver, status);
             if (vtable == nullptr)
                 return status;

@@ -7,10 +7,10 @@
 
 TEST(CoreDiscardProtocol, EvaluateDiscardProtocol)
 {
-    GTEST_SKIP();
     auto result = runModule(R"(
         DiscardProtocol
     )");
 
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellNil())));
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
+        MatchesDataCellType(lyric_runtime::DataCellType::PROTOCOL))));
 }

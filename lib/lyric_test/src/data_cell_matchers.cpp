@@ -49,42 +49,9 @@ lyric_test::matchers::DataCellMatcher::DataCellMatcher(const lyric_common::Symbo
 }
 
 lyric_test::matchers::DataCellMatcher::DataCellMatcher(lyric_object::LinkageSection section)
-    : m_type(MatcherType::DATA_CELL_DESCRIPTOR)
+    : m_type(MatcherType::DATA_CELL_DESCRIPTOR),
+      m_section(section)
 {
-    switch (section) {
-        case lyric_object::LinkageSection::Type:
-            m_cell.type = lyric_runtime::DataCellType::TYPE;
-            break;
-        case lyric_object::LinkageSection::Call:
-            m_cell.type = lyric_runtime::DataCellType::CALL;
-            break;
-        case lyric_object::LinkageSection::Field:
-            m_cell.type = lyric_runtime::DataCellType::FIELD;
-            break;
-        case lyric_object::LinkageSection::Enum:
-            m_cell.type = lyric_runtime::DataCellType::ENUM;
-            break;
-        case lyric_object::LinkageSection::Action:
-            m_cell.type = lyric_runtime::DataCellType::ACTION;
-            break;
-        case lyric_object::LinkageSection::Class:
-            m_cell.type = lyric_runtime::DataCellType::CLASS;
-            break;
-        case lyric_object::LinkageSection::Instance:
-            m_cell.type = lyric_runtime::DataCellType::INSTANCE;
-            break;
-        case lyric_object::LinkageSection::Struct:
-            m_cell.type = lyric_runtime::DataCellType::STRUCT;
-            break;
-        case lyric_object::LinkageSection::Concept:
-            m_cell.type = lyric_runtime::DataCellType::CONCEPT;
-            break;
-        case lyric_object::LinkageSection::Namespace:
-            m_cell.type = lyric_runtime::DataCellType::NAMESPACE;
-            break;
-        default:
-            TU_UNREACHABLE();
-    }
 }
 
 lyric_test::matchers::DataCellMatcher::DataCellMatcher(lyric_runtime::DataCellType type)
@@ -95,6 +62,7 @@ lyric_test::matchers::DataCellMatcher::DataCellMatcher(lyric_runtime::DataCellTy
 
 lyric_test::matchers::DataCellMatcher::DataCellMatcher(const DataCellMatcher &other)
     : m_type(other.m_type),
+      m_section(other.m_section),
       m_cell(other.m_cell),
       m_str(other.m_str),
       m_url(other.m_url),
@@ -146,7 +114,12 @@ lyric_test::matchers::DataCellMatcher::MatchAndExplain(
                 return sym.getSymbolPath() == m_sym.getSymbolPath();
             return m_sym == sym;
         }
-        case MatcherType::DATA_CELL_DESCRIPTOR:
+        case MatcherType::DATA_CELL_DESCRIPTOR: {
+            if (m_section == lyric_object::LinkageSection::Type)
+                return cell.type == lyric_runtime::DataCellType::TYPE;
+            return cell.type == lyric_runtime::DataCellType::DESCRIPTOR
+                && cell.data.descriptor->getLinkageSection() == m_section;
+        }
         case MatcherType::DATA_CELL_TYPE:
             return cell.type == m_cell.type;
     }
@@ -173,21 +146,7 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
             *os << "cell contains instance of " << m_sym.toString();
             break;
         case MatcherType::DATA_CELL_DESCRIPTOR:
-            switch (m_cell.type) {
-                case lyric_runtime::DataCellType::TYPE:        *os << "cell contains type descriptor"; break;
-                case lyric_runtime::DataCellType::CLASS:       *os << "cell contains class descriptor"; break;
-                case lyric_runtime::DataCellType::STRUCT:      *os << "cell contains struct descriptor"; break;
-                case lyric_runtime::DataCellType::INSTANCE:    *os << "cell contains instance descriptor"; break;
-                case lyric_runtime::DataCellType::CONCEPT:     *os << "cell contains concept descriptor"; break;
-                case lyric_runtime::DataCellType::CALL:        *os << "cell contains call descriptor"; break;
-                case lyric_runtime::DataCellType::FIELD:       *os << "cell contains field descriptor"; break;
-                case lyric_runtime::DataCellType::ACTION:      *os << "cell contains action descriptor"; break;
-                case lyric_runtime::DataCellType::NAMESPACE:   *os << "cell contains namespace descriptor"; break;
-                case lyric_runtime::DataCellType::BINDING:     *os << "cell contains binding descriptor"; break;
-                case lyric_runtime::DataCellType::STATIC:      *os << "cell contains static descriptor"; break;
-                default:
-                    TU_UNREACHABLE();
-            }
+            *os << "cell contains " << lyric_object::linkage_section_to_name(m_section) << " descriptor";
             break;
         case MatcherType::DATA_CELL_TYPE: {
             switch (m_cell.type) {
@@ -205,19 +164,8 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
                 case lyric_runtime::DataCellType::PROTOCOL:    *os << "cell contains protocol cell"; break;
                 case lyric_runtime::DataCellType::REST:        *os << "cell contains rest cell"; break;
                 case lyric_runtime::DataCellType::REF:         *os << "cell contains ref cell"; break;
+                case lyric_runtime::DataCellType::DESCRIPTOR:  *os << "cell contains descriptor cell"; break;
                 case lyric_runtime::DataCellType::TYPE:        *os << "cell contains type cell"; break;
-                case lyric_runtime::DataCellType::CLASS:       *os << "cell contains class cell"; break;
-                case lyric_runtime::DataCellType::STRUCT:      *os << "cell contains struct cell"; break;
-                case lyric_runtime::DataCellType::INSTANCE:    *os << "cell contains instance cell"; break;
-                case lyric_runtime::DataCellType::CONCEPT:     *os << "cell contains concept cell"; break;
-                case lyric_runtime::DataCellType::CALL:        *os << "cell contains call cell"; break;
-                case lyric_runtime::DataCellType::FIELD:       *os << "cell contains field cell"; break;
-                case lyric_runtime::DataCellType::ENUM:        *os << "cell contains enum cell"; break;
-                case lyric_runtime::DataCellType::ACTION:      *os << "cell contains action cell"; break;
-                case lyric_runtime::DataCellType::EXISTENTIAL: *os << "cell contains existential cell"; break;
-                case lyric_runtime::DataCellType::NAMESPACE:   *os << "cell contains namespace cell"; break;
-                case lyric_runtime::DataCellType::BINDING:     *os << "cell contains binding cell"; break;
-                case lyric_runtime::DataCellType::STATIC:      *os << "cell contains static cell"; break;
             }
             break;
         }

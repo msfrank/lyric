@@ -253,7 +253,6 @@ lyric_runtime::HeapManager::loadRestOntoStack(const CallCell &frame)
 lyric_runtime::DataCell
 lyric_runtime::HeapManager::allocateProtocol(const DataCell &descriptor)
 {
-    TU_ASSERT (descriptor.type == DataCellType::PROTOCOL);
     auto *instance = new ProtocolRef(m_preludeTables.ProtocolTable, descriptor);
     m_heap->insertInstance(instance);
     return DataCell::forProtocol(instance);

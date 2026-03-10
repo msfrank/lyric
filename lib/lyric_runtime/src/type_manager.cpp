@@ -19,46 +19,59 @@ tempo_utils::Result<lyric_runtime::DataCell>
 lyric_runtime::TypeManager::typeOf(const DataCell &value)
 {
     switch (value.type) {
-        case DataCellType::ACTION:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Action)];
         case DataCellType::BOOL:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Bool)];
-        case DataCellType::CALL:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Call)];
         case DataCellType::CHAR32:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Char)];
-        case DataCellType::CLASS:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Class)];
-        case DataCellType::CONCEPT:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Concept)];
         case DataCellType::DBL:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Float)];
-        case DataCellType::ENUM:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Enum)];
-        case DataCellType::EXISTENTIAL:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Existential)];
-        case DataCellType::FIELD:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Field)];
-        case DataCellType::INSTANCE:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Instance)];
         case DataCellType::I64:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Int)];
-        case DataCellType::NAMESPACE:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Namespace)];
         case DataCellType::NIL:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Nil)];
         case DataCellType::STRING:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::String)];
-        case DataCellType::STRUCT:
-            return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Struct)];
         case DataCellType::UNDEF:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Undef)];
         case DataCellType::URL:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Url)];
+        case DataCellType::PROTOCOL:
+            TU_LOG_FATAL << "typeOf PROTOCOL value is not implemented";
         case DataCellType::REF:
             return value.data.ref->getVirtualTable()->getType();
         case DataCellType::STATUS:
             return value.data.status->getVirtualTable()->getType();
+
+        case DataCellType::DESCRIPTOR: {
+            auto section = value.data.descriptor->getLinkageSection();
+            switch (section) {
+                case lyric_object::LinkageSection::Action:
+                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Action)];
+                case lyric_object::LinkageSection::Call:
+                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Call)];
+                case lyric_object::LinkageSection::Class:
+                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Class)];
+                case lyric_object::LinkageSection::Concept:
+                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Concept)];
+                case lyric_object::LinkageSection::Enum:
+                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Enum)];
+                case lyric_object::LinkageSection::Existential:
+                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Existential)];
+                case lyric_object::LinkageSection::Field:
+                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Field)];
+                case lyric_object::LinkageSection::Instance:
+                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Instance)];
+                case lyric_object::LinkageSection::Namespace:
+                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Namespace)];
+                case lyric_object::LinkageSection::Protocol:
+                    TU_LOG_FATAL << "intrinsic cache entry for Protocol is not implemented";
+                case lyric_object::LinkageSection::Struct:
+                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Struct)];
+                default:
+                    break;
+            }
+        }
+
         case DataCellType::TYPE:
             return InterpreterStatus::forCondition(
                 InterpreterCondition::kRuntimeInvariant, "type descriptor has no type");

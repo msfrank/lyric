@@ -48,7 +48,8 @@ namespace lyric_test {
             using is_gtest_matcher = void;
 
         private:
-            MatcherType m_type;
+            MatcherType m_type = MatcherType::INVALID;
+            lyric_object::LinkageSection m_section = lyric_object::LinkageSection::Invalid;
             lyric_runtime::DataCell m_cell;
             std::string m_str;
             tempo_utils::Url m_url;

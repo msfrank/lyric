@@ -18,7 +18,8 @@ lyric_runtime::internal::get_struct_virtual_table(
 {
     TU_ASSERT (segmentManagerData != nullptr);
 
-    if (descriptor.type != DataCellType::STRUCT) {
+    if (descriptor.type != DataCellType::DESCRIPTOR ||
+        descriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Struct) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid struct descriptor");
         return nullptr;

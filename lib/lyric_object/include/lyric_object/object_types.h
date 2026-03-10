@@ -371,8 +371,11 @@ namespace lyric_object {
         Binding,
     };
 
+    const char *linkage_section_to_name(LinkageSection section);
+    tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage&& message, LinkageSection section);
+
     LinkageSection descriptor_to_linkage_section(tu_uint8 section);
-    tu_uint8 linkage_to_descriptor_section(lyric_object::LinkageSection section);
+    tu_uint8 linkage_to_descriptor_section(LinkageSection section);
 
     struct ProcHeader {
         tu_uint32 procSize = 0;

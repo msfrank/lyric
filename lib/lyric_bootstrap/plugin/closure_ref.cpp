@@ -225,7 +225,8 @@ closure_ctor(
     auto &frame = currentCoro->currentCallOrThrow();
     TU_ASSERT(frame.numArguments() == 1);
     const auto &arg0 = frame.getArgument(0);
-    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::CALL);
+    TU_ASSERT(arg0.type == lyric_runtime::DataCellType::DESCRIPTOR);
+    TU_ASSERT(arg0.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Call);
 
     auto receiver = frame.getReceiver();
     TU_ASSERT(receiver.type == lyric_runtime::DataCellType::REF);

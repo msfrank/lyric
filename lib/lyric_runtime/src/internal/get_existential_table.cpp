@@ -18,7 +18,8 @@ lyric_runtime::internal::get_existential_table(
 {
     TU_ASSERT (segmentManagerData != nullptr);
 
-    if (descriptor.type != DataCellType::EXISTENTIAL) {
+    if (descriptor.type != DataCellType::DESCRIPTOR ||
+        descriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Existential) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid existential descriptor");
         return nullptr;

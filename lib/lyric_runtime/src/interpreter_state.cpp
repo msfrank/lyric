@@ -220,14 +220,14 @@ resolve_bootstrap_virtual_table(
     auto symbol = preludeObject.findSymbol(symbolPath);
     auto descriptor = segmentManager->resolveDescriptor(preludeSegment,
         symbol.getLinkageSection(), symbol.getLinkageIndex(), status);
-    switch (descriptor.type) {
-        case lyric_runtime::DataCellType::CLASS:
+    switch (descriptor.data.descriptor->getLinkageSection()) {
+        case lyric_object::LinkageSection::Class:
             return segmentManager->resolveClassVirtualTable(descriptor, status);
-        case lyric_runtime::DataCellType::ENUM:
+        case lyric_object::LinkageSection::Enum:
             return segmentManager->resolveEnumVirtualTable(descriptor, status);
-        case lyric_runtime::DataCellType::INSTANCE:
+        case lyric_object::LinkageSection::Instance:
             return segmentManager->resolveInstanceVirtualTable(descriptor, status);
-        case lyric_runtime::DataCellType::STRUCT:
+        case lyric_object::LinkageSection::Struct:
             return segmentManager->resolveStructVirtualTable(descriptor, status);
         default:
             return nullptr;

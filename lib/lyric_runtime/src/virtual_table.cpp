@@ -150,26 +150,9 @@ lyric_runtime::ImplTable::getSymbolUrl() const
     auto objectLocation = m_segment->getObjectLocation();
     auto object = m_segment->getObject();
 
-    lyric_object::LinkageSection section;
-    switch (m_descriptor.type) {
-        case DataCellType::CLASS:
-            section = lyric_object::LinkageSection::Class;
-            break;
-        case DataCellType::CONCEPT:
-            section = lyric_object::LinkageSection::Concept;
-            break;
-        case DataCellType::ENUM:
-            section = lyric_object::LinkageSection::Enum;
-            break;
-        case DataCellType::INSTANCE:
-            section = lyric_object::LinkageSection::Instance;
-            break;
-        case DataCellType::STRUCT:
-            section = lyric_object::LinkageSection::Struct;
-            break;
-        default:
-            return {};
-    }
+    lyric_object::LinkageSection section = m_descriptor.data.descriptor->getLinkageSection();
+    if (section == lyric_object::LinkageSection::Invalid)
+        return {};
 
     auto symbolPath = object.getSymbolPath(section, getDescriptorIndex());
     return lyric_common::SymbolUrl(objectLocation, symbolPath);
@@ -178,20 +161,7 @@ lyric_runtime::ImplTable::getSymbolUrl() const
 lyric_object::LinkageSection
 lyric_runtime::ImplTable::getLinkageSection() const
 {
-    switch (m_descriptor.type) {
-        case DataCellType::CLASS:
-            return lyric_object::LinkageSection::Class;
-        case DataCellType::CONCEPT:
-            return lyric_object::LinkageSection::Concept;
-        case DataCellType::ENUM:
-            return lyric_object::LinkageSection::Enum;
-        case DataCellType::INSTANCE:
-            return lyric_object::LinkageSection::Instance;
-        case DataCellType::STRUCT:
-            return lyric_object::LinkageSection::Struct;
-        default:
-            return lyric_object::LinkageSection::Invalid;
-    }
+    return m_descriptor.data.descriptor->getLinkageSection();
 }
 
 uint32_t
@@ -259,14 +229,9 @@ lyric_runtime::ExistentialTable::getSymbolUrl() const
     auto objectLocation = m_segment->getObjectLocation();
     auto object = m_segment->getObject();
 
-    lyric_object::LinkageSection section;
-    switch (m_descriptor.type) {
-        case DataCellType::EXISTENTIAL:
-            section = lyric_object::LinkageSection::Existential;
-            break;
-        default:
-            return {};
-    }
+    lyric_object::LinkageSection section = m_descriptor.data.descriptor->getLinkageSection();
+    if (section == lyric_object::LinkageSection::Invalid)
+        return {};
 
     auto symbolPath = object.getSymbolPath(section, getDescriptorIndex());
     return lyric_common::SymbolUrl(objectLocation, symbolPath);
@@ -275,12 +240,7 @@ lyric_runtime::ExistentialTable::getSymbolUrl() const
 lyric_object::LinkageSection
 lyric_runtime::ExistentialTable::getLinkageSection() const
 {
-    switch (m_descriptor.type) {
-        case DataCellType::EXISTENTIAL:
-            return lyric_object::LinkageSection::Existential;
-        default:
-            return lyric_object::LinkageSection::Invalid;
-    }
+    return m_descriptor.data.descriptor->getLinkageSection();
 }
 
 uint32_t
@@ -358,14 +318,9 @@ lyric_runtime::ConceptTable::getSymbolUrl() const
     auto objectLocation = m_segment->getObjectLocation();
     auto object = m_segment->getObject();
 
-    lyric_object::LinkageSection section;
-    switch (m_descriptor.type) {
-        case DataCellType::CONCEPT:
-            section = lyric_object::LinkageSection::Concept;
-            break;
-        default:
-            return {};
-    }
+    lyric_object::LinkageSection section = m_descriptor.data.descriptor->getLinkageSection();
+    if (section == lyric_object::LinkageSection::Invalid)
+        return {};
 
     auto symbolPath = object.getSymbolPath(section, getDescriptorIndex());
     return lyric_common::SymbolUrl(objectLocation, symbolPath);
@@ -374,12 +329,7 @@ lyric_runtime::ConceptTable::getSymbolUrl() const
 lyric_object::LinkageSection
 lyric_runtime::ConceptTable::getLinkageSection() const
 {
-    switch (m_descriptor.type) {
-        case DataCellType::CONCEPT:
-            return lyric_object::LinkageSection::Concept;
-        default:
-            return lyric_object::LinkageSection::Invalid;
-    }
+    return m_descriptor.data.descriptor->getLinkageSection();
 }
 
 uint32_t
@@ -459,23 +409,9 @@ lyric_runtime::VirtualTable::getSymbolUrl() const
     auto objectLocation = m_segment->getObjectLocation();
     auto object = m_segment->getObject();
 
-    lyric_object::LinkageSection section;
-    switch (m_descriptor.type) {
-        case DataCellType::CLASS:
-            section = lyric_object::LinkageSection::Class;
-            break;
-        case DataCellType::ENUM:
-            section = lyric_object::LinkageSection::Enum;
-            break;
-        case DataCellType::INSTANCE:
-            section = lyric_object::LinkageSection::Instance;
-            break;
-        case DataCellType::STRUCT:
-            section = lyric_object::LinkageSection::Struct;
-            break;
-        default:
-            return {};
-    }
+    lyric_object::LinkageSection section = m_descriptor.data.descriptor->getLinkageSection();
+    if (section == lyric_object::LinkageSection::Invalid)
+        return {};
 
     auto symbolPath = object.getSymbolPath(section, getDescriptorIndex());
     return lyric_common::SymbolUrl(objectLocation, symbolPath);
@@ -490,18 +426,7 @@ lyric_runtime::VirtualTable::getDescriptor() const
 lyric_object::LinkageSection
 lyric_runtime::VirtualTable::getLinkageSection() const
 {
-    switch (m_descriptor.type) {
-        case DataCellType::CLASS:
-            return lyric_object::LinkageSection::Class;
-        case DataCellType::ENUM:
-            return lyric_object::LinkageSection::Enum;
-        case DataCellType::INSTANCE:
-            return lyric_object::LinkageSection::Instance;
-        case DataCellType::STRUCT:
-            return lyric_object::LinkageSection::Struct;
-        default:
-            return lyric_object::LinkageSection::Invalid;
-    }
+    return m_descriptor.data.descriptor->getLinkageSection();
 }
 
 uint32_t

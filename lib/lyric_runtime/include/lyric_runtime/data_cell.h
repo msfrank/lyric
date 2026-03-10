@@ -27,26 +27,15 @@ namespace lyric_runtime {
         I64,
         DBL,
         CHAR32,
+        DESCRIPTOR,
+        TYPE,
         REF,
         BYTES,
-        STRING,
-        URL,
-        STATUS,
-        REST,
-        CLASS,
-        STRUCT,
-        INSTANCE,
-        CONCEPT,
-        ENUM,
-        CALL,
-        FIELD,
-        ACTION,
-        TYPE,
-        EXISTENTIAL,
-        NAMESPACE,
-        BINDING,
-        STATIC,
         PROTOCOL,
+        STATUS,
+        STRING,
+        REST,
+        URL,
     };
 
     struct DataCell final {
@@ -67,6 +56,8 @@ namespace lyric_runtime {
         bool isIntrinsic() const;
         bool isDescriptor() const;
         bool isReference() const;
+
+        lyric_object::LinkageSection getLinkage() const;
 
         std::string toString() const;
 
@@ -103,6 +94,7 @@ namespace lyric_runtime {
     };
 
     bool operator==(const DataCell &lhs, const DataCell &rhs);
+    bool operator!=(const DataCell &lhs, const DataCell &rhs);
 
     tempo_utils::LogMessage&& operator<<(tempo_utils::LogMessage &&message, const DataCell &cell);
 }

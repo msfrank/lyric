@@ -3,19 +3,6 @@
 #include <lyric_object/object_types.h>
 #include <tempo_utils/big_endian.h>
 
-lyric_object::LinkageSection
-lyric_object::descriptor_to_linkage_section(tu_uint8 section)
-{
-    return internal::descriptor_to_linkage_section(
-        static_cast<lyo1::DescriptorSection>(section));
-}
-
-tu_uint8
-lyric_object::linkage_to_descriptor_section(lyric_object::LinkageSection section)
-{
-    return static_cast<tu_uint8>(internal::linkage_to_descriptor_section(section));
-}
-
 static const char *OP_UNKNOWN_name             = "???";
 static const char *OP_NOOP_name                = "OP_NOOP";
 static const char *OP_UNDEF_name               = "OP_UNDEF";
@@ -244,4 +231,79 @@ const char *lyric_object::opcode_to_name(Opcode opcode)
 tempo_utils::LogMessage&& lyric_object::operator<<(tempo_utils::LogMessage&& message, Opcode opcode) {
     std::forward<tempo_utils::LogMessage>(message) << opcode_to_name(opcode);
     return std::move(message);
+}
+
+static const char *LINKAGE_SECTION_Action_name                  = "Action";
+static const char *LINKAGE_SECTION_Binding_name                 = "Binding";
+static const char *LINKAGE_SECTION_Call_name                    = "Call";
+static const char *LINKAGE_SECTION_Class_name                   = "Class";
+static const char *LINKAGE_SECTION_Concept_name                 = "Concept";
+static const char *LINKAGE_SECTION_Enum_name                    = "Enum";
+static const char *LINKAGE_SECTION_Existential_name             = "Existential";
+static const char *LINKAGE_SECTION_Field_name                   = "Field";
+static const char *LINKAGE_SECTION_Instance_name                = "Instance";
+static const char *LINKAGE_SECTION_Invalid_name                 = "Invalid";
+static const char *LINKAGE_SECTION_Literal_name                 = "Literal";
+static const char *LINKAGE_SECTION_Namespace_name               = "Namespace";
+static const char *LINKAGE_SECTION_Protocol_name                = "Protocol";
+static const char *LINKAGE_SECTION_Static_name                  = "Static";
+static const char *LINKAGE_SECTION_Struct_name                  = "Struct";
+static const char *LINKAGE_SECTION_Type_name                    = "Type";
+
+const char *
+lyric_object::linkage_section_to_name(LinkageSection section)
+{
+    switch (section) {
+        case LinkageSection::Action:
+            return LINKAGE_SECTION_Action_name;
+        case LinkageSection::Binding:
+            return LINKAGE_SECTION_Binding_name;
+        case LinkageSection::Call:
+            return LINKAGE_SECTION_Call_name;
+        case LinkageSection::Class:
+            return LINKAGE_SECTION_Class_name;
+        case LinkageSection::Concept:
+            return LINKAGE_SECTION_Concept_name;
+        case LinkageSection::Enum:
+            return LINKAGE_SECTION_Enum_name;
+        case LinkageSection::Existential:
+            return LINKAGE_SECTION_Existential_name;
+        case LinkageSection::Field:
+            return LINKAGE_SECTION_Field_name;
+        case LinkageSection::Instance:
+            return LINKAGE_SECTION_Instance_name;
+        case LinkageSection::Literal:
+            return LINKAGE_SECTION_Literal_name;
+        case LinkageSection::Namespace:
+            return LINKAGE_SECTION_Namespace_name;
+        case LinkageSection::Protocol:
+            return LINKAGE_SECTION_Protocol_name;
+        case LinkageSection::Static:
+            return LINKAGE_SECTION_Static_name;
+        case LinkageSection::Struct:
+            return LINKAGE_SECTION_Struct_name;
+        case LinkageSection::Type:
+            return LINKAGE_SECTION_Type_name;
+        default:
+            return LINKAGE_SECTION_Invalid_name;
+    }
+}
+
+tempo_utils::LogMessage&& lyric_object::operator<<(tempo_utils::LogMessage&& message, LinkageSection section)
+{
+    std::forward<tempo_utils::LogMessage>(message) << linkage_section_to_name(section);
+    return std::move(message);
+}
+
+lyric_object::LinkageSection
+lyric_object::descriptor_to_linkage_section(tu_uint8 section)
+{
+    return internal::descriptor_to_linkage_section(
+        static_cast<lyo1::DescriptorSection>(section));
+}
+
+tu_uint8
+lyric_object::linkage_to_descriptor_section(lyric_object::LinkageSection section)
+{
+    return static_cast<tu_uint8>(internal::linkage_to_descriptor_section(section));
 }

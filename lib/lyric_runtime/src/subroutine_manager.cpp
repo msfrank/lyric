@@ -276,7 +276,8 @@ lyric_runtime::SubroutineManager::callStatic(
     StackfulCoroutine *currentCoro,
     tempo_utils::Status &status)
 {
-    TU_ASSERT (descriptor.type == DataCellType::CALL);
+    TU_ASSERT (descriptor.type == DataCellType::DESCRIPTOR);
+    TU_ASSERT (descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Call);
     TU_ASSERT (currentCoro != nullptr);
 
     auto *segment = descriptor.data.descriptor->getSegment();

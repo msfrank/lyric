@@ -18,7 +18,8 @@ lyric_runtime::internal::get_concept_table(
 {
     TU_ASSERT (segmentManagerData != nullptr);
 
-    if (descriptor.type != DataCellType::CONCEPT) {
+    if (descriptor.type != DataCellType::DESCRIPTOR ||
+        descriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Concept) {
         status = InterpreterStatus::forCondition(
             InterpreterCondition::kRuntimeInvariant, "invalid concept descriptor");
         return nullptr;

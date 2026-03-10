@@ -31,18 +31,7 @@ H AbslHashValue(H state, const MapKey &key) {
             return H::combine(std::move(state), cell.data.i64);
         case lyric_runtime::DataCellType::DBL:
             return H::combine(std::move(state), cell.data.dbl);
-        case lyric_runtime::DataCellType::CONCEPT:
-        case lyric_runtime::DataCellType::FIELD:
-        case lyric_runtime::DataCellType::CALL:
-        case lyric_runtime::DataCellType::CLASS:
-        case lyric_runtime::DataCellType::STRUCT:
-        case lyric_runtime::DataCellType::INSTANCE:
-        case lyric_runtime::DataCellType::ENUM:
-        case lyric_runtime::DataCellType::ACTION:
-        case lyric_runtime::DataCellType::EXISTENTIAL:
-        case lyric_runtime::DataCellType::NAMESPACE:
-        case lyric_runtime::DataCellType::BINDING:
-        case lyric_runtime::DataCellType::STATIC:
+        case lyric_runtime::DataCellType::DESCRIPTOR:
             return H::combine(std::move(state),
                 cell.data.descriptor->getSegmentIndex(),
                 cell.data.descriptor->getDescriptorIndex());

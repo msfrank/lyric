@@ -1123,7 +1123,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 DataCell conceptDescriptor;
 
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(conceptDescriptor));
-                if (conceptDescriptor.type != DataCellType::CONCEPT)
+                if (conceptDescriptor.type != DataCellType::DESCRIPTOR
+                    || conceptDescriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Concept)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "invalid descriptor for concept call"));
 
@@ -1159,7 +1160,8 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                 DataCell existentialDescriptor;
 
                 ON_ERROR_IF_NOT_OK (currentCoro->popData(existentialDescriptor));
-                if (existentialDescriptor.type != DataCellType::EXISTENTIAL)
+                if (existentialDescriptor.type != DataCellType::DESCRIPTOR ||
+                    existentialDescriptor.data.descriptor->getLinkageSection() != lyric_object::LinkageSection::Existential)
                     return onError(op, InterpreterStatus::forCondition(
                         InterpreterCondition::kInvalidDataStackV1, "invalid descriptor for existential call"));
 

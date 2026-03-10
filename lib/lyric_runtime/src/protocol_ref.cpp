@@ -11,7 +11,8 @@ lyric_runtime::ProtocolRef::ProtocolRef(const ExistentialTable *etable, const Da
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
-    TU_ASSERT (m_descriptor.type == DataCellType::PROTOCOL);
+    TU_ASSERT (m_descriptor.type == DataCellType::DESCRIPTOR);
+    TU_ASSERT (m_descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Protocol);
 }
 
 lyric_runtime::ProtocolRef::~ProtocolRef()
