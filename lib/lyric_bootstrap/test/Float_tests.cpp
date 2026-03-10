@@ -4,10 +4,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreFloat, EvaluateDecimalFixedFloat)
-{
+class FloatTests : public BaseBootstrapFixture {};
+
+TEST_F(FloatTests, EvaluateDecimalFixedFloat) {
     auto result = runModule(R"(
         1.5
     )");
@@ -15,7 +16,7 @@ TEST(CoreFloat, EvaluateDecimalFixedFloat)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(1.5))));
 }
 
-TEST(CoreFloat, EvaluateDecimalScientificFloat)
+TEST_F(FloatTests, EvaluateDecimalScientificFloat)
 {
     auto result = runModule(R"(
         1.5e2
@@ -24,7 +25,7 @@ TEST(CoreFloat, EvaluateDecimalScientificFloat)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(150.0))));
 }
 
-TEST(CoreFloat, EvaluateHexFloat)
+TEST_F(FloatTests, EvaluateHexFloat)
 {
     auto result = runModule(R"(
         0x10.8
@@ -33,7 +34,7 @@ TEST(CoreFloat, EvaluateHexFloat)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(16.5))));
 }
 
-TEST(CoreFloat, EvaluateAddition)
+TEST_F(FloatTests, EvaluateAddition)
 {
     auto result = runModule(R"(
         1.5 + 2.5
@@ -42,7 +43,7 @@ TEST(CoreFloat, EvaluateAddition)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(4.0))));
 }
 
-TEST(CoreFloat, EvaluateSubtraction)
+TEST_F(FloatTests, EvaluateSubtraction)
 {
     auto result = runModule(R"(
         2.5 - 1.0
@@ -51,7 +52,7 @@ TEST(CoreFloat, EvaluateSubtraction)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(1.5))));
 }
 
-TEST(CoreFloat, EvaluateMultiplication)
+TEST_F(FloatTests, EvaluateMultiplication)
 {
     auto result = runModule(R"(
         2.0 * 3.0
@@ -60,7 +61,7 @@ TEST(CoreFloat, EvaluateMultiplication)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(6.0))));
 }
 
-TEST(CoreFloat, EvaluateDivision)
+TEST_F(FloatTests, EvaluateDivision)
 {
     auto result = runModule(R"(
         20.0 / 8.0
@@ -69,7 +70,7 @@ TEST(CoreFloat, EvaluateDivision)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(2.5))));
 }
 
-TEST(CoreFloat, EvaluateNegation)
+TEST_F(FloatTests, EvaluateNegation)
 {
     auto result = runModule(R"(
         -5.0
@@ -78,7 +79,7 @@ TEST(CoreFloat, EvaluateNegation)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(-5.0))));
 }
 
-TEST(CoreFloat, EvaluateIsEq)
+TEST_F(FloatTests, EvaluateIsEq)
 {
     auto result = runModule(R"(
         5.2 == 2.2
@@ -87,7 +88,7 @@ TEST(CoreFloat, EvaluateIsEq)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreFloat, EvaluateIsLt)
+TEST_F(FloatTests, EvaluateIsLt)
 {
     auto result = runModule(R"(
         5.7 < 2.1
@@ -96,7 +97,7 @@ TEST(CoreFloat, EvaluateIsLt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreFloat, EvaluateIsGt)
+TEST_F(FloatTests, EvaluateIsGt)
 {
     auto result = runModule(R"(
         5.4 > 0.3
@@ -105,7 +106,7 @@ TEST(CoreFloat, EvaluateIsGt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreFloat, EvaluateIsLe)
+TEST_F(FloatTests, EvaluateIsLe)
 {
     auto result = runModule(R"(
         5.1 <= 1.8
@@ -114,7 +115,7 @@ TEST(CoreFloat, EvaluateIsLe)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreFloat, EvaluateIsGe)
+TEST_F(FloatTests, EvaluateIsGe)
 {
     auto result = runModule(R"(
         5.0 >= 3.5
@@ -123,7 +124,7 @@ TEST(CoreFloat, EvaluateIsGe)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreFloat, EvaluateCeil)
+TEST_F(FloatTests, EvaluateCeil)
 {
     auto result = runModule(R"(
         (5.5).Ceil()
@@ -132,7 +133,7 @@ TEST(CoreFloat, EvaluateCeil)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(6.0))));
 }
 
-TEST(CoreFloat, EvaluateFloor)
+TEST_F(FloatTests, EvaluateFloor)
 {
     auto result = runModule(R"(
         (5.5).Floor()
@@ -141,7 +142,7 @@ TEST(CoreFloat, EvaluateFloor)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellFloat(5.0))));
 }
 
-TEST(CoreFloat, EvaluateTrunc)
+TEST_F(FloatTests, EvaluateTrunc)
 {
     auto result = runModule(R"(
         (-5.5).Trunc()

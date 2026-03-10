@@ -4,9 +4,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreStatus, TestEvaluateNewStatus)
+class StatusTests : public BaseBootstrapFixture {};
+
+TEST_F(StatusTests, TestEvaluateNewStatus)
 {
     auto result = runModule(R"(
         val status: Status = Cancelled{message = "OK"}
@@ -18,7 +20,7 @@ TEST(CoreStatus, TestEvaluateNewStatus)
             RunModule(StatusRef(lyric_bootstrap::preludeSymbol("Cancelled")))));
 }
 
-TEST(CoreStatus, TestEvaluateStatusCode)
+TEST_F(StatusTests, TestEvaluateStatusCode)
 {
     auto result = runModule(R"(
         val status: Status = Cancelled{message = "operation was cancelled"}
@@ -30,7 +32,7 @@ TEST(CoreStatus, TestEvaluateStatusCode)
             RunModule(DataCellInt(1))));
 }
 
-TEST(CoreStatus, TestEvaluateStatusMessage)
+TEST_F(StatusTests, TestEvaluateStatusMessage)
 {
     auto result = runModule(R"(
         val status: Status = Cancelled{message = "operation was cancelled"}

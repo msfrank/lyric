@@ -3,9 +3,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreOption, TestNewEmptyOptionUsingUnionType)
+class OptionTests : public BaseBootstrapFixture {};
+
+TEST_F(OptionTests, TestNewEmptyOptionUsingUnionType)
 {
     auto result = runModule(R"(
         val opt: Bool|Nil = nil

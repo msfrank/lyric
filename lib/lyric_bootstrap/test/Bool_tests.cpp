@@ -3,9 +3,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/result_matchers.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreBoolean, EvaluateLogicalAnd)
+class BoolTests : public BaseBootstrapFixture {};
+
+TEST_F(BoolTests, EvaluateLogicalAnd)
 {
     auto result = runModule(R"(
         true and false
@@ -14,7 +16,7 @@ TEST(CoreBoolean, EvaluateLogicalAnd)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreBoolean, EvaluateLogicalOr)
+TEST_F(BoolTests, EvaluateLogicalOr)
 {
     auto result = runModule(R"(
         true or false
@@ -23,7 +25,7 @@ TEST(CoreBoolean, EvaluateLogicalOr)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreBoolean, EvaluateLogicalNot)
+TEST_F(BoolTests, EvaluateLogicalNot)
 {
     auto result = runModule(R"(
         not false

@@ -3,9 +3,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreBytes, TestEvaluateBytesFromString)
+class BytesTests : public BaseBootstrapFixture {};
+
+TEST_F(BytesTests, TestEvaluateBytesFromString)
 {
     auto result = runModule(R"(
         val string: String = "Hello, world!"
@@ -17,7 +19,7 @@ TEST(CoreBytes, TestEvaluateBytesFromString)
                      RunModule(MatchesDataCellType(lyric_runtime::DataCellType::BYTES))));
 }
 
-TEST(CoreBytes, TestEvaluateBytesLength)
+TEST_F(BytesTests, TestEvaluateBytesLength)
 {
     auto result = runModule(R"(
         val string: String = "Hello, world!"
@@ -28,7 +30,7 @@ TEST(CoreBytes, TestEvaluateBytesLength)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(13))));
 }
 
-TEST(CoreBytes, TestEvaluateBytesAt)
+TEST_F(BytesTests, TestEvaluateBytesAt)
 {
     auto result = runModule(R"(
         val string: String = "Hello, world!"
@@ -39,7 +41,7 @@ TEST(CoreBytes, TestEvaluateBytesAt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(72))));
 }
 
-TEST(CoreBytes, TestEvaluateBytesEqual)
+TEST_F(BytesTests, TestEvaluateBytesEqual)
 {
     auto result = runModule(R"(
         val string1: String = "Hello, world!"

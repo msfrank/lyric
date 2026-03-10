@@ -3,9 +3,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreString, TestEvaluateNewString)
+class StringTests : public BaseBootstrapFixture {};
+
+TEST_F(StringTests, TestEvaluateNewString)
 {
     auto result = runModule(R"(
         val string: String = "Hello, world!"
@@ -17,7 +19,7 @@ TEST(CoreString, TestEvaluateNewString)
                      RunModule(DataCellString("Hello, world!"))));
 }
 
-TEST(CoreString, TestEvaluateNewEmptyString)
+TEST_F(StringTests, TestEvaluateNewEmptyString)
 {
     auto result = runModule(R"(
         val string: String = ""
@@ -29,7 +31,7 @@ TEST(CoreString, TestEvaluateNewEmptyString)
                      RunModule(DataCellString(""))));
 }
 
-TEST(CoreString, TestEvaluateStringSize)
+TEST_F(StringTests, TestEvaluateStringSize)
 {
     auto result = runModule(R"(
         val string: String = "Hello, world!"
@@ -39,7 +41,7 @@ TEST(CoreString, TestEvaluateStringSize)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(13))));
 }
 
-TEST(CoreString, TestEvaluateStringAt)
+TEST_F(StringTests, TestEvaluateStringAt)
 {
     auto result = runModule(R"(
         val string: String = "Hello, world!"
@@ -49,7 +51,7 @@ TEST(CoreString, TestEvaluateStringAt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellChar(static_cast<char32_t>('H')))));
 }
 
-TEST(CoreString, TestEvaluateIsEq)
+TEST_F(StringTests, TestEvaluateIsEq)
 {
     auto result = runModule(R"(
         "Hello" == "Hello"
@@ -58,7 +60,7 @@ TEST(CoreString, TestEvaluateIsEq)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreString, TestEvaluateIsLt)
+TEST_F(StringTests, TestEvaluateIsLt)
 {
     auto result = runModule(R"(
         "hello" < "goodbye"
@@ -67,7 +69,7 @@ TEST(CoreString, TestEvaluateIsLt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreString, TestEvaluateIsGt)
+TEST_F(StringTests, TestEvaluateIsGt)
 {
     auto result = runModule(R"(
         "hello" > "goodbye"
@@ -76,7 +78,7 @@ TEST(CoreString, TestEvaluateIsGt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreString, TestEvaluateIsLe)
+TEST_F(StringTests, TestEvaluateIsLe)
 {
     auto result = runModule(R"(
         "hello" <= "goodbye"
@@ -85,7 +87,7 @@ TEST(CoreString, TestEvaluateIsLe)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreString, TestEvaluateIsGe)
+TEST_F(StringTests, TestEvaluateIsGe)
 {
     auto result = runModule(R"(
         "hello" >= "goodbye"

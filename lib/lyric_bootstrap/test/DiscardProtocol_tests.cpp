@@ -3,9 +3,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreDiscardProtocol, EvaluateDiscardProtocol)
+class DiscardProtocolTests : public BaseBootstrapFixture {};
+
+TEST_F(DiscardProtocolTests, EvaluateDiscardProtocol)
 {
     auto result = runModule(R"(
         DiscardProtocol
@@ -13,4 +15,14 @@ TEST(CoreDiscardProtocol, EvaluateDiscardProtocol)
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
         MatchesDataCellType(lyric_runtime::DataCellType::PROTOCOL))));
+}
+
+TEST_F(DiscardProtocolTests, EvaluateDiscardProtocolType)
+{
+    auto result = runModule(R"(
+        typeof DiscardProtocol
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
+        Ty(lyric_runtime::DataCellType::PROTOCOL))));
 }

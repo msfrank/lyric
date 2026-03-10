@@ -4,9 +4,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CorePair, TestEvaluateNewPair)
+class PairTests : public BaseBootstrapFixture {};
+
+TEST_F(PairTests, TestEvaluateNewPair)
 {
     auto result = runModule(R"(
         val pair: Pair = Pair{first = 1, second = 2}
@@ -18,7 +20,7 @@ TEST(CorePair, TestEvaluateNewPair)
                      RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Pair")))));
 }
 
-TEST(CorePair, TestEvaluatePairFirst)
+TEST_F(PairTests, TestEvaluatePairFirst)
 {
     auto result = runModule(R"(
         val pair: Pair = Pair{first = 1, second = 2}
@@ -28,7 +30,7 @@ TEST(CorePair, TestEvaluatePairFirst)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
-TEST(CorePair, TestEvaluatePairSecond)
+TEST_F(PairTests, TestEvaluatePairSecond)
 {
     auto result = runModule(R"(
         val pair: Pair = Pair{first = 1, second = 2}

@@ -3,10 +3,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreInt, EvaluateDecimalInt)
-{
+class IntTests : public BaseBootstrapFixture {};
+
+TEST_F(IntTests, EvaluateDecimalInt) {
     auto result = runModule(R"(
         10
     )");
@@ -14,7 +15,7 @@ TEST(CoreInt, EvaluateDecimalInt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(10))));
 }
 
-TEST(CoreInt, EvaluateOctalInt)
+TEST_F(IntTests, EvaluateOctalInt)
 {
     auto result = runModule(R"(
         0o10
@@ -23,7 +24,7 @@ TEST(CoreInt, EvaluateOctalInt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(8))));
 }
 
-TEST(CoreInt, EvaluateHexInt)
+TEST_F(IntTests, EvaluateHexInt)
 {
     auto result = runModule(R"(
         0x10
@@ -32,7 +33,7 @@ TEST(CoreInt, EvaluateHexInt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(16))));
 }
 
-TEST(CoreInt, EvaluateAddition)
+TEST_F(IntTests, EvaluateAddition)
 {
     auto result = runModule(R"(
         1 + 2
@@ -42,7 +43,7 @@ TEST(CoreInt, EvaluateAddition)
 }
 
 
-TEST(CoreInt, EvaluateSubtraction)
+TEST_F(IntTests, EvaluateSubtraction)
 {
     auto result = runModule(R"(
         2 - 1
@@ -51,7 +52,7 @@ TEST(CoreInt, EvaluateSubtraction)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
-TEST(CoreInt, EvaluateMultiplication)
+TEST_F(IntTests, EvaluateMultiplication)
 {
     auto result = runModule(R"(
         2 * 3
@@ -60,7 +61,7 @@ TEST(CoreInt, EvaluateMultiplication)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
 }
 
-TEST(CoreInt, EvaluateDivision)
+TEST_F(IntTests, EvaluateDivision)
 {
     auto result = runModule(R"(
         20 / 5
@@ -69,7 +70,7 @@ TEST(CoreInt, EvaluateDivision)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(4))));
 }
 
-TEST(CoreInt, EvaluateNegation)
+TEST_F(IntTests, EvaluateNegation)
 {
     auto result = runModule(R"(
         -(5)
@@ -78,7 +79,7 @@ TEST(CoreInt, EvaluateNegation)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(-5))));
 }
 
-//TEST(CoreInt, EvaluateDirectAddition)
+//TEST_F(IntTests, EvaluateDirectAddition)
 //{
 //    auto result = LyricTester::runSingleModule(R"(
 //        IntInstance.add(1, 2)
@@ -87,7 +88,7 @@ TEST(CoreInt, EvaluateNegation)
 //    ASSERT_THAT (result, IsDataCellBool(3LL));
 //}
 //
-//TEST(CoreInt, EvaluateDirectSubtraction)
+//TEST_F(IntTests, EvaluateDirectSubtraction)
 //{
 //    auto result = LyricTester::runSingleModule(R"(
 //        IntInstance.subtract(2, 1)
@@ -96,7 +97,7 @@ TEST(CoreInt, EvaluateNegation)
 //    ASSERT_THAT (result, IsDataCellBool(1LL));
 //}
 //
-//TEST(CoreInt, EvaluateDirectMultiplication)
+//TEST_F(IntTests, EvaluateDirectMultiplication)
 //{
 //    auto result = LyricTester::runSingleModule(R"(
 //        IntInstance.multiply(2, 3)
@@ -105,7 +106,7 @@ TEST(CoreInt, EvaluateNegation)
 //    ASSERT_THAT (result, IsDataCellBool(6LL));
 //}
 //
-//TEST(CoreInt, EvaluateDirectDivision)
+//TEST_F(IntTests, EvaluateDirectDivision)
 //{
 //    auto result = LyricTester::runSingleModule(R"(
 //        IntInstance.divide(20, 5)
@@ -114,7 +115,7 @@ TEST(CoreInt, EvaluateNegation)
 //    ASSERT_THAT (result, IsDataCellBool(4LL));
 //}
 //
-//TEST(CoreInt, EvaluateDirectNegation)
+//TEST_F(IntTests, EvaluateDirectNegation)
 //{
 //    auto result = LyricTester::runSingleModule(R"(
 //        IntInstance.negate(5)
@@ -123,7 +124,7 @@ TEST(CoreInt, EvaluateNegation)
 //    ASSERT_THAT (result, IsDataCellBool(-5LL));
 //}
 
-TEST(CoreInt, EvaluateIsEq)
+TEST_F(IntTests, EvaluateIsEq)
 {
     auto result = runModule(R"(
         5 == 0
@@ -132,7 +133,7 @@ TEST(CoreInt, EvaluateIsEq)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreInt, EvaluateIsLt)
+TEST_F(IntTests, EvaluateIsLt)
 {
     auto result = runModule(R"(
         5 < 0
@@ -141,7 +142,7 @@ TEST(CoreInt, EvaluateIsLt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreInt, EvaluateIsGt)
+TEST_F(IntTests, EvaluateIsGt)
 {
     auto result = runModule(R"(
         5 > 0
@@ -150,7 +151,7 @@ TEST(CoreInt, EvaluateIsGt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreInt, EvaluateIsLe)
+TEST_F(IntTests, EvaluateIsLe)
 {
     auto result = runModule(R"(
         5 <= 0
@@ -159,7 +160,7 @@ TEST(CoreInt, EvaluateIsLe)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreInt, EvaluateIsGe)
+TEST_F(IntTests, EvaluateIsGe)
 {
     auto result = runModule(R"(
         5 >= 0

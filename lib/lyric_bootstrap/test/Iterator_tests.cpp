@@ -3,9 +3,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreIterator, TestForLoopWithExplicitTargetAndIteratorTypes)
+class IteratorTests : public BaseBootstrapFixture {};
+
+TEST_F(IteratorTests, TestForLoopWithExplicitTargetAndIteratorTypes)
 {
     auto result = runModule(R"(
 
@@ -40,7 +42,7 @@ TEST(CoreIterator, TestForLoopWithExplicitTargetAndIteratorTypes)
             DataCellInt(3))));
 }
 
-TEST(CoreIterator, TestForLoopWithExplicitTargetTypeAndInferredIteratorType)
+TEST_F(IteratorTests, TestForLoopWithExplicitTargetTypeAndInferredIteratorType)
 {
     auto result = runModule(R"(
 

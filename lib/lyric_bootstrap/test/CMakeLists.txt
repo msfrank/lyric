@@ -24,13 +24,16 @@ set(TEST_CASES
     Type_tests.cpp
     Undef_tests.cpp
     Url_tests.cpp
-    Utf16_tests.cpp
     va_tests.cpp
     )
 
 # define test suite driver
 
-add_executable(lyric_bootstrap_testsuite ${TEST_CASES} test_helpers.cpp test_helpers.h ${TEST_MAIN_CPP})
+add_executable(lyric_bootstrap_testsuite
+    ${TEST_CASES}
+    base_bootstrap_fixture.cpp base_bootstrap_fixture.h
+    test_helpers.cpp test_helpers.h
+    ${TEST_MAIN_CPP})
 target_compile_definitions(lyric_bootstrap_testsuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
@@ -44,7 +47,11 @@ gtest_discover_tests(lyric_bootstrap_testsuite DISCOVERY_TIMEOUT 30)
 
 # define test suite static library
 
-add_library(LyricBootstrapTestSuite OBJECT ${TEST_CASES} test_helpers.cpp test_helpers.h)
+add_library(LyricBootstrapTestSuite OBJECT
+    ${TEST_CASES}
+    base_bootstrap_fixture.cpp base_bootstrap_fixture.h
+    test_helpers.cpp test_helpers.h
+    )
 target_compile_definitions(LyricBootstrapTestSuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""

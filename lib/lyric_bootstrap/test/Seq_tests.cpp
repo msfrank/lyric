@@ -4,9 +4,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreSeq, TestEvaluateNewSeq)
+class SeqTests : public BaseBootstrapFixture {};
+
+TEST_F(SeqTests, TestEvaluateNewSeq)
 {
     auto result = runModule(R"(
         val seq: Seq = Seq{1, 2, 3}
@@ -18,7 +20,7 @@ TEST(CoreSeq, TestEvaluateNewSeq)
                      RunModule(DataCellRef(lyric_bootstrap::preludeSymbol("Seq")))));
 }
 
-TEST(CoreSeq, TestEvaluateSeqSize)
+TEST_F(SeqTests, TestEvaluateSeqSize)
 {
     auto result = runModule(R"(
         val seq: Seq = Seq{1, 2, 3}
@@ -28,7 +30,7 @@ TEST(CoreSeq, TestEvaluateSeqSize)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
-TEST(CoreSeq, TestEvaluateSeqGet)
+TEST_F(SeqTests, TestEvaluateSeqGet)
 {
     auto result = runModule(R"(
         val seq: Seq = Seq{1, 2, 3}
@@ -38,7 +40,7 @@ TEST(CoreSeq, TestEvaluateSeqGet)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
-TEST(CoreSeq, TestEvaluateSeqAppend)
+TEST_F(SeqTests, TestEvaluateSeqAppend)
 {
     auto result = runModule(R"(
         val seq1: Seq = Seq{1, 2, 3}
@@ -49,7 +51,7 @@ TEST(CoreSeq, TestEvaluateSeqAppend)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
 }
 
-TEST(CoreSeq, TestEvaluateSeqExtend)
+TEST_F(SeqTests, TestEvaluateSeqExtend)
 {
     auto result = runModule(R"(
         val seq1: Seq = Seq{1, 2, 3}
@@ -61,7 +63,7 @@ TEST(CoreSeq, TestEvaluateSeqExtend)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(6))));
 }
 
-TEST(CoreSeq, TestEvaluateSeqSlice)
+TEST_F(SeqTests, TestEvaluateSeqSlice)
 {
     auto result = runModule(R"(
         val seq1: Seq = Seq{1, 2, 3, 4, 5, 6}
@@ -72,7 +74,7 @@ TEST(CoreSeq, TestEvaluateSeqSlice)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(4))));
 }
 
-TEST(CoreSeq, TestEvaluateSeqIterateImpl)
+TEST_F(SeqTests, TestEvaluateSeqIterateImpl)
 {
     auto result = runModule(R"(
         val seq: Seq = Seq{1, 2, 3, 4, 5, 6}

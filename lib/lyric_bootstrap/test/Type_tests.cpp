@@ -1,13 +1,14 @@
 
 #include <gtest/gtest.h>
 
-#include <lyric_assembler/assembler_result.h>
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreType, TestTypeof)
+class TypeTests : public BaseBootstrapFixture {};
+
+TEST_F(TypeTests, TestTypeof)
 {
     auto result = runModule(R"(
         typeof Object
@@ -17,7 +18,7 @@ TEST(CoreType, TestTypeof)
         MatchesDescriptorSection(lyric_object::LinkageSection::Type))));
 }
 
-TEST(CoreType, TestCompareType)
+TEST_F(TypeTests, TestCompareType)
 {
     auto result = runModule(R"(
         val t: Type = typeof Object
@@ -28,7 +29,7 @@ TEST(CoreType, TestCompareType)
         DataCellInt(-1))));
 }
 
-TEST(CoreType, TestIsSupertypeOf)
+TEST_F(TypeTests, TestIsSupertypeOf)
 {
     auto result = runModule(R"(
         val t: Type = typeof Any
@@ -39,7 +40,7 @@ TEST(CoreType, TestIsSupertypeOf)
         DataCellBool(true))));
 }
 
-TEST(CoreType, TestIsSubtypeOf)
+TEST_F(TypeTests, TestIsSubtypeOf)
 {
     auto result = runModule(R"(
         val t: Type = typeof Object

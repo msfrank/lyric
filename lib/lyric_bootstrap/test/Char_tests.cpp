@@ -4,9 +4,11 @@
 
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreChar, EvaluateCharLiteral)
+class CharTests : public BaseBootstrapFixture {};
+
+TEST_F(CharTests, EvaluateCharLiteral)
 {
     auto result = runModule(R"(
         'H'
@@ -17,7 +19,7 @@ TEST(CoreChar, EvaluateCharLiteral)
                      RunModule(DataCellChar(static_cast<char32_t>('H')))));
 }
 
-TEST(CoreChar, EvaluateUnicode2ByteEscape)
+TEST_F(CharTests, EvaluateUnicode2ByteEscape)
 {
     auto result = runModule(R"(
         '\u03a9'
@@ -28,7 +30,7 @@ TEST(CoreChar, EvaluateUnicode2ByteEscape)
                      RunModule(DataCellChar(static_cast<char32_t>(u'Ω')))));
 }
 
-TEST(CoreChar, EvaluateUnicode4ByteEscape)
+TEST_F(CharTests, EvaluateUnicode4ByteEscape)
 {
     auto result = runModule(R"(
         '\U0001f71f'
@@ -39,7 +41,7 @@ TEST(CoreChar, EvaluateUnicode4ByteEscape)
                      RunModule(DataCellChar(static_cast<char32_t>(0x1f71f)))));
 }
 
-TEST(CoreChar, EvaluateIsEq)
+TEST_F(CharTests, EvaluateIsEq)
 {
     auto result = runModule(R"(
         'H' == 'H'
@@ -48,7 +50,7 @@ TEST(CoreChar, EvaluateIsEq)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreChar, EvaluateIsLt)
+TEST_F(CharTests, EvaluateIsLt)
 {
     auto result = runModule(R"(
         'b' < 'a'
@@ -57,7 +59,7 @@ TEST(CoreChar, EvaluateIsLt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreChar, EvaluateIsGt)
+TEST_F(CharTests, EvaluateIsGt)
 {
     auto result = runModule(R"(
         'c' > 'b'
@@ -66,7 +68,7 @@ TEST(CoreChar, EvaluateIsGt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreChar, EvaluateIsLe)
+TEST_F(CharTests, EvaluateIsLe)
 {
     auto result = runModule(R"(
         'h' <= 'e'
@@ -75,7 +77,7 @@ TEST(CoreChar, EvaluateIsLe)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreChar, EvaluateIsGe)
+TEST_F(CharTests, EvaluateIsGe)
 {
     auto result = runModule(R"(
         'h' >= 'e'

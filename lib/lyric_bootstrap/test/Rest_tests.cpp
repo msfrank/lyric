@@ -1,12 +1,13 @@
 #include <gtest/gtest.h>
 
-#include <lyric_bootstrap/bootstrap_helpers.h>
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreRest, TestEvaluateRestSize)
+class RestTests : public BaseBootstrapFixture {};
+
+TEST_F(RestTests, TestEvaluateRestSize)
 {
     auto result = runModule(R"(
         def CountArgs(args: ...Int): Int {
@@ -19,7 +20,7 @@ TEST(CoreRest, TestEvaluateRestSize)
         RunModule(DataCellInt(5))));
 }
 
-TEST(CoreRest, TestEvaluateRestGet)
+TEST_F(RestTests, TestEvaluateRestGet)
 {
     auto result = runModule(R"(
         def ArgAt(index: Int, args: ...Int): Int | Nil {
@@ -32,7 +33,7 @@ TEST(CoreRest, TestEvaluateRestGet)
         RunModule(DataCellInt(1))));
 }
 
-TEST(CoreRest, TestEvaluateRestIterateImpl)
+TEST_F(RestTests, TestEvaluateRestIterateImpl)
 {
     auto result = runModule(R"(
         def SumArgs(args: ...Int): Int {

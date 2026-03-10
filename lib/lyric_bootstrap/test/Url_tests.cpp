@@ -3,9 +3,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreUrl, TestEvaluateNewUrl)
+class UrlTests : public BaseBootstrapFixture {};
+
+TEST_F(UrlTests, TestEvaluateNewUrl)
 {
     auto result = runModule(R"(
         val uri: Url = `https://zuri.dev/example/uri.html`
@@ -17,7 +19,7 @@ TEST(CoreUrl, TestEvaluateNewUrl)
                      RunModule(DataCellUrl("https://zuri.dev/example/uri.html"))));
 }
 
-TEST(CoreUrl, TestEvaluateNewEmptyUrl)
+TEST_F(UrlTests, TestEvaluateNewEmptyUrl)
 {
     auto result = runModule(R"(
         val uri: Url = ``
@@ -29,7 +31,7 @@ TEST(CoreUrl, TestEvaluateNewEmptyUrl)
                      RunModule(DataCellUrl(""))));
 }
 
-TEST(CoreUrl, TestEvaluateIsEq)
+TEST_F(UrlTests, TestEvaluateIsEq)
 {
     auto result = runModule(R"(
         `/Hello` == `/Hello`

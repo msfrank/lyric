@@ -3,9 +3,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreUndef, EvaluateUndef)
+class UndefTests : public BaseBootstrapFixture {};
+
+TEST_F(UndefTests, EvaluateUndef)
 {
     auto result = runModule(R"(
         undef

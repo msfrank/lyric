@@ -3,9 +3,11 @@
 #include <lyric_test/matchers.h>
 #include <tempo_test/tempo_test.h>
 
-#include "test_helpers.h"
+#include "base_bootstrap_fixture.h"
 
-TEST(CoreMap, TestEvaluateMapContainsNoEntries)
+class MapTests : public BaseBootstrapFixture {};
+
+TEST_F(MapTests, TestEvaluateMapContainsNoEntries)
 {
     auto result = runModule(R"(
         val names: Map = Map{}
@@ -15,7 +17,7 @@ TEST(CoreMap, TestEvaluateMapContainsNoEntries)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreMap, TestEvaluateMapContainsSingleEntry)
+TEST_F(MapTests, TestEvaluateMapContainsSingleEntry)
 {
     auto result = runModule(R"(
         val names: Map = Map{ Pair{first = "one", second = 1} }
@@ -25,7 +27,7 @@ TEST(CoreMap, TestEvaluateMapContainsSingleEntry)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreMap, TestEvaluateMapContainsMultipleEntries)
+TEST_F(MapTests, TestEvaluateMapContainsMultipleEntries)
 {
     auto result = runModule(R"(
         val names: Map = Map{
@@ -39,7 +41,7 @@ TEST(CoreMap, TestEvaluateMapContainsMultipleEntries)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST(CoreMap, TestEvaluateMapGetSingleEntry)
+TEST_F(MapTests, TestEvaluateMapGetSingleEntry)
 {
     auto result = runModule(R"(
         val names: Map = Map{ Pair{first = "one", second = 1} }
@@ -49,7 +51,7 @@ TEST(CoreMap, TestEvaluateMapGetSingleEntry)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(1))));
 }
 
-TEST(CoreMap, TestEvaluateMapGetMultipleEntries)
+TEST_F(MapTests, TestEvaluateMapGetMultipleEntries)
 {
     auto result = runModule(R"(
         val names: Map = Map{
@@ -63,7 +65,7 @@ TEST(CoreMap, TestEvaluateMapGetMultipleEntries)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
-TEST(CoreMap, TestEvaluateMapSizeMultipleEntries)
+TEST_F(MapTests, TestEvaluateMapSizeMultipleEntries)
 {
     auto result = runModule(R"(
         val names: Map = Map{
@@ -77,7 +79,7 @@ TEST(CoreMap, TestEvaluateMapSizeMultipleEntries)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
-TEST(CoreMap, TestEvaluateMapUpdate)
+TEST_F(MapTests, TestEvaluateMapUpdate)
 {
     auto result = runModule(R"(
         var names: Map = Map{
@@ -91,7 +93,7 @@ TEST(CoreMap, TestEvaluateMapUpdate)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(3))));
 }
 
-TEST(CoreMap, TestEvaluateMapRemove)
+TEST_F(MapTests, TestEvaluateMapRemove)
 {
     auto result = runModule(R"(
         var names: Map = Map{
@@ -106,7 +108,7 @@ TEST(CoreMap, TestEvaluateMapRemove)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST(CoreMap, TestEvaluateMapIterateImpl)
+TEST_F(MapTests, TestEvaluateMapIterateImpl)
 {
     auto result = runModule(R"(
         val names: Map = Map{
