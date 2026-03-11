@@ -37,6 +37,15 @@ namespace lyric_runtime {
 
         virtual BytecodeSegment *getOrLoadSegment(const lyric_common::ModuleLocation &location, bool useSystemLoader);
 
+        virtual bool hasResource(
+            const lyric_common::ModuleLocation &location,
+            bool useSystemLoader,
+            tempo_utils::Status *statusptr);
+        virtual std::shared_ptr<const tempo_utils::ImmutableBytes> loadResource(
+            const lyric_common::ModuleLocation &location,
+            bool useSystemLoader,
+            tempo_utils::Status *statusptr);
+
         virtual const LinkEntry *resolveLink(
             const BytecodeSegment *sp,
             tu_uint32 index,

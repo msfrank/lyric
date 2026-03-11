@@ -43,6 +43,19 @@ namespace lyric_runtime {
             const lyric_common::ModuleLocation &location) = 0;
 
         /**
+         * Returns a Result containing true if the loader can load a plugin at the specified location,
+         * a Result containing false if the loader cannot load a plugin at the specified location, or a
+         * Status if there was an error.
+         *
+         * @param location The location.
+         * @param specifier
+         * @return A Result containing a boolean indicating whether the loader can load the plugin
+         */
+        virtual tempo_utils::Result<bool> hasPlugin(
+            const lyric_common::ModuleLocation &location,
+            const lyric_object::PluginSpecifier &specifier) const = 0;
+
+        /**
          *
          * @param location
          * @param specifier
@@ -51,6 +64,25 @@ namespace lyric_runtime {
         virtual tempo_utils::Result<Option<std::shared_ptr<const AbstractPlugin>>> loadPlugin(
             const lyric_common::ModuleLocation &location,
             const lyric_object::PluginSpecifier &specifier) = 0;
+
+        /**
+         * Returns a Result containing true if the loader can load a resource at the specified location,
+         * a Result containing false if the loader cannot load a resource at the specified location, or a
+         * Status if there was an error.
+         *
+         * @param location The location.
+         * @return A Result containing a boolean indicating whether the loader can load the resource
+         */
+        virtual tempo_utils::Result<bool> hasResource(
+            const lyric_common::ModuleLocation &location) const = 0;
+
+        /**
+         *
+         * @param location
+         * @return
+         */
+        virtual tempo_utils::Result<Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>> loadResource(
+            const lyric_common::ModuleLocation &location) = 0;
     };
 }
 

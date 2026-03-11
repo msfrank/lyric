@@ -22,9 +22,16 @@ namespace lyric_build {
             const lyric_common::ModuleLocation &location) const override;
         tempo_utils::Result<Option<lyric_object::LyricObject>> loadModule(
             const lyric_common::ModuleLocation &location) override;
+        tempo_utils::Result<bool> hasPlugin(
+            const lyric_common::ModuleLocation &location,
+            const lyric_object::PluginSpecifier &specifier) const override;
         tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>> loadPlugin(
             const lyric_common::ModuleLocation &location,
             const lyric_object::PluginSpecifier &specifier) override;
+        tempo_utils::Result<bool> hasResource(
+            const lyric_common::ModuleLocation &location) const override;
+        tempo_utils::Result<Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>> loadResource(
+            const lyric_common::ModuleLocation &location) override;
 
     private:
         tempo_utils::UUID m_generation;

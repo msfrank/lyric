@@ -13,9 +13,18 @@ namespace lyric_runtime {
             const lyric_common::ModuleLocation &location) const override;
         tempo_utils::Result<Option<lyric_object::LyricObject>> loadModule(
             const lyric_common::ModuleLocation &location) override;
+
+        tempo_utils::Result<bool> hasPlugin(
+            const lyric_common::ModuleLocation &location,
+            const lyric_object::PluginSpecifier &specifier) const override;
         tempo_utils::Result<Option<std::shared_ptr<const AbstractPlugin>>> loadPlugin(
             const lyric_common::ModuleLocation &location,
             const lyric_object::PluginSpecifier &specifier) override;
+
+        tempo_utils::Result<bool> hasResource(
+            const lyric_common::ModuleLocation &location) const override;
+        tempo_utils::Result<Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>> loadResource(
+            const lyric_common::ModuleLocation &location) override;
 
         tempo_utils::Status insertModule(
             const lyric_common::ModuleLocation &location,

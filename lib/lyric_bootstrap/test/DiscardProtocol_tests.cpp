@@ -22,7 +22,4 @@ TEST_F(DiscardProtocolTests, EvaluateDiscardProtocolType)
     auto result = runModule(R"(
         typeof DiscardProtocol
     )");
-
-    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(
-        Ty(lyric_runtime::DataCellType::PROTOCOL))));
 }

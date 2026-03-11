@@ -84,10 +84,30 @@ lyric_build::ArtifactLoader::loadModule(const lyric_common::ModuleLocation &loca
     return Option(lyric_object::LyricObject(loadContentResult.getResult()));
 }
 
+tempo_utils::Result<bool>
+lyric_build::ArtifactLoader::hasPlugin(
+    const lyric_common::ModuleLocation &location,
+    const lyric_object::PluginSpecifier &specifier) const
+{
+    return false;
+}
+
 tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>>
 lyric_build::ArtifactLoader::loadPlugin(
     const lyric_common::ModuleLocation &location,
     const lyric_object::PluginSpecifier &specifier)
 {
     return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>();
+}
+
+tempo_utils::Result<bool>
+lyric_build::ArtifactLoader::hasResource(const lyric_common::ModuleLocation &location) const
+{
+    return false;
+}
+
+tempo_utils::Result<Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>>
+lyric_build::ArtifactLoader::loadResource(const lyric_common::ModuleLocation &location)
+{
+    return Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>();
 }

@@ -72,6 +72,47 @@ lyric_runtime::SegmentManager::getOrLoadSegment(const lyric_common::ModuleLocati
     return internal::get_or_load_segment(location, {}, useSystemLoader, &m_data);
 }
 
+bool
+lyric_runtime::SegmentManager::hasResource(
+    const lyric_common::ModuleLocation &location,
+    bool useSystemLoader,
+    tempo_utils::Status *statusptr)
+{
+    tempo_utils::Result<bool> result;
+    if (useSystemLoader) {
+        result = m_data.systemLoader->hasResource(location);
+    } else {
+        result = m_data.applicationLoader->hasResource(location);
+    }
+    if (result.isResult())
+        return result.getResult();
+    if (statusptr != nullptr) {
+        *statusptr = result.getStatus();
+    }
+    return false;
+}
+
+std::shared_ptr<const tempo_utils::ImmutableBytes>
+lyric_runtime::SegmentManager::loadResource(
+    const lyric_common::ModuleLocation &location,
+    bool useSystemLoader,
+    tempo_utils::Status *statusptr)
+{
+    tempo_utils::Result<Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>> result;
+    if (useSystemLoader) {
+        result = m_data.systemLoader->loadResource(location);
+    } else {
+        result = m_data.applicationLoader->loadResource(location);
+    }
+    if (result.isResult()) {
+        return result.getResult().getOrDefault({});
+    }
+    if (statusptr != nullptr) {
+        *statusptr = result.getStatus();
+    }
+    return {};
+}
+
 const lyric_runtime::LinkEntry *
 lyric_runtime::SegmentManager::resolveLink(
     const BytecodeSegment *sp,

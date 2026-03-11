@@ -17,12 +17,32 @@ lyric_runtime::StaticLoader::loadModule(const lyric_common::ModuleLocation &loca
     return Option<lyric_object::LyricObject>();
 }
 
+tempo_utils::Result<bool>
+lyric_runtime::StaticLoader::hasPlugin(
+    const lyric_common::ModuleLocation &location,
+    const lyric_object::PluginSpecifier &specifier) const
+{
+    return false;
+}
+
 tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>>
 lyric_runtime::StaticLoader::loadPlugin(
     const lyric_common::ModuleLocation &location,
     const lyric_object::PluginSpecifier &specifier)
 {
     return Option<std::shared_ptr<const AbstractPlugin>>();
+}
+
+tempo_utils::Result<bool>
+lyric_runtime::StaticLoader::hasResource(const lyric_common::ModuleLocation &location) const
+{
+    return false;
+}
+
+tempo_utils::Result<Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>>
+lyric_runtime::StaticLoader::loadResource(const lyric_common::ModuleLocation &location)
+{
+    return Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>();
 }
 
 tempo_utils::Status

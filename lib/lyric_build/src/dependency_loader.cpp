@@ -42,6 +42,14 @@ lyric_build::DependencyLoader::loadModule(const lyric_common::ModuleLocation &lo
     return Option<lyric_object::LyricObject>();
 }
 
+tempo_utils::Result<bool>
+lyric_build::DependencyLoader::hasPlugin(
+    const lyric_common::ModuleLocation &location,
+    const lyric_object::PluginSpecifier &specifier) const
+{
+    return m_plugins.contains(location);
+}
+
 tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>>
 lyric_build::DependencyLoader::loadPlugin(
     const lyric_common::ModuleLocation &location,
@@ -116,6 +124,18 @@ lyric_build::DependencyLoader::loadPlugin(
     m_libraries[location] = plugin;
 
     return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>(plugin);
+}
+
+tempo_utils::Result<bool>
+lyric_build::DependencyLoader::hasResource(const lyric_common::ModuleLocation &location) const
+{
+    return false;
+}
+
+tempo_utils::Result<Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>>
+lyric_build::DependencyLoader::loadResource(const lyric_common::ModuleLocation &location)
+{
+    return Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>();
 }
 
 /**

@@ -19,12 +19,10 @@ tempo_utils::Result<bool>
 lyric_runtime::ChainLoader::hasModule(const lyric_common::ModuleLocation &location) const
 {
     for (const auto &loader : m_chain) {
-        auto hasModuleResult = loader->hasModule(location);
-        if (hasModuleResult.isStatus())
-            return hasModuleResult;
-        auto canLoad = hasModuleResult.getResult();
-        if (canLoad)
-            return hasModuleResult;
+        bool exists;
+        TU_ASSIGN_OR_RETURN (exists, loader->hasModule(location));
+        if (exists)
+            return exists;
     }
     return false;
 }
@@ -43,6 +41,20 @@ lyric_runtime::ChainLoader::loadModule(const lyric_common::ModuleLocation &locat
     return Option<lyric_object::LyricObject>();
 }
 
+tempo_utils::Result<bool>
+lyric_runtime::ChainLoader::hasPlugin(
+    const lyric_common::ModuleLocation &location,
+    const lyric_object::PluginSpecifier &specifier) const
+{
+    for (auto &loader : m_chain) {
+        bool exists;
+        TU_ASSIGN_OR_RETURN (exists, loader->hasPlugin(location, specifier));
+        if (exists)
+            return exists;
+    }
+    return false;
+}
+
 tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>>
 lyric_runtime::ChainLoader::loadPlugin(
     const lyric_common::ModuleLocation &location,
@@ -57,6 +69,18 @@ lyric_runtime::ChainLoader::loadPlugin(
             return loadPluginResult;
     }
     return Option<std::shared_ptr<const AbstractPlugin>>();
+}
+
+tempo_utils::Result<bool>
+lyric_runtime::ChainLoader::hasResource(const lyric_common::ModuleLocation &location) const
+{
+    return false;
+}
+
+tempo_utils::Result<Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>>
+lyric_runtime::ChainLoader::loadResource(const lyric_common::ModuleLocation &location)
+{
+    return Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>();
 }
 
 std::shared_ptr<lyric_runtime::AbstractLoader>

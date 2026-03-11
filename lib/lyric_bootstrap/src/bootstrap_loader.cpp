@@ -77,6 +77,15 @@ lyric_bootstrap::BootstrapLoader::loadModule(const lyric_common::ModuleLocation 
     return Option<lyric_object::LyricObject>{};
 }
 
+tempo_utils::Result<bool>
+lyric_bootstrap::BootstrapLoader::hasPlugin(
+    const lyric_common::ModuleLocation &location,
+    const lyric_object::PluginSpecifier &specifier) const
+{
+    auto module = findModule(location);
+    return module.second != nullptr;
+}
+
 tempo_utils::Result<Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>>
 lyric_bootstrap::BootstrapLoader::loadPlugin(
     const lyric_common::ModuleLocation &location,
@@ -86,4 +95,16 @@ lyric_bootstrap::BootstrapLoader::loadPlugin(
     if (module.second != nullptr)
         return Option(std::static_pointer_cast<const lyric_runtime::AbstractPlugin>(module.second));
     return Option<std::shared_ptr<const lyric_runtime::AbstractPlugin>>{};
+}
+
+tempo_utils::Result<bool>
+lyric_bootstrap::BootstrapLoader::hasResource(const lyric_common::ModuleLocation &location) const
+{
+    return false;
+}
+
+tempo_utils::Result<Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>>
+lyric_bootstrap::BootstrapLoader::loadResource(const lyric_common::ModuleLocation &location)
+{
+    return Option<std::shared_ptr<const tempo_utils::ImmutableBytes>>();
 }
