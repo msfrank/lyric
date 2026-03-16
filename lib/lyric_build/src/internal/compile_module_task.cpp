@@ -113,7 +113,8 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
 
     const auto &parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
-    auto parseGeneration = cache->loadTrace(parseTrace);
+    tempo_utils::UUID parseGeneration;
+    TU_ASSIGN_OR_RETURN (parseGeneration, cache->loadTrace(parseTrace));
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
@@ -143,7 +144,8 @@ lyric_build::internal::CompileModuleTask::analyzeImports(
 
     const auto &symbolizeHash = depStates.at(m_symbolizeTarget).getHash();
     TraceId symbolizeTrace(symbolizeHash, m_symbolizeTarget.getDomain(), m_symbolizeTarget.getId());
-    auto symbolizeGeneration = cache->loadTrace(symbolizeTrace);
+    tempo_utils::UUID symbolizeGeneration;
+    TU_ASSIGN_OR_RETURN (symbolizeGeneration, cache->loadTrace(symbolizeTrace));
     tempo_utils::UrlPath linkageArtifactPath;
     TU_ASSIGN_OR_RETURN (linkageArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kObjectFileDotSuffix));
@@ -196,7 +198,8 @@ lyric_build::internal::CompileModuleTask::compileModule(
     auto cache = buildState->getCache();
     const auto &parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
-    auto generation = cache->loadTrace(parseTrace);
+    tempo_utils::UUID generation;
+    TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(parseTrace));
 
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
@@ -269,7 +272,7 @@ lyric_build::internal::CompileModuleTask::compileModule(
                 "dependent task {} has invalid hash", m_pluginTarget.toString());
 
         TraceId pluginTrace(hash, m_pluginTarget.getDomain(), m_pluginTarget.getId());
-        generation = cache->loadTrace(pluginTrace);
+        TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(pluginTrace));
 
         std::vector<ArtifactId> pluginArtifacts;
         TU_ASSIGN_OR_RETURN (pluginArtifacts, cache->findArtifacts(generation, hash, {}, {}));

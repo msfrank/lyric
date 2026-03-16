@@ -264,20 +264,23 @@ lyric_build::MemoryCache::containsTrace(const TraceId &traceId)
     return m_traces.contains(traceId);
 }
 
-tempo_utils::UUID
+tempo_utils::Result<tempo_utils::UUID>
 lyric_build::MemoryCache::loadTrace(const TraceId &traceId)
 {
     absl::MutexLock locker(&m_lock);
-    if (m_traces.contains(traceId))
-        return m_traces.at(traceId);
-    return {};
+    auto entry = m_traces.find(traceId);
+    if (entry == m_traces.cend())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "missing trace {}", traceId.toString());
+    return entry->second;
 }
 
-void
+tempo_utils::Status
 lyric_build::MemoryCache::storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation)
 {
     absl::MutexLock locker(&m_lock);
     m_traces.insert_or_assign(traceId, generation);
+    return {};
 }
 
 bool
@@ -287,18 +290,21 @@ lyric_build::MemoryCache::containsDiagnostics(const TraceId &traceId)
     return m_diagnostics.contains(traceId);
 }
 
-tempo_tracing::TempoSpanset
+tempo_utils::Result<tempo_tracing::TempoSpanset>
 lyric_build::MemoryCache::loadDiagnostics(const TraceId &traceId)
 {
     absl::MutexLock locker(&m_lock);
-    if (m_diagnostics.contains(traceId))
-        return m_diagnostics.at(traceId);
-    return {};
+    auto entry = m_diagnostics.find(traceId);
+    if (entry == m_diagnostics.cend())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "missing diagnostic {}", traceId.toString());
+    return entry->second;
 }
 
-void
+tempo_utils::Status
 lyric_build::MemoryCache::storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset)
 {
     absl::MutexLock locker(&m_lock);
     m_diagnostics.insert_or_assign(traceId, spanset);
+    return {};
 }

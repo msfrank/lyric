@@ -16,6 +16,7 @@ namespace lyric_build::internal {
         bool isValid() const;
 
         lbm1::MetadataVersion getABI() const;
+        lbm1::EntryType getEntryType() const;
 
         const lbm1::NamespaceDescriptor *getNamespace(uint32_t index) const;
         uint32_t numNamespaces() const;

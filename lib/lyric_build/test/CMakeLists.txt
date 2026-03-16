@@ -10,6 +10,7 @@ set(TEST_CASES
     build_runner_tests.cpp
     compile_plugin_task_tests.cpp
     fetch_external_file_task_tests.cpp
+    lyric_metadata_tests.cpp
     parse_module_task_tests.cpp
     provide_plugin_task_tests.cpp
     )

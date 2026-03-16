@@ -105,7 +105,8 @@ lyric_build::internal::AnalyzeModuleTask::symbolizeImports(
     auto cache = buildState->getCache();
     const auto &symbolizeHash = depStates.at(m_symbolizeTarget).getHash();
     TraceId symbolizeTrace(symbolizeHash, m_symbolizeTarget.getDomain(), m_symbolizeTarget.getId());
-    auto generation = cache->loadTrace(symbolizeTrace);
+    tempo_utils::UUID generation;
+    TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(symbolizeTrace));
 
     tempo_utils::UrlPath linkageArtifactPath;
     TU_ASSIGN_OR_RETURN (linkageArtifactPath, convert_module_location_to_artifact_path(
@@ -152,7 +153,8 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     auto cache = buildState->getCache();
     auto parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
-    auto generation = cache->loadTrace(parseTrace);
+    tempo_utils::UUID generation;
+    TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(parseTrace));
 
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(

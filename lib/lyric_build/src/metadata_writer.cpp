@@ -14,7 +14,7 @@ lyric_build::MetadataWriter::configure()
     if (m_state != nullptr)
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "metadata writer is already configured");
-    auto state = std::make_unique<MetadataState>();
+    auto state = std::make_unique<MetadataState>(m_options.version, m_options.entryType);
 
     if (m_options.metadata.isValid()) {
         TU_RETURN_IF_NOT_OK (state->load(m_options.metadata));

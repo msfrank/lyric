@@ -47,6 +47,7 @@ set(LYRIC_BUILD_INCLUDES
     include/lyric_build/build_types.h
     include/lyric_build/task_settings.h
     include/lyric_build/dependency_loader.h
+    include/lyric_build/filesystem_cache.h
     include/lyric_build/local_filesystem.h
     include/lyric_build/lyric_build.h
     include/lyric_build/lyric_builder.h
@@ -78,8 +79,8 @@ target_sources(lyric_build PRIVATE
     src/build_runner.cpp
     src/build_state.cpp
     src/build_types.cpp
-    src/task_settings.cpp
     src/dependency_loader.cpp
+    src/filesystem_cache.cpp
     src/local_filesystem.cpp
     src/lyric_builder.cpp
     src/lyric_metadata.cpp
@@ -96,6 +97,7 @@ target_sources(lyric_build PRIVATE
     src/task_hasher.cpp
     src/task_notification.cpp
     src/task_registry.cpp
+    src/task_settings.cpp
     src/temp_directory.cpp
 
     include/lyric_build/internal/analyze_module_task.h
@@ -178,6 +180,7 @@ target_link_libraries(lyric_build
     tempo::tempo_utils
     rocksdb::rocksdb
     PRIVATE
+    Boost::headers
     flatbuffers::flatbuffers
     OpenSSL::Crypto
     uv::uv

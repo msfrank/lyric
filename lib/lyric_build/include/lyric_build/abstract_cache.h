@@ -80,15 +80,15 @@ namespace lyric_build {
 
         virtual bool containsTrace(const TraceId &traceId) = 0;
 
-        virtual tempo_utils::UUID loadTrace(const TraceId &traceId) = 0;
+        virtual tempo_utils::Result<tempo_utils::UUID> loadTrace(const TraceId &traceId) = 0;
 
-        virtual void storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation) = 0;
+        virtual tempo_utils::Status storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation) = 0;
 
         virtual bool containsDiagnostics(const TraceId &traceId) = 0;
 
-        virtual tempo_tracing::TempoSpanset loadDiagnostics(const TraceId &traceId) = 0;
+        virtual tempo_utils::Result<tempo_tracing::TempoSpanset> loadDiagnostics(const TraceId &traceId) = 0;
 
-        virtual void storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset) = 0;
+        virtual tempo_utils::Status storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset) = 0;
     };
 }
 

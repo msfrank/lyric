@@ -689,13 +689,10 @@ lyric_build::RocksdbCache::containsTrace(const TraceId &traceId)
 
     std::string e;
     status = m_db->Get(options, m_traces, k, &e);
-    if (status.IsNotFound())
-        return false;
-    TU_ASSERT (status.ok());
-    return true;
+    return status.ok();
 }
 
-tempo_utils::UUID
+tempo_utils::Result<tempo_utils::UUID>
 lyric_build::RocksdbCache::loadTrace(const TraceId &traceId)
 {
     TU_ASSERT (m_db != nullptr);
@@ -708,14 +705,14 @@ lyric_build::RocksdbCache::loadTrace(const TraceId &traceId)
 
     std::string e;
     status = m_db->Get(options, m_traces, k, &e);
-    if (status.IsNotFound())
-        return {};
-    TU_ASSERT (status.ok());
+    if (!status.ok())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "RocksDB Get failed; {}", status.ToString());
 
     return read_generation(e);
 }
 
-void
+tempo_utils::Status
 lyric_build::RocksdbCache::storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation)
 {
     TU_ASSERT (m_db != nullptr);
@@ -729,7 +726,10 @@ lyric_build::RocksdbCache::storeTrace(const TraceId &traceId, const tempo_utils:
     std::string g = write_generation(generation);
     auto v = rocksdb::Slice(g);
     status = m_db->Put(options, m_traces, k, v);
-    TU_ASSERT (status.ok());
+    if (!status.ok())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "RocksDB Put failed; {}", status.ToString());
+    return {};
 }
 
 bool
@@ -745,13 +745,10 @@ lyric_build::RocksdbCache::containsDiagnostics(const TraceId &traceId)
 
     std::string v;
     status = m_db->Get(options, m_traces, k, &v);
-    if (status.IsNotFound())
-        return false;
-    TU_ASSERT (status.ok());
-    return true;
+    return status.ok();
 }
 
-tempo_tracing::TempoSpanset
+tempo_utils::Result<tempo_tracing::TempoSpanset>
 lyric_build::RocksdbCache::loadDiagnostics(const TraceId &traceId)
 {
     TU_ASSERT (m_db != nullptr);
@@ -764,19 +761,16 @@ lyric_build::RocksdbCache::loadDiagnostics(const TraceId &traceId)
 
     std::string v;
     status = m_db->Get(options, m_traces, k, &v);
-    if (status.IsNotFound())
-        return {};
-    TU_ASSERT (status.ok());
+    if (!status.ok())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "RocksDB Get failed; {}", status.ToString());
 
     auto bytes = tempo_utils::MemoryBytes::copy(v);
     tempo_tracing::TempoSpanset spanset(bytes);
-    if (!spanset.isValid())
-        return {};
-
     return spanset;
 }
 
-void
+tempo_utils::Status
 lyric_build::RocksdbCache::storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset)
 {
     TU_ASSERT (m_db != nullptr);
@@ -790,7 +784,10 @@ lyric_build::RocksdbCache::storeDiagnostics(const TraceId &traceId, const tempo_
     auto bytes = spanset.bytesView();
     auto v = rocksdb::Slice((const char *) bytes.data(), bytes.size());
     status = m_db->Put(options, m_traces, k, v);
-    TU_ASSERT (status.ok());
+    if (!status.ok())
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "RocksDB Put failed; {}", status.ToString());
+    return {};
 }
 
 lyric_build::RocksdbContent::RocksdbContent(rocksdb::PinnableSlice *slice, Private p)

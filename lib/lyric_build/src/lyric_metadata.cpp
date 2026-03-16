@@ -1,6 +1,9 @@
 
+#include <flatbuffers/idl.h>
+#include <lyric_build/generated/metadata_schema.h>
 #include <lyric_build/internal/metadata_reader.h>
 #include <lyric_build/lyric_metadata.h>
+#include <tempo_utils/memory_bytes.h>
 
 lyric_build::LyricMetadata::LyricMetadata()
 {
@@ -19,7 +22,7 @@ lyric_build::LyricMetadata::LyricMetadata(std::span<const tu_uint8> unownedBytes
     m_reader = std::make_shared<internal::MetadataReader>(unownedBytes);
 }
 
-lyric_build::LyricMetadata::LyricMetadata(const lyric_build::LyricMetadata &other)
+lyric_build::LyricMetadata::LyricMetadata(const LyricMetadata &other)
     : m_bytes(other.m_bytes),
       m_reader(other.m_reader)
 {
@@ -44,6 +47,23 @@ lyric_build::LyricMetadata::getABI() const
         case lbm1::MetadataVersion::Unknown:
         default:
             return MetadataVersion::Unknown;
+    }
+}
+
+lyric_build::EntryType
+lyric_build::LyricMetadata::getEntryType() const
+{
+    if (m_reader == nullptr)
+        return EntryType::Unknown;
+    switch (m_reader->getEntryType()) {
+        case lbm1::EntryType::Artifact:
+            return EntryType::File;
+        case lbm1::EntryType::Link:
+            return EntryType::Link;
+        case lbm1::EntryType::LinkOverride:
+            return EntryType::LinkOverride;
+        default:
+            return EntryType::Unknown;
     }
 }
 
@@ -188,4 +208,18 @@ lyric_build::LyricMetadata::verify(std::span<const tu_uint8> bytes)
 {
     flatbuffers::Verifier verifier(bytes.data(), bytes.size());
     return lbm1::VerifyMetadataBuffer(verifier);
+}
+
+lyric_build::LyricMetadata
+lyric_build::LyricMetadata::loadJson(const std::string &json)
+{
+    flatbuffers::Parser parser;
+    if (!parser.Parse((const char *) schema::metadata::data))
+        return {};
+    parser.opts.strict_json = true;
+    if (!parser.Parse(json.c_str()))
+        return {};
+    auto span = parser.builder_.GetBufferSpan();
+    auto bytes = tempo_utils::MemoryBytes::copy(span);
+    return LyricMetadata(bytes);
 }

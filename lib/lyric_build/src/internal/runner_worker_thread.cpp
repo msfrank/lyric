@@ -254,7 +254,9 @@ lyric_build::internal::link_dependencies(
         const auto &depState = entry.second;
         auto depHash = depState.getHash();
         TraceId depTrace(depHash, depKey.getDomain(), depKey.getId());
-        auto targetGen = cache->loadTrace(depTrace);
+
+        tempo_utils::UUID targetGen;
+        TU_ASSIGN_OR_RETURN (targetGen, cache->loadTrace(depTrace));
 
         std::vector<ArtifactId> dependentArtifacts;
         TU_ASSIGN_OR_RETURN (dependentArtifacts, cache->findArtifacts(targetGen, depHash, {}, {}));

@@ -9,11 +9,9 @@
 namespace lyric_build {
 
     struct MetadataWriterOptions {
-        MetadataVersion version = MetadataVersion::Version1;
-        /**
-         *
-         */
-        LyricMetadata metadata = {};
+        MetadataVersion version = MetadataVersion::Version1;    /**< The metadata ABI version. */
+        EntryType entryType = EntryType::File;                  /**< The metadata entry type. */
+        LyricMetadata metadata = {};                            /**< If specified, then preload the metadata into the writer. */
     };
 
     class MetadataWriter {

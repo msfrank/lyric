@@ -155,7 +155,8 @@ lyric_build::internal::ProvideModuleTask::provideModule(
             return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                 "dependent task {} has invalid hash", m_buildTarget.toString());
         TraceId artifactTrace(hash, m_buildTarget.getDomain(), m_buildTarget.getId());
-        auto generation = cache->loadTrace(artifactTrace);
+        tempo_utils::UUID generation;
+        TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(artifactTrace));
 
         // TODO: support task setting to specify the source artifact path explicitly
         ArtifactId objectSrcId(generation, hash, objectArtifactPath);

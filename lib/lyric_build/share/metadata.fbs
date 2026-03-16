@@ -7,6 +7,13 @@ enum MetadataVersion : uint8 {
     Version1,
 }
 
+enum EntryType : uint8 {
+    Unknown,
+    Artifact,
+    Link,
+    LinkOverride,
+}
+
 enum TrueFalseNil : uint8 { Nil = 0, False, True }
 
 table TrueFalseNilValue { tfn: TrueFalseNil; }
@@ -40,7 +47,8 @@ table AttrDescriptor {
 }
 
 table Metadata {
-    abi: MetadataVersion;                       // target ABI the manifest was generated for
+    abi: MetadataVersion;                       // target ABI the metadata was generated for
+    entry_type: EntryType;                      // the entry type
     namespaces: [NamespaceDescriptor];          // array of namespace descriptors
     attrs: [AttrDescriptor];                    // array of attribute descriptors
 }

@@ -15,7 +15,7 @@ namespace lyric_build {
     class MetadataState {
 
     public:
-        MetadataState();
+        MetadataState(MetadataVersion abi, EntryType entryType);
 
         tempo_utils::Status load(const LyricMetadata &metadata);
 
@@ -36,6 +36,8 @@ namespace lyric_build {
         tempo_utils::Result<LyricMetadata> toMetadata() const;
 
     private:
+        MetadataVersion m_abi;
+        EntryType m_entryType;
         std::vector<MetadataNamespace *> m_metadataNamespaces;
         std::vector<MetadataAttr *> m_metadataAttrs;
         absl::flat_hash_map<tempo_utils::Url,tu_uint32> m_namespaceIndex;

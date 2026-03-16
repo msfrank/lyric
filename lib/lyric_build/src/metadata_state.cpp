@@ -9,8 +9,12 @@
 #include <lyric_build/metadata_state.h>
 #include <tempo_utils/memory_bytes.h>
 
-lyric_build::MetadataState::MetadataState()
+lyric_build::MetadataState::MetadataState(MetadataVersion abi, EntryType entryType)
+    : m_abi(abi),
+      m_entryType(entryType)
 {
+    TU_ASSERT (m_abi != MetadataVersion::Unknown);
+    TU_ASSERT (m_entryType != EntryType::Unknown);
 }
 
 tempo_utils::Status
@@ -189,6 +193,32 @@ lyric_build::MetadataState::toMetadata() const
     std::vector<flatbuffers::Offset<lbm1::NamespaceDescriptor>> namespaces_vector;
     std::vector<flatbuffers::Offset<lbm1::AttrDescriptor>> attrs_vector;
 
+    lbm1::MetadataVersion abi;
+    switch (m_abi) {
+        case MetadataVersion::Version1:
+            abi = lbm1::MetadataVersion::Version1;
+            break;
+        default:
+            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "invalid metadata abi");
+    }
+
+    lbm1::EntryType entry_type;
+    switch (m_entryType) {
+        case EntryType::File:
+            entry_type = lbm1::EntryType::Artifact;
+            break;
+        case EntryType::Link:
+            entry_type = lbm1::EntryType::Link;
+            break;
+        case EntryType::LinkOverride:
+            entry_type = lbm1::EntryType::LinkOverride;
+            break;
+        default:
+            return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+                "invalid metadata entry type");
+    }
+
     // serialize namespaces
     for (const auto *ns : m_metadataNamespaces) {
         auto fb_nsUrl = buffer.CreateString(ns->getNsUrl().toString());
@@ -209,7 +239,8 @@ lyric_build::MetadataState::toMetadata() const
     // build package from buffer
     lbm1::MetadataBuilder metadataBuilder(buffer);
 
-    metadataBuilder.add_abi(lbm1::MetadataVersion::Version1);
+    metadataBuilder.add_abi(abi);
+    metadataBuilder.add_entry_type(entry_type);
     metadataBuilder.add_namespaces(fb_namespaces);
     metadataBuilder.add_attrs(fb_attrs);
 

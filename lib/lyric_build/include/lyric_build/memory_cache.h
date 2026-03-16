@@ -49,12 +49,12 @@ namespace lyric_build {
         tempo_utils::Result<std::vector<ArtifactId>> listArtifacts() override;
 
         bool containsTrace(const TraceId &traceId) override;
-        tempo_utils::UUID loadTrace(const TraceId &traceId) override;
-        void storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation) override;
+        tempo_utils::Result<tempo_utils::UUID> loadTrace(const TraceId &traceId) override;
+        tempo_utils::Status storeTrace(const TraceId &traceId, const tempo_utils::UUID &generation) override;
 
         bool containsDiagnostics(const TraceId &traceId) override;
-        tempo_tracing::TempoSpanset loadDiagnostics(const TraceId &traceId) override;
-        void storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset) override;
+        tempo_utils::Result<tempo_tracing::TempoSpanset> loadDiagnostics(const TraceId &traceId) override;
+        tempo_utils::Status storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset) override;
 
     private:
         absl::Mutex m_lock;

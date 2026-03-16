@@ -89,7 +89,8 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     auto cache = buildState->getCache();
     auto parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
-    auto generation = cache->loadTrace(parseTrace);
+    tempo_utils::UUID generation;
+    TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(parseTrace));
 
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(

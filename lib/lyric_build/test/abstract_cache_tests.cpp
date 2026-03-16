@@ -3,6 +3,7 @@
 
 #include <lyric_build/abstract_cache.h>
 #include <lyric_build/build_attrs.h>
+#include <lyric_build/filesystem_cache.h>
 #include <lyric_build/memory_cache.h>
 #include <lyric_build/metadata_writer.h>
 #include <lyric_build/rocksdb_cache.h>
@@ -52,6 +53,23 @@ private:
     std::shared_ptr<lyric_build::MemoryCache> cache;
 };
 
+class FilesystemCache : public CacheFixture {
+public:
+    void initialize() override {
+        tempo_utils::TempdirMaker dbPathMaker("fs_cache.XXXXXXXX");
+        TU_RAISE_IF_NOT_OK (dbPathMaker.getStatus());
+        dbPath = dbPathMaker.getTempdir();
+        cache = std::make_shared<lyric_build::FilesystemCache>(dbPath);
+        TU_RAISE_IF_NOT_OK (cache->initializeCache());
+    }
+    std::shared_ptr<lyric_build::AbstractCache> getCache() const override {
+        return cache;
+    }
+private:
+    std::filesystem::path dbPath;
+    std::shared_ptr<lyric_build::FilesystemCache> cache;
+};
+
 template <class T>
 CacheFixture* CreateCacheFixture();
 
@@ -67,6 +85,12 @@ CacheFixture* CreateCacheFixture<MemoryCache>()
     return new MemoryCache();
 }
 
+template <>
+CacheFixture* CreateCacheFixture<FilesystemCache>()
+{
+    return new FilesystemCache();
+}
+
 template <class T>
 class AbstractCache : public testing::Test {
 protected:
@@ -79,7 +103,7 @@ protected:
     void TearDown() override { fixture->cleanup(); }
 };
 
-typedef ::testing::Types<MemoryCache, RocksdbCache> Implementations;
+typedef ::testing::Types<MemoryCache, RocksdbCache, FilesystemCache> Implementations;
 TYPED_TEST_SUITE(AbstractCache, Implementations);
 
 TYPED_TEST (AbstractCache, DeclareArtifact)

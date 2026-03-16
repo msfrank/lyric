@@ -88,7 +88,8 @@ lyric_build::internal::OrchestrateTask::orchestrate(
                 "dependent task {} has invalid hash", taskKey.toString());
 
         TraceId artifactTrace(hash, taskKey.getDomain(), taskKey.getId());
-        auto generation = cache->loadTrace(artifactTrace);
+        tempo_utils::UUID generation;
+        TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(artifactTrace));
 
         std::vector<ArtifactId> targetArtifacts;
         TU_ASSIGN_OR_RETURN (targetArtifacts, cache->findArtifacts(generation, hash, {}, {}));

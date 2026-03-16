@@ -1,35 +1,18 @@
-#ifndef LYRIC_BUILD_BUILD_CACHE_H
-#define LYRIC_BUILD_BUILD_CACHE_H
+#ifndef LYRIC_BUILD_FILESYSTEM_CACHE_H
+#define LYRIC_BUILD_FILESYSTEM_CACHE_H
 
-#include <filesystem>
+#include <absl/container/btree_map.h>
+#include <absl/container/flat_hash_map.h>
 
-#include <rocksdb/db.h>
-
-#include "abstract_cache.h"
-#include "build_result.h"
-#include "build_types.h"
-#include "task_settings.h"
-#include "lyric_metadata.h"
+#include <lyric_build/abstract_cache.h>
 
 namespace lyric_build {
 
-    class RocksdbContent : public tempo_utils::ImmutableBytes {
-        struct Private{ explicit Private() = default; };
-    public:
-        RocksdbContent(rocksdb::PinnableSlice *slice, Private p);
-        ~RocksdbContent();
-        static std::shared_ptr<const ImmutableBytes> acquireOrCopy(rocksdb::PinnableSlice *slice, bool copy);
-        const tu_uint8 *getData() const override;
-        tu_uint32 getSize() const override;
-    private:
-        rocksdb::PinnableSlice *m_slice;
-    };
-
-    class RocksdbCache : public AbstractCache {
+    class FilesystemCache : public AbstractCache {
 
     public:
-        RocksdbCache(const std::filesystem::path &dbPath, bool copyReadBuffers);
-        ~RocksdbCache() override;
+        explicit FilesystemCache(const std::filesystem::path &cacheRootDirectory);
+        ~FilesystemCache();
 
         tempo_utils::Status initializeCache() override;
 
@@ -75,25 +58,18 @@ namespace lyric_build {
         tempo_utils::Status storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset) override;
 
     private:
-        std::filesystem::path m_dbPath;
-        bool m_copyReadBuffers;
+        std::filesystem::path m_cacheRootDirectory;
 
-        // db and column family config
-        rocksdb::Options m_dbopts;
-        rocksdb::ColumnFamilyDescriptor m_defaultcf;
-        rocksdb::ColumnFamilyDescriptor m_contentcf;
-        rocksdb::ColumnFamilyDescriptor m_metadatacf;
-        rocksdb::ColumnFamilyDescriptor m_tracescf;
-        rocksdb::ColumnFamilyDescriptor m_diagnosticscf;
+        struct Priv;
+        std::unique_ptr<Priv> m_priv;
 
-        // db and column family handles
-        rocksdb::DB *m_db = nullptr;
-        rocksdb::ColumnFamilyHandle *m_default = nullptr;
-        rocksdb::ColumnFamilyHandle *m_content = nullptr;
-        rocksdb::ColumnFamilyHandle *m_metadata = nullptr;
-        rocksdb::ColumnFamilyHandle *m_traces = nullptr;
-        rocksdb::ColumnFamilyHandle *m_diagnostics = nullptr;
+        tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>> doLoadContent(
+            const std::filesystem::path &contentPath);
+        tempo_utils::Result<std::shared_ptr<const tempo_utils::ImmutableBytes>> doLoadContentFollowingLinks(
+            const std::filesystem::path &metadataPath);
+        tempo_utils::Result<LyricMetadata> doLoadMetadata(const std::filesystem::path &metadataPath);
+        tempo_utils::Result<LyricMetadata> doLoadMetadataFollowingLinks(const std::filesystem::path &metadataPath);
     };
 }
 
-#endif // LYRIC_BUILD_BUILD_CACHE_H
+#endif // LYRIC_BUILD_FILESYSTEM_CACHE_H

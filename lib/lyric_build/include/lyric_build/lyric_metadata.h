@@ -23,6 +23,7 @@ namespace lyric_build {
         bool isValid() const;
 
         MetadataVersion getABI() const;
+        EntryType getEntryType() const;
 
         bool hasAttr(const tempo_schema::AttrKey &key) const;
         bool hasAttr(const tempo_schema::AttrValidator &validator) const;
@@ -35,6 +36,8 @@ namespace lyric_build {
         std::string dumpJson() const;
 
         static bool verify(std::span<const tu_uint8> bytes);
+
+        static LyricMetadata loadJson(const std::string &json);
 
     private:
         std::shared_ptr<const tempo_utils::ImmutableBytes> m_bytes;

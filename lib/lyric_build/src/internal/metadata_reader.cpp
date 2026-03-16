@@ -26,6 +26,14 @@ lyric_build::internal::MetadataReader::getABI() const
     return m_metadata->abi();
 }
 
+lbm1::EntryType
+lyric_build::internal::MetadataReader::getEntryType() const
+{
+    if (m_metadata == nullptr)
+        return lbm1::EntryType::Unknown;
+    return m_metadata->entry_type();
+}
+
 const lbm1::NamespaceDescriptor *
 lyric_build::internal::MetadataReader::getNamespace(uint32_t index) const
 {
