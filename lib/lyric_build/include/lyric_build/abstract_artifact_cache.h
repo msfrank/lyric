@@ -1,5 +1,5 @@
-#ifndef LYRIC_BUILD_ABSTRACT_CACHE_H
-#define LYRIC_BUILD_ABSTRACT_CACHE_H
+#ifndef LYRIC_BUILD_ABSTRACT_ARTIFACT_CACHE_H
+#define LYRIC_BUILD_ABSTRACT_ARTIFACT_CACHE_H
 
 #include <span>
 
@@ -10,15 +10,38 @@
 
 namespace lyric_build {
 
-    class AbstractCache {
+    /**
+     * AbstractArtifactCache is the interface for interacting with the artifact cache.
+     */
+    class AbstractArtifactCache {
 
     public:
-        virtual ~AbstractCache() = default;
+        virtual ~AbstractArtifactCache() = default;
 
-        virtual tempo_utils::Status initializeCache() = 0;
+        /**
+         * Initializes the artifact cache. If the build root was disabled when constructing the LyricBuilder
+         * then `buildRoot` will be an empty path, otherwise `buildRoot` refers to an existing directory where
+         * all build data should be stored.
+         *
+         * @param buildRoot The directory where all build data should be stored.
+         * @return An Ok `Status` if initialization succeeded, otherwise a non-Ok `Status` containing an error.
+         */
+        virtual tempo_utils::Status initializeCache(const std::filesystem::path &buildRoot) = 0;
 
+        /**
+         * Declares an artifact in the build cache with the specified `artifactId`.
+         *
+         * @param artifactId
+         * @return An Ok `Status` if declaration succeeded, otherwise a non-Ok `Status` containing an error.
+         */
         virtual tempo_utils::Status declareArtifact(const ArtifactId &artifactId) = 0;
 
+        /**
+         * Returns true if the specified `artifactId` exists in the artifact cache, otherwise false.
+         *
+         * @param artifactId
+         * @return
+         */
         virtual bool hasArtifact(const ArtifactId &artifactId) = 0;
 
         /**
@@ -92,4 +115,4 @@ namespace lyric_build {
     };
 }
 
-#endif // LYRIC_BUILD_ABSTRACT_CACHE_H
+#endif // LYRIC_BUILD_ABSTRACT_ARTIFACT_CACHE_H

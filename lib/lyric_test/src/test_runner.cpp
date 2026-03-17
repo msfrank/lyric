@@ -2,6 +2,8 @@
 
 #include <lyric_build/build_result.h>
 #include <lyric_build/dependency_loader.h>
+#include <lyric_build/filesystem_cache.h>
+#include <lyric_build/memory_cache.h>
 #include <lyric_common/common_types.h>
 #include <lyric_runtime/chain_loader.h>
 #include <lyric_test/test_runner.h>
@@ -120,9 +122,11 @@ lyric_test::TestRunner::configureBaseTester()
 
     // if useInMemoryCache or isTemporary is true, then use in memory build cache
     if (m_useInMemoryCache || m_isTemporary) {
-        builderOptions.cacheMode = lyric_build::CacheMode::InMemory;
+        builderOptions.artifactCache = std::make_shared<lyric_build::MemoryCache>();
+        builderOptions.disableBuildRoot = true;
     } else {
-        builderOptions.cacheMode = lyric_build::CacheMode::Persistent;
+        builderOptions.artifactCache = std::make_shared<lyric_build::FilesystemCache>();
+        builderOptions.disableBuildRoot = false;
     }
 
     auto builder = new lyric_build::LyricBuilder(m_testerDirectory, m_taskSettings, builderOptions);
@@ -287,7 +291,7 @@ lyric_test::TestRunner::compileModuleInternal(
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return CompileModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
-    auto cache = m_builder->getCache();
+    auto cache = m_builder->getArtifactCache();
     auto tempRoot = m_builder->getTempRoot();
 
     // define the module origin
@@ -336,7 +340,7 @@ lyric_test::TestRunner::analyzeModuleInternal(
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return AnalyzeModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
-    auto cache = m_builder->getCache();
+    auto cache = m_builder->getArtifactCache();
     auto tempRoot = m_builder->getTempRoot();
 
     // define the module origin
@@ -385,7 +389,7 @@ lyric_test::TestRunner::symbolizeModuleInternal(
     if (targetState.getStatus() == lyric_build::TaskState::Status::FAILED)
         return SymbolizeModule(shared_from_this(), targetComputation, targetComputationSet.getDiagnostics());
 
-    auto cache = m_builder->getCache();
+    auto cache = m_builder->getArtifactCache();
     auto tempRoot = m_builder->getTempRoot();
 
     // define the module origin
@@ -428,8 +432,8 @@ lyric_test::TestRunner::getDiagnostics(const lyric_build::TargetComputation &com
     auto targetId = computation.getId();
     lyric_build::TraceId traceId(targetHash, targetId.getDomain(), targetId.getId());
 
-    auto cache = m_builder->getCache();
-    return cache->loadDiagnostics(traceId);
+    auto cache = m_builder->getArtifactCache();
+    return cache->loadDiagnostics(traceId).orElse(tempo_tracing::TempoSpanset());
 }
 
 bool

@@ -1,5 +1,5 @@
-#ifndef LYRIC_BUILD_ABSTRACT_FILESYSTEM_H
-#define LYRIC_BUILD_ABSTRACT_FILESYSTEM_H
+#ifndef LYRIC_BUILD_ABSTRACT_VIRTUAL_FILESYSTEM_H
+#define LYRIC_BUILD_ABSTRACT_VIRTUAL_FILESYSTEM_H
 
 #include <tempo_utils/immutable_bytes.h>
 #include <tempo_utils/option_template.h>
@@ -25,9 +25,13 @@ namespace lyric_build {
      */
     typedef bool (*ResourceMatcherFunc)(const tempo_utils::UrlPath &);
 
-    class AbstractFilesystem {
+    /**
+     * AbstractVirtualFilesystem is the interface for interacting with a filesystem containing
+     * resources which are used during a build.
+     */
+    class AbstractVirtualFilesystem {
     public:
-        virtual ~AbstractFilesystem() = default;
+        virtual ~AbstractVirtualFilesystem() = default;
 
         /**
          * Returns true if the filesystem contains a resource at the given path, otherwise false.
@@ -87,4 +91,4 @@ namespace lyric_build {
     };
 }
 
-#endif // LYRIC_BUILD_ABSTRACT_FILESYSTEM_H
+#endif // LYRIC_BUILD_ABSTRACT_VIRTUAL_FILESYSTEM_H

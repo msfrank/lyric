@@ -36,10 +36,8 @@ struct lyric_build::FilesystemCache::Priv {
     SharedMemory *shmem = nullptr;
 };
 
-lyric_build::FilesystemCache::FilesystemCache(const std::filesystem::path &cacheRootDirectory)
-    : m_cacheRootDirectory(cacheRootDirectory)
+lyric_build::FilesystemCache::FilesystemCache()
 {
-    TU_ASSERT (!m_cacheRootDirectory.empty());
 }
 
 lyric_build::FilesystemCache::~FilesystemCache()
@@ -51,38 +49,46 @@ lyric_build::FilesystemCache::~FilesystemCache()
 }
 
 tempo_utils::Status
-lyric_build::FilesystemCache::initializeCache()
+lyric_build::FilesystemCache::initializeCache(const std::filesystem::path &buildRoot)
 {
     if (m_priv != nullptr)
         return {};
 
-    if (!std::filesystem::is_directory(m_cacheRootDirectory))
+    std::error_code ec;
+
+    if (!std::filesystem::exists(buildRoot))
         return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
-            "cache root directory {} does not exist", m_cacheRootDirectory.string());
+            "failed to initialize FilesystemCache; build root {} does not exist", buildRoot.string());
 
-    auto priv = std::make_unique<Priv>();
+    auto cacheRootDirectory = buildRoot / "fscache";
+    if (!std::filesystem::create_directories(cacheRootDirectory, ec))
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "failed to create cache root directory {};  {}", cacheRootDirectory.string());
 
-    auto cacheStatePath = m_cacheRootDirectory / "cache.state";
+    auto cacheStateFile = cacheRootDirectory / "cache.state";
 
     // create the cache.state file if it does not exist
     {
-        tempo_utils::FileLock cacheLock(m_cacheRootDirectory / "cache.lock");
+        auto cacheLockFile = cacheRootDirectory / "cache.lock";
+        tempo_utils::FileLock cacheLock(cacheLockFile);
         TU_RETURN_IF_NOT_OK (cacheLock.getStatus());
         if (!cacheLock.isLocked())
             return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
-                "failed to lock cache root directory {}", m_cacheRootDirectory.string());
-        if (!std::filesystem::exists(cacheStatePath)) {
+                "failed to lock cache root directory {}", cacheRootDirectory.string());
+        if (!std::filesystem::exists(cacheStateFile)) {
             SharedMemory initial;
             initial.version = kSharedMemoryVersion;
             std::span bytes((const tu_uint8 *) &initial, sizeof(SharedMemory));
-            tempo_utils::FileWriter writer(cacheStatePath, bytes, tempo_utils::FileWriterMode::CREATE_ONLY);
+            tempo_utils::FileWriter writer(cacheStateFile, bytes, tempo_utils::FileWriterMode::CREATE_ONLY);
             TU_RETURN_IF_NOT_OK (writer.getStatus());
         }
     }
 
+    auto priv = std::make_unique<Priv>();
+
     // create the file mapping for the cache.state file
     try {
-        boost::interprocess::file_mapping mapping(cacheStatePath.c_str(), boost::interprocess::read_write);
+        boost::interprocess::file_mapping mapping(cacheStateFile.c_str(), boost::interprocess::read_write);
         priv->mapping = std::move(mapping);
     } catch (boost::interprocess::interprocess_exception &ex) {
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
@@ -107,9 +113,8 @@ lyric_build::FilesystemCache::initializeCache()
     boost::interprocess::scoped_lock lock(priv->shmem->mutex);
 
     // create the required directories if they do not exist
-    std::error_code ec;
 
-    priv->metadataDirectory = m_cacheRootDirectory / "metadata";
+    priv->metadataDirectory = cacheRootDirectory / "metadata";
     if (!std::filesystem::exists(priv->metadataDirectory)) {
         if (!std::filesystem::create_directory(priv->metadataDirectory, ec))
             return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
@@ -117,7 +122,7 @@ lyric_build::FilesystemCache::initializeCache()
                 priv->metadataDirectory.string(), ec.message());
     }
 
-    priv->contentDirectory = m_cacheRootDirectory / "content";
+    priv->contentDirectory = cacheRootDirectory / "content";
     if (!std::filesystem::exists(priv->contentDirectory)) {
         if (!std::filesystem::create_directory(priv->contentDirectory, ec))
             return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
@@ -125,7 +130,7 @@ lyric_build::FilesystemCache::initializeCache()
                 priv->contentDirectory.string(), ec.message());
     }
 
-    priv->tracesDirectory = m_cacheRootDirectory / "traces";
+    priv->tracesDirectory = cacheRootDirectory / "traces";
     if (!std::filesystem::exists(priv->tracesDirectory)) {
         if (!std::filesystem::create_directory(priv->tracesDirectory, ec))
             return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
@@ -133,7 +138,7 @@ lyric_build::FilesystemCache::initializeCache()
                 priv->tracesDirectory.string(), ec.message());
     }
 
-    priv->diagnosticsDirectory = m_cacheRootDirectory / "diagnostics";
+    priv->diagnosticsDirectory = cacheRootDirectory / "diagnostics";
     if (!std::filesystem::exists(priv->diagnosticsDirectory)) {
         if (!std::filesystem::create_directory(priv->diagnosticsDirectory, ec))
             return BuildStatus::forCondition(BuildCondition::kBuildInvariant,

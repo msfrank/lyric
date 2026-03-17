@@ -5,7 +5,7 @@
 #include <absl/container/flat_hash_set.h>
 
 #include <lyric_bootstrap/bootstrap_loader.h>
-#include <lyric_build/abstract_cache.h>
+#include <lyric_build/abstract_artifact_cache.h>
 #include <lyric_build/build_runner.h>
 #include <lyric_build/build_types.h>
 #include <lyric_build/task_settings.h>
@@ -18,28 +18,21 @@ namespace lyric_build {
     constexpr const char *kBuildRootDirectoryName = ".zuribuildroot";
 
     /**
-     * The build artifact caching mode.
-     */
-    enum class CacheMode {
-        Default,            /*< Use the default mode as determined by config */
-        Persistent,         /*< Store artifacts in a persistent cache */
-        InMemory,           /*< Store artifacts in an in-memory cache */
-    };
-
-    /**
      * The builder options.
      */
     struct BuilderOptions {
         /**
-         * The cache mode. Defaults to the cache mode specified in config.
+         * If true then the build root will not be available for reading and writing build data, and will
+         * not be created during initialization if missing. This option is mainly useful for instantiating
+         * a temporary, in-memory build system.
          */
-        CacheMode cacheMode = CacheMode::Default;
+        bool disableBuildRoot = false;
         /**
-         * The directory used to store build data. If cache mode is set to InMemory, then this option is
-         * ignored. If empty and the cache mode is set to Persistent, then this option defaults to the
-         * directory .zuribuildroot in the workspace root.
+         * The directory used to store build data, which will be created during initialization if necessary.
+         * If disableBuildRoot is true then this option is ignored. If empty and the disableBuildRoot is
+         * false then this option defaults to the directory .zuribuildroot in the workspace root.
          */
-        std::filesystem::path buildRoot;
+        std::filesystem::path buildRoot = {};
         /**
          * The number of build runner threads. If <= 0 then the number of threads will be calculated based
          * on the available parallelism of the host.
@@ -49,6 +42,11 @@ namespace lyric_build {
          * The runner thread ready queue timeout. If not specified then this option defaults to 1000ms.
          */
         absl::Duration waitTimeout = {};
+        /**
+         * The artifact cache implementation. If not specified then this option defaults to an internally
+         * allocated MemoryCache instance.
+         */
+        std::shared_ptr<AbstractArtifactCache> artifactCache = {};
         /**
          * The task registry. If not specified then this option defaults to an internally allocated instance.
          */
@@ -66,7 +64,7 @@ namespace lyric_build {
          * The virtual filesystem. If not specified then this option defaults to an internally allocated
          * LocalFilesystem instance rooted at the workspace root.
          */
-        std::shared_ptr<AbstractFilesystem> virtualFilesystem = {};
+        std::shared_ptr<AbstractVirtualFilesystem> virtualFilesystem = {};
         /**
          * Loader which is used to resolve system modules. If not specified then an internally allocated
          * BootstrapLoader is used.
@@ -110,13 +108,13 @@ namespace lyric_build {
 
         std::filesystem::path getBuildRoot() const;
         std::filesystem::path getTempRoot() const;
-        std::shared_ptr<AbstractCache> getCache() const;
+        std::shared_ptr<AbstractArtifactCache> getArtifactCache() const;
         std::shared_ptr<lyric_runtime::AbstractLoader> getBootstrapLoader() const;
         std::shared_ptr<lyric_runtime::AbstractLoader> getFallbackLoader() const;
         std::shared_ptr<lyric_importer::ModuleCache> getSharedModuleCache() const;
         std::shared_ptr<lyric_importer::ShortcutResolver> getShortcutResolver() const;
         std::shared_ptr<TaskRegistry> getTaskRegistry() const;
-        std::shared_ptr<AbstractFilesystem> getVirtualFilesystem() const;
+        std::shared_ptr<AbstractVirtualFilesystem> getVirtualFilesystem() const;
 
         void onTaskNotification(BuildRunner *runner, std::unique_ptr<TaskNotification> notification);
 
@@ -131,13 +129,13 @@ namespace lyric_build {
         std::filesystem::path m_tempRoot;
         int m_numThreads;
         int m_waitTimeoutInMs;
-        std::shared_ptr<AbstractCache> m_cache;
+        std::shared_ptr<AbstractArtifactCache> m_artifactCache;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_bootstrapLoader;
         std::shared_ptr<lyric_runtime::AbstractLoader> m_fallbackLoader;
         std::shared_ptr<lyric_importer::ModuleCache> m_sharedModuleCache;
         std::shared_ptr<lyric_importer::ShortcutResolver> m_shortcutResolver;
         std::shared_ptr<TaskRegistry> m_taskRegistry;
-        std::shared_ptr<AbstractFilesystem> m_virtualFilesystem;
+        std::shared_ptr<AbstractVirtualFilesystem> m_virtualFilesystem;
 
         // updated during each invocation of computeTargets
         absl::flat_hash_set<TaskKey> m_targets;

@@ -20,7 +20,7 @@ void on_notification(
 class BuildRunner : public ::testing::Test {
 protected:
     lyric_build::BuildGeneration buildgen;
-    std::shared_ptr<lyric_build::AbstractCache> cache;
+    std::shared_ptr<lyric_build::AbstractArtifactCache> cache;
     std::shared_ptr<lyric_build::BuildState> state;
     lyric_build::TaskSettings taskSettings;
     lyric_build::TaskRegistry taskRegistry;
@@ -28,14 +28,14 @@ protected:
 
 
     void SetUp() override {
-        std::shared_ptr<lyric_build::AbstractFilesystem> vfs;
+        std::shared_ptr<lyric_build::AbstractVirtualFilesystem> vfs;
         TU_ASSIGN_OR_RAISE (vfs, lyric_build::LocalFilesystem::create(std::filesystem::current_path()));
 
         buildgen = lyric_build::BuildGeneration::create();
         cache = std::make_shared<lyric_build::MemoryCache>();
         auto emptyLoader = std::make_shared<lyric_runtime::StaticLoader>();
         state = std::make_shared<lyric_build::BuildState>(buildgen,
-            std::static_pointer_cast<lyric_build::AbstractCache>(cache),
+            std::static_pointer_cast<lyric_build::AbstractArtifactCache>(cache),
             std::make_shared<lyric_bootstrap::BootstrapLoader>(),
             std::shared_ptr<lyric_runtime::AbstractLoader>{},
             lyric_importer::ModuleCache::create(emptyLoader),

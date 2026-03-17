@@ -9,7 +9,7 @@
 #include <absl/container/flat_hash_set.h>
 #include <uv.h>
 
-#include <lyric_build/abstract_cache.h>
+#include <lyric_build/abstract_artifact_cache.h>
 #include <lyric_build/base_task.h>
 #include <lyric_build/build_state.h>
 #include <lyric_build/build_types.h>
@@ -58,7 +58,7 @@ namespace lyric_build {
         AbstractBuildRunner *runner = nullptr;
         const TaskSettings *taskSettings = nullptr;
         std::shared_ptr<BuildState> buildState;
-        std::shared_ptr<AbstractCache> buildCache;
+        std::shared_ptr<AbstractArtifactCache> artifactCache;
         int index = -1;
         uv_thread_t tid;
         bool running = false;
@@ -74,7 +74,7 @@ namespace lyric_build {
         BuildRunner(
             const TaskSettings *taskSettings,
             std::shared_ptr<BuildState> buildState,
-            std::shared_ptr<AbstractCache> buildCache,
+            std::shared_ptr<AbstractArtifactCache> artifactCache,
             TaskRegistry *taskRegistry,
             int numThreads,
             int waitTimeoutInMs,
@@ -84,7 +84,7 @@ namespace lyric_build {
 
         const TaskSettings *getConfig() const;
         std::shared_ptr<BuildState> getState() const;
-        std::shared_ptr<AbstractCache> getCache() const;
+        std::shared_ptr<AbstractArtifactCache> getArtifactCache() const;
         TaskRegistry *getRegistry() const;
 
         tempo_utils::Status enqueueTask(const TaskKey &key) override;
@@ -115,7 +115,7 @@ namespace lyric_build {
 
         const TaskSettings *m_config;
         std::shared_ptr<BuildState> m_state;
-        std::shared_ptr<AbstractCache> m_cache;
+        std::shared_ptr<AbstractArtifactCache> m_artifactCache;
         TaskRegistry *m_registry;
 
         // build diagnostics recorder

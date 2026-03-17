@@ -47,12 +47,12 @@ TEST_F(ProvidePluginTask, RunSucceedsWhenProvidedExternalPluginFile)
     ASSERT_TRUE (taskComplete);
     ASSERT_THAT (runTaskStatus, tempo_test::IsOk());
 
-    auto cache = m_state->getCache();
+    auto artifactCache = m_state->getArtifactCache();
     lyric_build::ArtifactId artifactId(
         m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString(
             absl::StrCat("/foo.", tempo_utils::sharedLibraryPlatformId(), tempo_utils::sharedLibraryFileDotSuffix())));
 
-    auto loadMetadataResult = cache->loadMetadata(artifactId);
+    auto loadMetadataResult = artifactCache->loadMetadata(artifactId);
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
     auto metadata = loadMetadataResult.getResult();
 
@@ -60,7 +60,7 @@ TEST_F(ProvidePluginTask, RunSucceedsWhenProvidedExternalPluginFile)
     metadata.parseAttr(lyric_build::kLyricBuildContentType, contentType);
     ASSERT_EQ (lyric_common::kPluginContentType, contentType);
 
-    auto loadContentResult = cache->loadContent(artifactId);
+    auto loadContentResult = artifactCache->loadContent(artifactId);
     ASSERT_THAT (loadContentResult, tempo_test::IsResult());
     auto content = loadContentResult.getResult();
     std::string_view contentView((const char *) content->getData(), content->getSize());

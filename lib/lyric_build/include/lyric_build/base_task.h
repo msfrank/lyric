@@ -33,7 +33,7 @@ namespace lyric_build {
 
         virtual tempo_utils::Result<std::string> configureTask(
             const TaskSettings *configStore,
-            AbstractFilesystem *virtualFilesystem) = 0;
+            AbstractVirtualFilesystem *virtualFilesystem) = 0;
         virtual tempo_utils::Result<absl::flat_hash_set<TaskKey>> checkDependencies() = 0;
         virtual Option<tempo_utils::Status> runTask(
             const std::string &taskHash,

@@ -56,7 +56,7 @@ lyric_build::internal::RewriteModuleTask::configure(const TaskSettings *config)
 tempo_utils::Result<std::string>
 lyric_build::internal::RewriteModuleTask::configureTask(
     const TaskSettings *config,
-    AbstractFilesystem *virtualFilesystem)
+    AbstractVirtualFilesystem *virtualFilesystem)
 {
     auto key = getKey();
     auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
@@ -86,11 +86,11 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
             "missing state for dependent task {}", m_parseTarget.toString());
 
     // get the archetype artifact from the cache
-    auto cache = buildState->getCache();
+    auto artifactCache = buildState->getArtifactCache();
     auto parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
     tempo_utils::UUID generation;
-    TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(parseTrace));
+    TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(parseTrace));
 
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
@@ -98,7 +98,7 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     ArtifactId archetypeArtifact(generation, parseHash, archetypeArtifactPath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(archetypeArtifact));
+    TU_ASSIGN_OR_RETURN (content, artifactCache->loadContentFollowingLinks(archetypeArtifact));
     lyric_parser::LyricArchetype archetype(content);
 
     // configure rewriter
@@ -110,7 +110,7 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
 
     // configure loader
     std::shared_ptr<DependencyLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, cache, tempDirectory()));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, artifactCache, tempDirectory()));
 
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
     loaderChain.push_back(dependencyLoader);
@@ -135,7 +135,7 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     TU_ASSIGN_OR_RETURN (rewrittenArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
     ArtifactId rewrittenArtifact(buildState->getGeneration().getUuid(), taskHash, rewrittenArtifactPath);
-    TU_RETURN_IF_NOT_OK (cache->declareArtifact(rewrittenArtifact));
+    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(rewrittenArtifact));
 
     // store the archetype metadata in the build cache
     MetadataWriter writer;
@@ -145,11 +145,11 @@ lyric_build::internal::RewriteModuleTask::rewriteModule(
     TU_ASSIGN_OR_RETURN (rewrittenMetadata, writer.toMetadata());
 
     //
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(rewrittenArtifact, rewrittenMetadata));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(rewrittenArtifact, rewrittenMetadata));
 
     // store the rewritten archetype content in the build cache
     auto rewrittenBytes = rewritten.bytesView();
-    TU_RETURN_IF_NOT_OK (cache->storeContent(rewrittenArtifact, rewrittenBytes));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(rewrittenArtifact, rewrittenBytes));
 
     logInfo("stored rewritten archetype at {}", rewrittenArtifact.toString());
 

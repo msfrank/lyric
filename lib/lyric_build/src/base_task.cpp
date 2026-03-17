@@ -138,8 +138,8 @@ lyric_build::BaseTask::complete(
         m_diagnostics->close();
         tempo_tracing::TempoSpanset spanset;
         TU_ASSIGN_OR_RETURN (spanset, m_diagnostics->toSpanset());
-        auto cache = buildState->getCache();
-        cache->storeDiagnostics(TraceId(taskHash, m_key.getDomain(), m_key.getId()), spanset);
+        auto artifactCache = buildState->getArtifactCache();
+        artifactCache->storeDiagnostics(TraceId(taskHash, m_key.getDomain(), m_key.getId()), spanset);
     }
 
     // close the span

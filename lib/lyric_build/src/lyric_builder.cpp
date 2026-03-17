@@ -55,7 +55,7 @@ lyric_build::LyricBuilder::~LyricBuilder()
     m_virtualFilesystem.reset();
     m_options = {};
 
-    m_cache.reset();
+    m_artifactCache.reset();
 }
 
 std::filesystem::path
@@ -82,23 +82,8 @@ lyric_build::LyricBuilder::configure()
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "missing workspace root directory");
 
-    // determine the cache mode from config, and apply override if specified
-    CacheMode cacheMode;
-    switch (m_options.cacheMode) {
-        case CacheMode::Persistent:
-            cacheMode = CacheMode::Persistent;
-            break;
-        case CacheMode::InMemory:
-        case CacheMode::Default:
-            cacheMode = CacheMode::InMemory;
-            break;
-        default:
-            return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
-                "failed to determine the cache mode");
-    }
-
-    // if cache mode is Persistent then set the build root, creating it if needed
-    if (cacheMode == CacheMode::Persistent) {
+    // if disableBuildRoot is false then set the build root, creating it if needed
+    if (!m_options.disableBuildRoot) {
         if (m_options.buildRoot.empty()) {
             auto buildRoot = m_workspaceRoot / kBuildRootDirectoryName;
             if (!std::filesystem::exists(buildRoot)) {
@@ -182,28 +167,15 @@ lyric_build::LyricBuilder::configure()
         m_virtualFilesystem = m_options.virtualFilesystem;
     }
 
-    // create the build cache
-    switch (cacheMode) {
-        case CacheMode::InMemory: {
-            m_cache = std::make_shared<MemoryCache>();
-            break;
-        }
-        case CacheMode::Persistent: {
-            std::filesystem::path cacheDirectoryPath = m_buildRoot / "cache";
-            if (!std::filesystem::exists(cacheDirectoryPath)) {
-                if (!std::filesystem::create_directories(cacheDirectoryPath))
-                    return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
-                        "failed to create cache directory {}", cacheDirectoryPath.string());
-            }
-            auto cache = std::make_shared<RocksdbCache>(cacheDirectoryPath, /* copyReadBuffers= */ false);
-            TU_RETURN_IF_NOT_OK (cache->initializeCache());
-            m_cache = std::move(cache);
-            break;
-        }
-        default:
-            return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
-                "invalid global configuration for cache mode");
+    // configure the artifact cache
+    std::shared_ptr<AbstractArtifactCache> artifactCache;
+    if (m_options.artifactCache == nullptr) {
+        artifactCache = std::make_shared<MemoryCache>();
+    } else {
+        artifactCache = m_options.artifactCache;
     }
+    TU_RETURN_IF_NOT_OK (artifactCache->initializeCache(m_buildRoot));
+    m_artifactCache = std::move(artifactCache);
 
     // create the temp root
     if (!m_buildRoot.empty()) {
@@ -265,12 +237,12 @@ lyric_build::LyricBuilder::computeTargets(
 
     // wrap the build cache and loader chain in a unique generation
     auto buildGen = BuildGeneration::create();
-    auto state = std::make_shared<BuildState>(buildGen, m_cache,
+    auto state = std::make_shared<BuildState>(buildGen, m_artifactCache,
         m_bootstrapLoader, m_fallbackLoader, m_sharedModuleCache, shortcuts,
         m_virtualFilesystem, m_tempRoot);
 
     // construct a new task manager for managing parallel tasks
-    BuildRunner runner(&taskSettings, state, m_cache, m_taskRegistry.get(),
+    BuildRunner runner(&taskSettings, state, m_artifactCache, m_taskRegistry.get(),
         m_numThreads, m_waitTimeoutInMs, on_notification, this);
 
     // enqueue all tasks in parallel, and let the manager sequence them appropriately
@@ -350,10 +322,10 @@ lyric_build::LyricBuilder::getTempRoot() const
     return m_tempRoot;
 }
 
-std::shared_ptr<lyric_build::AbstractCache>
-lyric_build::LyricBuilder::getCache() const
+std::shared_ptr<lyric_build::AbstractArtifactCache>
+lyric_build::LyricBuilder::getArtifactCache() const
 {
-    return m_cache;
+    return m_artifactCache;
 }
 
 /**
@@ -398,7 +370,7 @@ lyric_build::LyricBuilder::getTaskRegistry() const
     return m_taskRegistry;
 }
 
-std::shared_ptr<lyric_build::AbstractFilesystem>
+std::shared_ptr<lyric_build::AbstractVirtualFilesystem>
 lyric_build::LyricBuilder::getVirtualFilesystem() const
 {
     return m_virtualFilesystem;

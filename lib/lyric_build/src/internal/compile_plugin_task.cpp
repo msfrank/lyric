@@ -100,7 +100,7 @@ lyric_build::internal::CompilePluginTask::configure(const TaskSettings *config)
 tempo_utils::Result<std::string>
 lyric_build::internal::CompilePluginTask::configureTask(
     const TaskSettings *config,
-    AbstractFilesystem *virtualFilesystem)
+    AbstractVirtualFilesystem *virtualFilesystem)
 {
     auto key = getKey();
     auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
@@ -225,11 +225,11 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     TU_LOG_V << compilerProcess.getChildError();
     TU_LOG_V << "----------------";
 
-    auto cache = buildState->getCache();
+    auto artifactCache = buildState->getArtifactCache();
 
     // declare the artifact
     ArtifactId pluginArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
-    TU_RETURN_IF_NOT_OK (cache->declareArtifact(pluginArtifact));
+    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(pluginArtifact));
 
     // store the plugin object metadata in the cache
     MetadataWriter writer;
@@ -240,12 +240,12 @@ lyric_build::internal::CompilePluginTask::compilePlugin(
     TU_ASSIGN_OR_RETURN (pluginMetadata, writer.toMetadata());
 
     //
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(pluginArtifact, pluginMetadata));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(pluginArtifact, pluginMetadata));
 
     // store the plugin content in the cache
     tempo_utils::FileReader reader(pluginDirectory / pluginFilename);
     TU_RETURN_IF_NOT_OK (reader.getStatus());
-    TU_RETURN_IF_NOT_OK (cache->storeContent(pluginArtifact, reader.getBytes()));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(pluginArtifact, reader.getBytes()));
 
     logInfo("stored plugin at ", pluginArtifact.toString());
 

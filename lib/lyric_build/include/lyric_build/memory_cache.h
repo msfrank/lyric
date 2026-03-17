@@ -4,16 +4,16 @@
 #include <absl/container/btree_map.h>
 #include <absl/container/flat_hash_map.h>
 
-#include <lyric_build/abstract_cache.h>
+#include <lyric_build/abstract_artifact_cache.h>
 
 namespace lyric_build {
 
-    class MemoryCache : public AbstractCache {
+    class MemoryCache : public AbstractArtifactCache {
 
     public:
         MemoryCache();
 
-        tempo_utils::Status initializeCache() override;
+        tempo_utils::Status initializeCache(const std::filesystem::path &buildRoot) override;
 
         tempo_utils::Status declareArtifact(const ArtifactId &artifactId) override;
 

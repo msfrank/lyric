@@ -22,7 +22,7 @@ static void on_async_notify(uv_async_t *async);
 lyric_build::BuildRunner::BuildRunner(
     const TaskSettings *configStore,
     std::shared_ptr<BuildState> buildState,
-    std::shared_ptr<AbstractCache> buildCache,
+    std::shared_ptr<AbstractArtifactCache> artifactCache,
     TaskRegistry *taskRegistry,
     int numThreads,
     int waitTimeoutInMs,
@@ -30,7 +30,7 @@ lyric_build::BuildRunner::BuildRunner(
     void *onNotificationData)
     : m_config(configStore),
       m_state(std::move(buildState)),
-      m_cache(std::move(buildCache)),
+      m_artifactCache(std::move(artifactCache)),
       m_registry(taskRegistry),
       m_totalTasksCreated(0),
       m_totalTasksCached(0),
@@ -43,7 +43,7 @@ lyric_build::BuildRunner::BuildRunner(
 {
     TU_ASSERT (m_config != nullptr);
     TU_ASSERT (m_state != nullptr);
-    TU_ASSERT (m_cache != nullptr);
+    TU_ASSERT (m_artifactCache != nullptr);
     TU_ASSERT (m_registry != nullptr);
     TU_ASSERT (m_numThreads > 0);
     TU_ASSERT (m_waitTimeoutInMs > 0);
@@ -80,10 +80,10 @@ lyric_build::BuildRunner::getState() const
     return m_state;
 }
 
-std::shared_ptr<lyric_build::AbstractCache>
-lyric_build::BuildRunner::getCache() const
+std::shared_ptr<lyric_build::AbstractArtifactCache>
+lyric_build::BuildRunner::getArtifactCache() const
 {
-    return m_cache;
+    return m_artifactCache;
 }
 
 lyric_build::TaskRegistry *
@@ -126,7 +126,7 @@ lyric_build::BuildRunner::run()
         thread.index = i;
         thread.taskSettings = getConfig();
         thread.buildState = getState();
-        thread.buildCache = getCache();
+        thread.artifactCache = getArtifactCache();
         thread.running = false;
         thread.joined = false;
 

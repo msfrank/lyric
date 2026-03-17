@@ -16,7 +16,7 @@ lyric_build::MemoryCache::MemoryCache()
 }
 
 tempo_utils::Status
-lyric_build::MemoryCache::initializeCache()
+lyric_build::MemoryCache::initializeCache(const std::filesystem::path &buildRoot)
 {
     return {};
 }

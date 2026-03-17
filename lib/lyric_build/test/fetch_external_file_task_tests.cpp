@@ -62,11 +62,11 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFile)
     ASSERT_TRUE (taskComplete);
     ASSERT_THAT (runTaskStatus, tempo_test::IsOk());
 
-    auto cache = m_state->getCache();
+    auto artifactCache = m_state->getArtifactCache();
     lyric_build::ArtifactId artifactId(
         m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/external.txt"));
 
-    auto loadMetadataResult = cache->loadMetadata(artifactId);
+    auto loadMetadataResult = artifactCache->loadMetadata(artifactId);
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
     auto metadata = loadMetadataResult.getResult();
 
@@ -75,7 +75,7 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFile)
     metadata.parseAttr(lyric_build::kLyricBuildContentType, contentType);
     ASSERT_EQ ("application/octet-stream", contentType);
 
-    auto loadContentResult = cache->loadContent(artifactId);
+    auto loadContentResult = artifactCache->loadContent(artifactId);
     ASSERT_THAT (loadContentResult, tempo_test::IsResult());
     auto content = loadContentResult.getResult();
     std::string_view contentView((const char *) content->getData(), content->getSize());
@@ -103,11 +103,11 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFileAndArtifactPath
     ASSERT_TRUE (taskComplete);
     ASSERT_THAT (runTaskStatus, tempo_test::IsOk());
 
-    auto cache = m_state->getCache();
+    auto artifactCache = m_state->getArtifactCache();
     lyric_build::ArtifactId artifactId(
         m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/artifact.txt"));
 
-    auto loadMetadataResult = cache->loadMetadata(artifactId);
+    auto loadMetadataResult = artifactCache->loadMetadata(artifactId);
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
     auto metadata = loadMetadataResult.getResult();
 
@@ -116,7 +116,7 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFileAndArtifactPath
     metadata.parseAttr(lyric_build::kLyricBuildContentType, contentType);
     ASSERT_EQ ("application/octet-stream", contentType);
 
-    auto loadContentResult = cache->loadContent(artifactId);
+    auto loadContentResult = artifactCache->loadContent(artifactId);
     ASSERT_THAT (loadContentResult, tempo_test::IsResult());
     auto content = loadContentResult.getResult();
     std::string_view contentView((const char *) content->getData(), content->getSize());
@@ -144,11 +144,11 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFileAndContentType)
     ASSERT_TRUE (taskComplete);
     ASSERT_THAT (runTaskStatus, tempo_test::IsOk());
 
-    auto cache = m_state->getCache();
+    auto artifactCache = m_state->getArtifactCache();
     lyric_build::ArtifactId artifactId(
         m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/external.txt"));
 
-    auto loadMetadataResult = cache->loadMetadata(artifactId);
+    auto loadMetadataResult = artifactCache->loadMetadata(artifactId);
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
     auto metadata = loadMetadataResult.getResult();
 
@@ -156,7 +156,7 @@ TEST_F(FetchExternalFileTask, RunSucceedsWhenProvidedExternalFileAndContentType)
     metadata.parseAttr(lyric_build::kLyricBuildContentType, contentType);
     ASSERT_EQ ("foo/bar", contentType);
 
-    auto loadContentResult = cache->loadContent(artifactId);
+    auto loadContentResult = artifactCache->loadContent(artifactId);
     ASSERT_THAT (loadContentResult, tempo_test::IsResult());
     auto content = loadContentResult.getResult();
     std::string_view contentView((const char *) content->getData(), content->getSize());

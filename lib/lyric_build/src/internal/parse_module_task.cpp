@@ -64,7 +64,7 @@ lyric_build::internal::ParseModuleTask::configure(const TaskSettings *config)
 tempo_utils::Result<std::string>
 lyric_build::internal::ParseModuleTask::configureTask(
     const TaskSettings *config,
-    AbstractFilesystem *virtualFilesystem)
+    AbstractVirtualFilesystem *virtualFilesystem)
 {
     auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
     TU_RETURN_IF_NOT_OK (configure(&merged));
@@ -103,7 +103,7 @@ lyric_build::internal::ParseModuleTask::parseModule(
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
 {
-    auto cache = buildState->getCache();
+    auto artifactCache = buildState->getArtifactCache();
     auto virtualFilesystem = buildState->getVirtualFilesystem();
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> bytes;
@@ -136,7 +136,7 @@ lyric_build::internal::ParseModuleTask::parseModule(
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kIntermezzoFileDotSuffix));
     ArtifactId archetypeArtifact(buildState->getGeneration().getUuid(), taskHash, archetypeArtifactPath);
-    TU_RETURN_IF_NOT_OK (cache->declareArtifact(archetypeArtifact));
+    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(archetypeArtifact));
 
     // store the archetype metadata in the build cache
     MetadataWriter writer;
@@ -147,11 +147,11 @@ lyric_build::internal::ParseModuleTask::parseModule(
     LyricMetadata archetypeMetadata;
     TU_ASSIGN_OR_RETURN (archetypeMetadata, writer.toMetadata());
 
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(archetypeArtifact, archetypeMetadata));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(archetypeArtifact, archetypeMetadata));
 
     // store the archetype content in the build cache
     auto archetypeBytes = archetype.bytesView();
-    TU_RETURN_IF_NOT_OK (cache->storeContent(archetypeArtifact, archetypeBytes));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(archetypeArtifact, archetypeBytes));
 
     logInfo("stored archetype at {}", archetypeArtifact.toString());
 

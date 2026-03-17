@@ -14,16 +14,16 @@
  * @param objects A map containing objects loaded from the cache.
  */
 lyric_build::DependencyLoader::DependencyLoader(
-    std::shared_ptr<AbstractCache> cache,
+    std::shared_ptr<AbstractArtifactCache> artifactCache,
     TempDirectory *tempDirectory,
     const absl::flat_hash_map<lyric_common::ModuleLocation, lyric_object::LyricObject> &objects,
     const absl::flat_hash_map<lyric_common::ModuleLocation, ArtifactId> &plugins)
-    : m_cache(std::move(cache)),
+    : m_artifactCache(std::move(artifactCache)),
       m_tempDirectory(tempDirectory),
       m_objects(objects),
       m_plugins(plugins)
 {
-    TU_ASSERT (m_cache != nullptr);
+    TU_ASSERT (m_artifactCache != nullptr);
     TU_ASSERT (m_tempDirectory != nullptr);
 }
 
@@ -78,13 +78,13 @@ lyric_build::DependencyLoader::loadPlugin(
 
     // write the plugin to a file in the temp directory
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-    TU_ASSIGN_OR_RETURN (content, m_cache->loadContentFollowingLinks(pluginEntry->second));
+    TU_ASSIGN_OR_RETURN (content, m_artifactCache->loadContentFollowingLinks(pluginEntry->second));
     std::filesystem::path absolutePath;
     TU_ASSIGN_OR_RETURN (absolutePath, m_tempDirectory->putContent(pluginPath, content));
 
     //
     LyricMetadata metadata;
-    TU_ASSIGN_OR_RETURN (metadata, m_cache->loadMetadataFollowingLinks(pluginEntry->second));
+    TU_ASSIGN_OR_RETURN (metadata, m_artifactCache->loadMetadataFollowingLinks(pluginEntry->second));
 
     // if runtime lib directory attr is present then create directory symlink to it
     if (metadata.hasAttr(kLyricBuildRuntimeLibDirectory)) {
@@ -142,17 +142,17 @@ lyric_build::DependencyLoader::loadResource(const lyric_common::ModuleLocation &
  * Find all assembly artifacts from the tasks specified by depStates and load them from the cache.
  *
  * @param depStates The map containing task states for all dependent tasks.
- * @param cache The cache containing task artifacts.
+ * @param artifactCache The cache containing task artifacts.
  * @return Result containing shared pointer to a new DependencyLoader, or status if creation failed.
  */
 tempo_utils::Result<std::shared_ptr<lyric_build::DependencyLoader>>
 lyric_build::DependencyLoader::create(
     const lyric_common::ModuleLocation &origin,
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-    std::shared_ptr<AbstractCache> cache,
+    std::shared_ptr<AbstractArtifactCache> artifactCache,
     TempDirectory *tempDirectory)
 {
-    TU_ASSERT (cache != nullptr);
+    TU_ASSERT (artifactCache != nullptr);
 
     absl::flat_hash_set<TaskKey> taskKeys;
     absl::flat_hash_set<lyric_common::ModuleLocation> objectLocations;
@@ -167,7 +167,7 @@ lyric_build::DependencyLoader::create(
 
         TraceId traceId(taskState.getHash(), taskKey.getDomain(), taskKey.getId());
         tempo_utils::UUID generation;
-        TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(traceId));
+        TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(traceId));
 
         std::vector<ArtifactId> artifactsFound;
 
@@ -177,12 +177,12 @@ lyric_build::DependencyLoader::create(
         LyricMetadata objectFilter;
         TU_ASSIGN_OR_RETURN(objectFilter, objectFilterWriter.toMetadata());
 
-        TU_ASSIGN_OR_RETURN (artifactsFound, cache->findArtifacts(
+        TU_ASSIGN_OR_RETURN (artifactsFound, artifactCache->findArtifacts(
             generation, taskState.getHash(), {}, objectFilter));
 
         for (const auto &artifactId : artifactsFound) {
             LyricMetadata metadata;
-            TU_ASSIGN_OR_RETURN (metadata, cache->loadMetadataFollowingLinks(artifactId));
+            TU_ASSIGN_OR_RETURN (metadata, artifactCache->loadMetadataFollowingLinks(artifactId));
 
             lyric_common::ModuleLocation location;
             TU_RETURN_IF_NOT_OK (metadata.parseAttr(kLyricBuildModuleLocation, location));
@@ -201,7 +201,7 @@ lyric_build::DependencyLoader::create(
                     "loader found duplicate object {}", location.toString());
 
             std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-            TU_ASSIGN_OR_RETURN (content,  cache->loadContentFollowingLinks(artifactId));
+            TU_ASSIGN_OR_RETURN (content,  artifactCache->loadContentFollowingLinks(artifactId));
 
             auto span = content->getSpan();
             if (!lyric_object::LyricObject::verify(span))
@@ -219,12 +219,12 @@ lyric_build::DependencyLoader::create(
         LyricMetadata pluginFilter;
         TU_ASSIGN_OR_RETURN(pluginFilter, pluginFilterWriter.toMetadata());
 
-        TU_ASSIGN_OR_RETURN (artifactsFound, cache->findArtifacts(
+        TU_ASSIGN_OR_RETURN (artifactsFound, artifactCache->findArtifacts(
             generation, taskState.getHash(), {}, pluginFilter));
 
         for (const auto &artifactId : artifactsFound) {
             LyricMetadata metadata;
-            TU_ASSIGN_OR_RETURN (metadata, cache->loadMetadataFollowingLinks(artifactId));
+            TU_ASSIGN_OR_RETURN (metadata, artifactCache->loadMetadataFollowingLinks(artifactId));
 
             lyric_common::ModuleLocation location;
             TU_RETURN_IF_NOT_OK (metadata.parseAttr(kLyricBuildModuleLocation, location));
@@ -242,7 +242,7 @@ lyric_build::DependencyLoader::create(
                     "loader found duplicate plugin {}", location.toString());
 
             //std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-            //TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(artifactId));
+            //TU_ASSIGN_OR_RETURN (content, artifactCache->loadContentFollowingLinks(artifactId));
 
             plugins[location] = artifactId;
             pluginLocations.insert(location);
@@ -256,26 +256,26 @@ lyric_build::DependencyLoader::create(
         << " plugins=" << pluginLocations;
 
     return std::shared_ptr<DependencyLoader>(
-        new DependencyLoader(std::move(cache), tempDirectory, objects, plugins));
+        new DependencyLoader(std::move(artifactCache), tempDirectory, objects, plugins));
 }
 
 tempo_utils::Result<std::shared_ptr<lyric_build::DependencyLoader>>
 lyric_build::DependencyLoader::create(
     const lyric_common::ModuleLocation &origin,
     const TargetComputation &targetComputation,
-    std::shared_ptr<AbstractCache> cache,
+    std::shared_ptr<AbstractArtifactCache> artifactCache,
     TempDirectory *tempDirectory)
 {
     auto taskId = targetComputation.getId();
     TaskKey taskKey(taskId.getDomain(), taskId.getId());
-    return create(origin, {{taskKey, targetComputation.getState()}}, cache, tempDirectory);
+    return create(origin, {{taskKey, targetComputation.getState()}}, artifactCache, tempDirectory);
 }
 
 tempo_utils::Result<std::shared_ptr<lyric_build::DependencyLoader>>
 lyric_build::DependencyLoader::create(
     const lyric_common::ModuleLocation &origin,
     const TargetComputationSet &targetComputationSet,
-    std::shared_ptr<AbstractCache> cache,
+    std::shared_ptr<AbstractArtifactCache> artifactCache,
     TempDirectory *tempDirectory)
 {
     absl::flat_hash_map<TaskKey,TaskState> depStates;
@@ -283,5 +283,5 @@ lyric_build::DependencyLoader::create(
         TaskKey taskKey(it->first.getDomain(), it->first.getId());
         depStates[taskKey] = it->second.getState();
     }
-    return create(origin, depStates, cache, tempDirectory);
+    return create(origin, depStates, artifactCache, tempDirectory);
 }

@@ -29,7 +29,7 @@ BaseCompilerFixture::runComputationSet(
 
     std::shared_ptr<lyric_build::DependencyLoader> dependencyLoader;
     TU_ASSIGN_OR_RETURN (dependencyLoader, lyric_build::DependencyLoader::create(
-        origin, depStates, builder->getCache(), &tempDirectory));
+        origin, depStates, builder->getArtifactCache(), &tempDirectory));
 
     lyric_runtime::InterpreterStateOptions options;
     options.mainLocation = origin.resolve(lyric_common::ModuleLocation::fromString(mainKey.getId()));

@@ -22,7 +22,7 @@ lyric_build::internal::CompileTask::CompileTask(
 tempo_utils::Status
 lyric_build::internal::CompileTask::configure(
     const TaskSettings *config,
-    AbstractFilesystem *virtualFilesystem)
+    AbstractVirtualFilesystem *virtualFilesystem)
 {
     auto taskId = getId();
 
@@ -73,7 +73,7 @@ lyric_build::internal::CompileTask::configure(
 tempo_utils::Result<std::string>
 lyric_build::internal::CompileTask::configureTask(
     const TaskSettings *config,
-    AbstractFilesystem *virtualFilesystem)
+    AbstractVirtualFilesystem *virtualFilesystem)
 {
     auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
     TU_RETURN_IF_NOT_OK (configure(&merged, virtualFilesystem));
@@ -92,7 +92,7 @@ lyric_build::internal::CompileTask::compile(
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
 {
-    auto cache = buildState->getCache();
+    auto artifactCache = buildState->getArtifactCache();
 
     for (const auto &dep : depStates) {
         const auto &taskKey = dep.first;
@@ -110,14 +110,14 @@ lyric_build::internal::CompileTask::compile(
 
         TraceId artifactTrace(hash, taskKey.getDomain(), taskKey.getId());
         tempo_utils::UUID generation;
-        TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(artifactTrace));
+        TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(artifactTrace));
 
         std::vector<ArtifactId> targetArtifacts;
-        TU_ASSIGN_OR_RETURN (targetArtifacts, cache->findArtifacts(generation, hash, {}, {}));
+        TU_ASSIGN_OR_RETURN (targetArtifacts, artifactCache->findArtifacts(generation, hash, {}, {}));
 
         for (const auto &srcId : targetArtifacts) {
             ArtifactId dstId(getGeneration(), taskHash, srcId.getLocation());
-            TU_RETURN_IF_NOT_OK (cache->linkArtifact(dstId, srcId));
+            TU_RETURN_IF_NOT_OK (artifactCache->linkArtifact(dstId, srcId));
         }
     }
 

@@ -10,7 +10,7 @@ lyric_build::internal::configure_task(
     AbstractBuildRunner *runner,
     const TaskSettings *taskSettings,
     BuildState *state,
-    AbstractFilesystem *vfs,
+    AbstractVirtualFilesystem *vfs,
     const tempo_utils::UUID &generation,
     std::pair<bool,std::string> &result)
 {
@@ -196,7 +196,7 @@ lyric_build::internal::check_for_existing_trace(
     const absl::flat_hash_map<TaskKey, TaskState> &depStates,
     AbstractBuildRunner *runner,
     BuildState *state,
-    AbstractCache *cache,
+    AbstractArtifactCache *artifactCache,
     const tempo_utils::UUID &generation,
     std::pair<bool,std::string> &result)
 {
@@ -224,7 +224,7 @@ lyric_build::internal::check_for_existing_trace(
 
     // if a trace exists for the tash hash and task key, then we don't need to run the task
     TraceId traceId(taskHash, key.getDomain(), key.getId());
-    if (cache->containsTrace(traceId)) {
+    if (artifactCache->containsTrace(traceId)) {
         TU_LOG_VV << "task " << key << " completed with previous trace " << absl::BytesToHexString(taskHash);
         auto currState = TaskState(TaskState::Status::COMPLETED, generation, taskHash);
         state->storeState(key, currState);
@@ -244,7 +244,7 @@ lyric_build::internal::link_dependencies(
     const TaskKey &key,
     AbstractBuildRunner *runner,
     BuildState *state,
-    AbstractCache *cache,
+    AbstractArtifactCache *artifactCache,
     const tempo_utils::UUID &generation,
     const absl::flat_hash_map<TaskKey, TaskState> &depStates,
     bool &complete)
@@ -256,15 +256,15 @@ lyric_build::internal::link_dependencies(
         TraceId depTrace(depHash, depKey.getDomain(), depKey.getId());
 
         tempo_utils::UUID targetGen;
-        TU_ASSIGN_OR_RETURN (targetGen, cache->loadTrace(depTrace));
+        TU_ASSIGN_OR_RETURN (targetGen, artifactCache->loadTrace(depTrace));
 
         std::vector<ArtifactId> dependentArtifacts;
-        TU_ASSIGN_OR_RETURN (dependentArtifacts, cache->findArtifacts(targetGen, depHash, {}, {}));
+        TU_ASSIGN_OR_RETURN (dependentArtifacts, artifactCache->findArtifacts(targetGen, depHash, {}, {}));
 
         for (const auto &srcId : dependentArtifacts) {
             ArtifactId dstId(generation, depHash, srcId.getLocation());
             if (dstId != srcId) {
-                auto status = cache->linkArtifact(dstId, srcId);
+                auto status = artifactCache->linkArtifact(dstId, srcId);
 
                 // if any dependent artifacts fail to link, then mark the task failed
                 if (!status.isOk()) {
@@ -291,7 +291,7 @@ lyric_build::internal::run_task(
     const std::string &taskHash,
     AbstractBuildRunner *runner,
     BuildState *state,
-    AbstractCache *cache,
+    AbstractArtifactCache *artifactCache,
     const tempo_utils::UUID &generation,
     bool &complete)
 {
@@ -331,7 +331,7 @@ lyric_build::internal::run_task(
     // otherwise the task completed successfully
     TraceId traceId(taskHash, key.getDomain(), key.getId());
     currState = TaskState(TaskState::Status::COMPLETED, generation, taskHash);
-    cache->storeTrace(traceId, generation);
+    artifactCache->storeTrace(traceId, generation);
     TU_LOG_VV << "task " << key << " completed with new trace " << absl::BytesToHexString(taskHash);
     state->storeState(key, currState);
     runner->enqueueNotification(std::make_unique<NotifyStateChanged>(key, currState));
@@ -347,7 +347,7 @@ lyric_build::internal::runner_worker_loop(const TaskThread *thread)
 
     const auto *taskSettings = thread->taskSettings;
     auto state = thread->buildState;
-    auto cache = thread->buildCache;
+    auto artifactCache = thread->artifactCache;
 
     auto virtualFilesystem = state->getVirtualFilesystem();
     auto generation = state->getGeneration().getUuid();
@@ -401,7 +401,7 @@ lyric_build::internal::runner_worker_loop(const TaskThread *thread)
         // all dependent tasks are complete, generate the task hash
         std::pair<bool,std::string> taskHashOrIncomplete;
         TU_RETURN_IF_NOT_OK (check_for_existing_trace(task, configHash, depStates, runner, state.get(),
-            cache.get(), generation, taskHashOrIncomplete));
+            artifactCache.get(), generation, taskHashOrIncomplete));
 
         // if incomplete flag is set then fetch next task
         if (taskHashOrIncomplete.first == false)
@@ -411,7 +411,7 @@ lyric_build::internal::runner_worker_loop(const TaskThread *thread)
 
         // make dependency artifacts available to the current task
         bool linkComplete;
-        TU_RETURN_IF_NOT_OK (link_dependencies(key, runner, state.get(), cache.get(),
+        TU_RETURN_IF_NOT_OK (link_dependencies(key, runner, state.get(), artifactCache.get(),
             generation, depStates, linkComplete));
 
         // if incomplete flag is set then fetch next task
@@ -421,7 +421,7 @@ lyric_build::internal::runner_worker_loop(const TaskThread *thread)
         // run the task
         bool taskComplete;
         TU_RETURN_IF_NOT_OK (run_task(task, configHash, depStates, taskHash, runner, state.get(),
-            cache.get(), generation, taskComplete));
+            artifactCache.get(), generation, taskComplete));
     }
 
     return {};

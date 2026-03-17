@@ -48,7 +48,7 @@ TestTask::configure(const lyric_build::TaskSettings *config)
 tempo_utils::Result<std::string>
 TestTask::configureTask(
     const lyric_build::TaskSettings *config,
-    lyric_build::AbstractFilesystem *virtualFilesystem)
+    lyric_build::AbstractVirtualFilesystem *virtualFilesystem)
 {
     auto key = getKey();
     auto merged = config->merge(lyric_build::TaskSettings({}, {}, {{getId(), getParams()}}));

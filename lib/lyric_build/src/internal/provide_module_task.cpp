@@ -77,7 +77,7 @@ lyric_build::internal::ProvideModuleTask::configure(const TaskSettings *config)
 tempo_utils::Result<std::string>
 lyric_build::internal::ProvideModuleTask::configureTask(
     const TaskSettings *config,
-    AbstractFilesystem *virtualFilesystem)
+    AbstractVirtualFilesystem *virtualFilesystem)
 {
     auto key = getKey();
     auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
@@ -138,7 +138,7 @@ lyric_build::internal::ProvideModuleTask::provideModule(
     TU_ASSIGN_OR_RETURN (objectArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kObjectFileDotSuffix));
 
-    auto cache = buildState->getCache();
+    auto artifactCache = buildState->getArtifactCache();
 
     // if build target was specified then pull forward the artifacts from the completed target
     if (m_buildTarget.isValid()) {
@@ -156,7 +156,7 @@ lyric_build::internal::ProvideModuleTask::provideModule(
                 "dependent task {} has invalid hash", m_buildTarget.toString());
         TraceId artifactTrace(hash, m_buildTarget.getDomain(), m_buildTarget.getId());
         tempo_utils::UUID generation;
-        TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(artifactTrace));
+        TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(artifactTrace));
 
         // TODO: support task setting to specify the source artifact path explicitly
         ArtifactId objectSrcId(generation, hash, objectArtifactPath);
@@ -169,11 +169,11 @@ lyric_build::internal::ProvideModuleTask::provideModule(
         LyricMetadata objectMetadata;
         TU_ASSIGN_OR_RETURN (objectMetadata, objectWriter.toMetadata());
 
-        TU_RETURN_IF_NOT_OK (cache->linkArtifactOverridingMetadata(objectDstId, objectMetadata, objectSrcId));
+        TU_RETURN_IF_NOT_OK (artifactCache->linkArtifactOverridingMetadata(objectDstId, objectMetadata, objectSrcId));
 
         // check for plugin
         std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-        TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(objectSrcId));
+        TU_ASSIGN_OR_RETURN (content, artifactCache->loadContentFollowingLinks(objectSrcId));
         lyric_object::LyricObject object(content);
 
         if (object.hasPlugin()) {
@@ -194,7 +194,7 @@ lyric_build::internal::ProvideModuleTask::provideModule(
             LyricMetadata pluginMetadata;
             TU_ASSIGN_OR_RETURN (pluginMetadata, pluginWriter.toMetadata());
 
-            TU_RETURN_IF_NOT_OK (cache->linkArtifactOverridingMetadata(pluginDstId, pluginMetadata, pluginSrcId));
+            TU_RETURN_IF_NOT_OK (artifactCache->linkArtifactOverridingMetadata(pluginDstId, pluginMetadata, pluginSrcId));
         }
 
         return {};
@@ -216,7 +216,7 @@ lyric_build::internal::ProvideModuleTask::provideModule(
 
     // declare the artifact
     ArtifactId objectArtifact(buildState->getGeneration().getUuid(), taskHash, m_moduleLocation.toUrl());
-    TU_RETURN_IF_NOT_OK (cache->declareArtifact(objectArtifact));
+    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(objectArtifact));
 
     // serialize the object metadata
     MetadataWriter objectMetadataWriter;
@@ -227,10 +227,10 @@ lyric_build::internal::ProvideModuleTask::provideModule(
     TU_ASSIGN_OR_RETURN (objectMetadata, objectMetadataWriter.toMetadata());
 
     // store the object metadata in the build cache
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(objectArtifact, objectMetadata));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(objectArtifact, objectMetadata));
 
     // store the object content in the build cache
-    TU_RETURN_IF_NOT_OK (cache->storeContent(objectArtifact, content));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(objectArtifact, content));
 
     logInfo("stored object at {}", objectArtifact.toString());
 
@@ -251,7 +251,7 @@ lyric_build::internal::ProvideModuleTask::provideModule(
 
         // declare the artifact
         ArtifactId pluginArtifact(buildState->getGeneration().getUuid(), taskHash, pluginLocation.toUrl());
-        TU_RETURN_IF_NOT_OK (cache->declareArtifact(pluginArtifact));
+        TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(pluginArtifact));
 
         // serialize the plugin metadata
         MetadataWriter pluginMetadataWriter;
@@ -262,10 +262,10 @@ lyric_build::internal::ProvideModuleTask::provideModule(
         TU_ASSIGN_OR_RETURN (pluginMetadata, pluginMetadataWriter.toMetadata());
 
         // store the plugin metadata in the build cache
-        TU_RETURN_IF_NOT_OK (cache->storeMetadata(pluginArtifact, pluginMetadata));
+        TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(pluginArtifact, pluginMetadata));
 
         // store the plugin content in the build cache
-        TU_RETURN_IF_NOT_OK (cache->storeContent(pluginArtifact, content));
+        TU_RETURN_IF_NOT_OK (artifactCache->storeContent(pluginArtifact, content));
 
         logInfo("stored plugin at {}", pluginArtifact.toString());
     }

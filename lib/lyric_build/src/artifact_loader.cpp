@@ -15,30 +15,30 @@ lyric_build::ArtifactLoader::ArtifactLoader()
 lyric_build::ArtifactLoader::ArtifactLoader(
     const BuildGeneration &generation,
     const std::string &hash,
-    std::shared_ptr<AbstractCache> cache)
+    std::shared_ptr<AbstractArtifactCache> artifactCache)
     : m_generation(generation.getUuid()),
       m_hash(hash),
-      m_cache(cache)
+      m_artifactCache(artifactCache)
 {
     TU_ASSERT (!m_generation.isNil());
     TU_ASSERT (!m_hash.empty());
-    TU_ASSERT (m_cache != nullptr);
+    TU_ASSERT (m_artifactCache != nullptr);
 }
 
-lyric_build::ArtifactLoader::ArtifactLoader(const TaskState &state, std::shared_ptr<AbstractCache> cache)
+lyric_build::ArtifactLoader::ArtifactLoader(const TaskState &state, std::shared_ptr<AbstractArtifactCache> artifactCache)
     : m_generation(state.getGeneration()),
       m_hash(state.getHash()),
-      m_cache(cache)
+      m_artifactCache(artifactCache)
 {
     TU_ASSERT (!m_generation.isNil());
     TU_ASSERT (!m_hash.empty());
-    TU_ASSERT (m_cache != nullptr);
+    TU_ASSERT (m_artifactCache != nullptr);
 }
 
 lyric_build::ArtifactLoader::ArtifactLoader(const ArtifactLoader &other)
     : m_generation(other.m_generation),
       m_hash(other.m_hash),
-      m_cache(other.m_cache)
+      m_artifactCache(other.m_artifactCache)
 {
 }
 
@@ -51,7 +51,7 @@ lyric_build::ArtifactLoader::hasModule(const lyric_common::ModuleLocation &locat
     ArtifactId artifactId(m_generation, m_hash, locationUrl);
 
     // artifact exists and is a file
-    auto loadMetadataResult = m_cache->loadMetadataFollowingLinks(artifactId);
+    auto loadMetadataResult = m_artifactCache->loadMetadataFollowingLinks(artifactId);
     if (loadMetadataResult.isStatus()) {
         auto status = loadMetadataResult.getStatus();
         if (status.matchesCondition(BuildCondition::kArtifactNotFound))
@@ -73,7 +73,7 @@ lyric_build::ArtifactLoader::loadModule(const lyric_common::ModuleLocation &loca
         return Option<lyric_object::LyricObject>();
     ArtifactId artifactId(m_generation, m_hash, locationUrl);
 
-    auto loadContentResult = m_cache->loadContentFollowingLinks(artifactId);
+    auto loadContentResult = m_artifactCache->loadContentFollowingLinks(artifactId);
     if (loadContentResult.isStatus()) {
         auto status = loadContentResult.getStatus();
         if (status.matchesCondition(BuildCondition::kArtifactNotFound))

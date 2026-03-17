@@ -27,7 +27,7 @@ BaseBuildFixture::SetUp()
     auto bootstrapLoader = std::make_shared<lyric_bootstrap::BootstrapLoader>();
     auto emptyLoader = std::make_shared<lyric_runtime::StaticLoader>();
     m_state = std::make_unique<lyric_build::BuildState>(buildgen,
-        std::static_pointer_cast<lyric_build::AbstractCache>(cache),
+        std::static_pointer_cast<lyric_build::AbstractArtifactCache>(cache),
         bootstrapLoader,
         std::shared_ptr<lyric_runtime::AbstractLoader>{},
         lyric_importer::ModuleCache::create(emptyLoader),

@@ -5,7 +5,7 @@
 
 #include <rocksdb/db.h>
 
-#include "abstract_cache.h"
+#include "abstract_artifact_cache.h"
 #include "build_result.h"
 #include "build_types.h"
 #include "task_settings.h"
@@ -25,13 +25,13 @@ namespace lyric_build {
         rocksdb::PinnableSlice *m_slice;
     };
 
-    class RocksdbCache : public AbstractCache {
+    class RocksdbCache : public AbstractArtifactCache {
 
     public:
-        RocksdbCache(const std::filesystem::path &dbPath, bool copyReadBuffers);
+        explicit RocksdbCache(bool copyReadBuffers);
         ~RocksdbCache() override;
 
-        tempo_utils::Status initializeCache() override;
+        tempo_utils::Status initializeCache(const std::filesystem::path &buildRoot) override;
 
         tempo_utils::Status declareArtifact(const ArtifactId &artifactId) override;
 
@@ -75,7 +75,6 @@ namespace lyric_build {
         tempo_utils::Status storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset) override;
 
     private:
-        std::filesystem::path m_dbPath;
         bool m_copyReadBuffers;
 
         // db and column family config

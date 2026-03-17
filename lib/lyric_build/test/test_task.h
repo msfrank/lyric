@@ -19,7 +19,7 @@ public:
 
     tempo_utils::Result<std::string> configureTask(
         const lyric_build::TaskSettings *config,
-        lyric_build::AbstractFilesystem *virtualFilesystem) override;
+        lyric_build::AbstractVirtualFilesystem *virtualFilesystem) override;
     tempo_utils::Result<absl::flat_hash_set<lyric_build::TaskKey>> checkDependencies() override;
     Option<tempo_utils::Status> runTask(
         const std::string &taskHash,

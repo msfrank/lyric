@@ -39,11 +39,11 @@ TEST_F(ParseModuleTask, ConfigureTask)
     ASSERT_TRUE (runTaskStatusOption.hasValue());
     ASSERT_THAT (runTaskStatusOption.getValue(), tempo_test::IsOk());
 
-    auto cache = m_state->getCache();
+    auto artifactCache = m_state->getArtifactCache();
     lyric_build::ArtifactId artifactId(
         m_state->getGeneration().getUuid(), taskHash, tempo_utils::Url::fromString("/mod.lyi"));
 
-    auto loadMetadataResult = cache->loadMetadata(artifactId);
+    auto loadMetadataResult = artifactCache->loadMetadata(artifactId);
     ASSERT_THAT (loadMetadataResult, tempo_test::IsResult());
     auto metadata = loadMetadataResult.getResult();
 
@@ -51,7 +51,7 @@ TEST_F(ParseModuleTask, ConfigureTask)
     metadata.parseAttr(lyric_build::kLyricBuildContentType, contentType);
     ASSERT_EQ (lyric_common::kIntermezzoContentType, contentType);
 
-    auto loadContentResult = cache->loadContent(artifactId);
+    auto loadContentResult = artifactCache->loadContent(artifactId);
     ASSERT_THAT (loadContentResult, tempo_test::IsResult());
     auto content = loadContentResult.getResult();
 

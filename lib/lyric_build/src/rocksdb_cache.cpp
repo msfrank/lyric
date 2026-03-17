@@ -15,9 +15,8 @@
 #include <tempo_utils/slice.h>
 #include <tempo_utils/unicode.h>
 
-lyric_build::RocksdbCache::RocksdbCache(const std::filesystem::path &dbPath, bool copyReadBuffers)
-    : m_dbPath(dbPath),
-      m_copyReadBuffers(copyReadBuffers)
+lyric_build::RocksdbCache::RocksdbCache(bool copyReadBuffers)
+    : m_copyReadBuffers(copyReadBuffers)
 {
     // configure db options
     m_dbopts.create_if_missing = true;
@@ -46,14 +45,26 @@ lyric_build::RocksdbCache::~RocksdbCache()
 }
 
 tempo_utils::Status
-lyric_build::RocksdbCache::initializeCache()
+lyric_build::RocksdbCache::initializeCache(const std::filesystem::path &buildRoot)
 {
+    std::error_code ec;
+
+    if (!std::filesystem::exists(buildRoot))
+        return BuildStatus::forCondition(BuildCondition::kInvalidConfiguration,
+            "failed to initialize RocksdbCache; build root {} does not exist", buildRoot.string());
+
+    auto cacheRootDirectory = buildRoot / "rockscache";
+
+    if (!std::filesystem::create_directories(cacheRootDirectory, ec))
+        return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
+            "failed to create cache root directory {};  {}", cacheRootDirectory.string());
+
     std::vector<rocksdb::ColumnFamilyHandle *> handles;
     rocksdb::Status status;
 
     // list existing column families in the db
     std::vector<std::string> existingCfs;
-    status = rocksdb::DB::ListColumnFamilies(m_dbopts, m_dbPath.string(), &existingCfs);
+    status = rocksdb::DB::ListColumnFamilies(m_dbopts, cacheRootDirectory.string(), &existingCfs);
     if (!status.ok() && !status.IsPathNotFound())
         return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
             "ListColumnFamilies failed: {}", status.ToString());
@@ -70,7 +81,7 @@ lyric_build::RocksdbCache::initializeCache()
         rocksdb::DB *initdb = nullptr;
         rocksdb::ColumnFamilyHandle *cf;
 
-        status = rocksdb::DB::Open(m_dbopts, m_dbPath.string(), &initdb);
+        status = rocksdb::DB::Open(m_dbopts, cacheRootDirectory.string(), &initdb);
         if (!status.ok())
             return BuildStatus::forCondition(BuildCondition::kBuildInvariant,
                 "Open failed: {}", status.ToString());
@@ -112,7 +123,7 @@ lyric_build::RocksdbCache::initializeCache()
     }
 
     // open the db with column families
-    status = rocksdb::DB::Open(m_dbopts, m_dbPath.string(),
+    status = rocksdb::DB::Open(m_dbopts, cacheRootDirectory.string(),
         {m_defaultcf, m_contentcf, m_metadatacf, m_tracescf, m_diagnosticscf},
         &handles, &m_db);
     if (!status.ok())

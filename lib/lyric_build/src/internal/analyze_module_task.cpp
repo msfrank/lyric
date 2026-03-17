@@ -72,7 +72,7 @@ lyric_build::internal::AnalyzeModuleTask::configure(const TaskSettings *config)
 tempo_utils::Result<std::string>
 lyric_build::internal::AnalyzeModuleTask::configureTask(
     const TaskSettings *config,
-    AbstractFilesystem *virtualFilesystem)
+    AbstractVirtualFilesystem *virtualFilesystem)
 {
     auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
 
@@ -102,11 +102,11 @@ lyric_build::internal::AnalyzeModuleTask::symbolizeImports(
         return BuildStatus::forCondition(BuildCondition::kTaskFailure,
             "missing state for dependent task {}", m_symbolizeTarget.toString());
 
-    auto cache = buildState->getCache();
+    auto artifactCache = buildState->getArtifactCache();
     const auto &symbolizeHash = depStates.at(m_symbolizeTarget).getHash();
     TraceId symbolizeTrace(symbolizeHash, m_symbolizeTarget.getDomain(), m_symbolizeTarget.getId());
     tempo_utils::UUID generation;
-    TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(symbolizeTrace));
+    TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(symbolizeTrace));
 
     tempo_utils::UrlPath linkageArtifactPath;
     TU_ASSIGN_OR_RETURN (linkageArtifactPath, convert_module_location_to_artifact_path(
@@ -114,7 +114,7 @@ lyric_build::internal::AnalyzeModuleTask::symbolizeImports(
     ArtifactId symbolizeArtifact(generation, symbolizeHash, linkageArtifactPath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(symbolizeArtifact));
+    TU_ASSIGN_OR_RETURN (content, artifactCache->loadContentFollowingLinks(symbolizeArtifact));
     lyric_object::LyricObject object(content);
 
     // check for any imports from modules in the src directory
@@ -150,11 +150,11 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
             "missing state for dependent task {}", m_parseTarget.toString());
 
     // get the archetype artifact from the cache
-    auto cache = buildState->getCache();
+    auto artifactCache = buildState->getArtifactCache();
     auto parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
     tempo_utils::UUID generation;
-    TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(parseTrace));
+    TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(parseTrace));
 
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
@@ -162,7 +162,7 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     ArtifactId archetypeArtifact(generation, parseHash, archetypeArtifactPath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(archetypeArtifact));
+    TU_ASSIGN_OR_RETURN (content, artifactCache->loadContentFollowingLinks(archetypeArtifact));
     lyric_parser::LyricArchetype archetype(content);
 
     // define the module origin
@@ -171,7 +171,7 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, cache, tempDirectory()));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, artifactCache, tempDirectory()));
     auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     // configure analyzer
@@ -192,7 +192,7 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     TU_ASSIGN_OR_RETURN (outlineArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kObjectFileDotSuffix));
     ArtifactId outlineArtifact(buildState->getGeneration().getUuid(), taskHash, outlineArtifactPath);
-    TU_RETURN_IF_NOT_OK (cache->declareArtifact(outlineArtifact));
+    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(outlineArtifact));
 
     // store the outline object metadata in the cache
     MetadataWriter writer;
@@ -203,11 +203,11 @@ lyric_build::internal::AnalyzeModuleTask::analyzeModule(
     TU_ASSIGN_OR_RETURN (outlineMetadata, writer.toMetadata());
 
     //
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(outlineArtifact, outlineMetadata));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(outlineArtifact, outlineMetadata));
 
     // store the outline object content in the cache
     auto outlineBytes = object.bytesView();
-    TU_RETURN_IF_NOT_OK (cache->storeContent(outlineArtifact, outlineBytes));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(outlineArtifact, outlineBytes));
 
     logInfo("stored outline at {}", outlineArtifact.toString());
 

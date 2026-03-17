@@ -84,7 +84,7 @@ lyric_build::internal::ArchiveTask::configure(const TaskSettings *config)
 tempo_utils::Result<std::string>
 lyric_build::internal::ArchiveTask::configureTask(
     const TaskSettings *config,
-    AbstractFilesystem *virtualFilesystem)
+    AbstractVirtualFilesystem *virtualFilesystem)
 {
     auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
     TU_RETURN_IF_NOT_OK (configure(&merged));
@@ -132,7 +132,7 @@ tempo_utils::Status
 archive_symbols(
     lyric_archiver::LyricArchiver &archiver,
     const absl::flat_hash_map<lyric_build::TaskKey,lyric_build::TaskState> &depStates,
-    lyric_build::AbstractCache *cache)
+    lyric_build::AbstractArtifactCache *artifactCache)
 {
     for (const auto &dep : depStates) {
         const auto &taskKey = dep.first;
@@ -152,13 +152,13 @@ archive_symbols(
 
         lyric_build::TraceId artifactTrace(hash, taskKey.getDomain(), taskKey.getId());
         tempo_utils::UUID generation;
-        TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(artifactTrace));
+        TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(artifactTrace));
         std::vector<lyric_build::ArtifactId> targetArtifacts;
-        TU_ASSIGN_OR_RETURN (targetArtifacts, cache->findArtifacts(generation, hash, {}, {}));
+        TU_ASSIGN_OR_RETURN (targetArtifacts, artifactCache->findArtifacts(generation, hash, {}, {}));
 
         for (const auto &artifactId : targetArtifacts) {
             lyric_build::LyricMetadata metadata;
-            TU_ASSIGN_OR_RETURN (metadata, cache->loadMetadataFollowingLinks(artifactId));
+            TU_ASSIGN_OR_RETURN (metadata, artifactCache->loadMetadataFollowingLinks(artifactId));
 
             // ignore artifact if there is no module location
             if (!metadata.hasAttr(lyric_build::kLyricBuildModuleLocation))
@@ -170,7 +170,7 @@ archive_symbols(
 
             // get the module content
             std::shared_ptr<const tempo_utils::ImmutableBytes> contentBytes;
-            TU_ASSIGN_OR_RETURN (contentBytes, cache->loadContentFollowingLinks(artifactId));
+            TU_ASSIGN_OR_RETURN (contentBytes, artifactCache->loadContentFollowingLinks(artifactId));
             std::span<const tu_uint8> contentSpan(contentBytes->getData(), contentBytes->getSize());
 
             if (!lyric_object::LyricObject::verify(contentSpan))
@@ -194,7 +194,7 @@ lyric_build::internal::ArchiveTask::buildArchive(
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
 {
-    auto cache = buildState->getCache();
+    auto artifactCache = buildState->getArtifactCache();
     auto recorder = traceDiagnostics();
 
     // define the module origin
@@ -203,7 +203,7 @@ lyric_build::internal::ArchiveTask::buildArchive(
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, cache, tempDirectory()));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, artifactCache, tempDirectory()));
     std::vector<std::shared_ptr<lyric_runtime::AbstractLoader>> loaderChain;
     loaderChain.push_back(dependencyLoader);
     loaderChain.push_back(buildState->getLoaderChain());
@@ -217,7 +217,7 @@ lyric_build::internal::ArchiveTask::buildArchive(
     TU_RETURN_IF_NOT_OK (archiver.initialize());
 
     // archive symbols
-    TU_RETURN_IF_NOT_OK (archive_symbols(archiver, depStates, cache.get()));
+    TU_RETURN_IF_NOT_OK (archive_symbols(archiver, depStates, artifactCache.get()));
 
     // build the archive
     logInfo("building archive {}", m_moduleLocation.toString());
@@ -227,7 +227,7 @@ lyric_build::internal::ArchiveTask::buildArchive(
     // declare the artifact
     ArtifactId moduleArtifact(buildState->getGeneration().getUuid(), taskHash,
         tempo_utils::Url::fromString(m_archiveName));
-    TU_RETURN_IF_NOT_OK (cache->declareArtifact(moduleArtifact));
+    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(moduleArtifact));
 
     // serialize the object metadata
     MetadataWriter writer;
@@ -238,11 +238,11 @@ lyric_build::internal::ArchiveTask::buildArchive(
     TU_ASSIGN_OR_RETURN (metadata, writer.toMetadata());
 
     // store the object metadata in the build cache
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(moduleArtifact, metadata));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(moduleArtifact, metadata));
 
     // store the object content in the build cache
     auto moduleBytes = object.bytesView();
-    TU_RETURN_IF_NOT_OK (cache->storeContent(moduleArtifact, moduleBytes));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(moduleArtifact, moduleBytes));
 
     logInfo("stored module at {}", moduleArtifact.toString());
 

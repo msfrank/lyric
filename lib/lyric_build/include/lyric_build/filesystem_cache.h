@@ -4,17 +4,17 @@
 #include <absl/container/btree_map.h>
 #include <absl/container/flat_hash_map.h>
 
-#include <lyric_build/abstract_cache.h>
+#include <lyric_build/abstract_artifact_cache.h>
 
 namespace lyric_build {
 
-    class FilesystemCache : public AbstractCache {
+    class FilesystemCache : public AbstractArtifactCache {
 
     public:
-        explicit FilesystemCache(const std::filesystem::path &cacheRootDirectory);
+        FilesystemCache();
         ~FilesystemCache();
 
-        tempo_utils::Status initializeCache() override;
+        tempo_utils::Status initializeCache(const std::filesystem::path &buildRoot) override;
 
         tempo_utils::Status declareArtifact(const ArtifactId &artifactId) override;
 
@@ -58,8 +58,6 @@ namespace lyric_build {
         tempo_utils::Status storeDiagnostics(const TraceId &traceId, const tempo_tracing::TempoSpanset &spanset) override;
 
     private:
-        std::filesystem::path m_cacheRootDirectory;
-
         struct Priv;
         std::unique_ptr<Priv> m_priv;
 

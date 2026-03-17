@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <lyric_build/abstract_cache.h>
+#include <lyric_build/abstract_artifact_cache.h>
 #include <lyric_build/build_attrs.h>
 #include <lyric_build/filesystem_cache.h>
 #include <lyric_build/memory_cache.h>
@@ -17,7 +17,7 @@ public:
     virtual ~CacheFixture() = default;
     virtual void initialize() {};
     virtual void cleanup() {};
-    virtual std::shared_ptr<lyric_build::AbstractCache> getCache() const = 0;
+    virtual std::shared_ptr<lyric_build::AbstractArtifactCache> getCache() const = 0;
 };
 
 class RocksdbCache : public CacheFixture {
@@ -26,14 +26,14 @@ public:
         tempo_utils::TempdirMaker dbPathMaker("rocksdb_cache.XXXXXXXX");
         TU_RAISE_IF_NOT_OK (dbPathMaker.getStatus());
         dbPath = dbPathMaker.getTempdir();
-        cache = std::make_shared<lyric_build::RocksdbCache>(dbPath, false);
-        TU_RAISE_IF_NOT_OK (cache->initializeCache());
+        cache = std::make_shared<lyric_build::RocksdbCache>(false);
+        TU_RAISE_IF_NOT_OK (cache->initializeCache(dbPath));
     }
     void cleanup() override {
         cache.reset();
         std::filesystem::remove_all(dbPath);
     }
-    std::shared_ptr<lyric_build::AbstractCache> getCache() const override {
+    std::shared_ptr<lyric_build::AbstractArtifactCache> getCache() const override {
         return cache;
     }
 private:
@@ -46,7 +46,7 @@ public:
     void initialize() override {
         cache = std::make_shared<lyric_build::MemoryCache>();
     }
-    std::shared_ptr<lyric_build::AbstractCache> getCache() const override {
+    std::shared_ptr<lyric_build::AbstractArtifactCache> getCache() const override {
         return cache;
     }
 private:
@@ -59,10 +59,10 @@ public:
         tempo_utils::TempdirMaker dbPathMaker("fs_cache.XXXXXXXX");
         TU_RAISE_IF_NOT_OK (dbPathMaker.getStatus());
         dbPath = dbPathMaker.getTempdir();
-        cache = std::make_shared<lyric_build::FilesystemCache>(dbPath);
-        TU_RAISE_IF_NOT_OK (cache->initializeCache());
+        cache = std::make_shared<lyric_build::FilesystemCache>();
+        TU_RAISE_IF_NOT_OK (cache->initializeCache(dbPath));
     }
-    std::shared_ptr<lyric_build::AbstractCache> getCache() const override {
+    std::shared_ptr<lyric_build::AbstractArtifactCache> getCache() const override {
         return cache;
     }
 private:

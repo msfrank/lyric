@@ -36,7 +36,7 @@ tempo_utils::Result<std::shared_ptr<lyric_runtime::AbstractLoader>>
 ArchiverTester::build()
 {
     auto *builder = m_tester->getRunner()->getBuilder();
-    auto cache = builder->getCache();
+    auto cache = builder->getArtifactCache();
 
     lyric_build::TargetComputationSet targetComputationSet;
     TU_ASSIGN_OR_RETURN (targetComputationSet, builder->computeTargets(m_taskIds));

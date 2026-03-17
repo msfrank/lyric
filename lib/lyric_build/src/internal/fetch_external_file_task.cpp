@@ -74,7 +74,7 @@ lyric_build::internal::FetchExternalFileTask::configure(const TaskSettings *conf
 tempo_utils::Result<std::string>
 lyric_build::internal::FetchExternalFileTask::configureTask(
     const TaskSettings *config,
-    AbstractFilesystem *virtualFilesystem)
+    AbstractVirtualFilesystem *virtualFilesystem)
 {
     auto key = getKey();
     auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
@@ -99,7 +99,7 @@ lyric_build::internal::FetchExternalFileTask::fetchExternalFile(
     const absl::flat_hash_map<TaskKey,TaskState> &depStates,
     BuildState *buildState)
 {
-    auto cache = buildState->getCache();
+    auto artifactCache = buildState->getArtifactCache();
     auto vfs = buildState->getVirtualFilesystem();
 
     tempo_utils::FileReader reader(m_filePath);
@@ -108,7 +108,7 @@ lyric_build::internal::FetchExternalFileTask::fetchExternalFile(
 
     // declare the artifact
     ArtifactId externalArtifact(buildState->getGeneration().getUuid(), taskHash, m_artifactPath);
-    TU_RETURN_IF_NOT_OK (cache->declareArtifact(externalArtifact));
+    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(externalArtifact));
 
     // serialize the file metadata
     MetadataWriter writer;
@@ -118,10 +118,10 @@ lyric_build::internal::FetchExternalFileTask::fetchExternalFile(
     TU_ASSIGN_OR_RETURN (externalMetadata, writer.toMetadata());
 
     // store the file metadata in the build cache
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(externalArtifact, externalMetadata));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(externalArtifact, externalMetadata));
 
     // store the file content in the build cache
-    TU_RETURN_IF_NOT_OK (cache->storeContent(externalArtifact, content));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(externalArtifact, content));
 
     logInfo("stored external content at {}", externalArtifact.toString());
 

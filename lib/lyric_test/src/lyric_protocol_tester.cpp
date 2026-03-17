@@ -64,7 +64,7 @@ lyric_test::LyricProtocolTester::runModuleInMockSandbox(
     TU_CONSOLE_OUT << "";
 
     auto *builder = m_runner->getBuilder();
-    auto cache = builder->getCache();
+    auto cache = builder->getArtifactCache();
     auto tempRoot = builder->getTempRoot();
 
     lyric_runtime::InterpreterStateOptions options;

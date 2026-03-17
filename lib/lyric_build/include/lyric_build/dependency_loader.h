@@ -4,7 +4,7 @@
 #include <lyric_runtime/abstract_loader.h>
 #include <lyric_runtime/library_plugin.h>
 
-#include "abstract_cache.h"
+#include "abstract_artifact_cache.h"
 #include "build_types.h"
 #include "target_computation.h"
 #include "temp_directory.h"
@@ -17,17 +17,17 @@ namespace lyric_build {
         static tempo_utils::Result<std::shared_ptr<DependencyLoader>> create(
             const lyric_common::ModuleLocation &origin,
             const absl::flat_hash_map<TaskKey,TaskState> &depStates,
-            std::shared_ptr<AbstractCache> cache,
+            std::shared_ptr<AbstractArtifactCache> artifactCache,
             TempDirectory *tempDirectory);
         static tempo_utils::Result<std::shared_ptr<DependencyLoader>> create(
             const lyric_common::ModuleLocation &origin,
             const TargetComputation &targetComputation,
-            std::shared_ptr<AbstractCache> cache,
+            std::shared_ptr<AbstractArtifactCache> artifactCache,
             TempDirectory *tempDirectory);
         static tempo_utils::Result<std::shared_ptr<DependencyLoader>> create(
             const lyric_common::ModuleLocation &origin,
             const TargetComputationSet &targetComputationSet,
-            std::shared_ptr<AbstractCache> cache,
+            std::shared_ptr<AbstractArtifactCache> artifactCache,
             TempDirectory *tempDirectory);
 
         tempo_utils::Result<bool> hasModule(
@@ -47,7 +47,7 @@ namespace lyric_build {
 
     private:
         lyric_common::ModuleLocation m_origin;
-        std::shared_ptr<AbstractCache> m_cache;
+        std::shared_ptr<AbstractArtifactCache> m_artifactCache;
         TempDirectory *m_tempDirectory;
         absl::flat_hash_map<
             lyric_common::ModuleLocation,
@@ -60,7 +60,7 @@ namespace lyric_build {
             std::shared_ptr<const lyric_runtime::LibraryPlugin>> m_libraries;
 
         DependencyLoader(
-            std::shared_ptr<AbstractCache> cache,
+            std::shared_ptr<AbstractArtifactCache> artifactCache,
             TempDirectory *tempDirectory,
             const absl::flat_hash_map<
                 lyric_common::ModuleLocation,

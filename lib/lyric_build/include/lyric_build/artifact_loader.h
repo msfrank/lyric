@@ -1,7 +1,7 @@
 #ifndef LYRIC_BUILD_ARTIFACT_LOADER_H
 #define LYRIC_BUILD_ARTIFACT_LOADER_H
 
-#include <lyric_build/abstract_cache.h>
+#include <lyric_build/abstract_artifact_cache.h>
 #include <lyric_build/build_types.h>
 #include <lyric_runtime/abstract_loader.h>
 
@@ -14,8 +14,8 @@ namespace lyric_build {
         ArtifactLoader(
             const BuildGeneration &generation,
             const std::string &hash,
-            std::shared_ptr<AbstractCache> cache);
-        ArtifactLoader(const TaskState &state, std::shared_ptr<AbstractCache> cache);
+            std::shared_ptr<AbstractArtifactCache> artifactCache);
+        ArtifactLoader(const TaskState &state, std::shared_ptr<AbstractArtifactCache> artifactCache);
         ArtifactLoader(const ArtifactLoader &other);
 
         tempo_utils::Result<bool> hasModule(
@@ -36,7 +36,7 @@ namespace lyric_build {
     private:
         tempo_utils::UUID m_generation;
         std::string m_hash;
-        std::shared_ptr<AbstractCache> m_cache;
+        std::shared_ptr<AbstractArtifactCache> m_artifactCache;
     };
 }
 

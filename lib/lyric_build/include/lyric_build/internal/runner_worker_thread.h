@@ -1,7 +1,7 @@
 #ifndef LYRIC_BUILD_INTERNAL_RUNNER_WORKER_THREAD_H
 #define LYRIC_BUILD_INTERNAL_RUNNER_WORKER_THREAD_H
 
-#include "../abstract_cache.h"
+#include "../abstract_artifact_cache.h"
 #include "../build_runner.h"
 
 namespace lyric_build::internal {
@@ -12,7 +12,7 @@ namespace lyric_build::internal {
         AbstractBuildRunner *runner,
         const TaskSettings *taskSettings,
         BuildState *state,
-        AbstractFilesystem *vfs,
+        AbstractVirtualFilesystem *vfs,
         const tempo_utils::UUID &generation,
         std::pair<bool,std::string> &result);
 
@@ -30,7 +30,7 @@ namespace lyric_build::internal {
         const absl::flat_hash_map<TaskKey, TaskState> &depStates,
         AbstractBuildRunner *runner,
         BuildState *state,
-        AbstractCache *cache,
+        AbstractArtifactCache *artifactCache,
         const tempo_utils::UUID &generation,
         std::pair<bool,std::string> &result);
 
@@ -38,7 +38,7 @@ namespace lyric_build::internal {
         const TaskKey &key,
         AbstractBuildRunner *runner,
         BuildState *state,
-        AbstractCache *cache,
+        AbstractArtifactCache *artifactCache,
         const tempo_utils::UUID &generation,
         const absl::flat_hash_map<TaskKey, TaskState> &depStates,
         bool &complete);
@@ -50,7 +50,7 @@ namespace lyric_build::internal {
         const std::string &taskHash,
         AbstractBuildRunner *runner,
         BuildState *state,
-        AbstractCache *cache,
+        AbstractArtifactCache *artifactCache,
         const tempo_utils::UUID &generation,
         bool &complete);
 

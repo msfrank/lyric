@@ -59,7 +59,7 @@ lyric_build::internal::SymbolizeModuleTask::configure(const TaskSettings *config
 tempo_utils::Result<std::string>
 lyric_build::internal::SymbolizeModuleTask::configureTask(
     const TaskSettings *config,
-    AbstractFilesystem *virtualFilesystem)
+    AbstractVirtualFilesystem *virtualFilesystem)
 {
     auto key = getKey();
     auto merged = config->merge(TaskSettings({}, {}, {{getId(), getParams()}}));
@@ -90,11 +90,11 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
             "missing state for dependent task {}", m_parseTarget.toString());
 
     // get the archetype artifact from the cache
-    auto cache = buildState->getCache();
+    auto artifactCache = buildState->getArtifactCache();
     auto parseHash = depStates.at(m_parseTarget).getHash();
     TraceId parseTrace(parseHash, m_parseTarget.getDomain(), m_parseTarget.getId());
     tempo_utils::UUID generation;
-    TU_ASSIGN_OR_RETURN (generation, cache->loadTrace(parseTrace));
+    TU_ASSIGN_OR_RETURN (generation, artifactCache->loadTrace(parseTrace));
 
     tempo_utils::UrlPath archetypeArtifactPath;
     TU_ASSIGN_OR_RETURN (archetypeArtifactPath, convert_module_location_to_artifact_path(
@@ -102,7 +102,7 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     ArtifactId archetypeArtifact(generation, parseHash, archetypeArtifactPath);
 
     std::shared_ptr<const tempo_utils::ImmutableBytes> content;
-    TU_ASSIGN_OR_RETURN (content, cache->loadContentFollowingLinks(archetypeArtifact));
+    TU_ASSIGN_OR_RETURN (content, artifactCache->loadContentFollowingLinks(archetypeArtifact));
     lyric_parser::LyricArchetype archetype(content);
 
     // define the module origin
@@ -111,7 +111,7 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
 
     // construct the local module cache
     std::shared_ptr<lyric_runtime::AbstractLoader> dependencyLoader;
-    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, cache, tempDirectory()));
+    TU_ASSIGN_OR_RETURN (dependencyLoader, DependencyLoader::create(origin, depStates, artifactCache, tempDirectory()));
     auto localModuleCache = lyric_importer::ModuleCache::create(dependencyLoader);
 
     // configure symbolizer
@@ -132,7 +132,7 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     TU_ASSIGN_OR_RETURN (linkageArtifactPath, convert_module_location_to_artifact_path(
         m_moduleLocation, lyric_common::kObjectFileDotSuffix));
     ArtifactId linkageArtifact(buildState->getGeneration().getUuid(), taskHash, linkageArtifactPath);
-    TU_RETURN_IF_NOT_OK (cache->declareArtifact(linkageArtifact));
+    TU_RETURN_IF_NOT_OK (artifactCache->declareArtifact(linkageArtifact));
 
     // store the object metadata in the build cache
     MetadataWriter writer;
@@ -143,11 +143,11 @@ lyric_build::internal::SymbolizeModuleTask::symbolizeModule(
     TU_ASSIGN_OR_RETURN (linkageMetadata, writer.toMetadata());
 
     //
-    TU_RETURN_IF_NOT_OK (cache->storeMetadata(linkageArtifact, linkageMetadata));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeMetadata(linkageArtifact, linkageMetadata));
 
     // store the linkage object content in the build cache
     auto linkageBytes = object.bytesView();
-    TU_RETURN_IF_NOT_OK (cache->storeContent(linkageArtifact, linkageBytes));
+    TU_RETURN_IF_NOT_OK (artifactCache->storeContent(linkageArtifact, linkageBytes));
 
     logInfo("stored linkage at {}", linkageArtifact.toString());
 
