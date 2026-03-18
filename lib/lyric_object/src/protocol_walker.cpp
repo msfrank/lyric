@@ -113,6 +113,17 @@ lyric_object::ProtocolWalker::getReceiveType() const
     return TypeWalker(m_reader, protocolDescriptor->receive_type());
 }
 
+lyric_object::TypeWalker
+lyric_object::ProtocolWalker::getProtocolType() const
+{
+    if (!isValid())
+        return {};
+    auto *protocolDescriptor = m_reader->getProtocol(m_protocolOffset);
+    if (protocolDescriptor == nullptr)
+        return {};
+    return TypeWalker(m_reader, protocolDescriptor->protocol_type());
+}
+
 tu_uint32
 lyric_object::ProtocolWalker::getDescriptorOffset() const
 {

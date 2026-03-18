@@ -206,6 +206,7 @@ struct CoreStruct {
 struct CoreProtocol {
     tu_uint32 protocol_index;
     lyric_common::SymbolPath protocolPath;
+    const CoreType *protocolType;
     const CoreType *sendType;
     const CoreType *recvType;
     lyo1::PortType port;
@@ -473,6 +474,7 @@ struct BuilderState {
 
     CoreProtocol *addProtocol(
         const lyric_common::SymbolPath &protocolPath,
+        const CoreExistential *protocolExistential,
         const CoreType *sendType,
         const CoreType *recvType,
         lyo1::PortType port,

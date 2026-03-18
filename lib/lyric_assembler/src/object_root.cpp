@@ -129,10 +129,7 @@ lyric_assembler::ObjectRoot::initialize(
             }
             case lyric_object::LinkageSection::Protocol: {
                 auto *protocolImport = preludeImport->getProtocol(symbolWalker.getLinkageIndex());
-                auto sendType = protocolImport->getSendType()->getTypeDef();
-                auto receiveType = protocolImport->getReceiveType()->getTypeDef();
-                TU_ASSIGN_OR_RETURN (binding.typeDef, lyric_common::TypeDef::forConcrete(
-                    protocolUrl, {sendType, receiveType}));
+                binding.typeDef = protocolImport->getProtocolType()->getTypeDef();
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
@@ -233,10 +230,7 @@ lyric_assembler::ObjectRoot::initialize(
                 }
                 case lyric_object::LinkageSection::Protocol: {
                     auto *protocolImport = preludeImport->getProtocol(symbolWalker.getLinkageIndex());
-                    auto sendType = protocolImport->getSendType()->getTypeDef();
-                    auto receiveType = protocolImport->getReceiveType()->getTypeDef();
-                    TU_ASSIGN_OR_RETURN (binding.typeDef, lyric_common::TypeDef::forConcrete(
-                        protocolUrl, {sendType, receiveType}));
+                    binding.typeDef = protocolImport->getProtocolType()->getTypeDef();
                     TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                     break;
                 }

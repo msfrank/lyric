@@ -154,6 +154,7 @@ namespace lyric_object {
         Enum,
         Existential,
         Namespace,
+        Protocol,
 
         // must be last
         NUM_INTRINSIC_TYPES,

@@ -77,6 +77,7 @@ import_type_symbol(
         case lyric_object::LinkageSection::Enum:
         case lyric_object::LinkageSection::Existential:
         case lyric_object::LinkageSection::Instance:
+        case lyric_object::LinkageSection::Protocol:
         case lyric_object::LinkageSection::Static:
         case lyric_object::LinkageSection::Struct:
             break;

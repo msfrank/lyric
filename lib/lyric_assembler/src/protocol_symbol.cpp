@@ -7,6 +7,8 @@
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_assembler/type_cache.h>
 
+#include "lyric_assembler/existential_symbol.h"
+
 lyric_assembler::ProtocolSymbol::ProtocolSymbol(
     const lyric_common::SymbolUrl &protocolUrl,
     lyric_object::PortType port,
@@ -60,7 +62,6 @@ lyric_assembler::ProtocolSymbol::ProtocolSymbol(
 lyric_assembler::ProtocolSymbolPriv *
 lyric_assembler::ProtocolSymbol::load()
 {
-    auto *fundamentalCache = m_state->fundamentalCache();
     auto *typeCache = m_state->typeCache();
 
     auto priv = std::make_unique<ProtocolSymbolPriv>();
@@ -70,8 +71,7 @@ lyric_assembler::ProtocolSymbol::load()
     priv->port = m_protocolImport->getPort();
     priv->comm = m_protocolImport->getCommunication();
 
-    TU_ASSIGN_OR_RAISE (priv->protocolType, typeCache->getOrMakeType(
-        fundamentalCache->getFundamentalType(FundamentalSymbol::Protocol)));
+    TU_ASSIGN_OR_RAISE (priv->protocolType, typeCache->importType(m_protocolImport->getProtocolType()));
 
     auto *sendType = m_protocolImport->getSendType();
     TU_ASSIGN_OR_RAISE (priv->sendType, typeCache->importType(sendType));
@@ -156,4 +156,20 @@ lyric_assembler::ProtocolSymbol::protocolBlock() const
 {
     auto *priv = getPriv();
     return priv->protocolBlock.get();
+}
+
+tempo_utils::Status
+lyric_assembler::ProtocolSymbol::prepareMethod(
+    const std::string &name,
+    const lyric_common::TypeDef &receiverType,
+    CallableInvoker &invoker,
+    bool thisReceiver) const
+{
+    auto *fundamentalCache = m_state->fundamentalCache();
+    auto *symbolCache = m_state->symbolCache();
+
+    auto protocolUrl = fundamentalCache->getFundamentalUrl(FundamentalSymbol::Protocol);
+    ExistentialSymbol *protocolExistential;
+    TU_ASSIGN_OR_RETURN (protocolExistential, symbolCache->getOrImportExistential(protocolUrl));
+    return protocolExistential->prepareMethod(name, receiverType, invoker, false);
 }

@@ -5,14 +5,25 @@
 #include <tempo_utils/log_stream.h>
 #include <tempo_utils/unicode.h>
 
-lyric_runtime::ProtocolRef::ProtocolRef(const ExistentialTable *etable, const DataCell &descriptor)
+lyric_runtime::ProtocolRef::ProtocolRef(
+    const ExistentialTable *etable,
+    const DataCell &descriptor,
+    const DataCell &type,
+    lyric_object::PortType port,
+    lyric_object::CommunicationType comm)
     : m_etable(etable),
       m_descriptor(descriptor),
+      m_type(type),
+      m_port(port),
+      m_comm(comm),
       m_reachable(false)
 {
     TU_ASSERT (m_etable != nullptr);
     TU_ASSERT (m_descriptor.type == DataCellType::DESCRIPTOR);
     TU_ASSERT (m_descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Protocol);
+    TU_ASSERT (m_type.type == DataCellType::TYPE);
+    TU_ASSERT (m_port != lyric_object::PortType::Invalid);
+    TU_ASSERT (m_comm != lyric_object::CommunicationType::Invalid);
 }
 
 lyric_runtime::ProtocolRef::~ProtocolRef()
@@ -36,6 +47,48 @@ const lyric_runtime::AbstractExtensionResolver *
 lyric_runtime::ProtocolRef::getExtensionResolver() const
 {
     return m_etable;
+}
+
+lyric_runtime::DataCell
+lyric_runtime::ProtocolRef::protocolIsAcceptor() const
+{
+    return DataCell(m_port == lyric_object::PortType::Accept);
+}
+
+lyric_runtime::DataCell
+lyric_runtime::ProtocolRef::protocolIsConnector() const
+{
+    return DataCell(m_port == lyric_object::PortType::Connect);
+}
+
+lyric_runtime::DataCell
+lyric_runtime::ProtocolRef::protocolCanSend() const
+{
+    switch (m_comm) {
+        case lyric_object::CommunicationType::Send:
+        case lyric_object::CommunicationType::SendAndReceive:
+            return DataCell(true);
+        default:
+            return DataCell(false);
+    }
+}
+
+lyric_runtime::DataCell
+lyric_runtime::ProtocolRef::protocolCanReceive() const
+{
+    switch (m_comm) {
+        case lyric_object::CommunicationType::Receive:
+        case lyric_object::CommunicationType::SendAndReceive:
+            return DataCell(true);
+        default:
+            return DataCell(false);
+    }
+}
+
+lyric_runtime::DataCell
+lyric_runtime::ProtocolRef::protocolType() const
+{
+    return m_type;
 }
 
 lyric_common::SymbolUrl

@@ -2,6 +2,7 @@
 #include <lyric_object/concrete_type_walker.h>
 #include <lyric_runtime/base_ref.h>
 #include <lyric_runtime/interpreter_result.h>
+#include <lyric_runtime/protocol_ref.h>
 #include <lyric_runtime/segment_manager.h>
 #include <lyric_runtime/status_ref.h>
 #include <lyric_runtime/type_manager.h>
@@ -35,12 +36,12 @@ lyric_runtime::TypeManager::typeOf(const DataCell &value)
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Undef)];
         case DataCellType::URL:
             return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Url)];
-        case DataCellType::PROTOCOL:
-            TU_LOG_FATAL << "typeOf PROTOCOL value is not implemented";
         case DataCellType::REF:
             return value.data.ref->getVirtualTable()->getType();
         case DataCellType::STATUS:
             return value.data.status->getVirtualTable()->getType();
+        case DataCellType::PROTOCOL:
+            return value.data.protocol->protocolType();
 
         case DataCellType::DESCRIPTOR: {
             auto section = value.data.descriptor->getLinkageSection();
@@ -64,11 +65,12 @@ lyric_runtime::TypeManager::typeOf(const DataCell &value)
                 case lyric_object::LinkageSection::Namespace:
                     return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Namespace)];
                 case lyric_object::LinkageSection::Protocol:
-                    TU_LOG_FATAL << "intrinsic cache entry for Protocol is not implemented";
+                    return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Protocol)];
                 case lyric_object::LinkageSection::Struct:
                     return m_intrinsiccache[static_cast<int>(lyric_object::IntrinsicType::Struct)];
                 default:
-                    break;
+                    return InterpreterStatus::forCondition(InterpreterCondition::kRuntimeInvariant,
+                        "{} descriptor has no type", lyric_object::linkage_section_to_name(section));
             }
         }
 

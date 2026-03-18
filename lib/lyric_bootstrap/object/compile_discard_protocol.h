@@ -5,6 +5,7 @@
 
 CoreProtocol *build_core_DiscardProtocol(
     BuilderState &state,
+    const CoreExistential *ProtocolExistential,
     const CoreType *AnyType,
     const CoreType *NilType);
 

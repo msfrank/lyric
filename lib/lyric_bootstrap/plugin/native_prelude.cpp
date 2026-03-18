@@ -7,6 +7,7 @@
 #include "native_prelude.h"
 #include "object_ref.h"
 #include "pair_ref.h"
+#include "protocol_traps.h"
 #include "record_ref.h"
 #include "rest_iterator_ref.h"
 #include "rest_traps.h"
@@ -16,7 +17,7 @@
 #include "string_traps.h"
 #include "url_traps.h"
 
-std::array<lyric_runtime::NativeTrap,55> kPreludeTraps = {{
+std::array<lyric_runtime::NativeTrap,59> kPreludeTraps = {{
     {bytes_at, "BytesAt", 0},
     { bytes_compare, "BytesCompare", 0 },
     { bytes_length, "BytesLength", 0 },
@@ -44,6 +45,10 @@ std::array<lyric_runtime::NativeTrap,55> kPreludeTraps = {{
     { pair_ctor, "PairCtor", 0 },
     { pair_first, "PairFirst", 0 },
     { pair_second, "PairSecond", 0 },
+    { protocol_is_acceptor, "ProtocolIsAcceptor", 0 },
+    { protocol_is_connector, "ProtocolIsConnector", 0 },
+    { protocol_can_send, "ProtocolCanSend", 0 },
+    { protocol_can_receive, "ProtocolCanReceive", 0 },
     { record_alloc, "RecordAlloc", 0 },
     { rest_size, "RestSize", 0 },
     { rest_get, "RestGet", 0 },

@@ -82,6 +82,8 @@ lyric_object::ConcreteTypeWalker::getLinkageSection() const
             return LinkageSection::Existential;
         case lyo1::TypeSection::Instance:
             return LinkageSection::Instance;
+        case lyo1::TypeSection::Protocol:
+            return LinkageSection::Protocol;
         case lyo1::TypeSection::Static:
             return LinkageSection::Static;
         case lyo1::TypeSection::Struct:

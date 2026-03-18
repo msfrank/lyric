@@ -249,6 +249,7 @@ lyric_object::ExistentialWalker::getIntrinsicType() const
         case lyo1::IntrinsicType::Enum:         return IntrinsicType::Enum;
         case lyo1::IntrinsicType::Existential:  return IntrinsicType::Existential;
         case lyo1::IntrinsicType::Namespace:    return IntrinsicType::Namespace;
+        case lyo1::IntrinsicType::Protocol:     return IntrinsicType::Protocol;
         default:
             return IntrinsicType::Invalid;
     }

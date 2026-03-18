@@ -4,6 +4,7 @@
 #include <lyric_assembler/enum_symbol.h>
 #include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/instance_symbol.h>
+#include <lyric_assembler/protocol_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 #include <lyric_assembler/symbol_cache.h>
 #include <lyric_compiler/block_handler.h>
@@ -426,6 +427,12 @@ invoke_method(
         case lyric_assembler::SymbolType::INSTANCE: {
             auto *instanceSymbol = cast_symbol_to_instance(receiver);
             TU_RETURN_IF_NOT_OK (instanceSymbol->prepareMethod(identifier, receiverType, *invoker, thisReceiver));
+            break;
+        }
+
+        case lyric_assembler::SymbolType::PROTOCOL: {
+            auto *protocolSymbol = cast_symbol_to_protocol(receiver);
+            TU_RETURN_IF_NOT_OK (protocolSymbol->prepareMethod(identifier, receiverType, *invoker, thisReceiver));
             break;
         }
 

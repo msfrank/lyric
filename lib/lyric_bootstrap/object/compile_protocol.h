@@ -3,6 +3,10 @@
 
 #include "builder_state.h"
 
-CoreExistential *build_core_Protocol(BuilderState &state, const CoreExistential *DescriptorExistential);
+CoreExistential *declare_core_Protocol(BuilderState &state, const CoreExistential *DescriptorExistential);
+void build_core_Protocol(
+    BuilderState &state,
+    const CoreExistential *ProtocolExistential,
+    const CoreType *BoolType);
 
 #endif // LYRIC_BOOTSTRAP_COMPILE_PROTOCOL_H

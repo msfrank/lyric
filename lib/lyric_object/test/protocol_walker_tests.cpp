@@ -15,6 +15,15 @@ protected:
         std::vector<flatbuffers::Offset<lyo1::StructDescriptor>> structs_vector;
         std::vector<flatbuffers::Offset<lyo1::TypeDescriptor>> types_vector;
 
+        auto protocolAssignable = lyo1::CreateConcreteAssignable(buffer,
+            lyo1::TypeSection::Existential,
+            lyric_object::GET_LINK_ADDRESS(0),
+            0);
+        types_vector.push_back(lyo1::CreateTypeDescriptor(buffer,
+            lyo1::Assignable::ConcreteAssignable,
+            protocolAssignable.Union(),
+            lyric_object::INVALID_ADDRESS_U32));
+
         structs_vector.push_back(lyo1::CreateStructDescriptor(
             buffer,
             buffer.CreateString("SendMessage")));
@@ -47,7 +56,9 @@ protected:
             lyo1::PortType::Connect,
             lyo1::CommunicationType::SendAndReceive,
             0,
-            1));
+            1,
+            2,
+            lyo1::ProtocolFlags::NONE));
 
         auto fb_protocols = buffer.CreateVector(protocols_vector);
         auto fb_structs = buffer.CreateVector(structs_vector);

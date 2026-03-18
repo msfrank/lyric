@@ -9,6 +9,7 @@ namespace lyric_importer {
         bool isDeclOnly = false;
         lyric_object::PortType port = lyric_object::PortType::Invalid;
         lyric_object::CommunicationType comm = lyric_object::CommunicationType::Invalid;
+        TypeImport *protocolType = nullptr;
         TypeImport *sendType = nullptr;
         TypeImport *receiveType = nullptr;
     };
@@ -46,6 +47,13 @@ lyric_importer::ProtocolImport::getCommunication()
 {
     load();
     return m_priv->comm;
+}
+
+lyric_importer::TypeImport *
+lyric_importer::ProtocolImport::getProtocolType()
+{
+    load();
+    return m_priv->protocolType;
 }
 
 bool
@@ -108,6 +116,8 @@ lyric_importer::ProtocolImport::load()
                 ImporterCondition::kImportError,
                 "cannot import protocol at index {} in module {}; invalid communication type",
                 m_protocolOffset, objectLocation.toString()));
+
+    priv->protocolType = moduleImport->getType(protocolWalker.getProtocolType().getDescriptorOffset());
 
     auto sendTypeWalker = protocolWalker.getSendType();
     if (sendTypeWalker.isValid()) {

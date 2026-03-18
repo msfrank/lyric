@@ -28,6 +28,8 @@ namespace lyric_object {
         TypeWalker getSendType() const;
         TypeWalker getReceiveType() const;
 
+        TypeWalker getProtocolType() const;
+
         tu_uint32 getDescriptorOffset() const;
 
     private:

@@ -1590,6 +1590,7 @@ BuilderState::addEnumSealedSubtype(const CoreEnum *receiver, const CoreEnum *sub
 CoreProtocol *
 BuilderState::addProtocol(
     const lyric_common::SymbolPath &protocolPath,
+    const CoreExistential *protocolExistential,
     const CoreType *sendType,
     const CoreType *recvType,
     lyo1::PortType port,
@@ -1602,8 +1603,14 @@ BuilderState::addProtocol(
     auto *Protocol = new CoreProtocol();
     protocols.push_back(Protocol);
 
+    auto *superType = addConcreteType(protocolExistential->existentialType,
+        lyo1::TypeSection::Existential, protocolExistential->existential_index,
+        {sendType, recvType});
+    auto protocolType = addConcreteType(superType, lyo1::TypeSection::Protocol, protocol_index);
+
     Protocol->protocol_index = protocol_index;
     Protocol->protocolPath = protocolPath;
+    Protocol->protocolType = protocolType;
     Protocol->sendType = sendType;
     Protocol->recvType = recvType;
     Protocol->port = port;
@@ -1955,7 +1962,8 @@ BuilderState::toBytes() const
             Protocol->recvType->type_index : lyric_object::INVALID_ADDRESS_U32;
         protocols_vector.push_back(lyo1::CreateProtocolDescriptor(buffer,
             fb_fullyQualifiedName, Protocol->port, Protocol->comm,
-            sendType, recvType, Protocol->flags));
+            Protocol->protocolType->type_index, sendType, recvType,
+            Protocol->flags));
     }
 
     // write the symbol descriptors

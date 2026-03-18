@@ -87,6 +87,7 @@ namespace lyric_assembler {
         tempo_utils::Result<tu_uint32> getLiteralAddress(const LiteralHandle *literalHandle) const;
         tempo_utils::Result<tu_uint32> getImplOffset(const ImplRef &implRef) const;
         tempo_utils::Result<tu_uint32> getTemplateOffset(const lyric_common::SymbolUrl &templateUrl) const;
+        tempo_utils::Result<tu_uint32> getTemplateAddress(const lyric_common::SymbolUrl &templateUrl) const;
         tempo_utils::Result<tu_uint32> getTypeOffset(const lyric_common::TypeDef &typeDef) const;
         tempo_utils::Result<tu_uint32> getTrapNumber(
             const lyric_common::ModuleLocation &pluginLocation,

@@ -16,6 +16,8 @@ namespace lyric_importer {
         lyric_object::PortType getPort();
         lyric_object::CommunicationType getCommunication();
 
+        TypeImport *getProtocolType();
+
         bool hasSendType();
         TypeImport *getSendType();
 

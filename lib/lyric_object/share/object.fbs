@@ -83,6 +83,7 @@ enum TypeSection : uint8 {
     Enum,
     Existential,
     Instance,
+    Protocol,
     Static,
     Struct,
     Type,
@@ -474,6 +475,7 @@ table ProtocolDescriptor {
     fqsn: string;                               // fully qualified protocol name
     protocol_port: PortType = Invalid;          // whether the protocol is the connector or acceptor
     protocol_comm: CommunicationType = Invalid; // direction of messages, either send, receive, or bidirectional
+    protocol_type: uint32 = 0xffffffff;         // offset of the protocol type in the types section
     send_type: uint32 = 0xffffffff;             // offset of the send message type in the types section
 	receive_type: uint32 = 0xffffffff;          // offset of the receive message type in the types section
     flags: ProtocolFlags;                       // bitfield containing protocol flags

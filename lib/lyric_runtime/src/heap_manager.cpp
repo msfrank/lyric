@@ -253,7 +253,17 @@ lyric_runtime::HeapManager::loadRestOntoStack(const CallCell &frame)
 lyric_runtime::DataCell
 lyric_runtime::HeapManager::allocateProtocol(const DataCell &descriptor)
 {
-    auto *instance = new ProtocolRef(m_preludeTables.ProtocolTable, descriptor);
+    TU_ASSERT (descriptor.type == DataCellType::DESCRIPTOR);
+    TU_ASSERT (descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Protocol);
+    auto *segment = descriptor.data.descriptor->getSegment();
+    auto object = segment->getObject();
+    auto walker = object.getProtocol(descriptor.data.descriptor->getDescriptorIndex());
+    auto port = walker.getPort();
+    auto comm = walker.getCommunication();
+    auto *protocolType = segment->lookupType(walker.getProtocolType().getDescriptorOffset());
+    auto type = DataCell::forType(protocolType);
+
+    auto *instance = new ProtocolRef(m_preludeTables.ProtocolTable, descriptor, type, port, comm);
     m_heap->insertInstance(instance);
     return DataCell::forProtocol(instance);
 }

@@ -101,13 +101,15 @@ main(int argc, char *argv[])
     // define descriptor existentials
     build_core_Binding(state, DescriptorExistential);
     build_core_Namespace(state, DescriptorExistential);
-    build_core_Protocol(state, DescriptorExistential);
     build_core_Class(state, DescriptorExistential);
     build_core_Struct(state, DescriptorExistential);
     build_core_Instance(state, DescriptorExistential);
     build_core_Enum(state, DescriptorExistential);
     build_core_Concept(state, DescriptorExistential);
     auto *CallExistential = build_core_Call(state, DescriptorExistential);
+
+    // declare descriptor existentials
+    auto *ProtocolExistential = declare_core_Protocol(state, DescriptorExistential);
 
     // declare (but do not define) root types for concepts, classes, structs, instances, and enums
     auto *IdeaConcept = declare_core_Idea(state, AnyExistential);
@@ -133,6 +135,9 @@ main(int argc, char *argv[])
     auto *PropositionConcept = build_core_Proposition(state, IdeaConcept, BoolExistential->existentialType);
     auto *UnwrapConcept = build_core_Unwrap(state, IdeaConcept);
     build_core_Varargs(state, IdeaConcept);
+
+    // define descriptor existentials
+    build_core_Protocol(state, ProtocolExistential, BoolExistential->existentialType);
 
     // define intrinsic existentials
     build_core_Bool(state, BoolExistential);
@@ -252,7 +257,8 @@ main(int argc, char *argv[])
         DataIteratorType, DataIterableType, BoolExistential->existentialType, IntExistential->existentialType);
 
     // define DiscardProtocol
-    build_core_DiscardProtocol(state, AnyExistential->existentialType, NilExistential->existentialType);
+    build_core_DiscardProtocol(state, ProtocolExistential, AnyExistential->existentialType,
+        NilExistential->existentialType);
 
     // define prelude functions
     build_core_prelude_trap(state, IntExistential->existentialType, state.noReturnType);

@@ -222,6 +222,9 @@ lyric_assembler::TypeCache::getOrMakeType(const lyric_common::TypeDef &assignabl
                 case SymbolType::TYPENAME:
                     return make_typename_type(assignableType, cast_symbol_to_typename(sym), m_typecache);
 
+                case SymbolType::PROTOCOL:
+                    return cast_symbol_to_protocol(sym)->protocolType();
+
                 default:
                     return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
                         "failed to make type {}; invalid type", assignableType.toString());
@@ -384,7 +387,7 @@ lyric_assembler::TypeCache::declareParameterizedType(
         return piterator->second;
     }
 
-    lyric_assembler::AbstractSymbol *symbol;
+    AbstractSymbol *symbol;
     TU_ASSIGN_OR_RETURN (symbol, m_objectState->symbolCache()->getOrImportSymbol(baseUrl));
     auto superType = symbol->getTypeDef();
 
@@ -856,6 +859,9 @@ lyric_assembler::TypeCache::resolveSignature(const lyric_common::SymbolUrl &symb
             break;
         case SymbolType::INSTANCE:
             typeHandle = cast_symbol_to_instance(symbol)->instanceType();
+            break;
+        case SymbolType::PROTOCOL:
+            typeHandle = cast_symbol_to_protocol(symbol)->protocolType();
             break;
         case SymbolType::STRUCT:
             typeHandle = cast_symbol_to_struct(symbol)->structType();

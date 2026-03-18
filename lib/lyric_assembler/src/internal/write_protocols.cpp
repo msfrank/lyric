@@ -24,6 +24,8 @@ lyric_assembler::internal::touch_protocol(
     if (protocolSymbol->isImported())
         return {};
 
+    TU_RETURN_IF_NOT_OK (writer.touchType(protocolSymbol->protocolType()));
+
     auto *sendType = protocolSymbol->sendType();
     TU_RETURN_IF_NOT_OK (writer.touchType(sendType->getTypeDef()));
 
@@ -78,6 +80,9 @@ write_protocol(
                 lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid communication type");
     }
 
+    tu_uint32 protocolTypeOffset;
+    TU_ASSIGN_OR_RETURN (protocolTypeOffset, writer.getTypeOffset(protocolSymbol->protocolType()->getTypeDef()));
+
     auto *sendType = protocolSymbol->sendType();
     tu_uint32 sendTypeOffset;
     TU_ASSIGN_OR_RETURN (sendTypeOffset, writer.getTypeOffset(sendType->getTypeDef()));
@@ -88,7 +93,9 @@ write_protocol(
 
     // add protocol descriptor
     protocols_vector.push_back(lyo1::CreateProtocolDescriptor(buffer,
-        fb_fullyQualifiedName, port, comm, sendTypeOffset, receiveTypeOffset, protocolFlags));
+        fb_fullyQualifiedName, port, comm,
+        protocolTypeOffset, sendTypeOffset, receiveTypeOffset,
+        protocolFlags));
 
     return {};
 }

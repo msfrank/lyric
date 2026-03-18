@@ -287,19 +287,54 @@ lyric_assembler::ObjectWriter::getImplOffset(const ImplRef &implRef) const
 {
     auto entry = m_implOffsets.find(implRef);
     if (entry == m_implOffsets.cend())
-        return AssemblerStatus::forCondition(
-            AssemblerCondition::kAssemblerInvariant, "missing impl");
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "missing impl {} for {}", implRef.implType.toString(), implRef.receiverUrl.toString());
+    return entry->second;
+}
+tempo_utils::Result<tu_uint32>
+lyric_assembler::ObjectWriter::getTemplateOffset(const lyric_common::SymbolUrl &templateUrl) const {
+    auto entry = m_templateOffsets.find(templateUrl);
+    if (entry == m_templateOffsets.cend())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "missing template for {}", templateUrl.toString());
     return entry->second;
 }
 
 tempo_utils::Result<tu_uint32>
-lyric_assembler::ObjectWriter::getTemplateOffset(const lyric_common::SymbolUrl &templateUrl) const
+lyric_assembler::ObjectWriter::getTemplateAddress(const lyric_common::SymbolUrl &templateUrl) const
 {
-    auto entry = m_templateOffsets.find(templateUrl);
-    if (entry == m_templateOffsets.cend())
-        return AssemblerStatus::forCondition(
-            AssemblerCondition::kAssemblerInvariant, "missing template");
-    return entry->second;
+    auto templateEntry = m_templateOffsets.find(templateUrl);
+    if (templateEntry != m_templateOffsets.cend())
+        return templateEntry->second;
+
+    auto symbolEntry = m_symbolEntries.find(templateUrl);
+    if (symbolEntry == m_symbolEntries.cend())
+        return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+            "missing template for {}", templateUrl.toString());
+
+    auto &entry = symbolEntry->second;
+    switch (entry.type) {
+        case SymbolEntry::EntryType::Link: {
+            if (m_links.size() <= entry.index)
+                return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                    "invalid link {}", templateUrl.toString());
+            auto requestedLink = m_links.at(entry.index);
+            switch (requestedLink.linkType) {
+                case lyric_object::LinkageSection::Class:
+                case lyric_object::LinkageSection::Concept:
+                case lyric_object::LinkageSection::Existential:
+                    break;
+                default:
+                    return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                        "invalid link {}", templateUrl.toString());
+            }
+            return lyric_object::GET_LINK_ADDRESS(entry.index);
+        }
+        case SymbolEntry::EntryType::Descriptor:
+        default:
+            return AssemblerStatus::forCondition(AssemblerCondition::kAssemblerInvariant,
+                "invalid symbol {}", templateUrl.toString());
+    }
 }
 
 tempo_utils::Result<tu_uint32>

@@ -1,5 +1,4 @@
 
-#include <lyric_assembler/assembler_types.h>
 #include <lyric_assembler/binding_symbol.h>
 #include <lyric_assembler/call_symbol.h>
 #include <lyric_assembler/class_symbol.h>
@@ -9,6 +8,7 @@
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/internal/write_types.h>
 #include <lyric_assembler/object_writer.h>
+#include <lyric_assembler/protocol_symbol.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
 
@@ -54,6 +54,9 @@ lyric_assembler::internal::touch_type(
             case SymbolType::INSTANCE:
                 TU_RETURN_IF_NOT_OK (writer.touchInstance(cast_symbol_to_instance(symbol)));
                 break;
+            case SymbolType::PROTOCOL:
+                TU_RETURN_IF_NOT_OK (writer.touchProtocol(cast_symbol_to_protocol(symbol)));
+                break;
             case SymbolType::STATIC:
                 TU_RETURN_IF_NOT_OK (writer.touchStatic(cast_symbol_to_static(symbol)));
                 break;
@@ -70,8 +73,10 @@ lyric_assembler::internal::touch_type(
     }
 
     switch (typeDef.getType()) {
+        case lyric_common::TypeDefType::Placeholder: {
+            [[fallthrough]];
+        }
         case lyric_common::TypeDefType::Concrete:
-        case lyric_common::TypeDefType::Placeholder:
         case lyric_common::TypeDefType::Intersection:
         case lyric_common::TypeDefType::Union: {
             auto *typeCache = objectState->typeCache();
@@ -137,6 +142,9 @@ write_type(
                 case lyric_object::LinkageSection::Instance:
                     concreteSection = lyo1::TypeSection::Instance;
                     break;
+                case lyric_object::LinkageSection::Protocol:
+                    concreteSection = lyo1::TypeSection::Protocol;
+                    break;
                 case lyric_object::LinkageSection::Static:
                     concreteSection = lyo1::TypeSection::Static;
                     break;
@@ -145,7 +153,8 @@ write_type(
                     break;
                 default:
                     return lyric_assembler::AssemblerStatus::forCondition(
-                        lyric_assembler::AssemblerCondition::kAssemblerInvariant, "invalid type");
+                        lyric_assembler::AssemblerCondition::kAssemblerInvariant,
+                        "invalid type section {}", lyric_object::linkage_section_to_name(section));
             }
             for (auto it = typeHandle->typeArgumentsBegin(); it != typeHandle->typeArgumentsEnd(); it++) {
                 tu_uint32 argumentType;
@@ -162,7 +171,7 @@ write_type(
         case lyric_common::TypeDefType::Placeholder: {
             auto templateUrl = assignableType.getPlaceholderTemplateUrl();
             tu_uint32 placeholderTemplate;
-            TU_ASSIGN_OR_RETURN (placeholderTemplate, writer.getTemplateOffset(templateUrl));
+            TU_ASSIGN_OR_RETURN (placeholderTemplate, writer.getTemplateAddress(templateUrl));
             std::vector<tu_uint32> parameters;
             for (auto it = typeHandle->typeArgumentsBegin(); it != typeHandle->typeArgumentsEnd(); it++) {
                 tu_uint32 argumentType;

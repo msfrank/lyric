@@ -57,6 +57,12 @@ namespace lyric_assembler {
 
         BlockHandle *protocolBlock() const;
 
+        tempo_utils::Status prepareMethod(
+            const std::string &name,
+            const lyric_common::TypeDef &receiverType,
+            CallableInvoker &invoker,
+            bool thisReceiver = false) const;
+
     private:
         lyric_common::SymbolUrl m_protocolUrl;
         lyric_importer::ProtocolImport *m_protocolImport = nullptr;

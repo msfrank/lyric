@@ -20,6 +20,8 @@ add_library(prelude-plugin STATIC
     plugin/object_ref.h
     plugin/pair_ref.cpp
     plugin/pair_ref.h
+    plugin/protocol_traps.cpp
+    plugin/protocol_traps.h
     plugin/rest_iterator_ref.cpp
     plugin/rest_iterator_ref.h
     plugin/rest_traps.cpp

@@ -7,12 +7,23 @@ namespace lyric_runtime {
 
     class ProtocolRef final : public AbstractRef {
     public:
-        ProtocolRef(const ExistentialTable *etable, const DataCell &descriptor);
+        ProtocolRef(
+            const ExistentialTable *etable,
+            const DataCell &descriptor,
+            const DataCell &type,
+            lyric_object::PortType port,
+            lyric_object::CommunicationType comm);
         ~ProtocolRef() override;
 
         const AbstractMemberResolver *getMemberResolver() const override;
         const AbstractMethodResolver *getMethodResolver() const override;
         const AbstractExtensionResolver *getExtensionResolver() const override;
+
+        DataCell protocolIsAcceptor() const;
+        DataCell protocolIsConnector() const;
+        DataCell protocolCanSend() const;
+        DataCell protocolCanReceive() const;
+        DataCell protocolType() const;
 
         bool equals(const AbstractRef *other) const override;
         std::string toString() const override;
@@ -45,6 +56,9 @@ namespace lyric_runtime {
     private:
         const ExistentialTable *m_etable;
         DataCell m_descriptor;
+        DataCell m_type;
+        lyric_object::PortType m_port;
+        lyric_object::CommunicationType m_comm;
         bool m_reachable;
     };
 }
