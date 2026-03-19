@@ -413,3 +413,50 @@ lyric_runtime::SegmentManager::storeProtocol(
     auto *segment = getSegment(linkage->object);
     return segment->setProtocol(linkage->value, value);
 }
+
+lyric_runtime::DataCell
+lyric_runtime::SegmentManager::loadNamespace(
+    tu_uint32 address,
+    StackfulCoroutine *currentCoro,
+    tempo_utils::Status &status)
+{
+    auto *sp = currentCoro->peekSP();
+
+    if (lyric_object::IS_NEAR(address))
+        return sp->getNamespace(address);
+
+    const auto *linkage = resolveLink(sp, lyric_object::GET_LINK_OFFSET(address), status);
+    if (linkage == nullptr)
+        return {};               // failed to resolve dynamic link
+    if (linkage->linkage != lyric_object::LinkageSection::Namespace) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "invalid namespace linkage");
+        return {};
+    }
+    auto *segment = getSegment(linkage->object);
+    return segment->getNamespace(linkage->value);
+}
+
+bool
+lyric_runtime::SegmentManager::storeNamespace(
+    tu_uint32 address,
+    const DataCell &value,
+    StackfulCoroutine *currentCoro,
+    tempo_utils::Status &status)
+{
+    auto *sp = currentCoro->peekSP();
+
+    if (lyric_object::IS_NEAR(address))
+        return sp->setNamespace(address, value);
+
+    const auto *linkage = resolveLink(sp, lyric_object::GET_LINK_OFFSET(address), status);
+    if (linkage == nullptr)
+        return false;                   // failed to resolve dynamic link
+    if (linkage->linkage != lyric_object::LinkageSection::Namespace) {
+        status = InterpreterStatus::forCondition(
+            InterpreterCondition::kRuntimeInvariant, "invalid namespace linkage");
+        return false;
+    }
+    auto *segment = getSegment(linkage->object);
+    return segment->setNamespace(linkage->value, value);
+}

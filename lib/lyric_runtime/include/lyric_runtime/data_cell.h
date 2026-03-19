@@ -12,6 +12,7 @@ namespace lyric_runtime {
     class BaseRef;
     class BytesRef;
     class DescriptorEntry;
+    class NamespaceRef;
     class ProtocolRef;
     class RestRef;
     class StatusRef;
@@ -31,6 +32,7 @@ namespace lyric_runtime {
         TYPE,
         REF,
         BYTES,
+        NAMESPACE,
         PROTOCOL,
         STATUS,
         STRING,
@@ -67,6 +69,7 @@ namespace lyric_runtime {
         static DataCell forLiteral(const LiteralCell &literal);
         static DataCell forBytes(BytesRef *bytes);
         static DataCell forDescriptor(DescriptorEntry *descriptor);
+        static DataCell forNamespace(NamespaceRef *ns);
         static DataCell forProtocol(ProtocolRef *protocol);
         static DataCell forRef(BaseRef *ref);
         static DataCell forRest(RestRef *rest);
@@ -85,6 +88,7 @@ namespace lyric_runtime {
             TypeEntry *type;
             BaseRef *ref;
             BytesRef *bytes;
+            NamespaceRef *ns;
             ProtocolRef *protocol;
             StatusRef *status;
             StringRef *str;

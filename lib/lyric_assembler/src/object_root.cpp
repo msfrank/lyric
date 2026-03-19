@@ -44,18 +44,16 @@ lyric_assembler::ObjectRoot::initialize(
         preludeLocation, ImportFlags::SystemBootstrap));
     auto preludeObject = preludeImport->getObject();
 
-    // resolve the Namespace type
+    // resolve the Namespace type and ensure it exists in the type cache
     auto namespaceType = fundamentalCache->getFundamentalType(FundamentalSymbol::Namespace);
-    TypeHandle *namespaceTypeHandle;
-    TU_ASSIGN_OR_RETURN (namespaceTypeHandle, typeCache->getOrMakeType(namespaceType));
-
-    // resolve the Protocol url
-    auto protocolUrl = fundamentalCache->getFundamentalUrl(FundamentalSymbol::Protocol);
+    TU_RETURN_IF_STATUS (typeCache->getOrMakeType(namespaceType));
 
     // create the $global namespace
     lyric_common::SymbolUrl globalUrl(location, lyric_common::SymbolPath({"$global"}));
+    TypeHandle *globalTypeHandle;
+    TU_ASSIGN_OR_RETURN (globalTypeHandle, typeCache->declareSubType(globalUrl, {}, namespaceType));
     auto globalNamespace = std::make_unique<NamespaceSymbol>(
-        globalUrl, namespaceTypeHandle, m_rootBlock.get(), m_state);
+        globalUrl, globalTypeHandle, m_rootBlock.get(), m_state);
     TU_ASSIGN_OR_RETURN (m_globalNamespace, m_state->appendNamespace(std::move(globalNamespace)));
 
     // create the $entry call
@@ -123,7 +121,8 @@ lyric_assembler::ObjectRoot::initialize(
                 break;
             }
             case lyric_object::LinkageSection::Namespace: {
-                binding.typeDef = namespaceType;
+                auto *namespaceImport = preludeImport->getNamespace(symbolWalker.getLinkageIndex());
+                binding.typeDef = namespaceImport->getNamespaceType()->getTypeDef();
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
@@ -224,7 +223,8 @@ lyric_assembler::ObjectRoot::initialize(
                     break;
                 }
                 case lyric_object::LinkageSection::Namespace: {
-                    binding.typeDef = namespaceType;
+                    auto *namespaceImport = preludeImport->getNamespace(symbolWalker.getLinkageIndex());
+                    binding.typeDef = namespaceImport->getNamespaceType()->getTypeDef();
                     TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                     break;
                 }

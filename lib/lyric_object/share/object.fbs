@@ -83,6 +83,7 @@ enum TypeSection : uint8 {
     Enum,
     Existential,
     Instance,
+    Namespace,
     Protocol,
     Static,
     Struct,
@@ -96,13 +97,13 @@ enum SpecialType : uint8 {
 
 table ConcreteAssignable {
     concrete_section: TypeSection = Invalid;    // object section containing the descriptor
-    concrete_descriptor: uint32 = 0xFFFFFFFF;   // index of the descriptor in the specified section
+    concrete_descriptor: uint32 = 0xffffffff;   // index of the descriptor in the specified section
     concrete_parameters: [uint32];              // array of descriptors of type parameters
 }
 
 table PlaceholderAssignable {
-    placeholder_template: uint32 = 0xFFFFFFFF;  // index of the template in the object
-    placeholder_index: uint16 = 0xFFFF;         // index of the placeholder in the specified template
+    placeholder_template: uint32 = 0xffffffff;  // index of the template in the object
+    placeholder_index: uint16 = 0xffff;         // index of the placeholder in the specified template
     placeholder_parameters: [uint32];           // array of descriptors of type parameters
 }
 
@@ -131,7 +132,7 @@ union Assignable {
 
 table TypeDescriptor {
     type_assignable: Assignable;                // the assignable type union
-    super_type: uint32 = 0xFFFFFFFF;            // super type of the type
+    super_type: uint32 = 0xffffffff;            // super type of the type
 }
 
 enum PlaceholderVariance : uint8 {
@@ -161,7 +162,7 @@ struct Constraint {
 
 table TemplateDescriptor {
     fqsn: string;                               // fully qualified name of symbol which declares the template
-    super_template: uint32 = 0xFFFFFFFF;        // offset of the super template in the templates section
+    super_template: uint32 = 0xffffffff;        // offset of the super template in the templates section
     placeholders: [Placeholder];                // array of template placeholders
     constraints: [Constraint];                  // array of constraints on the placeholders
     names: [string];                            // array of placeholder names
@@ -181,9 +182,9 @@ enum ExistentialFlags : uint16 (bit_flags) {
 
 table ExistentialDescriptor {
     fqsn: string;                               // fully qualified existential name
-    super_existential: uint32 = 0xFFFFFFFF;     // offset of the super existential in the existentials section
-    existential_template: uint32 = 0xFFFFFFFF;  // offset of the template in the templates section, or 0xFFFFFFFF if not generic
-    existential_type: uint32 = 0xFFFFFFFF;      // offset of the existential type in the types section
+    super_existential: uint32 = 0xffffffff;     // offset of the super existential in the existentials section
+    existential_template: uint32 = 0xffffffff;  // offset of the template in the templates section, or 0xffffffff if not generic
+    existential_type: uint32 = 0xffffffff;      // offset of the existential type in the types section
     intrinsic_mapping: IntrinsicType = Invalid; // mapping to intrinsic type, or Invalid if there is no mapping
     flags: ExistentialFlags;                    // bitfield containing existential flags
     methods: [uint32];                          // array of methods in the calls section
@@ -200,8 +201,8 @@ enum ParameterFlags : uint16 (bit_flags) {
 
 table Parameter {
     parameter_name: string;                     // the parameter name
-    parameter_type: uint32 = 0xFFFFFFFF;        // offset of the parameter type in the types section
-    initializer_call: uint32 = 0xFFFFFFFF;      // offset of the initializer call in the calls section, or 0xFFFFFFFF if no initializer
+    parameter_type: uint32 = 0xffffffff;        // offset of the parameter type in the types section
+    initializer_call: uint32 = 0xffffffff;      // offset of the initializer call in the calls section, or 0xffffffff if no initializer
     flags: ParameterFlags;                      // bitfield containing parameter flags
 }
 
@@ -224,15 +225,15 @@ enum CallFlags : uint16 (bit_flags) {
 
 table CallDescriptor {
     fqsn: string;                               // fully qualified call name
-    call_template: uint32 = 0xFFFFFFFF;         // offset of the template in the templates section, or 0xFFFFFFFF if not generic
-    receiver_symbol: uint32 = 0xFFFFFFFF;       // index of the receiver in the symbols section
-    virtual_call: uint32 = 0xFFFFFFFF;          // index of the virtual call if method is an override
-    bytecode_offset: uint32 = 0xFFFFFFFF;       // offset of the start of the proc in the bytecode section
+    call_template: uint32 = 0xffffffff;         // offset of the template in the templates section, or 0xffffffff if not generic
+    receiver_symbol: uint32 = 0xffffffff;       // index of the receiver in the symbols section
+    virtual_call: uint32 = 0xffffffff;          // index of the virtual call if method is an override
+    bytecode_offset: uint32 = 0xffffffff;       // offset of the start of the proc in the bytecode section
     flags: CallFlags;                           // bitfield containing call flags
     list_parameters: [Parameter];               // array of list parameters
     named_parameters: [Parameter];              // array of named parameters
     rest_parameter: Parameter;                  // the rest parameter, which is empty if the call does not have a rest parameter
-    result_type: uint32 = 0xFFFFFFFF;           // offset of the result type in the types section, or 0xFFFFFFFF if the call is marked NoReturn
+    result_type: uint32 = 0xffffffff;           // offset of the result type in the types section, or 0xffffffff if the call is marked NoReturn
 }
 
 // flags which apply to a StaticDescriptor
@@ -250,9 +251,9 @@ enum StaticFlags : uint16 (bit_flags) {
 
 table StaticDescriptor {
     fqsn: string;                               // fully qualified static name
-    static_type: uint32 = 0xFFFFFFFF;           // offset of the static type in the types section
+    static_type: uint32 = 0xffffffff;           // offset of the static type in the types section
     flags: StaticFlags;                         // bitfield containing static flags
-    initializer_call: uint32 = 0xFFFFFFFF;      // offset of the initializer call in the calls section
+    initializer_call: uint32 = 0xffffffff;      // offset of the initializer call in the calls section
 }
 
 // flags which apply to a ActionDescriptor
@@ -269,13 +270,13 @@ enum ActionFlags : uint16 (bit_flags) {
 
 table ActionDescriptor {
     fqsn: string;                               // fully qualified action name
-    action_template: uint32 = 0xFFFFFFFF;       // offset of the template in the templates section, or 0xFFFFFFFF if not generic
-    receiver_symbol: uint32 = 0xFFFFFFFF;       // index of the receiver in the symbols section
+    action_template: uint32 = 0xffffffff;       // offset of the template in the templates section, or 0xffffffff if not generic
+    receiver_symbol: uint32 = 0xffffffff;       // index of the receiver in the symbols section
     flags: ActionFlags;                         // bitfield containing action flags
     list_parameters: [Parameter];               // array of list parameters
     named_parameters: [Parameter];              // array of named parameters
     rest_parameter: Parameter;                  // the rest parameter, which is empty if the action does not have a rest parameter
-    result_type: uint32 = 0xFFFFFFFF;           // offset of the result type in the types section, or 0xFFFFFFFF if the action is marked NoReturn
+    result_type: uint32 = 0xffffffff;           // offset of the result type in the types section, or 0xffffffff if the action is marked NoReturn
 }
 
 // flags which apply to a ConceptDescriptor
@@ -293,9 +294,9 @@ enum ConceptFlags : uint16 (bit_flags) {
 
 table ConceptDescriptor {
     fqsn: string;                               // fully qualified concept name
-    super_concept: uint32 = 0xFFFFFFFF;         // offset of the super concept in the concepts section
-    concept_template: uint32 = 0xFFFFFFFF;      // offset of the template in the templates section, or 0xFFFFFFFF if not generic
-    concept_type: uint32 = 0xFFFFFFFF;          // offset of the concept type in the types section
+    super_concept: uint32 = 0xffffffff;         // offset of the super concept in the concepts section
+    concept_template: uint32 = 0xffffffff;      // offset of the template in the templates section, or 0xffffffff if not generic
+    concept_type: uint32 = 0xffffffff;          // offset of the concept type in the types section
     flags: ConceptFlags;                        // bitfield containing concept flags
     actions: [uint32];                          // array of actions in the actions section
     impls: [uint32];                            // array of impls in the impls section
@@ -315,9 +316,9 @@ enum FieldFlags : uint16 (bit_flags) {
 
 table FieldDescriptor {
     fqsn: string;                               // fully qualified field name
-    field_type: uint32 = 0xFFFFFFFF;            // offset of the field type in the types section
+    field_type: uint32 = 0xffffffff;            // offset of the field type in the types section
     flags: FieldFlags;                          // bitfield containing field flags
-    initializer_call: uint32 = 0xFFFFFFFF;      // offset of the initializer call in the calls section, or 0xFFFFFFFF if no initializer
+    initializer_call: uint32 = 0xffffffff;      // offset of the initializer call in the calls section, or 0xffffffff if no initializer
 }
 
 //
@@ -338,9 +339,9 @@ enum ImplFlags : uint16 (bit_flags) {
 //
 
 table ImplDescriptor {
-    impl_type: uint32 = 0xFFFFFFFF;             // offset of the impl type in the types section
-    impl_concept: uint32 = 0xFFFFFFFF;          // offset of the impl concept in the concepts section
-    receiver_symbol: uint32 = 0xFFFFFFFF;       // index of the receiver in the symbols section
+    impl_type: uint32 = 0xffffffff;             // offset of the impl type in the types section
+    impl_concept: uint32 = 0xffffffff;          // offset of the impl concept in the concepts section
+    receiver_symbol: uint32 = 0xffffffff;       // index of the receiver in the symbols section
     flags: ImplFlags;                           // bitfield containing impl flags
     extensions: [ImplExtension];                // array of extensions bound to the impl
 }
@@ -360,14 +361,14 @@ enum ClassFlags : uint16 (bit_flags) {
 
 table ClassDescriptor {
     fqsn: string;                               // fully qualified class name
-    super_class: uint32 = 0xFFFFFFFF;           // offset of the super class in the classes section
-    class_template: uint32 = 0xFFFFFFFF;        // offset of the template in the templates section, or 0xFFFFFFFF if not generic
-    class_type: uint32 = 0xFFFFFFFF;            // offset of the class type in the types section
+    super_class: uint32 = 0xffffffff;           // offset of the super class in the classes section
+    class_template: uint32 = 0xffffffff;        // offset of the template in the templates section, or 0xffffffff if not generic
+    class_type: uint32 = 0xffffffff;            // offset of the class type in the types section
     flags: ClassFlags;                          // bitfield containing class flags
     members: [uint32];                          // array of members in the fields section
     methods: [uint32];                          // array of methods in the calls section
     impls: [uint32];                            // array of impls in the impls section
-    allocator_trap: uint32 = 0xFFFFFFFF;        // index of the allocator trap in the current object, or 0xFFFFFFFF if delegating to parent
+    allocator_trap: uint32 = 0xffffffff;        // index of the allocator trap in the current object, or 0xffffffff if delegating to parent
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
 
@@ -386,13 +387,13 @@ enum StructFlags : uint16 (bit_flags) {
 
 table StructDescriptor {
     fqsn: string;                               // fully qualified struct name
-    super_struct: uint32 = 0xFFFFFFFF;          // offset of the super struct in the structs section
-    struct_type: uint32 = 0xFFFFFFFF;           // offset of the struct type in the types section
+    super_struct: uint32 = 0xffffffff;          // offset of the super struct in the structs section
+    struct_type: uint32 = 0xffffffff;           // offset of the struct type in the types section
     flags: StructFlags;                         // bitfield containing struct flags
     members: [uint32];                          // array of members in the fields section
     methods: [uint32];                          // array of methods in the calls section
     impls: [uint32];                            // array of impls in the impls section
-    allocator_trap: uint32 = 0xFFFFFFFF;        // index of the allocator trap in the current object, or 0xFFFFFFFF if delegating to parent
+    allocator_trap: uint32 = 0xffffffff;        // index of the allocator trap in the current object, or 0xffffffff if delegating to parent
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
 
@@ -411,14 +412,14 @@ enum InstanceFlags : uint16 (bit_flags) {
 
 table InstanceDescriptor {
     fqsn: string;                               // fully qualified symbol name for the instance
-    super_instance: uint32 = 0xFFFFFFFF;        // offset of the super instance in the instances section
-    instance_type: uint32 = 0xFFFFFFFF;         // offset of the instance type in the types section
+    super_instance: uint32 = 0xffffffff;        // offset of the super instance in the instances section
+    instance_type: uint32 = 0xffffffff;         // offset of the instance type in the types section
     flags: InstanceFlags;                       // bitfield containing instance flags
     members: [uint32];                          // array of members in the fields section
     methods: [uint32];                          // array of methods in the calls section
     impls: [uint32];                            // array of impls in the impls section
-    allocator_trap: uint32 = 0xFFFFFFFF;        // index of the allocator trap in the current object, or 0xFFFFFFFF if delegating to parent
-    initializer_call: uint32 = 0xFFFFFFFF;      // offset of the instance initializer in the calls section
+    allocator_trap: uint32 = 0xffffffff;        // index of the allocator trap in the current object, or 0xffffffff if delegating to parent
+    initializer_call: uint32 = 0xffffffff;      // offset of the instance initializer in the calls section
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
 
@@ -437,14 +438,14 @@ enum EnumFlags : uint16 (bit_flags) {
 
 table EnumDescriptor {
     fqsn: string;                               // fully qualified symbol name for the enum
-    super_enum: uint32 = 0xFFFFFFFF;            // offset of the super enum in the enums section
-    enum_type: uint32 = 0xFFFFFFFF;             // offset of the enum type in the types section
+    super_enum: uint32 = 0xffffffff;            // offset of the super enum in the enums section
+    enum_type: uint32 = 0xffffffff;             // offset of the enum type in the types section
     flags: EnumFlags;                           // bitfield containing enum flags
     members: [uint32];                          // array of members in the fields section
     methods: [uint32];                          // array of methods in the calls section
     impls: [uint32];                            // array of impls in the impls section
-    allocator_trap: uint32 = 0xFFFFFFFF;        // index of the allocator trap in the current object, or 0xFFFFFFFF if delegating to parent
-    initializer_call: uint32 = 0xFFFFFFFF;      // offset of the enum initializer in the calls section
+    allocator_trap: uint32 = 0xffffffff;        // index of the allocator trap in the current object, or 0xffffffff if delegating to parent
+    initializer_call: uint32 = 0xffffffff;      // offset of the enum initializer in the calls section
     sealed_subtypes: [uint32];                  // array of sealed subtypes in the types section
 }
 
@@ -468,6 +469,7 @@ enum CommunicationType : uint8 {
 // flags which apply to the ProtocolDescriptor
 
 enum ProtocolFlags : uint16 (bit_flags) {
+    Hidden,                                     // visible to the enclosing namespace and its child namespaces only
     DeclOnly,                                   // enum descriptor is only a declaration
 }
 
@@ -493,10 +495,10 @@ enum BindingFlags : uint16 (bit_flags) {
 
 table BindingDescriptor {
     fqsn: string;                               // fully qualified symbol name for the binding
-    binding_template: uint32 = 0xFFFFFFFF;      // offset of the template in the templates section, or 0xFFFFFFFF if not generic
-    binding_type: uint32 = 0xFFFFFFFF;          // offset of the binding type in the types section
+    binding_template: uint32 = 0xffffffff;      // offset of the template in the templates section, or 0xffffffff if not generic
+    binding_type: uint32 = 0xffffffff;          // offset of the binding type in the types section
     flags: BindingFlags;                        // bitfield containing binding flags
-    target_type: uint32 = 0xFFFFFFFF;           // offset of the target type in the types section
+    target_type: uint32 = 0xffffffff;           // offset of the target type in the types section
 }
 
 // flags which apply to the NamespaceDecriptor
@@ -512,7 +514,8 @@ enum NamespaceFlags : uint16 (bit_flags) {
 
 table NamespaceDescriptor {
     fqsn: string;                               // fully qualified symbol name for the namespace
-    super_namespace: uint32 = 0xFFFFFFFF;       // offset of the super namespace in the namespaces section
+    super_namespace: uint32 = 0xffffffff;       // offset of the super namespace in the namespaces section
+    namespace_type: uint32 = 0xffffffff;        //
     flags: NamespaceFlags;                      // bitfield containing namespace flags
     symbols: [uint32];                          // array of symbols in the symbols section
 }
@@ -547,7 +550,7 @@ table ImportDescriptor {
 
 table SymbolDescriptor {
     symbol_type: DescriptorSection = Invalid;   // object section containing the symbol
-    symbol_descriptor: uint32 = 0xFFFFFFFF;     // offset of the symbol in the section
+    symbol_descriptor: uint32 = 0xffffffff;     // offset of the symbol in the section
 }
 
 // a SortedSymbolIdentifier maps the fully qualified name of a symbol to its index in the
@@ -555,7 +558,7 @@ table SymbolDescriptor {
 
 table SortedSymbolIdentifier {
     fqsn: string (key);                         // fully qualified name of the symbol
-    symbol_index: uint32 = 0xFFFFFFFF;          // offset of the symbol in the symtable
+    symbol_index: uint32 = 0xffffffff;          // offset of the symbol in the symtable
 }
 
 table SortedSymbolTable {
@@ -574,7 +577,7 @@ union SymbolTable {
 table LinkDescriptor {
     fqsn: string;                               // fully qualified symbol name
     link_type: DescriptorSection = Invalid;     // descriptor section containing the symbol
-    link_import: uint32 = 0xFFFFFFFF;           // offset of the link import in the imports section
+    link_import: uint32 = 0xffffffff;           // offset of the link import in the imports section
 }
 
 // flags which apply to the PluginDescriptor

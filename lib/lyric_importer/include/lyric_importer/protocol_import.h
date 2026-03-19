@@ -13,6 +13,8 @@ namespace lyric_importer {
         lyric_common::SymbolUrl getSymbolUrl();
 
         bool isDeclOnly();
+        bool isHidden();
+
         lyric_object::PortType getPort();
         lyric_object::CommunicationType getCommunication();
 

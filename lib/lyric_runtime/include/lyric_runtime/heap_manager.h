@@ -13,6 +13,7 @@ namespace lyric_runtime {
         const ExistentialTable *StringTable = nullptr;
         const ExistentialTable *UrlTable = nullptr;
         const ExistentialTable *ProtocolTable = nullptr;
+        const ExistentialTable *NamespaceTable = nullptr;
         const VirtualTable *CancelledTable = nullptr;
         const VirtualTable *InvalidArgumentTable = nullptr;
         const VirtualTable *DeadlineExceededTable = nullptr;
@@ -64,6 +65,9 @@ namespace lyric_runtime {
 
         virtual DataCell allocateProtocol(const DataCell &descriptor);
         virtual tempo_utils::Status loadProtocolOntoStack(const DataCell &descriptor);
+
+        virtual DataCell allocateNamespace(const DataCell &descriptor);
+        virtual tempo_utils::Status loadNamespaceOntoStack(const DataCell &descriptor);
 
         virtual tempo_utils::Status collectGarbage();
 

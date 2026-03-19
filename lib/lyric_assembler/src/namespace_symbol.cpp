@@ -73,7 +73,6 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
 lyric_assembler::NamespaceSymbolPriv *
 lyric_assembler::NamespaceSymbol::load()
 {
-    auto *fundamentalCache = m_state->fundamentalCache();
     auto *importCache = m_state->importCache();
     auto *typeCache = m_state->typeCache();
 
@@ -82,8 +81,7 @@ lyric_assembler::NamespaceSymbol::load()
     priv->isHidden = m_namespaceImport->isHidden();
     priv->isDeclOnly = m_namespaceImport->isDeclOnly();
 
-    TU_ASSIGN_OR_RAISE (priv->namespaceType, typeCache->getOrMakeType(
-        fundamentalCache->getFundamentalType(FundamentalSymbol::Namespace)));
+    TU_ASSIGN_OR_RAISE (priv->namespaceType, typeCache->importType(m_namespaceImport->getNamespaceType()));
 
     auto superNamespaceUrl = m_namespaceImport->getSuperNamespace();
     if (superNamespaceUrl.isValid()) {
@@ -247,8 +245,14 @@ lyric_assembler::NamespaceSymbol::declareSubspace(
     lyric_common::SymbolPath namespacePath(parentPath.getPath(), name);
     lyric_common::SymbolUrl namespaceUrl(m_namespaceUrl.getModuleLocation(), namespacePath);
 
+    auto *typeCache = m_state->typeCache();
+
+    TypeHandle *namespaceTypeHandle;
+    TU_ASSIGN_OR_RETURN (namespaceTypeHandle, typeCache->declareSubType(
+        namespaceUrl, {}, getTypeDef()));
+
     auto namespaceSymbol = std::make_unique<NamespaceSymbol>(
-        namespaceUrl, isHidden, priv->namespaceType, this, priv->isDeclOnly,
+        namespaceUrl, isHidden, namespaceTypeHandle, this, priv->isDeclOnly,
         priv->namespaceBlock.get(), m_state);
 
     NamespaceSymbol *nsPtr;

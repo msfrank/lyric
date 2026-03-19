@@ -4,6 +4,7 @@
 #include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/internal/construct_enum.h>
 #include <lyric_runtime/internal/construct_instance.h>
+#include <lyric_runtime/internal/construct_namespace.h>
 #include <lyric_runtime/internal/construct_new.h>
 #include <lyric_runtime/internal/construct_protocol.h>
 #include <lyric_runtime/internal/raise_exception.h>
@@ -308,6 +309,11 @@ lyric_runtime::BytecodeInterpreter::runSubinterpreter()
                     }
                     case lyric_object::LOAD_PROTOCOL: {
                         ON_ERROR_IF_NOT_OK (internal::construct_protocol(
+                            index, flags, currentCoro, segmentManager, heapManager, m_state.get()));
+                        break;
+                    }
+                    case lyric_object::LOAD_NAMESPACE: {
+                        ON_ERROR_IF_NOT_OK (internal::construct_namespace(
                             index, flags, currentCoro, segmentManager, heapManager, m_state.get()));
                         break;
                     }

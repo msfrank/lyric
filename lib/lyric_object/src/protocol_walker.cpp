@@ -51,6 +51,20 @@ lyric_object::ProtocolWalker::isDeclOnly() const
     return bool(protocolDescriptor->flags() & lyo1::ProtocolFlags::DeclOnly);
 }
 
+lyric_object::AccessType
+lyric_object::ProtocolWalker::getAccess() const
+{
+    if (!isValid())
+        return AccessType::Invalid;
+    auto *protocolDescriptor = m_reader->getProtocol(m_protocolOffset);
+    if (protocolDescriptor == nullptr)
+        return AccessType::Invalid;
+
+    if (bool(protocolDescriptor->flags() & lyo1::ProtocolFlags::Hidden))
+        return AccessType::Hidden;
+    return AccessType::Public;
+}
+
 lyric_object::PortType
 lyric_object::ProtocolWalker::getPort() const
 {

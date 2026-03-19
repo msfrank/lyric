@@ -161,6 +161,7 @@ lyric_test::matchers::DataCellMatcher::DescribeTo(std::ostream* os) const
                 case lyric_runtime::DataCellType::STRING:      *os << "cell contains string cell"; break;
                 case lyric_runtime::DataCellType::URL:         *os << "cell contains url cell"; break;
                 case lyric_runtime::DataCellType::STATUS:      *os << "cell contains status cell"; break;
+                case lyric_runtime::DataCellType::NAMESPACE:   *os << "cell contains namespace cell"; break;
                 case lyric_runtime::DataCellType::PROTOCOL:    *os << "cell contains protocol cell"; break;
                 case lyric_runtime::DataCellType::REST:        *os << "cell contains rest cell"; break;
                 case lyric_runtime::DataCellType::REF:         *os << "cell contains ref cell"; break;

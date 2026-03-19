@@ -1625,7 +1625,7 @@ lyric_assembler::BlockHandle::declareAlias(
             case lyric_object::LinkageSection::Namespace:
                 binding.bindingType = BindingType::Namespace;
                 binding.symbolUrl = targetUrl;
-                binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Namespace);
+                binding.typeDef = symbol->getTypeDef();
                 break;
             default:
                 return AssemblerStatus::forCondition(AssemblerCondition::kMissingSymbol,
@@ -1657,7 +1657,7 @@ lyric_assembler::BlockHandle::declareAlias(
         case SymbolType::NAMESPACE:
             binding.bindingType = BindingType::Namespace;
             binding.symbolUrl = targetUrl;
-            binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Namespace);
+            binding.typeDef = symbol->getTypeDef();
             break;
 
         default:
@@ -1715,7 +1715,7 @@ lyric_assembler::BlockHandle::declareAlias(
         case ReferenceType::Namespace:
             binding.bindingType = BindingType::Namespace;
             binding.symbolUrl = targetRef.symbolUrl;
-            binding.typeDef = fundamentalCache->getFundamentalType(FundamentalSymbol::Namespace);
+            binding.typeDef = targetRef.typeDef;
             break;
 
         case ReferenceType::Value:

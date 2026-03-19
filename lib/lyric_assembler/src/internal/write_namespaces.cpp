@@ -13,6 +13,8 @@
 #include <lyric_assembler/type_cache.h>
 #include <lyric_assembler/linkage_symbol.h>
 
+#include "lyric_assembler/protocol_symbol.h"
+
 inline bool
 is_in_scope(bool isHidden, bool includeUnusedPrivateSymbols)
 {
@@ -38,6 +40,8 @@ lyric_assembler::internal::touch_namespace(
     // if namespace is an imported symbol then we are done
     if (namespaceSymbol->isImported())
         return {};
+
+    TU_RETURN_IF_NOT_OK (writer.touchType(namespaceSymbol->namespaceType()));
 
     auto *symbolCache = objectState->symbolCache();
 
@@ -105,6 +109,13 @@ lyric_assembler::internal::touch_namespace(
                 }
                 break;
             }
+            case SymbolType::PROTOCOL: {
+                auto *protocolSymbol = cast_symbol_to_protocol(symbol);
+                if (is_in_scope(protocolSymbol->isHidden(), includeUnusedPrivateSymbols)) {
+                    TU_RETURN_IF_NOT_OK (writer.touchProtocol(protocolSymbol));
+                }
+                break;
+            }
             case SymbolType::STATIC: {
                 auto *staticSymbol = cast_symbol_to_static(symbol);
                 if (is_in_scope(staticSymbol->isHidden(), includeUnusedPrivateSymbols)) {
@@ -158,6 +169,9 @@ write_namespace(
         namespaceFlags |= lyo1::NamespaceFlags::Hidden;
     }
 
+    tu_uint32 namespaceTypeOffset;
+    TU_ASSIGN_OR_RETURN (namespaceTypeOffset, writer.getTypeOffset(namespaceSymbol->namespaceType()->getTypeDef()));
+
     // serialize array of symbols
     std::vector<tu_uint32> bindings;
     for (auto symbolIterator = namespaceSymbol->targetsBegin();
@@ -181,7 +195,8 @@ write_namespace(
 
     // add namespace descriptor
     namespaces_vector.push_back(lyo1::CreateNamespaceDescriptor(buffer, fullyQualifiedName,
-        supernamespaceIndex, namespaceFlags, buffer.CreateVector(bindings)));
+        supernamespaceIndex, namespaceTypeOffset, namespaceFlags,
+        buffer.CreateVector(bindings)));
 
     return {};
 }

@@ -56,6 +56,9 @@ namespace lyric_runtime {
         DataCell getProtocol(tu_uint32 index) const;
         bool setProtocol(tu_uint32 index, const DataCell &value);
 
+        DataCell getNamespace(tu_uint32 index) const;
+        bool setNamespace(tu_uint32 index, const DataCell &value);
+
         NativeFunc getTrap(tu_uint32 address) const;
 
         void *getData() const;
@@ -87,6 +90,9 @@ namespace lyric_runtime {
 
         DataCell *m_protocols;
         tu_uint32 m_numProtocols;
+
+        DataCell *m_namespaces;
+        tu_uint32 m_numNamespaces;
 
         DescriptorTable m_actionDescriptors;
         DescriptorTable m_callDescriptors;

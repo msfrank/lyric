@@ -21,6 +21,7 @@ namespace lyric_object {
         lyric_common::SymbolPath getSymbolPath() const;
 
         bool isDeclOnly() const;
+        AccessType getAccess() const;
 
         PortType getPort() const;
         CommunicationType getCommunication() const;

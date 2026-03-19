@@ -8,6 +8,7 @@ namespace lyric_object {
     // forward declarations
     class LinkWalker;
     class SymbolWalker;
+    class TypeWalker;
 
     /**
      *
@@ -31,6 +32,8 @@ namespace lyric_object {
 
         tu_uint32 numSymbols() const;
         SymbolWalker getSymbol(tu_uint32 index) const;
+
+        TypeWalker getNamespaceType() const;
 
         tu_uint32 getDescriptorOffset() const;
 

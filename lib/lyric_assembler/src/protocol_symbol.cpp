@@ -11,6 +11,7 @@
 
 lyric_assembler::ProtocolSymbol::ProtocolSymbol(
     const lyric_common::SymbolUrl &protocolUrl,
+    bool isHidden,
     lyric_object::PortType port,
     lyric_object::CommunicationType comm,
     TypeHandle *protocolType,
@@ -27,6 +28,7 @@ lyric_assembler::ProtocolSymbol::ProtocolSymbol(
     TU_ASSERT (m_state != nullptr);
 
     auto *priv = getPriv();
+    priv->isHidden = isHidden;
     priv->port = port;
     priv->comm = comm;
     priv->protocolType = protocolType;
@@ -66,8 +68,10 @@ lyric_assembler::ProtocolSymbol::load()
 
     auto priv = std::make_unique<ProtocolSymbolPriv>();
 
-    priv->parentBlock = nullptr;
     priv->isDeclOnly = m_protocolImport->isDeclOnly();
+    priv->isHidden = m_protocolImport->isHidden();
+
+    priv->parentBlock = nullptr;
     priv->port = m_protocolImport->getPort();
     priv->comm = m_protocolImport->getCommunication();
 
@@ -109,6 +113,20 @@ lyric_assembler::ProtocolSymbol::getTypeDef() const
     return priv->protocolType->getTypeDef();
 }
 
+bool
+lyric_assembler::ProtocolSymbol::isHidden() const
+{
+    auto *priv = getPriv();
+    return priv->isHidden;
+}
+
+bool
+lyric_assembler::ProtocolSymbol::isDeclOnly() const
+{
+    auto *priv = getPriv();
+    return priv->isDeclOnly;
+}
+
 lyric_object::PortType
 lyric_assembler::ProtocolSymbol::getPortType() const
 {
@@ -121,13 +139,6 @@ lyric_assembler::ProtocolSymbol::getCommunicationType() const
 {
     auto *priv = getPriv();
     return priv->comm;
-}
-
-bool
-lyric_assembler::ProtocolSymbol::isDeclOnly() const
-{
-    auto *priv = getPriv();
-    return priv->isDeclOnly;
 }
 
 lyric_assembler::TypeHandle *

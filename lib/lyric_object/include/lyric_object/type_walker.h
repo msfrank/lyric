@@ -54,6 +54,7 @@ namespace lyric_object {
         friend class InstanceWalker;
         friend class IntersectionTypeWalker;
         friend class LyricObject;
+        friend class NamespaceWalker;
         friend class ParameterWalker;
         friend class PlaceholderTypeWalker;
         friend class PlaceholderWalker;

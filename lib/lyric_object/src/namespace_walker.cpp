@@ -3,6 +3,7 @@
 #include <lyric_object/link_walker.h>
 #include <lyric_object/namespace_walker.h>
 #include <lyric_object/symbol_walker.h>
+#include <lyric_object/type_walker.h>
 
 lyric_object::NamespaceWalker::NamespaceWalker()
     : m_namespaceOffset(INVALID_ADDRESS_U32)
@@ -139,6 +140,17 @@ lyric_object::NamespaceWalker::getSymbol(tu_uint32 index) const
         return {};
     auto symbolOffset = namespaceDescriptor->symbols()->Get(index);
     return SymbolWalker(m_reader, symbolOffset);
+}
+
+lyric_object::TypeWalker
+lyric_object::NamespaceWalker::getNamespaceType() const
+{
+    if (!isValid())
+        return {};
+    auto *namespaceDescriptor = m_reader->getNamespace(m_namespaceOffset);
+    if (namespaceDescriptor == nullptr)
+        return {};
+    return TypeWalker(m_reader, namespaceDescriptor->namespace_type());
 }
 
 tu_uint32

@@ -12,6 +12,7 @@
 namespace lyric_assembler {
 
     struct ProtocolSymbolPriv {
+        bool isHidden;
         lyric_object::PortType port = lyric_object::PortType::Invalid;
         lyric_object::CommunicationType comm = lyric_object::CommunicationType::Invalid;
         TypeHandle *protocolType = nullptr;
@@ -27,6 +28,7 @@ namespace lyric_assembler {
     public:
         ProtocolSymbol(
             const lyric_common::SymbolUrl &protocolUrl,
+            bool isHidden,
             lyric_object::PortType port,
             lyric_object::CommunicationType comm,
             TypeHandle *protocolType,
@@ -47,9 +49,11 @@ namespace lyric_assembler {
         lyric_common::SymbolUrl getSymbolUrl() const override;
         lyric_common::TypeDef getTypeDef() const override;
 
+        bool isDeclOnly() const;
+        bool isHidden() const;
+
         lyric_object::PortType getPortType() const;
         lyric_object::CommunicationType getCommunicationType() const;
-        bool isDeclOnly() const;
 
         TypeHandle *protocolType() const;
         TypeHandle *sendType() const;

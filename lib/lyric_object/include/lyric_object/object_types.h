@@ -25,6 +25,7 @@ namespace lyric_object {
     constexpr tu_uint8 LOAD_INSTANCE                = 0x06;
     constexpr tu_uint8 LOAD_ENUM                    = 0x07;
     constexpr tu_uint8 LOAD_PROTOCOL                = 0x08;
+    constexpr tu_uint8 LOAD_NAMESPACE               = 0x09;
 
     // store type enum
     constexpr tu_uint8 STORE_ARGUMENT               = 0x01;

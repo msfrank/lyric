@@ -824,6 +824,11 @@ lyric_assembler::LoadDataInstruction::apply(
                 writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Instance));
             flags = lyric_object::LOAD_INSTANCE;
             break;
+        case SymbolType::NAMESPACE:
+            TU_ASSIGN_OR_RETURN (address,
+                writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Namespace));
+            flags = lyric_object::LOAD_NAMESPACE;
+            break;
         case SymbolType::PROTOCOL:
             TU_ASSIGN_OR_RETURN (address,
                 writer.getSectionAddress(m_symbol->getSymbolUrl(), lyric_object::LinkageSection::Protocol));

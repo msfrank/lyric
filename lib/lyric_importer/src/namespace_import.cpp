@@ -8,6 +8,7 @@ namespace lyric_importer {
         bool isDeclOnly;
         bool isHidden;
         lyric_common::SymbolUrl superNamespace;
+        TypeImport *namespaceType = nullptr;
         absl::flat_hash_set<lyric_common::SymbolUrl> symbols;
     };
 }
@@ -47,6 +48,13 @@ lyric_importer::NamespaceImport::getSuperNamespace()
 {
     load();
     return m_priv->superNamespace;
+}
+
+lyric_importer::TypeImport *
+lyric_importer::NamespaceImport::getNamespaceType()
+{
+    load();
+    return m_priv->namespaceType;
 }
 
 absl::flat_hash_set<lyric_common::SymbolUrl>::const_iterator
@@ -119,6 +127,8 @@ lyric_importer::NamespaceImport::load()
                         m_namespaceOffset, objectLocation.toString()));
         }
     }
+
+    priv->namespaceType = moduleImport->getType(namespaceWalker.getNamespaceType().getDescriptorOffset());
 
     // preallocate space for all the bindings
     priv->symbols.reserve(namespaceWalker.numSymbols());

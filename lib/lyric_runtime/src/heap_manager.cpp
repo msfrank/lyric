@@ -7,6 +7,7 @@
 #include <lyric_runtime/url_ref.h>
 #include <tempo_utils/big_endian.h>
 
+#include "lyric_runtime/namespace_ref.h"
 #include "lyric_runtime/protocol_ref.h"
 #include "lyric_runtime/rest_ref.h"
 #include "lyric_runtime/status_ref.h"
@@ -277,7 +278,36 @@ lyric_runtime::HeapManager::loadProtocolOntoStack(const DataCell &descriptor)
     auto cell = allocateProtocol(descriptor);
     currentCoro->pushData(cell);
 
-    return {};}
+    return {};
+}
+
+lyric_runtime::DataCell
+lyric_runtime::HeapManager::allocateNamespace(const DataCell &descriptor)
+{
+    TU_ASSERT (descriptor.type == DataCellType::DESCRIPTOR);
+    TU_ASSERT (descriptor.data.descriptor->getLinkageSection() == lyric_object::LinkageSection::Namespace);
+    auto *segment = descriptor.data.descriptor->getSegment();
+    auto object = segment->getObject();
+    auto walker = object.getNamespace(descriptor.data.descriptor->getDescriptorIndex());
+    auto *namespaceType = segment->lookupType(walker.getNamespaceType().getDescriptorOffset());
+    auto type = DataCell::forType(namespaceType);
+
+    auto *instance = new NamespaceRef(m_preludeTables.NamespaceTable, descriptor, type);
+    m_heap->insertInstance(instance);
+    return DataCell::forNamespace(instance);
+}
+
+tempo_utils::Status
+lyric_runtime::HeapManager::loadNamespaceOntoStack(const DataCell &descriptor)
+{
+    auto *currentCoro = m_systemScheduler->currentCoro();
+    TU_ASSERT(currentCoro != nullptr);
+
+    auto cell = allocateNamespace(descriptor);
+    currentCoro->pushData(cell);
+
+    return {};
+}
 
 static void
 set_reachable_for_task(lyric_runtime::Task *task)

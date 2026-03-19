@@ -264,6 +264,9 @@ allocate_heap_manager(
     preludeTables.UrlTable = resolve_bootstrap_existential_table(segmentManager,
         preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Url"), status);
     TU_RETURN_IF_NOT_OK (status);
+    preludeTables.NamespaceTable = resolve_bootstrap_existential_table(segmentManager,
+        preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Namespace"), status);
+    TU_RETURN_IF_NOT_OK (status);
     preludeTables.ProtocolTable = resolve_bootstrap_existential_table(segmentManager,
         preludeSegment, preludeObject, lyric_common::SymbolPath::fromString("Protocol"), status);
     TU_RETURN_IF_NOT_OK (status);

@@ -13,6 +13,7 @@ set(TEST_CASES
     Int_tests.cpp
     Iterator_tests.cpp
     Map_tests.cpp
+    Namespace_tests.cpp
     Nil_tests.cpp
     Option_tests.cpp
     Pair_tests.cpp

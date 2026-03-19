@@ -30,6 +30,7 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/library_plugin.h
     include/lyric_runtime/literal_cell.h
     include/lyric_runtime/lyric_runtime.h
+    include/lyric_runtime/namespace_ref.h
     include/lyric_runtime/native_interface.h
     include/lyric_runtime/port_multiplexer.h
     include/lyric_runtime/promise.h
@@ -71,6 +72,7 @@ target_sources(lyric_runtime PRIVATE
     src/interpreter_state.cpp
     src/library_plugin.cpp
     src/literal_cell.cpp
+    src/namespace_ref.cpp
     src/native_interface.cpp
     src/port_multiplexer.cpp
     src/promise.cpp
@@ -98,6 +100,8 @@ target_sources(lyric_runtime PRIVATE
     src/internal/construct_enum.cpp
     include/lyric_runtime/internal/construct_instance.h
     src/internal/construct_instance.cpp
+    include/lyric_runtime/internal/construct_namespace.h
+    src/internal/construct_namespace.cpp
     include/lyric_runtime/internal/construct_new.h
     src/internal/construct_new.cpp
     include/lyric_runtime/internal/construct_protocol.h

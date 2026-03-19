@@ -7,6 +7,7 @@ namespace lyric_importer {
     struct ProtocolImport::Priv {
         lyric_common::SymbolUrl symbolUrl;
         bool isDeclOnly = false;
+        bool isHidden = false;
         lyric_object::PortType port = lyric_object::PortType::Invalid;
         lyric_object::CommunicationType comm = lyric_object::CommunicationType::Invalid;
         TypeImport *protocolType = nullptr;
@@ -33,6 +34,13 @@ bool
 lyric_importer::ProtocolImport::isDeclOnly()
 {
     return m_priv->isDeclOnly;
+}
+
+bool
+lyric_importer::ProtocolImport::isHidden()
+{
+    load();
+    return m_priv->isHidden;
 }
 
 lyric_object::PortType
@@ -100,6 +108,21 @@ lyric_importer::ProtocolImport::load()
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, protocolWalker.getSymbolPath());
 
     priv->isDeclOnly = protocolWalker.isDeclOnly();
+
+    switch (protocolWalker.getAccess()) {
+        case lyric_object::AccessType::Hidden:
+            priv->isHidden = true;
+            break;
+        case lyric_object::AccessType::Public:
+            priv->isHidden = false;
+            break;
+        default:
+            throw tempo_utils::StatusException(
+                ImporterStatus::forCondition(
+                    ImporterCondition::kImportError,
+                    "cannot import protocol at index {} in module {}; invalid access type",
+                    m_protocolOffset, objectLocation.toString()));
+    }
 
     priv->port = protocolWalker.getPort();
     if (priv->port == lyric_object::PortType::Invalid)

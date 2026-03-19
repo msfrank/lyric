@@ -45,6 +45,8 @@ lyric_runtime::BytecodeSegment::BytecodeSegment(
     m_enums = m_numEnums > 0 ? new DataCell[m_numEnums] : nullptr;
     m_numProtocols = m_object.numProtocols();
     m_protocols = m_numProtocols > 0 ? new DataCell[m_numProtocols] : nullptr;
+    m_numNamespaces = m_object.numNamespaces();
+    m_namespaces = m_numNamespaces > 0 ? new DataCell[m_numNamespaces] : nullptr;
 }
 
 lyric_runtime::BytecodeSegment::~BytecodeSegment()
@@ -60,6 +62,7 @@ lyric_runtime::BytecodeSegment::~BytecodeSegment()
     delete[] m_instances;
     delete[] m_enums;
     delete[] m_protocols;
+    delete[] m_namespaces;
 }
 
 uint32_t
@@ -237,6 +240,23 @@ lyric_runtime::BytecodeSegment::setProtocol(uint32_t index, const DataCell &valu
     if (m_numProtocols <= index)
         return false;
     m_protocols[index] = value;
+    return true;
+}
+
+lyric_runtime::DataCell
+lyric_runtime::BytecodeSegment::getNamespace(uint32_t index) const
+{
+    if (m_numNamespaces <= index)
+        return {};
+    return m_namespaces[index];
+}
+
+bool
+lyric_runtime::BytecodeSegment::setNamespace(uint32_t index, const DataCell &value)
+{
+    if (m_numNamespaces <= index)
+        return false;
+    m_namespaces[index] = value;
     return true;
 }
 

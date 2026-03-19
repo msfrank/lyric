@@ -5,6 +5,7 @@
 #include <lyric_runtime/data_cell.h>
 #include <lyric_runtime/descriptor_entry.h>
 #include <lyric_runtime/literal_cell.h>
+#include <lyric_runtime/namespace_ref.h>
 #include <lyric_runtime/protocol_ref.h>
 #include <lyric_runtime/rest_ref.h>
 #include <lyric_runtime/status_ref.h>
@@ -86,6 +87,10 @@ lyric_runtime::DataCell::DataCell(const DataCell &other) : DataCell()
             type = other.type;
             data.rest = other.data.rest;
             break;
+        case DataCellType::NAMESPACE:
+            type = other.type;
+            data.ns = other.data.ns;
+            break;
         case DataCellType::PROTOCOL:
             type = other.type;
             data.protocol = other.data.protocol;
@@ -135,6 +140,9 @@ lyric_runtime::DataCell::DataCell(DataCell &&other) noexcept : DataCell()
             break;
         case DataCellType::STATUS:
             data.status = other.data.status;
+            break;
+        case DataCellType::NAMESPACE:
+            data.ns = other.data.ns;
             break;
         case DataCellType::PROTOCOL:
             data.protocol = other.data.protocol;
@@ -280,6 +288,16 @@ lyric_runtime::DataCell::forUrl(UrlRef *url)
 }
 
 lyric_runtime::DataCell
+lyric_runtime::DataCell::forNamespace(NamespaceRef *ns)
+{
+    TU_ASSERT (ns != nullptr);
+    DataCell cell;
+    cell.type = DataCellType::NAMESPACE;
+    cell.data.ns = ns;
+    return cell;
+}
+
+lyric_runtime::DataCell
 lyric_runtime::DataCell::forProtocol(ProtocolRef *protocol)
 {
     TU_ASSERT (protocol != nullptr);
@@ -340,6 +358,10 @@ lyric_runtime::DataCell::operator=(const DataCell &other)
             type = other.type;
             data.status = other.data.status;
             break;
+        case DataCellType::NAMESPACE:
+            type = other.type;
+            data.ns = other.data.ns;
+            break;
         case DataCellType::PROTOCOL:
             type = other.type;
             data.protocol = other.data.protocol;
@@ -397,6 +419,9 @@ lyric_runtime::DataCell::operator=(DataCell &&other) noexcept
             case DataCellType::STATUS:
                 data.status = other.data.status;
                 break;
+            case DataCellType::NAMESPACE:
+                data.ns = other.data.ns;
+                break;
             case DataCellType::PROTOCOL:
                 data.protocol = other.data.protocol;
                 break;
@@ -431,6 +456,7 @@ lyric_runtime::DataCell::isValid() const
         case DataCellType::DESCRIPTOR:
         case DataCellType::DBL:
         case DataCellType::I64:
+        case DataCellType::NAMESPACE:
         case DataCellType::NIL:
         case DataCellType::PROTOCOL:
         case DataCellType::REF:
@@ -480,6 +506,7 @@ lyric_runtime::DataCell::isReference() const
 {
     switch (type) {
         case DataCellType::BYTES:
+        case DataCellType::NAMESPACE:
         case DataCellType::PROTOCOL:
         case DataCellType::REF:
         case DataCellType::REST:
@@ -525,6 +552,8 @@ lyric_runtime::DataCell::toString() const
             return data.url->toString();
         case DataCellType::STATUS:
             return data.status->toString();
+        case DataCellType::NAMESPACE:
+            return data.ns->toString();
         case DataCellType::PROTOCOL:
             return data.protocol->toString();
         case DataCellType::REST:
@@ -575,6 +604,8 @@ lyric_runtime::operator==(const DataCell &lhs, const DataCell &rhs)
             return lhs.data.url == rhs.data.url;
         case DataCellType::STATUS:
             return lhs.data.status == rhs.data.status;
+        case DataCellType::NAMESPACE:
+            return lhs.data.ns == rhs.data.ns;
         case DataCellType::PROTOCOL:
             return lhs.data.protocol == rhs.data.protocol;
         case DataCellType::REST:
@@ -640,6 +671,10 @@ lyric_runtime::operator<<(tempo_utils::LogMessage &&message, const DataCell &cel
         case DataCellType::STATUS:
             std::forward<tempo_utils::LogMessage>(message)
                 << absl::Substitute("DataCell(status=$0)", cell.data.status->toString());
+            break;
+        case DataCellType::NAMESPACE:
+            std::forward<tempo_utils::LogMessage>(message)
+                << absl::Substitute("DataCell(namespace=$0)", cell.data.ns->toString());
             break;
         case DataCellType::PROTOCOL:
             std::forward<tempo_utils::LogMessage>(message)

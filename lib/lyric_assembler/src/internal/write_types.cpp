@@ -54,6 +54,9 @@ lyric_assembler::internal::touch_type(
             case SymbolType::INSTANCE:
                 TU_RETURN_IF_NOT_OK (writer.touchInstance(cast_symbol_to_instance(symbol)));
                 break;
+            case SymbolType::NAMESPACE:
+                TU_RETURN_IF_NOT_OK (writer.touchNamespace(cast_symbol_to_namespace(symbol)));
+                break;
             case SymbolType::PROTOCOL:
                 TU_RETURN_IF_NOT_OK (writer.touchProtocol(cast_symbol_to_protocol(symbol)));
                 break;
@@ -141,6 +144,9 @@ write_type(
                     break;
                 case lyric_object::LinkageSection::Instance:
                     concreteSection = lyo1::TypeSection::Instance;
+                    break;
+                case lyric_object::LinkageSection::Namespace:
+                    concreteSection = lyo1::TypeSection::Namespace;
                     break;
                 case lyric_object::LinkageSection::Protocol:
                     concreteSection = lyo1::TypeSection::Protocol;
