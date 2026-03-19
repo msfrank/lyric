@@ -430,6 +430,12 @@ invoke_method(
             break;
         }
 
+        case lyric_assembler::SymbolType::NAMESPACE: {
+            auto *namespaceSymbol = cast_symbol_to_namespace(receiver);
+            TU_RETURN_IF_NOT_OK (namespaceSymbol->prepareMethod(identifier, receiverType, *invoker, thisReceiver));
+            break;
+        }
+
         case lyric_assembler::SymbolType::PROTOCOL: {
             auto *protocolSymbol = cast_symbol_to_protocol(receiver);
             TU_RETURN_IF_NOT_OK (protocolSymbol->prepareMethod(identifier, receiverType, *invoker, thisReceiver));

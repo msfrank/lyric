@@ -70,6 +70,12 @@ namespace lyric_assembler {
             const std::string &name,
             bool isHidden);
 
+        tempo_utils::Status prepareMethod(
+            const std::string &name,
+            const lyric_common::TypeDef &receiverType,
+            CallableInvoker &invoker,
+            bool thisReceiver = false) const;
+
     private:
         lyric_common::SymbolUrl m_namespaceUrl;
         lyric_importer::NamespaceImport *m_namespaceImport = nullptr;

@@ -1,5 +1,6 @@
 
 #include <lyric_assembler/binding_symbol.h>
+#include <lyric_assembler/existential_symbol.h>
 #include <lyric_assembler/fundamental_cache.h>
 #include <lyric_assembler/import_cache.h>
 #include <lyric_assembler/namespace_symbol.h>
@@ -263,4 +264,20 @@ lyric_assembler::NamespaceSymbol::declareSubspace(
     priv->targets[name] = namespaceUrl;
 
     return nsPtr;
+}
+
+tempo_utils::Status
+lyric_assembler::NamespaceSymbol::prepareMethod(
+    const std::string &name,
+    const lyric_common::TypeDef &receiverType,
+    CallableInvoker &invoker,
+    bool thisReceiver) const
+{
+    auto *fundamentalCache = m_state->fundamentalCache();
+    auto *symbolCache = m_state->symbolCache();
+
+    auto namespaceUrl = fundamentalCache->getFundamentalUrl(FundamentalSymbol::Namespace);
+    ExistentialSymbol *namespaceExistential;
+    TU_ASSIGN_OR_RETURN (namespaceExistential, symbolCache->getOrImportExistential(namespaceUrl));
+    return namespaceExistential->prepareMethod(name, receiverType, invoker, false);
 }
