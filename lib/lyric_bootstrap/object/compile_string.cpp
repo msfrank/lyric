@@ -16,8 +16,10 @@ build_core_String(
     const CoreExistential *StringExistential,
     const CoreType *IntType,
     const CoreType *CharType,
-    const CoreType *BytesType)
+    const CoreType *BytesType,
+    const CoreType *UndefType)
 {
+    auto *CharOrUndefType = state.addUnionType({CharType,UndefType});
     {
         lyric_object::BytecodeBuilder code;
         state.writeTrap(code, "StringLength");
@@ -38,7 +40,7 @@ build_core_String(
             {
                 make_list_param("index", IntType),
             },
-            code, CharType);
+            code, CharOrUndefType);
     }
     {
         lyric_object::BytecodeBuilder code;

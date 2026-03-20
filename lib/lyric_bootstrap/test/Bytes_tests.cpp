@@ -41,14 +41,57 @@ TEST_F(BytesTests, TestEvaluateBytesAt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellInt(72))));
 }
 
+TEST_F(BytesTests, TestEvaluateBytesAtInvalidIndex)
+{
+    auto result = runModule(R"(
+        val string: String = "Hello, world!"
+        val bytes: Bytes = string.ToBytes()
+        bytes.At(100)
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellUndef())));
+}
+
 TEST_F(BytesTests, TestEvaluateBytesEqual)
 {
     auto result = runModule(R"(
-        val string1: String = "Hello, world!"
-        val bytes1: Bytes = string1.ToBytes()
-        val string2: String = "Hello, world!"
-        val bytes2: Bytes = string2.ToBytes()
-        bytes1 == bytes2
+        "hello".ToBytes() == "hello".ToBytes()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+}
+
+TEST_F(BytesTests, TestEvaluateBytesLessThan)
+{
+    auto result = runModule(R"(
+        "hello".ToBytes() < "goodbye".ToBytes()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+}
+
+TEST_F(BytesTests, TestEvaluateBytesGreaterThan)
+{
+    auto result = runModule(R"(
+        "hello".ToBytes() > "goodbye".ToBytes()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
+}
+
+TEST_F(BytesTests, TestEvaluateBytesLessOrEqual)
+{
+    auto result = runModule(R"(
+        "hello".ToBytes() <= "goodbye".ToBytes()
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
+}
+
+TEST_F(BytesTests, TestEvaluateBytesGreaterOrEqual)
+{
+    auto result = runModule(R"(
+        "hello".ToBytes() >= "goodbye".ToBytes()
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));

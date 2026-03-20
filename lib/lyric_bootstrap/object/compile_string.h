@@ -9,7 +9,8 @@ void build_core_String(
     const CoreExistential *StringExistential,
     const CoreType *IntType,
     const CoreType *CharType,
-    const CoreType *BytesType);
+    const CoreType *BytesType,
+    const CoreType *UndefType);
 
 CoreInstance *build_core_StringInstance(
     BuilderState &state,

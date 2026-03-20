@@ -23,10 +23,10 @@ build_core_Rest(
     const CoreConcept *IteratorConcept,
     const CoreClass *RestIteratorClass,
     const CoreType *IntType,
-    const CoreType *NilType)
+    const CoreType *UndefType)
 {
     auto *TType = RestExistential->existentialTemplate->types.at("T");
-    auto *TOrNilType = state.addUnionType({TType,NilType});
+    auto *TOrUndefType = state.addUnionType({TType,UndefType});
 
     {
         lyric_object::BytecodeBuilder code;
@@ -48,7 +48,7 @@ build_core_Rest(
             {
                 make_list_param("index", IntType),
             },
-            code, TOrNilType);
+            code, TOrUndefType);
     }
 
     auto *IterableTType = state.addConcreteType(nullptr, lyo1::TypeSection::Concept,

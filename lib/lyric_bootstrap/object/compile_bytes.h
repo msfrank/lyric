@@ -8,7 +8,8 @@ void build_core_Bytes(
     BuilderState &state,
     const CoreExistential *BytesExistential,
     const CoreType *IntType,
-    const CoreType *StringType);
+    const CoreType *StringType,
+    const CoreType *UndefType);
 
 CoreInstance *build_core_BytesInstance(
     BuilderState &state,

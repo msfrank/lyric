@@ -135,11 +135,11 @@ lyric_runtime::DataCell
 lyric_runtime::BytesRef::byteAt(int index) const
 {
     if (m_data == nullptr)
-        return lyric_runtime::DataCell::undef();
+        return DataCell::undef();
     if (m_size <= index)
-        return lyric_runtime::DataCell::undef();
+        return DataCell::undef();
     auto byte = m_data[index];
-    return lyric_runtime::DataCell(static_cast<tu_int64>(byte));
+    return DataCell(static_cast<tu_int64>(byte));
 }
 
 lyric_runtime::DataCell
@@ -148,28 +148,28 @@ lyric_runtime::BytesRef::bytesCompare(BytesRef *other) const
     TU_ASSERT (other != nullptr);
 
     if (m_data == nullptr && other->m_data == nullptr)
-        return lyric_runtime::DataCell(static_cast<int64_t>(0));
+        return DataCell(static_cast<int64_t>(0));
     if (m_data == nullptr && other->m_data != nullptr)
-        return lyric_runtime::DataCell(static_cast<int64_t>(-1));
+        return DataCell(static_cast<int64_t>(-1));
     if (m_data != nullptr && other->m_data == nullptr)
-        return lyric_runtime::DataCell(static_cast<int64_t>(1));
+        return DataCell(static_cast<int64_t>(1));
 
     auto cmp = std::memcmp(m_data, other->m_data, m_size <= other->m_size? m_size : other->m_size);
     if (cmp != 0)
-        return lyric_runtime::DataCell(static_cast<int64_t>(cmp));
+        return DataCell(static_cast<int64_t>(cmp));
 
     if (m_size < other->m_size)
-        return lyric_runtime::DataCell(static_cast<int64_t>(-1));
+        return DataCell(static_cast<int64_t>(-1));
     if (m_size > other->m_size)
-        return lyric_runtime::DataCell(static_cast<int64_t>(1));
+        return DataCell(static_cast<int64_t>(1));
 
-    return lyric_runtime::DataCell(static_cast<int64_t>(0));
+    return DataCell(static_cast<int64_t>(0));
 }
 
 lyric_runtime::DataCell
 lyric_runtime::BytesRef::bytesLength() const
 {
-    return lyric_runtime::DataCell(static_cast<tu_int64>(m_size));
+    return DataCell(static_cast<tu_int64>(m_size));
 }
 
 const tu_uint8 *

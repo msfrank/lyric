@@ -12,7 +12,7 @@ void build_core_Rest(
     const CoreConcept *IteratorConcept,
     const CoreClass *RestIteratorClass,
     const CoreType *IntType,
-    const CoreType *NilType);
+    const CoreType *UndefType);
 
 CoreClass *build_core_RestIterator(
     BuilderState &state,

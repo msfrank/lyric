@@ -53,3 +53,10 @@ target_link_libraries(lyric_testsuite
     LyricTypingTestSuite
 )
 gtest_discover_tests(lyric_testsuite DISCOVERY_TIMEOUT 30)
+
+add_custom_target(run-lyric-testsuite
+    COMMAND lyric_testsuite
+      --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/lyric_testsuite_output.xml
+      --logging-config-file=${CMAKE_CURRENT_SOURCE_DIR}/test_logging.config
+    DEPENDS lyric_testsuite
+    )

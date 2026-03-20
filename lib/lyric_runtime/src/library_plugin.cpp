@@ -1,5 +1,6 @@
 
 #include <lyric_runtime/library_plugin.h>
+#include <tempo_utils/log_stream.h>
 
 lyric_runtime::LibraryPlugin::LibraryPlugin(
     std::shared_ptr<tempo_utils::LibraryLoader> loader,

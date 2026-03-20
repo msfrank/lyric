@@ -3,6 +3,6 @@
 
 #include "builder_state.h"
 
-CoreExistential *build_core_Nil(BuilderState &state);
+CoreExistential *build_core_Nil(BuilderState &state, const CoreExistential *IntrinsicExistential);
 
 #endif // ZURI_CORE_CORE_NIL_H

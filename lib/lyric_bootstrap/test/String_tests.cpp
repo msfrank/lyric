@@ -51,16 +51,26 @@ TEST_F(StringTests, TestEvaluateStringAt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellChar(static_cast<char32_t>('H')))));
 }
 
-TEST_F(StringTests, TestEvaluateIsEq)
+TEST_F(StringTests, TestEvaluateStringAtInvalidIndex)
 {
     auto result = runModule(R"(
-        "Hello" == "Hello"
+        val string: String = "Hello, world!"
+        string.At(100)
+    )");
+
+    ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellUndef())));
+}
+
+TEST_F(StringTests, TestEvaluateStringEqual)
+{
+    auto result = runModule(R"(
+        "hello" == "hello"
     )");
 
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST_F(StringTests, TestEvaluateIsLt)
+TEST_F(StringTests, TestEvaluateStringLessThan)
 {
     auto result = runModule(R"(
         "hello" < "goodbye"
@@ -69,7 +79,7 @@ TEST_F(StringTests, TestEvaluateIsLt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST_F(StringTests, TestEvaluateIsGt)
+TEST_F(StringTests, TestEvaluateStringGreaterThan)
 {
     auto result = runModule(R"(
         "hello" > "goodbye"
@@ -78,7 +88,7 @@ TEST_F(StringTests, TestEvaluateIsGt)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(true))));
 }
 
-TEST_F(StringTests, TestEvaluateIsLe)
+TEST_F(StringTests, TestEvaluateStringLessOrEqual)
 {
     auto result = runModule(R"(
         "hello" <= "goodbye"
@@ -87,7 +97,7 @@ TEST_F(StringTests, TestEvaluateIsLe)
     ASSERT_THAT (result, tempo_test::ContainsResult(RunModule(DataCellBool(false))));
 }
 
-TEST_F(StringTests, TestEvaluateIsGe)
+TEST_F(StringTests, TestEvaluateStringGreaterOrEqual)
 {
     auto result = runModule(R"(
         "hello" >= "goodbye"

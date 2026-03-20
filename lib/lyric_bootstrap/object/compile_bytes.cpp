@@ -15,8 +15,10 @@ build_core_Bytes(
     BuilderState &state,
     const CoreExistential *BytesExistential,
     const CoreType *IntType,
-    const CoreType *StringType)
+    const CoreType *StringType,
+    const CoreType *UndefType)
 {
+    auto *IntOrUndefType = state.addUnionType({IntType,UndefType});
     {
         lyric_object::BytecodeBuilder code;
         state.writeTrap(code, "BytesLength");
@@ -37,7 +39,7 @@ build_core_Bytes(
             {
                 make_list_param("index", IntType),
             },
-            code, IntType);
+            code, IntOrUndefType);
     }
     {
         lyric_object::BytecodeBuilder code;

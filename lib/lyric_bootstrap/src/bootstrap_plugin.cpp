@@ -1,5 +1,6 @@
 
 #include <lyric_bootstrap/bootstrap_plugin.h>
+#include <tempo_utils/log_stream.h>
 
 lyric_bootstrap::BootstrapPlugin::BootstrapPlugin(const lyric_runtime::NativeInterface *iface)
     : m_iface(iface)

@@ -25,6 +25,7 @@ class Lyric(ConanFile):
         'docker_base_image': ['ANY', None],
         'docker_tempo_image': ['ANY', None],
         'docker_registry': ['ANY', None],
+        'run_tests': [True, False, None],
     }
     default_options = {
         'runtime_distribution_root': None,
@@ -38,6 +39,7 @@ class Lyric(ConanFile):
         'docker_base_image': None,
         'docker_tempo_image': None,
         'docker_registry': None,
+        'run_tests': None,
     }
 
     exports = ('meta/*',)
@@ -120,6 +122,9 @@ class Lyric(ConanFile):
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
+
+        if self.options.run_tests:
+            cmake.build(target='run-lyric-testsuite')
 
     def package(self):
         cmake = CMake(self)

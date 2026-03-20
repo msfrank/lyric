@@ -42,6 +42,7 @@
 #include "compile_rest.h"
 #include "compile_seq.h"
 #include "compile_singleton.h"
+#include "compile_status.h"
 #include "compile_string.h"
 #include "compile_struct.h"
 #include "compile_tuple.h"
@@ -49,7 +50,6 @@
 #include "compile_unwrap.h"
 #include "compile_url.h"
 #include "compile_varargs.h"
-#include "compile_status.h"
 
 #include "native_prelude.h"
 
@@ -70,17 +70,17 @@ main(int argc, char *argv[])
     auto location = lyric_common::ModuleLocation::fromString(BOOTSTRAP_PRELUDE_LOCATION);
     BuilderState state(location, trapIndex);
 
-    // define the Any existential, which is the top of the type hierarchy
+    // define the Any existential, which is the top of the main type hierarchy
     auto *AnyExistential = build_core_Any(state);
 
-    // define the Nil existential, which exists in its own type hierarchy
-    auto *NilExistential = build_core_Nil(state);
+    // define the Undef existential, which exists in its own isolated type hierarchy
+    auto *UndefExistential = build_core_Undef(state);
 
     // define Intrinsic existential
     auto *IntrinsicExistential = build_core_Intrinsic(state, AnyExistential);
 
     // declare intrinsic existentials
-    build_core_Undef(state, IntrinsicExistential);
+    build_core_Nil(state, IntrinsicExistential);
     auto *BoolExistential = declare_core_Bool(state, IntrinsicExistential);
     auto *CharExistential = declare_core_Char(state, IntrinsicExistential);
     auto *IntExistential = declare_core_Int(state, IntrinsicExistential);
@@ -146,9 +146,10 @@ main(int argc, char *argv[])
     build_core_Float(state, FloatExistential);
     build_core_Descriptor(state, DescriptorExistential);
     build_core_Bytes(state, BytesExistential, IntExistential->existentialType,
-        StringExistential->existentialType);
+        StringExistential->existentialType, UndefExistential->existentialType);
     build_core_String(state, StringExistential, IntExistential->existentialType,
-        CharExistential->existentialType, BytesExistential->existentialType);
+        CharExistential->existentialType, BytesExistential->existentialType,
+        UndefExistential->existentialType);
     build_core_Url(state, UrlExistential);
 
     // define Type existential
@@ -242,7 +243,7 @@ main(int argc, char *argv[])
     auto *RestIteratorClass = build_core_RestIterator(state, ObjectClass, IteratorConcept,
         BoolExistential->existentialType);
     build_core_Rest(state, RestExistential, IterableConcept, IterableConcept, RestIteratorClass,
-        IntExistential->existentialType, NilExistential->existentialType);
+        IntExistential->existentialType, UndefExistential->existentialType);
 
     // define Seq struct
     auto *SeqIteratorClass = build_core_SeqIterator(state, ObjectClass, IteratorConcept, DataUnionType,
@@ -258,7 +259,7 @@ main(int argc, char *argv[])
 
     // define DiscardProtocol
     build_core_DiscardProtocol(state, ProtocolExistential, AnyExistential->existentialType,
-        NilExistential->existentialType);
+        UndefExistential->existentialType);
 
     // define prelude functions
     build_core_prelude_trap(state, IntExistential->existentialType, state.noReturnType);

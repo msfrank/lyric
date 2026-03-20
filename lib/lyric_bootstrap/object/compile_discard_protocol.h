@@ -7,6 +7,6 @@ CoreProtocol *build_core_DiscardProtocol(
     BuilderState &state,
     const CoreExistential *ProtocolExistential,
     const CoreType *AnyType,
-    const CoreType *NilType);
+    const CoreType *UndefType);
 
 #endif // LYRIC_BOOTSTRAP_COMPILE_DISCARD_PROTOCOL_H
