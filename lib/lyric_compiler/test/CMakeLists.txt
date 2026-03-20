@@ -37,7 +37,6 @@ add_executable(lyric_compiler_testsuite
     ${TEST_CASES}
     base_compiler_fixture.cpp base_compiler_fixture.h
     compiler_mocks.h
-    ${TEST_MAIN_CPP}
     )
 target_compile_definitions(lyric_compiler_testsuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
@@ -48,6 +47,7 @@ target_link_libraries(lyric_compiler_testsuite PUBLIC
     lyric::lyric_compiler
     lyric::lyric_test
     tempo::tempo_test
+    tempo::tempo_test_main
     gtest::gtest
     )
 gtest_discover_tests(lyric_compiler_testsuite DISCOVERY_TIMEOUT 30)

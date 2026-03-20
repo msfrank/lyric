@@ -19,7 +19,6 @@ add_executable(lyric_archiver_testsuite
     ${TEST_CASES}
     archiver_tester.cpp archiver_tester.h
     base_archiver_fixture.cpp base_archiver_fixture.h
-    ${TEST_MAIN_CPP}
     )
 target_compile_definitions(lyric_archiver_testsuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
@@ -33,6 +32,7 @@ target_link_libraries(lyric_archiver_testsuite PUBLIC
     lyric::lyric_schema
     lyric::lyric_test
     tempo::tempo_test
+    tempo::tempo_test_main
     gtest::gtest
     )
 gtest_discover_tests(lyric_archiver_testsuite DISCOVERY_TIMEOUT 30)

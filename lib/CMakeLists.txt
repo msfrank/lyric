@@ -1,8 +1,4 @@
 
-# define the test_main.cpp in a single place for all test suites
-set(TEST_MAIN_CPP ${CMAKE_CURRENT_SOURCE_DIR}/test_main.cpp)
-
-
 #######################################################################
 #
 # add targets from subdirectories
@@ -34,29 +30,37 @@ add_subdirectory(lyric_typing)
 #
 #######################################################################
 
-add_executable(lyric_testsuite ${TEST_MAIN_CPP})
+set(EMPTY_CPP ${CMAKE_CURRENT_BINARY_DIR}/empty.cpp)
+
+file(TOUCH ${EMPTY_CPP})
+
+add_executable(lyric_testsuite ${EMPTY_CPP})
 target_link_libraries(lyric_testsuite
-    PUBLIC gtest::gtest
+    PUBLIC
+      tempo::tempo_test_main
+      gtest::gtest
     PRIVATE
-    LyricAnalyzerTestSuite
-    LyricArchiverTestSuite
-    LyricAssemblerTestSuite
-    LyricBootstrapTestSuite
-    LyricBuildTestSuite
-    LyricCommonTestSuite
-    LyricCompilerTestSuite
-    LyricObjectTestSuite
-    LyricOptimizerTestSuite
-    LyricParserTestSuite
-    LyricRewriterTestSuite
-    LyricSymbolizerTestSuite
-    LyricTypingTestSuite
-)
+      LyricAnalyzerTestSuite
+      LyricArchiverTestSuite
+      LyricAssemblerTestSuite
+      LyricBootstrapTestSuite
+      LyricBuildTestSuite
+      LyricCommonTestSuite
+      LyricCompilerTestSuite
+      LyricObjectTestSuite
+      LyricOptimizerTestSuite
+      LyricParserTestSuite
+      LyricRewriterTestSuite
+      LyricSymbolizerTestSuite
+      LyricTypingTestSuite
+    )
 gtest_discover_tests(lyric_testsuite DISCOVERY_TIMEOUT 30)
 
-add_custom_target(run-lyric-testsuite
-    COMMAND lyric_testsuite
-      --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/lyric_testsuite_output.xml
-      --logging-config-file=${CMAKE_CURRENT_SOURCE_DIR}/test_logging.config
-    DEPENDS lyric_testsuite
+add_custom_target(run-full-testsuite
+    COMMAND
+      lyric_testsuite
+        --gtest_output=xml:${CMAKE_BINARY_DIR}/full_testsuite_output.xml
+        --logging-option severityFilter VeryVerbose
+        --logging-option logSink LogFile
+        --logging-option logFilePath ${CMAKE_BINARY_DIR}/full_testsuite.log
     )

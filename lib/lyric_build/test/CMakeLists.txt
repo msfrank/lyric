@@ -22,11 +22,11 @@ add_executable(lyric_build_testsuite ${TEST_CASES}
     base_build_fixture.h
     test_task.cpp
     test_task.h
-    ${TEST_MAIN_CPP}
     )
 target_link_libraries(lyric_build_testsuite PUBLIC
     lyric::lyric_build
     tempo::tempo_test
+    tempo::tempo_test_main
     gtest::gtest
     )
 gtest_discover_tests(lyric_build_testsuite DISCOVERY_TIMEOUT 30)

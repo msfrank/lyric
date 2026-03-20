@@ -20,7 +20,6 @@ add_executable(lyric_typing_testsuite
     ${TEST_CASES}
     base_typing_fixture.cpp base_typing_fixture.h
     test_callable.cpp test_callable.h
-    ${TEST_MAIN_CPP}
     )
 target_compile_definitions(lyric_typing_testsuite PRIVATE
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
@@ -29,6 +28,7 @@ target_link_libraries(lyric_typing_testsuite PUBLIC
     lyric::lyric_bootstrap
     lyric::lyric_typing
     tempo::tempo_test
+    tempo::tempo_test_main
     gtest::gtest
     )
 gtest_discover_tests(lyric_typing_testsuite DISCOVERY_TIMEOUT 30)

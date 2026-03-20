@@ -11,10 +11,11 @@ set(TEST_CASES
 
 # define test suite driver
 
-add_executable(lyric_object_testsuite ${TEST_CASES} ${TEST_MAIN_CPP})
+add_executable(lyric_object_testsuite ${TEST_CASES})
 target_link_libraries(lyric_object_testsuite PUBLIC
     lyric::lyric_object
     flatbuffers::flatbuffers
+    tempo::tempo_test_main
     gtest::gtest
     )
 gtest_discover_tests(lyric_object_testsuite DISCOVERY_TIMEOUT 30)

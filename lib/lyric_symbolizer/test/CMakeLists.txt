@@ -20,7 +20,6 @@ set(TEST_CASES
 add_executable(lyric_symbolizer_testsuite
     ${TEST_CASES}
     base_symbolizer_fixture.cpp base_symbolizer_fixture.h
-    ${TEST_MAIN_CPP}
     )
 target_compile_definitions(lyric_symbolizer_testsuite PRIVATE
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
@@ -32,6 +31,7 @@ target_link_libraries(lyric_symbolizer_testsuite PUBLIC
     lyric::lyric_symbolizer
     lyric::lyric_test
     tempo::tempo_test
+    tempo::tempo_test_main
     gtest::gtest
     )
 gtest_discover_tests(lyric_symbolizer_testsuite DISCOVERY_TIMEOUT 30)

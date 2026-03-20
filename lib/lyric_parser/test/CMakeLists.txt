@@ -21,11 +21,12 @@ set(TEST_CASES
 add_executable(lyric_parser_testsuite
     ${TEST_CASES}
     base_parser_fixture.cpp base_parser_fixture.h
-    ${TEST_MAIN_CPP})
+    )
 target_link_libraries(lyric_parser_testsuite PUBLIC
     lyric::lyric_parser
     lyric::lyric_schema
     tempo::tempo_test
+    tempo::tempo_test_main
     gtest::gtest
     )
 gtest_discover_tests(lyric_parser_testsuite DISCOVERY_TIMEOUT 30)

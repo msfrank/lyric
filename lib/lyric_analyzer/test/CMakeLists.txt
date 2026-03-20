@@ -22,7 +22,7 @@ set(TEST_CASES
 add_executable(lyric_analyzer_testsuite
     ${TEST_CASES}
     base_analyzer_fixture.cpp base_analyzer_fixture.h
-    ${TEST_MAIN_CPP})
+    )
 target_compile_definitions(lyric_analyzer_testsuite PRIVATE
     "BOOTSTRAP_PRELUDE_LOCATION=\"${BOOTSTRAP_PRELUDE_LOCATION}\""
     "LYRIC_BUILD_BOOTSTRAP_DIR=\"${LYRIC_BUILD_BOOTSTRAP_DIR}\""
@@ -34,6 +34,7 @@ target_link_libraries(lyric_analyzer_testsuite PUBLIC
     lyric::lyric_schema
     lyric::lyric_test
     tempo::tempo_test
+    tempo::tempo_test_main
     gtest::gtest
     )
 gtest_discover_tests(lyric_analyzer_testsuite DISCOVERY_TIMEOUT 30)
