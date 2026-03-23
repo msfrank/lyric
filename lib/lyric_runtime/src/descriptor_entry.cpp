@@ -133,7 +133,7 @@ lyric_runtime::DescriptorTable::lookupDescriptor(tu_uint32 index)
         if (numDescriptors <= index)
             return nullptr;
 
-        m_descriptorEntries = (DescriptorEntry **) std::calloc(m_numDescriptors, sizeof(DescriptorEntry *));
+        m_descriptorEntries = (DescriptorEntry **) std::calloc(numDescriptors, sizeof(DescriptorEntry *));
         m_numDescriptors = numDescriptors;
     }
 
