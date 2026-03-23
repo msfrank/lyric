@@ -7,7 +7,8 @@
 
 lyric_runtime::StatusRef::StatusRef(const VirtualTable *vtable)
     : BaseRef(vtable),
-      m_statusCode(tempo_utils::StatusCode::kUnknown)
+      m_statusCode(tempo_utils::StatusCode::kUnknown),
+      m_message(nullptr)
 {
     m_fields.resize(vtable->getLayoutTotal());
 }
