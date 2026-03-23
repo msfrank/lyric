@@ -41,7 +41,7 @@ lyric_runtime::TypeEntry::getTypeDef() const
 
 lyric_runtime::TypeTable::TypeTable(BytecodeSegment *segment)
     : m_segment(segment),
-      m_numTypes(lyric_runtime::INVALID_ADDRESS_U32),
+      m_numTypes(INVALID_ADDRESS_U32),
       m_typeEntries(nullptr)
 {
     TU_ASSERT (m_segment != nullptr);
@@ -74,7 +74,7 @@ lyric_runtime::TypeTable::lookupType(tu_uint32 index)
         if (numTypes <= index)
             return nullptr;
 
-        m_typeEntries = (TypeEntry **) std::calloc(m_numTypes, sizeof(TypeEntry *));
+        m_typeEntries = (TypeEntry **) std::calloc(numTypes, sizeof(TypeEntry *));
         m_numTypes = numTypes;
     }
 
