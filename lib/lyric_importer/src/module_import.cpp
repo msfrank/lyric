@@ -18,7 +18,6 @@
 #include <lyric_importer/template_import.h>
 #include <lyric_importer/type_import.h>
 
-
 lyric_importer::ModuleImport::ModuleImport(
     const lyric_common::ModuleLocation &objectLocation,
     const lyric_object::LyricObject &object,
@@ -51,12 +50,12 @@ lyric_importer::ModuleImport::initialize()
 {
     m_importedActions.resize(m_object.numActions());
     for (int i = 0; i < m_object.numActions(); i++) {
-        m_importedActions[i] = new ActionImport(shared_from_this(), i);
+        m_importedActions[i] = std::make_shared<ActionImport>(weak_from_this(), i);
     }
 
     m_importedBindings.resize(m_object.numBindings());
     for (int i = 0; i < m_object.numBindings(); i++) {
-        m_importedBindings[i] = new BindingImport(shared_from_this(), i);
+        m_importedBindings[i] = std::make_shared<BindingImport>(weak_from_this(), i);
     }
 
     m_importedCalls.resize(m_object.numCalls());
@@ -101,12 +100,12 @@ lyric_importer::ModuleImport::initialize()
 
     m_importedNamespaces.resize(m_object.numNamespaces());
     for (int i = 0; i < m_object.numNamespaces(); i++) {
-        m_importedNamespaces[i] = new NamespaceImport(shared_from_this(), i);
+        m_importedNamespaces[i] = std::make_shared<NamespaceImport>(weak_from_this(), i);
     }
 
     m_importedProtocols.resize(m_object.numProtocols());
     for (int i = 0; i < m_object.numProtocols(); i++) {
-        m_importedProtocols[i] = new ProtocolImport(shared_from_this(), i);
+        m_importedProtocols[i] = std::make_shared<ProtocolImport>(weak_from_this(), i);
     }
 
     m_importedStatics.resize(m_object.numStatics());
@@ -156,15 +155,15 @@ lyric_importer::ModuleImport::getPlugin() const
     return m_plugin;
 }
 
-lyric_importer::ActionImport *
+std::shared_ptr<lyric_importer::ActionImport>
 lyric_importer::ModuleImport::getAction(tu_uint32 offset) const
 {
     if (offset < m_importedActions.size())
         return m_importedActions.at(offset);
-    return nullptr;
+    return {};
 }
 
-lyric_importer::BindingImport *
+std::shared_ptr<lyric_importer::BindingImport>
 lyric_importer::ModuleImport::getBinding(tu_uint32 offset) const
 {
     if (offset < m_importedBindings.size())
@@ -236,7 +235,7 @@ lyric_importer::ModuleImport::getInstance(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::NamespaceImport *
+std::shared_ptr<lyric_importer::NamespaceImport>
 lyric_importer::ModuleImport::getNamespace(tu_uint32 offset) const
 {
     if (offset < m_importedNamespaces.size())
@@ -244,7 +243,7 @@ lyric_importer::ModuleImport::getNamespace(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::ProtocolImport *
+std::shared_ptr<lyric_importer::ProtocolImport>
 lyric_importer::ModuleImport::getProtocol(tu_uint32 offset) const
 {
     if (offset < m_importedProtocols.size())

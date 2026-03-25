@@ -9,7 +9,8 @@ namespace lyric_importer {
 
     class ActionImport : public BaseImport {
     public:
-        ActionImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 actionOffset);
+        ActionImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 actionOffset);
+        virtual ~ActionImport() = default;
 
         lyric_common::SymbolUrl getSymbolUrl();
 
@@ -42,7 +43,18 @@ namespace lyric_importer {
         tu_uint32 m_actionOffset;
         absl::Mutex m_lock;
 
-        struct Priv;
+        struct Priv {
+            lyric_common::SymbolUrl symbolUrl;
+            lyric_common::SymbolUrl receiverUrl;
+            bool isDeclOnly = false;
+            bool isHidden = false;
+            TemplateImport *actionTemplate = nullptr;
+            TypeImport *returnType = nullptr;
+            std::vector<Parameter> listParameters;
+            std::vector<Parameter> namedParameters;
+            Option<Parameter> restParameter;
+            absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
+        };
         std::unique_ptr<Priv> m_priv ABSL_GUARDED_BY(m_lock);
 
         void load();

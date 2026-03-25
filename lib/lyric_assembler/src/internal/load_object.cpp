@@ -15,7 +15,7 @@
 
 tempo_utils::Result<lyric_common::ModuleLocation>
 lyric_assembler::internal::find_system_bootstrap(
-    std::shared_ptr<lyric_importer::ModuleImport> moduleImport,
+    const std::shared_ptr<lyric_importer::ModuleImport> &moduleImport,
     ObjectState *state)
 {
     TU_ASSERT (moduleImport != nullptr);
@@ -36,7 +36,7 @@ lyric_assembler::internal::find_system_bootstrap(
 
 tempo_utils::Status
 lyric_assembler::internal::load_object_symbols(
-    std::shared_ptr<lyric_importer::ModuleImport> moduleImport,
+    const std::shared_ptr<lyric_importer::ModuleImport> &moduleImport,
     ObjectState *state)
 {
     TU_ASSERT (moduleImport != nullptr);
@@ -47,7 +47,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numActions(); i++) {
         auto walker = object.getAction(i);
         lyric_common::SymbolUrl actionUrl(walker.getSymbolPath());
-        auto *actionImport = moduleImport->getAction(i);
+        auto actionImport = moduleImport->getAction(i);
         auto actionSymbol = std::make_unique<ActionSymbol>(actionUrl, actionImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendAction(std::move(actionSymbol)));
     }
@@ -55,7 +55,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numBindings(); i++) {
         auto walker = object.getBinding(i);
         lyric_common::SymbolUrl bindingUrl(walker.getSymbolPath());
-        auto *bindingImport = moduleImport->getBinding(i);
+        auto bindingImport = moduleImport->getBinding(i);
         auto bindingSymbol = std::make_unique<BindingSymbol>(bindingUrl, bindingImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendBinding(std::move(bindingSymbol)));
     }
@@ -119,7 +119,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numNamespaces(); i++) {
         auto walker = object.getNamespace(i);
         lyric_common::SymbolUrl namespaceUrl(walker.getSymbolPath());
-        auto *namespaceImport = moduleImport->getNamespace(i);
+        auto namespaceImport = moduleImport->getNamespace(i);
         auto namespaceSymbol = std::make_unique<NamespaceSymbol>(namespaceUrl, namespaceImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendNamespace(std::move(namespaceSymbol)));
     }
@@ -127,7 +127,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numProtocols(); i++) {
         auto walker = object.getProtocol(i);
         lyric_common::SymbolUrl protocolUrl(walker.getSymbolPath());
-        auto *protocolImport = moduleImport->getProtocol(i);
+        auto protocolImport = moduleImport->getProtocol(i);
         auto protocolSymbol = std::make_unique<ProtocolSymbol>(protocolUrl, protocolImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendProtocol(std::move(protocolSymbol)));
     }

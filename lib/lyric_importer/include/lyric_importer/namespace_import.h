@@ -8,7 +8,7 @@ namespace lyric_importer {
 
     class NamespaceImport : public BaseImport {
     public:
-        NamespaceImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 namespaceOffset);
+        NamespaceImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 namespaceOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
 
@@ -27,7 +27,14 @@ namespace lyric_importer {
         tu_uint32 m_namespaceOffset;
         absl::Mutex m_lock;
 
-        struct Priv;
+        struct Priv {
+            lyric_common::SymbolUrl symbolUrl;
+            bool isDeclOnly;
+            bool isHidden;
+            lyric_common::SymbolUrl superNamespace;
+            TypeImport *namespaceType = nullptr;
+            absl::flat_hash_set<lyric_common::SymbolUrl> symbols;
+        };
         std::unique_ptr<Priv> m_priv ABSL_GUARDED_BY(m_lock);
 
         void load();

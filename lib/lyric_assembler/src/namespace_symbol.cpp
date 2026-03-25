@@ -58,12 +58,12 @@ lyric_assembler::NamespaceSymbol::NamespaceSymbol(
 
 lyric_assembler::NamespaceSymbol::NamespaceSymbol(
     const lyric_common::SymbolUrl &namespaceUrl,
-    lyric_importer::NamespaceImport *namespaceImport,
+    std::shared_ptr<lyric_importer::NamespaceImport> namespaceImport,
     bool isCopied,
     ObjectState *state)
     : BaseSymbol(isCopied),
       m_namespaceUrl(namespaceUrl),
-      m_namespaceImport(namespaceImport),
+      m_namespaceImport(std::move(namespaceImport)),
       m_state(state)
 {
     TU_ASSERT (m_namespaceUrl.isValid());

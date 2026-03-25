@@ -42,7 +42,7 @@ namespace lyric_assembler {
 
         ActionSymbol(
             const lyric_common::SymbolUrl &actionUrl,
-            lyric_importer::ActionImport *actionImport,
+            std::shared_ptr<lyric_importer::ActionImport> actionImport,
             bool isCopied,
             ObjectState *state);
 
@@ -77,7 +77,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_actionUrl;
-        lyric_importer::ActionImport *m_actionImport = nullptr;
+        std::shared_ptr<lyric_importer::ActionImport> m_actionImport;
         ObjectState *m_state;
 
         ActionSymbolPriv *load() override;

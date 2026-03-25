@@ -16,7 +16,7 @@
 
 tempo_utils::Result<lyric_assembler::ActionSymbol *>
 lyric_archiver::copy_action(
-    lyric_importer::ActionImport *actionImport,
+    const std::shared_ptr<lyric_importer::ActionImport> &actionImport,
     const std::string &importHash,
     lyric_assembler::NamespaceSymbol *targetNamespace,
     SymbolReferenceSet &symbolReferenceSet,
@@ -81,7 +81,7 @@ lyric_archiver::copy_action(
 
 tempo_utils::Status
 lyric_archiver::define_action(
-    lyric_importer::ActionImport *actionImport,
+    const std::shared_ptr<lyric_importer::ActionImport> &actionImport,
     lyric_assembler::ActionSymbol *actionSymbol,
     const std::string &importHash,
     lyric_assembler::NamespaceSymbol *targetNamespace,

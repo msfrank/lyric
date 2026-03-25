@@ -52,12 +52,12 @@ lyric_assembler::BindingSymbol::BindingSymbol(
 
 lyric_assembler::BindingSymbol::BindingSymbol(
     const lyric_common::SymbolUrl &bindingUrl,
-    lyric_importer::BindingImport *bindingImport,
+    std::shared_ptr<lyric_importer::BindingImport> bindingImport,
     bool isCopied,
     ObjectState *state)
     : BaseSymbol(isCopied),
       m_bindingUrl(bindingUrl),
-      m_bindingImport(bindingImport),
+      m_bindingImport(std::move(bindingImport)),
       m_state(state)
 {
     TU_ASSERT (m_bindingUrl.isValid());

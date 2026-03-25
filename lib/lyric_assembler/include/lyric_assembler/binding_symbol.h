@@ -9,7 +9,7 @@
 namespace lyric_assembler {
 
     struct BindingSymbolPriv {
-        bool isHidden;
+        bool isHidden = false;
         TypeHandle *bindingType = nullptr;
         TemplateHandle *bindingTemplate = nullptr;
         TypeHandle *targetType = nullptr;
@@ -34,7 +34,7 @@ namespace lyric_assembler {
 
         BindingSymbol(
             const lyric_common::SymbolUrl &bindingUrl,
-            lyric_importer::BindingImport *bindingImport,
+            std::shared_ptr<lyric_importer::BindingImport> bindingImport,
             bool isCopied,
             ObjectState *state);
 
@@ -60,7 +60,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_bindingUrl;
-        lyric_importer::BindingImport *m_bindingImport = nullptr;
+        std::shared_ptr<lyric_importer::BindingImport> m_bindingImport;
         ObjectState *m_state;
 
         BindingSymbolPriv *load() override;

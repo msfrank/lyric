@@ -10,10 +10,10 @@
 namespace lyric_assembler {
 
     struct NamespaceSymbolPriv {
-        bool isHidden;
-        bool isDeclOnly;
-        TypeHandle *namespaceType;
-        NamespaceSymbol *superNamespace;
+        bool isHidden = false;
+        bool isDeclOnly = false;
+        TypeHandle *namespaceType = nullptr;
+        NamespaceSymbol *superNamespace = nullptr;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> targets;
         std::unique_ptr<BlockHandle> namespaceBlock;
     };
@@ -36,7 +36,7 @@ namespace lyric_assembler {
             ObjectState *state);
         NamespaceSymbol(
             const lyric_common::SymbolUrl &nsUrl,
-            lyric_importer::NamespaceImport *namespaceImport,
+            std::shared_ptr<lyric_importer::NamespaceImport> namespaceImport,
             bool isCopied,
             ObjectState *state);
 
@@ -78,7 +78,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_namespaceUrl;
-        lyric_importer::NamespaceImport *m_namespaceImport = nullptr;
+        std::shared_ptr<lyric_importer::NamespaceImport> m_namespaceImport;
         ObjectState *m_state;
 
         NamespaceSymbolPriv *load() override;

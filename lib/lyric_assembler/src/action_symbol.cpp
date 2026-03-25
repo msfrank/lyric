@@ -53,12 +53,12 @@ lyric_assembler::ActionSymbol::ActionSymbol(
 
 lyric_assembler::ActionSymbol::ActionSymbol(
     const lyric_common::SymbolUrl &actionUrl,
-    lyric_importer::ActionImport *actionImport,
+    std::shared_ptr<lyric_importer::ActionImport> actionImport,
     bool isCopied,
     ObjectState *state)
     : BaseSymbol(isCopied),
       m_actionUrl(actionUrl),
-      m_actionImport(actionImport),
+      m_actionImport(std::move(actionImport)),
       m_state(state)
 {
     TU_ASSERT (m_actionUrl.isValid());

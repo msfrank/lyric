@@ -8,7 +8,7 @@ namespace lyric_importer {
 
     class ProtocolImport : public BaseImport {
     public:
-        ProtocolImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 protocolOffset);
+        ProtocolImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 protocolOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
 
@@ -30,7 +30,16 @@ namespace lyric_importer {
         tu_uint32 m_protocolOffset;
         absl::Mutex m_lock;
 
-        struct Priv;
+        struct Priv {
+            lyric_common::SymbolUrl symbolUrl;
+            bool isDeclOnly = false;
+            bool isHidden = false;
+            lyric_object::PortType port = lyric_object::PortType::Invalid;
+            lyric_object::CommunicationType comm = lyric_object::CommunicationType::Invalid;
+            TypeImport *protocolType = nullptr;
+            TypeImport *sendType = nullptr;
+            TypeImport *receiveType = nullptr;
+        };
         std::unique_ptr<Priv> m_priv ABSL_GUARDED_BY(m_lock);
 
         void load();

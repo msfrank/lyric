@@ -8,7 +8,7 @@ namespace lyric_importer {
 
     class BindingImport : public BaseImport {
     public:
-        BindingImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 bindingOffset);
+        BindingImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 bindingOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
 
@@ -21,7 +21,13 @@ namespace lyric_importer {
         tu_uint32 m_bindingOffset;
         absl::Mutex m_lock;
 
-        struct Priv;
+        struct Priv {
+            lyric_common::SymbolUrl symbolUrl;
+            bool isHidden;
+            TypeImport *bindingType;
+            TemplateImport *bindingTemplate;
+            TypeImport *targetType;
+        };
         std::unique_ptr<Priv> m_priv ABSL_GUARDED_BY(m_lock);
 
         void load();

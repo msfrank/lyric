@@ -102,7 +102,7 @@ lyric_archiver::copy_type(
     SymbolReferenceSet &symbolReferenceSet,
     ArchiverState &archiverState)
 {
-    auto moduleImport = typeImport->getModuleImport();
+    auto moduleImport = typeImport->acquireModuleImport();
 
     CopyTypeData data;
     data.location = moduleImport->getObjectLocation();

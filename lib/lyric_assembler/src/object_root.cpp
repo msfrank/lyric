@@ -121,13 +121,13 @@ lyric_assembler::ObjectRoot::initialize(
                 break;
             }
             case lyric_object::LinkageSection::Namespace: {
-                auto *namespaceImport = preludeImport->getNamespace(symbolWalker.getLinkageIndex());
+                auto namespaceImport = preludeImport->getNamespace(symbolWalker.getLinkageIndex());
                 binding.typeDef = namespaceImport->getNamespaceType()->getTypeDef();
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
             case lyric_object::LinkageSection::Protocol: {
-                auto *protocolImport = preludeImport->getProtocol(symbolWalker.getLinkageIndex());
+                auto protocolImport = preludeImport->getProtocol(symbolWalker.getLinkageIndex());
                 binding.typeDef = protocolImport->getProtocolType()->getTypeDef();
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
@@ -223,13 +223,13 @@ lyric_assembler::ObjectRoot::initialize(
                     break;
                 }
                 case lyric_object::LinkageSection::Namespace: {
-                    auto *namespaceImport = preludeImport->getNamespace(symbolWalker.getLinkageIndex());
+                    auto namespaceImport = preludeImport->getNamespace(symbolWalker.getLinkageIndex());
                     binding.typeDef = namespaceImport->getNamespaceType()->getTypeDef();
                     TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                     break;
                 }
                 case lyric_object::LinkageSection::Protocol: {
-                    auto *protocolImport = preludeImport->getProtocol(symbolWalker.getLinkageIndex());
+                    auto protocolImport = preludeImport->getProtocol(symbolWalker.getLinkageIndex());
                     binding.typeDef = protocolImport->getProtocolType()->getTypeDef();
                     TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                     break;

@@ -79,7 +79,12 @@ lyric_importer::ImplImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto moduleImport = getModuleImport();
+    auto moduleImport = acquireModuleImport();
+    if (moduleImport == nullptr)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(ImporterCondition::kImporterInvariant,
+                "invalid module import"));
+
     auto objectLocation = moduleImport->getObjectLocation();
     auto implWalker = moduleImport->getObject().getImpl(m_implOffset);
 

@@ -123,7 +123,7 @@ get_module_import(
     return entry->second;
 }
 
-tempo_utils::Result<lyric_importer::ActionImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::ActionImport>>
 lyric_archiver::ArchiverState::importAction(const lyric_common::SymbolUrl &actionUrl)
 {
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
@@ -224,7 +224,7 @@ lyric_archiver::ArchiverState::archiveSymbol(
     switch (symbol.getLinkageSection()) {
 
         case lyric_object::LinkageSection::Action: {
-            auto *actionImport = moduleImport->getAction(symbol.getLinkageIndex());
+            auto actionImport = moduleImport->getAction(symbol.getLinkageIndex());
             lyric_assembler::ActionSymbol *copiedAction;
             TU_ASSIGN_OR_RETURN (copiedAction, copy_action(
                 actionImport, importHash, globalNamespace, symbolReferenceSet, *this));

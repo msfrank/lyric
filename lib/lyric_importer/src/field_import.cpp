@@ -75,7 +75,12 @@ lyric_importer::FieldImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto moduleImport = getModuleImport();
+    auto moduleImport = acquireModuleImport();
+    if (moduleImport == nullptr)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(ImporterCondition::kImporterInvariant,
+                "invalid module import"));
+
     auto objectLocation = moduleImport->getObjectLocation();
     auto fieldWalker = moduleImport->getObject().getField(m_fieldOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, fieldWalker.getSymbolPath());

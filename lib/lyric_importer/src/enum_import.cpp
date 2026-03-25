@@ -195,7 +195,12 @@ lyric_importer::EnumImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto moduleImport = getModuleImport();
+    auto moduleImport = acquireModuleImport();
+    if (moduleImport == nullptr)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(ImporterCondition::kImporterInvariant,
+                "invalid module import"));
+
     auto objectLocation = moduleImport->getObjectLocation();
     auto enumWalker = moduleImport->getObject().getEnum(m_enumOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, enumWalker.getSymbolPath());

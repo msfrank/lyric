@@ -117,7 +117,7 @@ lyric_importer::ModuleCache::importModule(const lyric_common::ModuleLocation &ob
     return moduleImport;
 }
 
-tempo_utils::Result<lyric_importer::ActionImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::ActionImport>>
 lyric_importer::ModuleCache::getAction(const lyric_common::SymbolUrl &actionUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
@@ -134,7 +134,7 @@ lyric_importer::ModuleCache::getAction(const lyric_common::SymbolUrl &actionUrl)
     return moduleImport->getAction(symbolWalker.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::BindingImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::BindingImport>>
 lyric_importer::ModuleCache::getBinding(const lyric_common::SymbolUrl &bindingUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
@@ -270,7 +270,7 @@ lyric_importer::ModuleCache::getInstance(const lyric_common::SymbolUrl &instance
     return moduleImport->getInstance(symbolWalker.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::NamespaceImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::NamespaceImport>>
 lyric_importer::ModuleCache::getNamespace(const lyric_common::SymbolUrl &namespaceUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
@@ -287,7 +287,7 @@ lyric_importer::ModuleCache::getNamespace(const lyric_common::SymbolUrl &namespa
     return moduleImport->getNamespace(symbolWalker.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::ProtocolImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::ProtocolImport>>
 lyric_importer::ModuleCache::getProtocol(const lyric_common::SymbolUrl &protocolUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;

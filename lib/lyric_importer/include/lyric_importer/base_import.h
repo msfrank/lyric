@@ -7,12 +7,14 @@ namespace lyric_importer {
 
     class BaseImport {
     public:
-        explicit BaseImport(std::shared_ptr<ModuleImport> moduleImport);
+        explicit BaseImport(std::weak_ptr<ModuleImport> moduleImport);
 
-        std::shared_ptr<ModuleImport> getModuleImport() const;
+        std::weak_ptr<ModuleImport> getModuleImport() const;
+        std::shared_ptr<ModuleImport> acquireModuleImport() const;
+        void releaseModuleImport();
 
     private:
-        std::shared_ptr<ModuleImport> m_moduleImport;
+        std::weak_ptr<ModuleImport> m_moduleImport;
     };
 }
 

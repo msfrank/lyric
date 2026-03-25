@@ -3,21 +3,8 @@
 #include <lyric_importer/protocol_import.h>
 #include <lyric_object/protocol_walker.h>
 
-namespace lyric_importer {
-    struct ProtocolImport::Priv {
-        lyric_common::SymbolUrl symbolUrl;
-        bool isDeclOnly = false;
-        bool isHidden = false;
-        lyric_object::PortType port = lyric_object::PortType::Invalid;
-        lyric_object::CommunicationType comm = lyric_object::CommunicationType::Invalid;
-        TypeImport *protocolType = nullptr;
-        TypeImport *sendType = nullptr;
-        TypeImport *receiveType = nullptr;
-    };
-}
-
-lyric_importer::ProtocolImport::ProtocolImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 protocolOffset)
-    : BaseImport(moduleImport),
+lyric_importer::ProtocolImport::ProtocolImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 protocolOffset)
+    : BaseImport(std::move(moduleImport)),
       m_protocolOffset(protocolOffset)
 {
     TU_ASSERT (m_protocolOffset != lyric_object::INVALID_ADDRESS_U32);
@@ -102,7 +89,12 @@ lyric_importer::ProtocolImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto moduleImport = getModuleImport();
+    auto moduleImport = acquireModuleImport();
+    if (moduleImport == nullptr)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(ImporterCondition::kImporterInvariant,
+                "invalid module import"));
+
     auto objectLocation = moduleImport->getObjectLocation();
     auto protocolWalker = moduleImport->getObject().getProtocol(m_protocolOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, protocolWalker.getSymbolPath());

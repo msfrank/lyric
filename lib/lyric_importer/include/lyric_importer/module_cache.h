@@ -41,8 +41,8 @@ namespace lyric_importer {
         tempo_utils::Result<std::shared_ptr<ModuleImport>> importModule(
             const lyric_common::ModuleLocation &location);
 
-        tempo_utils::Result<ActionImport *> getAction(const lyric_common::SymbolUrl &actionUrl);
-        tempo_utils::Result<BindingImport *> getBinding(const lyric_common::SymbolUrl &bindingUrl);
+        tempo_utils::Result<std::shared_ptr<ActionImport>> getAction(const lyric_common::SymbolUrl &actionUrl);
+        tempo_utils::Result<std::shared_ptr<BindingImport>> getBinding(const lyric_common::SymbolUrl &bindingUrl);
         tempo_utils::Result<CallImport *> getCall(const lyric_common::SymbolUrl &callUrl);
         tempo_utils::Result<ClassImport *> getClass(const lyric_common::SymbolUrl &classUrl);
         tempo_utils::Result<ConceptImport *> getConcept(const lyric_common::SymbolUrl &conceptUrl);
@@ -50,8 +50,8 @@ namespace lyric_importer {
         tempo_utils::Result<ExistentialImport *> getExistential(const lyric_common::SymbolUrl &existentialUrl);
         tempo_utils::Result<FieldImport *> getField(const lyric_common::SymbolUrl &fieldUrl);
         tempo_utils::Result<InstanceImport *> getInstance(const lyric_common::SymbolUrl &instanceUrl);
-        tempo_utils::Result<NamespaceImport *> getNamespace(const lyric_common::SymbolUrl &namespaceUrl);
-        tempo_utils::Result<ProtocolImport *> getProtocol(const lyric_common::SymbolUrl &protocolUrl);
+        tempo_utils::Result<std::shared_ptr<NamespaceImport>> getNamespace(const lyric_common::SymbolUrl &namespaceUrl);
+        tempo_utils::Result<std::shared_ptr<ProtocolImport>> getProtocol(const lyric_common::SymbolUrl &protocolUrl);
         tempo_utils::Result<StaticImport *> getStatic(const lyric_common::SymbolUrl &staticUrl);
         tempo_utils::Result<StructImport *> getStruct(const lyric_common::SymbolUrl &structUrl);
 

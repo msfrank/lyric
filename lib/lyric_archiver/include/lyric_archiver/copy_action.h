@@ -12,14 +12,14 @@
 namespace lyric_archiver {
 
     tempo_utils::Result<lyric_assembler::ActionSymbol *> copy_action(
-        lyric_importer::ActionImport *actionImport,
+        const std::shared_ptr<lyric_importer::ActionImport> &actionImport,
         const std::string &importHash,
         lyric_assembler::NamespaceSymbol *targetNamespace,
         SymbolReferenceSet &symbolReferenceSet,
         ArchiverState &archiverState);
 
     tempo_utils::Status define_action(
-        lyric_importer::ActionImport *actionImport,
+        const std::shared_ptr<lyric_importer::ActionImport> &actionImport,
         lyric_assembler::ActionSymbol *actionSymbol,
         const std::string &importHash,
         lyric_assembler::NamespaceSymbol *targetNamespace,

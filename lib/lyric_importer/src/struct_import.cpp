@@ -195,7 +195,12 @@ lyric_importer::StructImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto moduleImport = getModuleImport();
+    auto moduleImport = acquireModuleImport();
+    if (moduleImport == nullptr)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(ImporterCondition::kImporterInvariant,
+                "invalid module import"));
+
     auto objectLocation = moduleImport->getObjectLocation();
     auto structWalker = moduleImport->getObject().getStruct(m_structOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, structWalker.getSymbolPath());

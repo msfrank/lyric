@@ -155,7 +155,7 @@ lyric_archiver::define_call(
     lyric_assembler::ProcHandle *procHandle;
     TU_ASSIGN_OR_RETURN (procHandle, callSymbol->defineCall(parameterPack, returnTypeHandle->getTypeDef()));
 
-    auto moduleImport = callImport->getModuleImport();
+    auto moduleImport = callImport->acquireModuleImport();
     auto object = moduleImport->getObject();
 
     //
@@ -186,7 +186,7 @@ lyric_archiver::put_pending_proc(
 {
     auto importUrl = callImport->getSymbolUrl();
 
-    auto moduleImport = callImport->getModuleImport();
+    auto moduleImport = callImport->acquireModuleImport();
     auto location = moduleImport->getObjectLocation();
     auto object = moduleImport->getObject();
     auto plugin = moduleImport->getPlugin();

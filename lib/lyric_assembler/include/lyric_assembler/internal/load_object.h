@@ -6,11 +6,11 @@
 namespace lyric_assembler::internal {
 
     tempo_utils::Result<lyric_common::ModuleLocation> find_system_bootstrap(
-        std::shared_ptr<lyric_importer::ModuleImport> moduleImport,
+        const std::shared_ptr<lyric_importer::ModuleImport> &moduleImport,
         ObjectState *state);
 
     tempo_utils::Status load_object_symbols(
-        std::shared_ptr<lyric_importer::ModuleImport> moduleImport,
+        const std::shared_ptr<lyric_importer::ModuleImport> &moduleImport,
         ObjectState *state);
 }
 

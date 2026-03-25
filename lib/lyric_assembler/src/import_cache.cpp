@@ -13,10 +13,9 @@
 #include <lyric_assembler/instance_symbol.h>
 #include <lyric_assembler/namespace_symbol.h>
 #include <lyric_assembler/object_state.h>
+#include <lyric_assembler/protocol_symbol.h>
 #include <lyric_assembler/static_symbol.h>
 #include <lyric_assembler/struct_symbol.h>
-
-#include "lyric_assembler/protocol_symbol.h"
 
 lyric_assembler::ImportCache::ImportCache(
     ObjectState *state,
@@ -74,7 +73,7 @@ lyric_assembler::ImportCache::resolveImportLocation(const tempo_utils::Url &impo
 
 inline tempo_utils::Status
 insert_symbol_into_cache(
-    std::shared_ptr<lyric_importer::ModuleImport> moduleImport,
+    std::shared_ptr<lyric_importer::ModuleImport> &moduleImport,
     const lyric_common::SymbolUrl &symbolUrl,
     lyric_object::SymbolWalker &symbolWalker,
     lyric_assembler::SymbolCache *symbolCache,
@@ -87,12 +86,12 @@ insert_symbol_into_cache(
 
     switch (symbolWalker.getLinkageSection()) {
         case lyric_object::LinkageSection::Action: {
-            auto *actionImport = moduleImport->getAction(symbolWalker.getLinkageIndex());
+            auto actionImport = moduleImport->getAction(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::ActionSymbol(symbolUrl, actionImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Binding: {
-            auto *bindingImport = moduleImport->getBinding(symbolWalker.getLinkageIndex());
+            auto bindingImport = moduleImport->getBinding(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::BindingSymbol(symbolUrl, bindingImport, /* isCopied= */ false, state);
             break;
         }
@@ -132,12 +131,12 @@ insert_symbol_into_cache(
             break;
         }
         case lyric_object::LinkageSection::Namespace: {
-            auto *namespaceImport = moduleImport->getNamespace(symbolWalker.getLinkageIndex());
+            auto namespaceImport = moduleImport->getNamespace(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::NamespaceSymbol(symbolUrl, namespaceImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Protocol: {
-            auto *protocolImport = moduleImport->getProtocol(symbolWalker.getLinkageIndex());
+            auto protocolImport = moduleImport->getProtocol(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::ProtocolSymbol(symbolUrl, protocolImport, /* isCopied= */ false, state);
             break;
         }

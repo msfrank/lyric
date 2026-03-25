@@ -4,25 +4,10 @@
 #include <lyric_importer/type_import.h>
 #include <lyric_object/parameter_walker.h>
 
-namespace lyric_importer {
-    struct ActionImport::Priv {
-        lyric_common::SymbolUrl symbolUrl;
-        lyric_common::SymbolUrl receiverUrl;
-        bool isDeclOnly;
-        bool isHidden;
-        TemplateImport *actionTemplate;
-        TypeImport *returnType;
-        std::vector<Parameter> listParameters;
-        std::vector<Parameter> namedParameters;
-        Option<Parameter> restParameter;
-        absl::flat_hash_map<std::string,lyric_common::SymbolUrl> initializers;
-    };
-}
-
 lyric_importer::ActionImport::ActionImport(
-    std::shared_ptr<ModuleImport> moduleImport,
+    std::weak_ptr<ModuleImport> moduleImport,
     tu_uint32 actionOffset)
-    : BaseImport(moduleImport),
+    : BaseImport(std::move(moduleImport)),
       m_actionOffset(actionOffset)
 {
     TU_ASSERT (m_actionOffset != lyric_object::INVALID_ADDRESS_U32);
@@ -184,7 +169,12 @@ lyric_importer::ActionImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto moduleImport = getModuleImport();
+    auto moduleImport = acquireModuleImport();
+    if (moduleImport == nullptr)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(ImporterCondition::kImporterInvariant,
+                "invalid module import"));
+
     auto objectLocation = moduleImport->getObjectLocation();
     auto actionWalker = moduleImport->getObject().getAction(m_actionOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, actionWalker.getSymbolPath());

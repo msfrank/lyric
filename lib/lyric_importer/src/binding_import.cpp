@@ -3,18 +3,8 @@
 #include <lyric_importer/importer_result.h>
 #include <lyric_object/binding_walker.h>
 
-namespace lyric_importer {
-    struct BindingImport::Priv {
-        lyric_common::SymbolUrl symbolUrl;
-        bool isHidden;
-        TypeImport *bindingType;
-        TemplateImport *bindingTemplate;
-        TypeImport *targetType;
-    };
-}
-
-lyric_importer::BindingImport::BindingImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 bindingOffset)
-    : BaseImport(moduleImport),
+lyric_importer::BindingImport::BindingImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 bindingOffset)
+    : BaseImport(std::move(moduleImport)),
       m_bindingOffset(bindingOffset)
 {
     TU_ASSERT (m_bindingOffset != lyric_object::INVALID_ADDRESS_U32);
@@ -65,7 +55,12 @@ lyric_importer::BindingImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto moduleImport = getModuleImport();
+    auto moduleImport = acquireModuleImport();
+    if (moduleImport == nullptr)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(ImporterCondition::kImporterInvariant,
+                "invalid module import"));
+
     auto objectLocation = moduleImport->getObjectLocation();
     auto bindingWalker = moduleImport->getObject().getBinding(m_bindingOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, bindingWalker.getSymbolPath());

@@ -160,7 +160,12 @@ lyric_importer::ExistentialImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto moduleImport = getModuleImport();
+    auto moduleImport = acquireModuleImport();
+    if (moduleImport == nullptr)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(ImporterCondition::kImporterInvariant,
+                "invalid module import"));
+
     auto objectLocation = moduleImport->getObjectLocation();
     auto existentialWalker = moduleImport->getObject().getExistential(m_existentialOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, existentialWalker.getSymbolPath());

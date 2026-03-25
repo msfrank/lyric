@@ -48,12 +48,12 @@ lyric_assembler::ProtocolSymbol::ProtocolSymbol(
 
 lyric_assembler::ProtocolSymbol::ProtocolSymbol(
     const lyric_common::SymbolUrl &protocolUrl,
-    lyric_importer::ProtocolImport *protocolImport,
+    std::shared_ptr<lyric_importer::ProtocolImport> protocolImport,
     bool isCopied,
     ObjectState *state)
     : BaseSymbol(isCopied),
       m_protocolUrl(protocolUrl),
-      m_protocolImport(protocolImport),
+      m_protocolImport(std::move(protocolImport)),
       m_state(state)
 {
     TU_ASSERT (m_protocolUrl.isValid());

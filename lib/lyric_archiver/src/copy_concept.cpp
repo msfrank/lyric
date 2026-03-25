@@ -92,7 +92,7 @@ lyric_archiver::copy_concept(
 
     for (auto it = conceptImport->actionsBegin(); it != conceptImport->actionsEnd(); it++) {
         auto &name = it->first;
-        lyric_importer::ActionImport *actionImport;
+        std::shared_ptr<lyric_importer::ActionImport> actionImport;
         TU_ASSIGN_OR_RETURN (actionImport, archiverState.importAction(it->second));
         std::vector<lyric_object::TemplateParameter> templateParameters;
         auto *templateImport = actionImport->getActionTemplate();

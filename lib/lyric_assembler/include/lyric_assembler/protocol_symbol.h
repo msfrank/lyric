@@ -12,7 +12,7 @@
 namespace lyric_assembler {
 
     struct ProtocolSymbolPriv {
-        bool isHidden;
+        bool isHidden = false;
         lyric_object::PortType port = lyric_object::PortType::Invalid;
         lyric_object::CommunicationType comm = lyric_object::CommunicationType::Invalid;
         TypeHandle *protocolType = nullptr;
@@ -39,7 +39,7 @@ namespace lyric_assembler {
             ObjectState *state);
         ProtocolSymbol(
             const lyric_common::SymbolUrl &protocolUrl,
-            lyric_importer::ProtocolImport *protocolImport,
+            std::shared_ptr<lyric_importer::ProtocolImport> protocolImport,
             bool isCopied,
             ObjectState *state);
 
@@ -69,7 +69,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_protocolUrl;
-        lyric_importer::ProtocolImport *m_protocolImport = nullptr;
+        std::shared_ptr<lyric_importer::ProtocolImport> m_protocolImport;
         ObjectState *m_state;
 
         ProtocolSymbolPriv *load() override;

@@ -2,21 +2,10 @@
 #include <lyric_importer/importer_result.h>
 #include <lyric_importer/namespace_import.h>
 
-namespace lyric_importer {
-    struct NamespaceImport::Priv {
-        lyric_common::SymbolUrl symbolUrl;
-        bool isDeclOnly;
-        bool isHidden;
-        lyric_common::SymbolUrl superNamespace;
-        TypeImport *namespaceType = nullptr;
-        absl::flat_hash_set<lyric_common::SymbolUrl> symbols;
-    };
-}
-
 lyric_importer::NamespaceImport::NamespaceImport(
-    std::shared_ptr<ModuleImport> moduleImport,
+    std::weak_ptr<ModuleImport> moduleImport,
     tu_uint32 namespaceOffset)
-    : BaseImport(moduleImport),
+    : BaseImport(std::move(moduleImport)),
       m_namespaceOffset(namespaceOffset)
 {
     TU_ASSERT (m_namespaceOffset != lyric_object::INVALID_ADDRESS_U32);
@@ -88,7 +77,12 @@ lyric_importer::NamespaceImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto moduleImport = getModuleImport();
+    auto moduleImport = acquireModuleImport();
+    if (moduleImport == nullptr)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(ImporterCondition::kImporterInvariant,
+                "invalid module import"));
+
     auto objectLocation = moduleImport->getObjectLocation();
     auto namespaceWalker = moduleImport->getObject().getNamespace(m_namespaceOffset);
     priv->symbolUrl = lyric_common::SymbolUrl(objectLocation, namespaceWalker.getSymbolPath());

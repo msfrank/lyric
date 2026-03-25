@@ -74,7 +74,12 @@ lyric_importer::TemplateImport::load()
 
     auto priv = std::make_unique<Priv>();
 
-    auto moduleImport = getModuleImport();
+    auto moduleImport = acquireModuleImport();
+    if (moduleImport == nullptr)
+        throw tempo_utils::StatusException(
+            ImporterStatus::forCondition(ImporterCondition::kImporterInvariant,
+                "invalid module import"));
+
     auto objectLocation = moduleImport->getObjectLocation();
     auto templateWalker = moduleImport->getObject().getTemplate(m_templateOffset);
     priv->templateUrl = lyric_common::SymbolUrl(objectLocation, templateWalker.getSymbolPath());
