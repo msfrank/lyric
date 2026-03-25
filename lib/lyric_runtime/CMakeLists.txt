@@ -37,7 +37,6 @@ set(LYRIC_RUNTIME_INCLUDES
     include/lyric_runtime/protocol_ref.h
     include/lyric_runtime/ref_handle.h
     include/lyric_runtime/rest_ref.h
-    include/lyric_runtime/runtime_options.h
     include/lyric_runtime/runtime_types.h
     include/lyric_runtime/segment_manager.h
     include/lyric_runtime/serialize_value.h
@@ -79,7 +78,6 @@ target_sources(lyric_runtime PRIVATE
     src/protocol_ref.cpp
     src/ref_handle.cpp
     src/rest_ref.cpp
-    src/runtime_options.cpp
     src/runtime_types.cpp
     src/segment_manager.cpp
     src/serialize_value.cpp
