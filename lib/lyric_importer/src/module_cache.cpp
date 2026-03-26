@@ -185,7 +185,7 @@ lyric_importer::ModuleCache::getClass(const lyric_common::SymbolUrl &classUrl)
     return moduleImport->getClass(symbolWalker.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::ConceptImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::ConceptImport>>
 lyric_importer::ModuleCache::getConcept(const lyric_common::SymbolUrl &conceptUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
@@ -236,7 +236,7 @@ lyric_importer::ModuleCache::getExistential(const lyric_common::SymbolUrl &exist
     return moduleImport->getExistential(symbolWalker.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::FieldImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::FieldImport>>
 lyric_importer::ModuleCache::getField(const lyric_common::SymbolUrl &fieldUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
@@ -253,7 +253,7 @@ lyric_importer::ModuleCache::getField(const lyric_common::SymbolUrl &fieldUrl)
     return moduleImport->getField(symbolWalker.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::InstanceImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::InstanceImport>>
 lyric_importer::ModuleCache::getInstance(const lyric_common::SymbolUrl &instanceUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
@@ -304,7 +304,7 @@ lyric_importer::ModuleCache::getProtocol(const lyric_common::SymbolUrl &protocol
     return moduleImport->getProtocol(symbolWalker.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::StaticImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::StaticImport>>
 lyric_importer::ModuleCache::getStatic(const lyric_common::SymbolUrl &staticUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;
@@ -321,7 +321,7 @@ lyric_importer::ModuleCache::getStatic(const lyric_common::SymbolUrl &staticUrl)
     return moduleImport->getStatic(symbolWalker.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::StructImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::StructImport>>
 lyric_importer::ModuleCache::getStruct(const lyric_common::SymbolUrl &structUrl)
 {
     std::shared_ptr<ModuleImport> moduleImport;

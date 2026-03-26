@@ -12,7 +12,7 @@
 
 tempo_utils::Result<lyric_assembler::InstanceSymbol *>
 lyric_archiver::copy_instance(
-    lyric_importer::InstanceImport *instanceImport,
+    const std::shared_ptr<lyric_importer::InstanceImport> &instanceImport,
     const std::string &importHash,
     lyric_assembler::NamespaceSymbol *targetNamespace,
     SymbolReferenceSet &symbolReferenceSet,
@@ -71,7 +71,7 @@ lyric_archiver::copy_instance(
 
     for (auto it = instanceImport->membersBegin(); it != instanceImport->membersEnd(); it++) {
         auto &name = it->first;
-        lyric_importer::FieldImport *fieldImport;
+        std::shared_ptr<lyric_importer::FieldImport> fieldImport;
         TU_ASSIGN_OR_RETURN (fieldImport, archiverState.importField(it->second));
         lyric_assembler::TypeHandle *memberTypeHandle;
         TU_ASSIGN_OR_RETURN (memberTypeHandle, copy_type(
@@ -131,7 +131,10 @@ lyric_archiver::copy_instance(
 
     // define the instance impls
     for (auto it = instanceImport->implsBegin(); it != instanceImport->implsEnd(); it++) {
-        auto *implImport = it->second;
+        auto implImport = it->second.lock();
+        if (implImport == nullptr)
+            return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
+                "invalid impl import");
         lyric_assembler::TypeHandle *implType;
         TU_ASSIGN_OR_RETURN (implType, copy_type(
             implImport->getImplType(), importHash, targetNamespace, symbolReferenceSet, archiverState));

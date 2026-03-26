@@ -33,12 +33,12 @@ lyric_assembler::FieldSymbol::FieldSymbol(
 
 lyric_assembler::FieldSymbol::FieldSymbol(
     const lyric_common::SymbolUrl &fieldUrl,
-    lyric_importer::FieldImport *fieldImport,
+    std::shared_ptr<lyric_importer::FieldImport> fieldImport,
     bool isCopied,
     ObjectState *state)
     : BaseSymbol(isCopied),
       m_fieldUrl(fieldUrl),
-      m_fieldImport(fieldImport),
+      m_fieldImport(std::move(fieldImport)),
       m_state(state)
 {
     TU_ASSERT (m_fieldUrl.isValid());

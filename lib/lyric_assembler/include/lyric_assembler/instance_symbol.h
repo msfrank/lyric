@@ -45,7 +45,7 @@ namespace lyric_assembler {
             ObjectState *state);
         InstanceSymbol(
             const lyric_common::SymbolUrl &instanceUrl,
-            lyric_importer::InstanceImport *instanceImport,
+            std::shared_ptr<lyric_importer::InstanceImport> instanceImport,
             bool isCopied,
             ObjectState *state);
 
@@ -141,7 +141,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_instanceUrl;
-        lyric_importer::InstanceImport *m_instanceImport;
+        std::shared_ptr<lyric_importer::InstanceImport> m_instanceImport;
         ObjectState *m_state;
 
         InstanceSymbolPriv *load() override;

@@ -117,36 +117,40 @@ lyric_assembler::ClassSymbol::load()
         TU_ASSIGN_OR_RAISE (priv->superClass, importCache->importClass(superClassUrl));
     }
 
-    for (auto iterator = m_classImport->membersBegin(); iterator != m_classImport->membersEnd(); iterator++) {
+    for (auto it = m_classImport->membersBegin(); it != m_classImport->membersEnd(); it++) {
         FieldSymbol *fieldSymbol;
-        TU_ASSIGN_OR_RAISE (fieldSymbol, importCache->importField(iterator->second));
+        TU_ASSIGN_OR_RAISE (fieldSymbol, importCache->importField(it->second));
         TU_RAISE_IF_NOT_OK (priv->classBlock->putBinding(fieldSymbol));
 
         DataReference memberRef;
-        memberRef.symbolUrl = iterator->second;
+        memberRef.symbolUrl = it->second;
         memberRef.typeDef = fieldSymbol->getTypeDef();
         memberRef.referenceType = fieldSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
-        priv->members[iterator->first] = memberRef;
+        priv->members[it->first] = memberRef;
     }
 
-    for (auto iterator = m_classImport->methodsBegin(); iterator != m_classImport->methodsEnd(); iterator++) {
+    for (auto it = m_classImport->methodsBegin(); it != m_classImport->methodsEnd(); it++) {
         CallSymbol *callSymbol;
-        TU_ASSIGN_OR_RAISE (callSymbol, importCache->importCall(iterator->second));
+        TU_ASSIGN_OR_RAISE (callSymbol, importCache->importCall(it->second));
         TU_RAISE_IF_NOT_OK (priv->classBlock->putBinding(callSymbol));
 
         BoundMethod methodBinding;
-        methodBinding.methodCall = iterator->second;
+        methodBinding.methodCall = it->second;
         methodBinding.hidden = callSymbol->isHidden();
         methodBinding.ctor = callSymbol->isCtor();
         methodBinding.final = callSymbol->isFinal();
-        priv->methods[iterator->first] = methodBinding;
+        priv->methods[it->first] = methodBinding;
     }
 
     auto *implCache = m_state->implCache();
-    for (auto iterator = m_classImport->implsBegin(); iterator != m_classImport->implsEnd(); iterator++) {
+    for (auto it = m_classImport->implsBegin(); it != m_classImport->implsEnd(); it++) {
+        auto implImport = it->second.lock();
+        if (implImport == nullptr)
+            throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+                AssemblerCondition::kImportError, "invalid impl import"));
         ImplHandle *implHandle;
-        TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(iterator->second));
-        auto implUrl = iterator->first.getConcreteUrl();
+        TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(implImport));
+        auto implUrl = it->first.getConcreteUrl();
         priv->impls[implUrl] = implHandle;
     }
 

@@ -35,12 +35,12 @@ lyric_assembler::StaticSymbol::StaticSymbol(
 
 lyric_assembler::StaticSymbol::StaticSymbol(
     const lyric_common::SymbolUrl &staticUrl,
-    lyric_importer::StaticImport *staticImport,
+    std::shared_ptr<lyric_importer::StaticImport> staticImport,
     bool isCopied,
     ObjectState *state)
     : BaseSymbol(isCopied),
       m_staticUrl(staticUrl),
-      m_staticImport(staticImport),
+      m_staticImport(std::move(staticImport)),
       m_state(state)
 {
     TU_ASSERT (m_staticUrl.isValid());

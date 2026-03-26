@@ -14,7 +14,7 @@
 
 tempo_utils::Result<lyric_assembler::ConceptSymbol *>
 lyric_archiver::copy_concept(
-    lyric_importer::ConceptImport *conceptImport,
+    const std::shared_ptr<lyric_importer::ConceptImport> &conceptImport,
     const std::string &importHash,
     lyric_assembler::NamespaceSymbol *targetNamespace,
     SymbolReferenceSet &symbolReferenceSet,
@@ -108,7 +108,10 @@ lyric_archiver::copy_concept(
 
     // define the concept impls
     for (auto it = conceptImport->implsBegin(); it != conceptImport->implsEnd(); it++) {
-        auto *implImport = it->second;
+        auto implImport = it->second.lock();
+        if (implImport == nullptr)
+            return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
+                "invalid impl import");
         lyric_assembler::TypeHandle *implType;
         TU_ASSIGN_OR_RETURN (implType, copy_type(
             implImport->getImplType(), importHash, targetNamespace, symbolReferenceSet, archiverState));

@@ -90,7 +90,7 @@ lyric_archiver::copy_class(
 
     for (auto it = classImport->membersBegin(); it != classImport->membersEnd(); it++) {
         auto &name = it->first;
-        lyric_importer::FieldImport *fieldImport;
+        std::shared_ptr<lyric_importer::FieldImport> fieldImport;
         TU_ASSIGN_OR_RETURN (fieldImport, archiverState.importField(it->second));
         lyric_assembler::TypeHandle *memberTypeHandle;
         TU_ASSIGN_OR_RETURN (memberTypeHandle, copy_type(
@@ -157,7 +157,10 @@ lyric_archiver::copy_class(
 
     // define the class impls
     for (auto it = classImport->implsBegin(); it != classImport->implsEnd(); it++) {
-        auto *implImport = it->second;
+        auto implImport = it->second.lock();
+        if (implImport == nullptr)
+            return ArchiverStatus::forCondition(ArchiverCondition::kArchiverInvariant,
+                "invalid impl import");
         lyric_assembler::TypeHandle *implType;
         TU_ASSIGN_OR_RETURN (implType, copy_type(
             implImport->getImplType(), importHash, targetNamespace, symbolReferenceSet, archiverState));

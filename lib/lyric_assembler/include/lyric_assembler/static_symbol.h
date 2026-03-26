@@ -12,12 +12,12 @@
 namespace lyric_assembler {
 
     struct StaticSymbolPriv {
-        bool isHidden;
-        bool isVariable;
-        TypeHandle *staticType;
-        BlockHandle *parentBlock;
+        bool isHidden = false;
+        bool isVariable = false;
+        TypeHandle *staticType = nullptr;
+        BlockHandle *parentBlock = nullptr;
         std::unique_ptr<InitializerHandle> initializerHandle;
-        bool isDeclOnly;
+        bool isDeclOnly = false;
         std::unique_ptr<BlockHandle> staticBlock;
     };
 
@@ -34,7 +34,7 @@ namespace lyric_assembler {
             ObjectState *state);
         StaticSymbol(
             const lyric_common::SymbolUrl &staticUrl,
-            lyric_importer::StaticImport *staticImport,
+            std::shared_ptr<lyric_importer::StaticImport> staticImport,
             bool isCopied,
             ObjectState *state);
 
@@ -58,7 +58,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_staticUrl;
-        lyric_importer::StaticImport *m_staticImport = nullptr;
+        std::shared_ptr<lyric_importer::StaticImport> m_staticImport;
         ObjectState *m_state;
 
         StaticSymbolPriv *load() override;

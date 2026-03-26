@@ -51,7 +51,7 @@ lyric_assembler::ImplCache::makeImpl(
 }
 
 tempo_utils::Result<lyric_assembler::ImplHandle *>
-lyric_assembler::ImplCache::importImpl(lyric_importer::ImplImport *implImport)
+lyric_assembler::ImplCache::importImpl(std::shared_ptr<lyric_importer::ImplImport> implImport)
 {
     TU_ASSERT (implImport != nullptr);
     auto *implHandle = new ImplHandle(implImport, m_objectState);

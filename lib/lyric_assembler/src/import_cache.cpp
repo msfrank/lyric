@@ -106,7 +106,7 @@ insert_symbol_into_cache(
             break;
         }
         case lyric_object::LinkageSection::Concept: {
-            auto *conceptImport = moduleImport->getConcept(symbolWalker.getLinkageIndex());
+            auto conceptImport = moduleImport->getConcept(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::ConceptSymbol(symbolUrl, conceptImport, /* isCopied= */ false, state);
             break;
         }
@@ -121,12 +121,12 @@ insert_symbol_into_cache(
             break;
         }
         case lyric_object::LinkageSection::Field: {
-            auto *fieldImport = moduleImport->getField(symbolWalker.getLinkageIndex());
+            auto fieldImport = moduleImport->getField(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::FieldSymbol(symbolUrl, fieldImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Instance: {
-            auto *instanceImport = moduleImport->getInstance(symbolWalker.getLinkageIndex());
+            auto instanceImport = moduleImport->getInstance(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::InstanceSymbol(symbolUrl, instanceImport, /* isCopied= */ false, state);
             break;
         }
@@ -141,12 +141,12 @@ insert_symbol_into_cache(
             break;
         }
         case lyric_object::LinkageSection::Static: {
-            auto *staticImport = moduleImport->getStatic(symbolWalker.getLinkageIndex());
+            auto staticImport = moduleImport->getStatic(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::StaticSymbol(symbolUrl, staticImport, /* isCopied= */ false, state);
             break;
         }
         case lyric_object::LinkageSection::Struct: {
-            auto *structImport = moduleImport->getStruct(symbolWalker.getLinkageIndex());
+            auto structImport = moduleImport->getStruct(symbolWalker.getLinkageIndex());
             symbolPtr = new lyric_assembler::StructSymbol(symbolUrl, structImport, /* isCopied= */ false, state);
             break;
         }

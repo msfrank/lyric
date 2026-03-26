@@ -12,7 +12,7 @@
 namespace lyric_archiver {
 
     tempo_utils::Result<lyric_assembler::StructSymbol *> copy_struct(
-        lyric_importer::StructImport *structImport,
+        const std::shared_ptr<lyric_importer::StructImport> &structImport,
         const std::string &importHash,
         lyric_assembler::NamespaceSymbol *targetNamespace,
         SymbolReferenceSet &symbolReferenceSet,

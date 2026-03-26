@@ -73,12 +73,12 @@ lyric_assembler::ConceptSymbol::ConceptSymbol(
 
 lyric_assembler::ConceptSymbol::ConceptSymbol(
     const lyric_common::SymbolUrl &conceptUrl,
-    lyric_importer::ConceptImport *conceptImport,
+    std::shared_ptr<lyric_importer::ConceptImport> conceptImport,
     bool isCopied,
     ObjectState *state)
     : BaseSymbol(isCopied),
       m_conceptUrl(conceptUrl),
-      m_conceptImport(conceptImport),
+      m_conceptImport(std::move(conceptImport)),
       m_state(state)
 {
     TU_ASSERT (m_conceptUrl.isValid());
@@ -126,8 +126,12 @@ lyric_assembler::ConceptSymbol::load()
 
     auto *implCache = m_state->implCache();
     for (auto it = m_conceptImport->implsBegin(); it != m_conceptImport->implsEnd(); it++) {
+        auto implImport = it->second.lock();
+        if (implImport == nullptr)
+            throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+                AssemblerCondition::kImportError, "invalid impl import"));
         ImplHandle *implHandle;
-        TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(it->second));
+        TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(implImport));
         auto implUrl = it->first.getConcreteUrl();
         priv->impls[implUrl] = implHandle;
     }

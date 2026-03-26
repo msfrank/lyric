@@ -116,23 +116,27 @@ lyric_assembler::ExistentialSymbol::load()
         TU_ASSIGN_OR_RAISE (priv->superExistential, importCache->importExistential(superExistentialUrl));
     }
 
-    for (auto iterator = m_existentialImport->methodsBegin(); iterator != m_existentialImport->methodsEnd(); iterator++) {
+    for (auto it = m_existentialImport->methodsBegin(); it != m_existentialImport->methodsEnd(); it++) {
         CallSymbol *callSymbol;
-        TU_ASSIGN_OR_RAISE (callSymbol, importCache->importCall(iterator->second));
+        TU_ASSIGN_OR_RAISE (callSymbol, importCache->importCall(it->second));
         TU_RAISE_IF_NOT_OK (priv->existentialBlock->putBinding(callSymbol));
 
         BoundMethod methodBinding;
-        methodBinding.methodCall = iterator->second;
+        methodBinding.methodCall = it->second;
         methodBinding.hidden = callSymbol->isHidden();
         methodBinding.final = false;    // FIXME: this should come from the call symbol
-        priv->methods[iterator->first] = methodBinding;
+        priv->methods[it->first] = methodBinding;
     }
 
     auto *implCache = m_state->implCache();
-    for (auto iterator = m_existentialImport->implsBegin(); iterator != m_existentialImport->implsEnd(); iterator++) {
+    for (auto it = m_existentialImport->implsBegin(); it != m_existentialImport->implsEnd(); it++) {
+        auto implImport = it->second.lock();
+        if (implImport == nullptr)
+            throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+                AssemblerCondition::kImportError, "invalid impl import"));
         ImplHandle *implHandle;
-        TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(iterator->second));
-        auto implUrl = iterator->first.getConcreteUrl();
+        TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(implImport));
+        auto implUrl = it->first.getConcreteUrl();
         priv->impls[implUrl] = implHandle;
     }
 

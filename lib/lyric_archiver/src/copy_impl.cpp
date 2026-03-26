@@ -5,7 +5,7 @@
 
 tempo_utils::Status
 lyric_archiver::copy_impl(
-    lyric_importer::ImplImport *implImport,
+    const std::shared_ptr<lyric_importer::ImplImport> &implImport,
     lyric_assembler::ImplHandle *implHandle,
     const std::string &importHash,
     lyric_assembler::NamespaceSymbol *targetNamespace,

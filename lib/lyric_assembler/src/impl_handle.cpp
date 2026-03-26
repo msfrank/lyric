@@ -59,7 +59,7 @@ lyric_assembler::ImplHandle::ImplHandle(
     TU_ASSERT(priv->receiverTemplate != nullptr);
 }
 
-lyric_assembler::ImplHandle::ImplHandle(lyric_importer::ImplImport *implImport, ObjectState *state)
+lyric_assembler::ImplHandle::ImplHandle(std::shared_ptr<lyric_importer::ImplImport> implImport, ObjectState *state)
     : m_implImport(implImport),
       m_state(state)
 {

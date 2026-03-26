@@ -9,7 +9,7 @@
 namespace lyric_archiver {
 
     tempo_utils::Status copy_impl(
-        lyric_importer::ImplImport *implImport,
+        const std::shared_ptr<lyric_importer::ImplImport> &implImport,
         lyric_assembler::ImplHandle *implHandle,
         const std::string &importHash,
         lyric_assembler::NamespaceSymbol *targetNamespace,

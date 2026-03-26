@@ -70,7 +70,7 @@ lyric_importer::ModuleImport::initialize()
 
     m_importedConcepts.resize(m_object.numConcepts());
     for (int i = 0; i < m_object.numConcepts(); i++) {
-        m_importedConcepts[i] = new ConceptImport(shared_from_this(), i);
+        m_importedConcepts[i] = std::make_shared<ConceptImport>(weak_from_this(), i);
     }
 
     m_importedEnums.resize(m_object.numEnums());
@@ -85,17 +85,17 @@ lyric_importer::ModuleImport::initialize()
 
     m_importedFields.resize(m_object.numFields());
     for (int i = 0; i < m_object.numFields(); i++) {
-        m_importedFields[i] = new FieldImport(shared_from_this(), i);
+        m_importedFields[i] = std::make_shared<FieldImport>(weak_from_this(), i);
     }
 
     m_importedImpls.resize(m_object.numImpls());
     for (int i = 0; i < m_object.numImpls(); i++) {
-        m_importedImpls[i] = new ImplImport(shared_from_this(), i);
+        m_importedImpls[i] = std::make_shared<ImplImport>(weak_from_this(), i);
     }
 
     m_importedInstances.resize(m_object.numInstances());
     for (int i = 0; i < m_object.numInstances(); i++) {
-        m_importedInstances[i] = new InstanceImport(shared_from_this(), i);
+        m_importedInstances[i] = std::make_shared<InstanceImport>(weak_from_this(), i);
     }
 
     m_importedNamespaces.resize(m_object.numNamespaces());
@@ -110,12 +110,12 @@ lyric_importer::ModuleImport::initialize()
 
     m_importedStatics.resize(m_object.numStatics());
     for (int i = 0; i < m_object.numStatics(); i++) {
-        m_importedStatics[i] = new StaticImport(shared_from_this(), i);
+        m_importedStatics[i] = std::make_shared<StaticImport>(weak_from_this(), i);
     }
 
     m_importedStructs.resize(m_object.numStructs());
     for (int i = 0; i < m_object.numStructs(); i++) {
-        m_importedStructs[i] = new StructImport(shared_from_this(), i);
+        m_importedStructs[i] = std::make_shared<StructImport>(weak_from_this(), i);
     }
 
     m_importedTemplates.resize(m_object.numTemplates());
@@ -187,7 +187,7 @@ lyric_importer::ModuleImport::getClass(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::ConceptImport *
+std::shared_ptr<lyric_importer::ConceptImport>
 lyric_importer::ModuleImport::getConcept(tu_uint32 offset) const
 {
     if (offset < m_importedConcepts.size())
@@ -211,7 +211,7 @@ lyric_importer::ModuleImport::getExistential(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::FieldImport *
+std::shared_ptr<lyric_importer::FieldImport>
 lyric_importer::ModuleImport::getField(tu_uint32 offset) const
 {
     if (offset < m_importedFields.size())
@@ -219,7 +219,7 @@ lyric_importer::ModuleImport::getField(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::ImplImport *
+std::shared_ptr<lyric_importer::ImplImport>
 lyric_importer::ModuleImport::getImpl(tu_uint32 offset) const
 {
     if (offset < m_importedImpls.size())
@@ -227,7 +227,7 @@ lyric_importer::ModuleImport::getImpl(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::InstanceImport *
+std::shared_ptr<lyric_importer::InstanceImport>
 lyric_importer::ModuleImport::getInstance(tu_uint32 offset) const
 {
     if (offset < m_importedInstances.size())
@@ -251,7 +251,7 @@ lyric_importer::ModuleImport::getProtocol(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::StaticImport *
+std::shared_ptr<lyric_importer::StaticImport>
 lyric_importer::ModuleImport::getStatic(tu_uint32 offset) const
 {
     if (offset < m_importedStatics.size())
@@ -259,7 +259,7 @@ lyric_importer::ModuleImport::getStatic(tu_uint32 offset) const
     return nullptr;
 }
 
-lyric_importer::StructImport *
+std::shared_ptr<lyric_importer::StructImport>
 lyric_importer::ModuleImport::getStruct(tu_uint32 offset) const
 {
     if (offset < m_importedStructs.size())

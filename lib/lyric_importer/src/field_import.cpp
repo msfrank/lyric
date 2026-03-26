@@ -3,21 +3,10 @@
 #include <lyric_importer/importer_result.h>
 #include <lyric_object/field_walker.h>
 
-namespace lyric_importer {
-    struct FieldImport::Priv {
-        lyric_common::SymbolUrl symbolUrl;
-        bool isHidden;
-        bool isVariable;
-        bool isDeclOnly;
-        TypeImport *fieldType;
-        lyric_common::SymbolUrl initializer;
-    };
-}
-
 lyric_importer::FieldImport::FieldImport(
-    std::shared_ptr<ModuleImport> moduleImport,
+    std::weak_ptr<ModuleImport> moduleImport,
     tu_uint32 fieldOffset)
-    : BaseImport(moduleImport),
+    : BaseImport(std::move(moduleImport)),
       m_fieldOffset(fieldOffset)
 {
     TU_ASSERT (m_fieldOffset != lyric_object::INVALID_ADDRESS_U32);

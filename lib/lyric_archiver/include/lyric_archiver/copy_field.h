@@ -12,7 +12,7 @@
 namespace lyric_archiver {
 
     tempo_utils::Result<lyric_assembler::FieldSymbol *> copy_field(
-        lyric_importer::FieldImport *fieldImport,
+        const std::shared_ptr<lyric_importer::FieldImport> &fieldImport,
         const std::string &importHash,
         lyric_assembler::NamespaceSymbol *targetNamespace,
         SymbolReferenceSet &symbolReferenceSet,

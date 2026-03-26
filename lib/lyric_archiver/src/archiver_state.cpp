@@ -145,7 +145,7 @@ lyric_archiver::ArchiverState::importCall(const lyric_common::SymbolUrl &callUrl
     return moduleImport->getCall(symbol.getLinkageIndex());
 }
 
-tempo_utils::Result<lyric_importer::FieldImport *>
+tempo_utils::Result<std::shared_ptr<lyric_importer::FieldImport>>
 lyric_archiver::ArchiverState::importField(const lyric_common::SymbolUrl &fieldUrl)
 {
     std::shared_ptr<lyric_importer::ModuleImport> moduleImport;
@@ -248,7 +248,7 @@ lyric_archiver::ArchiverState::archiveSymbol(
         }
 
         case lyric_object::LinkageSection::Concept: {
-            auto *conceptImport = moduleImport->getConcept(symbol.getLinkageIndex());
+            auto conceptImport = moduleImport->getConcept(symbol.getLinkageIndex());
             lyric_assembler::ConceptSymbol *copiedConcept;
             TU_ASSIGN_OR_RETURN (copiedConcept, copy_concept(
                 conceptImport, importHash, globalNamespace, symbolReferenceSet, *this));
@@ -264,7 +264,7 @@ lyric_archiver::ArchiverState::archiveSymbol(
         }
 
         case lyric_object::LinkageSection::Field: {
-            auto *fieldImport = moduleImport->getField(symbol.getLinkageIndex());
+            auto fieldImport = moduleImport->getField(symbol.getLinkageIndex());
             lyric_assembler::FieldSymbol *copiedField;
             TU_ASSIGN_OR_RETURN (copiedField, copy_field(
                 fieldImport, importHash, globalNamespace, symbolReferenceSet, *this));
@@ -272,7 +272,7 @@ lyric_archiver::ArchiverState::archiveSymbol(
         }
 
         case lyric_object::LinkageSection::Instance: {
-            auto *instanceImport = moduleImport->getInstance(symbol.getLinkageIndex());
+            auto instanceImport = moduleImport->getInstance(symbol.getLinkageIndex());
             lyric_assembler::InstanceSymbol *copiedInstance;
             TU_ASSIGN_OR_RETURN (copiedInstance, copy_instance(
                 instanceImport, importHash, globalNamespace, symbolReferenceSet, *this));
@@ -280,7 +280,7 @@ lyric_archiver::ArchiverState::archiveSymbol(
         }
 
         case lyric_object::LinkageSection::Struct: {
-            auto *structImport = moduleImport->getStruct(symbol.getLinkageIndex());
+            auto structImport = moduleImport->getStruct(symbol.getLinkageIndex());
             lyric_assembler::StructSymbol *copiedStruct;
             TU_ASSIGN_OR_RETURN (copiedStruct, copy_struct(
                 structImport, importHash, globalNamespace, symbolReferenceSet, *this));

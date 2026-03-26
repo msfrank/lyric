@@ -79,7 +79,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numConcepts(); i++) {
         auto walker = object.getConcept(i);
         lyric_common::SymbolUrl conceptUrl(walker.getSymbolPath());
-        auto *conceptImport = moduleImport->getConcept(i);
+        auto conceptImport = moduleImport->getConcept(i);
         auto conceptSymbol = std::make_unique<ConceptSymbol>(conceptUrl, conceptImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendConcept(std::move(conceptSymbol)));
     }
@@ -103,7 +103,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numFields(); i++) {
         auto walker = object.getField(i);
         lyric_common::SymbolUrl fieldUrl(walker.getSymbolPath());
-        auto *fieldImport = moduleImport->getField(i);
+        auto fieldImport = moduleImport->getField(i);
         auto fieldSymbol = std::make_unique<FieldSymbol>(fieldUrl, fieldImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendField(std::move(fieldSymbol)));
     }
@@ -111,7 +111,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numInstances(); i++) {
         auto walker = object.getInstance(i);
         lyric_common::SymbolUrl instanceUrl(walker.getSymbolPath());
-        auto *instanceImport = moduleImport->getInstance(i);
+        auto instanceImport = moduleImport->getInstance(i);
         auto instanceSymbol = std::make_unique<InstanceSymbol>(instanceUrl, instanceImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendInstance(std::move(instanceSymbol)));
     }
@@ -135,7 +135,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numStatics(); i++) {
         auto walker = object.getStatic(i);
         lyric_common::SymbolUrl staticUrl(walker.getSymbolPath());
-        auto *staticImport = moduleImport->getStatic(i);
+        auto staticImport = moduleImport->getStatic(i);
         auto staticSymbol = std::make_unique<StaticSymbol>(staticUrl, staticImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendStatic(std::move(staticSymbol)));
     }
@@ -143,7 +143,7 @@ lyric_assembler::internal::load_object_symbols(
     for (int i = 0; i < object.numStructs(); i++) {
         auto walker = object.getStruct(i);
         lyric_common::SymbolUrl structUrl(walker.getSymbolPath());
-        auto *structImport = moduleImport->getStruct(i);
+        auto structImport = moduleImport->getStruct(i);
         auto structSymbol = std::make_unique<StructSymbol>(structUrl, structImport, /* isCopied= */ true, state);
         TU_RETURN_IF_STATUS (state->appendStruct(std::move(structSymbol)));
     }

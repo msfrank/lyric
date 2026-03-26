@@ -10,12 +10,12 @@
 namespace lyric_assembler {
 
     struct FieldSymbolPriv {
-        bool isHidden;
-        bool isVariable;
-        bool isDeclOnly;
+        bool isHidden = false;
+        bool isVariable = false;
+        bool isDeclOnly = false;
         std::unique_ptr<InitializerHandle> initializerHandle;
-        BlockHandle *parentBlock;
-        TypeHandle *fieldType;
+        BlockHandle *parentBlock = nullptr;
+        TypeHandle *fieldType = nullptr;
     };
 
     class FieldSymbol : public BaseSymbol<FieldSymbolPriv> {
@@ -30,7 +30,7 @@ namespace lyric_assembler {
             ObjectState *state);
         FieldSymbol(
             const lyric_common::SymbolUrl &fieldUrl,
-            lyric_importer::FieldImport *fieldImport,
+            std::shared_ptr<lyric_importer::FieldImport> fieldImport,
             bool isCopied,
             ObjectState *state);
 
@@ -53,7 +53,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_fieldUrl;
-        lyric_importer::FieldImport * m_fieldImport = nullptr;
+        std::shared_ptr<lyric_importer::FieldImport> m_fieldImport;
         ObjectState *m_state;
 
         FieldSymbolPriv *load() override;

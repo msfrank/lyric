@@ -94,7 +94,7 @@ lyric_assembler::ObjectRoot::initialize(
                 break;
             }
             case lyric_object::LinkageSection::Concept: {
-                auto *conceptImport = preludeImport->getConcept(symbolWalker.getLinkageIndex());
+                auto conceptImport = preludeImport->getConcept(symbolWalker.getLinkageIndex());
                 binding.typeDef = conceptImport->getConceptType()->getTypeDef();
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
@@ -112,7 +112,7 @@ lyric_assembler::ObjectRoot::initialize(
                 break;
             }
             case lyric_object::LinkageSection::Instance: {
-                auto *instanceImport = preludeImport->getInstance(symbolWalker.getLinkageIndex());
+                auto instanceImport = preludeImport->getInstance(symbolWalker.getLinkageIndex());
                 binding.typeDef = instanceImport->getInstanceType()->getTypeDef();
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 InstanceSymbol *instanceSymbol;
@@ -133,13 +133,13 @@ lyric_assembler::ObjectRoot::initialize(
                 break;
             }
             case lyric_object::LinkageSection::Static: {
-                auto *staticImport = preludeImport->getStatic(symbolWalker.getLinkageIndex());
+                auto staticImport = preludeImport->getStatic(symbolWalker.getLinkageIndex());
                 binding.typeDef = staticImport->getStaticType()->getTypeDef();
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
             }
             case lyric_object::LinkageSection::Struct: {
-                auto *structImport = preludeImport->getStruct(symbolWalker.getLinkageIndex());
+                auto structImport = preludeImport->getStruct(symbolWalker.getLinkageIndex());
                 binding.typeDef = structImport->getStructType()->getTypeDef();
                 TU_RETURN_IF_STATUS (m_preludeBlock->declareAlias(symbolName, binding));
                 break;
@@ -196,7 +196,7 @@ lyric_assembler::ObjectRoot::initialize(
                     break;
                 }
                 case lyric_object::LinkageSection::Concept: {
-                    auto *conceptImport = environmentImport->getConcept(symbolWalker.getLinkageIndex());
+                    auto conceptImport = environmentImport->getConcept(symbolWalker.getLinkageIndex());
                     binding.typeDef = conceptImport->getConceptType()->getTypeDef();
                     TU_RETURN_IF_STATUS(m_environmentBlock->declareAlias(symbolName, binding));
                     break;
@@ -214,7 +214,7 @@ lyric_assembler::ObjectRoot::initialize(
                     break;
                 }
                 case lyric_object::LinkageSection::Instance: {
-                    auto *instanceImport = environmentImport->getInstance(symbolWalker.getLinkageIndex());
+                    auto instanceImport = environmentImport->getInstance(symbolWalker.getLinkageIndex());
                     binding.typeDef = instanceImport->getInstanceType()->getTypeDef();
                     TU_RETURN_IF_STATUS(m_environmentBlock->declareAlias(symbolName, binding));
                     InstanceSymbol *instanceSymbol;
@@ -235,13 +235,13 @@ lyric_assembler::ObjectRoot::initialize(
                     break;
                 }
                 case lyric_object::LinkageSection::Static: {
-                    auto *staticImport = environmentImport->getStatic(symbolWalker.getLinkageIndex());
+                    auto staticImport = environmentImport->getStatic(symbolWalker.getLinkageIndex());
                     binding.typeDef = staticImport->getStaticType()->getTypeDef();
                     TU_RETURN_IF_STATUS(m_environmentBlock->declareAlias(symbolName, binding));
                     break;
                 }
                 case lyric_object::LinkageSection::Struct: {
-                    auto *structImport = environmentImport->getStruct(symbolWalker.getLinkageIndex());
+                    auto structImport = environmentImport->getStruct(symbolWalker.getLinkageIndex());
                     binding.typeDef = structImport->getStructType()->getTypeDef();
                     TU_RETURN_IF_STATUS(m_environmentBlock->declareAlias(symbolName, binding));
                     break;

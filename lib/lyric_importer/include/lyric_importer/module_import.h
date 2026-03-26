@@ -50,16 +50,16 @@ namespace lyric_importer {
         std::shared_ptr<BindingImport> getBinding(tu_uint32 offset) const;
         CallImport *getCall(tu_uint32 offset) const;
         ClassImport *getClass(tu_uint32 offset) const;
-        ConceptImport *getConcept(tu_uint32 offset) const;
+        std::shared_ptr<ConceptImport> getConcept(tu_uint32 offset) const;
         EnumImport *getEnum(tu_uint32 offset) const;
         ExistentialImport *getExistential(tu_uint32 offset) const;
-        FieldImport *getField(tu_uint32 offset) const;
-        ImplImport *getImpl(tu_uint32 offset) const;
-        InstanceImport *getInstance(tu_uint32 offset) const;
+        std::shared_ptr<FieldImport> getField(tu_uint32 offset) const;
+        std::shared_ptr<ImplImport> getImpl(tu_uint32 offset) const;
+        std::shared_ptr<InstanceImport> getInstance(tu_uint32 offset) const;
         std::shared_ptr<NamespaceImport> getNamespace(tu_uint32 offset) const;
         std::shared_ptr<ProtocolImport> getProtocol(tu_uint32 offset) const;
-        StaticImport *getStatic(tu_uint32 offset) const;
-        StructImport *getStruct(tu_uint32 offset) const;
+        std::shared_ptr<StaticImport> getStatic(tu_uint32 offset) const;
+        std::shared_ptr<StructImport> getStruct(tu_uint32 offset) const;
         TypeImport *getType(tu_uint32 offset) const;
         TemplateImport *getTemplate(tu_uint32 offset) const;
 
@@ -75,16 +75,16 @@ namespace lyric_importer {
         std::vector<std::shared_ptr<BindingImport>> m_importedBindings;
         std::vector<CallImport *> m_importedCalls;
         std::vector<ClassImport *> m_importedClasses;
-        std::vector<ConceptImport *> m_importedConcepts;
+        std::vector<std::shared_ptr<ConceptImport>> m_importedConcepts;
         std::vector<EnumImport *> m_importedEnums;
         std::vector<ExistentialImport *> m_importedExistentials;
-        std::vector<FieldImport *> m_importedFields;
-        std::vector<ImplImport *> m_importedImpls;
-        std::vector<InstanceImport *> m_importedInstances;
+        std::vector<std::shared_ptr<FieldImport>> m_importedFields;
+        std::vector<std::shared_ptr<ImplImport>> m_importedImpls;
+        std::vector<std::shared_ptr<InstanceImport>> m_importedInstances;
         std::vector<std::shared_ptr<NamespaceImport>> m_importedNamespaces;
         std::vector<std::shared_ptr<ProtocolImport>> m_importedProtocols;
-        std::vector<StaticImport *> m_importedStatics;
-        std::vector<StructImport *> m_importedStructs;
+        std::vector<std::shared_ptr<StaticImport>> m_importedStatics;
+        std::vector<std::shared_ptr<StructImport>> m_importedStructs;
         std::vector<TemplateImport *> m_importedTemplates;
         std::vector<TypeImport *> m_importedTypes;
 

@@ -46,7 +46,7 @@ namespace lyric_assembler {
             BlockHandle *parentBlock,
             ObjectState *state);
 
-        ImplHandle(lyric_importer::ImplImport *implImport, ObjectState *state);
+        ImplHandle(std::shared_ptr<lyric_importer::ImplImport> implImport, ObjectState *state);
 
         ImplRef getRef() const;
         std::string getName() const;
@@ -81,7 +81,7 @@ namespace lyric_assembler {
         bool isCompletelyDefined() const;
 
     private:
-        lyric_importer::ImplImport *m_implImport = nullptr;
+        std::shared_ptr<lyric_importer::ImplImport> m_implImport;
         ObjectState *m_state;
 
         ImplHandlePriv *load();

@@ -4,26 +4,10 @@
 #include <lyric_importer/type_import.h>
 #include <lyric_object/instance_walker.h>
 
-namespace lyric_importer {
-    struct InstanceImport::Priv {
-        lyric_common::SymbolUrl symbolUrl;
-        bool isDeclOnly;
-        lyric_object::DeriveType derive;
-        bool isHidden;
-        TypeImport *instanceType;
-        lyric_common::SymbolUrl superInstance;
-        absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
-        absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
-        absl::flat_hash_map<lyric_common::TypeDef,ImplImport *> impls;
-        absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
-        std::string allocator;
-    };
-}
-
 lyric_importer::InstanceImport::InstanceImport(
-    std::shared_ptr<ModuleImport> moduleImport,
+    std::weak_ptr<ModuleImport> moduleImport,
     tu_uint32 instanceOffset)
-    : BaseImport(moduleImport),
+    : BaseImport(std::move(moduleImport)),
       m_instanceOffset(instanceOffset)
 {
     TU_ASSERT (m_instanceOffset != lyric_object::INVALID_ADDRESS_U32);
@@ -131,14 +115,14 @@ lyric_importer::InstanceImport::numMethods()
     return m_priv->methods.size();
 }
 
-absl::flat_hash_map<lyric_common::TypeDef,lyric_importer::ImplImport *>::const_iterator
+absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<lyric_importer::ImplImport>>::const_iterator
 lyric_importer::InstanceImport::implsBegin()
 {
     load();
     return m_priv->impls.cbegin();
 }
 
-absl::flat_hash_map<lyric_common::TypeDef,lyric_importer::ImplImport *>::const_iterator
+absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<lyric_importer::ImplImport>>::const_iterator
 lyric_importer::InstanceImport::implsEnd()
 {
     load();
@@ -294,7 +278,7 @@ lyric_importer::InstanceImport::load()
         }
 
         auto *implType = moduleImport->getType(impl.getImplType().getDescriptorOffset());
-        auto *implImport = moduleImport->getImpl(impl.getDescriptorOffset());
+        auto implImport = moduleImport->getImpl(impl.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 

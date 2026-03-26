@@ -15,12 +15,12 @@
 namespace lyric_assembler {
 
     struct ConceptSymbolPriv {
-        bool isHidden;
-        lyric_object::DeriveType derive;
-        bool isDeclOnly;
-        TypeHandle *conceptType;
-        TemplateHandle *conceptTemplate;
-        ConceptSymbol *superConcept;
+        bool isHidden = false;
+        lyric_object::DeriveType derive = lyric_object::DeriveType::Invalid;
+        bool isDeclOnly = false;
+        TypeHandle *conceptType = nullptr;
+        TemplateHandle *conceptTemplate = nullptr;
+        ConceptSymbol *superConcept = nullptr;
         absl::flat_hash_map<std::string, ActionMethod> actions;
         absl::flat_hash_map<lyric_common::SymbolUrl, ImplHandle *> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
@@ -53,7 +53,7 @@ namespace lyric_assembler {
 
         ConceptSymbol(
             const lyric_common::SymbolUrl &conceptUrl,
-            lyric_importer::ConceptImport *conceptImport,
+            std::shared_ptr<lyric_importer::ConceptImport> conceptImport,
             bool isCopied,
             ObjectState *state);
 
@@ -111,7 +111,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_conceptUrl;
-        lyric_importer::ConceptImport *m_conceptImport = nullptr;
+        std::shared_ptr<lyric_importer::ConceptImport> m_conceptImport;
         ObjectState *m_state;
 
         ConceptSymbolPriv *load() override;

@@ -8,7 +8,7 @@ namespace lyric_importer {
 
     class StaticImport : public BaseImport {
     public:
-        StaticImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 staticOffset);
+        StaticImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 staticOffset);
 
         lyric_common::SymbolUrl getSymbolUrl();
 
@@ -23,7 +23,14 @@ namespace lyric_importer {
         tu_uint32 m_staticOffset;
         absl::Mutex m_lock;
 
-        struct Priv;
+        struct Priv {
+            lyric_common::SymbolUrl symbolUrl;
+            bool isVariable = false;
+            bool isDeclOnly = false;
+            bool isHidden = false;
+            TypeImport *staticType = nullptr;
+            lyric_common::SymbolUrl initializer;
+        };
         std::unique_ptr<Priv> m_priv ABSL_GUARDED_BY(m_lock);
 
         void load();

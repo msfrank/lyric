@@ -3,19 +3,8 @@
 #include <lyric_importer/static_import.h>
 #include <lyric_object/static_walker.h>
 
-namespace lyric_importer {
-    struct StaticImport::Priv {
-        lyric_common::SymbolUrl symbolUrl;
-        bool isVariable;
-        bool isDeclOnly;
-        bool isHidden;
-        TypeImport *staticType;
-        lyric_common::SymbolUrl initializer;
-    };
-}
-
-lyric_importer::StaticImport::StaticImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 staticOffset)
-    : BaseImport(moduleImport),
+lyric_importer::StaticImport::StaticImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 staticOffset)
+    : BaseImport(std::move(moduleImport)),
       m_staticOffset(staticOffset)
 {
     TU_ASSERT (m_staticOffset != lyric_object::INVALID_ADDRESS_U32);

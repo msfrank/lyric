@@ -14,7 +14,7 @@ namespace lyric_importer {
         lyric_common::SymbolUrl superEnum;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> members;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
-        absl::flat_hash_map<lyric_common::TypeDef,ImplImport *> impls;
+        absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<ImplImport>> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
         std::string allocator;
     };
@@ -131,14 +131,14 @@ lyric_importer::EnumImport::numMethods()
     return m_priv->methods.size();
 }
 
-absl::flat_hash_map<lyric_common::TypeDef,lyric_importer::ImplImport *>::const_iterator
+absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<lyric_importer::ImplImport>>::const_iterator
 lyric_importer::EnumImport::implsBegin()
 {
     load();
     return m_priv->impls.cbegin();
 }
 
-absl::flat_hash_map<lyric_common::TypeDef,lyric_importer::ImplImport *>::const_iterator
+absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<lyric_importer::ImplImport>>::const_iterator
 lyric_importer::EnumImport::implsEnd()
 {
     load();
@@ -294,7 +294,7 @@ lyric_importer::EnumImport::load()
         }
 
         auto *implType = moduleImport->getType(impl.getImplType().getDescriptorOffset());
-        auto *implImport = moduleImport->getImpl(impl.getDescriptorOffset());
+        auto implImport = moduleImport->getImpl(impl.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 

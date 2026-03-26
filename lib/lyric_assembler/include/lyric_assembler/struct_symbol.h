@@ -43,7 +43,7 @@ namespace lyric_assembler {
             ObjectState *state);
         StructSymbol(
             const lyric_common::SymbolUrl &structUrl,
-            lyric_importer::StructImport *structImport,
+            std::shared_ptr<lyric_importer::StructImport> structImport,
             bool isCopied,
             ObjectState *state);
 
@@ -139,7 +139,7 @@ namespace lyric_assembler {
 
     private:
         lyric_common::SymbolUrl m_structUrl;
-        lyric_importer::StructImport *m_structImport = nullptr;
+        std::shared_ptr<lyric_importer::StructImport> m_structImport;
         ObjectState *m_state;
 
         StructSymbolPriv *load() override;

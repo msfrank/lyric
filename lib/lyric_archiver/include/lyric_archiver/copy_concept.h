@@ -12,7 +12,7 @@
 namespace lyric_archiver {
 
     tempo_utils::Result<lyric_assembler::ConceptSymbol *> copy_concept(
-        lyric_importer::ConceptImport *conceptImport,
+        const std::shared_ptr<lyric_importer::ConceptImport> &conceptImport,
         const std::string &importHash,
         lyric_assembler::NamespaceSymbol *targetNamespace,
         SymbolReferenceSet &symbolReferenceSet,

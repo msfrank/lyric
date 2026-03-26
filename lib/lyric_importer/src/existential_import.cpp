@@ -15,7 +15,7 @@ namespace lyric_importer {
         TemplateImport *existentialTemplate;
         lyric_common::SymbolUrl superExistential;
         absl::flat_hash_map<std::string,lyric_common::SymbolUrl> methods;
-        absl::flat_hash_map<lyric_common::TypeDef,ImplImport *> impls;
+        absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<ImplImport>> impls;
         absl::flat_hash_set<lyric_common::TypeDef> sealedTypes;
     };
 }
@@ -108,14 +108,14 @@ lyric_importer::ExistentialImport::numMethods()
     return m_priv->methods.size();
 }
 
-absl::flat_hash_map<lyric_common::TypeDef,lyric_importer::ImplImport *>::const_iterator
+absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<lyric_importer::ImplImport>>::const_iterator
 lyric_importer::ExistentialImport::implsBegin()
 {
     load();
     return m_priv->impls.cbegin();
 }
 
-absl::flat_hash_map<lyric_common::TypeDef,lyric_importer::ImplImport *>::const_iterator
+absl::flat_hash_map<lyric_common::TypeDef,std::weak_ptr<lyric_importer::ImplImport>>::const_iterator
 lyric_importer::ExistentialImport::implsEnd()
 {
     load();
@@ -248,7 +248,7 @@ lyric_importer::ExistentialImport::load()
         auto implWalker = existentialWalker.getImpl(i);
 
         auto *implType = moduleImport->getType(implWalker.getImplType().getDescriptorOffset());
-        auto *implImport = moduleImport->getImpl(implWalker.getDescriptorOffset());
+        auto implImport = moduleImport->getImpl(implWalker.getDescriptorOffset());
         priv->impls[implType->getTypeDef()] = implImport;
     }
 

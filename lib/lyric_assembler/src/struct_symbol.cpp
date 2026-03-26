@@ -50,12 +50,12 @@ lyric_assembler::StructSymbol::StructSymbol(
 
 lyric_assembler::StructSymbol::StructSymbol(
     const lyric_common::SymbolUrl &structUrl,
-    lyric_importer::StructImport *structImport,
+    std::shared_ptr<lyric_importer::StructImport> structImport,
     bool isCopied,
     ObjectState *state)
     : BaseSymbol(isCopied),
       m_structUrl(structUrl),
-      m_structImport(structImport),
+      m_structImport(std::move(structImport)),
       m_state(state)
 {
     TU_ASSERT (m_structUrl.isValid());
@@ -86,36 +86,40 @@ lyric_assembler::StructSymbol::load()
         TU_ASSIGN_OR_RAISE (priv->superStruct, importCache->importStruct(superStructUrl));
     }
 
-    for (auto iterator = m_structImport->membersBegin(); iterator != m_structImport->membersEnd(); iterator++) {
+    for (auto it = m_structImport->membersBegin(); it != m_structImport->membersEnd(); it++) {
         FieldSymbol *fieldSymbol;
-        TU_ASSIGN_OR_RAISE (fieldSymbol, importCache->importField(iterator->second));
+        TU_ASSIGN_OR_RAISE (fieldSymbol, importCache->importField(it->second));
         TU_RAISE_IF_NOT_OK (priv->structBlock->putBinding(fieldSymbol));
 
         DataReference memberRef;
-        memberRef.symbolUrl = iterator->second;
+        memberRef.symbolUrl = it->second;
         memberRef.typeDef = fieldSymbol->getTypeDef();
         memberRef.referenceType = fieldSymbol->isVariable()? ReferenceType::Variable : ReferenceType::Value;
-        priv->members[iterator->first] = memberRef;
+        priv->members[it->first] = memberRef;
     }
 
-    for (auto iterator = m_structImport->methodsBegin(); iterator != m_structImport->methodsEnd(); iterator++) {
+    for (auto it = m_structImport->methodsBegin(); it != m_structImport->methodsEnd(); it++) {
         CallSymbol *callSymbol;
-        TU_ASSIGN_OR_RAISE (callSymbol, importCache->importCall(iterator->second));
+        TU_ASSIGN_OR_RAISE (callSymbol, importCache->importCall(it->second));
         TU_RAISE_IF_NOT_OK (priv->structBlock->putBinding(callSymbol));
 
         BoundMethod methodBinding;
-        methodBinding.methodCall = iterator->second;
+        methodBinding.methodCall = it->second;
         methodBinding.hidden = callSymbol->isHidden();
         methodBinding.ctor = callSymbol->isCtor();
         methodBinding.final = callSymbol->isFinal();
-        priv->methods[iterator->first] = methodBinding;
+        priv->methods[it->first] = methodBinding;
     }
 
     auto *implCache = m_state->implCache();
-    for (auto iterator = m_structImport->implsBegin(); iterator != m_structImport->implsEnd(); iterator++) {
+    for (auto it = m_structImport->implsBegin(); it != m_structImport->implsEnd(); it++) {
+        auto implImport = it->second.lock();
+        if (implImport == nullptr)
+            throw tempo_utils::StatusException(AssemblerStatus::forCondition(
+                AssemblerCondition::kImportError, "invalid impl import"));
         ImplHandle *implHandle;
-        TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(iterator->second));
-        auto implUrl = iterator->first.getConcreteUrl();
+        TU_ASSIGN_OR_RAISE (implHandle, implCache->importImpl(implImport));
+        auto implUrl = it->first.getConcreteUrl();
         priv->impls[implUrl] = implHandle;
     }
 

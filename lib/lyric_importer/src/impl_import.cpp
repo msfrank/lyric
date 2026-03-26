@@ -3,18 +3,8 @@
 #include <lyric_importer/importer_result.h>
 #include <lyric_object/extension_walker.h>
 
-namespace lyric_importer {
-    struct ImplImport::Priv {
-        bool isDeclOnly;
-        TypeImport *implType;
-        lyric_common::SymbolUrl implConcept;
-        lyric_common::SymbolUrl receiverUrl;
-        absl::flat_hash_map<std::string, Extension> extensions;
-    };
-}
-
-lyric_importer::ImplImport::ImplImport(std::shared_ptr<ModuleImport> moduleImport, tu_uint32 implOffset)
-    : BaseImport(moduleImport),
+lyric_importer::ImplImport::ImplImport(std::weak_ptr<ModuleImport> moduleImport, tu_uint32 implOffset)
+    : BaseImport(std::move(moduleImport)),
       m_implOffset(implOffset)
 {
     TU_ASSERT (m_implOffset != lyric_object::INVALID_ADDRESS_U32);

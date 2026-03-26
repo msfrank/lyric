@@ -32,7 +32,7 @@ namespace lyric_assembler {
             bool isDeclOnly,
             BlockHandle *parentBlock);
 
-        tempo_utils::Result<ImplHandle *> importImpl(lyric_importer::ImplImport *implImport);
+        tempo_utils::Result<ImplHandle *> importImpl(std::shared_ptr<lyric_importer::ImplImport> implImport);
 
         std::vector<ImplHandle *>::const_iterator implsBegin() const;
         std::vector<ImplHandle *>::const_iterator implsEnd() const;
